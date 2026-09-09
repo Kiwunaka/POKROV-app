@@ -1,0 +1,235 @@
+{
+  "schema": "r12-android-handoff-evidence-v1",
+  "date": "2026-09-07",
+  "client": "9334d461f38cb906ce1ae22a9aed126d7a3f903a",
+  "core": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "device": "Huawei ADA-AL00U Android12 API31 ARM64",
+  "origin": "current-origin; geographic origin not independently attested",
+  "installed": {
+    "utc": "2026-09-07T19:08:16.321749+00:00",
+    "installed_apk_sha256": "d849d27398d0fdb18b8fdf3975c0a24b9d419c642048502018d76738201e14d2",
+    "matches_retained_arm64": true,
+    "wifi_on": "1",
+    "vpn_service": true,
+    "foreground": true
+  },
+  "repeat": {
+    "scope": "controlled Wi-Fi to mobile to Wi-Fi handoff, physical Huawei; no connect or disconnect actions during sequence",
+    "samples": [
+      {
+        "label": "wifi_before",
+        "utc": "2026-09-07T18:51:22.476487+00:00",
+        "wifi_on": "1",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      },
+      {
+        "label": "mobile_0",
+        "utc": "2026-09-07T18:51:22.772658+00:00",
+        "wifi_on": "0",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      },
+      {
+        "label": "mobile_10",
+        "utc": "2026-09-07T18:51:32.993684+00:00",
+        "wifi_on": "0",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      },
+      {
+        "label": "mobile_20",
+        "utc": "2026-09-07T18:51:43.216769+00:00",
+        "wifi_on": "0",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      },
+      {
+        "label": "mobile_30",
+        "utc": "2026-09-07T18:51:53.434255+00:00",
+        "wifi_on": "0",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      },
+      {
+        "label": "wifi_restore_requested",
+        "utc": "2026-09-07T18:51:54.092711+00:00",
+        "wifi_on": "1",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      },
+      {
+        "label": "wifi_restored_10",
+        "utc": "2026-09-07T18:52:04.313106+00:00",
+        "wifi_on": "1",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      },
+      {
+        "label": "wifi_restored_20",
+        "utc": "2026-09-07T18:52:14.520168+00:00",
+        "wifi_on": "1",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      },
+      {
+        "label": "wifi_restored_30",
+        "utc": "2026-09-07T18:52:24.729116+00:00",
+        "wifi_on": "1",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true,
+        "tun_present": true
+      }
+    ]
+  },
+  "refresh": {
+    "scope": "mobile handoff with explicit protection refresh",
+    "samples": [
+      {
+        "label": "before",
+        "utc": "2026-09-07T18:54:46.126811+00:00",
+        "wifi_on": "1",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true
+      },
+      {
+        "label": "mobile_before_refresh",
+        "utc": "2026-09-07T18:54:56.378642+00:00",
+        "wifi_on": "0",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true
+      },
+      {
+        "label": "mobile_after_refresh",
+        "utc": "2026-09-07T18:55:11.640765+00:00",
+        "wifi_on": "0",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true
+      },
+      {
+        "label": "wifi_restored",
+        "utc": "2026-09-07T18:55:22.288899+00:00",
+        "wifi_on": "1",
+        "pid": "22296",
+        "vpn_service": true,
+        "foreground": true
+      }
+    ]
+  },
+  "first_observation": {
+    "result": "UNRESOLVED_OBSERVATION",
+    "detail": "Initial resumed UI showed connected/protected; after Wi-Fi disable plus refresh service was absent and UI showed protection off. Native pre-handoff state was not recorded. Explicit Wi-Fi retry restored protection. Two later controlled sequences did not reproduce it. Do not discard the first observation or classify the full handoff matrix PASS.",
+    "snapshot": {
+      "utc": "2026-09-07T18:48:16.390639+00:00",
+      "wifi_on": "0",
+      "vpn_service": false,
+      "foreground": false,
+      "pid": "22296"
+    }
+  },
+  "proof": "App protection observer confirms tunnel/DNS/VPN egress after refresh both on mobile and restored Wi-Fi; not an independent packet capture or full route/leak proof.",
+  "artifacts": [
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-start.png",
+      "sha256": "f232ccfc1219d201e125381b91adbe043376e6d580bf8df441b1b9e9587f61f2",
+      "bytes": 161249
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-proof-before.png",
+      "sha256": "8997e8a46f3ff0e8738c647b8a6049f00e90077db3f058f111e37aaf8dc5b037",
+      "bytes": 152728
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-proof-mobile.png",
+      "sha256": "426ab248d8ace16684d6e008d9f440b03e33318cfabad54cc3e3541622908ed7",
+      "bytes": 154070
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-mobile-state.json",
+      "sha256": "0707f058daca050b3f8200d4ad4e24bcb3ce5090c97fd90964e17da5fa0454eb",
+      "bytes": 136
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-home-wifi-return.png",
+      "sha256": "bf4b2e89aef8b058db77316738a0a249ee384448a66164a333e855e5a9e5f9b0",
+      "bytes": 152383
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-retry-wifi.png",
+      "sha256": "dbd85a9128e547dbfba27fc9edbfdcf3e9439180f9bd5658fd56af6d067b9fc6",
+      "bytes": 162263
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\check-handoff.py",
+      "sha256": "5a7c01cf509889c960ce7d37d846ca898767945d7654136d2a217fccead74e03",
+      "bytes": 1701
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-repeat.json",
+      "sha256": "9102df9f21d5a36add4e8387991d287570e59a2c81f686786f100cb089d5db70",
+      "bytes": 2185
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-repeat-mobile.png",
+      "sha256": "629a563b6b42c7e788582ce9c9003416018ab1fa5408b822bccc6239605dc685",
+      "bytes": 161016
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-repeat-restored.png",
+      "sha256": "54e268d311ca5ec464ee97a95936d88807e184b25d2458b67753a26fbb1bd968",
+      "bytes": 161348
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-repeat-proof-refreshed.png",
+      "sha256": "1c05cc7f47e236b11fe4b36880bf69b6bd19a0ecb06b0943aa67bb575f93b4a1",
+      "bytes": 153158
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\check-handoff-refresh.py",
+      "sha256": "3f16a5f61f69b1d43f785fa749b29feed57696edde40e7cd45735726369c6375",
+      "bytes": 1350
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-mobile-refresh.json",
+      "sha256": "8ba95cb8f291e49306188d664c3e6c62a7eb602e0f26f72744b9f537d9b4a474",
+      "bytes": 889
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-mobile-refreshed.png",
+      "sha256": "bdcf4d4bebf5c62c1d57d563caf3cd5f4762138ac863ded013e6655c2e444200",
+      "bytes": 152166
+    },
+    {
+      "path": "E:\\r12-device-20260907\\access-label-fixed\\handoff-final-state.json",
+      "sha256": "65a691b1b728f3152a403cb40593ed8793c04cc4a9f4fd80c50343569c439b56",
+      "bytes": 247
+    }
+  ],
+  "final_state": "Same installed APK; Wi-Fi on and VPN connected, matching the observed state at start of this slice. No account/profile/preference change.",
+  "remaining": [
+    "unclassified first interruption",
+    "IPv6/MTU/UDP53/leak scenarios",
+    "OEM/API/network/endurance matrix",
+    "exact approved delivery channel"
+  ]
+}

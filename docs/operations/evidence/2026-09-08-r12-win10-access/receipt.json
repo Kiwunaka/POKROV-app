@@ -1,0 +1,235 @@
+{
+  "schema": "pokrov.r12-win10-access/v1",
+  "status": "BLOCKED_BY_ACCESS",
+  "blocker": "WINDOWS10_EVALUATION_NOT_LICENSED",
+  "origin": "current-origin; owned Windows 10 evaluation VM",
+  "vm_uuid": "66808ffb-e614-4de0-95a3-b948d216be36",
+  "client_source": "e88dff94bef85650c5f0b3d31dc3ff9a5e39c38a",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "planned_installer_sha256": "29a87a13906909e400037a947f1e4f876ca59821e7e34c73060e623f2d9fbeea",
+  "pokrov_installed": false,
+  "pokrov_runtime_tests_run": false,
+  "media": {
+    "path": "E:/r12-win10-lab-20260908/windows10-ltsc2021-eval-en-us-x64.iso",
+    "bytes": 4898582528,
+    "sha256": "e4ab2e3535be5748252a8d5d57539a6e59be8d6726345ee10e7afd2cb89fefb5"
+  },
+  "baseline": {
+    "utc": "2026-09-08T05:43:59.5116922Z",
+    "vm_uuid": "66808ffb-e614-4de0-95a3-b948d216be36",
+    "os": "Microsoft Windows 10 Enterprise LTSC Evaluation",
+    "os_version": "10.0.19044",
+    "os_build": "19044",
+    "display_version": "21H2",
+    "ubr": 1288,
+    "boot_utc": "2026-09-08T05:41:39.690401Z",
+    "logical_processors": 2,
+    "total_memory": 4274917376,
+    "collector_user": "pokrovtest",
+    "collector_admin": false,
+    "console_user": "none",
+    "local_administrators": [
+      "Administrator",
+      "r12admin"
+    ],
+    "ordinary_user_is_admin": false,
+    "adapter_count": 0,
+    "pokrov_ui_count": 0,
+    "pokrov_service_present": false,
+    "guest_additions": "Running",
+    "licensing": [
+      {
+        "Name": "Windows(R), EnterpriseSEval edition",
+        "Description": "Windows(R) Operating System, TIMEBASED_EVAL channel",
+        "LicenseStatus": 5,
+        "GracePeriodRemaining": 0
+      }
+    ],
+    "defender": {
+      "AMServiceEnabled": true,
+      "AntivirusEnabled": true,
+      "RealTimeProtectionEnabled": true,
+      "AntivirusSignatureVersion": "1.303.25.0"
+    },
+    "uac_enabled": 1,
+    "setup_bypass_key_present": false,
+    "autologon_enabled": false,
+    "autologon_password_value_present": false
+  },
+  "activation_attempts": [
+    {
+      "schema": "pokrov.r12-win10-evaluation-activation/v1",
+      "utc": "2026-09-08T05:52:06.6744662Z",
+      "vm_uuid": "66808ffb-e614-4de0-95a3-b948d216be36",
+      "before_status": 5,
+      "before_grace": 0,
+      "admin": true,
+      "product_key_supplied": false,
+      "activation_timer_reset": false,
+      "clock_backdated": false,
+      "activation_invoked": true,
+      "status": "NOT_LICENSED",
+      "cscript_exit": -2015294522,
+      "error_codes": [
+        "0X87E10BC6"
+      ],
+      "after_status": 5,
+      "after_grace": 0,
+      "completed_utc": "2026-09-08T05:52:07.6589204Z"
+    },
+    {
+      "schema": "pokrov.r12-win10-evaluation-activation/v1",
+      "utc": "2026-09-08T05:58:13.4074344Z",
+      "vm_uuid": "66808ffb-e614-4de0-95a3-b948d216be36",
+      "before_status": 5,
+      "before_grace": 0,
+      "admin": true,
+      "product_key_supplied": false,
+      "activation_timer_reset": false,
+      "clock_backdated": false,
+      "activation_invoked": true,
+      "status": "NOT_LICENSED",
+      "cscript_exit": -2015294522,
+      "error_codes": [
+        "0X87E10BC6"
+      ],
+      "after_status": 5,
+      "after_grace": 0,
+      "completed_utc": "2026-09-08T05:58:14.3753202Z"
+    }
+  ],
+  "cleanup": {
+    "utc": "2026-09-08T06:00:00.6008152Z",
+    "vm_uuid": "66808ffb-e614-4de0-95a3-b948d216be36",
+    "vm_off": true,
+    "nic_none": true,
+    "routes_sha256": "401e4b0a47c9c8c73d6b52536cec753f09f559ceb2d512884e57d5f7aff72434",
+    "dns_sha256": "720fe40b4ee8ab42f57c808b3c5f824808703b35113fe9999ef97a7bbccdee59",
+    "host_network_unchanged": true,
+    "os_media_mounted": false
+  },
+  "limits": [
+    "Win10 POKROV acceptance NOT_RUN",
+    "License failure does not prove permanent activation-service retirement",
+    "Existing licensed Win10 stand requested; owner answer pending",
+    "Full W01/W02/W05 and final channel remain open"
+  ],
+  "release": {
+    "published": false,
+    "deployed": false,
+    "promoted": false,
+    "final_candidate": false
+  },
+  "artifacts": [
+    {
+      "path": "E:/r12-win10-lab-20260908/media-source.json",
+      "bytes": 910,
+      "sha256": "dff8b37cf304eabe97997e157950605d843cd2694f8386ca803f8b049b94be26"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/media-download.json",
+      "bytes": 666,
+      "sha256": "f411d12709f70d735667952664898b79336bf2b011923b898981447856f1901d"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/official-hashes.pdf",
+      "bytes": 108817,
+      "sha256": "f3bd80fa94b823244d68b88d6c325ce9d83e7d81a08996efe9af307628e896b1"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/official-hashes.txt",
+      "bytes": 5414,
+      "sha256": "fb8c8f7c8b6c6d491b709f9646cb92f6b2fddcb42182ce4ba4b9982054c47e50"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/media-inspection.json",
+      "bytes": 250,
+      "sha256": "41f21620858a94145ab74212eb42b303d5ce8202c4dfea94cabe1d814a22ff9c"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/vm-created.json",
+      "bytes": 617,
+      "sha256": "c1a6704ea1cb82b772353e5020672a909a646ea765c76666ebce6a9bcc8dba2e"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/installation-attempt1.json",
+      "bytes": 710,
+      "sha256": "68ab2841472ac6fe54839ed76a2bee6fce23c033ec00fec3ae8c7872e5d17e67"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/installation-prepared-retry2.json",
+      "bytes": 272,
+      "sha256": "74f611e311268bc108d05ec5467f2ed76d18a0d0a5c5a86334afb8b3a86bb38c"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/baseline-initial.json",
+      "bytes": 1219,
+      "sha256": "f452f340dc2ffd48f87be8f471c1c30c7e5df662d6430685aadbf0f2e3c4e21e"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/capture-baseline.ps1",
+      "bytes": 3332,
+      "sha256": "24a5b6c5fdb77979ce54e6281b39037e784369023c75d8813309adba1e6f44b5"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/activate-evaluation.ps1",
+      "bytes": 2150,
+      "sha256": "5c75fa3f498e2e82fa091d9aa32d77ea4d8b8937050cc3c7510bd2d521c2dced"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/activate-evaluation-retry.ps1",
+      "bytes": 2156,
+      "sha256": "e068a3eb51eac6d570400f00f74c2b13447c5ffa305293e04050ef2635f0ec4a"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/activation.json",
+      "bytes": 636,
+      "sha256": "a17cce52d088b1688d80f3a32505ee8a989c22e7ae0df9963555fbcdd38f1692"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/activation-retry.json",
+      "bytes": 636,
+      "sha256": "e351b4ffbce967d9728452ad25de8f771307b2463343266a8551208d022f0b4c"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/microsoft-tls.json",
+      "bytes": 283,
+      "sha256": "5fe4f44d6bb40d4462c1ed2dfeb162660ca307e955d74ed6e662f78119e8ceea"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/host-network-before-nat.json",
+      "bytes": 220,
+      "sha256": "a56740cf679ee885a264083f22bfe80b1898a899a0be6178329ce5c159165491"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/temporary-nat.json",
+      "bytes": 289,
+      "sha256": "1d6a1aa1020a2ff0b4c97b8d8a9bd4185c21f6a2e58ee6bec2919f3ad7eae09a"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/final-guest-state.json",
+      "bytes": 424,
+      "sha256": "5bad47db5053b81b01e97c531da2765a18728fd84aeb534968692820ab2106ac"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/cleanup.json",
+      "bytes": 379,
+      "sha256": "c8bd1adf695b448c4a508105a255d6367ad2dc05a33782d027c3407f0f9ddcf9"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/vm-final-inventory.json",
+      "bytes": 327,
+      "sha256": "33c1430f1a7d058f3337d73fd19864037644472d1fbd8f48ec092d1974559988"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/license/license.rtf",
+      "bytes": 140135,
+      "sha256": "d7b69005eb679f71c2961225bf26e789c312596808d017a3f434eaa691fb52d1"
+    },
+    {
+      "path": "E:/r12-win10-lab-20260908/license/license.txt",
+      "bytes": 37378,
+      "sha256": "12634f89e48540291e2e4b9c4e3ab351358b3d3d1309ff132cca307a34c9ffef"
+    }
+  ]
+}

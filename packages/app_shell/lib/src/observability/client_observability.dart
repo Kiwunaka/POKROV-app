@@ -9,10 +9,27 @@ class DiagnosticsCoordinator {
   Timer? _healthTimer;
   int _healthGeneration = 0;
   int? _healthPollInFlight;
+  Timer? _runtimeTimer;
+  bool _runtimePollInFlight = false;
 
   bool get resumeRefreshPending => _resumeRefreshPending;
   int get healthGeneration => _healthGeneration;
   bool get healthPollingActive => _healthTimer != null;
+
+  /// Desktop service state remains observable after connect and in the tray.
+  /// This reads local IPC only; it does not repeat network diagnostics.
+  void startRuntimePolling(Future<void> Function() onPoll) {
+    if (_runtimeTimer != null) return;
+    _runtimeTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+      if (_runtimePollInFlight) return;
+      _runtimePollInFlight = true;
+      try {
+        await onPoll();
+      } finally {
+        _runtimePollInFlight = false;
+      }
+    });
+  }
 
   bool beginResumeRefresh() {
     if (_resumeRefreshPending) {
@@ -83,6 +100,8 @@ class DiagnosticsCoordinator {
   }
 
   void dispose() {
+    _runtimeTimer?.cancel();
+    _runtimeTimer = null;
     _resumeRefreshPending = false;
     stopHealthPolling();
     _healthPollInFlight = null;

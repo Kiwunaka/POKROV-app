@@ -1,0 +1,158 @@
+{
+  "schema": "pokrov.r12-connect-interruption.v1",
+  "utc": "2026-09-07T21:38:55.3177893Z",
+  "scope": "synthetic local Windows source; no installed network or VM run",
+  "source_base": "0f77637a0cbc448cac0b9f9c7d21ffaeaa6cd2b5",
+  "status": "PASS_LOCAL_INTERRUPTION_BOUNDARIES",
+  "sources": [
+    {
+      "path": "apps/windows_shell/windows/service/service_client.cpp",
+      "git_blob": "33c6cc38af5a49c73cc89535dbb26b73e201db82",
+      "sha256": "f23e30b23da08c6f356202233a42bf26b04a3b080268837575c5ed4aa6bcef20"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_client_test.cpp",
+      "git_blob": "bc143d1ff0245083a97742314fd00a481b1180ef",
+      "sha256": "79d5398d887727adf2beb8bf7629238fb98ccee21f71534da4e9fc1e502f7f39"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_runtime.cpp",
+      "git_blob": "1ef436adc6b2d303fbf5769c952d9da46b186298",
+      "sha256": "401bf2bf645e2effabaf2d69002143ac824b000c1d53b3955e64a1ec5d6e7ae6"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_runtime.h",
+      "git_blob": "509668e997ac821dc4e036d0126cb4ba5618be00",
+      "sha256": "18406349bcca2e5ed001a6eae290354cfa4e30096094819454902ae4f2952582"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_runtime_test.cpp",
+      "git_blob": "21ed163511a5dea3c89bc9207186a4e2b58ba717",
+      "sha256": "f0dfa4647a400f2a25571934a262200a28dfd82cb8b7ec0f42fd14c7167b8999"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_server.cpp",
+      "git_blob": "320d3d4251e1908c39e4246556be96794feb57e4",
+      "sha256": "b11780abb1f39ba387de8ace96b072501d61ca90f876cc35081834bf4a70b5b2"
+    }
+  ],
+  "checks": {
+    "native": "8/8 PASS Debug",
+    "flutter": "80 PASS; 1 exact-DLL test SKIPPED (POKROV_REAL_CORE_ROOT unset)",
+    "analyze": "PASS",
+    "release_service_build": "PASS",
+    "red": "FAIL late success and absent rollback; one digest assertion was also corrected from empty to none",
+    "client_docs": "PASS validate-seed.ps1 including client docs contract; initial header-position failure corrected",
+    "platform_docs": "33 PASS; platform-context PASS; package 13 imports / 83 R12 / 378 legacy / 288 links PASS"
+  },
+  "commands": [
+    "cmake --build apps/windows_shell/build/windows/x64 --config Debug --target pokrov_service_runtime_test pokrov_service_client_test pokrov_service_integration_test",
+    "ctest --test-dir apps/windows_shell/build/windows/x64 -C Debug -R ^pokrov_service_runtime$ --output-on-failure (red)",
+    "ctest --test-dir apps/windows_shell/build/windows/x64 -C Debug -R ^pokrov_(service_|windows_crash) --output-on-failure",
+    "cmake --build apps/windows_shell/build/windows/x64 --config Release --target pokrov_service",
+    "flutter.cmd test --reporter compact (packages/runtime_engine)",
+    "flutter.cmd analyze (packages/runtime_engine)",
+    "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+    "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q (platform)",
+    "python -B scripts/agent_context_packet_audit.py --platform-context-root . (platform)",
+    "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py (platform)",
+    "git diff --check (client/platform)",
+    "git diff --name-only -- artifacts/releases (client)"
+  ],
+  "artifacts": [
+    {
+      "path": "E:/r12-connect-interruption-20260908/test-red.log",
+      "sha256": "4f07515f42576b88cffa5612a09fa44e787bb90c5d475c0533822aa263af581c",
+      "bytes": 2104
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/test-green.log",
+      "sha256": "600c44eec776731391b8c727c24abd36ef14ef5ef1a9503a6d9823f99d75f677",
+      "bytes": 848
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/native-tests-final.log",
+      "sha256": "9e6c2cde664003ea010fad72507ca16b6026af105c6289fe021fc1dc69bb32b5",
+      "bytes": 1110
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/build-release.log",
+      "sha256": "ddf1df6a28eeb8079d93db85d25067baee204a0efa9538c9c2533575c28d2a0c",
+      "bytes": 533
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/runtime-flutter-tests.log",
+      "sha256": "6eb980efbcc82b4bbf10182a09f8427b75b18f389c96e10bc46a3104f39fad8d",
+      "bytes": 37517
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/runtime-analyze.log",
+      "sha256": "e1398e02414bc8c6255d90691bc98efec77626a8a42721013ad8d159df63d951",
+      "bytes": 1164
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/red/service_runtime.cpp",
+      "sha256": "7bcbdf746bb663e8dfb371754a9e805580c6aaba4d4fe6273bc3f26228c461da",
+      "bytes": 51123
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/red/service_runtime.h",
+      "sha256": "18406349bcca2e5ed001a6eae290354cfa4e30096094819454902ae4f2952582",
+      "bytes": 3834
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/red/service_runtime_test.cpp",
+      "sha256": "aee56972dcaebba0e4616f9acd17be45591824c10e27bb82a511e1e1f28a5a99",
+      "bytes": 46478
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/red/pokrov_service_runtime_test.exe",
+      "sha256": "596ca338ccbab839e22a172cda5a6301aa9deebb0c7cd2860fd9c8eed2a47048",
+      "bytes": 579584
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/client-validation.log",
+      "sha256": "024831c978f4296717e14f2cefb2afac25b5e931e27221b12e26674aad25b977",
+      "bytes": 2206
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/client-validation-final.log",
+      "sha256": "5d1880545941530116e78be0931947d000b147d139d4147eb0ecf252b8d97a7d",
+      "bytes": 1817
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/platform-docs.log",
+      "sha256": "ec23b3930fde9f6a8f776ce67609009a916b7f347b9a7e5a71e55ec16ac4a69b",
+      "bytes": 101
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/platform-context.log",
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+      "bytes": 23
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/package.log",
+      "sha256": "5f59ea31ef3e58856feef6a0bdf4c7bab698d1dda190e2bcd564c9936f9254fe",
+      "bytes": 109
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/green/pokrov_service.exe",
+      "sha256": "b6de5885af3e4bbe748fbcfa3b3ebe1babca4671d97b2a50f4a4bd443ae97ba7",
+      "bytes": 196096
+    },
+    {
+      "path": "E:/r12-connect-interruption-20260908/green/pokrov_service_runtime_test.exe",
+      "sha256": "5b254c4fb5c71ead09be7dd181e4e63dd16206b99e013f63fa3e94771ac75019",
+      "bytes": 588288
+    }
+  ],
+  "open": [
+    "Cancellation inside blocking Core WinHTTP and recovery calls",
+    "Correlated IPC cancel dispatch",
+    "Concurrent mutations and WFP coexistence",
+    "Installed connected-network acceptance Win10 and final package"
+  ],
+  "core_bytes_changed": false,
+  "new_candidate": false,
+  "push_merge_deploy": "NOT_PERFORMED"
+}

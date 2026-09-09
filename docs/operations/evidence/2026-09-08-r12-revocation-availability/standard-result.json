@@ -1,0 +1,10 @@
+﻿{
+    "utc":  "2026-09-08T13:44:55.6491375Z",
+    "account":  "R12Revocation",
+    "elevated":  false,
+    "status":  "FAIL",
+    "fresh_user_data":  true,
+    "installer_pid":  4104,
+    "installer_exit":  2,
+    "failure":  "Installer failed"
+}

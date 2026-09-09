@@ -1,0 +1,105 @@
+{
+  "kind": "R12 installed Win11 managed AWG switching acceptance slice",
+  "client_source": "6fc1e8439371dc5aee0f1df9cbcf1b3cca2841cd",
+  "platform_source": "5c5a3b7ab558928531930b0bebc32324a3cfecfd",
+  "core_source": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "package_binding": "../2026-09-08-r12-upgrade-managed/receipt.json; same v3 package, all 305 installed hashes rechecked",
+  "probe_binding": "existing 0218e89 diagnostic probe; its source label is not the UI source identity",
+  "origin": "Windows 11 VM on current-origin; Brain control-plane readbacks separately; no RU/LTE or DE server dataplane proof",
+  "scope_results": {
+    "normal_ui_connects": 3,
+    "profile_switching": "PASS_BOUNDED",
+    "profile_file_return_exact": true,
+    "disconnect_route_dns_recovery": "PASS_BOUNDED",
+    "installed_identity_files": 305,
+    "independent_route_proof": "BLOCKED_BY_ACCESS",
+    "release_candidate": "NOT_CREATED"
+  },
+  "limitations": [
+    "External egress hash identical across disconnected and connected runs; no independent route claim",
+    "DE SSH host key mismatch; Brain known_hosts has no matching target; no bypass or trusted-key update",
+    "Current-origin keyscan returned no parsed key; cross-origin key equality is not proven",
+    "AWG2 endpoint has no contract_id in current renderer; identification uses server/persisted revision and endpoint shape",
+    "UI continued to show saved Milan location and unresolved access label during fixed DE lab transport; effective-location presentation remains open",
+    "First masked VM click woke the display and also initiated the first connect; it is not a latency measurement",
+    "Sampler launch through scheduled task returned 1; first direct elevation lacked execution-policy argument and yielded no file; corrected direct launch retained three successful snapshots",
+    "No crash/sleep/WFP/Win10/final candidate or full protocol matrix acceptance"
+  ],
+  "cleanup": {
+    "rollout_config_restored": true,
+    "entitlement_changed": false,
+    "material_changed": false,
+    "sampler_process_count": 0,
+    "temporary_task_absent": true,
+    "vm_state": "poweroff",
+    "vm_nic1": "none",
+    "host_routes_dns_match_retained_baseline": true,
+    "guest_routes_dns_match_retained_preconnect_baseline": true
+  },
+  "raw_local_root": "E:\\r12-windows-routing-20260908",
+  "raw_sha256": {
+    "plan.json": "e1002e67c3ae00e90dfb3db7b366a10edb162df89896460b6f5f71c6fa3d793e",
+    "switch-awg31-first.json": "7231f025c1ed36160f41a73aeecdf311da5c707caa9382c4ad274a191a264d69",
+    "switch-awg2.json": "0de7afe60d58bb01f9a26a4fc5618659b7096bc26309710466fdaf6cf3015241",
+    "switch-awg31-return.json": "7231f025c1ed36160f41a73aeecdf311da5c707caa9382c4ad274a191a264d69",
+    "restore-original.json": "f1e12298af36d10de101be6a70a96f140373a5912ac32f52960b85362ec43d93",
+    "profile-awg31-first-1.json": "1d194c2f88d729fa99b9253b62a8e05fad2cca4eefdafcb279958517b250de4e",
+    "profile-awg2.json": "76be55909b9efd2f5511f5408f09b4210de771a029410ec1064b443526910c89",
+    "profile-awg31-return.json": "6b074b32f2c5f74d5a3c8a834c2fb09aa757b247dce876b2753593eccf345f55",
+    "revision-awg2.json": "6a3fd5bd3e0421e464e233ef3ed533afec57f52e5b333b8fabb24ba38f533421",
+    "revision-awg31-return.json": "6105c7609422d9b2dcacf2f08abc6dc7474d6cc2f62f157d202012b0461c98ff",
+    "network-awg31-first.json": "1df54a850c52d0d698563f6bc275f79552d4f9cafbc90949b856bc82fdfda0ef",
+    "network-after-awg31-first.json": "fe8833b5a790c196c667a6e9ecce9e075056119674ac9c6c0362502ed1ea9cf0",
+    "network-awg2.json": "7987f9a8cfb65747649645d5942eb13b5494b9ca136723165ede1903f28707e5",
+    "network-after-awg2.json": "a9b31574445da1c0cafa6d53f506535e616af67f61bd551ec423ecc5ae254f14",
+    "network-awg31-return.json": "233774384f13995d36ce9d66dd298298e723beb03b977df59b54f44e53a77a40",
+    "network-final.json": "9f224d0b3ccf245cdd739aa3cb74cae6d52f6d9494889e4210686cba137e4bff",
+    "final-identity.json": "72c7ec88705166103dcd382027981264cce7e0fe61d84516a7b360c4030a62d3",
+    "host-network-final.json": "7c3de17ad210ac63635a73508ce1b09c25c8575f74b182eb09c1a10ec2c3a92f",
+    "trusted-brain-key-comparison.json": "9f424836ef81577969e9e0650caa6f2c86cccd41ad75be5a4aebc4168db454cb",
+    "read-profile.ps1": "6fe3619029acfd4be8c8e20f37725c7c847c5bd5c8eff74cbdcd0bccd266bacc",
+    "final-identity.ps1": "56f8860d888da21f94666bba4cbb981c3cbe173a86c8c82c7c36c1b68c275c82",
+    "lab-control.py": "d94ef77c44fa8147458021b87373942124f18da0b2e373d7c19251b5233b763f",
+    "validate-seed.log": "a2c4590088e654d7097f664b6e51289a2ba780d381e0e1e6c865fe84a2396877"
+  },
+  "retained_sha256": {
+    "plan.json": "f018e3e2fb7224e01c11762ee2b5b2338609ece0d310eab01ecc3a0ce33ed232",
+    "switch-awg31-first.json": "375198a6b965aea05d89fdf123755dfc8bf894be9780d8b27c562af59a900a50",
+    "switch-awg2.json": "e34e208667edaf2e600c50fe9ac54b537cca9d7e798d692119fa3b7fe6fe8272",
+    "switch-awg31-return.json": "375198a6b965aea05d89fdf123755dfc8bf894be9780d8b27c562af59a900a50",
+    "restore-original.json": "3dcdeb7cf11b7f3aeba65ab7ed5fbb3aa251aca1769ce65bf79b921d0b3e2371",
+    "profile-awg31-first-1.json": "45a8a43aca01ad4b9ed2b18cd09f8594a24680995b364e4581ca19d05f6d9491",
+    "profile-awg2.json": "9882b2b276c9a0a7e3f19c1610a6670885f6b580feb79f9f5d35b8c700bd0d41",
+    "profile-awg31-return.json": "0ee970d06e064cac624388e044324ee62c3f668bf54f737604336ef8577ac6c1",
+    "revision-awg2.json": "ba67aaca8ec549e8fa1859cc1e29bae62c4fad95ad8fa139778ca54adaad4088",
+    "revision-awg31-return.json": "8f9a0d7763487242fb8423f4f46d27c204f076b71dcd29bf596938f2c24c76fe",
+    "network-awg31-first.json": "81ccae850eabd5b8d83f2b3f52b1416b71deee3bfcc3462558bb7dc73eb9abd8",
+    "network-after-awg31-first.json": "020ce6e59f987653697dc88b11f87f6aadb3ca90f729671fd02c9ad1b09ee03d",
+    "network-awg2.json": "435922c9b3db94494b14dc97e4dde8d65441b131737f0503871341669a531422",
+    "network-after-awg2.json": "deebe36661ce14e855dcd6d50f63523a3dfb26e5dea1f262aa272cbe94b40420",
+    "network-awg31-return.json": "8048927247874bf201f9a3cd71b0aa82bd78d69b35176fb6ce8bbdd9f2e9307e",
+    "network-final.json": "1cf2457829390d9bc7a920a327ee4b7f5ab381c653e10f7c5e5d575a7772eacf",
+    "final-identity.json": "3fb14f0232178b2320116087968b0fc1ec0a8a496ff92f23b89bd049d9f10e15",
+    "host-network-final.json": "715113d600e3697fef82668cf9385bf58dfacc0d8c101e1ff4f8bbe1982cfd21",
+    "trusted-brain-key-comparison.json": "6d9e1ffa90e4a52bc1f97493628d30e046ea47a1c1b4a0a70123dcf908dec987",
+    "read-profile.ps1": "6fe3619029acfd4be8c8e20f37725c7c847c5bd5c8eff74cbdcd0bccd266bacc",
+    "final-identity.ps1": "56f8860d888da21f94666bba4cbb981c3cbe173a86c8c82c7c36c1b68c275c82",
+    "ssh-access-status.json": "83e656cf40a599616376a23c8acc34c91df5d6836102a562095479b0882c3842",
+    "validate-seed.log": "4df4e299cf04362168f5f5e2873d213c73045d9f9ff413cf6d6617a0d1838222"
+  },
+  "retention": "JSON normalized to UTF-8 LF; original bytes retained locally and hashed separately; scripts byte-exact",
+  "verification": [
+    {
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "result": "PASS; client docs contract and seed scaffold OK"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    },
+    {
+      "command": "git diff --name-only -- artifacts/releases",
+      "result": "EMPTY; no release-artifact changes"
+    }
+  ]
+}

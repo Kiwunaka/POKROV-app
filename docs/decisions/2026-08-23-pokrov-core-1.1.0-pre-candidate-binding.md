@@ -1,5 +1,159 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
+## Current source binding — 2026-09-09
+
+The development client now binds Core `c7a11f7d2fd974726095ad7aa0619c055273dd15`.
+Its only changes after `02a091c` are the Apple build's Go-version check and
+release documentation. Two fresh local Android builds and two fresh Windows
+builds from the clean new revision reproduce all five files of the previous
+build trees byte for byte. The client's AAR, DLL and Cronet dependency also
+match those bytes. Runtime hashes, ABI, dependencies and capability contracts
+are unchanged; the native notice changes only its source reference.
+
+[Binding comparison](../operations/evidence/2026-09-09-r12-core-source-binding/binding.json),
+[Android evidence](../operations/evidence/2026-09-09-r12-core-source-binding/android-evidence.json)
+and [Windows evidence](../operations/evidence/2026-09-09-r12-core-source-binding/windows-evidence.json)
+record the exact new source. The [previous manifest](../operations/evidence/2026-09-09-r12-core-source-binding/previous-runtime-binding.json)
+retains rollback identity. Full builds, source SBOMs and logs remain under
+`E:/r12-core-rebinding-20260909`. The receipts' CI wording represents local
+execution here; no hosted run is attributed to these files. SBOM warnings
+remain separate licensing work.
+
+The exact Windows DLL again passed 100 proxy-only start/stop cycles. This
+rebinding creates no APK, installer, candidate, tag, signing or publication.
+Older device and system-route observations retain their original candidate
+identity; this comparison does not create new device or release acceptance.
+
+## Superseded source binding; AWG cross-field behavior retained — 2026-09-08
+
+The development client binds Core `02a091cb0e369192a5ad0909b56ccba8aa1dce17`
+for Android and Windows. The validator rejects intersecting H1-H4 ranges,
+S1-S4/MTU combinations exceeding the supported message buffer, oversized junk
+packets and inconsistent AWG3.1 rekey/reject/receive-refresh timing before
+device creation. The managed Android/Windows packet ceiling is 2016 bytes;
+this is a buffer bound, not a network path-MTU guarantee. Scalar schema maxima
+are necessary but insufficient on their own. ABI and dependency versions stay
+unchanged from the previous C05 binding.
+
+- Android AAR: 107490210 bytes, SHA-256 `5e2ea69c044ea461b9be352cb7ce73ddd208898b5a364b6a2642024a6215534a`.
+- Windows DLL: 55451648 bytes, SHA-256 `0409da4762c56234c38f7b60ac5fe8b49d4131c4a4debedf3ef313aebe8d0371`.
+- Both builds are byte-identical across two runs; four Android ABIs, desktop
+  ABI 2, event ABI 1 and 15 exports are retained. The exact DLL passed 100
+  proxy-only start/stop cycles. Full Core tests passed.
+- The exact source passed six owned Pi userspace AWG2/AWG3.1 cases at client
+  MTU 1280/1400/1408 with authenticated TLS/HTTP. These are bounded transport
+  checks and do not establish whole-client routing or independent RU-origin.
+
+[Binding receipt](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/binding.json),
+[Android builds](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/android-evidence.json),
+[Windows builds](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/windows-evidence.json)
+and the [previous manifest](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/previous-runtime-binding.json)
+retain exact identity and rollback. Local build trees, logs and source SBOMs
+are retained under `E:/r12-awg-crossfield-20260908`; the previous binaries remain
+under `E:/r12-c05-artifacts`. Native notices only update source references;
+module manifests and verbatim license text are unchanged. SBOM license warnings
+remain separate from this source/build verification. The evidence helper's CI
+label denotes local execution here, with no hosted workflow run.
+
+No new candidate, signing, tag, publication or promotion. Existing installed
+phone/VM packages still contain their earlier Core until explicitly replaced
+and checked; their acceptance is not transferred to these new bytes. Android
+and Windows whole-client, WARP, final package and full-origin gates stay open.
+
+[Consumer backtests](../operations/evidence/2026-09-08-r12-awg-crossfield-binding/client-backtests.json):
+80 runtime tests, 8 Android Flutter tests and 376 freshly executed JVM tests
+pass. Runtime/Android analyze, explicit-root seed/docs/parity and 16 release
+handoff-v2 cases pass. Five compiled Go target module/build records match the
+previous binding; the retained DLL/AAR bytes themselves have changed.
+
+## Superseded C05 binding — 2026-09-06
+
+The development client binds Core `8dc57a830bd1487389dd1b7c9190f094c31e13bc`
+for Android and Windows. `config/runtime-artifacts.seed.json` owns the identity.
+The binding uses Go 1.26.8, x/crypto 0.56.0 and tfo-go 2.3.3, including the
+Go 1.26 Psiphon TLS ConnectionState layout correction. It fixes source call
+paths to SSH deadlock advisories GO-2026-6354 and GO-2026-6355. Existing managed
+log filtering, probe correlation and transport authority are retained.
+
+- Android AAR: 107483275 bytes, SHA-256 `bc5ef7ece6ba6c138589307a7c5e30be32ec01cdd396e23dfdb8840011148b29`.
+- Windows DLL: 55449088 bytes, SHA-256 `c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68`.
+- Desktop ABI 2, event ABI 1, 15 required exports, four Android ABIs.
+
+Both platform builds are byte-identical across two local builds. Full Core gate,
+TLS conversion and 100 component proxy-only cycles passed. Build outputs and
+SBOMs remain in `E:/r12-c05-artifacts`. The copied [Android evidence](../operations/evidence/2026-09-06-r12-c05-core-binding/android-evidence.json),
+[Windows evidence](../operations/evidence/2026-09-06-r12-c05-core-binding/windows-evidence.json)
+and [previous D05 binding](../operations/evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json)
+retain exact identity and rollback; previous D05 build trees remain under
+`E:/POKROV-tools/builds/core-d05`. This section supersedes the stale N05-current
+heading below; the actual immediately preceding binding was D05 Core `94dd310`.
+
+The scanner extracts no symbols from these stripped DLL/SO, so its nine
+remaining advisory IDs have module precision. Bounded source analysis is not
+full reachability proof. Source SBOM license warnings and final APK/EXE notices
+remain open; no broad security or license clearance is claimed. Reproducibility
+receipts were generated after the source commit, from code-identical builds
+compiled before commit; their helper CI label is local evidence, not a hosted run.
+No new release tag, candidate, signing, publication or promotion is created.
+Candidate.33, public releases and the D05 Win11 component lab retain their
+original bytes and evidence. Physical Android, Windows SCM/TUN/DNS, WARP and
+independent-origin acceptance remain open for this binding.
+
+Consumer [backtests](../operations/evidence/2026-09-06-r12-c05-core-binding/client-backtests.json): 80 runtime tests, 8 Android Flutter tests and 372 fresh JVM tests pass; the default opt-in skip is covered by a separate 100-cycle run on the synced Windows DLL. Runtime/Android analyze and the seed/docs/parity gates pass. These are host/component checks, not device or final-package acceptance.
+
+## Superseded N05 local binding — 2026-09-06
+
+The local N05 client binds Core `6bc36034c86528972488fc203a98512686ac4db9`. Observed DNS, UDP timeout,
+TLS-handshake timeout and response stall retain separate diagnostic codes.
+An unqualified timeout stays generic. URL probes propagate cancellation after
+dial instead of reporting success. These observations do not establish censorship
+or change fallback authority. The desktop ABI remains 2, event ABI 1, 15 exports.
+Both Android (four ABIs) and Windows were built twice with byte-identical results.
+The exact Windows DLL passed 100 proxy-only start/stop cycles; full and race Core
+tests passed. The machine owner is `config/runtime-artifacts.seed.json`.
+
+- android: `pokrov-core.aar`, 107465916 bytes, SHA-256 `9f99134528e8309f60b2fb20bfed9df9db7f5fa978ec1f13b7d329e2a70cf19b`.
+- windows: `pokrov-core.dll`, 55440384 bytes, SHA-256 `148453156b61bf22c18d987cbf0cd8a47c0bf99636b2650c016310e92bc3384b`.
+
+Evidence and the previous runtime binding are retained in
+`docs/operations/evidence/2026-09-06-r12-n05-core-binding/`. Build trees and SBOMs:
+`E:/POKROV-tools/builds/core-6bc3603-n05/`. SBOM license/version warnings remain
+unresolved; this is not license clearance or hosted provenance. The former local
+binaries remain in `E:/r12-artifacts/final/` and candidate.33 is unchanged.
+No new candidate, release tag, signing, publication or promotion is created.
+Physical Android, Windows TUN/DNS/clean-VM and independent-origin checks remain
+open for these bytes. Prior receipts below are not transferred to this binding.
+
+## Superseded local binding — 2026-09-05
+
+The local R12 client now binds Core `3f52efd4635218967cc84d58cb06b2fa593fd563` for Android and Windows.
+This adds per-call Android `ProbeEndpoint` and `ProbeSelectedOutbound` results
+used by the endpoint and group egress verifier. Group proof captures the selected
+proxy leaf and rejects a changed route/runtime, timeout, direct or cyclic route.
+The desktop ABI remains 2, event ABI 1, with 15 exports. The AAR contains all
+four ABIs and both methods; its consumer rules preserve them under R8.
+Both platform outputs were built twice and compared byte for byte. The exact
+Windows DLL passed 100 proxy-only start/stop cycles. Full Core tests passed.
+
+- android: `pokrov-core.aar`, 107450158 bytes, SHA-256 `c02bc2fcc25f925f9062520f85667c324999b091eb2251a9cf26b8a1f66b0302`.
+- windows: `pokrov-core.dll`, 55434240 bytes, SHA-256 `94acf541893be21341255fe2fce66116fab48d68c80e84f3a820dc2fcfc40366`.
+
+The machine owner is `config/runtime-artifacts.seed.json`. Retained build
+evidence is under `docs/operations/evidence/2026-09-05-r12-core-binding/final/`;
+`previous-runtime-binding.json` preserves the superseded local binding. Full
+SBOMs and both build trees remain in `E:/r12-artifacts/final`. SBOM generation reported
+missing license/version metadata for local replacements; this is not a
+license-clearance pass. Evidence was generated locally, with no hosted run.
+
+New APK/installer, physical Android, clean Windows VM, signing, hosted CI and
+RU-origin checks have no transferred PASS. Candidate.33 and public release
+metadata remain retained. No candidate, tag, promotion or publication is created.
+
+## Superseded binding and historical evidence — 2026-08-30
+
+The remainder records earlier bytes and their evidence; it is not the current
+artifact identity and does not establish device proof for the R12 replacement.
+
 Status: refreshed on 2026-08-30 as a security-fixed, single-source
 Android/Windows pre-candidate binding for POKROV `1.2.0+4047`. Both active
 platform artifacts carry the Core egress, AWG allocated-port binding,

@@ -27,7 +27,7 @@ void main() {
   });
 
   test('catalog snapshot exposes every base 1.2.0 family', () {
-    expect(KnownOperationalErrorCodes.values, hasLength(121));
+    expect(KnownOperationalErrorCodes.values, hasLength(127));
     for (final family in <String>{
       'APP-BOOT',
       'AUTH',

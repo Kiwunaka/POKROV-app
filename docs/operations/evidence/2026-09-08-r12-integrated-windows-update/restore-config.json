@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "full_original_config_restored": true,
+  "config_sha256": "cd0add7b4805b863531ba0cd49b44c9749dbe38d6e740be6154114631b6920a3",
+  "scope": "exact configuration rollback only",
+  "entitlement_mutated": false,
+  "material_mutated": false,
+  "raw_identifiers_returned": false
+}

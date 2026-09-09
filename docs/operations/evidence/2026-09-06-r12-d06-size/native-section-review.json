@@ -1,0 +1,132 @@
+{
+  "apk_sha256": "49ba794b6ae5c1c711a66b1e68f4762bdf5eab474384fbe94139bdde5cd4f4d3",
+  "readelf_sha256": "2646e382d8b2559b5c4ae91e9a98e187ed9bd59f23936054d424049ef795ba5e",
+  "libraries": [
+    {
+      "entry": "lib/arm64-v8a/libapp.so",
+      "sha256": "84a5bd338a3542643f692066176f1be141f559cd0179773fe92e491eceefd297",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\arm64-v8a\\libapp.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\arm64-v8a\\libapp.sections.txt",
+      "log_sha256": "243476855688dcedcf1aa875955c1bb635347844b995031181109f9bd760a3a0"
+    },
+    {
+      "entry": "lib/arm64-v8a/libflutter.so",
+      "sha256": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\arm64-v8a\\libflutter.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\arm64-v8a\\libflutter.sections.txt",
+      "log_sha256": "4dedde76c5ce0869358753bce9f44c6344a0b39db7405860bafcd1a589e6ff4b"
+    },
+    {
+      "entry": "lib/arm64-v8a/libpokrov-core.so",
+      "sha256": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\arm64-v8a\\libpokrov-core.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\arm64-v8a\\libpokrov-core.sections.txt",
+      "log_sha256": "1ba5eec2ffb1034ccaa1aae4fc7e4468732af47849889f7e81a63adb64b63e80"
+    },
+    {
+      "entry": "lib/armeabi-v7a/libapp.so",
+      "sha256": "c97027de9cd0cc8f7856ae6e41a8717b332a4a467800a7f08bbbb91ed4941b1c",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\armeabi-v7a\\libapp.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\armeabi-v7a\\libapp.sections.txt",
+      "log_sha256": "66589e8cfeab9a67ae6de4eeacd0f8fa1d3fe4892cc9512068a5fa682f02c59d"
+    },
+    {
+      "entry": "lib/armeabi-v7a/libflutter.so",
+      "sha256": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\armeabi-v7a\\libflutter.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\armeabi-v7a\\libflutter.sections.txt",
+      "log_sha256": "e89c2ec164c94b6dafdb8c0a75d8c4fe190da5bed8a9fea3e53df7335d97fc7e"
+    },
+    {
+      "entry": "lib/armeabi-v7a/libpokrov-core.so",
+      "sha256": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\armeabi-v7a\\libpokrov-core.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\armeabi-v7a\\libpokrov-core.sections.txt",
+      "log_sha256": "f9db170073ee2d688f2daef8c406f6e2ed8c84d4d6fc6215b1011874c2844dc8"
+    },
+    {
+      "entry": "lib/x86_64/libapp.so",
+      "sha256": "fc5aea0b80c0717c4a31288465bcae91a3c6ec0279b79613dc5ab96b32fe5886",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\x86_64\\libapp.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\x86_64\\libapp.sections.txt",
+      "log_sha256": "708c56410543290891beb20b3be6e992cb4ff34f10e71da03e82c1cbdfe3072d"
+    },
+    {
+      "entry": "lib/x86_64/libflutter.so",
+      "sha256": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\x86_64\\libflutter.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\x86_64\\libflutter.sections.txt",
+      "log_sha256": "d63dc7ad6826b270da33fec1cbb81c391b7b8726d65241d255695ae29a4b3a0a"
+    },
+    {
+      "entry": "lib/x86_64/libpokrov-core.so",
+      "sha256": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376",
+      "debug_sections": [],
+      "command": [
+        "C:\\Users\\kiwun\\AppData\\Local\\Android\\Sdk\\ndk\\28.2.13676358\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\llvm-readelf.exe",
+        "--sections",
+        "--wide",
+        "E:\\r12-d06-size\\native\\lib\\x86_64\\libpokrov-core.so"
+      ],
+      "exit_code": 0,
+      "log": "E:\\r12-d06-size\\native\\lib\\x86_64\\libpokrov-core.sections.txt",
+      "log_sha256": "d1f1464792a7a7f1b01bb86e842c266113eb4d47fbd0f664ef233214181ee024"
+    }
+  ]
+}

@@ -1,0 +1,653 @@
+{
+  "schema": "r12-standard-account-installer-v1",
+  "date": "2026-09-07",
+  "status": "PASS_LOCAL_INSTALL_LIFECYCLE",
+  "source_base": "048909f8bdb877b3d24a7939c5d052c52bda6244",
+  "packaging_script_git_blob": "316119d57b2a725ce479556579d1ad4e25f76f34",
+  "packaging_script_raw_sha256": "58a87e772d5d1596f9a6379db1dea06a9ccca1aa8bbdb631881cb885aaee7f42",
+  "bundle_source": "98c39d62442865b46a13c40092217f6ec71ee33b",
+  "core_source": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "lab": {
+    "vm_uuid": "960ae449-036f-4166-b215-d8349145a4de",
+    "vm_name": "POKROV-r12-installer-20260907",
+    "source_uuid": "b769c8b4-e88a-452e-9d3a-cb4be23125e7",
+    "source_snapshot": "c0abfe48-b33c-4d9d-8556-6a7196aa1916",
+    "base": "E:/r12-installer-20260907",
+    "network": "NIC1 none",
+    "client_source": "048909f8bdb877b3d24a7939c5d052c52bda6244",
+    "core_source": "8dc57a830bd1487389dd1b7c9190f094c31e13bc"
+  },
+  "package_before": {
+    "files": [
+      {
+        "name": "pokrov-windows-x64-1.2.0+4053-setup.exe",
+        "sha256": "c02d6429d108284327c4ead5830bebb03d9030c6842b5144981f5cddfbbec6fa",
+        "bytes": 29249762
+      },
+      {
+        "name": "pokrov-windows-x64-1.2.0+4053-setup.exe.iss",
+        "sha256": "b85a1a26e0f2b7aa7f3a2bc3a4164f93340c2ff8a5a6bc0d687167a7ed3a3607",
+        "bytes": 12107
+      },
+      {
+        "name": "pokrov-windows-x64-1.2.0+4053.manifest.json",
+        "sha256": "b23103327c98f0d6c9323d8d08d18dd05986d294956b5cf930bd86daeb9c3a5f",
+        "bytes": 5917
+      }
+    ],
+    "source_bundle": "E:/r12-w04-20260907/teardown-v2-manifest.json",
+    "api": "https://127.0.0.1:1",
+    "scope": "unsigned local package install fixture; not final release"
+  },
+  "package_after": {
+    "files": [
+      {
+        "name": "pokrov-windows-x64-1.2.0+4053-setup.exe",
+        "sha256": "d792f4215b1feae486f84c8b077b74a3b840bcdc437048a03dabfe5ec15b8ed9",
+        "bytes": 29249988
+      },
+      {
+        "name": "pokrov-windows-x64-1.2.0+4053-setup.exe.iss",
+        "sha256": "f0a131588a703b6bc9e6407001764f17f2c4c8ea68fe85af4f19789289a7efae",
+        "bytes": 13066
+      },
+      {
+        "name": "pokrov-windows-x64-1.2.0+4053.manifest.json",
+        "sha256": "7db3f64479dc0229749a19c17a18ab953a7597a86fe4ab2d6b64d4b53ebc7231",
+        "bytes": 5917
+      }
+    ],
+    "scope": "same unsigned bundle; owner SID query correction"
+  },
+  "results": {
+    "before": {
+      "utc": "2026-09-07T19:50:57.4549412Z",
+      "account": "R12Standard",
+      "elevated": false,
+      "status": "FAIL",
+      "installer_pid": 4084,
+      "installer_exit": 7,
+      "failure": "Installer failed"
+    },
+    "fixed_install": {
+      "utc": "2026-09-07T19:59:13.5779661Z",
+      "account": "R12Standard",
+      "elevated": false,
+      "status": "PASS_INSTALL_UI_LAUNCHED",
+      "installer_pid": 2820,
+      "installer_exit": 0,
+      "owner_matches": true,
+      "service": {
+        "start_mode": "Auto",
+        "account": "LocalSystem",
+        "path": "C:\\Program Files\\POKROV\\pokrov_service.exe",
+        "state": "Running"
+      },
+      "ui_hash": "04fa96b7c82a091b2afad8bbbddbc7bd2faa69ac527e2c054ec9f7258f0eeca5",
+      "ui_pid": 3740
+    },
+    "installed_file_count": 305,
+    "installed_ui_owner_standard": true,
+    "ui_ipc_events": [
+      {
+        "outcome": "succeeded",
+        "status": "none",
+        "utc": "2026-09-07T20:00:08.4132492Z",
+        "name": "service_boot_observed",
+        "command": "none"
+      },
+      {
+        "outcome": "attempted",
+        "status": "none",
+        "utc": "2026-09-07T20:00:08.4132492Z",
+        "name": "service_start_pending",
+        "command": "none"
+      },
+      {
+        "outcome": "succeeded",
+        "status": "none",
+        "utc": "2026-09-07T20:00:08.4132492Z",
+        "name": "service_running",
+        "command": "none"
+      },
+      {
+        "outcome": "accepted",
+        "status": "none",
+        "utc": "2026-09-07T20:00:10.7657258Z",
+        "name": "ipc_session_accepted",
+        "command": "none"
+      },
+      {
+        "outcome": "attempted",
+        "status": "none",
+        "utc": "2026-09-07T20:00:10.7657258Z",
+        "name": "ipc_request",
+        "command": "hello"
+      },
+      {
+        "outcome": "succeeded",
+        "status": "ok",
+        "utc": "2026-09-07T20:00:10.7657258Z",
+        "name": "ipc_response",
+        "command": "hello"
+      },
+      {
+        "outcome": "attempted",
+        "status": "none",
+        "utc": "2026-09-07T20:00:10.7657258Z",
+        "name": "ipc_request",
+        "command": "status"
+      },
+      {
+        "outcome": "succeeded",
+        "status": "ok",
+        "utc": "2026-09-07T20:00:10.7657258Z",
+        "name": "ipc_response",
+        "command": "status"
+      },
+      {
+        "outcome": "succeeded",
+        "status": "none",
+        "utc": "2026-09-07T20:00:10.7657258Z",
+        "name": "ipc_session_closed",
+        "command": "none"
+      },
+      {
+        "outcome": "accepted",
+        "status": "none",
+        "utc": "2026-09-07T20:05:37.4457717Z",
+        "name": "ipc_session_accepted",
+        "command": "none"
+      },
+      {
+        "outcome": "attempted",
+        "status": "none",
+        "utc": "2026-09-07T20:05:37.4457717Z",
+        "name": "ipc_request",
+        "command": "hello"
+      },
+      {
+        "outcome": "succeeded",
+        "status": "ok",
+        "utc": "2026-09-07T20:05:37.4457717Z",
+        "name": "ipc_response",
+        "command": "hello"
+      },
+      {
+        "outcome": "attempted",
+        "status": "none",
+        "utc": "2026-09-07T20:05:37.4457717Z",
+        "name": "ipc_request",
+        "command": "status"
+      },
+      {
+        "outcome": "succeeded",
+        "status": "ok",
+        "utc": "2026-09-07T20:05:37.4457717Z",
+        "name": "ipc_response",
+        "command": "status"
+      },
+      {
+        "outcome": "succeeded",
+        "status": "none",
+        "utc": "2026-09-07T20:05:37.4457717Z",
+        "name": "ipc_session_closed",
+        "command": "none"
+      }
+    ],
+    "uninstall": {
+      "utc": "2026-09-07T20:08:14.1119104Z",
+      "account": "R12Standard",
+      "elevated": false,
+      "status": "PASS_UNINSTALL",
+      "uninstaller_exit": 0,
+      "service_present": false,
+      "install_present": false,
+      "owner_registry_present": false,
+      "ui_count": 0,
+      "service_process_count": 0,
+      "up_adapters": 0,
+      "pokrov_adapters": 0
+    },
+    "reinstall": {
+      "utc": "2026-09-07T20:11:55.5534140Z",
+      "account": "R12Standard",
+      "elevated": false,
+      "status": "PASS_INSTALL_UI_LAUNCHED",
+      "installer_pid": 2872,
+      "installer_exit": 0,
+      "owner_matches": true,
+      "service": {
+        "start_mode": "Auto",
+        "account": "LocalSystem",
+        "path": "C:\\Program Files\\POKROV\\pokrov_service.exe",
+        "state": "Running"
+      },
+      "ui_hash": "04fa96b7c82a091b2afad8bbbddbc7bd2faa69ac527e2c054ec9f7258f0eeca5",
+      "ui_pid": 7004
+    },
+    "reinstall_file_count": 305,
+    "service_boot": {
+      "utc": "2026-09-07T20:17:11.0705268Z",
+      "vm_uuid": "960AE449-036F-4166-B215-D8349145A4DE",
+      "before_boot_utc": "2026-09-07T19:46:05.5000000Z",
+      "boot_utc": "2026-09-07T20:15:19.5000000Z",
+      "service_state": "Running",
+      "service_start": "Auto",
+      "service_account": "LocalSystem",
+      "service_pid": 3084,
+      "service_sha256": "46d87dcb3b82d1c6fdcd3ddbd17e829ad509fc21aba86a82425448c69f0fffcc",
+      "ui_sha256": "04fa96b7c82a091b2afad8bbbddbc7bd2faa69ac527e2c054ec9f7258f0eeca5",
+      "owner_is_standard": true,
+      "owner_has_uint32_above_int32": true,
+      "explorer_count": 0,
+      "ui_count": 0,
+      "up_adapters": 0,
+      "pokrov_adapters": 0,
+      "status": "PASS_SERVICE_AUTO_START_BEFORE_LOGIN"
+    }
+  },
+  "artifact_refs": [
+    {
+      "path": "E:\\r12-installer-20260907\\account-created.json",
+      "sha256": "f2299e892f8a27314ab94e4a88825eac83aa48b5c14a960cf87f8e65b2f052eb",
+      "bytes": 242
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\account-uac.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\baseline.json",
+      "sha256": "4f0f8f544b3aef02bdf8e7161ba89f97042596f333e247179f6b8f718c7ea5f0",
+      "bytes": 315
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\collect-installed.ps1",
+      "sha256": "b8b9ba0b6d600c8f8fa6c03f52800582ba7992f7d78f00dfbb263c625c5af6ea",
+      "bytes": 2649
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\collect-reinstall.ps1",
+      "sha256": "6322727c866caa9fb2962818787948475524481e833ac02a2ebfa4679dd4c01a",
+      "bytes": 2656
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\create-standard-account.ps1",
+      "sha256": "cd1b9ef55cb926d3c284bd1b34254f342c95ff16eb8d5e685e5fca1270f74219",
+      "bytes": 2657
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\install-after.png",
+      "sha256": "2a6ce2917e8668d40c1c748a7d768e8bf4ca619708746aff0ddf3a600dd60847",
+      "bytes": 600669
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\install.log",
+      "sha256": "b0567399fa82ce0b71fa15da428e84fe6b5bcd2bbe7cfccbab1b20b53200ba4f",
+      "bytes": 1689
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\installer-uac.png",
+      "sha256": "407760dd1bcd45baf7cfd0c0f8ceba499c78b84375b85d75f52f4bdac994feaa",
+      "bytes": 212863
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\invoke-admin-account.ps1",
+      "sha256": "3a019f9598d788e59550f501b78b6235e6fe6d45fc4be92de202a127ac937d15",
+      "bytes": 331
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\lab.json",
+      "sha256": "931dc487fea31bf4f373fa2c0d81b8c6c3f1abfd0e0f4be18974b6b1c6978c18",
+      "bytes": 419
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-account.txt",
+      "sha256": "abbf488783fb90fcf8061b57fac8e48c5908873e31737320216c2fcab94ea738",
+      "bytes": 233
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-collect.txt",
+      "sha256": "ec3c844f8c603331a501bd4281766a38cb51bf2fd13a90c77214d0a31ea6fa8c",
+      "bytes": 227
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-reboot.txt",
+      "sha256": "03ab04c9a0eda7e3c5422ab3a2fa8890e101ce3966d1db1c0b633e86f3355ff8",
+      "bytes": 224
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-reinstall.ps1",
+      "sha256": "c65cf670d10d9358aa2fc53147ea30762cc55deb9ef849600aa0e463ccc35f7e",
+      "bytes": 859
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-reinstall.txt",
+      "sha256": "189fef0cc668b6d4d105721aa09b8defbabe2b979db4144847a5db674f5a8285",
+      "bytes": 226
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-standard-v2.ps1",
+      "sha256": "eeb1f85a29a3eed4f931e4ac78ae7b546cbd14a79ce77d1f1d7074eebc649c6c",
+      "bytes": 845
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-uninstall.ps1",
+      "sha256": "97fea2d8d9382f697acccd0b732868bd7cdd79c53dd9e0e37956fcf7eb6351fa",
+      "bytes": 851
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-uninstall.txt",
+      "sha256": "ec6b0c9417891d5a83cb6f689657c0c3596aaa51753eb2cf5a46c828173d356c",
+      "bytes": 226
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\launch-v2.txt",
+      "sha256": "da2a3231d72f48702095f9fb60261d6a53377ad8c0aba8ef71bbbaef06b22f13",
+      "bytes": 228
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\owner-sid-fix.patch",
+      "sha256": "77fedba6fa7e9a7aea53e3f12f823be943de291eeb1c97331ad990bd7d1ceb9c",
+      "bytes": 3072
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\package-build-v2.log",
+      "sha256": "d3004cdd797d1613930dfdce90446539366d123560b2b0bdcd97b1bd6e750898",
+      "bytes": 2058
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\package-build.log",
+      "sha256": "d3004cdd797d1613930dfdce90446539366d123560b2b0bdcd97b1bd6e750898",
+      "bytes": 2058
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\package-identity.json",
+      "sha256": "90b5e430503074a9a2356767a65f5d30ec303e301ea7ac04fe0b72178a2a6887",
+      "bytes": 747
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\packaging-script-v2.ps1",
+      "sha256": "58a87e772d5d1596f9a6379db1dea06a9ccca1aa8bbdb631881cb885aaee7f42",
+      "bytes": 53304
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "sha256": "c02d6429d108284327c4ead5830bebb03d9030c6842b5144981f5cddfbbec6fa",
+      "bytes": 29249762
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\pokrov-windows-x64-1.2.0+4053-setup.exe.iss",
+      "sha256": "b85a1a26e0f2b7aa7f3a2bc3a4164f93340c2ff8a5a6bc0d687167a7ed3a3607",
+      "bytes": 12107
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\pokrov-windows-x64-1.2.0+4053.manifest.json",
+      "sha256": "b23103327c98f0d6c9323d8d08d18dd05986d294956b5cf930bd86daeb9c3a5f",
+      "bytes": 5917
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\prepare-v2.py",
+      "sha256": "1fc6a7ea3d39380f5c466253ee0b74ad1b396ac0178dee290cf956ff0123775e",
+      "bytes": 1032
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reboot-fixture.ps1",
+      "sha256": "1986449f2d05e10bd4da08472feb97d480cdf11d06de58b800a65a999b1a14cf",
+      "bytes": 1027
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\run-interactive.ps1",
+      "sha256": "55d21f519780d51b7119b60f16b30bf4e2a1e774abf6e3a1e7d8c09e46940f7b",
+      "bytes": 323
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\standard-progress.json",
+      "sha256": "9af5ecfefa0664b559e03f8170437f776a1b2818806142d5848a8a6a1cf66d04",
+      "bytes": 173
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\standard-result.json",
+      "sha256": "f9f40f3bd01d11decec22bea06b81b55a34ae8bd9150216efbf7bf41f692117e",
+      "bytes": 227
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\standard-worker.ps1",
+      "sha256": "d10005df6a5cfaeb2b2725a553299b4341d2bee0bac1245557cc1701fe3b542b",
+      "bytes": 2458
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\write-evidence.py",
+      "sha256": "50ce0336143c7a6a43a40d98bf76bc2fb85c17caedcc65151f7698464b7faa82",
+      "bytes": 12541
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\after-install.png",
+      "sha256": "5d76a78ac7653379a2b89d24d5148586b51832d49ee359d4493e14e1901c3e09",
+      "bytes": 96805
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\collect-uac.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\install-uac.png",
+      "sha256": "44f017f95676cacd58f42be64d47bffe9da98cc06754e7908f42957def85d88e",
+      "bytes": 212862
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\install.log",
+      "sha256": "f3f4b3b6ecc4f5c7eb6b4bfb084b8cd0b30ffbf46e60b508b74b09f781000c52",
+      "bytes": 111121
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\installed-audit.json",
+      "sha256": "f2899b80f54417f317ad20a7dc06457854e5f031007041989527c02aeef88cdb",
+      "bytes": 88354
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\launch-uac.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\package-identity.json",
+      "sha256": "0c76c39692bd769419a571512372b062552674f2c666b2935abc7c3c23e6a4b9",
+      "bytes": 636
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "sha256": "d792f4215b1feae486f84c8b077b74a3b840bcdc437048a03dabfe5ec15b8ed9",
+      "bytes": 29249988
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\pokrov-windows-x64-1.2.0+4053-setup.exe.iss",
+      "sha256": "f0a131588a703b6bc9e6407001764f17f2c4c8ea68fe85af4f19789289a7efae",
+      "bytes": 13066
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\pokrov-windows-x64-1.2.0+4053.manifest.json",
+      "sha256": "7db3f64479dc0229749a19c17a18ab953a7597a86fe4ab2d6b64d4b53ebc7231",
+      "bytes": 5917
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\standard-progress.json",
+      "sha256": "032c7c4946ed6ad364aabe969c52ab6064f40317386d85d66bf9be33e3064f4d",
+      "bytes": 173
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\standard-result.json",
+      "sha256": "d324a18185c94ae30b06fbcb4ceba6c73120dd47c9e36780cd6f99332020cd17",
+      "bytes": 597
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\standard-uninstall.ps1",
+      "sha256": "34d15d9b23914b8ff57fe6629bcc29ba0827d2fea560863b8bdfc30133469cb6",
+      "bytes": 2298
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\standard-worker.ps1",
+      "sha256": "fc8b445c67a9bab21b79451adc5816ff9fa37fa824862dc33c484d8d35b897a9",
+      "bytes": 2486
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\uninstall-dispatch.json",
+      "sha256": "773b65bf3c703865f875a90821c328d3faa54a1cbfe4c329729b8e429fc8bd73",
+      "bytes": 106
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\uninstall-launch-uac.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\uninstall-progress.json",
+      "sha256": "846caddb2466e2eeb401552fa82ea852999d162e546c52908d3447836446a81f",
+      "bytes": 101
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\uninstall-result.json",
+      "sha256": "3b77bdc8e63e29ce30df7e6466174f29b22b5fcc553af79ead098c27492f9a4f",
+      "bytes": 383
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\uninstall-stop-expanded-parse.json",
+      "sha256": "18471b458bf7a28130d7c04811ba99f7af3bc900421ea487df8f44267bd7eecd",
+      "bytes": 251
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\uninstall-stop-parse.json",
+      "sha256": "1dcdfb77f2025697f29cdab4bf91c8108b34526291aa71a1c327e63e74a1336d",
+      "bytes": 208
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\uninstall-uac.png",
+      "sha256": "b3e0532621ee4e8b7dda1b2a71d3756b17998ee648f01e3e4a8e8dcbf593a8cf",
+      "bytes": 212822
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\uninstall.log",
+      "sha256": "066ff2fedd67304e69037574efb8ff7cb9c3a53074a565177d7471a5e0decd43",
+      "bytes": 41824
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\v2\\worker-dispatch.json",
+      "sha256": "d8f127f1b8c2e44e343bb8a98ecdf6c404038fd3d3ccbfb9161a17be008c2324",
+      "bytes": 106
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\install-uac.png",
+      "sha256": "44f017f95676cacd58f42be64d47bffe9da98cc06754e7908f42957def85d88e",
+      "bytes": 212862
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\install.log",
+      "sha256": "79f53e96da66efd2bed01c74d7ebd9400d9b5e0288030ee5350267dd817386fa",
+      "bytes": 111144
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\installed-audit.json",
+      "sha256": "dfda783066e7d3002511f35bf7cdfc6bd1f6b17e988928c3004260ff5e6f1c05",
+      "bytes": 88354
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\launch-uac.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\post-reboot.json",
+      "sha256": "88871be08810120624aa39cdd43a1b7e315029013895294d1143065f1528cbc4",
+      "bytes": 758
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\pre-reboot.json",
+      "sha256": "7cc9e2bcadd958ee5ff3f5319e2a7e3b6cd09b8cc359d9a055902e9ec9426900",
+      "bytes": 292
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\reboot-uac-settled.png",
+      "sha256": "541c071a060e29388b6821499a1d676dc08d88909f43912b391f14e6cf84b1df",
+      "bytes": 287617
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\reboot-uac.png",
+      "sha256": "817e54c581ed8b74bab149cea9d52cedb288350492b187dffd94bdbf6fd2374a",
+      "bytes": 97344
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\standard-progress.json",
+      "sha256": "08a6273692dc3b841f84613bb916d37603e46711a53af4aa50fc2d88831bd6d0",
+      "bytes": 173
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\standard-result.json",
+      "sha256": "0e2520c6d990664fef6238bf4b672825548ab2deafd95335e85e6d5a46baaa62",
+      "bytes": 597
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\standard-worker.ps1",
+      "sha256": "da58b2a8711e2042c563ed6e0e3457315eb784f7e415178221c1b750e9487d6d",
+      "bytes": 2500
+    },
+    {
+      "path": "E:\\r12-installer-20260907\\reinstall\\worker-dispatch.json",
+      "sha256": "9e36561713389d9b3a6dd29f0e891dae8457acf259bb064341bdd55b58d9f8bd",
+      "bytes": 106
+    }
+  ],
+  "constraints": [
+    "Exact local unsigned installer, loopback unavailable API https://127.0.0.1:1; no managed profile, VPN, TUN or network requested",
+    "Ordinary account R12Standard is not an Administrators member; UAC uses separate pokrovtest administrator",
+    "No update while connected, Win10, SmartScreen/MOTW download, real channel or full W01/W02/W03 acceptance",
+    "Reboot is planned forced guest reboot with disconnected UI and idle service; not connected recovery evidence",
+    "VM evaluation license can trigger wlms.exe shutdown; this reboot was explicitly requested and bound to pre/post boot timestamps"
+  ],
+  "rejected_collectors": [
+    "Raw ISS stop-service command parser initially treated Inno {{ escaping as a PowerShell brace; after Inno literal-brace expansion syntax passes. No uninstaller source change was retained."
+  ],
+  "credential_boundary": "Initial host-to-guest temporary new-password transfer was blocked by automatic approval review before execution. Alternative generates the test password only inside the guest and stores guest DPAPI ciphertext under a private admin-only ACL. No password/ciphertext copied into evidence.",
+  "final_state": "Installer clone 960ae449-036f-4166-b215-d8349145a4de running offline, fixed package installed, LocalSystem service Running/Auto, no UI/explorer before login, no up/TUN adapters; test account and private guest DPAPI fixture retained. Original VM and previous SCM clone are preserved. No push/merge/deploy/candidate/release-artifact delta.",
+  "validation": {
+    "installer_build_before_after": "PASS Inno Setup 6.7.1",
+    "standard_account_runtime": "PASS clean install / 305 hashes / stock UI IPC / uninstall / reinstall / SCM autoboot before login",
+    "client_seed": "PASS",
+    "platform_docs": "33 PASS",
+    "platform_context": "PASS",
+    "package": "13 imported hashes / 83 R12 / 378 legacy / 281 links PASS",
+    "diff_check": "PASS",
+    "release_artifact_delta": "none",
+    "commands": [
+      "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "python docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+      "git diff --check"
+    ],
+    "artifacts": [
+      {
+        "path": "E:\\r12-installer-20260907\\client-validation.log",
+        "sha256": "114021b6612d45516c91ef8b5fd0c8bf75b3e4672d4ce281c41967c35bb4cb20",
+        "bytes": 1817
+      },
+      {
+        "path": "E:\\r12-installer-20260907\\platform-docs-validation.log",
+        "sha256": "ec23b3930fde9f6a8f776ce67609009a916b7f347b9a7e5a71e55ec16ac4a69b",
+        "bytes": 101
+      },
+      {
+        "path": "E:\\r12-installer-20260907\\platform-context-validation.log",
+        "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+        "bytes": 23
+      },
+      {
+        "path": "E:\\r12-installer-20260907\\package-validation.log",
+        "sha256": "a55a2a2729473c8f4883ce8217cbdfad7c50366b4a9f4ffcfac3657a63ee6ce7",
+        "bytes": 109
+      }
+    ]
+  }
+}

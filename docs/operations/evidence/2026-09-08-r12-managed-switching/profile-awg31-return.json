@@ -1,0 +1,62 @@
+{
+  "utc": "2026-09-08T00:58:10.1322513Z",
+  "label": "awg31-first",
+  "profile_sha256": "20ce76b31fbc16f2ae8f8f49c934a45325dc74fba82b0eaf4948218189fe0dfb",
+  "root_keys": [
+    "log",
+    "dns",
+    "inbounds",
+    "outbounds",
+    "route",
+    "endpoints"
+  ],
+  "outbound_types": [
+    "direct",
+    "block"
+  ],
+  "endpoint_types": [
+    "awg"
+  ],
+  "endpoint_contracts": [
+    "pokrov.awg31.endpoint.v1"
+  ],
+  "outbound_field_names": [
+    "tag",
+    "type"
+  ],
+  "endpoint_field_names": [
+    "address",
+    "content_padding_addition",
+    "contract_id",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "header_protection_key",
+    "i1",
+    "i2",
+    "i3",
+    "i4",
+    "i5",
+    "jc",
+    "jmax",
+    "jmin",
+    "keepalive_timeout",
+    "max_handshake_attempts",
+    "mtu",
+    "peers",
+    "private_key",
+    "random_trailers",
+    "reject_after_time",
+    "rekey_after_time",
+    "rekey_timeout",
+    "s1",
+    "s2",
+    "s3",
+    "s4",
+    "tag",
+    "type",
+    "useIntegratedTun"
+  ],
+  "raw_profile_returned": false
+}

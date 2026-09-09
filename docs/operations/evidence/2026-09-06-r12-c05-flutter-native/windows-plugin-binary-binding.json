@@ -1,0 +1,121 @@
+[
+  {
+    "component": "file_selector_windows",
+    "dll": "E:\\r12-c05-flutter-native\\windows-bundle\\file_selector_windows_plugin.dll",
+    "sha256": "33930ce4c1324b6b5fb7fbfe4ece64d51c9d6dcbae73137bb7f74f0730a72d12",
+    "imports": [
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "flutter_windows.dll",
+      "kernel32.dll",
+      "msvcp140.dll",
+      "ole32.dll",
+      "shell32.dll",
+      "user32.dll",
+      "vcruntime140.dll",
+      "vcruntime140_1.dll"
+    ],
+    "package_license_sha256": "420f7739f169097f0aad1242045169cd643c8f1d94e62866fad265ae4c369b7d",
+    "package_license_verified_in_notices": true
+  },
+  {
+    "component": "flutter_secure_storage_windows",
+    "dll": "E:\\r12-c05-flutter-native\\windows-bundle\\flutter_secure_storage_windows_plugin.dll",
+    "sha256": "ef9e75dacb07a52fdf5f91cf50db9b86127c00f784b836f7ec54636b90364ad8",
+    "imports": [
+      "advapi32.dll",
+      "api-ms-win-crt-convert-l1-1-0.dll",
+      "api-ms-win-crt-filesystem-l1-1-0.dll",
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "api-ms-win-crt-stdio-l1-1-0.dll",
+      "api-ms-win-crt-string-l1-1-0.dll",
+      "bcrypt.dll",
+      "flutter_windows.dll",
+      "kernel32.dll",
+      "msvcp140.dll",
+      "shell32.dll",
+      "vcruntime140.dll",
+      "vcruntime140_1.dll",
+      "version.dll"
+    ],
+    "package_license_sha256": "55dafb084270616f95b9bea53654adda8bdcad95c022a83c4cf8769073f829fa",
+    "package_license_verified_in_notices": true
+  },
+  {
+    "component": "screen_retriever_windows",
+    "dll": "E:\\r12-c05-flutter-native\\windows-bundle\\screen_retriever_windows_plugin.dll",
+    "sha256": "a0adb51723692588265fce71b939aadb3607fb510134c21a5dfc26d3a7bb0d15",
+    "imports": [
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-math-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "flutter_windows.dll",
+      "kernel32.dll",
+      "msvcp140.dll",
+      "user32.dll",
+      "vcruntime140.dll",
+      "vcruntime140_1.dll"
+    ],
+    "package_license_sha256": "4c275c4e1ab3ffb97508c3c66a87db1c6e4f5d0233205fff8ca57ac35d20199f",
+    "package_license_verified_in_notices": true
+  },
+  {
+    "component": "tray_manager",
+    "dll": "E:\\r12-c05-flutter-native\\windows-bundle\\tray_manager_plugin.dll",
+    "sha256": "778d36113b2662f0ac78e6a3cffdadc89cdebd902019e7b482cf61b1da14cc34",
+    "imports": [
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "flutter_windows.dll",
+      "kernel32.dll",
+      "msvcp140.dll",
+      "shell32.dll",
+      "user32.dll",
+      "vcruntime140.dll",
+      "vcruntime140_1.dll"
+    ],
+    "package_license_sha256": "516e1f470fd0e4c5c6cf02b6876153a9145283660a5de03fe9812b207dc34db5",
+    "package_license_verified_in_notices": true
+  },
+  {
+    "component": "url_launcher_windows",
+    "dll": "E:\\r12-c05-flutter-native\\windows-bundle\\url_launcher_windows_plugin.dll",
+    "sha256": "3688c966897356067fde527eab7880e8e82a8f4be7300f666551a8270bc360f6",
+    "imports": [
+      "advapi32.dll",
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "flutter_windows.dll",
+      "kernel32.dll",
+      "msvcp140.dll",
+      "shell32.dll",
+      "shlwapi.dll",
+      "vcruntime140.dll",
+      "vcruntime140_1.dll"
+    ],
+    "package_license_sha256": "89519eca6f7b9529b35bdddd623a58c3af06a88c458dbd6531ddb4675acf75a9",
+    "package_license_verified_in_notices": true
+  },
+  {
+    "component": "window_manager",
+    "dll": "E:\\r12-c05-flutter-native\\windows-bundle\\window_manager_plugin.dll",
+    "sha256": "e3d38c9cdaaab6a8e274b9d56efe10442f7fe69e475fdfef3a9f4667cd5c79d7",
+    "imports": [
+      "advapi32.dll",
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "dwmapi.dll",
+      "flutter_windows.dll",
+      "kernel32.dll",
+      "msvcp140.dll",
+      "ole32.dll",
+      "shell32.dll",
+      "user32.dll",
+      "vcruntime140.dll",
+      "vcruntime140_1.dll"
+    ],
+    "package_license_sha256": "516e1f470fd0e4c5c6cf02b6876153a9145283660a5de03fe9812b207dc34db5",
+    "package_license_verified_in_notices": true
+  }
+]

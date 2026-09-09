@@ -1,0 +1,16 @@
+{
+  "host_utc": "2026-09-08T13:07:03.3614369Z",
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "vm_state": [
+    "VMState=\"poweroff\"",
+    "nic1=\"none\""
+  ],
+  "original_vm_state": "VMState=\"poweroff\"",
+  "host_time_extra_data": "No value set!",
+  "manual_backend_mutation": false,
+  "ordinary_client_api_used": true,
+  "clock_changed_in_fixed_run": false,
+  "firewall_cleanup": "firewall-cleanup.json",
+  "installed_client_source": "f479fd49f7904bda5c916e5f7148675f45105872",
+  "installer_sha256": "f44486c3ae32ac5c3020e9b76c997902c202084076cb7954bc0678d5805f676d"
+}

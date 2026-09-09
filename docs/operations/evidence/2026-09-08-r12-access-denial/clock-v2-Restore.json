@@ -1,0 +1,9 @@
+{
+    "mode":  "Restore",
+    "before_utc":  "2026-09-09T13:26:40.2406908Z",
+    "restore_target_utc":  "2026-09-08T12:27:23.2049865Z",
+    "method":  "original UTC plus guest monotonic TickCount; same boot",
+    "after_utc":  "2026-09-08T12:27:23.2408065Z",
+    "time_service_status":  "Stopped",
+    "time_service_start":  "Manual"
+}

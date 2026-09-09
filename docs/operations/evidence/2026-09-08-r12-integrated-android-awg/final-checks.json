@@ -1,0 +1,10 @@
+{
+  "apk_sha256": "88452b9921873c4fbb42bef25ed4d89c34841399ae11cbe8d9d482e5a03d5850",
+  "apk_matches": true,
+  "rules_restored": false,
+  "routes_restored": false,
+  "vpn_stopped": false,
+  "tun_removed": false,
+  "wifi_restored": true,
+  "mobile_restored": true
+}

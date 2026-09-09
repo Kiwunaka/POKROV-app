@@ -1,0 +1,313 @@
+{
+  "schema": "pokrov.r12-ipc-timeout-evidence.v1",
+  "date": "2026-09-08",
+  "status": "PASS_BOUNDED_IPC_TIMEOUT_FIX",
+  "source_base": "b5b583d44481cf2ba6ad17cb1110880636df6fdf",
+  "compiled_source": {
+    "apps/windows_shell/windows/service/service_server.cpp": {
+      "git_blob": "a1c94e1f98b71d614f85c55560f63ec52720763d",
+      "sha256": "21456a121de9fd2e93d7c9857fc682daaf6a965811513ca0343ef3119ac57a5e"
+    },
+    "apps/windows_shell/windows/service/service_integration_test.cpp": {
+      "git_blob": "3a925a2a9572aeeecee218615bc8e699c50098dd",
+      "sha256": "191c20f4b66d0520bf93bf5f6db565929365a01fbc070010be5c495eecf4a8b3"
+    }
+  },
+  "runtime": {
+    "core_source": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+    "installed_bundle_source": "98c39d6",
+    "installer_fix_source": "46ba68d",
+    "before_service_sha256": "46d87dcb3b82d1c6fdcd3ddbd17e829ad509fc21aba86a82425448c69f0fffcc",
+    "after_service_sha256": "2cccc269fe009a1dff71aac9a8693d0fde478a33e0ebaca06eb7559421104889",
+    "package_class": "unsigned local component substitution in preserved 1.2.0+4053 installation; original service restored",
+    "vm_uuid": "960ae449-036f-4166-b215-d8349145a4de",
+    "network": "NIC1 none; no managed profile or TUN",
+    "origin": "current-origin owned offline Windows VM"
+  },
+  "installed_red_green": {
+    "utc": "2026-09-07T21:17:22.6565440Z",
+    "status": "PASS_INSTALLED_COMPONENT_RED_GREEN",
+    "swapped": true,
+    "restored": true,
+    "before": {
+      "utc": "2026-09-07T21:17:24.7447868Z",
+      "phase": "before",
+      "status": "OBSERVED",
+      "standard_user": true,
+      "probe_sha256": "4da9a7b037553ce7322d6f796e1441023953fc4f05b7826df0d49d3d6a31b0d1",
+      "cases": [
+        {
+          "exit_code": 1,
+          "result": {
+            "case": "partial",
+            "not_elevated": true,
+            "service_pid": 3188,
+            "next_client_while_held": false,
+            "acquire_ms": 5000,
+            "recovered_after_release": true
+          }
+        },
+        {
+          "exit_code": 1,
+          "result": {
+            "case": "unread",
+            "not_elevated": true,
+            "service_pid": 3188,
+            "next_client_while_held": false,
+            "acquire_ms": 5016,
+            "recovered_after_release": true
+          }
+        }
+      ]
+    },
+    "before_stop": {
+      "stopped_while_response_unread": false,
+      "holder_pid": 8172,
+      "elapsed_ms": 5248
+    },
+    "after": {
+      "utc": "2026-09-07T21:17:42.2855872Z",
+      "phase": "after",
+      "status": "OBSERVED",
+      "standard_user": true,
+      "probe_sha256": "4da9a7b037553ce7322d6f796e1441023953fc4f05b7826df0d49d3d6a31b0d1",
+      "cases": [
+        {
+          "exit_code": 0,
+          "result": {
+            "case": "partial",
+            "not_elevated": true,
+            "service_pid": 5688,
+            "next_client_while_held": true,
+            "acquire_ms": 3047,
+            "recovered_after_release": true
+          }
+        },
+        {
+          "exit_code": 0,
+          "result": {
+            "case": "unread",
+            "not_elevated": true,
+            "service_pid": 5688,
+            "next_client_while_held": true,
+            "acquire_ms": 3000,
+            "recovered_after_release": true
+          }
+        }
+      ]
+    },
+    "after_stop": {
+      "stopped_while_response_unread": true,
+      "holder_pid": 7964,
+      "elapsed_ms": 10
+    },
+    "restored_file_count": 305,
+    "final_service_hash": "46d87dcb3b82d1c6fdcd3ddbd17e829ad509fc21aba86a82425448c69f0fffcc",
+    "final_service_state": "Running",
+    "final_tun_count": 0
+  },
+  "independent_restored_readback": {
+    "boot": "2026-09-07T21:14:34.5000000Z",
+    "build": "26200",
+    "service_sha256": "46d87dcb3b82d1c6fdcd3ddbd17e829ad509fc21aba86a82425448c69f0fffcc",
+    "service_state": "Running",
+    "version": "10.0.26200",
+    "utc": "2026-09-07T21:19:29.2277839Z",
+    "probe_process_count": 0,
+    "service_pid": 7916,
+    "caption": "Microsoft Windows 11 Enterprise Evaluation",
+    "service_account": "LocalSystem"
+  },
+  "local_checks": {
+    "integration_before": "FAIL: partial hello and unread hello response both prevent another client from acquiring the pipe within 5 seconds",
+    "integration_after": "PASS: both cases, 6.20 seconds combined",
+    "native_suite": "8/8 PASS (Debug service/client/protocol/security/crash/runtime/events/integration/pipe-client selection)",
+    "runtime_flutter": "80 PASS; 1 existing exact-DLL backtest skipped because POKROV_REAL_CORE_ROOT is unset; unchanged DLL was not retested here",
+    "runtime_analyze": "PASS; no issues",
+    "release_service_build": "PASS"
+  },
+  "limits": [
+    "The 3-second budget applies to frame transfer/idle I/O, not execution of an already admitted Core/network transaction.",
+    "Cancel/recover/diagnostic-state command IDs are parsed but not implemented in the dispatcher. Correlated operation cancellation and concurrent mutation proof remain OPEN.",
+    "Debug IPC fixtures now omit installed runtime/recovery state. The retained failing test uses this isolation guard with the original unbounded I/O implementation.",
+    "A first VM collector failed to observe the buffered stdout readiness marker; its FAIL was retained and no service replacement occurred in that attempt. A separate marker file corrected collection.",
+    "A planned guest reboot preceded the final run. The evaluation image licensing limit remains; no licensing bypass was attempted.",
+    "Only pokrov_service.exe was substituted for this run. The original 305-file package was restored and independently read back afterward."
+  ],
+  "open": [
+    "W02 connected crash/sleep/handoff recovery",
+    "W06 correlated operation cancellation and concurrent mutations",
+    "WFP/other-VPN coexistence",
+    "Win10",
+    "final channel/package candidate"
+  ],
+  "artifacts": [
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\red\\service_server.cpp",
+      "sha256": "cfe0f3850b430943539ecdbba4f8e221fd55ede091710ad648005169b6617c19",
+      "bytes": 12919
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\red\\service_integration_test.cpp",
+      "sha256": "191c20f4b66d0520bf93bf5f6db565929365a01fbc070010be5c495eecf4a8b3",
+      "bytes": 10171
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\red\\pokrov_service.exe",
+      "sha256": "9b3ae346173076f27a1051f74659a53b1db4989e4fac09c1347553245026aa2a",
+      "bytes": 580608
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\red\\pokrov_service_integration_test.exe",
+      "sha256": "5e68c21ed3a0909e96fbb67264d3498c9d15b3eaa9553a637d1447f3aab2cd7c",
+      "bytes": 183296
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\green\\service_server.cpp",
+      "sha256": "21456a121de9fd2e93d7c9857fc682daaf6a965811513ca0343ef3119ac57a5e",
+      "bytes": 13851
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\green\\service_integration_test.cpp",
+      "sha256": "191c20f4b66d0520bf93bf5f6db565929365a01fbc070010be5c495eecf4a8b3",
+      "bytes": 10171
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\green\\pokrov_service.exe",
+      "sha256": "2cccc269fe009a1dff71aac9a8693d0fde478a33e0ebaca06eb7559421104889",
+      "bytes": 193024
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\test-red.log",
+      "sha256": "20ff820fa376b287cc4e87a571deafd89cef7fa0d0fc732b5dac289ae596ef90",
+      "bytes": 550
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\test-green.log",
+      "sha256": "7bfdd5a0e5997f4d00ef4af533d7d5487d16e5a925333f90959bfc7f7fa1f8fc",
+      "bytes": 351
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\native-tests.log",
+      "sha256": "ac63f5db9f40733d4383054909c00b1dd490fb00361ecf312cb72b6b44ef409b",
+      "bytes": 1110
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\build-release.log",
+      "sha256": "e49d23f8b56ba4565372707547a4414de6c47ee26a6128ed3f4e9b5cb99658e7",
+      "bytes": 458
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\runtime-flutter-tests.log",
+      "sha256": "56adc3176fc8668886ff341d36f0263dac98ff7a00a2dc122052e8780e16a09d",
+      "bytes": 37919
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\runtime-analyze.log",
+      "sha256": "b3c9ac6880b5a979db9dfb51967c15a3c2446e72f17881072a5947d8d00010a2",
+      "bytes": 1164
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\probe-source\\main.cpp",
+      "sha256": "2eaa99dc409f44a306e312b6cd936e9f63e6d24d272ed06b60c300d83a81c636",
+      "bytes": 3816
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\probe-source\\CMakeLists.txt",
+      "sha256": "e25e2a45d0dbf5cd1e85c8d4367f27be35a0e950b6757bca880451d99a76d5c1",
+      "bytes": 679
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\probe-build\\Release\\r12_scm_probe.exe",
+      "sha256": "4da9a7b037553ce7322d6f796e1441023953fc4f05b7826df0d49d3d6a31b0d1",
+      "bytes": 269824
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\owner-worker.ps1",
+      "sha256": "183c0cf2648cca0ca7b36afaba5cac885c1393e3e0a07c24ed6e1f6c34e56b4e",
+      "bytes": 1785
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\owner-worker-v1.ps1",
+      "sha256": "63597929280f40b07dfebceb66ad06240747b9566f082e2c514cb9cb488751ea",
+      "bytes": 1757
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\run-installed.ps1",
+      "sha256": "3d910aeb5652b138818d4c45aed3fdc280796079eb55b6c45d48e90107243116",
+      "bytes": 5495
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\vm-results\\installed-result.json",
+      "sha256": "fbcd5915d5e0af82ed529ef70b50c814c8a4d9408ff74f043e63acc0a487eb0c",
+      "bytes": 4304
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\vm-results\\independent-restored.json",
+      "sha256": "6f9a630da52e0ffdbf397f2af63db608002715eb4fcda72d7bd6e592e3906574",
+      "bytes": 442
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\vm-results\\run1\\installed-result.json",
+      "sha256": "30a19320b1790b33dae4eb4d0150b9f69ca61218f73b2f9d0a9442a87a11b13b",
+      "bytes": 2162
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\vm-results\\run1\\before-stop-owner.json",
+      "sha256": "0301b259358c870f3665b2e35de2b9ccf423ef8c4490be35d970fd1e4fe9b20f",
+      "bytes": 261
+    },
+    {
+      "path": "E:\\r12-ipc-timeout-20260907\\vm-results\\run1\\before-stop-ready.json",
+      "sha256": "04b8fc9fd0525dec31fe3bcf6219e9dfd22f7b2aaacab0ea1dd683184b9725bd",
+      "bytes": 35
+    }
+  ],
+  "commands": [
+    "cmake --build apps/windows_shell/build/windows/x64 --config Debug --target pokrov_service_integration_test",
+    "ctest --test-dir apps/windows_shell/build/windows/x64 -C Debug -R '^pokrov_service_integration$' --output-on-failure (before and after)",
+    "ctest --test-dir apps/windows_shell/build/windows/x64 -C Debug -R '^pokrov_(service_|windows_crash)' --output-on-failure",
+    "cmake --build apps/windows_shell/build/windows/x64 --config Release --target pokrov_service",
+    "flutter.cmd test --reporter compact (packages/runtime_engine)",
+    "flutter.cmd analyze (packages/runtime_engine)",
+    "C:/Users/Public/R12IpcTimeout/run-installed.ps1 (owned guest, guarded component swap and restore)",
+    "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+    "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+    "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+    "python docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+    "git diff --check",
+    "git diff --name-only -- artifacts/releases"
+  ],
+  "validation": {
+    "client_seed_docs": "PASS",
+    "platform_docs": "33 PASS",
+    "platform_context": "PASS",
+    "package": "13 imports / 83 R12 / 378 legacy / 286 links PASS",
+    "diff_check": "PASS",
+    "retained_release_delta": "none",
+    "logs": [
+      {
+        "path": "E:\\r12-ipc-timeout-20260907\\client-validation.log",
+        "sha256": "4a81b38cc9f028f8160b6af4ef7c4f3295d9646e703363820d44c70ca490594d"
+      },
+      {
+        "path": "E:\\r12-ipc-timeout-20260907\\platform-docs-validation.log",
+        "sha256": "c6cf873946abb2b3c4162f1e037384e5dbbac1a46cf534489c159dc81dc4c0d2"
+      },
+      {
+        "path": "E:\\r12-ipc-timeout-20260907\\platform-context-validation.log",
+        "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+      },
+      {
+        "path": "E:\\r12-ipc-timeout-20260907\\package-validation.log",
+        "sha256": "2b381ef88e1be3214fe2ee7b48bf439b155b26999a6378ddfe99b7b242db9fd6"
+      }
+    ]
+  },
+  "new_candidate": false,
+  "push_merge_deploy": "NOT_PERFORMED",
+  "api_references": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers",
+    "https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex"
+  ]
+}

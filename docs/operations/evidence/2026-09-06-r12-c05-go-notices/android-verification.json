@@ -1,0 +1,56 @@
+{
+  "result": "PASS",
+  "initial_check_error": "Used app_shell instead of declared pokrov_app_shell in asset path; corrected checker only",
+  "packages": [
+    {
+      "file": "E:\\r12-c05-go-notices\\android\\app-direct-arm64-v8a-release.apk",
+      "bytes": 101179515,
+      "sha256": "d4cb7c6106c5f6cc410cf2cdb0e169fcd38f25e0f280accf6e29a3cbac48253a",
+      "notice_path": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+      "notice_sha256": "c0389ada6e70b079fb964eb04ec015db63db85e699b7d82e21a64b568c1c19f3",
+      "verbatim_145_bodies": "PASS",
+      "golos_ofl": "byte-identical",
+      "core_entries": {
+        "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5"
+      }
+    },
+    {
+      "file": "E:\\r12-c05-go-notices\\android\\app-direct-armeabi-v7a-release.apk",
+      "bytes": 90693745,
+      "sha256": "0149fbc511d6af01d05268f7195f1bb168f42b285b299d11a03031143329d1f8",
+      "notice_path": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+      "notice_sha256": "c0389ada6e70b079fb964eb04ec015db63db85e699b7d82e21a64b568c1c19f3",
+      "verbatim_145_bodies": "PASS",
+      "golos_ofl": "byte-identical",
+      "core_entries": {
+        "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e"
+      }
+    },
+    {
+      "file": "E:\\r12-c05-go-notices\\android\\app-direct-universal-release.apk",
+      "bytes": 295164246,
+      "sha256": "7ad7d4dd0aa7cfe23566518e8a1647a6ebf9ce339538479be19289a80589f036",
+      "notice_path": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+      "notice_sha256": "c0389ada6e70b079fb964eb04ec015db63db85e699b7d82e21a64b568c1c19f3",
+      "verbatim_145_bodies": "PASS",
+      "golos_ofl": "byte-identical",
+      "core_entries": {
+        "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+        "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+        "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+      }
+    },
+    {
+      "file": "E:\\r12-c05-go-notices\\android\\app-direct-x86_64-release.apk",
+      "bytes": 110188442,
+      "sha256": "dc3958f8aea6255d4c90b0192b39946c2f0857ae9af9595cfe69d9b48b72ebee",
+      "notice_path": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+      "notice_sha256": "c0389ada6e70b079fb964eb04ec015db63db85e699b7d82e21a64b568c1c19f3",
+      "verbatim_145_bodies": "PASS",
+      "golos_ofl": "byte-identical",
+      "core_entries": {
+        "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+      }
+    }
+  ]
+}

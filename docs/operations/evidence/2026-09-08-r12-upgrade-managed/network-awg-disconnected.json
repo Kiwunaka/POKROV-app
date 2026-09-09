@@ -1,0 +1,30 @@
+{
+    "utc":  "2026-09-07T23:53:41.2583356Z",
+    "label":  "awg-disconnected",
+    "routes_sha256":  "1c364bca7629f54c9677160f4e00552c37636bbaeb5ac37dd5559bb072276810",
+    "dns_sha256":  "a51d6fc76bbccbf38d1e875932d0dc57b300b7f54cebb62eb30c53e22e601287",
+    "up_adapter_count":  1,
+    "tun_count":  0,
+    "health_status":  200,
+    "egress_sha256":  "1276d207d06fcc83996c3e76cd83ef522f938d2305c1186acb70bfe2c8fb3a7b",
+    "egress_error":  null,
+    "dns_a_count":  1,
+    "probe":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  0,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "config_staged",
+                  "running":  false,
+                  "core_ready":  true,
+                  "dns_ready":  false,
+                  "egress_validated":  false,
+                  "can_connect":  true,
+                  "effective_matches_staged":  false,
+                  "failure":  "none"
+              },
+    "probe_exit_code":  0
+}

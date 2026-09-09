@@ -449,7 +449,7 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must use Kiwunaka/POKROV-core")
   }
 
-  if ($runtimeArtifacts.core.source_commit -ne "cd8f0f4169d570d693992a959d81d17c2c44884d") {
+  if ($runtimeArtifacts.core.source_commit -ne "c7a11f7d2fd974726095ad7aa0619c055273dd15") {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the exact POKROV Core source commit")
   }
   if ($runtimeArtifacts.core.sing_dependency -ne "v0.8.0-beta.12") {
@@ -458,8 +458,23 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   if ($runtimeArtifacts.core.sing_box_version -ne "1.13.0") {
     $manifestErrors.Add("runtime artifact contract must pin embedded sing-box 1.13.0")
   }
-  if ($runtimeArtifacts.core.go_toolchain -ne "go1.25.13") {
-    $manifestErrors.Add("runtime artifact contract must pin Go 1.25.13")
+  if ($runtimeArtifacts.core.go_toolchain -ne "go1.26.8") {
+    $manifestErrors.Add("runtime artifact contract must pin Go 1.26.8")
+  }
+  $nativeGoNotices = $runtimeArtifacts.core.native_go_notices
+  $nativeGoNoticeRelativePath = "packages/app_shell/assets/licenses/native-go-NOTICES.txt"
+  $nativeGoNoticePath = Join-Path $root $nativeGoNoticeRelativePath
+  if ($nativeGoNotices.file -ne $nativeGoNoticeRelativePath -or
+      $nativeGoNotices.source_commit -ne $runtimeArtifacts.core.source_commit -or
+      $nativeGoNotices.go_toolchain -ne $runtimeArtifacts.core.go_toolchain -or
+      -not (Test-Path -LiteralPath $nativeGoNoticePath -PathType Leaf)) {
+    $manifestErrors.Add("Core native Go notices must exist and bind the current Core source and toolchain")
+  } elseif ((Get-FileHash -Algorithm SHA256 -LiteralPath $nativeGoNoticePath).Hash.ToLowerInvariant() -ne $nativeGoNotices.sha256) {
+    $manifestErrors.Add("Core native Go notices must match their manifest SHA-256")
+  }
+  $appShellPubspec = [System.IO.File]::ReadAllText((Join-Path $root "packages/app_shell/pubspec.yaml"))
+  if ($appShellPubspec -notmatch '(?m)^\s+- assets/licenses/native-go-NOTICES\.txt\s*$') {
+    $manifestErrors.Add("App shell must package the declared Core native Go notice asset")
   }
   $artifactProvenance = $runtimeArtifacts.core.artifact_provenance
   if ($artifactProvenance.status -ne "clean_reproducible_pre_candidate_local" -or
@@ -470,27 +485,27 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
       $artifactProvenance.candidate_created -ne $false -or
       $artifactProvenance.promotion_authorized -ne $false -or
       $artifactProvenance.reproducible_build.android.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactProvenance.reproducible_build.android.source_commit -ne "cd8f0f4169d570d693992a959d81d17c2c44884d" -or
-      [int64]$artifactProvenance.reproducible_build.android.size -ne 107419397 -or
-      $artifactProvenance.reproducible_build.android.sha256 -ne "2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69" -or
+      $artifactProvenance.reproducible_build.android.source_commit -ne "c7a11f7d2fd974726095ad7aa0619c055273dd15" -or
+      [int64]$artifactProvenance.reproducible_build.android.size -ne 107490210 -or
+      $artifactProvenance.reproducible_build.android.sha256 -ne "5e2ea69c044ea461b9be352cb7ce73ddd208898b5a364b6a2642024a6215534a" -or
       $artifactProvenance.reproducible_build.windows.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactProvenance.reproducible_build.windows.source_commit -ne "cd8f0f4169d570d693992a959d81d17c2c44884d" -or
-      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55426048 -or
-      $artifactProvenance.reproducible_build.windows.sha256 -ne "f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204" -or
+      $artifactProvenance.reproducible_build.windows.source_commit -ne "c7a11f7d2fd974726095ad7aa0619c055273dd15" -or
+      [int64]$artifactProvenance.reproducible_build.windows.size -ne 55451648 -or
+      $artifactProvenance.reproducible_build.windows.sha256 -ne "0409da4762c56234c38f7b60ac5fe8b49d4131c4a4debedf3ef313aebe8d0371" -or
       $artifactProvenance.reproducible_build.libcronet_sha256 -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7" -or
       $artifactProvenance.promotion_rule -ne "exact_bytes_require_platform_source_convergence_candidate_signing_manual_gates_and_publication") {
     $manifestErrors.Add("runtime artifact contract must pin the exact single-source POKROV Core v1.1.0 pre-candidate builds without claiming a tag or publication")
   }
   $artifactEvidence = $artifactProvenance.artifact_evidence
   if ($artifactEvidence.android.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactEvidence.android.source_commit -ne "cd8f0f4169d570d693992a959d81d17c2c44884d" -or
-      $artifactEvidence.android.tree_sha256 -ne "881567c8bbeb1ac093f69dc72643fdcd1d22369bc488367900c5c62f19c14922" -or
-      $artifactEvidence.android.evidence_sha256 -ne "0c737c9086905167bc2e0f524aefe00925f5f8a17b10c162ac647e6ac297cd22" -or
+      $artifactEvidence.android.source_commit -ne "c7a11f7d2fd974726095ad7aa0619c055273dd15" -or
+      $artifactEvidence.android.tree_sha256 -ne "e59e2ab6a85973f05120ac6c30484c64c193596605f70d724520bbad12c60ab4" -or
+      $artifactEvidence.android.evidence_sha256 -ne "1d03d68afe5bba9f4bc812fb9b10a4da2f8e938849993633a3bfad21a9964c79" -or
       (@($artifactEvidence.android.abis) -join ',') -ne 'armeabi-v7a,arm64-v8a,x86,x86_64' -or
       $artifactEvidence.windows.result -ne "PASS_BYTE_IDENTICAL_TWO_BUILDS" -or
-      $artifactEvidence.windows.source_commit -ne "cd8f0f4169d570d693992a959d81d17c2c44884d" -or
-      $artifactEvidence.windows.tree_sha256 -ne "8678bae1cea86bf992bc1299661ee5d620130f8e8506dff3a4074e07bf7d53ca" -or
-      $artifactEvidence.windows.evidence_sha256 -ne "bdbde9aee7a05ba1ace6bbc2c031caf3ab393110570201414516360ad186dd8a" -or
+      $artifactEvidence.windows.source_commit -ne "c7a11f7d2fd974726095ad7aa0619c055273dd15" -or
+      $artifactEvidence.windows.tree_sha256 -ne "be4a0684fb1025bc7b0f6f8c2df15a42816d198407b7bd794021e202175f4d29" -or
+      $artifactEvidence.windows.evidence_sha256 -ne "efe7283abb8030ec3f168206eda26f0dd9317667e3cbb7728a08dc4cf28bbb4a" -or
       [int]$artifactEvidence.windows.required_exports -ne 15 -or
       [int]$artifactEvidence.windows.proxy_only_start_stop_cycles -ne 100 -or
       $artifactEvidence.windows.proxy_only_result -ne "PASS_LOCAL") {
@@ -498,10 +513,10 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   }
   $sbomEvidence = @($artifactEvidence.sbom)
   if ($sbomEvidence.Count -ne 2 -or
-      $sbomEvidence[0].name -ne 'pokrov-core.cdx.json' -or
-      $sbomEvidence[0].sha256 -ne 'cc8d93fc6b602b3d1c080b4f3d32367b231536a54c9bfa71272b0e1bd055e88e' -or
-      $sbomEvidence[1].name -ne 'sing-box.cdx.json' -or
-      $sbomEvidence[1].sha256 -ne '04c0972025e3ade1e74294cf7adb5cb79e616ea03899bc131aadc1bb30d6ce51') {
+      $sbomEvidence[0].name -ne 'core-source.cdx.json' -or
+      $sbomEvidence[0].sha256 -ne '48bb61280e6c6db4621f755be5ea78f6c7b54fa2186fdf841ce9b233fa70564b' -or
+      $sbomEvidence[1].name -ne 'engine-source.cdx.json' -or
+      $sbomEvidence[1].sha256 -ne 'bf2f4f2fd8c9d61e7178f19aca6991c0b00448949f1f8809279cc996cacf8672') {
     $manifestErrors.Add("runtime artifact contract must bind both exact Core 1.1.0 SBOM identities")
   }
   $retainedCore = $runtimeArtifacts.core.retained_public_release
@@ -563,9 +578,9 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $androidRuntime = $runtimeArtifacts.core.assets.android
   if ($androidRuntime.entry -ne "pokrov-core.aar" -or
       $androidRuntime.sync_policy -ne "exact_pre_candidate_build" -or
-      $androidRuntime.source_commit -ne "cd8f0f4169d570d693992a959d81d17c2c44884d" -or
-      [int64]$androidRuntime.size -ne 107419397 -or
-      $androidRuntime.sha256 -ne "2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69" -or
+      $androidRuntime.source_commit -ne "c7a11f7d2fd974726095ad7aa0619c055273dd15" -or
+      [int64]$androidRuntime.size -ne 107490210 -or
+      $androidRuntime.sha256 -ne "5e2ea69c044ea461b9be352cb7ce73ddd208898b5a364b6a2642024a6215534a" -or
       $androidRuntime.platform_state -ne "active_pre_candidate_local_security_fixed_physical_repeat_open") {
     $manifestErrors.Add("runtime artifact contract must pin the POKROV Core 1.1.0 Android AAR")
   }
@@ -573,14 +588,24 @@ if (Test-Path -LiteralPath $runtimeArtifactsPath -PathType Leaf) {
   $windowsRuntime = $runtimeArtifacts.core.assets.windows
   if ($windowsRuntime.entry -ne "pokrov-core.dll" -or
       $windowsRuntime.sync_policy -ne "exact_pre_candidate_build" -or
-      $windowsRuntime.source_commit -ne "cd8f0f4169d570d693992a959d81d17c2c44884d" -or
-      [int64]$windowsRuntime.size -ne 55426048 -or
-      $windowsRuntime.sha256 -ne "f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204" -or
+      $windowsRuntime.source_commit -ne "c7a11f7d2fd974726095ad7aa0619c055273dd15" -or
+      [int64]$windowsRuntime.size -ne 55451648 -or
+      $windowsRuntime.sha256 -ne "0409da4762c56234c38f7b60ac5fe8b49d4131c4a4debedf3ef313aebe8d0371" -or
       $windowsRuntime.platform_state -ne "active_pre_candidate_local_security_fixed_reproducible_abi_proxy_recheck_passed" -or
       @($windowsRuntime.runtime_dependencies) -notcontains "libcronet.dll" -or
       [int64]$windowsRuntime.runtime_dependency_size.'libcronet.dll' -ne 8596992 -or
       $windowsRuntime.runtime_dependency_sha256.'libcronet.dll' -ne "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7") {
     $manifestErrors.Add("config\\runtime-artifacts.seed.json must pin the POKROV Core 1.1.0 Windows DLL and retained libcronet.dll")
+  }
+
+  $cronetNotices = $windowsRuntime.runtime_dependency_origin.'libcronet.dll'.notices
+  $cronetNoticeRelativePath = "apps/windows_shell/windows/runner/resources/runtime/libcronet.NOTICES.txt"
+  $cronetNoticePath = Join-Path $root $cronetNoticeRelativePath
+  if ($cronetNotices.file -ne $cronetNoticeRelativePath -or
+      -not (Test-Path -LiteralPath $cronetNoticePath -PathType Leaf)) {
+    $manifestErrors.Add("Windows Cronet must retain its declared native notice file")
+  } elseif ((Get-FileHash -Algorithm SHA256 -LiteralPath $cronetNoticePath).Hash.ToLowerInvariant() -ne $cronetNotices.sha256) {
+    $manifestErrors.Add("Windows Cronet native notice file must match its manifest SHA-256")
   }
 
   foreach ($target in @("ios", "macos")) {

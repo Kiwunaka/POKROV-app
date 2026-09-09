@@ -1,0 +1,42 @@
+[
+  {
+    "cpu": "arm64",
+    "goarch": "arm64",
+    "compile_sources": 2663,
+    "source_filename_symbols": 2538,
+    "archive_members": 2663,
+    "matching_archive_member_multiset": true,
+    "matching_non_assembly_source_filename_multiset": true,
+    "limitations": "Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility."
+  },
+  {
+    "cpu": "arm",
+    "goarch": "arm",
+    "compile_sources": 2663,
+    "source_filename_symbols": 2538,
+    "archive_members": 2663,
+    "matching_archive_member_multiset": true,
+    "matching_non_assembly_source_filename_multiset": true,
+    "limitations": "Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility."
+  },
+  {
+    "cpu": "x64",
+    "goarch": "amd64",
+    "compile_sources": 2666,
+    "source_filename_symbols": 2540,
+    "archive_members": 2666,
+    "matching_archive_member_multiset": true,
+    "matching_non_assembly_source_filename_multiset": true,
+    "limitations": "Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility."
+  },
+  {
+    "cpu": "x86",
+    "goarch": "386",
+    "compile_sources": 2665,
+    "source_filename_symbols": 2540,
+    "archive_members": 2665,
+    "matching_archive_member_multiset": true,
+    "matching_non_assembly_source_filename_multiset": true,
+    "limitations": "Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility."
+  }
+]

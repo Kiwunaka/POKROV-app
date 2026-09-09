@@ -1,0 +1,30 @@
+{
+  "utc": "2026-09-08T01:20:08.1333077Z",
+  "label": "recovery-after-ui-termination",
+  "routes_sha256": "fd9c4c437c0f56969c56cffa3d8d4eff40e899016fb636f6260b669476560df7",
+  "dns_sha256": "f2ee0ed59123c46d793b050d474381a036be8316bc83955c67f864c18d9b445f",
+  "up_adapter_count": 2,
+  "tun_count": 1,
+  "health_status": 200,
+  "egress_sha256": "1276d207d06fcc83996c3e76cd83ef522f938d2305c1186acb70bfe2c8fb3a7b",
+  "egress_error": null,
+  "dns_a_count": 1,
+  "probe": {
+    "client_source": "0218e89",
+    "action": "status",
+    "elapsed_ms": 0,
+    "available": true,
+    "trusted": true,
+    "compatible": true,
+    "accepted": true,
+    "phase": "running",
+    "running": true,
+    "core_ready": true,
+    "dns_ready": true,
+    "egress_validated": true,
+    "can_connect": false,
+    "effective_matches_staged": true,
+    "failure": "none"
+  },
+  "probe_exit_code": 0
+}

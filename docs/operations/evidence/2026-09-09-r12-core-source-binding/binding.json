@@ -1,0 +1,131 @@
+{
+  "result": "PASS_EXACT_SOURCE_REBINDING_SAME_RUNTIME_BYTES",
+  "previous_core_commit": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "source_commit": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "changed_core_paths": [
+    "docs/release.md",
+    "scripts/build-apple.sh"
+  ],
+  "compared_files": [
+    {
+      "lane": "android",
+      "path": "pokrov-core-sources.jar",
+      "size": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65",
+      "previous_build_identical": true,
+      "client_file_identical": null
+    },
+    {
+      "lane": "android",
+      "path": "pokrov-core.aar",
+      "size": 107490210,
+      "sha256": "5e2ea69c044ea461b9be352cb7ce73ddd208898b5a364b6a2642024a6215534a",
+      "previous_build_identical": true,
+      "client_file_identical": true
+    },
+    {
+      "lane": "windows",
+      "path": "libcronet.dll",
+      "size": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7",
+      "previous_build_identical": true,
+      "client_file_identical": true
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.dll",
+      "size": 55451648,
+      "sha256": "0409da4762c56234c38f7b60ac5fe8b49d4131c4a4debedf3ef313aebe8d0371",
+      "previous_build_identical": true,
+      "client_file_identical": true
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.h",
+      "size": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f",
+      "previous_build_identical": true,
+      "client_file_identical": null
+    }
+  ],
+  "android_abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "desktop_abi": 2,
+  "event_abi": 1,
+  "exports": 15,
+  "windows_proxy_only_cycles": 100,
+  "proxy_log_sha256": "d9c24bd09506f56663394366f5db335b203a2521c99afa8a4ec6ef34591af6d0",
+  "native_notice_change": "source reference only; verbatim license text unchanged",
+  "candidate_created": false,
+  "promotion": "NOT_PERFORMED",
+  "runtime_acceptance": "No new device or system-route observation; older bounded observations retain their original candidate identity",
+  "commands_and_logs": [
+    {
+      "file": "android-a.log",
+      "sha256": "d7682b552af428e8251d6f737f342567feb03bf176fe73981cf4545d2b024f75"
+    },
+    {
+      "file": "android-b.log",
+      "sha256": "eb18559a6a1043437f3074f9fc26eca8d35a3c26644260a92fe0cc581e9199b4"
+    },
+    {
+      "file": "core-sbom.log",
+      "sha256": "dddef65d6583afa0d7f37708c4e1a953f3a920fe1f18d8e588dc64bf56cbd64c"
+    },
+    {
+      "file": "engine-sbom.log",
+      "sha256": "9e2dd34c7b7590d77ac437b9967ae5013ed7e14787aeefe3dcf447bb58c87fa3"
+    },
+    {
+      "file": "proxy100.log",
+      "sha256": "d9c24bd09506f56663394366f5db335b203a2521c99afa8a4ec6ef34591af6d0"
+    },
+    {
+      "file": "release-handoff-contract.log",
+      "sha256": "63b6ce302b59f7b16f239c7eff241f728772ebf85b3e8a6d073a486151b4c373"
+    },
+    {
+      "file": "seed-after.log",
+      "sha256": "e73f6c7de6c3fc48023de6965e690b6508bfbaae46c3b035fd8a43e31a0e111c"
+    },
+    {
+      "file": "windows-a-retry.log",
+      "sha256": "63d0d48a96abe718c0ac359b187799f5ad870d6a186c24eb7564a424380ad813"
+    },
+    {
+      "file": "windows-a.log",
+      "sha256": "1a2a228a07aa0ad2dec5939d738cb5da02af418d158c04d95cb8bc2f3e8d56d3"
+    },
+    {
+      "file": "windows-b-retry.log",
+      "sha256": "898e1d1b944607511049060432e9ca00eb40e890440cb563154e44da17bd4256"
+    }
+  ],
+  "verification": {
+    "seed_before": {
+      "exit_code": 1,
+      "message": "POKROV Core checkout is not the clean exact source authority for the bound 1.1.0 artifacts."
+    },
+    "seed_after": {
+      "exit_code": 0,
+      "log_sha256": "e73f6c7de6c3fc48023de6965e690b6508bfbaae46c3b035fd8a43e31a0e111c"
+    },
+    "windows_first_build": {
+      "exit_code": 1,
+      "reason": "cgo exit status 2; MinGW bin absent from process PATH"
+    },
+    "windows_retry": {
+      "exit_code": 0,
+      "process_PATH_prefix": "E:/POKROV-tools/runtimes/mingw-13.2.0-ucrt-posix-seh/mingw64/bin"
+    },
+    "standalone_handoff_wrapper": {
+      "exit_code": 1,
+      "test_result": "PASS_16_CASES",
+      "reason": "Ad hoc wrapper misread LASTEXITCODE left by the expected negative child; the complete seed validator exited 0 and included handoff and hygiene checks."
+    }
+  }
+}

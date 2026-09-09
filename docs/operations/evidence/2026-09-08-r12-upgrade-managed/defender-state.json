@@ -1,0 +1,7 @@
+{
+    "antivirus":  true,
+    "realtime":  true,
+    "behavior_monitor":  true,
+    "signature_version":  "1.459.28.0",
+    "signature_updated":  "2026-09-03T05:54:30.0000000Z"
+}

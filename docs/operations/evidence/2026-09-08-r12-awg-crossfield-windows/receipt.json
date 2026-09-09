@@ -1,0 +1,667 @@
+{
+  "schema_version": 1,
+  "status": "PASS_BOUNDED",
+  "origin": "current-origin Windows 11 VirtualBox NAT lab",
+  "client_source": "295ceace0b8dfbe9af5cfc9c3fa06eda45ce5747",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "package": {
+    "utc": "2026-09-08T02:35:51.3481207Z",
+    "client_source": "295ceace0b8dfbe9af5cfc9c3fa06eda45ce5747",
+    "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+    "installed_files": 305,
+    "installer_sha256": "ef4bc953f2a4fc2e8e149ecd312bf46ae1d1cfd01a41b41837b997cbd9f70cfa",
+    "core_sha256": "0409da4762c56234c38f7b60ac5fe8b49d4131c4a4debedf3ef313aebe8d0371",
+    "install_succeeded": true,
+    "log_closed": true,
+    "restart_required": false,
+    "saved_state_unchanged": true,
+    "adapter_count": 0,
+    "service_account": "LocalSystem",
+    "service_start_mode": "Auto",
+    "service_state": "Running",
+    "probe_elevated": false,
+    "probe_exit_code": 0,
+    "probe": {
+      "client_source": "0218e89",
+      "action": "status",
+      "elapsed_ms": 16,
+      "available": true,
+      "trusted": true,
+      "compatible": true,
+      "accepted": true,
+      "phase": "artifact_ready",
+      "running": false,
+      "core_ready": false,
+      "dns_ready": false,
+      "egress_validated": false,
+      "can_connect": false,
+      "effective_matches_staged": false,
+      "failure": "none"
+    }
+  },
+  "final_identity": {
+    "utc": "2026-09-08T02:51:56.7282169Z",
+    "installed_files_verified": 305,
+    "ui_sha256": "c8e1f31696525f50a108d5fb7f5f310423e08061e4bc825f7f23204fa150d515",
+    "service_sha256": "2aa636766328cbf6ce2f9efe651c97638542764a5dabf66b0c40c79210b70889",
+    "probe_sha256": "7c5e01fd1b46985c768ff5c9a90fb9b2bfd24c65dadb05102b058ca11faad05d",
+    "sampler_stop_requested": true,
+    "temporary_task_absent": true,
+    "elevated": false
+  },
+  "vm_id": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "pre_upgrade_snapshot_id": "2eded384-3715-496c-a3fe-d7e0535dac36",
+  "connection_observations": [
+    {
+      "utc": "2026-09-08T02:41:09.5743919Z",
+      "label": "awg31-steady",
+      "routes_sha256": "83e14c324d2e37daf7f3fbfce0cb1e8427fda8f70385159be8ec375e568ee6b3",
+      "dns_sha256": "8b8aea14ca08919a1e1cec9ebe83557aa4e9fa01b3787517103be725195f536e",
+      "up_adapter_count": 2,
+      "tun_count": 1,
+      "health_status": 200,
+      "egress_sha256": "350fae6cb583c84a346ead8dd287415917df2a91a9c895703c4174bf41268051",
+      "egress_error": null,
+      "dns_a_count": 1,
+      "probe": {
+        "client_source": "0218e89",
+        "action": "status",
+        "elapsed_ms": 0,
+        "available": true,
+        "trusted": true,
+        "compatible": true,
+        "accepted": true,
+        "phase": "running",
+        "running": true,
+        "core_ready": true,
+        "dns_ready": true,
+        "egress_validated": true,
+        "can_connect": false,
+        "effective_matches_staged": true,
+        "failure": "none"
+      },
+      "probe_exit_code": 0
+    },
+    {
+      "utc": "2026-09-08T02:49:06.3752062Z",
+      "label": "awg2-connected",
+      "routes_sha256": "83e14c324d2e37daf7f3fbfce0cb1e8427fda8f70385159be8ec375e568ee6b3",
+      "dns_sha256": "8b8aea14ca08919a1e1cec9ebe83557aa4e9fa01b3787517103be725195f536e",
+      "up_adapter_count": 2,
+      "tun_count": 1,
+      "health_status": 200,
+      "egress_sha256": "350fae6cb583c84a346ead8dd287415917df2a91a9c895703c4174bf41268051",
+      "egress_error": null,
+      "dns_a_count": 1,
+      "probe": {
+        "client_source": "0218e89",
+        "action": "status",
+        "elapsed_ms": 0,
+        "available": true,
+        "trusted": true,
+        "compatible": true,
+        "accepted": true,
+        "phase": "running",
+        "running": true,
+        "core_ready": true,
+        "dns_ready": true,
+        "egress_validated": true,
+        "can_connect": false,
+        "effective_matches_staged": true,
+        "failure": "none"
+      },
+      "probe_exit_code": 0
+    },
+    {
+      "utc": "2026-09-08T02:50:43.7571633Z",
+      "label": "awg31-reconnected",
+      "routes_sha256": "83e14c324d2e37daf7f3fbfce0cb1e8427fda8f70385159be8ec375e568ee6b3",
+      "dns_sha256": "8b8aea14ca08919a1e1cec9ebe83557aa4e9fa01b3787517103be725195f536e",
+      "up_adapter_count": 2,
+      "tun_count": 1,
+      "health_status": 200,
+      "egress_sha256": "350fae6cb583c84a346ead8dd287415917df2a91a9c895703c4174bf41268051",
+      "egress_error": null,
+      "dns_a_count": 1,
+      "probe": {
+        "client_source": "0218e89",
+        "action": "status",
+        "elapsed_ms": 15,
+        "available": true,
+        "trusted": true,
+        "compatible": true,
+        "accepted": true,
+        "phase": "running",
+        "running": true,
+        "core_ready": true,
+        "dns_ready": true,
+        "egress_validated": true,
+        "can_connect": false,
+        "effective_matches_staged": true,
+        "failure": "none"
+      },
+      "probe_exit_code": 0
+    }
+  ],
+  "disconnect_observations": [
+    {
+      "utc": "2026-09-08T02:43:53.6370285Z",
+      "label": "awg31-stopped",
+      "routes_sha256": "18d7afb596b42c1b238746b81e0e3fa0af92c9d6fccaca3f5d50ed55d9c248b1",
+      "dns_sha256": "5de74dba88385fbea86c0728fb4e44572a06ee8f7a8d3aad71187cee9f80ae4b",
+      "up_adapter_count": 1,
+      "tun_count": 0,
+      "health_status": 200,
+      "egress_sha256": "350fae6cb583c84a346ead8dd287415917df2a91a9c895703c4174bf41268051",
+      "egress_error": null,
+      "dns_a_count": 1,
+      "probe": {
+        "client_source": "0218e89",
+        "action": "status",
+        "elapsed_ms": 0,
+        "available": true,
+        "trusted": true,
+        "compatible": true,
+        "accepted": true,
+        "phase": "config_staged",
+        "running": false,
+        "core_ready": true,
+        "dns_ready": false,
+        "egress_validated": false,
+        "can_connect": true,
+        "effective_matches_staged": false,
+        "failure": "none"
+      },
+      "probe_exit_code": 0
+    },
+    {
+      "utc": "2026-09-08T02:50:01.3602722Z",
+      "label": "awg2-stopped",
+      "routes_sha256": "18d7afb596b42c1b238746b81e0e3fa0af92c9d6fccaca3f5d50ed55d9c248b1",
+      "dns_sha256": "5de74dba88385fbea86c0728fb4e44572a06ee8f7a8d3aad71187cee9f80ae4b",
+      "up_adapter_count": 1,
+      "tun_count": 0,
+      "health_status": 200,
+      "egress_sha256": "350fae6cb583c84a346ead8dd287415917df2a91a9c895703c4174bf41268051",
+      "egress_error": null,
+      "dns_a_count": 1,
+      "probe": {
+        "client_source": "0218e89",
+        "action": "status",
+        "elapsed_ms": 0,
+        "available": true,
+        "trusted": true,
+        "compatible": true,
+        "accepted": true,
+        "phase": "config_staged",
+        "running": false,
+        "core_ready": true,
+        "dns_ready": false,
+        "egress_validated": false,
+        "can_connect": true,
+        "effective_matches_staged": false,
+        "failure": "none"
+      },
+      "probe_exit_code": 0
+    },
+    {
+      "utc": "2026-09-08T02:51:26.4255740Z",
+      "label": "final-disconnected",
+      "routes_sha256": "18d7afb596b42c1b238746b81e0e3fa0af92c9d6fccaca3f5d50ed55d9c248b1",
+      "dns_sha256": "5de74dba88385fbea86c0728fb4e44572a06ee8f7a8d3aad71187cee9f80ae4b",
+      "up_adapter_count": 1,
+      "tun_count": 0,
+      "health_status": 200,
+      "egress_sha256": "350fae6cb583c84a346ead8dd287415917df2a91a9c895703c4174bf41268051",
+      "egress_error": null,
+      "dns_a_count": 1,
+      "probe": {
+        "client_source": "0218e89",
+        "action": "status",
+        "elapsed_ms": 0,
+        "available": true,
+        "trusted": true,
+        "compatible": true,
+        "accepted": true,
+        "phase": "config_staged",
+        "running": false,
+        "core_ready": true,
+        "dns_ready": false,
+        "egress_validated": false,
+        "can_connect": true,
+        "effective_matches_staged": false,
+        "failure": "none"
+      },
+      "probe_exit_code": 0
+    }
+  ],
+  "protected_profile_observations": [
+    {
+      "utc": "2026-09-08T02:43:10.8868200Z",
+      "label": "switching",
+      "profile_sha256": "20ce76b31fbc16f2ae8f8f49c934a45325dc74fba82b0eaf4948218189fe0dfb",
+      "root_keys": [
+        "log",
+        "dns",
+        "inbounds",
+        "outbounds",
+        "route",
+        "endpoints"
+      ],
+      "outbound_types": [
+        "direct",
+        "block"
+      ],
+      "endpoint_types": [
+        "awg"
+      ],
+      "endpoint_contracts": [
+        "pokrov.awg31.endpoint.v1"
+      ],
+      "outbound_field_names": [
+        "tag",
+        "type"
+      ],
+      "endpoint_field_names": [
+        "address",
+        "content_padding_addition",
+        "contract_id",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "header_protection_key",
+        "i1",
+        "i2",
+        "i3",
+        "i4",
+        "i5",
+        "jc",
+        "jmax",
+        "jmin",
+        "keepalive_timeout",
+        "max_handshake_attempts",
+        "mtu",
+        "peers",
+        "private_key",
+        "random_trailers",
+        "reject_after_time",
+        "rekey_after_time",
+        "rekey_timeout",
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "tag",
+        "type",
+        "useIntegratedTun"
+      ],
+      "raw_profile_returned": false
+    },
+    {
+      "utc": "2026-09-08T02:48:57.7103181Z",
+      "label": "switching",
+      "profile_sha256": "e6a2ef8faa7a04684c7cb5f522b4bcc21e5c1298572a2d2f9655714e116b10f8",
+      "root_keys": [
+        "log",
+        "dns",
+        "inbounds",
+        "outbounds",
+        "route",
+        "endpoints"
+      ],
+      "outbound_types": [
+        "direct",
+        "block"
+      ],
+      "endpoint_types": [
+        "awg"
+      ],
+      "endpoint_contracts": [],
+      "outbound_field_names": [
+        "tag",
+        "type"
+      ],
+      "endpoint_field_names": [
+        "address",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "jc",
+        "jmax",
+        "jmin",
+        "mtu",
+        "peers",
+        "private_key",
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "tag",
+        "type",
+        "useIntegratedTun"
+      ],
+      "raw_profile_returned": false
+    },
+    {
+      "utc": "2026-09-08T02:50:35.8717279Z",
+      "label": "switching",
+      "profile_sha256": "20ce76b31fbc16f2ae8f8f49c934a45325dc74fba82b0eaf4948218189fe0dfb",
+      "root_keys": [
+        "log",
+        "dns",
+        "inbounds",
+        "outbounds",
+        "route",
+        "endpoints"
+      ],
+      "outbound_types": [
+        "direct",
+        "block"
+      ],
+      "endpoint_types": [
+        "awg"
+      ],
+      "endpoint_contracts": [
+        "pokrov.awg31.endpoint.v1"
+      ],
+      "outbound_field_names": [
+        "tag",
+        "type"
+      ],
+      "endpoint_field_names": [
+        "address",
+        "content_padding_addition",
+        "contract_id",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "header_protection_key",
+        "i1",
+        "i2",
+        "i3",
+        "i4",
+        "i5",
+        "jc",
+        "jmax",
+        "jmin",
+        "keepalive_timeout",
+        "max_handshake_attempts",
+        "mtu",
+        "peers",
+        "private_key",
+        "random_trailers",
+        "reject_after_time",
+        "rekey_after_time",
+        "rekey_timeout",
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "tag",
+        "type",
+        "useIntegratedTun"
+      ],
+      "raw_profile_returned": false
+    }
+  ],
+  "cleanup": {
+    "rollout_restored": true,
+    "guest_routes_dns_restored": true,
+    "host_routes_dns_unchanged": true,
+    "sampler_stopped": true,
+    "vm": {
+      "utc": "2026-09-08T02:52:35.5704245Z",
+      "vm_id": "e42043a3-dd4d-452b-b151-410ad5d49543",
+      "poweroff": true,
+      "nic_none": true,
+      "source_vm_poweroff": true
+    }
+  },
+  "limits": [
+    "Local unsigned package; no release candidate or channel promotion.",
+    "The unchanged diagnostic probe source label 0218e89 identifies the probe only.",
+    "AWG2 identity combines guarded server assignment with endpoint shape; its renderer omits contract_id.",
+    "External egress hashes are identical with and without the tunnel; no independent packet or server-counter route proof.",
+    "Earlier unverified DE SSH key change remains unresolved; no trust bypass or server-counter read was attempted in this run.",
+    "UI retains saved Milan and unresolved access status under fixed DE lab transport; effective-location acceptance remains open.",
+    "No physical Android acceptance of the new Core bytes, Win10, service crash, sleep, WFP, IPv6 or final channel proof.",
+    "An initial live NIC enable from none did not create an adapter; the powered-off NIC change and new boot established the retained network baseline."
+  ],
+  "artifacts": [
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\build.ps1",
+      "bytes": 1083,
+      "sha256": "2d3a08af13af7b30d8d487549b3f7f13a99cfa1a640a8fd4dd55629be1636301"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\package.ps1",
+      "bytes": 1381,
+      "sha256": "638e49deba9f44d27cfcdc054213bf1870d4b6a77afc64e518759dab7265dd81"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\packaging-source.ps1",
+      "bytes": 53440,
+      "sha256": "2d3226128e93e86a396455673d70f98bff31e521405f11681baa9de55f463864"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\build.log",
+      "bytes": 137,
+      "sha256": "6d2e9c8df015038e160b7cfbcc6b22a9714255730c288729efcefe85cc65f66b"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\package.log",
+      "bytes": 2034,
+      "sha256": "c6263535db20a918f81c7d6326a965a89c26ef2c288689e99e2610c493822d0b"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\windows-tests.log",
+      "bytes": 3077,
+      "sha256": "49fcb3c4ece96c9c77ff1f17be69ed9ed576bed4956573e1de737a1f64f20425"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\windows-analyze.log",
+      "bytes": 98,
+      "sha256": "3b1b4db6c30631aacd8be7a3e0b7ed2ea4a7e5e97e70d5556dcbab3b7b877fe8"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\expected-bundle.json",
+      "bytes": 40144,
+      "sha256": "468cd88fdc3d68c6af8d47d361cdc4daa3679b2226408b7d60ae0e30f976de58"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\baseline.ps1",
+      "bytes": 1962,
+      "sha256": "41d080db1f17eb62a71763a4f21bdc86cf8c67eb785cb0c6bdd73e67719c0df0"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\baseline.json",
+      "bytes": 45310,
+      "sha256": "86bb27968909cbb2034cf79f946bfcbdcac3cffd9bde5deb8be7303721980ce2"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\verify-installed.ps1",
+      "bytes": 1938,
+      "sha256": "f79fc2ec77a5c293f92c643b5b1830d2ccc201cf6c3e1b05b5147058b542e179"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\installed.json",
+      "bytes": 1385,
+      "sha256": "3a441c6b7048bf26872985b59c27832c54192a864c23e32f783844b279f51661"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\lab-control.py",
+      "bytes": 7759,
+      "sha256": "74d3ed1882455b5c5f777769e5b024f07f86c12acc79ef62f104f37a47d4e53d"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\plan.json",
+      "bytes": 2687,
+      "sha256": "5b54a916174761d5ae785b377591b3cd16e32e4be41fd11c346efa21e9afd66d"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\bind-awg31.json",
+      "bytes": 1149,
+      "sha256": "4f8241b45aa935ae602433d05096d707c851bebe2b9efce5b7c9128302e3fb58"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\bind-awg2.json",
+      "bytes": 1147,
+      "sha256": "fc81debf347e9a7d203c93da161918e9031063531ec0abe3250ef30dce1a5fc8"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\rebind-awg31.json",
+      "bytes": 1149,
+      "sha256": "4f8241b45aa935ae602433d05096d707c851bebe2b9efce5b7c9128302e3fb58"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\restore-original.json",
+      "bytes": 1163,
+      "sha256": "f1e12298af36d10de101be6a70a96f140373a5912ac32f52960b85362ec43d93"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network.ps1",
+      "bytes": 2168,
+      "sha256": "587d03e0c8e2398b69e8a2973579ea2c2ac24fe92972f16c311699d8536f9543"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\read-profile.ps1",
+      "bytes": 1613,
+      "sha256": "ba8231ed264a86504fe8934b1397280501fb4ec9b566e243d0cc64eaa774321e"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\elevate-read.ps1",
+      "bytes": 171,
+      "sha256": "e3f50be04fdd4892b3ad74d8c426f8fa0423ead9f25579837954a19b92146025"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\final-identity.ps1",
+      "bytes": 1307,
+      "sha256": "8d630608450acd754695ccc6116cd422726846b71ca9e7c6c238e2a46a265eb2"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\routing-final-identity.json",
+      "bytes": 461,
+      "sha256": "3c780f02a8eb91904c13717882b7c8760438fe3ebf5b47bb03d57828ffa616d8"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\sampler-final.json",
+      "bytes": 84,
+      "sha256": "ed6b08f802b7e16a03382efb467a8520d92ab95aaccf7ffcfb8f338118c6ee1e"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\vm-final.json",
+      "bytes": 172,
+      "sha256": "f0a73fbf8b5236bbfe845c9b8ca4de69c58dd8c9d965fe0b07cc8cb96e25a8b8"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\host-network-before.json",
+      "bytes": 220,
+      "sha256": "670622a8474e3f4d7abff6383e8a6ab8fca1d62613410a67bbc07f4e7d53d90a"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\host-network-after.json",
+      "bytes": 220,
+      "sha256": "043b0354a56520f7dc56cce5607d2b026b6f926c53941225238e73a1c0fbb348"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\retain-evidence.py",
+      "bytes": 5941,
+      "sha256": "8b5d1455c80dd6c7c7429dc6512d30fa964de9f717b1f86a2b2ea2416157430f"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network-awg2-connected.json",
+      "bytes": 1165,
+      "sha256": "e111359129b83ffb83dc3b9f2cf0c7c41c8eb03ed796b39b97e617d0700d8323"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network-awg2-stopped.json",
+      "bytes": 1172,
+      "sha256": "ec86baa7eac376de17afe8d98f5d282e89c1d04d46acc2bfb13d5fa6d5a82b1a"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network-awg31-connected.json",
+      "bytes": 1174,
+      "sha256": "83059f8096b2b1ed08834807c49d8d0f02502372cc652281dbe4f45b5470c9e0"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network-awg31-reconnected.json",
+      "bytes": 1169,
+      "sha256": "96dd771d63c47d07ac2764552e6d2403cd37698f0a6d9c7583b13450299b44be"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network-awg31-steady.json",
+      "bytes": 1163,
+      "sha256": "320951d3ad8646bfe91a8698a04c049119705c929ef27ae2365bc5d575630c31"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network-awg31-stopped.json",
+      "bytes": 1173,
+      "sha256": "b0b0d99882d64bed0f14ac5b810b86ae0f43cab09906bccdc8da91bfb8bb94fd"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network-baseline.json",
+      "bytes": 1172,
+      "sha256": "d6ce73cca91e4b8e073c5453b5c5afb6dffa2a4e134308848ef061dbd1e762d3"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\network-final-disconnected.json",
+      "bytes": 1178,
+      "sha256": "e050381a66180e01c5bcb879e249856215338508f2874380b68963ed0d266920"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\profile-switching-1.json",
+      "bytes": 2453,
+      "sha256": "36d4c4dc359f71c0b23e9c9a2d37b5b0dce5e53f180528518dfc10076246c54d"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\profile-switching-2.json",
+      "bytes": 1698,
+      "sha256": "f711bf5ba383e303970009bc63c07d78d0494812927da030f0cfe1285d6f0a08"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\profile-switching-3.json",
+      "bytes": 2453,
+      "sha256": "a37cbdf49e9d93405d31a20fe6cf130687a38918e6f3bfde603f6d88dbcd8e6c"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\ui-awg31-connected.png",
+      "bytes": 103857,
+      "sha256": "4969cbe4d177ef6e08ffcc9daedec5372bc8b93fa0bb73b9dd4bcd93db107595"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\ui-awg2-connected.png",
+      "bytes": 104853,
+      "sha256": "c940a696bee97ce5c613d5c213371501c40eb69c52c77d81594844a94e3aff52"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\ui-awg31-reconnected.png",
+      "bytes": 104857,
+      "sha256": "2a73eaf38bf72d4bce2605af4e4525f7319d112c604abd512e5e00ae2cc6e2ec"
+    }
+  ],
+  "validation": [
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\client-seed.log",
+      "bytes": 1818,
+      "sha256": "78ba204a27573010fcaaf1369b4536553e9fb0dbf526e7cca6ac73eb20c265d5"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\platform-docs.log",
+      "bytes": 101,
+      "sha256": "ec23b3930fde9f6a8f776ce67609009a916b7f347b9a7e5a71e55ec16ac4a69b"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\platform-audit.log",
+      "bytes": 23,
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "path": "E:\\r12-windows-awg-crossfield-20260908\\package-validation.log",
+      "bytes": 109,
+      "sha256": "cdb42b3f58babdc0168acc4d6c27c73e1b9759555089b549f1247937c45556c2"
+    }
+  ]
+}

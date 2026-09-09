@@ -1,0 +1,99 @@
+{
+  "status": "I3_PARTIALLY_FIXED_FULL_C03_OPEN",
+  "baseline": "988414d6bf85c03a45b34d4e273cfa2853540ae1",
+  "extraction_commit": "e91b85d1449eff91f96b6691b6d563ce4b46683f",
+  "core": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "checks": [
+    {
+      "path": "E:\\r12-c03-support-analyze.log",
+      "sha256": "9dc053d69b8b8a8836dd2660f8f529343d31a60acc9c27d94c919b3c658f3454",
+      "exit_code": 1,
+      "result": "Initial unused import, corrected"
+    },
+    {
+      "path": "E:\\r12-c03-support-shell-tests.log",
+      "sha256": "fbd7b0ceee61173b4e50e2ea51eed6831105133fa71b2960be6a72501d0f4559",
+      "exit_code": 0,
+      "result": "Extraction 203 tests"
+    },
+    {
+      "path": "E:\\r12-c03-support-controller-tests.log",
+      "sha256": "5b91d69e7afa4f1409c0231cb960abf4979fa06ade246f23a1487dcad033efc3",
+      "exit_code": 1,
+      "result": "Initial fake service Future type error, corrected"
+    },
+    {
+      "path": "E:\\r12-c03-support-controller-tests-final.log",
+      "sha256": "791b12908cb7fdb1dd5a8207e2a20e71e0b3e921857b12a2bff6600bba268ee4",
+      "exit_code": 1,
+      "result": "Initial isolated missing-timer evidence"
+    },
+    {
+      "path": "E:\\r12-c03-support-controller-extraction.log",
+      "sha256": "6b1239fef726f6ba1b01f25c0d6093a3074d7920ad858c0bbe9edea426b24186",
+      "exit_code": 0,
+      "result": "Extraction 5 tests"
+    },
+    {
+      "path": "E:\\r12-c03-support-analyze-final.log",
+      "sha256": "2039d1632c6e31a3c71f5fadceda950d9b7a8d2c0fee88af8f02833d3311a85c",
+      "exit_code": 0,
+      "result": "Extraction analyze PASS"
+    },
+    {
+      "path": "E:\\r12-c03-support-seed.log",
+      "sha256": "6049ced881fa76ecc82667d8821a754ae78bf7b228990ac5ea0a39478ef3ccde",
+      "exit_code": 0,
+      "result": "Extraction seed/docs PASS"
+    },
+    {
+      "path": "E:\\r12-c03-support-backoff-red.log",
+      "sha256": "150bfe021f75bfce861f94cf904ae6160d1add07eeaff8b9c669b9a5df9b9fc1",
+      "exit_code": 1,
+      "result": "Two confirmed polling retry failures on e91b85d"
+    },
+    {
+      "path": "E:\\r12-c03-support-backoff-green.log",
+      "sha256": "ace8558a1743f1f6ac6eb1ebab1ebd49b38caca6a4a37f572733941fad81e7f6",
+      "exit_code": 0,
+      "result": "Final 208 tests"
+    },
+    {
+      "path": "E:\\r12-c03-support-backoff-analyze.log",
+      "sha256": "9957f7b9ab3a2749b9c3b68cf5b6719a772225044898b222c6086937903b4ed3",
+      "exit_code": 0,
+      "result": "Final analyze PASS"
+    },
+    {
+      "path": "E:\\r12-c03-support-backoff-seed.log",
+      "sha256": "4a6143eb98fae6a685d023375f350f06c4de6ecda505fd5b2cae723892f2a82d",
+      "exit_code": 0,
+      "result": "Final seed/docs PASS"
+    }
+  ],
+  "counts": {
+    "packages/app_shell/lib/src/shell/seed_shell.dart": {
+      "before_lines": 6482,
+      "after_lines": 6482
+    },
+    "packages/app_shell/lib/app_shell.dart": {
+      "before_lines": 316,
+      "after_lines": 317,
+      "before_parts": 29,
+      "after_parts": 29
+    },
+    "packages/app_shell/lib/src/features/support/support_chat.dart": {
+      "before_lines": 2687,
+      "after_lines": 2277
+    }
+  },
+  "preexisting_registrants_unchanged": true,
+  "archive": {
+    "path": "E:\\r12-c03-support-evidence.zip",
+    "bytes": 21579,
+    "sha256": "5de641d5e39d12cce4189370304c70500fc60364e3b4dc3608a7756a8ed5a92e",
+    "files": 11
+  },
+  "remaining": "Checkout ownership; installed/native runtime, exact candidate and release gates",
+  "operations": "No build, install, host VPN, external communication, signing, push, merge, deploy, publication or new candidate"
+}

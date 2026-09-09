@@ -449,8 +449,12 @@ void main() {
         'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:01Z|$runId|$attemptId|7|5|core.runtime.start|core|start|error|failed|TRANSPORT-002|core_start\n'
         'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:02Z|$runId|$attemptId|7|6|core.runtime.start|core|start|error|failed|TRANSPORT-003|core_start\n'
         'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:03Z|$runId|$attemptId|7|7|core.runtime.start|core|start|error|failed|TRANSPORT-004|core_start\n'
-        'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:04Z|$runId|$attemptId|7|8|core.runtime.start|core|start|error|failed|https://private.example.test?token=secret|core_start\n'
-        'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:05Z|$runId|$attemptId|7|9|core.raw.line|core|start|error|failed|CORE-006|core_start\n',
+        'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:03Z|$runId|$attemptId|7|8|core.egress.probe|egress|verify|error|failed|TRANSPORT-005|egress\n'
+        'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:03Z|$runId|$attemptId|7|9|core.egress.probe|egress|verify|error|failed|TRANSPORT-006|egress\n'
+        'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:03Z|$runId|$attemptId|7|10|core.egress.probe|egress|verify|error|failed|TRANSPORT-007|egress\n'
+        'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:03Z|$runId|$attemptId|7|11|core.egress.probe|egress|verify|error|failed|DNS-002|egress\n'
+        'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:04Z|$runId|$attemptId|7|12|core.runtime.start|core|start|error|failed|https://private.example.test?token=secret|core_start\n'
+        'POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:05Z|$runId|$attemptId|7|13|core.raw.line|core|start|error|failed|CORE-006|core_start\n',
       );
 
       final result =
@@ -458,7 +462,7 @@ void main() {
         file,
         _legacyContext(),
       );
-      expect(result.events, hasLength(4));
+      expect(result.events, hasLength(8));
       final event = result.events.first;
       expect(event.component, 'core');
       expect(
@@ -468,6 +472,10 @@ void main() {
           'TRANSPORT-002',
           'TRANSPORT-003',
           'TRANSPORT-004',
+          'TRANSPORT-005',
+          'TRANSPORT-006',
+          'TRANSPORT-007',
+          'DNS-002',
         ],
       );
       expect(event.correlation.runId, runId);

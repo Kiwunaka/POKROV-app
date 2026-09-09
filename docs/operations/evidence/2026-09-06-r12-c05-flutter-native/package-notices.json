@@ -1,0 +1,359 @@
+{
+  "schema": "pokrov.r12.c05-flutter-native-package/v1",
+  "status": "LOCAL_PACKAGE_VERIFICATION_PASS_FULL_C05_OPEN",
+  "client_before": "7bef147c14beea9b8a45a48fedbc22f5205f7f53",
+  "core_source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "notice": {
+    "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
+    "bytes": 664866,
+    "sha256": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+  },
+  "previous_notice": {
+    "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
+    "bytes": 659001,
+    "sha256": "71b707bb4af6d879c6ce13d86644ce1e1dbd5dabb7846085b10e798d63e9b56a"
+  },
+  "verbatim_texts": 186,
+  "added_texts": 1,
+  "added_body": {
+    "source_ref": "https://www.wintun.net/builds/wintun-0.14.1.zip!wintun/LICENSE.txt",
+    "body_offset": 659434,
+    "bytes": 5431,
+    "sha256": "183adac21e7d96c508c8fd34d394b7b6708bc81564ad1bad61ab66143a008cd2",
+    "platform": "windows-amd64",
+    "native_component_sha256": "e5da8447dc2c320edc0fc52fa01885c103de8c118481f683643cacc3220dafce"
+  },
+  "all_previous_asset_bytes_retained": true,
+  "flutter_notice_summary": [
+    {
+      "target": "android_shell",
+      "package_count": 92,
+      "unique_bodies": 1621,
+      "exact_reconstruction": true,
+      "reconstructed_sha256": "bf01e9be57437319fbf6973ab542a23511ed47207ee64abdc115a3e48310638c",
+      "sky_engine_bodies": 1594,
+      "no_root_license_file": [
+        "flutter_test",
+        "flutter_web_plugins",
+        "pokrov_app_shell",
+        "pokrov_core_domain",
+        "pokrov_diagnostics_collectors",
+        "pokrov_observability_contracts",
+        "pokrov_observability_runtime",
+        "pokrov_platform_contracts",
+        "pokrov_runtime_engine",
+        "pokrov_support_bundle",
+        "pokrov_support_context",
+        "pokrov_android_shell"
+      ]
+    },
+    {
+      "target": "windows_shell",
+      "package_count": 101,
+      "unique_bodies": 1624,
+      "exact_reconstruction": true,
+      "reconstructed_sha256": "6b58cbe65ac4fd0f312f52abd3551d19e9e7f18bd10e12cf14fb924d8a52231e",
+      "sky_engine_bodies": 1594,
+      "no_root_license_file": [
+        "flutter_test",
+        "flutter_web_plugins",
+        "pokrov_app_shell",
+        "pokrov_core_domain",
+        "pokrov_diagnostics_collectors",
+        "pokrov_observability_contracts",
+        "pokrov_observability_runtime",
+        "pokrov_platform_contracts",
+        "pokrov_runtime_engine",
+        "pokrov_support_bundle",
+        "pokrov_support_context",
+        "pokrov_windows_shell"
+      ]
+    }
+  ],
+  "flutter_engine_revision": "1527ae0ec577a4ef50e65f6fefcfc1326707d9bf",
+  "native_supplement": {
+    "file": "native-supplement.cdx.json",
+    "components": 12,
+    "schema": "CycloneDX 1.6",
+    "schema_validation": "PASS",
+    "scope": "native supplement only; not complete application SBOM",
+    "retained_artifact": {
+      "path": "E:\\r12-c05-flutter-native\\native-supplement.cdx.json",
+      "sha256": "12c300d240af6faccca4f93e27de98935ba34b790666a1fa3971d4b1cbeede5f"
+    },
+    "git_blob_sha256": "6c54eb525ff49f7825f4723fee3ecf76e91d850209a4c61836ad5148be338cf9",
+    "serialization": "Git line-ending normalization differs from retained artifact bytes; parsed documents are equal."
+  },
+  "windows_plugin_source_auth": {
+    "packages": 6,
+    "files": 49,
+    "mismatches": []
+  },
+  "wintun": {
+    "version": "0.14.1",
+    "native_sha256": "e5da8447dc2c320edc0fc52fa01885c103de8c118481f683643cacc3220dafce",
+    "embedded_in_core_sha256": "c679ba5af42939acbc8c6f44af59b4608f6a76c99e0d444cfa4bcc825bcc8e68",
+    "embedded_offset": 25050912,
+    "official_archive_sha256": "07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51",
+    "license_sha256": "183adac21e7d96c508c8fd34d394b7b6708bc81564ad1bad61ab66143a008cd2",
+    "signature": {
+      "Status": "Valid",
+      "Signer": "CN=WireGuard LLC, O=WireGuard LLC, L=Boulder, S=Colorado, C=US, SERIALNUMBER=4227913, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.2=Ohio, OID.1.3.6.1.4.1.311.60.2.1.3=US"
+    },
+    "source_api_typedef_matches": 13,
+    "compatibility_review": "OPEN"
+  },
+  "android": [
+    {
+      "path": "E:\\r12-c05-flutter-native\\android\\app-direct-arm64-v8a-release.apk",
+      "bytes": 101192671,
+      "sha256": "fa07cb0e6986ae4f959d2c2f04485326b4c165cc2704c49fd50d01cf41c5f0ee",
+      "notice_sha256": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8",
+      "core_entries": {
+        "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5"
+      },
+      "flutter_engine_entries": {
+        "lib/arm64-v8a/libflutter.so": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d"
+      },
+      "flutter_generated_notices_sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+      "signing": {
+        "command": [
+          "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+          "verify",
+          "--print-certs",
+          "E:\\r12-c05-flutter-native\\android\\app-direct-arm64-v8a-release.apk"
+        ],
+        "exit_code": 0,
+        "signer": "Android Debug",
+        "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+      }
+    },
+    {
+      "path": "E:\\r12-c05-flutter-native\\android\\app-direct-armeabi-v7a-release.apk",
+      "bytes": 90706901,
+      "sha256": "19f090042290c70f160151dd1f25e31fe9f44bcf51a813fbab0144f603c19789",
+      "notice_sha256": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8",
+      "core_entries": {
+        "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e"
+      },
+      "flutter_engine_entries": {
+        "lib/armeabi-v7a/libflutter.so": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07"
+      },
+      "flutter_generated_notices_sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+      "signing": {
+        "command": [
+          "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+          "verify",
+          "--print-certs",
+          "E:\\r12-c05-flutter-native\\android\\app-direct-armeabi-v7a-release.apk"
+        ],
+        "exit_code": 0,
+        "signer": "Android Debug",
+        "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+      }
+    },
+    {
+      "path": "E:\\r12-c05-flutter-native\\android\\app-direct-universal-release.apk",
+      "bytes": 295177402,
+      "sha256": "81e1b6493800a483b0d6ccb35e3b25ad62908110d958e266c1f2b54f1cb89969",
+      "notice_sha256": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8",
+      "core_entries": {
+        "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+        "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+        "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+      },
+      "flutter_engine_entries": {
+        "lib/arm64-v8a/libflutter.so": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+        "lib/armeabi-v7a/libflutter.so": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+        "lib/x86_64/libflutter.so": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd"
+      },
+      "flutter_generated_notices_sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+      "signing": {
+        "command": [
+          "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+          "verify",
+          "--print-certs",
+          "E:\\r12-c05-flutter-native\\android\\app-direct-universal-release.apk"
+        ],
+        "exit_code": 0,
+        "signer": "Android Debug",
+        "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+      }
+    },
+    {
+      "path": "E:\\r12-c05-flutter-native\\android\\app-direct-x86_64-release.apk",
+      "bytes": 110201598,
+      "sha256": "6aa224ac3338bdba6164d668c9216de6ef8770546c1dbf264fdd32d219c4aca5",
+      "notice_sha256": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8",
+      "core_entries": {
+        "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+      },
+      "flutter_engine_entries": {
+        "lib/x86_64/libflutter.so": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd"
+      },
+      "flutter_generated_notices_sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+      "signing": {
+        "command": [
+          "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+          "verify",
+          "--print-certs",
+          "E:\\r12-c05-flutter-native\\android\\app-direct-x86_64-release.apk"
+        ],
+        "exit_code": 0,
+        "signer": "Android Debug",
+        "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+      }
+    }
+  ],
+  "windows": {
+    "path": "E:\\r12-c05-flutter-native\\windows-bundle",
+    "file_count": 302,
+    "previous_bundle": "E:\\r12-c05-header-review\\windows-bundle",
+    "changed": [
+      "data/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt"
+    ],
+    "unchanged_files": 301
+  },
+  "preexisting_registrants": "all four byte-identical",
+  "original_install_prefix": "$<TARGET_FILE_DIR:pokrov_windows>",
+  "original_prefix_restored_exact": true,
+  "commands": [
+    {
+      "command": "flutter build apk --release --flavor direct --target-platform android-arm,android-arm64,android-x64 --android-project-arg=pokrov.singleVersionSplitApks=true --dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9 --dart-define=POKROV_APP_VERSION=1.2.0",
+      "cwd": "E:/r12client/apps/android_shell",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\android-build.log",
+      "sha256": "bd9d06de5bc723e957f8764c300c921f1bf578a238066a65320e56d4a05b8c04"
+    },
+    {
+      "command": "cmake -S E:/r12client/apps/windows_shell/windows -B E:/r12client/apps/windows_shell/build/windows/x64 -DCMAKE_INSTALL_PREFIX=E:/r12-c05-flutter-native/windows-bundle",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\windows-prefix.log",
+      "sha256": "bd36db056095bd70e1705e84670a1b7d129fc8a3a5709d605e8c04b846a38be8"
+    },
+    {
+      "command": "flutter build windows --release --no-pub --dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9 --dart-define=POKROV_APP_VERSION=1.2.0",
+      "cwd": "E:/r12client/apps/windows_shell",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\windows-build.log",
+      "sha256": "5b5e9027b55defef8b8020cfa030c9703ae4d93fda5f70d65aa6f5c33910fe90"
+    },
+    {
+      "command": "python -B E:/r12-c05-flutter-native/verify-packages.py",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\package-verification.log",
+      "sha256": "007623f272badd091d45d9f73de76ec7a1cef66924498dba9c7a5a9474e591d1"
+    },
+    {
+      "command": "cmake -S E:/r12client/apps/windows_shell/windows -B E:/r12client/apps/windows_shell/build/windows/x64 -U CMAKE_INSTALL_PREFIX",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\windows-prefix-restored.log",
+      "sha256": "5c383becea1729478bdf4a78f8993b5ff6a9e33b6591a6333e65d88b416591bc"
+    },
+    {
+      "command": "python -B E:/r12-c05-flutter-native/auth-native-plugins.py",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\plugin-auth.log",
+      "sha256": "fb54b614dad797cefd2899905867d3fddad87d2d0c4037f9cfc4fd74a3598a4c"
+    },
+    {
+      "command": "python -B E:/r12-c05-flutter-native/audit-notices.py",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\notices-reconstruction.log",
+      "sha256": "db0b8622c306d7892eb318e15fe420bafa03848fbfde9948d4acbd01ac77335c"
+    },
+    {
+      "command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\client-seed.log",
+      "sha256": "be16463eb3d1a4d86a05b6e8896a2915fe397248e890ec4c37ed66eac4f3bacc"
+    },
+    {
+      "command": "./test/docs-contract.ps1",
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-flutter-native\\client-docs.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--exit-code",
+        "--",
+        "artifacts/releases"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "environment": {
+    "POKROV_ALLOW_INTERNAL_BETA_DEBUG_SIGNING": "true",
+    "cmake_executable": "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe"
+  },
+  "external_inputs": {
+    "assembly.json": {
+      "path": "E:\\r12-c05-flutter-native\\assembly.json",
+      "sha256": "202dfa5cc38c9d053b7679935785ef03f509a5043e1cee622e6e3e2c5f7aa639"
+    },
+    "flutter-notices.json": {
+      "path": "E:\\r12-c05-flutter-native\\flutter-notices.json",
+      "sha256": "ee4278c6b61c215ad643f6f5664827b3be8a8895fa80f13e37d2a5f857671b45"
+    },
+    "official-downloads-verified.json": {
+      "path": "E:\\r12-c05-flutter-native\\official-downloads-verified.json",
+      "sha256": "2e7da9ebe86a9f16977322dd64927b048306fd4ff80312238a81f22c7bf19b62"
+    },
+    "download-readback.json": {
+      "path": "E:\\r12-c05-flutter-native\\download-readback.json",
+      "sha256": "81ed91aba916a61fba339b8b20b39abbeb103befd01ffb16397e6d51fcebf31a"
+    },
+    "schema-sources.json": {
+      "path": "E:\\r12-c05-flutter-native\\schema-sources.json",
+      "sha256": "9d6d390ffc3bf3c8f223bb1a47db2242c991dbf92978e04c21e12b50d19a71db"
+    },
+    "package-verification.json": {
+      "path": "E:\\r12-c05-flutter-native\\package-verification.json",
+      "sha256": "bd8adb1a5306de1ed24a2274ef7da1295aca5647be431e33ebc76a57f7604acc"
+    }
+  },
+  "limitations": [
+    "Native supplement and exact license text delivery do not establish complete license compatibility or a final application SBOM.",
+    "Wintun prebuilt terms differ from source GPL and wrapper MIT; named source API correspondence and memory-loader inspection are not a redistribution decision.",
+    "Psiphon utls root license, remaining native/Maven/file-level obligations, corresponding source, installed privacy and exact final candidate/device/origin/SCM gates remain open.",
+    "Official engine origin plus recorded stripping proves these delivered binaries, not native source-to-binary reproduction or absence of advisories.",
+    "Plugin source files/root license match locked official archives; no native rebuild reproducibility claim.",
+    "The SDK root license is included in generated notices. A missing package-local LICENSE is not automatically an unlicensed SDK package. POKROV root license remains an owner decision.",
+    "Android is internally debug-signed with loopback API; Windows bundle is unsigned and does not include final installer/app-local VC runtime acceptance.",
+    "Seed performance collector uses fixture input; no new physical-device performance measurement."
+  ],
+  "exploratory_attempts": [
+    "Android and Windows generated notice sets differed as expected from package configs; per-platform reconstruction replaced the initial cross-platform equality assumption.",
+    "The first GCS checker read only the first repeated x-goog-hash header and failed after all downloads completed. A HEAD readback retrieved all hash headers and verified all six retained files without re-downloading.",
+    "Initial text retention on Windows introduced newline conversion; raw decompressed notice bytes were re-retained and hashes verified. Source and packaged bytes were never changed by this attempt.",
+    "CycloneDX schema host returned HTTP 403; official specification repository schemas at ref 1.6 were retrieved and retained instead."
+  ],
+  "push_merge_deploy_candidate": false,
+  "packaging_source_diff_sha256": "3b1231f22a8d0000e952c3c618bebc7ce0086cbaa83632e3b641bdaa5b01ecdb",
+  "evidence_archive": {
+    "path": "E:\\r12-c05-flutter-native\\flutter-native-evidence.zip",
+    "bytes": 1300530,
+    "sha256": "7dc6db8ca91076eb3e6f5e0c9dea5a0b9d37d453bfab3362c8854a5600d3d3bf",
+    "files": 62,
+    "entry_hashes_verified": true,
+    "scope": "Receipts, scripts, license texts, schema files and six pub package archives. Official engine/Wintun binary archives and built packages remain separately retained with hashes."
+  }
+}

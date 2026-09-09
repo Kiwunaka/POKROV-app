@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "operation": "reprovision_exact_test_install",
+  "proof": {
+    "awg2_lab": {
+      "old_age_hours": 226.1,
+      "old_retained_rotated": true,
+      "active_count": 1,
+      "endpoint_unchanged": true,
+      "material_ready": true
+    },
+    "awg31_lab": {
+      "old_age_hours": 226.1,
+      "old_retained_rotated": true,
+      "active_count": 1,
+      "endpoint_unchanged": true,
+      "material_ready": true
+    }
+  },
+  "config_unchanged": true,
+  "entitlement_mutated": false,
+  "raw_identifiers_returned": false
+}

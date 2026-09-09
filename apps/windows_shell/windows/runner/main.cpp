@@ -112,7 +112,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
             ? pokrov::activation::Command::kShow
             : pokrov::activation::Command::kAcquisitionContinue,
         acquisition_uri};
-    const bool delivered = ForwardActivation(activation);
+    // A repeated login launch must leave the existing window's visibility
+    // alone. Only an ordinary launch or acquisition link activates it.
+    const bool delivered = start_hidden || ForwardActivation(activation);
     ::CloseHandle(ui_mutex);
     ::CoUninitialize();
     return delivered ? EXIT_SUCCESS : EXIT_FAILURE;

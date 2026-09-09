@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "client_source": "f479fd49f7904bda5c916e5f7148675f45105872",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "api_base_url": "https://app.pokrov.space",
+  "scope": "local integrated ABI package audit; physical-device acceptance tracked separately; not published candidate",
+  "artifacts": [
+    {
+      "abi": "universal",
+      "path": "E:/r12-integrated-acceptance-20260908/android-access-denial/pokrov-r12-universal.apk",
+      "sha256": "5966d8bcbfff4cad7cacbbbce41313a6011087b90a2ace4e7024daccee8bce0a",
+      "bytes": 295231078,
+      "package": "space.pokrov.pokrov_android_shell",
+      "version_code": 4053,
+      "version_name": "1.2.0",
+      "min_sdk": 24,
+      "target_sdk": 36,
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "debuggable": false,
+      "native": {
+        "lib/arm64-v8a/libapp.so": "0ea3188396250a340e43e0602bf5ab7699060044b5cc9bcfc088a3846d65afe3",
+        "lib/arm64-v8a/libflutter.so": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+        "lib/arm64-v8a/libpokrov-core.so": "96c6a72769066807ce73af9792e3c110040a08629f9a7b2067655984152ff0c8",
+        "lib/armeabi-v7a/libapp.so": "90a3d08d9be84ec2d06828ae858699657f011819e4659930d0d902a626e42eed",
+        "lib/armeabi-v7a/libflutter.so": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+        "lib/armeabi-v7a/libpokrov-core.so": "ee5e80779fbf6465464da69cfee03675ee7a126db5b207197c908deb2e39fba9",
+        "lib/x86_64/libapp.so": "75cd6a24206e0aafeaebb49759d10db4866c4b16d3326c2486a8f777546b26ed",
+        "lib/x86_64/libflutter.so": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd",
+        "lib/x86_64/libpokrov-core.so": "911179b9207113c508605c1b7b2b4fb041259ee8dadebc522e154ec4534b2d63"
+      },
+      "compressed_size_breakdown": {
+        "android_resources": 279781,
+        "assets": 1639781,
+        "dex": 1138809,
+        "dart_aot": 25299388,
+        "flutter": 31548768,
+        "core": 234782496,
+        "notices": 243545,
+        "fonts": 125091,
+        "zip_signing_alignment_overhead": 173419
+      },
+      "notices": {
+        "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+        "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+        "assets/flutter_assets/assets/licenses/maven-NOTICES.txt": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+        "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+        "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "d5de2971b8ab4f0227e64b7039edb9f3dc853c46c34d85dcf466b782d0092538"
+      }
+    },
+    {
+      "abi": "arm64-v8a",
+      "path": "E:/r12-integrated-acceptance-20260908/android-access-denial/pokrov-r12-arm64-v8a.apk",
+      "sha256": "20a0781baf9bea1e9e0e55de5f4d7d5193936dfe7a9d894df98c1bc457b897af",
+      "bytes": 101229131,
+      "package": "space.pokrov.pokrov_android_shell",
+      "version_code": 4053,
+      "version_name": "1.2.0",
+      "min_sdk": 24,
+      "target_sdk": 36,
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "debuggable": false,
+      "native": {
+        "lib/arm64-v8a/libapp.so": "0ea3188396250a340e43e0602bf5ab7699060044b5cc9bcfc088a3846d65afe3",
+        "lib/arm64-v8a/libflutter.so": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+        "lib/arm64-v8a/libpokrov-core.so": "96c6a72769066807ce73af9792e3c110040a08629f9a7b2067655984152ff0c8"
+      },
+      "compressed_size_breakdown": {
+        "android_resources": 279781,
+        "assets": 1639781,
+        "dex": 1138809,
+        "dart_aot": 8061872,
+        "flutter": 11107920,
+        "core": 78534168,
+        "notices": 243545,
+        "fonts": 125091,
+        "zip_signing_alignment_overhead": 98164
+      },
+      "notices": {
+        "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+        "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+        "assets/flutter_assets/assets/licenses/maven-NOTICES.txt": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+        "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+        "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "d5de2971b8ab4f0227e64b7039edb9f3dc853c46c34d85dcf466b782d0092538"
+      }
+    },
+    {
+      "abi": "armeabi-v7a",
+      "path": "E:/r12-integrated-acceptance-20260908/android-access-denial/pokrov-r12-armeabi-v7a.apk",
+      "sha256": "238317a1b05c6e92c2c77e067e9ec4aa4b035f5fe9be1b60c0015caf82258885",
+      "bytes": 90760385,
+      "package": "space.pokrov.pokrov_android_shell",
+      "version_code": 4053,
+      "version_name": "1.2.0",
+      "min_sdk": 24,
+      "target_sdk": 36,
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "debuggable": false,
+      "native": {
+        "lib/armeabi-v7a/libapp.so": "90a3d08d9be84ec2d06828ae858699657f011819e4659930d0d902a626e42eed",
+        "lib/armeabi-v7a/libflutter.so": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+        "lib/armeabi-v7a/libpokrov-core.so": "ee5e80779fbf6465464da69cfee03675ee7a126db5b207197c908deb2e39fba9"
+      },
+      "compressed_size_breakdown": {
+        "android_resources": 279781,
+        "assets": 1639781,
+        "dex": 1138809,
+        "dart_aot": 8913500,
+        "flutter": 8096376,
+        "core": 70211720,
+        "notices": 243545,
+        "fonts": 125091,
+        "zip_signing_alignment_overhead": 111782
+      },
+      "notices": {
+        "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+        "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+        "assets/flutter_assets/assets/licenses/maven-NOTICES.txt": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+        "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+        "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "d5de2971b8ab4f0227e64b7039edb9f3dc853c46c34d85dcf466b782d0092538"
+      }
+    },
+    {
+      "abi": "x86_64",
+      "path": "E:/r12-integrated-acceptance-20260908/android-access-denial/pokrov-r12-x86_64.apk",
+      "sha256": "5ca1730ef26b3de69136f7eb3076a7eb24fdfe28b0e3c50b2ac882158a466178",
+      "bytes": 110238890,
+      "package": "space.pokrov.pokrov_android_shell",
+      "version_code": 4053,
+      "version_name": "1.2.0",
+      "min_sdk": 24,
+      "target_sdk": 36,
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "debuggable": false,
+      "native": {
+        "lib/x86_64/libapp.so": "75cd6a24206e0aafeaebb49759d10db4866c4b16d3326c2486a8f777546b26ed",
+        "lib/x86_64/libflutter.so": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd",
+        "lib/x86_64/libpokrov-core.so": "911179b9207113c508605c1b7b2b4fb041259ee8dadebc522e154ec4534b2d63"
+      },
+      "compressed_size_breakdown": {
+        "android_resources": 279781,
+        "assets": 1639781,
+        "dex": 1138809,
+        "dart_aot": 8324016,
+        "flutter": 12344472,
+        "core": 86036608,
+        "notices": 243545,
+        "fonts": 125091,
+        "zip_signing_alignment_overhead": 106787
+      },
+      "notices": {
+        "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+        "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+        "assets/flutter_assets/assets/licenses/maven-NOTICES.txt": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+        "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+        "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "d5de2971b8ab4f0227e64b7039edb9f3dc853c46c34d85dcf466b782d0092538"
+      }
+    }
+  ],
+  "arm64_savings_bytes": 194001947,
+  "arm64_savings_percent": 65.71
+}

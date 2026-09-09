@@ -103,11 +103,16 @@ void TestRejectsInvalidFrames() {
       Identifier(3),
       4102444800000ULL,
       0,
-      "",
+      std::string(64, 'a'),
   };
   auto bytes = Encode(request);
   Expect(!bytes.empty(), "valid request did not encode");
 
+  auto missing_identity = request;
+  missing_identity.body.clear();
+  Expect(Encode(missing_identity).empty(), "connect without profile identity encoded");
+  missing_identity.body = std::string(64, 'g');
+  Expect(Encode(missing_identity).empty(), "non-hex profile identity encoded");
   auto future = bytes;
   WriteUint16(&future, 4, kProtocolVersion + 1);
   Expect(!Decode(future.data(), future.size()),

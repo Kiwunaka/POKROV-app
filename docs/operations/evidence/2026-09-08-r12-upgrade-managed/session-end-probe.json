@@ -1,0 +1,11 @@
+{
+    "utc":  "2026-09-07T23:30:20.7102835Z",
+    "ui_sha256":  "c8e1f31696525f50a108d5fb7f5f310423e08061e4bc825f7f23204fa150d515",
+    "ui_pid":  6252,
+    "query_accepted":  true,
+    "query_did_not_exit":  true,
+    "cancelled_end_did_not_exit":  true,
+    "normal_close_hides_without_exit":  true,
+    "restored_same_process":  true,
+    "status":  "PASS"
+}

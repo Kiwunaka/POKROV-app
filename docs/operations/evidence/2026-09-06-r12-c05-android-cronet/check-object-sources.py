@@ -1,0 +1,8 @@
+from pathlib import Path,PurePosixPath
+import json,collections
+out=Path('E:/r12-c05-android-cronet');archives={r['arch']:r for r in json.loads((out/'archive-object-metadata.json').read_text())};graph=json.loads((out/'source-object-mapping-initial.json').read_text());summary=[]
+for r in graph:
+ arch=archives[r['goarch']];actual=collections.Counter(s for o in arch['members'] for s in o['source_file_symbols']);expected=collections.Counter(PurePosixPath(s['file']).name for s in r['sources'] if PurePosixPath(s['file']).suffix.lower() not in ['.s','.asm']);print(r['cpu'],'file_symbols',sum(actual.values()),'expected C-family',sum(expected.values()),'extra',list((actual-expected).items())[:10],'missing',list((expected-actual).items())[:10]);r['source_filename_symbols']={'count':sum(actual.values()),'expected_count':sum(expected.values()),'extra':dict(actual-expected),'missing':dict(expected-actual)};assert actual==expected
+ assert not r['extra_archive_members'] and not r['missing_archive_members']
+ summary.append({'cpu':r['cpu'],'goarch':r['goarch'],'compile_sources':len(r['sources']),'source_filename_symbols':sum(actual.values()),'archive_members':r['archive_member_count'],'matching_archive_member_multiset':True,'matching_non_assembly_source_filename_multiset':True,'limitations':'Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility.'})
+(out/'source-object-mapping.json').write_text(json.dumps(graph,indent=2)+'\n');(out/'source-object-summary.json').write_text(json.dumps(summary,indent=2)+'\n')

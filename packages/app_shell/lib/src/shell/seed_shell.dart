@@ -93,6 +93,9 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
     return MaterialApp(
       title: 'POKROV',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => PokrovAppMotionGate(
+        child: child ?? const SizedBox.shrink(),
+      ),
       scrollBehavior: const PokrovScrollBehavior(),
       themeMode: _themeMode,
       theme: _buildPokrovTheme(
@@ -555,17 +558,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   final TextEditingController _firstLaunchRestoreCodeController =
       TextEditingController();
   bool _emergencyRuntimeActive = false;
-  bool _managedProfileDirty = true;
-  int _managedProfileRevision = 0;
-  int _quickSettingsInvalidationRequestedRevision = 0;
-  int _quickSettingsInvalidationCompletedRevision = 0;
-  Future<bool>? _quickSettingsInvalidationInFlight;
-  int _managedProfileInvalidationGeneration = 0;
-  Timer? _managedProfileInvalidationTimer;
-  Completer<bool>? _managedProfileInvalidationCompletion;
-  bool _seedShellDisposed = false;
+  late final ManagedProfileLifecycle _managedProfileLifecycle;
+  bool get _managedProfileDirty => _managedProfileLifecycle.dirty;
+  set _managedProfileDirty(bool value) =>
+      _managedProfileLifecycle.dirty = value;
+  int get _managedProfileRevision => _managedProfileLifecycle.revision;
   final CachedProfileFallbackGate _cachedProfileFallbackGate =
       CachedProfileFallbackGate();
+  ManagedProfileCacheInputs? _stagedCacheInputs;
+  String _stagedProfileCacheEntryId = '';
   // Hidden until the store confirms the hint was never dismissed, so the
   // one-time pulse never flashes for returning users while the read is
   // in flight.
@@ -593,6 +594,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _warpPolicyBusy = false;
   bool _stagedProfileUsesWarp = false;
   bool _activeConnectUsedWarp = false;
+  bool _accessDenialPending = false;
   bool _warpFallbackInFlight = false;
   SmartConnectProfile? _smartConnectProfile;
   ClientLocationsCatalog? _locationsCatalog;
@@ -602,6 +604,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   String _resolvedProfileVariantId = 'direct';
   String _stagedNodeCode = '';
   String _stagedVariantId = 'direct';
+  String _stagedTcpFallbackFromRevision = '';
+  String _tcpFallbackFromRevision = '';
   String _activeNodeCode = '';
   String _activeVariantId = 'direct';
   final Map<String, DateTime> _automaticNodeQuarantineUntil =
@@ -665,6 +669,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _selectedRouteMode = widget.appContext.runtimeProfile.defaultRouteMode;
     _runtimeEngine = createRuntimeEngine(
       hostPlatform: widget.appContext.hostPlatform,
+    );
+    _managedProfileLifecycle = ManagedProfileLifecycle(
+      invalidateProfile: _runtimeEngine.invalidateManagedProfile,
+      invalidateOnHost: () =>
+          widget.appContext.hostPlatform == HostPlatform.android,
+      timeout: () => widget.runtimeActionTimeout,
+      onInvalidated: (snapshot) {
+        if (mounted) setState(() => _runtimeSnapshot = snapshot);
+      },
     );
     _connectionCoordinator = ConnectionCoordinator(
       primaryConnectEnabled: _canPrimaryConnect,
@@ -760,6 +773,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     unawaited(_loadConnectHintState());
     unawaited(_restoreClientExperience());
     _refreshRuntimeSnapshot();
+    if (widget.appContext.hostPlatform == HostPlatform.windows) {
+      _diagnosticsCoordinator.startRuntimePolling(_refreshWindowsRuntimeSnapshot);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.observability?.markUiReady();
       final initialAcquisitionUri = widget.initialAcquisitionUri;
@@ -838,13 +854,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _refreshAccountSummary();
   }
 
-  Future<void> _refreshAccountSummary() async {
-    // Both calls may refresh the same expired app session and reconcile the
-    // same account projection. Keep them ordered so first launch cannot make
-    // two competing account transactions and leave bonuses in an error state.
-    await _refreshSubscriptionInfo();
-    await _loadBonusSummary();
-  }
+  Future<void> _refreshAccountSummary() =>
+      _accountSessionCoordinator.refreshSummary(
+        refreshSubscription: _refreshSubscriptionInfo,
+        refreshBonus: _loadBonusSummary,
+        refreshInbox: _refreshNotifications,
+        isActive: () => mounted,
+      );
 
   Future<void> _restoreClientExperience() async {
     final restoreRevision = _clientExperienceRevision;
@@ -1787,7 +1803,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     if (tab == SeedTab.profile && widget.bootstrapper != null) {
       unawaited(_refreshAccountSummary());
-      unawaited(_refreshNotifications());
     }
   }
 
@@ -1960,6 +1975,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _telegramBonusError = null;
         }
       });
+      if (info.lane == 'expiredOrBlocked') {
+        _cachedProfileFallbackGate.markAuthorizationDenied();
+        _managedProfileDirty = true;
+        _accessDenialPending = true;
+        await _enforceKnownAccessDenial();
+      }
       if (const {'trialPremium', 'paidUnlimited'}.contains(info.lane)) {
         final emergencyService = _emergencyNetworkService;
         if (emergencyService != null) {
@@ -1986,13 +2007,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         BootstrapFailure failure => failure.operationalErrorCode,
         _ => 'API-002',
       };
-      final entitlementCode =
-          error is BootstrapFailure && (error.statusCode ?? 0) >= 500
-              ? 'API-007'
-              : 'ENT-001';
       observability?.recordAuthRequestFinished(errorCode: authCode);
       observability?.recordEntitlementRefreshFinished(
-        errorCode: entitlementCode,
+        errorCode: authCode,
       );
       unawaited(_reportClientRuntimeError('subscription_refresh_failed'));
       if (mounted && showFailure) {
@@ -2048,7 +2065,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<void> _refreshNotifications() async {
     final service = _clientDataService;
-    if (service == null || _notificationsBusy) {
+    if (service == null ||
+        _notificationsBusy ||
+        !_firstSessionCoordinator.isReady) {
       return;
     }
     if (mounted) {
@@ -2248,15 +2267,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   @override
   void dispose() {
-    _seedShellDisposed = true;
-    _managedProfileInvalidationGeneration += 1;
-    _managedProfileInvalidationTimer?.cancel();
-    _managedProfileInvalidationTimer = null;
-    final pendingInvalidation = _managedProfileInvalidationCompletion;
-    if (pendingInvalidation != null && !pendingInvalidation.isCompleted) {
-      pendingInvalidation.complete(false);
-    }
-    _managedProfileInvalidationCompletion = null;
+    _managedProfileLifecycle.dispose();
     unawaited(_acquisitionUriSubscription?.cancel());
     _acquisitionUriSubscription = null;
     WidgetsBinding.instance.removeObserver(this);
@@ -2289,9 +2300,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (state == AppLifecycleState.resumed) {
       unawaited(_resumeRuntimeAndTrustedWifiChecks());
       unawaited(_checkForClientUpdate());
-      unawaited(_refreshNotifications());
       if (_telegramLinkVerificationPending) {
         unawaited(_verifyTelegramLinkAfterHandoff());
+        unawaited(_refreshNotifications());
+      } else if (_firstSessionCoordinator.isReady) {
+        // A browser/cabinet visit may change access on the server. Refresh the
+        // existing account on return without changing the selected tab or
+        // treating the browser return itself as payment confirmation.
+        unawaited(_refreshAccountSummary());
       }
     }
   }
@@ -3478,6 +3494,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     _automaticFailoverGeneration += 1;
     _automaticFailoverInFlight = false;
+    _tcpFallbackFromRevision = '';
     if (_runtimeSnapshot?.phase != RuntimePhase.running) {
       _automaticFailoverAttempts = 0;
     }
@@ -3918,6 +3935,22 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         );
       }
 
+      // Reuse the normal connect barrier: a pending host invalidation must
+      // finish before repair can stage a replacement profile.
+      final invalidated = await _waitForQuickSettingsInvalidation(
+        _managedProfileRevision,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (!invalidated) {
+        throw const BootstrapFailure(
+          'Не удалось обновить настройки для быстрого подключения. Попробуйте ещё раз.',
+        );
+      }
+
+      final profileRevision = _managedProfileRevision;
+
       // A repair always resolves the current account/node/routing contract.
       // Staging is idempotent on the host and the loop runs exactly once.
       onStep?.call(_ProtectionRepairStep.refreshProfile);
@@ -3927,10 +3960,25 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         'repairStageManagedProfile',
         () => _runtimeEngine.stageManagedProfile(managedProfile),
       );
+      if (!mounted) {
+        return;
+      }
+      if (profileRevision != _managedProfileRevision) {
+        setState(() {
+          _runtimeSnapshot = current;
+          _managedProfileDirty = true;
+        });
+        throw const BootstrapFailure(
+          'Настройки изменились. Подключитесь еще раз, чтобы обновить профиль.',
+        );
+      }
       _managedProfileDirty = false;
       _stagedProfileUsesWarp = managedProfile.warpPolicy.canEnableRuntime;
+      _stagedTcpFallbackFromRevision = managedProfile.tcpFallbackFromRevision;
       _stagedNodeCode = _resolvedProfileNodeCode;
       _stagedVariantId = _resolvedProfileVariantId;
+      _stagedCacheInputs = _managedProfileCacheInputs;
+      _stagedProfileCacheEntryId = managedProfile.cacheEntryId;
       _cachedProfileFallbackGate.markFreshProfileStaged();
       onStep?.call(_ProtectionRepairStep.verifyProtection);
       current = await _withRuntimeActionTimeout(
@@ -4276,6 +4324,46 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  Future<void> _enforceKnownAccessDenial() async {
+    if (!mounted || !_accessDenialPending || _runtimeBusy) return;
+    _accessDenialPending = false;
+    if (_runtimeSnapshot?.phase != RuntimePhase.running) {
+      _invalidateQuickSettingsProfile();
+      return;
+    }
+    _cancelPostConnectHostHealthPolling();
+    setState(() {
+      _runtimeBusy = true;
+      _runtimeIntent = ConnectionTransitionIntent.disconnect;
+    });
+    try {
+      var current = await _withRuntimeActionTimeout(
+        'accessDeniedDisconnect',
+        _runtimeEngine.disconnect,
+      );
+      current = await _settleRuntimeDisconnectTransition(current);
+      if (!mounted) return;
+      setState(() {
+        _runtimeSnapshot = current;
+        _emergencyRuntimeActive = false;
+        _runtimeHeadline = 'Доступ не активен. Продлите доступ, чтобы подключиться.';
+      });
+      _invalidateQuickSettingsProfile();
+    } on Object catch (error) {
+      if (mounted) {
+        setState(() => _runtimeHeadline = _runtimeUnexpectedErrorMessage(error));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _runtimeBusy = false;
+          _runtimeIntent = ConnectionTransitionIntent.none;
+        });
+      }
+      widget.shellController?.refresh();
+    }
+  }
+
   Future<RuntimeSnapshot> _runRuntimeAction(
     Future<RuntimeSnapshot> Function() action,
   ) async {
@@ -4283,8 +4371,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _runtimeBusy = true;
     });
 
+    late RuntimeSnapshot snapshot;
     try {
-      final snapshot = await action();
+      snapshot = await action();
       if (!mounted) {
         return snapshot;
       }
@@ -4299,15 +4388,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _runtimeHeadline = null;
       });
       widget.shellController?.refresh();
-      return snapshot;
     } finally {
       if (mounted) {
         setState(() {
           _runtimeBusy = false;
         });
       }
+      await _enforceKnownAccessDenial();
       widget.shellController?.refresh();
     }
+    return _runtimeSnapshot ?? snapshot;
   }
 
   Future<void> _refreshRuntimeSnapshot() async {
@@ -4322,6 +4412,39 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  Future<void> _refreshWindowsRuntimeSnapshot() async {
+    if (!mounted || _runtimeBusy) return;
+    final observed = _runtimeSnapshot;
+    RuntimeSnapshot? refreshed;
+    try {
+      refreshed = await _withRuntimeActionTimeout(
+        'windowsServiceStatus', _runtimeEngine.snapshot,
+      );
+    } on Object {
+      // An unavailable observer cannot retain the previous protection proof.
+      // The next local poll can recover without reconnecting or fetching API.
+    }
+    if (!mounted || _runtimeBusy || !identical(observed, _runtimeSnapshot)) {
+      return;
+    }
+    if (identical(observed, refreshed) ||
+        (observed != null && refreshed != null &&
+            observed.hasSameStateAs(refreshed))) {
+      return;
+    }
+    setState(() {
+      _runtimeSnapshot = refreshed;
+      if (refreshed?.phase != RuntimePhase.running) {
+        _emergencyRuntimeActive = false;
+      }
+      if (observed?.phase != refreshed?.phase ||
+          observed?.isCleanlyHealthy != refreshed?.isCleanlyHealthy) {
+        _runtimeHeadline = null;
+      }
+    });
+    widget.shellController?.refresh();
+  }
+
   Future<T> _withRuntimeActionTimeout<T>(
     String operation,
     Future<T> Function() action,
@@ -4334,8 +4457,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }) async {
     widget.observability?.enterProfilePhase();
     final resolveFuture = _bootstrapper.resolveManagedProfile(
+      timeout: deadline,
       hostPlatform: widget.appContext.hostPlatform,
       routeMode: _selectedRouteMode,
+      tcpFallbackFromRevision: _tcpFallbackFromRevision,
       selectedApps: _selectedRouteMode == RouteMode.selectedApps ||
               _selectedRouteMode == RouteMode.excludedApps
           ? _selectedAppIds
@@ -4350,8 +4475,28 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final payload = deadline == null
         ? await resolveFuture
         : await resolveFuture.timeout(deadline);
+    return _prepareManagedProfile(
+      payload, suppressWarpRuntime: suppressWarpRuntime);
+  }
+
+  ManagedProfileCacheInputs get _managedProfileCacheInputs =>
+      ManagedProfileCacheInputs(
+        hostPlatform: widget.appContext.hostPlatform,
+        routeMode: _selectedRouteMode,
+        selectedApps: _selectedRouteMode == RouteMode.selectedApps ||
+                _selectedRouteMode == RouteMode.excludedApps
+            ? List<String>.of(_selectedAppIds) : const <String>[],
+        preferredNodeCode: _preferredNodeCode,
+        preferredVariantId: _preferredVariantId,
+      );
+
+  Future<ManagedProfilePayload> _prepareManagedProfile(
+    ManagedProfilePayload payload, {
+    bool suppressWarpRuntime = false,
+    bool offline = false,
+  }) async {
     final baseWarpPolicy = payload.warpPolicy.withClientLocalDefaults();
-    final warpStatus = await _fetchWarpStatusOrNull();
+    final warpStatus = offline ? null : await _fetchWarpStatusOrNull();
     final serverDisplayWarpPolicy =
         warpStatus?.applyTo(baseWarpPolicy) ?? baseWarpPolicy;
     final explicitRetryRequested =
@@ -4452,8 +4597,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!file.existsSync()) {
         return false;
       }
-      final age = DateTime.now().difference(file.lastModifiedSync());
-      if (age > const Duration(hours: 24)) {
+      if (!CachedProfileFallbackGate.isCacheTimestampFresh(
+        modifiedAt: file.lastModifiedSync(),
+        now: DateTime.now(),
+      )) {
         return false;
       }
       final decoded = jsonDecode(file.readAsStringSync());
@@ -4741,103 +4888,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  void _invalidateQuickSettingsProfile() {
-    _managedProfileRevision += 1;
-    if (_seedShellDisposed ||
-        widget.appContext.hostPlatform != HostPlatform.android) {
-      return;
-    }
-    _quickSettingsInvalidationRequestedRevision = _managedProfileRevision;
-    _quickSettingsInvalidationInFlight ??= _drainQuickSettingsInvalidations();
-  }
+  void _invalidateQuickSettingsProfile() =>
+      _managedProfileLifecycle.invalidate();
 
-  Future<bool> _waitForQuickSettingsInvalidation(int revision) async {
-    if (_seedShellDisposed ||
-        widget.appContext.hostPlatform != HostPlatform.android) {
-      return true;
-    }
-    while (_quickSettingsInvalidationCompletedRevision < revision) {
-      final pending = _quickSettingsInvalidationInFlight ??=
-          _drainQuickSettingsInvalidations();
-      if (!await pending) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  Future<bool> _drainQuickSettingsInvalidations() async {
-    try {
-      // Snapshot the desired revision for each host call. All edits that land
-      // while it is running collapse into one follow-up call for the latest
-      // revision instead of building an unbounded timeout queue.
-      while (!_seedShellDisposed) {
-        final targetRevision = _quickSettingsInvalidationRequestedRevision;
-        final invalidated = await _runQuickSettingsProfileInvalidation();
-        if (!invalidated) {
-          return false;
-        }
-        _quickSettingsInvalidationCompletedRevision = targetRevision;
-        if (_quickSettingsInvalidationRequestedRevision <= targetRevision) {
-          return true;
-        }
-      }
-      return false;
-    } finally {
-      _quickSettingsInvalidationInFlight = null;
-    }
-  }
-
-  Future<bool> _runQuickSettingsProfileInvalidation() {
-    if (_seedShellDisposed) {
-      return Future<bool>.value(false);
-    }
-    final generation = ++_managedProfileInvalidationGeneration;
-    final completion = Completer<bool>();
-    _managedProfileInvalidationCompletion = completion;
-    final timer = Timer(widget.runtimeActionTimeout, () {
-      if (_seedShellDisposed ||
-          generation != _managedProfileInvalidationGeneration ||
-          completion.isCompleted) {
-        return;
-      }
-      _managedProfileInvalidationTimer = null;
-      completion.complete(false);
-      if (identical(_managedProfileInvalidationCompletion, completion)) {
-        _managedProfileInvalidationCompletion = null;
-      }
-    });
-    _managedProfileInvalidationTimer = timer;
-
-    void complete(bool invalidated, [RuntimeSnapshot? snapshot]) {
-      if (_seedShellDisposed ||
-          generation != _managedProfileInvalidationGeneration ||
-          completion.isCompleted) {
-        return;
-      }
-      timer.cancel();
-      if (identical(_managedProfileInvalidationTimer, timer)) {
-        _managedProfileInvalidationTimer = null;
-      }
-      if (identical(_managedProfileInvalidationCompletion, completion)) {
-        _managedProfileInvalidationCompletion = null;
-      }
-      if (invalidated && mounted && snapshot != null) {
-        setState(() {
-          _runtimeSnapshot = snapshot;
-        });
-      }
-      completion.complete(invalidated);
-    }
-
-    unawaited(
-      _runtimeEngine
-          .invalidateManagedProfile()
-          .then((snapshot) => complete(true, snapshot))
-          .catchError((Object _) => complete(false)),
-    );
-    return completion.future;
-  }
+  Future<bool> _waitForQuickSettingsInvalidation(int revision) =>
+      _managedProfileLifecycle.waitForInvalidation(revision);
 
   Future<void> _toggleRuntime({bool reconnectAfterDisconnect = false}) {
     final observability = widget.observability;
@@ -5010,12 +5065,25 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         });
       }
 
-      final cachedProfileAvailable = _hasFreshCachedManagedProfile(
-        current.stagedConfigPath,
-      );
+      final cacheInputs = _managedProfileCacheInputs;
+      final cacheService = _bootstrapper is CachedManagedProfileBootstrapper
+          ? _bootstrapper as CachedManagedProfileBootstrapper : null;
+      Future<ManagedProfilePayload?> readCache() async => cacheService != null &&
+              !_automaticFailoverInFlight && _tcpFallbackFromRevision.isEmpty
+          ? await cacheService.loadCachedManagedProfile(
+              cacheInputs,
+              preferProven: _cachedProfileFallbackGate.preferProvenProfile,
+            ).timeout(const Duration(seconds: 2), onTimeout: () => null)
+          : null;
+      var cachedPayload = await readCache();
+      final cachedProfileAvailable = cacheService == null
+          ? _hasFreshCachedManagedProfile(current.stagedConfigPath)
+          : cachedPayload != null;
       final cachedProfileFallbackAllowed = _cachedProfileFallbackGate
-          .canFallback(cachedProfileAvailable: cachedProfileAvailable);
-      if (cachedProfileAvailable &&
+          .canFallback(cachedProfileAvailable: cachedProfileAvailable,
+            inputsVerified: cachedPayload != null) &&
+          !_automaticFailoverInFlight && _tcpFallbackFromRevision.isEmpty;
+      if (cacheService == null && cachedProfileAvailable &&
           widget.appContext.hostPlatform == HostPlatform.android) {
         failureOperation = 'cached_profile_migration';
         failureStage = ConnectionStage.profile;
@@ -5024,21 +5092,60 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
       final shouldRefreshManagedProfile = _managedProfileDirty ||
           (current.stagedConfigPath ?? '').isEmpty ||
-          (widget.appContext.hostPlatform == HostPlatform.android &&
+          ((widget.appContext.hostPlatform == HostPlatform.android ||
+                  widget.appContext.hostPlatform == HostPlatform.windows) &&
               (actionIntent == ConnectionTransitionIntent.connect ||
                   actionIntent == ConnectionTransitionIntent.reconnect));
       if (shouldRefreshManagedProfile) {
+        ManagedProfilePayload? managedProfile;
         try {
           failureOperation = 'managed_profile_refresh';
           failureStage = ConnectionStage.profile;
-          final managedProfile = await _resolveManagedProfile(
+          managedProfile = await _resolveManagedProfile(
             deadline: cachedProfileFallbackAllowed
                 ? _cachedProfileRefreshDeadline
                 : widget.runtimeActionTimeout,
           );
+        } on TimeoutException {
+          if (!cachedProfileFallbackAllowed ||
+              !_cachedProfileFallbackGate.canFallback(
+                cachedProfileAvailable: cachedProfileAvailable,
+                inputsVerified: cachedPayload != null,
+              )) {
+            rethrow;
+          }
+          cachedPayload = await readCache();
+          if (cacheService != null && cachedPayload == null) rethrow;
+          usedCachedProfile = true;
+        } on BootstrapFailure catch (error) {
+          if (error.statusCode == 401 || error.statusCode == 403) {
+            _cachedProfileFallbackGate.markAuthorizationDenied();
+          }
+          if (!cachedProfileFallbackAllowed ||
+              !_cachedProfileFallbackGate.canFallback(
+                cachedProfileAvailable: cachedProfileAvailable,
+                inputsVerified: cachedPayload != null,
+              ) ||
+              !_isTransientProfileFailure(error)) {
+            rethrow;
+          }
+          cachedPayload = await readCache();
+          if (cacheService != null && cachedPayload == null) rethrow;
+          usedCachedProfile = true;
+        }
+        if (usedCachedProfile && cachedPayload != null) {
+          // Restore from the protected original, including after process restart
+          // or a host clear. Restaging must not renew the cache timestamp.
+          managedProfile = await _prepareManagedProfile(cachedPayload, offline: true);
+        }
+        final resolvedProfile = managedProfile;
+        if (resolvedProfile != null) {
+          // A stage timeout has an unknown mutation outcome and cannot fall
+          // through to connect using the previous snapshot.
+          failureOperation = 'managed_profile_stage';
           current = await _withRuntimeActionTimeout(
             'stageManagedProfile',
-            () => _runtimeEngine.stageManagedProfile(managedProfile),
+            () => _runtimeEngine.stageManagedProfile(resolvedProfile),
           );
           if (!mounted) {
             return;
@@ -5056,22 +5163,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             _runtimeSnapshot = current;
             _runtimeHeadline = null;
             _managedProfileDirty = false;
-            _stagedProfileUsesWarp = managedProfile.warpPolicy.canEnableRuntime;
+            _stagedProfileUsesWarp =
+                resolvedProfile.warpPolicy.canEnableRuntime;
+            _stagedTcpFallbackFromRevision =
+                resolvedProfile.tcpFallbackFromRevision;
             _stagedNodeCode = _resolvedProfileNodeCode;
             _stagedVariantId = _resolvedProfileVariantId;
-            _cachedProfileFallbackGate.markFreshProfileStaged();
+            _stagedCacheInputs = cacheInputs;
+            _stagedProfileCacheEntryId = resolvedProfile.cacheEntryId;
+            if (!usedCachedProfile) {
+              _cachedProfileFallbackGate.markFreshProfileStaged();
+            }
           });
-        } on TimeoutException {
-          if (!cachedProfileFallbackAllowed) {
-            rethrow;
-          }
-          usedCachedProfile = true;
-        } on BootstrapFailure catch (error) {
-          if (!cachedProfileFallbackAllowed ||
-              !_isTransientProfileFailure(error)) {
-            rethrow;
-          }
-          usedCachedProfile = true;
         }
       }
 
@@ -5210,6 +5313,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           );
         }
         if (current.phase != RuntimePhase.running &&
+            _handleFailedManagedProfile(current)) {
+          return;
+        }
+        if (current.phase != RuntimePhase.running &&
             current.message.trim().isNotEmpty) {
           unawaited(
             _reportClientRuntimeError(
@@ -5269,6 +5376,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (_runtimeSnapshot?.phase != RuntimePhase.running) {
         _connectionCoordinator.clearAttempt();
       }
+      await _enforceKnownAccessDenial();
       widget.shellController?.refresh();
     }
   }
@@ -5405,6 +5513,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _connectionCoordinator.presentation;
 
   void _finalizeProvenConnection(RuntimeSnapshot snapshot) {
+    final cacheService = _bootstrapper;
+    final cacheInputs = _stagedCacheInputs;
+    if (!_emergencyRuntimeActive && snapshot.isCleanlyHealthy &&
+        cacheService is CachedManagedProfileBootstrapper && cacheInputs != null) {
+      unawaited((cacheService as CachedManagedProfileBootstrapper).markManagedProfileProven(
+        cacheInputs, _stagedProfileCacheEntryId));
+    }
     _automaticFailoverAttempts = 0;
     _automaticFailoverInFlight = false;
     _promoteStagedLocationAfterFreshConnect();
@@ -5495,49 +5610,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           widget.shellController?.refresh();
           return;
         }
-        final mustRefreshProfile = _mustRefreshProfileAfterRuntimeFailure(
-          refreshed,
-        );
-        final failedNodeCode = _stagedNodeCode.trim().toLowerCase();
-        final confirmedAutomaticNodeFailure =
-            refreshed.lastFailureKind?.trim() == 'core_egress_probe_failed' &&
-                _preferredNodeCode.trim().isEmpty &&
-                failedNodeCode.isNotEmpty;
-        final shouldRetryAutomatically = confirmedAutomaticNodeFailure &&
-            !_automaticFailoverInFlight &&
-            _automaticFailoverAttempts < _maxAutomaticFailoverAttempts;
-        if (confirmedAutomaticNodeFailure) {
-          _quarantineAutomaticNode(failedNodeCode);
-        }
-        setState(() {
-          _runtimeSnapshot = refreshed;
-          if (mustRefreshProfile) {
-            _managedProfileDirty = true;
-            _stagedNodeCode = '';
-            _stagedVariantId = 'direct';
-          }
-          _runtimeHeadline = shouldRetryAutomatically
-              ? 'Локация не ответила. Пробуем другую…'
-              : refreshed.message.trim().isEmpty
-                  ? 'Подключение остановлено. Попробуйте еще раз.'
-                  : refreshed.message;
-        });
-        if (mustRefreshProfile) {
-          // The last staged profile failed after its TUN was established. Do
-          // not let a later offline fallback restart it under the same UI
-          // choice; the next CTA must resolve and stage a fresh authorized
-          // profile first.
-          _cachedProfileFallbackGate.markRuntimeProfileInvalid();
-          _invalidateQuickSettingsProfile();
-        }
-        if (shouldRetryAutomatically) {
-          _automaticFailoverAttempts += 1;
-          _automaticFailoverInFlight = true;
-          final ownerGeneration = _automaticFailoverGeneration;
-          unawaited(
-            _retryAutomaticLocationAfterEgressFailure(ownerGeneration),
-          );
-        }
+        _handleFailedManagedProfile(refreshed);
         widget.shellController?.refresh();
         return;
       }
@@ -5615,9 +5688,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeSnapshot = staged;
           _managedProfileDirty = !baselineReady;
           _stagedProfileUsesWarp = false;
+          _stagedTcpFallbackFromRevision = baselineReady
+              ? baselineProfile.tcpFallbackFromRevision
+              : '';
           _stagedNodeCode = baselineReady ? _resolvedProfileNodeCode : '';
           _stagedVariantId =
               baselineReady ? _resolvedProfileVariantId : 'direct';
+          _stagedCacheInputs = _managedProfileCacheInputs;
+          _stagedProfileCacheEntryId = baselineReady ? baselineProfile.cacheEntryId : '';
           _managedWarpPolicy = _managedWarpPolicy.copyWith(
             state: 'fallback',
             userConsented: true,
@@ -5671,8 +5749,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _managedProfileDirty = true;
         _stagedNodeCode = '';
         _stagedVariantId = 'direct';
-        _cachedProfileFallbackGate.markRuntimeProfileInvalid();
-        _invalidateQuickSettingsProfile();
+        _cachedProfileFallbackGate.markRuntimeFailure();
       }
       widget.shellController?.refresh();
     } on Object catch (error) {
@@ -5742,16 +5819,77 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _automaticFailoverGeneration += 1;
     _automaticFailoverAttempts = 0;
     _automaticFailoverInFlight = false;
+    _tcpFallbackFromRevision = '';
+  }
+
+  bool _handleFailedManagedProfile(RuntimeSnapshot failed) {
+    final mustRefreshProfile = _mustRefreshProfileAfterRuntimeFailure(failed);
+    final confirmedFailure =
+        failed.lastFailureKind?.trim() == 'core_egress_probe_failed';
+    final failedNodeCode = _stagedNodeCode.trim().toLowerCase();
+    final confirmedAutomaticNodeFailure =
+        confirmedFailure &&
+        _preferredNodeCode.trim().isEmpty &&
+        failedNodeCode.isNotEmpty;
+    final failedLabRevision = _stagedTcpFallbackFromRevision;
+    final confirmedLabFailure =
+        confirmedFailure &&
+        failedLabRevision.isNotEmpty &&
+        _tcpFallbackFromRevision.isEmpty;
+    final shouldRetryAutomatically =
+        (confirmedLabFailure || confirmedAutomaticNodeFailure) &&
+        !_automaticFailoverInFlight &&
+        _automaticFailoverAttempts < _maxAutomaticFailoverAttempts;
+    if (confirmedAutomaticNodeFailure) {
+      _quarantineAutomaticNode(failedNodeCode);
+    }
+    setState(() {
+      _runtimeSnapshot = failed;
+      if (mustRefreshProfile) {
+        _managedProfileDirty = true;
+        _stagedNodeCode = '';
+        _stagedVariantId = 'direct';
+        _stagedTcpFallbackFromRevision = '';
+      }
+      if (shouldRetryAutomatically && confirmedLabFailure) {
+        _tcpFallbackFromRevision = failedLabRevision;
+      }
+      _runtimeHeadline = shouldRetryAutomatically
+          ? confirmedLabFailure
+              ? 'Основное подключение не ответило. Пробуем резервное…'
+              : 'Локация не ответила. Пробуем другую…'
+          : failed.message.trim().isEmpty
+              ? 'Подключение остановлено. Попробуйте еще раз.'
+              : failed.message;
+    });
+    // Preserve the downloaded/proven cache for a manual offline retry.
+    // Automatic failover still requires a newly selected server profile.
+    if (mustRefreshProfile) {
+      _cachedProfileFallbackGate.markRuntimeFailure();
+    }
+    if (shouldRetryAutomatically) {
+      _automaticFailoverAttempts += 1;
+      _automaticFailoverInFlight = true;
+      unawaited(
+        _retryAutomaticLocationAfterEgressFailure(_automaticFailoverGeneration),
+      );
+    }
+    return shouldRetryAutomatically;
   }
 
   Future<void> _retryAutomaticLocationAfterEgressFailure(
     int ownerGeneration,
   ) async {
-    await Future<void>.delayed(const Duration(milliseconds: 250));
+    final retryIndex = (_automaticFailoverAttempts - 1).clamp(0, 1);
+    final retryDelay = Duration(
+      milliseconds: (250 << retryIndex) + math.Random().nextInt(251),
+    );
+    await Future<void>.delayed(retryDelay);
     try {
       if (!mounted ||
           ownerGeneration != _automaticFailoverGeneration ||
-          _preferredNodeCode.trim().isNotEmpty) {
+          (_preferredNodeCode.trim().isNotEmpty &&
+              _tcpFallbackFromRevision.isEmpty)) {
         return;
       }
       await _toggleRuntime();

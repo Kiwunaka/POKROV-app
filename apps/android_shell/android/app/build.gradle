@@ -81,6 +81,10 @@ android {
     }
 
     packaging {
+        resources {
+            // kotlinx.coroutines debugger-only resource; not needed on Android.
+            excludes += ["DebugProbesKt.bin"]
+        }
         jniLibs {
             // Preserve the published Core identity inside APK/AAB packages.
             // Android's strip task otherwise rewrites the Go ELF section table.

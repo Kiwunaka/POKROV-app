@@ -45,7 +45,10 @@ input only; it does not prove signing or publication.
 into strict-v2 metadata by exact repository and revision. It owns published
 manifests, checksums, SBOM/provenance references, and same-byte promotion
 identity. This client source tree does not own or mirror that signed index.
-Access to the public index remains `BLOCKED_BY_ACCESS` for the 1.2.0 candidate.
+A private signed candidate contract retained in Actions is not a published
+release index. Read candidate publication and promotion state from
+`config/cutover-readiness.seed.json`; access to a repository or artifact alone
+does not establish either state.
 
 Generated build output and local caches are not release truth and remain
 untracked.

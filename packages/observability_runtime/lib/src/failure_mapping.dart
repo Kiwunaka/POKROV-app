@@ -122,7 +122,7 @@ abstract final class OperationalFailureMapper {
       return 'CONN-001';
     }
     final normalized = runtimeFailureKind?.trim().toLowerCase() ?? '';
-    return _runtimeCodes[normalized] ?? 'CONN-005';
+    return _runtimeCodes[normalized] ?? 'CORE-009';
   }
 
   static String update(ClientUpdateFailure failure) => switch (failure) {
@@ -198,6 +198,8 @@ abstract final class OperationalFailureMapper {
     'desktop_tun_egress_probe_failed': 'EGRESS-001',
     'emergency_endpoint_unreachable': 'CONN-006',
     'profile_staging_failed': 'CONN-005',
+    'profile_identity_failed': 'CONN-005',
+    'profile_identity_mismatch': 'CONN-005',
     'config_apply_failed': 'CORE-005',
     'notification_permission_denied': 'AND-BG-002',
     'resolver_response_error': 'DNS-002',
@@ -209,13 +211,17 @@ abstract final class OperationalFailureMapper {
     'ipv6_route_unavailable': 'ROUTE-003',
     'egress_region_mismatch': 'EGRESS-002',
     'vpn_permission_revoked': 'AND-VPN-004',
+    'vpn_permission_denied': 'CONN-001',
     'service_protocol_mismatch': 'WIN-SVC-004',
     'default_network_unavailable': 'CONN-003',
-    'default_network_interface_unresolved': 'ROUTE-003',
-    'default_network_index_unresolved': 'ROUTE-003',
+    'default_network_interface_unresolved': 'ROUTE-005',
+    'default_network_index_unresolved': 'ROUTE-005',
     'network_unavailable': 'CONN-003',
-    'tunnel_handshake_failed': 'CORE-006',
-    'runtime_failure': 'CONN-005',
+    'endpoint_connect_failed': 'CONN-006',
+    'endpoint_connect_refused': 'TRANSPORT-002',
+    'transport_timeout': 'TRANSPORT-001',
+    'tunnel_handshake_failed': 'TRANSPORT-004',
+    'runtime_failure': 'CORE-009',
   };
 
   static const Map<OperationalFaultInjection, OperationalFaultExpectation>

@@ -20,10 +20,20 @@ constexpr std::size_t kMaxFrameSize = kFrameHeaderSize + kMaxBodySize;
 constexpr std::uint64_t kCapabilityProtocolV1 = 1ULL << 0;
 constexpr std::uint64_t kCapabilityStatus = 1ULL << 1;
 constexpr std::uint64_t kCapabilityRuntimeControl = 1ULL << 2;
+constexpr std::uint64_t kCapabilityProfileIdentity = 1ULL << 5;
+constexpr std::uint64_t kCapabilityCancellation = 1ULL << 6;
 constexpr std::uint64_t kCapabilityRecovery = 1ULL << 3;
 constexpr std::uint64_t kCapabilitySanitizedDiagnostic = 1ULL << 4;
 
 using Identifier = std::array<std::uint8_t, 16>;
+
+struct CancellationTarget {
+  Identifier session_token{};
+  Identifier operation_nonce{};
+};
+
+std::string EncodeCancellationTarget(const CancellationTarget& target);
+std::optional<CancellationTarget> DecodeCancellationTarget(const std::string& body);
 
 enum class FrameKind : std::uint16_t {
   kHelloRequest = 1,

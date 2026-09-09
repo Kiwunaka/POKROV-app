@@ -1,0 +1,326 @@
+{
+  "schema": "pokrov.r12-windows-firewall-coexistence-receipt/v1",
+  "status": "PASS_BOUNDED",
+  "client_source": "e88dff94bef85650c5f0b3d31dc3ff9a5e39c38a",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "installer_sha256": "29a87a13906909e400037a947f1e4f876ca59821e7e34c73060e623f2d9fbeea",
+  "version": "1.2.0+4053",
+  "installed_files_verified": 305,
+  "build_worktree_state": "unchanged e88dff9 local package; generated registrants dirty at build time",
+  "new_package_built": false,
+  "application_source_changed": false,
+  "origin": "current-origin; owned Windows 11 VM; VirtualBox NAT; managed AWG3.1",
+  "os_version": "10.0.26200",
+  "license_status": 1,
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "probe": {
+    "role": "existing read-only SCM IPC helper; embedded client_source labels helper build only",
+    "embedded_source": "0218e89",
+    "sha256": "7c5e01fd1b46985c768ff5c9a90fb9b2bfd24c65dadb05102b058ca11faad05d"
+  },
+  "method": {
+    "endpoint": "owned https://app.pokrov.space/health; new direct HttpWebRequest connections with TLS1.2 and 8-second deadline",
+    "block_scope": "PowerShell executable, TCP443 and resolved owned health IPv4 addresses only",
+    "local_application": "ordinary-user loopback-only HTTP listener at 127.0.0.1:43919",
+    "firewall_scope": "488 preexisting PersistentStore rules; selected rule/application/address/port/service/interface/security/profile fields; raw policy not exported",
+    "foreign_policy_sha256": "4e0d2af25f09492ac5efb2f8eb1eb9a4efac30210f4ec51a69a27ed30f2d6364",
+    "active_rule_readback": true,
+    "samples": "one before, one connected, one after disconnect; each has baseline/block/restore probes"
+  },
+  "observations": {
+    "before": {
+      "health_before": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 522
+      },
+      "health_blocked": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 9
+      },
+      "health_restored": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 386
+      },
+      "local_responses": [
+        200,
+        200,
+        200
+      ],
+      "running_before": false,
+      "running_after": false,
+      "tun_before": 0,
+      "tun_after": 0,
+      "foreign_policy_unchanged": true
+    },
+    "connected": {
+      "health_before": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 420
+      },
+      "health_blocked": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 33
+      },
+      "health_restored": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 245
+      },
+      "local_responses": [
+        200,
+        200,
+        200
+      ],
+      "running_before": true,
+      "running_after": true,
+      "tun_before": 1,
+      "tun_after": 1,
+      "foreign_policy_unchanged": true
+    },
+    "after": {
+      "health_before": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 520
+      },
+      "health_blocked": {
+        "status": null,
+        "error": "ConnectFailure",
+        "elapsed_ms": 4
+      },
+      "health_restored": {
+        "status": 200,
+        "error": null,
+        "elapsed_ms": 371
+      },
+      "local_responses": [
+        200,
+        200,
+        200
+      ],
+      "running_before": false,
+      "running_after": false,
+      "tun_before": 0,
+      "tun_after": 0,
+      "foreign_policy_unchanged": true
+    }
+  },
+  "routes_and_dns_restored": true,
+  "cleanup": {
+    "utc": "2026-09-08T06:28:40.3203434Z",
+    "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+    "vm_off": true,
+    "nic_none": true,
+    "source_off": true,
+    "routes_sha256": "401e4b0a47c9c8c73d6b52536cec753f09f559ceb2d512884e57d5f7aff72434",
+    "dns_sha256": "720fe40b4ee8ab42f57c808b3c5f824808703b35113fe9999ef97a7bbccdee59",
+    "backend_restored": true,
+    "fixture_rules": 0,
+    "listener_stopped": true,
+    "ui_count": 0,
+    "installed_files_verified": 305,
+    "host_network_unchanged": true
+  },
+  "validation_notes": [
+    "First fixture preparation failed before rule creation because firewall rejected forward-slash Program path; v2 uses native Windows path; first receipt retained",
+    "Initial attempt to change attachment of a disabled NIC was rejected; orderly shutdown followed by NAT configuration and restart was required",
+    "UI launched with ordinary owner token and explicitly disconnected; exact launched PID was stopped only during cleanup",
+    "Local HTTP reachability does not establish loopback firewall enforcement"
+  ],
+  "open_checks": [
+    "other VPN coexistence",
+    "third-party native WFP providers and sublayers",
+    "LAN applications and IPv6",
+    "Windows 10",
+    "independent route and effective location proof",
+    "exact final channel and full W06"
+  ],
+  "release": {
+    "published": false,
+    "deployed": false,
+    "promoted": false,
+    "final_candidate": false
+  },
+  "artifacts": [
+    {
+      "path": "E:/r12-windows-coexistence-20260908/coexist.ps1",
+      "bytes": 8333,
+      "sha256": "b10814a8fe9fecab32d49febadc72f8e72603e135e234e900e97f06817449010"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/coexist-v2.ps1",
+      "bytes": 8333,
+      "sha256": "c855cd1cd968eacdfaeafd4205469e9a12f2697fe373d0bf0be919b792bc0722"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/elevate.ps1",
+      "bytes": 764,
+      "sha256": "9dc33c66c0db73a0682f9ddcd3fe300db92f2b686adc82e602725e44fee1fd8d"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/elevate-v2.ps1",
+      "bytes": 767,
+      "sha256": "c0d44a0978ec5cdf449b7e2b28151cbdebbbd5ce8fa3fdd763188f00039e5991"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/local-server.ps1",
+      "bytes": 1630,
+      "sha256": "265affe857ef9f71fbba4d25b58f4c843d95ae791edfacea64590562401da2f0"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/final-identity.ps1",
+      "bytes": 1902,
+      "sha256": "4cd0342d05252c6c01850f2bc56b22da4dbf130beb5fdff68ae07e52bdc4dc51"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/finish.ps1",
+      "bytes": 2846,
+      "sha256": "148ec67a96969f7d856cdbcfbd29ea43dce1f92cca9a543a109630a66eb656ba"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/lab-control.py",
+      "bytes": 7756,
+      "sha256": "6cbc5a35da7303f0eac2feea0b74f80d8058ab75e1c816b4186ae0ff2228950e"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/host-before.json",
+      "bytes": 283,
+      "sha256": "b1048118f4973e88d1f925a5989e2a76d1f769c9f22d1fabb8cb333e8b5180f9"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/initial-identity.json",
+      "bytes": 499,
+      "sha256": "8d0a6ad6fb14c964c26df5ebe4ab4555b12236bb29ab69e281f316d0bacf8f50"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/prepare.json",
+      "bytes": 1900,
+      "sha256": "60eb4c92633bbb518c7140600bda844349fee493c08b3105545efb193b2b4a39"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/prepare-exit.json",
+      "bytes": 123,
+      "sha256": "87f942d81c3c78b11be3b90dc8fd608cb733a071ca31152adf1ba14aafd5d781"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/prepare-v2.json",
+      "bytes": 3407,
+      "sha256": "f46a359b8131c872756137e6c7232241ec3862d5223b25be65423c66a9bfbb60"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/prepare-v2-exit.json",
+      "bytes": 126,
+      "sha256": "01b401ab66039baca2f89e6de54853230cc81e8a0d125b1f01c7615645628400"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/before.json",
+      "bytes": 7253,
+      "sha256": "3fa12f748bbed5b610f8f6bc3a9112975444b6bb66f86f9c39adc081f11e5c6b"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/before-exit.json",
+      "bytes": 122,
+      "sha256": "43df3736adb9d3b761065b657a04bfc2473f941dd6365f34ccdbd8d031c8ba49"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/connected.json",
+      "bytes": 7234,
+      "sha256": "5dcdae7903cf4a48f0c3747914c289ac8f5df3a053876d256dd1a860c760ae18"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/connected-exit.json",
+      "bytes": 125,
+      "sha256": "c41c53d5e91f450b88c3a62cfd9ac1358d21af79498bb5ba288e150ed4c58273"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/after.json",
+      "bytes": 7247,
+      "sha256": "4189dc0bf10b93397b035629c05b92860930870870a89bad8d6682aac4f3d46f"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/after-exit.json",
+      "bytes": 121,
+      "sha256": "40711c42b155f144f5356d8ffcd13e34d4c544efcf72710253a7b1b3f4ccce1b"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/cleanup.json",
+      "bytes": 3270,
+      "sha256": "5f5819a1ed1c1875b89ab274a25408f07da58e050d47b2e007d5d5d414e135b7"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/cleanup-exit.json",
+      "bytes": 123,
+      "sha256": "58bd44806e594f704dac05e415e5f206a7a70b43cfee40560990f2fdd1511150"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/listener.json",
+      "bytes": 149,
+      "sha256": "269a50d1932a60baf0dc6716259a1d5e61f618ab501fe59e4679ecd9ad956743"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/listener-finished.json",
+      "bytes": 143,
+      "sha256": "5a91491707aab78dac0102f359c0583442fe646a8975b1691fb509ff07529674"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/ordinary-baseline.json",
+      "bytes": 127,
+      "sha256": "b00ab6ecff717be4a8d7daab251851d348d81dbc874f0ca4f4ab96b0931de8b8"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/ordinary-after.json",
+      "bytes": 100,
+      "sha256": "73c7f9b79c0a7f5c0dcfe90210d5bcf1ef1cd8eb4e6c7ec5422d4399f3a32e3d"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/final-identity.json",
+      "bytes": 1292,
+      "sha256": "843a08b4f431134c77dd9093dd9f1fe9e0dcc0e3f1c1646b677ae5fe60bc1abb"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/plan.json",
+      "bytes": 2687,
+      "sha256": "9d6066e477b35546779fb3decf5303289e1f6363bb8a2bb36ec4886e287a876b"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/switch-awg31.json",
+      "bytes": 1149,
+      "sha256": "1356eb8c08888f352d3fd6e79a9b3b0dddb3f034a3e6d7a0f62c795b9aefb612"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/restore.json",
+      "bytes": 1163,
+      "sha256": "f1e12298af36d10de101be6a70a96f140373a5912ac32f52960b85362ec43d93"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/return-state.json",
+      "bytes": 507,
+      "sha256": "c562169e8cde1f574978f62afd5ed5b87b696cb31d4cf2417c54c2925c261a41"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/ui-before.png",
+      "bytes": 100895,
+      "sha256": "cd3f8d8deb2508a0d4f87634736d27e22c69ade4c5d9cb051f00d4c6c58f86c9"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/ui-connect-01.png",
+      "bytes": 118939,
+      "sha256": "92c54182c33bf66c365b8af28e202788dcf6fba55b2a3a745be0f83f9b524d0d"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/ui-connected.png",
+      "bytes": 103435,
+      "sha256": "e5c13920d191fc69058d64b42f9a55874d17f7b96e075c827813a1d0f8803a97"
+    },
+    {
+      "path": "E:/r12-windows-coexistence-20260908/retain-evidence.py",
+      "bytes": 7800,
+      "sha256": "98083754659740ccb1bc1b956761e96c2086d8a6f844542f011cd776c905de58"
+    }
+  ]
+}

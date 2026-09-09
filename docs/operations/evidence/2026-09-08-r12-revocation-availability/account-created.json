@@ -1,0 +1,8 @@
+﻿{
+    "account":  "R12Revocation",
+    "status":  "DISPATCHED",
+    "administrator_member":  false,
+    "credential_location":  "guest-only DPAPI protected file",
+    "utc":  "2026-09-08T13:44:54.1198730Z",
+    "worker_pid":  5712
+}
