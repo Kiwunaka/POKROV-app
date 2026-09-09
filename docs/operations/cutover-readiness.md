@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-09-06
+Last updated: 2026-09-09
 
 ## Document Status
 
@@ -20,6 +20,12 @@ If prose disagrees with these machine contracts, stop and reconcile the
 contracts. Do not select the most optimistic status.
 
 ## Current Decision
+
+[Candidate.33 retention rechecked on 2026-09-09](evidence/2026-09-09-r12-candidate33-retention/README.md):
+all 24 local files remain, including 21 matches to previously pinned hashes.
+Five related CI archives were retained with their individual deadlines: Core
+receipts/SBOM expire on September 13, signer output on September 18. This closes
+R12-G02 preservation only; the candidate verdict and runtime gates below remain.
 
 Owner checkpoint, 2026-09-05: execution is `OWNER_PAUSED_FOR_REPLANNING`.
 Preserve candidate.33 and all partial/blocked results as-is. Do not continue

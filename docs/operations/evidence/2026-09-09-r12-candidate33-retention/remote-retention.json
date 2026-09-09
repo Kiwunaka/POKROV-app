@@ -1,0 +1,179 @@
+{
+  "recorded_at_utc": "2026-09-09T01:25:33.489934+00:00",
+  "origin": "current-origin authenticated GitHub REST",
+  "runs": [
+    {
+      "repository": "Kiwunaka/pokrov",
+      "run_id": 33851401873,
+      "endpoint": "repos/Kiwunaka/pokrov/actions/runs/33851401873/artifacts",
+      "total_count": 1,
+      "artifacts": [
+        {
+          "id": 9928470408,
+          "name": "pokrov-pokrov-1.2.0-candidate.33-signed-manifest-63993fba699b68641b7e972071ab7729fa9ec43c",
+          "size_in_bytes": 7955,
+          "digest": "sha256:e31d70082cc9417e088868f6d09a139cb0a8fecd95025b6d28b314a30f59e844",
+          "expired": false,
+          "created_at": "2026-09-04T08:01:26Z",
+          "expires_at": "2026-09-18T08:01:25Z",
+          "workflow_run": {
+            "id": 33851401873,
+            "repository_id": 1262255691,
+            "head_repository_id": 1262255691,
+            "head_branch": "main",
+            "head_sha": "63993fba699b68641b7e972071ab7729fa9ec43c"
+          },
+          "local_archive": "9928470408.zip",
+          "local_archive_sha256": "e31d70082cc9417e088868f6d09a139cb0a8fecd95025b6d28b314a30f59e844",
+          "local_archive_bytes": 7955,
+          "files": [
+            {
+              "path": "9928470408/release-index.json",
+              "bytes": 6884,
+              "sha256": "5620c2f0558e7c9a0f8ff8dfbcd47523986dd7fdf13f061e81adab3b10a3f680"
+            },
+            {
+              "path": "9928470408/release-index.json.sig",
+              "bytes": 64,
+              "sha256": "5115ab3cd8ee0fa49018e521f75fd9baf5d469c2793a8a47cda4a965b82d3191"
+            },
+            {
+              "path": "9928470408/signing-receipt.json",
+              "bytes": 589,
+              "sha256": "f84843c81f9173072dcb3f3f551f7ef5ca9e41c21312ddec77ca0fe6cb6b78d7"
+            }
+          ],
+          "retention_result": "ARCHIVE_DIGEST_AND_MEMBER_CRC_PASS"
+        }
+      ]
+    },
+    {
+      "repository": "Kiwunaka/pokrov-core",
+      "run_id": 33303561763,
+      "endpoint": "repos/Kiwunaka/pokrov-core/actions/runs/33303561763/artifacts",
+      "total_count": 4,
+      "artifacts": [
+        {
+          "id": 9729821940,
+          "name": "core-android-pre-candidate-evidence",
+          "size_in_bytes": 1271,
+          "digest": "sha256:d884eb33044ece14bc06c939cb27db253725b904026503ef80ae31ce9ae7446d",
+          "expired": false,
+          "created_at": "2026-08-30T09:22:48Z",
+          "expires_at": "2026-09-13T09:22:47Z",
+          "workflow_run": {
+            "id": 33303561763,
+            "repository_id": 1309638069,
+            "head_repository_id": 1309638069,
+            "head_branch": "codex/secret-safe-core-logging",
+            "head_sha": "cd8f0f4169d570d693992a959d81d17c2c44884d"
+          },
+          "local_archive": "9729821940.zip",
+          "local_archive_sha256": "d884eb33044ece14bc06c939cb27db253725b904026503ef80ae31ce9ae7446d",
+          "local_archive_bytes": 1271,
+          "files": [
+            {
+              "path": "9729821940/core-android-evidence.json",
+              "bytes": 2127,
+              "sha256": "662a41b9e70ed9dc8d2c88753b54f705b845f9004f909e74fa287795a355968a"
+            }
+          ],
+          "retention_result": "ARCHIVE_DIGEST_AND_MEMBER_CRC_PASS"
+        },
+        {
+          "id": 9729818862,
+          "name": "core-windows-pre-candidate-evidence",
+          "size_in_bytes": 1330,
+          "digest": "sha256:669568b0a48c2203d08393a77fca4df2842d9d7bd294396a3ce4d35a2d33b8de",
+          "expired": false,
+          "created_at": "2026-08-30T09:22:34Z",
+          "expires_at": "2026-09-13T09:22:34Z",
+          "workflow_run": {
+            "id": 33303561763,
+            "repository_id": 1309638069,
+            "head_repository_id": 1309638069,
+            "head_branch": "codex/secret-safe-core-logging",
+            "head_sha": "cd8f0f4169d570d693992a959d81d17c2c44884d"
+          },
+          "local_archive": "9729818862.zip",
+          "local_archive_sha256": "669568b0a48c2203d08393a77fca4df2842d9d7bd294396a3ce4d35a2d33b8de",
+          "local_archive_bytes": 1330,
+          "files": [
+            {
+              "path": "9729818862/core-windows-evidence.json",
+              "bytes": 2341,
+              "sha256": "9c6bfc12bc8e2e030411b5df18581aedc5fcd73e08d5846eed05f5bc1c0fd9fc"
+            }
+          ],
+          "retention_result": "ARCHIVE_DIGEST_AND_MEMBER_CRC_PASS"
+        },
+        {
+          "id": 9729813473,
+          "name": "core-apple-pre-candidate-evidence",
+          "size_in_bytes": 1924,
+          "digest": "sha256:631c8c5b11293873b1295130cb5a314839048508e4da02521854f1eea1a9ee14",
+          "expired": false,
+          "created_at": "2026-08-30T09:22:11Z",
+          "expires_at": "2026-09-13T09:22:10Z",
+          "workflow_run": {
+            "id": 33303561763,
+            "repository_id": 1309638069,
+            "head_repository_id": 1309638069,
+            "head_branch": "codex/secret-safe-core-logging",
+            "head_sha": "cd8f0f4169d570d693992a959d81d17c2c44884d"
+          },
+          "local_archive": "9729813473.zip",
+          "local_archive_sha256": "631c8c5b11293873b1295130cb5a314839048508e4da02521854f1eea1a9ee14",
+          "local_archive_bytes": 1924,
+          "files": [
+            {
+              "path": "9729813473/core-apple-evidence.json",
+              "bytes": 8300,
+              "sha256": "641f6675b08a17579f219fae6bf98089f4a23254dc780a09bfcba8e7e649c251"
+            }
+          ],
+          "retention_result": "ARCHIVE_DIGEST_AND_MEMBER_CRC_PASS"
+        },
+        {
+          "id": 9729751245,
+          "name": "core-source-sbom",
+          "size_in_bytes": 55454,
+          "digest": "sha256:fac52c3ee5dc79f6728ef740e704b190f3d7b4a407f1646801f60a5f1469c8b6",
+          "expired": false,
+          "created_at": "2026-08-30T09:17:35Z",
+          "expires_at": "2026-09-13T09:17:34Z",
+          "workflow_run": {
+            "id": 33303561763,
+            "repository_id": 1309638069,
+            "head_repository_id": 1309638069,
+            "head_branch": "codex/secret-safe-core-logging",
+            "head_sha": "cd8f0f4169d570d693992a959d81d17c2c44884d"
+          },
+          "local_archive": "9729751245.zip",
+          "local_archive_sha256": "fac52c3ee5dc79f6728ef740e704b190f3d7b4a407f1646801f60a5f1469c8b6",
+          "local_archive_bytes": 55454,
+          "files": [
+            {
+              "path": "9729751245/pokrov-core.cdx.json",
+              "bytes": 313052,
+              "sha256": "cc8d93fc6b602b3d1c080b4f3d32367b231536a54c9bfa71272b0e1bd055e88e"
+            },
+            {
+              "path": "9729751245/sing-box.cdx.json",
+              "bytes": 268331,
+              "sha256": "04c0972025e3ade1e74294cf7adb5cb79e616ea03899bc131aadc1bb30d6ce51"
+            }
+          ],
+          "retention_result": "ARCHIVE_DIGEST_AND_MEMBER_CRC_PASS"
+        }
+      ]
+    },
+    {
+      "repository": "Kiwunaka/POKROV-app",
+      "run_id": 33849479969,
+      "endpoint": "repos/Kiwunaka/POKROV-app/actions/runs/33849479969/artifacts",
+      "total_count": 0,
+      "artifacts": []
+    }
+  ]
+}
