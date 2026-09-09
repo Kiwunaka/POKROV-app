@@ -2041,6 +2041,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         hostPlatform: widget.appContext.hostPlatform,
         runtimePhase: phase,
         connected: connected,
+        connectivitySnapshot: _runtimeSnapshot,
         errorCode: errorCode,
         selectedNodeCode: _activeNodeCode.isNotEmpty
             ? _activeNodeCode
@@ -4388,6 +4389,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _runtimeHeadline = null;
       });
       widget.shellController?.refresh();
+      if (_firstLaunchStep == _FirstLaunchStep.ready) {
+        unawaited(_reportClientLifecycle("runtime_observed"));
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -4442,6 +4446,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _runtimeHeadline = null;
       }
     });
+    unawaited(_reportClientLifecycle("runtime_observed"));
     widget.shellController?.refresh();
   }
 
@@ -5377,6 +5382,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _connectionCoordinator.clearAttempt();
       }
       await _enforceKnownAccessDenial();
+      if (mounted) unawaited(_reportClientLifecycle("runtime_observed"));
       widget.shellController?.refresh();
     }
   }
@@ -5482,6 +5488,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         hostPlatform: widget.appContext.hostPlatform,
         runtimePhase: snapshot.phase.name,
         connected: snapshot.phase == RuntimePhase.running,
+        connectivitySnapshot: snapshot,
         selectedNodeCode: _activeNodeCode.isNotEmpty
             ? _activeNodeCode
             : _resolvedProfileNodeCode,

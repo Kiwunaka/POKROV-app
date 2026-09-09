@@ -75,6 +75,7 @@ class _StubBootstrapper
     int? attemptNumber,
     bool? retryable,
     String networkClass = '',
+    RuntimeSnapshot? connectivitySnapshot,
   }) async {
     onRuntimeStats?.call(runtimePhase, connected);
     if (errorCode.isNotEmpty) {
@@ -297,8 +298,10 @@ void main() {
     expect(hintStateFile().readAsStringSync().trim(), 'done');
     expect(reports, <(String, bool)>[
       ('app_opened', false),
+      ('runtime_observed', false),
       ('connect_requested', false),
       ('running', true),
+      ('runtime_observed', false),
     ]);
     expect(onboardingCompleted, 1);
     expect(
@@ -338,8 +341,10 @@ void main() {
     expect(hintStateFile().existsSync(), isFalse);
     expect(reports, <(String, bool)>[
       ('app_opened', false),
+      ('runtime_observed', false),
       ('connect_requested', false),
       ('failed', false),
+      ('runtime_observed', false),
     ]);
     expect(errors, <String>['runtime_start_failed']);
     expect(onboardingCompleted, 0);

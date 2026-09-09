@@ -324,6 +324,17 @@ Equal status values do not rebuild the shell or notify tray listeners. The
 comparison includes diagnostics and profile revision/identity values, so a
 health or source change within the same runtime phase still reaches the UI.
 
+Runtime diagnostics retain the fetched, staged and effective upstream revision
+and protocol family separately from local content digests. The shell sends only
+these bounded fields, proof stage and optional observation time in the existing
+authenticated runtime-stats request. Local paths, profile contents and digests
+are omitted. Reports use a random per-bootstrap run ID and monotonic sequence;
+they do not establish server traffic proof, access or onboarding completion.
+The observation time is the first locally observed transition into full healthy
+proof. Ordinary polling never renews it; unhealthy state or changed effective
+content clears it. Attaching to an already healthy service leaves the time
+unknown. Protocol data missing from an older cache is reported as unknown.
+
 If restart or a final journal-write failure leaves the transaction at
 `recovered`, retry clears the saved network snapshot in the atomic `clean`
 commit. A failed write retains the `recovered` checkpoint and its snapshot for

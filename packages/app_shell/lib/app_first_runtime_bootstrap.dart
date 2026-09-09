@@ -16,6 +16,7 @@ import 'emergency_network_contract.dart';
 import 'src/emergency/emergency_network_store.dart';
 import 'src/observability/release_health_baseline.dart';
 import 'src/shell/managed_profile_cache.dart';
+import 'src/shell/runtime_connectivity_report.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -564,6 +565,7 @@ abstract interface class AppFirstExperienceService {
     int? attemptNumber,
     bool? retryable,
     String networkClass = '',
+    RuntimeSnapshot? connectivitySnapshot,
   });
 
   Future<void> completeAccountOnboarding({
@@ -2708,6 +2710,8 @@ class AppFirstRuntimeBootstrapper
   final EmergencyEnvelopeVerifier _emergencyEnvelopeVerifier;
   final EmergencyNetworkStore _emergencyNetworkStore;
   final ManagedProfileCache _managedProfileCache;
+  final String _runtimeReportRunId = OperationalIdFactory().uuidV4();
+  int _runtimeReportSequence = 0;
   bool _networkContextInFlight = false;
   DateTime? _lastNetworkContextAt;
   String _lastNetworkContextAccount = '';
@@ -2869,7 +2873,8 @@ class AppFirstRuntimeBootstrapper
         configPayload: config,
         materializedForRuntime: true,
         source: RuntimeProfileSource(
-          revision: revision, origin: RuntimeProfileSourceOrigin.managedManifest),
+          revision: revision, origin: RuntimeProfileSourceOrigin.managedManifest,
+          protocol: _readText(value['protocol'])),
         tcpFallbackFromRevision: _readText(value['tcp_fallback_from_revision']),
         routeMode: inputs.routeMode,
         resolvedNodeCode: _readText(value['resolved_node_code']),
@@ -3052,6 +3057,7 @@ class AppFirstRuntimeBootstrapper
                 payload: <String, Object?>{
                   'cache_entry_id': payload.cacheEntryId,
                   'revision': manifest.profileRevision,
+                  'protocol': payload.source?.protocol,
                   'config_payload': payload.configPayload,
                   'resolved_node_code': payload.resolvedNodeCode,
                   'tcp_fallback_from_revision': payload.tcpFallbackFromRevision,
@@ -3405,6 +3411,7 @@ class AppFirstRuntimeBootstrapper
     int? attemptNumber,
     bool? retryable,
     String networkClass = '',
+    RuntimeSnapshot? connectivitySnapshot,
   }) async {
     final phase = runtimePhase.trim().toLowerCase();
     final safeErrorCode = errorCode.trim().toLowerCase();
@@ -3422,6 +3429,9 @@ class AppFirstRuntimeBootstrapper
       body: <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,
+        'report_run_id': _runtimeReportRunId,
+        'report_sequence': ++_runtimeReportSequence,
+        'connectivity': runtimeConnectivityReport(connectivitySnapshot),
         if (RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,
         if (RegExp(r'^[a-z0-9_.-]{1,32}$').hasMatch(safeNodeCode))
@@ -6106,6 +6116,11 @@ class AppFirstRuntimeBootstrapper
       source: RuntimeProfileSource(
         revision: _readText(response['profile_revision']),
         origin: RuntimeProfileSourceOrigin.managedManifest,
+        protocol: switch (_readText(response['transport_kind'])) {
+          'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
+          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' => 'vless',
+          _ => 'unknown',
+        },
       ),
       profileName: _profileName(
         hostPlatform: hostPlatform,

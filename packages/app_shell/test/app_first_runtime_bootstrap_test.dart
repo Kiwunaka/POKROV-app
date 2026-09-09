@@ -2006,15 +2006,23 @@ void main() {
       'POST /api/events',
       'POST /api/acquisition/handoffs/consume',
     ]);
+    final reportRunId = statsBodies.first['report_run_id'];
+    expect(reportRunId, matches(RegExp(r'^[0-9a-f-]{36}$')));
     expect(statsBodies, <Map<String, dynamic>>[
       <String, Object?>{
         'runtime_phase': 'running',
         'connected': true,
+        'report_run_id': reportRunId,
+        'report_sequence': 1,
+        'connectivity': {'proof_stage': 'unknown'},
       },
       <String, Object?>{
         'runtime_phase': 'failed',
         'connected': false,
         'error_code': 'pairing_claim_failed',
+        'report_run_id': reportRunId,
+        'report_sequence': 2,
+        'connectivity': {'proof_stage': 'unknown'},
       },
     ]);
     expect(telegramLinkEventBodies, <Map<String, dynamic>>[
