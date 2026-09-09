@@ -26,7 +26,7 @@ $requiredFragments = @(
   "repository: Kiwunaka/portal",
   "ref: `${{ github.event_name == 'workflow_dispatch' && inputs.platform_ref || 'master' }}",
   "repository: Kiwunaka/pokrov-core",
-  "ref: `${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || 'main' }}",
+  "ref: `${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 95 && '1f9a5a8865b80067784b893ef99d43c63f943777' || 'main' }}",
   "fetch-depth: 0",
   "Materialize bound Core source authority",
   "client/config/runtime-artifacts.seed.json",
