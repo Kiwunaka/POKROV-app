@@ -39,7 +39,7 @@ No app Connect button was used. Opening the app subsequently observed the tunnel
 refreshing its protection sheet confirmed tunnel, DNS and VPN egress.
 **PASS_SYSTEM_START_WITHOUT_APP_CONNECT** on these exact APK bytes.
 
-## Verification and pending evidence
+## Verification and initial pending evidence
 
 - Gradle `:app:testDirectDebugUnitTest :app:testStoreDebugUnitTest`: 188 tests per
   flavor, zero failures, errors or skips.
@@ -62,3 +62,25 @@ retain exact identities and observations. Device helpers are linked from the ear
 [Huawei evidence](../2026-09-10-r12-huawei-current/README.md); private profile and raw UI data are not retained.
 
 Documentation validation: `pwsh.exe -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation` — PASS; [log](client-seed.log). `git diff --check` PASS, no release-artifact delta.
+
+## Completed reboot follow-up
+
+After the owner manually unlocked and reconnected USB, a new boot identity,
+foreground VPN service and tun0 were observed before the runner opened the app.
+The runner did not press Connect. [Native result](alwayson-after-unlock-result.json):
+**PASS_AUTOMATIC_AFTER_REBOOT_NATIVE**, 2026-09-09 22:59:31 UTC. This records
+the runner's actions; it does not attest to unobserved actions outside the runner.
+The subsequent app protection refresh confirmed tunnel, DNS and VPN egress.
+
+Disabling the actual always-on system switch stopped the service and removed
+the TUN. Always-on and lockdown are now OFF; Frankfurt, selected apps and exact
+APK identity remain unchanged. All seven [restoration checks](alwayson-postboot-result.json)
+passed at 23:00:44 UTC. No preboot route identity claim is made.
+
+PR96 merged as `ead081fbeb3831dc9aeda289ffcee51bbe01023c`; exact merge CI
+run34414964728 PASS. [Binding](alwayson-merge-binding.json) verifies both signed
+commits have the same tree. The pending observations above describe the earlier
+checkpoint and are superseded by this follow-up. Public release bytes remain unchanged;
+full D03 acceptance remains open. The phone was returned to the owner.
+
+Postboot documentation validation: same `validate-seed.ps1` command PASS; [log](postboot-client-seed.log). All 27 retained file hashes verified; no release-artifact delta.

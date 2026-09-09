@@ -1,15 +1,15 @@
 {
-  "status": "PASS_SYSTEM_START_WITHOUT_APP_CONNECT",
+  "status": "PASS_SYSTEM_START_REBOOT_AND_RESTORATION",
   "client_source": "c691c708e9a3bf0e46451eb40481aaea670dc449",
   "core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
   "artifact_sha256": "03924eee799e15b1e1486646331de832d46bb5857fcfbf94d414afb6ff36847c",
   "backend_source": "6b34dfd52003e820ca46f0b7365746b94fbb89d2",
   "ci_pr": "PASS",
-  "main_promotion": "PENDING",
-  "reboot_observation": "PENDING_OWNER_UNLOCK",
-  "final_settings_restoration": "PENDING_OWNER_UNLOCK",
+  "main_promotion": "PASS",
+  "reboot_observation": "PASS_AUTOMATIC_AFTER_REBOOT_NATIVE",
+  "final_settings_restoration": "PASS_POSTBOOT_PROTECTION_AND_SETTINGS_RESTORED",
   "last_known_settings": {
-    "always_on": true,
+    "always_on": false,
     "lockdown": false
   },
   "release_artifacts_changed": false,
@@ -105,7 +105,64 @@
       "file": "client-seed.log",
       "sha256": "ca0e53d975fe4025985ba8e43813ea6e72e5f08025dd586ea4940ca880b7feca",
       "bytes": 1818
+    },
+    {
+      "file": "alwayson-after-unlock-native.json",
+      "sha256": "e63f46ac33ed5d4892b2e21c2916361fc9f9c34836e830c3108e2d9f2a92e28e",
+      "bytes": 4301
+    },
+    {
+      "file": "alwayson-after-unlock-result.json",
+      "sha256": "c0cc874ce32771c52b883860a69453903144f2e338c877db1b297b6d1ea3286d",
+      "bytes": 434
+    },
+    {
+      "file": "alwayson-after-unlock.py",
+      "sha256": "bfafee3ad65d0c9a296bd78ece9928fa765571081776ff045efb309509a3f9c5",
+      "bytes": 1174
+    },
+    {
+      "file": "alwayson-postboot-app.json",
+      "sha256": "35855d79d97a73c7e25564bf2829c6be1194ea2578210d465d6cfdbae3289de6",
+      "bytes": 4629
+    },
+    {
+      "file": "alwayson-postboot-restored.json",
+      "sha256": "743b0dd9a543fecfcea60f4e577a209bd38f8774ac3dff9f6f4bb283a6b15e83",
+      "bytes": 2969
+    },
+    {
+      "file": "alwayson-postboot-result.json",
+      "sha256": "78c115443a09edc954e86423a3715ebee7d3ced0dcc370730ea0e518a74afb77",
+      "bytes": 986
+    },
+    {
+      "file": "alwayson-postboot-restore.py",
+      "sha256": "7a751a12c9df92f630ae34424fda1cd5e25930fdef85b4748704cc5114b770ca",
+      "bytes": 2373
+    },
+    {
+      "file": "alwayson-merge-binding.json",
+      "sha256": "c36e23fc62a65ee636f18599a52250708b4db3966e660204bf03140c52e722bc",
+      "bytes": 597
+    },
+    {
+      "file": "postboot-client-seed.log",
+      "sha256": "b2b4fa8d09fa35e5900369e1ad65168b0a5f5bb260dfb67315b50e0b9f6845ab",
+      "bytes": 1818
     }
   ],
-  "documentation_validation": "PASS_SEED_DOCS_DIFF"
+  "documentation_validation": "PASS_SEED_DOCS_DIFF",
+  "prior_observation": {
+    "status": "PASS_SYSTEM_START_WITHOUT_APP_CONNECT",
+    "main_promotion": "PENDING",
+    "reboot_observation": "PENDING_OWNER_UNLOCK",
+    "final_settings_restoration": "PENDING_OWNER_UNLOCK",
+    "last_known_settings": {
+      "always_on": true,
+      "lockdown": false
+    }
+  },
+  "merge_source": "ead081fbeb3831dc9aeda289ffcee51bbe01023c",
+  "ci_merge": "PASS"
 }
