@@ -82,6 +82,26 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Android starts always-on VPN without our explicit START command.
+        // Reuse only the previously confirmed, digest-bound profile; the normal
+        // start path below still validates its contents before creating a TUN.
+        val commandIntent = if (intent?.action == null || intent.action == SERVICE_INTERFACE) {
+            if (isTunEstablished() || AndroidRuntimeState.isConnectionPending()) {
+                return START_NOT_STICKY
+            }
+            val profile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(this)
+                ?.takeIf { it.canStartFromQuickSettings() }
+            Intent(this, PokrovRuntimeVpnService::class.java).apply {
+                action = ACTION_START
+                profile?.let {
+                    putExtra(EXTRA_CONFIG_PATH, it.configPath)
+                    putExtra(EXTRA_ROUTE_MODE, it.routeMode)
+                    putExtra(EXTRA_PROFILE_DIGEST, it.configDigest)
+                }
+            }
+        } else {
+            intent
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
             android.content.pm.PackageManager.PERMISSION_GRANTED &&
@@ -89,7 +109,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         ) {
             AndroidRuntimeState.markSystemNotificationWarning()
         }
-        when (intent?.action) {
+        when (commandIntent.action) {
             ACTION_STOP -> {
                 AndroidOperationalJournal.record(
                     AndroidOperationalEvent.VPN_SERVICE,
@@ -97,7 +117,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     activeRuntimeSession?.generation,
                 )
                 val commandGeneration = serviceCommandGeneration.incrementAndGet()
-                val tileGeneration = intent.getLongExtra(
+                val tileGeneration = commandIntent.getLongExtra(
                     PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION,
                     NO_TILE_TRANSITION_GENERATION,
                 ).takeIf { it != NO_TILE_TRANSITION_GENERATION }
@@ -140,10 +160,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     stopSelf()
                     return START_NOT_STICKY
                 }
-                val configPath = intent.getStringExtra(EXTRA_CONFIG_PATH)
-                val routeMode = intent.getStringExtra(EXTRA_ROUTE_MODE).orEmpty()
-                val expectedDigest = intent.getStringExtra(EXTRA_PROFILE_DIGEST).orEmpty()
-                val tileGeneration = intent.getLongExtra(
+                val configPath = commandIntent.getStringExtra(EXTRA_CONFIG_PATH)
+                val routeMode = commandIntent.getStringExtra(EXTRA_ROUTE_MODE).orEmpty()
+                val expectedDigest = commandIntent.getStringExtra(EXTRA_PROFILE_DIGEST).orEmpty()
+                val tileGeneration = commandIntent.getLongExtra(
                     PokrovQuickSettingsTileService.EXTRA_TILE_TRANSITION_GENERATION,
                     NO_TILE_TRANSITION_GENERATION,
                 ).takeIf { it != NO_TILE_TRANSITION_GENERATION }
