@@ -84,10 +84,11 @@ enum RuntimeProfileSourceOrigin { managedManifest, signedEmergencyEnvelope }
 /// Upstream revision carried alongside its materialized local execution input.
 /// This does not prove the server still desires this revision after the fetch.
 class RuntimeProfileSource {
-  const RuntimeProfileSource({required this.revision, required this.origin});
+  const RuntimeProfileSource({required this.revision, required this.origin, this.protocol = "unknown"});
 
   final String revision;
   final RuntimeProfileSourceOrigin origin;
+  final String protocol;
 }
 
 class RuntimeSnapshot {
@@ -118,6 +119,7 @@ class RuntimeSnapshot {
     this.fetchedProfileSource,
     this.stagedProfileSource,
     this.effectiveProfileSource,
+    this.proofObservedAt,
     this.lastFailureKind,
     this.lastStopReason,
     this.safeProtocolDiagnosticCode,
@@ -157,6 +159,10 @@ class RuntimeSnapshot {
   final RuntimeProfileSource? fetchedProfileSource;
   final RuntimeProfileSource? stagedProfileSource;
   final RuntimeProfileSource? effectiveProfileSource;
+
+  /// First observed transition into this proof. Unknown when attaching to an
+  /// already proven service; polling alone never renews this timestamp.
+  final DateTime? proofObservedAt;
   final String? lastFailureKind;
   final String? lastStopReason;
   final String? safeProtocolDiagnosticCode;
@@ -195,9 +201,10 @@ class RuntimeSnapshot {
         stagedProfileDigest,
         effectiveProfileDigest,
         profileIdentityOrigin,
-        (fetchedProfileSource?.revision, fetchedProfileSource?.origin),
-        (stagedProfileSource?.revision, stagedProfileSource?.origin),
-        (effectiveProfileSource?.revision, effectiveProfileSource?.origin),
+        (fetchedProfileSource?.revision, fetchedProfileSource?.origin, fetchedProfileSource?.protocol),
+        (stagedProfileSource?.revision, stagedProfileSource?.origin, stagedProfileSource?.protocol),
+        (effectiveProfileSource?.revision, effectiveProfileSource?.origin, effectiveProfileSource?.protocol),
+        proofObservedAt,
         lastFailureKind,
         lastStopReason,
         safeProtocolDiagnosticCode,
@@ -2861,6 +2868,9 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   final RuntimeLane runtimeLane;
   ManagedProfilePayload? _stagedPayload;
   RuntimeProfileSource? _fetchedSource;
+  bool? _previousFullProof;
+  DateTime? _proofObservedAt;
+  String? _lastProofDigest;
   String? _acknowledgedProfileDigest;
 
   static const defaultCoreTag = DesktopRuntimeEngine.defaultCoreTag;
@@ -3362,6 +3372,19 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
             stagedDigest == effectiveDigest
         ? _stagedPayload?.source
         : null;
+    final fullProof = phase == RuntimePhase.running &&
+        resolvedHostHealth == RuntimeHostHealth.healthy &&
+        resolvedDnsState == RuntimeDiagnosticState.healthy &&
+        resolvedUplinkState == RuntimeDiagnosticState.healthy &&
+        dnsReady != false && coreEgressValidated == true;
+    if (!fullProof || _lastProofDigest != effectiveDigest) {
+      _proofObservedAt = null;
+    }
+    if (fullProof && _previousFullProof == false) {
+      _proofObservedAt = DateTime.now().toUtc();
+    }
+    _previousFullProof = fullProof;
+    _lastProofDigest = effectiveDigest;
     return RuntimeSnapshot(
       hostPlatform: hostPlatform,
       lane: runtimeLane,
@@ -3375,6 +3398,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       fetchedProfileSource: _fetchedSource,
       stagedProfileSource: stagedSource,
       effectiveProfileSource: effectiveSource,
+      proofObservedAt: _proofObservedAt,
       profileIdentityOrigin: const {
         'windows_service_stage_request_sha256',
         'android_private_stage_request_sha256',

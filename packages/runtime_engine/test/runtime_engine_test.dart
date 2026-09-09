@@ -1661,14 +1661,16 @@ void main() {
         'effectiveProfileDigest': effectiveDigest,
         'profileIdentityOrigin': 'android_private_stage_request_sha256',
         'coreEgressValidated': effectiveDigest != null,
+        'dnsReady': effectiveDigest != null,
+        'hostHealth': 'healthy', 'dnsState': 'healthy', 'uplinkState': 'healthy',
       };
     });
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
     const sourceA = RuntimeProfileSource(
-        revision: 'synthetic:awg31:1',
+        revision: 'synthetic:awg31:1', protocol: 'awg31',
         origin: RuntimeProfileSourceOrigin.managedManifest);
     const sourceB = RuntimeProfileSource(
-        revision: 'synthetic:awg2:2',
+        revision: 'synthetic:awg2:2', protocol: 'awg2',
         origin: RuntimeProfileSourceOrigin.managedManifest);
     const payloadA = ManagedProfilePayload(
         profileName: 'synthetic-a',
@@ -1688,6 +1690,10 @@ void main() {
     expect(state.effectiveProfileSource, isNull);
     state = await engine.connect();
     expect(state.effectiveProfileSource, same(sourceA));
+    final provenAt = state.proofObservedAt;
+    expect(provenAt, isNotNull);
+    expect((await engine.snapshot()).proofObservedAt, provenAt);
+    expect(state.effectiveProfileSource?.protocol, 'awg31');
 
     rejectStage = true;
     await expectLater(engine.stageManagedProfile(payloadB), throwsStateError);
@@ -1700,6 +1706,7 @@ void main() {
     nextDigest = digestB;
     state = await engine.stageManagedProfile(payloadB);
     expect(state.stagedProfileSource, same(sourceB));
+    expect(state.proofObservedAt, isNull);
     expect(state.effectiveProfileSource, isNull);
     effectiveDigest =
         digestA; // Delayed previous proof cannot confirm revision B.
@@ -1709,6 +1716,7 @@ void main() {
     // A new consumer cannot reconstruct upstream authority from the local hash.
     final freshEngine = createRuntimeEngine(hostPlatform: HostPlatform.android);
     expect((await freshEngine.snapshot()).effectiveProfileSource, isNull);
+    expect((await freshEngine.snapshot()).proofObservedAt, isNull);
   });
 
   test('windows profile mismatch remains unprotected with explicit recovery',
