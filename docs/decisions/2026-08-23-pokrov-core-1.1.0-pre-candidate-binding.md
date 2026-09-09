@@ -1,6 +1,30 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current AWG cross-field binding — 2026-09-08
+## Current source binding — 2026-09-09
+
+The development client now binds Core `c7a11f7d2fd974726095ad7aa0619c055273dd15`.
+Its only changes after `02a091c` are the Apple build's Go-version check and
+release documentation. Two fresh local Android builds and two fresh Windows
+builds from the clean new revision reproduce all five files of the previous
+build trees byte for byte. The client's AAR, DLL and Cronet dependency also
+match those bytes. Runtime hashes, ABI, dependencies and capability contracts
+are unchanged; the native notice changes only its source reference.
+
+[Binding comparison](../operations/evidence/2026-09-09-r12-core-source-binding/binding.json),
+[Android evidence](../operations/evidence/2026-09-09-r12-core-source-binding/android-evidence.json)
+and [Windows evidence](../operations/evidence/2026-09-09-r12-core-source-binding/windows-evidence.json)
+record the exact new source. The [previous manifest](../operations/evidence/2026-09-09-r12-core-source-binding/previous-runtime-binding.json)
+retains rollback identity. Full builds, source SBOMs and logs remain under
+`E:/r12-core-rebinding-20260909`. The receipts' CI wording represents local
+execution here; no hosted run is attributed to these files. SBOM warnings
+remain separate licensing work.
+
+The exact Windows DLL again passed 100 proxy-only start/stop cycles. This
+rebinding creates no APK, installer, candidate, tag, signing or publication.
+Older device and system-route observations retain their original candidate
+identity; this comparison does not create new device or release acceptance.
+
+## Superseded source binding; AWG cross-field behavior retained — 2026-09-08
 
 The development client binds Core `02a091cb0e369192a5ad0909b56ccba8aa1dce17`
 for Android and Windows. The validator rejects intersecting H1-H4 ranges,
