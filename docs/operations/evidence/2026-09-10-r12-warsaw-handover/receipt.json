@@ -1,0 +1,139 @@
+{
+  "status": "RETEST_PASS_BOUNDED_PREVIOUS_FAILURE_RETAINED",
+  "utc": "2026-09-09T21:51:43.645399+00:00",
+  "client_source": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "apk_sha256": "d030288a672b654a70db593f512416113fd2e8ad12025237b94a422c9613f510",
+  "backend_source": "6b34dfd52003e820ca46f0b7365746b94fbb89d2",
+  "profile": "Warsaw whitelist primary variant",
+  "physical_origin": "current Huawei network; no independent geographic origin verification",
+  "same_pid_across_handover": true,
+  "default_networks": [
+    {
+      "default_network_id": "297",
+      "transports": [
+        "WIFI"
+      ],
+      "radio_type": "LTE,LTE"
+    },
+    {
+      "default_network_id": "303",
+      "transports": [
+        "CELLULAR"
+      ],
+      "radio_type": "LTE,LTE"
+    },
+    {
+      "default_network_id": "305",
+      "transports": [
+        "WIFI"
+      ],
+      "radio_type": "LTE,LTE"
+    }
+  ],
+  "initial_failure_root_cause": "NOT_ESTABLISHED",
+  "product_change_for_this_retest": false,
+  "files": [
+    {
+      "file": "warsaw-locations-before.json",
+      "sha256": "ae40d6b79a3413fa68f6b35fd85b1a80c5b33dc92630cf6002b0127347272868",
+      "bytes": 571
+    },
+    {
+      "file": "warsaw-select-action.json",
+      "sha256": "0ab2c8ff033536e8f306144a0b565928698f0405ace525c75c0dd7dd556025e7",
+      "bytes": 146
+    },
+    {
+      "file": "warsaw-before-connect.json",
+      "sha256": "350f32346a72bbf54d3049d122e3db2934b81cdbaf07d5e1d3294701ac7f8c1a",
+      "bytes": 2670
+    },
+    {
+      "file": "warsaw-connected.json",
+      "sha256": "cadb0aec7ff8e7f058a3638fe410be1994d7dfc278facddfab3e95a2afae5532",
+      "bytes": 4688
+    },
+    {
+      "file": "warsaw-protection.json",
+      "sha256": "b8edecb06e043e080c6ceb5e2500ea746802d3529c1dd972a08e85b5501bcb5e",
+      "bytes": 757
+    },
+    {
+      "file": "warsaw-wifi.json",
+      "sha256": "d87b8b729fe7ce3bc57a5eb46520c4047f5f368c760af0df6a019b92028cecdc",
+      "bytes": 4518
+    },
+    {
+      "file": "warsaw-cellular.json",
+      "sha256": "9ab5abaaba13724600718cf24a6ff682a54953acf27b4f79204dda5e545de138",
+      "bytes": 4522
+    },
+    {
+      "file": "warsaw-wifi-restored.json",
+      "sha256": "d4115ab3ab47339dad0617b9f7fcaa5963507ef6c6a9f6bc21ab6375a0b20c86",
+      "bytes": 4527
+    },
+    {
+      "file": "warsaw-handover.json",
+      "sha256": "633194d9bc088021f11f534c925129c3646944ba60bc79ddab90ce55d5c5cb3b",
+      "bytes": 1579
+    },
+    {
+      "file": "warsaw-disconnected.json",
+      "sha256": "3153e81a77a491fb3eb934246dd7ed0fc73642d109ed62c333547f194a96099f",
+      "bytes": 2667
+    },
+    {
+      "file": "warsaw-rule-restoration.json",
+      "sha256": "0ce2b0d579dd4bde80f19998c5c28a2c7ffbfce0a85bc5acc7ddf3f384643a2d",
+      "bytes": 808
+    },
+    {
+      "file": "warsaw-final-frankfurt.json",
+      "sha256": "3bfd61d086278c76d00adda49ee83cb6756c7de55d80962b7428663945fb87d9",
+      "bytes": 2667
+    },
+    {
+      "file": "frankfurt-restored-connected.json",
+      "sha256": "471ca68a83427f7fd0d49b4e18d0d549c9db0440604d4a4986c2007a22c91d2e",
+      "bytes": 4704
+    },
+    {
+      "file": "warsaw-final-restored.json",
+      "sha256": "fe3476de8cc62ec6dc3fbb921dbb19040ae54d091c6807ef3d6cc5fbb798d1e5",
+      "bytes": 2673
+    },
+    {
+      "file": "warsaw-final-restoration.json",
+      "sha256": "bbcddec96f5a178cf087d08fe22f7ef2ef7d8d7d7bef021d3ff3800cd73e2623",
+      "bytes": 602
+    },
+    {
+      "file": "check-warsaw.py",
+      "sha256": "22362ba0fa5fdef8d22e3ad03bdd1c3a01ad4c85697a43df6a3dc47edb671888",
+      "bytes": 1461
+    },
+    {
+      "file": "warsaw-handover.py",
+      "sha256": "95cffa06b8823f2c6f5d91be8c6a750d359e5f5bd25679ed26f55b02c4dbd567",
+      "bytes": 2312
+    },
+    {
+      "file": "restore-frankfurt-v3.py",
+      "sha256": "24106a775c049ae88b9405c071ec2288568f30733a9487ef2082b8e0f05781c9",
+      "bytes": 1735
+    },
+    {
+      "file": "client-seed.log",
+      "sha256": "1ca2dea5ef9a3a0c8176c28530001073f7861275dcabde5e2976f3dd61316e9c",
+      "bytes": 1818
+    }
+  ],
+  "shared_collector": "../2026-09-10-r12-huawei-current/device.py and R12Tree.java",
+  "full_network_parent_accepted": false,
+  "validation": {
+    "seed_scaffold": "PASS",
+    "client_docs_contract": "PASS",
+    "release_artifacts_changed": false
+  }
+}

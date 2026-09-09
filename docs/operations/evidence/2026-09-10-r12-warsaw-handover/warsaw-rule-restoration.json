@@ -1,0 +1,19 @@
+{
+  "status": "PASS_NETWORK_ID_ONLY",
+  "raw_rule_hashes_match": false,
+  "normalized_hashes_match": true,
+  "previous_default_network_id": 297,
+  "current_default_network_id": 305,
+  "substitution": "only fwmark low 16 bits equal current default network ID replaced by previous default network ID; all other bytes unchanged",
+  "changed_lines": [
+    {
+      "original_sha256": "9f95bc74034e21312056168811da57d98500d61f025b37d6640cdd0ee806e751",
+      "normalized_sha256": "2c3c99c7ffa1d9b8c89a91f105fe6b0ffd95e9ae0960d1d9f824a8167a783023"
+    },
+    {
+      "original_sha256": "7b3edd22219129e22f3afbf3aa226aa2518f19c44f2764d280710edbcf776461",
+      "normalized_sha256": "2cd420b82eb6ae1d95045fe472a7e6afa03ec72b7cdaae546f685cda5cacc71b"
+    }
+  ],
+  "raw_rule_lines_exported": false
+}

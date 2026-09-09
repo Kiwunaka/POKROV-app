@@ -1,0 +1,18 @@
+{
+  "status": "PASS_RESTORED_WITH_OS_NETWORK_ID_CHANGE",
+  "selection_restored_to_frankfurt": true,
+  "reason": "selected location is Frankfurt; home still reports last applied Warsaw until reconnect",
+  "frankfurt_home_visible": true,
+  "protection_confirmed": true,
+  "checks": {
+    "frankfurt_home_visible": true,
+    "selected_apps_visible": true,
+    "vpn_off": true,
+    "no_tun": true,
+    "routes_exact_restore": true,
+    "same_apk": true,
+    "wifi_mobile_unchanged": true,
+    "rules_match_analyzed_after_handover": true
+  },
+  "utc": "2026-09-09T21:49:55.281377+00:00"
+}

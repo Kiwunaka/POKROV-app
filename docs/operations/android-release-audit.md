@@ -35,6 +35,12 @@ and final channel gates remain open.
 
 ## Current Truth
 
+The [current Warsaw whitelist retest](evidence/2026-09-10-r12-warsaw-handover/README.md)
+confirmed app protection on Wi-Fi, actual CELLULAR default network and restored
+Wi-Fi with one foreground-service PID. The earlier egress failure is retained;
+its cause remains unknown. Frankfurt was restored; final policy-rule differences
+are limited to the new Android default-network ID. Full network gates stay open.
+
 The [current Huawei lifecycle follow-up](evidence/2026-09-10-r12-huawei-current/README.md)
 binds the already installed ARM64 `d030288a…f510` to client `c05b58b`:
 120-second forced Doze, protection refresh, force-stop/relaunch/reconnect and

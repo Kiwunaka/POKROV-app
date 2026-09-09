@@ -38,3 +38,4 @@ docs/operations/evidence/2026-09-09-r12-candidate33-retention/*.json -text white
 docs/operations/evidence/2026-09-09-r12-candidate33-retention/*.py -text whitespace=cr-at-eol
 docs/operations/evidence/2026-09-09-r12-core-source-binding/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
 docs/operations/evidence/2026-09-10-r12-huawei-current/** -text whitespace=cr-at-eol
+docs/operations/evidence/2026-09-10-r12-warsaw-handover/** -text whitespace=cr-at-eol
