@@ -35,6 +35,14 @@ and final channel gates remain open.
 
 ## Current Truth
 
+The [always-on correction](evidence/2026-09-10-r12-huawei-alwayson/README.md)
+binds signed source `c691c70` to installed ARM64 `03924eee…847c`. Actual Huawei
+system-switch start from a stopped app now creates a foreground service/TUN;
+subsequent app protection refresh passes. Four-package audit and exact PR CI PASS.
+The connected reboot was sent; owner unlock, pre-activity tunnel observation and
+final settings restoration remain pending. Always-on was enabled and lockdown
+was disabled at reboot. This does not prove reboot recovery or full D03.
+
 The [Huawei permission/lockdown run](evidence/2026-09-10-r12-huawei-permission-lockdown/README.md)
 proved revoke, deny/regrant and bounded Android traffic blocking on `c05b58b`.
 It also reproduced a system always-on start that left the service without a
