@@ -1,0 +1,16 @@
+{
+  "utc": "2026-09-09T21:28:37.901894+00:00",
+  "known_labels": [
+    "Премиум",
+    "Telegram",
+    "Аккаунт",
+    "Профиль"
+  ],
+  "account_identifiers_exported": false,
+  "profile_open_action": {
+    "target": "Профиль",
+    "bounds": "[889,2558][1167,2742]",
+    "derived_from": "fresh UI tree"
+  },
+  "data_source": "actual installed app with retained owner session; cache versus new request not independently separated"
+}

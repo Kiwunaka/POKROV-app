@@ -1,6 +1,6 @@
 # Android Release Audit
 
-Last updated: 2026-09-08
+Last updated: 2026-09-10
 
 ## Document Status
 
@@ -11,7 +11,7 @@ Older APK identities and device runs are retained separately as evidence.
 The cutover seed still names `pokrov-1.2.0-candidate.33`; its retained evidence
 does not prove the newer local working sources below.
 
-The latest [APK after explicit-denial fix](evidence/2026-09-08-r12-android-access-denial/README.md)
+The earlier [APK after explicit-denial fix](evidence/2026-09-08-r12-android-access-denial/README.md)
 binds client `f479fd4` to ARM64 `20a0781b…97af`. All four ABI packages passed
 signer/native/notices audit; Huawei update, ordinary connect, resume and exact
 route/rule cleanup passed. Physical denial/revocation remains MANUAL_OWNER_TEST
@@ -34,6 +34,13 @@ rule-hash difference remains unproven. Exact installed AWG, full D01/D02/A03
 and final channel gates remain open.
 
 ## Current Truth
+
+The [current Huawei lifecycle follow-up](evidence/2026-09-10-r12-huawei-current/README.md)
+binds the already installed ARM64 `d030288a…f510` to client `c05b58b`:
+120-second forced Doze, protection refresh, force-stop/relaunch/reconnect and
+exact final route/rule restoration PASS_BOUNDED. Premium/Telegram fields are
+visible again; cache versus a new account request was not independently timed.
+No new install or final-channel verdict, no battery or full OEM/API matrix PASS.
 
 The [2026-09-07 network handoff receipt](evidence/2026-09-07-r12-network-handoff/README.md)
 retains bounded Wi-Fi/mobile/Wi-Fi service continuity and refreshed protection

@@ -1,0 +1,132 @@
+{
+  "status": "PASS_BOUNDED_PHYSICAL_HUAWEI",
+  "utc": "2026-09-09T21:36:03.096932+00:00",
+  "client_source": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "artifact_sha256": "d030288a672b654a70db593f512416113fd2e8ad12025237b94a422c9613f510",
+  "artifact_bytes": 101229131,
+  "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+  "artifact_binding": "exact digest matches prior all-ABI signer/native/notices audit; no rebuild or reinstall",
+  "origin": "current physical Huawei network; no new geographic origin verification",
+  "backend_source": "6b34dfd52003e820ca46f0b7365746b94fbb89d2",
+  "files": [
+    {
+      "file": "initial.json",
+      "sha256": "0de375d442a794139aca15dc2bf9a4a3bdb312d87ed26e9fa18ba7c8620b9a42",
+      "bytes": 2617
+    },
+    {
+      "file": "animation-baseline.json",
+      "sha256": "913c4a35cfd13c7400e9f07c9df214136b13c2ecbaa392b5746cd596019343a5",
+      "bytes": 118
+    },
+    {
+      "file": "connect-action.json",
+      "sha256": "84d299a4d9a0caed91288b7db304bedb688e301bdd5aa592650f94c6c0a3ad63",
+      "bytes": 114
+    },
+    {
+      "file": "connected-tree.json",
+      "sha256": "2136e435c08a1ffc4d8f3cad9caccf171e177fab8c2045919a77c568e2b5cb18",
+      "bytes": 4648
+    },
+    {
+      "file": "open-protection.json",
+      "sha256": "ab8103245e23d15a69ec382910c8ab580d44e3f5b2d61340082e6fc158cd61a9",
+      "bytes": 119
+    },
+    {
+      "file": "protection.json",
+      "sha256": "bb1ff5518cb8d189a08b016c866612574a6017791b52daae640fcd240522cbd4",
+      "bytes": 4517
+    },
+    {
+      "file": "protection-refreshed.json",
+      "sha256": "36557959fad641396d5bd7a8d075da4d35e61e008237a061f066567a3dd9772a",
+      "bytes": 180
+    },
+    {
+      "file": "profile-after-backend-fix.json",
+      "sha256": "be144cd682086a9dbee1e0aed5865f03722ef35adde3732ea7022c3b1d229cb6",
+      "bytes": 473
+    },
+    {
+      "file": "doze.json",
+      "sha256": "2eaaa9547bc1344a6a899bfda9644e1f42b3b87ce390f3dedcb34f809dd80c43",
+      "bytes": 29822
+    },
+    {
+      "file": "doze-resume.json",
+      "sha256": "f7414f927fdb36338a38a030613e491daab511689fcc80e630c5a93ba6204946",
+      "bytes": 4687
+    },
+    {
+      "file": "forced-stop.json",
+      "sha256": "a1ec3ccf080a70b163d2185bbd1b7998a24ae79e2b6475412cceac425e224fb6",
+      "bytes": 2224
+    },
+    {
+      "file": "cold-reopened.json",
+      "sha256": "6750000f677fc22380cd4df8aea67ce946f424cd1971c57f76969e7aa02b04ec",
+      "bytes": 2627
+    },
+    {
+      "file": "cold-reconnected.json",
+      "sha256": "c8978913fcc9205be3519f2612425f48a2ba16c7cc4d3d0afbe66ad30140e0f8",
+      "bytes": 4692
+    },
+    {
+      "file": "recovery.json",
+      "sha256": "c4e99b9ce411ea8d2c443e8b0194f863fdd69e8c776826e877f24f55755c4393",
+      "bytes": 16615
+    },
+    {
+      "file": "final-disconnected.json",
+      "sha256": "03626ed0bb870f62507f93af51603ad980d0a60e71a65468ed05419f5587aa78",
+      "bytes": 2670
+    },
+    {
+      "file": "restoration.json",
+      "sha256": "3ca6181fad70ff237c8e6ca8428c6d3ad3ffc927fed130794fab47deec22b6f0",
+      "bytes": 624
+    },
+    {
+      "file": "R12Tree.java",
+      "sha256": "64fb4a98a5ec08013ab789a3d58c5089039e3ff26cfb20df2d5043696472efe8",
+      "bytes": 2049
+    },
+    {
+      "file": "device.py",
+      "sha256": "d1d33f0c5f732e30eb4a4cca4061b82c9ceb169579395805ec04a3f78df8d42b",
+      "bytes": 3876
+    },
+    {
+      "file": "doze.py",
+      "sha256": "dec07550ea45a09e07b19d4d7bd6f94225a773090dd3d435d5770a82bde73e1e",
+      "bytes": 2410
+    },
+    {
+      "file": "recovery.py",
+      "sha256": "1a6dbf63ab9b391252c251a68611057511a53c00ea7c9010385a3874d74e9bb8",
+      "bytes": 2470
+    },
+    {
+      "file": "restore.py",
+      "sha256": "4f65183aa771e3586166b296c87750165105bec62fd34dec15792e69a60df46c",
+      "bytes": 1471
+    }
+  ],
+  "local_runner_directory": "E:\\r12-huawei-current-20260910",
+  "helper_jar_sha256": "8fb518a57e91ac7d66035425d963f3940ca0e5e0dfc4c03e06fce96902e3af25",
+  "screen_images_copied_to_repo": false,
+  "raw_ui_xml_retained": false,
+  "real_telegram_or_payment_actions": false,
+  "remaining": [
+    "full D01 exact released channel and account identity preservation across update",
+    "other OEM/API matrix",
+    "permission revoke/lockdown/reboot",
+    "battery baseline and long soak",
+    "Warsaw whitelist egress defect",
+    "independent DNS/egress and complete network matrix"
+  ]
+}

@@ -1,0 +1,7 @@
+from device import *
+import time
+run('shell','input','keyevent','KEYCODE_BACK');time.sleep(.5);action=tap('Отключить');time.sleep(5)
+final=snapshot('final-disconnected');initial=json.loads((ROOT/'initial.json').read_bytes());scales={key:run('shell','settings','get','global',key) for key in ('window_animation_scale','transition_animation_scale','animator_duration_scale')};expected=json.loads((ROOT/'animation-baseline.json').read_bytes())
+r={'status':'PASS_RESTORED','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'vpn_service_removed':not final['vpn_service'],'no_tun':not final['tun_interfaces'],'routes_exact_restore':final['routes_sha256']==initial['routes_sha256'],'rules_exact_restore':final['rules_hashes']==initial['rules_hashes'],'apk_unchanged':final['apk_sha256']==initial['apk_sha256'],'install_timestamp_unchanged':final['package_fields']['lastUpdateTime']==initial['package_fields']['lastUpdateTime'],'wifi_mobile_unchanged':(final['wifi_on'],final['mobile_data'])==(initial['wifi_on'],initial['mobile_data']),'animation_scales_restored':scales==expected,'final_scales':scales,'disconnect_action':action}
+assert all(r[k] for k in ('vpn_service_removed','no_tun','routes_exact_restore','rules_exact_restore','apk_unchanged','install_timestamp_unchanged','wifi_mobile_unchanged','animation_scales_restored'))
+(ROOT/'restoration.json').write_text(json.dumps(r,ensure_ascii=False,indent=2)+'\n',encoding='utf8');print(json.dumps(r))
