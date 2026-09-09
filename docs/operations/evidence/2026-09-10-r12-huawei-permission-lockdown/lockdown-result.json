@@ -1,0 +1,100 @@
+{
+  "status": "PASS_BOUNDED_LOCKDOWN_MANUAL_PATH",
+  "origin": "physical Huawei shell UID 2000; not general application matrix",
+  "samples": [
+    {
+      "label": "lockdown-no-tunnel",
+      "state": {
+        "always_on": "space.pokrov.pokrov_android_shell",
+        "lockdown": "1",
+        "service": true,
+        "foreground": false,
+        "tun": []
+      },
+      "http": {
+        "status": "NETWORK_FAILED",
+        "exception_class": "UnknownHostException",
+        "elapsed_ms": 29
+      }
+    },
+    {
+      "label": "lockdown-tunnel-active",
+      "state": {
+        "always_on": "space.pokrov.pokrov_android_shell",
+        "lockdown": "1",
+        "service": true,
+        "foreground": true,
+        "tun": [
+          "tun0"
+        ]
+      },
+      "http": {
+        "status": "NETWORK_FAILED",
+        "exception_class": "UnknownHostException",
+        "elapsed_ms": 32
+      }
+    },
+    {
+      "label": "lockdown-after-disconnect",
+      "state": {
+        "always_on": "space.pokrov.pokrov_android_shell",
+        "lockdown": "1",
+        "service": false,
+        "foreground": false,
+        "tun": []
+      },
+      "http": {
+        "status": "NETWORK_FAILED",
+        "exception_class": "UnknownHostException",
+        "elapsed_ms": 28
+      }
+    }
+  ],
+  "enable_action": {
+    "target": "ВКЛЮЧИТЬ",
+    "bounds": "[624,2582][1145,2697]",
+    "derived_from": "fresh UI tree"
+  },
+  "app_without_tun": {
+    "known_labels": [
+      "Подключить",
+      "Не защищено",
+      "Статус защиты",
+      "Профиль",
+      "Правила",
+      "Локации",
+      "Франкфурт",
+      "Доступ активен",
+      "Только выбранные",
+      "WARP",
+      "VPN"
+    ],
+    "node_count": 25,
+    "packages": [
+      "space.pokrov.pokrov_android_shell"
+    ]
+  },
+  "manual_connect_native": {
+    "service": true,
+    "foreground": true,
+    "tun": [
+      "tun0"
+    ]
+  },
+  "protection_confirmed": true,
+  "settings_after_restore": {
+    "always_on": "null",
+    "lockdown": "0",
+    "service": true,
+    "foreground": false,
+    "tun": []
+  },
+  "http_after_restore": {
+    "status": "HTTP_RESPONSE",
+    "http_status": 200,
+    "bytes": 155573,
+    "sha256": "5fa697b48cf39f99ed27f2cae3932da1dc97f0d3af8d8c81dbceb605f47cd433",
+    "elapsed_ms": 341
+  },
+  "utc": "2026-09-09T22:15:59.785402+00:00"
+}

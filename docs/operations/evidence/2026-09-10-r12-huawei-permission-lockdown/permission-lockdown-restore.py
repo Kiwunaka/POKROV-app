@@ -1,0 +1,5 @@
+import sys,json,time,importlib.util
+sys.path.insert(0,'E:/r12-huawei-current-20260910')
+from device import *
+run('shell','am','force-stop',PACKAGE);time.sleep(1)
+spec=importlib.util.spec_from_file_location('rev',ROOT/'revoke-start.py');mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod);mod.app();s=snapshot('permission-lockdown-final');b=json.loads((ROOT/'revoke-baseline.json').read_bytes());r={'checks':{'no_service':not s['vpn_service'],'no_tun':not s['tun_interfaces'],'rules_exact':s['rules_hashes']==b['rules_hashes'],'routes_exact':s['routes_sha256']==b['routes_sha256'],'same_apk':s['apk_sha256']==b['apk_sha256'],'same_package_fields':s['package_fields']==b['package_fields'],'wifi_mobile_same':(s['wifi_on'],s['mobile_data'])==(b['wifi_on'],b['mobile_data'])},'always_on':run('shell','settings','get','secure','always_on_vpn_app'),'lockdown':run('shell','settings','get','secure','always_on_vpn_lockdown'),'stopped_lingering_system_started_service':True};assert all(r['checks'].values()) and r['always_on']=='null' and r['lockdown']=='0';(ROOT/'permission-lockdown-restoration.json').write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(r))

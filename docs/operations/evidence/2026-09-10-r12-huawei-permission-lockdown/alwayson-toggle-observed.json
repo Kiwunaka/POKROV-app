@@ -1,0 +1,30 @@
+{
+  "action": {
+    "label": "Постоянная VPN",
+    "bounds": "[1018,346][1155,483]",
+    "source": "fresh ancestor row switch"
+  },
+  "samples": [
+    {
+      "always_on": "space.pokrov.pokrov_android_shell",
+      "lockdown": "0",
+      "service": true,
+      "foreground": false,
+      "tun": []
+    },
+    {
+      "always_on": "space.pokrov.pokrov_android_shell",
+      "lockdown": "0",
+      "service": true,
+      "foreground": false,
+      "tun": []
+    },
+    {
+      "always_on": "space.pokrov.pokrov_android_shell",
+      "lockdown": "0",
+      "service": true,
+      "foreground": false,
+      "tun": []
+    }
+  ]
+}

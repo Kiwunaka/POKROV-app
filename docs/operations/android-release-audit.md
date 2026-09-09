@@ -35,6 +35,13 @@ and final channel gates remain open.
 
 ## Current Truth
 
+The [Huawei permission/lockdown run](evidence/2026-09-10-r12-huawei-permission-lockdown/README.md)
+proved revoke, deny/regrant and bounded Android traffic blocking on `c05b58b`.
+It also reproduced a system always-on start that left the service without a
+foreground notification or TUN. Settings/routes were restored. The correction
+reuses the confirmed persisted profile through the normal validated start path;
+exact new-build physical proof and the rest of D03 remain required.
+
 The [current Huawei connected reboot](evidence/2026-09-10-r12-huawei-reboot/README.md)
 retained Frankfurt/selected-app context and showed disconnected status after
 owner unlock. Manual reconnect confirmed protection; disconnect exactly restored

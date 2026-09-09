@@ -1,0 +1,156 @@
+{
+  "status": "PERMISSION_AND_LOCKDOWN_BOUNDED_PASS_ALWAYS_ON_START_FAILURE",
+  "client_source": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "apk_sha256": "d030288a672b654a70db593f512416113fd2e8ad12025237b94a422c9613f510",
+  "backend_source": "6b34dfd52003e820ca46f0b7365746b94fbb89d2",
+  "files": [
+    {
+      "file": "permission-settings-baseline.json",
+      "sha256": "9f00caa1c51011b2c92f302f21df645f4a6b25ded476165a76b17aa5fe015ce9",
+      "bytes": 52
+    },
+    {
+      "file": "revoke-baseline.json",
+      "sha256": "53802316bdc12a9e3b0987a93db75c9124c2669adbb251dcfcd0ec33ee1b7e11",
+      "bytes": 2667
+    },
+    {
+      "file": "revoke-connected.json",
+      "sha256": "4387f13e7a596b1cddff03312e9ede31016bba7b33a781d094cd5f60889111b1",
+      "bytes": 4692
+    },
+    {
+      "file": "permission-revoked-native.json",
+      "sha256": "d0410767aea8b030cf4c924704693e2500f7fe6036e8d6c9a661db1321c11290",
+      "bytes": 2241
+    },
+    {
+      "file": "permission-revoked-app.json",
+      "sha256": "022905753e1f2268ecc50ddbe2d9b3ace189409f757f9e329313d241518fba14",
+      "bytes": 2674
+    },
+    {
+      "file": "permission-revoked.json",
+      "sha256": "f849172c88f6c4a741034cb55e52b7fe6da933c384753d8f42131f8f7ae54f7d",
+      "bytes": 382
+    },
+    {
+      "file": "permission-denied.json",
+      "sha256": "75cb4dc696c1f85dbbc867a26c321372669fc27d1ff713ecf91b8d03c252d877",
+      "bytes": 2606
+    },
+    {
+      "file": "permission-regranted.json",
+      "sha256": "2302d671a7bbc7e1a6ffeefbe7b23e7ea15b35014e3866eced97dc69b7295177",
+      "bytes": 4696
+    },
+    {
+      "file": "permission-final-restored.json",
+      "sha256": "0ed1dbc53c5139a133ff4bf57f87f25a8595c2bc99a75be1f5656593b001a8f2",
+      "bytes": 2677
+    },
+    {
+      "file": "permission-result.json",
+      "sha256": "7bd1f3d28089dbe170c4a41125b226de68e0ce9b6ce313a6b858791ee78a07c7",
+      "bytes": 1236
+    },
+    {
+      "file": "lockdown-http-baseline.json",
+      "sha256": "2bf0137a7713bf22076e979d51b8c362685ce0e947560bd80d60be0102de6617",
+      "bytes": 234
+    },
+    {
+      "file": "alwayson-toggle-observed.json",
+      "sha256": "5c9d0ca6ce43087b794c4f19fb9cb07f613425c7cd0608642bc051a056e4c52e",
+      "bytes": 666
+    },
+    {
+      "file": "lockdown-manual-connected.json",
+      "sha256": "91d0ab64f9f3258f810a4fb441ba580b0b075ae1a665ed3321feaee615c9f477",
+      "bytes": 4847
+    },
+    {
+      "file": "lockdown-result.json",
+      "sha256": "efb12cba5fc8a065a2315ccd2f2ded72142af6d4aebfec21f38c36b7149d9792",
+      "bytes": 2507
+    },
+    {
+      "file": "permission-lockdown-final.json",
+      "sha256": "5c4132427b9a319fd4e81beb82d23816da2534fda0cd9252670f9d8f2c788199",
+      "bytes": 2639
+    },
+    {
+      "file": "permission-lockdown-restoration.json",
+      "sha256": "6e9ae3b5eb7265dcf86234b7a643be888e7b2865550190c534b152e0271442f9",
+      "bytes": 309
+    },
+    {
+      "file": "revoke-start.py",
+      "sha256": "8a41d36c3c10ff39143518d7b4d2ac475f7cb63d3c8c734d9050ea5492488eb5",
+      "bytes": 1177
+    },
+    {
+      "file": "revoke-confirm.py",
+      "sha256": "171f1e6fc498b622313e8b7d9b2c5da565c7cdf533eba42640a28370b12696f8",
+      "bytes": 1609
+    },
+    {
+      "file": "permission-regrant-v2.py",
+      "sha256": "f30f117076c2be99a54a6e7e828f8d0073a5d96fc775e3a254851c319264ef44",
+      "bytes": 2895
+    },
+    {
+      "file": "permission-regrant-v3.py",
+      "sha256": "57310fb52b8028d5d64cfe56e30ce12f7cda95340e6e4620285246988d5482ae",
+      "bytes": 2543
+    },
+    {
+      "file": "permission-regrant-v4.py",
+      "sha256": "51d0c5f4387a3ffd4787a2080556df8ed1999132000cc55000e13abeb4636063",
+      "bytes": 2347
+    },
+    {
+      "file": "lockdown-switch.py",
+      "sha256": "229f4012c0b67757ef5d8c0fe89f886b33946edfea78ab08a70717410fa2c64c",
+      "bytes": 1392
+    },
+    {
+      "file": "lockdown-start.py",
+      "sha256": "5425b2ab8083904a5b1a04eb32171ae259bf0ce5b0790843f78b2e7832a63cf9",
+      "bytes": 1247
+    },
+    {
+      "file": "lockdown-test.py",
+      "sha256": "e7ccb016c6343e55d5b8882149deed226085efae23547cae0ffc07975e3ed756",
+      "bytes": 2478
+    },
+    {
+      "file": "permission-lockdown-restore.py",
+      "sha256": "ef86166b8c6d971a50324bb8ae941285c159929de3eed2051e04a6b5f36aadc5",
+      "bytes": 1177
+    },
+    {
+      "file": "R12Http.java",
+      "sha256": "218cd17ed2a57e794a84f4067149d13e0f6f014a539c79a7229e42abacc6d65a",
+      "bytes": 1304
+    },
+    {
+      "file": "build-http.py",
+      "sha256": "2410e37d2803c13c6e0396aec22adff53bfc1f5d35c0ef9834adaa9b9667d1a5",
+      "bytes": 653
+    },
+    {
+      "file": "client-seed.log",
+      "sha256": "25a97a268ee993a5fb4214bc76ea07cf3c1d4e189e8f623aba4f4a2e7a3d06d1",
+      "bytes": 1818
+    }
+  ],
+  "full_parent_accepted": false,
+  "device_restored": true,
+  "alwayson_defect": "Android system start creates service but no foreground/TUN; source ignores SERVICE_INTERFACE/unflagged start",
+  "probe_uid": 2000,
+  "probe_scope": "owned public HTTPS; shell UID excluded from selected-app routing",
+  "new_fix_runtime_verified": false,
+  "documentation_validation": "PASS_SEED_AND_DOCS_CONTRACT"
+}
