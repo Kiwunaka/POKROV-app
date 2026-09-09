@@ -617,3 +617,11 @@ and failure clear active proof. The fixed origin is
 Quick Settings requires a supported record with a valid digest. Old records
 without one require an app refresh. Local JVM tests do not prove packaged Core,
 Android filesystem crash durability, routing coverage or physical-device behavior.
+
+Android system-started always-on commands reuse that same persisted profile only
+after its route scope has been confirmed and its digest is valid. They enter the
+ordinary foreground start path, which checks the saved metadata against the
+actual config before creating a TUN. A missing or unconfirmed profile fails closed;
+an already running or pending connection is not restarted by a duplicate system
+start. System lockdown remains Android-owned and can block apps outside the
+selected-app allowlist, including while the selected tunnel is connected.
