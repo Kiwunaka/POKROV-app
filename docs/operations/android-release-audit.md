@@ -35,6 +35,11 @@ and final channel gates remain open.
 
 ## Current Truth
 
+The [current Huawei connected reboot](evidence/2026-09-10-r12-huawei-reboot/README.md)
+retained Frankfurt/selected-app context and showed disconnected status after
+owner unlock. Manual reconnect confirmed protection; disconnect exactly restored
+the post-boot route/rule baseline. Automatic restart and full D03 are not claimed.
+
 The [current Warsaw whitelist retest](evidence/2026-09-10-r12-warsaw-handover/README.md)
 confirmed app protection on Wi-Fi, actual CELLULAR default network and restored
 Wi-Fi with one foreground-service PID. The earlier egress failure is retained;

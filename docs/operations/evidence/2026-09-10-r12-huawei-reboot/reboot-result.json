@@ -1,0 +1,42 @@
+{
+  "status": "PASS_BOUNDED_MANUAL_RECONNECT_AFTER_REBOOT",
+  "owner_unlocked": true,
+  "post_boot_false_success_absent": true,
+  "manual_reconnect": true,
+  "actions": [
+    {
+      "target": "Подключить",
+      "bounds": "[286,394][938,1047]",
+      "derived_from": "fresh UI tree"
+    },
+    {
+      "target": "Статус защиты:",
+      "bounds": "[420,835][804,918]",
+      "derived_from": "fresh UI tree"
+    },
+    {
+      "target": "Обновить проверки",
+      "bounds": "[1029,513][1167,650]",
+      "derived_from": "fresh UI tree"
+    },
+    {
+      "target": "Отключить",
+      "bounds": "[286,394][938,1047]",
+      "derived_from": "fresh UI tree"
+    }
+  ],
+  "connected": true,
+  "protection_confirmed": true,
+  "checks": {
+    "service_stopped": true,
+    "tun_removed": true,
+    "postboot_rules_restored": true,
+    "postboot_routes_restored": true,
+    "wifi_mobile_same_as_before_reboot": true,
+    "same_apk": true,
+    "same_package_fields": true,
+    "frankfurt_retained": true,
+    "selected_apps_retained": true
+  },
+  "utc": "2026-09-09T22:00:24.214773+00:00"
+}
