@@ -1,0 +1,12 @@
+{
+  "utc": "2026-09-09T08:55:37.123150+00:00",
+  "origin": "owned-de-loopback",
+  "engine": "Xray 26.6.1 94ffd50",
+  "ephemeral_client_only": true,
+  "server_config_modified": false,
+  "raw_material_exported": false,
+  "process_running": true,
+  "curl_exit": 0,
+  "http_status": "204",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

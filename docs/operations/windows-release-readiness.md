@@ -3,6 +3,13 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 current transport (2026-09-09): [NAT/bridge controls](evidence/2026-09-09-r12-windows-nat-path/README.md)
+bind client `c05b58b` / Core `c7a11f7` and 304 unchanged installed files.
+The same cached Frankfurt profile fails REALITY through host NAT and succeeds
+through the VM's Ethernet bridge, repeated in the same Windows boot. These
+standalone probes do not prove installed-service TUN/DNS/egress. Windows login
+and the full UI connection check remain MANUAL_OWNER_TEST; VM link is off.
+
 R12 revocation fixture (2026-09-08): [initial availability receipt](evidence/2026-09-08-r12-revocation-availability/README.md)
 preserves the failed installation attempt in a separate standard-user clone.
 Automatic UAC password input was rejected; setup exited 2, actual revocation

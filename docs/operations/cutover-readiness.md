@@ -50,8 +50,11 @@ Huawei Frankfurt ordinary connection and bounded Wi-Fi/mobile switch samples PAS
 Warsaw egress FAIL. Windows installation subsequently passed after owner resume:
 304 files match, session and secure storage preserved.
 [Current Windows egress diagnosis](evidence/2026-09-09-r12-windows-egress/README.md)
-records Milan/Frankfurt failures and successful rollback; Core error readback
-and the connectivity fix remain open.
+records Milan/Frankfurt failures and successful rollback. Subsequent
+[NAT/bridge controls](evidence/2026-09-09-r12-windows-nat-path/README.md) isolate
+Frankfurt's REALITY failure to the host NAT path: the unchanged profile passes
+through a bridge. Full installed-service connection awaits Windows login;
+standalone transport proof does not close the TUN/DNS/egress gate.
 These observations do not change the candidate.33 or public release verdict.
 
 The September 9 source integration uses signed promotion PR #95 after platform

@@ -1,0 +1,43 @@
+{
+    "config_sha256":  "69fe0e07161c2b9ebc6a2b837e82a254f2fed9015ccefc50c33d0a071b014df7",
+    "core_source":  "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+    "direct_tcp_category":  "none",
+    "direct_tcp_ms":  39,
+    "error_category":  "reality_handshake",
+    "error_is_eof":  false,
+    "error_is_unexpected_eof":  false,
+    "error_sha256":  "efdb5c5532e5c99786e0be9d5f11d4499508b026631f843a8f640760efa4466c",
+    "error_types":  [
+                        "*urltest.ProbeError",
+                        "*errors.errorString"
+                    ],
+    "mode":  "cached_selected_outbound_without_tun",
+    "observed_probe_stage":  0,
+    "parameter_sha256":  {
+                             "host":  "9cbe63494f2822fa475d6f2c0d71e9f22e05e841811d12c0472c632f50a5b7a7",
+                             "public_key":  "bde84d4126f0759fffe9f72e46669f8597fe51fdfd1919275b00d16dc00954c6",
+                             "short_id":  "7a98cbe0ce0c09ccdde5e52df86fb64ea5d25fc71b2f9b67ff9f5645d8e4fe0c",
+                             "sni":  "962bbd952510b10c4fed8bd95b112739d604e34daa6313979cb434c87874fbe0",
+                             "uuid":  "1a7260c508d57db8f4b94befa6d633bb1817aa0de34d33b4bd60b32238bcf7a1"
+                         },
+    "probe_elapsed_ms":  149,
+    "profile_file_modified":  false,
+    "raw_error_exported":  false,
+    "raw_profile_exported":  false,
+    "reality_enabled":  true,
+    "selected_type":  "vless",
+    "server_is_ip":  false,
+    "stage":  "authenticated_egress",
+    "success":  false,
+    "tls_enabled":  true,
+    "tun_created":  false,
+    "utc":  "2026-09-09T08:44:50.5360834Z",
+    "utls_chrome":  false,
+    "utls_enabled":  true,
+    "utls_fingerprint":  "firefox",
+    "vision_flow":  true,
+    "diagnostic_only_change":  "country_selector_second_direct_variant",
+    "original_config_sha256":  "716567a5451a9993a6f5e44d6c24a86a9966aae0c4f1a3979a09ab7b794299d2",
+    "owned_install_verified":  true,
+    "cached_profile_verified_at":  "2026-09-09T07:28:26.244374Z"
+}

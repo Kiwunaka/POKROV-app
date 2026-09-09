@@ -1,0 +1,12 @@
+{
+    "utc":  "2026-09-09T08:47:43.4134498Z",
+    "owned_install_verified":  true,
+    "raw_addresses_exported":  false,
+    "addresses":  [
+                      {
+                          "family":  "InterNetwork",
+                          "address_sha256":  "5a8735db03a9b7134a66eca92a6d2e56f20b0eac54acbb9230024804539500fc",
+                          "benchmark_range":  false
+                      }
+                  ]
+}

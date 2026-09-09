@@ -1,0 +1,26 @@
+{
+  "utc": "2026-09-09T08:54:09.211848+00:00",
+  "origin": "owned-de-node",
+  "panel_max_time_diff": 0,
+  "panel_pubkey_matches": true,
+  "panel_port": 443,
+  "raw_material_exported": false,
+  "ntp_synchronized": true,
+  "generated_config_present": true,
+  "matching_generated_inbounds": [
+    {
+      "port": 443,
+      "security": "reality",
+      "max_time_diff": 0,
+      "min_client_ver": "",
+      "max_client_ver": "",
+      "mldsa_configured": false,
+      "pubkey_matches": true,
+      "sni_matches": true,
+      "short_id_matches": true,
+      "owned_user_matches": 1,
+      "owned_user_vision": true
+    }
+  ],
+  "frontend_config_present": false
+}

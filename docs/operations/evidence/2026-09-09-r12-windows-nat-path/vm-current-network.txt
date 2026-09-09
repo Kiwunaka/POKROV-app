@@ -1,0 +1,4 @@
+VMState="running"
+bridgeadapter1="Intel(R) Ethernet Controller (3) I225-V"
+cableconnected1="off"
+nic1="bridged"

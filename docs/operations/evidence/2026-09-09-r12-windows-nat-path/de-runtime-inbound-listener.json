@@ -1,0 +1,35 @@
+{
+  "utc": "2026-09-09T08:47:50.059353+00:00",
+  "origin": "owned-de-node",
+  "panel_max_time_diff": 0,
+  "panel_pubkey_matches": true,
+  "panel_port": 443,
+  "raw_material_exported": false,
+  "ntp_synchronized": true,
+  "generated_config_present": true,
+  "matching_generated_inbounds": [
+    {
+      "port": 443,
+      "listen_hash": "19e36255972107d42b8cecb77ef5622e842e8a50778a6ed8dd1ce94732daca9e",
+      "listen_wildcard": true,
+      "security": "reality",
+      "max_time_diff": 0,
+      "pubkey_matches": true,
+      "sni_matches": true,
+      "short_id_matches": true,
+      "owned_user_matches": 1,
+      "owned_user_vision": true
+    }
+  ],
+  "frontend_config_present": false,
+  "listeners_443": [
+    {
+      "listen_hash": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+      "wildcard": true,
+      "xray": true,
+      "caddy": false,
+      "haproxy": false,
+      "nginx": false
+    }
+  ]
+}

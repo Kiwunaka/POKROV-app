@@ -1,5 +1,10 @@
 # Current Windows egress failure, 2026-09-09
 
+Follow-up: [NAT/bridge transport controls](../2026-09-09-r12-windows-nat-path/README.md)
+reproduce the failure on NAT and pass on the bridged path with the same profile.
+The record below preserves the earlier investigation. Protected-log reading
+was subsequently completed; full installed-service connection remains open.
+
 **FAIL_EGRESS_UNCONFIRMED.** Installed client `c05b58b` / Core `c7a11f7`
 matched all 304 package files in the [installation readback](../2026-09-09-r12-installed-current/README.md).
 The current-origin owned Windows VM cannot establish the ordinary Milan or

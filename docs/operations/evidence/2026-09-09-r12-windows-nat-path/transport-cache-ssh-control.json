@@ -1,0 +1,40 @@
+{
+    "config_sha256":  "23b8e48e06c0d5d8480f1d6a0e7e56cc8d015d8ae9196ae37126e7ad7acb10e2",
+    "core_source":  "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+    "direct_tcp_category":  "none",
+    "direct_tcp_ms":  2,
+    "error_category":  "none",
+    "error_is_eof":  false,
+    "error_is_unexpected_eof":  false,
+    "error_types":  [
+
+                    ],
+    "mode":  "cached_selected_outbound_without_tun",
+    "parameter_sha256":  {
+                             "host":  "f9292b96ff7d66abe0820bbe9bd022cb0abd37bd673d7b462e1bba84245a9f66",
+                             "public_key":  "bde84d4126f0759fffe9f72e46669f8597fe51fdfd1919275b00d16dc00954c6",
+                             "short_id":  "7a98cbe0ce0c09ccdde5e52df86fb64ea5d25fc71b2f9b67ff9f5645d8e4fe0c",
+                             "sni":  "962bbd952510b10c4fed8bd95b112739d604e34daa6313979cb434c87874fbe0",
+                             "uuid":  "1a7260c508d57db8f4b94befa6d633bb1817aa0de34d33b4bd60b32238bcf7a1"
+                         },
+    "probe_elapsed_ms":  267,
+    "profile_file_modified":  false,
+    "raw_error_exported":  false,
+    "raw_profile_exported":  false,
+    "reality_enabled":  true,
+    "selected_type":  "vless",
+    "server_is_ip":  true,
+    "stage":  "authenticated_egress",
+    "success":  true,
+    "tls_enabled":  true,
+    "tun_created":  false,
+    "utc":  "2026-09-09T09:01:20.1082365Z",
+    "utls_chrome":  false,
+    "utls_enabled":  true,
+    "utls_fingerprint":  "firefox",
+    "vision_flow":  true,
+    "diagnostic_only_change":  "owned_de_loopback_via_ssh_control",
+    "original_config_sha256":  "716567a5451a9993a6f5e44d6c24a86a9966aae0c4f1a3979a09ab7b794299d2",
+    "owned_install_verified":  true,
+    "cached_profile_verified_at":  "2026-09-09T07:28:26.244374Z"
+}
