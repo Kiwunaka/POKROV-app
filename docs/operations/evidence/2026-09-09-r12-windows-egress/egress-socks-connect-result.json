@@ -1,0 +1,1 @@
+{"client_source":"0218e89","action":"connect","elapsed_ms":22953,"available":true,"trusted":true,"compatible":true,"accepted":false,"phase":"config_staged","running":false,"core_ready":true,"dns_ready":false,"egress_validated":false,"can_connect":true,"effective_matches_staged":false,"failure":"core_egress_probe_failed"}

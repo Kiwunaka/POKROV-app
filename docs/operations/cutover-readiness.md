@@ -48,7 +48,10 @@ not mark the release goal complete or turn any missing gate into PASS.
 [Installed development client checks, September 9](evidence/2026-09-09-r12-installed-current/README.md):
 Huawei Frankfurt ordinary connection and bounded Wi-Fi/mobile switch samples PASS;
 Warsaw egress FAIL. Windows installation subsequently passed after owner resume:
-304 files match, session and secure storage preserved; connectivity is pending.
+304 files match, session and secure storage preserved.
+[Current Windows egress diagnosis](evidence/2026-09-09-r12-windows-egress/README.md)
+records Milan/Frankfurt failures and successful rollback; Core error readback
+and the connectivity fix remain open.
 These observations do not change the candidate.33 or public release verdict.
 
 The September 9 source integration uses signed promotion PR #95 after platform

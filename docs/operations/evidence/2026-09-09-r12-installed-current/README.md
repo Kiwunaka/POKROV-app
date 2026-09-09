@@ -45,7 +45,9 @@ After the owner explicitly resumed VM testing, the same installer completed with
 exit 0 at 07:04:35 UTC. Readback matched all 304 expected files; persisted session
 and secure-store hashes were unchanged, and POKROVService was Running as
 LocalSystem. This supersedes only the installation blocker above; the failed
-first dispatch remains retained. Current connectivity checks are still running.
+first dispatch remains retained. The subsequent
+[Windows egress investigation](../2026-09-09-r12-windows-egress/README.md)
+retains failed Milan/Frankfurt connections, rollback and transport diagnostics.
 
 Validation: `pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot
 C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot
