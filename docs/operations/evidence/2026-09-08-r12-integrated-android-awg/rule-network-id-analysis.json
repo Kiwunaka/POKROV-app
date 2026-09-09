@@ -1,0 +1,25 @@
+{
+  "changed_lines": 2,
+  "matched_network_id_changes": 2,
+  "matches": [
+    {
+      "priority": "16000",
+      "field": "fwmark low16 network identifier",
+      "before": "0x100dd",
+      "after": "0x100ef",
+      "before_sha256": "088b1d91d4ccb2cd0a40b01b0a07d34e62853d08a1c97f3bf6e154b6241d1941",
+      "after_sha256": "3641f8a7b8984f362bc4e4bdf1ae65b7da1c62c7c6aaa8b3a3c05a3a9c7045b1"
+    },
+    {
+      "priority": "23000",
+      "field": "fwmark low16 network identifier",
+      "before": "0xdd",
+      "after": "0xef",
+      "before_sha256": "e32af7e551a580bd81afd2a87f952579750e16dea58574e56efe929be1e4e15c",
+      "after_sha256": "5313ebf6c92a38b467ff4c833996661707c0a23380e7e1a1195740cb66b3b039"
+    }
+  ],
+  "all_other_text_identical": true,
+  "no_device_mutation": true,
+  "exact_rules_restored": false
+}

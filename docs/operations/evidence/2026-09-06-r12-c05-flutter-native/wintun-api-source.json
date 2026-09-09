@@ -1,0 +1,90 @@
+{
+  "source_files": [
+    {
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\sing-tun@v0.8.0-beta.17\\internal\\wintun\\dll_windows.go",
+      "sha256": "1a332593019fe17c3d929672cd1e37236c1be88efbafe2cbdcbfcf8e3e615c36"
+    },
+    {
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\sing-tun@v0.8.0-beta.17\\internal\\wintun\\dll_windows_amd64.go",
+      "sha256": "2510bebfe4eabfdbeddaeece4ed91b53d84950108af6432b8e1c39cef33d1c83"
+    },
+    {
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\sing-tun@v0.8.0-beta.17\\internal\\wintun\\session_windows.go",
+      "sha256": "bc0acf1c17d9cdc2b09e68355f940be7733a4876344b497ea065bd9a51377ba7"
+    },
+    {
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\sing-tun@v0.8.0-beta.17\\internal\\wintun\\wintun_windows.go",
+      "sha256": "bb0ce825686014fa8314ac111fc483406593a231ae7a4f05153802051df815b0"
+    }
+  ],
+  "api_header_sha256": "510a5984fbf73efd21a61ada60edfe05e1a38a77c8c47f6d62e0ab1cdbdd460f",
+  "api_symbols": [
+    {
+      "resolved_symbol": "WintunAllocateSendPacket",
+      "header_typedef": "WINTUN_ALLOCATE_SEND_PACKET_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunCloseAdapter",
+      "header_typedef": "WINTUN_CLOSE_ADAPTER_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunCreateAdapter",
+      "header_typedef": "WINTUN_CREATE_ADAPTER_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunDeleteDriver",
+      "header_typedef": "WINTUN_DELETE_DRIVER_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunEndSession",
+      "header_typedef": "WINTUN_END_SESSION_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunGetAdapterLUID",
+      "header_typedef": "WINTUN_GET_ADAPTER_LUID_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunGetReadWaitEvent",
+      "header_typedef": "WINTUN_GET_READ_WAIT_EVENT_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunGetRunningDriverVersion",
+      "header_typedef": "WINTUN_GET_RUNNING_DRIVER_VERSION_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunOpenAdapter",
+      "header_typedef": "WINTUN_OPEN_ADAPTER_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunReceivePacket",
+      "header_typedef": "WINTUN_RECEIVE_PACKET_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunReleaseReceivePacket",
+      "header_typedef": "WINTUN_RELEASE_RECEIVE_PACKET_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunSendPacket",
+      "header_typedef": "WINTUN_SEND_PACKET_FUNC",
+      "typedef_present": true
+    },
+    {
+      "resolved_symbol": "WintunStartSession",
+      "header_typedef": "WINTUN_START_SESSION_FUNC",
+      "typedef_present": true
+    }
+  ],
+  "loader": "dll_windows.go calls memmod.LoadLibrary(dllContent); this source fact is not a license interpretation or runtime acceptance.",
+  "scope": "Selected source named entrypoints correspond to types in official header; does not prove absence of every dynamic behavior or license compatibility."
+}

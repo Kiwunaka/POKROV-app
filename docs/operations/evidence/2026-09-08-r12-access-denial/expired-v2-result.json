@@ -1,0 +1,92 @@
+{
+    "schema":  "pokrov.r12-windows-api-outage-sample/v1",
+    "utc":  "2026-09-09T13:25:29.7037650Z",
+    "label":  "expired-v2-result",
+    "collector_admin":  false,
+    "ui_pids":  [
+                    608
+                ],
+    "service_pid":  3168,
+    "service_state":  "Running",
+    "probe":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  0,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "config_staged",
+                  "running":  false,
+                  "core_ready":  true,
+                  "dns_ready":  false,
+                  "egress_validated":  false,
+                  "can_connect":  true,
+                  "effective_matches_staged":  false,
+                  "failure":  "none"
+              },
+    "probe_exit":  0,
+    "tun_count":  0,
+    "routes_sha256":  "871393b7313f3228158694fac1d409b8777d3f431c1207bea4538af53ad34ed2",
+    "dns_sha256":  "5de74dba88385fbea86c0728fb4e44572a06ee8f7a8d3aad71187cee9f80ae4b",
+    "curl_exit":  0,
+    "curl_status":  200,
+    "blocked_process_probe":  {
+                                  "status":  null,
+                                  "error":  "ConnectFailure",
+                                  "elapsed_ms":  44
+                              },
+    "cache":  {
+                  "available":  true,
+                  "version":  1,
+                  "records":  [
+                                  {
+                                      "slot":  "downloaded",
+                                      "verified_at":  "2026-09-08T11:35:41.1639170Z",
+                                      "age_seconds":  92989.55025819999,
+                                      "binding_sha256":  "995f17c54995c746f875fa5fc29fd55f27a95e96c964336b043e9bb9456b2cda",
+                                      "revision_sha256":  "ff956fc7ef3afd1bb8eced836b12bedabb23b65c87fdc582527ca2c0c076c1b6",
+                                      "payload_sha256":  "06ae09f773ae793f58d35c43e9d6470fa5b5c7dba3c2132f5f817d51ed28f9a8",
+                                      "cache_entry_id_sha256":  "bc2e556962481dab8f9de85afc6d30c44946304e6c29d078b18689265f6b7690"
+                                  },
+                                  {
+                                      "slot":  "proven",
+                                      "verified_at":  "2026-09-08T11:35:41.1639170Z",
+                                      "age_seconds":  92989.5978471,
+                                      "binding_sha256":  "995f17c54995c746f875fa5fc29fd55f27a95e96c964336b043e9bb9456b2cda",
+                                      "revision_sha256":  "ff956fc7ef3afd1bb8eced836b12bedabb23b65c87fdc582527ca2c0c076c1b6",
+                                      "payload_sha256":  "06ae09f773ae793f58d35c43e9d6470fa5b5c7dba3c2132f5f817d51ed28f9a8",
+                                      "cache_entry_id_sha256":  "bc2e556962481dab8f9de85afc6d30c44946304e6c29d078b18689265f6b7690"
+                                  }
+                              ],
+                  "raw_exported":  false,
+                  "store_written":  false
+              },
+    "connected_events":  [
+                             {
+                                 "occurred_at":  "2026-09-08T12:22:22.658274Z",
+                                 "id_sha256":  "ecb2c2baf26fc6f8825f401fb9ecbb71b7cfecec2dd7065acd91aaa9f1d7fbe8",
+                                 "cached_profile":  true
+                             },
+                             {
+                                 "occurred_at":  "2026-09-08T12:20:06.689748Z",
+                                 "id_sha256":  "d20bc07a4d57373331c56e64860594dffa6bfe14607903ed8bdce1b46e5d9106",
+                                 "cached_profile":  true
+                             },
+                             {
+                                 "occurred_at":  "2026-09-08T11:35:46.287300Z",
+                                 "id_sha256":  "0fa9d4edb894fcb597a1fec83092ec34fbbbc6c8cca6963581bbb842c543957d",
+                                 "cached_profile":  false
+                             }
+                         ],
+    "outage_rule_states":  [
+                               {
+                                   "Name":  "R12Expiry-20260908-Probe",
+                                   "Enabled":  1
+                               },
+                               {
+                                   "Name":  "R12Expiry-20260908-Ui",
+                                   "Enabled":  1
+                               }
+                           ]
+}

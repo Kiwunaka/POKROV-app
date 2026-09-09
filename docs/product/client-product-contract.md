@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-08-31
+Last updated: 2026-09-07
 
 ## Document Status
 
@@ -33,7 +33,16 @@ tariff-catalog and commercial-contract digests plus the commercial revision.
 from the same owners and supplies runtime trial, Telegram reward, platform
 routing, legal, official-release and support constants. Consumer fallback copy is assembled
 in `src/shared/platform_product_copy.dart`; account-specific values still come
-from server responses. `docs/generated/platform-copy-contract.md` maps every
+from server responses. The account badge, profile and subscription sheet do
+not derive a user's access lane or remaining days from the seed or the
+advertised trial duration. Before the first valid subscription response,
+including after an API timeout or app restart, the account presentation is
+unknown. Zero remaining days never becomes a fresh trial. A previously received
+in-process subscription value may remain displayed after a failed refresh;
+this presentation grants no access. The protected offline-profile policy and
+current tunnel proof independently determine whether connection can proceed.
+
+`docs/generated/platform-copy-contract.md` maps every
 platform copy namespace, the active-client `app.*` review baseline and the
 authority boundary. It is generated reference evidence, not runtime copy or a
 new source of truth. `validate-seed.ps1`
@@ -542,7 +551,10 @@ Support contract rules:
   8–10 seconds; after one minute without a ticket change it relaxes to 15–30
   seconds. Returning from background triggers one immediate refresh. Transport
   failures use bounded exponential backoff with jitter and retain the explicit
-  retry control. SSE/WebSocket remains conditional on measured polling failure
+  retry control. A failed read restores polling eligibility before the existing
+  coordinator schedules its backoff; an offline hint does not stop retries for
+  an open foreground ticket. Backgrounding or closing the screen still cancels
+  them. SSE/WebSocket remains conditional on measured polling failure
   and is not part of the 1.2.0 support contract
 - the AI helper handles WARP, location, route-mode, and system-permission
   recovery before human escalation. A transport failure is shown as a retryable
@@ -857,6 +869,9 @@ Host behavior:
   button hides to tray (default) or exits; the explicit tray `Выход` action
   always requests native teardown. Exact-artifact runtime shutdown and system
   proxy restoration remain a manual release check.
+  Login startup (`--startup`) stays hidden; repeating it leaves the existing
+  window's visibility unchanged. An ordinary launch or acquisition link
+  activates the one existing UI instead of opening another instance.
 
 Compatibility-only residue may still exist in internal identifiers, imports, namespaces, or hidden handlers such as `pokrovvpn://`, but it must not define the user-facing product story.
 

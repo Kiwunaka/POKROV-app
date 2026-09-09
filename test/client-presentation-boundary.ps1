@@ -23,6 +23,15 @@ $clientUpdate = Read-RepoText "packages\app_shell\lib\src\features\update\client
 $bootstrap = Read-RepoText "packages\app_shell\lib\app_first_runtime_bootstrap.dart"
 $appShell = Read-RepoText "packages\app_shell\lib\app_shell.dart"
 
+if ($seed -notmatch [regex]::Escape("late final ManagedProfileLifecycle _managedProfileLifecycle;")) {
+  $errors.Add("Composition root must delegate profile lifecycle to its standalone owner.")
+}
+foreach ($forbidden in @("bool _managedProfileDirty =", "int _managedProfileRevision =", "_quickSettingsInvalidationInFlight", "_managedProfileInvalidationTimer")) {
+  if ($seed -match [regex]::Escape($forbidden)) {
+    $errors.Add("Composition root retained raw profile lifecycle state: '$forbidden'.")
+  }
+}
+
 if ($seed -notmatch [regex]::Escape("late final ConnectionCoordinator _connectionCoordinator;")) {
   $errors.Add("Composition root must own one ConnectionCoordinator boundary.")
 }

@@ -1,0 +1,21 @@
+{
+    "utc":  "2026-09-08T12:33:22.3114239Z",
+    "read_only_requests":  true,
+    "session_refreshed":  false,
+    "raw_exported":  false,
+    "results":  [
+                    {
+                        "path":  "/api/client/subscription",
+                        "status":  200,
+                        "elapsed_ms":  699,
+                        "lane":  "expiredOrBlocked",
+                        "days_left":  0
+                    },
+                    {
+                        "path":  "/api/client/profile/managed",
+                        "status":  503,
+                        "elapsed_ms":  243,
+                        "error":  "ProtocolError"
+                    }
+                ]
+}

@@ -159,6 +159,8 @@ class AndroidRuntimeStateTest {
         AndroidRuntimeState.markRunning("POKROV включен на этом устройстве.")
 
         AndroidRuntimeState.updateVpnValidation(true)
+        setPrivateField("stagedProfileDigest", "a".repeat(64))
+        AndroidRuntimeState.bindActiveProfile("a".repeat(64))
         AndroidRuntimeState.updateCoreEgressValidation(true)
         val snapshot = AndroidRuntimeState.snapshot()
         @Suppress("UNCHECKED_CAST")
@@ -275,6 +277,8 @@ class AndroidRuntimeStateTest {
         AndroidRuntimeState.updateCoreEgressValidation(false)
         assertEquals("degraded", AndroidRuntimeState.snapshot()["hostHealth"])
 
+        setPrivateField("stagedProfileDigest", "a".repeat(64))
+        AndroidRuntimeState.bindActiveProfile("a".repeat(64))
         AndroidRuntimeState.updateCoreEgressValidation(true)
         val snapshot = AndroidRuntimeState.snapshot()
         assertEquals("healthy", snapshot["hostHealth"])
@@ -517,6 +521,8 @@ class AndroidRuntimeStateTest {
         setPrivateField("phase", AndroidRuntimePhase.RUNNING)
         AndroidRuntimeState.updateDefaultNetwork("wlan0", 42, dnsReady = true)
         AndroidRuntimeState.updateVpnValidation(true)
+        setPrivateField("stagedProfileDigest", "a".repeat(64))
+        AndroidRuntimeState.bindActiveProfile("a".repeat(64))
         AndroidRuntimeState.updateCoreEgressValidation(true)
 
         AndroidRuntimeState.markDnsTransportFailure(
@@ -658,10 +664,40 @@ class AndroidRuntimeStateTest {
         assertNull(stats["downlinkTotalBytes"])
     }
 
+    @Test
+    fun effectiveIdentityBelongsToTheActiveProfileAndClearsAfterStop() {
+        val first = "a".repeat(64)
+        val second = "b".repeat(64)
+        AndroidRuntimeState.markProfileStaged("/synthetic/profile.json", profileDigest = first)
+        AndroidRuntimeState.bindActiveProfile(first)
+        AndroidRuntimeState.markRunning("synthetic running")
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        assertEquals(first, AndroidRuntimeState.snapshot()["effectiveProfileDigest"])
+
+        // The same path is now owned by B. A delayed success from A proves nothing about B.
+        AndroidRuntimeState.markProfileStaged("/synthetic/profile.json", profileDigest = second)
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        assertEquals(second, AndroidRuntimeState.snapshot()["stagedProfileDigest"])
+        assertFalse(AndroidRuntimeState.snapshot()["core_egress_validated"] as Boolean)
+        assertEquals("profile_identity_mismatch", AndroidRuntimeState.snapshot()["last_failure_kind"])
+        assertNull(AndroidRuntimeState.snapshot()["effectiveProfileDigest"])
+
+        AndroidRuntimeState.bindActiveProfile(second)
+        AndroidRuntimeState.markRunning("synthetic replacement running")
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        assertEquals(second, AndroidRuntimeState.snapshot()["effectiveProfileDigest"])
+        AndroidRuntimeState.markStopRequested()
+        assertNull(AndroidRuntimeState.snapshot()["effectiveProfileDigest"])
+        AndroidRuntimeState.invalidateStagedProfile()
+        assertNull(AndroidRuntimeState.snapshot()["stagedProfileDigest"])
+    }
+
     private fun resetState() {
         setPrivateField("environment", null)
         setPrivateField("phase", AndroidRuntimePhase.ARTIFACT_MISSING)
         setPrivateField("stagedConfigPath", null)
+        setPrivateField("stagedProfileDigest", null)
+        setPrivateField("activeProfileDigest", null)
         setPrivateField(
             "lastMessage",
             "Native runtime bridge has not inspected this host yet.",

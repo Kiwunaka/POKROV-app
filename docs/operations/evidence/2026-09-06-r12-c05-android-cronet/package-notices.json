@@ -1,0 +1,877 @@
+{
+  "schema": "pokrov.r12.c05-android-cronet/v1",
+  "status": "LOCAL_ANDROID_NOTICE_PACKAGING_PASS_FULL_C05_OPEN",
+  "client_before": "46ac645f5096628d065a9dd2c2a0da58d2dce4f4",
+  "core_source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "native_source_commit": "30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5",
+  "asset": {
+    "path": "apps/android_shell/assets/licenses/cronet-NOTICES.txt",
+    "bytes": 173535,
+    "sha256": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5"
+  },
+  "body_count": 31,
+  "bodies": [
+    {
+      "name": "NaiveProxy",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/LICENSE",
+      "sha256": "845022e0c1db1abb41a6ba4cd3c4b674ec290f3359d9d3c78ae558d4c0ed9308",
+      "bytes": 1559,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\01.txt",
+      "body_offset": 532
+    },
+    {
+      "name": "Chromium",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/LICENSE",
+      "sha256": "368cca1106be99d39ecd32a38d8305585d802a475effb66380b91ffc9bcf709b",
+      "bytes": 1536,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\02.txt",
+      "body_offset": 2366
+    },
+    {
+      "name": "CityHash",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/cityhash/COPYING",
+      "sha256": "3ed00dd93c75655599456c83cba2f69c6824fd53f24fc24206ba27b65057709d",
+      "bytes": 1110,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\03.txt",
+      "body_offset": 4203
+    },
+    {
+      "name": "CityHash",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/cityhash_v103/COPYING",
+      "sha256": "3ed00dd93c75655599456c83cba2f69c6824fd53f24fc24206ba27b65057709d",
+      "bytes": 1110,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\04.txt",
+      "body_offset": 5619
+    },
+    {
+      "name": "Google Double Conversion",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/double_conversion/LICENSE",
+      "sha256": "4af93c12062c58058378de2397dc1c92bbff9ddfb1d583a01c84127557ce97ca",
+      "bytes": 1527,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\05.txt",
+      "body_offset": 7055
+    },
+    {
+      "name": "ICU",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/icu/LICENSE",
+      "sha256": "5d85142a5609ad177a2d7a2e7cae060b886b8b42f25c5b9803cf0cb5ee04ad2f",
+      "bytes": 3674,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\06.txt",
+      "body_offset": 8873
+    },
+    {
+      "name": "Netscape Portable Runtime (NSPR)",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/nspr/LICENSE",
+      "sha256": "d55a403514532af12dc2fbfb2e41900090a5dd6c7c76c8e4d9b20bcc737eac35",
+      "bytes": 1724,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\07.txt",
+      "body_offset": 12868
+    },
+    {
+      "name": "Paul Hsieh's SuperFastHash",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/base/third_party/superfasthash/LICENSE",
+      "sha256": "90b2201c340cee36b40a443f949d9eb416f0a0d204c32d350aff87fedeb67ae8",
+      "bytes": 1527,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\08.txt",
+      "body_offset": 14916
+    },
+    {
+      "name": "QUICHE",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/net/third_party/quiche/src/LICENSE",
+      "sha256": "845022e0c1db1abb41a6ba4cd3c4b674ec290f3359d9d3c78ae558d4c0ed9308",
+      "bytes": 1559,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\09.txt",
+      "body_offset": 16743
+    },
+    {
+      "name": "URI Template Parser",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/net/third_party/uri_template/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\10.txt",
+      "body_offset": 18617
+    },
+    {
+      "name": "Abseil",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/abseil-cpp/LICENSE",
+      "sha256": "c79a7fea0e3cac04cd43f20e7b648e5a0ff8fa5344e644b0ee09ca1162b62747",
+      "bytes": 11361,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\11.txt",
+      "body_offset": 30271
+    },
+    {
+      "name": "BoringSSL",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/boringssl/src/LICENSE",
+      "sha256": "827c8d8fc207c2392794eef9e00fe246f9f61fdcc132556c275be3dd8c3cd97f",
+      "bytes": 13115,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\12.txt",
+      "body_offset": 41934
+    },
+    {
+      "name": "Fiat-Crypto: Synthesizing Correct-by-Construction Code for Cryptographic Primitives",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/boringssl/src/third_party/fiat/LICENSE",
+      "sha256": "9eacbcb81be660840c714a560a9d65ba07913db98dd4baf969f78dd499fdd60f",
+      "bytes": 638,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\13.txt",
+      "body_offset": 55442
+    },
+    {
+      "name": "Brotli",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/brotli/LICENSE",
+      "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94",
+      "bytes": 1084,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\14.txt",
+      "body_offset": 56372
+    },
+    {
+      "name": "libcxx",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/libc++/src/LICENSE.TXT",
+      "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+      "bytes": 16703,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\15.txt",
+      "body_offset": 57756
+    },
+    {
+      "name": "modp base64 decoder",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/modp_b64/LICENSE",
+      "sha256": "d47e8390fb0d7ad4a18f26aedd6283c7ab6b5b4fabab536ccb4db7f9f6d90c08",
+      "bytes": 1721,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\16.txt",
+      "body_offset": 74766
+    },
+    {
+      "name": "simdutf unicode transcoder",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/simdutf/LICENSE",
+      "sha256": "fc8dbc04e03ad4efc08a647ffe7f995b811a95bc04c0e85a56d5277c6593fa5f",
+      "bytes": 1059,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\17.txt",
+      "body_offset": 76800
+    },
+    {
+      "name": "zlib",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/zlib/LICENSE",
+      "sha256": "e1cfcc55c325b3f78cf55df9664abaa066e2271dffe8213347d9fccdfbac8f2c",
+      "bytes": 910,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\18.txt",
+      "body_offset": 78147
+    },
+    {
+      "name": "Zstandard",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/zstd/src/LICENSE",
+      "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8",
+      "bytes": 1549,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\19.txt",
+      "body_offset": 79354
+    },
+    {
+      "name": "url_parse",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/url/third_party/mozilla/LICENSE.txt",
+      "sha256": "284545e873c704952e5b1b39d457dd83a3b115a51d9f1eb5175137bd69b8fa1b",
+      "bytes": 3200,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\20.txt",
+      "body_offset": 81207
+    },
+    {
+      "name": "Perfetto",
+      "origin": "https://chromium.googlesource.com/external/github.com/google/perfetto/+/ac7792a0f3f1cbfffb071e8b97cd9a5168900e03/LICENSE",
+      "sha256": "df3384bec476fac3525c723d0c10da9ac9820ef56cbb065ec035d32e9b55bd7a",
+      "bytes": 14169,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\21.txt",
+      "body_offset": 84706
+    },
+    {
+      "name": "Protocol Buffers 32.0 (Chromium integration)",
+      "origin": "https://chromium.googlesource.com/chromium/src/+/refs/tags/143.0.7499.109/third_party/protobuf/LICENSE",
+      "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d",
+      "bytes": 1732,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\22.txt",
+      "body_offset": 99192
+    },
+    {
+      "name": "LLVM compiler-rt",
+      "origin": "https://chromium.googlesource.com/external/github.com/llvm/llvm-project/compiler-rt/+/08611c39bbfc52cc034904eb88817c6209b828f9/LICENSE.TXT",
+      "sha256": "1a8f1058753f1ba890de984e48f0242a3a5c29a6a8f2ed9fd813f36985387e8d",
+      "bytes": 16708,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\23.txt",
+      "body_offset": 101249
+    },
+    {
+      "name": "Protocol Buffers utf8_range",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/protobuf/third_party/utf8_range/LICENSE",
+      "sha256": "02de69b64fc36d9e938f418e52723e42f0b2b226d58a9cb3c8dcbdf7059f5074",
+      "bytes": 1091,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\24.txt",
+      "body_offset": 118295
+    },
+    {
+      "name": "LLVM libc++abi",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/libc++abi/src/LICENSE.TXT",
+      "sha256": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c",
+      "bytes": 16706,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\25.txt",
+      "body_offset": 119697
+    },
+    {
+      "name": "Fiat-Crypto authors",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/boringssl/src/third_party/fiat/AUTHORS",
+      "sha256": "ad74c036a6afaedc418fed65f171c877c2f74a4c70938a03930aa11c98a20508",
+      "bytes": 648,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\26.txt",
+      "body_offset": 136732
+    },
+    {
+      "name": "Perfetto intrusive tree / OpenBSD attribution",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/perfetto/src/base/intrusive_tree.cc",
+      "sha256": "8d3778752983f24cb16b5177f431980239bf7ecb43d4b524c9854e32f2a0f882",
+      "bytes": 2091,
+      "scope": "Android GN native dependency or supporting source header; prior upstream authentication reused only after exact package source equality.",
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\27.txt",
+      "body_offset": 137732
+    },
+    {
+      "name": "LLVM libunwind",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/libunwind/src/LICENSE.TXT",
+      "sha256": "b5efebcaca80879234098e52d1725e6d9eb8fb96a19fce625d39184b705f7b6d",
+      "bytes": 16706,
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\28.txt",
+      "body_offset": 140134
+    },
+    {
+      "name": "CPU Features",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/cpu_features/src/LICENSE",
+      "sha256": "af272c1b4dd08dd61d43e001d3134119d03ca7a2b057a64f7355fdf27fbea3dd",
+      "bytes": 12876,
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\29.txt",
+      "body_offset": 157148
+    },
+    {
+      "name": "JNI Zero",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/jni_zero/LICENSE",
+      "sha256": "57faf03e216d5628169a779df31a842347e55c8e6567e1107b6cb8fb90175b59",
+      "bytes": 1458,
+      "body_file": "E:\\r12-c05-android-cronet\\notices\\30.txt",
+      "body_offset": 170320
+    },
+    {
+      "name": "CPU Features Android NDK compatibility header",
+      "origin": "https://github.com/SagerNet/naiveproxy/blob/30f3a5689ac20ba1b87c1ce58f66d3aaa8b2cfe5/src/third_party/cpu_features/src/ndk_compat/cpu-features.h",
+      "sha256": "6b78feaa023a9371c733a935210d5e48719285f8d7f87174d182a2172f4cf4be",
+      "bytes": 1397,
+      "body_file": "E:\\r12-c05-android-cronet\\cpu-features-bsd-header.txt",
+      "body_offset": 172137
+    }
+  ],
+  "source_object_summary": [
+    {
+      "cpu": "arm64",
+      "goarch": "arm64",
+      "compile_sources": 2663,
+      "source_filename_symbols": 2538,
+      "archive_members": 2663,
+      "matching_archive_member_multiset": true,
+      "matching_non_assembly_source_filename_multiset": true,
+      "limitations": "Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility."
+    },
+    {
+      "cpu": "arm",
+      "goarch": "arm",
+      "compile_sources": 2663,
+      "source_filename_symbols": 2538,
+      "archive_members": 2663,
+      "matching_archive_member_multiset": true,
+      "matching_non_assembly_source_filename_multiset": true,
+      "limitations": "Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility."
+    },
+    {
+      "cpu": "x64",
+      "goarch": "amd64",
+      "compile_sources": 2666,
+      "source_filename_symbols": 2540,
+      "archive_members": 2666,
+      "matching_archive_member_multiset": true,
+      "matching_non_assembly_source_filename_multiset": true,
+      "limitations": "Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility."
+    },
+    {
+      "cpu": "x86",
+      "goarch": "386",
+      "compile_sources": 2665,
+      "source_filename_symbols": 2540,
+      "archive_members": 2665,
+      "matching_archive_member_multiset": true,
+      "matching_non_assembly_source_filename_multiset": true,
+      "limitations": "Member and STT_FILE basenames cannot distinguish source paths with identical basenames or prove compiler command/source bytes/reproducibility."
+    }
+  ],
+  "source_original_files_hashed": 4771,
+  "native_source_snapshot_files": 30591,
+  "native_source_unchanged": true,
+  "source_project_directories_in_sbom": 25,
+  "static_archive_inputs_in_sbom": 4,
+  "sbom_schema": "CycloneDX 1.6",
+  "sbom_validation": "PASS",
+  "packages": {
+    "status": "PASS_LOCAL_ANDROID_NOTICE_PACKAGING",
+    "asset": {
+      "path": "apps/android_shell/assets/licenses/cronet-NOTICES.txt",
+      "bytes": 173535,
+      "sha256": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5"
+    },
+    "body_count": 31,
+    "packages": [
+      {
+        "file": "E:\\r12-c05-android-cronet\\android\\app-direct-arm64-v8a-release.apk",
+        "bytes": 101226830,
+        "sha256": "75addbcda500f1e8b27e89753941a4662a6bae05efbfae53706b16ea15936962",
+        "added": [
+          "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt"
+        ],
+        "changed": [
+          "assets/flutter_assets/AssetManifest.bin"
+        ],
+        "unchanged_entries": 376,
+        "protected_entries": {
+          "classes.dex": "30b6a2b2dbcd87256746968c0143c096e0173288669e36eacd1cb485ecddcd38",
+          "lib/arm64-v8a/libapp.so": "84a5bd338a3542643f692066176f1be141f559cd0179773fe92e491eceefd297",
+          "lib/arm64-v8a/libflutter.so": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+          "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+          "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+          "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+        },
+        "signing": {
+          "command": [
+            "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+            "verify",
+            "--print-certs",
+            "E:\\r12-c05-android-cronet\\android\\app-direct-arm64-v8a-release.apk"
+          ],
+          "exit_code": 0,
+          "signer": "Android Debug",
+          "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+        }
+      },
+      {
+        "file": "E:\\r12-c05-android-cronet\\android\\app-direct-armeabi-v7a-release.apk",
+        "bytes": 90741060,
+        "sha256": "dd82fa0d0385738810d1222d019fbb666c0bd334f565e3bd0b5cb3d6d3fac602",
+        "added": [
+          "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt"
+        ],
+        "changed": [
+          "assets/flutter_assets/AssetManifest.bin"
+        ],
+        "unchanged_entries": 376,
+        "protected_entries": {
+          "classes.dex": "30b6a2b2dbcd87256746968c0143c096e0173288669e36eacd1cb485ecddcd38",
+          "lib/armeabi-v7a/libapp.so": "c97027de9cd0cc8f7856ae6e41a8717b332a4a467800a7f08bbbb91ed4941b1c",
+          "lib/armeabi-v7a/libflutter.so": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+          "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+          "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+          "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+        },
+        "signing": {
+          "command": [
+            "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+            "verify",
+            "--print-certs",
+            "E:\\r12-c05-android-cronet\\android\\app-direct-armeabi-v7a-release.apk"
+          ],
+          "exit_code": 0,
+          "signer": "Android Debug",
+          "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+        }
+      },
+      {
+        "file": "E:\\r12-c05-android-cronet\\android\\app-direct-universal-release.apk",
+        "bytes": 295211561,
+        "sha256": "49ba794b6ae5c1c711a66b1e68f4762bdf5eab474384fbe94139bdde5cd4f4d3",
+        "added": [
+          "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt"
+        ],
+        "changed": [
+          "assets/flutter_assets/AssetManifest.bin"
+        ],
+        "unchanged_entries": 382,
+        "protected_entries": {
+          "classes.dex": "30b6a2b2dbcd87256746968c0143c096e0173288669e36eacd1cb485ecddcd38",
+          "lib/arm64-v8a/libapp.so": "84a5bd338a3542643f692066176f1be141f559cd0179773fe92e491eceefd297",
+          "lib/arm64-v8a/libflutter.so": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+          "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+          "lib/armeabi-v7a/libapp.so": "c97027de9cd0cc8f7856ae6e41a8717b332a4a467800a7f08bbbb91ed4941b1c",
+          "lib/armeabi-v7a/libflutter.so": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07",
+          "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+          "lib/x86_64/libapp.so": "fc5aea0b80c0717c4a31288465bcae91a3c6ec0279b79613dc5ab96b32fe5886",
+          "lib/x86_64/libflutter.so": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd",
+          "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376",
+          "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+          "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+        },
+        "signing": {
+          "command": [
+            "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+            "verify",
+            "--print-certs",
+            "E:\\r12-c05-android-cronet\\android\\app-direct-universal-release.apk"
+          ],
+          "exit_code": 0,
+          "signer": "Android Debug",
+          "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+        }
+      },
+      {
+        "file": "E:\\r12-c05-android-cronet\\android\\app-direct-x86_64-release.apk",
+        "bytes": 110235757,
+        "sha256": "88757c8380b2abae2bd63d366685899daea1e6b667d40957d455ef7ed2eb94a5",
+        "added": [
+          "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt"
+        ],
+        "changed": [
+          "assets/flutter_assets/AssetManifest.bin"
+        ],
+        "unchanged_entries": 376,
+        "protected_entries": {
+          "classes.dex": "30b6a2b2dbcd87256746968c0143c096e0173288669e36eacd1cb485ecddcd38",
+          "lib/x86_64/libapp.so": "fc5aea0b80c0717c4a31288465bcae91a3c6ec0279b79613dc5ab96b32fe5886",
+          "lib/x86_64/libflutter.so": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd",
+          "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376",
+          "assets/flutter_assets/NOTICES.Z": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f",
+          "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt": "8075f4b06ef00fc4b7bf50e05905a4908d63619d73a1571aaf74c5e3b62314e8"
+        },
+        "signing": {
+          "command": [
+            "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+            "verify",
+            "--print-certs",
+            "E:\\r12-c05-android-cronet\\android\\app-direct-x86_64-release.apk"
+          ],
+          "exit_code": 0,
+          "signer": "Android Debug",
+          "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+        }
+      }
+    ],
+    "preexisting_registrants": "4 byte-identical",
+    "scope": "Internal Android Debug-signed Direct release-mode APKs with loopback API. No installed runtime/privacy, production signing or final candidate acceptance."
+  },
+  "toolchain": {
+    "gn": {
+      "url": "https://chrome-infra-packages.appspot.com/dl/gn/gn/linux-amd64/+/git_revision:07d3c6f4dc290fae5ca6152ebcb37d6815c411ab",
+      "zip_sha256": "83122b4cc100774aed0042f24160563bd366695f36521e5848ce01133dfaa061",
+      "gn_sha256": "6e694f35619516a8a089ea92db93df8b1d78a3d6f27abb5b569bd1649e95ee8e",
+      "version": "2287 (07d3c6f4dc29)"
+    },
+    "downloads": [
+      {
+        "name": "clang.tar.xz",
+        "url": "https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64/clang-llvmorg-22-init-8940-g4d4cb757-84.tar.xz",
+        "command": [
+          "curl",
+          "-fL",
+          "--retry",
+          "3",
+          "--retry-all-errors",
+          "--connect-timeout",
+          "20",
+          "--max-time",
+          "600",
+          "-D",
+          "/opt/r12/c05-android-cronet/downloads/clang.tar.xz.headers",
+          "https://commondatastorage.googleapis.com/chromium-browser-clang/Linux_x64/clang-llvmorg-22-init-8940-g4d4cb757-84.tar.xz",
+          "-o",
+          "/opt/r12/c05-android-cronet/downloads/clang.tar.xz"
+        ],
+        "exit_code": 0,
+        "bytes": 55669844,
+        "sha256": "f6a487ffd0e56ba7a39b063d85d1f8ff7846514f50635785730cffb7368872ce"
+      },
+      {
+        "name": "android-ndk-r28-linux.zip",
+        "url": "https://dl.google.com/android/repository/android-ndk-r28-linux.zip",
+        "command": [
+          "curl",
+          "-fL",
+          "--retry",
+          "3",
+          "--retry-all-errors",
+          "--connect-timeout",
+          "20",
+          "--max-time",
+          "600",
+          "-D",
+          "/opt/r12/c05-android-cronet/downloads/android-ndk-r28-linux.zip.headers",
+          "https://dl.google.com/android/repository/android-ndk-r28-linux.zip",
+          "-o",
+          "/opt/r12/c05-android-cronet/downloads/android-ndk-r28-linux.zip"
+        ],
+        "exit_code": 0,
+        "bytes": 723148067,
+        "sha256": "a186b67e8810cb949514925e4f7a2255548fb55f5e9b0824a6430d012c1b695b"
+      }
+    ],
+    "extraction": {
+      "clang_version": "clang version 22.0.0git (https://chromium.googlesource.com/a/external/github.com/llvm/llvm-project 71d381f9673da50215a8d09ed34eebd4ff8f9cfb)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/r12/c05-android-cronet/source/src/third_party/llvm-build/Release+Asserts/bin\n",
+      "ndk_files": 8449,
+      "ndk_source_properties": "Pkg.Desc = Android NDK\nPkg.Revision = 28.0.13004108\nPkg.BaseRevision = 28.0.13004108\nPkg.ReleaseName = r28\n",
+      "gn_command": [
+        "/opt/r12/c05-android-cronet/source/src/gn/out/gn",
+        "gen",
+        "out/r12-arm64",
+        "--args=is_official_build=true is_debug=false is_clang=true use_clang_modules=false use_thin_lto=false fatal_linker_warnings=false treat_warnings_as_errors=false is_cronet_build=true use_udev=false use_aura=false use_ozone=false use_gio=false use_glib=false use_kerberos=false disable_zstd_filter=false enable_reporting=false enable_bracketed_proxy_uris=true enable_quic_proxy_support=true use_nss_certs=false enable_backup_ref_ptr_support=false enable_dangling_raw_ptr_checks=false exclude_unwind_tables=true enable_resource_allowlist_generation=false symbol_level=0 enable_dsyms=false optimize_for_size=true use_sysroot=false default_min_sdk_version=23 is_high_end_android=true android_ndk_major_version=28 target_os=\"android\" target_cpu=\"arm64\""
+      ],
+      "gn_exit_code": 0
+    },
+    "final": {
+      "source_inputs_verified": 30591,
+      "source_changed": [],
+      "toolchain_downloads": [
+        {
+          "file": "clang.tar.xz",
+          "sha256": "f6a487ffd0e56ba7a39b063d85d1f8ff7846514f50635785730cffb7368872ce",
+          "md5_base64": "zejZkeQ3AZf7wsTR09xe/w==",
+          "server_md5_values": [
+            "zejZkeQ3AZf7wsTR09xe/w=="
+          ],
+          "server_md5_matches": true
+        },
+        {
+          "file": "android-ndk-r28-linux.zip",
+          "sha256": "a186b67e8810cb949514925e4f7a2255548fb55f5e9b0824a6430d012c1b695b",
+          "md5_base64": "UDNYKgsGn7JwJPXG7cFl2w==",
+          "server_md5_values": [],
+          "server_md5_matches": null
+        }
+      ],
+      "ndk_zip_symlinks": [
+        "android-ndk-r28/shader-tools/linux-x86_64/libc++.so",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/musl/lib/i686-unknown-linux-musl/libc++.so.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/musl/lib/x86_64-unknown-linux-musl/libc++.so.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/i386-unknown-linux-gnu/libc++.so.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/i386-unknown-linux-gnu/libc++abi.so.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/libunwind.so",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/python3.11/site-packages/lldb/_lldb.cpython-311-x86_64-linux-gnu.so",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/python3.11/site-packages/lldb/lldb-argdumper",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/libc++.a",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/libc++abi.a",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/libc++.so",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/libxml2.so",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/x86_64-unknown-linux-gnu/libc++.so.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/x86_64-unknown-linux-gnu/libc++abi.so.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/libc++.so.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/lib/libc++abi.so.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/python3/share/man/man1/python3.1",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/python3/lib/pkgconfig/python3.pc",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/python3/lib/pkgconfig/python3-embed.pc",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/python3/lib/libpython3.11.so",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/python3/bin/python3",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-addr2line",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-lib",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/ld64.lld",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/ld.lld",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-dlltool",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/lld-link",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-windres",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/clang",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/wasm-ld",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib",
+        "android-ndk-r28/toolchains/llvm/prebuilt/linux-x86_64/bin/ld"
+      ],
+      "prior_lab_services": "Id=r12-deploy-fixture.service\nActiveState=inactive\n\nId=r12-compat-current.service\nActiveState=inactive\n\nId=r12-compat-previous.service\nActiveState=inactive\n",
+      "scope": "GN generation only; no Ninja/native compile, no runtime/network engine execution, no package/service install."
+    },
+    "ndk_symlink_correction": {
+      "corrected_ndk_symlinks": [
+        {
+          "path": "shader-tools/linux-x86_64/libc++.so",
+          "target": "../../toolchains/llvm/prebuilt/linux-x86_64/lib/libc++.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/musl/lib/i686-unknown-linux-musl/libc++.so.1",
+          "target": "libc++.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/musl/lib/x86_64-unknown-linux-musl/libc++.so.1",
+          "target": "libc++.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/i386-unknown-linux-gnu/libc++.so.1",
+          "target": "libc++.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/i386-unknown-linux-gnu/libc++abi.so.1",
+          "target": "libc++abi.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/libunwind.so",
+          "target": "x86_64-unknown-linux-gnu/libunwind.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/python3.11/site-packages/lldb/_lldb.cpython-311-x86_64-linux-gnu.so",
+          "target": "../../../liblldb.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/python3.11/site-packages/lldb/lldb-argdumper",
+          "target": "../../../../bin/lldb-argdumper"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/libc++.a",
+          "target": "x86_64-unknown-linux-gnu/libc++.a"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/libc++abi.a",
+          "target": "x86_64-unknown-linux-gnu/libc++abi.a"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/libc++.so",
+          "target": "x86_64-unknown-linux-gnu/libc++.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/libxml2.so",
+          "target": "libxml2.so.2"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/x86_64-unknown-linux-gnu/libc++.so.1",
+          "target": "libc++.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/x86_64-unknown-linux-gnu/libc++abi.so.1",
+          "target": "libc++abi.so"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/libc++.so.1",
+          "target": "x86_64-unknown-linux-gnu/libc++.so.1"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/lib/libc++abi.so.1",
+          "target": "x86_64-unknown-linux-gnu/libc++abi.so.1"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/python3/share/man/man1/python3.1",
+          "target": "python3.11.1"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/python3/lib/pkgconfig/python3.pc",
+          "target": "python-3.11.pc"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/python3/lib/pkgconfig/python3-embed.pc",
+          "target": "python-3.11-embed.pc"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/python3/lib/libpython3.11.so",
+          "target": "libpython3.11.so.1.0"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/python3/bin/python3",
+          "target": "python3.11"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-addr2line",
+          "target": "llvm-symbolizer"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-lib",
+          "target": "llvm-ar"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/ld64.lld",
+          "target": "lld"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/clang++",
+          "target": "clang"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/ld.lld",
+          "target": "lld"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf",
+          "target": "llvm-readobj"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-dlltool",
+          "target": "llvm-ar"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/lld-link",
+          "target": "lld"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-windres",
+          "target": "llvm-rc"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip",
+          "target": "llvm-objcopy"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/clang",
+          "target": "clang-19"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/wasm-ld",
+          "target": "lld"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib",
+          "target": "llvm-ar"
+        },
+        {
+          "path": "toolchains/llvm/prebuilt/linux-x86_64/bin/ld",
+          "target": "ld.lld"
+        }
+      ],
+      "precondition": "Every file was a task-created regular file containing exactly the retained official ZIP symlink target; all resolved targets inside task NDK root. Original ZIP retained.",
+      "graph_rechecks": [
+        {
+          "cpu": "arm64",
+          "command": [
+            "/opt/r12/c05-android-cronet/source/src/gn/out/gn",
+            "desc",
+            "out/r12-arm64",
+            "*",
+            "--all",
+            "--format=json"
+          ],
+          "exit_code": 0,
+          "graph_sha256": "72a3a1a3884eada7a36c011cd9cc32be5dfe9cbd72047fc6f59c6f16cc18024d",
+          "graph_unchanged": true
+        },
+        {
+          "cpu": "arm",
+          "command": [
+            "/opt/r12/c05-android-cronet/source/src/gn/out/gn",
+            "desc",
+            "out/r12-arm",
+            "*",
+            "--all",
+            "--format=json"
+          ],
+          "exit_code": 0,
+          "graph_sha256": "60b0b6bceb49f29e89f15cef70a2ab7ed61f2009278a9b9e94653be28ae3a5b3",
+          "graph_unchanged": true
+        },
+        {
+          "cpu": "x64",
+          "command": [
+            "/opt/r12/c05-android-cronet/source/src/gn/out/gn",
+            "desc",
+            "out/r12-x64",
+            "*",
+            "--all",
+            "--format=json"
+          ],
+          "exit_code": 0,
+          "graph_sha256": "472346c93f717c9681689acb12d774036cbf0c35c03d49e025d98b3570b24e9a",
+          "graph_unchanged": true
+        },
+        {
+          "cpu": "x86",
+          "command": [
+            "/opt/r12/c05-android-cronet/source/src/gn/out/gn",
+            "desc",
+            "out/r12-x86",
+            "*",
+            "--all",
+            "--format=json"
+          ],
+          "exit_code": 0,
+          "graph_sha256": "1246c96f87519b92e2c7d60cf886bb00b01f78d0c7eea0da1f8aac03b89d2f7f",
+          "graph_unchanged": true
+        }
+      ]
+    }
+  },
+  "vm_name": "POKROV-r12-b08-linux-20260906",
+  "vm_final_state": "poweroff",
+  "origin": "current-origin local Ubuntu VM",
+  "full_license_clearance": false,
+  "evidence_directory": "E:\\r12-c05-android-cronet",
+  "limitations": [
+    "GN member and source filename multisets match every bound archive; basenames alone cannot distinguish equal-named paths or prove source bytes/compiler flags/full binary reproduction.",
+    "Android 386 archive is present in the AAR, not in current APKs.",
+    "GN-declared source and supporting headers are covered; complete transitive include/file-level obligations and overall license compatibility remain open.",
+    "uTLS root license, corresponding source, native advisory/reachability and installed privacy/final candidate/device/origin acceptance remain open.",
+    "No native compilation or runtime engine execution in the VM; no package/service install.",
+    "NDK archive was downloaded from official HTTPS and SHA-256 retained; no independent server MD5 was present. Clang server MD5 matched.",
+    "The upstream android_ndk_major_version argument is unused by GN; actual r28 source.properties and full args are retained.",
+    "Android packages use internal Android Debug signing and loopback API; no new release candidate."
+  ],
+  "push_merge_deploy_signing_candidate": false,
+  "evidence_archive": {
+    "path": "E:\\r12-c05-android-cronet\\android-cronet-evidence.zip",
+    "bytes": 20022280,
+    "sha256": "dd78a5acbc9810dac31e6dc3c381d087f73004582c9662d2434246d356beb0ce",
+    "file_count": 154
+  },
+  "archive_scope": "Graphs, scripts, public source/notice metadata and logs. APKs, original source ZIP and compiler/NDK archives retained separately; final seed log separately hashed.",
+  "retained_attempts": [
+    "WSL HCS_E_SERVICE_NOT_AVAILABLE; existing Ubuntu lab used.",
+    "First GN generation required absent pinned Clang; actual pinned tools downloaded before successful graphs.",
+    "GN emits the unused upstream android_ndk_major_version warning before JSON; raw output retained, parsed JSON saved separately.",
+    "Perfetto notice is an exact 2091-byte source header prefix; initial whole-file hash assertion failed and was corrected to the recorded source range.",
+    "Official NDK ZIP symlink entries were initially retained as target-text files; all 35 task-created stubs verified and replaced with internal symlinks. All four complete graph output hashes remained unchanged.",
+    "SSH banner timeouts immediately after lab boot were followed by successful pinned-host connection; no host-key bypass."
+  ],
+  "commands": [
+    {
+      "command": "flutter build apk --release --flavor direct --target-platform android-arm,android-arm64,android-x64 --android-project-arg=pokrov.singleVersionSplitApks=true --dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9 --dart-define=POKROV_APP_VERSION=1.2.0",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-android-cronet\\android-build.log",
+      "sha256": "7683ea3bf7b50aac5774356e8711f685d5a3c1c4a4a7944887399d02ed4dc3c2"
+    },
+    {
+      "command": "python -B E:/r12-c05-android-cronet/verify-packages.py",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-android-cronet\\package-verification.log",
+      "sha256": "370f22e88b6fb0319f55e8893c3bc90ea15e1294cbe1e14cab8990c3c60e3a14"
+    },
+    {
+      "command": "python -B E:/r12-c05-android-cronet/validate-sbom.py",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-android-cronet\\sbom-validation.log",
+      "sha256": "2d72cef7d7ba88a759ff92999ee128a7887eb6fe5534ee1220a58212ed93e361"
+    },
+    {
+      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-android-cronet\\client-seed.log",
+      "sha256": "df2e20d17e28dd8f5a9ffe74401dec5482a01097ac71e98f35ee19c72e27e3b6"
+    }
+  ],
+  "seed_performance_scope": "fixture, not device performance proof",
+  "build_environment": {
+    "JAVA_HOME": "C:/Users/kiwun/tools/jdk/17.0.18",
+    "flutter": "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat",
+    "POKROV_ALLOW_INTERNAL_BETA_DEBUG_SIGNING": "true"
+  }
+}

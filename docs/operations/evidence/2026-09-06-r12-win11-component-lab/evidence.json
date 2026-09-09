@@ -1,0 +1,361 @@
+{
+  "schema": "pokrov.r12.win11-component-lab/v1",
+  "recorded_at_utc": "2026-09-06T04:16:39.048886+00:00",
+  "status": "PASS_COMPONENT_FIXTURES_SCM_MANUAL_PENDING",
+  "candidate_created": false,
+  "candidate_proven": false,
+  "promotion_authorized": false,
+  "origin": "current-origin Windows host -> local offline VirtualBox Windows 11 clone; not brain/RU origin",
+  "client_source": "ded58b1906bbfb1096ff919085ef37f5be942eb7",
+  "core_source": "94dd31012ac91fb9ecf2c98ad7383afb54102dd4",
+  "platform_source": "5d613dcc706f1c26a38d0a3baf66b491c702a71e",
+  "guest_baseline": {
+    "windows_version": "10.0.26200",
+    "administrator": false,
+    "pokrov_service_count": 0,
+    "install_root_exists": false,
+    "programdata_exists": false,
+    "pokrov_process_count": 0,
+    "up_adapter_count": 0,
+    "pokrov_adapter_count": 0
+  },
+  "vm_readback": {
+    "clone": {
+      "VMState": "running",
+      "nic1": "none",
+      "UUID": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27"
+    },
+    "source": {
+      "VMState": "poweroff",
+      "nic1": "bridged",
+      "UUID": "b769c8b4-e88a-452e-9d3a-cb4be23125e7"
+    }
+  },
+  "source_snapshot": "c0abfe48-b33c-4d9d-8556-6a7196aa1916",
+  "clone_scope": "linked clone; source remains poweroff; no original guest boot/install or explicit NIC modification; no claim of bytewise source config invariance",
+  "payload": {
+    "kind": "local component VM fixture; not installer or release candidate",
+    "client_source": "ded58b1906bbfb1096ff919085ef37f5be942eb7",
+    "configuration": "Release",
+    "core_source": "94dd31012ac91fb9ecf2c98ad7383afb54102dd4",
+    "vm_uuid": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+    "files": [
+      {
+        "name": "pokrov_service.exe",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64\\service\\Release\\pokrov_service.exe",
+        "bytes": 193024,
+        "sha256": "46d87dcb3b82d1c6fdcd3ddbd17e829ad509fc21aba86a82425448c69f0fffcc"
+      },
+      {
+        "name": "pokrov_service_runtime_test.exe",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64\\service\\Release\\pokrov_service_runtime_test.exe",
+        "bytes": 161280,
+        "sha256": "de709fde7e931d8b670d9b3cc007df3d9895ea49ef10f117ee993f0cccd64a94"
+      },
+      {
+        "name": "pokrov_service_security_test.exe",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64\\service\\Release\\pokrov_service_security_test.exe",
+        "bytes": 25600,
+        "sha256": "108d1c55637704e2c73169f23838331a95b89287c6eec7d5729c8c820e348ecb"
+      },
+      {
+        "name": "pokrov_service_protocol_test.exe",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64\\service\\Release\\pokrov_service_protocol_test.exe",
+        "bytes": 30720,
+        "sha256": "3b9e46aea48c95102c5250ca5d3b7e95c313e50995ffa87311e5bc7fa0e5290f"
+      },
+      {
+        "name": "pokrov_service_events_test.exe",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64\\service\\Release\\pokrov_service_events_test.exe",
+        "bytes": 63488,
+        "sha256": "b74562ef516176808c3dd48170505c735da74bf8801bcaa51f7e65c5e6d5926c"
+      },
+      {
+        "name": "pokrov_service_client_test.exe",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64\\service\\Release\\pokrov_service_client_test.exe",
+        "bytes": 36352,
+        "sha256": "e9d270e93df8415b963743e23794a0890f1a1896bca8a2870f62aa105fcdd772"
+      },
+      {
+        "name": "pokrov_service_pipe_client_test.exe",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64\\service\\Release\\pokrov_service_pipe_client_test.exe",
+        "bytes": 23040,
+        "sha256": "54bb1900727787e37fceb91e285bfa1fccfab124ee1cbdfe5c420721fc04f862"
+      },
+      {
+        "name": "pokrov_windows_crash_profile_test.exe",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\build\\windows\\x64\\service\\Release\\pokrov_windows_crash_profile_test.exe",
+        "bytes": 24576,
+        "sha256": "5597d519541255cbfc28d2c68189e12e6e25357de22d13186c46ae3bde865538"
+      },
+      {
+        "name": "msvcp140.dll",
+        "source_path": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Redist\\MSVC\\14.42.34433\\x64\\Microsoft.VC143.CRT\\msvcp140.dll",
+        "bytes": 575592,
+        "sha256": "9057d39b36b6c7d054865ee2bf9cde7a490fe3b01ec4e82514687e24f576269f"
+      },
+      {
+        "name": "vcruntime140.dll",
+        "source_path": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Redist\\MSVC\\14.42.34433\\x64\\Microsoft.VC143.CRT\\vcruntime140.dll",
+        "bytes": 120432,
+        "sha256": "da72e6677bd1bcd01c453c1998aaa19aeaf6659f4774cf6848409da8232a95b2"
+      },
+      {
+        "name": "vcruntime140_1.dll",
+        "source_path": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Redist\\MSVC\\14.42.34433\\x64\\Microsoft.VC143.CRT\\vcruntime140_1.dll",
+        "bytes": 49744,
+        "sha256": "26e470b29bed3d873e0c328186e53f95e9edbfe0b0fd0cda44743a0b1a04a828"
+      },
+      {
+        "name": "pokrov-core.dll",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\windows\\runner\\resources\\runtime\\pokrov-core.dll",
+        "bytes": 55443968,
+        "sha256": "38d40a1713c1cb5b3ad90ab5b4e66df68d5463b38945abac9d322be859b57c6b"
+      },
+      {
+        "name": "libcronet.dll",
+        "source_path": "E:\\r12client\\apps\\windows_shell\\windows\\runner\\resources\\runtime\\libcronet.dll",
+        "bytes": 8596992,
+        "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+      }
+    ],
+    "source_hashes": {
+      "apps/windows_shell/windows/service/CMakeLists.txt": "b526ba528522aeda6b081bb918ef1282a7e7c8886e852636a46fe5496b24af23",
+      "apps/windows_shell/windows/service/service_client.cpp": "bfcecc56f1db121a60843077dc79adcbe93f09dd07eb14cbee3d22cfc35376d6",
+      "apps/windows_shell/windows/service/service_client.h": "1a67ca398a04aa28a185fab17d8f7ea9daf02ecb5f372a7aedd2041647fef750",
+      "apps/windows_shell/windows/service/service_client_test.cpp": "a5e6e4766635e2aa3f133981445f78aa8fefe4b402af4f64b23ca200650e7691",
+      "apps/windows_shell/windows/service/service_events.cpp": "b1265418051d2b6dc1a009869c218f51cb0a94d97c1a475eb02930a56681b4eb",
+      "apps/windows_shell/windows/service/service_events.h": "ea4166b899d56f32aea94847daf02e8565e6e596fa32c9c5ce6e98215621828c",
+      "apps/windows_shell/windows/service/service_events_test.cpp": "c07a56129a904d629a48530dd3a37f481b585d81ab8e6b616b03dd1835f632e2",
+      "apps/windows_shell/windows/service/service_integration_test.cpp": "328da0476199979e697d2ca33f5bb5d255c2f94d63d49c52bd9f0c10229abc1b",
+      "apps/windows_shell/windows/service/service_main.cpp": "2754c1d62dbfd1dff2fea8823c497a23a50b5260615ea3164ca67b898a6cb1b3",
+      "apps/windows_shell/windows/service/service_network_state.cpp": "aafa2bf88f5d2d20ee140fb691b7ffc6688516ac08b2db438a5e4862435c70ff",
+      "apps/windows_shell/windows/service/service_pipe_client.cpp": "df348f43c190da7725a368e89787edae6828b782f5bf942d12efabb581ada3ae",
+      "apps/windows_shell/windows/service/service_pipe_client.h": "d9ef70334d6fb34c0e8cebcf27283d0e1a74d68fb8252861e27c8774259b09e2",
+      "apps/windows_shell/windows/service/service_pipe_client_test.cpp": "73c914b86b7298045f366f43d6b0f8f0b7787522319552292252eb7057ddc30a",
+      "apps/windows_shell/windows/service/service_profile_identity.cpp": "aeef8b1aae50219669cea3a91e943259fdb1f8c9b55c1295ea78f7a753f6c097",
+      "apps/windows_shell/windows/service/service_profile_identity.h": "4830dadd2f17bff454f66e45af09d22ecb75b54114d4fe3034c969c2be4d25ef",
+      "apps/windows_shell/windows/service/service_protocol.cpp": "4afe7f9d04daca27a616c6a6f60719589cdbaa6b8179e674c74687c638b39ea6",
+      "apps/windows_shell/windows/service/service_protocol.h": "3934424eb5a4ce4857f971a05bf3819066c2a9cd0710ccaf9a038bfe90b80701",
+      "apps/windows_shell/windows/service/service_protocol_test.cpp": "705dc3e61740bc5637aca0997aa954184392969344f5ea253c6468fa74b88578",
+      "apps/windows_shell/windows/service/service_recovery.cpp": "c9c2b16d0abf18c58630d32b96d73a9f807211a72989977116e66e75447a36db",
+      "apps/windows_shell/windows/service/service_recovery.h": "7843d11ab1fc5d9bf5dceec12a04e2c50d5872d3d3cade4784fc15d8d6cf8f3c",
+      "apps/windows_shell/windows/service/service_runtime.cpp": "423ca7ed7ee30566d71bc09b8c36beec53227b352620543930675c6e7b89a40b",
+      "apps/windows_shell/windows/service/service_runtime.h": "4712b076d5c3006b60a7848e9487e7d3ea846be8ae18ebd194f86b23e61c10f6",
+      "apps/windows_shell/windows/service/service_runtime_test.cpp": "2c7210e82eee37f9a528610d91ff9e7acbb88da4f32403d1a61bf739a7ba0035",
+      "apps/windows_shell/windows/service/service_security.cpp": "4bd50042062faf27c8100793fb027c933f72f52c7be8ac5f8f4d43b96f8197e5",
+      "apps/windows_shell/windows/service/service_security.h": "69c4f8bfb14a09096f79f0b2cfd27ceb5d360e5ddb566a3d5326708839e848f7",
+      "apps/windows_shell/windows/service/service_security_test.cpp": "e66e63fd58d397af0252ab4a85e3e3b802d63cf0480dafa96ca627871ec5970a",
+      "apps/windows_shell/windows/service/service_server.cpp": "3b5297d671ed231d1899b80637485218079994cac0857f370d017240fd075744",
+      "apps/windows_shell/windows/service/service_server.h": "207584111faf97c9a5518d6ace29d056d74f55a1f0a9db3de655dc6db4fadebb",
+      "apps/windows_shell/windows/service/windows_crash_profile.cpp": "726b4960cfa27d59e55cd07f6be8bca041dca2d225df3a424ec18f8145d86e14",
+      "apps/windows_shell/windows/service/windows_crash_profile.h": "9a2252138a2fb4c19002200656a9f31564a27ae864479257c666c812859fd820",
+      "apps/windows_shell/windows/service/windows_crash_profile_test.cpp": "26e4fafc235389250993371005b4af85fd8fa8edf337d2a9f992c6c27840ea64"
+    },
+    "build_log_sha256": "1a6f0bf603c1fa61d5a2c1c38e85a4bfd8ac3bb8bd9cbe5129fb0bb8509eaf34"
+  },
+  "native_results": {
+    "vm_uuid": "d5ae2f7a-96c3-48b5-a2ba-5e009948ee27",
+    "windows_version": "10.0.26200",
+    "client_source": "ded58b1906bbfb1096ff919085ef37f5be942eb7",
+    "configuration": "Release",
+    "payload_hashes_verified": true,
+    "elevated": false,
+    "tests": [
+      {
+        "timed_out": false,
+        "name": "pokrov_service_protocol_test",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "exit_code": 0
+      },
+      {
+        "timed_out": false,
+        "name": "pokrov_service_security_test",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "exit_code": 0
+      },
+      {
+        "timed_out": false,
+        "name": "pokrov_windows_crash_profile_test",
+        "stdout_sha256": "aefa55b66c4650bab859a39a1a961b7c81e183e21e1581bb218f43f7eb4087d5",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "exit_code": 0
+      },
+      {
+        "timed_out": false,
+        "name": "pokrov_service_runtime_test",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "exit_code": 0
+      },
+      {
+        "timed_out": false,
+        "name": "pokrov_service_events_test",
+        "stdout_sha256": "f5094d2f91f5ee24b9096d5da858ef0110ee121f76d4bad8e619a479788e8d16",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "exit_code": 0
+      },
+      {
+        "timed_out": false,
+        "name": "pokrov_service_client_test",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "exit_code": 0
+      },
+      {
+        "timed_out": false,
+        "name": "pokrov_service_pipe_client_test",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "exit_code": 0
+      }
+    ],
+    "service_count": 0,
+    "pokrov_adapter_count": 0
+  },
+  "build_command": "cmake.exe --build apps/windows_shell/build/windows/x64 --config Release --target pokrov_service pokrov_service_runtime_test pokrov_service_security_test pokrov_service_protocol_test pokrov_windows_crash_profile_test pokrov_service_events_test pokrov_service_client_test pokrov_service_pipe_client_test",
+  "cmake_path": "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe",
+  "build_exit_code": 0,
+  "guest_command": "E:/r12-win11-invoke-guest.ps1 -PowerShellCommand \"& 'C:/Users/Public/R12Lab/native-tests-v2.ps1'\"",
+  "guest_command_exit_code": 0,
+  "build_owner_source_hash": "769319a50c9264caf722a15b16488c990febca3feba390a72a2bc93775e1995e",
+  "limitations": [
+    "Runtime tests use fake Core, egress and network backends; temporary journal/file/ACL and named pipe mechanisms run on the real guest OS. No live TUN/DNS/route or managed transport proof.",
+    "No UI/installer built, no service installed or started by this run, no Authenticode/new release candidate or retained artifacts/releases mutation.",
+    "First guest collector produced seven null exit codes despite completed processes: rejected evidence, guestcontrol returned 33. Replaced Start-Process/Refresh with System.Diagnostics.Process and reran; v1 and v2 logs retained.",
+    "Initial UAC probe queried a nonexistent Guest Additions version path: nonterminating error retained; not used as version proof. Administrator group membership was checked separately and is true, current guest process is unelevated.",
+    "Release tests use explicit Expect/return failure checks; NDEBUG does not remove their assertions. Debug-only integration server mode was not built/run in the Release service.",
+    "Prepared SCM probe uses current production service_client/status handshake code; compilation, transferred hashes and expected unavailable status with no service verified; no installed SCM result yet.",
+    "Windows 10, actual crash/forced kill/sleep/network change/reboot, connect/update/uninstall, packaged identity, managed profile effective revision, standard-user UI and RU-origin acceptance remain open."
+  ],
+  "scm_manual": {
+    "status": "MANUAL_OWNER_TEST",
+    "guest_launcher": "C:/Users/Public/R12Lab/Run-SCM-Smoke.cmd",
+    "guest_script": "C:/Users/Public/R12Lab/scm-smoke.ps1",
+    "prepared_hashes": [
+      {
+        "name": "scm-smoke.ps1",
+        "sha256": "4d5566374fd8826b67b5818ec54fce1f4fa8d1e12b743d63386a69b9f5d65d53"
+      },
+      {
+        "name": "Run-SCM-Smoke.cmd",
+        "sha256": "071f820b3a7b53655327104a409f04c1f3f47d41ca5a14ce82839c679c464dd3"
+      },
+      {
+        "name": "r12_scm_probe.exe",
+        "sha256": "52b94dd345a92d397e4a7d8330d8ffc9fd1874ed78eeb9c6e043aaaad2ce3400"
+      }
+    ],
+    "guards": [
+      "Exact clone SMBIOS UUID, elevation, no up NICs, no existing POKROV service/owner registry/install/runtime dirs",
+      "Pinned manifest and probe hashes; validate each of 13 payload files"
+    ],
+    "actions": [
+      "Copy service/Core/CRT/probe to Program Files/POKROV-R12-Lab; record owner SID in expected registry; create manual-start LocalSystem POKROVService",
+      "Start service; authenticated status only through production client code; stop; verify durable lifecycle event names",
+      "Retain stopped service, registry, files and journal in clone; no cleanup/deletion; return JSON even on failure"
+    ],
+    "owner_prompt_sent": true,
+    "executed": false,
+    "clone_left_running_offline_for_owner": true,
+    "absent_service_probe": {
+      "status": "PASS_EXPECTED_UNAVAILABLE",
+      "probe_exit_code": 1,
+      "wrapper_exit_code": 0,
+      "result": {
+        "expected": "unavailable before installation",
+        "exit_code": 1,
+        "probe": {
+          "available": false,
+          "trusted": false,
+          "compatible": false,
+          "command_accepted": false,
+          "core_ready": false,
+          "running": false
+        }
+      }
+    }
+  },
+  "retained_artifacts": {
+    "E:/r12-win11-native-build.log": "1a6f0bf603c1fa61d5a2c1c38e85a4bfd8ac3bb8bd9cbe5129fb0bb8509eaf34",
+    "E:/r12-win11-guest-baseline.log": "aa08b4dae10e27581ab63565f3ad864778272a8427eee0e972d9004ee5a72d92",
+    "E:/r12-win11-uac-probe.log": "f3d95816c3f730e5f5f499e53fe4f6865afdca8a6b35cd9ffbd5c051fb48e89d",
+    "E:/r12-win11-account-probe.log": "6929d18ab26eff994780b7a0538d6a806c0e7abd9407555c79826d4facac2ff8",
+    "E:/r12-win11-machine-probe.log": "c8352d4650fe23e890a57cb9df5a1b5567e5d861643bffe7d9465bdf666330f1",
+    "E:/r12-win11-native-guest.log": "b0621570c2b270d82794d859a257451fccbdd028bde6721dd5243b5bf2dc84f9",
+    "E:/r12-win11-native-guest-v2.log": "8cf3a511ab395ecc99c3419f5c313d37a6a8e5e190c379ba7d484c385e0fe0f5",
+    "E:/r12-win11-progress-probe.log": "707d0d43d0a04fca79790ffe3836febeec28a31fb4c2839300f84a6fb2eec6ba",
+    "E:/r12-win11-probe-configure.log": "fe2e42cbe53773f07b993d2832136e5c77a8bd1d5c078b79d6a4a475fea04bbb",
+    "E:/r12-win11-probe-build.log": "79728b89fdb23aa8a22e8df6fec9fd1ac07fb2e0051bba02d671d88d1667d0b5",
+    "E:/r12-win11-scm-prepared.log": "e79d99e914817c1b979d7aec1b7cc6d5659469099463c558f56368373e1a92d3",
+    "E:/r12-win11-collect.log": "a826c71c782a6607873b0706023b36ed08770b1e07a77da113010065be96f06a",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\preflight.json": "8d1517b5d3d998d0efd3ff5c6f3b37472649d331cdf0d457dace45ce658378dc",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\guest-baseline.json": "4331e885e5f69ee002019f75ec31cc13a4991b5be6cb5511056470d15cb34aff",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\payload.zip": "a6701396031b29efbb463811bf7a2fbe099cea170b0e937106367c7cb8ee2baf",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\payload\\manifest.json": "91710cadac27907fe6e3afe96347c3619c867947381637f419487932d94e678a",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results.zip": "8fbba6f1e1c148d78cfd79fe0b18efe6ad80a8299dddc859d40e80b0ba210eb5",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\vm-readback.json": "a4f933e7449136cf751c8f020c8ddf0a4d039bbfe3d8379bd727cc794aa2ec19",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\scm-smoke.ps1": "4d5566374fd8826b67b5818ec54fce1f4fa8d1e12b743d63386a69b9f5d65d53",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\Run-SCM-Smoke.cmd": "071f820b3a7b53655327104a409f04c1f3f47d41ca5a14ce82839c679c464dd3",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\scm-probe-source\\main.cpp": "9c5900bc2d7157836b35efe7e91b41051ebb7839d229dd95e64704b75b13bd9e",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\scm-probe-source\\CMakeLists.txt": "e14ca2564a2422f09623e880732cd378a83e6d56091b118666c8adece44f6c38",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\scm-probe-build\\Release\\r12_scm_probe.exe": "52b94dd345a92d397e4a7d8330d8ffc9fd1874ed78eeb9c6e043aaaad2ce3400",
+    "E:/r12-win11-clone.py": "e0b52ff212f8337289bd4e0df95a4758b0154f55b2f76a9931c475e80bf87238",
+    "E:/r12-win11-invoke-guest.ps1": "c02d6f673bed684a729c5f7fa5597c3a5e4ba4c9c17fee5c16d50a57600e78b1",
+    "E:/r12-win11-copy.ps1": "948bf486d9110936418c1bdc452947eae5064efb236a14262b331e6852b6d6d5",
+    "E:/r12-win11-prepare-payload.py": "dfb07cab048177cfec314df5573b87841ddf5e2cc3b9423f7049fa53b1302298",
+    "E:/r12-win11-native-guest.ps1": "24c6ab85c9e3583bd828a5dd4a2d489777357bf1b6b501d228d2923ff313dc2b",
+    "E:/r12-win11-native-guest-v2.ps1": "3ff613ee853158c4849a8e2ec48074edbb05e58584527390f2151c193af9ce74",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\native-tests-v2.json": "b66a46f5895e972f9b488d831672ff6fe5477871b4c2f6bff26c27c34b2b91b0",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\native-tests.json": "6570b11f0f26def83e22a1cfc5ebf6497cc551f630f21b4688c7926e04e574d1",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_client_test.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_client_test.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_client_test.v2.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_client_test.v2.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_events_test.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_events_test.stdout.log": "f5094d2f91f5ee24b9096d5da858ef0110ee121f76d4bad8e619a479788e8d16",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_events_test.v2.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_events_test.v2.stdout.log": "f5094d2f91f5ee24b9096d5da858ef0110ee121f76d4bad8e619a479788e8d16",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_pipe_client_test.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_pipe_client_test.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_pipe_client_test.v2.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_pipe_client_test.v2.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_protocol_test.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_protocol_test.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_protocol_test.v2.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_protocol_test.v2.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_runtime_test.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_runtime_test.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_runtime_test.v2.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_runtime_test.v2.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_security_test.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_security_test.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_security_test.v2.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_service_security_test.v2.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_windows_crash_profile_test.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_windows_crash_profile_test.stdout.log": "aefa55b66c4650bab859a39a1a961b7c81e183e21e1581bb218f43f7eb4087d5",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_windows_crash_profile_test.v2.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "E:\\r12-windows-lab\\r12-win11-20260906T035616Z\\native-results\\pokrov_windows_crash_profile_test.v2.stdout.log": "aefa55b66c4650bab859a39a1a961b7c81e183e21e1581bb218f43f7eb4087d5",
+    "E:/r12-win11-probe-absent.log": "5cdca1d1641575558db168d68c3d71e411d49e4e68f26ea2ef41349b38a02726"
+  },
+  "documentation_checks": [
+    {
+      "command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:\\r12client",
+      "log": "E:/r12-win11-client-seed.log",
+      "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9",
+      "exit_code": 1,
+      "result": "FAIL: added header moved retained candidate name outside the checked header; no product runtime failure"
+    },
+    {
+      "command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:\\r12client",
+      "log": "E:/r12-win11-client-seed-final.log",
+      "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9",
+      "exit_code": 0,
+      "result": "PASS after explicit retained candidate.33 reference in the new introduction"
+    }
+  ]
+}

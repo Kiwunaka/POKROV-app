@@ -1,0 +1,9 @@
+{
+    "mode":  "Advance",
+    "before_utc":  "2026-09-08T12:22:37.0329865Z",
+    "original_time_service_status":  "Stopped",
+    "original_time_service_start":  "Manual",
+    "boot_utc":  "2026-09-08T12:17:31.5000000Z",
+    "uptime_tick":  305781,
+    "after_utc":  "2026-09-09T13:22:37.0407875Z"
+}

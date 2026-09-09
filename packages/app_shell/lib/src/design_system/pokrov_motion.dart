@@ -84,6 +84,50 @@ abstract final class PokrovLoopingMotion {
       debugLoopingOverride ?? !Platform.environment.containsKey('FLUTTER_TEST');
 }
 
+/// Mutes widget tickers while the app is inactive, including navigator overlays.
+/// Runtime operations and foreground refresh remain owned by their coordinators.
+class PokrovAppMotionGate extends StatefulWidget {
+  const PokrovAppMotionGate({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  State<PokrovAppMotionGate> createState() => _PokrovAppMotionGateState();
+}
+
+class _PokrovAppMotionGateState extends State<PokrovAppMotionGate>
+    with WidgetsBindingObserver {
+  late bool _active;
+
+  @override
+  void initState() {
+    super.initState();
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _active = lifecycle == null || lifecycle == AppLifecycleState.resumed;
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final active = state == AppLifecycleState.resumed;
+    if (_active != active) {
+      setState(() => _active = active);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TickerMode(
+        enabled: _active,
+        child: widget.child,
+      );
+}
+
 class PokrovMotionScope extends InheritedWidget {
   const PokrovMotionScope({
     required super.child,

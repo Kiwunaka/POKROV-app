@@ -1,0 +1,16 @@
+[
+  {
+    "alias": "pokrov-brain",
+    "exit": 0,
+    "marker_match": true,
+    "host_key_mismatch": false,
+    "raw_error_returned": false
+  },
+  {
+    "alias": "pokrov-de",
+    "exit": 255,
+    "marker_match": false,
+    "host_key_mismatch": true,
+    "raw_error_returned": false
+  }
+]

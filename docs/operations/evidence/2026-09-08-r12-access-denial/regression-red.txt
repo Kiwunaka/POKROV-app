@@ -1,0 +1,37 @@
+00:00 +0: loading E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart
+00:00 +0: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: protected managed cache restores exact profile after restart and respects server denial
+00:00 +0 -1: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: explicit inactive subscription blocks cached reconnect on profile 503
+00:00 +0 -1: E:/r12client/packages/app_shell/test/app_first_runtime_bootstrap_test.dart: protected managed cache restores exact profile after restart and respects server denial [E]
+  Expected: null
+    Actual: <Instance of 'ManagedProfilePayload'>
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\app_first_runtime_bootstrap_test.dart 399:5    main.<fn>
+  
+00:01 +0 -1: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: explicit inactive subscription blocks cached reconnect on profile 503
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: empty
+  Actual: WhereIterable<String>:['runtimeEngine.connect']
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart:9470:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart line 9470
+The test description was:
+  explicit inactive subscription blocks cached reconnect on profile 503
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:01 +0 -2: E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart: explicit inactive subscription blocks cached reconnect on profile 503 [E]
+  Test failed. See exception logs above.
+  The test description was: explicit inactive subscription blocks cached reconnect on profile 503
+  
+00:01 +0 -2: Some tests failed.

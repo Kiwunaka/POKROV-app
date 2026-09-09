@@ -1,6 +1,6 @@
 part of pokrov_app_shell;
 
-String _accessPoolLabel(AccessLane lane) {
+String _accessPoolLabel(AccessLane? lane) {
   return switch (lane) {
     AccessLane.trialPremium ||
     AccessLane.bonusPremium ||
@@ -8,6 +8,7 @@ String _accessPoolLabel(AccessLane lane) {
       'Премиум-доступ',
     AccessLane.freeMonthly || AccessLane.freeSoftMode => 'Базовый доступ',
     AccessLane.expiredOrBlocked => 'Доступ не активен',
+    null => 'Сведения о подписке',
   };
 }
 
@@ -21,23 +22,21 @@ String _accessMainLabel(
   if (freeLabel != null) {
     return freeLabel;
   }
-  final baseDays = appContext.runtimeProfile.trialDays;
-  final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
   final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
-  final totalDays = baseDays + (claimed ? bonusDays : 0);
   final lane = _effectiveAccessLane(appContext, subscriptionInfo);
   final liveDays = subscriptionInfo?.daysLeft ?? 0;
   return switch (lane) {
-    AccessLane.trialPremium => claimed
-        ? '${ruDays(liveDays > 0 ? liveDays : totalDays)} доступа'
-        : '${ruDays(liveDays > 0 ? liveDays : baseDays)} пробного доступа',
+    AccessLane.trialPremium => liveDays > 0
+        ? '${ruDays(liveDays)} ${claimed ? 'доступа' : 'пробного доступа'}'
+        : 'Пробный доступ',
     AccessLane.bonusPremium =>
-      '${ruDays(liveDays > 0 ? liveDays : totalDays)} доступа',
+      liveDays > 0 ? '${ruDays(liveDays)} доступа' : 'Бонусный доступ',
     AccessLane.paidUnlimited =>
       liveDays > 0 ? '${ruDays(liveDays)} доступа' : 'Премиум активен',
     AccessLane.freeMonthly => 'Базовый режим',
     AccessLane.freeSoftMode => 'Лимит закончился',
     AccessLane.expiredOrBlocked => 'Доступ не активен',
+    null => 'Статус доступа уточняется',
   };
 }
 
@@ -51,20 +50,16 @@ String _accessShortValue(
   if (freeValue != null) {
     return freeValue;
   }
-  final baseDays = appContext.runtimeProfile.trialDays;
-  final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
-  final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
-  final totalDays = baseDays + (claimed ? bonusDays : 0);
   final lane = _effectiveAccessLane(appContext, subscriptionInfo);
   final liveDays = subscriptionInfo?.daysLeft ?? 0;
   return switch (lane) {
-    AccessLane.trialPremium =>
-      ruDays(liveDays > 0 ? liveDays : (claimed ? totalDays : baseDays)),
-    AccessLane.bonusPremium => ruDays(liveDays > 0 ? liveDays : totalDays),
+    AccessLane.trialPremium => liveDays > 0 ? ruDays(liveDays) : 'Пробный',
+    AccessLane.bonusPremium => liveDays > 0 ? ruDays(liveDays) : 'Бонусный',
     AccessLane.paidUnlimited => liveDays > 0 ? ruDays(liveDays) : 'Премиум',
     AccessLane.freeMonthly => 'Базовый',
     AccessLane.freeSoftMode => 'Лимит',
     AccessLane.expiredOrBlocked => 'Нет доступа',
+    null => 'Нет данных',
   };
 }
 
@@ -79,25 +74,21 @@ int? _accessShortDays(
   if (_freeProfileAccessLabel(freeProfileAccess) != null) {
     return null;
   }
-  final baseDays = appContext.runtimeProfile.trialDays;
-  final bonusDays = bonus?.channelBonusPremiumDays ?? 0;
-  final claimed = (bonus?.channelBonusClaimedAt ?? '').trim().isNotEmpty;
-  final totalDays = baseDays + (claimed ? bonusDays : 0);
   final lane = _effectiveAccessLane(appContext, subscriptionInfo);
   final liveDays = subscriptionInfo?.daysLeft ?? 0;
   return switch (lane) {
-    AccessLane.trialPremium =>
-      liveDays > 0 ? liveDays : (claimed ? totalDays : baseDays),
-    AccessLane.bonusPremium => liveDays > 0 ? liveDays : totalDays,
+    AccessLane.trialPremium ||
+    AccessLane.bonusPremium ||
     AccessLane.paidUnlimited => liveDays > 0 ? liveDays : null,
     AccessLane.freeMonthly ||
     AccessLane.freeSoftMode ||
-    AccessLane.expiredOrBlocked =>
+    AccessLane.expiredOrBlocked ||
+    null =>
       null,
   };
 }
 
-AccessLane _effectiveAccessLane(
+AccessLane? _effectiveAccessLane(
   SeedAppContext appContext,
   ClientSubscriptionInfo? subscriptionInfo,
 ) {
@@ -108,12 +99,12 @@ AccessLane _effectiveAccessLane(
     'freeMonthly' => AccessLane.freeMonthly,
     'freeSoftMode' => AccessLane.freeSoftMode,
     'expiredOrBlocked' => AccessLane.expiredOrBlocked,
-    _ => appContext.accessLane,
+    _ => null,
   };
 }
 
 String _accessPoolLabelFor(
-  AccessLane fallback, [
+  AccessLane? fallback, [
   FreeProfileAccess? freeProfileAccess,
 ]) {
   if (freeProfileAccess?.needsConservativePresentation ?? false) {

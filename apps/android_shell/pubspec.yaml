@@ -23,6 +23,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/
+    - assets/licenses/maven-NOTICES.txt
+    - assets/licenses/cronet-NOTICES.txt
 
 dev_dependencies:
   flutter_lints: ^4.0.0

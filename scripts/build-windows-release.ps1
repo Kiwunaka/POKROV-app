@@ -884,6 +884,9 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 [Tasks]
 Name: "desktopicon"; Description: "Создать ярлык на рабочем столе"; GroupDescription: "Ярлыки:"; Flags: unchecked
 
+[InstallDelete]
+Type: files; Name: "{app}\pokrov_activation_protocol_test.exe"
+
 [Files]
 Source: "$stagedBundleDirectory\*"; Excludes: "\$($windowsReleaseConfig.runtime.service_binary)"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "$stagedBundleDirectory\$($windowsReleaseConfig.runtime.service_binary)"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall: InstallAndStartService
@@ -983,11 +986,49 @@ begin
   end;
 end;
 
+function QueryOriginalInstallOwnerSid(var OwnerSid: String): Boolean;
+var
+  PartIndex: Integer;
+  HalfIndex: Integer;
+  SubAuthority: Int64;
+  CommandLine: String;
+  ResultCode: Integer;
+begin
+  Result := False;
+  OwnerSid := 'S-1-5-21';
+  { Elevated Setup's protected temp directory is not writable by the original
+    user. Return tagged 16-bit pieces through ExecAsOriginalUser's exit code:
+    no shared writable file, and shell failures cannot become SID components. }
+  for PartIndex := 4 to 7 do
+  begin
+    SubAuthority := 0;
+    for HalfIndex := 0 to 1 do
+    begin
+      CommandLine := '-NoProfile -NonInteractive -Command "' +
+        '`$ErrorActionPreference=''Stop''; try { ' +
+        '`$sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value; ' +
+        'if (`$sid -notmatch ''^S-1-5-21-([0-9]+-){3}[0-9]+$'') { exit 1 }; ' +
+        '`$part=[uint32](`$sid.Split(''-'')[' + IntToStr(PartIndex) + ']); ' +
+        'exit (65536 + ((`$part -shr ' + IntToStr(HalfIndex * 16) +
+        ') -band 65535)) } catch { exit 1 }"';
+      if not ExecAsOriginalUser(
+        ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+        CommandLine, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+        exit;
+      if (ResultCode < 65536) or (ResultCode > 131071) then
+        exit;
+      if HalfIndex = 0 then
+        SubAuthority := ResultCode - 65536
+      else
+        SubAuthority := SubAuthority + Int64(ResultCode - 65536) * 65536;
+    end;
+    OwnerSid := OwnerSid + '-' + IntToStr(SubAuthority);
+  end;
+  Result := ExtractOwnerSid(OwnerSid) = OwnerSid;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
-  SidFile: String;
-  SidLines: TArrayOfString;
-  CommandLine: String;
   ResultCode: Integer;
   OwnerQuerySucceeded: Boolean;
 begin
@@ -1007,21 +1048,8 @@ begin
       'повторите установку.';
     exit;
   end;
-  SidFile := ExpandConstant('{tmp}\pokrov-install-owner.sid');
-  DeleteFile(SidFile);
-  CommandLine := '/C ""' + ExpandConstant('{sys}\whoami.exe') +
-    '" /user /fo csv /nh > "' + SidFile + '""';
-  OwnerQuerySucceeded := ExecAsOriginalUser(
-    ExpandConstant('{sys}\cmd.exe'), CommandLine, '', SW_HIDE,
-    ewWaitUntilTerminated, ResultCode);
-  if OwnerQuerySucceeded then
-    OwnerQuerySucceeded := ResultCode = 0;
-  if OwnerQuerySucceeded then
-    OwnerQuerySucceeded := LoadStringsFromFile(SidFile, SidLines) and
-      (GetArrayLength(SidLines) > 0);
-  if OwnerQuerySucceeded then
-    InstallOwnerSid := ExtractOwnerSid(SidLines[0])
-  else
+  OwnerQuerySucceeded := QueryOriginalInstallOwnerSid(InstallOwnerSid);
+  if not OwnerQuerySucceeded then
     InstallOwnerSid := '';
   if InstallOwnerSid = '' then
   begin

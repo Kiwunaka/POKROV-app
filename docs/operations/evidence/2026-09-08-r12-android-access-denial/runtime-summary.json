@@ -1,0 +1,18 @@
+{
+  "scope": "f479fd4 Huawei update ordinary connect resume disconnect",
+  "result": "PASS_BOUNDED",
+  "apk_sha256": "20a0781baf9bea1e9e0e55de5f4d7d5193936dfe7a9d894df98c1bc457b897af",
+  "checks": {
+    "installed_bytes_still_match": true,
+    "first_install_time_preserved": true,
+    "ordinary_connect": true,
+    "active_access_survives_resume": true,
+    "vpn_and_tun_removed": true,
+    "routes_restored": true,
+    "rules_restored": true,
+    "wifi_mobile_preserved": true
+  },
+  "denial_and_session_revocation": "MANUAL_OWNER_TEST; current phone tied to runtime admin account; separate test login requested",
+  "backend_mutation": false,
+  "independent_egress_leak_proof": false
+}

@@ -1,0 +1,304 @@
+{
+  "status": "PASS_LOCAL_D06_DEBUG_RESOURCE_EXCLUSION_FINAL_ACCEPTANCE_OPEN",
+  "packages": [
+    {
+      "file": "E:\\r12-d06-size\\apks\\app-direct-arm64-v8a-release.apk",
+      "sha256": "39917bf25a427a55c383b11519e9fbbac302e9dbab84bccf02d38edb82b6116a",
+      "bytes": 101225939,
+      "before_sha256": "75addbcda500f1e8b27e89753941a4662a6bae05efbfae53706b16ea15936962",
+      "saved_bytes": 891,
+      "removed": [
+        "DebugProbesKt.bin"
+      ],
+      "removed_bytes": 1738,
+      "removed_compressed_bytes": 782,
+      "unchanged_entries": 377,
+      "groups": {
+        "other_metadata_and_resources": {
+          "bytes": 30838,
+          "compressed_bytes": 11064,
+          "entries": 43
+        },
+        "dex": {
+          "bytes": 2338484,
+          "compressed_bytes": 1137399,
+          "entries": 1
+        },
+        "native/arm64-v8a/dart_aot": {
+          "bytes": 8061872,
+          "compressed_bytes": 8061872,
+          "entries": 1
+        },
+        "native/arm64-v8a/flutter": {
+          "bytes": 11107920,
+          "compressed_bytes": 11107920,
+          "entries": 1
+        },
+        "native/arm64-v8a/core": {
+          "bytes": 78530968,
+          "compressed_bytes": 78530968,
+          "entries": 1
+        },
+        "flutter_assets": {
+          "bytes": 3087540,
+          "compressed_bytes": 1639513,
+          "entries": 277
+        },
+        "licenses": {
+          "bytes": 1137841,
+          "compressed_bytes": 247117,
+          "entries": 6
+        },
+        "fonts": {
+          "bytes": 233016,
+          "compressed_bytes": 125091,
+          "entries": 6
+        },
+        "android_resources": {
+          "bytes": 284858,
+          "compressed_bytes": 265423,
+          "entries": 41
+        }
+      },
+      "zip_payload_bytes": 101126367,
+      "zip_alignment_signing_overhead_bytes": 99572,
+      "signer": "Android Debug",
+      "signer_log": "app-direct-arm64-v8a-release.signer.txt",
+      "signer_log_sha256": "e9e0965ad86ccc45209f66fd7e60f5bfd0571f80e67a92627ea9e590953db8f6",
+      "manifest_dex_native_assets_fonts_notices_unchanged": true
+    },
+    {
+      "file": "E:\\r12-d06-size\\apks\\app-direct-armeabi-v7a-release.apk",
+      "sha256": "6886597fb5a0f9b3d13f17ff59a78f928d0fb15c7e64b61553cc5b4390414805",
+      "bytes": 90740169,
+      "before_sha256": "dd82fa0d0385738810d1222d019fbb666c0bd334f565e3bd0b5cb3d6d3fac602",
+      "saved_bytes": 891,
+      "removed": [
+        "DebugProbesKt.bin"
+      ],
+      "removed_bytes": 1738,
+      "removed_compressed_bytes": 782,
+      "unchanged_entries": 377,
+      "groups": {
+        "other_metadata_and_resources": {
+          "bytes": 30838,
+          "compressed_bytes": 11064,
+          "entries": 43
+        },
+        "dex": {
+          "bytes": 2338484,
+          "compressed_bytes": 1137399,
+          "entries": 1
+        },
+        "native/armeabi-v7a/dart_aot": {
+          "bytes": 8897116,
+          "compressed_bytes": 8897116,
+          "entries": 1
+        },
+        "native/armeabi-v7a/flutter": {
+          "bytes": 8096376,
+          "compressed_bytes": 8096376,
+          "entries": 1
+        },
+        "native/armeabi-v7a/core": {
+          "bytes": 70207880,
+          "compressed_bytes": 70207880,
+          "entries": 1
+        },
+        "flutter_assets": {
+          "bytes": 3087540,
+          "compressed_bytes": 1639513,
+          "entries": 277
+        },
+        "licenses": {
+          "bytes": 1137841,
+          "compressed_bytes": 247117,
+          "entries": 6
+        },
+        "fonts": {
+          "bytes": 233016,
+          "compressed_bytes": 125091,
+          "entries": 6
+        },
+        "android_resources": {
+          "bytes": 284858,
+          "compressed_bytes": 265423,
+          "entries": 41
+        }
+      },
+      "zip_payload_bytes": 90626979,
+      "zip_alignment_signing_overhead_bytes": 113190,
+      "signer": "Android Debug",
+      "signer_log": "app-direct-armeabi-v7a-release.signer.txt",
+      "signer_log_sha256": "e9e0965ad86ccc45209f66fd7e60f5bfd0571f80e67a92627ea9e590953db8f6",
+      "manifest_dex_native_assets_fonts_notices_unchanged": true
+    },
+    {
+      "file": "E:\\r12-d06-size\\apks\\app-direct-universal-release.apk",
+      "sha256": "c1c6b6cd8e6b734600b78de9bfb4d424e8fc17c23aa4d6fd1d11d936b8e8bbe3",
+      "bytes": 295210670,
+      "before_sha256": "49ba794b6ae5c1c711a66b1e68f4762bdf5eab474384fbe94139bdde5cd4f4d3",
+      "saved_bytes": 891,
+      "removed": [
+        "DebugProbesKt.bin"
+      ],
+      "removed_bytes": 1738,
+      "removed_compressed_bytes": 782,
+      "unchanged_entries": 383,
+      "groups": {
+        "other_metadata_and_resources": {
+          "bytes": 30838,
+          "compressed_bytes": 11064,
+          "entries": 43
+        },
+        "dex": {
+          "bytes": 2338484,
+          "compressed_bytes": 1137399,
+          "entries": 1
+        },
+        "native/arm64-v8a/dart_aot": {
+          "bytes": 8061872,
+          "compressed_bytes": 8061872,
+          "entries": 1
+        },
+        "native/arm64-v8a/flutter": {
+          "bytes": 11107920,
+          "compressed_bytes": 11107920,
+          "entries": 1
+        },
+        "native/arm64-v8a/core": {
+          "bytes": 78530968,
+          "compressed_bytes": 78530968,
+          "entries": 1
+        },
+        "native/armeabi-v7a/dart_aot": {
+          "bytes": 8897116,
+          "compressed_bytes": 8897116,
+          "entries": 1
+        },
+        "native/armeabi-v7a/flutter": {
+          "bytes": 8096376,
+          "compressed_bytes": 8096376,
+          "entries": 1
+        },
+        "native/armeabi-v7a/core": {
+          "bytes": 70207880,
+          "compressed_bytes": 70207880,
+          "entries": 1
+        },
+        "native/x86_64/dart_aot": {
+          "bytes": 8324016,
+          "compressed_bytes": 8324016,
+          "entries": 1
+        },
+        "native/x86_64/flutter": {
+          "bytes": 12344472,
+          "compressed_bytes": 12344472,
+          "entries": 1
+        },
+        "native/x86_64/core": {
+          "bytes": 86032576,
+          "compressed_bytes": 86032576,
+          "entries": 1
+        },
+        "flutter_assets": {
+          "bytes": 3087540,
+          "compressed_bytes": 1639513,
+          "entries": 277
+        },
+        "licenses": {
+          "bytes": 1137841,
+          "compressed_bytes": 247117,
+          "entries": 6
+        },
+        "fonts": {
+          "bytes": 233016,
+          "compressed_bytes": 125091,
+          "entries": 6
+        },
+        "android_resources": {
+          "bytes": 284858,
+          "compressed_bytes": 265423,
+          "entries": 41
+        }
+      },
+      "zip_payload_bytes": 295028803,
+      "zip_alignment_signing_overhead_bytes": 181867,
+      "signer": "Android Debug",
+      "signer_log": "app-direct-universal-release.signer.txt",
+      "signer_log_sha256": "e9e0965ad86ccc45209f66fd7e60f5bfd0571f80e67a92627ea9e590953db8f6",
+      "manifest_dex_native_assets_fonts_notices_unchanged": true
+    },
+    {
+      "file": "E:\\r12-d06-size\\apks\\app-direct-x86_64-release.apk",
+      "sha256": "a314104f676484b8f61a410facf9091bcc1f128a15b7a82f5f92d73a77b97f1e",
+      "bytes": 110234866,
+      "before_sha256": "88757c8380b2abae2bd63d366685899daea1e6b667d40957d455ef7ed2eb94a5",
+      "saved_bytes": 891,
+      "removed": [
+        "DebugProbesKt.bin"
+      ],
+      "removed_bytes": 1738,
+      "removed_compressed_bytes": 782,
+      "unchanged_entries": 377,
+      "groups": {
+        "other_metadata_and_resources": {
+          "bytes": 30838,
+          "compressed_bytes": 11064,
+          "entries": 43
+        },
+        "dex": {
+          "bytes": 2338484,
+          "compressed_bytes": 1137399,
+          "entries": 1
+        },
+        "native/x86_64/dart_aot": {
+          "bytes": 8324016,
+          "compressed_bytes": 8324016,
+          "entries": 1
+        },
+        "native/x86_64/flutter": {
+          "bytes": 12344472,
+          "compressed_bytes": 12344472,
+          "entries": 1
+        },
+        "native/x86_64/core": {
+          "bytes": 86032576,
+          "compressed_bytes": 86032576,
+          "entries": 1
+        },
+        "flutter_assets": {
+          "bytes": 3087540,
+          "compressed_bytes": 1639513,
+          "entries": 277
+        },
+        "licenses": {
+          "bytes": 1137841,
+          "compressed_bytes": 247117,
+          "entries": 6
+        },
+        "fonts": {
+          "bytes": 233016,
+          "compressed_bytes": 125091,
+          "entries": 6
+        },
+        "android_resources": {
+          "bytes": 284858,
+          "compressed_bytes": 265423,
+          "entries": 41
+        }
+      },
+      "zip_payload_bytes": 110126671,
+      "zip_alignment_signing_overhead_bytes": 108195,
+      "signer": "Android Debug",
+      "signer_log": "app-direct-x86_64-release.signer.txt",
+      "signer_log_sha256": "e9e0965ad86ccc45209f66fd7e60f5bfd0571f80e67a92627ea9e590953db8f6",
+      "manifest_dex_native_assets_fonts_notices_unchanged": true
+    }
+  ],
+  "command": "python -B docs/operations/evidence/2026-09-06-r12-d06-size/verify-after.py",
+  "baseline_report_sha256": "3dfb092750f1fd3970f8ec9ac8524709b87a67f146bc7f0958c9b614bcc93a18",
+  "verifier_sha256": "325df018885c625c61665feb8708393ddb74b763faab7ab6f3b035e09eaee2b7",
+  "gradle_sha256": "c978d2403d048065ac2eca3d17da418e5485b850d9d3ea469aaacd04536e36bc",
+  "no_production_signing_candidate_installation": true
+}

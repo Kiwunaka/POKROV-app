@@ -111,7 +111,7 @@ foreach ($marker in @(
   "HISTORICAL_EVIDENCE_ONLY",
   "LOCAL_CANDIDATE_STAGING",
   "PUBLIC_RELEASE_INDEX",
-  "BLOCKED_BY_ACCESS"
+  "config/cutover-readiness.seed.json"
 )) {
   if (-not $artifactBoundary.Contains($marker)) {
     throw "Artifact boundary lacks required marker: $marker"

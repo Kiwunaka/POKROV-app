@@ -195,6 +195,51 @@ void main() {
     expect(servers.first['detour'], 'awg31-lab');
   });
 
+  test('Windows selected process keeps its AWG endpoint with a direct final', () {
+    final awgProfile = ManagedProfilePayload(
+      profileName: 'awg31-selected-process',
+      configPayload: jsonEncode(<String, Object?>{
+        'endpoints': <Object?>[
+          <String, Object?>{'type': 'awg', 'tag': 'unused-awg'},
+          <String, Object?>{'type': 'awg', 'tag': 'awg31-lab'},
+        ],
+        'outbounds': <Object?>[
+          <String, Object?>{'type': 'direct', 'tag': 'direct'},
+          <String, Object?>{'type': 'block', 'tag': 'block'},
+        ],
+        'route': <String, Object?>{
+          'final': 'direct',
+          'rules': <Object?>[
+            <String, Object?>{
+              'process_name': <String>['powershell.exe'],
+              'outbound': 'awg31-lab',
+            },
+          ],
+        },
+      }),
+      materializedForRuntime: true,
+    );
+
+    final transformed = applyPokrovRoutingPreferences(
+      awgProfile,
+      const PokrovRoutingPreferences.defaults().copyWith(
+        dnsPreset: PokrovDnsPreset.cloudflare,
+      ),
+      hostPlatform: HostPlatform.windows,
+    );
+    final config = _jsonMap(transformed.configPayload);
+    final route = _map(config['route']);
+    final processRule = _maps(route['rules'])
+        .singleWhere((rule) => rule.containsKey('process_name'));
+    final dnsServers = _maps(_map(config['dns'])['servers']);
+
+    expect(route['final'], 'direct');
+    expect(processRule['process_name'], <String>['powershell.exe']);
+    expect(processRule['outbound'], 'awg31-lab');
+    expect(dnsServers.first['detour'], 'awg31-lab');
+    expect(config['endpoints'], _jsonMap(awgProfile.configPayload)['endpoints']);
+  });
+
   test('AdGuard toggle stages the filtering DoH resolver through VPN', () {
     final transformed = applyPokrovRoutingPreferences(
       _profile(),

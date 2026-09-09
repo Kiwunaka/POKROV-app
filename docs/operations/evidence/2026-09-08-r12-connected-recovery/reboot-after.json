@@ -1,0 +1,10 @@
+{
+  "utc": "2026-09-08T01:29:57.1169986Z",
+  "boot": "2026-09-08T01:29:47.5000000Z",
+  "service": {
+    "State": "Running",
+    "ProcessId": 3140,
+    "StartMode": "Auto",
+    "StartName": "LocalSystem"
+  }
+}

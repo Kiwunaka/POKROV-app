@@ -104,6 +104,29 @@ The service transport is a local named pipe with:
   disconnect, cancel, recover and a sanitized diagnostic state;
 - server-side authorization per command.
 
+The current local R12 source requires negotiated `ProfileIdentity` (bit 5) and
+`Cancellation` (bit 6) capabilities on both UI and service. Frame version stays 1; a mixed old/new
+bundle fails capability negotiation and requires matching UI/service installation.
+`connect` carries exactly one lowercase 64-hex SHA-256 of the acknowledged stage
+request. The digest covers the flag line, materialized JSON and embedded ruleset
+bytes. It identifies local content, not a server assignment revision.
+
+The service changes `staged_profile_digest` only after the atomic stage commits.
+It sets `effective_profile_digest` only after Core start, egress proof and recovery
+transaction commit, and clears effective identity on stop/failure. A connect with
+a different digest fails before network mutation. Failed staging retains the
+previous staged identity. Service restart clears in-memory identity and requires
+restaging; durable last-known-good restoration remains a separate N02 gate.
+
+The bounded status response includes both digests. The native parser rejects
+malformed identity, a running effective/staged mismatch and partial healthy data.
+The UI keeps its expected stage digest across polling; another session's staged
+profile cannot silently become this session's protected connection. Relaunch
+without a local intent may show the actual service-owned running profile, but a
+new connect still requires an acknowledged stage. Flutter receives only bounded
+digests and the fixed origin `windows_service_stage_request_sha256`; raw profile,
+ruleset, endpoint and credential data never enter this projection.
+
 The protocol contains no arbitrary command execution, URL fetch, caller-owned
 privileged output path or raw secret-bearing log request. Unknown or
 unauthorized input fails before Core or network mutation.
@@ -128,7 +151,13 @@ The current WO-005B1/005B2/005C source implements:
 - bounded UI-side pipe acquisition. A genuinely absent service pipe fails
   immediately. After observing an existing but busy pipe, the client retries
   both another waiter's `CreateFileW` race and the short gap while the serial
-  service replaces its pipe instance, for at most five seconds;
+  service replaces a pipe instance, for at most five seconds. The service now
+  admits at most eight authenticated sessions while keeping one runtime owner;
+- a three-second monotonic budget for each IPC frame transfer, shared by its
+  header and body. Partial frames, idle sessions and unread replies cannot
+  monopolize a session slot indefinitely. An incompatible hello gets a
+  bounded opportunity to consume its rejection; no follow-up request is run.
+  Session teardown never calls an unbounded pipe flush;
 - a persistent service runtime owner that loads only the sibling
   `pokrov-core.dll`, negotiates desktop ABI 2 and the optional exact capability
   descriptor, and owns Core setup/start/stop after the UI disconnects;
@@ -172,12 +201,22 @@ and rollback stages. They are a local producer seam only. Unified support
 envelopes, export/upload, remote ingest, retention and alerts belong to the
 observability work order.
 
-Debug builds expose a one-client isolated handshake mode used by native tests.
+Debug builds expose bounded isolated handshake modes used by native tests.
 Release builds do not expose that entrypoint. The service and UI client are
 copied into the local release bundle and the Inno source installs a machine-wide
-SCM service. This is source/build/package-syntax evidence only: no current
-1.2.0 service installation, clean-VM runtime, signing or exact-candidate proof
-exists.
+SCM service. Debug IPC fixtures use no installed runtime root or recovery
+backend, so the protocol tests cannot open the host's recovery journal. Bounded
+local installed-service evidence is linked from
+[Windows readiness](../operations/windows-release-readiness.md); it does not
+establish final-candidate signing or the complete managed-network matrix.
+
+The UI accepts `WM_QUERYENDSESSION` without exiting and tears down through its
+normal native destruction path only on a confirmed `WM_ENDSESSION`. A canceled
+session end keeps the UI alive. Restart Manager can therefore release the UI
+files during an update without the ordinary close-to-tray preference preventing
+shutdown. The service keeps its separate SCM lifecycle. The installer removes
+the exact obsolete `pokrov_activation_protocol_test.exe` left by earlier bundles;
+this is not a wildcard cleanup of the installation directory.
 
 The production pipe loop isolates client-session failure from service
 availability. A caller that disconnects before `hello`, fails caller
@@ -188,6 +227,54 @@ rejected first session followed by a valid session is exercised without
 exposing a release entrypoint. A separate native concurrency test opens 32
 clients against one serial pipe instance and requires every bounded retry to
 reach the server.
+
+Connect also checks its admitted deadline and the SCM stop signal before
+mutation and between snapshot, Core start, egress verification and journal
+commit. The wall-clock deadline is converted once to a monotonic deadline.
+A signal observed after mutation rolls back through the existing journal on
+the same runtime owner before returning; it cannot publish effective profile
+identity or protection. A rollback failure takes precedence and remains
+`recovery_required`. Successful rollback preserves the staged profile. The
+native UI parser accepts `deadline_exceeded` and `operation_cancelled` as closed
+failure categories; matched UI/service source must be packaged together.
+
+Status and cancellation can be served during Connect. A concurrent mutation
+returns `runtime_busy`; it is not queued inside the privileged service. Cached
+`connecting`/`busy` snapshots expose no protection or effective identity and
+do not permit another connect. RuntimeHost itself is touched by only one
+dispatcher execution, including rollback.
+
+A cancel request carries exactly 64 lowercase hexadecimal characters encoding
+the target connection's session token and operation nonce. It still has its own
+authenticated session, correlation, deadline and fresh replay-protected nonce.
+Only the active token/nonce pair can be cancelled. `cancellation_requested`
+acknowledges the request; the original Connect response proves its outcome.
+The dispatcher also rolls back a cancellation accepted after the final runtime
+check but before completion is published. Active identity is cleared under the
+cancellation lock; stale cancellation cannot reach a later connection. Target
+tokens and nonces never enter the event journal.
+
+The UI runs service calls on one bounded worker queue and completes method
+results on the window thread. A replacement connect, stage, invalidation or
+disconnect requests cancellation of the preceding connection before its queued
+mutation runs. A separate authenticated IPC exchange sends that cancellation.
+Client frame I/O is overlapped and bounded (three-second hello/write frames,
+33-second normal response budget); window destruction abandons pending reads
+after requesting cancellation. This does not assert that the remote runtime
+has already stopped.
+
+The egress request uses asynchronous WinHTTP, retains callback state until
+`HANDLE_CLOSING`, and closes the pending request on interruption. Retry waits
+also check interruption. HTTPS, proxy bypass and the required proof marker are
+unchanged. The loopback HTTP factory exists only in Debug test builds. See
+[WinHTTP cancellation and callback lifetime](https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpclosehandle).
+
+Blocking Core Start/Stop and recovery calls still must return before the
+cooperative signal can be observed; bounded in-call Core cancellation and
+rollback duration remain unproven. The `recover` and `diagnostic-state` command
+identifiers still return `runtime_not_owned`; automatic startup recovery is
+separate. Local IPC/worker tests do not close installed WFP coexistence, Win10
+or the final package's connected-network acceptance.
 
 ### Windows network transaction target
 
@@ -225,6 +312,25 @@ the initialized runtime in `recovery_required`, disables a new connect and
 permits a repeated disconnect/recovery attempt. A corrupted, partial or future
 journal is preserved and fails closed; it is not silently erased while
 POKROV-owned network state may remain.
+
+While the Windows UI process is alive, including when hidden in the tray,
+it samples the local service status every two seconds with at most one such
+request in flight. This does not fetch profiles or run network probes. A
+service stop/restart or unavailable observer clears the previous UI/tray
+protection claim. Poll results that cross a runtime action or replace an older
+snapshot are discarded; polling stops when the shell is disposed. The existing
+bounded Android post-connect diagnostics remain separate.
+Equal status values do not rebuild the shell or notify tray listeners. The
+comparison includes diagnostics and profile revision/identity values, so a
+health or source change within the same runtime phase still reaches the UI.
+
+If restart or a final journal-write failure leaves the transaction at
+`recovered`, retry clears the saved network snapshot in the atomic `clean`
+commit. A failed write retains the `recovered` checkpoint and its snapshot for
+another retry. The completed journal must reload as `clean` before a later
+transaction starts. Native tests cover this interrupted completion using a
+synthetic network backend and a locked journal; installed-package reboot and
+last-known-good profile restoration remain separate proof obligations.
 
 The boot marker is derived from system FILETIME minus Windows uptime, so a
 service restart in the same OS boot retains the same opaque boot correlation;
@@ -492,3 +598,22 @@ As of 2026-09-03:
   matrices are implemented and retained.
 
 These statements describe source progress, not a 1.2.0 candidate or release.
+
+### Android stage/start identity
+
+The bridge persists and acknowledges SHA-256 over exact staged content,
+route mode and the egress requirement. Service intents, including deferred
+notification/VPN consent and Quick Settings, carry the captured digest. Service
+start compares saved metadata and actual content before touching a live session,
+and uses the verified immutable string for Core. A replaced file at the same
+path cannot inherit the previous start intent. Deferred consent ownership also
+compares digests, so completion of an old request cannot release a newer one.
+
+`stagedProfileDigest` names the staged input; `effectiveProfileDigest` is emitted
+only for a running, egress-validated active input. Staging a different digest
+invalidates previous proof; an old proof cannot validate the replacement. Stop
+and failure clear active proof. The fixed origin is
+`android_private_stage_request_sha256`; these digests are not server revisions.
+Quick Settings requires a supported record with a valid digest. Old records
+without one require an app refresh. Local JVM tests do not prove packaged Core,
+Android filesystem crash durability, routing coverage or physical-device behavior.

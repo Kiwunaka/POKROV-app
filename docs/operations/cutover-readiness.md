@@ -1,6 +1,6 @@
 # Cutover Readiness
 
-Last updated: 2026-09-05
+Last updated: 2026-09-09
 
 ## Document Status
 
@@ -21,6 +21,12 @@ contracts. Do not select the most optimistic status.
 
 ## Current Decision
 
+[Candidate.33 retention rechecked on 2026-09-09](evidence/2026-09-09-r12-candidate33-retention/README.md):
+all 24 local files remain, including 21 matches to previously pinned hashes.
+Five related CI archives were retained with their individual deadlines: Core
+receipts/SBOM expire on September 13, signer output on September 18. This closes
+R12-G02 preservation only; the candidate verdict and runtime gates below remain.
+
 Owner checkpoint, 2026-09-05: execution is `OWNER_PAUSED_FOR_REPLANNING`.
 Preserve candidate.33 and all partial/blocked results as-is. Do not continue
 the old test/build/deploy plan without a new owner request. This pause does
@@ -34,14 +40,24 @@ not mark the release goal complete or turn any missing gate into PASS.
 | Continuing source target | `PRE_CANDIDATE_LOCAL` on `POKROV-app/main` |
 | Latest exact candidate | Private signed `pokrov-1.2.0-candidate.33`, app `1.2.0+4053`. Supply and exact `WIN-001` pass; bounded Windows synthetic TUN/DNS, partial physical Android and exact LDPlayer install/cold-start evidence exist. Gate F remains `BLOCKED 2/17/0`. |
 | Retained signed-index predecessor | Candidate.32 is immutable `NO_GO` history for `WIN-001`. Candidate.31 and earlier candidates retain their original evidence and verdicts. |
-| Candidate/current-main boundary | Candidate.33 binds exact client source `6ab1bca…735e`, which is the current `POKROV-app/main`. Later documentation does not change candidate bytes. |
+| Candidate/source boundary | Candidate.33 binds exact client source `6ab1bca…735e`. Continuing source commits do not change those candidate bytes or inherit their evidence. |
 | New public cutover | `BLOCKED_GATE_F_17_NON_PASS`; no public asset, Store object or stable pointer exists |
 | Planned distribution if approved | Android direct stable target; Windows direct unsigned beta with mandatory SmartScreen warning; stores `NOT_REQUESTED`. No new public claim exists yet. |
 
+The September 9 source integration uses signed promotion PR #95 after platform
+PR #243 and before Core PR #9. This exact client PR validates against Core
+`1f9a5a8865b80067784b893ef99d43c63f943777`; its Git tree matches the retained
+`c7a11f7` source bound by the runtime seed. Other PRs and pushes keep the normal
+promotion-line check. The platform publishing guide owns this bounded merge
+sequence and requires ordinary checks after all three source lines converge.
+Source integration does not change the candidate.33 or public-release decision
+above, and signed Git commits do not establish signed application packages.
+
 The existing `1.1.6` publication does not approve new `1.2.0` bytes. Its
 signing, device, runtime and origin evidence cannot be reused for promotion.
-The continuing client seed describes the `1.2.0+4053` development line with
-Core `cd8f0f4…884d`; its `candidate_created=false` describes continuing `main`,
+The continuing client seed describes the `1.2.0+4053` development line; its
+current Core source and bytes are owned by `config/runtime-artifacts.seed.json`.
+Its `candidate_created=false` describes continuing `main`,
 not the separate signed candidate contract. `config/cutover-readiness.seed.json`
 now binds private candidate.33: platform `f530005…5bc1`, client
 `6ab1bca…735e` and Core `cd8f0f4…884d`. Six build-4053 artifacts exist.
@@ -54,6 +70,12 @@ exact installed bytes and Wi-Fi runtime, with only bounded Beeline credit.
 Gate F therefore remains `BLOCKED 2/17/0`; candidate.33 is unpublished and
 unpromoted. Candidate.32 and earlier candidates retain their exact historical
 verdicts.
+
+The signed candidate contract is the Ed25519 release-index manifest. It is
+not Windows Authenticode: the candidate.33 Windows signing field remains
+`SKIPPED_BY_OWNER_DIRECT_BETA_ONLY`. Android package signing is separate.
+The public `1.1.6` line, retained candidate.33, and continuing source target
+must each be read from its own owner above, even when app build numbers match.
 
 ## Current 1.2.0 Gate Matrix
 

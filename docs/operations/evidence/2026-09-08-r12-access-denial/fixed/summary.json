@@ -1,0 +1,29 @@
+{
+  "schema": "pokrov.r12-access-denial-fixed/v1",
+  "result": "PASS_BOUNDED",
+  "source": "f479fd49f7904bda5c916e5f7148675f45105872",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "installer_sha256": "f44486c3ae32ac5c3020e9b76c997902c202084076cb7954bc0678d5805f676d",
+  "checks": {
+    "installed_files_304": true,
+    "installed_exact_fix": true,
+    "install_succeeded": true,
+    "cache_connection_before_denial": true,
+    "known_api_denial": true,
+    "automatic_disconnect": true,
+    "denial_cache_cleared": true,
+    "new_ui_process": true,
+    "offline_after_restart_refused": true,
+    "offline_with_health_reachable": true,
+    "no_new_connected_event": true,
+    "session_file_preserved": true,
+    "routes_restored": true,
+    "dns_restored": true,
+    "firewall_removed": true
+  },
+  "manual_backend_mutation": false,
+  "ordinary_client_api_used": true,
+  "clock_mutated": false,
+  "old_only_package_file": "native_assets.json",
+  "old_only_file_note": "canonical fresh bundle has 304 files; all expected bytes verified; no blanket claim about extra installed files"
+}

@@ -1,0 +1,13 @@
+{
+  "after_config_sha256": "cd0add7b4805b863531ba0cd49b44c9749dbe38d6e740be6154114631b6920a3",
+  "before_config_sha256": "5d56fd0cae261bd9212bec0f1e1a41f53244602f90ce09a8c68fa461a7737fb3",
+  "entitlement_mutated": false,
+  "full_original_config_restored": true,
+  "material_mutated": false,
+  "material_reused": true,
+  "ok": true,
+  "operation": "restore",
+  "raw_identifiers_returned": false,
+  "resolved_profile": "legacy_reality_fallback",
+  "target_install_sha256": "fe746f1300ba28298736b684b3b272af2f0c3d02cf4934def66ee98f581475d0"
+}

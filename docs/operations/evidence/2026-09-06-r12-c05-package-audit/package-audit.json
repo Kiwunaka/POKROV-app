@@ -1,0 +1,576 @@
+{
+  "schema": "pokrov.r12.c05-client-package-audit/v1",
+  "observed_at": "2026-09-06T06:05:24.780157+00:00",
+  "state": "LOCAL_NON_PUBLIC_PACKAGE_AUDIT_PARTIAL",
+  "candidate_created": false,
+  "promotion_authorized": false,
+  "client_base_commit": "c2c6f966f0742f58d52043df50ca2d6f3e26edb2",
+  "core_source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "source_note": "Packages built from client_base_commit plus the two implementation files below, before documentation/evidence commit. Source hashes are local workspace bytes; a later platform receipt binds the client commit.",
+  "implementation_files": {
+    "packages/app_shell/pubspec.yaml": "314358866626d0103d471035cf273fb31a97cf7dba3df4d690c92c52f1c39735",
+    "apps/windows_shell/windows/runner/CMakeLists.txt": "a2b83586eb79a81796fe5f457e54da9b3db6ed51dbd846ff2681e2cf96b025a1"
+  },
+  "core_binding": {
+    "path": "E:\\r12client\\config\\runtime-artifacts.seed.json",
+    "sha256": "2f8cf7e338a152ec7b3ea97432e03ec038c62709307ea7f2f3ccc801d00b3856",
+    "size": 6928
+  },
+  "android_packages": [
+    {
+      "artifact": "E:\\r12-c05-package-artifacts\\after\\app-arm64-v8a-direct-release.apk",
+      "sha256": "58726009356fa92936f197db2e9d063cfd3fee5af1f3e45dccb6c56a9bf6c034",
+      "size": 101090548,
+      "embedded_core": [
+        {
+          "entry": "lib/arm64-v8a/libpokrov-core.so",
+          "sha256": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+          "size": 78530968
+        }
+      ],
+      "ofl_entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+      "ofl_sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+      "unexpected_extensions": [],
+      "native_abis": [
+        "arm64-v8a"
+      ]
+    },
+    {
+      "artifact": "E:\\r12-c05-package-artifacts\\after\\app-armeabi-v7a-direct-release.apk",
+      "sha256": "dbf6f114f1939c581e4edf08c20e60d4eecdd97622c6cc10cf3e861de7990107",
+      "size": 90604778,
+      "embedded_core": [
+        {
+          "entry": "lib/armeabi-v7a/libpokrov-core.so",
+          "sha256": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+          "size": 70207880
+        }
+      ],
+      "ofl_entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+      "ofl_sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+      "unexpected_extensions": [],
+      "native_abis": [
+        "armeabi-v7a"
+      ]
+    },
+    {
+      "artifact": "E:\\r12-c05-package-artifacts\\after\\app-direct-release.apk",
+      "sha256": "79bac53ad42750a36b007b483d09e07d8632181ac9d7c883086044676ea545b5",
+      "size": 295075279,
+      "embedded_core": [
+        {
+          "entry": "lib/arm64-v8a/libpokrov-core.so",
+          "sha256": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+          "size": 78530968
+        },
+        {
+          "entry": "lib/armeabi-v7a/libpokrov-core.so",
+          "sha256": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+          "size": 70207880
+        },
+        {
+          "entry": "lib/x86_64/libpokrov-core.so",
+          "sha256": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376",
+          "size": 86032576
+        }
+      ],
+      "ofl_entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+      "ofl_sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+      "unexpected_extensions": [],
+      "native_abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ]
+    },
+    {
+      "artifact": "E:\\r12-c05-package-artifacts\\after\\app-x86_64-direct-release.apk",
+      "sha256": "464bad2173ebac051acd19eba285bd8e04e2b62660c158e013535e28c87d4f24",
+      "size": 110099475,
+      "embedded_core": [
+        {
+          "entry": "lib/x86_64/libpokrov-core.so",
+          "sha256": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376",
+          "size": 86032576
+        }
+      ],
+      "ofl_entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+      "ofl_sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+      "unexpected_extensions": [],
+      "native_abis": [
+        "x86_64"
+      ]
+    }
+  ],
+  "windows_bundle": {
+    "inventory": {
+      "path": "E:\\r12-c05-package-artifacts\\after-windows-inventory.json",
+      "sha256": "e67ffd2e603ecbe11ac36b0abfaa0e957364c2f3da135b709a9dad8d3aef151c",
+      "size": 53277
+    },
+    "file_count": 300,
+    "directory": "E:\\r12-c05-package-artifacts\\after\\windows-bundle",
+    "ofl_exact_bytes": true,
+    "core_and_cronet_exact_bound_bytes": true,
+    "test_debug_link_artifacts_present": false,
+    "installer_created": false,
+    "app_local_vc_runtime": "NOT_STAGED_BY_DIRECT_FLUTTER_BUILD; official release packager owns it"
+  },
+  "before_findings": [
+    "All four release-mode APKs omitted the existing Golos OFL; baseline Flutter NOTICES.Z had no Golos or SagerNet/sing-box markers.",
+    "Windows runner release output included pokrov_activation_protocol_test.exe, which the release packager copies as part of the whole folder.",
+    "AAR contained 4 Core SOs and no license/notice entries."
+  ],
+  "commands": [
+    {
+      "command": "flutter build apk --release --flavor direct --target-platform android-arm,android-arm64,android-x64 --android-project-arg=pokrov.singleVersionSplitApks=true --dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9 --dart-define=POKROV_APP_VERSION=1.2.0",
+      "cwd": "E:\\r12client\\apps\\android_shell",
+      "result": "PASS baseline 4 APKs; explicit internal debug signing",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-android-build.log",
+        "sha256": "537f6c60ee59bcb5139d2dd1fc5723ebdb34f7c099ec0769d00eda7c73461e51",
+        "size": 2984
+      }
+    },
+    {
+      "command": "same local APK command after OFL asset declaration",
+      "cwd": "E:\\r12client\\apps\\android_shell",
+      "result": "PASS 4 APKs",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-android-after.log",
+        "sha256": "ec707b2686bee1e0fdccb18ce23ca7e1a5981637f8c3daeeb4e2b2d456078b5c",
+        "size": 2984
+      }
+    },
+    {
+      "command": "flutter build windows --release --no-pub --dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9 --dart-define=POKROV_APP_VERSION=1.2.0",
+      "cwd": "E:\\r12client\\apps\\windows_shell",
+      "result": "PASS baseline bundle contained test EXE",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-windows-build.log",
+        "sha256": "5a05212b0adde29ba3971efe2f762e1c3d65fac24d5361873c59427f6fadf977",
+        "size": 137
+      }
+    },
+    {
+      "command": "same local Windows command after OFL and CMake test-output correction",
+      "cwd": "E:\\r12client\\apps\\windows_shell",
+      "result": "PASS bundle excludes test EXE; old output retained by exact-path move",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-windows-after.log",
+        "sha256": "9d7a701b8a5530fae46114fa1cab2a87e2e25137bbabf304e0d1a562ea02289f",
+        "size": 137
+      }
+    },
+    {
+      "command": "ctest --test-dir apps/windows_shell/build/windows/x64 -C Release --output-on-failure",
+      "cwd": "E:\\r12client",
+      "result": "PASS 8/8 including relocated activation protocol test",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-windows-ctest.log",
+        "sha256": "73f6198cbe81cc95d951ec420a217b2fa4e378b453e61cab5adc4e6fdff20a66",
+        "size": 1110
+      }
+    },
+    {
+      "command": "gradlew.bat :app:dependencies --configuration directReleaseRuntimeClasspath --offline",
+      "cwd": "E:\\r12client\\apps\\android_shell\\android",
+      "result": "PASS runtime graph",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-gradle-dependencies.log",
+        "sha256": "0515e494c37181ce3f0a422fc259036eba3ebc99192a67dca1b1a898373a71d6",
+        "size": 24397
+      }
+    },
+    {
+      "command": "gradlew.bat -I E:/r12-c05-gradle-modules.init.gradle :app:r12RuntimeInventory --offline",
+      "cwd": "E:\\r12client\\apps\\android_shell\\android",
+      "result": "PASS 68 selected modules",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-gradle-modules.log",
+        "sha256": "5116950ea3502adfaa033ba0f54ab418f694f01ba70816d5d26ee447c6201a4d",
+        "size": 602
+      }
+    },
+    {
+      "command": "go1.26.8 mod verify",
+      "cwd": "E:/r12core-implementation",
+      "result": "PASS all modules verified; local replacements tied to clean Core Git source",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-module-verify.log",
+        "sha256": "acdb6a6a98dc2c297af31bb3538319778be8c8ef263cd0a8c9799de9c4998533",
+        "size": 22
+      }
+    },
+    {
+      "command": "apksigner verify --verbose --print-certs after/app-direct-release.apk",
+      "cwd": "E:/",
+      "result": "PASS integrity only; Android Debug signer, not production",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-android-signature.log",
+        "sha256": "6df645f49f0d35e8f1edf7318446bfd49782d8c384a218771e40c4c7b0c8f4ab",
+        "size": 972
+      }
+    },
+    {
+      "command": "aapt dump badging after/app-direct-release.apk",
+      "cwd": "E:/",
+      "result": "PASS version 1.2.0+4053, 3 ABIs, not debuggable",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-android-badging.log",
+        "sha256": "e9163d67c8f02861f7b5b29c684b6f8e6753d8852248b3c56451e3610c1c533f",
+        "size": 5468
+      }
+    },
+    {
+      "command": "aapt dump permissions after/app-direct-release.apk",
+      "cwd": "E:/",
+      "result": "RETAINED actual manifest permissions; no runtime permission-flow proof",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-android-permissions.log",
+        "sha256": "03591bef8f6fa7d06339cbd605d9d65962f6c0532a53df0f0783183ad06ac19c",
+        "size": 949
+      }
+    },
+    {
+      "command": "apkanalyzer dex packages --defined-only after/app-direct-release.apk",
+      "cwd": "E:/",
+      "result": "PASS readback; 7 explicit ad/analytics namespace patterns absent, not full privacy clearance",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-dex-packages.log",
+        "sha256": "0d6297a6d9a7154926e4bd8a71abceae067c1d3ea933998d53b0d3e76d5efd5b",
+        "size": 957875
+      }
+    },
+    {
+      "command": "python -B E:/r12-c05-query-runtime-advisories.py",
+      "cwd": "E:/",
+      "result": "PASS query response: 0 advisory IDs for 75 Pub/63 Maven runtime graph records; not complete native scan",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-osv.log",
+        "sha256": "46c8acd9897c802d6325314cbb03f8d5d16eb7a990562b6f144820e98ddff513",
+        "size": 54
+      }
+    },
+    {
+      "command": "flutter analyze",
+      "cwd": "E:/r12client/apps/android_shell",
+      "result": "PASS no issues",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-android-analyze.log",
+        "size": 98,
+        "sha256": "395502b2572f288e7542e9e9754857f22583f7eb3782ccd0e4179ca4a2baa93a"
+      }
+    },
+    {
+      "command": "flutter analyze",
+      "cwd": "E:/r12client/apps/windows_shell",
+      "result": "PASS no issues",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-windows-analyze.log",
+        "size": 99,
+        "sha256": "22efcba6e82d722079a9d84d7ac9c31aadc28f1f1ff23c7707a38433be1bf3cd"
+      }
+    },
+    {
+      "command": "test/docs-contract.ps1",
+      "cwd": "E:/r12client",
+      "result": "PASS after restoring full candidate identifier in current header",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-client-docs-final.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    {
+      "command": "scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:/r12client",
+      "result": "PASS final seed/parity/source logging/docs/release fixtures; performance collector fixture is not new real CPU measurement",
+      "exit_code": 0,
+      "log": {
+        "path": "E:\\r12-c05-package-client-seed-final.log",
+        "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9",
+        "size": 497
+      }
+    }
+  ],
+  "artifact_receipts": [
+    {
+      "path": "E:\\r12-c05-package-artifacts\\before-apk-inventory.json",
+      "sha256": "f36ea79464b84f577a93ae012310e2099952e63964ded13098a0d9773bee138f",
+      "size": 4967
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\after-apk-checks.json",
+      "sha256": "52a4866e2c5a82110641e694c807bbee85f700b2b4cd029a049c699bfe3d81ea",
+      "size": 3049
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\before-windows-inventory.json",
+      "sha256": "da9805976229f3ab7207af9fe334e8ffb8829d953c53472676bf4982182516b8",
+      "size": 53247
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\after-windows-inventory.json",
+      "sha256": "e67ffd2e603ecbe11ac36b0abfaa0e957364c2f3da135b709a9dad8d3aef151c",
+      "size": 53277
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\pe-import-summary.json",
+      "sha256": "a98a9a39643d9a3eb3abee948abc55d8ac07a8e645c4eaa32a353b84c0a2907c",
+      "size": 7822
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\android-sbom-summary.json",
+      "sha256": "2fb52af9d7b17e84f50ac23d4619afef5af5499eb0b54da5104f50410dfa3905",
+      "size": 1281
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\linked-module-notices.json",
+      "sha256": "528149a64746f4e08ac9fd9dacb34d51414d7ebb801a310a5aea81c57258349f",
+      "size": 120803
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\linked-root-notices.zip",
+      "sha256": "568cd1091c8db4207dcf9e41862d5a1e7228bd712bee15d3dcfb05b1018598b9",
+      "size": 206966
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\cronet-version-comparison.json",
+      "sha256": "e8e50b179cfef7fdf22567e3525404f468a9b1b9df14d05827eb4beb61770998",
+      "size": 628
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\cronet-version-exact-loaded.json",
+      "sha256": "d24548185b858fdd50bf860fcfb7b58c06dda883a20ead69096688ec66e2e7e0",
+      "size": 969
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\osv-query-public-packages.json",
+      "sha256": "aa7139cf30682e16810dbfa9e041b0515bf249d0a2bcda83bfdef35d379389b7",
+      "size": 19166
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\osv-response-public-packages.json",
+      "sha256": "2aca7e5b136aed5d1c4e694e025df7777f9fe566089a67661a70c3097683863c",
+      "size": 1126
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\osv-runtime-graph-summary.json",
+      "sha256": "2226bb3728f185741ed0e1c8c1049d22a29c65b96a7a63089670ceee88bc00ca",
+      "size": 26958
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\psiphon-license-history.json",
+      "sha256": "60cef8f8e26017e015adbe62db1851b9798e069ac65ed7a3867d30a4a70e3cf6",
+      "size": 157
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\android-gradle-modules.json",
+      "sha256": "bd00fc2172e49b2cd73dbb8e53846f5c28b11ffab02f39b3b75061dd87a73323",
+      "size": 7935
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\libpokrov-core-arm64-v8a.cdx.json",
+      "sha256": "a998d66ba7acd9934f15ff76af169868f10e7cbe356e9cb81cccc8f25fd812b7",
+      "size": 106545
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\libpokrov-core-armeabi-v7a.cdx.json",
+      "sha256": "e86c72b0aea510a62851d228687f5407d1f58f7458aca563713e68b1b9542820",
+      "size": 106523
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\libpokrov-core-x86.cdx.json",
+      "sha256": "fc45f8fa948bc612fd431156a06af502537b8de9f55e91c464e8333622bfc441",
+      "size": 106515
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\libpokrov-core-x86_64.cdx.json",
+      "sha256": "dc7a0d9c0c431e871193c815f7c3a569fc8b26f7790fa5e837a1ebb16d8999f5",
+      "size": 106542
+    },
+    {
+      "path": "E:\\r12-c05-collect-linked-notices.py",
+      "sha256": "96690587b914c8c1c5d41f3669803c262373bc0790c1cec83a20c2a31dd6cdd9",
+      "size": 2281
+    },
+    {
+      "path": "E:\\r12-c05-gradle-inventory.init.gradle",
+      "sha256": "059b6facd7918ea42c36e8441b75c6dd7419fce7c288c3f42fdcdefb8e4edb95",
+      "size": 999
+    },
+    {
+      "path": "E:\\r12-c05-gradle-modules.init.gradle",
+      "sha256": "324b8495ed5a2b38fcf93cc447b097e42ba6109fd8cb1168d75deba688812224",
+      "size": 1015
+    },
+    {
+      "path": "E:\\r12-c05-query-runtime-advisories.py",
+      "sha256": "4765a836a8fb5bb24f764baed4c2fec876e28940422f51c3d9adbc80fc4691fc",
+      "size": 2694
+    },
+    {
+      "path": "E:\\r12-c05-cronet-version-probe.py",
+      "sha256": "3ec4f0fdd21de6219342de11daca197f07778a7c7eb0d3cbf6786da85cc7549d",
+      "size": 1108
+    },
+    {
+      "path": "E:\\r12-c05-package-android-pub-deps.json",
+      "sha256": "d26c5994ea34bb8d1ca3acceb1206e589796ac7ab5dcc807367d4b743ac0b00d",
+      "size": 31391
+    },
+    {
+      "path": "E:\\r12-c05-package-windows-pub-deps.json",
+      "sha256": "58b2c88c3452237ce74737e7da59ac45142bcbd7f6619fa61805acad6012adf0",
+      "size": 34429
+    },
+    {
+      "path": "E:\\r12-c05-package-artifacts\\cronet-pe-comparison.json",
+      "sha256": "82dbb9f2ce09968d727eba466a7c3ed306584b7bdb9fb680652f83f6d19fbc38",
+      "size": 4205
+    }
+  ],
+  "retained_failed_attempts": [
+    {
+      "action": "Initial artifact enumeration through resolvedConfiguration.resolvedArtifacts",
+      "result": "FAIL variant ambiguity for Android project plugin artifacts; corrected to selected resolutionResult modules, no source/dependency change",
+      "log": {
+        "path": "E:\\r12-c05-package-gradle-inventory.log",
+        "sha256": "233b6eb2a819a8076b20dcf875893f46103b4dd18d1a0fb04c3dda18d7160bb5",
+        "size": 119523
+      }
+    },
+    {
+      "action": "Initial Java and SDK tool path guesses",
+      "result": "Commands not launched: guessed Adoptium JDK and build-tools/36.0.0 missing. Used configured JDK17.0.18 and installed build-tools36.1.0 afterwards."
+    },
+    {
+      "action": "Initial final docs/seed check after added package section",
+      "result": "FAIL exact cutover candidate string moved outside checked header; corrected current header to name full retained pokrov-1.2.0-candidate.33 identity, without changing gate",
+      "logs": [
+        {
+          "path": "E:\\r12-c05-package-client-docs.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        {
+          "path": "E:\\r12-c05-package-client-seed.log",
+          "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9",
+          "size": 497
+        }
+      ]
+    }
+  ],
+  "dependency_scan": {
+    "pub_runtime_graph_records": 75,
+    "maven_runtime_graph_records": 63,
+    "osv_advisory_ids": 0,
+    "response_pagination": false,
+    "binary_go_sboms": [
+      {
+        "abi": "libpokrov-core-arm64-v8a",
+        "binary_sha256": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+        "sbom": "E:\\r12-c05-package-artifacts\\libpokrov-core-arm64-v8a.cdx.json",
+        "sbom_sha256": "a998d66ba7acd9934f15ff76af169868f10e7cbe356e9cb81cccc8f25fd812b7",
+        "modules": 119
+      },
+      {
+        "abi": "libpokrov-core-armeabi-v7a",
+        "binary_sha256": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+        "sbom": "E:\\r12-c05-package-artifacts\\libpokrov-core-armeabi-v7a.cdx.json",
+        "sbom_sha256": "e86c72b0aea510a62851d228687f5407d1f58f7458aca563713e68b1b9542820",
+        "modules": 119
+      },
+      {
+        "abi": "libpokrov-core-x86",
+        "binary_sha256": "a74663276fd9fb87f1175d13310781fc0ca8583d06eac12cb6472b7738228a1a",
+        "sbom": "E:\\r12-c05-package-artifacts\\libpokrov-core-x86.cdx.json",
+        "sbom_sha256": "fc45f8fa948bc612fd431156a06af502537b8de9f55e91c464e8333622bfc441",
+        "modules": 119
+      },
+      {
+        "abi": "libpokrov-core-x86_64",
+        "binary_sha256": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376",
+        "sbom": "E:\\r12-c05-package-artifacts\\libpokrov-core-x86_64.cdx.json",
+        "sbom_sha256": "dc7a0d9c0c431e871193c815f7c3a569fc8b26f7790fa5e837a1ebb16d8999f5",
+        "modules": 119
+      }
+    ],
+    "go_scan_reuse": "Core DLL and packaged SO hashes equal the previous C05-scanned bytes; no rerun credited. Nine residual Go advisory IDs and module-fallback precision/reachability limits remain in prior Core evidence.",
+    "native_notice_inventory": {
+      "go_module_entries_union": 128,
+      "root_notice_files_retained": 130,
+      "modules_with_root_notice": 127,
+      "missing_root_notice": [
+        {
+          "module": "github.com/Psiphon-Labs/utls",
+          "version": "v0.0.0-20260129182755-24497d415a8d",
+          "sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+          "replacement": null
+        }
+      ],
+      "scope": "Root texts only, replacements honored. Does not prove nested licenses, native Chromium/Cronet obligations or corresponding source delivery; retained collection not shipped as complete notices."
+    },
+    "cronet": [
+      {
+        "path": "E:\\r12-c05-package-artifacts\\after\\windows-bundle\\libcronet.dll",
+        "loaded_path": "E:\\r12-c05-package-artifacts\\after\\windows-bundle\\libcronet.dll",
+        "version": "143.0.7499.109",
+        "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7",
+        "scope": "Fresh Python process, verified loaded module path; Create/GetVersionString/Destroy only, no engine start"
+      },
+      {
+        "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\cronet-go\\lib\\windows_amd64@v0.0.0-20260117110516-f21660bef13f\\libcronet.dll",
+        "loaded_path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\cronet-go\\lib\\windows_amd64@v0.0.0-20260117110516-f21660bef13f\\libcronet.dll",
+        "version": "143.0.7499.109",
+        "sha256": "104ee114876dd0b8631d241437197a94ba231f33976b3d40ec5cd8533f6e63b3",
+        "scope": "Fresh Python process, verified loaded module path; Create/GetVersionString/Destroy only, no engine start"
+      }
+    ],
+    "dex_namespace_patterns": [
+      "com.google.android.gms.ads",
+      "com.google.firebase.analytics",
+      "com.facebook.ads",
+      "com.appsflyer",
+      "com.adjust.sdk",
+      "io.appmetrica",
+      "com.yandex.metrica"
+    ],
+    "dex_pattern_matches": 0,
+    "cronet_comparison_note": "Pinned DLL 8596992 bytes vs Go-module DLL 8593920 bytes. Both report 143.0.7499.109 in separate processes with loaded paths verified, but .text and other sections differ. No code/source equivalence inferred."
+  },
+  "limits": [
+    "Internal Android debug signing and loopback API define only; no production signer or new candidate.",
+    "Unsigned Windows application/service EXE and native bundle inventory, not installer packaging/installation/SCM/TUN/clean-host proof.",
+    "Go module lists and Pub/Maven graph queries are not a complete native SBOM or whole-program reachability proof.",
+    "Flutter engine, external Cronet/Chromium, nested package/license coverage, source distribution and installed runtime logging/privacy remain open.",
+    "No physical Android, current Windows VM C05 run, WARP, brain-origin/RU-origin proof, payment action, publication, push, merge or deploy.",
+    "Original evidence, previous APKs/bundle and relocated old test EXE retained outside release artifacts."
+  ],
+  "references": [
+    "https://google.github.io/osv.dev/post-v1-querybatch/",
+    "https://github.com/Psiphon-Labs/utls/tree/24497d415a8de0d11c20c3a47724fb88897ed725",
+    "https://raw.githubusercontent.com/refraction-networking/utls/v1.8.2/LICENSE"
+  ],
+  "canonical_doc_workspace_sha256": {
+    "docs/operations/android-release-audit.md": "f013e0a7a0048b16be6c2c4341ae704759b22aacba9753d7eb95b96dc5b3c60e",
+    "docs/operations/windows-release-readiness.md": "3039fd4d8cc98a09747757e0f767863239ffbcf78ad12ec42bd7fb9a9075e8eb"
+  }
+}

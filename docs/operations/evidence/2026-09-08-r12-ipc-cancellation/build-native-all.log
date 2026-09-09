@@ -1,0 +1,63 @@
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_service_runtime.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_runtime.lib
+  pokrov_service_cancellation_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_cancellation_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_service_runtime.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_runtime.lib
+  service_egress_probe_test.cpp
+  pokrov_service_egress_probe_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_egress_probe_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  service_client.cpp
+  service_client_test.cpp
+  service_pipe_client.cpp
+  Создание кода...
+  pokrov_service_client_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_client_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_service_protocol_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_protocol_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_service_security_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_security_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_windows_crash_profile_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_windows_crash_profile_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_service_runtime.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_runtime.lib
+  service_runtime_test.cpp
+  pokrov_service_runtime_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_runtime_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_service_runtime.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_runtime.lib
+  service_events_test.cpp
+  pokrov_service_events_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_events_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_service_runtime.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_runtime.lib
+  pokrov_service.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service.exe
+  pokrov_service_integration_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_integration_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  service_pipe_client.cpp
+  service_pipe_client_test.cpp
+  Создание кода...
+  pokrov_service_pipe_client_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_pipe_client_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Debug\pokrov_service_common.lib
+  pokrov_runtime_task_runner_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\tests\Debug\pokrov_runtime_task_runner_test.exe
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  LINK : не найден или не выполнена сборка E:\r12client\apps\windows_shell\build\windows\x64\tests\Debug\pokrov_activation_protocol_test.exe при последней инкрементной компоновке; выполняется полная компоновка
+  pokrov_activation_protocol_test.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\tests\Debug\pokrov_activation_protocol_test.exe

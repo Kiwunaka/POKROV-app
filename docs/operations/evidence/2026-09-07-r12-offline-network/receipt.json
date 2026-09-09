@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-09-07",
+  "scope": "local owner-authorized physical Huawei; controlled control-plane outage; no public release",
+  "origin": "current-origin attached physical device; no independent RU-origin attestation",
+  "source": {
+    "platform_base": "398b32f",
+    "client": "550329f",
+    "client_cache": "98b425d",
+    "core": "8dc57a8"
+  },
+  "device": {
+    "manufacturer": "HUAWEI",
+    "model": "ADA-AL00U",
+    "android": 12,
+    "sdk": 31,
+    "architecture": "arm64-v8a"
+  },
+  "identity": {
+    "purpose": "owner-authorized local Huawei test; no publication",
+    "package": "space.pokrov.pokrov_android_shell",
+    "version_name": "1.2.0",
+    "version_code": 4053,
+    "apk_bytes": 257494420,
+    "apk_sha256": "abfdc26d4265a6cd49fa425626924bfec9400ed54eb652bd53fa16d8513dcd41",
+    "core_arm64_sha256": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+    "installed_before_sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2",
+    "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500"
+  },
+  "artifacts": [
+    {
+      "path": "E:/r12-device-20260907/installed-before.apk",
+      "bytes": 295370161,
+      "sha256": "51b86f66bd5c79fdf8a8e51d7607315a6ea3f8dfe9c36c4656034aac3b4583f2"
+    },
+    {
+      "path": "E:/r12-device-20260907/pokrov-r12-local-arm64.apk",
+      "bytes": 257494420,
+      "sha256": "abfdc26d4265a6cd49fa425626924bfec9400ed54eb652bd53fa16d8513dcd41"
+    },
+    {
+      "path": "E:/r12-device-20260907/pokrov-r12-api-unavailable-fixture.apk",
+      "bytes": 257494420,
+      "sha256": "9c0b87367b9ca22eedcfa03e871342b6d90902a376d0607cbd1e055beb95df98"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "E:/r12-device-20260907/protection-wifi.png",
+      "bytes": 155473,
+      "sha256": "382a6612e35228728969f3bb88d4293344bc435b681dbef35a0c59f6be625faa"
+    },
+    {
+      "path": "E:/r12-device-20260907/protection-restart-wifi.png",
+      "bytes": 174707,
+      "sha256": "3562b44c2a989aaa91b737367fbe955d7b34be4af9dbbface112d1b6be5bfe7e"
+    },
+    {
+      "path": "E:/r12-device-20260907/protection-mobile.png",
+      "bytes": 203899,
+      "sha256": "5f5e172e67bb1ef71415a7b1fc7b07611fe6f9f4da2764074dfc24b2c05aac05"
+    },
+    {
+      "path": "E:/r12-device-20260907/protection-api-unavailable-mobile.png",
+      "bytes": 208167,
+      "sha256": "d7dcb460f5f04d16b3b36270f2bf7b3620b802481e6b775a035708ee69846597"
+    },
+    {
+      "path": "E:/r12-device-20260907/protection-api-unavailable-restart-mobile.png",
+      "bytes": 202318,
+      "sha256": "04ba044f3c671ce45522ba8ce3fda52f7beff59393faefbb80024871b58cb6ee"
+    }
+  ],
+  "logs": [
+    {
+      "path": "E:/r12-offline-profile-focused-final.log",
+      "bytes": 44394,
+      "sha256": "606c49d1d05a2ee6eddf5a625a38e7eec51b0307d95113e58df3224c5a33cb1b"
+    },
+    {
+      "path": "E:/r12-offline-profile-deadline.log",
+      "bytes": 2445,
+      "sha256": "403f2b3cbbd9128b8a2b08bf32748efa7fb80def20fd71e8a7dfa17dae4c0986"
+    },
+    {
+      "path": "E:/r12-offline-runtime-engine.log",
+      "bytes": 7282,
+      "sha256": "2b0fb24775e320112775260b7a615133ca7d031fecb892caf3aeb675b8b92065"
+    },
+    {
+      "path": "E:/r12-network-flutter-suite.log",
+      "bytes": 43252,
+      "sha256": "cb2a337583975a0d22bf90ed2d0be3eea6f15a4828d34cee2b93bf262c9c8b37"
+    },
+    {
+      "path": "E:/r12-network-gradle-final.log",
+      "bytes": 12212,
+      "sha256": "facd92b7eb57c5ffac5e1c41e6b17566f4cf2b06eeb14c732622081e286c05e9"
+    },
+    {
+      "path": "E:/r12-network-analyze.log",
+      "bytes": 98,
+      "sha256": "94a4bfc59219b23ead1d6ad7c173f56f162cce7fc31e2cd6bba5c0b286bb4968"
+    },
+    {
+      "path": "E:/r12-network-seed.log",
+      "bytes": 1817,
+      "sha256": "f8890d288e3d716549a8b79f3cec3368bd0a4d0609457d85f5c2170af15e5d1e"
+    },
+    {
+      "path": "E:/r12-network-api-test-final.log",
+      "bytes": 115,
+      "sha256": "4a919d8e7e2d9ca9d54ab9ef554eeefb5942015e0fdb9c72d7310794867f91e3"
+    },
+    {
+      "path": "E:/r12-network-backend-regression.log",
+      "bytes": 12259,
+      "sha256": "146c4e0accf33d8c2dc5846f1255b9f018dcc04147095e279615c1dfeb707c4e"
+    },
+    {
+      "path": "E:/r12-network-admin-privacy-recheck.log",
+      "bytes": 100,
+      "sha256": "353d30faf754b98cb3460121f1dcc32983d41aeaba65d6a1558fdc70d984287a"
+    },
+    {
+      "path": "E:/r12-network-admin-build-final.log",
+      "bytes": 1760,
+      "sha256": "5c2297b4395f7b4f5107916029c1a984c2aeb09e5cd114500cdddaf75027ed37"
+    },
+    {
+      "path": "E:/r12-network-admin-lint.log",
+      "bytes": 44,
+      "sha256": "6ffa13369ce63ea4802a88045643022692e51d25ff529168647557a8f394a88b"
+    },
+    {
+      "path": "E:/r12-network-admin-e2e.log",
+      "bytes": 165120,
+      "sha256": "9266351365a6c3afc8bd3f8da14820f84727834c9a2f8adcb8dede37b3d20d37"
+    },
+    {
+      "path": "E:/r12-network-admin-clients-final.log",
+      "bytes": 16140,
+      "sha256": "1c60bf4610475b52dd2fb9148929bf8b3902a5158174a984acbded3a4916219b"
+    },
+    {
+      "path": "E:/r12-network-docs-contracts.log",
+      "bytes": 101,
+      "sha256": "c6f85e09bbd08922b21fd861fa345676c86b0e9e331e2951601280a83faadf46"
+    },
+    {
+      "path": "E:/r12-network-context-audit.log",
+      "bytes": 23,
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "path": "E:/r12-network-marketing-build.log",
+      "bytes": 1571,
+      "sha256": "7f3b67784aea021f68f814e67495aa85f1c95cfb8295e08d8074973d9f3b59af"
+    },
+    {
+      "path": "E:/r12-network-marketing-responsive.log",
+      "bytes": 242,
+      "sha256": "e3aefd26df8fbe60f15239484ca12f6ee94df27c48dc0463d4960c0bdc2036bf"
+    },
+    {
+      "path": "E:/r12-network-marketing-seo.log",
+      "bytes": 118,
+      "sha256": "61297802d5beb919f8434fea61ef4778f928c5b16a3cadd87c4cb42f480afc96"
+    },
+    {
+      "path": "E:/r12-network-package-final.log",
+      "bytes": 109,
+      "sha256": "759867af8482d4340bad50e90bee55d898a14c84cc94119944dc1d4a1a9d8ec9"
+    },
+    {
+      "path": "E:/r12-network-docs-final.log",
+      "bytes": 101,
+      "sha256": "0d917123525e40216d5bfc5f6b30f66edd77b7093fac462773f5a7559b30a7ce"
+    },
+    {
+      "path": "E:/r12-network-client-final-seed.log",
+      "bytes": 1817,
+      "sha256": "45857e2202b56fedf1cb6ceeefe184e73c85b5be5216421b0b0bfd33bf021b4d"
+    }
+  ],
+  "fixture": {
+    "api_base_url": "https://127.0.0.1:1",
+    "method": "same source and signer; build-time API override; preserved encrypted app storage",
+    "proof": "app reports tunnel, DNS and VPN egress confirmed on mobile after update and force-stop/relaunch"
+  },
+  "deployed_network_context": "NOT_REQUESTED; endpoint/admin not deployed",
+  "release": "NOT_REQUESTED; local exact byte proof only",
+  "geoip": {
+    "source": "https://download.db-ip.com/free/dbip-city-lite-2026-09.mmdb.gz",
+    "license": "CC BY 4.0",
+    "attribution": "IP Geolocation by DB-IP; https://db-ip.com",
+    "bytes": 127339927,
+    "sha256": "05a10861259c7966cb54d7181ef8c360de8c8829d182098c0e62a9b7d54cd50d",
+    "sha1": "6ea870a637b5460023643fc18fdea84dcea14b9c",
+    "md5": "8a0a03f5b9098ba9f2e28f920473d6c1",
+    "scope": "local preparation; no deployment",
+    "local_parser_has_country": true,
+    "local_parser_has_region": true
+  },
+  "packaged_core": {
+    "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+    "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+    "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+  },
+  "restoration": {
+    "status": "PASS",
+    "restored_installed_apk_sha256": "abfdc26d4265a6cd49fa425626924bfec9400ed54eb652bd53fa16d8513dcd41",
+    "data_preserved": true,
+    "method": "adb install -r; installed /data/app base.apk sha256sum matches normal API artifact",
+    "wifi": "enabled",
+    "vpn": "disconnected",
+    "evidence": {
+      "path": "E:/r12-device-20260907/home-restored-final.png",
+      "bytes": 151639,
+      "sha256": "cfff18c1c5ed84219ff6f0a6d14a90b94e769a9040a7e4c029a04780e9828086"
+    }
+  },
+  "platform_implementation_sha256": {
+    "portal_bot/client_network_diagnostics.py": "7ddfb4dda7ae6eb7f9fcca9d3f2808a277f5dd34c56dc00bb757bad1116a8b44",
+    "portal_bot/api_client_routes.py": "f276938227a99208ea27f798ebfdceeff0a5c76c809c3498de6528102f3c4d45",
+    "portal_bot/antiabuse_privacy_service.py": "69f84c675946393122960c5e7bfbb1501de0beafd001da94e1f3f55c22b34f69",
+    "portal_bot/support_work_service.py": "a7ff8474f628c937fa36989c686205fbdcbebb3bb4c909ce2b93b89a2c29b3bf",
+    "portal_bot/admin_v2/router.py": "54738dde0bf6da676fcca695643591851aafa10a66e30eedbf19e924e9158792",
+    "adminapp/src/features/users/user-detail.tsx": "840a8da06847c84300459980f621a920ee034b45e6127a0b48ebaa0612cc5236",
+    "adminapp/src/lib/admin-api/support.ts": "50c13cf263c65b04a8759b208f3a347a7229d1f9cc9c8442a4d338badfe3620e"
+  }
+}

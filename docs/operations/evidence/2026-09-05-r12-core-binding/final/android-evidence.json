@@ -1,0 +1,60 @@
+{
+  "schema": "pokrov.core.pre-candidate-artifact-evidence/v1",
+  "lane": "android",
+  "state": "PRE_CANDIDATE_LOCAL",
+  "candidate_created": false,
+  "candidate_proven": false,
+  "promotion_authorized": false,
+  "provenance_status": "UNSIGNED_CI_BUILD_EVIDENCE",
+  "source": {
+    "commit": "3f52efd4635218967cc84d58cb06b2fa593fd563",
+    "clean": true
+  },
+  "toolchain": {
+    "go": "go1.25.13",
+    "runner_os": ""
+  },
+  "workflow": {
+    "run_id": "",
+    "run_attempt": ""
+  },
+  "contracts": {
+    "config/release.json": "e11356a9acdd9cec42f60eae91b42de505aef0103e87b0e82259a539070bb214",
+    "config/abi-contract.json": "ea4962507e27dd8e46990b88345fcbe7ad1f154a5abd1ba44cc3af42a53375a1",
+    "config/core-event-abi.json": "013bc449984de234ce7fd57154cd28843eec57afee86d97dd63f886a1b1b6bdf",
+    "config/awg2-capability.json": "c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8",
+    "config/awg31-capability.json": "1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818",
+    "go.sum": "ca5492839f2436916d685ab87a14ea27ba2fe5250a4cb46e561399f1096dcc3b",
+    "engine/sing-box/go.sum": "5079550d0c5e46125239196821bd0992cd6a71f53c16d0f6337138ce4cd3af95"
+  },
+  "reproducibility": {
+    "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+    "file_count": 2,
+    "tree_sha256": "8c33543649e976628e691a848b73b4146bfb82478c6c6dfedb335dcb6b2710f0",
+    "files": [
+      {
+        "path": "pokrov-core-sources.jar",
+        "size": 55179,
+        "sha256": "f221b97096667e8f1cfed872e3d0f8e0721b4f06adaad461ba0b2296b0d19d11"
+      },
+      {
+        "path": "pokrov-core.aar",
+        "size": 107450158,
+        "sha256": "c02bc2fcc25f925f9062520f85667c324999b091eb2251a9cf26b8a1f66b0302"
+      }
+    ]
+  },
+  "sbom": [
+    {
+      "name": "pokrov-core.cdx.json",
+      "size": 311801,
+      "sha256": "bc3de60080ba3bd1e26e185a7d01ff6bea2aa617f3f3525f8a999faf99aca83e"
+    },
+    {
+      "name": "sing-box.cdx.json",
+      "size": 267686,
+      "sha256": "127b185ad24218f5e8eb11a47388237698a3b77826160dbe725261632af06d2e"
+    }
+  ],
+  "evidence_ceiling": "LOCAL_OR_HOSTED_PRE_CANDIDATE_CI"
+}

@@ -1,0 +1,109 @@
+{
+  "core_gate": "PASS",
+  "negative_before": "6 expected regression failures",
+  "focused_after": "PASS",
+  "runtime_tests": {
+    "passed": 80,
+    "opt_in_skipped": 1,
+    "opt_in_separate_run": "100 cycles PASS"
+  },
+  "android_flutter": 8,
+  "android_jvm": {
+    "direct": 188,
+    "store": 188,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "flutter_analyze": "PASS runtime_engine and android_shell",
+  "seed_docs_parity": "PASS explicit platform/Core roots",
+  "release_handoff_v2_cases": 16,
+  "initial_windows_build": "FAILED compiler launch; process-local MinGW PATH retry PASS",
+  "initial_seed": "FAILED missing default E:/POKROV-core; explicit roots PASS",
+  "build_inputs": {
+    "result": "PASS",
+    "module_and_build_records_equal": {
+      "windows": true,
+      "armeabi-v7a": true,
+      "arm64-v8a": true,
+      "x86": true,
+      "x86_64": true
+    },
+    "scope": "Five compiled Go target graphs; binary code differs as expected"
+  },
+  "logs": {
+    "core-gate.log": {
+      "sha256": "d2df7aa8612f3eb7babac3174aa5c591b8f3cc62c492be9ed8264a7acf92f39c",
+      "bytes": 2070
+    },
+    "before.log": {
+      "sha256": "534638044de7062be753b18dbbb7da965ab4f2d1b7b9f4fedfe9f152010ad082",
+      "bytes": 2463
+    },
+    "after.log": {
+      "sha256": "e367913c37db304e90563b315824e5e63a6c000413319911d7b1167cf9c87e65",
+      "bytes": 1827
+    },
+    "windows-a.log": {
+      "sha256": "c4b3d5744707f144730f2400136355682063386453055750714b4f2f7985bfab",
+      "bytes": 803
+    },
+    "windows-a-retry.log": {
+      "sha256": "a9e5d820c48fc66ff6ae393e568c408f3ea7c055385e11ab98075f245fbca579",
+      "bytes": 875
+    },
+    "windows-b.log": {
+      "sha256": "97507b107cb293b07c9eeb37fc4e138a7eb06d9326ca655c6cefb61e6282fb7f",
+      "bytes": 875
+    },
+    "android-a.log": {
+      "sha256": "a682a2274af871314dfa7fda783ec534a0b182a035dfe8816197b4a3d9d3ea9b",
+      "bytes": 627
+    },
+    "android-b.log": {
+      "sha256": "6530f46956f6891e09bb7cc4754dd4bbaf3d09a982bb90911fbe2daccfad5f65",
+      "bytes": 627
+    },
+    "proxy100.log": {
+      "sha256": "b754b4dcbc7a6b84d0313027c7e89ebebc08f39568a4713e4db96dd26f738305",
+      "bytes": 2055
+    },
+    "runtime-tests.log": {
+      "sha256": "2b0fb24775e320112775260b7a615133ca7d031fecb892caf3aeb675b8b92065",
+      "bytes": 7282
+    },
+    "runtime-analyze.log": {
+      "sha256": "3a0ad3aaa26d69e74293c5a87b0bb8d7f95ed79ce1b5c573c047892c4bbfbde3",
+      "bytes": 1165
+    },
+    "android-flutter.log": {
+      "sha256": "d4b6683d685d83fefd50509660b663bf68487aa93fd972707b6b5844fa2a3464",
+      "bytes": 3523
+    },
+    "android-analyze.log": {
+      "sha256": "873a56ab65345561a193dd4f5b25ab8acc559335312dc0554e00edea63389422",
+      "bytes": 2443
+    },
+    "android-jvm.log": {
+      "sha256": "40738e7e42dbc2417696814c27473f9a0f615f505a3491c27e17e7c86cccb4b0",
+      "bytes": 14611
+    },
+    "client-seed.log": {
+      "sha256": "015e41c5ef916270845ccd2cff9f94000a04d5ca9672d52a19562ab0d3393366",
+      "bytes": 347
+    },
+    "client-seed-explicit.log": {
+      "sha256": "a52af781b4a835f39814e8317161f95a575e01f68bd28b88b09b21d96df157e6",
+      "bytes": 1818
+    },
+    "release-handoff-contract.log": {
+      "sha256": "63b6ce302b59f7b16f239c7eff241f728772ebf85b3e8a6d073a486151b4c373",
+      "bytes": 50
+    }
+  },
+  "local_evidence_root": "E:\\r12-awg-crossfield-20260908",
+  "source_commit": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "client_source_before_binding": "6014b910e0f7263ae5d378efc9dad2abe3e567d7",
+  "physical_or_vm_current_bytes": "NOT_RUN",
+  "candidate_created": false
+}

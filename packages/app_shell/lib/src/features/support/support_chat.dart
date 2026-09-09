@@ -42,19 +42,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
   late final TextEditingController _composer;
   late final FocusNode _composerFocusNode;
   late final ScrollController _messageListController;
-  late final SupportPollingCoordinator _threadPolling;
-  bool _supportPollingForeground = true;
-  bool _sending = false;
-  bool _loadingThread = true;
-  bool _refreshingThread = false;
-  bool _threadRefreshFailed = false;
-  bool _threadClosed = false;
-  bool _hasOperatorReply = false;
-  int? _ticketId;
-  String _threadVersion = '';
-  String? _threadError;
-  String? _sendError;
-  List<_SupportChatMessage> _messages = _supportGreetingMessages();
+  late final SupportConversationController _conversation;
   bool _attachDiagnosticsToNextMessage = false;
   bool _sendingBundle = false;
 
@@ -63,23 +51,29 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    _supportPollingForeground =
-        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
-    _threadPolling = SupportPollingCoordinator(
-      onPoll: () => _refreshActiveThread(pollingOwned: true),
-    );
+    _conversation = SupportConversationController(
+      service: widget.supportTicketService,
+      hostPlatform: widget.appContext.hostPlatform,
+      foreground:
+          lifecycleState == null || lifecycleState == AppLifecycleState.resumed,
+      onMessagesChanged: _scrollToLatestMessage,
+      onMessageAccepted: (text) {
+        _clearComposerAfterSend(text);
+        _attachDiagnosticsToNextMessage = false;
+      },
+    )..addListener(_onConversationChanged);
     _composer = TextEditingController();
     _composerFocusNode = FocusNode(debugLabel: 'support-composer');
     _messageListController = ScrollController(
       debugLabel: 'support-message-list',
     );
-    unawaited(_loadInitialThread());
+    unawaited(_conversation.loadInitialThread());
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _threadPolling.dispose();
+    _conversation.dispose();
     _composerFocusNode.dispose();
     _messageListController.dispose();
     _composer.dispose();
@@ -88,8 +82,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    _supportPollingForeground = state == AppLifecycleState.resumed;
-    _syncThreadPolling();
+    _conversation.setForeground(state == AppLifecycleState.resumed);
   }
 
   /// Keeps the freshly appended message visible: after the frame with the
@@ -115,296 +108,21 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
     });
   }
 
-  Future<void> _loadInitialThread() async {
-    setState(() {
-      _loadingThread = true;
-      _threadError = null;
-    });
-
-    try {
-      final tickets = await widget.supportTicketService.listTickets(
-        hostPlatform: widget.appContext.hostPlatform,
-        limit: 5,
-      );
-      SupportTicketThread? selected;
-      for (final ticket in tickets) {
-        if (!ticket.isClosed) {
-          selected = ticket;
-          break;
-        }
-      }
-      selected ??= tickets.isEmpty ? null : tickets.first;
-
-      if (selected == null) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _ticketId = null;
-          _threadClosed = false;
-          _threadRefreshFailed = false;
-          _hasOperatorReply = false;
-          _loadingThread = false;
-          _messages = _supportGreetingMessages();
-        });
-        _syncThreadPolling();
-        return;
-      }
-
-      final thread = await widget.supportTicketService.getTicket(
-        hostPlatform: widget.appContext.hostPlatform,
-        ticketId: selected.id,
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _loadingThread = false;
-        _applyThread(thread);
-      });
-      _syncThreadPolling();
-    } on SupportTicketFailure catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _loadingThread = false;
-        _threadClosed = false;
-        _threadRefreshFailed = false;
-        _hasOperatorReply = false;
-        _threadError = error.message;
-      });
-      _syncThreadPolling();
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _loadingThread = false;
-        _threadError = 'Не удалось загрузить историю поддержки.';
-      });
+  void _onConversationChanged() {
+    if (mounted) {
+      setState(() {});
     }
   }
 
-  bool _applyThread(SupportTicketThread thread) {
-    final nextVersion = _supportThreadVersion(thread);
-    final changed = _threadVersion.isNotEmpty && _threadVersion != nextVersion;
-    _threadVersion = nextVersion;
-    _ticketId = thread.id;
-    _threadClosed = thread.isClosed;
-    final nextMessages = _messagesFromThread(thread);
-    _messages =
-        nextMessages.isEmpty ? _supportGreetingMessages() : nextMessages;
-    _hasOperatorReply = nextMessages.any(
-      (message) => message.role == _SupportChatRole.operator,
-    );
-    _threadRefreshFailed = false;
-    return changed;
-  }
-
-  void _syncThreadPolling() {
-    _threadPolling.configure(
-      eligible: mounted &&
-          _ticketId != null &&
-          !_threadClosed &&
-          !_loadingThread &&
-          !_sending &&
-          !_refreshingThread &&
-          _threadError == null,
-      foreground: _supportPollingForeground,
-    );
-  }
-
-  Future<SupportPollingResult> _refreshActiveThread({
-    bool pollingOwned = false,
-  }) async {
-    final activeTicketId = _ticketId;
-    if (activeTicketId == null ||
-        _threadClosed ||
-        _loadingThread ||
-        _sending ||
-        _refreshingThread) {
-      return SupportPollingResult.unchanged;
-    }
-    setState(() {
-      _refreshingThread = true;
-    });
-    _syncThreadPolling();
-    try {
-      final thread = await widget.supportTicketService.getTicket(
-        hostPlatform: widget.appContext.hostPlatform,
-        ticketId: activeTicketId,
-      );
-      if (!mounted) {
-        return SupportPollingResult.failed;
-      }
-      var changed = false;
-      setState(() {
-        _refreshingThread = false;
-        _threadError = null;
-        changed = _applyThread(thread);
-      });
-      _syncThreadPolling();
-      final result = changed
-          ? SupportPollingResult.changed
-          : SupportPollingResult.unchanged;
-      if (!pollingOwned) {
-        _threadPolling.recordExternalResult(result: result);
-      }
-      return result;
-    } catch (_) {
-      if (!mounted) {
-        return SupportPollingResult.failed;
-      }
-      setState(() {
-        _refreshingThread = false;
-        _threadRefreshFailed = true;
-      });
-      if (!pollingOwned) {
-        _threadPolling.recordExternalResult(
-          result: SupportPollingResult.failed,
-        );
-      }
-      return SupportPollingResult.failed;
-    }
-  }
-
-  _SupportLifecycleState get _supportLifecycleState {
-    if (_loadingThread) {
-      return _SupportLifecycleState.loading;
-    }
-    if (_threadError != null || _threadRefreshFailed) {
-      return _SupportLifecycleState.offline;
-    }
-    if (_refreshingThread) {
-      return _SupportLifecycleState.refreshing;
-    }
-    if (_threadClosed) {
-      return _SupportLifecycleState.closed;
-    }
-    if (_hasOperatorReply) {
-      return _SupportLifecycleState.operator;
-    }
-    if (_ticketId != null) {
-      return _SupportLifecycleState.tracking;
-    }
-    return _SupportLifecycleState.ready;
-  }
-
-  void _retrySupportLifecycle() {
-    if (_ticketId == null) {
-      unawaited(_loadInitialThread());
-      return;
-    }
-    setState(() {
-      _threadRefreshFailed = false;
-    });
-    unawaited(_refreshActiveThread());
-  }
-
-  Future<void> _sendMessage() async {
-    final text = _composer.text.trim();
-    if (text.isEmpty || _sending || _loadingThread) {
-      return;
-    }
-    final pendingMessage = _SupportChatMessage(
-      role: _SupportChatRole.user,
-      body: text,
-    );
-    final attachDiagnostics = _attachDiagnosticsToNextMessage;
-    final diagnostics =
-        attachDiagnostics ? _supportDiagnostics() : const <String, Object?>{};
-    setState(() {
-      _sendError = null;
-      _messages.add(pendingMessage);
-      _sending = true;
-    });
-    _syncThreadPolling();
-    _scrollToLatestMessage();
-
-    try {
-      final activeTicketId = _ticketId;
-      if (activeTicketId != null) {
-        final thread = await widget.supportTicketService.sendMessage(
-          hostPlatform: widget.appContext.hostPlatform,
-          ticketId: activeTicketId,
-          body: text,
-          routeMode: attachDiagnostics ? widget.selectedRouteMode : null,
-          statusLabel: attachDiagnostics ? widget.statusLabel : '',
-          diagnostics: diagnostics,
-        );
-        if (!mounted) {
-          return;
-        }
-        _clearComposerAfterSend(text);
-        setState(() {
-          _sending = false;
-          _threadError = null;
-          _attachDiagnosticsToNextMessage = false;
-          _applyThread(thread);
-        });
-        _scrollToLatestMessage();
-        _syncThreadPolling();
-        return;
-      }
-
-      final receipt = await widget.supportTicketService.createTicket(
-        hostPlatform: widget.appContext.hostPlatform,
+  Future<void> _sendMessage() => _conversation.send(
+        text: _composer.text,
         routeMode: widget.selectedRouteMode,
-        statusLabel: attachDiagnostics ? widget.statusLabel : '',
-        subject: 'Обращение из приложения POKROV',
-        body: text,
-        diagnostics: diagnostics,
+        attachDiagnostics: _attachDiagnosticsToNextMessage,
+        statusLabel: widget.statusLabel,
+        diagnostics: _attachDiagnosticsToNextMessage
+            ? _supportDiagnostics()
+            : const <String, Object?>{},
       );
-      _ticketId = receipt.ticketId;
-      if (!mounted) {
-        return;
-      }
-      _clearComposerAfterSend(text);
-      setState(() {
-        _sending = false;
-        _threadError = null;
-        _threadRefreshFailed = false;
-        _attachDiagnosticsToNextMessage = false;
-        _messages.add(
-          _SupportChatMessage(
-            role: _SupportChatRole.assistant,
-            label: 'Поддержка',
-            body:
-                'Обращение #${receipt.ticketId} создано. Ответ появится прямо в этом чате.',
-          ),
-        );
-      });
-      _scrollToLatestMessage();
-      _syncThreadPolling();
-      try {
-        final thread = await widget.supportTicketService.getTicket(
-          hostPlatform: widget.appContext.hostPlatform,
-          ticketId: receipt.ticketId,
-        );
-        if (!mounted || thread.messages.isEmpty) {
-          return;
-        }
-        setState(() {
-          _applyThread(thread);
-        });
-        _scrollToLatestMessage();
-        _syncThreadPolling();
-      } catch (_) {
-        // Keep the local confirmation when the immediate refresh is unavailable.
-      }
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _sending = false;
-        _messages.remove(pendingMessage);
-        _sendError = 'Сообщение не отправлено. Проверьте интернет и повторите.';
-      });
-      _syncThreadPolling();
-    }
-  }
 
   /// The draft is cleared only after the backend accepted the message, so a
   /// failed send never loses the typed text. If the user already typed a new
@@ -468,71 +186,6 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
     return 'Не включен';
   }
 
-  List<_SupportChatMessage> _messagesFromThread(SupportTicketThread thread) {
-    final messages = <_SupportChatMessage>[];
-    for (final message in thread.messages) {
-      final body = message.body.trim();
-      if (body.isEmpty) {
-        continue;
-      }
-      final role = _supportRoleFromSender(message.senderRole);
-      messages.add(
-        _SupportChatMessage(
-          role: role,
-          label: _supportLabelForRole(role),
-          body: body,
-        ),
-      );
-    }
-    return messages;
-  }
-
-  String _supportThreadVersion(SupportTicketThread thread) {
-    final buffer = StringBuffer();
-
-    void writeField(Object value) {
-      final text = value.toString();
-      buffer
-        ..write(text.length)
-        ..write(':')
-        ..write(text);
-    }
-
-    writeField(thread.id);
-    writeField(thread.status);
-    writeField(thread.statusTitle);
-    writeField(thread.updatedAt);
-    writeField(thread.closedAt);
-    writeField(thread.lastMessagePreview);
-    for (final message in thread.messages) {
-      writeField(message.id);
-      writeField(message.senderRole);
-      writeField(message.body);
-      writeField(message.mediaType);
-      writeField(message.createdAt);
-    }
-    return buffer.toString();
-  }
-
-  _SupportChatRole _supportRoleFromSender(String senderRole) {
-    final role = senderRole.toLowerCase();
-    if (role == 'user') {
-      return _SupportChatRole.user;
-    }
-    if (role == 'admin' || role == 'operator' || role == 'support') {
-      return _SupportChatRole.operator;
-    }
-    return _SupportChatRole.assistant;
-  }
-
-  String _supportLabelForRole(_SupportChatRole role) {
-    return switch (role) {
-      _SupportChatRole.user => '',
-      _SupportChatRole.operator => 'Поддержка',
-      _SupportChatRole.assistant => 'Помощник POKROV',
-    };
-  }
-
   /// Opens the AI mini chat sheet. When the user picks the human escape row
   /// inside, the sheet closes and focus lands on the existing ticket
   /// composer so escalation stays one motion away.
@@ -586,46 +239,16 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
     );
   }
 
-  Future<String?> _submitFeedback(_SupportFeedbackDraft draft) async {
-    if (_sending) {
-      return 'Дождитесь отправки текущего сообщения.';
-    }
-    try {
-      final diagnostics = draft.attachDiagnostics
-          ? _supportDiagnostics()
-          : const <String, Object?>{};
-      final receipt = await widget.supportTicketService.createTicket(
-        hostPlatform: widget.appContext.hostPlatform,
+  Future<String?> _submitFeedback(_SupportFeedbackDraft draft) =>
+      _conversation.submitFeedback(
         routeMode: widget.selectedRouteMode,
         statusLabel: draft.attachDiagnostics ? widget.statusLabel : '',
         subject: 'Обратная связь POKROV — ${draft.category.subject}',
         body: draft.message,
-        diagnostics: diagnostics,
+        diagnostics: draft.attachDiagnostics
+            ? _supportDiagnostics()
+            : const <String, Object?>{},
       );
-      if (!mounted) {
-        return null;
-      }
-      setState(() {
-        _ticketId = receipt.ticketId;
-        _threadClosed = false;
-        _threadRefreshFailed = false;
-        _threadError = null;
-        _messages.add(
-          _SupportChatMessage(
-            role: _SupportChatRole.assistant,
-            label: 'Поддержка',
-            body:
-                'Спасибо — отзыв #${receipt.ticketId} отправлен. Ответ, если он понадобится, появится в этом чате.',
-          ),
-        );
-      });
-      _scrollToLatestMessage();
-      _syncThreadPolling();
-      return null;
-    } catch (_) {
-      return 'Не удалось отправить отзыв. Проверьте интернет и повторите.';
-    }
-  }
 
   void _showDiagnosticsPreview() {
     late final PreparedSupportBundle prepared;
@@ -921,7 +544,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
         prepared: prepared,
         caseSummary:
             'Версия $pokrovClientVersion; ${widget.appContext.hostPlatform.name}; режим ${widget.selectedRouteMode.name}; диагностика приложения.',
-        ticketId: _ticketId,
+        ticketId: _conversation.ticketId,
       );
       widget.observability?.recordSupportBundleFinished(prepared: prepared);
       if (!mounted) {
@@ -986,7 +609,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
           ),
           _SendSupportMessageIntent: CallbackAction<_SendSupportMessageIntent>(
             onInvoke: (_) {
-              if (!_sending && !_loadingThread) {
+              if (!_conversation.sending && !_conversation.loadingThread) {
                 unawaited(_sendMessage());
               }
               return null;
@@ -1027,8 +650,8 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
                             Padding(
                               padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
                               child: _SupportLifecycleHint(
-                                state: _supportLifecycleState,
-                                onRetry: _retrySupportLifecycle,
+                                state: _conversation.lifecycle,
+                                onRetry: _conversation.retry,
                               ),
                             ),
                             if (widget.askAssistant != null)
@@ -1061,7 +684,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
                                 ),
                               ),
                             ),
-                            if (_loadingThread)
+                            if (_conversation.loadingThread)
                               const SizedBox(
                                 height: 230,
                                 child: _SupportChatSkeleton(),
@@ -1072,7 +695,8 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
                                     const EdgeInsets.fromLTRB(18, 0, 18, 12),
                                 child: Column(
                                   children: [
-                                    for (final message in _messages)
+                                    for (final message
+                                        in _conversation.messages)
                                       _SupportChatBubble(message: message),
                                   ],
                                 ),
@@ -1085,7 +709,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (_sendError case final sendError?)
+                            if (_conversation.sendError case final sendError?)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: _SupportRetryNotice(
@@ -1096,7 +720,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
                                   retryKey: const ValueKey(
                                     'support-send-retry',
                                   ),
-                                  onRetry: _sending
+                                  onRetry: _conversation.sending
                                       ? null
                                       : () => unawaited(_sendMessage()),
                                 ),
@@ -1160,7 +784,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
                                     IconButton(
                                       key: const ValueKey('support-chat-send'),
                                       tooltip: 'Отправить',
-                                      icon: _sending
+                                      icon: _conversation.sending
                                           ? const SizedBox.square(
                                               dimension: 18,
                                               child: CircularProgressIndicator(
@@ -1168,7 +792,8 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
                                               ),
                                             )
                                           : const Icon(Icons.send_rounded),
-                                      onPressed: (_sending || _loadingThread)
+                                      onPressed: (_conversation.sending ||
+                                              _conversation.loadingThread)
                                           ? null
                                           : () => unawaited(_sendMessage()),
                                     ),
@@ -1345,94 +970,59 @@ String _diagnosticCategoryLabel(DiagnosticCategory category) =>
       DiagnosticCategory.redaction => 'очистка',
     };
 
-enum _SupportChatRole { user, assistant, operator }
-
-class _SupportChatMessage {
-  const _SupportChatMessage({
-    required this.role,
-    required this.body,
-    this.label = '',
-  });
-
-  final _SupportChatRole role;
-  final String body;
-  final String label;
-}
-
-List<_SupportChatMessage> _supportGreetingMessages() {
-  return <_SupportChatMessage>[
-    _SupportChatMessage(
-      role: _SupportChatRole.assistant,
-      label: 'Помощник POKROV',
-      body:
-          'Напишите, что случилось. POKROV приложит только сведения о приложении и подключении, а ответ появится здесь.',
-    ),
-  ];
-}
-
-enum _SupportLifecycleState {
-  loading,
-  ready,
-  tracking,
-  refreshing,
-  operator,
-  closed,
-  offline,
-}
-
 class _SupportLifecycleHint extends StatelessWidget {
   const _SupportLifecycleHint({required this.state, required this.onRetry});
 
-  final _SupportLifecycleState state;
+  final SupportConversationLifecycle state;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
     final data = switch (state) {
-      _SupportLifecycleState.loading => (
+      SupportConversationLifecycle.loading => (
           key: 'loading',
           icon: Icons.sync_rounded,
           label: 'Загружаем переписку',
           accent: p.muted,
           retry: false,
         ),
-      _SupportLifecycleState.ready => (
+      SupportConversationLifecycle.ready => (
           key: 'ready',
           icon: Icons.smart_toy_outlined,
           label: 'Чат с человеком · ответим здесь',
           accent: p.muted,
           retry: false,
         ),
-      _SupportLifecycleState.tracking => (
+      SupportConversationLifecycle.tracking => (
           key: 'tracking',
           icon: Icons.mark_chat_unread_outlined,
           label: 'Открыто · человек ответит здесь',
           accent: p.accent,
           retry: false,
         ),
-      _SupportLifecycleState.refreshing => (
+      SupportConversationLifecycle.refreshing => (
           key: 'refreshing',
           icon: Icons.sync_rounded,
           label: 'Проверяем новые ответы',
           accent: p.accent,
           retry: false,
         ),
-      _SupportLifecycleState.operator => (
+      SupportConversationLifecycle.operator => (
           key: 'operator',
           icon: Icons.support_agent_rounded,
           label: 'Поддержка ответила',
           accent: p.accent,
           retry: false,
         ),
-      _SupportLifecycleState.closed => (
+      SupportConversationLifecycle.closed => (
           key: 'closed',
           icon: Icons.check_circle_outline_rounded,
           label: 'Обращение закрыто',
           accent: p.success,
           retry: false,
         ),
-      _SupportLifecycleState.offline => (
+      SupportConversationLifecycle.offline => (
           key: 'offline',
           icon: Icons.cloud_off_outlined,
           label: 'Чат временно не обновился',
@@ -1544,16 +1134,16 @@ class _SupportRetryNotice extends StatelessWidget {
 class _SupportChatBubble extends StatelessWidget {
   const _SupportChatBubble({required this.message});
 
-  final _SupportChatMessage message;
+  final SupportChatMessage message;
 
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final isUser = message.role == _SupportChatRole.user;
+    final isUser = message.role == SupportChatRole.user;
     // Automation bubbles share one visual language with the AI sheet: the
     // mint tone plus the small sparkle badge keep it honest that no human
     // wrote this text. Operator replies stay on the neutral surface.
-    final isAutomation = message.role == _SupportChatRole.assistant &&
+    final isAutomation = message.role == SupportChatRole.assistant &&
         message.label == 'Помощник POKROV';
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,

@@ -1,6 +1,6 @@
 # App-First Onboarding Flow
 
-Last updated: 2026-08-17
+Last updated: 2026-09-06
 
 ## Document Status
 
@@ -10,6 +10,25 @@ The platform contract owner is
 `C:/Users/kiwun/Documents/ai/VPN/docs/architecture/app-first-and-bonus-flows.md`.
 Public download behavior belongs to
 `C:/Users/kiwun/Documents/ai/VPN/docs/architecture/client-downloads-flow.md`.
+
+## Automatic access-network context (owner decision 2026-09-07)
+
+Android reports source-network context on app open/connect/running/failure,
+at most once per minute per account in a process. `AndroidNetworkDiagnostics`
+uses the latency probe's physical `NOT_VPN` network and `Network.openConnection`
+to fixed owned HTTPS hosts, without proxy, redirects or default-network
+fallback. Carrier comes from the default data subscription; Wi-Fi is not
+labeled with the SIM operator. No GPS or additional permission is requested.
+The source IP remains server-side, never in Dart, logs or consumer UI.
+
+If the direct path fails, ordinary authenticated transport sends carrier/class
+with `direct_observation=false`; its IP cannot become the underlying address.
+Unknown stays unknown. This best-effort observation cannot gate connect,
+renew a session or confer access. Platform owns local coarse geography,
+sensitive-role reads/audit and capped 72-hour raw data retention. First launch
+and the linked privacy policy disclose collection. Manual support bundles
+retain separate consent/custody. Network observations are not persisted as
+client state or added to the operational event journal.
 
 ## Goal
 
@@ -62,6 +81,23 @@ UX guardrail:
   acquisition handle, session token, profile, endpoint, or raw host detail.
 
 ## Account Experience And Connection Evidence
+
+When an established app flow returns to the foreground (including a cabinet
+browser return), the shell refreshes its existing account subscription,
+bonus summary and inbox without changing the selected tab. Access changes come
+only from the authenticated server response; closing the browser never means payment
+succeeded. The welcome/restore choice does not start an authenticated refresh
+merely because the app resumes. Pending Telegram verification keeps its existing
+dedicated refresh path.
+
+Foreground, profile-tab and initial account-summary requests share one in-flight
+refresh, keeping subscription, bonus and inbox reads sequential. Inbox reads
+also wait for the access choice because their session helper can create a trial
+when no app session exists. A failed refresh retains the previously observed
+account view and permits another foreground or
+profile refresh; it does not clear access, claim payment or reset navigation.
+These reads use the existing bounded app-first HTTP request path. Native browser,
+tray, upgrade and payment acceptance still require exact installed-package proof.
 
 The native welcome shown before account creation is necessarily install-scoped.
 Once a real app session exists, onboarding continuation and first-connection UX

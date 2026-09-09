@@ -12,6 +12,7 @@ import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_app_shell/emergency_network_contract.dart';
 import 'package:pokrov_app_shell/src/emergency/emergency_network_store.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 const _ruDomainWhitelistRuleSetTag = 'pokrov-ru-domain-whitelist';
 const _ruDomainCategoryRuleSetTag = 'pokrov-ru-domain-category';
@@ -317,6 +318,152 @@ void main() {
     expect(selectSafeTunMtu(1400), 1400);
     expect(selectSafeTunMtu(1492), 1492);
     expect(selectSafeTunMtu(1500), 1500);
+  });
+
+  test('protected managed cache restores exact profile after restart and respects server denial', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-managed-cache-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    var revision = 'a';
+    var denied = false;
+    var subscriptionDenied = false;
+    var stall = false;
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'cache-fixture-token', 'account_id': 'cache-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (denied) {
+          request.response.statusCode = 403;
+          request.response.write('{"detail":"access denied"}');
+        } else if (request.uri.path == '/api/client/subscription') {
+          request.response.write(jsonEncode({
+            'lane': subscriptionDenied ? 'expiredOrBlocked' : 'paidUnlimited',
+          }));
+        } else if (request.uri.path == '/api/client/route-policy') {
+          request.response.write('{"ok":true}');
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          if (stall) continue;
+          request.response.write(jsonEncode(_readyManagedProfile(revision)));
+        } else {
+          request.response.statusCode = 404;
+          request.response.write('{}');
+        }
+        await request.response.close();
+      }
+    }());
+    AppFirstRuntimeBootstrapper create({bool offline = false}) => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory,
+      maxRequestAttempts: 1, delayScheduler: (_) async {},
+      httpClientFactory: offline ? () => throw StateError('offline cache used HTTP') : null,
+    );
+    const inputs = ManagedProfileCacheInputs(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
+    final online = create();
+    final a = await online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+    await online.markManagedProfileProven(inputs, a.cacheEntryId);
+    revision = 'b';
+    final b = await online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+    // Simulate a process restart with no available HTTP transport.
+    final restarted = create(offline: true);
+    final restored = await restarted.loadCachedManagedProfile(inputs);
+    expect(restored?.configPayload, b.configPayload);
+    expect(restored?.source?.revision, 'b');
+    expect(restored?.cacheEntryId, b.cacheEntryId);
+    final proven = await restarted.loadCachedManagedProfile(inputs, preferProven: true);
+    expect(proven?.configPayload, a.configPayload);
+    expect(proven?.source?.revision, 'a');
+    expect(await restarted.loadCachedManagedProfile(const ManagedProfileCacheInputs(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.allExceptRu)), isNull);
+    stall = true;
+    await expectLater(online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+      timeout: const Duration(milliseconds: 100),
+    ).timeout(const Duration(seconds: 2)), throwsA(isA<BootstrapFailure>()));
+    expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, b.cacheEntryId);
+    stall = false;
+    await online.fetchClientSubscription(hostPlatform: inputs.hostPlatform);
+    expect(await restarted.loadCachedManagedProfile(inputs), isNotNull);
+    subscriptionDenied = true;
+    await online.fetchClientSubscription(hostPlatform: inputs.hostPlatform);
+    expect(await restarted.loadCachedManagedProfile(inputs), isNull);
+    subscriptionDenied = false;
+    await online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+    denied = true;
+    await expectLater(online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode), throwsA(isA<BootstrapFailure>()));
+    expect(await restarted.loadCachedManagedProfile(inputs), isNull);
+  });
+
+  test('automatic Android network context reports unknown origin through API and throttles duplicates', () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    TestWidgetsFlutterBinding.ensureInitialized();
+    HttpOverrides.global = originalHttpOverrides;
+    final directory = await Directory.systemTemp.createTemp('pokrov-network-context-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() async {
+      messenger.setMockMethodCallHandler(channel, null);
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.android,
+      installId: 'network-fixture-install', sessionToken: 'network-fixture-session');
+    await File('${directory.path}/app-first-session-android.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': 'network-fixture-install',
+      'account_id': 'network-fixture-account', 'profile_revision': 'network-revision',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    var nativeCalls = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method != 'runtimeEngine.observeNetworkContext') return null;
+      nativeCalls++;
+      final args = Map<String, dynamic>.from(call.arguments as Map);
+      expect(args['sessionToken'], 'network-fixture-session');
+      expect(args['profileRevision'], 'network-revision');
+      return {'status': 'unavailable', 'network_class': 'cellular', 'carrier': 'Fixture carrier'};
+    });
+    final observed = Completer<Map<String, dynamic>>();
+    final paths = <String>[];
+    unawaited(() async {
+      await for (final request in server) {
+        paths.add(request.uri.path);
+        final raw = await utf8.decoder.bind(request).join();
+        expect(request.headers.value(HttpHeaders.authorizationHeader), 'Bearer network-fixture-session');
+        if (request.uri.path == '/api/client/network/context') {
+          observed.complete(jsonDecode(raw) as Map<String, dynamic>);
+        }
+        request.response.headers.contentType = ContentType.json;
+        request.response.write('{"ok":true}');
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory, sessionSecretStore: secrets,
+      maxRequestAttempts: 1,
+    );
+    await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.android, runtimePhase: 'running', connected: true);
+    final context = await observed.future.timeout(const Duration(seconds: 3));
+    expect(context, {'network_class': 'cellular', 'carrier': 'Fixture carrier',
+      'direct_observation': false, 'profile_revision': 'network-revision', 'runtime_phase': 'running'});
+    await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.android, runtimePhase: 'failed', connected: false);
+    expect(nativeCalls, 1);
+    expect(paths.where((path) => path == '/api/client/network/context').length, 1);
+    expect(paths, isNot(contains('/api/client/session/start-trial')));
   });
 
   test('default API origin is owned and arbitrary fallbacks are rejected', () {
@@ -1608,6 +1755,8 @@ void main() {
     );
 
     expect(payload.profileName, 'pokrov-windows-rev-007');
+    expect(payload.source?.revision, 'rev-007');
+    expect(payload.source?.origin, RuntimeProfileSourceOrigin.managedManifest);
     expect(payload.smartConnect, isNotNull);
     expect(payload.smartConnect?.shortlistRevision, 'short-007');
     expect(payload.smartConnect?.shortlist.single.code, 'pl');
@@ -2514,8 +2663,8 @@ void main() {
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
-      smartConnectTelemetryDeadline: const Duration(milliseconds: 80),
-      smartConnectProbeTimeout: const Duration(seconds: 5),
+      smartConnectTelemetryDeadline: const Duration(milliseconds: 500),
+      smartConnectProbeTimeout: const Duration(milliseconds: 40),
       smartConnectProbeConcurrency: 3,
       smartConnectLatencyProbe: (_) {
         probesStarted += 1;
@@ -2532,6 +2681,22 @@ void main() {
     expect(stopwatch.elapsed, lessThan(const Duration(milliseconds: 500)));
     await Future<void>.delayed(const Duration(milliseconds: 160));
     expect(probesStarted, 3);
+    // A wrapper timeout does not cancel the original Future. A new resolution
+    // must share occupied slots until those probes actually settle.
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    expect(probesStarted, 3);
+    neverCompletes.complete(null);
+    await Future<void>.delayed(Duration.zero);
+    await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 160));
+    expect(probesStarted, greaterThan(3));
   });
 
   test('manual smart-connect preference does not upload fake RTT samples',
@@ -4444,7 +4609,11 @@ void main() {
         hostPlatform: HostPlatform.windows,
         routeMode: RouteMode.fullTunnel,
       ),
-      throwsA(isA<BootstrapFailure>()),
+      throwsA(isA<BootstrapFailure>().having(
+        (failure) => failure.operationalErrorCode,
+        'provisioning observation',
+        'API-011',
+      )),
     );
     expect(starts, 1);
     final payload = await bootstrapper.resolveManagedProfile(
@@ -5462,6 +5631,8 @@ void main() {
 
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       addTearDown(server.close);
+      var fallbackResponseMode = 'accepted';
+      final fallbackRequests = <String>[];
       unawaited(() async {
         await for (final request in server) {
           await utf8.decoder.bind(request).join();
@@ -5469,90 +5640,134 @@ void main() {
             case '/api/client/session/start-trial':
               request.response
                 ..headers.contentType = ContentType.json
-                ..write(jsonEncode(<String, Object?>{
-                  'session': <String, Object?>{
-                    'session_token': 'awg-lab-session',
-                    'account_id': '127',
-                  },
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                    'managed_manifest': <String, Object?>{
-                      'url': '/api/client/profile/managed',
+                ..write(
+                  jsonEncode(<String, Object?>{
+                    'session': <String, Object?>{
+                      'session_token': 'awg-lab-session',
+                      'account_id': '127',
                     },
-                  },
-                }));
+                    'provisioning': <String, Object?>{
+                      'status': 'ready',
+                      'sync_ok': true,
+                      'managed_manifest': <String, Object?>{
+                        'url': '/api/client/profile/managed',
+                      },
+                    },
+                  }),
+                );
             case '/api/client/route-policy':
               request.response
                 ..headers.contentType = ContentType.json
                 ..write(jsonEncode(<String, Object?>{'ok': true}));
             case '/api/client/profile/managed':
+              final requestedFallback =
+                  request.uri.queryParameters['fallback_from_revision'];
+              if (requestedFallback != null) {
+                fallbackRequests.add(requestedFallback);
+              }
+              if (requestedFallback != null &&
+                  fallbackResponseMode != 'ignored') {
+                request.response
+                  ..headers.contentType = ContentType.json
+                  ..write(
+                    jsonEncode(<String, Object?>{
+                      ..._readyManagedProfile(
+                        fallbackResponseMode == 'wrongRevision'
+                            ? 'unrelated-revision'
+                            : '$requestedFallback:fallback:legacy_reality_fallback',
+                      ),
+                      'transport_profile': 'legacy_reality_fallback',
+                      'fallback_order': <String>['legacy_reality_fallback'],
+                      'config_payload': <String, Object?>{
+                        'outbounds': <Object?>[
+                          <String, Object?>{
+                            'type': 'vless',
+                            'tag': 'proxy',
+                            'server': 'tcp-fallback.example',
+                            'server_port': 443,
+                            'uuid': '11111111-1111-4111-8111-111111111111',
+                            'tls': <String, Object?>{'enabled': true},
+                          },
+                          <String, Object?>{'type': 'direct', 'tag': 'direct'},
+                        ],
+                        'route': <String, Object?>{'final': 'proxy'},
+                      },
+                    }),
+                  );
+                break;
+              }
               request.response
                 ..headers.contentType = ContentType.json
-                ..write(jsonEncode(<String, Object?>{
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                  },
-                  'profile_revision': 'rev-${lab['profile']}',
-                  'transport_profile': lab['profile'],
-                  'config_format': 'singbox-json',
-                  'smart_connect': <String, Object?>{
-                    'eligible': true,
-                    'shortlist': <Object?>[
-                      <String, Object?>{'code': 'de-fra'},
-                    ],
-                  },
-                  'config_payload': <String, Object?>{
-                    '_meta': <String, Object?>{
-                      'title': 'POKROV',
-                      'transport_contract': <String, Object?>{
-                        'id': lab['contract_id'],
-                        'sha256': lab['contract_sha256'],
-                        'profile': lab['profile'],
-                        'state': 'enabled',
-                        'generation': '${lab['profile']}-v1',
-                      },
+                ..write(
+                  jsonEncode(<String, Object?>{
+                    'provisioning': <String, Object?>{
+                      'status': 'ready',
+                      'sync_ok': true,
                     },
-                    'dns': <String, Object?>{
-                      'servers': <Object?>[
-                        <String, Object?>{
-                          'tag': 'bootstrap',
-                          'address': 'local',
+                    'profile_revision': 'rev-${lab['profile']}',
+                    'transport_profile': lab['profile'],
+                    'fallback_order': <String>[
+                      lab['profile']!,
+                      'legacy_reality_fallback',
+                    ],
+                    'config_format': 'singbox-json',
+                    'smart_connect': <String, Object?>{
+                      'eligible': true,
+                      'shortlist': <Object?>[
+                        <String, Object?>{'code': 'de-fra'},
+                      ],
+                    },
+                    'config_payload': <String, Object?>{
+                      '_meta': <String, Object?>{
+                        'title': 'POKROV',
+                        'transport_contract': <String, Object?>{
+                          'id': lab['contract_id'],
+                          'sha256': lab['contract_sha256'],
+                          'profile': lab['profile'],
+                          'state': 'enabled',
+                          'generation': '${lab['profile']}-v1',
                         },
+                      },
+                      'dns': <String, Object?>{
+                        'servers': <Object?>[
+                          <String, Object?>{
+                            'tag': 'bootstrap',
+                            'address': 'local',
+                          },
+                          <String, Object?>{
+                            'tag': 'lab-dns',
+                            'address': '8.8.8.8',
+                            'detour': lab['tag'],
+                          },
+                        ],
+                        'final': 'lab-dns',
+                      },
+                      'inbounds': <Object?>[],
+                      'endpoints': <Object?>[
                         <String, Object?>{
-                          'tag': 'lab-dns',
-                          'address': '8.8.8.8',
-                          'detour': lab['tag'],
+                          'type': 'awg',
+                          'tag': lab['tag'],
+                          'contract_id': lab['contract_id'],
+                          'useIntegratedTun': false,
                         },
                       ],
-                      'final': 'lab-dns',
-                    },
-                    'inbounds': <Object?>[],
-                    'endpoints': <Object?>[
-                      <String, Object?>{
-                        'type': 'awg',
-                        'tag': lab['tag'],
-                        'contract_id': lab['contract_id'],
-                        'useIntegratedTun': false,
-                      },
-                    ],
-                    'outbounds': <Object?>[
-                      <String, Object?>{'type': 'direct', 'tag': 'direct'},
-                      <String, Object?>{'type': 'block', 'tag': 'block'},
-                      <String, Object?>{'type': 'dns', 'tag': 'dns-out'},
-                    ],
-                    'route': <String, Object?>{
-                      'rules': <Object?>[
-                        <String, Object?>{
-                          'protocol': 'dns',
-                          'outbound': 'dns-out',
-                        },
+                      'outbounds': <Object?>[
+                        <String, Object?>{'type': 'direct', 'tag': 'direct'},
+                        <String, Object?>{'type': 'block', 'tag': 'block'},
+                        <String, Object?>{'type': 'dns', 'tag': 'dns-out'},
                       ],
-                      'final': lab['tag'],
+                      'route': <String, Object?>{
+                        'rules': <Object?>[
+                          <String, Object?>{
+                            'protocol': 'dns',
+                            'outbound': 'dns-out',
+                          },
+                        ],
+                        'final': lab['tag'],
+                      },
                     },
-                  },
-                }));
+                  }),
+                );
             default:
               request.response.statusCode = HttpStatus.notFound;
           }
@@ -5576,24 +5791,60 @@ void main() {
           (config['_meta'] as Map<String, dynamic>)['transport_contract']
               as Map<String, dynamic>;
       final route = config['route'] as Map<String, dynamic>;
-      final outbounds =
-          (config['outbounds'] as List<dynamic>).cast<Map<String, dynamic>>();
+      final outbounds = (config['outbounds'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
 
       expect(endpoint['type'], 'awg');
       expect(endpoint['tag'], lab['tag']);
       expect(endpoint['contract_id'], lab['contract_id']);
       expect(contract['id'], lab['contract_id']);
       expect(contract['profile'], lab['profile']);
+      expect(payload.tcpFallbackFromRevision, 'rev-${lab['profile']}');
       expect(payload.resolvedNodeCode, isEmpty);
       expect(payload.smartConnect, isNull);
       expect(route['final'], lab['tag']);
       expect(
         outbounds.every(
-          (outbound) => const <String>{'direct', 'block', 'dns'}
-              .contains(outbound['type']),
+          (outbound) => const <String>{
+            'direct',
+            'block',
+            'dns',
+          }.contains(outbound['type']),
         ),
         isTrue,
       );
+      final fallback = await bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.android,
+        routeMode: RouteMode.fullTunnel,
+        tcpFallbackFromRevision: payload.tcpFallbackFromRevision,
+      );
+      final fallbackConfig =
+          jsonDecode(fallback.configPayload) as Map<String, dynamic>;
+      expect(
+        fallback.source?.revision,
+        '${payload.tcpFallbackFromRevision}:fallback:legacy_reality_fallback',
+      );
+      expect(fallback.tcpFallbackFromRevision, isEmpty);
+      expect(fallback.routeMode, payload.routeMode);
+      expect(fallbackConfig['endpoints'], anyOf(isNull, isEmpty));
+      expect(
+        (fallbackConfig['outbounds'] as List).any(
+          (outbound) => (outbound as Map)['type'] == 'vless',
+        ),
+        isTrue,
+      );
+      expect(fallbackRequests.single, payload.tcpFallbackFromRevision);
+      for (final responseMode in ['ignored', 'wrongRevision']) {
+        fallbackResponseMode = responseMode;
+        await expectLater(
+          bootstrapper.resolveManagedProfile(
+            hostPlatform: HostPlatform.android,
+            routeMode: RouteMode.fullTunnel,
+            tcpFallbackFromRevision: payload.tcpFallbackFromRevision,
+          ),
+          throwsA(isA<BootstrapFailure>()),
+        );
+      }
     }
   });
 
@@ -6342,7 +6593,8 @@ void main() {
     );
   });
 
-  test('preserves a runtime-ready managed config on desktop hosts', () async {
+  test('preserves Windows runtime settings while applying mode rules',
+      () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-pass-through-test-',
     );
@@ -6407,7 +6659,16 @@ void main() {
                     '_meta': <String, Object?>{'source': 'managed'},
                     'log': <String, Object?>{'level': 'info'},
                     'dns': <String, Object?>{
-                      'servers': <Object?>['local'],
+                      'servers': <Object?>[
+                        <String, Object?>{
+                          'type': 'https',
+                          'tag': 'sealed',
+                          'server': '9.9.9.9',
+                          'path': '/dns-query',
+                          'detour': 'proxy'
+                        }
+                      ],
+                      'final': 'sealed',
                     },
                     'inbounds': <Object?>[
                       <String, Object?>{
@@ -6417,8 +6678,17 @@ void main() {
                     ],
                     'outbounds': <Object?>[
                       <String, Object?>{
+                        'type': 'vless',
+                        'tag': 'node-1',
+                        'server': '127.0.0.1',
+                        'server_port': 443,
+                        'uuid': '00000000-0000-4000-8000-000000000001'
+                      },
+                      <String, Object?>{'type': 'direct', 'tag': 'direct'},
+                      <String, Object?>{
                         'type': 'selector',
                         'tag': 'proxy',
+                        'outbounds': <String>['node-1'],
                       },
                     ],
                     'route': <String, Object?>{
@@ -6458,7 +6728,19 @@ void main() {
     expect(config.containsKey('_meta'), isFalse);
     expect(config.toString(), contains('auto_detect_interface'));
     expect(config.toString(), contains('override_android_vpn'));
-    expect((config['dns'] as Map<String, dynamic>)['servers'], ['local']);
+    final dns = config['dns'] as Map<String, dynamic>;
+    expect(dns['final'], 'dns-remote');
+    expect(
+        (dns['servers'] as List)
+            .cast<Map>()
+            .singleWhere((server) => server['tag'] == 'sealed'),
+        <String, Object?>{
+          'type': 'https',
+          'tag': 'sealed',
+          'server': '9.9.9.9',
+          'path': '/dns-query',
+          'detour': 'proxy'
+        });
     expect(payload.routeMode, RouteMode.fullTunnel);
   });
 
@@ -7698,26 +7980,37 @@ void main() {
     expect(config['route'], containsPair('final', 'proxy'));
   });
 
-  test('selected-apps mode rejects an empty selection before bootstrap sync',
-      () async {
-    final bootstrapper = AppFirstRuntimeBootstrapper(
-      apiBaseUrl: 'http://127.0.0.1:1/',
-    );
+  for (final host in [HostPlatform.android, HostPlatform.windows]) {
+    for (final selection in host == HostPlatform.windows
+        ? <List<String>>[
+            [],
+            ['not a process']
+          ]
+        : <List<String>>[[]]) {
+      test(
+          '${host.name} selected-apps rejects an effectively empty selection $selection before bootstrap sync',
+          () async {
+        final bootstrapper = AppFirstRuntimeBootstrapper(
+          apiBaseUrl: 'http://127.0.0.1:1/',
+        );
 
-    await expectLater(
-      bootstrapper.resolveManagedProfile(
-        hostPlatform: HostPlatform.android,
-        routeMode: RouteMode.selectedApps,
-      ),
-      throwsA(
-        isA<BootstrapFailure>().having(
-          (error) => error.message,
-          'message',
-          'Выберите хотя бы одно приложение в разделе «Правила».',
-        ),
-      ),
-    );
-  });
+        await expectLater(
+          bootstrapper.resolveManagedProfile(
+            hostPlatform: host,
+            routeMode: RouteMode.selectedApps,
+            selectedApps: selection,
+          ),
+          throwsA(
+            isA<BootstrapFailure>().having(
+              (error) => error.message,
+              'message',
+              'Выберите хотя бы одно приложение в разделе «Правила».',
+            ),
+          ),
+        );
+      });
+    }
+  }
 
   test(
       'windows selected-apps route mode limits proxy routing to selected processes',
@@ -8044,135 +8337,271 @@ void main() {
     expect(finalServer['address_resolver'], 'local');
   });
 
-  test('android full tunnel removes direct from selector and urltest chains',
-      () async {
-    final tempDirectory = await Directory.systemTemp.createTemp(
-      'pokrov-bootstrap-android-selector-sanitize-test-',
-    );
-    addTearDown(() async {
-      if (await tempDirectory.exists()) {
-        await tempDirectory.delete(recursive: true);
-      }
-    });
+  for (final host in [HostPlatform.android, HostPlatform.windows]) {
+    for (final mode in RouteMode.values) {
+      for (final ready
+          in host == HostPlatform.windows ? [false, true] : [false]) {
+        test(
+            '${host.name} ${mode.name} removes direct from VPN selector and urltest chains (runtimeReady=$ready)',
+            () async {
+          final tempDirectory = await Directory.systemTemp.createTemp(
+            'pokrov-bootstrap-android-selector-sanitize-test-',
+          );
+          addTearDown(() async {
+            if (await tempDirectory.exists()) {
+              await tempDirectory.delete(recursive: true);
+            }
+          });
 
-    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    addTearDown(server.close);
-    unawaited(() async {
-      await for (final request in server) {
-        await utf8.decoder.bind(request).join();
-        if (request.uri.path == '/api/client/session/start-trial') {
-          request.response
-            ..headers.contentType = ContentType.json
-            ..write(
-              jsonEncode(
-                <String, Object?>{
-                  'session': <String, Object?>{
-                    'session_token': 'session-token-android-selector-sanitize',
-                    'account_id': '340',
-                  },
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                    'managed_manifest': <String, Object?>{
-                      'url': '/api/client/profile/managed',
-                    },
-                  },
-                },
-              ),
+          final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+          addTearDown(server.close);
+          unawaited(() async {
+            await for (final request in server) {
+              await utf8.decoder.bind(request).join();
+              if (request.uri.path == '/api/client/session/start-trial') {
+                request.response
+                  ..headers.contentType = ContentType.json
+                  ..write(
+                    jsonEncode(
+                      <String, Object?>{
+                        'session': <String, Object?>{
+                          'session_token':
+                              'session-token-android-selector-sanitize',
+                          'account_id': '340',
+                        },
+                        'provisioning': <String, Object?>{
+                          'status': 'ready',
+                          'sync_ok': true,
+                          'managed_manifest': <String, Object?>{
+                            'url': '/api/client/profile/managed',
+                          },
+                        },
+                      },
+                    ),
+                  );
+                await request.response.close();
+                continue;
+              }
+
+              if (request.uri.path == '/api/client/route-policy') {
+                request.response
+                  ..headers.contentType = ContentType.json
+                  ..write(jsonEncode(<String, Object?>{'ok': true}));
+                await request.response.close();
+                continue;
+              }
+
+              if (request.uri.path == '/api/client/profile/managed') {
+                request.response
+                  ..headers.contentType = ContentType.json
+                  ..write(
+                    jsonEncode(
+                      <String, Object?>{
+                        'provisioning': <String, Object?>{
+                          'status': 'ready',
+                          'sync_ok': true,
+                        },
+                        'profile_revision': 'rev-android-selector-sanitize',
+                        'config_format': 'singbox-json',
+                        'config_payload': <String, Object?>{
+                          if (ready)
+                            'dns': <String, Object?>{
+                              'servers': <Object?>[
+                                <String, Object?>{
+                                  'type': 'local',
+                                  'tag': 'bootstrap'
+                                },
+                                <String, Object?>{
+                                  'type': 'https',
+                                  'tag': 'sealed',
+                                  'server': '9.9.9.9',
+                                  'path': '/private-dns-query',
+                                  'domain_resolver': <String, Object?>{
+                                    'server': 'dns-direct',
+                                    'strategy': 'ipv4_only'
+                                  },
+                                  'tls': <String, Object?>{
+                                    'server_name': 'dns.example'
+                                  },
+                                  'detour': 'select'
+                                },
+                              ],
+                              'rules': <Object?>[
+                                <String, Object?>{
+                                  'query_type': <String>['AXFR'],
+                                  'action': 'reject'
+                                },
+                                <String, Object?>{
+                                  'process_name': <String>['old.exe'],
+                                  'server': 'sealed'
+                                }
+                              ],
+                              'final': 'sealed',
+                              'independent_cache': true,
+                            },
+                          if (ready)
+                            'inbounds': <Object?>[
+                              <String, Object?>{
+                                'type': 'tun',
+                                'tag': 'tun-in',
+                                'address': <String>['172.19.0.1/28']
+                              }
+                            ],
+                          'outbounds': <Object?>[
+                            <String, Object?>{
+                              'type': 'selector',
+                              'tag': 'select',
+                              'outbounds': <Object?>['auto', 'direct'],
+                              'default': 'direct',
+                            },
+                            <String, Object?>{
+                              'type': 'urltest',
+                              'tag': 'auto',
+                              'outbounds': <Object?>['direct', 'node-1'],
+                              'url': 'http://cp.cloudflare.com',
+                            },
+                            <String, Object?>{
+                              'type': 'vless',
+                              'tag': 'node-1',
+                              'server': 'nl.kiwunaka.space',
+                              'server_port': 443,
+                              'uuid': 'test-uuid',
+                            },
+                            if (!ready)
+                              <String, Object?>{
+                                'type': 'direct',
+                                'tag': 'direct',
+                              },
+                          ],
+                          'route': <String, Object?>{
+                            if (ready)
+                              'rules': <Object?>[
+                                <String, Object?>{
+                                  'process_name': <String>['old.exe'],
+                                  'outbound': 'select'
+                                },
+                                <String, Object?>{
+                                  'domain_suffix': <String>['.ru'],
+                                  'outbound': 'direct'
+                                }
+                              ],
+                            'final': ready && mode == RouteMode.selectedApps
+                                ? 'direct'
+                                : 'select',
+                          },
+                        },
+                      },
+                    ),
+                  );
+                await request.response.close();
+                continue;
+              }
+
+              request.response.statusCode = HttpStatus.notFound;
+              await request.response.close();
+            }
+          }());
+
+          final bootstrapper = AppFirstRuntimeBootstrapper(
+            apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+            supportDirectoryResolver: () async => tempDirectory,
+            allExceptRuRuleSetUrlsResolver: (_) =>
+                <String>['http://127.0.0.1:${server.port}/missing-rules'],
+          );
+
+          final payload = await bootstrapper.resolveManagedProfile(
+            hostPlatform: host,
+            routeMode: mode,
+            selectedApps: host == HostPlatform.android
+                ? const <String>['org.telegram.messenger']
+                : const <String>['telegram.exe'],
+          );
+          final config =
+              jsonDecode(payload.configPayload) as Map<String, dynamic>;
+          final outbounds =
+              (config['outbounds'] as List).cast<Map<String, dynamic>>();
+          final selector =
+              outbounds.singleWhere((outbound) => outbound['tag'] == 'select');
+          final urltest =
+              outbounds.singleWhere((outbound) => outbound['tag'] == 'auto');
+          final route = config['route'] as Map<String, dynamic>;
+
+          if (ready) {
+            final dns = config['dns'] as Map<String, dynamic>;
+            expect(
+                outbounds.singleWhere(
+                    (outbound) => outbound['tag'] == 'direct')['type'],
+                'direct');
+            final rules = (route['rules'] as List? ?? []).cast<Map>();
+            final dnsRules = (dns['rules'] as List? ?? []).cast<Map>();
+            expect(route['find_process'], isTrue);
+            expect(
+                rules.any((rule) =>
+                    (rule['process_name'] as List?)?.contains('old.exe') ==
+                    true),
+                isFalse);
+            expect(
+                rules.any((rule) =>
+                    (rule['domain_suffix'] as List?)?.contains('.ru') == true &&
+                    rule['outbound'] == 'direct'),
+                mode == RouteMode.allExceptRu);
+            expect(
+                dnsRules.any((rule) =>
+                    (rule['process_name'] as List?)?.contains('old.exe') ==
+                    true),
+                isFalse);
+            expect(rules.first, containsPair('action', 'hijack-dns'));
+            if (mode == RouteMode.selectedApps ||
+                mode == RouteMode.excludedApps) {
+              final processRule = rules.singleWhere((rule) =>
+                  (rule['process_name'] as List?)?.contains('telegram.exe') ==
+                  true);
+              expect(processRule['outbound'],
+                  mode == RouteMode.selectedApps ? 'select' : 'direct');
+              expect(
+                  dnsRules.any((rule) =>
+                      (rule['process_name'] as List?)
+                          ?.contains('telegram.exe') ==
+                      true),
+                  isTrue);
+            }
+            expect(dnsRules.first['action'], 'reject');
+            final servers = (dns['servers'] as List).cast<Map>();
+            final directDns =
+                servers.singleWhere((server) => server['tag'] == 'dns-direct');
+            expect(directDns['domain_resolver'], <String, Object?>{
+              'server': 'dns-local',
+              'strategy': 'ipv4_only'
+            });
+            final routedDns =
+                servers.singleWhere((server) => server['tag'] == dns['final']);
+            expect(routedDns['type'], 'https');
+            expect(routedDns['server'], '9.9.9.9');
+            expect(routedDns['path'], '/private-dns-query');
+            expect(routedDns['tls'],
+                <String, Object?>{'server_name': 'dns.example'});
+            expect(routedDns['detour'],
+                mode == RouteMode.selectedApps ? 'direct' : 'select');
+            final tun = (config['inbounds'] as List).cast<Map>().single;
+            expect(tun['address'], <String>['172.19.0.1/28']);
+          }
+          expect(selector['outbounds'], isNot(contains('direct')));
+          expect(selector['default'], isNot('direct'));
+          expect(urltest['outbounds'], isNot(contains('direct')));
+          if (host == HostPlatform.android)
+            expect(
+              urltest['url'],
+              'https://api.pokrov.space/api/public/authenticated-egress-probe',
             );
-          await request.response.close();
-          continue;
-        }
-
-        if (request.uri.path == '/api/client/route-policy') {
-          request.response
-            ..headers.contentType = ContentType.json
-            ..write(jsonEncode(<String, Object?>{'ok': true}));
-          await request.response.close();
-          continue;
-        }
-
-        if (request.uri.path == '/api/client/profile/managed') {
-          request.response
-            ..headers.contentType = ContentType.json
-            ..write(
-              jsonEncode(
-                <String, Object?>{
-                  'provisioning': <String, Object?>{
-                    'status': 'ready',
-                    'sync_ok': true,
-                  },
-                  'profile_revision': 'rev-android-selector-sanitize',
-                  'config_format': 'singbox-json',
-                  'config_payload': <String, Object?>{
-                    'outbounds': <Object?>[
-                      <String, Object?>{
-                        'type': 'selector',
-                        'tag': 'select',
-                        'outbounds': <Object?>['auto', 'direct'],
-                        'default': 'direct',
-                      },
-                      <String, Object?>{
-                        'type': 'urltest',
-                        'tag': 'auto',
-                        'outbounds': <Object?>['direct', 'node-1'],
-                        'url': 'http://cp.cloudflare.com',
-                      },
-                      <String, Object?>{
-                        'type': 'vless',
-                        'tag': 'node-1',
-                        'server': 'nl.kiwunaka.space',
-                        'server_port': 443,
-                        'uuid': 'test-uuid',
-                      },
-                      <String, Object?>{
-                        'type': 'direct',
-                        'tag': 'direct',
-                      },
-                    ],
-                    'route': <String, Object?>{
-                      'final': 'select',
-                    },
-                  },
-                },
-              ),
-            );
-          await request.response.close();
-          continue;
-        }
-
-        request.response.statusCode = HttpStatus.notFound;
-        await request.response.close();
+          expect(
+              route['final'],
+              host == HostPlatform.windows && mode == RouteMode.selectedApps
+                  ? 'direct'
+                  : 'select');
+        });
       }
-    }());
-
-    final bootstrapper = AppFirstRuntimeBootstrapper(
-      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
-      supportDirectoryResolver: () async => tempDirectory,
-    );
-
-    final payload = await bootstrapper.resolveManagedProfile(
-      hostPlatform: HostPlatform.android,
-      routeMode: RouteMode.fullTunnel,
-    );
-    final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
-    final outbounds =
-        (config['outbounds'] as List).cast<Map<String, dynamic>>();
-    final selector =
-        outbounds.singleWhere((outbound) => outbound['tag'] == 'select');
-    final urltest =
-        outbounds.singleWhere((outbound) => outbound['tag'] == 'auto');
-    final route = config['route'] as Map<String, dynamic>;
-
-    expect(selector['outbounds'], isNot(contains('direct')));
-    expect(selector['default'], isNot('direct'));
-    expect(urltest['outbounds'], isNot(contains('direct')));
-    expect(
-      urltest['url'],
-      'https://api.pokrov.space/api/public/authenticated-egress-probe',
-    );
-    expect(route['final'], 'select');
-  });
+    }
+  }
 
   test(
       'android ipv4-only support context does not keep a dead ipv6 tunnel lane',

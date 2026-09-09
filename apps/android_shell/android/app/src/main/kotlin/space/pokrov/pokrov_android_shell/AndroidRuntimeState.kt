@@ -90,6 +90,8 @@ internal object AndroidRuntimeState {
     private var dnsReady: Boolean = false
     private var vpnValidated: Boolean? = null
     private var coreEgressValidated: Boolean? = null
+    private var stagedProfileDigest: String? = null
+    private var activeProfileDigest: String? = null
     private var coreEgressValidationRequired: Boolean = true
     private var lastFailureKind: String? = null
     private var lastStopReason: String? = null
@@ -123,6 +125,9 @@ internal object AndroidRuntimeState {
             environment = null
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
+            stagedProfileDigest = null
+            activeProfileDigest = null
+            coreEgressValidated = null
             runningSince = null
             invalidateTunnelTrafficSession()
             lastMessage = "В этой сборке для Android нет модуля подключения."
@@ -200,8 +205,11 @@ internal object AndroidRuntimeState {
     fun markProfileStaged(
         path: String,
         preserveConnectionPending: Boolean = false,
+        profileDigest: String? = null,
     ) {
         stagedConfigPath = path
+        stagedProfileDigest = profileDigest?.takeIf(::isRuntimeProfileDigest)
+        if (activeProfileDigest != stagedProfileDigest) coreEgressValidated = null
         phase = AndroidRuntimePhase.CONFIG_STAGED
         if (!preserveConnectionPending) {
             connectionPending = false
@@ -225,6 +233,7 @@ internal object AndroidRuntimeState {
     @Synchronized
     fun invalidateStagedProfile() {
         stagedConfigPath = null
+        stagedProfileDigest = null
         connectionPending = false
         if (phase != AndroidRuntimePhase.RUNNING) {
             phase = if (environment != null) {
@@ -277,6 +286,13 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
+    fun bindActiveProfile(profileDigest: String) {
+        check(isRuntimeProfileDigest(profileDigest))
+        activeProfileDigest = profileDigest
+        coreEgressValidated = null
+    }
+
+    @Synchronized
     fun markRunning(message: String) {
         phase = AndroidRuntimePhase.RUNNING
         connectionPending = false
@@ -301,6 +317,7 @@ internal object AndroidRuntimeState {
         message: String = "Отключаем POKROV на этом устройстве...",
         stopReason: String = "user_requested",
     ) {
+        activeProfileDigest = null
         connectionPending = false
         phase = when {
             stagedConfigPath != null -> AndroidRuntimePhase.CONFIG_STAGED
@@ -320,6 +337,7 @@ internal object AndroidRuntimeState {
         message: String,
         stopReason: String = "service_stopped",
     ) {
+        activeProfileDigest = null
         connectionPending = false
         phase = when {
             stagedConfigPath != null -> AndroidRuntimePhase.CONFIG_STAGED
@@ -343,10 +361,12 @@ internal object AndroidRuntimeState {
         message: String,
         stopReason: String,
     ) {
+        activeProfileDigest = null
         connectionPending = false
         // This is a terminal dataplane failure, not an ordinary disconnect.
         // The profile must not remain staged for Quick Settings reuse.
         stagedConfigPath = null
+        stagedProfileDigest = null
         phase = when {
             environment != null -> AndroidRuntimePhase.INITIALIZED
             else -> AndroidRuntimePhase.ARTIFACT_MISSING
@@ -367,6 +387,8 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun markFailure(kind: String, message: String) {
+        coreEgressValidated = null
+        activeProfileDigest = null
         connectionPending = false
         runningSince = null
         invalidateTunnelTrafficSession()
@@ -476,7 +498,14 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun updateCoreEgressValidation(validated: Boolean?) {
-        coreEgressValidated = validated
+        coreEgressValidated = if (validated == true) {
+            activeProfileDigest != null && activeProfileDigest == stagedProfileDigest
+        } else validated
+        if (validated == true && coreEgressValidated != true) {
+            lastFailureKind = "profile_identity_mismatch"
+            lastMessage = AndroidRuntimeSafety.publicFailureMessage("profile_identity_mismatch")
+            return
+        }
         if (
             validated == true &&
                 phase == AndroidRuntimePhase.RUNNING &&
@@ -615,6 +644,11 @@ internal object AndroidRuntimeState {
             "coreBinaryPath" to resolved?.coreBinaryPath,
             "helperBinaryPath" to null,
             "stagedConfigPath" to stagedConfigPath,
+            "stagedProfileDigest" to stagedProfileDigest,
+            "effectiveProfileDigest" to activeProfileDigest?.takeIf {
+                phase == AndroidRuntimePhase.RUNNING && coreEgressValidated == true
+            },
+            "profileIdentityOrigin" to "android_private_stage_request_sha256",
             "supportsLiveConnect" to true,
             "canInitialize" to canInitialize,
             "canConnect" to canConnect,

@@ -1,0 +1,212 @@
+Resolving dependencies...
+Downloading packages...
+  async 2.11.0 (2.13.1 available)
+  boolean_selector 2.1.1 (2.1.2 available)
+  characters 1.4.0 (1.4.1 available)
+  clock 1.1.2 (1.1.3 available)
+  ffi 2.1.3 (2.2.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  meta 1.17.0 (1.19.0 available)
+  path_provider 2.1.5 (2.1.6 available)
+  path_provider_android 2.2.15 (2.3.1 available)
+  path_provider_foundation 2.4.1 (2.6.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  source_span 1.10.0 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  string_scanner 1.2.0 (1.4.1 available)
+  term_glyph 1.2.1 (1.2.2 available)
+  test_api 0.7.7 (0.7.14 available)
+  vector_math 2.2.0 (2.4.2 available)
+  vm_service 14.2.5 (15.3.0 available)
+  win32 5.10.1 (6.4.0 available)
+Got dependencies!
+21 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+
+00:00 +0: loading E:/r12client/packages/runtime_engine/test/runtime_engine_test.dart
+00:01 +0: loading E:/r12client/packages/runtime_engine/test/runtime_engine_test.dart
+00:01 +0: desktop ABI 2 retains the released marker-only compatibility lane
+00:01 +1: desktop ABI 2 retains the released marker-only compatibility lane
+00:01 +1: desktop ABI 2 negotiates the exact capability and event contract
+00:01 +2: desktop ABI 2 negotiates the exact capability and event contract
+00:01 +2: desktop ABI negotiation fails closed on future contract versions
+00:01 +3: desktop ABI negotiation fails closed on future contract versions
+00:01 +3: desktop ABI negotiation rejects missing capabilities and unknown events
+00:01 +4: desktop ABI negotiation rejects missing capabilities and unknown events
+00:01 +4: parses the managed-profile free access contract conservatively
+00:01 +5: parses the managed-profile free access contract conservatively
+00:01 +5: clean health requires DNS and selected-outbound egress proof
+00:01 +6: clean health requires DNS and selected-outbound egress proof
+00:01 +6: mobile lane reports artifact-missing without a synced core asset
+00:01 +7: mobile lane reports artifact-missing without a synced core asset
+00:01 +7: mobile lane reports artifact-ready without a native host bridge
+00:01 +8: mobile lane reports artifact-ready without a native host bridge
+00:01 +8: mobile lane uses a native host bridge to initialize and stage profiles
+00:01 +9: mobile lane uses a native host bridge to initialize and stage profiles
+00:01 +9: mobile lane forwards materialized runtime configs without re-parsing
+00:01 +10: mobile lane forwards materialized runtime configs without re-parsing
+00:01 +10: mobile lane accepts only the current AWG2 lab contract
+00:01 +11: mobile lane accepts only the current AWG2 lab contract
+00:01 +11: mobile lane accepts the separate current AWG 3.1 lab contract
+00:01 +12: mobile lane accepts the separate current AWG 3.1 lab contract
+00:01 +12: mobile lane accepts the bounded current Hysteria2 lab contract
+00:01 +13: mobile lane accepts the bounded current Hysteria2 lab contract
+00:01 +13: mobile lane rejects Hysteria2 missing provenance
+00:01 +14: mobile lane rejects Hysteria2 missing provenance
+00:01 +14: mobile lane rejects Hysteria2 stale hash
+00:01 +15: mobile lane rejects Hysteria2 stale hash
+00:01 +15: mobile lane rejects Hysteria2 insecure TLS
+00:01 +16: mobile lane rejects Hysteria2 insecure TLS
+00:01 +16: mobile lane rejects Hysteria2 port hopping
+00:01 +17: mobile lane rejects Hysteria2 port hopping
+00:01 +17: Android and Windows keep AWG2 inside existing outer route modes
+00:01 +18: Android and Windows keep AWG2 inside existing outer route modes
+00:01 +18: mobile lane rejects AWG2 missing provenance
+00:01 +19: mobile lane rejects AWG2 missing provenance
+00:01 +19: mobile lane rejects AWG2 stale contract hash
+00:01 +20: mobile lane rejects AWG2 stale contract hash
+00:01 +20: mobile lane rejects AWG2 integrated TUN ownership
+00:01 +21: mobile lane rejects AWG2 integrated TUN ownership
+00:01 +21: mobile lane rejects AWG2 AWG3.1 endpoint identity
+00:01 +22: mobile lane rejects AWG2 AWG3.1 endpoint identity
+00:01 +22: mobile lane rejects AWG 3.1 without explicit endpoint contract id
+00:01 +23: mobile lane rejects AWG 3.1 without explicit endpoint contract id
+00:01 +23: mobile invalidation removes the reusable host profile before restaging
+00:01 +24: mobile invalidation removes the reusable host profile before restaging
+00:01 +24: mobile lane surfaces degraded host diagnostics from the bridge
+00:01 +25: mobile lane surfaces degraded host diagnostics from the bridge
+00:01 +25: mobile lane derives Android diagnostics from top-level host fields
+00:01 +26: mobile lane derives Android diagnostics from top-level host fields
+00:01 +26: WARP effective time accepts only the bridge wire enum
+00:01 +27: WARP effective time accepts only the bridge wire enum
+00:01 +27: mobile lane redacts native runtime details from public snapshots
+00:01 +28: mobile lane redacts native runtime details from public snapshots
+00:01 +28: mobile lane distinguishes observed network failures without guessing
+00:01 +29: mobile lane distinguishes observed network failures without guessing
+00:01 +29: mobile lane preserves the safe emergency endpoint failure kind
+00:01 +30: mobile lane preserves the safe emergency endpoint failure kind
+00:01 +30: mobile lane preserves actionable VPN permission denial
+00:01 +31: mobile lane preserves actionable VPN permission denial
+00:01 +31: profile stage exception requires an explicit host acknowledgement
+00:01 +32: profile stage exception requires an explicit host acknowledgement
+00:01 +32: profile stage missing requires an explicit host acknowledgement
+00:01 +33: profile stage missing requires an explicit host acknowledgement
+00:01 +33: profile stage rejected requires an explicit host acknowledgement
+00:01 +34: profile stage rejected requires an explicit host acknowledgement
+00:01 +34: profile stage missing-path requires an explicit host acknowledgement
+00:01 +35: profile stage missing-path requires an explicit host acknowledgement
+00:01 +35: profile stage notification-warning requires an explicit host acknowledgement
+00:01 +36: profile stage notification-warning requires an explicit host acknowledgement
+00:01 +36: mobile lane redacts PlatformException details after fallback fails
+00:01 +37: mobile lane redacts PlatformException details after fallback fails
+00:01 +37: mobile lane survives 100 serial host bridge start-stop cycles
+00:01 +38: mobile lane survives 100 serial host bridge start-stop cycles
+00:01 +38: real Windows POKROV Core 1.1.0 survives 100 start-stop cycles
+00:01 +38: real Windows POKROV Core 1.1.0 survives 100 start-stop cycles
+  Skip: Set POKROV_REAL_CORE_ROOT to run the exact DLL backtest.
+
+00:01 +38 ~1: real Windows POKROV Core 1.1.0 survives 100 start-stop cycles
+00:01 +38 ~1: windows factory uses the authenticated service bridge
+00:01 +39 ~1: windows factory uses the authenticated service bridge
+00:01 +39 ~1: server revision follows acknowledged and effective content identity
+00:01 +40 ~1: server revision follows acknowledged and effective content identity
+00:01 +40 ~1: windows profile mismatch remains unprotected with explicit recovery
+00:01 +41 ~1: windows profile mismatch remains unprotected with explicit recovery
+00:01 +41 ~1: windows service stages local rule sets through a bounded bundle
+00:01 +42 ~1: windows service stages local rule sets through a bounded bundle
+00:01 +42 ~1: windows service rejects an oversized local rule set
+00:01 +43 ~1: windows service rejects an oversized local rule set
+00:01 +43 ~1: desktop lane does not silently activate a foreign runtime artifact
+00:01 +44 ~1: desktop lane does not silently activate a foreign runtime artifact
+00:01 +44 ~1: desktop lane discovers the active POKROV Core artifact
+00:01 +45 ~1: desktop lane discovers the active POKROV Core artifact
+00:01 +45 ~1: desktop lane discovers a macOS runtime bundle copied into app frameworks
+00:01 +46 ~1: desktop lane discovers a macOS runtime bundle copied into app frameworks
+00:01 +46 ~1: desktop lane stages a materialized runtime config without parse
+00:01 +47 ~1: desktop lane stages a materialized runtime config without parse
+00:01 +47 ~1: POKROV Core desktop ABI starts only a materialized profile
+00:01 +48 ~1: POKROV Core desktop ABI starts only a materialized profile
+00:01 +48 ~1: POKROV Core health probe uses the materialized loopback mixed port
+00:02 +48 ~1: POKROV Core health probe uses the materialized loopback mixed port
+00:03 +48 ~1: POKROV Core health probe uses the materialized loopback mixed port
+00:03 +49 ~1: POKROV Core health probe uses the materialized loopback mixed port
+00:03 +49 ~1: POKROV Core desktop ABI rejects a nonmaterialized profile
+00:03 +50 ~1: POKROV Core desktop ABI rejects a nonmaterialized profile
+00:03 +50 ~1: POKROV Core materializes client-local WARP before start
+00:03 +51 ~1: POKROV Core materializes client-local WARP before start
+00:03 +51 ~1: POKROV Core WARP-over-proxy preserves selected-app direct routing
+00:03 +52 ~1: POKROV Core WARP-over-proxy preserves selected-app direct routing
+00:03 +52 ~1: POKROV Core disabling WARP restores the staged base config
+00:03 +53 ~1: POKROV Core disabling WARP restores the staged base config
+00:03 +53 ~1: desktop lane keeps Windows full tunnel on TUN before core start
+00:04 +53 ~1: desktop lane keeps Windows full tunnel on TUN before core start
+00:04 +54 ~1: desktop lane keeps Windows full tunnel on TUN before core start
+00:04 +54 ~1: desktop lane remaps a busy loopback port before core start
+00:04 +55 ~1: desktop lane remaps a busy loopback port before core start
+00:04 +55 ~1: desktop lane keeps Windows all-except-RU on TUN before core start
+00:05 +55 ~1: desktop lane keeps Windows all-except-RU on TUN before core start
+00:05 +56 ~1: desktop lane keeps Windows all-except-RU on TUN before core start
+00:05 +56 ~1: desktop lane keeps Windows selected-app routing on TUN
+00:05 +57 ~1: desktop lane keeps Windows selected-app routing on TUN
+00:05 +57 ~1: desktop lane redacts setup errors instead of generic ready text
+00:05 +58 ~1: desktop lane redacts setup errors instead of generic ready text
+00:05 +58 ~1: desktop lane redacts start errors after profile staging
+00:05 +59 ~1: desktop lane redacts start errors after profile staging
+00:05 +59 ~1: desktop lane rejects invalid materialized core config
+00:06 +59 ~1: desktop lane rejects invalid materialized core config
+00:06 +60 ~1: desktop lane rejects invalid materialized core config
+00:06 +60 ~1: desktop lane redacts secure-file errors before start
+00:06 +61 ~1: desktop lane redacts secure-file errors before start
+00:06 +61 ~1: desktop lane redacts disconnect errors
+00:06 +62 ~1: desktop lane redacts disconnect errors
+00:06 +62 ~1: desktop lane redacts hostile probe failures
+00:06 +63 ~1: desktop lane redacts hostile probe failures
+00:06 +63 ~1: desktop lane never reports running when proxy passes but Windows TUN fails
+00:07 +63 ~1: desktop lane never reports running when proxy passes but Windows TUN fails
+00:08 +63 ~1: desktop lane never reports running when proxy passes but Windows TUN fails
+00:09 +63 ~1: desktop lane never reports running when proxy passes but Windows TUN fails
+00:10 +63 ~1: desktop lane never reports running when proxy passes but Windows TUN fails
+00:10 +64 ~1: desktop lane never reports running when proxy passes but Windows TUN fails
+00:10 +64 ~1: desktop lane waits for a late Windows TUN route before passing
+00:11 +64 ~1: desktop lane waits for a late Windows TUN route before passing
+00:12 +64 ~1: desktop lane waits for a late Windows TUN route before passing
+00:13 +64 ~1: desktop lane waits for a late Windows TUN route before passing
+00:14 +64 ~1: desktop lane waits for a late Windows TUN route before passing
+00:15 +64 ~1: desktop lane waits for a late Windows TUN route before passing
+00:15 +65 ~1: desktop lane waits for a late Windows TUN route before passing
+00:15 +65 ~1: desktop lane classifies Windows TUN startup failures
+00:15 +66 ~1: desktop lane classifies Windows TUN startup failures
+00:15 +66 ~1: desktop lane blocks a known competing Windows VPN before Core start
+00:15 +67 ~1: desktop lane blocks a known competing Windows VPN before Core start
+00:15 +67 ~1: desktop system-proxy mode ignores a competing TUN preflight
+00:16 +67 ~1: desktop system-proxy mode ignores a competing TUN preflight
+00:16 +68 ~1: desktop system-proxy mode ignores a competing TUN preflight
+00:16 +68 ~1: desktop system-proxy mode skips the Windows TUN-only probe
+00:17 +68 ~1: desktop system-proxy mode skips the Windows TUN-only probe
+00:17 +69 ~1: desktop system-proxy mode skips the Windows TUN-only probe
+00:17 +69 ~1: desktop lane keeps runtime-ready WARP disabled without user consent
+00:17 +70 ~1: desktop lane keeps runtime-ready WARP disabled without user consent
+00:17 +70 ~1: desktop lane maps consented runtime-ready WARP into core endpoint
+00:17 +71 ~1: desktop lane maps consented runtime-ready WARP into core endpoint
+00:17 +71 ~1: desktop lane enables client-local WARP without server material
+00:17 +72 ~1: desktop lane enables client-local WARP without server material
+00:17 +72 ~1: desktop lane applies WARP before the next connect
+00:17 +73 ~1: desktop lane applies WARP before the next connect
+00:17 +73 ~1: desktop lane exposes honest live stats without fake traffic numbers
+00:18 +73 ~1: desktop lane exposes honest live stats without fake traffic numbers
+00:18 +74 ~1: desktop lane exposes honest live stats without fake traffic numbers
+00:18 +74 ~1: mobile lane forwards WARP, live stats, and push token calls
+00:18 +75 ~1: mobile lane forwards WARP, live stats, and push token calls
+00:18 +75 ~1: live stats expose explicit reset and reject unknown counter states
+00:18 +76 ~1: live stats expose explicit reset and reject unknown counter states
+00:18 +76 ~1: mobile live stats retain only allowlisted public labels
+00:18 +77 ~1: mobile live stats retain only allowlisted public labels
+00:18 +77 ~1: Linux daemon snapshot stays fail closed while mapping safe host facts
+00:18 +78 ~1: Linux daemon snapshot stays fail closed while mapping safe host facts
+00:18 +78 ~1: Linux profile staging is bounded and never echoes config in snapshot
+00:18 +79 ~1: Linux profile staging is bounded and never echoes config in snapshot
+00:18 +79 ~1: Linux daemon rejects mismatched response identity and arbitrary copy
+00:18 +80 ~1: Linux daemon rejects mismatched response identity and arbitrary copy
+00:18 +80 ~1: All tests passed!

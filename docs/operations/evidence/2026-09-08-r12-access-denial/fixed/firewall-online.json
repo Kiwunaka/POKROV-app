@@ -1,0 +1,54 @@
+{
+    "utc":  "2026-09-08T13:00:18.7270876Z",
+    "mode":  "Disable",
+    "label":  "online",
+    "result":  "PASS_BOUNDED",
+    "before":  {
+                   "foreign_rule_count":  489,
+                   "config_sha256":  "8c06628e289ad675a9e1491cf332501cbcb6f6191b3563c905fe857c8561cd16",
+                   "component_hashes":  {
+                                            "rules":  "12dc640eaae9dc94cf5076b5062e106e2999b6ba4d98445ea0207ff80aeda203",
+                                            "application":  "38c98d56bb75892a1c1d838ce7552ed5bc381a63efae555e698f740e613a9ad1",
+                                            "address":  "448d83ed67caa66e780e8cd058ec291b12d266b2f3dc5cb9ab07a53a3963ceb1",
+                                            "port":  "e980a102693653aece79f85c45d64a05e92c80d58a2c402bc3db013d03309684",
+                                            "service":  "2388d75abd3cf7ee7358c03a64a159a7a4e6db16be66de22cf18e82c96fbe470",
+                                            "interface":  "c2f3734964733887772f824f1ada41034d604270c3bb0cf2e682ad221730a474",
+                                            "interface_type":  "b1bfb2a599981193713c425c61f216aca22e04499698834ce9701ee205116ea0",
+                                            "security":  "59745bf17aaaf139a10574761ce261ecc97afd715931ffd56ddf0d1e77e78f0c",
+                                            "profiles":  "a056b5f48aadf7456a549ea9e5364d7d81f7ed83b3213b73b3a73eb343624dbf"
+                                        },
+                   "firewall_service":  "Running",
+                   "fixture_rule_count":  2
+               },
+    "after":  {
+                  "foreign_rule_count":  489,
+                  "config_sha256":  "8c06628e289ad675a9e1491cf332501cbcb6f6191b3563c905fe857c8561cd16",
+                  "component_hashes":  {
+                                           "rules":  "12dc640eaae9dc94cf5076b5062e106e2999b6ba4d98445ea0207ff80aeda203",
+                                           "application":  "38c98d56bb75892a1c1d838ce7552ed5bc381a63efae555e698f740e613a9ad1",
+                                           "address":  "448d83ed67caa66e780e8cd058ec291b12d266b2f3dc5cb9ab07a53a3963ceb1",
+                                           "port":  "e980a102693653aece79f85c45d64a05e92c80d58a2c402bc3db013d03309684",
+                                           "service":  "2388d75abd3cf7ee7358c03a64a159a7a4e6db16be66de22cf18e82c96fbe470",
+                                           "interface":  "c2f3734964733887772f824f1ada41034d604270c3bb0cf2e682ad221730a474",
+                                           "interface_type":  "b1bfb2a599981193713c425c61f216aca22e04499698834ce9701ee205116ea0",
+                                           "security":  "59745bf17aaaf139a10574761ce261ecc97afd715931ffd56ddf0d1e77e78f0c",
+                                           "profiles":  "a056b5f48aadf7456a549ea9e5364d7d81f7ed83b3213b73b3a73eb343624dbf"
+                                       },
+                  "firewall_service":  "Running",
+                  "fixture_rule_count":  2
+              },
+    "rule_states":  [
+                        {
+                            "Name":  "R12DenialFix-20260908-Probe",
+                            "Enabled":  2,
+                            "Direction":  2,
+                            "Action":  4
+                        },
+                        {
+                            "Name":  "R12DenialFix-20260908-Ui",
+                            "Enabled":  2,
+                            "Direction":  2,
+                            "Action":  4
+                        }
+                    ]
+}

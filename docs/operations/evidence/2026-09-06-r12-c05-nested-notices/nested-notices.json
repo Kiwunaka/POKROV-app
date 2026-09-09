@@ -1,0 +1,630 @@
+{
+  "selection": "New license-like files in ancestors of selected package directories and embedded files under exact module/Core/Go boundaries; native includes and file-header obligations are separate",
+  "new_notices": [
+    {
+      "source_ref": "core@8dc57a830bd1487389dd1b7c9190f094c31e13bc/engine/sing-box/common/ja3/LICENSE",
+      "path": "E:\\r12core-implementation\\engine\\sing-box\\common\\ja3\\LICENSE",
+      "bytes": 1544,
+      "sha256": "fbf8be62efaf777900674533141cddef88fe00ca93aa37a2edbb492f5e7a7461",
+      "package_imports": [
+        "github.com/sagernet/sing-box/common/ja3"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/crypto/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\common\\crypto\\LICENSE",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/Yawning/chacha20",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/internal/poly1305",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/ssh/internal/bcrypt_pbkdf",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/ssh",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/internal/subtle",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/nacl/secretbox"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/crypto/PATENTS",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\common\\crypto\\PATENTS",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/Yawning/chacha20",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/internal/poly1305",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/ssh/internal/bcrypt_pbkdf",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/ssh",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/internal/subtle",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/nacl/secretbox"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/crypto/Yawning/chacha20/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\common\\crypto\\Yawning\\chacha20\\LICENSE",
+      "bytes": 7049,
+      "sha256": "7179683e8000e6bdc9bbc60d85edf0a4ac8e76f951857f54fcb775d5886f1309",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/crypto/Yawning/chacha20"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/monotime/COPYING",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\common\\monotime\\COPYING",
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/monotime"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/quic/gquic-go/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\common\\quic\\gquic-go\\LICENSE",
+      "bytes": 1091,
+      "sha256": "77d0b7b53e8abb84cf4dd3f9945a7fdf27044240d2e8023966a721a9a46fe96e",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/internal/protocol",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/internal/utils",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/internal/congestion",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/qerr",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/quic-go-certificates",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/internal/crypto",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/internal/handshake",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/internal/wire",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/internal/ackhandler",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/internal/flowcontrol",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/h2quic"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/quic/gquic-go/quic-go-certificates/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\common\\quic\\gquic-go\\quic-go-certificates\\LICENSE",
+      "bytes": 1071,
+      "sha256": "b1547813eebdfc9e8defa8e935472b133be8ae8173a49033c800805e742c4984",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/quic/gquic-go/quic-go-certificates"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/regen/LICENSE.txt",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\common\\regen\\LICENSE.txt",
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/regen"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/sss/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\common\\sss\\LICENSE",
+      "bytes": 1076,
+      "sha256": "b75bcef6ff363d18b3d30dbdc997cea48f5681df11fa0ca032a443ce555bc6af",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/common/sss"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/upstreamproxy/go-ntlm/License",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\upstreamproxy\\go-ntlm\\License",
+      "bytes": 1727,
+      "sha256": "07def08bbb00b9fbc30e9a0409fc5797f37fdec1634373a69a03e07b7e814f8a",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/upstreamproxy/go-ntlm/ntlm/md4",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/upstreamproxy/go-ntlm/ntlm"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/upstreamproxy/go-ntlm/ntlm/md4/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62\\psiphon\\upstreamproxy\\go-ntlm\\ntlm\\md4\\LICENSE",
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067",
+      "package_imports": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core/psiphon/upstreamproxy/go-ntlm/ntlm/md4"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/utls@v0.0.0-20260129182755-24497d415a8d/dicttls/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\!psiphon-!labs\\utls@v0.0.0-20260129182755-24497d415a8d\\dicttls\\LICENSE",
+      "bytes": 1498,
+      "sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec",
+      "package_imports": [
+        "github.com/Psiphon-Labs/utls/dicttls"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/enfein/mieru/v3@v3.27.0/pkg/log/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\enfein\\mieru\\v3@v3.27.0\\pkg\\log\\LICENSE",
+      "bytes": 1082,
+      "sha256": "51a0c9ec7f8b7634181b8d4c03e5b5d204ac21d6e72f46c313973424664b2e6b",
+      "package_imports": [
+        "github.com/enfein/mieru/v3/pkg/log"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/klauspost/compress@v1.18.0/internal/snapref/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\klauspost\\compress@v1.18.0\\internal\\snapref\\LICENSE",
+      "bytes": 1486,
+      "sha256": "f69f157b0be75da373605dbc8bbf142e8924ee82d8f44f11bcaf351335bf98cf",
+      "package_imports": [
+        "github.com/klauspost/compress/internal/snapref"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/klauspost/compress@v1.18.0/zstd/internal/xxhash/LICENSE.txt",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\klauspost\\compress@v1.18.0\\zstd\\internal\\xxhash\\LICENSE.txt",
+      "bytes": 1068,
+      "sha256": "f566a9f97bacdaf00d9f21dd991e81dc11201c4e016c86b470799429a1c9a79c",
+      "package_imports": [
+        "github.com/klauspost/compress/zstd/internal/xxhash"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/metacubex/utls@v1.8.4/dicttls/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\metacubex\\utls@v1.8.4\\dicttls\\LICENSE",
+      "bytes": 1498,
+      "sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec",
+      "package_imports": [
+        "github.com/metacubex/utls/dicttls"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/refraction-networking/utls@v1.8.2/dicttls/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\refraction-networking\\utls@v1.8.2\\dicttls\\LICENSE",
+      "bytes": 1498,
+      "sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec",
+      "package_imports": [
+        "github.com/refraction-networking/utls/dicttls"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/sagernet/sing@v0.8.0-beta.12/contrab/freelru/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\sing@v0.8.0-beta.12\\contrab\\freelru\\LICENSE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "package_imports": [
+        "github.com/sagernet/sing/contrab/freelru"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "github.com/sagernet/sing@v0.8.0-beta.12/contrab/freelru/NOTICE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\github.com\\sagernet\\sing@v0.8.0-beta.12\\contrab\\freelru\\NOTICE",
+      "bytes": 49,
+      "sha256": "0ff9ab6ed7706295e43814a14122085ea139755d065f0ad835317403d4043b00",
+      "package_imports": [
+        "github.com/sagernet/sing/contrab/freelru"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/crypto/internal/boring/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\crypto\\internal\\boring\\LICENSE",
+      "bytes": 9714,
+      "sha256": "56210f826b8f0fbac3160dfe55c97f4019eb6cdda3963b5a0eab8a8bdb62360e",
+      "package_imports": [
+        "crypto/internal/boring/sig",
+        "crypto/internal/boring",
+        "crypto/internal/boring/bbig"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/crypto/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\vendor\\golang.org\\x\\crypto\\LICENSE",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "package_imports": [
+        "vendor/golang.org/x/crypto/cryptobyte/asn1",
+        "vendor/golang.org/x/crypto/cryptobyte",
+        "vendor/golang.org/x/crypto/internal/alias",
+        "vendor/golang.org/x/crypto/chacha20",
+        "vendor/golang.org/x/crypto/internal/poly1305",
+        "vendor/golang.org/x/crypto/chacha20poly1305"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/crypto/PATENTS",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\vendor\\golang.org\\x\\crypto\\PATENTS",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "package_imports": [
+        "vendor/golang.org/x/crypto/cryptobyte/asn1",
+        "vendor/golang.org/x/crypto/cryptobyte",
+        "vendor/golang.org/x/crypto/internal/alias",
+        "vendor/golang.org/x/crypto/chacha20",
+        "vendor/golang.org/x/crypto/internal/poly1305",
+        "vendor/golang.org/x/crypto/chacha20poly1305"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/net/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\vendor\\golang.org\\x\\net\\LICENSE",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "package_imports": [
+        "vendor/golang.org/x/net/dns/dnsmessage",
+        "vendor/golang.org/x/net/idna",
+        "vendor/golang.org/x/net/http/httpguts",
+        "vendor/golang.org/x/net/http/httpproxy",
+        "vendor/golang.org/x/net/http2/hpack"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/net/PATENTS",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\vendor\\golang.org\\x\\net\\PATENTS",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "package_imports": [
+        "vendor/golang.org/x/net/dns/dnsmessage",
+        "vendor/golang.org/x/net/idna",
+        "vendor/golang.org/x/net/http/httpguts",
+        "vendor/golang.org/x/net/http/httpproxy",
+        "vendor/golang.org/x/net/http2/hpack"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/sys/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\vendor\\golang.org\\x\\sys\\LICENSE",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "package_imports": [
+        "vendor/golang.org/x/sys/cpu"
+      ],
+      "targets": [
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/sys/PATENTS",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\vendor\\golang.org\\x\\sys\\PATENTS",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "package_imports": [
+        "vendor/golang.org/x/sys/cpu"
+      ],
+      "targets": [
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/text/LICENSE",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\vendor\\golang.org\\x\\text\\LICENSE",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "package_imports": [
+        "vendor/golang.org/x/text/transform",
+        "vendor/golang.org/x/text/unicode/bidi",
+        "vendor/golang.org/x/text/secure/bidirule",
+        "vendor/golang.org/x/text/unicode/norm"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/text/PATENTS",
+      "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\src\\vendor\\golang.org\\x\\text\\PATENTS",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "package_imports": [
+        "vendor/golang.org/x/text/transform",
+        "vendor/golang.org/x/text/unicode/bidi",
+        "vendor/golang.org/x/text/secure/bidirule",
+        "vendor/golang.org/x/text/unicode/norm"
+      ],
+      "targets": [
+        "libpokrov-core-arm64-v8a",
+        "libpokrov-core-armeabi-v7a",
+        "libpokrov-core-x86",
+        "libpokrov-core-x86_64",
+        "pokrov-core"
+      ]
+    }
+  ],
+  "excluded_source_files": {
+    "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/notice.go": "source code filename matched license-like prefix"
+  },
+  "unknown_packages": {},
+  "used_buildinfo_modules": [
+    "filippo.io/edwards25519",
+    "github.com/AdguardTeam/golibs",
+    "github.com/Jigsaw-Code/outline-sdk",
+    "github.com/Psiphon-Labs/bolt",
+    "github.com/Psiphon-Labs/consistent",
+    "github.com/Psiphon-Labs/goptlib",
+    "github.com/Psiphon-Labs/psiphon-tls",
+    "github.com/Psiphon-Labs/psiphon-tunnel-core",
+    "github.com/Psiphon-Labs/quic-go",
+    "github.com/Psiphon-Labs/utls",
+    "github.com/ajg/form",
+    "github.com/ameshkov/dnscrypt/v2",
+    "github.com/ameshkov/dnsstamps",
+    "github.com/amnezia-vpn/amneziawg-go/v3",
+    "github.com/andybalholm/brotli",
+    "github.com/anytls/sing-anytls",
+    "github.com/axiomhq/hyperloglog",
+    "github.com/bepass-org/warp-plus",
+    "github.com/bifurcation/mint",
+    "github.com/biter777/countries",
+    "github.com/bits-and-blooms/bitset",
+    "github.com/bits-and-blooms/bloom/v3",
+    "github.com/cespare/xxhash",
+    "github.com/cheekybits/genny",
+    "github.com/cloudflare/circl",
+    "github.com/cognusion/go-cache-lru",
+    "github.com/cretz/bine",
+    "github.com/database64128/netx-go",
+    "github.com/database64128/tfo-go/v2",
+    "github.com/dgryski/go-metro",
+    "github.com/ebitengine/purego",
+    "github.com/enfein/mieru/v3",
+    "github.com/florianl/go-nfqueue/v2",
+    "github.com/flynn/noise",
+    "github.com/fsnotify/fsnotify",
+    "github.com/fxamacker/cbor/v2",
+    "github.com/go-chi/chi/v5",
+    "github.com/go-chi/render",
+    "github.com/go-ole/go-ole",
+    "github.com/gobwas/httphead",
+    "github.com/gobwas/pool",
+    "github.com/godbus/dbus/v5",
+    "github.com/gofrs/uuid/v5",
+    "github.com/golang/groupcache",
+    "github.com/golang/snappy",
+    "github.com/google/btree",
+    "github.com/grafov/m3u8",
+    "github.com/hashicorp/yamux",
+    "github.com/hectane/go-acl",
+    "github.com/kamstrup/intmap",
+    "github.com/klauspost/compress",
+    "github.com/klauspost/cpuid/v2",
+    "github.com/klauspost/reedsolomon",
+    "github.com/logrusorgru/aurora",
+    "github.com/mahsanet/dnstt",
+    "github.com/marusama/semaphore",
+    "github.com/mdlayher/netlink",
+    "github.com/mdlayher/socket",
+    "github.com/metacubex/utls",
+    "github.com/miekg/dns",
+    "github.com/pires/go-proxyproto",
+    "github.com/pkg/errors",
+    "github.com/quic-go/qpack",
+    "github.com/refraction-networking/utls",
+    "github.com/sagernet/bbolt",
+    "github.com/sagernet/cors",
+    "github.com/sagernet/cronet-go",
+    "github.com/sagernet/cronet-go/all",
+    "github.com/sagernet/cronet-go/lib/android_386",
+    "github.com/sagernet/cronet-go/lib/android_amd64",
+    "github.com/sagernet/cronet-go/lib/android_arm",
+    "github.com/sagernet/cronet-go/lib/android_arm64",
+    "github.com/sagernet/cronet-go/lib/windows_amd64",
+    "github.com/sagernet/fswatch",
+    "github.com/sagernet/gomobile",
+    "github.com/sagernet/gvisor",
+    "github.com/sagernet/netlink",
+    "github.com/sagernet/nftables",
+    "github.com/sagernet/quic-go",
+    "github.com/sagernet/sing",
+    "github.com/sagernet/sing-box",
+    "github.com/sagernet/sing-dns",
+    "github.com/sagernet/sing-mux",
+    "github.com/sagernet/sing-quic",
+    "github.com/sagernet/sing-shadowsocks",
+    "github.com/sagernet/sing-shadowsocks2",
+    "github.com/sagernet/sing-shadowtls",
+    "github.com/sagernet/sing-tun",
+    "github.com/sagernet/sing-vmess",
+    "github.com/sagernet/smux",
+    "github.com/sagernet/wireguard-go",
+    "github.com/sagernet/ws",
+    "github.com/shadowsocks/go-shadowsocks2",
+    "github.com/syndtr/gocapability",
+    "github.com/syndtr/goleveldb",
+    "github.com/tailscale/netlink",
+    "github.com/tendermint/tm-db",
+    "github.com/tidwall/gjson",
+    "github.com/tidwall/match",
+    "github.com/tidwall/pretty",
+    "github.com/tjfoc/gmsm",
+    "github.com/vishvananda/netns",
+    "github.com/wader/filtertransport",
+    "github.com/wlynxg/anet",
+    "github.com/x448/float16",
+    "github.com/xmdhs/clash2singbox",
+    "github.com/xtaci/kcp-go/v5",
+    "github.com/xtaci/smux",
+    "go4.org/netipx",
+    "golang.org/x/crypto",
+    "golang.org/x/exp",
+    "golang.org/x/mod",
+    "golang.org/x/net",
+    "golang.org/x/sync",
+    "golang.org/x/sys",
+    "golang.org/x/text",
+    "golang.org/x/time",
+    "golang.zx2c4.com/wintun",
+    "golang.zx2c4.com/wireguard",
+    "golang.zx2c4.com/wireguard/wgctrl",
+    "golang.zx2c4.com/wireguard/windows",
+    "google.golang.org/genproto/googleapis/rpc",
+    "google.golang.org/grpc",
+    "google.golang.org/protobuf",
+    "gopkg.in/yaml.v3",
+    "gvisor.dev/gvisor",
+    "lukechampine.com/blake3",
+    "tailscale.com"
+  ],
+  "buildinfo_modules_not_found_in_source_graph": []
+}

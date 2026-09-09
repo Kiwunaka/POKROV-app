@@ -523,6 +523,18 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
                 onTap: onReturningUser,
               ),
             ];
+            final networkPrivacyNotice = appContext.hostPlatform == HostPlatform.android
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(
+                      'Для диагностики подключения автоматически передаются исходный IP, '
+                      'оператор и примерный регион сети. Хранение — до 72 часов. '
+                      'История посещённых сайтов не собирается.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(color: p.muted),
+                    ),
+                  )
+                : const SizedBox.shrink();
             if (compact) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -536,6 +548,7 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
                     ),
                     if (index != actions.length - 1) const SizedBox(height: 12),
                   ],
+                  networkPrivacyNotice,
                 ],
               );
             }
@@ -561,6 +574,7 @@ class _FirstLaunchChoiceScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                networkPrivacyNotice,
               ],
             );
           },

@@ -1,0 +1,32 @@
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  Generating E:/r12client/apps/windows_shell/windows/flutter/ephemeral/flutter_windows.dll, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/flutter_export.h, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/flutter_windows.h, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/flutter_messenger.h, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/flutter_plugin_registrar.h, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/flutter_texture_registrar.h, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/cpp_client_wrapper/core_implementations.cc, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/cpp_client_wrapper/standard_codec.cc, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/cpp_client_wrapper/plugin_registrar.cc, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/cpp_client_wrapper/flutter_engine.cc, E:/r12client/apps/windows_shell/windows/flutter/ephemeral/cpp_client_wrapper/flutter_view_controller.cc, _phony_
+  flutter_wrapper_plugin.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\flutter\Release\flutter_wrapper_plugin.lib
+  file_selector_windows_plugin.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\plugins\file_selector_windows\Release\file_selector_windows_plugin.dll
+  flutter_secure_storage_windows_plugin.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\plugins\flutter_secure_storage_windows\Release\flutter_secure_storage_windows_plugin.dll
+  flutter_wrapper_app.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\flutter\Release\flutter_wrapper_app.lib
+  service_profile_identity.cpp
+  service_protocol.cpp
+  Создание кода...
+  pokrov_service_common.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Release\pokrov_service_common.lib
+  service_egress_probe.cpp
+  service_events.cpp
+  service_runtime.cpp
+  Создание кода...
+  pokrov_service_runtime.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Release\pokrov_service_runtime.lib
+  service_main.cpp
+  service_server.cpp
+  service_dispatcher.cpp
+  Создание кода...
+  pokrov_service.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\service\Release\pokrov_service.exe
+  screen_retriever_windows_plugin.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\plugins\screen_retriever_windows\Release\screen_retriever_windows_plugin.dll
+  tray_manager_plugin.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\plugins\tray_manager\Release\tray_manager_plugin.dll
+  url_launcher_windows_plugin.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\plugins\url_launcher_windows\Release\url_launcher_windows_plugin.dll
+  window_manager_plugin.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\plugins\window_manager\Release\window_manager_plugin.dll
+  service_client.cpp
+  service_pipe_client.cpp
+  flutter_window.cpp
+  runtime_task_runner.cpp
+  main.cpp
+  Создание кода...
+  pokrov_windows.vcxproj -> E:\r12client\apps\windows_shell\build\windows\x64\runner\Release\pokrov_windows.exe

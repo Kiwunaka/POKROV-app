@@ -1,0 +1,233 @@
+{
+  "schema": "pokrov.r12.c05-file-header-notices/v1",
+  "status": "LOCAL_PACKAGE_VERIFICATION_PASS_FULL_C05_OPEN",
+  "client_before": "64a26c394a8d85c79f32877f1beb1c6f7ae3939f",
+  "core_source_commit": "8dc57a830bd1487389dd1b7c9190f094c31e13bc",
+  "notice": {
+    "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
+    "bytes": 659001,
+    "sha256": "71b707bb4af6d879c6ce13d86644ce1e1dbd5dabb7846085b10e798d63e9b56a"
+  },
+  "previous_notice": {
+    "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
+    "bytes": 637092,
+    "sha256": "17034f0a50bbdc6480c660908885cf7d1ad185e1813e23b2dc6d2d25cde03355"
+  },
+  "verbatim_texts": 185,
+  "added_blocks": 12,
+  "all_previous_asset_bytes_retained": true,
+  "source_scan": {
+    "files_hash_verified": 6751,
+    "hash_mismatches": [],
+    "inventory_sha256": "fa432bd61a8d660c8e523907e2c1f32c4622cdaee49b1d3572740997a7aa24fa",
+    "unique_full_blocks": 25,
+    "scope": "Candidate license-bearing comment blocks in first 160 lines of selected source files. Text presence is normalized substring matching, not a legal completeness verdict. Excludes native transitive includes and full-file obligations."
+  },
+  "android": [
+    {
+      "path": "E:\\r12-c05-header-review\\android\\app-direct-arm64-v8a-release.apk",
+      "bytes": 101190471,
+      "sha256": "8670930f1811aa69e5c56e0fad679be53f85b7c870ca3d8a2d06df15e38d3905",
+      "notice_sha256": "71b707bb4af6d879c6ce13d86644ce1e1dbd5dabb7846085b10e798d63e9b56a",
+      "core_entries": {
+        "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5"
+      },
+      "signing": {
+        "command": [
+          "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+          "verify",
+          "--print-certs",
+          "E:\\r12-c05-header-review\\android\\app-direct-arm64-v8a-release.apk"
+        ],
+        "exit_code": 0,
+        "signer": "Android Debug",
+        "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+      }
+    },
+    {
+      "path": "E:\\r12-c05-header-review\\android\\app-direct-armeabi-v7a-release.apk",
+      "bytes": 90704701,
+      "sha256": "f192c38f195e54c65d0a36e87869c24a36e6503314093a96544b0ec745776ab4",
+      "notice_sha256": "71b707bb4af6d879c6ce13d86644ce1e1dbd5dabb7846085b10e798d63e9b56a",
+      "core_entries": {
+        "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e"
+      },
+      "signing": {
+        "command": [
+          "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+          "verify",
+          "--print-certs",
+          "E:\\r12-c05-header-review\\android\\app-direct-armeabi-v7a-release.apk"
+        ],
+        "exit_code": 0,
+        "signer": "Android Debug",
+        "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+      }
+    },
+    {
+      "path": "E:\\r12-c05-header-review\\android\\app-direct-universal-release.apk",
+      "bytes": 295175202,
+      "sha256": "6c3e6dd205c18ef9adaf54c44d2659de99cf5bf360a1675909c798ac24c2e0b5",
+      "notice_sha256": "71b707bb4af6d879c6ce13d86644ce1e1dbd5dabb7846085b10e798d63e9b56a",
+      "core_entries": {
+        "lib/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+        "lib/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+        "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+      },
+      "signing": {
+        "command": [
+          "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+          "verify",
+          "--print-certs",
+          "E:\\r12-c05-header-review\\android\\app-direct-universal-release.apk"
+        ],
+        "exit_code": 0,
+        "signer": "Android Debug",
+        "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+      }
+    },
+    {
+      "path": "E:\\r12-c05-header-review\\android\\app-direct-x86_64-release.apk",
+      "bytes": 110199398,
+      "sha256": "78a992e5793071eb68a83748e6f8ea94e8834b6f919cea0eed250a3e83246654",
+      "notice_sha256": "71b707bb4af6d879c6ce13d86644ce1e1dbd5dabb7846085b10e798d63e9b56a",
+      "core_entries": {
+        "lib/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+      },
+      "signing": {
+        "command": [
+          "C:/Users/kiwun/AppData/Local/Android/Sdk/build-tools/34.0.0/apksigner.bat",
+          "verify",
+          "--print-certs",
+          "E:\\r12-c05-header-review\\android\\app-direct-x86_64-release.apk"
+        ],
+        "exit_code": 0,
+        "signer": "Android Debug",
+        "certificate_sha256": "55d2e71b9871459a3d436563f02de5150336201b848f4d9f22d5e247e1520e74"
+      }
+    }
+  ],
+  "windows": {
+    "path": "E:\\r12-c05-header-review\\windows-bundle",
+    "file_count": 302,
+    "previous_bundle": "E:\\r12-c05-utls-review\\windows-bundle",
+    "changed": [
+      "data/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt"
+    ],
+    "unchanged_files": 301
+  },
+  "windows_signing": [
+    {
+      "Path": "E:\\r12-c05-header-review\\windows-bundle\\pokrov_windows.exe",
+      "Status": "NotSigned"
+    },
+    {
+      "Path": "E:\\r12-c05-header-review\\windows-bundle\\pokrov_service.exe",
+      "Status": "NotSigned"
+    }
+  ],
+  "generated_registrants": "all four byte-identical",
+  "original_install_prefix": "$<TARGET_FILE_DIR:pokrov_windows>",
+  "install_prefix_restored_exact": true,
+  "commands": [
+    {
+      "command": "flutter build apk --release --flavor direct --target-platform android-arm,android-arm64,android-x64 --android-project-arg=pokrov.singleVersionSplitApks=true --dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9 --dart-define=POKROV_APP_VERSION=1.2.0",
+      "cwd": "E:/r12client/apps/android_shell",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-header-review\\android-build.log",
+      "sha256": "41aecf111cfc14af0d0c3c6769da40c9c3a67294903a281013970db234883284"
+    },
+    {
+      "command": "cmake -S E:/r12client/apps/windows_shell/windows -B E:/r12client/apps/windows_shell/build/windows/x64 -DCMAKE_INSTALL_PREFIX=E:/r12-c05-header-review/windows-bundle",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-header-review\\windows-prefix.log",
+      "sha256": "b7b15e30751d5e792572e5c27f7c588a4407a458083943f584e173a57a400cd7"
+    },
+    {
+      "command": "flutter build windows --release --no-pub --dart-define=POKROV_API_BASE_URL=http://127.0.0.1:9 --dart-define=POKROV_APP_VERSION=1.2.0",
+      "cwd": "E:/r12client/apps/windows_shell",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-header-review\\windows-build.log",
+      "sha256": "9a7a41aa75927df60c919d2c364c65ea0c5699b30814240f9554d0bdd4dbb721"
+    },
+    {
+      "command": "python -B E:/r12-c05-header-review/verify-packages.py",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-header-review\\package-verification.log",
+      "sha256": "418e11c6f0c1ebdf61a003942a66889b7d5ae50eb664c9a8b24a5dab881cc12c"
+    },
+    {
+      "command": "cmake -S E:/r12client/apps/windows_shell/windows -B E:/r12client/apps/windows_shell/build/windows/x64 -U CMAKE_INSTALL_PREFIX",
+      "cwd": "E:/r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-header-review\\windows-prefix-restored-exact.log",
+      "sha256": "c74029ded3404c790b40f72cd587680c9e08d404cb13ae427a7e0d9e29769ecc"
+    },
+    {
+      "command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-header-review\\client-seed.log",
+      "sha256": "c75348d37b8d8314128d35d06f9336b9fd2b145c2369373b4b8b5c138b62db3b"
+    },
+    {
+      "command": "./test/docs-contract.ps1",
+      "cwd": "E:\\r12client",
+      "exit_code": 0,
+      "log": "E:\\r12-c05-header-review\\client-docs.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--exit-code",
+        "--",
+        "artifacts/releases"
+      ],
+      "cwd": "E:\\r12client",
+      "exit_code": 0
+    }
+  ],
+  "environment": {
+    "POKROV_ALLOW_INTERNAL_BETA_DEBUG_SIGNING": "true",
+    "cmake_executable": "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe"
+  },
+  "retained_inputs": {
+    "audit-headers.py": "f533ef6dddb4b8d04dc15b8fdc2573cb6ba3373b894977d0c1e03a47cf8452ca",
+    "review-bodies.py": "9e190357128a9e82a2740d626f030ae364506a99aa1081a4dddc081297191d35",
+    "append-headers.py": "32f906b5e095e50ffdee1190beb9ddab1ac0392c3b84b0f26be74ac2236e91d4",
+    "verify-packages.py": "76afb53ce51dfaea3238114e67ea2fe4c8ad12b4034b949c2ad9c888e0c3a39d",
+    "assembly.json": "ef2c2b0198001345b89c002dd514a689db6aefa04217c3faec6180bbbeb4ee68",
+    "header-candidates.json": "38618b02ed431091160618c3d267b4f405d7ee5c9c482f94d48254d6ee9e28e7",
+    "body-review.json": "f7575e2eddf8b18974c40cffdcabbb4cae88cb5c5b80405059f924611ac13f1e"
+  },
+  "package_inventory": {
+    "path": "E:\\r12-c05-header-review\\package-verification.json",
+    "sha256": "446b202a208ed5f162c419bdc1409fef1d843507cc42fda76422cc16e28a86a3"
+  },
+  "limitations": [
+    "Scan covers only explicit full permission/redistribution comment blocks in first 160 lines; SPDX-only references, later headers and transitive native includes are not complete.",
+    "Normalized literal matching and subset grouping are deduplication, not legal compatibility or completeness conclusions.",
+    "Missing Psiphon utls root license, corresponding source, installed privacy and final candidate/device/origin/SCM gates remain open.",
+    "Android uses internal Android Debug signer and loopback API; Windows application/service are NotSigned. No installer, tunnel, candidate, signing approval or production proof.",
+    "Seed performance collector exercises a fixture; it is not a new physical-device performance result."
+  ],
+  "exploratory_attempts": [
+    "Initial broad header scan completed inventory but console output failed on cp1251; retained externally as header-candidates-initial.json and audit-headers-initial.py. Final bounded scan completed successfully.",
+    "First restore via -D converted the generator expression into an absolute path. The -U CMAKE_INSTALL_PREFIX configure restored the exact original cache value; no install/build was run with the intermediate value."
+  ],
+  "push_merge_deploy_candidate": false,
+  "packaging_source_diff_sha256": "3c585cfa360d30ea0a71ca515797637a2818d2a9e15db0fa680bd2df91ae8a3b"
+}

@@ -2,6 +2,7 @@
 #define POKROV_SERVICE_SERVICE_RUNTIME_H_
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -44,10 +45,13 @@ class CoreOperationalEventFence {
   std::int64_t last_sequence_ = 0;
 };
 
+enum class OperationInterruption { kNone, kCancelled, kDeadlineExceeded };
+using CheckInterruption = std::function<OperationInterruption()>;
+
 class RuntimeEgressProbe {
  public:
   virtual ~RuntimeEgressProbe() = default;
-  virtual std::string Verify() = 0;
+  virtual std::string Verify(const CheckInterruption& interrupted = {}) = 0;
 };
 
 struct RuntimeResult {
@@ -65,11 +69,13 @@ class RuntimeHost {
   ~RuntimeHost();
 
   RuntimeResult Snapshot() const;
+  RuntimeResult PendingSnapshot(Command command) const;
   RuntimeResult RecoverOnStartup();
   RuntimeResult Initialize();
   RuntimeResult StageProfile(const std::string& body);
   RuntimeResult InvalidateProfile();
-  RuntimeResult Connect();
+  RuntimeResult Connect(const std::string& expected_profile_digest,
+                        const CheckInterruption& interrupted = {});
   RuntimeResult Disconnect();
   void Shutdown();
 
@@ -84,9 +90,9 @@ class RuntimeHost {
   };
 
   RuntimeResult Fail(Status status, const char* failure);
-  std::string SnapshotBody() const;
+  std::string SnapshotBody(const char* pending_phase = nullptr) const;
   bool PrepareDirectories();
-  bool WriteProfileAtomically(const std::string& profile);
+  std::string WriteProfileAtomically(const std::string& profile);
   bool WriteBundledRuleSets(
       int slot, const std::vector<std::vector<std::uint8_t>>& rule_sets,
       std::vector<std::wstring>* written_paths);
@@ -105,6 +111,8 @@ class RuntimeHost {
   bool secure_storage_ = true;
   bool initialized_ = false;
   bool profile_staged_ = false;
+  std::string staged_profile_digest_;
+  std::string effective_profile_digest_;
   bool disable_memory_limit_ = false;
   int bundled_rule_set_slot_ = 0;
   bool core_egress_validated_ = false;
@@ -114,6 +122,11 @@ class RuntimeHost {
 
 std::unique_ptr<CoreRuntime> CreateInstalledCoreRuntime();
 std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe();
+#ifdef _DEBUG
+// Loopback-only fixture; the production factory has no caller-owned URL.
+std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
+    std::uint16_t port);
+#endif
 std::wstring ResolveServiceRuntimeRoot();
 
 }  // namespace pokrov::service

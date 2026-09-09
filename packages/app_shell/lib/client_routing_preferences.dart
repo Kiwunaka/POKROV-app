@@ -707,6 +707,17 @@ String _resolveProxyTag(
     final tag = _routingText(outbound['tag']);
     if (tag.isNotEmpty && !_nonProxyTypes.contains(type)) return tag;
   }
+  // Selected Windows processes can use an AWG endpoint while unselected
+  // traffic has a direct final. Follow the existing route, not an unused peer.
+  final endpointTags = endpoints
+      .where((endpoint) => _routingText(endpoint['type']).isNotEmpty)
+      .map((endpoint) => _routingText(endpoint['tag']))
+      .where((tag) => tag.isNotEmpty)
+      .toSet();
+  for (final rule in _routingListOfMaps(route['rules'])) {
+    final tag = _routingText(rule['outbound']);
+    if (endpointTags.contains(tag)) return tag;
+  }
   return '';
 }
 

@@ -1,0 +1,27 @@
+{
+  "schema": "pokrov.r12-expiry-before-fix/v1",
+  "old_installed_client_source": "3784352dc58a282910c4ddc77ff7a30493706f2f",
+  "old_installer_sha256": "83c253ce8a1cc5d64aa615e259ae2a0f6d5d978442fd3732965d7778d14d6063",
+  "core_source": "02a091cb0e369192a5ad0909b56ccba8aa1dce17",
+  "expiry_result": "PASS_BOUNDED_CONTROLLED_GUEST_CLOCK",
+  "explicit_denial_result": "FAIL",
+  "source_fix": "f479fd4",
+  "fixed_runtime_status": "PENDING",
+  "first_clock_attempt": "INVALID_AUTO_RESYNCHRONIZED",
+  "observed_expired_age_seconds": 92989.55025819999,
+  "checks": {
+    "old_installed_305_files": true,
+    "cache_connected": true,
+    "api_blocked_with_health_reachable": true,
+    "expired_clock_maintained": true,
+    "expired_refused": true,
+    "clock_restore_reconnect": true,
+    "original_cache_unchanged": true,
+    "explicit_denial_bug_reproduced": true,
+    "session_file_same": true,
+    "routes_restored": true,
+    "dns_restored": true,
+    "firewall_cleanup": true
+  },
+  "backend_mutated": false
+}

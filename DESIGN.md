@@ -15,6 +15,9 @@ POKROV client UI should feel calm, premium, and operationally honest.
 - Diagnostics are available behind details, not first-layer UI.
 - Android and Windows availability labels must reflect gate status.
 - Motion should be quiet and respect reduced-motion settings.
+- Widget animation tickers are muted whenever the app is not resumed, including
+  modal routes. Returning to the foreground resumes them with widget state
+  intact; inactive tabs keep their own `TickerMode` and repaint boundaries.
 - Progress, success, disconnect, and error must use distinct status language;
   transitional states stay neutral rather than warning-colored.
 
