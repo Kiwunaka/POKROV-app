@@ -1,6 +1,26 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current source binding — 2026-09-09
+## Current lifecycle privacy binding — 2026-09-10
+
+The development client binds Core `c8b0461c1975ef96e32024774300a5829b9fdc43`. A real rejected-profile FFI call
+previously exposed raw configuration/error text in its return and stderr,
+even with debug disabled. Lifecycle failure logging, status and ABI responses
+now expose the catalog code while retaining the typed cause internally.
+Structured event classification preserves that code.
+
+Android AAR: 107491758 bytes, SHA-256 `2ddb4c43664763624d47632a7197c4c1f641605d586aaf2c16f5fff9d86265e0`.
+Windows DLL: 55449600 bytes, SHA-256 `46e203b5d69267c47ba3f2f11800b28c20c0de48de4dabf7311ce967a14a74ed`.
+Two clean builds per platform are byte-identical; four Android ABIs, 15 Windows
+exports, desktop ABI 2 and event ABI 1 remain. Exact DLL direct-FFI canary and
+100 proxy-only lifecycle checks pass. Cronet and dependency contracts are unchanged.
+
+[Binding evidence](../operations/evidence/2026-09-10-r12-core-privacy-binding/README.md)
+retains the original failure and old manifest. Current installed packages still
+use earlier Core; no device/route/extended-support acceptance is transferred.
+This is a pre-candidate local binding. No tag, public release or signing claim.
+81 runtime tests, 8 Android Flutter tests, runtime analyze and exact-source seed/docs checks pass. Coordinated Core/client CI must converge before packaging acceptance.
+
+## Superseded source binding — 2026-09-09
 
 The development client now binds Core `c7a11f7d2fd974726095ad7aa0619c055273dd15`.
 Its only changes after `02a091c` are the Apple build's Go-version check and
