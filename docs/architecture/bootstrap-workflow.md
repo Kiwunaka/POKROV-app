@@ -325,6 +325,10 @@ Current blocking dependency:
   account, install, device, destination or package identity. Requests outside
   an attempt receive a fresh UUIDv4.
 - The app-private operational store remains authoritative only for diagnostics.
+  Its initialization runs in the existing asynchronous writer, so a filesystem
+  failure cannot stop bootstrap or a connection action. The bounded in-memory
+  timeline remains available, writer failures increment `writerErrors`, and a
+  later batch retries the same storage path without relocating diagnostic data.
   Its two-segment cap is 24 MiB on Android and 64 MiB on Windows. A separate
   best-effort mirror sends only the identity-free release-health projection
   after an app session already exists; observability never creates a trial or
@@ -336,6 +340,9 @@ Current blocking dependency:
   Clean exit overwrites it; an active marker on the next launch is reported as
   unclean. The marker is diagnostic evidence and can never restore or declare
   runtime state; host/service snapshot and recovery journal remain authority.
+  Marker filesystem write failures are counted in `writeErrors` without escaping
+  into bootstrap, normal exit or the crash handler; privacy validation still
+  rejects unsafe values before an IO attempt.
 - a failed Windows connect keeps its sanitized failure kind and message across subsequent runtime snapshots until an explicit restage or successful retry clears it; polling must not replace a failed `configStaged` state with the success copy `Профиль доступа готов`
 - `scripts/test-windows-core-proxy-only.ps1` is the host-safe developer lane while another VPN owns Windows routes: it runs the exact bundled DLL through 100 loopback mixed-proxy start/stop cycles and never creates a TUN. A pass proves Core loading, ABI lifecycle, local proxy traffic and teardown only; Windows TUN, DNS capture and leak proof still require an isolated VM or Windows Sandbox
 - source-level runtime tests cover the Windows TUN options for all three route

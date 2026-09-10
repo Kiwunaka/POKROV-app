@@ -12,6 +12,47 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 void main() {
+  test('diagnostic storage failure preserves bootstrap and connection actions',
+      () async {
+    final root =
+        await Directory.systemTemp.createTemp('pokrov-obs-unavailable-');
+    addTearDown(() => root.delete(recursive: true));
+    final blocked = File('${root.path}/pokrov-observability');
+    await blocked.writeAsString('owned diagnostic path-conflict fixture');
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.windows,
+      directoryResolver: () async => root,
+      buildIdentity: _build(),
+    );
+
+    observability.markUiReady();
+    var connectionActionRan = false;
+    await observability.runConnectionAction(() async {
+      connectionActionRan = true;
+    }, beginsWithDisconnect: false);
+    await observability.markCleanExit();
+    await observability.markCrash();
+    observability.markCrashSynchronously();
+    await observability.flush();
+
+    expect(connectionActionRan, isTrue);
+    expect(observability.dispatcher.breadcrumbs.snapshot().map((e) => e.name),
+        contains('app.bootstrap.ui_ready.finished'));
+    expect(observability.dispatcher.snapshot().writerErrors, greaterThan(0));
+    expect(observability.markerStore.writeErrors, 4);
+    expect(
+        await blocked.readAsString(), 'owned diagnostic path-conflict fixture');
+
+    await blocked.delete();
+    observability.recordAuthRequestStarted();
+    await observability.flush();
+    expect(await File('${blocked.path}/operational-events.v1.0.jsonl').exists(),
+        isTrue);
+    await observability.markCrash();
+    expect(await observability.markerStore.file.exists(), isTrue);
+    expect(observability.markerStore.writeErrors, 4);
+  });
+
   test('client observability follows reducer proof and mirrors safe aggregate',
       () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-obs-app-');
