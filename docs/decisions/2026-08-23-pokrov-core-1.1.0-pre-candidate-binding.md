@@ -15,10 +15,15 @@ exports, desktop ABI 2 and event ABI 1 remain. Exact DLL direct-FFI canary and
 100 proxy-only lifecycle checks pass. Cronet and dependency contracts are unchanged.
 
 [Binding evidence](../operations/evidence/2026-09-10-r12-core-privacy-binding/README.md)
-retains the original failure and old manifest. Current installed packages still
-use earlier Core; no device/route/extended-support acceptance is transferred.
-This is a pre-candidate local binding. No tag, public release or signing claim.
-81 runtime tests, 8 Android Flutter tests, runtime analyze and exact-source seed/docs checks pass. Coordinated Core/client CI must converge before packaging acceptance.
+retains the original failure and old manifest. Client PR105 and Core PR10 are
+merged with matching source trees; all four exact PR/merge CI workflows pass.
+[Installed Windows proof](../operations/evidence/2026-09-10-r12-core-privacy-installed/README.md)
+binds client d655e2a to 304 package hashes, an installed-DLL direct FFI canary
+check and ordinary connect/disconnect with network restoration. Earlier device
+and extended-support evidence is not transferred to this package. Android,
+native extended/crash and full V01 remain open. No tag, public release or
+trusted-signing claim. 81 runtime tests, 8 Android Flutter tests, runtime analyze
+and exact-source seed/docs checks pass.
 
 ## Superseded source binding — 2026-09-09
 

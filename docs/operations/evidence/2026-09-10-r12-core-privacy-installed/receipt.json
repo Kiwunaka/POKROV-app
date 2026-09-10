@@ -1,0 +1,334 @@
+{
+  "status": "PASS_BOUNDED_INSTALLED_CORE_PRIVACY",
+  "utc": "2026-09-10T15:34:04.771659+00:00",
+  "client_source": "d655e2a9a58cb3c833f97a327b4342cdb02edf60",
+  "core_source": "c8b0461c1975ef96e32024774300a5829b9fdc43",
+  "client_merge": "1acbb7509f25ce1b8fc92c8467effc33bd133122",
+  "core_merge": "5ff9cca549d728b74bc65c44a3475ed0626945b4",
+  "origin": "current-origin owned Windows 11 VM; local signed source package, unsigned installer",
+  "files": [
+    {
+      "path": "captures/client-source-promoted.json",
+      "bytes": 670,
+      "sha256": "d5e45b0554b688507c3474d20820453d7b060a59565d437f16da4ea438426a1b"
+    },
+    {
+      "path": "captures/source-promoted.json",
+      "bytes": 1071,
+      "sha256": "024641bb2cfdb0758dab436fa9f1590b5e69c221704ac9a1f6f17858e0652942"
+    },
+    {
+      "path": "captures/client-ci-pr.json",
+      "bytes": 7259,
+      "sha256": "2266d838ba5325f1a6aa9a1b5e91a216c74a3493c378040420be3a6e730b9c5e"
+    },
+    {
+      "path": "captures/client-ci-merge.json",
+      "bytes": 7254,
+      "sha256": "16245980e6921dbca2ab52a5b965560086beca2b04384f69972cf7ea2b551111"
+    },
+    {
+      "path": "captures/core-ci-pr.json",
+      "bytes": 25539,
+      "sha256": "93a470e35694c1ef2ab7ea27a1fa9639cd70d6ecd74051ff0fe3b45d344648cd"
+    },
+    {
+      "path": "captures/core-ci-merge.json",
+      "bytes": 25534,
+      "sha256": "74aa521043ff5fdb4afa9b978bb95596b692aa4f817d787d9eb1ad665872685b"
+    },
+    {
+      "path": "captures/client-ci-merge-attempt1.json",
+      "bytes": 5253,
+      "sha256": "b5b49d4336991d59b0ad483068ddbad249afc577c7aadd4a06a9ff3e9dc2d85a"
+    },
+    {
+      "path": "captures/core-ci-pr-attempt1.json",
+      "bytes": 22589,
+      "sha256": "33dbcdaeef46392282e69984496e122491343dc5c5269634d7c295c5e5e3e26c"
+    },
+    {
+      "path": "captures/client-merge-binding.json",
+      "bytes": 353,
+      "sha256": "f14223431c9062dacc94997e932ca75ffca822b8d9d2bfe6fc1dc2aa1f81adaa"
+    },
+    {
+      "path": "captures/core-merge-binding.json",
+      "bytes": 353,
+      "sha256": "0501f2839455c184d3d05acf321ab28b8ac4825dbadc6e8f1c84bcbe5d45f67c"
+    },
+    {
+      "path": "captures/windows-expected.json",
+      "bytes": 39924,
+      "sha256": "3587b188b74714820070e57cdc3f703214b88261b43bffb43802babeb85f4cc5"
+    },
+    {
+      "path": "captures/windows-payload-comparison.json",
+      "bytes": 615,
+      "sha256": "173718e9759113d402d9253a8311153a68f31ee6eb98e1855a6a98881c073374"
+    },
+    {
+      "path": "captures/before.json",
+      "bytes": 430,
+      "sha256": "f0cbe7d5ae9418c302cfc6556bf21808c969ce1a30d840dfc42d3af4d5628a4e"
+    },
+    {
+      "path": "captures/wizard-readback.json",
+      "bytes": 967,
+      "sha256": "4522de2bf4eafcc1d536ca54a4a4bec18f53299d1664a3e7288459616aa0cd50"
+    },
+    {
+      "path": "captures/installed-ffi-receipt.json",
+      "bytes": 2780,
+      "sha256": "55cd4ca873fe61439ff7cb4e87c3c785de559483fe58ba327847ab1d5f4e847d"
+    },
+    {
+      "path": "captures/runtime-before.json",
+      "bytes": 1015,
+      "sha256": "423fa903af39283b26b60e7c6ddf7d29e2148e32fcf1052c396f4e3d2f280fc4"
+    },
+    {
+      "path": "captures/runtime-connected.json",
+      "bytes": 1003,
+      "sha256": "afc687a57d9229cc419cb14747ff8a203479407ba17618edeea611fc04e1e7c8"
+    },
+    {
+      "path": "captures/runtime-after.json",
+      "bytes": 1012,
+      "sha256": "4c76ddd25d2bed9975f2ae0c122e44a07dddae2fd048a10eed5b33a097ff77e7"
+    },
+    {
+      "path": "captures/network-before.json",
+      "bytes": 1442,
+      "sha256": "a89360db0fa47cf6927a2868ef045e05e548678f3bf11407178cf858ca96155a"
+    },
+    {
+      "path": "captures/network-after.json",
+      "bytes": 1439,
+      "sha256": "a8c41935807018b0496dc446e8a8e86d291bda18d38ba5413fbfb3626ac99b01"
+    },
+    {
+      "path": "captures/tunnel-traffic.json",
+      "bytes": 3526,
+      "sha256": "d8575f77484a7598f776b09a4ed8698fa3f876f51ee7af6c3b64fc2a95345826"
+    },
+    {
+      "path": "captures/final-timeline.json",
+      "bytes": 22720,
+      "sha256": "cbf42d6b83c688ddc1af2d56e8bc908a5d4011e2bb8c1ab9de927ce691918ed9"
+    },
+    {
+      "path": "captures/runtime-verification.json",
+      "bytes": 355,
+      "sha256": "bea18452bcf00d4a56384d506a2555e7967cda2d1c7caa3759247844e3041623"
+    },
+    {
+      "path": "captures/runtime-verification-v2.json",
+      "bytes": 503,
+      "sha256": "6865910af8ce0f0817d04fa5c642f4fd3f954e0ff97f388b6c94fda3b74dcb65"
+    },
+    {
+      "path": "captures/vm-restoration.json",
+      "bytes": 416,
+      "sha256": "1c58e1d8bd1223f7c92bd66dc4cb91fb11c494f001dec92a695106da29e757af"
+    },
+    {
+      "path": "captures/snapshots-before.txt",
+      "bytes": 1420,
+      "sha256": "118605b59fca3c3311163539003dcd9c47236a10aafaccf577e2d3c7eb4fe62a"
+    },
+    {
+      "path": "captures/snapshots-after.txt",
+      "bytes": 1961,
+      "sha256": "37da76fe7a309741fcc32f83af5f357925aa647350fa047a27ab1eeb6ae09266"
+    },
+    {
+      "path": "captures/wizard-completed.png",
+      "bytes": 1372449,
+      "sha256": "65c4b1b838da3b76ffa2b6ee24401e7da70acbaf5e55ccac727af516a4a369f7"
+    },
+    {
+      "path": "captures/app-connected.png",
+      "bytes": 889647,
+      "sha256": "134c93ddcca025ff9ffa8aa435b567a271856128a14765312d8bc67918aef579"
+    },
+    {
+      "path": "captures/app-disconnected.png",
+      "bytes": 895449,
+      "sha256": "042e6034bdfe11043d5897425481e56f9083ae4163c1ca2e083c0b64e320fad7"
+    },
+    {
+      "path": "captures/packaged-ffi.json",
+      "bytes": 2906,
+      "sha256": "8842eca2c96d7179a96945516bf04a13d4b6840d8818e75e94b1e9eb93305a86"
+    },
+    {
+      "path": "captures/prior-ffi-failure.json",
+      "bytes": 2847,
+      "sha256": "244b038ffe749abb87bbdc4f357421e7b76977337381ce367ef23b5f64e7430c"
+    }
+  ],
+  "local_runners": [
+    {
+      "path": "C:/r12-v01-core-20260910/prepare-package.py",
+      "sha256": "b6cce2a447d6c86d02e832400d0929275764a2965fdb68cdb8dc54eb50340682"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/verify-client-ci.py",
+      "sha256": "c1f821e4fd1e8ed76b88acd9f9e87045b5493209d826a7de716e90161816ed57"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/verify-core-ci.py",
+      "sha256": "62da92e84bc0160b019a922f42d08c7c2dbc863aa0f9d2417421ff7825cd122b"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/merge-client.py",
+      "sha256": "7d3cd9d92b057cd03289388e93a46f4c2fe933e3778a3efd1c6ed783ac63c66c"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/merge-core.py",
+      "sha256": "ec28d706c9bf2e3b93699bc2daf2c2e8416a2256ab7db5c1f74159f97f8f7e3e"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/build-client-windows.ps1",
+      "sha256": "2475f175ce1babfef804938f0ce052fc16beacc93bae5ab5a10f9a43a99a2028"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/ffi-child.ps1",
+      "sha256": "e5e2609c8544c8c8597a5bd623aa7c561f267cf093903a938560e474ad18b003"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/ffi-run.ps1",
+      "sha256": "5af6c32451abfd73edb5505ef85f52470f04e289d699f785484372287228a18f"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/before.ps1",
+      "sha256": "2c1f28bb1f4b95689d8c5b44996aba6b82c81b6fd8da1952191c9abfbf3c73ef"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/verify-wizard.ps1",
+      "sha256": "433be0e5f25e56426f8b62672acb6a200712ba89584d639c33784502687cd347"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/readback.ps1",
+      "sha256": "a19d763448a441c67a2169652704fa8d6176d0557807793091e1602181acd8f0"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/timeline.ps1",
+      "sha256": "b89ab0d12b3dd863dd4209119e7b5f2babaf634a58a13a138387762694844c40"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/verify-runtime.py",
+      "sha256": "c4834799981d0bf0707d663300a148444a52f775425cfe71dcf747c13923b1d0"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/retain-installed.py",
+      "sha256": "fb7462acfaa42fd7ae4a8b549f0ba082e98afab7a8ebd8969980cf543fbe4329"
+    },
+    {
+      "path": "E:/r12-windows-resume-20260910/network-v2.ps1",
+      "sha256": "620c2b2b8b909ee18db3ee9bd3754eca921497e436fbbd088cf95291d0f40197"
+    },
+    {
+      "path": "E:/r12-windows-resume-20260910/tunnel-traffic.ps1",
+      "sha256": "79747f72cbc023891f5f6c5d0941f37828dce599eb2537140dba932fece1f8d7"
+    }
+  ],
+  "local_logs": [
+    {
+      "path": "C:/r12-v01-core-20260910/client-windows-build.log",
+      "sha256": "4a68a8451956f9e7546a3b29926eb7fd6b6120fff58e7ff4098a0b7193132204"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/client-bootstrap.log",
+      "sha256": "b5ace0c4d1b72eb934f87402af94fd67fb168ce44173752d5b66a6da2373e99f"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/client-clean-runtime-sync.log",
+      "sha256": "a507cb9f4745bf74ea4ff6f11fb0b09dd5266576a650448eb04e9c54d5b3b30d"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/client-runtime-tests.log",
+      "sha256": "8a980a2b090a237a78ecbbb15dce2ecab6b62125caa4d80c6b0130dab260d76a"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/client-runtime-analyze.log",
+      "sha256": "ede84bddbaa33739f6b12bf775cc0b26a625cf84f9a448b801d6b469ef1efc15"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/client-android-tests.log",
+      "sha256": "31a91c462616088c42a76ce9ecb3feae86daac6688ef3233e360c686cb611b63"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/client-seed.log",
+      "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/client-docs.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/client-coordinated-ci-contract.log",
+      "sha256": "ea7bc18ecc2a6fae58e4ea058f28c00b0be3b9e849acf7972b7bce1e2de3d9d0"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/full-test.log",
+      "sha256": "48249480eff8fd8a632acc95b7653dffc7452c2acc8181959714b0fea6eb24c4"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/windows-a.log",
+      "sha256": "782b7c76fba89aecf699008289d88f81a122a4ef4df3b26e31994fda1d59f49a"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/windows-b.log",
+      "sha256": "96065161fe6a82986a0348486d920f9bb2a62267b4f3a30f35a55ba4f6417886"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/android-a.log",
+      "sha256": "897e2fbe03849dc4786bc2c477f9ea8cce4f117e929f14b4486d4bfc074fae57"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/android-b.log",
+      "sha256": "8502ab2d87b6f0936fd0f2247d26cbae36603dcbdca35bf07131b2bf546ca9d8"
+    },
+    {
+      "path": "C:/r12-v01-core-20260910/windows-100-cycle.log",
+      "sha256": "da2ef6160df8c4d3b6bc0debebd376518a9c9619f949fc2d78e13f16f8fbfb9c"
+    }
+  ],
+  "snapshots": {
+    "before_count": 5,
+    "after_count": 7,
+    "original_ids_preserved": true
+  },
+  "public_release": false,
+  "phone_touched": false,
+  "platform_deployed": false,
+  "full_v01_accepted": false,
+  "open": [
+    "Native extended/crash and other sinks",
+    "Android installed privacy",
+    "PSM1 runtime signer and extended authorization",
+    "N03 and full release gates",
+    "Complete source publication and licensing obligations"
+  ],
+  "final_checks": {
+    "client_seed": "PASS exact c8 source",
+    "client_docs": "PASS",
+    "platform_docs_tests": 33,
+    "platform_context": "PASS",
+    "platform_links": 718,
+    "diff_checks": "PASS",
+    "retained_release_artifact_delta": false,
+    "logs": [
+      {
+        "path": "C:/r12-v01-core-20260910/client-final-seed.log",
+        "sha256": "f4840d1df4d9a9090c4c0171af2d489f1a0bd6ee724c8732cd99007414144ca8"
+      },
+      {
+        "path": "C:/r12-v01-core-20260910/client-final-docs.log",
+        "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+      }
+    ]
+  }
+}

@@ -11,6 +11,15 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+R12 Core privacy (2026-09-10): [installed proof](evidence/2026-09-10-r12-core-privacy-installed/README.md)
+updates the owned Win11 VM to client `d655e2a` / Core `c8b0461`. The ordinary
+wizard preserves user state and secure storage; all 304 files match. Direct
+installed-DLL FFI no longer exposes six synthetic markers in return/stderr.
+Core/DNS/egress, ten HTTPS markers, 44 source-bound events and route/DNS recovery
+pass. Client PR105/Core PR10 and their merge CI pass. VM off/NIC none; seven
+snapshots retained. Native extended/crash, Android, N03 and final release gates
+remain open; unsigned setup is not a trusted-signing pass.
+
 R12 diagnostic fault acceptance (2026-09-10): [actual disk-full and source faults](evidence/2026-09-10-r12-observability-faults/README.md)
 uses unchanged installed `6816aab`: isolated NTFS ERROR_DISK_FULL 112/free 0,
 visible UI, TUN/DNS/egress, ten HTTPS markers and exact network recovery PASS.

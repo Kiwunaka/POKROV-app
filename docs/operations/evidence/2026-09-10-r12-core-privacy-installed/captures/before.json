@@ -1,0 +1,10 @@
+﻿{
+    "utc":  "2026-09-10T15:21:08.2678209Z",
+    "client_source":  "2edfbdebb3362cba1a71881545f458bc841e3b0e",
+    "matched_files":  304,
+    "state_sha256":  "505d8e3d789bf0a8438c60b26eb571172cc709c6d2692cc38a461d02fb0ed979",
+    "secure_store_sha256":  "1e7c06cb67e6acd79fd4cea21676cbe2b1a74d3a68e0363d75c8e0b5c4634125",
+    "service_state":  "Running",
+    "service_account":  "LocalSystem",
+    "ui_count":  0
+}

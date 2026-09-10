@@ -1,0 +1,16 @@
+{
+  "status": "FAIL",
+  "checks": {
+    "routes_restored": true,
+    "dns_restored": true,
+    "no_tun_after": true,
+    "stopped": true,
+    "same_304_files": true,
+    "ten_https_markers": true,
+    "core_dns_egress": true,
+    "event_source_identity": false
+  },
+  "events_count": 44,
+  "tun_rx_delta": 24877,
+  "tun_tx_delta": 24877
+}

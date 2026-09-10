@@ -1,0 +1,28 @@
+{
+    "utc":  "2026-09-10T15:24:51.1899404Z",
+    "client_source":  "d655e2a9a58cb3c833f97a327b4342cdb02edf60",
+    "core_source":  "c8b0461c1975ef96e32024774300a5829b9fdc43",
+    "matched_files":  304,
+    "expected_files":  304,
+    "missing":  0,
+    "different":  0,
+    "service_state":  "Running",
+    "ui_count":  1,
+    "status":  {
+                   "client_source":  "0218e89",
+                   "action":  "status",
+                   "elapsed_ms":  0,
+                   "available":  true,
+                   "trusted":  true,
+                   "compatible":  true,
+                   "accepted":  true,
+                   "phase":  "artifact_ready",
+                   "running":  false,
+                   "core_ready":  false,
+                   "dns_ready":  false,
+                   "egress_validated":  false,
+                   "can_connect":  false,
+                   "effective_matches_staged":  false,
+                   "failure":  "none"
+               }
+}
