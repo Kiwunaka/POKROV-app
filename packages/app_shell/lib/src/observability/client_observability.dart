@@ -221,7 +221,8 @@ final class PokrovClientObservability {
             : OperationalStoragePlatform.windows,
       ),
     );
-    await localStore.initialize();
+    // The dispatcher initializes storage while draining and counts IO failures;
+    // diagnostic persistence must not hold up the app's bootstrap.
     final OperationalEventWriter writer;
     if (releaseHealthService == null) {
       writer = localStore;
