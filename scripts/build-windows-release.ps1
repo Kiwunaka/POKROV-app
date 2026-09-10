@@ -574,6 +574,18 @@ if (($windowsReleaseConfig.PSObject.Properties.Name -contains "portable_zip") -a
 $appDirectory = Join-Path $root "apps\\windows_shell"
 $pubspecPath = Join-Path $appDirectory "pubspec.yaml"
 $version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
+if (-not $SkipBuild) {
+  $clientRevision = ([string](& git -C $root rev-parse HEAD 2>&1 | Select-Object -First 1)).Trim()
+  if ($LASTEXITCODE -ne 0 -or $clientRevision -notmatch '^[0-9a-fA-F]{40}$') {
+    throw "Could not bind Windows diagnostics to the client revision."
+  }
+  & git -C $root diff --quiet HEAD --
+  if ($LASTEXITCODE -ne 0) {
+    throw "Commit tracked client changes before building revision-bound Windows diagnostics."
+  }
+  $clientRevision = $clientRevision.ToLowerInvariant()
+  $clientBuildNumber = ($version -split '\+', 2)[1]
+}
 if ($ownerUnsignedExceptionActive) {
   $productVersion = ($version -split '\+', 2)[0]
   $unsignedWarning = [string]$windowsReleaseConfig.signing.user_warning
@@ -712,6 +724,8 @@ if (-not $SkipBuild) {
     "--release",
     "--no-pub",
     "--dart-define=POKROV_APP_VERSION=$version",
+    "--dart-define=POKROV_BUILD_NUMBER=$clientBuildNumber",
+    "--dart-define=POKROV_GIT_REVISION=$clientRevision",
     "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
     "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
     "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
