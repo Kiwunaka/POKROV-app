@@ -1,0 +1,8 @@
+00:00 +0: loading E:/r12client/packages/app_shell/test/support_bundle_delivery_test.dart
+00:00 +0: full outbox preserves retries and bounds concurrent admission
+00:00 +0 -1: full outbox preserves retries and bounds concurrent admission [E]
+  Bad state: Too many elements
+  dart:core                                     Iterable.single
+  test\support_bundle_delivery_test.dart 80:71  main.<fn>
+  
+00:00 +0 -1: Some tests failed.

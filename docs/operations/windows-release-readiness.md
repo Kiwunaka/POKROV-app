@@ -1,5 +1,7 @@
 # Windows Release Readiness
 
+2026-09-10 source update: [encrypted support-outbox bound](evidence/2026-09-10-r12-outbox-bound/README.md), PR102 merged `e547016` / signed source `f318265`. New admission is limited to 24 MiB with existing encrypted retries preserved. 26 focused tests, analyze, seed/docs and both CI PASS. This source update is not installed-package proof; earlier `6816aab` fault evidence remains bound to that package. V03 active/I4; latest-package and V01 gates stay open.
+
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
