@@ -74,9 +74,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Kiwunaka/pokrov-core
-          # PR 105 is the coordinated privacy binding before Core PR 10.
+          # PR 110 is the coordinated lifecycle binding before Core PR 11.
           # Ordinary push/PR checks return to main outside this exact PR.
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 105 && 'c8b0461c1975ef96e32024774300a5829b9fdc43' || 'main' }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 110 && '904e440aca98cb6419744c5c04c83223a6d6380e' || 'main' }}
           path: POKROV-core
           fetch-depth: 0
           persist-credentials: false
