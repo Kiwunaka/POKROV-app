@@ -233,6 +233,10 @@ void main() {
     expect(report.isRuntimeAuthority, isFalse);
     final raw = await store.file.readAsString();
     expect(OperationalPrivacyGuard.containsForbiddenMaterial(raw), isFalse);
+    final invalid = jsonDecode(raw) as Map<String, Object?>;
+    invalid['error_code'] = 'DNS-002';
+    await store.file.writeAsString(jsonEncode(invalid));
+    expect((await store.readPrevious()).kind, PreviousExitKind.corrupt);
   });
 
   test('failure maps and all problem-book paths remain closed', () {

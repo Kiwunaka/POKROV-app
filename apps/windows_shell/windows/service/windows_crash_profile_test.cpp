@@ -77,6 +77,33 @@ int main() {
   }
 
   std::array<WindowsCrashFrame, kMaximumWindowsCrashFrames + 8> many_frames{};
+  pokrov::windows_crash::WindowsCrashDiagnostic projected;
+  Expect(pokrov::windows_crash::ProjectWindowsCrashRecord(record, WindowsCrashProcess::kUi, &projected),
+         "closed UI record did not project");
+  Expect(projected.error_code == "CRASH-001" && projected.signature.size() == 64,
+         "crash projection has no closed code/hash");
+  auto later = record;
+  later.replace(later.find("133700000000000000"), 18, "133700000010000000");
+  pokrov::windows_crash::WindowsCrashDiagnostic next;
+  Expect(pokrov::windows_crash::ProjectWindowsCrashRecord(later, WindowsCrashProcess::kUi, &next) &&
+         next.signature == projected.signature && next.occurred_at_unix_ms != projected.occurred_at_unix_ms,
+         "crash signature depends on capture time");
+  Expect(!pokrov::windows_crash::ProjectWindowsCrashRecord(record, WindowsCrashProcess::kService, &next),
+         "UI record crossed service boundary");
+  for (const auto& corrupt : {record + "token=fixture-canary", std::string(2048, 'x'),
+                              std::string("POKROV_WINDOWS_CRASH_V1|time=1|process=ui|exception=0xc0000005|frames=none\n")}) {
+    Expect(!pokrov::windows_crash::ProjectWindowsCrashRecord(corrupt, WindowsCrashProcess::kUi, &next),
+           "untrusted crash record was projected");
+  }
+  const auto wire = pokrov::windows_crash::EncodeWindowsCrashDiagnostics({projected, projected});
+  std::vector<pokrov::windows_crash::WindowsCrashDiagnostic> decoded;
+  Expect(pokrov::windows_crash::DecodeWindowsCrashDiagnostics(wire, &decoded) && decoded.size() == 2 &&
+         decoded[0].signature == projected.signature && wire.find("frames") == std::string::npos,
+         "bounded hashed crash IPC did not roundtrip");
+  Expect(!pokrov::windows_crash::DecodeWindowsCrashDiagnostics(wire + wire.substr(10), &decoded),
+         "crash IPC exceeded two records");
+  Expect(pokrov::windows_crash::DecodeWindowsCrashDiagnostics("crashes_v1", &decoded) && decoded.empty(),
+         "empty crash state was not distinguished from failure");
   for (std::size_t index = 0; index < many_frames.size(); ++index) {
     many_frames[index] = {WindowsCrashModule::kUi, index + 1};
   }

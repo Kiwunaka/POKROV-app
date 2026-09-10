@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -12,7 +13,49 @@ import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   final now = DateTime.utc(2026, 8, 22, 12);
+
+  test('native crash read requires allowed active PSM and rejects raw records', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    var calls = 0;
+    Object? native = [
+      {
+        'occurred_at_unix_ms': now.millisecondsSinceEpoch,
+        'error_code': 'CRASH-003',
+        'signature': 'a' * 64,
+      },
+    ];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'runtimeEngine.crashDiagnostics');
+      calls++;
+      return native;
+    });
+    addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null));
+    final denied = await _activationFixture(now: now, allowCrashes: false);
+    final allowed = await _activationFixture(now: now);
+    for (final policy in [null, denied.activation.policy]) {
+      expect(await collectPokrovWindowsCrashDiagnostics(
+        hostPlatform: HostPlatform.windows, policy: policy, now: now,
+      ), isEmpty);
+    }
+    expect(await collectPokrovWindowsCrashDiagnostics(
+      hostPlatform: HostPlatform.windows, policy: allowed.activation.policy,
+      now: now.add(const Duration(hours: 1)),
+    ), isEmpty);
+    expect(calls, 0);
+    final records = await collectPokrovWindowsCrashDiagnostics(
+      hostPlatform: HostPlatform.windows, policy: allowed.activation.policy, now: now,
+    );
+    expect(records.single.errorCode, 'CRASH-003');
+    expect(records.single.occurredAt, now);
+    native = [{'raw': 'token=fixture-canary path=C:/fixture/private'}];
+    await expectLater(collectPokrovWindowsCrashDiagnostics(
+      hostPlatform: HostPlatform.windows, policy: allowed.activation.policy, now: now,
+    ), throwsFormatException);
+  });
 
   test('support mode requires consent, persists usage and rejects nonce replay',
       () async {
@@ -48,6 +91,7 @@ void main() {
       encryptedDeliveryAvailable: true,
       supportModePolicy: controller.activePolicy,
       systemSummary: _snapshot().system,
+      crashes: _snapshot().crashes,
       timelineBreadcrumbs: [
         OperationalBreadcrumb(
           eventId: '22222222-2222-4222-8222-222222222222',
@@ -158,6 +202,35 @@ void main() {
     await corrupt.initialize();
     expect(corrupt.view.active, isFalse);
     expect(await state.exists(), isFalse);
+  });
+
+  test('signed crash category includes the closed marker in the preview',
+      () async {
+    final fixture = await _activationFixture(now: now);
+    PreparedSupportBundle prepare(VerifiedSupportCollectionPolicy? policy) =>
+        preparePokrovClientSupportBundle(
+          hostPlatform: HostPlatform.windows,
+          routeMode: RouteMode.allExceptRu,
+          snapshot: null,
+          warpState: 'disabled',
+          now: now,
+          appVersion: '1.2.0',
+          buildNumber: '30',
+          releaseChannel: 'local',
+          candidateLabel: 'test-build',
+          supportModePolicy: policy,
+          systemSummary: _snapshot().system,
+          crashes: _snapshot().crashes,
+        );
+    final prepared = prepare(fixture.activation.policy);
+    final crashFile = prepared.preview.files
+        .singleWhere((file) => file.path == 'crash/index.jsonl');
+    expect(crashFile.category, DiagnosticCategory.crashes);
+    expect(crashFile.size, greaterThan(0));
+    final ordinary = prepare(null);
+    expect(ordinary.preview.profile, SupportDiagnosticProfile.summary);
+    expect(ordinary.preview.files.map((file) => file.path),
+        isNot(contains('crash/index.jsonl')));
   });
 
   testWidgets('persistent support-mode indicator exposes open and disable',

@@ -30,6 +30,7 @@ class FlutterWindow : public Win32Window {
   bool QueueRuntime(pokrov::service::Command command, std::string body,
                     RuntimeTaskRunner::Completion completion);
   std::unique_ptr<RuntimeTaskRunner> runtime_tasks_;
+  std::unique_ptr<RuntimeTaskRunner> diagnostic_tasks_;
   std::shared_ptr<pokrov::service::ServiceCallControl> pending_connect_;
   // The project to run.
   flutter::DartProject project_;

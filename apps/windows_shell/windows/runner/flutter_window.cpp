@@ -273,8 +273,16 @@ FlutterWindow::~FlutterWindow() {
 bool FlutterWindow::QueueRuntime(pokrov::service::Command command, std::string body,
                                 RuntimeTaskRunner::Completion completion) {
   using pokrov::service::Command;
+  if (command == Command::kDiagnosticState && !diagnostic_tasks_) {
+    const HWND window = GetHandle();
+    diagnostic_tasks_ = std::make_unique<RuntimeTaskRunner>([window] {
+      ::PostMessageW(window, kRuntimeCompletionMessage, 0, 0);
+    });
+  }
+  auto* tasks = command == Command::kDiagnosticState
+                    ? diagnostic_tasks_.get() : runtime_tasks_.get();
   auto control = std::make_shared<pokrov::service::ServiceCallControl>();
-  if (!runtime_tasks_ || !runtime_tasks_->Submit(command, std::move(body), control,
+  if (!tasks || !tasks->Submit(command, std::move(body), control,
                                                 std::move(completion))) return false;
   if (command == Command::kConnect || command == Command::kDisconnect ||
       command == Command::kStageProfile || command == Command::kInvalidateProfile) {
@@ -404,6 +412,23 @@ bool FlutterWindow::OnCreate() {
           snapshot_call(Command::kStatus, "", expected_profile_digest_);
           return;
         }
+        if (call.method_name() == "runtimeEngine.crashDiagnostics") {
+          if (!QueueRuntime(Command::kDiagnosticState, "", [reply](auto snapshot) {
+            if (!snapshot.command_accepted) {
+              reply->Error("crash_diagnostics_unavailable", "Crash diagnostics could not be read.");
+              return;
+            }
+            flutter::EncodableList records;
+            for (const auto& record : snapshot.crash_diagnostics) {
+              records.emplace_back(flutter::EncodableMap{
+                  {flutter::EncodableValue("occurred_at_unix_ms"), flutter::EncodableValue(record.occurred_at_unix_ms)},
+                  {flutter::EncodableValue("error_code"), flutter::EncodableValue(record.error_code)},
+                  {flutter::EncodableValue("signature"), flutter::EncodableValue(record.signature)}});
+            }
+            reply->Success(flutter::EncodableValue(records));
+          })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
         if (call.method_name() == "runtimeEngine.initialize") {
           snapshot_call(Command::kInitialize, "", expected_profile_digest_);
           return;
@@ -522,6 +547,10 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  if (diagnostic_tasks_) {
+    diagnostic_tasks_->Shutdown();
+    diagnostic_tasks_.reset();
+  }
   if (runtime_tasks_) {
     runtime_tasks_->Shutdown();
     runtime_tasks_.reset();
@@ -552,6 +581,7 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
   if (message == kRuntimeCompletionMessage) {
     if (runtime_tasks_) runtime_tasks_->Drain();
+    if (diagnostic_tasks_) diagnostic_tasks_->Drain();
     return 0;
   }
   // Give Flutter, including plugins, an opportunity to handle window messages.

@@ -5,6 +5,7 @@
 #include <atomic>
 
 #include "service_protocol.h"
+#include "windows_crash_profile.h"
 
 namespace pokrov::service {
 
@@ -41,6 +42,7 @@ struct ServiceRuntimeSnapshot {
   std::string effective_profile_digest;
   std::string phase = "artifact_missing";
   std::string failure = "service_unavailable";
+  std::vector<windows_crash::WindowsCrashDiagnostic> crash_diagnostics;
 };
 
 // Parse atomically: rejected service data cannot leave partially healthy state.

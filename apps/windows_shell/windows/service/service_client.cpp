@@ -236,7 +236,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
       {},
       0,
       kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
-          kCapabilityProfileIdentity | kCapabilityCancellation,
+          kCapabilityProfileIdentity | kCapabilityCancellation | kCapabilitySanitizedDiagnostic,
       "",
   };
   if (!WriteFrame(pipe, hello, ::GetTickCount64() + 3000, control)) {
@@ -274,7 +274,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
       request_correlation,
       hello_response->session_token,
       operation_nonce,
-      UnixTimeMilliseconds() + (command == Command::kCancel ? 3000 : 30000),
+      UnixTimeMilliseconds() + ((command == Command::kCancel || command == Command::kDiagnosticState) ? 3000 : 30000),
       0,
       body,
   };
@@ -299,7 +299,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
     });
   }
   result.response = ReadFrame(pipe,
-      ::GetTickCount64() + (command == Command::kCancel ? 3000 : 33000), control);
+      ::GetTickCount64() + ((command == Command::kCancel || command == Command::kDiagnosticState) ? 3000 : 33000), control);
   finished = true;
   if (cancellation.joinable()) cancellation.join();
   ::CloseHandle(pipe);
@@ -510,6 +510,15 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
   }
   result.status = exchange.response->status;
   result.command_accepted = result.status == Status::kOk;
+  if (command == Command::kDiagnosticState) {
+    if (result.command_accepted &&
+        !windows_crash::DecodeWindowsCrashDiagnostics(exchange.response->body,
+                                                      &result.crash_diagnostics)) {
+      result.compatible = false;
+      result.command_accepted = false;
+    }
+    return result;
+  }
   if (!ParseServiceRuntimeSnapshot(exchange.response->body, &result)) {
     result.client_state = ClientState::kProtocolIncompatible;
     result.compatible = false;
@@ -535,7 +544,20 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
 ServiceRuntimeSnapshot InvokeInstalledService(Command command,
                                               const std::string& body,
                                               ServiceCallControl* control) {
-  return InvokeService(command, body, control, kProductionPipeName, true);
+  auto result = InvokeService(command, body, control, kProductionPipeName, true);
+  if (command == Command::kDiagnosticState && result.command_accepted) {
+    std::vector<windows_crash::WindowsCrashDiagnostic> ui_records;
+    if (!windows_crash::ReadWindowsCrashDiagnostics(
+            windows_crash::WindowsCrashProcess::kUi,
+            windows_crash::ResolveWindowsUiStateRoot(), &ui_records)) {
+      result.command_accepted = false;
+      result.crash_diagnostics.clear();
+    } else {
+      result.crash_diagnostics.insert(result.crash_diagnostics.end(),
+                                     ui_records.begin(), ui_records.end());
+    }
+  }
+  return result;
 }
 
 #ifdef _DEBUG

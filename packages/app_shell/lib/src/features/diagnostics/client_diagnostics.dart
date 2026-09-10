@@ -14,6 +14,54 @@ import '../../../app_first_runtime_bootstrap.dart'
 import '../../observability/release_health_baseline.dart';
 import 'support_mode.dart';
 
+bool pokrovWindowsCrashCollectionAllowed({
+  required HostPlatform hostPlatform,
+  required VerifiedSupportCollectionPolicy? policy,
+  required DateTime now,
+}) =>
+    hostPlatform == HostPlatform.windows &&
+    policy != null &&
+    !now.isBefore(policy.issuedAt) &&
+    now.isBefore(policy.expiresAt) &&
+    policy.allowedCategories.contains(DiagnosticCategory.crashes) &&
+    policy.allowedCollectors.contains('crash_index');
+
+Future<List<DiagnosticCrashRecord>> collectPokrovWindowsCrashDiagnostics({
+  required HostPlatform hostPlatform,
+  required VerifiedSupportCollectionPolicy? policy,
+  required DateTime now,
+}) async {
+  if (!pokrovWindowsCrashCollectionAllowed(
+    hostPlatform: hostPlatform, policy: policy, now: now,
+  )) return const [];
+  final result = await const MethodChannel('space.pokrov/runtime_engine')
+      .invokeMethod<Object?>('runtimeEngine.crashDiagnostics')
+      .timeout(const Duration(seconds: 12));
+  if (result is! List || result.length > 4) {
+    throw const FormatException('Invalid native crash diagnostics');
+  }
+  return [
+    for (final record in result) _nativeCrashRecord(record),
+  ];
+}
+
+DiagnosticCrashRecord _nativeCrashRecord(Object? value) {
+  if (value is! Map || value.length != 3 ||
+      value['occurred_at_unix_ms'] is! int ||
+      value['error_code'] is! String || value['signature'] is! String) {
+    throw const FormatException('Invalid native crash record');
+  }
+  final milliseconds = value['occurred_at_unix_ms'] as int;
+  if (milliseconds < 0 || milliseconds > 253402300799999) {
+    throw const FormatException('Invalid native crash timestamp');
+  }
+  return DiagnosticCrashRecord(
+    occurredAt: DateTime.fromMillisecondsSinceEpoch(milliseconds, isUtc: true),
+    errorCode: value['error_code'] as String,
+    signature: value['signature'] as String,
+  );
+}
+
 enum PokrovDiagnosticMessageKey {
   verified('diagnostics.summary.verified'),
   checking('diagnostics.summary.checking'),
@@ -128,6 +176,7 @@ final class PokrovDiagnosticsReport {
     required this.preparedBundle,
     required this.supportCode,
     required this.encryptedDeliveryAvailable,
+    this.crashDiagnosticsReady = true,
     required List<String> safeActionKeys,
     required List<PokrovDiagnosticTimelineAttempt> timelineAttempts,
     this.releaseHealthBaseline =
@@ -148,6 +197,7 @@ final class PokrovDiagnosticsReport {
   final PreparedSupportBundle preparedBundle;
   final String supportCode;
   final bool encryptedDeliveryAvailable;
+  final bool crashDiagnosticsReady;
   final List<String> safeActionKeys;
   final List<PokrovDiagnosticTimelineAttempt> timelineAttempts;
   final ClientReleaseHealthBaseline releaseHealthBaseline;
@@ -167,6 +217,7 @@ final class PokrovDiagnosticsReport {
         preparedBundle: preparedBundle,
         supportCode: supportCode,
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
+        crashDiagnosticsReady: crashDiagnosticsReady,
         safeActionKeys: safeActionKeys,
         timelineAttempts: timelineAttempts,
         releaseHealthBaseline:
@@ -189,9 +240,11 @@ abstract final class PokrovDiagnosticsPresenter {
     required String releaseChannel,
     required String candidateLabel,
     required bool encryptedDeliveryAvailable,
+    bool crashDiagnosticsReady = true,
     VerifiedSupportCollectionPolicy? supportModePolicy,
     DiagnosticSystemSummary? systemSummary,
     List<OperationalBreadcrumb> timelineBreadcrumbs = const [],
+    List<DiagnosticCrashRecord> crashes = const [],
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
         const ClientReleaseHealthBaseline.unavailable(),
@@ -260,6 +313,7 @@ abstract final class PokrovDiagnosticsPresenter {
       candidateLabel: candidateLabel,
       supportModePolicy: supportModePolicy,
       systemSummary: systemSummary,
+      crashes: crashes,
       events: [
         if (supportModePolicy != null)
           for (final breadcrumb in timelineBreadcrumbs)
@@ -297,6 +351,7 @@ abstract final class PokrovDiagnosticsPresenter {
       preparedBundle: prepared,
       supportCode: supportCode,
       encryptedDeliveryAvailable: encryptedDeliveryAvailable,
+      crashDiagnosticsReady: crashDiagnosticsReady,
       safeActionKeys: problemBook?.safeActions ?? const <String>[],
       timelineAttempts: _timelineAttempts(timelineBreadcrumbs),
       releaseHealthBaseline: releaseHealthBaseline,
@@ -536,6 +591,7 @@ PreparedSupportBundle preparePokrovClientSupportBundle({
   VerifiedSupportCollectionPolicy? supportModePolicy,
   DiagnosticSystemSummary? systemSummary,
   List<DiagnosticEventRecord> events = const [],
+  List<DiagnosticCrashRecord> crashes = const [],
 }) {
   final platform = hostPlatform == HostPlatform.android ? 'android' : 'windows';
   final channel = hostPlatform == HostPlatform.android &&
@@ -549,6 +605,7 @@ PreparedSupportBundle preparePokrovClientSupportBundle({
     snapshot: DiagnosticSnapshot(
       system: systemSummary,
       events: events,
+      crashes: crashes,
       build: DiagnosticBuildSummary(
         platform: platform,
         appVersion: appVersion,
@@ -706,7 +763,9 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
   void didUpdateWidget(covariant PokrovDiagnosticsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     _supportMode = widget.initialSupportMode;
-    if (oldWidget.initialSupportMode.active && !_supportMode.active) {
+    if (oldWidget.initialSupportMode.active != _supportMode.active ||
+        oldWidget.initialSupportMode.expiresAt != _supportMode.expiresAt) {
+      _report = widget.initialReport;
       unawaited(_refresh(includeReleaseHealth: false));
     }
   }
@@ -830,6 +889,8 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
   Future<void> _createCase({String? savedDiagnosticId}) async {
     final action = widget.onCreateCaseWithBundle;
     if (_sending ||
+        (savedDiagnosticId == null &&
+            (!_report.crashDiagnosticsReady || _refreshing || _supportModeBusy)) ||
         (savedDiagnosticId == null
             ? action == null
             : widget.onRetryPendingBundle == null)) {
@@ -871,7 +932,8 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
 
   Future<void> _exportBundle() async {
     final action = widget.onExportBundle;
-    if (action == null || _exporting) {
+    if (action == null || _exporting || !_report.crashDiagnosticsReady ||
+        _refreshing || _supportModeBusy) {
       return;
     }
     setState(() {
@@ -1285,11 +1347,20 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
               label: const Text('Проверить и восстановить'),
             ),
             const SizedBox(height: 8),
+            if (!_report.crashDiagnosticsReady) ...[
+              const Text(
+                'Сведения об авариях Windows ещё не прочитаны. Обновите проверку '
+                'или выключите режим поддержки, чтобы отправить обычную сводку.',
+                key: ValueKey('diagnostics-crashes-unavailable'),
+              ),
+              const SizedBox(height: 8),
+            ],
             if (_report.encryptedDeliveryAvailable &&
                 widget.onCreateCaseWithBundle != null)
               OutlinedButton.icon(
                 key: const ValueKey('diagnostics-create-case-bundle'),
-                onPressed: _sending ? null : _createCase,
+                onPressed: _sending || _refreshing || _supportModeBusy ||
+                        !_report.crashDiagnosticsReady ? null : _createCase,
                 icon: _sending
                     ? const SizedBox.square(
                         dimension: 18,
@@ -1303,7 +1374,8 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 key: const ValueKey('diagnostics-export-bundle'),
-                onPressed: _exporting ? null : _exportBundle,
+                onPressed: _exporting || _refreshing || _supportModeBusy ||
+                        !_report.crashDiagnosticsReady ? null : _exportBundle,
                 icon: _exporting
                     ? const SizedBox.square(
                         dimension: 18,
