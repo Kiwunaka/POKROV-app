@@ -1,4 +1,4 @@
-# Core lifecycle privacy binding вЂ” 2026-09-10
+# Core lifecycle privacy binding — 2026-09-10
 
 Evidence for source `c8b0461c1975ef96e32024774300a5829b9fdc43`, not an installed
 client or public release. The previous Core c7 DLL exposed planted data in
