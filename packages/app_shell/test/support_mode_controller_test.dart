@@ -5,7 +5,10 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
+import 'package:pokrov_observability_contracts/observability_contracts.dart';
+import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 void main() {
@@ -31,12 +34,41 @@ void main() {
     expect(controller.view.active, isFalse);
 
     await controller.activate(fixture.activation, userConfirmed: true);
-    final prepared = const SupportBundleBuilder().prepare(
-      snapshot: _snapshot(),
-      profile: SupportDiagnosticProfile.extended,
+    final prepared = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: null,
+      statusLabel: 'Отключено',
+      warpState: 'disabled',
       now: now,
-      extendedPolicy: fixture.activation.policy,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'local',
+      candidateLabel: 'test-build',
+      encryptedDeliveryAvailable: true,
+      supportModePolicy: controller.activePolicy,
+      systemSummary: _snapshot().system,
+      timelineBreadcrumbs: [
+        OperationalBreadcrumb(
+          eventId: '22222222-2222-4222-8222-222222222222',
+          occurredAtUtc: now,
+          name: 'app.connection.dns.finished',
+          outcome: ObservabilityOutcome.failed,
+          errorCode: 'DNS-002',
+          generation: 1,
+          sequence: 1,
+        ),
+      ],
+    ).preparedBundle;
+    expect(prepared.preview.profile, SupportDiagnosticProfile.extended);
+    expect(
+      prepared.preview.files
+          .singleWhere((file) => file.path == 'events/recent.jsonl')
+          .size,
+      greaterThan(0),
     );
+    expect(prepared.preview.files.map((file) => file.path),
+        contains('system/summary.json'));
     await controller.registerBundle(prepared);
     expect(controller.view.active, isTrue);
     expect(controller.view.consumedBundles, 1);

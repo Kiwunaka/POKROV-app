@@ -546,6 +546,13 @@ Support contract rules:
   `PSM1-*` code is redeemed and its Ed25519 policy independently verifies for
   the exact platform/app/build. The app then shows categories, expiry and caps
   and requires explicit confirmation; redemption alone cannot activate it
+- the diagnostics screen prepares the extended preview from the current system
+  summary and the same bounded, sanitized connection breadcrumbs shown locally.
+  System data is limited to OS family/numeric version (unknown when unavailable),
+  process ABI and app locale. Free-form OS build strings, device fingerprints,
+  raw native journals, event IDs and arbitrary event fields are not collected.
+  Event stages are closed connection phases with catalog error codes. The normal
+  summary profile still contains only build/network/redaction categories.
 - while active, support mode has a persistent app-level indicator and manual
   disable action. It cannot execute commands, modify VPN/routes/DNS, read user
   files, capture packets/destinations, expose tokens/configuration, hide itself
