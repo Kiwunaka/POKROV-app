@@ -10,8 +10,9 @@ ABI2, event ABI1 and 15 exports remain unchanged.
 
 [C02 source and artifact evidence](../operations/evidence/2026-09-11-r12-c02-lifecycle/README.md)
 retains the initial goroutine and handle failures alongside fixed source race
-and bounded default-scheduler DLL observations. New consumer/CI convergence is
-pending. Earlier installed and C01 receipts remain tied to their previous
+and bounded default-scheduler DLL observations. Client PR110 and Core PR11 are merged with equal source trees; all four
+exact PR/merge CI workflows pass. The client passed 81 runtime tests, 8 Android
+Flutter tests and a separate 100-cycle exact-DLL Dart test. Earlier installed and C01 receipts remain tied to their previous
 bytes; this binding does not transfer device or public release acceptance.
 
 ## C01 contract acceptance — 2026-09-11

@@ -1,0 +1,194 @@
+{
+  "status": "PASS_C02_ORIGINAL_DOD_I3",
+  "full_release_complete": false,
+  "source_and_artifacts_merged": true,
+  "device_or_publication_performed": false,
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "c133ffcf8b8ec1beedc0aaf332d9894e66739f2f164e4675a29185d2bb5f446e"
+    },
+    {
+      "path": "android-evidence.json",
+      "sha256": "8eb6d4f60d2bf9ef922a85c369e5db269fb5ee448713e403ef11b7337cd77737"
+    },
+    {
+      "path": "artifact-lifecycle-v2.json",
+      "sha256": "f56ec9f85722c344b946ad42fefba0a688893d192d64e82c75b105285cddbc2b"
+    },
+    {
+      "path": "artifact-lifecycle-v2.py",
+      "sha256": "2a716f6591ceb0e50d4b2726729d64bab0e856a040faa529804d97aeba0d0e7a"
+    },
+    {
+      "path": "artifact-lifecycle.json",
+      "sha256": "181705596751b166075dc850b8a50f975e4443d6d4c4f031423d4f966bdec131"
+    },
+    {
+      "path": "artifact-lifecycle.py",
+      "sha256": "5ea6f8d588989513ef2a54fd08992077a756ec2d76631644f4ef12524bdac0cd"
+    },
+    {
+      "path": "before-tagged-lifecycle.log",
+      "sha256": "f461e06ead49dca6c2a99abda70ff0b02488b8be0ba3f3af4fb8bcf634403fa9"
+    },
+    {
+      "path": "binding.json",
+      "sha256": "0e9686f5915f3c58485da0cd326520b3c25f8fc20704561f0da7cb4771d18a06"
+    },
+    {
+      "path": "client-android-tests.log",
+      "sha256": "31a91c462616088c42a76ce9ecb3feae86daac6688ef3233e360c686cb611b63"
+    },
+    {
+      "path": "client-ci-merge.json",
+      "sha256": "9a64ef1171e6a54dd170fe9fd33afb9bcb6d38920eaeb5a66c1280d8d294ccb4"
+    },
+    {
+      "path": "client-ci-pr.json",
+      "sha256": "f4cea1f7bce7cdf1581f1d2dbe7fbebe5e8ab3c7a1edda40605109dc866186a6"
+    },
+    {
+      "path": "client-coordinated-ci-contract.log",
+      "sha256": "ea7bc18ecc2a6fae58e4ea058f28c00b0be3b9e849acf7972b7bce1e2de3d9d0"
+    },
+    {
+      "path": "client-docs-final.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "path": "client-docs-v2.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "path": "client-evidence-integrity.json",
+      "sha256": "883e32dffcc8b729e9103930bf1dade868614a10a616ebbb774859a669d124ce"
+    },
+    {
+      "path": "client-merge-binding.json",
+      "sha256": "d1cbf06e6355b971761a3544bf9bb7d0018781ed15b1aac7b02471d362d503d5"
+    },
+    {
+      "path": "client-proxy-100.log",
+      "sha256": "52aa3468ea94d2c94fbd618ed2ea81a90b83ce418f53899d5b02aa36f3ca2986"
+    },
+    {
+      "path": "client-runtime-tests-v2.log",
+      "sha256": "8a980a2b090a237a78ecbbb15dce2ecab6b62125caa4d80c6b0130dab260d76a"
+    },
+    {
+      "path": "client-seed-final.log",
+      "sha256": "2105ceb5511a419a6b93407efdfb2075a7d9f9df5f246fd501f840de98a50c2f"
+    },
+    {
+      "path": "client-seed.log",
+      "sha256": "e647c8c6c742b5420349a763aff2b83f80ca1909366d1cb0594275c6a8345e4f"
+    },
+    {
+      "path": "client-source-promoted.json",
+      "sha256": "aa2b0833b98d58b13148bb5572e6fe16f7dee8f19c42aab2d662b86a3f8be978"
+    },
+    {
+      "path": "consumer-checks.json",
+      "sha256": "47b7989707e77c117b64b7d775a9bf5dd90816e400c8c4549f77d49116d6688b"
+    },
+    {
+      "path": "core-ci-initial-failed.log",
+      "sha256": "537620d0c49f523290fd6e44cabbcaf2e193840333e3a2048945fb8b3980ca90"
+    },
+    {
+      "path": "core-ci-merge.json",
+      "sha256": "0008a5ef2a659f6ac4a39db7cbcb4756658fa6bf943cc4d732bc2599ee905725"
+    },
+    {
+      "path": "core-ci-pr.json",
+      "sha256": "564eeee5310a60f753b1b7670e0a1da09d62619bacf4422979c634b0cdcc453a"
+    },
+    {
+      "path": "core-ci-resource-fuzz.log",
+      "sha256": "5a1e59e54db7ec62b593a8f7525507cc16860a53a39c7e0a7c0f1ff3fd1422ef"
+    },
+    {
+      "path": "core-full-tests-final-v2.log",
+      "sha256": "d61e0425073aea54abebd54ffef5f4bd594cc84cf4ad5b3cb9f6b9e021300316"
+    },
+    {
+      "path": "core-merge-binding.json",
+      "sha256": "be31c59364cbab671b1fc80915306c53395c776639dbad6717165537c20ce40a"
+    },
+    {
+      "path": "docs-links-final.json",
+      "sha256": "e352541958c39172ca0885bb6b611ee990169d15c928cf4bd108173c258ad0f4"
+    },
+    {
+      "path": "handle-types.py",
+      "sha256": "6d411c789b831da2f5b8d22b313fc79291e9a593ebf028b652e6da0b5e0d6eb3"
+    },
+    {
+      "path": "lifecycle-windows-race-v2.log",
+      "sha256": "8e6b9c03215abf09ea3b2c732dd9fa0a78b55b326f091aa70c145a2f1944fe65"
+    },
+    {
+      "path": "lifecycle-windows-race.log",
+      "sha256": "4a0ec5e27fefb206beb75c6cf6ecd9ed90e8fd10fc83174780bce170efe33053"
+    },
+    {
+      "path": "mobile-bridge-windows-race.log",
+      "sha256": "7999eca1498c96dadd59b9b6b2d5451c8e8eb060de779f807e8a525ee07558b6"
+    },
+    {
+      "path": "platform-context-final.log",
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "path": "platform-docs-final.log",
+      "sha256": "46771e8ab8d591ac5d9cddf6da8da599ce05eb84dd50465d0158dc5d444f9cbc"
+    },
+    {
+      "path": "previous-runtime-binding.json",
+      "sha256": "4f2f6a7964eb736af3be3d84c2cd87a105a1269dcebe6cf4ea0a71562ab5b514"
+    },
+    {
+      "path": "README.md",
+      "sha256": "815f63462c055a162bd7e6e6a7fb37af81a4480c45968e506bf3f4c70a127623"
+    },
+    {
+      "path": "source-promoted.json",
+      "sha256": "ff0ff1a8a3c2dbeaceb91914cca767f17dad0b260dd68b1c3bf004cde9838081"
+    },
+    {
+      "path": "supported-windows-race.log",
+      "sha256": "627ce1bdd01755c2cb3cee8fb74ec48f661025e1c9073c38494bbf89e9c5f985"
+    },
+    {
+      "path": "windows-evidence.json",
+      "sha256": "9c132c6165904d9de8bce87b11386ab4eafa53200e0976c0fd35e1ead5b644f2"
+    }
+  ],
+  "script_hashes": [
+    {
+      "path": "C:\\r12-c02-20260911\\bind-client.py",
+      "sha256": "f45ba3d7252591df63d7c704dadffa4e6e5e540927f9058e5a0a3a46fdbd425e"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\promote.py",
+      "sha256": "f0f5f71d4ba5caf859b54931a2a9bb76f46c9044279493ac2d77bb09143455e3"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\promote-client.py",
+      "sha256": "1f30c76e06f7bb43c8fcaee8963d1b736e93b3e2cc2629e19c4ea02cca74c432"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\sign-coordinated-client.py",
+      "sha256": "7d644c5d764732e3e2f7c08a9c22ae34b9af0b3e54802e86bb8a284327cae3bf"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\finish-evidence.py",
+      "sha256": "f6c3fa46862d34cd93097d6bb8d0f12d9d7204f090ffb12caa01e7161432a6eb"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\check-doc-links.py",
+      "sha256": "846155e815a966917b6e62a4a464d41c4df6d47dc6ef526a4544dc9738479e17"
+    }
+  ]
+}

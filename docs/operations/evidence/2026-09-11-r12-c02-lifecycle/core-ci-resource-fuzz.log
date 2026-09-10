@@ -1,0 +1,74 @@
+test	Race-test supported runtime packages	﻿2026-09-10T22:25:55.2987101Z ##[group]Run go test -race ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./ray2sing/ray2sing
+test	Race-test supported runtime packages	2026-09-10T22:25:55.2987697Z ^[[36;1mgo test -race ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./ray2sing/ray2sing^[[0m
+test	Race-test supported runtime packages	2026-09-10T22:25:55.3020111Z shell: /usr/bin/bash -e {0}
+test	Race-test supported runtime packages	2026-09-10T22:25:55.3020332Z env:
+test	Race-test supported runtime packages	2026-09-10T22:25:55.3020568Z   POKROV_SOURCE_COMMIT: 904e440aca98cb6419744c5c04c83223a6d6380e
+test	Race-test supported runtime packages	2026-09-10T22:25:55.3020843Z ##[endgroup]
+test	Race-test supported runtime packages	2026-09-10T22:25:57.4139604Z ok  	github.com/Kiwunaka/POKROV-core/internal/observability	1.051s
+test	Race-test supported runtime packages	2026-09-10T22:26:05.2978007Z ok  	github.com/Kiwunaka/POKROV-core/v2/config	1.072s
+test	Race-test supported runtime packages	2026-09-10T22:26:05.6563999Z ok  	github.com/Kiwunaka/POKROV-core/v2/hcore	1.065s
+test	Race-test supported runtime packages	2026-09-10T22:26:05.6564444Z ?   	github.com/Kiwunaka/POKROV-core/v2/hutils	[no test files]
+test	Race-test supported runtime packages	2026-09-10T22:26:05.6566635Z ok  	github.com/Kiwunaka/POKROV-core/ray2sing/ray2sing	1.066s
+test	Check release lifecycle resource ownership	﻿2026-09-10T22:26:05.7011065Z ##[group]Run go test -race -count=1 -tags with_clash_api -run '^TestStartStopReleasesServiceObservers$' -v ./v2/hcore
+test	Check release lifecycle resource ownership	2026-09-10T22:26:05.7012287Z ^[[36;1mgo test -race -count=1 -tags with_clash_api -run '^TestStartStopReleasesServiceObservers$' -v ./v2/hcore^[[0m
+test	Check release lifecycle resource ownership	2026-09-10T22:26:05.7057685Z shell: /usr/bin/bash -e {0}
+test	Check release lifecycle resource ownership	2026-09-10T22:26:05.7058061Z env:
+test	Check release lifecycle resource ownership	2026-09-10T22:26:05.7058433Z   POKROV_SOURCE_COMMIT: 904e440aca98cb6419744c5c04c83223a6d6380e
+test	Check release lifecycle resource ownership	2026-09-10T22:26:05.7058878Z ##[endgroup]
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.1177241Z === RUN   TestStartStopReleasesServiceObservers
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.1184346Z ^[[37mDEBUG^[[0m[0000] POKROV CORE libbox.Setup success /tmp/TestStartStopReleasesServiceObservers194367222/001 /tmp/TestStartStopReleasesServiceObservers194367222/001 /tmp/TestStartStopReleasesServiceObservers194367222/001 true
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.1185720Z ^[[37mDEBUG^[[0m[0000] POKROV CORE StartGrpcServerByMode  0
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.3422387Z ^[[37mDEBUG^[[0m[0000] POKROV CORE stored POKROV settings unavailable
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.3663821Z ^[[37mDEBUG^[[0m[0000] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.4084350Z ^[[37mDEBUG^[[0m[0000] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.4517413Z ^[[37mDEBUG^[[0m[0000] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.6233347Z ^[[37mDEBUG^[[0m[0000] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.6728836Z     lifecycle_test.go:129: cycle=1 goroutines=25 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.8986480Z ^[[37mDEBUG^[[0m[0000] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.9289506Z     lifecycle_test.go:129: cycle=2 goroutines=27 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.9500565Z ^[[37mDEBUG^[[0m[0000] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:13.9717438Z     lifecycle_test.go:129: cycle=3 goroutines=29 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.0023635Z ^[[37mDEBUG^[[0m[0000] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.0239234Z     lifecycle_test.go:129: cycle=4 goroutines=30 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.0453334Z ^[[37mDEBUG^[[0m[0000] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.2503867Z     lifecycle_test.go:129: cycle=5 goroutines=32 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.2733285Z ^[[37mDEBUG^[[0m[0001] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.2958162Z     lifecycle_test.go:129: cycle=6 goroutines=34 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.3166925Z ^[[37mDEBUG^[[0m[0001] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.3388181Z     lifecycle_test.go:129: cycle=7 goroutines=40 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.3602968Z ^[[37mDEBUG^[[0m[0001] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.4058034Z     lifecycle_test.go:129: cycle=8 goroutines=35 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.4268707Z ^[[37mDEBUG^[[0m[0001] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.4492130Z     lifecycle_test.go:129: cycle=9 goroutines=35 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.4732841Z ^[[37mDEBUG^[[0m[0001] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.4954804Z     lifecycle_test.go:129: cycle=10 goroutines=36 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.5753220Z ^[[37mDEBUG^[[0m[0001] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.5975251Z     lifecycle_test.go:129: cycle=11 goroutines=38 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.7430249Z ^[[37mDEBUG^[[0m[0001] [Service] Restarting
+test	Check release lifecycle resource ownership	2026-09-10T22:26:14.8210678Z     lifecycle_test.go:129: cycle=12 goroutines=39 OS resources=14
+test	Check release lifecycle resource ownership	2026-09-10T22:26:15.3532971Z     lifecycle_test.go:138: goroutines before=22 after=24; OS resources before=14 after=12; measured cycles=12 each start/restart/stop; old and new sessions cancelled
+test	Check release lifecycle resource ownership	2026-09-10T22:26:15.3538034Z --- PASS: TestStartStopReleasesServiceObservers (2.24s)
+test	Check release lifecycle resource ownership	2026-09-10T22:26:15.3538564Z PASS
+test	Check release lifecycle resource ownership	2026-09-10T22:26:16.3579148Z ok  	github.com/Kiwunaka/POKROV-core/v2/hcore	3.300s
+test	Vet and race-test mobile Core event bridge	﻿2026-09-10T22:26:32.2042094Z ##[group]Run go vet ./daemon ./experimental/libbox
+test	Vet and race-test mobile Core event bridge	2026-09-10T22:26:32.2042452Z ^[[36;1mgo vet ./daemon ./experimental/libbox^[[0m
+test	Vet and race-test mobile Core event bridge	2026-09-10T22:26:32.2042730Z ^[[36;1mgo test -race ./daemon ./experimental/libbox^[[0m
+test	Vet and race-test mobile Core event bridge	2026-09-10T22:26:32.2075940Z shell: /usr/bin/bash -e {0}
+test	Vet and race-test mobile Core event bridge	2026-09-10T22:26:32.2076173Z env:
+test	Vet and race-test mobile Core event bridge	2026-09-10T22:26:32.2076420Z   POKROV_SOURCE_COMMIT: 904e440aca98cb6419744c5c04c83223a6d6380e
+test	Vet and race-test mobile Core event bridge	2026-09-10T22:26:32.2076713Z ##[endgroup]
+test	Vet and race-test mobile Core event bridge	2026-09-10T22:26:40.3237186Z ok  	github.com/sagernet/sing-box/daemon	1.117s
+test	Vet and race-test mobile Core event bridge	2026-09-10T22:26:40.3237682Z ok  	github.com/sagernet/sing-box/experimental/libbox	1.080s
+test	Fuzz the config and profile parser	2026-09-10T22:27:25.1663617Z fuzz: elapsed: 0s, gathering baseline coverage: 0/184 completed
+test	Fuzz the config and profile parser	2026-09-10T22:27:28.0633065Z fuzz: elapsed: 3s, gathering baseline coverage: 184/184 completed, now fuzzing with 4 workers
+test	Fuzz the config and profile parser	2026-09-10T22:27:28.1680830Z fuzz: elapsed: 3s, execs: 224 (75/sec), new interesting: 0 (total: 184)
+test	Fuzz the config and profile parser	2026-09-10T22:27:31.1687333Z fuzz: elapsed: 6s, execs: 8459 (2745/sec), new interesting: 16 (total: 200)
+test	Fuzz the config and profile parser	2026-09-10T22:27:34.1699017Z fuzz: elapsed: 9s, execs: 20214 (3920/sec), new interesting: 43 (total: 227)
+test	Fuzz the config and profile parser	2026-09-10T22:27:37.1671604Z fuzz: elapsed: 12s, execs: 27182 (2322/sec), new interesting: 57 (total: 241)
+test	Fuzz the config and profile parser	2026-09-10T22:27:40.1662593Z fuzz: elapsed: 15s, execs: 30073 (964/sec), new interesting: 65 (total: 249)
+test	Fuzz the config and profile parser	2026-09-10T22:27:43.1673707Z fuzz: elapsed: 18s, execs: 31805 (577/sec), new interesting: 67 (total: 251)
+test	Fuzz the config and profile parser	2026-09-10T22:27:46.1683701Z fuzz: elapsed: 21s, execs: 31805 (0/sec), new interesting: 67 (total: 251)
+test	Fuzz the config and profile parser	2026-09-10T22:27:49.1742560Z fuzz: elapsed: 24s, execs: 31805 (0/sec), new interesting: 67 (total: 251)
+test	Fuzz the config and profile parser	2026-09-10T22:27:52.1761811Z fuzz: elapsed: 27s, execs: 76877 (15034/sec), new interesting: 71 (total: 255)
+test	Fuzz the config and profile parser	2026-09-10T22:27:55.1678536Z fuzz: elapsed: 30s, execs: 77733 (285/sec), new interesting: 74 (total: 258)
+test	Fuzz the config and profile parser	2026-09-10T22:27:56.1731799Z fuzz: elapsed: 31s, execs: 77733 (0/sec), new interesting: 74 (total: 258)

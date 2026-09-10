@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "merge": "edc607c3da66c5d23767a7fe3ca796b5483d68e8",
+  "source": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "tree": "79381b964dde17672d927d23280da563745d82d0",
+  "same_tree": true,
+  "merge_signature_verified": true,
+  "merged_at": "2026-09-10T22:53:15Z",
+  "pr": "https://github.com/Kiwunaka/pokrov-core/pull/11"
+}

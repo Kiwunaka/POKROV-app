@@ -1,0 +1,1 @@
+PASS: client release-v2 CI is strict and the Windows exact-candidate gate retains sanitized failure evidence.
