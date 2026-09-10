@@ -553,6 +553,9 @@ Support contract rules:
   raw native journals, event IDs and arbitrary event fields are not collected.
   Event stages are closed connection phases with catalog error codes. The normal
   summary profile still contains only build/network/redaction categories.
+  Optional system, events and crashes categories are omitted unless allowed by
+  the signed policy; an events/system policy must not collect an empty crash
+  index or fail the preview because crashes were not authorized.
 - while active, support mode has a persistent app-level indicator and manual
   disable action. It cannot execute commands, modify VPN/routes/DNS, read user
   files, capture packets/destinations, expose tokens/configuration, hide itself
