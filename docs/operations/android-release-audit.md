@@ -1014,3 +1014,11 @@ sections. The duplicate brand assets remain required by the current host-path
 contract. This is I3 packaging evidence with internal Android Debug signing
 and loopback API. D01/final signed candidate, installation, distribution and
 full C05 acceptance remain open; retained candidate.33 evidence is unchanged.
+
+## 2026-09-11 Psiphon file attribution
+
+The shared notice asset appends the original `u_prng.go` Psiphon copyright
+and explicit uTLS license reference. All previous bytes and 185 recorded
+bodies are retained. [Source evidence](evidence/2026-09-11-r12-utls-file-attribution/README.md)
+binds the 77 selected files to Core 904. The root license gap of the pinned
+fork and full C05 clearance remain open; exact package checks are pending.
