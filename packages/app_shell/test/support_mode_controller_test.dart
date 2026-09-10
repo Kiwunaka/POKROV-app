@@ -18,7 +18,7 @@ void main() {
       () async {
     final temporary = await Directory.systemTemp.createTemp('pokrov-mode-');
     addTearDown(() => temporary.delete(recursive: true));
-    final fixture = await _activationFixture(now: now);
+    final fixture = await _activationFixture(now: now, allowCrashes: false);
     final controller = _controller(
       temporary: temporary,
       now: () => now,
@@ -69,6 +69,8 @@ void main() {
     );
     expect(prepared.preview.files.map((file) => file.path),
         contains('system/summary.json'));
+    expect(prepared.preview.files.map((file) => file.path),
+        isNot(contains('crash/index.jsonl')));
     await controller.registerBundle(prepared);
     expect(controller.view.active, isTrue);
     expect(controller.view.consumedBundles, 1);
@@ -221,16 +223,20 @@ Future<({SupportModeActivation activation, String signingPublicKey})>
   String platform = 'windows',
   String appVersion = '1.2.0',
   String buildNumber = '30',
+  bool allowCrashes = true,
 }) async {
   final algorithm = Ed25519();
   final keyPair = await algorithm.newKeyPair();
   final publicKey = await keyPair.extractPublicKey();
   final payload = <String, Object?>{
-    'allowed_categories':
-        DiagnosticCategory.values.map((category) => category.name).toList(),
-    'allowed_collectors': const <String>[
+    'allowed_categories': DiagnosticCategory.values
+        .where((category) =>
+            allowCrashes || category != DiagnosticCategory.crashes)
+        .map((category) => category.name)
+        .toList(),
+    'allowed_collectors': <String>[
       'build_summary',
-      'crash_index',
+      if (allowCrashes) 'crash_index',
       'network_summary',
       'operational_events',
       'redaction_report',
