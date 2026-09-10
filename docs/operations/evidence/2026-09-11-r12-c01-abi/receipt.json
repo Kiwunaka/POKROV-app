@@ -1,0 +1,84 @@
+{
+  "status": "PASS_C01_ACCEPTANCE",
+  "product_code_changed": false,
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "22106984a6c1274ead5c283789ca11d75b303658949aaa627698747e7b2d6160"
+    },
+    {
+      "path": "abi-contract.log",
+      "sha256": "461656f34f5f198042e6f4156b01da67963ba0a9a9f5da99772a6426d2c39780"
+    },
+    {
+      "path": "audit.json",
+      "sha256": "4491358ac50c4129653ae6719141bd2420816ef487a3599413b5c4f2c607ddef"
+    },
+    {
+      "path": "audit.py",
+      "sha256": "c94803333220a522557d823e69a6d91b56e0a086f8dda0e67a4bb38dcc03ccff"
+    },
+    {
+      "path": "awg2-contract.log",
+      "sha256": "c2d1bbf1618ecfca476340384f444a901b5c979ba687597c919f29af2227269c"
+    },
+    {
+      "path": "awg31-contract.log",
+      "sha256": "49661af8e69ce6c1e86707d1720b3c579452d9284aeac1791760c0065cd5ca40"
+    },
+    {
+      "path": "client-docs.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "path": "client-seed.log",
+      "sha256": "69c3502dfa3fa51d68615c7ede916662ebaf221568eda05af06e2595ae965e68"
+    },
+    {
+      "path": "consumer-abi-tests.log",
+      "sha256": "805a90638c4d6d83d2346791832943530d11578d86fe230b1596cf4960ba2925"
+    },
+    {
+      "path": "docs-links-final.json",
+      "sha256": "9c0f273775f852acb50c5c77357d3a0b1178f08152610ab777432d3a2e7d78a4"
+    },
+    {
+      "path": "hy2-contract.log",
+      "sha256": "6d9ce89f6c5aeacbfa39a57b936bbab6c5d1395a342929b712a719f2a91653e1"
+    },
+    {
+      "path": "observability-contract.log",
+      "sha256": "c7888a9107fc8ec20a24daf16ed3a3793aacbef3bbf697a135203b7a1b5f9384"
+    },
+    {
+      "path": "platform-context.log",
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "path": "platform-docs.log",
+      "sha256": "3ad662f775402842298035c10f902cca893213e4b20fee94459e60f5dea8e635"
+    },
+    {
+      "path": "README.md",
+      "sha256": "86ea4dbdd95159bc2f5d144a10c9bd0469ce0b495fb47471664b739b68ee3b9e"
+    }
+  ],
+  "scripts": [
+    {
+      "path": "C:\\r12-c01-20260911\\audit.py",
+      "sha256": "c94803333220a522557d823e69a6d91b56e0a086f8dda0e67a4bb38dcc03ccff"
+    },
+    {
+      "path": "C:\\r12-c01-20260911\\retain.py",
+      "sha256": "54b6b4f4894768308fd914fd09340c4bf297df260778dc36f8c69ab025005678"
+    },
+    {
+      "path": "C:\\r12-c01-20260911\\finalize.py",
+      "sha256": "e331d25ea439d29622b4ee29682a3890ecf6308a3a876fc86f7ad2ba173fb362"
+    },
+    {
+      "path": "C:\\r12-c01-20260911\\check-doc-links.py",
+      "sha256": "a754625c72c7700b5d2c7544a962c13e4b24db50eeba12cf083bf5a5918e6b2e"
+    }
+  ]
+}

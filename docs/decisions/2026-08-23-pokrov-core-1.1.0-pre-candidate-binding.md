@@ -1,5 +1,15 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
+## C01 contract acceptance — 2026-09-11
+
+[Exact ABI/config/event/capability matrix](../operations/evidence/2026-09-11-r12-c01-abi/README.md)
+verifies the original C01 source/artifact/consumer criterion at I3 for Core
+`c8b0461` and client `e18fa60` / merge `503979f`. Five reproduced files, four
+Android ABIs, generated classes, actual Windows ABI2 descriptor/15 exports,
+five contract checks and six consumer tests pass. Exact direct/store CI and
+installed Windows evidence are bound to those bytes. Android JNI device
+execution, final candidate and the full release remain separate gates.
+
 ## Current lifecycle privacy binding — 2026-09-10
 
 The development client binds Core `c8b0461c1975ef96e32024774300a5829b9fdc43`. A real rejected-profile FFI call
