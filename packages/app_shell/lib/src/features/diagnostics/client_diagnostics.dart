@@ -9,6 +9,8 @@ import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
+import '../../../app_first_runtime_bootstrap.dart'
+    show SupportBundleTransferFailure;
 import '../../observability/release_health_baseline.dart';
 import 'support_mode.dart';
 
@@ -647,6 +649,8 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
     required this.onOpenSupport,
     this.onReleaseHealthRefresh,
     this.onCreateCaseWithBundle,
+    this.onLoadPendingBundles,
+    this.onRetryPendingBundle,
     this.onExportBundle,
     this.initialSupportMode = const PokrovSupportModeView.inactive(),
     this.onActivateSupportMode,
@@ -661,6 +665,8 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
   final VoidCallback onOpenSupport;
   final Future<SupportBundleDeliveryResult> Function(PreparedSupportBundle)?
       onCreateCaseWithBundle;
+  final Future<List<String>> Function()? onLoadPendingBundles;
+  final Future<SupportBundleDeliveryResult> Function(String)? onRetryPendingBundle;
   final Future<SupportBundleExportResult> Function(PreparedSupportBundle)?
       onExportBundle;
   final PokrovSupportModeView initialSupportMode;
@@ -679,6 +685,8 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
   String? _refreshError;
   SupportBundleDeliveryResult? _delivery;
   String? _deliveryError;
+  List<String> _pendingBundleIds = const [];
+  String? _pendingBundlesError;
   bool _exporting = false;
   SupportBundleExportResult? _export;
   String? _exportError;
@@ -787,6 +795,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
         });
       }
     } finally {
+      await _loadPendingBundles();
       if (mounted) {
         setState(() {
           _refreshing = false;
@@ -795,9 +804,35 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     }
   }
 
-  Future<void> _createCase() async {
+  Future<void> _loadPendingBundles() async {
+    final load = widget.onLoadPendingBundles;
+    if (load == null || !mounted) {
+      return;
+    }
+    try {
+      final ids = await load();
+      if (mounted) {
+        setState(() {
+          _pendingBundleIds = ids;
+          _pendingBundlesError = null;
+        });
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _pendingBundlesError =
+              'Не удалось прочитать сохранённые отчёты. Обновите проверку.';
+        });
+      }
+    }
+  }
+
+  Future<void> _createCase({String? savedDiagnosticId}) async {
     final action = widget.onCreateCaseWithBundle;
-    if (action == null || _sending) {
+    if (_sending ||
+        (savedDiagnosticId == null
+            ? action == null
+            : widget.onRetryPendingBundle == null)) {
       return;
     }
     setState(() {
@@ -806,21 +841,26 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       _deliveryError = null;
     });
     try {
-      final result = await action(_report.preparedBundle);
+      final result = savedDiagnosticId == null
+          ? await action!(_report.preparedBundle)
+          : await widget.onRetryPendingBundle!(savedDiagnosticId);
       if (!mounted) {
         return;
       }
       setState(() {
         _delivery = result;
       });
-    } on Object {
+    } on Object catch (error) {
       if (mounted) {
         setState(() {
-          _deliveryError =
-              'Не удалось передать зашифрованную диагностику. Откройте поддержку и повторите.';
+          _deliveryError = _bundleErrorMessage(
+            error,
+            'Не удалось передать зашифрованную диагностику. Повторите отправку сохранённого отчёта.',
+          );
         });
       }
     } finally {
+      await _loadPendingBundles();
       if (mounted) {
         setState(() {
           _sending = false;
@@ -847,11 +887,13 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       setState(() {
         _export = result;
       });
-    } on Object {
+    } on Object catch (error) {
       if (mounted) {
         setState(() {
-          _exportError =
-              'Не удалось экспортировать зашифрованный пакет. Исходная диагностика на диск не записана.';
+          _exportError = _bundleErrorMessage(
+            error,
+            'Не удалось экспортировать зашифрованный пакет. Исходная диагностика на диск не записана.',
+          );
         });
       }
     } finally {
@@ -861,6 +903,27 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
         });
       }
     }
+  }
+
+  String _bundleErrorMessage(Object error, String fallback) {
+    final code = switch (error) {
+      SupportBundleFailure failure => failure.code,
+      SupportBundleTransferFailure failure => failure.code,
+      _ => null,
+    };
+    return switch (code) {
+      'support_mode_volume_exhausted' =>
+        'Лимит режима поддержки исчерпан. Для нового расширенного отчёта нужен новый код от оператора. Сохранённые отчёты можно отправить повторно.',
+      'support_mode_inactive' =>
+        'Режим поддержки завершён. Обновите проверку или введите новый код от оператора.',
+      'support_saved_bundle_missing' =>
+        'Сохранённый отчёт больше не ожидает отправки. Обновите проверку.',
+      'outbox_full' =>
+        'Хранилище диагностики заполнено. Повторите отправку сохранённых отчётов.',
+      'outbox_content_invalid' =>
+        'Сохранённый отчёт повреждён. Он не отправлен и остаётся на устройстве.',
+      _ => fallback,
+    };
   }
 
   @override
@@ -1153,6 +1216,37 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 ],
               ),
             ),
+            if (_pendingBundleIds.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _DiagnosticsCard(
+                key: const ValueKey('diagnostics-pending-bundles'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Ожидают отправки', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Эти отчёты уже зашифрованы. Повтор отправляет сохранённый файл без нового сбора диагностики.',
+                    ),
+                    for (final id in _pendingBundleIds) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        key: ValueKey('diagnostics-retry-$id'),
+                        onPressed: _sending || widget.onRetryPendingBundle == null
+                            ? null
+                            : () => _createCase(savedDiagnosticId: id),
+                        icon: const Icon(Icons.upload_rounded),
+                        label: Text('Повторить отправку · ${id.substring(5, 13)}'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+            if (_pendingBundlesError case final error?) ...[
+              const SizedBox(height: 12),
+              Text(error, style: TextStyle(color: colors.error)),
+            ],
             if (_delivery case final delivery?) ...[
               const SizedBox(height: 12),
               _DiagnosticsCard(
@@ -1160,7 +1254,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 child: Text(
                   delivery.state == SupportBundleDeliveryState.queued
                       ? 'Обращение #${delivery.ticketId ?? '—'} создано. Зашифрованный пакет поставлен в очередь.'
-                      : 'Обращение #${delivery.ticketId ?? '—'} создано. Сеть недоступна; зашифрованный .pokrov-support сохранен для повтора.',
+                      : '${delivery.ticketId == null ? 'Отправка не завершена.' : 'Обращение #${delivery.ticketId} создано.'} Зашифрованный отчёт сохранён. Его можно отправить повторно.',
                 ),
               ),
             ],

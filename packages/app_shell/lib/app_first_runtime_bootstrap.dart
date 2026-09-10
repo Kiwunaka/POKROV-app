@@ -9896,6 +9896,13 @@ class SupportTicketFailure implements Exception {
 abstract interface class SupportBundleTransferService {
   bool get supportBundleEncryptionConfigured;
 
+  Future<List<String>> listPendingSupportBundles();
+
+  Future<SupportBundleDeliveryResult> retrySupportBundle({
+    required HostPlatform hostPlatform,
+    required String diagnosticId,
+  });
+
   Future<SupportModeActivation> redeemSupportMode({
     required HostPlatform hostPlatform,
     required String activationCode,
@@ -10024,6 +10031,24 @@ class PokrovFileSupportBundleOutbox implements SupportBundleEncryptedOutbox {
     final root = await _root();
     final safeId = _validateDiagnosticId(diagnosticId);
     return File('${root.path}${Platform.pathSeparator}$safeId.pokrov-support');
+  }
+
+  @override
+  Future<List<String>> listDiagnosticIds() async {
+    final root = await _root();
+    final ids = <String>[];
+    await for (final entry in root.list(followLinks: false)) {
+      if (entry is! File) {
+        continue;
+      }
+      final name = entry.uri.pathSegments.last;
+      final match = RegExp(r'^(diag-[a-f0-9]{24})\.pokrov-support$')
+          .firstMatch(name);
+      if (match != null) {
+        ids.add(match.group(1)!);
+      }
+    }
+    return ids..sort();
   }
 
   @override
@@ -10275,6 +10300,27 @@ class AppFirstSupportTicketService
   @override
   bool get supportBundleEncryptionConfigured =>
       _supportSigningPublicKeysById.isNotEmpty;
+
+  @override
+  Future<List<String>> listPendingSupportBundles() =>
+      _supportBundleOutbox.listDiagnosticIds();
+
+  @override
+  Future<SupportBundleDeliveryResult> retrySupportBundle({
+    required HostPlatform hostPlatform,
+    required String diagnosticId,
+  }) =>
+      SupportBundleDeliveryCoordinator(
+        transport: _AppFirstSupportBundleUploadTransport(
+          service: this,
+          hostPlatform: hostPlatform,
+        ),
+        outbox: _supportBundleOutbox,
+        delayScheduler: _bootstrapper._delayScheduler,
+      ).retry(
+        diagnosticId: diagnosticId,
+        caseSummary: 'Повторная отправка сохранённой диагностики POKROV.',
+      );
 
   @override
   Future<SupportModeActivation> redeemSupportMode({

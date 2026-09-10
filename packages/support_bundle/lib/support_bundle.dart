@@ -821,6 +821,8 @@ final class StoredEncryptedSupportBundle {
 }
 
 abstract interface class SupportBundleEncryptedOutbox {
+  Future<List<String>> listDiagnosticIds();
+
   Future<StoredEncryptedSupportBundle?> load(String diagnosticId);
 
   Future<StoredEncryptedSupportBundle> save(EncryptedSupportBundle bundle);
@@ -917,12 +919,31 @@ final class SupportBundleDeliveryCoordinator {
       final encrypted = await prepared.encrypt(recipient: recipient, now: now);
       stored = await outbox.save(encrypted);
     }
+    return _deliverStored(stored, caseSummary: caseSummary, ticketId: ticketId);
+  }
+
+  Future<SupportBundleDeliveryResult> retry({
+    required String diagnosticId,
+    required String caseSummary,
+  }) async {
+    final stored = await outbox.load(diagnosticId);
+    if (stored == null) {
+      throw const SupportBundleFailure('support_saved_bundle_missing');
+    }
+    return _deliverStored(stored, caseSummary: caseSummary);
+  }
+
+  Future<SupportBundleDeliveryResult> _deliverStored(
+    StoredEncryptedSupportBundle stored, {
+    required String caseSummary,
+    int? ticketId,
+  }) async {
     final bytes = Uint8List.fromList(stored.bytes);
     final checksum = _sha256(bytes);
     final request = SupportBundleUploadRequest(
       idempotencyKey:
-          'bundle-${prepared.preview.diagnosticId.substring(5)}-${checksum.substring(0, 16)}',
-      bundleId: prepared.preview.diagnosticId,
+          'bundle-${stored.diagnosticId.substring(5)}-${checksum.substring(0, 16)}',
+      bundleId: stored.diagnosticId,
       sizeBytes: bytes.length,
       sha256: checksum,
       contentType: 'application/vnd.pokrov.support-bundle+json',
@@ -944,7 +965,7 @@ final class SupportBundleDeliveryCoordinator {
           await outbox.remove(stored);
           return SupportBundleDeliveryResult(
             state: SupportBundleDeliveryState.queued,
-            diagnosticId: prepared.preview.diagnosticId,
+            diagnosticId: stored.diagnosticId,
             outboxReference: stored.reference,
             ticketId: issued.ticketId,
           );
@@ -970,7 +991,7 @@ final class SupportBundleDeliveryCoordinator {
         await outbox.remove(stored);
         return SupportBundleDeliveryResult(
           state: SupportBundleDeliveryState.queued,
-          diagnosticId: prepared.preview.diagnosticId,
+          diagnosticId: stored.diagnosticId,
           outboxReference: stored.reference,
           ticketId: issued.ticketId,
         );
@@ -983,7 +1004,7 @@ final class SupportBundleDeliveryCoordinator {
     }
     return SupportBundleDeliveryResult(
       state: SupportBundleDeliveryState.offlineEncrypted,
-      diagnosticId: prepared.preview.diagnosticId,
+      diagnosticId: stored.diagnosticId,
       outboxReference: stored.reference,
       ticketId: lastTicket?.ticketId,
       failureCode: 'upload_deferred',
