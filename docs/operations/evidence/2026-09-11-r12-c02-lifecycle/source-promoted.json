@@ -1,0 +1,67 @@
+{
+  "tested": "4fbd47cc85bba244875a69272e06e8ac6324462b",
+  "parent": "5ff9cca549d728b74bc65c44a3475ed0626945b4",
+  "signed_commit": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "tree": "79381b964dde17672d927d23280da563745d82d0",
+  "signature_valid": true,
+  "pr": "https://github.com/Kiwunaka/pokrov-core/pull/11",
+  "branch": "codex/c02-lifecycle-signed-20260911",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "9a5d047281ec4cb8d8c6aee591c3bc5628293e696252939ff79a9312f32f66c3"
+    },
+    {
+      "path": "docs/architecture.md",
+      "sha256": "dab9e3fcc119e3ec032c83c85c5d7aa4dfb52d4cdec7b0fd4edcb2ea46239cdb"
+    },
+    {
+      "path": "engine/sing-box/common/monitoring/outbound_monitoring.go",
+      "sha256": "4a46cda59433b1dd96173b7390671618e53c887969e43e26d7f7b5bf6ea81b35"
+    },
+    {
+      "path": "engine/sing-box/daemon/started_service.go",
+      "sha256": "31df9723fd8ce1f09e0f27db33506332a50782a2cd0379d8bc1f479c3807f6bf"
+    },
+    {
+      "path": "engine/sing-box/daemon/started_service_test.go",
+      "sha256": "05dbde4630a01d7590ffdb6125ff91d8409a75ab72e993438a516cba5d70b3d9"
+    },
+    {
+      "path": "engine/sing-box/experimental/libbox/command_server.go",
+      "sha256": "3afb62de6165a77a3bb629e650ba05fc90f9e8bf483c7557b33e3537f10aff84"
+    },
+    {
+      "path": "v2/hcore/custom.go",
+      "sha256": "077897f98ccf2c3de1b7288940d437ebd4ecc12a9d9774b99a05d08b805d776d"
+    },
+    {
+      "path": "v2/hcore/independent_instance.go",
+      "sha256": "4e134a4781da5ba3c4b6781fd7c80f9afa44a481caf07dc021d73bbc300dc6f1"
+    },
+    {
+      "path": "v2/hcore/lifecycle_linux_test.go",
+      "sha256": "e52cae5dc97f18d71a80cc4f1e2142f67a1466ea6d4e206b81e7badc2e8888f0"
+    },
+    {
+      "path": "v2/hcore/lifecycle_test.go",
+      "sha256": "92c3c4b9e0ec7ff3844b40315916d32cd87a75b486021427867cd2e1d3f4c49b"
+    },
+    {
+      "path": "v2/hcore/lifecycle_windows_test.go",
+      "sha256": "c0918be3d0ee892b8bd13c9cd0da2f1cfca7071ccb13e0264ad2dbd691634589"
+    },
+    {
+      "path": "v2/hcore/service.go",
+      "sha256": "b8c6b0cbbb6f7f75e97ee3583d63ef9817d85a340eed77e8592717362418a621"
+    },
+    {
+      "path": "v2/hcore/stop.go",
+      "sha256": "58a764d92351a8556a6bc0597b600d9e304285acb84945566df01276c21df15e"
+    },
+    {
+      "path": "v2/hcore/tunnelservice/tunnel_service.go",
+      "sha256": "cece11ad89f153c1ec3e6e194e9b3516df6e5e6df578e017436c216e58003512"
+    }
+  ]
+}

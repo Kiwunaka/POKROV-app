@@ -1,5 +1,19 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
+## Current lifecycle resource binding — 2026-09-11
+
+The development client binds Core `904e440aca98cb6419744c5c04c83223a6d6380e`. Discarded service owners now close
+their background observers; live command servers keep restartable stop/reload.
+Monitoring cancellation and ticker access are synchronized. Android and Windows
+artifacts each reproduce exactly from that source; four Android ABIs, desktop
+ABI2, event ABI1 and 15 exports remain unchanged.
+
+[C02 source and artifact evidence](../operations/evidence/2026-09-11-r12-c02-lifecycle/README.md)
+retains the initial goroutine and handle failures alongside fixed source race
+and bounded default-scheduler DLL observations. New consumer/CI convergence is
+pending. Earlier installed and C01 receipts remain tied to their previous
+bytes; this binding does not transfer device or public release acceptance.
+
 ## C01 contract acceptance — 2026-09-11
 
 [Exact ABI/config/event/capability matrix](../operations/evidence/2026-09-11-r12-c01-abi/README.md)
@@ -10,7 +24,7 @@ five contract checks and six consumer tests pass. Exact direct/store CI and
 installed Windows evidence are bound to those bytes. Android JNI device
 execution, final candidate and the full release remain separate gates.
 
-## Current lifecycle privacy binding — 2026-09-10
+## Previous lifecycle privacy binding — 2026-09-10
 
 The development client binds Core `c8b0461c1975ef96e32024774300a5829b9fdc43`. A real rejected-profile FFI call
 previously exposed raw configuration/error text in its return and stderr,

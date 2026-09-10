@@ -1,0 +1,35 @@
+=== RUN   TestStartStopReleasesServiceObservers
+[37mDEBUG[0m[0000] POKROV CORE libbox.Setup success C:\Users\kiwun\AppData\Local\Temp\TestStartStopReleasesServiceObservers3048577003\001 C:\Users\kiwun\AppData\Local\Temp\TestStartStopReleasesServiceObservers3048577003\001 C:\Users\kiwun\AppData\Local\Temp\TestStartStopReleasesServiceObservers3048577003\001 true
+[37mDEBUG[0m[0000] POKROV CORE StartGrpcServerByMode  0
+[37mDEBUG[0m[0000] POKROV CORE stored POKROV settings unavailable
+[37mDEBUG[0m[0000] [Service] Restarting
+[37mDEBUG[0m[0000] [Service] Restarting
+[37mDEBUG[0m[0000] [Service] Restarting
+[37mDEBUG[0m[0000] [Service] Restarting
+    lifecycle_test.go:129: cycle=1 goroutines=40 OS resources=199
+[37mDEBUG[0m[0001] [Service] Restarting
+    lifecycle_test.go:129: cycle=2 goroutines=40 OS resources=199
+[37mDEBUG[0m[0001] [Service] Restarting
+    lifecycle_test.go:129: cycle=3 goroutines=40 OS resources=199
+[37mDEBUG[0m[0001] [Service] Restarting
+    lifecycle_test.go:129: cycle=4 goroutines=40 OS resources=199
+[37mDEBUG[0m[0001] [Service] Restarting
+    lifecycle_test.go:129: cycle=5 goroutines=41 OS resources=199
+[37mDEBUG[0m[0001] [Service] Restarting
+    lifecycle_test.go:129: cycle=6 goroutines=41 OS resources=199
+[37mDEBUG[0m[0002] [Service] Restarting
+    lifecycle_test.go:129: cycle=7 goroutines=41 OS resources=199
+[37mDEBUG[0m[0002] [Service] Restarting
+    lifecycle_test.go:129: cycle=8 goroutines=41 OS resources=199
+[37mDEBUG[0m[0002] [Service] Restarting
+    lifecycle_test.go:129: cycle=9 goroutines=41 OS resources=199
+[37mDEBUG[0m[0002] [Service] Restarting
+    lifecycle_test.go:129: cycle=10 goroutines=41 OS resources=199
+[37mDEBUG[0m[0002] [Service] Restarting
+    lifecycle_test.go:129: cycle=11 goroutines=41 OS resources=199
+[37mDEBUG[0m[0003] [Service] Restarting
+    lifecycle_test.go:129: cycle=12 goroutines=41 OS resources=199
+    lifecycle_test.go:138: goroutines before=38 after=40; OS resources before=199 after=199; measured cycles=12 each start/restart/stop; old and new sessions cancelled
+--- PASS: TestStartStopReleasesServiceObservers (3.11s)
+PASS
+ok  	github.com/Kiwunaka/POKROV-core/v2/hcore	4.271s

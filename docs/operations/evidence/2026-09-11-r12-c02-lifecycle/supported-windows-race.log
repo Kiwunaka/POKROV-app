@@ -1,0 +1,5 @@
+ok  	github.com/Kiwunaka/POKROV-core/internal/observability	1.888s
+ok  	github.com/Kiwunaka/POKROV-core/v2/config	1.404s
+ok  	github.com/Kiwunaka/POKROV-core/v2/hcore	1.264s
+?   	github.com/Kiwunaka/POKROV-core/v2/hutils	[no test files]
+ok  	github.com/Kiwunaka/POKROV-core/ray2sing/ray2sing	1.237s
