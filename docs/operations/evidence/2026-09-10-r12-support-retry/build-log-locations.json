@@ -1,0 +1,17 @@
+[
+  {
+    "original_path": "C:\\r12-psm-runtime-20260910\\empty-fix\\retry-client-bootstrap.log",
+    "retained_path": "C:\\r12-support-retry-20260910\\retry-client-bootstrap.log",
+    "sha256": "b5ace0c4d1b72eb934f87402af94fd67fb168ce44173752d5b66a6da2373e99f"
+  },
+  {
+    "original_path": "C:\\r12-psm-runtime-20260910\\empty-fix\\retry-client-clean-runtime-sync.log",
+    "retained_path": "C:\\r12-support-retry-20260910\\retry-client-clean-runtime-sync.log",
+    "sha256": "a507cb9f4745bf74ea4ff6f11fb0b09dd5266576a650448eb04e9c54d5b3b30d"
+  },
+  {
+    "original_path": "C:\\r12-psm-runtime-20260910\\empty-fix\\retry-client-windows-build.log",
+    "retained_path": "C:\\r12-support-retry-20260910\\retry-client-windows-build.log",
+    "sha256": "18c7c7ea2bad177badb847884adafb49a85c2ac3071ae5104458a70df981f806"
+  }
+]

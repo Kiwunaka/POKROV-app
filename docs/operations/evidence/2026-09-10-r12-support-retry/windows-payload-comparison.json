@@ -1,0 +1,14 @@
+{
+  "client_source": "c3e70ad2622d9cb76cfcd226175cf8b222436415",
+  "core_source": "c8b0461c1975ef96e32024774300a5829b9fdc43",
+  "installer_sha256": "9208b040d1c43bdc7dc834fdf9cf189e8b0946a77fd60d89f5ecfbd03716dc0f",
+  "file_count": 304,
+  "status": "PASS_PACKAGE_INVENTORY",
+  "installer_bytes": 29223799,
+  "changed_payload_paths": [
+    "data/app.so"
+  ],
+  "unchanged_payload_count": 303,
+  "old_installed_source": "45d495956ee8f8e557d4ea3bd257685e7ed89ee4",
+  "installed": false
+}

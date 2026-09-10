@@ -1,0 +1,168 @@
+{
+  "status": "PASS_BOUNDED",
+  "utc": "2026-09-10T20:02:35.280575+00:00",
+  "captures": [
+    {
+      "file": "retry-source-promoted.json",
+      "bytes": 2234,
+      "sha256": "00b730be0dbb485591d6a22d59e42d21b5a56267a11120eef6e7ff9b2b796407"
+    },
+    {
+      "file": "client-ci-pr.json",
+      "bytes": 7259,
+      "sha256": "fe0439957f2aa87c372caa07187d9d33baed4a1a4b519cce32cbf51874617fa5"
+    },
+    {
+      "file": "client-ci-merge.json",
+      "bytes": 7254,
+      "sha256": "176968c3d76dca48d3d5792fb452c51be5399a110eacf43b648f20f5f6fe1803"
+    },
+    {
+      "file": "client-merge-binding.json",
+      "bytes": 353,
+      "sha256": "d7594ad422870997382ac60e3b43d4ce5ad91a579b25fd830df03e9b47aaf2c7"
+    },
+    {
+      "file": "windows-expected.json",
+      "bytes": 39924,
+      "sha256": "9563082d3cff3472b952100f3fd102f0399a831f76d9bb69a18ee8b44aae4ebd"
+    },
+    {
+      "file": "windows-payload-comparison.json",
+      "bytes": 499,
+      "sha256": "98598d4d657a1c13e63845cb7df6102963079e9b13e7c5faca18dda6e66dc72e"
+    },
+    {
+      "file": "pre-install.json",
+      "bytes": 520,
+      "sha256": "f147bf112c1875538a02e68c55c57f59bb11c9b245d26e029ffb94ab7dbc0913"
+    },
+    {
+      "file": "wizard-readback.json",
+      "bytes": 967,
+      "sha256": "5265bf54ada0e6f05d1712b1d77c8192f2be1ae63b57a2154ac6b5d6dda8671e"
+    },
+    {
+      "file": "native-case-56-before.json",
+      "bytes": 677,
+      "sha256": "ca1f849f6f6ff1f5d154c33208658713df7ea0c62f2f9aab5bc3f2ae64ee8e13"
+    },
+    {
+      "file": "native-case-56-readback.json",
+      "bytes": 722,
+      "sha256": "839344af064d7a6d3940234ddb4f3ff96e7034588bd0e0c9556a80a0bfabef5d"
+    },
+    {
+      "file": "native-admin-56-payload-scan.json",
+      "bytes": 2670,
+      "sha256": "05bfbad2d9fdafe9ef681e5c2945ad1a333ff9797c6547d271ebf20650660724"
+    },
+    {
+      "file": "native-after-retry.json",
+      "bytes": 231,
+      "sha256": "4e3ac4525f5dc91206948d29fce5ebb63cbce6f019e5d33f9a4586be1c586718"
+    },
+    {
+      "file": "native-no-duplicate.json",
+      "bytes": 265,
+      "sha256": "cd1b91755006b82ab0af08bf23172e54ab8aa6925786735054891e7effdacc63"
+    },
+    {
+      "file": "build-log-locations.json",
+      "bytes": 841,
+      "sha256": "e141f16395f09ce04cbbcd0eeb201d15e713f48b09592bed5a797e11a28ef52f"
+    },
+    {
+      "file": "bundle-tests.log",
+      "bytes": 1709,
+      "sha256": "023b0ffdb1f9508e97825447f4f993bf2fbc08bcbb0460f06fb2ebe69eeaa94f"
+    },
+    {
+      "file": "shell-tests.log",
+      "bytes": 31624,
+      "sha256": "2d6780cecb1bf7a7b7cc75a271db1fe5b5e248cc4a6304e4c30db09957109f9e"
+    },
+    {
+      "file": "focused-tests.log",
+      "bytes": 4909,
+      "sha256": "c9343e00229509b841e56cb7ff4f511e951df4bd10e547cc1079038acb240c9d"
+    },
+    {
+      "file": "bundle-analyze.log",
+      "bytes": 609,
+      "sha256": "1eaae292ae2193808821eb95d8d1a5d8204ae396ea50ca10bbd779883cafee7d"
+    },
+    {
+      "file": "shell-analyze.log",
+      "bytes": 2358,
+      "sha256": "c5b016c45fa65ab5f283836fb52db913387897b17de67d461451d2fee453a801"
+    },
+    {
+      "file": "seed.log",
+      "bytes": 1818,
+      "sha256": "8eee60bec3222c358570b9d5b7eeab3c8e9158156c0854f7f2e3adf6a932b972"
+    },
+    {
+      "file": "docs.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "file": "pending-list.png",
+      "bytes": 864143,
+      "sha256": "1c82cfbcd76b709eaa9d10b7c032cbd40645aa01fc85ada745eeb217beb35e3c"
+    },
+    {
+      "file": "retry-click-result.png",
+      "bytes": 860454,
+      "sha256": "4f813be1ee1b557e2bc5ce72c833dc9502dd28caf14f45079cce13b71478e801"
+    },
+    {
+      "file": "wizard-completed.png",
+      "bytes": 1372276,
+      "sha256": "6539bf048fe5a95c0ea1a77474150da442b72e7e49699248855f14032edc81f4"
+    }
+  ],
+  "vm": {
+    "state": "poweroff",
+    "nic1": "none",
+    "snapshot_count": 10,
+    "snapshot_uuids": [
+      "785e0b63-c486-4f9d-81e3-ec9abd3e0ef3",
+      "2eded384-3715-496c-a3fe-d7e0535dac36",
+      "e9b7fcd8-a726-43b8-bb76-d8165086db3d",
+      "603e20c2-5a23-46e4-a356-75572e3caffc",
+      "94edbf0c-adee-4e39-a823-bcbe1e80e4c7",
+      "5a15fec5-c60e-442d-8db8-15d86c672d6a",
+      "8b6bc907-cb2c-4319-9e03-9176fba7f033",
+      "e25d24c9-c7fc-49e5-8d07-6d379234cabc",
+      "02d29785-db85-41ca-8feb-f8cc0a883a9c",
+      "a991bc7e-b99c-4466-8f0e-49661499ae7a"
+    ],
+    "after_snapshot": "a991bc7e-b99c-4466-8f0e-49661499ae7a"
+  },
+  "limits": [
+    "Android not executed",
+    "Crash profile not executed",
+    "Native cap message not re-exercised; focused controller and widget tests passed",
+    "No public release",
+    "No new Core or backend deployment"
+  ],
+  "local_build_logs": [
+    {
+      "original_path": "C:\\r12-psm-runtime-20260910\\empty-fix\\retry-client-bootstrap.log",
+      "retained_path": "C:\\r12-support-retry-20260910\\retry-client-bootstrap.log",
+      "sha256": "b5ace0c4d1b72eb934f87402af94fd67fb168ce44173752d5b66a6da2373e99f"
+    },
+    {
+      "original_path": "C:\\r12-psm-runtime-20260910\\empty-fix\\retry-client-clean-runtime-sync.log",
+      "retained_path": "C:\\r12-support-retry-20260910\\retry-client-clean-runtime-sync.log",
+      "sha256": "a507cb9f4745bf74ea4ff6f11fb0b09dd5266576a650448eb04e9c54d5b3b30d"
+    },
+    {
+      "original_path": "C:\\r12-psm-runtime-20260910\\empty-fix\\retry-client-windows-build.log",
+      "retained_path": "C:\\r12-support-retry-20260910\\retry-client-windows-build.log",
+      "sha256": "18c7c7ea2bad177badb847884adafb49a85c2ac3071ae5104458a70df981f806"
+    }
+  ]
+}

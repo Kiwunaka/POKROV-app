@@ -1,0 +1,56 @@
+{
+  "tested": "24da816d9541468fe4f0d838126d0accc10c6c32",
+  "source": "fe3718d3b0b99789e479744eac58a464c012c32c",
+  "parent": "f19f5027d386e5c2f7ae0ab7c4bda98d764d36b0",
+  "signed_commit": "c3e70ad2622d9cb76cfcd226175cf8b222436415",
+  "tree": "12c0bbb12a5600bb1af8b5f6c4e2dab5af6e954c",
+  "signature_valid": true,
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/108",
+  "branch": "codex/support-retry-signed-20260910",
+  "verified_package_trees": [
+    "packages/app_shell",
+    "packages/observability_runtime",
+    "packages/observability_contracts",
+    "packages/runtime_engine",
+    "packages/diagnostics_collectors",
+    "packages/support_bundle"
+  ],
+  "files": [
+    {
+      "path": "docs/product/client-product-contract.md",
+      "sha256": "8c48c974b9655db97f3dfbf3e39ac1b296a674457eb6238627ff79c23972593e"
+    },
+    {
+      "path": "packages/app_shell/lib/app_first_runtime_bootstrap.dart",
+      "sha256": "fcae94fc3948fd41d18a88c718de1f08819ca0c20869b5c4dc70196f637b9363"
+    },
+    {
+      "path": "packages/app_shell/lib/src/features/diagnostics/client_diagnostics.dart",
+      "sha256": "7bf7f550d930097e652edc2ebf1498ed744184ec4defe1e26e3312c5d7dc5098"
+    },
+    {
+      "path": "packages/app_shell/lib/src/shell/seed_shell.dart",
+      "sha256": "638312e851de475fed8c8f8b246d569ebc6265c7d67d3d76e1fe75f678942b80"
+    },
+    {
+      "path": "packages/app_shell/test/client_diagnostics_test.dart",
+      "sha256": "ad314d67fc070550739c9ec05ae9b6e2460ec818bd8d8a62c9b09b19bba0f659"
+    },
+    {
+      "path": "packages/app_shell/test/pokrov_seed_app_test.dart",
+      "sha256": "55dd7c9eec37f6c2cc879f7a635f735d8aae6aa7b2201136387f7fa4f97334e4"
+    },
+    {
+      "path": "packages/app_shell/test/support_bundle_delivery_test.dart",
+      "sha256": "c9a1085fc429f02d20e78c9afd062aab6241c8e3505c6770427cd28611bece36"
+    },
+    {
+      "path": "packages/support_bundle/lib/support_bundle.dart",
+      "sha256": "d6e4b17b19f6926847d55dcb022f26a7192edc9c60b538cb2c3ef26f5a11fde5"
+    },
+    {
+      "path": "packages/support_bundle/test/support_bundle_test.dart",
+      "sha256": "c673b2fd5a99a8f1b211709bf10996faf463d02abb2af885869f24ed438727ae"
+    }
+  ]
+}
