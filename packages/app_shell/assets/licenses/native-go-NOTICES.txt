@@ -12400,3 +12400,23 @@ Prebuilt Binaries License
    terms, release dates, APIs, ABIs, general availability, or other
    characteristics of the Software.
 
+
+
+==============================================================================
+Psiphon uTLS file copyright and explicit license reference
+==============================================================================
+
+Source: github.com/Psiphon-Labs/utls@v0.0.0-20260129182755-24497d415a8d/u_prng.go
+The following original file header refers explicitly to the uTLS license.
+That license text is reproduced above in the section
+github.com/refraction-networking/utls@v1.8.2/LICENSE.
+This file attribution does not replace the missing root license of the
+recorded Psiphon fork or establish complete licensing clearance.
+
+/*
+ * Copyright (c) 2019, Psiphon Inc.
+ * All rights reserved.
+ *
+ * Released under utls licence:
+ * https://github.com/refraction-networking/utls/blob/master/LICENSE
+ */
