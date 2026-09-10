@@ -43,6 +43,65 @@ void main() {
     expect(await outbox.load(prepared.preview.diagnosticId), isNull);
   });
 
+  test('full outbox preserves retries and bounds concurrent admission',
+      () async {
+    final temporary =
+        await Directory.systemTemp.createTemp('pokrov-outbox-cap-');
+    addTearDown(() => temporary.delete(recursive: true));
+    final recipient = await _recipient(now);
+    final bundles = <EncryptedSupportBundle>[];
+    for (final buildId in ['candidate-a', 'candidate-b']) {
+      bundles.add(await const SupportBundleBuilder()
+          .prepare(
+              snapshot: _snapshot(buildId: buildId),
+              profile: SupportDiagnosticProfile.summary,
+              now: now)
+          .encrypt(recipient: recipient, now: now));
+    }
+    final first = PokrovFileSupportBundleOutbox(
+      directoryResolver: () async => temporary,
+    );
+    final second = PokrovFileSupportBundleOutbox(
+      directoryResolver: () async => temporary,
+    );
+    final root = Directory('${temporary.path}/support-bundle-outbox');
+    await root.create();
+    // An interrupted write still occupies capacity and must not be purged.
+    final interrupted = File('${root.path}/retained.pokrov-support.next');
+    final available = bundles.map((b) => b.bytes.length).reduce(
+          (a, b) => a > b ? a : b,
+        );
+    final handle = await interrupted.open(mode: FileMode.write);
+    await handle.truncate(24 * 1024 * 1024 - available);
+    await handle.close();
+    final preservedLength = await interrupted.length();
+    final outcomes = await Future.wait<Object>([
+      first.save(bundles[0]).then<Object>((v) => v, onError: (Object e) => e),
+      second.save(bundles[1]).then<Object>((v) => v, onError: (Object e) => e),
+    ]);
+    final stored = outcomes.whereType<StoredEncryptedSupportBundle>().single;
+    final failure = outcomes.whereType<SupportBundleTransferFailure>().single;
+    expect(failure.code, 'outbox_full');
+    final accepted =
+        bundles.singleWhere((b) => b.diagnosticId == stored.diagnosticId);
+    final rejected =
+        bundles.singleWhere((b) => b.diagnosticId != stored.diagnosticId);
+    expect((await second.save(accepted)).bytes, accepted.bytes);
+    expect(await first.load(rejected.diagnosticId), isNull);
+    final files =
+        await root.list().where((e) => e is File).cast<File>().toList();
+    var totalBytes = 0;
+    for (final file in files) {
+      totalBytes += await file.length();
+    }
+    expect(totalBytes, lessThanOrEqualTo(24 * 1024 * 1024));
+    expect(await interrupted.length(), preservedLength);
+    expect(files, hasLength(2));
+    await first.remove(stored);
+    expect((await second.save(rejected)).bytes, rejected.bytes);
+    expect(await interrupted.length(), preservedLength);
+  });
+
   test('file outbox rejects planted plaintext and build pin stays explicit',
       () async {
     final temporary = await Directory.systemTemp.createTemp('pokrov-outbox-');
@@ -207,11 +266,12 @@ Future<
   );
 }
 
-DiagnosticSnapshot _snapshot() => DiagnosticSnapshot(
+DiagnosticSnapshot _snapshot({String buildId = 'candidate-test'}) =>
+    DiagnosticSnapshot(
       build: DiagnosticBuildSummary(
         platform: 'windows',
         appVersion: '1.2.0',
-        buildId: 'candidate-test',
+        buildId: buildId,
         channel: 'stable',
       ),
       network: DiagnosticNetworkSummary(
