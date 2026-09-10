@@ -300,6 +300,11 @@ Current blocking dependency:
   returns to `config_staged` and reports `core_egress_probe_failed`; raw DNS,
   provider or WinHTTP details never cross IPC
 - the desktop runtime also keeps a bounded safe event journal at `%APPDATA%/space.pokrov/POKROV/pokrov-runtime/working/pokrov-runtime-events.jsonl`. It records UTC time, platform, a closed typed lifecycle event (`initialization`, `profile`, `core_start`, `tun`, `routes`, `dns`, `egress`, `recovery`, `stop`), bounded probe/stop reason, attempt, outcome, and allowlisted failure kind only; it never records profile contents, endpoints, visited domains, IP addresses, credentials, or raw provider/Core errors. Journal failure cannot block a connection, and files over 128 KiB are reduced to the latest 300 events
+- The Android production and Windows release builders pass the committed Git
+  revision and the pubspec build number into the operational build identity.
+  They reject tracked source changes before compiling so a packaged journal
+  cannot silently report zero values or attribute dirty source to `HEAD`.
+  Local/candidate/channel labels keep their separate release authority.
 - Android and Windows now start the shared operational-observability pipeline
   before `runApp`. Bootstrap start/finish/UI-ready, the exact
   `ConnectionExperienceReducer` phase, profile/Core/TUN/routes/DNS/egress
