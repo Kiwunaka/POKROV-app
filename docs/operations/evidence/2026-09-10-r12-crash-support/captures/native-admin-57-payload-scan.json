@@ -1,0 +1,38 @@
+{
+  "status": "FAIL_NATIVE_EXTENDED_SCAN",
+  "case_number": 57,
+  "origin": "brain-origin real HTTPS and worker-key in-memory scan",
+  "source_revision": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "external_oidc_retested": false,
+  "plaintext_or_credentials_exported": false,
+  "lookups": [
+    {
+      "kind": "case_number",
+      "own_result_count": 1,
+      "canary_matches": 0
+    },
+    {
+      "kind": "diagnostic_id",
+      "own_result_count": 1,
+      "canary_matches": 0
+    }
+  ],
+  "operator_summary": {
+    "diagnostic_profile": "extended",
+    "app_version": "1.2.0+4053",
+    "build_number": "pokrov-local-client",
+    "platform": "windows",
+    "architecture": "x64",
+    "last_phase": null,
+    "last_error_code": null,
+    "proof_outcome": "failed",
+    "attempt_link_source": null
+  },
+  "failure_type": "ValueError",
+  "failure_line": 93,
+  "session_cleanup": {
+    "fixture_revoked": true,
+    "preexisting_unchanged": true
+  },
+  "utc": "2026-09-10T21:12:52.410823+00:00"
+}

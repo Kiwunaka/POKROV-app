@@ -1,0 +1,40 @@
+{
+  "status": "PASS_NATIVE_POLICY_ISSUED",
+  "origin": "brain-origin real HTTPS",
+  "backend_source": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "external_oidc_tested": false,
+  "fixture_authentication_used": true,
+  "credentials_exported": false,
+  "ticket_id": 52,
+  "policy_id": "spol-c6006f23e5f64963a41ee42e",
+  "policy_status": "issued",
+  "expires_at": "2026-09-10T21:24:48Z",
+  "current_roles": [
+    "superadmin"
+  ],
+  "l2_confirmation": true,
+  "idempotent_execution": true,
+  "policy_count_delta": 1,
+  "activation_code_not_in_intent_storage": true,
+  "fixture_session_audit_retained": true,
+  "code_stored_root_0600_only": true,
+  "audience": {
+    "app_version": "1.2.0+4053",
+    "build_number": "4053",
+    "platform": "windows"
+  },
+  "categories": [
+    "build",
+    "crashes",
+    "events",
+    "network",
+    "redaction",
+    "system"
+  ],
+  "maximum_bundles": 2,
+  "maximum_bundle_bytes": 1048576,
+  "maximum_total_bytes": 2097152,
+  "fixture_session_revoked": true,
+  "preexisting_sessions_unchanged": true,
+  "utc": "2026-09-10T21:09:48.752095+00:00"
+}

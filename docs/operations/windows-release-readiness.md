@@ -1,5 +1,15 @@
 # Windows Release Readiness
 
+2026-09-10 current crash support: [installed proof](evidence/2026-09-10-r12-crash-support/README.md).
+PR109 merged503979f; installed e18fa60/Corec8 has304 matching files and preserved
+upgrade state. Real UI/service access violations produced closed records; PSM
+consent, corrupt-input block/restore, case57 validated upload and audited admin
+scan match both native signatures/times without planted markers. Normal VPN,
+ten HTTPS markers and exact route/DNS recovery pass. VM off/NIC none, eleven
+snapshots retained. Zero-frame faults do not prove nonempty native stacks;
+Android, broader V01/V03/V04 and public release remain open. Earlier entries
+below retain their original candidate-specific scope.
+
 2026-09-10 installed privacy proof: [native canaries](evidence/2026-09-10-r12-v01-native-canaries/README.md). Unchanged `2edfbde` / Core `c7a11f7`: six native/Core fault inputs, six diagnostic sinks, actual summary upload and audited admin download scan — 0 canary matches. Case52 fixture closed; 304 hashes, normal UI connection, route/DNS recovery and off/NIC none PASS. Profile was freshly staged and secure-store refresh preserved. Full extended/crash/Android V01 and release remain open. Separate direct-Core FFI canary leakage remains FAIL; Core PR10 is open and its release-contract CI failed. This result does not close that path.
 
 2026-09-10 source fix: [extended support preview](evidence/2026-09-10-r12-extended-support/README.md), PR104 source `cbb00f5`. The real presenter lacked the system summary required by extended mode; it now receives safe OS/ABI/locale facts and existing sanitized connection phases. 13 focused tests/analyze/seed/docs PASS; both CI PASS; merged `f33d79a`. No new binary installed: native PSM1 activation remains open because current Brain lacks its signing/code-secret configuration. Previous installed evidence stays bound to `2edfbde`.

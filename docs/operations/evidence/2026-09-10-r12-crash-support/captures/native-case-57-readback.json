@@ -1,0 +1,22 @@
+{
+  "status": "validated",
+  "diagnostic_profile": "extended",
+  "app_version": "1.2.0+4053",
+  "build_number": "pokrov-local-client",
+  "platform": "windows",
+  "architecture": "x64",
+  "last_phase": null,
+  "last_error_code": null,
+  "proof_outcome": "failed",
+  "observed_attempts": null,
+  "failure_code": null,
+  "expected_size_bytes": 3617,
+  "received_size_bytes": 3617,
+  "expected_sha256": "b48c69b326713cd9aff8818f7f530eb0a6022e2a9223141feb502fc2dcebcc21",
+  "utc": "2026-09-10T21:12:39.410467+00:00",
+  "origin": "brain-origin",
+  "case_number": 57,
+  "owned_install_guard": true,
+  "raw_identifiers_exported": false,
+  "backend_source": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f"
+}

@@ -1,0 +1,23 @@
+{
+  "utc": "2026-09-10T20:58:37.1500145Z",
+  "origin": "current-origin Windows owned VM",
+  "client_source": "e18fa6073d310623fae003689af439fb11d4dc5e",
+  "core_source": "c8b0461c1975ef96e32024774300a5829b9fdc43",
+  "installer": {
+    "mode": "interactive_wizard",
+    "installer_sha256": "dfbe69491fc2a3c811be68995867bb303e3d08100a42a360910f5fa019eb1306",
+    "log_requested": false,
+    "completion_evidence": "wizard-completed.png"
+  },
+  "matched_files": 304,
+  "expected_files": 304,
+  "missing": [],
+  "different": [],
+  "state_preserved": true,
+  "secure_store_preserved": true,
+  "service_state": "Running",
+  "service_account": "LocalSystem",
+  "service_path": "C:\\Program Files\\POKROV\\pokrov_service.exe",
+  "ui_count": 0,
+  "adapter_count": 1
+}

@@ -1,0 +1,18 @@
+{
+  "status": "PASS_BOUNDED_RUNTIME",
+  "client_source": "e18fa6073d310623fae003689af439fb11d4dc5e",
+  "checks": {
+    "routes_restored": true,
+    "dns_restored": true,
+    "no_tun_after": true,
+    "stopped": true,
+    "same_304_files": true,
+    "native_records_preserved": true,
+    "outbox_empty": true,
+    "ten_https_markers": true,
+    "core_dns_egress": true
+  },
+  "tun_rx_delta": 25088,
+  "tun_tx_delta": 25088,
+  "scope": "Owned Windows11 VM current-origin; status probe source0218e89 is a separate test harness identity, installed source bound by304hashes; initial connected sample predates readiness and is retained."
+}

@@ -1,0 +1,16 @@
+{
+  "client_source": "e18fa6073d310623fae003689af439fb11d4dc5e",
+  "core_source": "c8b0461c1975ef96e32024774300a5829b9fdc43",
+  "installer_sha256": "dfbe69491fc2a3c811be68995867bb303e3d08100a42a360910f5fa019eb1306",
+  "file_count": 304,
+  "status": "PASS_PACKAGE_INVENTORY",
+  "installer_bytes": 29268204,
+  "changed_payload_paths": [
+    "data/app.so",
+    "pokrov_service.exe",
+    "pokrov_windows.exe"
+  ],
+  "unchanged_payload_count": 301,
+  "old_installed_source": "c3e70ad2622d9cb76cfcd226175cf8b222436415",
+  "installed": false
+}
