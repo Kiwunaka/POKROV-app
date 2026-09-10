@@ -602,14 +602,13 @@ void main() {
       transport: resumed,
       outbox: outbox,
       delayScheduler: (_) async {},
-    ).deliver(
-      prepared: prepared,
-      recipient: recipient,
-      now: now,
+    ).retry(
+      diagnosticId: first.diagnosticId,
       caseSummary: 'Версия 1.2.0; Windows; код CORE-START-01.',
     );
 
     expect(second.state, SupportBundleDeliveryState.queued);
+    expect(second.diagnosticId, first.diagnosticId);
     expect(outbox.saveCalls, 1);
     expect(outbox.removeCalls, 1);
     expect(resumed.receivedBytes, retainedBytes);
@@ -651,6 +650,10 @@ final class _FakeEncryptedOutbox implements SupportBundleEncryptedOutbox {
   StoredEncryptedSupportBundle? stored;
   int saveCalls = 0;
   int removeCalls = 0;
+
+  @override
+  Future<List<String>> listDiagnosticIds() async =>
+      stored == null ? <String>[] : <String>[stored!.diagnosticId];
 
   @override
   Future<StoredEncryptedSupportBundle?> load(String diagnosticId) async {
