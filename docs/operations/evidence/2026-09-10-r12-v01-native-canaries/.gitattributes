@@ -1,1 +1,1 @@
-captures/** -text
+captures/** -text whitespace=cr-at-eol
