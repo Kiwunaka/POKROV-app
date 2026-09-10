@@ -1,0 +1,23 @@
+{
+  "status": "PASS_BOUNDED_BUILD_IDENTITY",
+  "utc": "2026-09-10T09:57:13.215535+00:00",
+  "source": "71ae96428c0f7c61b6db14dfce22f3e7b752b62d",
+  "events": 9,
+  "checks": {
+    "installed_exact_304_files": true,
+    "state_secure_store_preserved": true,
+    "service_running": true,
+    "final_exact_304_files": true,
+    "all_events_exact_revision": true,
+    "all_events_exact_build_number": true,
+    "ui_ready": true,
+    "sequence_contiguous": true,
+    "offline_no_adapter": true
+  },
+  "limits": [
+    "Offline bootstrap; no new connected-cycle or physical Android proof.",
+    "Prior 5a13ec7 zero-revision events remain failed historical evidence.",
+    "Previous-exit APP-BOOT-006 is observed, not independently classified here.",
+    "No full release acceptance or new public binary publication."
+  ]
+}

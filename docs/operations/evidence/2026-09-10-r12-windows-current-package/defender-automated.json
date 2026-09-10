@@ -1,0 +1,80 @@
+{
+    "status":  "DEFENDER_BLOCKED_AUTOMATED_INSTALL",
+    "events":  [
+                   {
+                       "utc":  "2026-09-10T09:23:13.7563193Z",
+                       "id":  1117,
+                       "threat":  "Behavior:Win32/SuspClickFix.G2",
+                       "severity":  "Severe",
+                       "category":  "Suspicious Behavior",
+                       "process":  "C:\\Users\\POKROV~1\\AppData\\Local\\Temp\\is-60HSAWV1R2.tmp\\setup.tmp",
+                       "action":  "Remove",
+                       "error":  "0x00000000"
+                   },
+                   {
+                       "utc":  "2026-09-10T09:23:13.6074242Z",
+                       "id":  1116,
+                       "threat":  "Behavior:Win32/SuspClickFix.G2",
+                       "severity":  "Severe",
+                       "category":  "Suspicious Behavior",
+                       "process":  "C:\\Users\\POKROV~1\\AppData\\Local\\Temp\\is-60HSAWV1R2.tmp\\setup.tmp",
+                       "action":  "Not Applicable",
+                       "error":  "0x00000000"
+                   },
+                   {
+                       "utc":  "2026-09-10T09:23:13.2127732Z",
+                       "id":  1116,
+                       "threat":  "Behavior:Win32/SuspClickFix.G2",
+                       "severity":  "Severe",
+                       "category":  "Suspicious Behavior",
+                       "process":  "Unknown",
+                       "action":  "Not Applicable",
+                       "error":  "0x00000000"
+                   },
+                   {
+                       "utc":  "2026-09-10T09:23:13.1880765Z",
+                       "id":  1117,
+                       "threat":  "Behavior:Win32/SuspClickFix.G2",
+                       "severity":  "Severe",
+                       "category":  "Suspicious Behavior",
+                       "process":  "C:\\Users\\Public\\R12CurrentSeptember10\\setup.exe",
+                       "action":  "Remove",
+                       "error":  "0x00000000"
+                   },
+                   {
+                       "utc":  "2026-09-10T09:23:11.0507056Z",
+                       "id":  1116,
+                       "threat":  "Behavior:Win32/SuspClickFix.G2",
+                       "severity":  "Severe",
+                       "category":  "Suspicious Behavior",
+                       "process":  "C:\\Users\\Public\\R12CurrentSeptember10\\setup.exe",
+                       "action":  "Not Applicable",
+                       "error":  "0x00000000"
+                   },
+                   {
+                       "utc":  "2026-09-10T09:23:09.9673003Z",
+                       "id":  1116,
+                       "threat":  "Behavior:Win32/SuspClickFix.G2",
+                       "severity":  "Severe",
+                       "category":  "Suspicious Behavior",
+                       "process":  "Unknown",
+                       "action":  "Not Applicable",
+                       "error":  "0x00000000"
+                   },
+                   {
+                       "utc":  "2026-09-10T09:23:09.1741188Z",
+                       "id":  1116,
+                       "threat":  "Behavior:Win32/SuspClickFix.G2",
+                       "severity":  "Severe",
+                       "category":  "Suspicious Behavior",
+                       "process":  "Unknown",
+                       "action":  "Not Applicable",
+                       "error":  "0x00000000"
+                   }
+               ],
+    "protection":  {
+                       "AntivirusEnabled":  true,
+                       "RealTimeProtectionEnabled":  true,
+                       "BehaviorMonitorEnabled":  true
+                   }
+}

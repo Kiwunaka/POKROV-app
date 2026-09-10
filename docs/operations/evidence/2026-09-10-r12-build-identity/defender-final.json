@@ -1,0 +1,11 @@
+{
+    "utc":  "2026-09-10T09:57:43.9781714Z",
+    "since_utc":  "2026-09-10T09:47:00Z",
+    "defender_detection_or_action_count":  0,
+    "protection":  {
+                       "behavior":  true,
+                       "antivirus":  true,
+                       "realtime":  true
+                   },
+    "scope":  "Read-only Defender status and event counts, no exclusions or changes"
+}

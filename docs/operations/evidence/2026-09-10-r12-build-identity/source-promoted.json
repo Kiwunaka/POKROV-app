@@ -1,0 +1,32 @@
+{
+  "tested": "29bed99407dea98e4ccda4b1f5754ec9b3f9bf4b",
+  "source": "c0b6a54ba878391b5d0af4b55be24524b23ba950",
+  "parent": "5a13ec7698905df647e8040eb48a9ebf0f044419",
+  "signed_commit": "71ae96428c0f7c61b6db14dfce22f3e7b752b62d",
+  "tree": "8d5ca65982ced941c37c955157f146d44797c758",
+  "signature_valid": true,
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/100",
+  "branch": "codex/diagnostic-build-identity-signed-20260910",
+  "verified_package_trees": [
+    "packages/app_shell",
+    "packages/observability_runtime",
+    "packages/observability_contracts",
+    "packages/runtime_engine",
+    "packages/diagnostics_collectors",
+    "packages/support_bundle"
+  ],
+  "files": [
+    {
+      "path": "scripts/build-windows-release.ps1",
+      "sha256": "73a315d9acea1e5a1c4130e583aad108905bc3f8ab21ac6a0b0a49533021575b"
+    },
+    {
+      "path": "scripts/build-android-production.ps1",
+      "sha256": "a406e11e4f771d6c2da26c68c12769376430704ab203a15b80f4b05e24deafb3"
+    },
+    {
+      "path": "docs/architecture/bootstrap-workflow.md",
+      "sha256": "b33a6f8b9ec243db7b37b510b4a07e3c7e3f5b3a0cb9584b3928164afb2941e1"
+    }
+  ]
+}

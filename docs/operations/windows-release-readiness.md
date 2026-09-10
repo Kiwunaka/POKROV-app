@@ -3,7 +3,22 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
-R12 bridge session (2026-09-10): [installed-service result](evidence/2026-09-10-r12-windows-bridge-session/README.md)
+R12 diagnostic build identity (2026-09-10): [fixed installed package](evidence/2026-09-10-r12-build-identity/README.md)
+source `71ae964` / Core `c7a11f7` replaces zero diagnostic revision with the
+committed source and build `4053`. Exact 304 files, preserved secure state,
+nine offline bootstrap events and PR CI PASS; PR #100 merged `e90a290`.
+Merge CI PASS. Six local artifacts built; no new public binary release.
+
+Historical R12 current package (2026-09-10): [installed 5a13ec7 evidence](evidence/2026-09-10-r12-windows-current-package/README.md)
+binds 304 exact files and preserved session/secure storage after the ordinary
+wizard. TUN/DNS/egress, ten HTTPS markers, exact recovery and six real Brain
+connectivity reports pass. Automatic silent setup was stopped by Defender;
+protection remained enabled and the wizard/runtime added no new detections.
+All 48 local events have a zero Git revision: diagnostic build identity FAIL,
+with a packaging fix in progress. W01/W03/O03/V02 and full release remain open.
+VM off/NIC none; no public release or repeated test-grant mutation.
+
+Historical R12 bridge session (2026-09-10): [installed-service result](evidence/2026-09-10-r12-windows-bridge-session/README.md)
 for unchanged client `c05b58b` / Core `c7a11f7`: normal VirtualBox credential
 API login succeeds, 304 installed hashes before/after, TUN/DNS/egress and ten
 owned HTTPS markers pass. Disconnect restores exact routes/DNS and identity;

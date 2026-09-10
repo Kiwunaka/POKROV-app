@@ -1,0 +1,2180 @@
+﻿2026-09-10 12:25:52.601   Log opened. (Time zone: UTC+03:00)
+2026-09-10 12:25:52.601   Setup version: Inno Setup version 6.7.1
+2026-09-10 12:25:52.601   Original Setup EXE: C:\Users\Public\R12CurrentSeptember10\setup.exe
+2026-09-10 12:25:52.601   Setup command line: /SL5="$60088,28022294,871424,C:\Users\Public\R12CurrentSeptember10\setup.exe" /SPAWNWND=$5008A /FIRSTWND=$50184 /LOG=C:\Users\Public\R12CurrentSeptember10\wizard.log
+2026-09-10 12:25:52.603   Compatibility mode: Yes (Installer)
+2026-09-10 12:25:52.603   Windows version: 10.0.26200
+2026-09-10 12:25:52.603   Windows architecture: x64 (64-bit)
+2026-09-10 12:25:52.603   Machine types supported by system: x86 x64
+2026-09-10 12:25:52.603   User privileges: Administrative
+2026-09-10 12:25:52.605   Administrative install mode: Yes
+2026-09-10 12:25:52.605   Install mode root key: HKEY_LOCAL_MACHINE
+2026-09-10 12:25:52.605   64-bit install mode: Yes
+2026-09-10 12:25:52.605   RedirectionGuard status for current process: Enabled in enforcing mode
+2026-09-10 12:25:52.607   Created protected temporary directory: C:\Users\POKROV~1\AppData\Local\Temp\is-F0XBQYNJQS.tmp
+2026-09-10 12:27:08.976   Found 14 files to register with RestartManager.
+2026-09-10 12:27:08.976   Calling RestartManager's RmGetList.
+2026-09-10 12:27:09.828   RmGetList finished successfully.
+2026-09-10 12:27:09.828   RestartManager found no applications using one of our files.
+2026-09-10 12:27:09.838   Starting the installation process.
+2026-09-10 12:27:09.842   Directory for uninstall files: C:\Program Files\POKROV
+2026-09-10 12:27:09.848   Will append to existing uninstall log: C:\Program Files\POKROV\unins000.dat
+2026-09-10 12:27:09.871   -- File entry --
+2026-09-10 12:27:09.871   Dest filename: C:\Program Files\POKROV\unins000.exe
+2026-09-10 12:27:09.871   Non-default bitness: 32-bit
+2026-09-10 12:27:09.876   Time stamp of our file: 2026-09-10 12:25:52.439
+2026-09-10 12:27:09.876   Dest file exists.
+2026-09-10 12:27:09.876   Time stamp of existing file: 2026-09-09 10:04:40.970
+2026-09-10 12:27:09.876   Version of our file: 51.1054.0.0
+2026-09-10 12:27:09.937   Version of existing file: 51.1054.0.0
+2026-09-10 12:27:09.937   Installing the file.
+2026-09-10 12:27:09.952   Leaving temporary file in place for now.
+2026-09-10 12:27:09.952   -- File entry --
+2026-09-10 12:27:09.954   Dest filename: C:\Program Files\POKROV\file_selector_windows_plugin.dll
+2026-09-10 12:27:09.954   Time stamp of our file: 2026-09-10 11:04:48.000
+2026-09-10 12:27:09.954   Dest file exists.
+2026-09-10 12:27:09.954   Time stamp of existing file: 2026-09-09 09:23:56.000
+2026-09-10 12:27:09.954   Installing the file.
+2026-09-10 12:27:09.958   Successfully installed the file.
+2026-09-10 12:27:09.958   -- File entry --
+2026-09-10 12:27:09.958   Dest filename: C:\Program Files\POKROV\flutter_secure_storage_windows_plugin.dll
+2026-09-10 12:27:09.958   Time stamp of our file: 2026-09-10 11:04:50.000
+2026-09-10 12:27:09.958   Dest file exists.
+2026-09-10 12:27:09.958   Time stamp of existing file: 2026-09-09 09:23:58.000
+2026-09-10 12:27:09.958   Installing the file.
+2026-09-10 12:27:09.962   Successfully installed the file.
+2026-09-10 12:27:09.962   -- File entry --
+2026-09-10 12:27:09.964   Dest filename: C:\Program Files\POKROV\flutter_windows.dll
+2026-09-10 12:27:09.964   Time stamp of our file: 2026-04-15 05:42:40.000
+2026-09-10 12:27:09.964   Dest file exists.
+2026-09-10 12:27:09.964   Time stamp of existing file: 2026-04-15 05:42:40.000
+2026-09-10 12:27:09.964   Installing the file.
+2026-09-10 12:27:10.442   Successfully installed the file.
+2026-09-10 12:27:10.442   -- File entry --
+2026-09-10 12:27:10.444   Dest filename: C:\Program Files\POKROV\libcronet.dll
+2026-09-10 12:27:10.444   Time stamp of our file: 2026-09-09 05:39:40.000
+2026-09-10 12:27:10.444   Dest file exists.
+2026-09-10 12:27:10.444   Time stamp of existing file: 2026-09-09 06:43:06.000
+2026-09-10 12:27:10.444   Installing the file.
+2026-09-10 12:27:10.661   Successfully installed the file.
+2026-09-10 12:27:10.661   -- File entry --
+2026-09-10 12:27:10.661   Dest filename: C:\Program Files\POKROV\libcronet.NOTICES.txt
+2026-09-10 12:27:10.661   Time stamp of our file: 2026-09-10 10:47:26.000
+2026-09-10 12:27:10.661   Dest file exists.
+2026-09-10 12:27:10.661   Time stamp of existing file: 2026-09-09 06:43:06.000
+2026-09-10 12:27:10.661   Installing the file.
+2026-09-10 12:27:10.664   Successfully installed the file.
+2026-09-10 12:27:10.664   -- File entry --
+2026-09-10 12:27:10.664   Dest filename: C:\Program Files\POKROV\msvcp140.dll
+2026-09-10 12:27:10.664   Time stamp of our file: 2024-11-30 00:40:52.000
+2026-09-10 12:27:10.664   Dest file exists.
+2026-09-10 12:27:10.664   Time stamp of existing file: 2024-11-30 00:40:52.000
+2026-09-10 12:27:10.664   Installing the file.
+2026-09-10 12:27:10.677   Successfully installed the file.
+2026-09-10 12:27:10.677   -- File entry --
+2026-09-10 12:27:10.679   Dest filename: C:\Program Files\POKROV\pokrov-core.dll
+2026-09-10 12:27:10.679   Time stamp of our file: 2026-09-09 05:39:40.000
+2026-09-10 12:27:10.679   Dest file exists.
+2026-09-10 12:27:10.679   Time stamp of existing file: 2026-09-09 06:43:06.000
+2026-09-10 12:27:10.679   Installing the file.
+2026-09-10 12:27:11.893   Successfully installed the file.
+2026-09-10 12:27:11.893   -- File entry --
+2026-09-10 12:27:11.893   Dest filename: C:\Program Files\POKROV\pokrov_tray.ico
+2026-09-10 12:27:11.893   Time stamp of our file: 2026-09-10 10:47:26.000
+2026-09-10 12:27:11.893   Dest file exists.
+2026-09-10 12:27:11.893   Time stamp of existing file: 2026-09-09 06:43:06.000
+2026-09-10 12:27:11.893   Installing the file.
+2026-09-10 12:27:11.898   Successfully installed the file.
+2026-09-10 12:27:11.900   -- File entry --
+2026-09-10 12:27:11.900   Dest filename: C:\Program Files\POKROV\pokrov_windows.exe
+2026-09-10 12:27:11.900   Time stamp of our file: 2026-09-10 11:05:40.000
+2026-09-10 12:27:11.900   Dest file exists.
+2026-09-10 12:27:11.900   Time stamp of existing file: 2026-09-09 09:24:46.000
+2026-09-10 12:27:11.900   Installing the file.
+2026-09-10 12:27:11.908   Successfully installed the file.
+2026-09-10 12:27:11.908   -- File entry --
+2026-09-10 12:27:11.908   Dest filename: C:\Program Files\POKROV\screen_retriever_windows_plugin.dll
+2026-09-10 12:27:11.908   Time stamp of our file: 2026-09-10 11:05:24.000
+2026-09-10 12:27:11.908   Dest file exists.
+2026-09-10 12:27:11.908   Time stamp of existing file: 2026-09-09 09:24:30.000
+2026-09-10 12:27:11.908   Installing the file.
+2026-09-10 12:27:11.910   Successfully installed the file.
+2026-09-10 12:27:11.912   -- File entry --
+2026-09-10 12:27:11.912   Dest filename: C:\Program Files\POKROV\tray_manager_plugin.dll
+2026-09-10 12:27:11.912   Time stamp of our file: 2026-09-10 11:05:26.000
+2026-09-10 12:27:11.912   Dest file exists.
+2026-09-10 12:27:11.912   Time stamp of existing file: 2026-09-09 09:24:32.000
+2026-09-10 12:27:11.912   Installing the file.
+2026-09-10 12:27:11.916   Successfully installed the file.
+2026-09-10 12:27:11.916   -- File entry --
+2026-09-10 12:27:11.916   Dest filename: C:\Program Files\POKROV\url_launcher_windows_plugin.dll
+2026-09-10 12:27:11.916   Time stamp of our file: 2026-09-10 11:05:30.000
+2026-09-10 12:27:11.916   Dest file exists.
+2026-09-10 12:27:11.916   Time stamp of existing file: 2026-09-09 09:24:36.000
+2026-09-10 12:27:11.916   Installing the file.
+2026-09-10 12:27:11.920   Successfully installed the file.
+2026-09-10 12:27:11.920   -- File entry --
+2026-09-10 12:27:11.920   Dest filename: C:\Program Files\POKROV\vcruntime140.dll
+2026-09-10 12:27:11.920   Time stamp of our file: 2024-11-30 00:40:52.000
+2026-09-10 12:27:11.920   Dest file exists.
+2026-09-10 12:27:11.920   Time stamp of existing file: 2024-11-30 00:40:52.000
+2026-09-10 12:27:11.920   Installing the file.
+2026-09-10 12:27:11.925   Successfully installed the file.
+2026-09-10 12:27:11.925   -- File entry --
+2026-09-10 12:27:11.925   Dest filename: C:\Program Files\POKROV\vcruntime140_1.dll
+2026-09-10 12:27:11.925   Time stamp of our file: 2024-11-30 00:40:52.000
+2026-09-10 12:27:11.925   Dest file exists.
+2026-09-10 12:27:11.925   Time stamp of existing file: 2024-11-30 00:40:52.000
+2026-09-10 12:27:11.925   Installing the file.
+2026-09-10 12:27:11.927   Successfully installed the file.
+2026-09-10 12:27:11.927   -- File entry --
+2026-09-10 12:27:11.929   Dest filename: C:\Program Files\POKROV\window_manager_plugin.dll
+2026-09-10 12:27:11.929   Time stamp of our file: 2026-09-10 11:05:32.000
+2026-09-10 12:27:11.929   Dest file exists.
+2026-09-10 12:27:11.929   Time stamp of existing file: 2026-09-09 09:24:40.000
+2026-09-10 12:27:11.929   Installing the file.
+2026-09-10 12:27:11.933   Successfully installed the file.
+2026-09-10 12:27:11.933   -- File entry --
+2026-09-10 12:27:11.933   Dest filename: C:\Program Files\POKROV\data\app.so
+2026-09-10 12:27:11.933   Time stamp of our file: 2026-09-10 11:04:38.000
+2026-09-10 12:27:11.933   Dest file exists.
+2026-09-10 12:27:11.933   Time stamp of existing file: 2026-09-09 09:23:44.000
+2026-09-10 12:27:11.933   Installing the file.
+2026-09-10 12:27:12.149   Successfully installed the file.
+2026-09-10 12:27:12.149   -- File entry --
+2026-09-10 12:27:12.149   Dest filename: C:\Program Files\POKROV\data\icudtl.dat
+2026-09-10 12:27:12.152   Time stamp of our file: 2026-04-15 05:16:02.000
+2026-09-10 12:27:12.152   Dest file exists.
+2026-09-10 12:27:12.152   Time stamp of existing file: 2026-04-15 05:16:02.000
+2026-09-10 12:27:12.152   Installing the file.
+2026-09-10 12:27:12.177   Successfully installed the file.
+2026-09-10 12:27:12.177   -- File entry --
+2026-09-10 12:27:12.177   Dest filename: C:\Program Files\POKROV\data\flutter_assets\AssetManifest.bin
+2026-09-10 12:27:12.177   Time stamp of our file: 2026-09-10 11:04:38.000
+2026-09-10 12:27:12.177   Dest file exists.
+2026-09-10 12:27:12.177   Time stamp of existing file: 2026-09-09 09:23:44.000
+2026-09-10 12:27:12.177   Installing the file.
+2026-09-10 12:27:12.179   Successfully installed the file.
+2026-09-10 12:27:12.179   -- File entry --
+2026-09-10 12:27:12.179   Dest filename: C:\Program Files\POKROV\data\flutter_assets\FontManifest.json
+2026-09-10 12:27:12.179   Time stamp of our file: 2026-09-10 11:04:38.000
+2026-09-10 12:27:12.179   Dest file exists.
+2026-09-10 12:27:12.179   Time stamp of existing file: 2026-09-09 09:23:44.000
+2026-09-10 12:27:12.179   Installing the file.
+2026-09-10 12:27:12.181   Successfully installed the file.
+2026-09-10 12:27:12.181   -- File entry --
+2026-09-10 12:27:12.181   Dest filename: C:\Program Files\POKROV\data\flutter_assets\NativeAssetsManifest.json
+2026-09-10 12:27:12.181   Time stamp of our file: 2026-09-10 11:04:10.000
+2026-09-10 12:27:12.181   Dest file exists.
+2026-09-10 12:27:12.181   Time stamp of existing file: 2026-09-09 09:23:20.000
+2026-09-10 12:27:12.181   Installing the file.
+2026-09-10 12:27:12.183   Successfully installed the file.
+2026-09-10 12:27:12.183   -- File entry --
+2026-09-10 12:27:12.183   Dest filename: C:\Program Files\POKROV\data\flutter_assets\NOTICES.Z
+2026-09-10 12:27:12.183   Time stamp of our file: 2026-09-10 11:04:38.000
+2026-09-10 12:27:12.183   Dest file exists.
+2026-09-10 12:27:12.183   Time stamp of existing file: 2026-09-09 09:23:44.000
+2026-09-10 12:27:12.183   Installing the file.
+2026-09-10 12:27:12.190   Successfully installed the file.
+2026-09-10 12:27:12.190   -- File entry --
+2026-09-10 12:27:12.192   Dest filename: C:\Program Files\POKROV\data\flutter_assets\assets\brand\pokrov_mark.png
+2026-09-10 12:27:12.192   Time stamp of our file: 2026-09-10 10:47:26.000
+2026-09-10 12:27:12.192   Dest file exists.
+2026-09-10 12:27:12.192   Time stamp of existing file: 2026-09-09 06:43:06.000
+2026-09-10 12:27:12.192   Installing the file.
+2026-09-10 12:27:12.196   Successfully installed the file.
+2026-09-10 12:27:12.196   -- File entry --
+2026-09-10 12:27:12.196   Dest filename: C:\Program Files\POKROV\data\flutter_assets\assets\brand\pokrov_mark_128.png
+2026-09-10 12:27:12.196   Time stamp of our file: 2026-09-10 10:47:26.000
+2026-09-10 12:27:12.196   Dest file exists.
+2026-09-10 12:27:12.196   Time stamp of existing file: 2026-09-09 06:43:06.000
+2026-09-10 12:27:12.196   Installing the file.
+2026-09-10 12:27:12.198   Successfully installed the file.
+2026-09-10 12:27:12.198   -- File entry --
+2026-09-10 12:27:12.200   Dest filename: C:\Program Files\POKROV\data\flutter_assets\assets\brand\pokrov_mark_256.png
+2026-09-10 12:27:12.200   Time stamp of our file: 2026-09-10 10:47:26.000
+2026-09-10 12:27:12.200   Dest file exists.
+2026-09-10 12:27:12.200   Time stamp of existing file: 2026-09-09 06:43:06.000
+2026-09-10 12:27:12.200   Installing the file.
+2026-09-10 12:27:12.204   Successfully installed the file.
+2026-09-10 12:27:12.204   -- File entry --
+2026-09-10 12:27:12.204   Dest filename: C:\Program Files\POKROV\data\flutter_assets\fonts\MaterialIcons-Regular.otf
+2026-09-10 12:27:12.206   Time stamp of our file: 2026-04-15 05:15:58.000
+2026-09-10 12:27:12.206   Dest file exists.
+2026-09-10 12:27:12.206   Time stamp of existing file: 2026-04-15 05:15:58.000
+2026-09-10 12:27:12.206   Installing the file.
+2026-09-10 12:27:12.239   Successfully installed the file.
+2026-09-10 12:27:12.239   -- File entry --
+2026-09-10 12:27:12.241   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ac.si
+2026-09-10 12:27:12.241   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.241   Dest file exists.
+2026-09-10 12:27:12.241   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.241   Installing the file.
+2026-09-10 12:27:12.243   Successfully installed the file.
+2026-09-10 12:27:12.243   -- File entry --
+2026-09-10 12:27:12.243   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ad.si
+2026-09-10 12:27:12.243   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.243   Dest file exists.
+2026-09-10 12:27:12.243   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.243   Installing the file.
+2026-09-10 12:27:12.245   Successfully installed the file.
+2026-09-10 12:27:12.245   -- File entry --
+2026-09-10 12:27:12.247   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ae.si
+2026-09-10 12:27:12.247   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.247   Dest file exists.
+2026-09-10 12:27:12.247   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.247   Installing the file.
+2026-09-10 12:27:12.247   Successfully installed the file.
+2026-09-10 12:27:12.247   -- File entry --
+2026-09-10 12:27:12.247   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\af.si
+2026-09-10 12:27:12.247   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.247   Dest file exists.
+2026-09-10 12:27:12.247   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.247   Installing the file.
+2026-09-10 12:27:12.250   Successfully installed the file.
+2026-09-10 12:27:12.250   -- File entry --
+2026-09-10 12:27:12.250   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ag.si
+2026-09-10 12:27:12.250   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.250   Dest file exists.
+2026-09-10 12:27:12.250   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.250   Installing the file.
+2026-09-10 12:27:12.252   Successfully installed the file.
+2026-09-10 12:27:12.252   -- File entry --
+2026-09-10 12:27:12.252   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ai.si
+2026-09-10 12:27:12.252   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.252   Dest file exists.
+2026-09-10 12:27:12.254   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.254   Installing the file.
+2026-09-10 12:27:12.254   Successfully installed the file.
+2026-09-10 12:27:12.254   -- File entry --
+2026-09-10 12:27:12.256   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\al.si
+2026-09-10 12:27:12.256   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.256   Dest file exists.
+2026-09-10 12:27:12.256   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.256   Installing the file.
+2026-09-10 12:27:12.256   Successfully installed the file.
+2026-09-10 12:27:12.256   -- File entry --
+2026-09-10 12:27:12.258   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\am.si
+2026-09-10 12:27:12.258   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.258   Dest file exists.
+2026-09-10 12:27:12.258   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.258   Installing the file.
+2026-09-10 12:27:12.258   Successfully installed the file.
+2026-09-10 12:27:12.258   -- File entry --
+2026-09-10 12:27:12.258   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ao.si
+2026-09-10 12:27:12.258   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.260   Dest file exists.
+2026-09-10 12:27:12.260   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.260   Installing the file.
+2026-09-10 12:27:12.260   Successfully installed the file.
+2026-09-10 12:27:12.260   -- File entry --
+2026-09-10 12:27:12.260   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\aq.si
+2026-09-10 12:27:12.260   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.260   Dest file exists.
+2026-09-10 12:27:12.260   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.260   Installing the file.
+2026-09-10 12:27:12.262   Successfully installed the file.
+2026-09-10 12:27:12.262   -- File entry --
+2026-09-10 12:27:12.262   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ar.si
+2026-09-10 12:27:12.262   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.262   Dest file exists.
+2026-09-10 12:27:12.262   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.262   Installing the file.
+2026-09-10 12:27:12.264   Successfully installed the file.
+2026-09-10 12:27:12.264   -- File entry --
+2026-09-10 12:27:12.264   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\as.si
+2026-09-10 12:27:12.264   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.264   Dest file exists.
+2026-09-10 12:27:12.264   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.264   Installing the file.
+2026-09-10 12:27:12.267   Successfully installed the file.
+2026-09-10 12:27:12.267   -- File entry --
+2026-09-10 12:27:12.267   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\at.si
+2026-09-10 12:27:12.267   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.267   Dest file exists.
+2026-09-10 12:27:12.267   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.267   Installing the file.
+2026-09-10 12:27:12.269   Successfully installed the file.
+2026-09-10 12:27:12.269   -- File entry --
+2026-09-10 12:27:12.269   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\au.si
+2026-09-10 12:27:12.269   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.269   Dest file exists.
+2026-09-10 12:27:12.269   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.269   Installing the file.
+2026-09-10 12:27:12.271   Successfully installed the file.
+2026-09-10 12:27:12.271   -- File entry --
+2026-09-10 12:27:12.271   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\aw.si
+2026-09-10 12:27:12.271   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.271   Dest file exists.
+2026-09-10 12:27:12.271   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.271   Installing the file.
+2026-09-10 12:27:12.271   Successfully installed the file.
+2026-09-10 12:27:12.271   -- File entry --
+2026-09-10 12:27:12.271   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ax.si
+2026-09-10 12:27:12.274   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.274   Dest file exists.
+2026-09-10 12:27:12.274   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.274   Installing the file.
+2026-09-10 12:27:12.274   Successfully installed the file.
+2026-09-10 12:27:12.274   -- File entry --
+2026-09-10 12:27:12.274   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\az.si
+2026-09-10 12:27:12.275   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.275   Dest file exists.
+2026-09-10 12:27:12.275   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.275   Installing the file.
+2026-09-10 12:27:12.275   Successfully installed the file.
+2026-09-10 12:27:12.275   -- File entry --
+2026-09-10 12:27:12.275   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ba.si
+2026-09-10 12:27:12.275   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.275   Dest file exists.
+2026-09-10 12:27:12.275   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.275   Installing the file.
+2026-09-10 12:27:12.278   Successfully installed the file.
+2026-09-10 12:27:12.278   -- File entry --
+2026-09-10 12:27:12.278   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bb.si
+2026-09-10 12:27:12.278   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.278   Dest file exists.
+2026-09-10 12:27:12.278   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.278   Installing the file.
+2026-09-10 12:27:12.280   Successfully installed the file.
+2026-09-10 12:27:12.280   -- File entry --
+2026-09-10 12:27:12.280   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bd.si
+2026-09-10 12:27:12.280   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.280   Dest file exists.
+2026-09-10 12:27:12.280   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.280   Installing the file.
+2026-09-10 12:27:12.280   Successfully installed the file.
+2026-09-10 12:27:12.280   -- File entry --
+2026-09-10 12:27:12.280   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\be.si
+2026-09-10 12:27:12.282   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.282   Dest file exists.
+2026-09-10 12:27:12.282   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.282   Installing the file.
+2026-09-10 12:27:12.289   Successfully installed the file.
+2026-09-10 12:27:12.289   -- File entry --
+2026-09-10 12:27:12.289   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bf.si
+2026-09-10 12:27:12.289   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.289   Dest file exists.
+2026-09-10 12:27:12.289   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.289   Installing the file.
+2026-09-10 12:27:12.291   Successfully installed the file.
+2026-09-10 12:27:12.291   -- File entry --
+2026-09-10 12:27:12.291   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bg.si
+2026-09-10 12:27:12.291   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.291   Dest file exists.
+2026-09-10 12:27:12.291   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.291   Installing the file.
+2026-09-10 12:27:12.291   Successfully installed the file.
+2026-09-10 12:27:12.293   -- File entry --
+2026-09-10 12:27:12.293   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bh.si
+2026-09-10 12:27:12.293   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.293   Dest file exists.
+2026-09-10 12:27:12.293   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.293   Installing the file.
+2026-09-10 12:27:12.293   Successfully installed the file.
+2026-09-10 12:27:12.293   -- File entry --
+2026-09-10 12:27:12.293   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bi.si
+2026-09-10 12:27:12.295   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.295   Dest file exists.
+2026-09-10 12:27:12.295   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.295   Installing the file.
+2026-09-10 12:27:12.295   Successfully installed the file.
+2026-09-10 12:27:12.295   -- File entry --
+2026-09-10 12:27:12.295   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bj.si
+2026-09-10 12:27:12.295   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.295   Dest file exists.
+2026-09-10 12:27:12.295   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.295   Installing the file.
+2026-09-10 12:27:12.297   Successfully installed the file.
+2026-09-10 12:27:12.297   -- File entry --
+2026-09-10 12:27:12.298   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bl.si
+2026-09-10 12:27:12.298   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.298   Dest file exists.
+2026-09-10 12:27:12.298   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.298   Installing the file.
+2026-09-10 12:27:12.298   Successfully installed the file.
+2026-09-10 12:27:12.300   -- File entry --
+2026-09-10 12:27:12.300   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bm.si
+2026-09-10 12:27:12.300   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.300   Dest file exists.
+2026-09-10 12:27:12.300   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.300   Installing the file.
+2026-09-10 12:27:12.300   Successfully installed the file.
+2026-09-10 12:27:12.302   -- File entry --
+2026-09-10 12:27:12.302   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bn.si
+2026-09-10 12:27:12.302   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.302   Dest file exists.
+2026-09-10 12:27:12.302   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.302   Installing the file.
+2026-09-10 12:27:12.302   Successfully installed the file.
+2026-09-10 12:27:12.302   -- File entry --
+2026-09-10 12:27:12.304   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bo.si
+2026-09-10 12:27:12.304   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.304   Dest file exists.
+2026-09-10 12:27:12.304   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.304   Installing the file.
+2026-09-10 12:27:12.307   Successfully installed the file.
+2026-09-10 12:27:12.309   -- File entry --
+2026-09-10 12:27:12.309   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bq.si
+2026-09-10 12:27:12.309   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.309   Dest file exists.
+2026-09-10 12:27:12.309   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.309   Installing the file.
+2026-09-10 12:27:12.309   Successfully installed the file.
+2026-09-10 12:27:12.309   -- File entry --
+2026-09-10 12:27:12.311   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\br.si
+2026-09-10 12:27:12.311   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.311   Dest file exists.
+2026-09-10 12:27:12.311   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.311   Installing the file.
+2026-09-10 12:27:12.311   Successfully installed the file.
+2026-09-10 12:27:12.311   -- File entry --
+2026-09-10 12:27:12.313   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bs.si
+2026-09-10 12:27:12.313   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.313   Dest file exists.
+2026-09-10 12:27:12.313   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.313   Installing the file.
+2026-09-10 12:27:12.313   Successfully installed the file.
+2026-09-10 12:27:12.313   -- File entry --
+2026-09-10 12:27:12.314   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bt.si
+2026-09-10 12:27:12.314   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.314   Dest file exists.
+2026-09-10 12:27:12.314   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.314   Installing the file.
+2026-09-10 12:27:12.316   Successfully installed the file.
+2026-09-10 12:27:12.316   -- File entry --
+2026-09-10 12:27:12.316   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bv.si
+2026-09-10 12:27:12.316   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.316   Dest file exists.
+2026-09-10 12:27:12.316   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.316   Installing the file.
+2026-09-10 12:27:12.318   Successfully installed the file.
+2026-09-10 12:27:12.318   -- File entry --
+2026-09-10 12:27:12.318   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bw.si
+2026-09-10 12:27:12.318   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.318   Dest file exists.
+2026-09-10 12:27:12.318   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.318   Installing the file.
+2026-09-10 12:27:12.318   Successfully installed the file.
+2026-09-10 12:27:12.320   -- File entry --
+2026-09-10 12:27:12.320   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\by.si
+2026-09-10 12:27:12.320   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.320   Dest file exists.
+2026-09-10 12:27:12.320   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.320   Installing the file.
+2026-09-10 12:27:12.320   Successfully installed the file.
+2026-09-10 12:27:12.320   -- File entry --
+2026-09-10 12:27:12.320   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\bz.si
+2026-09-10 12:27:12.320   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.320   Dest file exists.
+2026-09-10 12:27:12.320   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.323   Installing the file.
+2026-09-10 12:27:12.323   Successfully installed the file.
+2026-09-10 12:27:12.323   -- File entry --
+2026-09-10 12:27:12.325   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ca.si
+2026-09-10 12:27:12.325   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.325   Dest file exists.
+2026-09-10 12:27:12.325   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.325   Installing the file.
+2026-09-10 12:27:12.325   Successfully installed the file.
+2026-09-10 12:27:12.325   -- File entry --
+2026-09-10 12:27:12.325   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cc.si
+2026-09-10 12:27:12.327   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.327   Dest file exists.
+2026-09-10 12:27:12.327   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.327   Installing the file.
+2026-09-10 12:27:12.327   Successfully installed the file.
+2026-09-10 12:27:12.327   -- File entry --
+2026-09-10 12:27:12.327   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cd.si
+2026-09-10 12:27:12.327   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.327   Dest file exists.
+2026-09-10 12:27:12.327   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.327   Installing the file.
+2026-09-10 12:27:12.329   Successfully installed the file.
+2026-09-10 12:27:12.329   -- File entry --
+2026-09-10 12:27:12.329   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cefta.si
+2026-09-10 12:27:12.329   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.329   Dest file exists.
+2026-09-10 12:27:12.329   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.329   Installing the file.
+2026-09-10 12:27:12.329   Successfully installed the file.
+2026-09-10 12:27:12.332   -- File entry --
+2026-09-10 12:27:12.332   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cf.si
+2026-09-10 12:27:12.332   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.332   Dest file exists.
+2026-09-10 12:27:12.332   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.332   Installing the file.
+2026-09-10 12:27:12.332   Successfully installed the file.
+2026-09-10 12:27:12.332   -- File entry --
+2026-09-10 12:27:12.334   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cg.si
+2026-09-10 12:27:12.334   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.334   Dest file exists.
+2026-09-10 12:27:12.334   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.334   Installing the file.
+2026-09-10 12:27:12.334   Successfully installed the file.
+2026-09-10 12:27:12.334   -- File entry --
+2026-09-10 12:27:12.334   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ch.si
+2026-09-10 12:27:12.334   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.334   Dest file exists.
+2026-09-10 12:27:12.334   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.334   Installing the file.
+2026-09-10 12:27:12.336   Successfully installed the file.
+2026-09-10 12:27:12.336   -- File entry --
+2026-09-10 12:27:12.336   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ci.si
+2026-09-10 12:27:12.336   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.336   Dest file exists.
+2026-09-10 12:27:12.336   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.336   Installing the file.
+2026-09-10 12:27:12.336   Successfully installed the file.
+2026-09-10 12:27:12.336   -- File entry --
+2026-09-10 12:27:12.338   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ck.si
+2026-09-10 12:27:12.338   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.338   Dest file exists.
+2026-09-10 12:27:12.338   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.338   Installing the file.
+2026-09-10 12:27:12.338   Successfully installed the file.
+2026-09-10 12:27:12.338   -- File entry --
+2026-09-10 12:27:12.340   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cl.si
+2026-09-10 12:27:12.340   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.340   Dest file exists.
+2026-09-10 12:27:12.340   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.340   Installing the file.
+2026-09-10 12:27:12.340   Successfully installed the file.
+2026-09-10 12:27:12.340   -- File entry --
+2026-09-10 12:27:12.340   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cm.si
+2026-09-10 12:27:12.340   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.340   Dest file exists.
+2026-09-10 12:27:12.340   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.340   Installing the file.
+2026-09-10 12:27:12.340   Successfully installed the file.
+2026-09-10 12:27:12.340   -- File entry --
+2026-09-10 12:27:12.343   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cn.si
+2026-09-10 12:27:12.343   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.343   Dest file exists.
+2026-09-10 12:27:12.343   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.343   Installing the file.
+2026-09-10 12:27:12.343   Successfully installed the file.
+2026-09-10 12:27:12.343   -- File entry --
+2026-09-10 12:27:12.343   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\co.si
+2026-09-10 12:27:12.344   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.344   Dest file exists.
+2026-09-10 12:27:12.344   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.344   Installing the file.
+2026-09-10 12:27:12.344   Successfully installed the file.
+2026-09-10 12:27:12.344   -- File entry --
+2026-09-10 12:27:12.346   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cp.si
+2026-09-10 12:27:12.346   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.346   Dest file exists.
+2026-09-10 12:27:12.346   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.346   Installing the file.
+2026-09-10 12:27:12.348   Successfully installed the file.
+2026-09-10 12:27:12.348   -- File entry --
+2026-09-10 12:27:12.348   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cr.si
+2026-09-10 12:27:12.348   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.348   Dest file exists.
+2026-09-10 12:27:12.348   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.348   Installing the file.
+2026-09-10 12:27:12.348   Successfully installed the file.
+2026-09-10 12:27:12.348   -- File entry --
+2026-09-10 12:27:12.348   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cu.si
+2026-09-10 12:27:12.348   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.348   Dest file exists.
+2026-09-10 12:27:12.348   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.348   Installing the file.
+2026-09-10 12:27:12.351   Successfully installed the file.
+2026-09-10 12:27:12.351   -- File entry --
+2026-09-10 12:27:12.351   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cv.si
+2026-09-10 12:27:12.351   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.351   Dest file exists.
+2026-09-10 12:27:12.351   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.351   Installing the file.
+2026-09-10 12:27:12.351   Successfully installed the file.
+2026-09-10 12:27:12.353   -- File entry --
+2026-09-10 12:27:12.353   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cw.si
+2026-09-10 12:27:12.353   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.353   Dest file exists.
+2026-09-10 12:27:12.353   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.353   Installing the file.
+2026-09-10 12:27:12.353   Successfully installed the file.
+2026-09-10 12:27:12.353   -- File entry --
+2026-09-10 12:27:12.354   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cx.si
+2026-09-10 12:27:12.354   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.354   Dest file exists.
+2026-09-10 12:27:12.354   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.354   Installing the file.
+2026-09-10 12:27:12.354   Successfully installed the file.
+2026-09-10 12:27:12.354   -- File entry --
+2026-09-10 12:27:12.354   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cy.si
+2026-09-10 12:27:12.354   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.354   Dest file exists.
+2026-09-10 12:27:12.356   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.356   Installing the file.
+2026-09-10 12:27:12.356   Successfully installed the file.
+2026-09-10 12:27:12.356   -- File entry --
+2026-09-10 12:27:12.356   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\cz.si
+2026-09-10 12:27:12.356   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.356   Dest file exists.
+2026-09-10 12:27:12.356   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.356   Installing the file.
+2026-09-10 12:27:12.359   Successfully installed the file.
+2026-09-10 12:27:12.359   -- File entry --
+2026-09-10 12:27:12.359   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\de.si
+2026-09-10 12:27:12.359   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.359   Dest file exists.
+2026-09-10 12:27:12.359   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.359   Installing the file.
+2026-09-10 12:27:12.359   Successfully installed the file.
+2026-09-10 12:27:12.361   -- File entry --
+2026-09-10 12:27:12.361   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\dg.si
+2026-09-10 12:27:12.361   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.361   Dest file exists.
+2026-09-10 12:27:12.361   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.361   Installing the file.
+2026-09-10 12:27:12.362   Successfully installed the file.
+2026-09-10 12:27:12.362   -- File entry --
+2026-09-10 12:27:12.362   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\dj.si
+2026-09-10 12:27:12.362   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.362   Dest file exists.
+2026-09-10 12:27:12.362   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.362   Installing the file.
+2026-09-10 12:27:12.364   Successfully installed the file.
+2026-09-10 12:27:12.364   -- File entry --
+2026-09-10 12:27:12.364   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\dk.si
+2026-09-10 12:27:12.364   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.364   Dest file exists.
+2026-09-10 12:27:12.364   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.364   Installing the file.
+2026-09-10 12:27:12.366   Successfully installed the file.
+2026-09-10 12:27:12.366   -- File entry --
+2026-09-10 12:27:12.366   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\dm.si
+2026-09-10 12:27:12.366   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.366   Dest file exists.
+2026-09-10 12:27:12.366   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.366   Installing the file.
+2026-09-10 12:27:12.366   Successfully installed the file.
+2026-09-10 12:27:12.368   -- File entry --
+2026-09-10 12:27:12.368   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\do.si
+2026-09-10 12:27:12.368   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.368   Dest file exists.
+2026-09-10 12:27:12.368   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.368   Installing the file.
+2026-09-10 12:27:12.372   Successfully installed the file.
+2026-09-10 12:27:12.372   -- File entry --
+2026-09-10 12:27:12.374   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\dz.si
+2026-09-10 12:27:12.374   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.374   Dest file exists.
+2026-09-10 12:27:12.374   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.374   Installing the file.
+2026-09-10 12:27:12.374   Successfully installed the file.
+2026-09-10 12:27:12.374   -- File entry --
+2026-09-10 12:27:12.374   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ea.si
+2026-09-10 12:27:12.399   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.399   Dest file exists.
+2026-09-10 12:27:12.399   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.399   Installing the file.
+2026-09-10 12:27:12.401   Successfully installed the file.
+2026-09-10 12:27:12.401   -- File entry --
+2026-09-10 12:27:12.401   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ec.si
+2026-09-10 12:27:12.401   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.401   Dest file exists.
+2026-09-10 12:27:12.401   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.401   Installing the file.
+2026-09-10 12:27:12.404   Successfully installed the file.
+2026-09-10 12:27:12.404   -- File entry --
+2026-09-10 12:27:12.404   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ee.si
+2026-09-10 12:27:12.404   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.404   Dest file exists.
+2026-09-10 12:27:12.404   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.404   Installing the file.
+2026-09-10 12:27:12.405   Successfully installed the file.
+2026-09-10 12:27:12.405   -- File entry --
+2026-09-10 12:27:12.405   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\eg.si
+2026-09-10 12:27:12.405   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.405   Dest file exists.
+2026-09-10 12:27:12.405   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.405   Installing the file.
+2026-09-10 12:27:12.408   Successfully installed the file.
+2026-09-10 12:27:12.408   -- File entry --
+2026-09-10 12:27:12.408   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\eh.si
+2026-09-10 12:27:12.408   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.408   Dest file exists.
+2026-09-10 12:27:12.408   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.408   Installing the file.
+2026-09-10 12:27:12.410   Successfully installed the file.
+2026-09-10 12:27:12.410   -- File entry --
+2026-09-10 12:27:12.410   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\er.si
+2026-09-10 12:27:12.410   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.410   Dest file exists.
+2026-09-10 12:27:12.410   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.410   Installing the file.
+2026-09-10 12:27:12.410   Successfully installed the file.
+2026-09-10 12:27:12.410   -- File entry --
+2026-09-10 12:27:12.412   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\es-ct.si
+2026-09-10 12:27:12.412   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.412   Dest file exists.
+2026-09-10 12:27:12.412   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.412   Installing the file.
+2026-09-10 12:27:12.412   Successfully installed the file.
+2026-09-10 12:27:12.412   -- File entry --
+2026-09-10 12:27:12.412   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\es-ga.si
+2026-09-10 12:27:12.412   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.412   Dest file exists.
+2026-09-10 12:27:12.412   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.414   Installing the file.
+2026-09-10 12:27:12.414   Successfully installed the file.
+2026-09-10 12:27:12.414   -- File entry --
+2026-09-10 12:27:12.414   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\es.si
+2026-09-10 12:27:12.414   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.414   Dest file exists.
+2026-09-10 12:27:12.414   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.414   Installing the file.
+2026-09-10 12:27:12.418   Successfully installed the file.
+2026-09-10 12:27:12.418   -- File entry --
+2026-09-10 12:27:12.418   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\et.si
+2026-09-10 12:27:12.418   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.418   Dest file exists.
+2026-09-10 12:27:12.418   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.418   Installing the file.
+2026-09-10 12:27:12.418   Successfully installed the file.
+2026-09-10 12:27:12.418   -- File entry --
+2026-09-10 12:27:12.420   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\eu.si
+2026-09-10 12:27:12.420   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.420   Dest file exists.
+2026-09-10 12:27:12.420   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.420   Installing the file.
+2026-09-10 12:27:12.420   Successfully installed the file.
+2026-09-10 12:27:12.420   -- File entry --
+2026-09-10 12:27:12.420   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\fi.si
+2026-09-10 12:27:12.420   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.420   Dest file exists.
+2026-09-10 12:27:12.420   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.420   Installing the file.
+2026-09-10 12:27:12.422   Successfully installed the file.
+2026-09-10 12:27:12.422   -- File entry --
+2026-09-10 12:27:12.422   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\fj.si
+2026-09-10 12:27:12.422   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.422   Dest file exists.
+2026-09-10 12:27:12.422   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.422   Installing the file.
+2026-09-10 12:27:12.424   Successfully installed the file.
+2026-09-10 12:27:12.424   -- File entry --
+2026-09-10 12:27:12.424   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\fk.si
+2026-09-10 12:27:12.424   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.424   Dest file exists.
+2026-09-10 12:27:12.426   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.426   Installing the file.
+2026-09-10 12:27:12.426   Successfully installed the file.
+2026-09-10 12:27:12.426   -- File entry --
+2026-09-10 12:27:12.426   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\fm.si
+2026-09-10 12:27:12.429   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.429   Dest file exists.
+2026-09-10 12:27:12.429   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.429   Installing the file.
+2026-09-10 12:27:12.429   Successfully installed the file.
+2026-09-10 12:27:12.429   -- File entry --
+2026-09-10 12:27:12.429   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\fo.si
+2026-09-10 12:27:12.429   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.429   Dest file exists.
+2026-09-10 12:27:12.429   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.429   Installing the file.
+2026-09-10 12:27:12.431   Successfully installed the file.
+2026-09-10 12:27:12.431   -- File entry --
+2026-09-10 12:27:12.431   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\fr.si
+2026-09-10 12:27:12.431   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.431   Dest file exists.
+2026-09-10 12:27:12.431   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.431   Installing the file.
+2026-09-10 12:27:12.432   Successfully installed the file.
+2026-09-10 12:27:12.432   -- File entry --
+2026-09-10 12:27:12.432   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ga.si
+2026-09-10 12:27:12.434   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.434   Dest file exists.
+2026-09-10 12:27:12.434   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.434   Installing the file.
+2026-09-10 12:27:12.434   Successfully installed the file.
+2026-09-10 12:27:12.434   -- File entry --
+2026-09-10 12:27:12.434   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gb-eng.si
+2026-09-10 12:27:12.434   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.434   Dest file exists.
+2026-09-10 12:27:12.434   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.434   Installing the file.
+2026-09-10 12:27:12.437   Successfully installed the file.
+2026-09-10 12:27:12.437   -- File entry --
+2026-09-10 12:27:12.437   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gb-nir.si
+2026-09-10 12:27:12.437   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.437   Dest file exists.
+2026-09-10 12:27:12.437   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.437   Installing the file.
+2026-09-10 12:27:12.439   Successfully installed the file.
+2026-09-10 12:27:12.439   -- File entry --
+2026-09-10 12:27:12.439   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gb-sct.si
+2026-09-10 12:27:12.439   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.439   Dest file exists.
+2026-09-10 12:27:12.439   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.439   Installing the file.
+2026-09-10 12:27:12.439   Successfully installed the file.
+2026-09-10 12:27:12.439   -- File entry --
+2026-09-10 12:27:12.441   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gb-wls.si
+2026-09-10 12:27:12.441   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.441   Dest file exists.
+2026-09-10 12:27:12.441   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.441   Installing the file.
+2026-09-10 12:27:12.441   Successfully installed the file.
+2026-09-10 12:27:12.441   -- File entry --
+2026-09-10 12:27:12.441   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gb.si
+2026-09-10 12:27:12.441   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.441   Dest file exists.
+2026-09-10 12:27:12.441   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.441   Installing the file.
+2026-09-10 12:27:12.443   Successfully installed the file.
+2026-09-10 12:27:12.443   -- File entry --
+2026-09-10 12:27:12.443   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gd.si
+2026-09-10 12:27:12.443   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.443   Dest file exists.
+2026-09-10 12:27:12.443   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.443   Installing the file.
+2026-09-10 12:27:12.445   Successfully installed the file.
+2026-09-10 12:27:12.445   -- File entry --
+2026-09-10 12:27:12.445   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ge.si
+2026-09-10 12:27:12.445   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.445   Dest file exists.
+2026-09-10 12:27:12.445   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.445   Installing the file.
+2026-09-10 12:27:12.445   Successfully installed the file.
+2026-09-10 12:27:12.445   -- File entry --
+2026-09-10 12:27:12.447   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gf.si
+2026-09-10 12:27:12.447   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.447   Dest file exists.
+2026-09-10 12:27:12.447   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.447   Installing the file.
+2026-09-10 12:27:12.448   Successfully installed the file.
+2026-09-10 12:27:12.448   -- File entry --
+2026-09-10 12:27:12.448   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gg.si
+2026-09-10 12:27:12.448   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.448   Dest file exists.
+2026-09-10 12:27:12.448   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.448   Installing the file.
+2026-09-10 12:27:12.450   Successfully installed the file.
+2026-09-10 12:27:12.450   -- File entry --
+2026-09-10 12:27:12.450   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gh.si
+2026-09-10 12:27:12.450   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.450   Dest file exists.
+2026-09-10 12:27:12.450   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.450   Installing the file.
+2026-09-10 12:27:12.452   Successfully installed the file.
+2026-09-10 12:27:12.452   -- File entry --
+2026-09-10 12:27:12.452   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gi.si
+2026-09-10 12:27:12.452   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.452   Dest file exists.
+2026-09-10 12:27:12.452   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.452   Installing the file.
+2026-09-10 12:27:12.454   Successfully installed the file.
+2026-09-10 12:27:12.454   -- File entry --
+2026-09-10 12:27:12.454   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gl.si
+2026-09-10 12:27:12.454   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.454   Dest file exists.
+2026-09-10 12:27:12.454   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.454   Installing the file.
+2026-09-10 12:27:12.454   Successfully installed the file.
+2026-09-10 12:27:12.454   -- File entry --
+2026-09-10 12:27:12.456   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gm.si
+2026-09-10 12:27:12.456   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.456   Dest file exists.
+2026-09-10 12:27:12.456   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.456   Installing the file.
+2026-09-10 12:27:12.456   Successfully installed the file.
+2026-09-10 12:27:12.456   -- File entry --
+2026-09-10 12:27:12.456   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gn.si
+2026-09-10 12:27:12.456   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.456   Dest file exists.
+2026-09-10 12:27:12.456   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.456   Installing the file.
+2026-09-10 12:27:12.459   Successfully installed the file.
+2026-09-10 12:27:12.459   -- File entry --
+2026-09-10 12:27:12.459   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gp.si
+2026-09-10 12:27:12.459   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.459   Dest file exists.
+2026-09-10 12:27:12.459   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.459   Installing the file.
+2026-09-10 12:27:12.461   Successfully installed the file.
+2026-09-10 12:27:12.461   -- File entry --
+2026-09-10 12:27:12.461   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gq.si
+2026-09-10 12:27:12.461   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.461   Dest file exists.
+2026-09-10 12:27:12.461   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.461   Installing the file.
+2026-09-10 12:27:12.461   Successfully installed the file.
+2026-09-10 12:27:12.462   -- File entry --
+2026-09-10 12:27:12.462   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gr.si
+2026-09-10 12:27:12.462   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.462   Dest file exists.
+2026-09-10 12:27:12.462   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.462   Installing the file.
+2026-09-10 12:27:12.462   Successfully installed the file.
+2026-09-10 12:27:12.462   -- File entry --
+2026-09-10 12:27:12.462   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gs.si
+2026-09-10 12:27:12.462   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.462   Dest file exists.
+2026-09-10 12:27:12.462   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.462   Installing the file.
+2026-09-10 12:27:12.467   Successfully installed the file.
+2026-09-10 12:27:12.467   -- File entry --
+2026-09-10 12:27:12.467   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gt.si
+2026-09-10 12:27:12.467   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.467   Dest file exists.
+2026-09-10 12:27:12.467   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.467   Installing the file.
+2026-09-10 12:27:12.469   Successfully installed the file.
+2026-09-10 12:27:12.469   -- File entry --
+2026-09-10 12:27:12.469   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gu.si
+2026-09-10 12:27:12.469   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.469   Dest file exists.
+2026-09-10 12:27:12.469   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.469   Installing the file.
+2026-09-10 12:27:12.471   Successfully installed the file.
+2026-09-10 12:27:12.471   -- File entry --
+2026-09-10 12:27:12.471   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gw.si
+2026-09-10 12:27:12.471   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.471   Dest file exists.
+2026-09-10 12:27:12.471   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.471   Installing the file.
+2026-09-10 12:27:12.471   Successfully installed the file.
+2026-09-10 12:27:12.473   -- File entry --
+2026-09-10 12:27:12.473   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\gy.si
+2026-09-10 12:27:12.473   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.473   Dest file exists.
+2026-09-10 12:27:12.473   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.473   Installing the file.
+2026-09-10 12:27:12.473   Successfully installed the file.
+2026-09-10 12:27:12.473   -- File entry --
+2026-09-10 12:27:12.473   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\hk.si
+2026-09-10 12:27:12.475   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.475   Dest file exists.
+2026-09-10 12:27:12.475   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.475   Installing the file.
+2026-09-10 12:27:12.475   Successfully installed the file.
+2026-09-10 12:27:12.475   -- File entry --
+2026-09-10 12:27:12.475   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\hm.si
+2026-09-10 12:27:12.475   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.475   Dest file exists.
+2026-09-10 12:27:12.475   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.475   Installing the file.
+2026-09-10 12:27:12.477   Successfully installed the file.
+2026-09-10 12:27:12.477   -- File entry --
+2026-09-10 12:27:12.477   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\hn.si
+2026-09-10 12:27:12.477   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.477   Dest file exists.
+2026-09-10 12:27:12.477   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.477   Installing the file.
+2026-09-10 12:27:12.477   Successfully installed the file.
+2026-09-10 12:27:12.479   -- File entry --
+2026-09-10 12:27:12.479   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\hr.si
+2026-09-10 12:27:12.479   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.479   Dest file exists.
+2026-09-10 12:27:12.479   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.479   Installing the file.
+2026-09-10 12:27:12.481   Successfully installed the file.
+2026-09-10 12:27:12.481   -- File entry --
+2026-09-10 12:27:12.484   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ht.si
+2026-09-10 12:27:12.484   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.484   Dest file exists.
+2026-09-10 12:27:12.484   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.484   Installing the file.
+2026-09-10 12:27:12.484   Successfully installed the file.
+2026-09-10 12:27:12.484   -- File entry --
+2026-09-10 12:27:12.484   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\hu.si
+2026-09-10 12:27:12.484   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.484   Dest file exists.
+2026-09-10 12:27:12.484   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.484   Installing the file.
+2026-09-10 12:27:12.504   Successfully installed the file.
+2026-09-10 12:27:12.504   -- File entry --
+2026-09-10 12:27:12.506   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ic.si
+2026-09-10 12:27:12.506   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.506   Dest file exists.
+2026-09-10 12:27:12.506   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.506   Installing the file.
+2026-09-10 12:27:12.506   Successfully installed the file.
+2026-09-10 12:27:12.506   -- File entry --
+2026-09-10 12:27:12.506   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\id.si
+2026-09-10 12:27:12.506   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.506   Dest file exists.
+2026-09-10 12:27:12.508   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.508   Installing the file.
+2026-09-10 12:27:12.508   Successfully installed the file.
+2026-09-10 12:27:12.508   -- File entry --
+2026-09-10 12:27:12.508   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ie.si
+2026-09-10 12:27:12.508   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.508   Dest file exists.
+2026-09-10 12:27:12.508   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.508   Installing the file.
+2026-09-10 12:27:12.510   Successfully installed the file.
+2026-09-10 12:27:12.510   -- File entry --
+2026-09-10 12:27:12.510   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\il.si
+2026-09-10 12:27:12.510   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.510   Dest file exists.
+2026-09-10 12:27:12.510   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.510   Installing the file.
+2026-09-10 12:27:12.510   Successfully installed the file.
+2026-09-10 12:27:12.512   -- File entry --
+2026-09-10 12:27:12.512   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\im.si
+2026-09-10 12:27:12.512   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.512   Dest file exists.
+2026-09-10 12:27:12.512   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.512   Installing the file.
+2026-09-10 12:27:12.512   Successfully installed the file.
+2026-09-10 12:27:12.512   -- File entry --
+2026-09-10 12:27:12.512   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\in.si
+2026-09-10 12:27:12.512   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.512   Dest file exists.
+2026-09-10 12:27:12.512   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.512   Installing the file.
+2026-09-10 12:27:12.515   Successfully installed the file.
+2026-09-10 12:27:12.515   -- File entry --
+2026-09-10 12:27:12.515   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\io.si
+2026-09-10 12:27:12.515   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.515   Dest file exists.
+2026-09-10 12:27:12.515   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.515   Installing the file.
+2026-09-10 12:27:12.517   Successfully installed the file.
+2026-09-10 12:27:12.517   -- File entry --
+2026-09-10 12:27:12.517   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\iq.si
+2026-09-10 12:27:12.517   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.517   Dest file exists.
+2026-09-10 12:27:12.517   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.517   Installing the file.
+2026-09-10 12:27:12.517   Successfully installed the file.
+2026-09-10 12:27:12.519   -- File entry --
+2026-09-10 12:27:12.519   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ir.si
+2026-09-10 12:27:12.521   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.521   Dest file exists.
+2026-09-10 12:27:12.521   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.521   Installing the file.
+2026-09-10 12:27:12.523   Successfully installed the file.
+2026-09-10 12:27:12.523   -- File entry --
+2026-09-10 12:27:12.523   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\is.si
+2026-09-10 12:27:12.523   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.523   Dest file exists.
+2026-09-10 12:27:12.523   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.523   Installing the file.
+2026-09-10 12:27:12.525   Successfully installed the file.
+2026-09-10 12:27:12.525   -- File entry --
+2026-09-10 12:27:12.525   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\it.si
+2026-09-10 12:27:12.525   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.525   Dest file exists.
+2026-09-10 12:27:12.525   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.525   Installing the file.
+2026-09-10 12:27:12.525   Successfully installed the file.
+2026-09-10 12:27:12.525   -- File entry --
+2026-09-10 12:27:12.525   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\je.si
+2026-09-10 12:27:12.527   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.527   Dest file exists.
+2026-09-10 12:27:12.527   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.527   Installing the file.
+2026-09-10 12:27:12.527   Successfully installed the file.
+2026-09-10 12:27:12.527   -- File entry --
+2026-09-10 12:27:12.527   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\jm.si
+2026-09-10 12:27:12.527   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.527   Dest file exists.
+2026-09-10 12:27:12.527   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.527   Installing the file.
+2026-09-10 12:27:12.529   Successfully installed the file.
+2026-09-10 12:27:12.529   -- File entry --
+2026-09-10 12:27:12.529   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\jo.si
+2026-09-10 12:27:12.529   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.529   Dest file exists.
+2026-09-10 12:27:12.529   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.529   Installing the file.
+2026-09-10 12:27:12.529   Successfully installed the file.
+2026-09-10 12:27:12.529   -- File entry --
+2026-09-10 12:27:12.531   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\jp.si
+2026-09-10 12:27:12.531   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.531   Dest file exists.
+2026-09-10 12:27:12.531   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.531   Installing the file.
+2026-09-10 12:27:12.531   Successfully installed the file.
+2026-09-10 12:27:12.531   -- File entry --
+2026-09-10 12:27:12.531   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ke.si
+2026-09-10 12:27:12.531   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.531   Dest file exists.
+2026-09-10 12:27:12.531   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.533   Installing the file.
+2026-09-10 12:27:12.533   Successfully installed the file.
+2026-09-10 12:27:12.533   -- File entry --
+2026-09-10 12:27:12.533   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\kg.si
+2026-09-10 12:27:12.533   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.533   Dest file exists.
+2026-09-10 12:27:12.533   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.533   Installing the file.
+2026-09-10 12:27:12.536   Successfully installed the file.
+2026-09-10 12:27:12.536   -- File entry --
+2026-09-10 12:27:12.536   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\kh.si
+2026-09-10 12:27:12.536   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.536   Dest file exists.
+2026-09-10 12:27:12.536   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.536   Installing the file.
+2026-09-10 12:27:12.536   Successfully installed the file.
+2026-09-10 12:27:12.536   -- File entry --
+2026-09-10 12:27:12.538   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ki.si
+2026-09-10 12:27:12.538   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.538   Dest file exists.
+2026-09-10 12:27:12.538   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.538   Installing the file.
+2026-09-10 12:27:12.540   Successfully installed the file.
+2026-09-10 12:27:12.540   -- File entry --
+2026-09-10 12:27:12.540   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\km.si
+2026-09-10 12:27:12.540   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.540   Dest file exists.
+2026-09-10 12:27:12.540   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.540   Installing the file.
+2026-09-10 12:27:12.542   Successfully installed the file.
+2026-09-10 12:27:12.542   -- File entry --
+2026-09-10 12:27:12.542   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\kn.si
+2026-09-10 12:27:12.542   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.542   Dest file exists.
+2026-09-10 12:27:12.542   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.542   Installing the file.
+2026-09-10 12:27:12.542   Successfully installed the file.
+2026-09-10 12:27:12.544   -- File entry --
+2026-09-10 12:27:12.544   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\kp.si
+2026-09-10 12:27:12.544   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.544   Dest file exists.
+2026-09-10 12:27:12.544   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.544   Installing the file.
+2026-09-10 12:27:12.544   Successfully installed the file.
+2026-09-10 12:27:12.544   -- File entry --
+2026-09-10 12:27:12.546   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\kr.si
+2026-09-10 12:27:12.546   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.546   Dest file exists.
+2026-09-10 12:27:12.546   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.546   Installing the file.
+2026-09-10 12:27:12.546   Successfully installed the file.
+2026-09-10 12:27:12.546   -- File entry --
+2026-09-10 12:27:12.549   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\kw.si
+2026-09-10 12:27:12.549   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.549   Dest file exists.
+2026-09-10 12:27:12.549   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.549   Installing the file.
+2026-09-10 12:27:12.549   Successfully installed the file.
+2026-09-10 12:27:12.549   -- File entry --
+2026-09-10 12:27:12.549   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ky.si
+2026-09-10 12:27:12.549   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.549   Dest file exists.
+2026-09-10 12:27:12.549   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.549   Installing the file.
+2026-09-10 12:27:12.551   Successfully installed the file.
+2026-09-10 12:27:12.551   -- File entry --
+2026-09-10 12:27:12.551   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\kz.si
+2026-09-10 12:27:12.551   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.551   Dest file exists.
+2026-09-10 12:27:12.551   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.551   Installing the file.
+2026-09-10 12:27:12.557   Successfully installed the file.
+2026-09-10 12:27:12.557   -- File entry --
+2026-09-10 12:27:12.559   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\la.si
+2026-09-10 12:27:12.559   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.559   Dest file exists.
+2026-09-10 12:27:12.559   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.559   Installing the file.
+2026-09-10 12:27:12.561   Successfully installed the file.
+2026-09-10 12:27:12.561   -- File entry --
+2026-09-10 12:27:12.563   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\lb.si
+2026-09-10 12:27:12.563   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.563   Dest file exists.
+2026-09-10 12:27:12.563   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.563   Installing the file.
+2026-09-10 12:27:12.563   Successfully installed the file.
+2026-09-10 12:27:12.563   -- File entry --
+2026-09-10 12:27:12.565   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\lc.si
+2026-09-10 12:27:12.565   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.565   Dest file exists.
+2026-09-10 12:27:12.565   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.565   Installing the file.
+2026-09-10 12:27:12.565   Successfully installed the file.
+2026-09-10 12:27:12.565   -- File entry --
+2026-09-10 12:27:12.565   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\li.si
+2026-09-10 12:27:12.565   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.565   Dest file exists.
+2026-09-10 12:27:12.565   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.567   Installing the file.
+2026-09-10 12:27:12.567   Successfully installed the file.
+2026-09-10 12:27:12.567   -- File entry --
+2026-09-10 12:27:12.569   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\lk.si
+2026-09-10 12:27:12.569   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.569   Dest file exists.
+2026-09-10 12:27:12.569   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.569   Installing the file.
+2026-09-10 12:27:12.569   Successfully installed the file.
+2026-09-10 12:27:12.571   -- File entry --
+2026-09-10 12:27:12.571   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\lr.si
+2026-09-10 12:27:12.571   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.571   Dest file exists.
+2026-09-10 12:27:12.571   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.571   Installing the file.
+2026-09-10 12:27:12.571   Successfully installed the file.
+2026-09-10 12:27:12.571   -- File entry --
+2026-09-10 12:27:12.573   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ls.si
+2026-09-10 12:27:12.573   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.573   Dest file exists.
+2026-09-10 12:27:12.573   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.573   Installing the file.
+2026-09-10 12:27:12.573   Successfully installed the file.
+2026-09-10 12:27:12.573   -- File entry --
+2026-09-10 12:27:12.575   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\lt.si
+2026-09-10 12:27:12.575   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.575   Dest file exists.
+2026-09-10 12:27:12.575   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.575   Installing the file.
+2026-09-10 12:27:12.575   Successfully installed the file.
+2026-09-10 12:27:12.575   -- File entry --
+2026-09-10 12:27:12.575   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\lu.si
+2026-09-10 12:27:12.575   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.577   Dest file exists.
+2026-09-10 12:27:12.577   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.577   Installing the file.
+2026-09-10 12:27:12.577   Successfully installed the file.
+2026-09-10 12:27:12.577   -- File entry --
+2026-09-10 12:27:12.577   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\lv.si
+2026-09-10 12:27:12.577   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.577   Dest file exists.
+2026-09-10 12:27:12.577   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.577   Installing the file.
+2026-09-10 12:27:12.579   Successfully installed the file.
+2026-09-10 12:27:12.579   -- File entry --
+2026-09-10 12:27:12.579   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ly.si
+2026-09-10 12:27:12.579   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.579   Dest file exists.
+2026-09-10 12:27:12.579   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.579   Installing the file.
+2026-09-10 12:27:12.581   Successfully installed the file.
+2026-09-10 12:27:12.581   -- File entry --
+2026-09-10 12:27:12.581   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ma.si
+2026-09-10 12:27:12.581   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.581   Dest file exists.
+2026-09-10 12:27:12.581   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.581   Installing the file.
+2026-09-10 12:27:12.581   Successfully installed the file.
+2026-09-10 12:27:12.581   -- File entry --
+2026-09-10 12:27:12.584   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mc.si
+2026-09-10 12:27:12.584   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.584   Dest file exists.
+2026-09-10 12:27:12.584   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.584   Installing the file.
+2026-09-10 12:27:12.584   Successfully installed the file.
+2026-09-10 12:27:12.585   -- File entry --
+2026-09-10 12:27:12.585   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\md.si
+2026-09-10 12:27:12.585   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.585   Dest file exists.
+2026-09-10 12:27:12.585   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.585   Installing the file.
+2026-09-10 12:27:12.587   Successfully installed the file.
+2026-09-10 12:27:12.587   -- File entry --
+2026-09-10 12:27:12.587   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\me.si
+2026-09-10 12:27:12.587   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.587   Dest file exists.
+2026-09-10 12:27:12.587   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.587   Installing the file.
+2026-09-10 12:27:12.590   Successfully installed the file.
+2026-09-10 12:27:12.590   -- File entry --
+2026-09-10 12:27:12.592   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mf.si
+2026-09-10 12:27:12.592   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.592   Dest file exists.
+2026-09-10 12:27:12.592   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.592   Installing the file.
+2026-09-10 12:27:12.592   Successfully installed the file.
+2026-09-10 12:27:12.592   -- File entry --
+2026-09-10 12:27:12.592   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mg.si
+2026-09-10 12:27:12.592   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.592   Dest file exists.
+2026-09-10 12:27:12.592   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.592   Installing the file.
+2026-09-10 12:27:12.594   Successfully installed the file.
+2026-09-10 12:27:12.594   -- File entry --
+2026-09-10 12:27:12.594   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mh.si
+2026-09-10 12:27:12.594   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.594   Dest file exists.
+2026-09-10 12:27:12.594   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.594   Installing the file.
+2026-09-10 12:27:12.594   Successfully installed the file.
+2026-09-10 12:27:12.596   -- File entry --
+2026-09-10 12:27:12.596   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mk.si
+2026-09-10 12:27:12.596   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.596   Dest file exists.
+2026-09-10 12:27:12.596   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.596   Installing the file.
+2026-09-10 12:27:12.596   Successfully installed the file.
+2026-09-10 12:27:12.596   -- File entry --
+2026-09-10 12:27:12.598   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ml.si
+2026-09-10 12:27:12.598   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.598   Dest file exists.
+2026-09-10 12:27:12.598   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.598   Installing the file.
+2026-09-10 12:27:12.598   Successfully installed the file.
+2026-09-10 12:27:12.598   -- File entry --
+2026-09-10 12:27:12.598   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mm.si
+2026-09-10 12:27:12.598   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.598   Dest file exists.
+2026-09-10 12:27:12.598   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.598   Installing the file.
+2026-09-10 12:27:12.600   Successfully installed the file.
+2026-09-10 12:27:12.600   -- File entry --
+2026-09-10 12:27:12.600   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mn.si
+2026-09-10 12:27:12.600   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.600   Dest file exists.
+2026-09-10 12:27:12.600   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.600   Installing the file.
+2026-09-10 12:27:12.602   Successfully installed the file.
+2026-09-10 12:27:12.602   -- File entry --
+2026-09-10 12:27:12.602   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mo.si
+2026-09-10 12:27:12.602   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.602   Dest file exists.
+2026-09-10 12:27:12.602   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.602   Installing the file.
+2026-09-10 12:27:12.604   Successfully installed the file.
+2026-09-10 12:27:12.604   -- File entry --
+2026-09-10 12:27:12.604   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mp.si
+2026-09-10 12:27:12.604   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.604   Dest file exists.
+2026-09-10 12:27:12.604   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.604   Installing the file.
+2026-09-10 12:27:12.606   Successfully installed the file.
+2026-09-10 12:27:12.606   -- File entry --
+2026-09-10 12:27:12.606   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mq.si
+2026-09-10 12:27:12.606   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.606   Dest file exists.
+2026-09-10 12:27:12.606   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.606   Installing the file.
+2026-09-10 12:27:12.608   Successfully installed the file.
+2026-09-10 12:27:12.608   -- File entry --
+2026-09-10 12:27:12.608   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mr.si
+2026-09-10 12:27:12.608   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.608   Dest file exists.
+2026-09-10 12:27:12.608   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.608   Installing the file.
+2026-09-10 12:27:12.610   Successfully installed the file.
+2026-09-10 12:27:12.610   -- File entry --
+2026-09-10 12:27:12.610   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ms.si
+2026-09-10 12:27:12.610   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.610   Dest file exists.
+2026-09-10 12:27:12.610   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.610   Installing the file.
+2026-09-10 12:27:12.610   Successfully installed the file.
+2026-09-10 12:27:12.612   -- File entry --
+2026-09-10 12:27:12.612   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mt.si
+2026-09-10 12:27:12.612   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.612   Dest file exists.
+2026-09-10 12:27:12.612   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.612   Installing the file.
+2026-09-10 12:27:12.612   Successfully installed the file.
+2026-09-10 12:27:12.614   -- File entry --
+2026-09-10 12:27:12.614   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mu.si
+2026-09-10 12:27:12.614   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.614   Dest file exists.
+2026-09-10 12:27:12.614   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.614   Installing the file.
+2026-09-10 12:27:12.614   Successfully installed the file.
+2026-09-10 12:27:12.614   -- File entry --
+2026-09-10 12:27:12.617   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mv.si
+2026-09-10 12:27:12.617   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.617   Dest file exists.
+2026-09-10 12:27:12.617   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.617   Installing the file.
+2026-09-10 12:27:12.618   Successfully installed the file.
+2026-09-10 12:27:12.618   -- File entry --
+2026-09-10 12:27:12.618   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mw.si
+2026-09-10 12:27:12.618   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.618   Dest file exists.
+2026-09-10 12:27:12.618   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.618   Installing the file.
+2026-09-10 12:27:12.620   Successfully installed the file.
+2026-09-10 12:27:12.620   -- File entry --
+2026-09-10 12:27:12.620   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mx.si
+2026-09-10 12:27:12.620   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.620   Dest file exists.
+2026-09-10 12:27:12.620   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.620   Installing the file.
+2026-09-10 12:27:12.624   Successfully installed the file.
+2026-09-10 12:27:12.624   -- File entry --
+2026-09-10 12:27:12.624   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\my.si
+2026-09-10 12:27:12.624   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.624   Dest file exists.
+2026-09-10 12:27:12.624   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.624   Installing the file.
+2026-09-10 12:27:12.626   Successfully installed the file.
+2026-09-10 12:27:12.626   -- File entry --
+2026-09-10 12:27:12.626   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\mz.si
+2026-09-10 12:27:12.626   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.626   Dest file exists.
+2026-09-10 12:27:12.626   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.626   Installing the file.
+2026-09-10 12:27:12.628   Successfully installed the file.
+2026-09-10 12:27:12.628   -- File entry --
+2026-09-10 12:27:12.628   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\na.si
+2026-09-10 12:27:12.628   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.628   Dest file exists.
+2026-09-10 12:27:12.628   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.628   Installing the file.
+2026-09-10 12:27:12.630   Successfully installed the file.
+2026-09-10 12:27:12.630   -- File entry --
+2026-09-10 12:27:12.630   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\nc.si
+2026-09-10 12:27:12.630   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.630   Dest file exists.
+2026-09-10 12:27:12.630   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.630   Installing the file.
+2026-09-10 12:27:12.630   Successfully installed the file.
+2026-09-10 12:27:12.630   -- File entry --
+2026-09-10 12:27:12.632   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ne.si
+2026-09-10 12:27:12.632   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.632   Dest file exists.
+2026-09-10 12:27:12.632   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.632   Installing the file.
+2026-09-10 12:27:12.632   Successfully installed the file.
+2026-09-10 12:27:12.634   -- File entry --
+2026-09-10 12:27:12.634   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\nf.si
+2026-09-10 12:27:12.634   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.634   Dest file exists.
+2026-09-10 12:27:12.634   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.634   Installing the file.
+2026-09-10 12:27:12.636   Successfully installed the file.
+2026-09-10 12:27:12.636   -- File entry --
+2026-09-10 12:27:12.636   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ng.si
+2026-09-10 12:27:12.636   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.636   Dest file exists.
+2026-09-10 12:27:12.636   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.636   Installing the file.
+2026-09-10 12:27:12.638   Successfully installed the file.
+2026-09-10 12:27:12.638   -- File entry --
+2026-09-10 12:27:12.638   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ni.si
+2026-09-10 12:27:12.638   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.638   Dest file exists.
+2026-09-10 12:27:12.638   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.638   Installing the file.
+2026-09-10 12:27:12.640   Successfully installed the file.
+2026-09-10 12:27:12.640   -- File entry --
+2026-09-10 12:27:12.640   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\nl.si
+2026-09-10 12:27:12.640   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.640   Dest file exists.
+2026-09-10 12:27:12.640   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.640   Installing the file.
+2026-09-10 12:27:12.642   Successfully installed the file.
+2026-09-10 12:27:12.642   -- File entry --
+2026-09-10 12:27:12.642   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\no.si
+2026-09-10 12:27:12.642   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.642   Dest file exists.
+2026-09-10 12:27:12.642   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.642   Installing the file.
+2026-09-10 12:27:12.642   Successfully installed the file.
+2026-09-10 12:27:12.642   -- File entry --
+2026-09-10 12:27:12.645   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\np.si
+2026-09-10 12:27:12.645   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.645   Dest file exists.
+2026-09-10 12:27:12.645   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.645   Installing the file.
+2026-09-10 12:27:12.645   Successfully installed the file.
+2026-09-10 12:27:12.645   -- File entry --
+2026-09-10 12:27:12.645   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\nr.si
+2026-09-10 12:27:12.645   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.645   Dest file exists.
+2026-09-10 12:27:12.645   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.645   Installing the file.
+2026-09-10 12:27:12.647   Successfully installed the file.
+2026-09-10 12:27:12.647   -- File entry --
+2026-09-10 12:27:12.647   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\nu.si
+2026-09-10 12:27:12.647   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.647   Dest file exists.
+2026-09-10 12:27:12.647   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.647   Installing the file.
+2026-09-10 12:27:12.647   Successfully installed the file.
+2026-09-10 12:27:12.649   -- File entry --
+2026-09-10 12:27:12.649   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\nz.si
+2026-09-10 12:27:12.649   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.649   Dest file exists.
+2026-09-10 12:27:12.649   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.649   Installing the file.
+2026-09-10 12:27:12.649   Successfully installed the file.
+2026-09-10 12:27:12.649   -- File entry --
+2026-09-10 12:27:12.651   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\om.si
+2026-09-10 12:27:12.651   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.651   Dest file exists.
+2026-09-10 12:27:12.651   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.651   Installing the file.
+2026-09-10 12:27:12.653   Successfully installed the file.
+2026-09-10 12:27:12.653   -- File entry --
+2026-09-10 12:27:12.653   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pa.si
+2026-09-10 12:27:12.653   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.653   Dest file exists.
+2026-09-10 12:27:12.653   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.653   Installing the file.
+2026-09-10 12:27:12.656   Successfully installed the file.
+2026-09-10 12:27:12.656   -- File entry --
+2026-09-10 12:27:12.656   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pe.si
+2026-09-10 12:27:12.656   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.656   Dest file exists.
+2026-09-10 12:27:12.656   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.656   Installing the file.
+2026-09-10 12:27:12.662   Successfully installed the file.
+2026-09-10 12:27:12.662   -- File entry --
+2026-09-10 12:27:12.662   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pf.si
+2026-09-10 12:27:12.662   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.662   Dest file exists.
+2026-09-10 12:27:12.662   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.662   Installing the file.
+2026-09-10 12:27:12.664   Successfully installed the file.
+2026-09-10 12:27:12.664   -- File entry --
+2026-09-10 12:27:12.664   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pg.si
+2026-09-10 12:27:12.664   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.664   Dest file exists.
+2026-09-10 12:27:12.664   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.664   Installing the file.
+2026-09-10 12:27:12.665   Successfully installed the file.
+2026-09-10 12:27:12.665   -- File entry --
+2026-09-10 12:27:12.667   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ph.si
+2026-09-10 12:27:12.667   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.667   Dest file exists.
+2026-09-10 12:27:12.667   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.667   Installing the file.
+2026-09-10 12:27:12.667   Successfully installed the file.
+2026-09-10 12:27:12.667   -- File entry --
+2026-09-10 12:27:12.669   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pk.si
+2026-09-10 12:27:12.669   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.669   Dest file exists.
+2026-09-10 12:27:12.669   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.669   Installing the file.
+2026-09-10 12:27:12.669   Successfully installed the file.
+2026-09-10 12:27:12.669   -- File entry --
+2026-09-10 12:27:12.669   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pl.si
+2026-09-10 12:27:12.669   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.669   Dest file exists.
+2026-09-10 12:27:12.669   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.669   Installing the file.
+2026-09-10 12:27:12.671   Successfully installed the file.
+2026-09-10 12:27:12.671   -- File entry --
+2026-09-10 12:27:12.671   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pm.si
+2026-09-10 12:27:12.671   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.671   Dest file exists.
+2026-09-10 12:27:12.671   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.671   Installing the file.
+2026-09-10 12:27:12.673   Successfully installed the file.
+2026-09-10 12:27:12.673   -- File entry --
+2026-09-10 12:27:12.673   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pn.si
+2026-09-10 12:27:12.673   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.673   Dest file exists.
+2026-09-10 12:27:12.673   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.673   Installing the file.
+2026-09-10 12:27:12.675   Successfully installed the file.
+2026-09-10 12:27:12.675   -- File entry --
+2026-09-10 12:27:12.675   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pr.si
+2026-09-10 12:27:12.675   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.675   Dest file exists.
+2026-09-10 12:27:12.675   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.675   Installing the file.
+2026-09-10 12:27:12.675   Successfully installed the file.
+2026-09-10 12:27:12.675   -- File entry --
+2026-09-10 12:27:12.675   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ps.si
+2026-09-10 12:27:12.675   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.675   Dest file exists.
+2026-09-10 12:27:12.675   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.675   Installing the file.
+2026-09-10 12:27:12.678   Successfully installed the file.
+2026-09-10 12:27:12.678   -- File entry --
+2026-09-10 12:27:12.678   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pt.si
+2026-09-10 12:27:12.678   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.678   Dest file exists.
+2026-09-10 12:27:12.678   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.678   Installing the file.
+2026-09-10 12:27:12.680   Successfully installed the file.
+2026-09-10 12:27:12.680   -- File entry --
+2026-09-10 12:27:12.680   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\pw.si
+2026-09-10 12:27:12.680   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.680   Dest file exists.
+2026-09-10 12:27:12.680   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.680   Installing the file.
+2026-09-10 12:27:12.682   Successfully installed the file.
+2026-09-10 12:27:12.682   -- File entry --
+2026-09-10 12:27:12.682   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\py.si
+2026-09-10 12:27:12.682   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.682   Dest file exists.
+2026-09-10 12:27:12.682   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.682   Installing the file.
+2026-09-10 12:27:12.685   Successfully installed the file.
+2026-09-10 12:27:12.685   -- File entry --
+2026-09-10 12:27:12.685   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\qa.si
+2026-09-10 12:27:12.685   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.685   Dest file exists.
+2026-09-10 12:27:12.685   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.685   Installing the file.
+2026-09-10 12:27:12.687   Successfully installed the file.
+2026-09-10 12:27:12.687   -- File entry --
+2026-09-10 12:27:12.687   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\re.si
+2026-09-10 12:27:12.687   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.687   Dest file exists.
+2026-09-10 12:27:12.687   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.687   Installing the file.
+2026-09-10 12:27:12.687   Successfully installed the file.
+2026-09-10 12:27:12.687   -- File entry --
+2026-09-10 12:27:12.710   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ro.si
+2026-09-10 12:27:12.712   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.712   Dest file exists.
+2026-09-10 12:27:12.712   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.712   Installing the file.
+2026-09-10 12:27:12.712   Successfully installed the file.
+2026-09-10 12:27:12.712   -- File entry --
+2026-09-10 12:27:12.712   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\rs.si
+2026-09-10 12:27:12.712   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.712   Dest file exists.
+2026-09-10 12:27:12.712   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.712   Installing the file.
+2026-09-10 12:27:12.725   Successfully installed the file.
+2026-09-10 12:27:12.725   -- File entry --
+2026-09-10 12:27:12.725   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ru.si
+2026-09-10 12:27:12.726   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.726   Dest file exists.
+2026-09-10 12:27:12.726   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.726   Installing the file.
+2026-09-10 12:27:12.726   Successfully installed the file.
+2026-09-10 12:27:12.726   -- File entry --
+2026-09-10 12:27:12.728   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\rw.si
+2026-09-10 12:27:12.728   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.728   Dest file exists.
+2026-09-10 12:27:12.728   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.728   Installing the file.
+2026-09-10 12:27:12.728   Successfully installed the file.
+2026-09-10 12:27:12.728   -- File entry --
+2026-09-10 12:27:12.728   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sa.si
+2026-09-10 12:27:12.728   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.728   Dest file exists.
+2026-09-10 12:27:12.730   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.730   Installing the file.
+2026-09-10 12:27:12.732   Successfully installed the file.
+2026-09-10 12:27:12.732   -- File entry --
+2026-09-10 12:27:12.732   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sb.si
+2026-09-10 12:27:12.732   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.732   Dest file exists.
+2026-09-10 12:27:12.732   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.732   Installing the file.
+2026-09-10 12:27:12.734   Successfully installed the file.
+2026-09-10 12:27:12.734   -- File entry --
+2026-09-10 12:27:12.734   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sc.si
+2026-09-10 12:27:12.734   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.734   Dest file exists.
+2026-09-10 12:27:12.734   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.734   Installing the file.
+2026-09-10 12:27:12.734   Successfully installed the file.
+2026-09-10 12:27:12.734   -- File entry --
+2026-09-10 12:27:12.737   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sd.si
+2026-09-10 12:27:12.737   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.737   Dest file exists.
+2026-09-10 12:27:12.737   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.737   Installing the file.
+2026-09-10 12:27:12.737   Successfully installed the file.
+2026-09-10 12:27:12.737   -- File entry --
+2026-09-10 12:27:12.737   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\se.si
+2026-09-10 12:27:12.737   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.737   Dest file exists.
+2026-09-10 12:27:12.737   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.739   Installing the file.
+2026-09-10 12:27:12.739   Successfully installed the file.
+2026-09-10 12:27:12.739   -- File entry --
+2026-09-10 12:27:12.739   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sg.si
+2026-09-10 12:27:12.739   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.739   Dest file exists.
+2026-09-10 12:27:12.739   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.739   Installing the file.
+2026-09-10 12:27:12.741   Successfully installed the file.
+2026-09-10 12:27:12.741   -- File entry --
+2026-09-10 12:27:12.741   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sh.si
+2026-09-10 12:27:12.741   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.741   Dest file exists.
+2026-09-10 12:27:12.741   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.741   Installing the file.
+2026-09-10 12:27:12.742   Successfully installed the file.
+2026-09-10 12:27:12.742   -- File entry --
+2026-09-10 12:27:12.742   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\si.si
+2026-09-10 12:27:12.742   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.742   Dest file exists.
+2026-09-10 12:27:12.742   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.742   Installing the file.
+2026-09-10 12:27:12.744   Successfully installed the file.
+2026-09-10 12:27:12.744   -- File entry --
+2026-09-10 12:27:12.744   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sj.si
+2026-09-10 12:27:12.744   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.744   Dest file exists.
+2026-09-10 12:27:12.744   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.744   Installing the file.
+2026-09-10 12:27:12.747   Successfully installed the file.
+2026-09-10 12:27:12.747   -- File entry --
+2026-09-10 12:27:12.747   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sk.si
+2026-09-10 12:27:12.747   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.747   Dest file exists.
+2026-09-10 12:27:12.747   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.747   Installing the file.
+2026-09-10 12:27:12.747   Successfully installed the file.
+2026-09-10 12:27:12.747   -- File entry --
+2026-09-10 12:27:12.749   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sl.si
+2026-09-10 12:27:12.749   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.749   Dest file exists.
+2026-09-10 12:27:12.749   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.749   Installing the file.
+2026-09-10 12:27:12.749   Successfully installed the file.
+2026-09-10 12:27:12.749   -- File entry --
+2026-09-10 12:27:12.749   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sm.si
+2026-09-10 12:27:12.749   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.749   Dest file exists.
+2026-09-10 12:27:12.749   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.749   Installing the file.
+2026-09-10 12:27:12.751   Successfully installed the file.
+2026-09-10 12:27:12.751   -- File entry --
+2026-09-10 12:27:12.751   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sn.si
+2026-09-10 12:27:12.751   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.751   Dest file exists.
+2026-09-10 12:27:12.751   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.751   Installing the file.
+2026-09-10 12:27:12.751   Successfully installed the file.
+2026-09-10 12:27:12.751   -- File entry --
+2026-09-10 12:27:12.751   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\so.si
+2026-09-10 12:27:12.754   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.754   Dest file exists.
+2026-09-10 12:27:12.754   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.754   Installing the file.
+2026-09-10 12:27:12.754   Successfully installed the file.
+2026-09-10 12:27:12.754   -- File entry --
+2026-09-10 12:27:12.754   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sr.si
+2026-09-10 12:27:12.754   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.754   Dest file exists.
+2026-09-10 12:27:12.754   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.754   Installing the file.
+2026-09-10 12:27:12.756   Successfully installed the file.
+2026-09-10 12:27:12.756   -- File entry --
+2026-09-10 12:27:12.756   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ss.si
+2026-09-10 12:27:12.756   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.756   Dest file exists.
+2026-09-10 12:27:12.756   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.756   Installing the file.
+2026-09-10 12:27:12.756   Successfully installed the file.
+2026-09-10 12:27:12.756   -- File entry --
+2026-09-10 12:27:12.758   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\st.si
+2026-09-10 12:27:12.758   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.758   Dest file exists.
+2026-09-10 12:27:12.758   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.758   Installing the file.
+2026-09-10 12:27:12.760   Successfully installed the file.
+2026-09-10 12:27:12.760   -- File entry --
+2026-09-10 12:27:12.760   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sv.si
+2026-09-10 12:27:12.760   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.760   Dest file exists.
+2026-09-10 12:27:12.760   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.760   Installing the file.
+2026-09-10 12:27:12.762   Successfully installed the file.
+2026-09-10 12:27:12.762   -- File entry --
+2026-09-10 12:27:12.764   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sx.si
+2026-09-10 12:27:12.764   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.764   Dest file exists.
+2026-09-10 12:27:12.764   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.764   Installing the file.
+2026-09-10 12:27:12.764   Successfully installed the file.
+2026-09-10 12:27:12.764   -- File entry --
+2026-09-10 12:27:12.766   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sy.si
+2026-09-10 12:27:12.766   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.766   Dest file exists.
+2026-09-10 12:27:12.766   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.766   Installing the file.
+2026-09-10 12:27:12.766   Successfully installed the file.
+2026-09-10 12:27:12.766   -- File entry --
+2026-09-10 12:27:12.766   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\sz.si
+2026-09-10 12:27:12.766   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.766   Dest file exists.
+2026-09-10 12:27:12.766   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.766   Installing the file.
+2026-09-10 12:27:12.768   Successfully installed the file.
+2026-09-10 12:27:12.768   -- File entry --
+2026-09-10 12:27:12.768   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ta.si
+2026-09-10 12:27:12.768   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.768   Dest file exists.
+2026-09-10 12:27:12.768   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.768   Installing the file.
+2026-09-10 12:27:12.770   Successfully installed the file.
+2026-09-10 12:27:12.770   -- File entry --
+2026-09-10 12:27:12.770   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tc.si
+2026-09-10 12:27:12.770   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.770   Dest file exists.
+2026-09-10 12:27:12.770   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.770   Installing the file.
+2026-09-10 12:27:12.772   Successfully installed the file.
+2026-09-10 12:27:12.772   -- File entry --
+2026-09-10 12:27:12.772   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\td.si
+2026-09-10 12:27:12.772   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.772   Dest file exists.
+2026-09-10 12:27:12.772   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.772   Installing the file.
+2026-09-10 12:27:12.772   Successfully installed the file.
+2026-09-10 12:27:12.772   -- File entry --
+2026-09-10 12:27:12.774   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tf.si
+2026-09-10 12:27:12.774   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.774   Dest file exists.
+2026-09-10 12:27:12.774   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.774   Installing the file.
+2026-09-10 12:27:12.776   Successfully installed the file.
+2026-09-10 12:27:12.776   -- File entry --
+2026-09-10 12:27:12.776   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tg.si
+2026-09-10 12:27:12.776   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.776   Dest file exists.
+2026-09-10 12:27:12.776   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.776   Installing the file.
+2026-09-10 12:27:12.776   Successfully installed the file.
+2026-09-10 12:27:12.778   -- File entry --
+2026-09-10 12:27:12.778   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\th.si
+2026-09-10 12:27:12.778   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.778   Dest file exists.
+2026-09-10 12:27:12.778   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.778   Installing the file.
+2026-09-10 12:27:12.778   Successfully installed the file.
+2026-09-10 12:27:12.778   -- File entry --
+2026-09-10 12:27:12.778   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tj.si
+2026-09-10 12:27:12.780   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.780   Dest file exists.
+2026-09-10 12:27:12.780   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.780   Installing the file.
+2026-09-10 12:27:12.780   Successfully installed the file.
+2026-09-10 12:27:12.780   -- File entry --
+2026-09-10 12:27:12.780   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tk.si
+2026-09-10 12:27:12.780   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.780   Dest file exists.
+2026-09-10 12:27:12.780   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.780   Installing the file.
+2026-09-10 12:27:12.783   Successfully installed the file.
+2026-09-10 12:27:12.783   -- File entry --
+2026-09-10 12:27:12.783   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tl.si
+2026-09-10 12:27:12.783   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.783   Dest file exists.
+2026-09-10 12:27:12.783   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.783   Installing the file.
+2026-09-10 12:27:12.783   Successfully installed the file.
+2026-09-10 12:27:12.783   -- File entry --
+2026-09-10 12:27:12.785   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tm.si
+2026-09-10 12:27:12.785   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.785   Dest file exists.
+2026-09-10 12:27:12.785   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.785   Installing the file.
+2026-09-10 12:27:12.785   Successfully installed the file.
+2026-09-10 12:27:12.785   -- File entry --
+2026-09-10 12:27:12.787   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tn.si
+2026-09-10 12:27:12.787   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.787   Dest file exists.
+2026-09-10 12:27:12.787   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.787   Installing the file.
+2026-09-10 12:27:12.787   Successfully installed the file.
+2026-09-10 12:27:12.787   -- File entry --
+2026-09-10 12:27:12.787   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\to.si
+2026-09-10 12:27:12.789   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.789   Dest file exists.
+2026-09-10 12:27:12.789   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.789   Installing the file.
+2026-09-10 12:27:12.789   Successfully installed the file.
+2026-09-10 12:27:12.789   -- File entry --
+2026-09-10 12:27:12.790   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tr.si
+2026-09-10 12:27:12.790   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.790   Dest file exists.
+2026-09-10 12:27:12.790   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.790   Installing the file.
+2026-09-10 12:27:12.790   Successfully installed the file.
+2026-09-10 12:27:12.790   -- File entry --
+2026-09-10 12:27:12.790   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tt.si
+2026-09-10 12:27:12.790   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.790   Dest file exists.
+2026-09-10 12:27:12.790   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.790   Installing the file.
+2026-09-10 12:27:12.793   Successfully installed the file.
+2026-09-10 12:27:12.793   -- File entry --
+2026-09-10 12:27:12.793   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tv.si
+2026-09-10 12:27:12.793   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.793   Dest file exists.
+2026-09-10 12:27:12.793   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.793   Installing the file.
+2026-09-10 12:27:12.795   Successfully installed the file.
+2026-09-10 12:27:12.795   -- File entry --
+2026-09-10 12:27:12.795   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tw.si
+2026-09-10 12:27:12.795   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.795   Dest file exists.
+2026-09-10 12:27:12.795   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.795   Installing the file.
+2026-09-10 12:27:12.797   Successfully installed the file.
+2026-09-10 12:27:12.797   -- File entry --
+2026-09-10 12:27:12.797   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\tz.si
+2026-09-10 12:27:12.797   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.797   Dest file exists.
+2026-09-10 12:27:12.797   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.797   Installing the file.
+2026-09-10 12:27:12.797   Successfully installed the file.
+2026-09-10 12:27:12.797   -- File entry --
+2026-09-10 12:27:12.799   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ua.si
+2026-09-10 12:27:12.799   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.799   Dest file exists.
+2026-09-10 12:27:12.799   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.799   Installing the file.
+2026-09-10 12:27:12.799   Successfully installed the file.
+2026-09-10 12:27:12.799   -- File entry --
+2026-09-10 12:27:12.801   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ug.si
+2026-09-10 12:27:12.801   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.801   Dest file exists.
+2026-09-10 12:27:12.801   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.801   Installing the file.
+2026-09-10 12:27:12.801   Successfully installed the file.
+2026-09-10 12:27:12.801   -- File entry --
+2026-09-10 12:27:12.801   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\um.si
+2026-09-10 12:27:12.801   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.801   Dest file exists.
+2026-09-10 12:27:12.801   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.801   Installing the file.
+2026-09-10 12:27:12.804   Successfully installed the file.
+2026-09-10 12:27:12.804   -- File entry --
+2026-09-10 12:27:12.804   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\un.si
+2026-09-10 12:27:12.804   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.804   Dest file exists.
+2026-09-10 12:27:12.804   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.804   Installing the file.
+2026-09-10 12:27:12.806   Successfully installed the file.
+2026-09-10 12:27:12.806   -- File entry --
+2026-09-10 12:27:12.806   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\us.si
+2026-09-10 12:27:12.806   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.806   Dest file exists.
+2026-09-10 12:27:12.806   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.806   Installing the file.
+2026-09-10 12:27:12.808   Successfully installed the file.
+2026-09-10 12:27:12.808   -- File entry --
+2026-09-10 12:27:12.808   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\uy.si
+2026-09-10 12:27:12.808   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.808   Dest file exists.
+2026-09-10 12:27:12.808   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.808   Installing the file.
+2026-09-10 12:27:12.810   Successfully installed the file.
+2026-09-10 12:27:12.810   -- File entry --
+2026-09-10 12:27:12.810   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\uz.si
+2026-09-10 12:27:12.810   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.810   Dest file exists.
+2026-09-10 12:27:12.810   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.810   Installing the file.
+2026-09-10 12:27:12.812   Successfully installed the file.
+2026-09-10 12:27:12.812   -- File entry --
+2026-09-10 12:27:12.812   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\va.si
+2026-09-10 12:27:12.812   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.812   Dest file exists.
+2026-09-10 12:27:12.812   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.812   Installing the file.
+2026-09-10 12:27:12.814   Successfully installed the file.
+2026-09-10 12:27:12.814   -- File entry --
+2026-09-10 12:27:12.814   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\vc.si
+2026-09-10 12:27:12.814   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.814   Dest file exists.
+2026-09-10 12:27:12.814   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.814   Installing the file.
+2026-09-10 12:27:12.814   Successfully installed the file.
+2026-09-10 12:27:12.814   -- File entry --
+2026-09-10 12:27:12.816   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ve.si
+2026-09-10 12:27:12.816   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.816   Dest file exists.
+2026-09-10 12:27:12.816   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.816   Installing the file.
+2026-09-10 12:27:12.816   Successfully installed the file.
+2026-09-10 12:27:12.816   -- File entry --
+2026-09-10 12:27:12.816   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\vg.si
+2026-09-10 12:27:12.816   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.816   Dest file exists.
+2026-09-10 12:27:12.816   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.816   Installing the file.
+2026-09-10 12:27:12.818   Successfully installed the file.
+2026-09-10 12:27:12.818   -- File entry --
+2026-09-10 12:27:12.818   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\vi.si
+2026-09-10 12:27:12.818   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.818   Dest file exists.
+2026-09-10 12:27:12.818   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.818   Installing the file.
+2026-09-10 12:27:12.820   Successfully installed the file.
+2026-09-10 12:27:12.820   -- File entry --
+2026-09-10 12:27:12.820   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\vn.si
+2026-09-10 12:27:12.820   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.820   Dest file exists.
+2026-09-10 12:27:12.820   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.820   Installing the file.
+2026-09-10 12:27:12.822   Successfully installed the file.
+2026-09-10 12:27:12.822   -- File entry --
+2026-09-10 12:27:12.824   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\vu.si
+2026-09-10 12:27:12.824   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.824   Dest file exists.
+2026-09-10 12:27:12.824   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.824   Installing the file.
+2026-09-10 12:27:12.824   Successfully installed the file.
+2026-09-10 12:27:12.824   -- File entry --
+2026-09-10 12:27:12.826   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\wf.si
+2026-09-10 12:27:12.826   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.826   Dest file exists.
+2026-09-10 12:27:12.826   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.826   Installing the file.
+2026-09-10 12:27:12.826   Successfully installed the file.
+2026-09-10 12:27:12.826   -- File entry --
+2026-09-10 12:27:12.826   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ws.si
+2026-09-10 12:27:12.826   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.826   Dest file exists.
+2026-09-10 12:27:12.826   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.826   Installing the file.
+2026-09-10 12:27:12.828   Successfully installed the file.
+2026-09-10 12:27:12.828   -- File entry --
+2026-09-10 12:27:12.828   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\xk.si
+2026-09-10 12:27:12.828   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.828   Dest file exists.
+2026-09-10 12:27:12.828   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.828   Installing the file.
+2026-09-10 12:27:12.831   Successfully installed the file.
+2026-09-10 12:27:12.831   -- File entry --
+2026-09-10 12:27:12.831   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\xx.si
+2026-09-10 12:27:12.831   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.831   Dest file exists.
+2026-09-10 12:27:12.831   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.831   Installing the file.
+2026-09-10 12:27:12.831   Successfully installed the file.
+2026-09-10 12:27:12.831   -- File entry --
+2026-09-10 12:27:12.833   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\ye.si
+2026-09-10 12:27:12.833   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.833   Dest file exists.
+2026-09-10 12:27:12.833   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.833   Installing the file.
+2026-09-10 12:27:12.833   Successfully installed the file.
+2026-09-10 12:27:12.833   -- File entry --
+2026-09-10 12:27:12.833   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\yt.si
+2026-09-10 12:27:12.833   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.833   Dest file exists.
+2026-09-10 12:27:12.833   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.833   Installing the file.
+2026-09-10 12:27:12.835   Successfully installed the file.
+2026-09-10 12:27:12.835   -- File entry --
+2026-09-10 12:27:12.835   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\za.si
+2026-09-10 12:27:12.835   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.835   Dest file exists.
+2026-09-10 12:27:12.835   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.835   Installing the file.
+2026-09-10 12:27:12.835   Successfully installed the file.
+2026-09-10 12:27:12.835   -- File entry --
+2026-09-10 12:27:12.837   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\zm.si
+2026-09-10 12:27:12.837   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.837   Dest file exists.
+2026-09-10 12:27:12.837   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.837   Installing the file.
+2026-09-10 12:27:12.837   Successfully installed the file.
+2026-09-10 12:27:12.839   -- File entry --
+2026-09-10 12:27:12.839   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\country_flags\res\si\zw.si
+2026-09-10 12:27:12.839   Time stamp of our file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.839   Dest file exists.
+2026-09-10 12:27:12.839   Time stamp of existing file: 2026-08-13 12:30:56.000
+2026-09-10 12:27:12.839   Installing the file.
+2026-09-10 12:27:12.839   Successfully installed the file.
+2026-09-10 12:27:12.839   -- File entry --
+2026-09-10 12:27:12.842   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\brand\pokrov_mark.png
+2026-09-10 12:27:12.842   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.842   Dest file exists.
+2026-09-10 12:27:12.842   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.842   Installing the file.
+2026-09-10 12:27:12.844   Successfully installed the file.
+2026-09-10 12:27:12.844   -- File entry --
+2026-09-10 12:27:12.844   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\brand\pokrov_mark_128.png
+2026-09-10 12:27:12.844   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.844   Dest file exists.
+2026-09-10 12:27:12.844   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.844   Installing the file.
+2026-09-10 12:27:12.846   Successfully installed the file.
+2026-09-10 12:27:12.846   -- File entry --
+2026-09-10 12:27:12.846   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\brand\pokrov_mark_256.png
+2026-09-10 12:27:12.846   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.846   Dest file exists.
+2026-09-10 12:27:12.846   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.846   Installing the file.
+2026-09-10 12:27:12.849   Successfully installed the file.
+2026-09-10 12:27:12.849   -- File entry --
+2026-09-10 12:27:12.849   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\fonts\GolosText-Bold.ttf
+2026-09-10 12:27:12.849   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.849   Dest file exists.
+2026-09-10 12:27:12.849   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.849   Installing the file.
+2026-09-10 12:27:12.851   Successfully installed the file.
+2026-09-10 12:27:12.851   -- File entry --
+2026-09-10 12:27:12.853   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\fonts\GolosText-ExtraBold.ttf
+2026-09-10 12:27:12.853   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.853   Dest file exists.
+2026-09-10 12:27:12.853   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.853   Installing the file.
+2026-09-10 12:27:12.855   Successfully installed the file.
+2026-09-10 12:27:12.855   -- File entry --
+2026-09-10 12:27:12.855   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\fonts\GolosText-Medium.ttf
+2026-09-10 12:27:12.855   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.855   Dest file exists.
+2026-09-10 12:27:12.855   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.855   Installing the file.
+2026-09-10 12:27:12.857   Successfully installed the file.
+2026-09-10 12:27:12.857   -- File entry --
+2026-09-10 12:27:12.857   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\fonts\GolosText-Regular.ttf
+2026-09-10 12:27:12.857   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.857   Dest file exists.
+2026-09-10 12:27:12.857   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.857   Installing the file.
+2026-09-10 12:27:12.860   Successfully installed the file.
+2026-09-10 12:27:12.860   -- File entry --
+2026-09-10 12:27:12.860   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\fonts\GolosText-SemiBold.ttf
+2026-09-10 12:27:12.862   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.862   Dest file exists.
+2026-09-10 12:27:12.862   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.862   Installing the file.
+2026-09-10 12:27:12.865   Successfully installed the file.
+2026-09-10 12:27:12.865   -- File entry --
+2026-09-10 12:27:12.865   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\fonts\OFL.txt
+2026-09-10 12:27:12.865   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.865   Dest file exists.
+2026-09-10 12:27:12.865   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.865   Installing the file.
+2026-09-10 12:27:12.865   Successfully installed the file.
+2026-09-10 12:27:12.867   -- File entry --
+2026-09-10 12:27:12.867   Dest filename: C:\Program Files\POKROV\data\flutter_assets\packages\pokrov_app_shell\assets\licenses\native-go-NOTICES.txt
+2026-09-10 12:27:12.867   Time stamp of our file: 2026-09-10 10:47:36.000
+2026-09-10 12:27:12.867   Dest file exists.
+2026-09-10 12:27:12.867   Time stamp of existing file: 2026-09-09 06:43:16.000
+2026-09-10 12:27:12.867   Installing the file.
+2026-09-10 12:27:12.877   Successfully installed the file.
+2026-09-10 12:27:12.877   -- File entry --
+2026-09-10 12:27:12.877   Dest filename: C:\Program Files\POKROV\data\flutter_assets\shaders\ink_sparkle.frag
+2026-09-10 12:27:12.877   Time stamp of our file: 2026-09-10 11:04:38.000
+2026-09-10 12:27:12.877   Dest file exists.
+2026-09-10 12:27:12.877   Time stamp of existing file: 2026-09-09 09:23:46.000
+2026-09-10 12:27:12.877   Installing the file.
+2026-09-10 12:27:12.880   Successfully installed the file.
+2026-09-10 12:27:12.880   -- File entry --
+2026-09-10 12:27:12.880   Dest filename: C:\Program Files\POKROV\data\flutter_assets\shaders\stretch_effect.frag
+2026-09-10 12:27:12.880   Time stamp of our file: 2026-09-10 11:04:38.000
+2026-09-10 12:27:12.880   Dest file exists.
+2026-09-10 12:27:12.880   Time stamp of existing file: 2026-09-09 09:23:46.000
+2026-09-10 12:27:12.880   Installing the file.
+2026-09-10 12:27:12.880   Successfully installed the file.
+2026-09-10 12:27:12.882   -- File entry --
+2026-09-10 12:27:12.882   Dest filename: C:\Program Files\POKROV\pokrov_service.exe
+2026-09-10 12:27:12.882   Time stamp of our file: 2026-09-10 11:05:08.000
+2026-09-10 12:27:12.882   Dest file exists.
+2026-09-10 12:27:12.882   Time stamp of existing file: 2026-09-09 09:24:14.000
+2026-09-10 12:27:12.882   Installing the file.
+2026-09-10 12:27:12.889   Successfully installed the file.
+2026-09-10 12:27:13.188   -- Icon entry --
+2026-09-10 12:27:13.188   Dest filename: C:\ProgramData\Microsoft\Windows\Start Menu\Programs\POKROV\POKROV.lnk
+2026-09-10 12:27:13.190   Creating the icon.
+2026-09-10 12:27:13.271   Successfully created the icon.
+2026-09-10 12:27:13.282   -- Registry entry --
+2026-09-10 12:27:13.282   Key: HKEY_LOCAL_MACHINE\Software\space.pokrov\POKROV\Service
+2026-09-10 12:27:13.282   Value name: InstallOwnerSid
+2026-09-10 12:27:13.282   Creating or opening the key.
+2026-09-10 12:27:13.282   Creating or setting the value.
+2026-09-10 12:27:13.282   Successfully created or set the value.
+2026-09-10 12:27:13.282   Saving uninstall information.
+2026-09-10 12:27:13.282   Renaming uninstaller.
+2026-09-10 12:27:13.282   Deleting uninstall key left over from previous administrative 64-bit install.
+2026-09-10 12:27:13.284   Creating new uninstall key: HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\{A8EE9193-93A9-4B13-A7AD-8441D98A48E1}_is1
+2026-09-10 12:27:13.284   Writing uninstall key values.
+2026-09-10 12:27:13.284   Detected previous non administrative install? No
+2026-09-10 12:27:13.284   Detected previous administrative 32-bit install? No
+2026-09-10 12:27:13.286   Installation process succeeded.
+2026-09-10 12:27:13.288   Need to restart Windows? No
+2026-09-10 12:27:52.818   Deinitializing Setup.
+2026-09-10 12:27:52.829   Log closed.

@@ -1,0 +1,44 @@
+{
+    "utc":  "2026-09-10T09:32:01.4117362Z",
+    "label":  "connected-final",
+    "counter_method":  "NetworkInterface.GetIPv4Statistics",
+    "routes_count":  25,
+    "routes_sha256":  "fd9c4c437c0f56969c56cffa3d8d4eff40e899016fb636f6260b669476560df7",
+    "dns_sha256":  "f2ee0ed59123c46d793b050d474381a036be8316bc83955c67f864c18d9b445f",
+    "adapters":  [
+                     {
+                         "interface_index":  13,
+                         "is_pokrov_tun":  false,
+                         "received_bytes":  1827625,
+                         "sent_bytes":  945738
+                     },
+                     {
+                         "interface_index":  18,
+                         "is_pokrov_tun":  true,
+                         "received_bytes":  0,
+                         "sent_bytes":  4928
+                     }
+                 ],
+    "http_status":  204,
+    "marker_valid":  true,
+    "http_error":  null,
+    "dns_a_count":  1,
+    "dns_error":  null,
+    "status":  {
+                   "client_source":  "0218e89",
+                   "action":  "status",
+                   "elapsed_ms":  47,
+                   "available":  true,
+                   "trusted":  true,
+                   "compatible":  true,
+                   "accepted":  true,
+                   "phase":  "connecting",
+                   "running":  false,
+                   "core_ready":  true,
+                   "dns_ready":  false,
+                   "egress_validated":  false,
+                   "can_connect":  false,
+                   "effective_matches_staged":  false,
+                   "failure":  "none"
+               }
+}

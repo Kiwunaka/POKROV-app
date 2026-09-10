@@ -1,0 +1,28 @@
+{
+    "utc":  "2026-09-10T09:35:27.1372755Z",
+    "client_source":  "5a13ec7698905df647e8040eb48a9ebf0f044419",
+    "core_source":  "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+    "matched_files":  304,
+    "expected_files":  304,
+    "missing":  0,
+    "different":  0,
+    "service_state":  "Running",
+    "ui_count":  1,
+    "status":  {
+                   "client_source":  "0218e89",
+                   "action":  "status",
+                   "elapsed_ms":  0,
+                   "available":  true,
+                   "trusted":  true,
+                   "compatible":  true,
+                   "accepted":  true,
+                   "phase":  "config_staged",
+                   "running":  false,
+                   "core_ready":  true,
+                   "dns_ready":  false,
+                   "egress_validated":  false,
+                   "can_connect":  true,
+                   "effective_matches_staged":  false,
+                   "failure":  "none"
+               }
+}
