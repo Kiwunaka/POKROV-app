@@ -832,6 +832,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
         .toList(growable: false);
     return Scaffold(
       key: const ValueKey('diagnostics-screen'),
+      backgroundColor: theme.canvasColor,
       appBar: AppBar(
         title: const Text('Диагностика'),
         actions: [

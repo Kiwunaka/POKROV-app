@@ -25,7 +25,7 @@ POKROV client UI should feel calm, premium, and operationally honest.
 
 Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `2026-07-redesign-w01`) until a generated Flutter export exists. The 2026-07 wave-3 alignment landed the values in `packages/app_shell/lib/src/design_system/pokrov_palette.dart`, locked by `design_system_contract_test.dart`:
 
-- light: white surfaces on `#F5F7F6` canvas, ink `#16181D`, emerald accent `#12805A` (pressed `#0F6B47`, tint `#E6F4ED`);
+- light: white surfaces on `#F5F7F6` canvas, ink `#16181D`, emerald accent `#12805A` (pressed `#0F6B47`, tint `#E6F4ED`); the standalone diagnostics route paints the theme canvas because the shell's transparent scaffold has no background underneath a pushed route;
 - dark: off-black greens (`#111715` canvas, `#161D1A` surface — never pure black), mint accent `#8AC4AB`, readable muted text `#83908A`, and near-black `#101713` accent-label text; the dark-green raster brand mark is tinted with the mint accent in dark mode so it does not disappear into the canvas;
 - `connectedGreen` (`#34C759` / `#30D158`) is the shared iOS `status_green`: connect-disc connected state and switch on-tracks only, never text or generic accents;
 - brand family: Golos Text (bundled 400–800, latin+cyrillic, OFL) with system fallbacks.
