@@ -89,13 +89,21 @@
     },
     {
       "file": "bundle-analyze.log",
-      "bytes": 609,
-      "sha256": "1eaae292ae2193808821eb95d8d1a5d8204ae396ea50ca10bbd779883cafee7d"
+      "bytes": 557,
+      "sha256": "450ab121dd6696ed80836a23c13c96182ac2f8fc82129aec8fce01ffba7a6586",
+      "original_sha256": "1eaae292ae2193808821eb95d8d1a5d8204ae396ea50ca10bbd779883cafee7d",
+      "original_bytes": 609,
+      "original_retained_path": "C:\\r12-support-retry-20260910\\bundle-analyze.log",
+      "normalization": "Remove trailing horizontal whitespace and normalize line endings; original capture retained unchanged at original_retained_path and in commit a426d60."
     },
     {
       "file": "shell-analyze.log",
-      "bytes": 2358,
-      "sha256": "c5b016c45fa65ab5f283836fb52db913387897b17de67d461451d2fee453a801"
+      "bytes": 2263,
+      "sha256": "1a01ec9c927b748c4e3e5bb7b11d3ccd1b6943a1dd552a8b46c8803ecdb6251b",
+      "original_sha256": "c5b016c45fa65ab5f283836fb52db913387897b17de67d461451d2fee453a801",
+      "original_bytes": 2358,
+      "original_retained_path": "C:\\r12-support-retry-20260910\\shell-analyze.log",
+      "normalization": "Remove trailing horizontal whitespace and normalize line endings; original capture retained unchanged at original_retained_path and in commit a426d60."
     },
     {
       "file": "seed.log",

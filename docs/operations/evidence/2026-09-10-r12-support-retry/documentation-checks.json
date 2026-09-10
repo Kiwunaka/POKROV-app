@@ -1,6 +1,6 @@
 {
   "status": "PASS",
-  "utc": "2026-09-10T20:04:25.963579+00:00",
+  "utc": "2026-09-10T23:04:25.963579+03:00",
   "checks": [
     {
       "file": "docs-platform-final.log",
@@ -43,7 +43,8 @@
       "status": "PASS"
     }
   ],
-  "diff_check_client": "PASS",
+  "diff_check_client": "PASS: git diff --check 24da816 -- docs/operations/evidence/2026-09-10-r12-support-retry, after presentation-log normalization",
   "diff_check_platform": "PASS",
-  "release_artifacts_delta": "NONE"
+  "release_artifacts_delta": "NONE",
+  "initial_staged_diff_check": "FAIL: two analyzer progress lines contained trailing spaces; the shell continued to commit a426d60. Original logs preserved. Retained presentation copies subsequently normalized with both hashes recorded in receipt.json."
 }
