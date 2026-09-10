@@ -120,7 +120,7 @@ void main() {
     expect(remote, isNot(contains('package_name')));
   });
 
-  test('caught connection failure remains failed instead of cancelled',
+  test('connection failure survives interleaved account refresh events',
       () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-obs-fail-');
     addTearDown(() => directory.delete(recursive: true));
@@ -133,6 +133,10 @@ void main() {
 
     await observability.runConnectionAction(
       () async {
+        observability.recordAuthRequestStarted();
+        observability.recordEntitlementRefreshStarted();
+        observability.recordAuthRequestFinished();
+        observability.recordEntitlementRefreshFinished();
         observability.recordConnectionFailure(
           stage: ConnectionStage.profile,
           errorCode: 'CONN-005',
@@ -147,6 +151,7 @@ void main() {
         );
     expect(terminal.outcome.wireValue, 'failed');
     expect(terminal.errorCode, 'CONN-005');
+    expect(observability.dispatcher.snapshot().rejectedAsStale, 0);
   });
 
   test('active app-first client emits correlation header and aggregate batch',
