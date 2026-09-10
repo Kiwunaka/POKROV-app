@@ -2,6 +2,7 @@ library pokrov_app_shell;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi' show Abi;
 import 'dart:io';
 import 'dart:math' as math;
 

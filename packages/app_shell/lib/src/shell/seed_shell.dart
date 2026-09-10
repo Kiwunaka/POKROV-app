@@ -3557,6 +3557,31 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       checkedAtUtc: checkedAtUtc,
       releaseHealthBaseline: releaseHealthBaseline,
       supportModePolicy: _supportModeController.activePolicy,
+      systemSummary: _supportModeController.activePolicy == null
+          ? null
+          : _diagnosticSystemSummary(),
+    );
+  }
+
+  DiagnosticSystemSummary _diagnosticSystemSummary() {
+    // Keep only the numeric OS version, never the platform's free-form build
+    // string (Android may include a device/build fingerprint).
+    final osVersion = RegExp(r'\b(?:Windows|Android)\s+(\d+(?:\.\d+){0,2})\b')
+            .firstMatch(Platform.operatingSystemVersion)
+            ?.group(1) ??
+        'unknown';
+    final architecture = switch (Abi.current()) {
+      Abi.androidArm => 'arm',
+      Abi.androidArm64 || Abi.windowsArm64 => 'arm64',
+      Abi.androidIA32 || Abi.windowsIA32 => 'x86',
+      Abi.androidX64 || Abi.windowsX64 => 'x64',
+      _ => throw UnsupportedError('Unsupported diagnostic host ABI'),
+    };
+    return DiagnosticSystemSummary(
+      osFamily: Platform.operatingSystem,
+      osVersion: osVersion,
+      architecture: architecture,
+      locale: Localizations.localeOf(context).toLanguageTag(),
     );
   }
 
