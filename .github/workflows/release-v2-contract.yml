@@ -74,9 +74,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Kiwunaka/pokrov-core
-          # PR 95 is the coordinated source integration before Core PR 9.
+          # PR 105 is the coordinated privacy binding before Core PR 10.
           # Ordinary push/PR checks return to main outside this exact PR.
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 95 && '1f9a5a8865b80067784b893ef99d43c63f943777' || 'main' }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 105 && 'c8b0461c1975ef96e32024774300a5829b9fdc43' || 'main' }}
           path: POKROV-core
           fetch-depth: 0
           persist-credentials: false
