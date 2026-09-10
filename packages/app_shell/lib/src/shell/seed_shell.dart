@@ -3638,37 +3638,40 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               });
             }
 
-            return PokrovDiagnosticsScreen(
-              initialReport: _buildDiagnosticsReport(),
-              onRefresh: _refreshDiagnosticsReport,
-              onReleaseHealthRefresh: _releaseHealthService == null
-                  ? null
-                  : _fetchReleaseHealthBaseline,
-              onOpenProtection: () => closeThen(_openProtectionCenter),
-              onOpenSupport: () => closeThen(() {
-                unawaited(_showSupportHub());
-              }),
-              onCreateCaseWithBundle: transferService == null ||
-                      !transferService.supportBundleEncryptionConfigured
-                  ? null
-                  : (prepared) => _deliverSupportBundleWithObservability(
-                        transferService,
-                        prepared,
-                        ticketId: null,
-                      ),
-              onExportBundle: transferService == null ||
-                      !transferService.supportBundleEncryptionConfigured
-                  ? null
-                  : (prepared) => _exportSupportBundle(
-                        transferService,
-                        prepared,
-                      ),
-              initialSupportMode: _supportModeController.view,
-              onActivateSupportMode: transferService == null ||
-                      !transferService.supportBundleEncryptionConfigured
-                  ? null
-                  : () => _activateTemporarySupportMode(transferService),
-              onDisableSupportMode: _supportModeController.disable,
+            return ListenableBuilder(
+              listenable: _supportModeController,
+              builder: (context, child) => PokrovDiagnosticsScreen(
+                initialReport: _buildDiagnosticsReport(),
+                onRefresh: _refreshDiagnosticsReport,
+                onReleaseHealthRefresh: _releaseHealthService == null
+                    ? null
+                    : _fetchReleaseHealthBaseline,
+                onOpenProtection: () => closeThen(_openProtectionCenter),
+                onOpenSupport: () => closeThen(() {
+                  unawaited(_showSupportHub());
+                }),
+                onCreateCaseWithBundle: transferService == null ||
+                        !transferService.supportBundleEncryptionConfigured
+                    ? null
+                    : (prepared) => _deliverSupportBundleWithObservability(
+                          transferService,
+                          prepared,
+                          ticketId: null,
+                        ),
+                onExportBundle: transferService == null ||
+                        !transferService.supportBundleEncryptionConfigured
+                    ? null
+                    : (prepared) => _exportSupportBundle(
+                          transferService,
+                          prepared,
+                        ),
+                initialSupportMode: _supportModeController.view,
+                onActivateSupportMode: transferService == null ||
+                        !transferService.supportBundleEncryptionConfigured
+                    ? null
+                    : () => _activateTemporarySupportMode(transferService),
+                onDisableSupportMode: _supportModeController.disable,
+              ),
             );
           },
         ),

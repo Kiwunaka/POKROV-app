@@ -66,6 +66,24 @@ void main() {
     },
   );
 
+  test('empty record lists omit JSONL files instead of emitting blank lines',
+      () {
+    final populated = _snapshot();
+    final collection = const BoundedDiagnosticsCollector().collect(
+      snapshot: DiagnosticSnapshot(
+        build: populated.build,
+        system: populated.system,
+        network: populated.network,
+      ),
+      profile: SupportDiagnosticProfile.extended,
+    );
+
+    expect(collection.files.where((file) => file.path.endsWith('.jsonl')),
+        isEmpty);
+    expect(collection.files.map((file) => file.path),
+        contains('system/summary.json'));
+  });
+
   test('profile and optional category boundaries are deterministic', () {
     final first = const BoundedDiagnosticsCollector().collect(
       snapshot: _snapshot(),

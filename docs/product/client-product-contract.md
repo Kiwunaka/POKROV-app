@@ -555,12 +555,15 @@ Support contract rules:
   summary profile still contains only build/network/redaction categories.
   Optional system, events and crashes categories are omitted unless allowed by
   the signed policy; an events/system policy must not collect an empty crash
-  index or fail the preview because crashes were not authorized.
+  index or fail the preview because crashes were not authorized. Empty event
+  and crash lists omit their optional JSONL files; they never emit blank records.
 - while active, support mode has a persistent app-level indicator and manual
   disable action. It cannot execute commands, modify VPN/routes/DNS, read user
   files, capture packets/destinations, expose tokens/configuration, hide itself
   or extend itself. It expires within 30 minutes and enforces the signed
-  per-bundle, cumulative-byte and one/two-bundle limits across restart
+  per-bundle, cumulative-byte and one/two-bundle limits across restart. The open
+  diagnostics screen follows usage changes and returns to the ordinary preview
+  when the controller expires or disables the mode
 - ticket history restores into the existing conversation; loading and offline
   states keep one lifecycle hint and one retry instead of duplicate notices
 - a failed ticket send keeps the draft and removes its unconfirmed optimistic

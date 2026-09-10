@@ -354,13 +354,15 @@ final class BoundedDiagnosticsCollector {
             (removals[DiagnosticRemovalReason.eventsTruncated] ?? 0) +
                 bounded.dropped;
       }
-      files.add(
-        CollectedDiagnosticFile(
-          path: 'events/recent.jsonl',
-          category: DiagnosticCategory.events,
-          bytes: bounded.bytes,
-        ),
-      );
+      if (bounded.bytes.isNotEmpty) {
+        files.add(
+          CollectedDiagnosticFile(
+            path: 'events/recent.jsonl',
+            category: DiagnosticCategory.events,
+            bytes: bounded.bytes,
+          ),
+        );
+      }
     }
     if (categories.contains(DiagnosticCategory.crashes)) {
       final bounded = _boundedJsonLines(
@@ -372,13 +374,15 @@ final class BoundedDiagnosticsCollector {
             (removals[DiagnosticRemovalReason.crashesTruncated] ?? 0) +
                 bounded.dropped;
       }
-      files.add(
-        CollectedDiagnosticFile(
-          path: 'crash/index.jsonl',
-          category: DiagnosticCategory.crashes,
-          bytes: bounded.bytes,
-        ),
-      );
+      if (bounded.bytes.isNotEmpty) {
+        files.add(
+          CollectedDiagnosticFile(
+            path: 'crash/index.jsonl',
+            category: DiagnosticCategory.crashes,
+            bytes: bounded.bytes,
+          ),
+        );
+      }
     }
     addJson(
       'redaction/report.json',
@@ -450,9 +454,6 @@ _BoundedLines _boundedJsonLines(
   final bytes = BytesBuilder(copy: false);
   for (final line in kept.reversed) {
     bytes.add(line);
-  }
-  if (total == 0) {
-    bytes.add(const <int>[0x0A]);
   }
   return _BoundedLines(bytes.takeBytes(), encoded.length - kept.length);
 }
