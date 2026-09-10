@@ -1,0 +1,16 @@
+00:00 +0: loading E:/r12-observability-startup-20260910/startup_storage_test.dart
+00:00 +0: unavailable diagnostic directory does not block client bootstrap
+00:00 +0 -1: unavailable diagnostic directory does not block client bootstrap [E]
+  PathExistsException: Creation failed, path = 'C:\Users\kiwun\AppData\Local\Temp\pokrov-obs-path-conflict-c9d35ae5\pokrov-observability' (OS Error: Невозможно создать файл, так как он уже существует, errno = 183)
+  dart:io                                                                      _Directory.create
+  package:pokrov_observability_runtime/src/store.dart 92:21                    RotatingOperationalJsonlStore.initialize
+  package:pokrov_app_shell/src/observability/client_observability.dart 224:22  PokrovClientObservability.start
+  ===== asynchronous gap ===========================
+  dart:async                                                                   _CustomZone.registerUnaryCallback
+  package:pokrov_app_shell/src/observability/client_observability.dart 212:18  PokrovClientObservability.start
+  e:/r12-observability-startup-20260910/startup_storage_test.dart 12:61        main.<fn>
+  ===== asynchronous gap ===========================
+  dart:async                                                                   _CustomZone.registerUnaryCallback
+  e:/r12-observability-startup-20260910/startup_storage_test.dart 8:18         main.<fn>
+  
+00:00 +0 -1: Some tests failed.

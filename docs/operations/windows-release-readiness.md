@@ -3,7 +3,15 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
-R12 diagnostic build identity (2026-09-10): [fixed installed package](evidence/2026-09-10-r12-build-identity/README.md)
+R12 diagnostic storage failure (2026-09-10): [installed fault rehearsal](evidence/2026-09-10-r12-observability-startup/README.md)
+source `6816aab` / Core `c7a11f7` starts and connects with an unavailable
+diagnostic path where the previous package showed no window. 304 hashes,
+ten HTTPS markers, TUN/DNS/egress and exact recovery PASS_BOUNDED. Original
+journals restored with matching hashes; persistence resumes with exact build
+identity. PR #101 merged `1f6aeb5`; PR CI PASS, merge CI PASS. VM off/NIC none.
+Full V03/Win10/Android and release gates remain open; no public binary release.
+
+Historical R12 diagnostic build identity (2026-09-10): [fixed installed package](evidence/2026-09-10-r12-build-identity/README.md)
 source `71ae964` / Core `c7a11f7` replaces zero diagnostic revision with the
 committed source and build `4053`. Exact 304 files, preserved secure state,
 nine offline bootstrap events and PR CI PASS; PR #100 merged `e90a290`.

@@ -1,0 +1,52 @@
+{
+    "utc":  "2026-09-10T10:27:57.0349517Z",
+    "scope":  "Allowlisted projection of current installed app run; no raw attributes or correlation identifiers",
+    "events":  [
+                   {
+                       "name":  "app.bootstrap.initialize.started",
+                       "outcome":  "started",
+                       "stage":  "initialize",
+                       "sequence":  0,
+                       "generation":  0,
+                       "has_attempt":  false,
+                       "git_revision":  "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+                       "build_number":  "4053",
+                       "error_code":  null
+                   },
+                   {
+                       "name":  "app.previous_exit.detected",
+                       "outcome":  "degraded",
+                       "stage":  "recover",
+                       "sequence":  1,
+                       "generation":  0,
+                       "has_attempt":  false,
+                       "git_revision":  "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+                       "build_number":  "4053",
+                       "error_code":  "APP-BOOT-006"
+                   },
+                   {
+                       "name":  "app.bootstrap.initialize.finished",
+                       "outcome":  "succeeded",
+                       "stage":  "complete",
+                       "sequence":  2,
+                       "generation":  0,
+                       "has_attempt":  false,
+                       "git_revision":  "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+                       "build_number":  "4053",
+                       "error_code":  null
+                   },
+                   {
+                       "name":  "app.bootstrap.ui_ready.finished",
+                       "outcome":  "succeeded",
+                       "stage":  "complete",
+                       "sequence":  3,
+                       "generation":  0,
+                       "has_attempt":  false,
+                       "git_revision":  "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+                       "build_number":  "4053",
+                       "error_code":  null
+                   }
+               ],
+    "invalid_lines_in_retained_file":  0,
+    "file_bytes":  1609393
+}

@@ -1,0 +1,34 @@
+{
+  "status": "PASS_BOUNDED_STORAGE_FAILURE",
+  "utc": "2026-09-10T10:29:38.695667+00:00",
+  "source": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+  "checks": {
+    "old_package_window_absent": true,
+    "fixed_package_window_present_with_same_fault": true,
+    "installed_304_match": true,
+    "session_secure_store_preserved_after_install": true,
+    "installed_service_running": true,
+    "final_304_match": true,
+    "fixture_and_original_hashes_unchanged_during_traffic": true,
+    "ten_https_markers": true,
+    "positive_tun_counters": true,
+    "fresh_effective_proof": true,
+    "exact_route_dns_recovery": true,
+    "disconnected_no_tun": true,
+    "outside_https_after_disconnect": true,
+    "original_journal_hashes_restored": true,
+    "persistence_resumed_after_restore": true,
+    "restored_records_exact_build": true,
+    "vm_baseline_restored": true,
+    "defender_enabled_no_new_detections": true
+  },
+  "retained_original_files": 2,
+  "tun_delta_bytes_each": 24756,
+  "limits": [
+    "An actual path conflict is tested; this does not substitute for disk-full, clock-jump, event-storm, upload-timeout or full Android/Win10 acceptance.",
+    "Fault-period events exist only in memory; no invented durable timeline. After restoration four bootstrap records were captured.",
+    "Connection counters include ambient traffic and do not identify per-request traffic.",
+    "The lab stopped the disconnected UI process to restore files; this is not user-tray-exit proof.",
+    "Initial network-connecting snapshot straddles route application; steady network-connected and traffic proof are the accepted observations."
+  ]
+}

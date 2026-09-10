@@ -1,0 +1,372 @@
+{
+  "utc": "2026-09-10T10:36:54.752836+00:00",
+  "status": "PASS_BOUNDED_STORAGE_FAILURE",
+  "source": {
+    "tested": "716d7547ac30bb7f5090ed972391927b469f9c9b",
+    "source": "1210d7cabeed753b581aa0930beec7aeb8276378",
+    "parent": "e90a290fa671e7dbe61b607cacaeded8321d1cd2",
+    "signed_commit": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+    "tree": "20fe0a0c8e6f1f81ba806c129b2e774dd98d2ba5",
+    "signature_valid": true,
+    "pr": "https://github.com/Kiwunaka/POKROV-app/pull/101",
+    "branch": "codex/observability-startup-io-signed-20260910",
+    "verified_package_trees": [
+      "packages/app_shell",
+      "packages/observability_runtime",
+      "packages/observability_contracts",
+      "packages/runtime_engine",
+      "packages/diagnostics_collectors",
+      "packages/support_bundle"
+    ],
+    "files": [
+      {
+        "path": "packages/app_shell/lib/src/observability/client_observability.dart",
+        "sha256": "288ad90722de4e175c84b6e49e0b97cc74ad7fa6716f496635cdcfc57e1e44d3"
+      },
+      {
+        "path": "packages/app_shell/test/client_observability_test.dart",
+        "sha256": "e4f4b38991c8e21bbf1e6997051aa29ddbf73a682f489b0cd30d1abf01d3d0fc"
+      },
+      {
+        "path": "packages/observability_runtime/lib/src/crash_marker.dart",
+        "sha256": "6def9de07f29656d24985e39b78a3705090545f8d4f131e9e59c10b80ea4b171"
+      },
+      {
+        "path": "docs/architecture/bootstrap-workflow.md",
+        "sha256": "a80e151fc5638135bd958cd0b5ecec2823ff1caf2ffacbf5ba2249b9402f5967"
+      }
+    ]
+  },
+  "merge": {
+    "status": "PASS",
+    "merge": "1f6aeb5638d9f19df5b6a20db0d4b6fdcb0a9685",
+    "source": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+    "tree": "20fe0a0c8e6f1f81ba806c129b2e774dd98d2ba5",
+    "same_tree": true,
+    "merge_signature_verified": true,
+    "merged_at": "2026-09-10T10:28:58Z",
+    "pr": "https://github.com/Kiwunaka/POKROV-app/pull/101"
+  },
+  "files": [
+    {
+      "file": "source-promoted.json",
+      "raw_sha256": "8e14ef8ef15ae741515454fa01a9e30d828f4c1957699b3a3ee455824b3208ef",
+      "retained_sha256": "cce3954bf6c10d0a6f4822cb2c83ef1f697bec31c78bf34a000a404f5691df75",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "ci-pr.json",
+      "raw_sha256": "4680a0ee6a9c56919796767b433d9d8344b510ce22d964357d9578b1899e3ec4",
+      "retained_sha256": "336c78bbff700fca3fb706bcb16b0c6f6e2d82dca64a7bdcee869d1e1fa79a03",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "merge-binding.json",
+      "raw_sha256": "6475b7952f69ecf13d13967c7cd4438cfea05e63aba39f756b3ccdb8110e0203",
+      "retained_sha256": "4e3cee45c96cbd40049f2d75ff11f73204330df3f6fed01408fa8618f1c0cf95",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "windows-expected.json",
+      "raw_sha256": "fc866ff69b84ab263d4bbda7dbd02a9f56e92c68f656d6efd35febf97169d049",
+      "retained_sha256": "69a878e513c349028d48db57a9b0ba64ee2efe87bdfba8f6c081c1d81413bbeb",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "windows-payload-comparison.json",
+      "raw_sha256": "82402d6cb6c9db3e68bd8b1cbe5ee68821b8248bf053c5d12e965b4be77a5d87",
+      "retained_sha256": "89565c363b8c0ec61362809ea09b01d8086a9220b51185a818dd0432b588e96f",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "windows-before.json",
+      "raw_sha256": "61a50cc2a50d9ad523f0b480af704c967d0a3fc049b0d6fa08317c46a4fea0be",
+      "retained_sha256": "4d98a44f07456714c1d4e953b4caecdc613f8b54b6108a3a155118a4d4005b15",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "wizard-readback.json",
+      "raw_sha256": "e9c6ad195ab48aa4c953d9d41735e75d65f24bffe234fc441aad5a4acbf6733a",
+      "retained_sha256": "b552162a054b4dfa57dc82ff2fbce5144ac6fc987f59164ebc76f5b04daeb1e7",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "installed-final.json",
+      "raw_sha256": "5a65ce642f475f48a649591b96d73401837b3dd661174f464bd2f31d0074ece9",
+      "retained_sha256": "c12d533d09bcf252b380c2ae7b5d8e0eb1e113c168c8e45bcd2155ad6c69f564",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "old-package-fault-final.json",
+      "raw_sha256": "6eb4b98ecfbcf408295d2588407eabd526007cd040304ba149d71aed9319f336",
+      "retained_sha256": "a00e855499a33e1eb132e2124162fb1e044752ed9a09679ee658f016d3b4ecb3",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "fixed-package-fault.json",
+      "raw_sha256": "f0229437babf2e550e18ed5379e6dc66b9417b372b8b6385732781356819f621",
+      "retained_sha256": "c66ce59adccfab37c53c7f94d776c2d4406190269ea9bea8bb6ac07cd2357dc1",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-before.json",
+      "raw_sha256": "e9bfc73186116edd64faaa5801a1da619abb24dc2f91a1e8a05cc05bfaf23176",
+      "retained_sha256": "b95e881c4c18d564e47f45f3a425e1b081116968e3a906ead2ac4c6c90e05da7",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-after-old.json",
+      "raw_sha256": "4113867be673a48bc014d9eb70f4c145a260ddb6fe96fcd6a46e0b349a71a62c",
+      "retained_sha256": "521c931a84541e2c7bd00a4e141d3f0c243dc42170001683959f444ca7e56836",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-after-fixed-ui.json",
+      "raw_sha256": "97b51441ae0ea28d069f87a35a8767197aa71297a7d1c8d332fd2d06d229f6cc",
+      "retained_sha256": "d7e306ffc7885bc6245071dcbd7741686fc5a91f30a0f4bee9611d80e99bbaac",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-before-connect.json",
+      "raw_sha256": "d41481e11078a04d68214c8d22299a3348c4c22c2d670c41cd96e4170a534817",
+      "retained_sha256": "ee427c1a8827ff4944dc15be69b6261f6b5c7c55d224694f275432633c194fcb",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-during-tunnel.json",
+      "raw_sha256": "df2139f6b92797b4d5ff7e4d015f8567efc9c5349dd9d1fbe53cc4b9d6bcb02c",
+      "retained_sha256": "fb8b102ac4b51c6a7e7173c5e458205da9c77c41c3c271962993636f7986973c",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-restored.json",
+      "raw_sha256": "9be9445d61ba5455f2975ffbb223a7a3d44daf3df7d0cdeb3827f9833eedc066",
+      "retained_sha256": "c4e47ff0a5c49e44b6b63ed0f5cd286ddc35f2fafe87b908dcd52160015a6f3c",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "network-before.json",
+      "raw_sha256": "1b4b678211c0a0cf44cafb23b55483ff7104c76b32c1a4ff7c80ee9355c75862",
+      "retained_sha256": "98c8c16ebc9ee85fda5f0cca5cd14351dbf33c45fdc1b72a7943f8311d55bcdd",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "network-connecting.json",
+      "raw_sha256": "351bb31604bbf8b76b400c941a04d1a471f851908a136708571b18a0d220088e",
+      "retained_sha256": "9eae0a1b8802925b6d031d6fc24d980fa963ef74d95f1212de1c6b2256920795",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "network-connected.json",
+      "raw_sha256": "6ebd82fffe54f518e55b831cfc7b3b038276fb8ca982b3f5161ebeebf8138d0f",
+      "retained_sha256": "8a17cee2c15bf8cc6185cd6f7a419162778901459e9329b557fb4fdfe5fe9c94",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "network-disconnected.json",
+      "raw_sha256": "61277cad09590afa002f85e9550f2c21a3105f5293f63a7d423385da20c3b147",
+      "retained_sha256": "c37bf2cc75e0bb9827e819175d7b0ae32e3930c934cf57ff757082687e6a4fa5",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "tunnel-traffic-fault.json",
+      "raw_sha256": "e79773ef0b98b27be87a403270a227644fe1f57c48d5b6ed71bfd18863b32e13",
+      "retained_sha256": "353bf5a1931e001f7d6d7ffdbca476de02fe85efac14df66b598792d54efe799",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "timeline-restored.json",
+      "raw_sha256": "aac1027415dfa91223f166935ad5a6628b93a5bb0dc517f25cbbb4f26b6524aa",
+      "retained_sha256": "714bde33c897a6d1f391eafb483330159e4bc37d7f93b926aee464aadfb9069c",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "runtime-validation.json",
+      "raw_sha256": "9681c13ec573f65ee4ae95e8a9eb7843bc20e844291f6f60de1f718d6da4b7f3",
+      "retained_sha256": "49df86d12ea5e96bee4d255bbf63cfb211886f896bb3ad85da31ae4bfacf4c56",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "defender-final.json",
+      "raw_sha256": "18d3a2f4105e39d40cb7ba4c7500b08d484d7f25acfd9e3e8bf460f61705694a",
+      "retained_sha256": "43df0d0f707f621ddfd37743045b5e672819f5bd756c1c23849fe51add9adb46",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "vm-restoration.json",
+      "raw_sha256": "0907f14a7bff92e962a2a6cff3b0e9c5feddd8906657e875505edceb378fbe6d",
+      "retained_sha256": "a918e9a455d02e9a816603e36f52117b3543fd8c475913277c08b6d7a1fa7a33",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "startup-red.log",
+      "raw_sha256": "335eb03ef154d3463edf9adf39ca9b563dae2cc8e88710f5352b2987d9963710",
+      "retained_sha256": "335eb03ef154d3463edf9adf39ca9b563dae2cc8e88710f5352b2987d9963710",
+      "normalization": "none"
+    },
+    {
+      "file": "shell-tests.log",
+      "raw_sha256": "9a8ee2091a8163b5b3f9ad3b48b724c82bbaf82d68af25e045574e59df85d4fc",
+      "retained_sha256": "9a8ee2091a8163b5b3f9ad3b48b724c82bbaf82d68af25e045574e59df85d4fc",
+      "normalization": "none"
+    },
+    {
+      "file": "shell-analyze.log",
+      "raw_sha256": "164dd96954847e91c3a28261e351a0df319f28f14bd59d26d826fffbd9671cb1",
+      "retained_sha256": "164dd96954847e91c3a28261e351a0df319f28f14bd59d26d826fffbd9671cb1",
+      "normalization": "none"
+    },
+    {
+      "file": "runtime-tests.log",
+      "raw_sha256": "e18a7cc2cae3d506a287d9209a225de12b38477e42bb332aeb78c9fa0346d972",
+      "retained_sha256": "e18a7cc2cae3d506a287d9209a225de12b38477e42bb332aeb78c9fa0346d972",
+      "normalization": "none"
+    },
+    {
+      "file": "runtime-analyze.log",
+      "raw_sha256": "50279fa46be9bf80d4e5fb8817702b546019db35cfa051cfcde964ac30b0f870",
+      "retained_sha256": "50279fa46be9bf80d4e5fb8817702b546019db35cfa051cfcde964ac30b0f870",
+      "normalization": "none"
+    },
+    {
+      "file": "seed-before-build.log",
+      "raw_sha256": "1040ece1b3ee6a7b4911b8177d72b8fe5971a6ff5af62798577f9ac682fbb3a7",
+      "retained_sha256": "1040ece1b3ee6a7b4911b8177d72b8fe5971a6ff5af62798577f9ac682fbb3a7",
+      "normalization": "none"
+    },
+    {
+      "file": "wizard.log",
+      "raw_sha256": "9741408eb6d4260f8fcdf48f46563262a08cc1269a04e6ae5d838e8457831a19",
+      "retained_sha256": "9741408eb6d4260f8fcdf48f46563262a08cc1269a04e6ae5d838e8457831a19",
+      "normalization": "none"
+    },
+    {
+      "file": "old-fault.png",
+      "raw_sha256": "9a52c0a014a5b781740668975706d803467f2e80a7a40fb475e47e9a9522a94e",
+      "retained_sha256": "9a52c0a014a5b781740668975706d803467f2e80a7a40fb475e47e9a9522a94e",
+      "normalization": "none"
+    },
+    {
+      "file": "fault-connected.png",
+      "raw_sha256": "6a154cdc9bdd9c18fefb9fef2e32f5edcc645395a82b252875ea5a9a0bc93a4d",
+      "retained_sha256": "6a154cdc9bdd9c18fefb9fef2e32f5edcc645395a82b252875ea5a9a0bc93a4d",
+      "normalization": "none"
+    },
+    {
+      "file": "build.ps1",
+      "raw_sha256": "f163d4083b221cf93711f12a1d46aaefb29e83b206bd7a09582a82af7769a8e7",
+      "retained_sha256": "f163d4083b221cf93711f12a1d46aaefb29e83b206bd7a09582a82af7769a8e7",
+      "normalization": "none"
+    },
+    {
+      "file": "storage-fixture.ps1",
+      "raw_sha256": "8da358c6908977cfc35b5ae90dd9ad95f8a420d7ff2e43afff066ee5b928a891",
+      "retained_sha256": "8da358c6908977cfc35b5ae90dd9ad95f8a420d7ff2e43afff066ee5b928a891",
+      "normalization": "none"
+    },
+    {
+      "file": "validate-runtime.py",
+      "raw_sha256": "d576e33981c5e209a063cf6b9678465d8ee33c102a603d337242aba4e04cb2f4",
+      "retained_sha256": "d576e33981c5e209a063cf6b9678465d8ee33c102a603d337242aba4e04cb2f4",
+      "normalization": "none"
+    },
+    {
+      "file": "verify-wizard.ps1",
+      "raw_sha256": "aa9a7e75b21acd5f8ac9a202167c03cd4b3ec50d6483de2eeb8205ede8850ba7",
+      "retained_sha256": "aa9a7e75b21acd5f8ac9a202167c03cd4b3ec50d6483de2eeb8205ede8850ba7",
+      "normalization": "none"
+    },
+    {
+      "file": "timeline.ps1",
+      "raw_sha256": "b89ab0d12b3dd863dd4209119e7b5f2babaf634a58a13a138387762694844c40",
+      "retained_sha256": "b89ab0d12b3dd863dd4209119e7b5f2babaf634a58a13a138387762694844c40",
+      "normalization": "none"
+    },
+    {
+      "file": "ci-merge.json",
+      "raw_sha256": "b1ad112b5c155d8b9c3cbecf365a81bf5241610e9ae274bc21d7ebbf630c7955",
+      "retained_sha256": "b1ad112b5c155d8b9c3cbecf365a81bf5241610e9ae274bc21d7ebbf630c7955",
+      "normalization": "none"
+    },
+    {
+      "file": "client-seed-final.log",
+      "raw_sha256": "bb487c90fad943e6e7b7cbe9c4ebe756f7c0ae8d8db6afc93a63adb3b8927bcd",
+      "retained_sha256": "bb487c90fad943e6e7b7cbe9c4ebe756f7c0ae8d8db6afc93a63adb3b8927bcd",
+      "normalization": "none"
+    },
+    {
+      "file": "client-docs-final.log",
+      "raw_sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874",
+      "retained_sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874",
+      "normalization": "none"
+    },
+    {
+      "file": "platform-docs.log",
+      "raw_sha256": "46771e8ab8d591ac5d9cddf6da8da599ce05eb84dd50465d0158dc5d444f9cbc",
+      "retained_sha256": "46771e8ab8d591ac5d9cddf6da8da599ce05eb84dd50465d0158dc5d444f9cbc",
+      "normalization": "none"
+    },
+    {
+      "file": "platform-context.log",
+      "raw_sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+      "retained_sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+      "normalization": "none"
+    },
+    {
+      "file": "platform-package.log",
+      "raw_sha256": "69270a4dfc8b56145256e1fb16b44fba68b1a0e76f07de2bf286d41410206319",
+      "retained_sha256": "69270a4dfc8b56145256e1fb16b44fba68b1a0e76f07de2bf286d41410206319",
+      "normalization": "none"
+    }
+  ],
+  "build_logs": [
+    {
+      "path": "E:\\r12-observability-startup-20260910\\bootstrap.log",
+      "sha256": "b5ace0c4d1b72eb934f87402af94fd67fb168ce44173752d5b66a6da2373e99f"
+    },
+    {
+      "path": "E:\\r12-observability-startup-20260910\\runtime-sync.log",
+      "sha256": "a507cb9f4745bf74ea4ff6f11fb0b09dd5266576a650448eb04e9c54d5b3b30d"
+    },
+    {
+      "path": "E:\\r12-observability-startup-20260910\\windows-build.log",
+      "sha256": "f5e2d7bb8a5f7287452cadffc665f13c875ae051999a46c7a261b98a7e1d736e"
+    }
+  ],
+  "limits": [
+    "An actual path conflict is tested; this does not substitute for disk-full, clock-jump, event-storm, upload-timeout or full Android/Win10 acceptance.",
+    "Fault-period events exist only in memory; no invented durable timeline. After restoration four bootstrap records were captured.",
+    "Connection counters include ambient traffic and do not identify per-request traffic.",
+    "The lab stopped the disconnected UI process to restore files; this is not user-tray-exit proof.",
+    "Initial network-connecting snapshot straddles route application; steady network-connected and traffic proof are the accepted observations."
+  ],
+  "merge_ci": "PASS",
+  "rollback": "Previous 71ae964 installer retained separately. Original two diagnostic files restored byte for byte; no release index changed.",
+  "documentation_checks": [
+    {
+      "log": "client-seed-final.log",
+      "result": "Seed scaffold OK",
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation"
+    },
+    {
+      "log": "client-docs-final.log",
+      "result": "Client docs contract OK",
+      "command": "pwsh -NoProfile -File test/docs-contract.ps1"
+    },
+    {
+      "log": "platform-docs.log",
+      "result": "33 passed",
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q"
+    },
+    {
+      "log": "platform-context.log",
+      "result": "PASS platform-context",
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root ."
+    },
+    {
+      "log": "platform-package.log",
+      "result": "703 local file links",
+      "command": "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py"
+    }
+  ]
+}
