@@ -1,0 +1,65 @@
+{
+  "schema": "pokrov.core.pre-candidate-artifact-evidence/v1",
+  "lane": "windows",
+  "state": "PRE_CANDIDATE_LOCAL",
+  "candidate_created": false,
+  "candidate_proven": false,
+  "promotion_authorized": false,
+  "provenance_status": "UNSIGNED_CI_BUILD_EVIDENCE",
+  "source": {
+    "commit": "c8b0461c1975ef96e32024774300a5829b9fdc43",
+    "clean": true
+  },
+  "toolchain": {
+    "go": "go1.26.8",
+    "runner_os": ""
+  },
+  "workflow": {
+    "run_id": "",
+    "run_attempt": ""
+  },
+  "contracts": {
+    "config/release.json": "2f2f63c62b12c0507d6441c324b18f8dfaa9e2cb36883ebd60a81370d4e60e4e",
+    "config/abi-contract.json": "ea4962507e27dd8e46990b88345fcbe7ad1f154a5abd1ba44cc3af42a53375a1",
+    "config/core-event-abi.json": "b6e1708f6879b889d1a4f3bcc3d53d29fe4cb2518d05d5cc2c73a0ae02df2c81",
+    "config/awg2-capability.json": "c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8",
+    "config/awg31-capability.json": "1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818",
+    "go.sum": "cd1d48bfba17ae7f459a07c2cf70c8ed0b5572bc4f930bec9abcbb5b61b53502",
+    "engine/sing-box/go.sum": "bc563f56a5cb57b3bb01c98758dbf4314f81ed9fbbca35e28fa383bcda9fb91f"
+  },
+  "reproducibility": {
+    "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
+    "file_count": 3,
+    "tree_sha256": "811886ce705b733ccda5bc76a14e24c0ff872f8b94397e375e1f848bd92d3419",
+    "files": [
+      {
+        "path": "libcronet.dll",
+        "size": 8596992,
+        "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+      },
+      {
+        "path": "pokrov-core.dll",
+        "size": 55449600,
+        "sha256": "46e203b5d69267c47ba3f2f11800b28c20c0de48de4dabf7311ce967a14a74ed"
+      },
+      {
+        "path": "pokrov-core.h",
+        "size": 4167,
+        "sha256": "810473c55b8de8d9e9ec053b59d51d9b80288ef8d9e4742f96365a51f8d73d0e"
+      }
+    ]
+  },
+  "sbom": [
+    {
+      "name": "pokrov-core.cdx.json",
+      "size": 311796,
+      "sha256": "48bb61280e6c6db4621f755be5ea78f6c7b54fa2186fdf841ce9b233fa70564b"
+    },
+    {
+      "name": "sing-box.cdx.json",
+      "size": 267681,
+      "sha256": "bf2f4f2fd8c9d61e7178f19aca6991c0b00448949f1f8809279cc996cacf8672"
+    }
+  ],
+  "evidence_ceiling": "LOCAL_OR_HOSTED_PRE_CANDIDATE_CI"
+}

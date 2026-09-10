@@ -1,0 +1,38 @@
+{
+  "result": "PASS_LOCAL_FOCUSED",
+  "runtime_tests": 81,
+  "runtime_opt_in_skips": 1,
+  "opt_in_coverage": "Separate existing exact-DLL 100-cycle run PASS",
+  "android_flutter_tests": 8,
+  "runtime_analyze": "PASS",
+  "checks": [
+    {
+      "file": "client-runtime-tests.log",
+      "sha256": "8a980a2b090a237a78ecbbb15dce2ecab6b62125caa4d80c6b0130dab260d76a",
+      "expected": "+81 ~1: All tests passed!"
+    },
+    {
+      "file": "client-runtime-analyze.log",
+      "sha256": "ede84bddbaa33739f6b12bf775cc0b26a625cf84f9a448b801d6b469ef1efc15",
+      "expected": "No issues found!"
+    },
+    {
+      "file": "client-android-tests.log",
+      "sha256": "31a91c462616088c42a76ce9ecb3feae86daac6688ef3233e360c686cb611b63",
+      "expected": "+8: All tests passed!"
+    },
+    {
+      "file": "client-seed.log",
+      "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9",
+      "result": "PASS exit0; Write-Host completion retained in command record"
+    },
+    {
+      "file": "client-docs.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result": "PASS exit0; Write-Host completion retained in command record"
+    }
+  ],
+  "seed": "PASS exact c8b0461 source authority",
+  "docs": "PASS",
+  "source_release_contract_cases": 16
+}

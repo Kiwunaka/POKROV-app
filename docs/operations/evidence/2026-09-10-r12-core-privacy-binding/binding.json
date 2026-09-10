@@ -1,0 +1,104 @@
+{
+  "status": "PASS_REPRODUCIBLE_CORE_PRIVACY_BINDING_LOCAL",
+  "previous_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "source": "c8b0461c1975ef96e32024774300a5829b9fdc43",
+  "source_tree": "5dcbae56aac8f0deab29e4f88dee36afb8c59211",
+  "compared_files": [
+    {
+      "lane": "android",
+      "path": "pokrov-core-sources.jar",
+      "size": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "lane": "android",
+      "path": "pokrov-core.aar",
+      "size": 107491758,
+      "sha256": "2ddb4c43664763624d47632a7197c4c1f641605d586aaf2c16f5fff9d86265e0"
+    },
+    {
+      "lane": "windows",
+      "path": "libcronet.dll",
+      "size": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.dll",
+      "size": 55449600,
+      "sha256": "46e203b5d69267c47ba3f2f11800b28c20c0de48de4dabf7311ce967a14a74ed"
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.h",
+      "size": 4167,
+      "sha256": "810473c55b8de8d9e9ec053b59d51d9b80288ef8d9e4742f96365a51f8d73d0e"
+    }
+  ],
+  "android_abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "desktop_abi": 2,
+  "event_abi": 1,
+  "required_exports": 15,
+  "windows_proxy_only_cycles": 100,
+  "proxy_log_sha256": "da2ef6160df8c4d3b6bc0debebd376518a9c9619f949fc2d78e13f16f8fbfb9c",
+  "direct_ffi": "PASS six canaries absent from FFI return, stderr, files and structured events",
+  "module_license_change": "No dependency or license file changes; only current source reference updated in notices",
+  "source_promotion": "Core PR10 pending coordinated client binding; no public release",
+  "device_acceptance": "NOT_RUN for new Core; installed Windows 2ed still uses previous c7",
+  "rollback_artifacts": "E:/r12-core-rebinding-20260909/{android-a,windows-a}",
+  "logs": [
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\android-a.log",
+      "sha256": "897e2fbe03849dc4786bc2c477f9ea8cce4f117e929f14b4486d4bfc074fae57"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\android-b.log",
+      "sha256": "8502ab2d87b6f0936fd0f2247d26cbae36603dcbdca35bf07131b2bf546ca9d8"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\ci-pr-failed.log",
+      "sha256": "4fc1267d621ab887e9592c5a599a100e83cf5519a2981cd00c801a63d2f0be1e"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\focused-final.log",
+      "sha256": "1408fc321e8121d715f3e2f62e201a99e6d1263901d2dbfc6473ee7b42291d73"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\focused.log",
+      "sha256": "8959a64bd5b7da95bbb75eec3f01e7ba1c689cb6b59e44a77d8a519e12be48bc"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\full-test.log",
+      "sha256": "48249480eff8fd8a632acc95b7653dffc7452c2acc8181959714b0fea6eb24c4"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\sbom-core.log",
+      "sha256": "7348c30b77c402f838ffd559db3445e98e82bb99baa3e7c8bf1059c6e774632e"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\sbom-engine.log",
+      "sha256": "5dfe93e6a5c12b6abe165724a9c3f78060a2fcb54426a979688453e2b1b81097"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\source-repro.log",
+      "sha256": "fc259aa40170069008525481ff96781615f979902057f55fc08556676441622a"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\windows-100-cycle.log",
+      "sha256": "da2ef6160df8c4d3b6bc0debebd376518a9c9619f949fc2d78e13f16f8fbfb9c"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\windows-a.log",
+      "sha256": "782b7c76fba89aecf699008289d88f81a122a4ef4df3b26e31994fda1d59f49a"
+    },
+    {
+      "local_path": "C:\\r12-v01-core-20260910\\windows-b.log",
+      "sha256": "96065161fe6a82986a0348486d920f9bb2a62267b4f3a30f35a55ba4f6417886"
+    }
+  ]
+}

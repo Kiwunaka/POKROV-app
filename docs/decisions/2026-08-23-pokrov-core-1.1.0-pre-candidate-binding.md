@@ -1,6 +1,26 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current source binding — 2026-09-09
+## Current lifecycle privacy binding вЂ” 2026-09-10
+
+The development client binds Core `c8b0461c1975ef96e32024774300a5829b9fdc43`. A real rejected-profile FFI call
+previously exposed raw configuration/error text in its return and stderr,
+even with debug disabled. Lifecycle failure logging, status and ABI responses
+now expose the catalog code while retaining the typed cause internally.
+Structured event classification preserves that code.
+
+Android AAR: 107491758 bytes, SHA-256 `2ddb4c43664763624d47632a7197c4c1f641605d586aaf2c16f5fff9d86265e0`.
+Windows DLL: 55449600 bytes, SHA-256 `46e203b5d69267c47ba3f2f11800b28c20c0de48de4dabf7311ce967a14a74ed`.
+Two clean builds per platform are byte-identical; four Android ABIs, 15 Windows
+exports, desktop ABI 2 and event ABI 1 remain. Exact DLL direct-FFI canary and
+100 proxy-only lifecycle checks pass. Cronet and dependency contracts are unchanged.
+
+[Binding evidence](../operations/evidence/2026-09-10-r12-core-privacy-binding/README.md)
+retains the original failure and old manifest. Current installed packages still
+use earlier Core; no device/route/extended-support acceptance is transferred.
+This is a pre-candidate local binding. No tag, public release or signing claim.
+81 runtime tests, 8 Android Flutter tests, runtime analyze and exact-source seed/docs checks pass. Coordinated Core/client CI must converge before packaging acceptance.
+
+## Superseded source binding вЂ” 2026-09-09
 
 The development client now binds Core `c7a11f7d2fd974726095ad7aa0619c055273dd15`.
 Its only changes after `02a091c` are the Apple build's Go-version check and
@@ -24,7 +44,7 @@ rebinding creates no APK, installer, candidate, tag, signing or publication.
 Older device and system-route observations retain their original candidate
 identity; this comparison does not create new device or release acceptance.
 
-## Superseded source binding; AWG cross-field behavior retained — 2026-09-08
+## Superseded source binding; AWG cross-field behavior retained вЂ” 2026-09-08
 
 The development client binds Core `02a091cb0e369192a5ad0909b56ccba8aa1dce17`
 for Android and Windows. The validator rejects intersecting H1-H4 ranges,
@@ -66,7 +86,7 @@ pass. Runtime/Android analyze, explicit-root seed/docs/parity and 16 release
 handoff-v2 cases pass. Five compiled Go target module/build records match the
 previous binding; the retained DLL/AAR bytes themselves have changed.
 
-## Superseded C05 binding — 2026-09-06
+## Superseded C05 binding вЂ” 2026-09-06
 
 The development client binds Core `8dc57a830bd1487389dd1b7c9190f094c31e13bc`
 for Android and Windows. `config/runtime-artifacts.seed.json` owns the identity.
@@ -101,7 +121,7 @@ independent-origin acceptance remain open for this binding.
 
 Consumer [backtests](../operations/evidence/2026-09-06-r12-c05-core-binding/client-backtests.json): 80 runtime tests, 8 Android Flutter tests and 372 fresh JVM tests pass; the default opt-in skip is covered by a separate 100-cycle run on the synced Windows DLL. Runtime/Android analyze and the seed/docs/parity gates pass. These are host/component checks, not device or final-package acceptance.
 
-## Superseded N05 local binding — 2026-09-06
+## Superseded N05 local binding вЂ” 2026-09-06
 
 The local N05 client binds Core `6bc36034c86528972488fc203a98512686ac4db9`. Observed DNS, UDP timeout,
 TLS-handshake timeout and response stall retain separate diagnostic codes.
@@ -124,7 +144,7 @@ No new candidate, release tag, signing, publication or promotion is created.
 Physical Android, Windows TUN/DNS/clean-VM and independent-origin checks remain
 open for these bytes. Prior receipts below are not transferred to this binding.
 
-## Superseded local binding — 2026-09-05
+## Superseded local binding вЂ” 2026-09-05
 
 The local R12 client now binds Core `3f52efd4635218967cc84d58cb06b2fa593fd563` for Android and Windows.
 This adds per-call Android `ProbeEndpoint` and `ProbeSelectedOutbound` results
@@ -149,7 +169,7 @@ New APK/installer, physical Android, clean Windows VM, signing, hosted CI and
 RU-origin checks have no transferred PASS. Candidate.33 and public release
 metadata remain retained. No candidate, tag, promotion or publication is created.
 
-## Superseded binding and historical evidence — 2026-08-30
+## Superseded binding and historical evidence вЂ” 2026-08-30
 
 The remainder records earlier bytes and their evidence; it is not the current
 artifact identity and does not establish device proof for the R12 replacement.
@@ -196,8 +216,8 @@ scoped release line until its own owner-solo promotion evidence is recorded.
 | Android | `pokrov-core.aar` | `107419397` | `2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69` | two byte-identical local builds from `cd8f0f4`; `armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64` present |
 | Windows x64 | `pokrov-core.dll` | `55426048` | `f284fa8841f1a45271874a7a05ed6093fb0e3efbdd03e00001edd046be708204` | two byte-identical local builds from `cd8f0f4`; 15 required exports present; 100 proxy-only start/stop cycles pass |
 | Windows dependency | `libcronet.dll` | `8596992` | `8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7` | unchanged retained dependency |
-| iOS | `PokrovCore.xcframework` | — | — | `MANUAL_OWNER_TEST` |
-| macOS | `pokrov-core.dylib` | — | — | `MANUAL_OWNER_TEST` |
+| iOS | `PokrovCore.xcframework` | вЂ” | вЂ” | `MANUAL_OWNER_TEST` |
+| macOS | `pokrov-core.dylib` | вЂ” | вЂ” | `MANUAL_OWNER_TEST` |
 
 Android is bound by package `space.pokrov.core`, its exact source commit and AAR
 digest. Windows is bound by the same source commit, desktop ABI `2`, exact DLL
@@ -262,7 +282,7 @@ The strongest claim from this decision is
   system routes;
 - Windows TUN, DNS capture and leak protection were not exercised by that
   host-safe harness;
-- exact production-signed ARM64 APK `7d1d4093…58ee5`, size `101364310`, binds
+- exact production-signed ARM64 APK `7d1d4093вЂ¦58ee5`, size `101364310`, binds
   client `064fcd0...` and Core `547f096...`, installs/readbacks byte-identically
   as release/non-debuggable `1.2.0+4046` on physical Huawei/Android 12;
 - ordinary Frankfurt reaches verified green on that APK and Beeline path;
@@ -296,8 +316,8 @@ The strongest claim from this decision is
 
 ## Superseded Android Binding Evidence
 
-The previous exact Android AAR from Core `f234bb6…c171`, size `107392318` and
-SHA-256 `ce11d3d…51b8`, remains retained evidence for builds 4041/4042. It is no
+The previous exact Android AAR from Core `f234bb6вЂ¦c171`, size `107392318` and
+SHA-256 `ce11d3dвЂ¦51b8`, remains retained evidence for builds 4041/4042. It is no
 longer the active binding. Production-signed build 4042 used that AAR with an
 app-side global interface-auto-detection experiment; LDPlayer failed at Core
 service start with no owned-server AWG packet. Build 4042 is rejected, not a
