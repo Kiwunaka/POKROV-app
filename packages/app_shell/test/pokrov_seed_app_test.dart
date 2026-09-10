@@ -864,6 +864,21 @@ class _FakeEncryptedSupportTicketService extends _FakeSupportTicketService
   bool get supportBundleEncryptionConfigured => true;
 
   @override
+  Future<List<String>> listPendingSupportBundles() async => <String>[];
+
+  @override
+  Future<SupportBundleDeliveryResult> retrySupportBundle({
+    required HostPlatform hostPlatform,
+    required String diagnosticId,
+  }) async =>
+      SupportBundleDeliveryResult(
+        state: SupportBundleDeliveryState.queued,
+        diagnosticId: diagnosticId,
+        outboxReference: 'encrypted-outbox.pokrov-support',
+        ticketId: receipt.ticketId,
+      );
+
+  @override
   Future<SupportModeActivation> redeemSupportMode({
     required HostPlatform hostPlatform,
     required String activationCode,

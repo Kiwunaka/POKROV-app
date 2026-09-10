@@ -532,6 +532,16 @@ Support contract rules:
   retry; it must not fall back to plaintext ZIP, legacy chat attachment or raw
   diagnostic text. The separately labelled short summary remains available
   when the signed-key lane is not configured
+- diagnostics lists saved encrypted report IDs and provides an explicit retry
+  for each one after navigation, restart, changed preview or support-mode expiry.
+  Retry loads and validates the existing envelope, preserves its diagnostic ID,
+  ciphertext hash and idempotency key, and uses the authenticated upload API's
+  resume offset. It does not collect or encrypt again, fetch a new recipient,
+  reactivate support mode or consume its collection budget a second time.
+  The saved envelope is removed only after queued/validated completion.
+  Partial `.next` writes and unrelated filenames are not offered as reports.
+  A support-mode volume limit is shown as a limit requiring a new operator code
+  for new extended collection, rather than as a network failure.
 - the ordinary diagnostics screen emits a versioned support code that expires
   after 14 days and contains only platform, route/connection class, app/build
   and a short diagnostic hash prefix. `PSD1-*` remains the stable compact form

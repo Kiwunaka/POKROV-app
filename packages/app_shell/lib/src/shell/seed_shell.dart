@@ -3658,6 +3658,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                           prepared,
                           ticketId: null,
                         ),
+                onLoadPendingBundles: transferService == null ||
+                        !transferService.supportBundleEncryptionConfigured
+                    ? null
+                    : transferService.listPendingSupportBundles,
+                onRetryPendingBundle: transferService == null ||
+                        !transferService.supportBundleEncryptionConfigured
+                    ? null
+                    : (diagnosticId) => transferService.retrySupportBundle(
+                          hostPlatform: widget.appContext.hostPlatform,
+                          diagnosticId: diagnosticId,
+                        ),
                 onExportBundle: transferService == null ||
                         !transferService.supportBundleEncryptionConfigured
                     ? null

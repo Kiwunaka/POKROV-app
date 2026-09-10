@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
+import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
@@ -10,6 +13,99 @@ import 'package:pokrov_support_bundle/support_bundle.dart';
 
 void main() {
   final now = DateTime.utc(2026, 8, 21, 12);
+
+  test('restarted service completes saved ciphertext without a fresh preview or key',
+      () async {
+    final temporary = await Directory.systemTemp.createTemp('pokrov-retry-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final previousSecureStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance =
+        TestFlutterSecureStoragePlatform(<String, String>{});
+    addTearDown(() async {
+      FlutterSecureStoragePlatform.instance = previousSecureStorage;
+      await server.close(force: true);
+      await temporary.delete(recursive: true);
+    });
+    final prepared = const SupportBundleBuilder().prepare(
+      snapshot: _snapshot(),
+      profile: SupportDiagnosticProfile.summary,
+      now: now,
+    );
+    final encrypted = await prepared.encrypt(
+      recipient: await _recipient(now),
+      now: now,
+    );
+    final oldOutbox = PokrovFileSupportBundleOutbox(
+      directoryResolver: () async => temporary,
+    );
+    final saved = await oldOutbox.save(encrypted);
+    final checksum = (await Sha256().hash(saved.bytes)).bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    final paths = <String>[];
+    Map<String, dynamic>? issuedRequest;
+    const uploadId = '01234567-89ab-4cde-8fab-0123456789ab';
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        final path = request.uri.path;
+        paths.add(path);
+        request.response.headers.contentType = ContentType.json;
+        if (path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {
+              'session_token': 'retry-fixture-session',
+              'account_id': 'retry-fixture-account',
+            },
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (path == '/api/client/support/bundles/upload-tickets') {
+          issuedRequest = jsonDecode(body) as Map<String, dynamic>;
+          expect(request.headers.value(HttpHeaders.authorizationHeader),
+              'Bearer retry-fixture-session');
+          request.response.write(jsonEncode({
+            'upload_id': uploadId,
+            'upload_ticket': 'fixture-upload-ticket',
+            'ticket_id': 56,
+            'next_offset': saved.bytes.length,
+            'status': 'uploading',
+          }));
+        } else if (path == '/api/client/support/bundles/uploads/$uploadId/complete') {
+          request.response.write('{"status":"queued"}');
+        } else {
+          request.response.statusCode = 404;
+          request.response.write('{}');
+        }
+        await request.response.close();
+      }
+    }());
+    final restarted = AppFirstSupportTicketService(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      supportDirectoryResolver: () async => temporary,
+      supportSigningPublicKeysById: const {'old-root': 'not-needed-for-retry'},
+      maxRequestAttempts: 1,
+      delayScheduler: (_) async {},
+    );
+    expect(await restarted.listPendingSupportBundles(), [saved.diagnosticId]);
+    final result = await restarted.retrySupportBundle(
+      hostPlatform: HostPlatform.windows,
+      diagnosticId: saved.diagnosticId,
+    );
+    expect(result.state, SupportBundleDeliveryState.queued);
+    expect(result.ticketId, 56);
+    expect(result.diagnosticId, saved.diagnosticId);
+    expect(issuedRequest?['bundle_id'], saved.diagnosticId);
+    expect(issuedRequest?['sha256'], checksum);
+    expect(issuedRequest?['size_bytes'], saved.bytes.length);
+    expect(issuedRequest?['idempotency_key'],
+        'bundle-${saved.diagnosticId.substring(5)}-${checksum.substring(0, 16)}');
+    expect(paths, [
+      '/api/client/session/start-trial',
+      '/api/client/support/bundles/upload-tickets',
+      '/api/client/support/bundles/uploads/$uploadId/complete',
+    ]);
+    expect(await restarted.listPendingSupportBundles(), isEmpty);
+    expect(await File(saved.reference).exists(), isFalse);
+  });
 
   test('file outbox stores and restores only the encrypted envelope', () async {
     final temporary = await Directory.systemTemp.createTemp('pokrov-outbox-');
@@ -39,8 +135,14 @@ void main() {
       1,
     );
 
+    await File('${stored.reference}.next').writeAsString('interrupted fixture');
+    await File('${File(stored.reference).parent.path}/other.pokrov-support')
+        .writeAsString('unrelated fixture');
+    expect(await outbox.listDiagnosticIds(), [stored.diagnosticId]);
+
     await outbox.remove(restored);
     expect(await outbox.load(prepared.preview.diagnosticId), isNull);
+    expect(await outbox.listDiagnosticIds(), isEmpty);
   });
 
   test('full outbox preserves retries and bounds concurrent admission',

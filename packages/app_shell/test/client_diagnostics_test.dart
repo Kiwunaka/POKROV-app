@@ -482,6 +482,71 @@ void main() {
     expect(summary.data, isNot(contains('устройств:')));
   });
 
+  testWidgets('limit failure leaves a different saved report retryable with mode off',
+      (tester) async {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: _snapshot(),
+      statusLabel: 'Нужно внимание',
+      warpState: 'disabled',
+      now: now,
+      checkedAtUtc: now,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'direct',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: true,
+    );
+    const savedId = 'diag-0123456789abcdef01234567';
+    expect(report.preparedBundle.preview.diagnosticId, isNot(savedId));
+    var pending = <String>[savedId];
+    String? retriedId;
+    var collectCalls = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: PokrovDiagnosticsScreen(
+        initialReport: report,
+        onRefresh: () async => report,
+        onOpenProtection: () {},
+        onOpenSupport: () {},
+        onCreateCaseWithBundle: (_) async {
+          collectCalls++;
+          throw const SupportBundleFailure('support_mode_volume_exhausted');
+        },
+        onLoadPendingBundles: () async => pending,
+        onRetryPendingBundle: (id) async {
+          retriedId = id;
+          pending = [];
+          return SupportBundleDeliveryResult(
+            state: SupportBundleDeliveryState.queued,
+            diagnosticId: id,
+            outboxReference: 'private-encrypted-file',
+            ticketId: 56,
+          );
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    final scrollable = find.descendant(
+      of: find.byKey(const ValueKey('diagnostics-scroll')),
+      matching: find.byType(Scrollable),
+    ).first;
+    final create = find.byKey(const ValueKey('diagnostics-create-case-bundle'));
+    await tester.scrollUntilVisible(create, 180, scrollable: scrollable);
+    await tester.tap(create);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Лимит режима поддержки исчерпан.'), findsOneWidget);
+    expect(find.textContaining('Не удалось передать зашифрованную диагностику.'), findsNothing);
+    final retry = find.byKey(const ValueKey('diagnostics-retry-$savedId'));
+    await tester.scrollUntilVisible(retry, -180, scrollable: scrollable);
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+    expect(retriedId, savedId);
+    expect(collectCalls, 1);
+    expect(find.byKey(const ValueKey('diagnostics-pending-bundles')), findsNothing);
+    expect(find.textContaining('Обращение #56'), findsOneWidget);
+  });
+
   testWidgets('encrypted export cancellation never claims a file was saved',
       (tester) async {
     final report = PokrovDiagnosticsPresenter.fromRuntime(
