@@ -369,6 +369,75 @@ void main() {
     );
   });
 
+  testWidgets('open diagnostics follows support usage and automatic expiry',
+      (tester) async {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.allExceptRu,
+      snapshot: _snapshot(),
+      statusLabel: 'Нужно внимание',
+      warpState: 'disabled',
+      now: now,
+      checkedAtUtc: now,
+      appVersion: '1.2.0',
+      buildNumber: '30',
+      releaseChannel: 'direct',
+      candidateLabel: 'pokrov-1.2.0-test',
+      encryptedDeliveryAvailable: true,
+    );
+    PokrovSupportModeView active(int used) => PokrovSupportModeView(
+          active: true,
+          expiresAt: now.add(const Duration(minutes: 5)),
+          allowedCategories: const [],
+          maximumTotalBytes: 4096,
+          consumedBytes: used * 100,
+          maximumBundles: 2,
+          consumedBundles: used,
+        );
+    final mode = ValueNotifier(active(0));
+    addTearDown(mode.dispose);
+    var refreshes = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: ValueListenableBuilder<PokrovSupportModeView>(
+        valueListenable: mode,
+        builder: (context, value, child) => PokrovDiagnosticsScreen(
+          initialReport: report,
+          initialSupportMode: value,
+          onRefresh: () async {
+            refreshes++;
+            return report;
+          },
+          onOpenProtection: () {},
+          onOpenSupport: () {},
+          onDisableSupportMode: () async {},
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('diagnostics-support-mode-status')),
+      150,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const ValueKey('diagnostics-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
+    mode.value = active(1);
+    await tester.pumpAndSettle();
+    expect(
+        find.textContaining('Использовано 100 из 4096 байт и 1 из 2 пакетов.'),
+        findsOneWidget);
+    expect(refreshes, 1);
+    mode.value = const PokrovSupportModeView.inactive();
+    await tester.pumpAndSettle();
+    expect(find.text('Выключить режим'), findsNothing);
+    expect(find.text('Выключен'), findsOneWidget);
+    expect(refreshes, 2);
+  });
+
   testWidgets('screen shows same-build bands without exact cohort numbers',
       (tester) async {
     final report = PokrovDiagnosticsPresenter.fromRuntime(
