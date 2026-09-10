@@ -188,6 +188,7 @@ abstract final class PokrovDiagnosticsPresenter {
     required String candidateLabel,
     required bool encryptedDeliveryAvailable,
     VerifiedSupportCollectionPolicy? supportModePolicy,
+    DiagnosticSystemSummary? systemSummary,
     List<OperationalBreadcrumb> timelineBreadcrumbs = const [],
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
@@ -256,6 +257,25 @@ abstract final class PokrovDiagnosticsPresenter {
       releaseChannel: releaseChannel,
       candidateLabel: candidateLabel,
       supportModePolicy: supportModePolicy,
+      systemSummary: systemSummary,
+      events: [
+        if (supportModePolicy != null)
+          for (final breadcrumb in timelineBreadcrumbs)
+            if (_timelinePhase(breadcrumb.name) case final phase?)
+              if (breadcrumb.outcome != ObservabilityOutcome.notApplicable)
+                DiagnosticEventRecord(
+                  occurredAt: breadcrumb.occurredAtUtc,
+                  subsystem: 'connection',
+                  stage: phase.$1,
+                  outcome: switch (breadcrumb.outcome) {
+                    ObservabilityOutcome.blocked ||
+                    ObservabilityOutcome.degraded =>
+                      'failed',
+                    _ => breadcrumb.outcome.wireValue,
+                  },
+                  errorCode: breadcrumb.errorCode,
+                ),
+      ],
     );
     final supportCode = pokrovSupportDiagnosticCode(
       prepared: prepared,
@@ -512,6 +532,8 @@ PreparedSupportBundle preparePokrovClientSupportBundle({
   required String releaseChannel,
   required String candidateLabel,
   VerifiedSupportCollectionPolicy? supportModePolicy,
+  DiagnosticSystemSummary? systemSummary,
+  List<DiagnosticEventRecord> events = const [],
 }) {
   final platform = hostPlatform == HostPlatform.android ? 'android' : 'windows';
   final channel = hostPlatform == HostPlatform.android &&
@@ -523,6 +545,8 @@ PreparedSupportBundle preparePokrovClientSupportBundle({
   final connectionState = pokrovDiagnosticConnectionState(snapshot);
   return const SupportBundleBuilder().prepare(
     snapshot: DiagnosticSnapshot(
+      system: systemSummary,
+      events: events,
       build: DiagnosticBuildSummary(
         platform: platform,
         appVersion: appVersion,
