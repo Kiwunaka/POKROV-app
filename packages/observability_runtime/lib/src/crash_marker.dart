@@ -54,6 +54,9 @@ final class PreviousExitMarkerStore {
   final DateTime Function() clock;
   String? _activeRunId;
   bool _crashMarked = false;
+  int _writeErrors = 0;
+
+  int get writeErrors => _writeErrors;
 
   Future<PreviousExitReport> beginRun(String runId) async {
     _validateUuid(runId, 'runId');
@@ -259,30 +262,38 @@ final class PreviousExitMarkerStore {
     final encoded = jsonEncode(value);
     OperationalPrivacyGuard.validateSerialized(encoded);
     final temporary = File('${file.path}.next');
-    await file.parent.create(recursive: true);
-    if (await temporary.exists()) {
-      await temporary.delete();
+    try {
+      await file.parent.create(recursive: true);
+      if (await temporary.exists()) {
+        await temporary.delete();
+      }
+      await temporary.writeAsString(encoded, flush: true);
+      if (await file.exists()) {
+        await file.delete();
+      }
+      await temporary.rename(file.path);
+    } on FileSystemException {
+      _writeErrors += 1;
     }
-    await temporary.writeAsString(encoded, flush: true);
-    if (await file.exists()) {
-      await file.delete();
-    }
-    await temporary.rename(file.path);
   }
 
   void _writeSynchronously(Map<String, Object?> value) {
     final encoded = jsonEncode(value);
     OperationalPrivacyGuard.validateSerialized(encoded);
     final temporary = File('${file.path}.next');
-    file.parent.createSync(recursive: true);
-    if (temporary.existsSync()) {
-      temporary.deleteSync();
+    try {
+      file.parent.createSync(recursive: true);
+      if (temporary.existsSync()) {
+        temporary.deleteSync();
+      }
+      temporary.writeAsStringSync(encoded, flush: true);
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+      temporary.renameSync(file.path);
+    } on FileSystemException {
+      _writeErrors += 1;
     }
-    temporary.writeAsStringSync(encoded, flush: true);
-    if (file.existsSync()) {
-      file.deleteSync();
-    }
-    temporary.renameSync(file.path);
   }
 
   PreviousExitReport _corruptReport() => PreviousExitReport(
