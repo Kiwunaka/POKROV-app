@@ -520,6 +520,14 @@ Support contract rules:
   X25519 recipient key set. The client stores only the encrypted envelope in
   private app support storage before upload, follows the server-authoritative
   resume offset and removes it only after queued/validated completion
+- the private encrypted outbox admits at most 24 MiB across saved envelopes
+  and interrupted temporary writes, on both Android and Windows. Each envelope
+  must fit the existing 2.5 MiB read limit before writing. Admission is serialized
+  across service instances in the app isolate. A full outbox rejects a new
+  diagnostic ID with `outbox_full`; existing IDs remain available for retry.
+  It never evicts unsent bundles to make room. Already oversized spools are
+  preserved and cannot grow through new admission. This cap is separate from
+  the rotating operational event store budget.
 - offline or interrupted delivery keeps the encrypted object for explicit
   retry; it must not fall back to plaintext ZIP, legacy chat attachment or raw
   diagnostic text. The separately labelled short summary remains available

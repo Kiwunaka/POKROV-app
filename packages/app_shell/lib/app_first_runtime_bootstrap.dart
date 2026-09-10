@@ -9998,6 +9998,7 @@ class PokrovFileSupportBundleOutbox implements SupportBundleEncryptedOutbox {
   }) : _directoryResolver = directoryResolver ?? getApplicationSupportDirectory;
 
   static const _maximumEnvelopeBytes = 2621440;
+  static const _maximumOutboxBytes = 24 * 1024 * 1024;
   final Future<Directory> Function() _directoryResolver;
 
   Future<Directory> _root() async {
@@ -10051,33 +10052,56 @@ class PokrovFileSupportBundleOutbox implements SupportBundleEncryptedOutbox {
   Future<StoredEncryptedSupportBundle> save(
     EncryptedSupportBundle bundle,
   ) async {
-    final existing = await load(bundle.diagnosticId);
-    if (existing != null) {
-      return existing;
-    }
-    final file = await _file(bundle.diagnosticId);
-    final next = File('${file.path}.next');
-    final bytes = bundle.bytes;
-    _validateEncryptedEnvelope(bytes, bundle.diagnosticId);
-    if (await next.exists()) {
-      await next.delete();
-    }
-    await next.writeAsBytes(bytes, flush: true);
-    try {
-      await next.rename(file.path);
-    } on FileSystemException {
-      if (await file.exists()) {
-        try {
-          await next.delete();
-        } on FileSystemException {
-          // The canonical encrypted object already won the race. A stale
-          // temporary file is harmless and will be replaced on the next save.
-        }
-      } else {
-        rethrow;
+    final root = await _root();
+    // All service instances in the app isolate share admission for this spool.
+    return _withAppFirstStateFileLock(File('${root.path}/.admission'),
+        () async {
+      final existing = await load(bundle.diagnosticId);
+      if (existing != null) {
+        return existing;
       }
-    }
-    return (await load(bundle.diagnosticId))!;
+      final file = await _file(bundle.diagnosticId);
+      final next = File('${file.path}.next');
+      final bytes = bundle.bytes;
+      if (bytes.isEmpty || bytes.length > _maximumEnvelopeBytes) {
+        throw const SupportBundleTransferFailure(
+          'outbox_content_invalid',
+          'Размер пакета диагностики превышает допустимый предел.',
+        );
+      }
+      _validateEncryptedEnvelope(bytes, bundle.diagnosticId);
+      if (await next.exists()) {
+        await next.delete();
+      }
+      var occupied = 0;
+      await for (final entry in root.list(followLinks: false)) {
+        if (entry is File) {
+          occupied += await entry.length();
+        }
+      }
+      if (occupied + bytes.length > _maximumOutboxBytes) {
+        throw const SupportBundleTransferFailure(
+          'outbox_full',
+          'Хранилище диагностики заполнено. Повторите отправку сохранённого пакета.',
+        );
+      }
+      await next.writeAsBytes(bytes, flush: true);
+      try {
+        await next.rename(file.path);
+      } on FileSystemException {
+        if (await file.exists()) {
+          try {
+            await next.delete();
+          } on FileSystemException {
+            // The canonical encrypted object already won the race. A stale
+            // temporary file is harmless and will be replaced on the next save.
+          }
+        } else {
+          rethrow;
+        }
+      }
+      return (await load(bundle.diagnosticId))!;
+    });
   }
 
   @override
