@@ -1,0 +1,16 @@
+{
+  "status": "READ_ONLY",
+  "utc": "2026-09-10T13:08:09.404871+00:00",
+  "origin": "brain-origin",
+  "api_unit": {
+    "MainPID": "233237",
+    "ActiveState": "active"
+  },
+  "backend_source": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "support_mode_presence": {
+    "POKROV_SUPPORT_MODE_SIGNING_KEY_ID": false,
+    "POKROV_SUPPORT_MODE_SIGNING_PRIVATE_KEY_B64": false,
+    "POKROV_SUPPORT_MODE_CODE_SECRET": false
+  },
+  "secret_values_exported": false
+}

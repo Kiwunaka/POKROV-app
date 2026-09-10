@@ -1,0 +1,40 @@
+{
+  "tested": "3f3f4c844077a20631789fc57ee86a38fec38125",
+  "source": "0f382d555b66ae9a500e24e6a51cac578064bd46",
+  "parent": "c17936960dd3c77649d5eda5fe06f0a7bba85db8",
+  "signed_commit": "cbb00f5fd8e4f1ab7ea9a00b57248e18be41dcbc",
+  "tree": "7f5e90a625689b7122a8869bef67886261b8e5c2",
+  "signature_valid": true,
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/104",
+  "branch": "codex/extended-support-context-signed-20260910",
+  "verified_package_trees": [
+    "packages/app_shell",
+    "packages/observability_runtime",
+    "packages/observability_contracts",
+    "packages/runtime_engine",
+    "packages/diagnostics_collectors",
+    "packages/support_bundle"
+  ],
+  "files": [
+    {
+      "path": "docs/product/client-product-contract.md",
+      "sha256": "d28b398581f21f967f6dde68523ce06f4dc1e0fe7bacf724108bbf31ed8d6ce8"
+    },
+    {
+      "path": "packages/app_shell/lib/app_shell.dart",
+      "sha256": "9eaf7759bddcebdbad6ee7ccb38b4f2ea5e9d467975cf57884c9b8a42d2610cb"
+    },
+    {
+      "path": "packages/app_shell/lib/src/features/diagnostics/client_diagnostics.dart",
+      "sha256": "c239b8f606d12c06725403f2c9688e51477934d87c92299825e02479b5638f2c"
+    },
+    {
+      "path": "packages/app_shell/lib/src/shell/seed_shell.dart",
+      "sha256": "88561e80e6dc7339a973af220f3efd7554c5dd7a7659bc36cd732aee774cb701"
+    },
+    {
+      "path": "packages/app_shell/test/support_mode_controller_test.dart",
+      "sha256": "ed4cc116235e36c2d50e97fda6f57c6ff9f9981b6109e0acd93b8e8dec48db96"
+    }
+  ]
+}
