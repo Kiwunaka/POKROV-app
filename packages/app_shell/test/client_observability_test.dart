@@ -25,6 +25,7 @@ void main() {
       buildIdentity: _build(),
       idFactory: ids,
     );
+    observability.recordAndroidRoutingAppCount(3);
     observability.markUiReady();
     observability.recordUpdateInstallStarted(
       channel: PokrovOperationalUpdateChannel.direct,
@@ -118,6 +119,7 @@ void main() {
     final remote = jsonEncode(releaseHealth.batches);
     expect(remote, isNot(contains('org.telegram.messenger')));
     expect(remote, isNot(contains('package_name')));
+    expect(observability.dispatcher.snapshot().rejectedAsStale, 0);
   });
 
   test('connection failure survives interleaved account refresh events',

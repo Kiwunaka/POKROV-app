@@ -179,7 +179,6 @@ final class PokrovClientObservability {
   final String runId;
   final OperationalIdFactory ids;
   int _generation = 0;
-  int _bootstrapSequence = 0;
   OperationalAttemptTimeline? _attempt;
   String _lastExperienceFingerprint = '';
   bool _uiReadyRecorded = false;
@@ -734,7 +733,7 @@ final class PokrovClientObservability {
       'phase': 'bootstrap'
     },
   }) {
-    _bootstrapSequence += 1;
+    final sequence = dispatcher.sequenceFence.lastSequence + 1;
     dispatcher.emit(
       OperationalEvent(
         eventId: ids.uuidV4(),
@@ -755,7 +754,7 @@ final class PokrovClientObservability {
           runId: runId,
           attemptId: null,
           generation: 0,
-          sequence: _bootstrapSequence,
+          sequence: sequence,
         ),
         build: build,
         error: errorCode == null
