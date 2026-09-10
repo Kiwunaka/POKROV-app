@@ -1,0 +1,11 @@
+﻿{
+    "utc":  "2026-09-10T18:42:48.6347336Z",
+    "label":  "resumed-upload",
+    "session_present":  true,
+    "used_nonce_count":  5,
+    "consumed_bytes":  1769,
+    "consumed_bundle_count":  1,
+    "disabled":  false,
+    "outbox_encrypted_files":  0,
+    "raw_policy_exported":  false
+}

@@ -1,0 +1,182 @@
+{
+  "status": "PASS_BOUNDED_WITH_OPEN_FINDINGS",
+  "source_directory": "C:\\r12-psm-runtime-20260910",
+  "files": [
+    {
+      "file": "client-ci-pr.json",
+      "bytes": 7259,
+      "sha256": "bc3b3f4d396edb8dbaff0f1fcdd3b9f0af542fa0b0c57c692b49058508f660b8"
+    },
+    {
+      "file": "client-ci-merge.json",
+      "bytes": 7254,
+      "sha256": "f0e7131e3c8d9ad19b28b1504905e54185539b04a40ee72f2b375729dff92549"
+    },
+    {
+      "file": "client-merge-binding.json",
+      "bytes": 353,
+      "sha256": "8b4829dcfbf338f2d22eb9c6fd6c60053413695ca7592038a6e5ba8d1c4fc8e9"
+    },
+    {
+      "file": "scan-after.json",
+      "bytes": 2043,
+      "sha256": "0b476857040f9ce3b61939d6605e0861dc7fb23d241ed933d3f4ff591f7ae24c"
+    },
+    {
+      "file": "fake-key-control.json",
+      "bytes": 332,
+      "sha256": "a6368afbda8ae4831aebad2dce6aeb188816e43c60bd7824fac4f16a3aa788b1"
+    },
+    {
+      "file": "recovery-verification.json",
+      "bytes": 299,
+      "sha256": "2a055d862f57b42a233566832274ef23b2932e91dd4e1a0c395a5767669b40fe"
+    },
+    {
+      "file": "probe-cleanup.json",
+      "bytes": 133,
+      "sha256": "e9b21fc6c7dc37257bbc085a654d035c43a4e15f7898837f48f81e91633233cf"
+    },
+    {
+      "file": "empty-jsonl-native-rejection.json",
+      "bytes": 1326,
+      "sha256": "822690f3d88be44db8775961dc0ed009bd9dd525588f719b18a12d829d91b707"
+    },
+    {
+      "file": "mode-before-expiry.json",
+      "bytes": 305,
+      "sha256": "148ed20a226d254206b95e469b867c297042c8f0711d7569f7891e36a25deb09"
+    },
+    {
+      "file": "mode-expired-confirmed.json",
+      "bytes": 309,
+      "sha256": "34a6968a5b9c7b0f95acc9ff1df467a015272c44a6dc3c574ea9951359615a82"
+    },
+    {
+      "file": "empty-fix--client-ci-pr.json",
+      "bytes": 7259,
+      "sha256": "4ca9d9981574dfce7c16d27f2701bfda54de87d0eeba1ec9536e57d91c0b982c"
+    },
+    {
+      "file": "empty-fix--client-ci-merge.json",
+      "bytes": 7254,
+      "sha256": "ee9d707f19cc24e28f5e138882232ac5e93b0aa9a9242adc6612eb74d2b3da4a"
+    },
+    {
+      "file": "empty-fix--client-merge-binding.json",
+      "bytes": 353,
+      "sha256": "dcdd9937a5c9e7b3301a817d6fc42bfb687a23add8e47ae28ba3d13f931a490b"
+    },
+    {
+      "file": "empty-fix--windows-payload-comparison.json",
+      "bytes": 499,
+      "sha256": "7df6e47d90806f3bd743a18d984ca33c0c702efb1fda121c49dfcd358b0d53bb"
+    },
+    {
+      "file": "empty-fix--wizard-readback.json",
+      "bytes": 967,
+      "sha256": "bad5b4e9cc288a37ad24587dbb5deadd885b711cd74c514b93daec6c85396ba2"
+    },
+    {
+      "file": "empty-fix--state-final.json",
+      "bytes": 713,
+      "sha256": "e16b944605a237874e46fa4b3ea3b9052887182d1a9b07b2dae001b02ceef22b"
+    },
+    {
+      "file": "empty-fix--export-receipt.json",
+      "bytes": 986,
+      "sha256": "88d771c7801e757ffeca108468d90b4e817e8317ab3fdc12aaf9006fff81d05e"
+    },
+    {
+      "file": "empty-fix--mode-after-first-upload.json",
+      "bytes": 310,
+      "sha256": "157173669e9e14c71ba7a32d383c0a0f4765588e91194b7b6d8039629ca4a6c9"
+    },
+    {
+      "file": "empty-fix--mode-after-export.json",
+      "bytes": 304,
+      "sha256": "57ba06dc6a789e998e4c067bca29f07c0b6cdfa5ae73b55e0727674f5522117e"
+    },
+    {
+      "file": "empty-fix--mode-before-policy3-expiry.json",
+      "bytes": 313,
+      "sha256": "d93ad6ba7b3c8786aaca55474b2b2fb32af49314226961402c13d20378c77da3"
+    },
+    {
+      "file": "empty-fix--mode-policy3-expiry.json",
+      "bytes": 306,
+      "sha256": "c790cb36154a82eda0345737b6a244ff11df51ed42502abcab5435c51710a335"
+    },
+    {
+      "file": "empty-fix--mode-resumed-upload.json",
+      "bytes": 306,
+      "sha256": "93c74f6c5e954ba545efcb102fe65833df83679b7606ecbb53e5c19425a36e71"
+    },
+    {
+      "file": "empty-fix--mode-policy5-first.json",
+      "bytes": 305,
+      "sha256": "c82ae69c9e29b1036f2066949bc7cab6437a9a7934a0ba176ae4c1dd40416bbe"
+    },
+    {
+      "file": "empty-fix--mode-policy5-second.json",
+      "bytes": 307,
+      "sha256": "731492b4cf0ce1ba10e732d41178e12f9bbb106cec9ffd24b0561a6023a22a4b"
+    },
+    {
+      "file": "empty-fix--mode-policy5-third-denied.json",
+      "bytes": 313,
+      "sha256": "e02261fd52a1161a0d485647db2c6511d883c125cf03cf53c064aae3806d7634"
+    },
+    {
+      "file": "empty-fix--mode-policy6-active.json",
+      "bytes": 303,
+      "sha256": "c03651c80c9b3d24d1d4286ad3814b210f3708355dfac9c0d6d7a1eb6373ace5"
+    },
+    {
+      "file": "empty-fix--mode-policy6-manual-disabled.json",
+      "bytes": 315,
+      "sha256": "7ddb45a92750299575d4122c9092d3686564fff9ac772f11dbefaa5db4e7c975"
+    },
+    {
+      "file": "empty-fix--mode-final-inactive.json",
+      "bytes": 306,
+      "sha256": "bcbe6d66c0d7551c76548da56c8768379d0f6a6953565b9c50c90086992ad4e5"
+    },
+    {
+      "file": "empty-fix--native-admin-54-payload-scan.json",
+      "bytes": 2467,
+      "sha256": "88ca44a414499264c7d4d35ec22ead611a7a29f8c67bbab408b4b9e52e6fc21e"
+    },
+    {
+      "file": "empty-fix--native-admin-55-payload-scan.json",
+      "bytes": 2670,
+      "sha256": "efd90ff9b41d4dda957b4023076fc27aa68a3fc3e6979380065abbaef1ef20e4"
+    },
+    {
+      "file": "empty-fix--native-case-54-readback.json",
+      "bytes": 716,
+      "sha256": "1b5db3e275d7067f669aaf8257b3bcd7b6c0cb8c55a0493d8e61613833749e83"
+    },
+    {
+      "file": "empty-fix--native-case-55-readback.json",
+      "bytes": 720,
+      "sha256": "13914b1b004f8072143e8af66f7c263eb30d4b9037835bfaac248a1142c1cbb5"
+    },
+    {
+      "file": "empty-fix--native-case-56-readback.json",
+      "bytes": 677,
+      "sha256": "e2469a40b555d922fb07b46fdd293997ef4451edd32147b607e7b2a2aa06d9e9"
+    },
+    {
+      "file": "empty-fix--final-policy-proof.json",
+      "bytes": 1019,
+      "sha256": "8beadc3599a10a85cd6e83527bceeae59a9cae87f263ad0b62a34cd35c7ed4e7"
+    },
+    {
+      "file": "empty-fix--vm-final-state.txt",
+      "bytes": 1101,
+      "sha256": "6485e216e00167533857351ab66661f8b457845ada59ed6fb27d8987d1562fcb"
+    }
+  ],
+  "private_material_exported": false
+}

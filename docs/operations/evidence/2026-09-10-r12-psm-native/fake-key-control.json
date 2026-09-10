@@ -1,0 +1,11 @@
+{
+  "fake_signature_valid": true,
+  "fake_public_key_sha256": "66f83b95a9ad1f9f9c60dfdb0c1daba188f15fe790a4e6867ee662fdba73fd22",
+  "only_fake_material": true,
+  "audience": {
+    "app_version": "1.2.0+4053",
+    "build_number": "4053",
+    "platform": "windows"
+  },
+  "expires_at": "2026-09-10T17:00:20.278631+00:00"
+}

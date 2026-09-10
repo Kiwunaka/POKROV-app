@@ -1,0 +1,11 @@
+﻿{
+    "utc":  "2026-09-10T18:23:57.5707764Z",
+    "label":  "after-export",
+    "session_present":  true,
+    "used_nonce_count":  4,
+    "consumed_bytes":  1769,
+    "consumed_bundle_count":  1,
+    "disabled":  false,
+    "outbox_encrypted_files":  1,
+    "raw_policy_exported":  false
+}

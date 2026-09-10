@@ -1,0 +1,11 @@
+﻿{
+    "utc":  "2026-09-10T19:06:48.6871752Z",
+    "label":  "policy6-active",
+    "session_present":  true,
+    "used_nonce_count":  7,
+    "consumed_bytes":  0,
+    "consumed_bundle_count":  0,
+    "disabled":  false,
+    "outbox_encrypted_files":  1,
+    "raw_policy_exported":  false
+}

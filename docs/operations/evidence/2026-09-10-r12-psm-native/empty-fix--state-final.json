@@ -1,0 +1,13 @@
+﻿{
+    "utc":  "2026-09-10T19:13:58.9139296Z",
+    "phase":  "after",
+    "client_source":  "45d495956ee8f8e557d4ea3bd257685e7ed89ee4",
+    "core_source":  "c8b0461c1975ef96e32024774300a5829b9fdc43",
+    "installed_hashes_match":  304,
+    "state_sha256":  "505d8e3d789bf0a8438c60b26eb571172cc709c6d2692cc38a461d02fb0ed979",
+    "secure_store_sha256":  "be7e4fe116c1168befe2eeaf4babfd361c86e2cee578ea0e89f8840c8711f820",
+    "default_routes_digest":  "a9673713fbe4018158016b75ab16ff39e8267e2a406afb60ba79eebb5ef55be4",
+    "dns_digest":  "9487fe1fae5c8527f699ae1a1e07fab5f3e4cebabb88c09f2bdc9fb618a3eab3",
+    "active_pokrov_adapters":  0,
+    "private_service_profile":  "NOT_READ_UNPRIVILEGED"
+}

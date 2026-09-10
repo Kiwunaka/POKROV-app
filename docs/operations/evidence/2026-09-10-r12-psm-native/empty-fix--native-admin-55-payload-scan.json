@@ -1,0 +1,91 @@
+{
+  "status": "PASS_NATIVE_EXTENDED_CANARY_SCAN",
+  "case_number": 55,
+  "origin": "brain-origin real HTTPS and worker-key in-memory scan",
+  "source_revision": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "external_oidc_retested": false,
+  "plaintext_or_credentials_exported": false,
+  "lookups": [
+    {
+      "kind": "case_number",
+      "own_result_count": 1,
+      "canary_matches": 0
+    },
+    {
+      "kind": "diagnostic_id",
+      "own_result_count": 1,
+      "canary_matches": 0
+    }
+  ],
+  "operator_summary": {
+    "diagnostic_profile": "extended",
+    "app_version": "1.2.0+4053",
+    "build_number": "pokrov-local-client",
+    "platform": "windows",
+    "architecture": "x64",
+    "last_phase": "result",
+    "last_error_code": null,
+    "proof_outcome": "failed",
+    "attempt_link_source": null
+  },
+  "payload_scan": {
+    "profile": "extended",
+    "plaintext_bytes": 5999,
+    "plaintext_sha256": "7b87628f0a4dbd4a9e8ad211a30dcf28b224ae82562a5136dad956ce4dc76f56",
+    "file_count": 5,
+    "files": [
+      {
+        "path": "build/identity.json",
+        "bytes": 101,
+        "sha256": "8a62f10f8c1b5d24c7db4a9cbe8c333abaf6b33be621f390e490a4c4e0a11fce",
+        "canary_matches": 0
+      },
+      {
+        "path": "events/recent.jsonl",
+        "bytes": 3032,
+        "sha256": "31eba1ff7b65746986cf4b85f3f62b65661bc1af70db31718d8f402f78e756d5",
+        "canary_matches": 0
+      },
+      {
+        "path": "network/summary.json",
+        "bytes": 158,
+        "sha256": "0baaf17b4ebe30c4055c113b23c2bf32ab94ea569113efaac2ab0d5351de7da3",
+        "canary_matches": 0
+      },
+      {
+        "path": "redaction/report.json",
+        "bytes": 137,
+        "sha256": "c08a412c38024d7b63cb9df3f6faa1e84876b7630cf76fa664f1232717eb43ef",
+        "canary_matches": 0
+      },
+      {
+        "path": "system/summary.json",
+        "bytes": 79,
+        "sha256": "37a6563c10d5ea7dedcfc9a67cff34b22d15a9f3e49330fba10914594fcc63e5",
+        "canary_matches": 0
+      }
+    ],
+    "canary_matches": 0,
+    "extended_included": true,
+    "crash_included": false
+  },
+  "access": {
+    "without_step_up": "DENIED",
+    "controlled_fixture_step_up": true,
+    "download": "PASS_EXACT_CIPHERTEXT",
+    "replay": "DENIED",
+    "cache_control": "no-store",
+    "audit_rows_before": 0,
+    "audit_rows_after": 2,
+    "audit_actions": [
+      "downloaded",
+      "grant_issued"
+    ]
+  },
+  "own_case_kept_for_native_acceptance": true,
+  "session_cleanup": {
+    "fixture_revoked": true,
+    "preexisting_unchanged": true
+  },
+  "utc": "2026-09-10T18:55:56.611755+00:00"
+}

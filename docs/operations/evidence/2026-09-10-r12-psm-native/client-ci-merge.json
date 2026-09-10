@@ -1,0 +1,204 @@
+{
+  "status": "PASS",
+  "utc": "2026-09-10T17:56:41.521511+00:00",
+  "source": "196fac4c9a04aeb30fd79fee0d83a9af4843391c",
+  "phase": "merge",
+  "runs": [
+    {
+      "id": 34508747880,
+      "name": "Release v2 Contract",
+      "head_sha": "196fac4c9a04aeb30fd79fee0d83a9af4843391c",
+      "status": "completed",
+      "conclusion": "success",
+      "event": "push",
+      "run_attempt": 1,
+      "html_url": "https://github.com/Kiwunaka/POKROV-app/actions/runs/34508747880",
+      "jobs": [
+        {
+          "id": 102977303950,
+          "name": "cross-repository-contract",
+          "status": "completed",
+          "conclusion": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-10T17:31:40Z",
+              "completed_at": "2026-09-10T17:31:43Z"
+            },
+            {
+              "name": "Reclaim unused runner disk",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-10T17:31:43Z",
+              "completed_at": "2026-09-10T17:31:58Z"
+            },
+            {
+              "name": "Validate exact replay refs",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 3,
+              "started_at": "2026-09-10T17:31:58Z",
+              "completed_at": "2026-09-10T17:31:58Z"
+            },
+            {
+              "name": "Checkout client candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-10T17:31:58Z",
+              "completed_at": "2026-09-10T17:33:38Z"
+            },
+            {
+              "name": "Checkout platform promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-10T17:33:38Z",
+              "completed_at": "2026-09-10T17:33:48Z"
+            },
+            {
+              "name": "Checkout Core promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-10T17:33:48Z",
+              "completed_at": "2026-09-10T17:33:50Z"
+            },
+            {
+              "name": "Materialize bound Core source authority",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-10T17:33:50Z",
+              "completed_at": "2026-09-10T17:33:56Z"
+            },
+            {
+              "name": "Setup Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-10T17:33:56Z",
+              "completed_at": "2026-09-10T17:33:57Z"
+            },
+            {
+              "name": "Setup Java",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-10T17:33:57Z",
+              "completed_at": "2026-09-10T17:33:57Z"
+            },
+            {
+              "name": "Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-10T17:33:57Z",
+              "completed_at": "2026-09-10T17:34:05Z"
+            },
+            {
+              "name": "Setup Flutter",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-10T17:34:05Z",
+              "completed_at": "2026-09-10T17:34:35Z"
+            },
+            {
+              "name": "Validate cross-repository release-handoff v2 contract",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-09-10T17:34:35Z",
+              "completed_at": "2026-09-10T17:34:55Z"
+            },
+            {
+              "name": "Run client unit and Android flavor tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-10T17:34:55Z",
+              "completed_at": "2026-09-10T17:41:28Z"
+            },
+            {
+              "name": "Validate conditional Linux daemon foundation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-09-10T17:41:28Z",
+              "completed_at": "2026-09-10T17:41:40Z"
+            },
+            {
+              "name": "Post Setup Flutter",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22,
+              "started_at": "2026-09-10T17:41:40Z",
+              "completed_at": "2026-09-10T17:41:42Z"
+            },
+            {
+              "name": "Post Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-09-10T17:41:42Z",
+              "completed_at": "2026-09-10T17:41:42Z"
+            },
+            {
+              "name": "Post Setup Java",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-09-10T17:41:42Z",
+              "completed_at": "2026-09-10T17:41:42Z"
+            },
+            {
+              "name": "Post Setup Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-09-10T17:41:42Z",
+              "completed_at": "2026-09-10T17:41:42Z"
+            },
+            {
+              "name": "Post Checkout Core promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-09-10T17:41:42Z",
+              "completed_at": "2026-09-10T17:41:43Z"
+            },
+            {
+              "name": "Post Checkout platform promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-09-10T17:41:43Z",
+              "completed_at": "2026-09-10T17:41:43Z"
+            },
+            {
+              "name": "Post Checkout client candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28,
+              "started_at": "2026-09-10T17:41:43Z",
+              "completed_at": "2026-09-10T17:41:43Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29,
+              "started_at": "2026-09-10T17:41:43Z",
+              "completed_at": "2026-09-10T17:41:43Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

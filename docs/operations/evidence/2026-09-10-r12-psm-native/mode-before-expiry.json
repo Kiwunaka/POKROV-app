@@ -1,0 +1,11 @@
+﻿{
+    "utc":  "2026-09-10T17:49:24.4694021Z",
+    "label":  "before-expiry",
+    "session_present":  true,
+    "used_nonce_count":  3,
+    "consumed_bytes":  1955,
+    "consumed_bundle_count":  1,
+    "disabled":  false,
+    "outbox_encrypted_files":  0,
+    "raw_policy_exported":  false
+}
