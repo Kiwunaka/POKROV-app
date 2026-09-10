@@ -318,6 +318,10 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(
+          scaffoldBackgroundColor: Colors.transparent,
+          canvasColor: const Color(0xFFF5F7F6),
+        ),
         home: PokrovDiagnosticsScreen(
           initialReport: report,
           onRefresh: () async => report,
@@ -327,6 +331,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(
+      tester.widget<Scaffold>(
+        find.byKey(const ValueKey('diagnostics-screen')),
+      ).backgroundColor,
+      const Color(0xFFF5F7F6),
+    );
     await tester.drag(
       find.byKey(const ValueKey('diagnostics-scroll')),
       const Offset(0, -360),
