@@ -1,0 +1,37 @@
+{
+  "status": "PASS_BOUNDED_V03_FAULTS",
+  "utc": "2026-09-10T11:14:08.512830+00:00",
+  "source": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+  "checks": {
+    "isolated_volume_32_mib": true,
+    "actual_windows_disk_full": true,
+    "system_volume_not_full": true,
+    "same_installed_304_before_after": true,
+    "ui_visible_while_volume_full": true,
+    "operational_log_could_not_grow": true,
+    "connected_runtime_verified": true,
+    "ten_https_markers": true,
+    "positive_tun_counters": true,
+    "original_journals_preserved_during_traffic": true,
+    "exact_routes_dns_recovered": true,
+    "disconnected_without_tun": true,
+    "outside_https_recovered": true,
+    "original_two_journals_restored": true,
+    "fixture_volume_detached": true,
+    "vm_baseline_restored": true,
+    "defender_unchanged": true,
+    "corrupt_and_schema_harness": true,
+    "queue_storm_harness": true,
+    "clock_harness": true,
+    "http_timeout_harness": true,
+    "exact_source_packages": true
+  },
+  "limits": [
+    "Actual disk exhaustion is limited to the isolated diagnostic volume; the system/account volume remains writable.",
+    "Clock changes are injected into the Dart diagnostic clock; the OS clock is not changed.",
+    "Queue, corrupt/schema and HTTP timeout runs are current-source harnesses, not installed Android/Win10 or real user/provider traffic.",
+    "The upload case proves retention of one encrypted envelope; total accumulated support-outbox capacity is not proven.",
+    "TUN byte counters include ambient traffic; exact per-request attribution and geolocation are not claimed.",
+    "No durable fault-period local timeline can be recovered from the full volume; memory behavior has separate source evidence."
+  ]
+}

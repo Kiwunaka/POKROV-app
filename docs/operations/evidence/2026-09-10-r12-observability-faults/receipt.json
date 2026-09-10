@@ -1,0 +1,273 @@
+{
+  "status": "PASS_BOUNDED_V03_FAULTS",
+  "utc": "2026-09-10T11:14:08.643445+00:00",
+  "source": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+  "files": [
+    {
+      "file": "volume-created.json",
+      "raw_sha256": "515b210aabd5537b6a6244aa3da6208b602bd9f639050612e700919ab5315bbc",
+      "retained_sha256": "c4956c878b934e8622ab9f347e001aac3480b080ad9f021052ce735595895e57",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "disk-full.json",
+      "raw_sha256": "21aca64dc6ebeb7bd8e1d23c4ce8d5f60af6ff287c135fd5bb0e59ffd6a20cb9",
+      "retained_sha256": "460101c99a67a7144d3a274a9b435a462bf7633d6c66349454551b91e1a9ff64",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "installed-before.json",
+      "raw_sha256": "70a6111f8aa9a0c915619b0efcf9e60f47592029c93f4284b20b8a7e19ce926b",
+      "retained_sha256": "6a494bc401e4beae7942c5a17e53df81394b08723589167b65b6ae6aed44cfd3",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "installed-final.json",
+      "raw_sha256": "44b05737ffc26afaba72b807b2f2fed17be154f96fd2cac6772bb5f78a3e9bed",
+      "retained_sha256": "ff83404f969b5285220ee43be800e71b8935fd87695ac36cbb3b69b1d483be00",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "diskfull-ui.json",
+      "raw_sha256": "dd125ee587fdcdfaf804c3b36c503b638a70a0d844e4e7869e3270e99bb8da14",
+      "retained_sha256": "8e3cf36e5b8da94ad738d02ea4300d68c8fe67c012630b8341a8130167599324",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-before.json",
+      "raw_sha256": "d0ce98849a941d5a66f9e4278fd52d05fc241a221e61ff2c55b1f4d943d5e746",
+      "retained_sha256": "cd14b9a671ad38fe3abd9bbc458f225a8a6f8f20881f306f4a0eebd7d3f525dc",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-prepared.json",
+      "raw_sha256": "83a6a12e3e16dffccc43199b0a4f1483b13c0d83b9ee8873f5f6b0eec1e7e936",
+      "retained_sha256": "ba546a9cc28e265cb0f5ccff141242276491031a39c38fcc186897c98bf257b4",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-full-before-ui.json",
+      "raw_sha256": "f22d96cb081400ebe0bd4b95fa75e67d6f7ddd3d67721a3d001e250caaa1c525",
+      "retained_sha256": "bab1f71ea1c5defda1ddb344d1c645d3d6aab21e8d10a27b8e9c47bfb342f124",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-during-tunnel.json",
+      "raw_sha256": "ebf9d4b10936c6c251aa44d11452f40d17dca69e98de726f7773ba02ce1b3789",
+      "retained_sha256": "7d761aa4b4ecdd876158e9ebfe0b0532d39cd5697f5de3b437d96519235e9c56",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "storage-restored.json",
+      "raw_sha256": "9c8b119f3a03b1fbcbf2e36764e968d5ff89a467bb8df77250a58e9d8582ebe3",
+      "retained_sha256": "e236e5683f13f0b52b11462f2ebe2201df6bc038c7284c0186371895d639095c",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "network-before-valid.json",
+      "raw_sha256": "55b883a11cb526b33748b594c8186775d8021a29cd93f026bf05180afe5b77ee",
+      "retained_sha256": "a5c64ec396959b48b2a52c2f6eecb85d96ced78535ebe58b8ec5d94a68e0b714",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "network-first-connect.json",
+      "raw_sha256": "64d9c4ccb65547de08911852974b3f68c9412b77519838388211ea5a3a1847f7",
+      "retained_sha256": "a7a9e4951f105977927b9bd85ae435cfcc84ede6866abf1677778356aad8dccc",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "network-disconnected.json",
+      "raw_sha256": "5e02a27284adff43ccff4bb81ae56943469639435ca741e3c28ee91f49590f30",
+      "retained_sha256": "eccafb50f84bbbd313a14a3ecc1065d1b48f607c073e2e0415fb869a09ad574b",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "tunnel-traffic-full.json",
+      "raw_sha256": "0c07e14ee8418b9a6358c338d363139cd15fb9a48f680c1abae83f22ec9c72b9",
+      "retained_sha256": "b5df801be94d8d6b4e5b0f694ea0dda32e757f6be5dcbafdc18bb99749dad8a4",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "volume-detached.json",
+      "raw_sha256": "3ae4cbfdb11fc2ee93b816507c7cc4625af86f0d228ff87432451316a5860567",
+      "retained_sha256": "969cea9031801422d609b51b0c94872a425b97c33b491eb95eeb50a8cdfa3bda",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "vm-restoration.json",
+      "raw_sha256": "1bdc8a9f5344cbe184c0dc8f8dc7a35c8eae14efdf69459673a8445d83c140ae",
+      "retained_sha256": "df113c756e2ad097b437b098c7d2fe16119306d675163b95cd138153d48ad316",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "defender-final.json",
+      "raw_sha256": "3c6b287bbe91ac3672b3d557f1ce232ac84929d782c3b912317d235674046286",
+      "retained_sha256": "6eceb652ff0ff464266e2c52d9748cf588a072c3805a9ffeafba4db86ab90f5f",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "corrupt-schema.json",
+      "raw_sha256": "ab6ac41bd361429e420433fff7190a02dd4a92144a7c8d3203bfd99243367b6d",
+      "retained_sha256": "ab6ac41bd361429e420433fff7190a02dd4a92144a7c8d3203bfd99243367b6d",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "queue-storm.json",
+      "raw_sha256": "96dabc231ab47c9f9534ba9dae8195a2825dbf6c994a0d93c0f01850a8696a4b",
+      "retained_sha256": "96dabc231ab47c9f9534ba9dae8195a2825dbf6c994a0d93c0f01850a8696a4b",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "clock-jumps.json",
+      "raw_sha256": "1c17fe33fe0af95b45d2ee5301cc0526bd261416ceed53e0c1a1f4c7045da04d",
+      "retained_sha256": "1c17fe33fe0af95b45d2ee5301cc0526bd261416ceed53e0c1a1f4c7045da04d",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "http-upload-timeout.json",
+      "raw_sha256": "11878df6acdb3a584fc09b6c3fc33b32bde02b2dbf64f02f1ca91ca3b5e1ee21",
+      "retained_sha256": "11878df6acdb3a584fc09b6c3fc33b32bde02b2dbf64f02f1ca91ca3b5e1ee21",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "harness-binding.json",
+      "raw_sha256": "e776fb52706fbf8efca1156b532e38f985b3fee9c58f4c026e088c4ca906e9ab",
+      "retained_sha256": "f37847660da2e00b0c2143de2832ab7c3094aa91a22476fbb0f8a29cb5e3f361",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "validation.json",
+      "raw_sha256": "92f63f0cb26f977f0f013ff06d6b091c09f4743a1a40f6c749bef93d84dbae73",
+      "retained_sha256": "f607098587c78629f49fc2fa2bd4621294472c22f15ffb74f0aa096fee22b12c",
+      "normalization": "UTF-8 without BOM and LF; values unchanged"
+    },
+    {
+      "file": "create-volume.log",
+      "raw_sha256": "853cb213672605248d832dfab9e0e1287f250ff0de175c2f7bc563571a685b7b",
+      "retained_sha256": "853cb213672605248d832dfab9e0e1287f250ff0de175c2f7bc563571a685b7b",
+      "normalization": "none"
+    },
+    {
+      "file": "create-volume.ps1",
+      "raw_sha256": "fb87fd5da4575eaf0ca92a23b2a5e7a6e9a54987453902162697d226b3dfba53",
+      "retained_sha256": "fb87fd5da4575eaf0ca92a23b2a5e7a6e9a54987453902162697d226b3dfba53",
+      "normalization": "none"
+    },
+    {
+      "file": "storage-volume.ps1",
+      "raw_sha256": "f16287d770661ae97d4f7b934134182cfc82d8b842b64034f3dedf9ad4832c65",
+      "retained_sha256": "f16287d770661ae97d4f7b934134182cfc82d8b842b64034f3dedf9ad4832c65",
+      "normalization": "none"
+    },
+    {
+      "file": "fill-volume.ps1",
+      "raw_sha256": "fbfb9441cf862cc100d6764504dc2fed5d08bfaef6904ce0c66c2878b740c6ef",
+      "retained_sha256": "fbfb9441cf862cc100d6764504dc2fed5d08bfaef6904ce0c66c2878b740c6ef",
+      "normalization": "none"
+    },
+    {
+      "file": "detach-volume.ps1",
+      "raw_sha256": "8ae99f56e3c4019eda9ac415b208dfecd4af94a45bbc8d72e597a41506f34d21",
+      "retained_sha256": "8ae99f56e3c4019eda9ac415b208dfecd4af94a45bbc8d72e597a41506f34d21",
+      "normalization": "none"
+    },
+    {
+      "file": "source-faults-first.log",
+      "raw_sha256": "1cc411dfb70a79dddc66521b3a2258dc0c7cb5b3cce6b93746e4d5dc2732bbb7",
+      "retained_sha256": "1cc411dfb70a79dddc66521b3a2258dc0c7cb5b3cce6b93746e4d5dc2732bbb7",
+      "normalization": "none"
+    },
+    {
+      "file": "faults_test.dart",
+      "raw_sha256": "3838d531e223bc22eabe875a4e867ed5739d13c2a5262650651e626138f9da36",
+      "retained_sha256": "3838d531e223bc22eabe875a4e867ed5739d13c2a5262650651e626138f9da36",
+      "normalization": "none"
+    },
+    {
+      "file": "validate-results.py",
+      "raw_sha256": "2952d0e87eda00d84ae9d6f4745bf6eb1f9111c838a3e478d3e24b1092f8dd0c",
+      "retained_sha256": "2952d0e87eda00d84ae9d6f4745bf6eb1f9111c838a3e478d3e24b1092f8dd0c",
+      "normalization": "none"
+    },
+    {
+      "file": "diskfull-ui.png",
+      "raw_sha256": "16dcf3d492bbfcab3b79fda7344ade7838859032b7768a1d2ca5a23b45f0fa33",
+      "retained_sha256": "16dcf3d492bbfcab3b79fda7344ade7838859032b7768a1d2ca5a23b45f0fa33",
+      "normalization": "none"
+    },
+    {
+      "file": "diskfull-connected.png",
+      "raw_sha256": "f8e2cc5c4a0a4557af34904eba850715ec31b5a7c3e00005b933ece20d695b12",
+      "retained_sha256": "f8e2cc5c4a0a4557af34904eba850715ec31b5a7c3e00005b933ece20d695b12",
+      "normalization": "none"
+    },
+    {
+      "file": "client-seed-final.log",
+      "raw_sha256": "e901e996734a9fa5d779491c291067fb74ed7ccdbf4d14500d1ef0cab1f1c99e",
+      "retained_sha256": "e901e996734a9fa5d779491c291067fb74ed7ccdbf4d14500d1ef0cab1f1c99e",
+      "normalization": "none"
+    },
+    {
+      "file": "client-docs-final.log",
+      "raw_sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874",
+      "retained_sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874",
+      "normalization": "none"
+    },
+    {
+      "file": "platform-docs.log",
+      "raw_sha256": "3ad662f775402842298035c10f902cca893213e4b20fee94459e60f5dea8e635",
+      "retained_sha256": "3ad662f775402842298035c10f902cca893213e4b20fee94459e60f5dea8e635",
+      "normalization": "none"
+    },
+    {
+      "file": "platform-context.log",
+      "raw_sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+      "retained_sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+      "normalization": "none"
+    },
+    {
+      "file": "platform-package.log",
+      "raw_sha256": "5d069893bfb14314b585279a221c633f7baf731e2eb56aae0bee68c1fe9346da",
+      "retained_sha256": "5d069893bfb14314b585279a221c633f7baf731e2eb56aae0bee68c1fe9346da",
+      "normalization": "none"
+    }
+  ],
+  "limits": [
+    "Actual disk exhaustion is limited to the isolated diagnostic volume; the system/account volume remains writable.",
+    "Clock changes are injected into the Dart diagnostic clock; the OS clock is not changed.",
+    "Queue, corrupt/schema and HTTP timeout runs are current-source harnesses, not installed Android/Win10 or real user/provider traffic.",
+    "The upload case proves retention of one encrypted envelope; total accumulated support-outbox capacity is not proven.",
+    "TUN byte counters include ambient traffic; exact per-request attribution and geolocation are not claimed.",
+    "No durable fault-period local timeline can be recovered from the full volume; memory behavior has separate source evidence."
+  ],
+  "reused_proof": "../2026-09-10-r12-observability-startup/receipt.json",
+  "new_product_source_changes": false,
+  "new_build_or_release": false,
+  "documentation_checks": [
+    {
+      "log": "client-seed-final.log",
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "result": "Seed scaffold OK"
+    },
+    {
+      "log": "client-docs-final.log",
+      "command": "pwsh -NoProfile -File test/docs-contract.ps1",
+      "result": "Client docs contract OK"
+    },
+    {
+      "log": "platform-docs.log",
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "result": "33 passed"
+    },
+    {
+      "log": "platform-context.log",
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "result": "PASS platform-context"
+    },
+    {
+      "log": "platform-package.log",
+      "command": "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+      "result": "706 local file links"
+    }
+  ]
+}

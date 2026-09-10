@@ -3,7 +3,14 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
-R12 diagnostic storage failure (2026-09-10): [installed fault rehearsal](evidence/2026-09-10-r12-observability-startup/README.md)
+R12 diagnostic fault acceptance (2026-09-10): [actual disk-full and source faults](evidence/2026-09-10-r12-observability-faults/README.md)
+uses unchanged installed `6816aab`: isolated NTFS ERROR_DISK_FULL 112/free 0,
+visible UI, TUN/DNS/egress, ten HTTPS markers and exact network recovery PASS.
+Original journals restored, VHD detached, VM off/NIC none. Four current-source
+queue/corrupt/schema/clock/HTTP-timeout checks PASS; these are not Android/Win10
+device proof. V03 active/I4; aggregate support-outbox cap and V01 remain open.
+
+Historical R12 diagnostic storage failure (2026-09-10): [installed fault rehearsal](evidence/2026-09-10-r12-observability-startup/README.md)
 source `6816aab` / Core `c7a11f7` starts and connects with an unavailable
 diagnostic path where the previous package showed no window. 304 hashes,
 ten HTTPS markers, TUN/DNS/egress and exact recovery PASS_BOUNDED. Original

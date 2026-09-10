@@ -1,0 +1,23 @@
+{
+  "utc": "2026-09-10T11:06:26.935373Z",
+  "source": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+  "scope": "Current-source local Dart harness; not physical device acceptance",
+  "status": "PASS",
+  "storm_events": 20000,
+  "storm_elapsed_ms": 1659,
+  "queue_depth": 4096,
+  "queue_bytes": 3292083,
+  "dropped": 15904,
+  "dropped_by_severity": {
+    "trace": 0,
+    "debug": 0,
+    "info": 15904,
+    "warn": 0,
+    "error": 0,
+    "fatal": 0
+  },
+  "callback_elapsed_us": 529,
+  "callback_before_transport_release": true,
+  "rejected_health_batches": 1,
+  "queue_drained_after_release": true
+}

@@ -1,0 +1,9 @@
+{
+    "status":  "PASS",
+    "utc":  "2026-09-10T10:55:39.8244743Z",
+    "mode":  "verify",
+    "preserved_files":  2,
+    "original_diagnostic_hashes_match":  true,
+    "raw_diagnostics_exported":  false,
+    "volume_free_bytes":  0
+}

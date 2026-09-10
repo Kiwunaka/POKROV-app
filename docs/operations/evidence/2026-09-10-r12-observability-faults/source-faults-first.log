@@ -1,0 +1,6 @@
+00:00 +0: loading E:/r12-observability-faults-20260910/faults_test.dart
+00:00 +0: corrupt journal and unsupported exit marker do not block bootstrap
+00:00 +1: event storm and full queue cannot wait on stalled release-health transport
+00:02 +2: backward and forward diagnostic clock jumps preserve ordered terminals
+00:02 +3: real HTTP chunk timeout preserves encrypted outbox and concurrent action
+00:02 +4: All tests passed!

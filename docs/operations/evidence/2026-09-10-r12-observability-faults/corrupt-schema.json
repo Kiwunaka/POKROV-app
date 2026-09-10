@@ -1,0 +1,11 @@
+{
+  "utc": "2026-09-10T11:06:24.665390Z",
+  "source": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+  "scope": "Current-source local Dart harness; not physical device acceptance",
+  "status": "PASS",
+  "connection_callback_completed": true,
+  "unsupported_marker_error": "APP-BOOT-008",
+  "invalid_complete_lines": 1,
+  "partial_tail_repaired": true,
+  "ui_ready_persisted": true
+}

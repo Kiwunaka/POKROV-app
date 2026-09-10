@@ -1,0 +1,23 @@
+{
+  "utc": "2026-09-10T11:06:27.472893Z",
+  "source": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+  "scope": "Current-source local Dart harness; not physical device acceptance",
+  "status": "PASS",
+  "http_chunk_timeouts": 3,
+  "requests": [
+    "GET /api/client/support/bundles/key-set",
+    "POST /api/client/support/bundles/upload-tickets",
+    "PUT /api/client/support/bundles/uploads/68c6aa53-55f0-4afe-9a80-b72f0cfdcc99/chunks",
+    "POST /api/client/support/bundles/upload-tickets",
+    "PUT /api/client/support/bundles/uploads/68c6aa53-55f0-4afe-9a80-b72f0cfdcc99/chunks",
+    "POST /api/client/support/bundles/upload-tickets",
+    "PUT /api/client/support/bundles/uploads/68c6aa53-55f0-4afe-9a80-b72f0cfdcc99/chunks"
+  ],
+  "delivery_state": "offlineEncrypted",
+  "failure_code": "upload_deferred",
+  "outbox_bytes": 2407,
+  "outbox_encrypted": true,
+  "callback_before_upload_finished": true,
+  "callback_elapsed_us": 209,
+  "session_store": "in-memory test plugin; no real credentials"
+}

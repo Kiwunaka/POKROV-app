@@ -1,0 +1,9 @@
+{
+    "utc":  "2026-09-10T11:00:56.4919651Z",
+    "protection":  {
+                       "behavior":  true,
+                       "antivirus":  true,
+                       "realtime":  true
+                   },
+    "defender_detection_or_action_count":  0
+}
