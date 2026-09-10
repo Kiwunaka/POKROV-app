@@ -35,6 +35,14 @@ and final channel gates remain open.
 
 ## Current Truth
 
+[Connectivity telemetry preparation](evidence/2026-09-10-r12-connectivity-report/README.md)
+binds source `64fe01d` / merged `bf3d1c4` to four audited APKs; ARM64
+`c0fca985…a7e52`, 101229131 bytes. Exact PR/main CI, 110 shell tests,
+81 runtime tests and both analyses PASS; one exact-DLL test is SKIPPED.
+These new bytes have not been installed: the phone is with the owner.
+The installed c691 package and its always-on proof below remain a separate candidate.
+No public client release changed.
+
 The [always-on correction](evidence/2026-09-10-r12-huawei-alwayson/README.md)
 binds signed source `c691c70` to installed ARM64 `03924eee…847c`. Actual Huawei
 system-switch start from a stopped app now creates a foreground service/TUN;

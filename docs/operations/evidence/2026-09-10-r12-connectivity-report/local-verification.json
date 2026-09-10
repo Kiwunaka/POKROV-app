@@ -1,0 +1,39 @@
+{
+  "status": "PASS_LOCAL_SCOPED",
+  "client": {
+    "integration": "458c1b4010dfeeb420de3249d57b3069fa616c57",
+    "source": "64fe01d6d4577f0989dc690e0d4e4e900b67534a",
+    "shell_tests": 110,
+    "runtime_tests": 81,
+    "runtime_skips": 1,
+    "skip_reason": "POKROV_REAL_CORE_ROOT absent for existing exact-DLL backtest",
+    "analysis": "PASS both packages",
+    "seed_docs": "PASS",
+    "physical_new_apk": "NOT_RUN_OWNER_USING_PHONE"
+  },
+  "platform": {
+    "integration": "eeb966a3a1567c04209bbb1a41aa953cef0f27ae",
+    "source": "f1238e31786df1b454d371e80e5ac07c5568c1bd",
+    "browser_tests": 88,
+    "docs_tests": 33,
+    "lint": "PASS",
+    "build": "PASS integration and clean source",
+    "api_focused": 2,
+    "attempt_outcome_regression": 1,
+    "broader_api": {
+      "tests": 229,
+      "subtests": 8,
+      "status": "PASS",
+      "duration_seconds": 1066.42
+    },
+    "runtime_ui": "PASS_LOCAL_SYNTHETIC 3 flows at 1440/390px",
+    "unrelated_source_difference": "Integration has legacy matrix expected read count 7; promotion has current 5 in tests/test_operator_center_manifest.py. This file was not part of reused focused results; exact hosted CI checks promotion."
+  },
+  "superseded_checks": [
+    {
+      "log": "app-focused.log",
+      "result": "107 pass / 2 old exact-list expectations failed after additive runtime_observed reports; updated expectations then 110 PASS"
+    }
+  ],
+  "old_public_release_bytes_unchanged": true
+}

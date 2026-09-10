@@ -1,0 +1,88 @@
+{
+  "status": "PASS_SOURCE_PACKAGE_AND_CI_PHYSICAL_PENDING",
+  "source": "64fe01d6d4577f0989dc690e0d4e4e900b67534a",
+  "merge": "bf3d1c4f400d58a2cd3411e0f4553670dd8dbb13",
+  "physical_new_apk": "NOT_RUN_OWNER_USING_PHONE",
+  "published_release_changed": false,
+  "text_retention": "LF normalized; original raw hashes retained separately",
+  "files": [
+    {
+      "file": "client-merge-binding.json",
+      "sha256": "445e55549e1b44ec5e6dd823daf2695df66ddc1089e80c40660ce0dcc6ee8782",
+      "source_sha256": "17deaddfb9b74409ab253d6fb3b23dca436fa405b18ee0781b74c804fec639c7"
+    },
+    {
+      "file": "client-ci-pr.json",
+      "sha256": "085f83d49383027be1443b91a1c70362f29486c2b83730f5b5b0d808680f07ad",
+      "source_sha256": "0b2832a0a04e5dc94334d144dd76895f59b7480effb97ae595fadd9694a9bf63"
+    },
+    {
+      "file": "client-ci-merge.json",
+      "sha256": "5c0d36370fa0d568c270e6c58a480eddd9b06317b8343dfe427dd314bb80df32",
+      "source_sha256": "4e72a793b2ac330a777b971602cf174aee16bf143ee1f5e5cbbe01c935845ee7"
+    },
+    {
+      "file": "local-verification.json",
+      "sha256": "81cf62074f533bf35c3d23e5970c61161686950d894899210cd3fbf933c40a0e",
+      "source_sha256": "1a9849de043cba9ed92296d10746d9b31e9fa7f6c440cdb31fd56305caa3c173"
+    },
+    {
+      "file": "abi-package-audit.json",
+      "sha256": "ab7b4742b0586f247b0868a9118ebe182afacba96df93e50e82755af167ed1f0",
+      "source_sha256": "593a76cc6a559b5aabc5ae111011332745cfe63a250c38286739c2f100485782"
+    },
+    {
+      "file": "client-docs-final.log",
+      "sha256": "99c60f1c510ab9cad24dd2e10e025c64ea2c439e59b1449a2da8439fc6e08a56",
+      "source_sha256": "e2fd49f5133a3c7cef3c5125c4c456b0a91ae1465a64229b9a23b528ffb5e0b2"
+    }
+  ],
+  "external_logs": [
+    {
+      "path": "E:\\r12-o03-20260910\\app-focused.log",
+      "sha256": "c1b23e838c9f968463d1f85b21ae0e9cd3b98b54dbefd1b85588e6d553a28b4c",
+      "bytes": 23387
+    },
+    {
+      "path": "E:\\r12-o03-20260910\\app-focused-v2.log",
+      "sha256": "a6deeee20af622164855f93d1a6f9fc953f7451e8ac58d64c91c1d7b8dded56f",
+      "bytes": 19048
+    },
+    {
+      "path": "E:\\r12-o03-20260910\\app-analyze.log",
+      "sha256": "736d1c9de427a6f74ec1c4ab531982f62e86cb9c6096ed29dfa702d6601f8629",
+      "bytes": 2304
+    },
+    {
+      "path": "E:\\r12-o03-20260910\\runtime-tests.log",
+      "sha256": "c3137073e21ba062d9f0904d559379d3b579a7a077cf9adc2d69fbd53f286c17",
+      "bytes": 7397
+    },
+    {
+      "path": "E:\\r12-o03-20260910\\runtime-analyze.log",
+      "sha256": "3ebe83a635896d03cca151f86ceb1bf45452aee56e8d4f0dbfc1ea16e8709e2e",
+      "bytes": 1200
+    },
+    {
+      "path": "E:\\r12-o03-20260910\\client-seed.log",
+      "sha256": "1bf03c42de7bc774828469b1098f5a5158f5ae8ec448da2ffc88876bedca55d4",
+      "bytes": 1818
+    },
+    {
+      "path": "E:\\r12-o03-20260910\\android-build-runner.log",
+      "sha256": "d542857c46343b61225edf71ef1d5c8b4cd36695dec0a5e076db29d142012e7a",
+      "bytes": 31
+    },
+    {
+      "path": "E:\\r12-o03-20260910\\android-audit.log",
+      "sha256": "c168f27e636e409064df49f1b50e3fdc24ce1a4805e08bdda606b10a2da654f7",
+      "bytes": 545
+    }
+  ],
+  "documentation_validation": {
+    "status": "PASS",
+    "local_links": 3,
+    "diff_check": "PASS",
+    "command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation; ./test/docs-contract.ps1"
+  }
+}
