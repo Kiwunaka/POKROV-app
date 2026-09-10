@@ -11,9 +11,12 @@
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
+#include <charconv>
+#include <regex>
 #include <string>
 
 #include "service_security.h"
+#include "service_profile_identity.h"
 
 namespace pokrov::windows_crash {
 namespace {
@@ -334,6 +337,104 @@ LONG WINAPI HandleUnhandledException(EXCEPTION_POINTERS* exception) {
 }
 
 }  // namespace
+
+bool ProjectWindowsCrashRecord(const std::string& record,
+                               WindowsCrashProcess expected_process,
+                               WindowsCrashDiagnostic* output) {
+  if (output == nullptr || record.size() >= kMaximumWindowsCrashRecordBytes) {
+    return false;
+  }
+  static const std::regex schema(
+      R"(POKROV_WINDOWS_CRASH_V1\|time=([0-9]{1,19})\|process=(ui|service)\|exception=(0x[0-9a-f]{8})\|frames=(none|(?:ui|service|flutter|core|app)\+0x[0-9a-f]{1,16}(?:,(?:ui|service|flutter|core|app)\+0x[0-9a-f]{1,16}){0,31})\n)");
+  std::smatch match;
+  if (!std::regex_match(record, match, schema) ||
+      match[2].str() != ProcessName(expected_process)) return false;
+  const auto time = match[1].str();
+  std::uint64_t ticks = 0;
+  const auto parsed = std::from_chars(time.data(), time.data() + time.size(), ticks);
+  constexpr std::uint64_t epoch = 116444736000000000ULL;
+  constexpr std::uint64_t last_tick = 2650467743999999999ULL;  // 9999-12-31
+  if (parsed.ec != std::errc() || ticks < epoch || ticks > last_tick) return false;
+  WindowsCrashDiagnostic result;
+  result.occurred_at_unix_ms = static_cast<std::int64_t>((ticks - epoch) / 10000);
+  result.error_code = expected_process == WindowsCrashProcess::kUi
+                          ? "CRASH-001" : "CRASH-003";
+  result.signature = pokrov::service::ProfileDigest(
+      match[2].str() + "|" + match[3].str() + "|" + match[4].str());
+  if (!pokrov::service::IsProfileDigest(result.signature)) return false;
+  *output = std::move(result);
+  return true;
+}
+
+bool ReadWindowsCrashDiagnostics(WindowsCrashProcess process,
+                                 const std::wstring& state_root,
+                                 std::vector<WindowsCrashDiagnostic>* output) {
+  if (state_root.empty() || output == nullptr) return false;
+  const auto root = AppendPath(state_root, kCrashDirectoryName);
+  const std::array<const wchar_t*, 2> names = process == WindowsCrashProcess::kUi
+      ? std::array<const wchar_t*, 2>{kUiCrashName, kUiPreviousCrashName}
+      : std::array<const wchar_t*, 2>{kServiceCrashName, kServicePreviousCrashName};
+  std::vector<WindowsCrashDiagnostic> records;
+  for (const auto* name : names) {
+    const auto path = AppendPath(root, name);
+    const HANDLE file = ::CreateFileW(path.c_str(), GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+    if (file == INVALID_HANDLE_VALUE) {
+      const auto error = ::GetLastError();
+      if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND) continue;
+      return false;
+    }
+    BY_HANDLE_FILE_INFORMATION info{};
+    std::array<char, kMaximumWindowsCrashRecordBytes> buffer{};
+    DWORD read = 0;
+    const bool valid_file = ::GetFileType(file) == FILE_TYPE_DISK &&
+        ::GetFileInformationByHandle(file, &info) != FALSE &&
+        (info.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY)) == 0 &&
+        info.nFileSizeHigh == 0 && info.nFileSizeLow > 0 &&
+        info.nFileSizeLow < buffer.size();
+    const bool read_ok = valid_file &&
+        ::ReadFile(file, buffer.data(), static_cast<DWORD>(buffer.size()), &read, nullptr) != FALSE;
+    ::CloseHandle(file);
+    WindowsCrashDiagnostic projected;
+    if (!read_ok || read != info.nFileSizeLow ||
+        !ProjectWindowsCrashRecord(std::string(buffer.data(), read), process, &projected)) return false;
+    records.push_back(std::move(projected));
+  }
+  *output = std::move(records);
+  return true;
+}
+
+std::string EncodeWindowsCrashDiagnostics(
+    const std::vector<WindowsCrashDiagnostic>& records) {
+  std::string body = "crashes_v1";
+  for (const auto& record : records) {
+    body += ";" + std::to_string(record.occurred_at_unix_ms) + "," +
+            record.error_code + "," + record.signature;
+  }
+  return body;
+}
+
+bool DecodeWindowsCrashDiagnostics(
+    const std::string& body, std::vector<WindowsCrashDiagnostic>* output) {
+  if (output == nullptr || body.size() > 256 || body.rfind("crashes_v1", 0) != 0) return false;
+  static const std::regex item(R"(;([0-9]{1,15}),(CRASH-00[13]),([0-9a-f]{64}))");
+  std::vector<WindowsCrashDiagnostic> records;
+  auto begin = body.cbegin() + 10;
+  std::smatch match;
+  while (begin != body.cend()) {
+    if (records.size() == 2 ||
+        !std::regex_search(begin, body.cend(), match, item, std::regex_constants::match_continuous)) return false;
+    const auto time = match[1].str();
+    std::int64_t milliseconds = 0;
+    if (std::from_chars(time.data(), time.data() + time.size(), milliseconds).ec != std::errc() ||
+        milliseconds > 253402300799999LL) return false;
+    records.push_back({milliseconds, match[2].str(), match[3].str()});
+    begin = match[0].second;
+  }
+  *output = std::move(records);
+  return true;
+}
 
 std::wstring ResolveWindowsUiStateRoot() {
   PWSTR local_app_data = nullptr;

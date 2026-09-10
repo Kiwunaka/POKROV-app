@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace pokrov::windows_crash {
 
@@ -29,6 +30,25 @@ struct WindowsCrashFrame {
   WindowsCrashModule module = WindowsCrashModule::kUnknown;
   std::uint64_t relative_address = 0;
 };
+
+struct WindowsCrashDiagnostic {
+  std::int64_t occurred_at_unix_ms = 0;
+  std::string error_code;
+  std::string signature;
+};
+
+// Read only the two fixed records for this process, validating before hashing.
+// Missing records are an empty success; unreadable/corrupt records fail closed.
+bool ReadWindowsCrashDiagnostics(WindowsCrashProcess process,
+                                 const std::wstring& state_root,
+                                 std::vector<WindowsCrashDiagnostic>* output);
+bool ProjectWindowsCrashRecord(const std::string& record,
+                               WindowsCrashProcess expected_process,
+                               WindowsCrashDiagnostic* output);
+std::string EncodeWindowsCrashDiagnostics(
+    const std::vector<WindowsCrashDiagnostic>& records);
+bool DecodeWindowsCrashDiagnostics(
+    const std::string& body, std::vector<WindowsCrashDiagnostic>* output);
 
 // Resolves the ordinary user's private state root. No directory is created by
 // this resolver.

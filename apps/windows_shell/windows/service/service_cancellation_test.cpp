@@ -3,6 +3,8 @@
 #include <atomic>
 #include <cstring>
 #include <iostream>
+#include <fstream>
+#include <filesystem>
 #include <thread>
 #include <vector>
 
@@ -179,6 +181,31 @@ int main() {
       const auto connect = first.Request(Command::kConnect, ProfileDigest(profile));
       Expect(first.Send(connect), "first connect was not sent");
       probe_state->WaitFor(1);
+      Expect(Has(control.Call(Command::kDiagnosticState), Status::kUnsupported, "diagnostic_capability_required"),
+             "crash diagnostics did not require negotiated capability");
+      const auto empty_crashes = InvokeServiceForTest(pipe, Command::kDiagnosticState, "");
+      Expect(empty_crashes.command_accepted && empty_crashes.crash_diagnostics.empty(),
+             "missing crash files did not return an empty accepted result during connect");
+      const auto crash_root = std::filesystem::path(root) / L"Crash";
+      std::filesystem::create_directory(crash_root);
+      const auto crash_path = crash_root / L"service-crash-profile.v1.log";
+      {
+        std::ofstream crash(crash_path, std::ios::binary);
+        crash << "POKROV_WINDOWS_CRASH_V1|time=133700000000000000|process=service|exception=0xc0000005|frames=service+0x1234\n";
+      }
+      const auto crashes = InvokeServiceForTest(pipe, Command::kDiagnosticState, "");
+      Expect(crashes.command_accepted && crashes.crash_diagnostics.size() == 1 &&
+                 crashes.crash_diagnostics.front().error_code == "CRASH-003",
+             "service crash file did not reach the authenticated client during connect");
+      {
+        std::ofstream corrupt(crash_path, std::ios::binary);
+        corrupt << "token=fixture-canary path=C:\\fixture\\private";
+      }
+      const auto corrupt_crashes = InvokeServiceForTest(pipe, Command::kDiagnosticState, "");
+      Expect(!corrupt_crashes.command_accepted && corrupt_crashes.crash_diagnostics.empty(),
+             "corrupt crash file was reported as a successful empty diagnostic state");
+      std::filesystem::remove(crash_path);
+      std::filesystem::remove(crash_root);
       Expect(Has(control.Call(Command::kStatus), Status::kOk, "phase=connecting"),
              "status blocked behind Connect or did not expose pending state");
       Expect(Has(control.Call(Command::kStageProfile, profile), Status::kNotReady, "runtime_busy"),

@@ -567,6 +567,22 @@ Support contract rules:
   the signed policy; an events/system policy must not collect an empty crash
   index or fail the preview because crashes were not authorized. Empty event
   and crash lists omit their optional JSONL files; they never emit blank records.
+  The app retains the previous and current run's validated crash marker facts
+  for this preview: UTC time, closed CRASH code and coarse signature only.
+  A crash index is included only when the active signed policy allows crashes;
+  ordinary summary and policies without that category omit it. These facts do
+  not change protection status and do not include exception text or run IDs.
+  On Windows, an allowed `crash_index` policy also reads the two fixed UI and
+  two fixed service crash records. A bounded host parser exports only UTC time,
+  CRASH-001/CRASH-003 and SHA-256 of the process/exception/module-relative frames;
+  capture time is excluded from the signature. Raw stack records stay local.
+  Service files retain their SYSTEM/admin ACL and are projected through the
+  authenticated service IPC. Collection uses a separate bounded worker from
+  VPN commands. Missing records are an empty success; corrupt/unreadable records
+  or an unavailable service leave extended delivery/export disabled with a
+  visible retry/ordinary-summary path. Native data is discarded if the policy
+  expires or changes during collection. Preview and explicit transfer consent
+  still apply; the installed-candidate proof remains a separate release gate.
 - while active, support mode has a persistent app-level indicator and manual
   disable action. It cannot execute commands, modify VPN/routes/DNS, read user
   files, capture packets/destinations, expose tokens/configuration, hide itself

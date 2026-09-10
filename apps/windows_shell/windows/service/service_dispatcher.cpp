@@ -21,6 +21,10 @@ RuntimeResult RuntimeDispatcher::Cancel(const std::string& body) {
 RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event,
                                          ULONGLONG deadline) {
   if (request.command == Command::kCancel) return Cancel(request.body);
+  if (request.command == Command::kDiagnosticState) {
+    if (!request.body.empty()) return {Status::kInvalid, "invalid_diagnostic_request"};
+    return runtime_->CrashDiagnostics();
+  }
   if (request.command == Command::kStatus) {
     std::lock_guard<std::mutex> state(state_lock_);
     return snapshot_;

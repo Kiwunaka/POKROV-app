@@ -183,6 +183,15 @@ final class PokrovClientObservability {
   String _lastExperienceFingerprint = '';
   bool _uiReadyRecorded = false;
   int _lastAndroidSelectedAppCount = -1;
+  DiagnosticCrashRecord? _previousCrash;
+  DiagnosticCrashRecord? _currentCrash;
+
+  /// Closed marker facts only; exception text, stacks and run IDs stay out of
+  /// the support preview. At most the previous and current run are retained.
+  List<DiagnosticCrashRecord> get crashDiagnostics => [
+        if (_previousCrash case final crash?) crash,
+        if (_currentCrash case final crash?) crash,
+      ];
 
   /// Returns only the already-sanitized, bounded connection timeline used by
   /// the local diagnostics screen. The dispatcher ring remains the authority;
@@ -654,11 +663,13 @@ final class PokrovClientObservability {
     if (attempt != null && !attempt.isTerminal) {
       attempt.finish(OperationalTerminalKind.crash);
     }
-    return markerStore.markCrash(
-      errorCode: errorCode,
-      crashSignature: signature,
-      breadcrumbs: dispatcher.breadcrumbs.snapshot(),
-    );
+    return markerStore
+        .markCrash(
+          errorCode: errorCode,
+          crashSignature: signature,
+          breadcrumbs: dispatcher.breadcrumbs.snapshot(),
+        )
+        .then((_) => _rememberCurrentCrash(errorCode, signature));
   }
 
   void markCrashSynchronously({String errorCode = 'CRASH-001'}) {
@@ -675,6 +686,15 @@ final class PokrovClientObservability {
       errorCode: errorCode,
       crashSignature: signature,
       breadcrumbs: dispatcher.breadcrumbs.snapshot(),
+    );
+    _rememberCurrentCrash(errorCode, signature);
+  }
+
+  void _rememberCurrentCrash(String errorCode, String signature) {
+    _currentCrash = DiagnosticCrashRecord(
+      occurredAt: DateTime.now().toUtc(),
+      errorCode: errorCode,
+      signature: signature,
     );
   }
 
@@ -707,6 +727,13 @@ final class PokrovClientObservability {
   }
 
   void _recordPreviousExit(PreviousExitReport previous) {
+    if (previous.kind == PreviousExitKind.crash) {
+      _previousCrash = DiagnosticCrashRecord(
+        occurredAt: previous.occurredAtUtc!,
+        errorCode: previous.errorCode!,
+        signature: previous.crashSignature!,
+      );
+    }
     if (previous.kind == PreviousExitKind.none ||
         previous.kind == PreviousExitKind.clean) {
       return;

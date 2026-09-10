@@ -3533,6 +3533,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   PokrovDiagnosticsReport _buildDiagnosticsReport({
     RuntimeSnapshot? snapshot,
+    List<DiagnosticCrashRecord>? nativeCrashes,
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
         const ClientReleaseHealthBaseline.unavailable(),
@@ -3554,6 +3555,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           transferService?.supportBundleEncryptionConfigured ?? false,
       timelineBreadcrumbs:
           widget.observability?.connectionTimelineBreadcrumbs ?? const [],
+      crashes: [
+        ...?widget.observability?.crashDiagnostics,
+        ...?nativeCrashes,
+      ],
+      crashDiagnosticsReady: nativeCrashes != null ||
+          !pokrovWindowsCrashCollectionAllowed(
+            hostPlatform: widget.appContext.hostPlatform,
+            policy: _supportModeController.activePolicy,
+            now: DateTime.now().toUtc(),
+          ),
       checkedAtUtc: checkedAtUtc,
       releaseHealthBaseline: releaseHealthBaseline,
       supportModePolicy: _supportModeController.activePolicy,
@@ -3605,8 +3616,24 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<PokrovDiagnosticsReport> _refreshDiagnosticsReport() async {
     final data = await _collectProtectionCenterData();
+    final policy = _supportModeController.activePolicy;
+    List<DiagnosticCrashRecord>? nativeCrashes;
+    try {
+      nativeCrashes = await collectPokrovWindowsCrashDiagnostics(
+        hostPlatform: widget.appContext.hostPlatform,
+        policy: policy,
+        now: DateTime.now().toUtc(),
+      );
+    } on Object {
+      // Preserve a usable safe summary; incomplete crash collection cannot be
+      // delivered as a complete extended report.
+    }
+    if (!identical(policy, _supportModeController.activePolicy)) {
+      nativeCrashes = null;
+    }
     return _buildDiagnosticsReport(
       snapshot: data.snapshot,
+      nativeCrashes: nativeCrashes,
       checkedAtUtc: data.checkedAt?.toUtc(),
     );
   }

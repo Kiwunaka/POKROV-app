@@ -1,4 +1,5 @@
 #include "service_runtime.h"
+#include "windows_crash_profile.h"
 #include "service_profile_identity.h"
 
 #include <windows.h>
@@ -21,6 +22,15 @@
 #include <vector>
 
 namespace pokrov::service {
+
+RuntimeResult RuntimeHost::CrashDiagnostics() const {
+  std::vector<windows_crash::WindowsCrashDiagnostic> records;
+  if (!windows_crash::ReadWindowsCrashDiagnostics(
+          windows_crash::WindowsCrashProcess::kService, runtime_root_, &records)) {
+    return {Status::kNotReady, "crash_diagnostics_unavailable"};
+  }
+  return {Status::kOk, windows_crash::EncodeWindowsCrashDiagnostics(records)};
+}
 namespace {
 
 constexpr char kCoreCapabilities[] =

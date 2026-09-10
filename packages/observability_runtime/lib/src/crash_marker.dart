@@ -217,7 +217,9 @@ final class PreviousExitMarkerStore {
         return _corruptReport();
       }
       if (kind == PreviousExitKind.crash &&
-          (errorCode == null || signature == null)) {
+          (errorCode == null ||
+              !(errorCode as String).startsWith('CRASH-') ||
+              signature == null)) {
         return _corruptReport();
       }
       if (kind != PreviousExitKind.crash &&
