@@ -81,7 +81,6 @@ final class OperationalAttemptTimeline {
   final OperationalIdFactory ids;
   final DateTime Function() clock;
   late final String traceId;
-  int _sequence = 0;
   _OpenOperationalPhase? _open;
   bool _started = false;
   bool _terminal = false;
@@ -273,7 +272,8 @@ final class OperationalAttemptTimeline {
     String? spanId,
     String? stageOverride,
   }) {
-    _sequence += 1;
+    // Other app events share this generation and may have advanced the fence.
+    final sequence = dispatcher.sequenceFence.lastSequence + 1;
     dispatcher.emit(
       OperationalEvent(
         eventId: ids.uuidV4(),
@@ -292,7 +292,7 @@ final class OperationalAttemptTimeline {
           runId: runId,
           attemptId: attemptId,
           generation: generation,
-          sequence: _sequence,
+          sequence: sequence,
         ),
         build: build,
         error: errorCode == null
