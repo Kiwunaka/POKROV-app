@@ -1,0 +1,304 @@
+{
+  "observed_at": "2026-09-10T09:11:46.684543+00:00",
+  "status": "PASS_BOUNDED_INSTALLED_BRIDGE_CONNECT_AND_RECOVERY",
+  "client_source": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "origin": "current-origin owned Windows 11 VM; Ethernet bridge",
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "login": {
+    "method": "Existing VirtualBox controlvm setcredentials API with protected DPAPI password file",
+    "observed_console_user": "pokrovtest",
+    "observed_console_state": "Active",
+    "observed_session_id": 1,
+    "observed_logged_in_users": 1,
+    "credential_exported": false,
+    "uac_or_security_settings_changed": false,
+    "scope": "Ordinary login only; not proof of automatic UAC elevation"
+  },
+  "installed_files_before_and_after": 304,
+  "requests_passed": 10,
+  "recovery": {
+    "routes_restored": true,
+    "dns_restored": true,
+    "tun_removed": true,
+    "runtime_stopped": true,
+    "outside_http_marker": true,
+    "all_installed_files_match": true,
+    "identity_preserved": true
+  },
+  "one_day_test_grant": {
+    "utc": "2026-09-10T09:01:50.794142+00:00",
+    "status": "PASS",
+    "target_install_sha256": "fe746f1300ba28298736b684b3b272af2f0c3d02cf4934def66ee98f581475d0",
+    "before": {
+      "is_active": false,
+      "expiry_at": "2026-09-10T07:16:43.171242",
+      "sub_type": "FREE",
+      "current_plan_code": "free_retired"
+    },
+    "after": {
+      "is_active": true,
+      "expiry_at": "2026-09-11T09:01:49.756991",
+      "sub_type": "PAID",
+      "current_plan_code": "admin_grant"
+    },
+    "delta_days": 1,
+    "action": "user.extend",
+    "action_intent_used": true,
+    "payment_or_refund": false,
+    "raw_identifiers_returned": false
+  },
+  "restoration": {
+    "status": "PASS",
+    "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+    "shutdown_method": "ACPI power button; no forced poweroff",
+    "restored_original_baseline": true,
+    "state": {
+      "VMState": "\"poweroff\"",
+      "nic1": "\"none\""
+    },
+    "initial_readback_error": "One showvminfo call failed during shutdown; subsequent same-VM readback confirmed poweroff before modification."
+  },
+  "known_harness_limits": [
+    "First screenshot failed before login; screenshot succeeded after normal logon.",
+    "A guest status command had an unquoted Program Files path; corrected subsequent commands.",
+    "Get-NetAdapterStatistics unavailable in guest; preserved null counters/error, then explicitly used NetworkInterface.GetIPv4Statistics.",
+    "Click helper initially reported scheduled task running (267009); actual UI/status afterward proves completed action.",
+    "One showvminfo call failed during ACPI shutdown; later authoritative same-VM readback confirmed poweroff.",
+    "Initial staged diff check treated CRLF metadata as trailing whitespace; scoped cr-at-eol attributes now preserve exact evidence bytes and retain ordinary whitespace checks. No capture modified."
+  ],
+  "limits": [
+    "Old installed c05b58b bytes; new 5a13ec7 package not installed or covered.",
+    "Ambient guest traffic present; NIC deltas are not per-request or selected-process attribution.",
+    "No new egress-location or full protocol/IPv6/Win10 proof.",
+    "NAT path failure root cause remains unconfirmed; no host VPN modification.",
+    "No install/UAC, V03 disk-full/privacy/hot-path, provider payment or final release acceptance in this slice."
+  ],
+  "files": [
+    {
+      "file": "account-readonly.json",
+      "raw_sha256": "192c190d7df141573075f085d6d2d1faa9dfc4ac5e668161e6971000aa2974d2",
+      "retained_sha256": "ed05ce192e597871687a659b8a918b534de014d8d6514ace46b040f135826c82",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "identity-before.json",
+      "raw_sha256": "5a7981715a3107c6e263b5136dfdfcad1f87510efe14536150706e6c7ab48ffb",
+      "retained_sha256": "fdeb413869b251b78117e9236b8004319e1a583b30fa3d4b51d42ae291106ef9",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "identity-after.json",
+      "raw_sha256": "0ea1ae1f47a9b32e9c86cf411df6d9f49e416bdd5ee0abd872d4f8f2d0aad2f1",
+      "retained_sha256": "07bdc06312f15826fec018e80315d3d9aeefd7f7c54e6527f75232a68a1a0894",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "network-before-accepted.json",
+      "raw_sha256": "02c42f40ba99da2d57b2ae968d267c461d7353448d2f30de2a5cc25903233619",
+      "retained_sha256": "dd3e016bd2c8dee7b4442ed0a3eb5462edf70aafd657dfd08393797398a35b68",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "network-failed-connect.json",
+      "raw_sha256": "9c2bd3b5848c84bb851d1dfd476549fa4ea5110143ec0ea1121f158aed9c5bcb",
+      "retained_sha256": "04bda1a9f116cc088448c770ef2d2f93b6cfd3d7be328d836b256095a94012a1",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "network-connected.json",
+      "raw_sha256": "f261362e4b457b5ca31a5621fba4d7e612f82c003a2978854419fd01e2c72b97",
+      "retained_sha256": "05a75596eba3f8c898cf9b3e00d26948dbc070fd6aee610f858c24aad62705ab",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "network-after.json",
+      "raw_sha256": "a1aa1349f67c4215df4d784dad5a565c4d3ef62dbf65de09587836b6dc1445d5",
+      "retained_sha256": "e410f5d7757d019ec2bb471d9f1cbfd81d5a1481663fb8cf05088b086fffae26",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "readback-before.log",
+      "raw_sha256": "14926361ad3eff53cdb0c5172caac21a0f3e831b0dd4aaa4e2aa48fc4a745b43",
+      "retained_sha256": "50b0955e013ae97c54f6ed9ee3c27b80e846488a01bb75935d3e020ce84f5a03",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "readback-after.json",
+      "raw_sha256": "39f1bf9cc7aadba29e33464a051c522e2c500a06098bde282a6de6c9d5fed423",
+      "retained_sha256": "3c0bba19f6d7ee9c1c4e8a65d4c47864815a075c759cdb9b43c820fff3f65a87",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "recovery.json",
+      "raw_sha256": "27cfc6a499af8e302181bf9b3db740e2283717fa93a68ad38170d438ea8c6604",
+      "retained_sha256": "11ee490b40622d872b6f79e73203493698ac1901693819c481a970a949ac95ce",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "tunnel-traffic.json",
+      "raw_sha256": "10a64eb1737b7e1213e557e52c871ebc72558ef2c00968a7dc0b10f00c04ef3e",
+      "retained_sha256": "4bd4f3e50cf51765b502e1dae338ec570ab478742d1fe555078a2e9fc85bb7d2",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "vm-restoration.json",
+      "raw_sha256": "e4f221dbf29e6442e0bf357c8b23dbc1850bae186230bfe410684c73952e9ee5",
+      "retained_sha256": "b0e11bc3d4d2cfa298782fb7e5ec443adedcf2a9b7acae262455dfcfcfe357dc",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "windows-one-day-plan.json",
+      "raw_sha256": "7084280cecd72badaa32772de902acfd687d5744d837e5ad8ed1cb2f60761762",
+      "retained_sha256": "0c983eada9442972a5a7cf60e46e3144791d3fd6a2af523f85de38eae6fffdf5",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "windows-one-day-applied.json",
+      "raw_sha256": "d375a75bf9517a5ed33f101d0762a0fa11868dc6a46475f30341f199d889aa15",
+      "retained_sha256": "9091ec1adec215d32fbe90853964e2652c17226b59527aaa6c084826ec9f5f58",
+      "normalization": "UTF-8 BOM removal and LF; JSON values unchanged"
+    },
+    {
+      "file": "after-login.png",
+      "raw_sha256": "b854739116e4e4de9e6f0f466da0f665484bb220278866f9caa120b26fa02c74",
+      "retained_sha256": "b854739116e4e4de9e6f0f466da0f665484bb220278866f9caa120b26fa02c74",
+      "normalization": "none"
+    },
+    {
+      "file": "ui-connected.png",
+      "raw_sha256": "c7de89420f33f4dfbc4fa697f57250f4f175d6c110ea351b51c8ce62e2850291",
+      "retained_sha256": "c7de89420f33f4dfbc4fa697f57250f4f175d6c110ea351b51c8ce62e2850291",
+      "normalization": "none"
+    },
+    {
+      "file": "ui-disconnected.png",
+      "raw_sha256": "40bfd62954483d53721e5ba8562ea68ca20e4d4db73edd93795fd2345db008de",
+      "retained_sha256": "40bfd62954483d53721e5ba8562ea68ca20e4d4db73edd93795fd2345db008de",
+      "normalization": "none"
+    },
+    {
+      "file": "initial-counter-failure.log",
+      "raw_sha256": "847158c803db8b5f02da3e3f3b43d2386a90c9a5c2c06e7a2f9e3e07867fc40a",
+      "retained_sha256": "847158c803db8b5f02da3e3f3b43d2386a90c9a5c2c06e7a2f9e3e07867fc40a",
+      "normalization": "none; original JSON followed by PowerShell counter error retained as log"
+    },
+    {
+      "file": "client-seed.log",
+      "raw_sha256": "bb7f8fbd235fb2658a7d11557af2984ba1c4323987cd74e036f6bad3b76b5f38",
+      "retained_sha256": "3166c3262af6dbf4448cb5f382f016d53ed9a5a84c9cb36f565eba0e0ff080df",
+      "normalization": "UTF-8 BOM removal and LF; stdout retained"
+    },
+    {
+      "file": "platform-docs.log",
+      "raw_sha256": "46771e8ab8d591ac5d9cddf6da8da599ce05eb84dd50465d0158dc5d444f9cbc",
+      "retained_sha256": "d568928a6595b251bbe07b3216871bc64fa35e4078e7ebe6e13ef2905b562335",
+      "normalization": "UTF-8 BOM removal and LF; stdout retained"
+    },
+    {
+      "file": "platform-context.log",
+      "raw_sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d",
+      "retained_sha256": "163018728356b7e89f40f13654de31358cdb731cd8c2b7c95d815d55eccb3a03",
+      "normalization": "UTF-8 BOM removal and LF; stdout retained"
+    },
+    {
+      "file": "platform-package.log",
+      "raw_sha256": "41fc2fccb5b8c32ad7d3edb22d8817a5996a59b90e3a08e557777a116a56e448",
+      "retained_sha256": "eafec1ccaa492ef51feda4e3a16faebc7cba1c71b5af91c17901879dda02ae06",
+      "normalization": "UTF-8 BOM removal and LF; stdout retained"
+    },
+    {
+      "file": "credential-cleanup.json",
+      "raw_sha256": "9b515ff3284e07f941f20e389c7105d84b868250edb44728e18e7c83d3ea8013",
+      "retained_sha256": "9b515ff3284e07f941f20e389c7105d84b868250edb44728e18e7c83d3ea8013",
+      "normalization": "none"
+    }
+  ],
+  "instruments": [
+    {
+      "path": "E:\\r12-windows-resume-20260910\\identity.ps1",
+      "sha256": "96a3e8208e3bccd074f7253c8510afc641279260c5b2abd35cc0e187c9d2c50c"
+    },
+    {
+      "path": "E:\\r12-windows-resume-20260910\\readback.ps1",
+      "sha256": "2029d14b2a16ce9cf7ea706adbd73c0ce023f0eaf7429eda2dee316f771cd317"
+    },
+    {
+      "path": "E:\\r12-windows-resume-20260910\\network.ps1",
+      "sha256": "f34772a63cfd8434bb7e5121a7a982fb7d3f0791e4a82dce2c52f90de473a609"
+    },
+    {
+      "path": "E:\\r12-windows-resume-20260910\\network-v2.ps1",
+      "sha256": "620c2b2b8b909ee18db3ee9bd3754eca921497e436fbbd088cf95291d0f40197"
+    },
+    {
+      "path": "E:\\r12-windows-resume-20260910\\tunnel-traffic.ps1",
+      "sha256": "79747f72cbc023891f5f6c5d0941f37828dce599eb2537140dba932fece1f8d7"
+    },
+    {
+      "path": "E:\\r12-windows-resume-20260910\\extend-owned-windows.py",
+      "sha256": "257bcfcd9fb2a28a5074d89cefe031f231f5006d28b9997bf0c3737887b74032"
+    },
+    {
+      "path": "E:\\r12-windows-resume-20260910\\account-readonly.py",
+      "sha256": "3b101c57ad51bd125a67d32f9c988177b95848145f24f8d88433e62523f90079"
+    },
+    {
+      "path": "E:\\r12-windows-resume-20260910\\launch-ui.txt",
+      "sha256": "68f50fe9c2b2d4afebc21495b00a0497aa710a360d756a424f6ca6d19f0b4171"
+    },
+    {
+      "path": "E:\\r12-windows-managed-20260908\\vm-logon-api.ps1",
+      "sha256": "c7bc6baeb294cb25abdd9a5a5264f366a458b18c41e791e69423e660aae7d7f9"
+    },
+    {
+      "path": "E:\\r12-windows-managed-20260908\\invoke.ps1",
+      "sha256": "ab49b30d105c90b38313c418e79f2f147cdb49ef667e93e5624860a3fcc4c273"
+    },
+    {
+      "path": "E:\\r12-windows-managed-20260908\\copy.ps1",
+      "sha256": "dfbd7848d153ebed86f5bfdcd54f3ab498db2a05342cc23ebe24a2d192bcab04"
+    },
+    {
+      "path": "E:\\r12-windows-managed-20260908\\run-interactive.ps1",
+      "sha256": "63b86fefc02468404ca332d6cf22aad51e67f2a6e50d4b6df46849258a0e0888"
+    },
+    {
+      "path": "E:\\r12-windows-managed-20260908\\click.ps1",
+      "sha256": "920fadf3e3b89427f9cd23e209e8e8175e8417cf8661d937166216222ec4c140"
+    }
+  ],
+  "source_changed": false,
+  "public_release_changed": false,
+  "host_network_changed": false,
+  "verification": [
+    {
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "exit_code": 0,
+      "result": "Seed scaffold OK",
+      "log": "client-seed.log",
+      "sha256": "3166c3262af6dbf4448cb5f382f016d53ed9a5a84c9cb36f565eba0e0ff080df"
+    },
+    {
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "exit_code": 0,
+      "result": "33 passed",
+      "log": "platform-docs.log",
+      "sha256": "d568928a6595b251bbe07b3216871bc64fa35e4078e7ebe6e13ef2905b562335"
+    },
+    {
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "exit_code": 0,
+      "result": "PASS platform-context",
+      "log": "platform-context.log",
+      "sha256": "163018728356b7e89f40f13654de31358cdb731cd8c2b7c95d815d55eccb3a03"
+    },
+    {
+      "command": "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+      "exit_code": 0,
+      "result": "692 local file links",
+      "log": "platform-package.log",
+      "sha256": "eafec1ccaa492ef51feda4e3a16faebc7cba1c71b5af91c17901879dda02ae06"
+    }
+  ]
+}

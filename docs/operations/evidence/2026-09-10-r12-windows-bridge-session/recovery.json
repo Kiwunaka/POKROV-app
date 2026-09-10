@@ -1,0 +1,9 @@
+{
+  "routes_restored": true,
+  "dns_restored": true,
+  "tun_removed": true,
+  "runtime_stopped": true,
+  "outside_http_marker": true,
+  "all_installed_files_match": true,
+  "identity_preserved": true
+}

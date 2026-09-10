@@ -3,7 +3,16 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
-R12 current transport (2026-09-09): [NAT/bridge controls](evidence/2026-09-09-r12-windows-nat-path/README.md)
+R12 bridge session (2026-09-10): [installed-service result](evidence/2026-09-10-r12-windows-bridge-session/README.md)
+for unchanged client `c05b58b` / Core `c7a11f7`: normal VirtualBox credential
+API login succeeds, 304 installed hashes before/after, TUN/DNS/egress and ten
+owned HTTPS markers pass. Disconnect restores exact routes/DNS and identity;
+VM gracefully off/NIC none. The expired isolated test identity received one
+day through audited `user.extend`, with no payment. No password export or
+UAC/security-policy change. Old manual-login blocker below is superseded;
+new `5a13ec7` package, full runtime/privacy/Win10 gates remain open.
+
+Historical R12 transport (2026-09-09): [NAT/bridge controls](evidence/2026-09-09-r12-windows-nat-path/README.md)
 bind client `c05b58b` / Core `c7a11f7` and 304 unchanged installed files.
 The same cached Frankfurt profile fails REALITY through host NAT and succeeds
 through the VM's Ethernet bridge, repeated in the same Windows boot. These
