@@ -694,6 +694,15 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     unawaited(_refresh(includeReleaseHealth: false));
   }
 
+  @override
+  void didUpdateWidget(covariant PokrovDiagnosticsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _supportMode = widget.initialSupportMode;
+    if (oldWidget.initialSupportMode.active && !_supportMode.active) {
+      unawaited(_refresh(includeReleaseHealth: false));
+    }
+  }
+
   Future<void> _activateSupportMode() async {
     final action = widget.onActivateSupportMode;
     if (action == null || _supportModeBusy) {
