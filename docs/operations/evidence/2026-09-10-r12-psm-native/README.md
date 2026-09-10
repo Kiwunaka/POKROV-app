@@ -91,3 +91,10 @@ checks/analyze/seed/docs и PR/merge CI PASS. Полные локальные л
 
 [Проверенные captures](receipt.json). Platform provisioning/enable/rollback
 описан в платформенном EXECUTION-PSM-NATIVE-2026-09-10.md и отдельном receipt.
+
+Финальные client `scripts/validate-seed.ps1` с exact Core/platform roots и
+`test/docs-contract.ps1` — PASS; platform 33 docs tests, context audit,
+package validator (83 R12 IDs / 729 links), оба `git diff --check` — PASS.
+Client `artifacts/releases` delta пуст. Новых product tests/build после
+документации не запускалось. Логи связаны hashes в receipt; PowerShell host
+stream seed/docs показал успех в command completion, но не попал в redirection.
