@@ -24,7 +24,7 @@ namespace {
 
 constexpr std::uint64_t kServiceCapabilities =
     kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
-    kCapabilityProfileIdentity | kCapabilityCancellation;
+    kCapabilityProfileIdentity | kCapabilityCancellation | kCapabilitySanitizedDiagnostic;
 constexpr std::uint64_t kMaximumDeadlineLeadMs = 5 * 60 * 1000;
 // Release a stalled session before the normal client's five-second pipe
 // acquisition budget expires. Header and body share one transfer deadline.
@@ -269,6 +269,10 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
                  (negotiated_capabilities & kCapabilityCancellation) == 0) {
         status = Status::kUnsupported;
         body = "cancellation_capability_required";
+      } else if (request->command == Command::kDiagnosticState &&
+                 (negotiated_capabilities & kCapabilitySanitizedDiagnostic) == 0) {
+        status = Status::kUnsupported;
+        body = "diagnostic_capability_required";
       } else {
         auto result = dispatcher->Execute(*request, stop_event,
             monotonic_now + request->deadline_unix_ms - now);

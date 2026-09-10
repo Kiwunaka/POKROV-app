@@ -12,6 +12,34 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 void main() {
+  test('validated crash marker reaches diagnostics after restart', () async {
+    final root = await Directory.systemTemp.createTemp('pokrov-crash-preview-');
+    addTearDown(() => root.delete(recursive: true));
+    Future<PokrovClientObservability> start() =>
+        PokrovClientObservability.start(
+          hostPlatform: HostPlatform.windows,
+          directoryResolver: () async => root,
+          buildIdentity: _build(),
+        );
+    final first = await start();
+    expect(first.crashDiagnostics, isEmpty);
+    first.markCrashSynchronously();
+    final crash = first.crashDiagnostics.single;
+    expect(crash.errorCode, 'CRASH-001');
+    await first.flush();
+    final restarted = await start();
+    expect(restarted.crashDiagnostics.single.signature, crash.signature);
+    expect(restarted.crashDiagnostics.single.toJson().keys,
+        unorderedEquals(['occurred_at', 'error_code', 'signature']));
+    await restarted.markCrash(errorCode: 'CRASH-003');
+    expect(restarted.crashDiagnostics.map((record) => record.errorCode),
+        ['CRASH-001', 'CRASH-003']);
+    await restarted.markCrash(errorCode: 'CRASH-002');
+    expect(restarted.crashDiagnostics.map((record) => record.errorCode),
+        ['CRASH-001', 'CRASH-002']);
+    await restarted.flush();
+  });
+
   test('diagnostic storage failure preserves bootstrap and connection actions',
       () async {
     final root =

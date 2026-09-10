@@ -69,6 +69,7 @@ class RuntimeHost {
   ~RuntimeHost();
 
   RuntimeResult Snapshot() const;
+  RuntimeResult CrashDiagnostics() const;
   RuntimeResult PendingSnapshot(Command command) const;
   RuntimeResult RecoverOnStartup();
   RuntimeResult Initialize();
