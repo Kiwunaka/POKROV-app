@@ -1,0 +1,28 @@
+{
+  "source": "E:\\r12-windows-managed-20260908\\POKROV-r12-managed-20260908",
+  "destination": "C:\\r12-v01-vm-20260910",
+  "file_count": 16,
+  "total_bytes": 37432653371.0,
+  "disk_files": [
+    {
+      "path": "Snapshots\\{095c81bc-af3c-4079-b906-1739ec81b566}.vdi",
+      "size": 17341349888,
+      "sha256": "38209734b0c6ab253aaa5d0f62d32ca143ea788b0e5e61bf2435ea3f647ebe40"
+    },
+    {
+      "path": "Snapshots\\{5895158f-96ca-4c47-8446-b11110ac0554}.vdi",
+      "size": 14109638656,
+      "sha256": "4b9d33817e1f8b7d25ba76386b58f407a396d30c9c012a3892bf25a0fee59c31"
+    },
+    {
+      "path": "Snapshots\\{64e8c5bb-687a-4595-91d2-951cc1c2b31f}.vdi",
+      "size": 1894776832,
+      "sha256": "4f45c9a14f70855112f837bb0fa63dc87f1e80927a90fdfe2229dbef7fc65035"
+    },
+    {
+      "path": "Snapshots\\{a2f8066f-4f28-4829-a17d-03fd22b17621}.vdi",
+      "size": 4083154944,
+      "sha256": "ec1a488462ffc4af59f9080a39017a31b9a1d9fd328937c2b67a76522fa2a315"
+    }
+  ]
+}

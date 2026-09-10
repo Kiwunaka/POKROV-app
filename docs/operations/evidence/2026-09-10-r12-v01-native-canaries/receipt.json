@@ -1,0 +1,286 @@
+{
+  "status": "PASS_BOUNDED_WINDOWS_NATIVE_SUMMARY_CANARIES",
+  "client_source": "2edfbdebb3362cba1a71881545f458bc841e3b0e",
+  "core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "backend_source": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "case_number": 52,
+  "native_canaries": 6,
+  "scanned_sink_files": 6,
+  "plaintext_bundle_files": 3,
+  "canary_matches": 0,
+  "restoration": {
+    "status": "PASS_WORKING_PROFILE_AND_NETWORK_RESTORED",
+    "installed_files_match": 304,
+    "app_first_state_unchanged": true,
+    "default_routes_unchanged": true,
+    "dns_unchanged": true,
+    "active_tun_after_disconnect": 0,
+    "normal_ui_connect_dns_egress_pass": true,
+    "profile_contains_canary": false,
+    "profile_bytes_equal_baseline": false,
+    "profile_restoration_method": "Normal UI staged the current real profile; baseline bytes were not copied back.",
+    "secure_store_bytes_equal_baseline": false,
+    "secure_store_restoration_method": "Fresh authenticated state preserved; no old snapshot restored.",
+    "task_probe_removed": true,
+    "snapshot_before_and_after_retained": true,
+    "final_vm": "poweroff / nic1 none"
+  },
+  "limits": [
+    "summary only; extended and crash not exercised",
+    "no Android or Win10 proof",
+    "operator architecture/phase/error/attempt fields remain null",
+    "full V01/V04 dependencies open",
+    "no new product code, binary build, deployment or public release"
+  ],
+  "verification": "PASS client seed/docs using exact clean c7 checkout; PASS 33 platform docs tests, context audit, 716 local links and diff checks. Initial wrong-Core parity failure retained.",
+  "captures": [
+    {
+      "path": "captures/canary-0.json",
+      "bytes": 218,
+      "sha256": "3698777f6c4da8ecc1c359f11f8abc87fe816572db8b37fbad79708919cc5119"
+    },
+    {
+      "path": "captures/canary-1.json",
+      "bytes": 218,
+      "sha256": "adce6774a116d1afb851ba975f0f0250f8440685c9fa4b41d386654ebd163655"
+    },
+    {
+      "path": "captures/canary-2.json",
+      "bytes": 218,
+      "sha256": "0e4327bbbbd1c2d1ddfa529d55554606cc6e308728ddd586da05a6127cd32673"
+    },
+    {
+      "path": "captures/canary-3.json",
+      "bytes": 218,
+      "sha256": "ae4764e6d3c722cddc792806e0faaccaa7d9f994fcaeabb3de72e1cd85c97941"
+    },
+    {
+      "path": "captures/canary-4.json",
+      "bytes": 218,
+      "sha256": "a014d6e0ea574265b56a170f7394f83c151d42ceea57a5a4594e167ed1677225"
+    },
+    {
+      "path": "captures/canary-5.json",
+      "bytes": 218,
+      "sha256": "72f48aaaefb2cc70314e0cec82975b1d4d1495000f07634385c962ab68c9e1e3"
+    },
+    {
+      "path": "captures/state-before-elevated.json",
+      "bytes": 779,
+      "sha256": "4f156d2c0f8fe455bd741a9dc830827487941f033d14a10a8a7df821b706d680"
+    },
+    {
+      "path": "captures/state-after.json",
+      "bytes": 778,
+      "sha256": "b220fe333f5601ba85be9b5c18ff47b8a4fe2c8ceb6c763566b559f2cc6b5aa8"
+    },
+    {
+      "path": "captures/post-upload-state.json",
+      "bytes": 295,
+      "sha256": "d79e9f831ae6df3f974bd013f21fe0677aff52801c76885ad474281aea23600b"
+    },
+    {
+      "path": "captures/scan-before.json",
+      "bytes": 2042,
+      "sha256": "15f63575ae5786d68a4ac302c1e5978e990fb1e12963397e5acc772e37fc634d"
+    },
+    {
+      "path": "captures/scan-after.json",
+      "bytes": 2043,
+      "sha256": "80d6f11c640b141ce721ff2bba1e2dfafb762ffb4f875bb61b2b9ad6c59a5f26"
+    },
+    {
+      "path": "captures/scan-final-v2.json",
+      "bytes": 2043,
+      "sha256": "bf964143ddc35eaaf55c5a37a04c8561d511c42816712d0d9117d67b26996e09"
+    },
+    {
+      "path": "captures/core-event-summary-v2.json",
+      "bytes": 642,
+      "sha256": "e0ed98b11ab5d5a1e5dd23ab4898608b1a78a060dd004bf1652ab65a7378cc56"
+    },
+    {
+      "path": "captures/app-timeline.json",
+      "bytes": 25859,
+      "sha256": "a66ee87cd93bea3347dfb9660d9f7b32e52beb74f8fb4f4ce633d5d983ded984"
+    },
+    {
+      "path": "captures/native-case-readback.json",
+      "bytes": 714,
+      "sha256": "c88764d12ca177eb2daddecc12d0bc91f7117e042754c6e483557f822f1b86ef"
+    },
+    {
+      "path": "captures/native-admin-payload-scan.json",
+      "bytes": 2226,
+      "sha256": "af659b4bf0395852d0ced5dca033d5d6135c978a7b53d6e720a3174c88f71293"
+    },
+    {
+      "path": "captures/outbox-readback.json",
+      "bytes": 350,
+      "sha256": "cdc8709ca27b761125dc1c1833bc2bf6f660a1ec8a5ec8857a25ef75e40ca4d8"
+    },
+    {
+      "path": "captures/recovery-runtime-connected.json",
+      "bytes": 1003,
+      "sha256": "599fa9552db4efb9195419960dc59200566660ac3a5702d70c54d3b84598c1c3"
+    },
+    {
+      "path": "captures/recovery-runtime-disconnected.json",
+      "bytes": 1012,
+      "sha256": "0105332159a4d5eceb4aafd6c2285e364045a9a79f7d70fbcf16fd4608bd3656"
+    },
+    {
+      "path": "captures/recovery-state.json",
+      "bytes": 778,
+      "sha256": "3245b3804ddb9458bd570bf13bd7b2363602fb3284c99deb6d42801b96f15502"
+    },
+    {
+      "path": "captures/profile-restoration.json",
+      "bytes": 268,
+      "sha256": "bba4a4c3d931e0b11fbd91209d857de959ff3ddacc44978a14cf3669fde544c5"
+    },
+    {
+      "path": "captures/probe-cleanup.json",
+      "bytes": 133,
+      "sha256": "c3bb03d0e07b5d07dae1893389e0d583d911bb8324f135070ef750186ecce463"
+    },
+    {
+      "path": "captures/restoration-verification.json",
+      "bytes": 743,
+      "sha256": "c04201a95c56938c90111d46a4caa3ff55b8753efab3c62fd81472a0969b720c"
+    },
+    {
+      "path": "captures/vm-restoration.json",
+      "bytes": 290,
+      "sha256": "c8d43651d4cf4757f0d510e17d2a764366d0a57932caf5b4a05c534cd8d9753e"
+    },
+    {
+      "path": "captures/vm-disks-before.json",
+      "bytes": 1000,
+      "sha256": "d0a10dd4cd1d3c4008efe9133588fb65bed2c53c7ff9de1acaf08156b9d1a28b"
+    },
+    {
+      "path": "captures/vm-move-verified.json",
+      "bytes": 876,
+      "sha256": "b034421c8ada5697a9fa58b67ccb64a53bf75241c106a1950ce1df5a60ce6f86"
+    },
+    {
+      "path": "captures/snapshots-after-canaries.txt",
+      "bytes": 1420,
+      "sha256": "118605b59fca3c3311163539003dcd9c47236a10aafaccf577e2d3c7eb4fe62a"
+    },
+    {
+      "path": "captures/probe-configure.log",
+      "bytes": 581,
+      "sha256": "10b25c9cc987c40a87d2979455709c0224dce9e12e1e2c5e1dade77d37dfdafb"
+    },
+    {
+      "path": "captures/probe-build.log",
+      "bytes": 491,
+      "sha256": "8994917742a07ac96ac1f074438ce39c767737597dfd9b01ef7420471cae76c2"
+    },
+    {
+      "path": "captures/bundle-preview.png",
+      "bytes": 865471,
+      "sha256": "bd400f798781f510714a3c473efd8309b71c35a54d184c6825a887e47387dc05"
+    },
+    {
+      "path": "captures/bundle-sent.png",
+      "bytes": 869888,
+      "sha256": "972ddd99d1b28e0857b5570bd4c2ebd93c65d4357605ecc2b92079399886ef64"
+    },
+    {
+      "path": "captures/recovery-connected.png",
+      "bytes": 890303,
+      "sha256": "e6d1bf42ac5210cfecab13c98c66d7bc1c760b0c114c33e835cc78bb3884e16f"
+    },
+    {
+      "path": "captures/client-seed-exact.log",
+      "bytes": 497,
+      "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9"
+    },
+    {
+      "path": "captures/client-docs-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "captures/platform-docs.log",
+      "bytes": 101,
+      "sha256": "ef068527969c3c2381d5e8899023987983fd6222cf5bb70441c586bc051f5fc7"
+    },
+    {
+      "path": "captures/platform-context.log",
+      "bytes": 23,
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "path": "captures/platform-package.log",
+      "bytes": 109,
+      "sha256": "f265b23a8e5c1d3590c92e750412461c6b19e942b4185f5ee059d6a44bba7e4d"
+    },
+    {
+      "path": "captures/client-seed-first-failure.json",
+      "bytes": 464,
+      "sha256": "712460a00379ed6da0e21437a630ef711d48b55672118d502ef411ad1a13037a"
+    },
+    {
+      "path": "captures/prior-core-ffi-failure.json",
+      "bytes": 2847,
+      "sha256": "244b038ffe749abb87bbdc4f357421e7b76977337381ce367ef23b5f64e7430c"
+    }
+  ],
+  "local_runner_hashes": [
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\probe-source\\main.cpp",
+      "sha256": "c111f7c8536545bc1201bcc009645f25d9fc5136cd4a9c308ae657ab19850784"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\probe-source\\CMakeLists.txt",
+      "sha256": "d686978be32a64922b8922eba646e97d452ba5d2e36f7ae9aa2b99ccf9f228d0"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\scan-sinks.ps1",
+      "sha256": "6f2c1ebd6abaa9cd1dd63ba546d3f7dee610b11fc629b10fd0222f68d972abb8"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\state.ps1",
+      "sha256": "cdaaf8450e77d7628a48b700e477c6801acc01651aaf0849851d6577caeab0ea"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\final-guest-v2.ps1",
+      "sha256": "1f3e01c9876671b6ab2b114b38793dbedc5ba708884f24ad1ab0859a46aa41fb"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\admin-scan-remote.py",
+      "sha256": "c943d41ef323b37470724ab755791716966bfaa9f876867d5c6269dfeb2fc111"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\admin-scan.py",
+      "sha256": "4f1e24aa4573defbebf5d67557451351d055c6cc7170bb4a21029fb6ddebc28f"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\read-case.py",
+      "sha256": "e5026bc2aee6f8763b7cd5afa76284f1ae5dfb80abc87cdb8a47a5341b78c395"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\recovery-readback.ps1",
+      "sha256": "62a0c062f5fae9c26e027957b9fcfa79ca81238083ac4c5918d5ad558cbb987e"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\profile-restoration.ps1",
+      "sha256": "e459fcb16f5d27e6f1f8caa3c157ea2ad175aaf362b69d1a6b678cc020dee34a"
+    },
+    {
+      "local_path": "C:\\r12-v01-native-20260910\\click-v2.ps1",
+      "sha256": "d238277d3fbd76285ccf6d29554f5cc97194d79bb59e4188948d530ddb42d679"
+    }
+  ],
+  "known_counterevidence": {
+    "status": "FAIL_PRIVACY_IN_SEPARATE_DIRECT_CORE_FFI_PATH",
+    "packaged_core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+    "receipt": "captures/prior-core-ffi-failure.json",
+    "fix_pr": "https://github.com/Kiwunaka/pokrov-core/pull/10",
+    "fix_status": "OPEN; release-contract CI failed; not installed"
+  }
+}

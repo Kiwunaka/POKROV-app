@@ -1,0 +1,17 @@
+{
+  "status": "PASS_WORKING_PROFILE_AND_NETWORK_RESTORED",
+  "installed_files_match": 304,
+  "app_first_state_unchanged": true,
+  "default_routes_unchanged": true,
+  "dns_unchanged": true,
+  "active_tun_after_disconnect": 0,
+  "normal_ui_connect_dns_egress_pass": true,
+  "profile_contains_canary": false,
+  "profile_bytes_equal_baseline": false,
+  "profile_restoration_method": "Normal UI staged the current real profile; baseline bytes were not copied back.",
+  "secure_store_bytes_equal_baseline": false,
+  "secure_store_restoration_method": "Fresh authenticated state preserved; no old snapshot restored.",
+  "task_probe_removed": true,
+  "snapshot_before_and_after_retained": true,
+  "final_vm": "poweroff / nic1 none"
+}

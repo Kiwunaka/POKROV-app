@@ -1,0 +1,116 @@
+{
+  "setup_ok": true,
+  "config_rejected": true,
+  "ffi_return_contains": {
+    "credentials": true,
+    "config": true,
+    "url": true,
+    "ip": true,
+    "path": true,
+    "pii": true
+  },
+  "structured_events": [
+    {
+      "schema": 1,
+      "abi": 1,
+      "name": "core.runtime.initialize",
+      "subsystem": "core",
+      "stage": "initialize",
+      "severity": "info",
+      "outcome": "started",
+      "code": "",
+      "phase": "initialization",
+      "sequence": 1
+    },
+    {
+      "schema": 1,
+      "abi": 1,
+      "name": "core.runtime.initialize",
+      "subsystem": "core",
+      "stage": "initialize",
+      "severity": "info",
+      "outcome": "succeeded",
+      "code": "",
+      "phase": "initialization",
+      "sequence": 2
+    },
+    {
+      "schema": 1,
+      "abi": 1,
+      "name": "core.runtime.start",
+      "subsystem": "core",
+      "stage": "start",
+      "severity": "info",
+      "outcome": "started",
+      "code": "",
+      "phase": "core_start",
+      "sequence": 3
+    },
+    {
+      "schema": 1,
+      "abi": 1,
+      "name": "core.runtime.start",
+      "subsystem": "core",
+      "stage": "start",
+      "severity": "error",
+      "outcome": "failed",
+      "code": "CORE-005",
+      "phase": "core_start",
+      "sequence": 4
+    }
+  ],
+  "structured_contains": {
+    "credentials": false,
+    "config": false,
+    "url": false,
+    "ip": false,
+    "path": false,
+    "pii": false
+  },
+  "dll_sha256": "0409da4762c56234c38f7b60ac5fe8b49d4131c4a4debedf3ef313aebe8d0371",
+  "debug": false,
+  "status": "FAIL_PRIVACY",
+  "utc": "2026-09-10T13:18:29.815757+00:00",
+  "origin": "current-origin Windows isolated FFI subprocess; same packaged Core DLL",
+  "sinks": {
+    "stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    },
+    "stderr": {
+      "bytes": 508,
+      "sha256": "657ef95fc9c7e3097de4c6b830cc1ce11e390be26b47a8fc847b0b85575ddbd4",
+      "contains": {
+        "credentials": true,
+        "config": true,
+        "url": true,
+        "ip": true,
+        "path": true,
+        "pii": true
+      }
+    },
+    "working\\data\\AppSettings.db\\000001.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    }
+  },
+  "live_profile_used": false,
+  "host_vpn_changed": false,
+  "raw_diagnostic_output_retained": false
+}

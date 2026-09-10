@@ -1,0 +1,12 @@
+Версия MSBuild 17.12.6+db5f6012c для .NET Framework
+
+  1>Checking Build System
+  Building Custom Rule C:/r12-v01-native-20260910/probe-source/CMakeLists.txt
+  main.cpp
+  service_client.cpp
+  service_pipe_client.cpp
+  service_protocol.cpp
+  service_profile_identity.cpp
+  Создание кода...
+  r12_v01_probe.vcxproj -> C:\r12-v01-native-20260910\probe-build\Release\r12_v01_probe.exe
+  Building Custom Rule C:/r12-v01-native-20260910/probe-source/CMakeLists.txt

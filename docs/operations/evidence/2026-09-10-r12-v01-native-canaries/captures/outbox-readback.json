@@ -1,0 +1,10 @@
+{
+    "utc":  "2026-09-10T14:18:17.7406860Z",
+    "origin":  "current-origin Windows owned VM",
+    "outbox_exists":  true,
+    "file_count":  0,
+    "total_bytes":  0,
+    "accepted_ciphertext_sha256":  "a4e7d6897198a9d9419d351590c423c9b28221a53cb84d8178e9d88cfb3a98ad",
+    "has_accepted_envelope":  false,
+    "non_envelope_count":  0
+}

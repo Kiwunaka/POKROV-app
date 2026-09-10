@@ -1,0 +1,19 @@
+﻿{
+    "utc":  "2026-09-10T14:21:16.9358358Z",
+    "core_event_count":  26,
+    "core_failure_count":  6,
+    "core_generation_count":  6,
+    "core_codes":  [
+                       {
+                           "code":  "CORE-003",
+                           "count":  5
+                       },
+                       {
+                           "code":  "CORE-005",
+                           "count":  1
+                       }
+                   ],
+    "native_start_failures":  6,
+    "service_log_sha256":  "08499477e195f74f930bb4543f4c49dfa8f036abc98f06754f2d63ff7d41eaa4",
+    "raw_events_exported":  false
+}

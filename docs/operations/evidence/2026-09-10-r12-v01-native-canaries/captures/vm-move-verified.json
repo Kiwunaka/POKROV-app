@@ -1,0 +1,29 @@
+{
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "source": "E:\\r12-windows-managed-20260908\\POKROV-r12-managed-20260908",
+  "destination": "C:\\r12-v01-vm-20260910\\POKROV-r12-managed-20260908",
+  "disk_count": 4,
+  "disks": [
+    {
+      "path": "Snapshots\\{095c81bc-af3c-4079-b906-1739ec81b566}.vdi",
+      "size_matches": true,
+      "sha256_matches": true
+    },
+    {
+      "path": "Snapshots\\{5895158f-96ca-4c47-8446-b11110ac0554}.vdi",
+      "size_matches": true,
+      "sha256_matches": true
+    },
+    {
+      "path": "Snapshots\\{64e8c5bb-687a-4595-91d2-951cc1c2b31f}.vdi",
+      "size_matches": true,
+      "sha256_matches": true
+    },
+    {
+      "path": "Snapshots\\{a2f8066f-4f28-4829-a17d-03fd22b17621}.vdi",
+      "size_matches": true,
+      "sha256_matches": true
+    }
+  ],
+  "utc": "2026-09-10T13:50:06.8673317Z"
+}
