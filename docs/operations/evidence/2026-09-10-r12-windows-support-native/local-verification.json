@@ -1,0 +1,50 @@
+{
+  "status": "PASS",
+  "tested_source": "e73dcb92a96421dc7eae0488259b1accee031cbd",
+  "signed_source": "2edfbdebb3362cba1a71881545f458bc841e3b0e",
+  "tests": 10,
+  "validation": [
+    {
+      "file": "diagnostics-tests.log",
+      "sha256": "a84f47fc888f99213d87c616fa8c0affcf5bc8ec1956f5d34fbed2a5cc409fa8",
+      "status": "PASS",
+      "required_marker": "+10: All tests passed!"
+    },
+    {
+      "file": "analyze.log",
+      "sha256": "20a90491434e35f44b6bf782a8bffe0cc15e2676198e4889e447b441b7108645",
+      "status": "PASS",
+      "required_marker": "No issues found!"
+    },
+    {
+      "file": "client-seed.log",
+      "sha256": "7b3d1bc3eba4edc05dcc272aef7b2a6f2fa672b19bc3822e145f9e486109f21b",
+      "status": "PASS",
+      "required_marker": "Seed scaffold OK:"
+    },
+    {
+      "file": "client-docs.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874",
+      "status": "PASS",
+      "required_marker": "Client docs contract OK."
+    },
+    {
+      "file": "windows-build.log",
+      "sha256": "1073633318abca6976a1d24646b364b1b6ff255e476074d1e25d2ad9fa487283",
+      "status": "PASS",
+      "required_marker": "completed build and 304-file package verified"
+    },
+    {
+      "file": "fixed-windows-build.log",
+      "sha256": "0c735927b5c700c1cfb004e1848392e1c1e439750e34aa9a55b01872bfb2edc4",
+      "status": "PASS",
+      "required_marker": "completed build and 304-file package verified"
+    }
+  ],
+  "native_package_readbacks": [
+    "wizard-readback.json",
+    "fixed/wizard-readback.json"
+  ],
+  "public_binary_release": "NOT_REQUESTED",
+  "main_ci": "PENDING"
+}

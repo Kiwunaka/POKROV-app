@@ -1,0 +1,36 @@
+{
+  "status": "PASS_OWN_CASE_AND_DIAGNOSTIC_CODE_LOOKUP",
+  "origin": "brain-origin real HTTPS",
+  "source_revision": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "lookup_identity_or_credentials_exported": false,
+  "external_OIDC_tested": false,
+  "case_number": {
+    "status": "PASS",
+    "own_result_count": 1,
+    "no_raw_upload_reference": true
+  },
+  "diagnostic_code": {
+    "status": "PASS",
+    "own_result_count": 1,
+    "no_raw_upload_reference": true
+  },
+  "native_case_fields": {
+    "diagnostic_profile": "summary",
+    "app_version": "1.2.0+4053",
+    "build_number": "pokrov-local-client",
+    "platform": "windows",
+    "architecture": null,
+    "last_phase": null,
+    "last_error_code": null,
+    "proof_outcome": "failed",
+    "attempt_link_source": null
+  },
+  "known_issue_lookup": {
+    "status": "NOT_APPLICABLE_NO_OBSERVED_ERROR_CODE"
+  },
+  "cleanup": {
+    "fixture_session_revoked": true,
+    "preexisting_sessions_unchanged": true
+  },
+  "utc": "2026-09-10T12:23:26.810924+00:00"
+}

@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "source": "f318265bbac942222cd770baac03b51797113433",
+  "installer_sha256": "5527e8a78076fad7bd7cc55bb9ac2c0796bfd2654a032f0d7e853dd9c004ff1a",
+  "installer_bytes": 29266781,
+  "changed_payload_paths": [
+    "data/app.so"
+  ],
+  "unchanged_payload_count": 303,
+  "old_installed_source": "6816aaba1e9526ba84182d8b13ecd20569e37d23"
+}

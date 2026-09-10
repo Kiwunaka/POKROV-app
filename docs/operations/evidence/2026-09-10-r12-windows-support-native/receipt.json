@@ -1,0 +1,247 @@
+{
+  "status": "PASS_BOUNDED_NATIVE_SUMMARY_AND_CANVAS",
+  "utc": "2026-09-10T12:47:22.670034+00:00",
+  "delivery_source": "f318265bbac942222cd770baac03b51797113433",
+  "canvas_fixed_source": "2edfbdebb3362cba1a71881545f458bc841e3b0e",
+  "merge": "c17936960dd3c77649d5eda5fe06f0a7bba85db8",
+  "tree": "64587d13b331ee29b76951c6ad74c80f5c003930",
+  "merge_ci": "PASS",
+  "files": [
+    {
+      "file": "source-binding.json",
+      "sha256": "99db0c60b563c96d5bd1edfde9b7e7fd8506e238789c0c77ec8fbdcaa33bb7bf"
+    },
+    {
+      "file": "windows-expected.json",
+      "sha256": "9c801aa61b5a8fe95ea62e3060b7f6bb2d2624c9ffcfccb2aeb9cfb7ea1ea97b"
+    },
+    {
+      "file": "windows-payload-comparison.json",
+      "sha256": "5eba626cc7f14c75cf9545a00ba6e08b73bb81dfc30c90b8b5c7919277230905"
+    },
+    {
+      "file": "before.json",
+      "sha256": "74e90bd36662c9e5a076dd1ea3d13fa159cc6d358b348dfa46b086c40b9ca8c3"
+    },
+    {
+      "file": "wizard-readback.json",
+      "sha256": "310f14ca85ccf1630ce6363b26f204e335c914700982a0386e7bea244945fda3"
+    },
+    {
+      "file": "native-case-readback.json",
+      "sha256": "b6e4a11301da1fe68b44e593592344f7f19d9ec0be642a14df50978a5b9c5db8"
+    },
+    {
+      "file": "native-case-admin-lookup.json",
+      "sha256": "cda844948e03a3c457871ebd5e919890a2ba4d6e3e9a0af4535c7e18feae5269"
+    },
+    {
+      "file": "native-case-cleanup.json",
+      "sha256": "6aea02a85167922534f3dfd5c0ed6fbd180162ca927d056ee052992e7f0f505a"
+    },
+    {
+      "file": "native-runtime-readback.json",
+      "sha256": "d468c51a25e40f20bbef8618c2f675f3c1b8f7a96f75de65326d92d1384e5f21"
+    },
+    {
+      "file": "outbox-readback.json",
+      "sha256": "f5acdf922e4bc4ee03b7c1bc982395a14825e5dfa715ee9816762d2351aafd99"
+    },
+    {
+      "file": "timeline-after-upload.json",
+      "sha256": "91a3dd842869dbd2da7be3714485e897b0d4ae33711e22a98afa02293235a6b0"
+    },
+    {
+      "file": "canvas-verification.json",
+      "sha256": "c4c8198a409b5d6f0ed8db30f700c2a2bfdcea7c028c6a57684953e8ee4f0a61"
+    },
+    {
+      "file": "vm-restoration.json",
+      "sha256": "f3eccf365ee088606271266763e207619f6f7f80f308aaff718befef0fcdf272"
+    },
+    {
+      "file": "local-verification.json",
+      "sha256": "a4002ed6e2d22fa1935b67647718431f12a0f04576a622e0ed26ec005d9a28ca"
+    },
+    {
+      "file": "source-promoted.json",
+      "sha256": "a0cf48457d55a7c4657b96ed8449f960a3729c6f8f49847045af4d92a2689a17"
+    },
+    {
+      "file": "merge-binding.json",
+      "sha256": "a46fe0a70451cef597e2747f6492829444c12e4fbf6629f212fadbf2002ea0c9"
+    },
+    {
+      "file": "ci-pr.json",
+      "sha256": "10265e61d15e87768c4871be13664a79a668c74302fc96f1b9490d1e14985418"
+    },
+    {
+      "file": "diagnostics-tests.log",
+      "sha256": "a84f47fc888f99213d87c616fa8c0affcf5bc8ec1956f5d34fbed2a5cc409fa8"
+    },
+    {
+      "file": "analyze.log",
+      "sha256": "20a90491434e35f44b6bf782a8bffe0cc15e2676198e4889e447b441b7108645"
+    },
+    {
+      "file": "client-seed.log",
+      "sha256": "7b3d1bc3eba4edc05dcc272aef7b2a6f2fa672b19bc3822e145f9e486109f21b"
+    },
+    {
+      "file": "client-docs.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "file": "windows-build.log",
+      "sha256": "1073633318abca6976a1d24646b364b1b6ff255e476074d1e25d2ad9fa487283"
+    },
+    {
+      "file": "fixed-windows-build.log",
+      "sha256": "0c735927b5c700c1cfb004e1848392e1c1e439750e34aa9a55b01872bfb2edc4"
+    },
+    {
+      "file": "read-case.py",
+      "sha256": "f91d6356e8d00be69f2b47cb3138b134799db16fdc83dc44e3c0b7b9e5287205"
+    },
+    {
+      "file": "case-lookup.py",
+      "sha256": "7c3ed6a770a172a48380ff8719dd7c50837e56244ca0b942044651f76e74b19f"
+    },
+    {
+      "file": "case-lookup-remote.py",
+      "sha256": "1d5a524dc82d7dd8e4a0b3081e154af1f9ba4d57d665b1ce6d5601955f65483e"
+    },
+    {
+      "file": "close-case.py",
+      "sha256": "a04ed9d10188dcc0f8b8280f62bbfea6b4e85304c5e46fcb5a7481e948d2c693"
+    },
+    {
+      "file": "outbox-readback.ps1",
+      "sha256": "28825bbae8304497dc42abea3a4cc7bcdd31b189056d376ae85f4dc7d31e7875"
+    },
+    {
+      "file": "verify-canvas.py",
+      "sha256": "0f9374cdf14a5e9698fe0619780546a53c59e1622524ee7e94158edd794d6c79"
+    },
+    {
+      "file": "verify-restoration.py",
+      "sha256": "9326f49649216aef0589fe75250c2b947258dc7f854830a062af7a512601ffb2"
+    },
+    {
+      "file": "diagnostics.png",
+      "sha256": "25e9ed08d4f838c31718fc12febb2fc2cd1922e8fae1db63f07709e9a8361313"
+    },
+    {
+      "file": "bundle-controls.png",
+      "sha256": "9398573786fb406a73b260512b6b84e95a67edc78113aec0a4f8768b0e9ed879"
+    },
+    {
+      "file": "bundle-preview.png",
+      "sha256": "f327277cd5a0efdcc36cd979ac23094809cc49b4f30c885bc51f9fd14bab3fd2"
+    },
+    {
+      "file": "wizard-after-install.png",
+      "sha256": "6309087412765895a8db6af5bcb881a32ea00cc1b4c7e46591754d215606181d"
+    },
+    {
+      "file": "fixed/windows-expected.json",
+      "sha256": "1e463576e55a36ee09ca711ae2ade97b3f111f8e7ff4534d8e5ab2f629b6f23b"
+    },
+    {
+      "file": "fixed/windows-payload-comparison.json",
+      "sha256": "94aceed1a21a626f0f4f202f3a1a7dc9554bd44d6bb72b5ed0781178c8f8d3d6"
+    },
+    {
+      "file": "fixed/before.json",
+      "sha256": "928a0f0409421417eb2a7e3c95a5fb64c13a06ff0191cfc92a6305e415466ee2"
+    },
+    {
+      "file": "fixed/wizard-readback.json",
+      "sha256": "2786728c90607220ceedf9c56bbf0242171671b6bb6683eafffd7830e56be6e8"
+    },
+    {
+      "file": "fixed/final-runtime-readback.json",
+      "sha256": "7443ac05de79236c5cd3a4f3c4c53bd1df81aa35d21b65a3d0dd5b664a219954"
+    },
+    {
+      "file": "fixed/final-timeline.json",
+      "sha256": "80ccb96225128dcc3f3380a0c11f77ea762e9388769f8d5ddd026afbfba47579"
+    },
+    {
+      "file": "fixed/wizard-completed.png",
+      "sha256": "d83e7057afabc5341792e3bfb5a55ceaa0be3979b4cb63c26b43eae26f503ad2"
+    },
+    {
+      "file": "fixed/diagnostics-light.png",
+      "sha256": "bd992461e18afd355e8ef0f66689dbac347acc201e89db7285134b7a3f701d25"
+    },
+    {
+      "file": "fixed/diagnostics-light-controls.png",
+      "sha256": "4df7315a03173efc34ab3c6a016c7ed212f41b827a3dac8515d857a7d7065f7f"
+    },
+    {
+      "file": "fixed/diagnostics-dark.png",
+      "sha256": "44516ab0397ecc349408b30c61ddbb0e8a9cab4bc6ffeaa08f3867efb6f7fc61"
+    },
+    {
+      "file": "fixed/theme-restored.png",
+      "sha256": "5dd21fa3cbe89734f4e05a13bebbcbee70e611d2073f24bf0f717ae82028c644"
+    },
+    {
+      "file": "ci-merge.json",
+      "sha256": "fde3044c3975328c37f0bcee32827adbdd73d23140b9a5c431cd85a537905311"
+    },
+    {
+      "file": "client-seed-final.log",
+      "sha256": "3bb7ad7d08dc54a61b7f2b4c65c142eb721439869212b068ee0d95878bd171a6"
+    },
+    {
+      "file": "client-docs-final.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "file": "platform-docs.log",
+      "sha256": "9f0b24cb94adafd27631947ea77400ef258ed55d88dc67e653c434b961d6d8a7"
+    },
+    {
+      "file": "platform-context.log",
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "file": "platform-package.log",
+      "sha256": "ae34a85b2b7c5646529700e7242d16eb47a2b0294127d39a88d52e30e742680b"
+    }
+  ],
+  "full_planted_secret_sinks": "NOT_RUN",
+  "physical_android": "NOT_RUN",
+  "public_binary_release": "NOT_REQUESTED",
+  "backend_deploy": "NOT_REQUESTED",
+  "vm_restored": true,
+  "documentation_checks": [
+    {
+      "log": "client-seed-final.log",
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core-implementation",
+      "status": "PASS"
+    },
+    {
+      "log": "client-docs-final.log",
+      "command": "pwsh -NoProfile -File test/docs-contract.ps1",
+      "status": "PASS"
+    },
+    {
+      "log": "platform-docs.log",
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "status": "PASS"
+    },
+    {
+      "log": "platform-context.log",
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "status": "PASS"
+    },
+    {
+      "log": "platform-package.log",
+      "command": "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+      "status": "PASS"
+    }
+  ]
+}

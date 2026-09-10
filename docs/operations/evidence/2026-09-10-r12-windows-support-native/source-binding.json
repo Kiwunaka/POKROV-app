@@ -1,0 +1,9 @@
+{
+  "client_source": "f318265bbac942222cd770baac03b51797113433",
+  "merged_as": "e54701616a1e5f77967cb451ca56fc2068d6dabd",
+  "source_tree": "8833c5a36607f0d7cc910a6687148dd7e6bdc85a",
+  "existing_validation": "E:/r12client/docs/operations/evidence/2026-09-10-r12-outbox-bound/receipt.json",
+  "purpose": "V01 V04 exact installed Windows support upload and privacy acceptance",
+  "prior_installed_source": "6816aaba1e9526ba84182d8b13ecd20569e37d23",
+  "public_release": false
+}

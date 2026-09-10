@@ -1,0 +1,11 @@
+{
+  "status": "PASS_OWNED_FIXTURE_CLEANUP",
+  "case_number": 51,
+  "utc": "2026-09-10T12:30:52.093011+00:00",
+  "closed": true,
+  "mode": "direct isolated-fixture cleanup; not operator action acceptance",
+  "ciphertext_and_messages_retained": true,
+  "retention_clock_unchanged": true,
+  "external_message_sent": false,
+  "raw_identifiers_exported": false
+}
