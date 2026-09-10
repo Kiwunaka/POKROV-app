@@ -1,0 +1,37 @@
+{
+  "core_source": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "consumer_source": "051b0ebfa64eabd1e5364ed87b82d899aaea0073 plus C02 exact runtime binding",
+  "runtime_tests": "PASS 81; optional DLL test skipped in ordinary suite and passed separately",
+  "android_flutter_tests": "PASS 8",
+  "exact_dll_dart_cycles": "PASS 100 via existing isolated helper",
+  "seed": "PASS explicit platform/Core roots",
+  "docs": "PASS",
+  "initial_harness_failure": "Combined opt-in runtime run used stale shared TEMP database and was stopped after missing-file retries. Existing test-windows-core-proxy-only.ps1 isolated TEMP and passed; failed log preserved locally. First extra docs invocation used nonexistent path, actual test/docs-contract.ps1 passed.",
+  "core_ci": "Initial four jobs PASS, release-contract blocked by client/main previous pin; exact retry required after coordinated promotion",
+  "logs": [
+    {
+      "name": "client-runtime-tests-v2.log",
+      "sha256": "8a980a2b090a237a78ecbbb15dce2ecab6b62125caa4d80c6b0130dab260d76a"
+    },
+    {
+      "name": "client-android-tests.log",
+      "sha256": "31a91c462616088c42a76ce9ecb3feae86daac6688ef3233e360c686cb611b63"
+    },
+    {
+      "name": "client-proxy-100.log",
+      "sha256": "52aa3468ea94d2c94fbd618ed2ea81a90b83ce418f53899d5b02aa36f3ca2986"
+    },
+    {
+      "name": "client-seed.log",
+      "sha256": "e647c8c6c742b5420349a763aff2b83f80ca1909366d1cb0594275c6a8345e4f"
+    },
+    {
+      "name": "client-docs-v2.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "name": "core-ci-initial-failed.log",
+      "sha256": "537620d0c49f523290fd6e44cabbcaf2e193840333e3a2048945fb8b3980ca90"
+    }
+  ]
+}

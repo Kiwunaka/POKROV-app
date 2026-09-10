@@ -1,0 +1,10 @@
+=== RUN   TestStartStopReleasesServiceObservers
+[37mDEBUG[0m[0000] POKROV CORE libbox.Setup success C:\Users\kiwun\AppData\Local\Temp\TestStartStopReleasesServiceObservers2678450047\001 C:\Users\kiwun\AppData\Local\Temp\TestStartStopReleasesServiceObservers2678450047\001 C:\Users\kiwun\AppData\Local\Temp\TestStartStopReleasesServiceObservers2678450047\001 true
+[37mDEBUG[0m[0000] POKROV CORE StartGrpcServerByMode  0
+[37mDEBUG[0m[0000] POKROV CORE stored POKROV settings unavailable
+    lifecycle_test.go:58: goroutines before=37 after=95 cycles=12
+    lifecycle_test.go:60: stopped services retain goroutines: before=37 after=95
+--- FAIL: TestStartStopReleasesServiceObservers (3.44s)
+FAIL
+FAIL	github.com/Kiwunaka/POKROV-core/v2/hcore	3.556s
+FAIL

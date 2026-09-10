@@ -1,0 +1,153 @@
+{
+  "status": "PASS_REPRODUCIBLE_C02_BINDING_LOCAL",
+  "previous_source": "c8b0461c1975ef96e32024774300a5829b9fdc43",
+  "source": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "source_tree": "79381b964dde17672d927d23280da563745d82d0",
+  "compared_files": [
+    {
+      "lane": "android",
+      "path": "pokrov-core-sources.jar",
+      "size": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "lane": "android",
+      "path": "pokrov-core.aar",
+      "size": 107493859,
+      "sha256": "d2382adeeef8336721de6849b51d68d01576bbf9ae7c614a240bb18b9a4ea021"
+    },
+    {
+      "lane": "windows",
+      "path": "libcronet.dll",
+      "size": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.dll",
+      "size": 55453184,
+      "sha256": "18c5bf90a4e710b4d262f92d9e93bb587c4718d9425af89e265304dfd3a16a3c"
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.h",
+      "size": 4167,
+      "sha256": "810473c55b8de8d9e9ec053b59d51d9b80288ef8d9e4742f96365a51f8d73d0e"
+    }
+  ],
+  "android_abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "desktop_abi": 2,
+  "event_abi": 1,
+  "required_exports": 15,
+  "dependency_graph": "Unchanged go.mod/go.sum in both modules; previous SBOM bytes remain exact",
+  "device_acceptance": "NOT_RUN for this binding; installed Windows and phone retain earlier Core",
+  "promotion": "Core PR11 and coordinated client promotion pending; no public release",
+  "rollback": "C:/r12-v01-core-20260910/{android-a,windows-a}",
+  "logs": [
+    {
+      "path": "C:\\r12-c02-20260911\\after-lifecycle.log",
+      "sha256": "e5e47478c46eb2c2393bf1ddcc9e7841fb31f54c09f5dff1bbb00fb0c9327328"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\android-a.log",
+      "sha256": "7c17edcae65efa52883318b07752f82ab0925c1312e8e43a13a7f66dd5e356fc"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\android-b.log",
+      "sha256": "d2eeb2b81f2c8b802a22ba5ab42acf9136e2065573ef7ce9ba2ac91ed20725cb"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\artifact-lifecycle-v2.log",
+      "sha256": "d202712113e0d28914a932feb735ba31a7160f34ac5100e80ca2e12e40dde44f"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\artifact-lifecycle.log",
+      "sha256": "a30301f80775ad35eb18eb7950b5fbb1f0144e91854d33c7ba4e38a9433ce72d"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\before-lifecycle-cause.log",
+      "sha256": "6e57662ac2060df578d23ad64f213f0772f5298869da0f0a2778a249738e66a9"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\before-lifecycle.log",
+      "sha256": "d6f18f21f54713dcb284a9d98d8c600f996a937b3046942c2d4b9223d8c55b03"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\before-tagged-lifecycle.log",
+      "sha256": "f461e06ead49dca6c2a99abda70ff0b02488b8be0ba3f3af4fb8bcf634403fa9"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\controlled-session-resources.log",
+      "sha256": "24126fddfe2ca8570f46e3a23adb0d9f479e05fbb690519349458cb3c53da8a9"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\core-full-tests-final-v2.log",
+      "sha256": "d61e0425073aea54abebd54ffef5f4bd594cc84cf4ad5b3cb9f6b9e021300316"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\core-full-tests-final.log",
+      "sha256": "dc93de86c9b06ae1bcaaf2285d19712383f5080b5a1e448ec2e2602640e4bdc3"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\core-full-tests.log",
+      "sha256": "220e792d565b061858c008b27c72268ca6e2a419deb39f662c8b25b97a27c638"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\daemon-mobile-tests.log",
+      "sha256": "bfe42535df53c7c5988fec0fdf57566425b254a3900971b5c2cab05a553ed833"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\handle-type-investigation.log",
+      "sha256": "eff080ff1777f4ef1cdaa9e97d78c04fbfae39f001845c180ccc906f3806d665"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\handle-type-names.log",
+      "sha256": "64c482e14e701560fb6e96ed9414ba2ae4ce102634e46ad577ca0400119d2666"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\lifecycle-windows-race-v2.log",
+      "sha256": "8e6b9c03215abf09ea3b2c732dd9fa0a78b55b326f091aa70c145a2f1944fe65"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\lifecycle-windows-race.log",
+      "sha256": "4a0ec5e27fefb206beb75c6cf6ecd9ed90e8fd10fc83174780bce170efe33053"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\mobile-bridge-windows-race.log",
+      "sha256": "7999eca1498c96dadd59b9b6b2d5451c8e8eb060de779f807e8a525ee07558b6"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\session-resource-samples.log",
+      "sha256": "7186df77a473d088df59b7ae205b3f68c5b2b1e14e05659b1b3fbb95930b88ba"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\session-resources.log",
+      "sha256": "eb00f8510f1314b2d80dc64d134e91dd3a71ef33bacecab42e9f5c466e2fb7fb"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\settled-session-resources.log",
+      "sha256": "e766b6febaf160f9a2d7157fb3e4b12fa8b1c124a91ebfbb927d7568a2f85a9f"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\supported-windows-race.log",
+      "sha256": "627ce1bdd01755c2cb3cee8fb74ec48f661025e1c9073c38494bbf89e9c5f985"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\windows-a-v2.log",
+      "sha256": "113169f84f77fe10a5b7722f7fc22f11af9a620f3fb8178241ce2f1e23431fc5"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\windows-a.log",
+      "sha256": "26183de3e884e6083cd1cb1a07b8f59eda20d19711f368ae0c4421c6815b41fc"
+    },
+    {
+      "path": "C:\\r12-c02-20260911\\windows-b-v2.log",
+      "sha256": "f68a398185a464039e09e38511c82a37d8396e38070bc9391d7fff015636bea4"
+    }
+  ]
+}
