@@ -307,8 +307,10 @@ Current blocking dependency:
   marker are closed typed events. A successful attempt cannot be emitted until
   the reducer has current interface, routes/uplink, DNS and selected-outbound
   egress proof.
-- Connection timeline events take their next sequence from the shared app
-  dispatcher, including after interleaved auth or entitlement refresh events.
+- Bootstrap and connection timeline events take their next sequence from the
+  shared app dispatcher, including after restored Android routing counts or
+  interleaved auth and entitlement refresh events. An early routing restoration
+  cannot suppress the subsequent UI-ready event.
   Refresh cannot suppress a subsequent connection failure or terminal event as
   a duplicate sequence. The attempt generation stays fixed, so callbacks from
   an older attempt remain rejected.
