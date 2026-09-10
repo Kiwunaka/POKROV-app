@@ -112,6 +112,15 @@ if ($declaredVersionParts.Count -ne 2 -or $declaredVersionParts[1] -notmatch '^[
 }
 $declaredVersionName = $declaredVersionParts[0]
 $declaredVersionCode = $declaredVersionParts[1]
+$clientRevision = ([string](& git -C $repoRoot rev-parse HEAD 2>&1 | Select-Object -First 1)).Trim()
+if ($LASTEXITCODE -ne 0 -or $clientRevision -notmatch '^[0-9a-fA-F]{40}$') {
+  throw "Could not bind Android diagnostics to the client revision."
+}
+& git -C $repoRoot diff --quiet HEAD --
+if ($LASTEXITCODE -ne 0) {
+  throw "Commit tracked client changes before building revision-bound Android diagnostics."
+}
+$clientRevision = $clientRevision.ToLowerInvariant()
 $outputDirectory = Join-Path $androidRoot "build\app\outputs\flutter-apk"
 $resolvedSigningDirectory = [System.IO.Path]::GetFullPath($SigningDirectory)
 $keystorePath = Join-Path $resolvedSigningDirectory "pokrov-production.p12"
@@ -161,6 +170,8 @@ try {
       "--android-project-arg=pokrov.singleVersionSplitApks=true",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
+      "--dart-define=POKROV_BUILD_NUMBER=$declaredVersionCode",
+      "--dart-define=POKROV_GIT_REVISION=$clientRevision",
       "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
       "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
       "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
@@ -179,6 +190,8 @@ try {
       "--target-platform", "android-arm,android-arm64,android-x64",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
+      "--dart-define=POKROV_BUILD_NUMBER=$declaredVersionCode",
+      "--dart-define=POKROV_GIT_REVISION=$clientRevision",
       "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
       "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
       "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
@@ -380,10 +393,6 @@ try {
   $aabArchive.Dispose()
 }
 
-$clientRevision = ([string](& git -C $repoRoot rev-parse HEAD 2>&1 | Select-Object -First 1)).Trim()
-if ($LASTEXITCODE -ne 0 -or $clientRevision -notmatch '^[0-9a-fA-F]{40}$') {
-  throw "Could not bind the production store AAB to the exact client revision."
-}
 $aab = Get-Item -LiteralPath $aabPath
 $aabHash = (Get-FileHash -LiteralPath $aabPath -Algorithm SHA256).Hash
 $aabEvidence = [ordered]@{
