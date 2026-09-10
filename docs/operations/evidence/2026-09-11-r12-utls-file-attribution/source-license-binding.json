@@ -1,0 +1,1099 @@
+{
+  "status": "PASS_EXACT_SELECTED_SOURCE_AND_EXPLICIT_FILE_LICENSE",
+  "observed_at": "2026-09-10T23:32:10.337561+00:00",
+  "core_revision": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "module": "github.com/Psiphon-Labs/utls",
+  "module_revision": "24497d415a8de0d11c20c3a47724fb88897ed725",
+  "official_licensed_branch_revision": "7a1fc711853d6dd31c10eca10bbd53bf3b082aac",
+  "license_git_blob": "6a66aea5eafe0ca6a688840c47219556c552488e",
+  "license_sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067",
+  "license_first_commit": "37f7eb6d8aac00e15d4e4235189a9c5c26616dfb",
+  "branches_are_diverged": true,
+  "root_license_in_pinned_tree": false,
+  "current_asset_sha256": "106fea6a67ff40a16277dc2bd5922dcd8ddeaf379ee480c6a64d7dd445fa538d",
+  "license_body_already_in_asset": true,
+  "u_prng_copyright_header_in_asset": false,
+  "selected_files": [
+    {
+      "path": "byteorder/byteorder.go",
+      "git_blob": "ba37856ccd97fc67c942d134b7ea7810fc3581f5",
+      "sha256": "0139d44cca5316fc83a8e976eb1d9d11ec0882efa46ce540043877429a4a7c0d",
+      "bytes": 3550,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "dicttls/alerts.go",
+      "git_blob": "ec1f4e7f7691bacd78e155b03fb871bbb2c2459e",
+      "sha256": "8784054974bb66f498d58b69f48d7f5284efdcc01db4fe5ddef3a63d2f2a646a",
+      "bytes": 4398,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/authorization_data_formats.go",
+      "git_blob": "5a1847e450f66f14b3db51d4ab1e64756a48b45f",
+      "sha256": "86f09e0c2547d6e14c4c870ccd1d4978624d0fb24f8401383564d00dd6ae0315",
+      "bytes": 1097,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/cachedinformationtype_values.go",
+      "git_blob": "8e1469b1c3be487462bca492381af27ecbff62ef",
+      "sha256": "96000280792b9cd933e8a5b98ae467d2e1ed62535b7db86840c616e5e55fc43c",
+      "bytes": 451,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/certificate_compression_algorithm_ids.go",
+      "git_blob": "e5ffca3fe924b276978504cfa194517e0067c1c2",
+      "sha256": "b2eab80278aa179000442686e8fd8258183eb482c5e0aa335316e115b1a902d7",
+      "bytes": 522,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/certificate_status_types.go",
+      "git_blob": "67e028526087196cd47ec784d1d0834f4eeff53c",
+      "sha256": "df69968231908e6d88b9bdcdc880ff6d50e16ac3776e20bc0ff1cf5eede42e1d",
+      "bytes": 444,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/certificte_types.go",
+      "git_blob": "93a3285a1d3c54f1b351ebaff30d3ea1722738d3",
+      "sha256": "59ba21c37061510971de99b3f3bc8e9a572971a2f2d0fdb5ab551395263d914d",
+      "bytes": 593,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/cipher_suites.go",
+      "git_blob": "d7875210ca52cd10ea7ce8f5e3da4f6fd5924cdd",
+      "sha256": "9ddaf5b351a07107c4474c5bf5b200e5e03a7de5a0332b5708c02803c1833c20",
+      "bytes": 55813,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/clientcertificatetype_identifiers.go",
+      "git_blob": "c022bfdc39068d2620d69896ad73ff6681fe5923",
+      "sha256": "060fa9f3b3fdf8b92fb5efa7cd44385df154aee2ee80928af84c51e062c52feb",
+      "bytes": 1494,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/comp_meth_ids.go",
+      "git_blob": "a3f951d31ee1bbee92a820307b995428b042f3e0",
+      "sha256": "f6c9079088b7854da6d073a20e338ba3ec6141447dcfc2aa6f57ec445d1212be",
+      "bytes": 409,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/contenttype.go",
+      "git_blob": "b54c84ddfd03b4074539cb84c12e2b3e463ed351",
+      "sha256": "ac89d47467631d66cb0739d2fd47c699803e570a3b9ca9236fc4cea41a675fbc",
+      "bytes": 884,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/ec_curve_types.go",
+      "git_blob": "c15db2475114ee2c8be73994bc4f49b41149aecf",
+      "sha256": "a33a7cafda9d0e6ee447621834adaa9a1f82f937ee28bd9ac64c8964a3124c19",
+      "bytes": 499,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/ec_point_formats.go",
+      "git_blob": "bfe44bbae9079859813d4707740e0ad56005a5b1",
+      "sha256": "84cbe01db7d7dbbfc84ba3bd9e65b3c0128d114882d3935aad2d1585feca415a",
+      "bytes": 586,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/exttype_values.go",
+      "git_blob": "103e8800aaf3b08d71ad51d928f2877e6cab1d33",
+      "sha256": "044caaa4ab0100ef54c82904e3bfcbd66bc8c737baac7e9a50a02a4a8f99ab18",
+      "bytes": 9296,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "dicttls/handshaketype.go",
+      "git_blob": "798a1c37cb87e729ab1a4f033ee6d8819677b26d",
+      "sha256": "092979632e7d24a952e6ecc47e71a1ee59c05a0b13b8d590563b1f4820ea207d",
+      "bytes": 3236,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/hashalgorithm.go",
+      "git_blob": "24e615867d9b64830943d89571f767bc29f65873",
+      "sha256": "b7de62f071c8df3108917120983d24ccb2b7dacfe851f3516475754ea5dcfe1f",
+      "bytes": 851,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/heartbeat_message_types.go",
+      "git_blob": "0b076be113b14585532b09c02b8597fe0d9c4ba9",
+      "sha256": "590e4d86628431b9d2e5df71de6754130e825ad98499417931a4d56b1967f958",
+      "bytes": 447,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/heartbeat_mode.go",
+      "git_blob": "747ae6e1d82faf16d8ff21bc6c7ae73fd8a47441",
+      "sha256": "cddc9beefb52e5876ce65c3c66408c1d13dffe773ae827a6a96933f4e7ff67b7",
+      "bytes": 472,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/hpke_aead_identifiers.go",
+      "git_blob": "c4f82314fd025a09626c72ce5e88048ae96e01c5",
+      "sha256": "474bc4fb0443cf04c1ff24806216c2dd282a75e54cfdcb8a19169c66397446bb",
+      "bytes": 580,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/hpke_kdf_identifiers.go",
+      "git_blob": "7471943fa7ba52a0e53576eed47a578ab0e1f180",
+      "sha256": "c28efbb3887683d15ede8b0c1372c73a782d490b9180fea1378912c03642cf1d",
+      "bytes": 534,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/hpke_kem_identifiers.go",
+      "git_blob": "213e7f8c7bc89173b55d561f1088e3bfd6f05d49",
+      "sha256": "6716d23789803cddd88e269bfae5a19d3b65bd6ce338e068de033a063ac8cf3a",
+      "bytes": 1720,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/psk_key_exchange_mode.go",
+      "git_blob": "7f3cc38894ddf5c1963ae62364beec1f3b554ab9",
+      "sha256": "89859d538cb4495986191b396f4e158b48fbacbc8bd6af9b77911263b397df8c",
+      "bytes": 415,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/quic_frame_types.go",
+      "git_blob": "a7dd0ac61d2124086fba6e02e225d835de71a904",
+      "sha256": "f70d1f8c278d78832b569f305defd03eff62d0419a74951606402b59475b9bae",
+      "bytes": 3684,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/quic_transport_error_codes.go",
+      "git_blob": "52d2c8bd11c5bac098d80f4ce553d034e9acf9c4",
+      "sha256": "7291eb4c2ca206f357a177aeacd6658543b2714c84de34a9c3c5f7b8ac3220a2",
+      "bytes": 2888,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/quic_transport_parameters.go",
+      "git_blob": "66eb881b8c82b4fae1e913615f8d94b49c996ad7",
+      "sha256": "36f446045bd06403aec27202cb027073886c3b879799ac8d28095b524535a45c",
+      "bytes": 4698,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/signaturealgorithm.go",
+      "git_blob": "65c40c4f6870ac85f6e43e5b9791e37cb25ee494",
+      "sha256": "660400d80ebc52749ae58d08286fe67f44db3e77889547bdca2362b9529d713d",
+      "bytes": 1266,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/signaturescheme.go",
+      "git_blob": "d0b9803f8e555240e5fa35e1c68e9e1b783b6215",
+      "sha256": "94cd76aece96a01150b0831418168a8f28b093617e9e46403b502612a0c0d543",
+      "bytes": 5062,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/supplemental_data_formats.go",
+      "git_blob": "9dd7f176a1de3365b9918a9a91f423a24ac7ec4b",
+      "sha256": "174dc03af03b7c3be901710c334fa5c3d75cd6d5d6d4573f7b764bcc83a414d6",
+      "bytes": 498,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/supported_groups.go",
+      "git_blob": "7c5cb5417cf6e80164c210133d481a12898225ff",
+      "sha256": "dbbafdf59e4fada73d563b2e341bdecbe63cd44e3cda7a301f3e6c9caa3ace93",
+      "bytes": 6197,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "dicttls/usermappingtype_values.go",
+      "git_blob": "a16d071f1f2f58104ff5e494ab66e952c38fe664",
+      "sha256": "52d9d963402cb23dd5ba34274d945b6f4e1d579619e8275d886e3de38d9b8395",
+      "bytes": 363,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "internal/boring/notboring.go",
+      "git_blob": "7678883506dc0e5cbe41092f9361a65ec8b8876e",
+      "sha256": "06a305c8e61d6208aec9fa822d961c627b484d797f70dc0852d0921b9136431c",
+      "bytes": 338,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "internal/helper/typeconv.go",
+      "git_blob": "73ec0583e38bfa7efb3f3043c4c0fc98bd9c619f",
+      "sha256": "23e0fa1bde5c607e3e67c33e77d76c9590d51ddeedbd474292221f5227fdb3cc",
+      "bytes": 460,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "internal/hpke/hpke.go",
+      "git_blob": "611c89aac0e16adb74ee8d6c7144b3669f4265d2",
+      "sha256": "db58b86d94c7f4e3e671a0988b9e0da05190eee9240d7d0499a55ff366edaac7",
+      "bytes": 7141,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "internal/mlkem768/mlkem768.go",
+      "git_blob": "52c05e7e8b6d4b5319e718a94437ba54e22771fa",
+      "sha256": "d231296beb94eb5c61954e15dae1af2e874143ac449f83468ea1c79e66904c56",
+      "bytes": 29133,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "internal/quicvarint/protocol/protocol.go",
+      "git_blob": "3cbc3423c2c7b7cc126482c0637fc47dd2f9cc0d",
+      "sha256": "cdd8bcdcf3e198b128b4f409a337b76837d5b4d87d866bfdede3ecdcaa72cb13",
+      "bytes": 4250,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "internal/quicvarint/varint.go",
+      "git_blob": "f442403cb20877a45b26bc93e9f57f4b25e24491",
+      "sha256": "d63cff0842d49058916844ecd43451ec4c4ed2a95f4760bfae4be9df07a42a57",
+      "bytes": 3449,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "alert.go",
+      "git_blob": "2301c0673d83878ef0b3bf209108a00d35ece28e",
+      "sha256": "95b0aab666e8a08a2c56191e0ed96a804be83b4e2d7475d4d1e7c4eb9f8b6b6c",
+      "bytes": 4398,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "auth.go",
+      "git_blob": "5bb202cd6aa97416c241a106717fc7e3ba597600",
+      "sha256": "49d2191f0677a28941ac5def5b1f139087f79f69ed1b11cca54cf40e0b443d3b",
+      "bytes": 10224,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "cache.go",
+      "git_blob": "a7677611fdc7bf927585cb3cf84628f126a36eea",
+      "sha256": "3a9502ab6ed2c77b57a2408990dc64c47f1e0527657ef46d0abe530a8e75f52f",
+      "bytes": 3511,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "cipher_suites.go",
+      "git_blob": "6d2d42d555c67ca6d2c861ce48ccb8142e247542",
+      "sha256": "2367549b2087ac6f15a0c8cb8deae3a15612f8e0c983b3bb73e54a2b1d8071ac",
+      "bytes": 26193,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "common.go",
+      "git_blob": "9d07e20815fd48c99d9133651dc922cd9db321f9",
+      "sha256": "0c0ded90d952d993da1cbb564974aab6965f35973830fc98294a3a8809ad0900",
+      "bytes": 64858,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "common_string.go",
+      "git_blob": "1752f810505bd15384630f421c444ff4d0533bb0",
+      "sha256": "8862ddba3892834d9f96a06cd6f7b23d3934aab5bc22df1bdf30efb5ec43c0dc",
+      "bytes": 3472,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "conn.go",
+      "git_blob": "4998fce5bd7c254bdefe9990a70397b4683dffb0",
+      "sha256": "48a48c53127fd485680fa8cc8af2ecba491c99cecf0776f2243128b3d9f97d57",
+      "bytes": 54021,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "defaults.go",
+      "git_blob": "7def7049e25e61a0cfba9c67e4dc45df6e9e8cee",
+      "sha256": "a062f48d08265ec57a7fa962c87b0e2aa2f33f4b3e0fd7d889693f4a0fb415ab",
+      "bytes": 4277,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "ech.go",
+      "git_blob": "dc8940ee310b205fc805940ddb6831cb5df52780",
+      "sha256": "435238e8d64d0bf22ad3a7936dbf2d6f8cfec201e14ad6f11b5709fdcad1492b",
+      "bytes": 7619,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "handshake_client.go",
+      "git_blob": "3b7f4e1069ee70cdd423070e9f5d1a2bb9777445",
+      "sha256": "902a892b415629227495be5a15ef4b77c9bebeed61f950b3f34d92cfaea18ff4",
+      "bytes": 43472,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "handshake_client_tls13.go",
+      "git_blob": "9d395f871ea36d6097559d4e1aeb1619fc080def",
+      "sha256": "0c41f1841d9ff12cc8b19ec6c2ae9578f69220a563e3fc8161a2bc69401ccfc0",
+      "bytes": 33171,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "handshake_messages.go",
+      "git_blob": "97ef3f9c4747f1c72f795dc5656d8d39ba5e56dd",
+      "sha256": "d303530c2b354c5e3a59be6fc24de849bb87f929954f656bae060b43df2824cc",
+      "bytes": 53448,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "handshake_server.go",
+      "git_blob": "53be82c82a3aff218decc4cd5c09b09ae815c289",
+      "sha256": "16aa7f8308af67db0631178db1255ae0da5f6e6924612ae72970074dbecc5da1",
+      "bytes": 28514,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "handshake_server_tls13.go",
+      "git_blob": "31b6f32f804b584857204b20a0f4c4e6b0ab4880",
+      "sha256": "ba5fcb2b5ebf7829e2578ec00d668ef4272ac0d2be5402dca001bb825d74df87",
+      "bytes": 31334,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "key_agreement.go",
+      "git_blob": "3e96242b9798b8cdab5c78cfe62372b6ff387e85",
+      "sha256": "db368fa743f1842bda6b5f3e2ec7ce0dab4270aabaf3215af4b30dd397670783",
+      "bytes": 12131,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "key_schedule.go",
+      "git_blob": "e830a79f12525148fc428e5919f7f2d40c2b0b52",
+      "sha256": "b873d091f8aef2099552158d4a0e9db863e2be94ca7c5e9fe5d1f674a0f84469",
+      "bytes": 8059,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "notboring.go",
+      "git_blob": "bdbc32e05b35ddee82b0414a200e1ef50c394a91",
+      "sha256": "976c93b45d770fc99f37c599bec5729370ec037ff87493f2844c366c55c237b5",
+      "bytes": 237,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "prf.go",
+      "git_blob": "a7fa3370e66c825c74e0d8e6262cdfe21a6c4b78",
+      "sha256": "84edb6dc1201ea2f2260c0b35dbbec374209c845525d1ae13ecb9b1ed5c3ff35",
+      "bytes": 9451,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "quic.go",
+      "git_blob": "9dd6168b62356ebac3f911cecb5b7f9284757a78",
+      "sha256": "55f74139cc2fd4f24a1d7031bb6a66ec2e2ac1948b29faaec945c3e81d79d372",
+      "bytes": 15422,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "ticket.go",
+      "git_blob": "06aec5aa63f901aa080037ccc9fb043f10c67394",
+      "sha256": "d23d7e666ef1fa6d60da93e5b6c06549d92d945a6fdc40c7b386efea30d5805c",
+      "bytes": 12857,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "tls.go",
+      "git_blob": "8f4eb167ef83f4dc90dd8f4672d612786ae01138",
+      "sha256": "1ea2860921aac93637c82023484e6b9e7512a8947ed26ce350a493f460f37820",
+      "bytes": 12624,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_alias.go",
+      "git_blob": "af579c2ee4bbbe00ef534788452e9f767beae4fe",
+      "sha256": "66351c4551a9a61138965d3aae61cda75399eafaba9f677193d59659153680dd",
+      "bytes": 457,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_clienthello_json.go",
+      "git_blob": "d4194ed65776895e8ae963180b5fafbd5b57b7a9",
+      "sha256": "469f7053eb3afb33479019b37eff8b92742660f398aaa645aa5c6070a95afe4c",
+      "bytes": 5346,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "u_common.go",
+      "git_blob": "3b9e7dcae7cbb55e1ef8bdfd35d89e84230b4fb3",
+      "sha256": "1f698c52cf4974e38452a491d5035cba51e242970e356745456e524126aeb153",
+      "bytes": 28383,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_conn.go",
+      "git_blob": "255563088129ff1e43daac68382f61cfc09796cf",
+      "sha256": "6b02882a0c5ab3c4b8a69f4b2b0f9657798eabece95df1f48fb9a6c2059190d1",
+      "bytes": 34713,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_ech.go",
+      "git_blob": "716562c466554caaf218ac1943b0e8d4b9978756",
+      "sha256": "5eb9d0cd7a9d09317fcba89af01ee86f59a919a539bb175e268635e11829dd1e",
+      "bytes": 11364,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_ech_config.go",
+      "git_blob": "633c7b128eb52b0292371b349f427924d6a611b7",
+      "sha256": "eaf29496e0e60434ffb938cab4b781ffa0dbd4982bcb264fc8d7177086e232d7",
+      "bytes": 3678,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_fingerprinter.go",
+      "git_blob": "61afc7332947f619de5ba58388249df1791a0ca6",
+      "sha256": "6c58a9821809111d1dae37a9f9912c4c36036b97e5f43806335f106ed0504dee",
+      "bytes": 3016,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "u_handshake_client.go",
+      "git_blob": "d6ec7f23fa931f243b4be1bd111d6c4ecc2e23be",
+      "sha256": "d2b103e8d4c80f8cf8a2d10c02678ecb96970d8e8099b76cd45bac647e67903c",
+      "bytes": 15507,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_handshake_messages.go",
+      "git_blob": "2d48025ef5cff0a1328efa0dd27f0b192c68811e",
+      "sha256": "f21d480ac43e6425caa4c5a116b35ab54be77d69fb3bc6a8ed0f74022ea7edea",
+      "bytes": 3839,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_hpke.go",
+      "git_blob": "08d5eb4f42dde284b87144ebc0e301245569152b",
+      "sha256": "7e3e4a5dd706bf8447cdb58c45b02d8a3bf11e6dee70677d391b9af0c068f94c",
+      "bytes": 1471,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_parrots.go",
+      "git_blob": "9a7a7673619f7bef93b46232eb7d5b3b303ffd10",
+      "sha256": "af38d80047916b7b11827269f494e4fe58997f57068ac3fc96abe984221de7e3",
+      "bytes": 90843,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_pre_shared_key.go",
+      "git_blob": "4ad546e114cc089b6cd859aaa9f48b0609ef8d03",
+      "sha256": "13f6ce0d5ea7997b9f2b6e1988b358344729397fca823a25436ee0200084e4db",
+      "bytes": 17956,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_prng.go",
+      "git_blob": "cbd840818a75a0eba07df6dfaa4d303f9fdeddf4",
+      "sha256": "e1c740dfc333aff0aa7652ae1f423cd71b44eb3f5dd3bf19135ecafdb9ec93c6",
+      "bytes": 4714,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_public.go",
+      "git_blob": "791791ab867bb1481828f8ea40adcf3cdf622f0e",
+      "sha256": "5b5489c57c0b57d176268a99cf16da2912639b8a121d2cd00f8dbade2c5c7181",
+      "bytes": 22311,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_quic.go",
+      "git_blob": "ab53c12ebda9c42f56ffac65fa6a5fcaf0efc322",
+      "sha256": "eda6e64e0f504e60c154e603440b2566fb9ac906d517d3be52bcc293329cb2d7",
+      "bytes": 6318,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_quic_transport_parameters.go",
+      "git_blob": "94cc9b63c3d3c15fc6b2ee2a92baf03071810bd8",
+      "sha256": "9f562181dc006bf9884b853925d79ddd5e715e8a55f76b6a2ed04b3fbaedff89",
+      "bytes": 7894,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "u_roller.go",
+      "git_blob": "a1c5291423c8647b6d2bc9e298d7f61ac5dca9ec",
+      "sha256": "d79d2f10df33539bc9c90b6f4aaf9e56120741f6d4340b7f20e7931d44faf411",
+      "bytes": 2729,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": true
+    },
+    {
+      "path": "u_session_controller.go",
+      "git_blob": "ce81dddc08aee040e4f44b8eb21f773c325bba37",
+      "sha256": "2decba6a89de7c8253a6651b4f15cd103bcd8c8f7481499daaa02daecdd59f02",
+      "bytes": 17203,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_session_ticket.go",
+      "git_blob": "f2785d8141c3104fe6c0b432ef729d23281613f9",
+      "sha256": "231f2efa4ce51a56ea28906413da0822006fe2e1a9720e1a0a69513ecec6e2ca",
+      "bytes": 2292,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    },
+    {
+      "path": "u_tls_extensions.go",
+      "git_blob": "1bd6c00f52d707c034a0b6376721e203bc2b3126",
+      "sha256": "c16d05de12a71ccccce7e2248ab92a7cee646432892bea6624a06347bd682830",
+      "bytes": 51870,
+      "origins": [
+        "libpokrov-core-arm64-v8a.offline.stdout.json",
+        "libpokrov-core-armeabi-v7a.offline.stdout.json",
+        "libpokrov-core-x86.offline.stdout.json",
+        "libpokrov-core-x86_64.offline.stdout.json",
+        "pokrov-core.offline.stdout.json"
+      ],
+      "same_blob_in_licensed_branch": false
+    }
+  ],
+  "selected_file_count": 77,
+  "same_blob_count_in_licensed_branch": 38,
+  "scope": "Explicit u_prng.go license link and missing copyright attribution. Newer branch license does not establish clearance for the whole pinned fork."
+}

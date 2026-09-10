@@ -193,7 +193,7 @@
     },
     "native_go_notices": {
       "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
-      "sha256": "106fea6a67ff40a16277dc2bd5922dcd8ddeaf379ee480c6a64d7dd445fa538d",
+      "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a",
       "source_commit": "904e440aca98cb6419744c5c04c83223a6d6380e",
       "go_toolchain": "go1.26.8",
       "scope": "Verbatim root, source-package, bounded full file-header and identified embedded-native license notices for recorded Android/Windows Go inputs; complete licensing and corresponding-source clearance remains separate",

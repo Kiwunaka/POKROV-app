@@ -1,0 +1,20 @@
+{
+  "status": "PASS_NOTICE_ATTRIBUTION_ADDED",
+  "asset": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
+  "core_revision": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "old_bytes": 664866,
+  "old_sha256": "106fea6a67ff40a16277dc2bd5922dcd8ddeaf379ee480c6a64d7dd445fa538d",
+  "bytes": 665657,
+  "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a",
+  "previous_asset_prefix_unchanged": true,
+  "previous_verbatim_blocks_verified": 185,
+  "added_file_header": {
+    "source": "github.com/Psiphon-Labs/utls@24497d415a8de0d11c20c3a47724fb88897ed725/u_prng.go",
+    "body_offset": 665486,
+    "bytes": 170,
+    "sha256": "d2f2b8067fefd9dfe21de7b51a048b8fa4ac20439bcd5d229d97e87ac010046b"
+  },
+  "license_body_already_present_sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067",
+  "root_license_gap": "OPEN_PINNED_FORK",
+  "complete_license_clearance": false
+}

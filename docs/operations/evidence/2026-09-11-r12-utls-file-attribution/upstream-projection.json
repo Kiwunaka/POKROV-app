@@ -1,0 +1,18 @@
+{
+  "module_revision": "24497d415a8de0d11c20c3a47724fb88897ed725",
+  "official_licensed_branch_revision": "7a1fc711853d6dd31c10eca10bbd53bf3b082aac",
+  "license_first_commit": "37f7eb6d8aac00e15d4e4235189a9c5c26616dfb",
+  "branches_are_diverged": true,
+  "tree_responses": [
+    {
+      "file": "pinned-tree.json",
+      "sha256": "5958e090848541a308eda91a604dd112f9d07485646c2cc55a82e396cc08ec22"
+    },
+    {
+      "file": "licensed-tree.json",
+      "sha256": "b2566918187ec59821785b095bb47245eff88e90c441099e5bae3735356c7e39"
+    }
+  ],
+  "comparison_response_sha256": "78c16653e733ed8750927f1ea601ed58a7d6760c2963ccdd25591c975bba67ff",
+  "scope": "Authentic reference license retained; not a grant inferred for every file in the divergent pinned fork."
+}
