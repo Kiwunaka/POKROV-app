@@ -583,6 +583,15 @@ PreparedSupportBundle preparePokrovClientSupportBundle({
         : SupportDiagnosticProfile.extended,
     now: now,
     extendedPolicy: supportModePolicy,
+    excludedOptionalCategories: {
+      if (supportModePolicy != null)
+        for (final category in const [
+          DiagnosticCategory.system,
+          DiagnosticCategory.events,
+          DiagnosticCategory.crashes,
+        ])
+          if (!supportModePolicy.allowedCategories.contains(category)) category,
+    },
   );
 }
 
