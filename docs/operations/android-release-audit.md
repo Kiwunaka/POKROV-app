@@ -33,6 +33,15 @@ A separate reconnect restored routes/rules and removed TUN; the earlier handoff
 rule-hash difference remains unproven. Exact installed AWG, full D01/D02/A03
 and final channel gates remain open.
 
+## Target architecture packaging
+
+Android native dependency filters and ABI splits follow Flutter's
+`--target-platform`. An ARM64-only command packages only `arm64-v8a`; it no
+longer includes other Core ABIs without matching Flutter application libraries.
+The default remains ARMv7, ARM64 and x86_64. The canonical production script
+still requests all three architectures and four direct APKs plus the store AAB.
+A single-architecture local build does not satisfy that complete release set.
+
 ## Current Truth
 
 The [2026-09-07 network handoff receipt](evidence/2026-09-07-r12-network-handoff/README.md)

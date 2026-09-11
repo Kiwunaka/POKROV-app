@@ -31,6 +31,14 @@ def singleVersionSplitApks = providers
         .orElse(false)
         .get()
 
+// Match dependency native libraries to the same architectures compiled by Flutter.
+def targetAbis = providers.gradleProperty("target-platform")
+        .orElse("android-arm,android-arm64,android-x64")
+        .get().split(",").collect { platform ->
+            ["android-arm": "armeabi-v7a", "android-arm64": "arm64-v8a",
+             "android-x64": "x86_64"][platform]
+        }
+
 android {
     namespace = "space.pokrov.pokrov_android_shell"
     compileSdk = flutter.compileSdkVersion
@@ -61,7 +69,7 @@ android {
         abi {
             enable = singleVersionSplitApks
             reset()
-            include "armeabi-v7a", "arm64-v8a", "x86_64"
+            include(*targetAbis)
             universalApk = singleVersionSplitApks
         }
     }
@@ -104,6 +112,10 @@ android {
     }
 
     buildTypes {
+        all {
+            ndk.abiFilters.clear()
+            ndk.abiFilters.addAll(targetAbis)
+        }
         release {
             if (hasProductionReleaseSigning) {
                 signingConfig = signingConfigs.production
