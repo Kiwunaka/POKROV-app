@@ -1,0 +1,58 @@
+{
+  "operation": "connected_uninstall_and_purge",
+  "source_version": "1.2.0~beta.30-7",
+  "started_epoch": 1789134559.2452226,
+  "running_observed": true,
+  "post_upgrade_full_mode_http_probes": [
+    {
+      "attempt": 1,
+      "target": "app",
+      "curl_exit": 35,
+      "http_code": "000",
+      "expected": "200",
+      "pass": false
+    },
+    {
+      "attempt": 1,
+      "target": "marker",
+      "curl_exit": 0,
+      "http_code": "204",
+      "expected": "204",
+      "pass": true
+    },
+    {
+      "attempt": 2,
+      "target": "app",
+      "curl_exit": 0,
+      "http_code": "200",
+      "expected": "200",
+      "pass": true
+    },
+    {
+      "attempt": 2,
+      "target": "marker",
+      "curl_exit": 35,
+      "http_code": "000",
+      "expected": "204",
+      "pass": false
+    },
+    {
+      "attempt": 3,
+      "target": "app",
+      "curl_exit": 35,
+      "http_code": "000",
+      "expected": "200",
+      "pass": false
+    },
+    {
+      "attempt": 3,
+      "target": "marker",
+      "curl_exit": 35,
+      "http_code": "000",
+      "expected": "204",
+      "pass": false
+    }
+  ],
+  "post_upgrade_ru_direct_rules": 0,
+  "post_upgrade_system_dns": true
+}

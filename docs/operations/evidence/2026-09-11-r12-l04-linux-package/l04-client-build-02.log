@@ -1,0 +1,3 @@
+Building Linux application...                                   
+ERROR: Target dart_build failed: Error: Failed to find any of [llvm-ar, ar] in LocalDirectory: '/usr/lib/llvm-18/bin'
+Build process failed

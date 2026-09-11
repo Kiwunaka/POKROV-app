@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+case "$1" in
+    configure)
+        install -d -o root -g root -m 0700 /var/lib/pokrov
+        systemctl daemon-reload
+        if test -z "$2"; then
+            systemctl enable pokrov-linuxd.socket pokrov-linux-sleep.service
+        fi
+        if systemctl is-enabled --quiet pokrov-linuxd.socket; then
+            systemctl start pokrov-linuxd.socket
+        fi
+        ;;
+esac

@@ -1,0 +1,20 @@
+{
+  "status": "PASS_INSTALL",
+  "package_absent_before": true,
+  "product_state_absent_before": true,
+  "signature_verified": true,
+  "sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+  "network_before": {
+    "routes4": "4c17891a726a7fa6bcb2b6250486b0f3d22b09c19b501ffd07680e6a0b8f0d01",
+    "routes6": "6677a96ff304086c57809fabcb41e8252e354d3cb011f0226bf44c8645da84a0",
+    "rules4": "e79a76eff86a78de4ce5d38c6277dbafbab227656214e1e116d9ac63597dbb9d",
+    "rules6": "78fc521d26d8f02af636ce8e1c74bb782cbfd272b8a81529bea0adb9a68ed0ea",
+    "nft": "e8e2201c1f9ccf2da32a899d44795084d1168072cc9ddf3a6f57a212767ac173",
+    "dns": "9fc34b8019cb213b2ed161e532123f02ff21f655bb32231e148b9fe6a3966267",
+    "domains": "ce9364bf1cf29bf3bb55c5d7b43dba6d4b6b79a55f089117b21d361d8c1961eb"
+  },
+  "started_epoch": 1789132665.7427156,
+  "apt_exit_code": 0,
+  "installed_version": "1.2.0~beta.30-7",
+  "finished_epoch": 1789132673.4807918
+}

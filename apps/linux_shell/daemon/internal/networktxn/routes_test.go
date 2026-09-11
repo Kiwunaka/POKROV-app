@@ -63,6 +63,28 @@ func TestRecoveryRejectsReplacementNftTable(t *testing.T) {
 	}
 }
 
+func TestRouteRecoveryAcceptsNativeIPv6RejectRoute(t *testing.T) {
+	plan := validPlan(t)
+	plan.dnsServers = plan.dnsServers[:1]
+	runner := &scriptedCommandRunner{responses: []commandResponse{
+		{output: `[]`}, {output: `[]`}, {output: `[]`},
+		{output: `[{"type":"7","dst":"default","dev":"lo","table":"20555","protocol":"243","metric":42700,"flags":[],"pref":"medium"}]`},
+		{},
+	}}
+	p := &routeParticipant{runner: runner, dirty: true}
+	if err := p.Rollback(context.Background(), plan); err != nil {
+		t.Fatal(err)
+	}
+	if p.PendingRollback() || len(runner.calls) != 5 || runner.calls[4].arguments[3] != "unreachable" {
+		t.Fatal("native IPv6 reject route was not restored")
+	}
+	var foreign map[string]json.RawMessage
+	_ = json.Unmarshal([]byte(`{"type":"7","dst":"default","dev":"foreign0","table":"20555","protocol":"243","metric":42700,"flags":[],"pref":"medium"}`), &foreign)
+	if ownedRouteObject("route", "-6", foreign, plan) {
+		t.Fatal("changed reject route device accepted")
+	}
+}
+
 func TestRouteMatcherRejectsUnrecognizedSelector(t *testing.T) {
 	var object map[string]json.RawMessage
 	_ = json.Unmarshal([]byte(`{"priority":20555,"not":null,"src":"all","fwmark":"0x504f4b52","table":"20555","protocol":"243","iif":"foreign0"}`), &object)

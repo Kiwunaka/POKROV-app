@@ -1,0 +1,1 @@
+{"status": "RESTARTED_SAME_DISK_AFTER_GUEST_REBOOT", "previous_pid": 1891755, "pid": 1908675, "same_retained_disk": true, "original_no_reboot_flag": true, "no_reboot_flag_removed_for_subsequent_test": true, "previous_process_verified_absent": true}

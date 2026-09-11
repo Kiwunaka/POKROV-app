@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+case "$1" in
+    remove|purge)
+        systemctl daemon-reload
+        ;;
+esac
+# Private profiles and user settings are retained, including on purge.
+# Uninstall must not remove customer data or a recovery record.

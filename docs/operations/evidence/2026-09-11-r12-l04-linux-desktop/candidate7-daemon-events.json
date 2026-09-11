@@ -1,0 +1,1046 @@
+[
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "daemon_start",
+    "POKROV_OUTCOME": "started",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "host_probe",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "profile",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "connect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "disconnect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "profile",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "connect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "unavailable",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_ERROR_CODE": "linux_authorization_timeout",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "request",
+    "POKROV_OUTCOME": "denied",
+    "POKROV_ERROR_CODE": "linux_authorization_denied",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "disconnect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "profile",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "connect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "disconnect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "profile",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "connect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "disconnect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "4"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "daemon_start",
+    "POKROV_OUTCOME": "started",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "profile",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "connect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "daemon_start",
+    "POKROV_OUTCOME": "started",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "unavailable",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_ERROR_CODE": "linux_authorization_timeout",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "request",
+    "POKROV_OUTCOME": "denied",
+    "POKROV_ERROR_CODE": "linux_authorization_denied",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "0"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "profile",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "connect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "disconnect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "1"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "profile",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "connect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "disconnect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "2"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "profile",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "authorization",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "checkpoint",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "apply",
+    "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "connect",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "resolved",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "routes",
+    "POKROV_GENERATION": "3"
+  },
+  {
+    "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+    "POKROV_EVENT": "network_transaction",
+    "POKROV_OUTCOME": "pass",
+    "POKROV_NETWORK_STAGE": "rollback",
+    "POKROV_NETWORK_SUBSYSTEM": "nftables",
+    "POKROV_GENERATION": "3"
+  }
+]

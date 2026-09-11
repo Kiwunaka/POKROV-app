@@ -1149,6 +1149,9 @@ if (-not (Test-Path -LiteralPath $attributesPath -PathType Leaf)) {
   $requiredLineEndingPaths = @(
     'AGENTS.md',
     'docs/README.md',
+    'apps/linux_shell/packaging/debian/postinst',
+    'apps/linux_shell/packaging/debian/prerm',
+    'apps/linux_shell/packaging/debian/postrm',
     'packages/app_shell/test/fixtures/app-first-session-v0.json',
     'packages/app_shell/test/fixtures/secure-session-v0.txt',
     'packages/app_shell/test/fixtures/client-experience-v0.json',
@@ -1171,7 +1174,7 @@ if (-not (Test-Path -LiteralPath $attributesPath -PathType Leaf)) {
     $lineEndingAttributeRules | Where-Object { $requiredLineEndingAttributes -cnotcontains $_ }
   )
   if ($unexpectedLineEndingAttributes.Count -gt 0) {
-    $errors += ".gitattributes must not define additional eol attributes beyond the approved client contract and migration fixture files: $($unexpectedLineEndingAttributes -join ', ')"
+    $errors += ".gitattributes must not define additional eol attributes beyond the approved client contract, migration fixture and package hook files: $($unexpectedLineEndingAttributes -join ', ')"
   }
 
   $effectiveAttributeOutput = @(& git -C $root check-attr text eol -- @requiredLineEndingPaths 2>&1)

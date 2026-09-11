@@ -136,10 +136,20 @@ final class LinuxDaemonRuntimeEngine implements PokrovRuntimeEngine {
     ManagedProfilePayload payload,
   ) async {
     final name = payload.profileName.trim();
-    final config = payload.configPayload.trim();
+    var config = payload.configPayload.trim();
     if (!RegExp(r'^[a-zA-Z0-9_.-]{1,80}$').hasMatch(name) ||
         config.isEmpty ||
         utf8.encode(config).length > 512 * 1024) {
+      return _failureSnapshot(
+        failureKind: 'linux_profile_invalid',
+        messageCode: 'profile_invalid',
+      );
+    }
+    try {
+      // Linux beta has no WARP runtime. Strip API metadata using the same
+      // materializer as the other Core hosts before crossing the IPC boundary.
+      config = _materializePokrovCoreConfig(config, WarpRuntimePolicy.disabled);
+    } on FormatException {
       return _failureSnapshot(
         failureKind: 'linux_profile_invalid',
         messageCode: 'profile_invalid',

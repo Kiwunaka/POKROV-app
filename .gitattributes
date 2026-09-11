@@ -37,3 +37,9 @@ docs/operations/evidence/2026-09-08-r12-revocation-availability/*.json -text whi
 docs/operations/evidence/2026-09-09-r12-candidate33-retention/*.json -text whitespace=cr-at-eol
 docs/operations/evidence/2026-09-09-r12-candidate33-retention/*.py -text whitespace=cr-at-eol
 docs/operations/evidence/2026-09-09-r12-core-source-binding/*.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+apps/linux_shell/packaging/debian/postinst text eol=lf
+apps/linux_shell/packaging/debian/prerm text eol=lf
+apps/linux_shell/packaging/debian/postrm text eol=lf
+apps/linux_shell/packaging/linux-packages-public.asc -text
+docs/operations/evidence/2026-09-11-r12-l04-linux-package/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+docs/operations/evidence/2026-09-11-r12-l04-linux-desktop/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol

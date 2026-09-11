@@ -1,0 +1,189 @@
+{
+  "candidate_sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+  "authorization": "root peer credential in isolated recovery harness; GUI polkit tested separately",
+  "profile_source": "unchanged retained profile from successful package7b connected uninstall; no API refresh",
+  "started_epoch": 1789135954.7079334,
+  "steps": [
+    {
+      "action": "connect",
+      "ok": true,
+      "phase": "running",
+      "last_stop_reason": null,
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "disconnect",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "connect",
+      "ok": true,
+      "phase": "running",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "disconnect",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "connect",
+      "ok": true,
+      "phase": "running",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "disconnect",
+      "ok": false,
+      "phase": null,
+      "last_stop_reason": null,
+      "host_health": null,
+      "dns_state": null,
+      "uplink_state": null
+    },
+    {
+      "action": "invalidate_profile",
+      "ok": false,
+      "phase": null,
+      "last_stop_reason": null,
+      "host_health": null,
+      "dns_state": null,
+      "uplink_state": null
+    },
+    {
+      "action": "disconnect",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "connect",
+      "ok": true,
+      "phase": "running",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "status",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "runtime_error",
+      "host_health": "degraded",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "connect",
+      "ok": true,
+      "phase": "running",
+      "last_stop_reason": "runtime_error",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "initialize",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "runtime_error",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "connect",
+      "ok": true,
+      "phase": "running",
+      "last_stop_reason": "runtime_error",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "disconnect",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "disconnect",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    }
+  ],
+  "fixed_profile_initial_http": [
+    {
+      "curl_exit": 0,
+      "http_code": "204"
+    },
+    {
+      "curl_exit": 0,
+      "http_code": "204"
+    },
+    {
+      "curl_exit": 0,
+      "http_code": "204"
+    }
+  ],
+  "normal_restore": "PASS",
+  "foreign_rule_preserved": "PASS",
+  "partial_rollback_retains_journal_filter_and_profile": "PASS",
+  "partial_rollback_retry": "PASS",
+  "core_sigkill_restore": "PASS",
+  "fixed_profile_after_daemon_restart_http": [
+    {
+      "curl_exit": 0,
+      "http_code": "204"
+    },
+    {
+      "curl_exit": 0,
+      "http_code": "204"
+    },
+    {
+      "curl_exit": 0,
+      "http_code": "204"
+    }
+  ],
+  "daemon_sigkill_restart_restore": "PASS",
+  "profile_bytes_unchanged": true,
+  "status": "PASS_CURRENT_PACKAGE_RECOVERY",
+  "final_network_matches_baseline": {
+    "routes4": true,
+    "routes6": true,
+    "rules4": true,
+    "rules6": true,
+    "nft": true,
+    "dns": true,
+    "domains": true
+  },
+  "finished_epoch": 1789135986.1621985
+}

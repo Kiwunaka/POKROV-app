@@ -1,0 +1,416 @@
+[
+  {
+    "path": "candidate7-after-full-disconnect.json",
+    "sha256": "7af106c1a5001235a06c94b9f71ae601143e953f2c10d3b6168a4a13773387f2",
+    "bytes": 189,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-after-full-disconnect.json"
+  },
+  {
+    "path": "candidate7-after-ru-disconnect.json",
+    "sha256": "7af106c1a5001235a06c94b9f71ae601143e953f2c10d3b6168a4a13773387f2",
+    "bytes": 189,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-after-ru-disconnect.json"
+  },
+  {
+    "path": "candidate7-connected-uninstall.json",
+    "sha256": "ff16b4d5defc4df037347454ac5013c00213dec0ad261a20bd4e914bb89d20f3",
+    "bytes": 1180,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-connected-uninstall.json"
+  },
+  {
+    "path": "candidate7-connected-upgrade.json",
+    "sha256": "479bc0a37d385af90b3f8904447c387644da82dbab5f9a92ba97567470d90e17",
+    "bytes": 1198,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-connected-upgrade.json"
+  },
+  {
+    "path": "candidate7-connected-upgrade.log",
+    "sha256": "0aed3bc6f2d1cf9bd42126bc75d168f4597962bbc4ea76698547ecd44114540f",
+    "bytes": 1548,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-connected-upgrade.log"
+  },
+  {
+    "path": "candidate7-daemon-events.json",
+    "sha256": "de2d8e7f4dc9391078fad90d88edd5b4e237fed492ca82214fbd4ae6441f2e09",
+    "bytes": 31276,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-daemon-events.json"
+  },
+  {
+    "path": "candidate7-desktop-environment.json",
+    "sha256": "300bde37532a80cd867d8329269a472341f15f3c87d4249b0e71108d0a5a3fca",
+    "bytes": 873,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-desktop-environment.json"
+  },
+  {
+    "path": "candidate7-full-443-sampled-route-proof.json",
+    "sha256": "307fcf61dca607b09d67252dcc798e14223ebecbc7b48b307f4726e46dc1ec1e",
+    "bytes": 1068,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-full-443-sampled-route-proof.json"
+  },
+  {
+    "path": "candidate7-full-http-diagnostic.json",
+    "sha256": "fdc9d944e3a4441df587a0a1c0c7b0b2ded6a2768b13135a1248722973598806",
+    "bytes": 1374,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-full-http-diagnostic.json"
+  },
+  {
+    "path": "candidate7-full-profile-shape.json",
+    "sha256": "4da7a4cc6d4f3732927a781a95144dca2e3b5da5a402b67aabc0151cf417409c",
+    "bytes": 13113,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-full-profile-shape.json"
+  },
+  {
+    "path": "candidate7-full-transport-shape.json",
+    "sha256": "450ea8530c3e7854aae66a954ecb51d4b81cdea0ef76e44253e461752b62bdc3",
+    "bytes": 325,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-full-transport-shape.json"
+  },
+  {
+    "path": "candidate7-installed-permissions.json",
+    "sha256": "5968fde770c1fe293371ef4c85ec9a7659926f24c9de4ce35b0ef6cff3500283",
+    "bytes": 2135,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-installed-permissions.json"
+  },
+  {
+    "path": "candidate7-no-vpn-http-control.json",
+    "sha256": "fdc9d944e3a4441df587a0a1c0c7b0b2ded6a2768b13135a1248722973598806",
+    "bytes": 1374,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-no-vpn-http-control.json"
+  },
+  {
+    "path": "candidate7-rollback-to-baseline.json",
+    "sha256": "214da0264f1a67521896c61771a0eb23957fd69caa11e119fcd424bd19eddfc4",
+    "bytes": 821,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-rollback-to-baseline.json"
+  },
+  {
+    "path": "candidate7-rollback-to-baseline.log",
+    "sha256": "613ab25401bd35dca68abaf3ddb72b54b08b0a98bcf06214273a0195851d3c08",
+    "bytes": 1656,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-rollback-to-baseline.log"
+  },
+  {
+    "path": "candidate7-ru-443-sampled-route-proof.json",
+    "sha256": "9518e361c91987e416fdc845b125462f3ff770f2c72d0dc1d3b49d8e4cfb5a1f",
+    "bytes": 1063,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-ru-443-sampled-route-proof.json"
+  },
+  {
+    "path": "candidate7-ru-443-settled-route-proof.json",
+    "sha256": "f4d0a11ccff45e7d88a16fd02a52cd0fab9f0c529a98fdc7f1570b35ae22a604",
+    "bytes": 978,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-ru-443-settled-route-proof.json"
+  },
+  {
+    "path": "candidate7-ru-route-proof.json",
+    "sha256": "10f34839054600d994ed01beb206d5215b946dd64dbb96b5af726f3f1361b996",
+    "bytes": 897,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-ru-route-proof.json"
+  },
+  {
+    "path": "candidate7-uninstall-wait-timeout.json",
+    "sha256": "a544541ad9d2ae8beabc26e2cd47f2e26d12ca17a7abe08c3b41e800edab3c47",
+    "bytes": 157,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-uninstall-wait-timeout.json"
+  },
+  {
+    "path": "candidate7b-connected-uninstall.json",
+    "sha256": "903befa7e64616c82c8037a60d7bcec8aa8fe49f6e0aa7fe2f1498dc0a23c2da",
+    "bytes": 2623,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7b-connected-uninstall.json"
+  },
+  {
+    "path": "candidate7b-connected-uninstall.log",
+    "sha256": "7ff538e3636e9512fd589417005e799946c7df5ed39a7443ccb4302fd8465ff7",
+    "bytes": 1861,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7b-connected-uninstall.log"
+  },
+  {
+    "path": "clean-install.json",
+    "sha256": "ec50a2dab8060771668815490f1fcf02a62086459ee7330e49af580a50568005",
+    "bytes": 953,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\clean-install.json"
+  },
+  {
+    "path": "clean-install.log",
+    "sha256": "1f30c813d29cf090e24b8e14f3de72fd68ec8d83d4055e2cffb9afad0fe9bfb3",
+    "bytes": 1885,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\clean-install.log"
+  },
+  {
+    "path": "native-signature-verification.json",
+    "sha256": "499f81825930be25d574bc0a014739329cfca2e2749016cc30ff378a3ab477cf",
+    "bytes": 394,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\native-signature-verification.json"
+  },
+  {
+    "path": "candidate7-baseline-audit.json",
+    "sha256": "aa7e7359430e0e1e59b98c8e28126e9051b4576d03cf0da7a06b47688c83c880",
+    "bytes": 627,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\candidate7-baseline-audit.json"
+  },
+  {
+    "path": "candidate7-package-audit.json",
+    "sha256": "813d8251ecf489ccca0f63d5f6061604c488ff25d34bbf2038748d530456ad05",
+    "bytes": 91546,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\candidate7-package-audit.json"
+  },
+  {
+    "path": "candidate7-build-1.log",
+    "sha256": "7269e1347d22e6d3ddad9ee5fd0d484319660d0c5fbd745d88faf17cdb134578",
+    "bytes": 820,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\candidate7-build-1.log"
+  },
+  {
+    "path": "candidate7-build-7.log",
+    "sha256": "6f36c24fd24b622c8590285e32e2e43302e15a7111ad99678429f6e45fedadda",
+    "bytes": 812,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\candidate7-build-7.log"
+  },
+  {
+    "path": "candidate7-unit-verify.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\candidate7-unit-verify.log"
+  },
+  {
+    "path": "package7-signature-verify.log",
+    "sha256": "d65f0365d5c36de9d9200bafef27b51a9ce0a49c1ebbef686e550dd99a975c94",
+    "bytes": 633,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\package7-signature-verify.log"
+  },
+  {
+    "path": "package7-signature.json",
+    "sha256": "b8dc447a432bd26357454643f87d61b8da412c3a3fb8f4b34047a829145eb394",
+    "bytes": 569,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\package7-signature.json"
+  },
+  {
+    "path": "baseline7-signature-verify.log",
+    "sha256": "d764468c7d4571fe47efe07f42dfdd59150355f263d07ba3a13bf34b1baf1ba2",
+    "bytes": 633,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\baseline7-signature-verify.log"
+  },
+  {
+    "path": "baseline7-signature.json",
+    "sha256": "99c3844d961914723e917461070199e40ddc872d3a3dc21d7fa52a7f2ce5bf13",
+    "bytes": 569,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\baseline7-signature.json"
+  },
+  {
+    "path": "pokrov_1.2.0~beta.30-7_amd64.json",
+    "sha256": "63267799ac8c31d59f31b8ca4c1039a3e515d397d0ed604e2aa9aac9ddfd0de9",
+    "bytes": 722,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\pokrov_1.2.0~beta.30-7_amd64.json"
+  },
+  {
+    "path": "pokrov_1.2.0~beta.30-1_amd64.json",
+    "sha256": "93d1e9b524c2d3f6a4eac601128ef81ab5d3f6f0598d86ae9d6465411e8f05e9",
+    "bytes": 722,
+    "source": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence\\pokrov_1.2.0~beta.30-1_amd64.json"
+  },
+  {
+    "path": "l04-client-build-08.json",
+    "sha256": "f26104bfd715965b7afe9cbec8a599b7706591c913e01cc755857972b0ef4602",
+    "bytes": 698,
+    "source": "C:\\r12-l04-fix07-20260911\\build08-public-evidence\\l04-client-build-08.json"
+  },
+  {
+    "path": "l04-client-build-08.log",
+    "sha256": "ab45d1ca7b816dd7135fad58593558e054d143f53f61374732a246ea3a2d02a4",
+    "bytes": 1998,
+    "source": "C:\\r12-l04-fix07-20260911\\build08-public-evidence\\l04-client-build-08.log"
+  },
+  {
+    "path": "l04-public-build-defines-08.json",
+    "sha256": "ddc4c32a7a03dbddc6470a59ddda13bee747e033fba740f39578049623dcea24",
+    "bytes": 491,
+    "source": "C:\\r12-l04-fix07-20260911\\build08-public-evidence\\l04-public-build-defines-08.json"
+  },
+  {
+    "path": "candidate4-public-failure.json",
+    "sha256": "dcc226feba995a58802784b0dc178cd6ec8698486f740a25851c72bc72d2860a",
+    "bytes": 7825,
+    "source": "C:\\r12-l04-fix07-20260911\\fix07-public-evidence\\candidate4-public-failure.json"
+  },
+  {
+    "path": "clean-candidate7-first-frame.png",
+    "sha256": "fe7420f9fe90e5993eec9ce7464dadffc76dcd59b23e0e32cb4416f58d1694f0",
+    "bytes": 115986,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\clean-candidate7-first-frame.png"
+  },
+  {
+    "path": "clean-candidate7-auth-prompt.png",
+    "sha256": "2b2ce1049edf593a2d0c7d67de945ee2f8ce3e47649bbe4d8d006a8b0b5d311a",
+    "bytes": 145537,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\clean-candidate7-auth-prompt.png"
+  },
+  {
+    "path": "clean-candidate7-full-selected.png",
+    "sha256": "3f0828d269611d0d85c3c8648272478c8337b91282584c9aacd7b5016ccc79f2",
+    "bytes": 159514,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\clean-candidate7-full-selected.png"
+  },
+  {
+    "path": "clean-candidate7-after-upgrade-state.png",
+    "sha256": "6de2a8a4fa06dc9daf2e812c51cf5063dfa38cf2434f8f46617640fad7c8051d",
+    "bytes": 159982,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\clean-candidate7-after-upgrade-state.png"
+  },
+  {
+    "path": "clean-candidate7-final-connected.png",
+    "sha256": "08e15e58d4278c7fdfff0a2691310fdd0c613f1459092905fb88ad73dffe52f5",
+    "bytes": 162167,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\clean-candidate7-final-connected.png"
+  },
+  {
+    "path": "route-observer7-443-sampled.template.py",
+    "sha256": "0b396c5c042a4195d0f32c98c68fc03891bd7caaedad372d4feb748d86ef3e37",
+    "bytes": 3887,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\route-observer7-443-sampled.template.py"
+  },
+  {
+    "path": "guest-installed-permissions.py",
+    "sha256": "e435c2f0ec7304e311e4d45a51de1519681c281fbccf3918784b5e24a4ea2566",
+    "bytes": 1369,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-installed-permissions.py"
+  },
+  {
+    "path": "guest-rollback7.py",
+    "sha256": "900f78b6bf717e2d136d6ac0a477e6190e158969eef45953d74c815451970a7c",
+    "bytes": 3052,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-rollback7.py"
+  },
+  {
+    "path": "guest-connected-upgrade7.py",
+    "sha256": "408fcc4f00e21dcf42a4125db3578445eb0d2160645ee59836367f593b559b37",
+    "bytes": 4725,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-connected-upgrade7.py"
+  },
+  {
+    "path": "guest-connected-uninstall7b.py",
+    "sha256": "a037edf22921b2f2045b204e9b05796e0ad8834126bcd06f8b36a48b21c9fe73",
+    "bytes": 7404,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-connected-uninstall7b.py"
+  },
+  {
+    "path": "guest-full-http-diagnostic7.py",
+    "sha256": "262bb53ae338345cb10deb64490d9cab09638f451172078aefc73caa788a0af7",
+    "bytes": 2131,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-full-http-diagnostic7.py"
+  },
+  {
+    "path": "guest-retain-native7.py",
+    "sha256": "e4885251f394fac2dab0c8ef68e94ec920e5f371b481f5fa84fb9a19b68cc263",
+    "bytes": 2050,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-retain-native7.py"
+  },
+  {
+    "path": "candidate7-reinstall-for-recovery.json",
+    "sha256": "012841f92a94c8ab56b7dd0dcb5d02e2a7da3b44d82a0c8b0a1cd12e6bf875ee",
+    "bytes": 349,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-reinstall-for-recovery.json"
+  },
+  {
+    "path": "candidate7-reinstall-for-recovery.log",
+    "sha256": "d8fa785fc66da985d4a583dafc561fc243d2620dedf2734350ffef35c9471fd8",
+    "bytes": 1855,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-reinstall-for-recovery.log"
+  },
+  {
+    "path": "candidate7-live-recovery.json",
+    "sha256": "6589d1e0f04c840df7065ae8776366e50101ca370cc9ed75a79166b6e8b5790a",
+    "bytes": 4640,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-live-recovery.json"
+  },
+  {
+    "path": "candidate7-sleep.json",
+    "sha256": "3f43cd5f4ef905b3900b30f00a2e5503461b1139dfdc40afefd2efa1584351b4",
+    "bytes": 3097,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-sleep.json"
+  },
+  {
+    "path": "candidate7-reboot.json",
+    "sha256": "1fcd61643ee7018d329d1ca33c98008ac7d4c7e2ef4b0abbe8aedcdc17ce7588",
+    "bytes": 3134,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-reboot.json"
+  },
+  {
+    "path": "candidate7-reboot-native.json",
+    "sha256": "71391c69a1177bc29707681ec743ef02ad277506a3edfcec78fb8057cb734233",
+    "bytes": 3133,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-reboot-native.json"
+  },
+  {
+    "path": "candidate7-recovery-terminal.json",
+    "sha256": "2dc5a2ae7f6044613ae2c71d9ddb4130fb529271a64a8f8cce1b9f8a6017b7b7",
+    "bytes": 202,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-recovery-terminal.json"
+  },
+  {
+    "path": "candidate7-sleep-qmp.json",
+    "sha256": "0da7e5712d59aa47be1664784f291bde0051acdb5925581bbaa07615abc486b6",
+    "bytes": 213,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\candidate7-sleep-qmp.json"
+  },
+  {
+    "path": "candidate7-reboot-qemu.json",
+    "sha256": "adea07c58f804276ab3c81c6fbe529fede177c83dffe242af930e2e41aa79352",
+    "bytes": 250,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\candidate7-reboot-qemu.json"
+  },
+  {
+    "path": "candidate7-reboot-native-qmp.json",
+    "sha256": "26152dfc8f9169d814bede3fd743088e794480d761aaecc4bef2f6caa0e1518f",
+    "bytes": 106,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\candidate7-reboot-native-qmp.json"
+  },
+  {
+    "path": "guest-recovery7.py",
+    "sha256": "1004707e1ddb343beaba2b0675b3f0f6c7c81a76308e4df5a0df318a8b1c0950",
+    "bytes": 6220,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-recovery7.py"
+  },
+  {
+    "path": "guest-sleep7.py",
+    "sha256": "3d65c9d309b8dca6a4399dd137ef16bde6925c826ed88fba4f069415c80750a4",
+    "bytes": 4695,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-sleep7.py"
+  },
+  {
+    "path": "guest-reboot7-before.py",
+    "sha256": "1b5f0b8e2bae18fd2026352d96dc4709473bfd58660667fa8a15932a85230796",
+    "bytes": 3671,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-reboot7-before.py"
+  },
+  {
+    "path": "guest-reboot7-after.py",
+    "sha256": "556d80d2f58be2420ae179d4ced4fe5e2e361792a5a8ffa35f9dbee817c7b4fa",
+    "bytes": 3949,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-reboot7-after.py"
+  },
+  {
+    "path": "guest-reboot7-native-before.py",
+    "sha256": "97c99a9ea08a5a5725f15d1bcdbaa6a05006cd6b1a1a689a7c524950ad4f0ba3",
+    "bytes": 3692,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-reboot7-native-before.py"
+  },
+  {
+    "path": "guest-reboot7-native-after.py",
+    "sha256": "8bf53a9e51f494b45a605b65422990fc16f53d3e19e6ea47a583dbaf8770e9bb",
+    "bytes": 3970,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-reboot7-native-after.py"
+  },
+  {
+    "path": "mini-wakeup7.py",
+    "sha256": "67ea5c70cc1127ed5a2f8437135c3ffbf4c9bb9766504e8cb660aa8fa6442990",
+    "bytes": 1124,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\mini-wakeup7.py"
+  },
+  {
+    "path": "mini-restart-reboot7.py",
+    "sha256": "fee361af56c28b8f84669e1aef59855aa25abd2fa3febd817f716d4c86df1f8a",
+    "bytes": 1111,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\mini-restart-reboot7.py"
+  }
+]

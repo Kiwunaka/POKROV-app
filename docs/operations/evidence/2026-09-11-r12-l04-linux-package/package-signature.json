@@ -1,0 +1,12 @@
+{
+  "status": "PASS_DETACHED_SIGNATURE",
+  "artifact_sha256": "cb21072ac3552219ff63e59c9adacd323107a431ace4c7346cd9c8370f8c5f53",
+  "signature_sha256": "fe02b0d5fc584df670f85d30595f5c809f9e35aeaa6adf75f769b17849a52a3a",
+  "fingerprint": "29636EDAF204D6F6101CB083B2281E647B0EDDA0",
+  "public_key_sha256": "7fcf205d9a71744f1d98e1d17724c0793330252e575b5633f258b91ed271c14c",
+  "verifier": "GnuPG gpgv with the single exported public key",
+  "package_bytes_unchanged": true,
+  "installed": false,
+  "published": false,
+  "distro_archive_trust": "NOT_CLAIMED"
+}

@@ -16,10 +16,27 @@ connectable socket does not grant authority; it only makes the authenticated
 system-service endpoint reachable without placing desktop users in a standing
 privileged group.
 
+The Linux entrypoint mounts the shared UI directly with its app-first
+bootstrapper. Operational observability remains limited to Android/Windows;
+calling that unsupported startup API on Linux aborts before the first frame.
+The Linux shell does not initialize that API or claim its telemetry coverage.
+
 Current source status is `IMPLEMENTED_PARTIAL`. The L02 live lifecycle is
 implemented and [verified in an isolated Ubuntu VM](../../docs/operations/evidence/2026-09-11-r12-l02-linux-runtime/README.md);
 durable recovery also has [L03 VM evidence](../../docs/operations/evidence/2026-09-11-r12-l03-linux-recovery/README.md).
-Signed desktop-package acceptance remains open:
+[Client source integration](../../docs/operations/evidence/2026-09-11-r12-linux-source-promotion/README.md)
+has passed PR/main CI; coordinated Core promotion and signed desktop-package
+acceptance remain open.
+
+The [Ubuntu packaging source](packaging/README.md) supplies the GTK runner,
+deb assembler and lifecycle hooks. A [native package and detached-signature
+receipt](../../docs/operations/evidence/2026-09-11-r12-l04-linux-package/README.md)
+binds the first signed candidate. The later [package-7 desktop evidence](../../docs/operations/evidence/2026-09-11-r12-l04-linux-desktop/README.md)
+proves clean installation, real non-root GUI/polkit, installed permissions,
+rollback, connected upgrade and uninstall/purge on Ubuntu 24.04.4 Xfce/X11.
+Observed RU/full routes and IPv6 rejection pass; intermittent full-mode TLS
+failures remain unresolved. The same package now passes crash, partial rollback,
+actual sleep/resume and native reboot recovery on that guest; final acceptance stays open.
 
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;
@@ -73,7 +90,8 @@ Signed desktop-package acceptance remains open:
 - the installed sleep unit stops both socket and service before sleep and
   starts the daemon on resume, running journal recovery before IPC;
 - Ubuntu 24.04 LTS amd64 with the required system stack is the only
-  foundation-supported host row; exact desktop-session VM proof remains open;
+  foundation-supported host row; the recorded package-7 desktop row is Xfce/X11
+  with LightDM and the production polkit action;
 - Fedora Workstation remains a package/runtime-proof backlog row;
 - `supports_live_connect` reflects the required host stack and executable Core;
   `can_connect` additionally requires a staged profile, no active transaction
@@ -86,8 +104,9 @@ Signed desktop-package acceptance remains open:
   polkit fixture grant was removed. It is not a desktop authentication-agent,
   Flutter GUI, signed deb or public-candidate test. L03 additionally proves
   dual-stack traffic, crash/suspend/reboot restoration, partial rollback retry
-  and real-agent authorization negatives. Exact package and desktop-session
-  acceptance remain L04 gates.
+  and real-agent authorization negatives. L04 adds real GUI authorization and
+  exact package lifecycle and crash/suspend/reboot recovery proof. TLS
+  consistency and final acceptance remain open L04 gates.
 
 No Linux artifact or availability promise belongs to release 1.2.0 until those
 gates and exact-package evidence close.

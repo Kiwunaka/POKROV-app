@@ -1,0 +1,7 @@
+{
+  "unit": "MainPID=0\nResult=success\nExecMainStatus=0\nActiveState=inactive\n",
+  "state_directory_mode": "0o700",
+  "no_tun": true,
+  "no_recovery": true,
+  "installed_version": "1.2.0~beta.30-7"
+}

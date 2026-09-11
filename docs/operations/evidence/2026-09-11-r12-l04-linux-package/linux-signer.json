@@ -1,0 +1,11 @@
+{
+  "algorithm": "OpenPGP Ed25519",
+  "purpose": "linux-package-detached-signature",
+  "fingerprint": "29636EDAF204D6F6101CB083B2281E647B0EDDA0",
+  "public_key_sha256": "7fcf205d9a71744f1d98e1d17724c0793330252e575b5633f258b91ed271c14c",
+  "private_key_encrypted": true,
+  "passphrase_protection": "Windows current-user DPAPI",
+  "directory_acl": "current user and SYSTEM only",
+  "private_material_exported": false,
+  "public_distribution": "NOT_PUBLISHED"
+}

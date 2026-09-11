@@ -1,0 +1,39 @@
+{
+  "status": "PASS_DOCUMENTATION_AND_RETAINED_EVIDENCE",
+  "client_commands": [
+    {
+      "command": "pwsh -NoProfile -File test/docs-contract.ps1",
+      "result": "PASS after restoring the canonical L04 gates phrase"
+    },
+    {
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -CoreRoot E:/r12core904-bound-source -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start",
+      "result": "PASS; default Android/Windows Core binding remains 904; not a claim that Linux Core97 is promoted"
+    },
+    {
+      "command": "git diff --cached --check",
+      "result": "PASS"
+    },
+    {
+      "command": "Compare all 51 retained-files.json hashes against staged git show bytes",
+      "result": "PASS 51/51"
+    },
+    {
+      "command": "git diff --name-only -- artifacts/releases",
+      "result": "EMPTY"
+    }
+  ],
+  "platform_commands": [
+    {
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "result": "PASS 33 tests"
+    },
+    {
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "result": "PASS platform-context"
+    },
+    {
+      "command": "git diff --check",
+      "result": "PASS"
+    }
+  ]
+}
