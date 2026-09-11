@@ -33,6 +33,16 @@ RuntimeResult RuntimeHost::CrashDiagnostics() const {
 }
 namespace {
 
+const char* SafeEgressFailure(const std::string& failure) {
+  for (const auto* known : {
+           "core_egress_dns_failed", "core_egress_connect_failed",
+           "core_egress_tls_failed", "core_egress_tls_timeout",
+           "core_egress_response_timeout", "core_egress_timeout"}) {
+    if (failure == known) return known;
+  }
+  return "core_egress_probe_failed";
+}
+
 constexpr char kCoreCapabilities[] =
     "{\"schema_version\":1,\"desktop_abi\":2,\"event_abi\":1,"
     "\"capabilities\":[\"bounded_stop_reason\",\"core_start_stop\","
@@ -989,10 +999,10 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
   if (const auto result = interruption(true)) return *result;
   RecordEvent(ServiceEvent::kRuntimeEgressVerify,
               ServiceEventOutcome::kAttempted);
-  const bool egress_verified =
-      egress_probe_ != nullptr && egress_probe_->Verify(interrupted).empty();
+  const auto egress_failure = egress_probe_ != nullptr
+      ? egress_probe_->Verify(interrupted) : "core_egress_probe_failed";
   if (const auto result = interruption(true)) return *result;
-  if (!egress_verified) {
+  if (!egress_failure.empty()) {
     RecordEvent(ServiceEvent::kRuntimeEgressVerify,
                 ServiceEventOutcome::kFailed);
     const auto rollback_error = RollbackRuntime();
@@ -1005,7 +1015,7 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
                   ServiceEventOutcome::kFailed);
       return Fail(Status::kNotReady, rollback_error.c_str());
     }
-    return Fail(Status::kNotReady, "core_egress_probe_failed");
+    return Fail(Status::kNotReady, SafeEgressFailure(egress_failure));
   }
   RecordEvent(ServiceEvent::kRuntimeEgressVerify,
               ServiceEventOutcome::kSucceeded);

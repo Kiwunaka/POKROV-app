@@ -354,7 +354,7 @@ bool IsKnownPhase(const std::string& value) {
 }
 
 bool IsKnownFailure(const std::string& value) {
-  static constexpr std::array<const char*, 38> failures = {
+  static constexpr std::array<const char*, 44> failures = {
       "none",
       "core_not_initialized",
       "core_missing",
@@ -374,6 +374,12 @@ bool IsKnownFailure(const std::string& value) {
       "profile_identity_mismatch",
       "core_start_failed",
       "core_egress_probe_failed",
+      "core_egress_dns_failed",
+      "core_egress_connect_failed",
+      "core_egress_tls_failed",
+      "core_egress_tls_timeout",
+      "core_egress_response_timeout",
+      "core_egress_timeout",
       "deadline_exceeded",
       "operation_cancelled",
       "runtime_busy",

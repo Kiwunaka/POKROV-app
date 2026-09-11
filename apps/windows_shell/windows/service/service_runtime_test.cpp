@@ -579,6 +579,17 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
          "egress failure category was not sanitized");
   Expect(!Contains(result, "provider response"),
          "raw egress probe error crossed the service boundary");
+  auto classified_core = std::make_unique<FakeCoreRuntime>();
+  auto classified_probe = std::make_unique<FakeEgressProbe>();
+  classified_probe->verify_error = "core_egress_response_timeout";
+  RuntimeHost classified(std::move(classified_core), std::move(classified_probe),
+                         std::make_unique<FakeRecovery>(), root, false);
+  classified.Initialize();
+  classified.StageProfile("0\n{}");
+  const auto observed = classified.Connect(StagedDigest(classified));
+  Expect(Contains(observed, "failure=core_egress_response_timeout") &&
+             Contains(observed, "core_egress_validated=0;dns_ready=0"),
+         "service discarded the observed egress failure after rollback");
   RemoveTestRoot(root);
 }
 

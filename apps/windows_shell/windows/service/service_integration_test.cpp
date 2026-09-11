@@ -202,7 +202,7 @@ int RunStalledClientCase(bool unread_hello_response) {
       Expect(hello_response->capabilities ==
                  (kCapabilityProtocolV1 | kCapabilityStatus |
                   kCapabilityRuntimeControl | kCapabilityProfileIdentity |
-                  kCapabilityCancellation),
+                  kCapabilityCancellation | kCapabilitySanitizedDiagnostic),
              "service advertised unsupported capabilities");
       Expect(!IsZeroIdentifier(hello_response->session_token),
              "service omitted the session token");
