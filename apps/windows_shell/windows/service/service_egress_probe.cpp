@@ -14,11 +14,32 @@ bool Interrupted(const CheckInterruption& check) {
   return check && check() != OperationInterruption::kNone;
 }
 
+enum class ProbeStage { kConnect, kTls, kSending, kResponse };
+
+const char* ObservedFailure(DWORD error, ProbeStage stage) {
+  switch (error) {
+    case ERROR_WINHTTP_NAME_NOT_RESOLVED:
+      return "core_egress_dns_failed";
+    case ERROR_WINHTTP_CANNOT_CONNECT:
+      return "core_egress_connect_failed";
+    case ERROR_WINHTTP_SECURE_FAILURE:
+    case ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED:
+      return "core_egress_tls_failed";
+    case ERROR_WINHTTP_TIMEOUT:
+      if (stage == ProbeStage::kTls) return "core_egress_tls_timeout";
+      if (stage == ProbeStage::kResponse) return "core_egress_response_timeout";
+      return "core_egress_timeout";
+    default:
+      return "core_egress_probe_failed";
+  }
+}
+
 // WinHTTP can call back after CloseHandle returns. The request owns one
 // reference until HANDLE_CLOSING; the runtime owns the other while waiting.
 class Completion {
  public:
-  Completion() : ready(::CreateEventW(nullptr, FALSE, FALSE, nullptr)) {}
+  explicit Completion(bool secure)
+      : ready(::CreateEventW(nullptr, FALSE, FALSE, nullptr)), secure_(secure) {}
   void Retain() { references.fetch_add(1); }
   void Release() {
     if (references.fetch_sub(1) == 1) delete this;
@@ -34,25 +55,44 @@ class Completion {
   }
 
   static void CALLBACK Callback(HINTERNET, DWORD_PTR context, DWORD status,
-                                void*, DWORD) {
+                                void* information, DWORD information_size) {
     auto* completion = reinterpret_cast<Completion*>(context);
     if (completion == nullptr) return;
     if (status == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING) {
       completion->Release();
+    } else if (status == WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER) {
+      completion->stage.store(ProbeStage::kConnect);
+    } else if (status == WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER) {
+      completion->stage.store(completion->secure_ ? ProbeStage::kTls
+                                                 : ProbeStage::kConnect);
+    } else if (status == WINHTTP_CALLBACK_STATUS_SENDING_REQUEST) {
+      // With no proxy and no request body, TLS has completed by this point.
+      completion->stage.store(ProbeStage::kSending);
     } else if (status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE ||
                status == WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE ||
                status == WINHTTP_CALLBACK_STATUS_REQUEST_ERROR) {
+      if (status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE) {
+        completion->stage.store(ProbeStage::kResponse);
+      }
+      if (status == WINHTTP_CALLBACK_STATUS_REQUEST_ERROR &&
+          information != nullptr && information_size == sizeof(WINHTTP_ASYNC_RESULT)) {
+        completion->error.store(
+            static_cast<WINHTTP_ASYNC_RESULT*>(information)->dwError);
+      }
       completion->status.store(status);
       ::SetEvent(completion->ready);
     }
   }
 
   HANDLE ready;
+  std::atomic<DWORD> error{ERROR_SUCCESS};
+  std::atomic<ProbeStage> stage{ProbeStage::kConnect};
 
  private:
   ~Completion() { if (ready != nullptr) ::CloseHandle(ready); }
   std::atomic<unsigned> references{1};
   std::atomic<DWORD> status{0};
+  bool secure_;
 };
 
 class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
@@ -61,8 +101,10 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       : host_(host), port_(port), secure_(secure) {}
 
   std::string Verify(const CheckInterruption& interrupted) override {
+    std::string failure = "core_egress_probe_failed";
     for (int attempt = 0; attempt < 3 && !Interrupted(interrupted); ++attempt) {
-      if (ProbeOnce(interrupted) && !Interrupted(interrupted)) return "";
+      failure = ProbeOnce(interrupted);
+      if (failure.empty() && !Interrupted(interrupted)) return "";
       if (attempt < 2) {
         const auto until = ::GetTickCount64() + (attempt == 0 ? 900 : 1500);
         while (::GetTickCount64() < until && !Interrupted(interrupted)) {
@@ -70,15 +112,15 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
         }
       }
     }
-    return "core_egress_probe_failed";
+    return Interrupted(interrupted) ? "core_egress_probe_failed" : failure;
   }
 
  private:
-  bool ProbeOnce(const CheckInterruption& interrupted) {
+  std::string ProbeOnce(const CheckInterruption& interrupted) {
     const HINTERNET session = ::WinHttpOpen(
         L"POKROVService/1.2", WINHTTP_ACCESS_TYPE_NO_PROXY,
         WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, WINHTTP_FLAG_ASYNC);
-    if (session == nullptr) return false;
+    if (session == nullptr) return "core_egress_probe_failed";
     ::WinHttpSetTimeouts(session, 3000, 3000, 3000, 6000);
     const HINTERNET connection = ::WinHttpConnect(session, host_, port_, 0);
     const HINTERNET request = connection == nullptr ? nullptr :
@@ -86,7 +128,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
             L"/api/public/authenticated-egress-probe", nullptr,
             WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
             WINHTTP_FLAG_REFRESH | (secure_ ? WINHTTP_FLAG_SECURE : 0));
-    auto* completion = new Completion();
+    auto* completion = new Completion(secure_);
     DWORD_PTR context = reinterpret_cast<DWORD_PTR>(completion);
     bool callback_installed = false;
     if (request != nullptr && completion->ready != nullptr &&
@@ -95,18 +137,29 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       completion->Retain();
       callback_installed = ::WinHttpSetStatusCallback(
           request, Completion::Callback,
-          WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES,
+          WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES |
+              WINHTTP_CALLBACK_FLAG_CONNECT_TO_SERVER | WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
           0) != WINHTTP_INVALID_STATUS_CALLBACK;
       if (!callback_installed) completion->Release();
     }
-    bool valid = callback_installed && !Interrupted(interrupted) &&
-        ::WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS,
-            0, WINHTTP_NO_REQUEST_DATA, 0, 0, context) != FALSE &&
-        completion->Wait(WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE, interrupted) &&
-        !Interrupted(interrupted) &&
-        ::WinHttpReceiveResponse(request, nullptr) != FALSE &&
-        completion->Wait(WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, interrupted) &&
-        !Interrupted(interrupted);
+    bool valid = false;
+    DWORD error = ERROR_SUCCESS;
+    if (callback_installed && !Interrupted(interrupted)) {
+      if (!::WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS,
+                               0, WINHTTP_NO_REQUEST_DATA, 0, 0, context)) {
+        error = ::GetLastError();
+      } else if (completion->Wait(WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE, interrupted) &&
+                 !Interrupted(interrupted)) {
+        if (!::WinHttpReceiveResponse(request, nullptr)) {
+          error = ::GetLastError();
+        } else {
+          valid = completion->Wait(WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, interrupted) &&
+                  !Interrupted(interrupted);
+        }
+      }
+    }
+    if (error == ERROR_SUCCESS) error = completion->error.load();
+    const auto failure = ObservedFailure(error, completion->stage.load());
     DWORD status = 0;
     DWORD status_size = sizeof(status);
     if (valid) {
@@ -129,7 +182,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     completion->Release();
     if (connection != nullptr) ::WinHttpCloseHandle(connection);
     ::WinHttpCloseHandle(session);
-    return valid && !Interrupted(interrupted);
+    return valid && !Interrupted(interrupted) ? "" : failure;
   }
 
   const wchar_t* host_;
@@ -146,8 +199,8 @@ std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe() {
 
 #ifdef _DEBUG
 std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
-    std::uint16_t port) {
-  return std::make_unique<AuthenticatedEgressProbe>(L"127.0.0.1", port, false);
+    std::uint16_t port, bool secure) {
+  return std::make_unique<AuthenticatedEgressProbe>(L"127.0.0.1", port, secure);
 }
 #endif
 

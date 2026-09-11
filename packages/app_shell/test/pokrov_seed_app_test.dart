@@ -9839,7 +9839,9 @@ void main() {
                 return runtimeState(
                   'configStaged',
                   egressValidated: false,
-                  failureKind: 'core_egress_probe_failed',
+                  failureKind: host == HostPlatform.windows
+                      ? 'core_egress_response_timeout'
+                      : 'core_egress_probe_failed',
                   message: 'Fixture path failed.',
                 );
               }
