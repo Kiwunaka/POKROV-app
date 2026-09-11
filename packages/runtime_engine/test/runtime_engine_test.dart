@@ -3627,8 +3627,16 @@ void main() {
     final snapshot = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'pokrov-test',
-        configPayload: '{"dns":{},"inbounds":[],"outbounds":[],"route":{}}',
+        configPayload: '{"_meta":{"revision":"test-only"},'
+            '"dns":{},"inbounds":[],"outbounds":[],"route":{},'
+            '"experimental":{"cache_file":{"enabled":true}}}',
         materializedForRuntime: true,
+        warpPolicy: WarpRuntimePolicy(
+          enabled: true,
+          runtimeReady: true,
+          userConsented: true,
+          state: 'consented',
+        ),
       ),
     );
 
@@ -3636,9 +3644,20 @@ void main() {
     expect(captured['action'], 'stage_profile');
     expect(payload['profile_name'], 'pokrov-test');
     expect(payload['config_payload'], contains('"outbounds"'));
+    final config = jsonDecode(payload['config_payload']! as String) as Map;
+    expect(config.containsKey('_meta'), isFalse);
+    expect(config.containsKey('experimental'), isFalse);
+    expect(config.containsKey('endpoints'), isFalse);
     expect(snapshot.phase, RuntimePhase.configStaged);
     expect(snapshot.stagedConfigPath, isNull);
     expect(snapshot.message, isNot(contains('outbounds')));
+
+    captured = <String, Object?>{};
+    final invalid = await engine.stageManagedProfile(
+      const ManagedProfilePayload(profileName: 'pokrov-test', configPayload: '['),
+    );
+    expect(invalid.lastFailureKind, 'linux_profile_invalid');
+    expect(captured, isEmpty);
   });
 
   test('Linux daemon rejects mismatched response identity and arbitrary copy',

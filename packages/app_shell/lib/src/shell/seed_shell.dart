@@ -4519,8 +4519,14 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<T> _withRuntimeActionTimeout<T>(
     String operation,
     Future<T> Function() action,
-  ) =>
-      _connectionCoordinator.runWithTimeout(operation, action);
+  ) {
+    // Linux IPC already bounds polkit + connect + cleanup. The shorter UI
+    // deadline must not discard an authorized mutation's eventual response.
+    if (widget.appContext.hostPlatform == HostPlatform.linux) {
+      return action();
+    }
+    return _connectionCoordinator.runWithTimeout(operation, action);
+  }
 
   Future<ManagedProfilePayload> _resolveManagedProfile({
     Duration? deadline,

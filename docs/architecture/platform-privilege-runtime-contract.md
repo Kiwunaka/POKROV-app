@@ -520,6 +520,13 @@ reused for the response, so a completed authorization cannot mutate state and
 then silently lose its result solely because the prompt outlived the frame
 read window.
 
+The Linux UI retains the transport's bounded 130-second wait for authorization,
+connect and cleanup instead of applying the shared 18-second runtime deadline.
+Profile API requests keep their existing deadline. Before staging, the Linux
+adapter uses the shared Core config materializer to remove API-only `_meta`
+and unused cache-file settings, with WARP disabled for this beta. Core still
+validates the complete privileged profile boundary before network mutation.
+
 A compiling Core or UI, an unsigned package, or an AppImage containing only UI
 does not prove VPN beta support. Public facts remain unchanged until the exact
 signed package passes install, upgrade, rollback, uninstall, non-root,
