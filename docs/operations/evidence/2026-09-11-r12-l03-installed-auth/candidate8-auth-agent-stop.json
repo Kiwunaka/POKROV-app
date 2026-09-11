@@ -1,0 +1,9 @@
+{
+  "status": "STOPPED_EXACT_DESKTOP_AGENT",
+  "pid": 1590,
+  "uid": 1000,
+  "executable": "/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1",
+  "remaining_same_user_agents": [],
+  "no_policy_change": true,
+  "epoch": 1789144130.8815458
+}

@@ -24,6 +24,9 @@ The Linux shell does not initialize that API or claim its telemetry coverage.
 Current source status is `IMPLEMENTED_PARTIAL`. The L02 live lifecycle is
 implemented and [verified in an isolated Ubuntu VM](../../docs/operations/evidence/2026-09-11-r12-l02-linux-runtime/README.md);
 durable recovery also has [L03 VM evidence](../../docs/operations/evidence/2026-09-11-r12-l03-linux-recovery/README.md).
+The later [installed criterion review](../../docs/operations/evidence/2026-09-11-r12-l03-installed-auth/README.md)
+verifies L02/L03 at I4 for the declared Ubuntu scope, including current-package
+polkit negatives and explicitly bounded reuse of identical recovery components.
 [Client source integration](../../docs/operations/evidence/2026-09-11-r12-linux-source-promotion/README.md)
 has passed PR/main CI; coordinated Core promotion and signed desktop-package
 acceptance remain open.
