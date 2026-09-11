@@ -40,6 +40,10 @@ rollback, connected upgrade and uninstall/purge on Ubuntu 24.04.4 Xfce/X11.
 Observed RU/full routes and IPv6 rejection pass; intermittent full-mode TLS
 failures remain unresolved. The same package now passes crash, partial rollback,
 actual sleep/resume and native reboot recovery on that guest; final acceptance stays open.
+The later [package-8 DE-path investigation](../../docs/operations/evidence/2026-09-11-r12-l04-de-tcp/README.md)
+reproduces curl35 alongside pending TCP handshakes: repeated SYNs appear at
+MINI egress but not in the simultaneous DE capture. The loss cause is unknown;
+successful no-VPN controls and other paths do not close this acceptance gate.
 
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;

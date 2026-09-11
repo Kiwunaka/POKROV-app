@@ -44,6 +44,10 @@ presented as a product failure or omitted from the interpretation.
 
 ## TLS investigation remains open
 
+Subsequent [package-8 DE-path evidence](../2026-09-11-r12-l04-de-tcp/README.md)
+reproduces curl35 with simultaneous TCP/socket observations. It supersedes
+the earlier investigation state below without changing these retained captures.
+
 The [package-7 comparison](candidate7-tls-path-comparison.json) used three
 existing direct paths, restored the original profile bytes and all seven
 network baselines. No-VPN control and paths 0 and 34 each passed six HTTPS

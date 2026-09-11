@@ -1,0 +1,164 @@
+[
+  {
+    "path": "de-tcp-handshake-observation.json",
+    "sha256": "f36a2cbb526ced7faf8546874e9a8d3e861c3d2bf068cc71e99e3dd87a59ded1",
+    "bytes": 1073,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-tcp-handshake-observation.json"
+  },
+  {
+    "path": "de-mini-concurrent-handshake.json",
+    "sha256": "a66daa4e0001a34601139e2d547d8904497b29edbcdc02d15df0e0cca12be262",
+    "bytes": 1248,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-mini-concurrent-handshake.json"
+  },
+  {
+    "path": "mini-de-route-source.json",
+    "sha256": "1bdfccb94a03e74595cd2e76ec2f33bc52cb45e5bc7caeec11f128432cc9bbb4",
+    "bytes": 250,
+    "source": "C:\\r12-l04-ui-poll-20260911\\mini-de-route-source.json"
+  },
+  {
+    "path": "de-transport-shape.json",
+    "sha256": "2421ecf74e21baa9f2059e7c4164a95ee8c4004c9ce2b686af44103cc787f7fc",
+    "bytes": 1159,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-transport-shape.json"
+  },
+  {
+    "path": "de-fixture-member.json",
+    "sha256": "fba08bc546d2e09252755b7bed15d719ad88e60e81912e2267f429e0b2d84c59",
+    "bytes": 229,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-fixture-member.json"
+  },
+  {
+    "path": "de-fixture-panel-row.json",
+    "sha256": "9472ad22f83f150ed0a54c3175390d5a7e2a57af481493261e8ed663b8c5094e",
+    "bytes": 396,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-fixture-panel-row.json"
+  },
+  {
+    "path": "candidate8-de-concurrent-wire.json",
+    "sha256": "c4fa5ef8179b308a60bdba6300a2a2cce29d9a285c7883a01e61e386abc36fc6",
+    "bytes": 2572,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-de-concurrent-wire.json"
+  },
+  {
+    "path": "observe-de-handshake.py",
+    "sha256": "7e2be2dfcd381d42db9d74895687f78c9d854b19149fd95eee5a8b485d56aea1",
+    "bytes": 3462,
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-handshake.py"
+  },
+  {
+    "path": "observe-de-mini-handshake.py",
+    "sha256": "8b5abcd2a855e28aa0c5ca4a3e6bd2d297baf9850dbe02ce2d47bbe144fab710",
+    "bytes": 4826,
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-mini-handshake.py"
+  },
+  {
+    "path": "observe-mini-de-source.py",
+    "sha256": "cd9138a704145a6ec723b03c3614786e3c22d339372ab6ea0f95ab7fa2f8ab80",
+    "bytes": 1115,
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-mini-de-source.py"
+  },
+  {
+    "path": "observe-de-wire8.py",
+    "sha256": "5bbac2ad3b0018e406d4298680f28fd20899025ef62c418ee3cae57bf1411225",
+    "bytes": 3922,
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-wire8.py"
+  },
+  {
+    "path": "remote-de-transport-shape.py",
+    "sha256": "13b21969d871984f39314af6f434d4ec7e4faa1f3fe2bbaa91d5ca16fe76027a",
+    "bytes": 2180,
+    "source": "C:\\r12-l04-ui-poll-20260911\\remote-de-transport-shape.py"
+  },
+  {
+    "path": "remote-de-fixture-member.py",
+    "sha256": "f084496f798084d49404b44d1dbbacc5bae9148e061f92c86566e196aec1999d",
+    "bytes": 914,
+    "source": "C:\\r12-l04-ui-poll-20260911\\remote-de-fixture-member.py"
+  },
+  {
+    "path": "remote-de-fixture-panel-row.py",
+    "sha256": "ef6435903e279d08b95fbfcc2ee205eb034f2a1db0b4e47e6fa042d73f1c928a",
+    "bytes": 926,
+    "source": "C:\\r12-l04-ui-poll-20260911\\remote-de-fixture-panel-row.py"
+  },
+  {
+    "path": "guest-de-https8.py",
+    "sha256": "8e90ce3ef005befb72d2d71aebb607ff62d7630129435cd0c544ef1a555bd1ec",
+    "bytes": 6701,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-de-https8.py"
+  },
+  {
+    "path": "guest-de-sockets8.py",
+    "sha256": "2d751458c76122736865c128ce451a36ea7def84b7add1751c6220ab061a75ec",
+    "bytes": 7630,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-de-sockets8.py"
+  },
+  {
+    "path": "guest-de-wire8.py",
+    "sha256": "268d43deccd1688a8fa373b2ee1c477daab0fc2f056b7560d8697d86c2b0fec2",
+    "bytes": 7635,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-de-wire8.py"
+  },
+  {
+    "path": "guest-de-public-metadata8.py",
+    "sha256": "c43c44705fab492a0944704fb090d0d66d505bad1ad8a5a5490c30602d1f7273",
+    "bytes": 1085,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-de-public-metadata8.py"
+  },
+  {
+    "path": "guest-arm-de-wire8.py",
+    "sha256": "367ad27dbce8fa2d2e742d3c4ce1f0dcbbc06b24e23fadc8c9d484a02d0f4f09",
+    "bytes": 8052,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-arm-de-wire8.py"
+  },
+  {
+    "path": "candidate8-de-https-recheck.json",
+    "sha256": "5eb8b1bf38f873f538c77ce0a391964de8cfd63d53e0373e7d27e39708e1c5a1",
+    "bytes": 6928,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-diagnostic-public\\candidate8-de-https-recheck.json"
+  },
+  {
+    "path": "candidate8-de-public-metadata.json",
+    "sha256": "a1a90c471948ec72085bd071e1ff66298b6c4605c843696240d092cbebc52b64",
+    "bytes": 638,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-diagnostic-public\\candidate8-de-public-metadata.json"
+  },
+  {
+    "path": "candidate8-de-socket-observation.json",
+    "sha256": "6a2047d2867c96a72418c62cf53ad2cc3c34267013e0912260ed8ba5e0a27437",
+    "bytes": 9477,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-diagnostic-public\\candidate8-de-socket-observation.json"
+  },
+  {
+    "path": "candidate8-de-wire-socket-observation.json",
+    "sha256": "0b280a322b6598e0015183e6ba26dd5f3bbac09637dc5c588cf4c13ea4504298",
+    "bytes": 5190,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-diagnostic-public\\candidate8-de-wire-socket-observation.json"
+  },
+  {
+    "path": "de-hook-boundary.json",
+    "sha256": "f1d82da300bd944ac0d792dd71838ac72063246fc22147c006ddcf32a1196cbb",
+    "bytes": 9855,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-hook-boundary.json"
+  },
+  {
+    "path": "observe-de-hook-boundary.py",
+    "sha256": "a0f4c5571bd2e56b0827b86d90ba662d0f8fcb340c02405368e7758c3efb68e3",
+    "bytes": 2205,
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-hook-boundary.py"
+  },
+  {
+    "path": "de-native-host-wire-counters.json",
+    "sha256": "e860553652aca872be539f4511a42b6a852701d33b0d43a0346f2dc1e6134970",
+    "bytes": 5298,
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-native-host-wire-counters.json"
+  },
+  {
+    "path": "observe-de-native-host-wire.py",
+    "sha256": "4eb6093fb6aaf5d8b32a840b9ad86182e3ab1345f0aa3f153b9c7999101fcac4",
+    "bytes": 4720,
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-native-host-wire.py"
+  }
+]

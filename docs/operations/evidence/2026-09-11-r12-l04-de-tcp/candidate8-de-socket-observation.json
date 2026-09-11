@@ -1,0 +1,340 @@
+{
+  "candidate_sha256": "b71c3190ad56e534bcd0057b68de4f818e775bc89cf1d5470814468ad7ada933",
+  "authorization": "root peer credential in isolated recovery harness; GUI polkit tested separately",
+  "profile_source": "existing GUI profile; only existing selector defaults changed per isolated comparison; original bytes restored finally",
+  "started_epoch": 1789142595.3516016,
+  "steps": [
+    {
+      "action": "stage_profile",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "connect",
+      "ok": true,
+      "phase": "running",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "disconnect",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "disconnect",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    },
+    {
+      "action": "stage_profile",
+      "ok": true,
+      "phase": "config_staged",
+      "last_stop_reason": "requested",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown"
+    }
+  ],
+  "network_before": {
+    "routes4": "4c17891a726a7fa6bcb2b6250486b0f3d22b09c19b501ffd07680e6a0b8f0d01",
+    "routes6": "6677a96ff304086c57809fabcb41e8252e354d3cb011f0226bf44c8645da84a0",
+    "rules4": "e79a76eff86a78de4ce5d38c6277dbafbab227656214e1e116d9ac63597dbb9d",
+    "rules6": "78fc521d26d8f02af636ce8e1c74bb782cbfd272b8a81529bea0adb9a68ed0ea",
+    "nft": "e8e2201c1f9ccf2da32a899d44795084d1168072cc9ddf3a6f57a212767ac173",
+    "dns": "9fc34b8019cb213b2ed161e532123f02ff21f655bb32231e148b9fe6a3966267",
+    "domains": "ce9364bf1cf29bf3bb55c5d7b43dba6d4b6b79a55f089117b21d361d8c1961eb"
+  },
+  "observations": [
+    {
+      "label": "no_vpn_control",
+      "requests": [
+        {
+          "attempt": 1,
+          "target": "app",
+          "core_de_socket_states": [],
+          "curl_exit": 0,
+          "http_code": 200,
+          "seconds": 0.19,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 0,
+          "error_kinds": []
+        },
+        {
+          "attempt": 1,
+          "target": "marker",
+          "core_de_socket_states": [],
+          "curl_exit": 0,
+          "http_code": 204,
+          "seconds": 0.16,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 0,
+          "error_kinds": []
+        },
+        {
+          "attempt": 2,
+          "target": "app",
+          "core_de_socket_states": [],
+          "curl_exit": 0,
+          "http_code": 200,
+          "seconds": 0.23,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 0,
+          "error_kinds": []
+        },
+        {
+          "attempt": 2,
+          "target": "marker",
+          "core_de_socket_states": [],
+          "curl_exit": 0,
+          "http_code": 204,
+          "seconds": 0.16,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 0,
+          "error_kinds": []
+        },
+        {
+          "attempt": 3,
+          "target": "app",
+          "core_de_socket_states": [],
+          "curl_exit": 0,
+          "http_code": 200,
+          "seconds": 0.21,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 0,
+          "error_kinds": []
+        },
+        {
+          "attempt": 3,
+          "target": "marker",
+          "core_de_socket_states": [],
+          "curl_exit": 0,
+          "http_code": 204,
+          "seconds": 0.15,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 0,
+          "error_kinds": []
+        }
+      ]
+    },
+    {
+      "label": "selected_existing_path",
+      "requests": [
+        {
+          "attempt": 1,
+          "target": "app",
+          "core_de_socket_states": [
+            {
+              "seconds": 0.05,
+              "states": {}
+            },
+            {
+              "seconds": 4.96,
+              "states": {
+                "SYN-SENT": 1
+              }
+            }
+          ],
+          "curl_exit": 28,
+          "http_code": 0,
+          "seconds": 12.03,
+          "peer_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "ssl_verify_result": 0,
+          "error_kinds": [
+            "timed out"
+          ]
+        },
+        {
+          "attempt": 1,
+          "target": "marker",
+          "core_de_socket_states": [
+            {
+              "seconds": 0.03,
+              "states": {
+                "SYN-SENT": 1
+              }
+            },
+            {
+              "seconds": 8.01,
+              "states": {
+                "ESTAB": 1
+              }
+            },
+            {
+              "seconds": 8.23,
+              "states": {
+                "ESTAB": 1,
+                "SYN-SENT": 1
+              }
+            }
+          ],
+          "curl_exit": 28,
+          "http_code": 0,
+          "seconds": 12.05,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 1,
+          "error_kinds": [
+            "timed out"
+          ]
+        },
+        {
+          "attempt": 2,
+          "target": "app",
+          "core_de_socket_states": [
+            {
+              "seconds": 0.05,
+              "states": {
+                "ESTAB": 1,
+                "SYN-SENT": 1
+              }
+            },
+            {
+              "seconds": 0.27,
+              "states": {
+                "ESTAB": 1,
+                "SYN-SENT": 2
+              }
+            },
+            {
+              "seconds": 1.36,
+              "states": {
+                "ESTAB": 1,
+                "SYN-SENT": 1
+              }
+            }
+          ],
+          "curl_exit": 35,
+          "http_code": 0,
+          "seconds": 5.07,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 1,
+          "error_kinds": [
+            "Connection reset by peer"
+          ]
+        },
+        {
+          "attempt": 2,
+          "target": "marker",
+          "core_de_socket_states": [
+            {
+              "seconds": 0.03,
+              "states": {
+                "ESTAB": 1
+              }
+            },
+            {
+              "seconds": 0.27,
+              "states": {
+                "ESTAB": 1,
+                "SYN-SENT": 1
+              }
+            }
+          ],
+          "curl_exit": 35,
+          "http_code": 0,
+          "seconds": 5.04,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 1,
+          "error_kinds": [
+            "Connection reset by peer"
+          ]
+        },
+        {
+          "attempt": 3,
+          "target": "app",
+          "core_de_socket_states": [
+            {
+              "seconds": 0.04,
+              "states": {
+                "ESTAB": 1
+              }
+            },
+            {
+              "seconds": 0.25,
+              "states": {
+                "ESTAB": 1,
+                "SYN-SENT": 1
+              }
+            }
+          ],
+          "curl_exit": 35,
+          "http_code": 0,
+          "seconds": 5.06,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 1,
+          "error_kinds": [
+            "Connection reset by peer"
+          ]
+        },
+        {
+          "attempt": 3,
+          "target": "marker",
+          "core_de_socket_states": [
+            {
+              "seconds": 0.07,
+              "states": {
+                "ESTAB": 1
+              }
+            },
+            {
+              "seconds": 0.3,
+              "states": {
+                "ESTAB": 1,
+                "SYN-SENT": 1
+              }
+            }
+          ],
+          "curl_exit": 35,
+          "http_code": 0,
+          "seconds": 5.07,
+          "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+          "ssl_verify_result": 1,
+          "error_kinds": [
+            "Connection reset by peer"
+          ]
+        }
+      ],
+      "outbound_index": 5,
+      "selector_path": [
+        [
+          35,
+          10
+        ],
+        [
+          10,
+          5
+        ]
+      ],
+      "server_sha256": "9cbe63494f2822fa475d6f2c0d71e9f22e05e841811d12c0472c632f50a5b7a7",
+      "sni_sha256": "962bbd952510b10c4fed8bd95b112739d604e34daa6313979cb434c87874fbe0",
+      "server_port": 443,
+      "utls_fingerprint": "firefox"
+    }
+  ],
+  "status": "COMPARISON_COMPLETE",
+  "original_profile_restored": true,
+  "final_network_matches_baseline": {
+    "routes4": true,
+    "routes6": true,
+    "rules4": true,
+    "rules6": true,
+    "nft": true,
+    "dns": true,
+    "domains": true
+  },
+  "finished_epoch": 1789142644.9691327
+}

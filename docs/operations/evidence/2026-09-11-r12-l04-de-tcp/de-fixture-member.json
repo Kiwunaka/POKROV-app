@@ -1,0 +1,6 @@
+{
+  "pid": 1326,
+  "config_sha256": "9e11efd9e60bba832c7a11a9bae113b2f78841ae6d657d45e0166773bc7f9bc5",
+  "fixture_client_matches": [],
+  "scope": "current on-disk Xray inbound only; not proof of loaded dynamic user map"
+}
