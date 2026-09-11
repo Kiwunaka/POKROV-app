@@ -1088,3 +1088,17 @@ fork and full C05 clearance remain open. Exact local packages for source a24b211
 [final evidence](evidence/2026-09-11-r12-utls-file-attribution/README.md) records
 the six artifacts and fresh module-precision scans. Current installation,
 installer extraction and runtime/device privacy were not tested in this slice.
+
+## 2026-09-12 Core2662 installed startup and privacy
+
+The exact client212/Core2662 ARM64 APK is installed on the owner's Huawei
+API31 phone; the x86_64 APK is installed in the existing API34 LDPlayer QA
+instance. Same-signer updates and installed SHA-256 readback pass; observed
+settings and UI startup are preserved. The phone was withdrawn before runtime
+acceptance. The [installed/JNI evidence](evidence/2026-09-12-r12-c05-installed-privacy/README.md)
+adds a current-process startup log scan and a separate six-marker native
+`Libbox.checkConfig` probe loaded from the exact installed x86_64 APK.
+Native stdout/stderr/logcat have no markers; the caught JNI exception does
+contain them and is not declared safe for display/logging. No tunnel or
+subscription bypass was used. Physical ARM logging, current TUN/recovery,
+extended/crash sinks and full C05/source/release gates remain open.

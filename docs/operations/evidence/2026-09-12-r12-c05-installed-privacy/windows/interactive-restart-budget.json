@@ -1,0 +1,14 @@
+{
+  "retained_snapshots": 13,
+  "free_c": 44557418496,
+  "before_nic": "none",
+  "free_e": 44059840512,
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "reason": "Owner is available for exact package installation and UI acceptance; reuse allocated writable leaf",
+  "floor": 42949672960,
+  "before_power": "poweroff",
+  "budget_usd": 0,
+  "leaf_bytes": 3357540352,
+  "utc": "2026-09-11T21:52:56.9346630Z",
+  "additional_growth_budget": 536870912
+}

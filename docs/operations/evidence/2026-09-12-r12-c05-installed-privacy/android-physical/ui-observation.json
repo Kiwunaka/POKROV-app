@@ -1,0 +1,12 @@
+{
+  "status": "PASS_OBSERVED_INSTALLED_STARTUP",
+  "device_class": "Huawei ADA-AL00U API31 physical ARM64",
+  "main_screen_visible": true,
+  "visible_location_routing_warp_and_entitlement_unchanged": true,
+  "method": "Before/after screenshots inspected during authorized device availability; account-bearing images retained locally only.",
+  "before_image_sha256": "d1b3fb9742e47b0cff140e6a4d89463d9ddfa3538105d941ecc28717d3aa14ab",
+  "after_image_sha256": "650ee1522cc1a7f1f204dc30c4d614f3f2ed1f3131317d42d84d8d148cf0605a",
+  "tunnel_test": "NOT_RUN",
+  "owner_withdrew_device_until_morning": true,
+  "no_device_actions_after_withdrawal": true
+}

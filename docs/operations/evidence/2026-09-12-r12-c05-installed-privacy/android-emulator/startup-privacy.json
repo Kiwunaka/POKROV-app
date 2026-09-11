@@ -1,0 +1,24 @@
+{
+  "utc": "2026-09-11T22:28:33.308922+00:00",
+  "status": "PASS_BOUNDED_STARTUP_LOG_SCAN",
+  "apk_sha256": "9ffe8e83cfab393ef765acc0631579d236a9363525f3c71bd5e5d54660666fee",
+  "main_ui_visible": true,
+  "stored_location_preserved": true,
+  "stored_routing_preserved": true,
+  "entitlement_requires_renewal": true,
+  "vpn_service_running": false,
+  "app_logcat_bytes": 13433,
+  "app_logcat_sha256": "083c9471b58e4d85f0a2c88f70533acd5dd0ca05f684c1c04bafcbf9b9f57602",
+  "pattern_counts": {
+    "connection_uri": 0,
+    "bearer_value": 0,
+    "jwt": 0,
+    "private_key_pem": 0,
+    "credential_assignment": 0,
+    "email": 0
+  },
+  "fatal_exception_seen": false,
+  "anr_seen": false,
+  "raw_logs_exported": false,
+  "scope": "Current main process startup only. Regex scan is bounded and is not proof of absence of every secret in every sink."
+}

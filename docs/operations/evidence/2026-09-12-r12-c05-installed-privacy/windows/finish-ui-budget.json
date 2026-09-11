@@ -1,0 +1,9 @@
+{
+  "utc": "2026-09-11T22:11:24.8288294Z",
+  "reason": "Finish exact installed UI acceptance and normal shutdown",
+  "budget_usd": 0,
+  "additional_growth_bytes": 268435456,
+  "total_restart_growth_budget": 805306368,
+  "free_e_before": 43549577216,
+  "floor_bytes": 42949672960
+}

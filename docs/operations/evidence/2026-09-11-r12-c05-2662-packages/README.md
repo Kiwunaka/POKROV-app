@@ -34,3 +34,7 @@ receipts retain their exact earlier bytes. Windows Authenticode remains
 The subsequent [package FFI check](../2026-09-12-r12-c05-package-ffi/README.md)
 passes the six-marker direct-FFI regression for this exact DLL in an isolated
 Windows VM fixture. It does not change the uninstalled scope above.
+
+The later [installed startup and JNI privacy slice](../2026-09-12-r12-c05-installed-privacy/README.md)
+updates Windows, physical ARM64 and emulator x86_64 installation evidence.
+Its bounded results and remaining runtime/source gates are recorded separately.

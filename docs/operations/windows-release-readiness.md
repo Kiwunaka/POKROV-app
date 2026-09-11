@@ -1484,3 +1484,14 @@ shutdown, 13 retained snapshots and unchanged host network digests.
 Installation and ordinary UI acceptance remain deferred by the owner; this
 fixture does not establish current installed service, TUN or full runtime-log
 coverage. Source publication, complete licensing and public release remain open.
+
+## 2026-09-12 Core2662 installed startup and privacy
+
+The exact client212/Core2662 package is now installed in the owned Windows11
+VM. All 304 files match before/after ordinary UI startup; LocalSystem service,
+session/secure-store preservation and empty outbox pass. The
+[installed follow-up](evidence/2026-09-12-r12-c05-installed-privacy/README.md)
+records the disabled-NIC scope, startup journal, normal guest poweroff,
+13 preserved snapshots and unchanged host network. This supersedes the earlier
+installation deferral for startup only; current TUN/recovery and full privacy,
+license/source and release acceptance remain open.
