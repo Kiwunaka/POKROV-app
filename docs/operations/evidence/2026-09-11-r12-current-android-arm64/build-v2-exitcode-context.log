@@ -1,0 +1,2 @@
+Client/Core version parity OK: app=1.2.0+4053 public=1.1.6 target_state=PRE_CANDIDATE_LOCAL core_pre_candidate=1.1.0 core_target=1.1.0 desktop_abi=2 core_checkout=NOT_REQUESTED
+build-arm64.ps1: The variable '$LASTEXITCODE' cannot be retrieved because it has not been set.

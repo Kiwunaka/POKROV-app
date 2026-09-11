@@ -1,0 +1,221 @@
+{
+  "schema": "pokrov.r12.current-android-arm64-package/v1",
+  "status": "PASS_LOCAL_PACKAGE",
+  "observed_at": "2026-09-11T05:53:22.949093+00:00",
+  "source_client_sha": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+  "source_main_base": "d9763e8cd7aba9b215015e07c0576f667c1dec09",
+  "feature_fix_sha": "bf78a26ed20302189ce648f77a1a9baf55ff27fb",
+  "source_core_sha": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "artifact": {
+    "path": "C:\\r12-current-windows-source-20260911\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+    "size": 101301451,
+    "sha256": "3ecff58793e0f6b354ce49eabd5f84f06052a92176cd12e4c5c7583a91cc41a0"
+  },
+  "signing_receipt": {
+    "path": "C:\\r12-current-windows-source-20260911\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk.signing.json",
+    "size": 793,
+    "sha256": "a6a3b7f7c65aecb09ea5cd1c8b95108d548a669277063cc11f1e6c364ad372e2"
+  },
+  "core_aar": {
+    "path": "C:\\r12-current-windows-source-20260911\\apps\\android_shell\\android\\app\\libs\\pokrov-core.aar",
+    "size": 107493859,
+    "sha256": "d2382adeeef8336721de6849b51d68d01576bbf9ae7c614a240bb18b9a4ea021"
+  },
+  "flutter_prior_binding": {
+    "path": "E:\\r12-c05-flutter-native\\engine-binary-binding.json",
+    "size": 4306,
+    "sha256": "5fc8400a103db31ba0a8b86c845093074e3fea269b42654e7f66ef57f81b318a"
+  },
+  "native_libraries": [
+    {
+      "entry": "lib/arm64-v8a/libapp.so",
+      "size": 8127408,
+      "sha256": "721ddaf9c6d6575bb20591397cc6b00becca80040c2150776480419a5abd4284",
+      "elf_machine": 183
+    },
+    {
+      "entry": "lib/arm64-v8a/libflutter.so",
+      "size": 11107920,
+      "sha256": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d",
+      "elf_machine": 183
+    },
+    {
+      "entry": "lib/arm64-v8a/libpokrov-core.so",
+      "size": 78540664,
+      "sha256": "fe9bf133e0b3ad02a6991a46a8b0a6039531d28be52879ab646c5422c777b7d8",
+      "elf_machine": 183
+    }
+  ],
+  "notices": [
+    {
+      "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+      "size": 4487,
+      "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679"
+    },
+    {
+      "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+      "size": 665657,
+      "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a"
+    },
+    {
+      "entry": "assets/flutter_assets/assets/licenses/maven-NOTICES.txt",
+      "size": 176690,
+      "sha256": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af"
+    },
+    {
+      "entry": "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt",
+      "size": 173535,
+      "sha256": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5"
+    }
+  ],
+  "flutter_notices": {
+    "size": 108088,
+    "sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f"
+  },
+  "embedded_exact_revision": true,
+  "abi_configuration": {
+    "before": {
+      "targetPlatform": "android-arm64",
+      "injectedAbi": "arm64-v8a",
+      "releaseNdkAbis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "splitsEnabled": false,
+      "splitsIncludes": [],
+      "variants": [
+        {
+          "name": "directRelease",
+          "outputs": [
+            {
+              "file": "app-direct-release-unsigned.apk",
+              "filters": []
+            }
+          ]
+        }
+      ],
+      "packageAbis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "buildTargetAbi": null
+    },
+    "arm64": {
+      "targetPlatform": "android-arm64",
+      "injectedAbi": null,
+      "releaseNdkAbis": [
+        "arm64-v8a"
+      ],
+      "splitsEnabled": false,
+      "splitsIncludes": [],
+      "variants": [
+        {
+          "name": "directRelease",
+          "outputs": [
+            {
+              "file": "app-direct-release-unsigned.apk",
+              "filters": []
+            }
+          ]
+        }
+      ],
+      "packageAbis": [
+        "arm64-v8a"
+      ],
+      "buildTargetAbi": null
+    },
+    "production": {
+      "targetPlatform": "android-arm,android-arm64,android-x64",
+      "injectedAbi": null,
+      "releaseNdkAbis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "splitsEnabled": true,
+      "splitsIncludes": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "variants": [
+        {
+          "name": "directRelease",
+          "outputs": [
+            {
+              "file": "app-direct-arm64-v8a-release-unsigned.apk",
+              "filters": [
+                {
+                  "type": "ABI",
+                  "identifier": "arm64-v8a"
+                }
+              ]
+            },
+            {
+              "file": "app-direct-armeabi-v7a-release-unsigned.apk",
+              "filters": [
+                {
+                  "type": "ABI",
+                  "identifier": "armeabi-v7a"
+                }
+              ]
+            },
+            {
+              "file": "app-direct-universal-release-unsigned.apk",
+              "filters": []
+            },
+            {
+              "file": "app-direct-x86_64-release-unsigned.apk",
+              "filters": [
+                {
+                  "type": "ABI",
+                  "identifier": "x86_64"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "packageAbis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "buildTargetAbi": null
+    }
+  },
+  "disk_budget": {
+    "source": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+    "before_bytes": {
+      "C": 45271810048,
+      "E": 43353767936
+    },
+    "projected_growth_gib": {
+      "C": 1.8,
+      "E": 0.15
+    },
+    "minimum_required_free_gib": 40,
+    "stop_threshold_free_gib": 40.25,
+    "started_at": "2026-09-11T05:50:21.527387+00:00",
+    "exit_code": 0,
+    "after_bytes": {
+      "C": 43997458432,
+      "E": 43342143488
+    },
+    "minimum_observed_free_bytes": {
+      "C": 43998633984,
+      "E": 43341590528
+    },
+    "finished_at": "2026-09-11T05:52:59.676697+00:00"
+  },
+  "unexpected_private_or_build_file_names": [],
+  "limits": [
+    "One local ARM64 Direct package; other three direct packages and store AAB NOT_BUILT_CURRENT_SOURCE.",
+    "Not installed on the owner phone or another device; no physical acceptance inferred.",
+    "No new public release candidate, publication, push or deployment.",
+    "Self-managed production certificate is compared to the existing local identity, not a Store or external trust claim.",
+    "Static file-name inspection is bounded, not a full secret scan or runtime privacy proof."
+  ]
+}

@@ -1,0 +1,18 @@
+import groovy.json.JsonOutput
+gradle.projectsEvaluated {
+  def p = gradle.rootProject.findProject(':app')
+  if (p == null) return
+  p.tasks.register('r12AbiProbe') {
+    doLast {
+      def a=p.extensions.getByName('android')
+      def variants=a.applicationVariants.findAll { it.name=='directRelease' }.collect { v ->
+        [name:v.name, outputs:v.outputs.collect { o -> [file:o.outputFileName, filters:o.filters.collect { f -> [type:f.filterType,identifier:f.identifier] }] }]
+      }
+      def report=[targetPlatform:p.findProperty('target-platform'), injectedAbi:p.findProperty('android.injected.build.abi'), releaseNdkAbis:a.buildTypes.release.ndk.abiFilters.toList().sort(), splitsEnabled:a.splits.abi.enable, splitsIncludes:a.splits.abi.applicableFilters.toList().sort(), variants:variants]
+      def pkg = p.tasks.getByName('packageDirectRelease')
+      report.packageAbis=pkg.abiFilters.get().toList().sort()
+      report.buildTargetAbi=pkg.buildTargetAbi
+      println('R12_ABI_PROBE='+JsonOutput.toJson(report))
+    }
+  }
+}

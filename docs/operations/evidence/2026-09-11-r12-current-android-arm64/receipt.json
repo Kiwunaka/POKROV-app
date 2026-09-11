@@ -1,0 +1,167 @@
+{
+  "schema": "pokrov.r12.current-android-arm64-retained/v1",
+  "status": "PASS_LOCAL_PACKAGE",
+  "observed_at": "2026-09-11T05:55:02.439428+00:00",
+  "source_client_sha": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+  "source_main_base": "d9763e8cd7aba9b215015e07c0576f667c1dec09",
+  "feature_fix_sha": "bf78a26ed20302189ce648f77a1a9baf55ff27fb",
+  "source_core_sha": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "artifact": {
+    "path": "C:\\r12-current-windows-source-20260911\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+    "size": 101301451,
+    "sha256": "3ecff58793e0f6b354ce49eabd5f84f06052a92176cd12e4c5c7583a91cc41a0"
+  },
+  "abi": "arm64-v8a",
+  "signing": "PRODUCTION_SELF_MANAGED_CERTIFICATE_MATCH",
+  "native_libraries_verified": 3,
+  "notice_sources_verified": 4,
+  "embedded_exact_revision": true,
+  "abi_regression": "PASS_ARM64_ONLY_AND_EXISTING_FOUR_APK_PRODUCTION_CONFIGURATION",
+  "release_handoff_contract": "16_PASS",
+  "seed_before_build": "PASS",
+  "minimum_observed_free_gib": {
+    "C": 40.977,
+    "E": 40.365
+  },
+  "retained_files": [
+    {
+      "name": "abi-probe.gradle",
+      "source_path": "E:\\r12-current-android-package-20260911\\abi-probe.gradle",
+      "bytes": 1037,
+      "sha256": "fe269fd8cfe06c6f8dc067206c8d9e09442c77ed1804ebce18674633456fb993"
+    },
+    {
+      "name": "abi-injected-v2.log",
+      "source_path": "E:\\r12-current-android-package-20260911\\abi-injected-v2.log",
+      "bytes": 1196,
+      "sha256": "0b64e718cdf800b5300659f58e9c2800c31013e39c26e1945e4f7f915a91e1d4"
+    },
+    {
+      "name": "abi-fixed-arm64.log",
+      "source_path": "E:\\r12-current-android-package-20260911\\abi-fixed-arm64.log",
+      "bytes": 1143,
+      "sha256": "41c9d9ea09960cbc30d1f93efc4029bfa530c2bae609fe9e529034757133e55b"
+    },
+    {
+      "name": "abi-fixed-production.log",
+      "source_path": "E:\\r12-current-android-package-20260911\\abi-fixed-production.log",
+      "bytes": 1569,
+      "sha256": "d093106bbb4cb0d4bd866e4cf96ec4e2c435c6645c21d89dec201e6c3b3aa7ab"
+    },
+    {
+      "name": "release-handoff-v2-v2.log",
+      "source_path": "E:\\r12-current-android-package-20260911\\release-handoff-v2-v2.log",
+      "bytes": 50,
+      "sha256": "63b6ce302b59f7b16f239c7eff241f728772ebf85b3e8a6d073a486151b4c373"
+    },
+    {
+      "name": "seed-before-build.log",
+      "source_path": "E:\\r12-current-android-package-20260911\\seed-before-build.log",
+      "bytes": 1844,
+      "sha256": "7b5c9255cf043767e78e4feeb07df2034dc3d8ccb5bd6b5c8c042a619eeac6c2"
+    },
+    {
+      "name": "build-arm64.ps1",
+      "source_path": "E:\\r12-current-android-package-20260911\\build-arm64.ps1",
+      "bytes": 12426,
+      "sha256": "84550d801d5dfaa25b18ba7bc3c0aefe0627d64eb72a0cc1e55a66a0fff1253e"
+    },
+    {
+      "name": "build-arm64-v1.ps1",
+      "source_path": "E:\\r12-current-android-package-20260911\\build-arm64-v1.ps1",
+      "bytes": 12395,
+      "sha256": "1539a67f92dd233de7301d205debc5a79e04b61654909e50be0167025e749e97"
+    },
+    {
+      "name": "build-arm64-v2.ps1",
+      "source_path": "E:\\r12-current-android-package-20260911\\build-arm64-v2.ps1",
+      "bytes": 12401,
+      "sha256": "ad7561fb46ac6e6c3365ecbd0dec3ea87c23069d3921837ab92be2acddcbde01"
+    },
+    {
+      "name": "run-build.py",
+      "source_path": "E:\\r12-current-android-package-20260911\\run-build.py",
+      "bytes": 2373,
+      "sha256": "a2233c344e2b3016724db818530919b7dc6ba07acd685a4412532ffee0f43558"
+    },
+    {
+      "name": "build-v1-missing-harness-root.log",
+      "source_path": "E:\\r12-current-android-package-20260911\\build-v1-missing-harness-root.log",
+      "bytes": 285,
+      "sha256": "bbfe3d66e321eaa120254f5fb9686ff4a4894f368de0df5d0e872cc730c46f42"
+    },
+    {
+      "name": "build-v1-disk-and-exit.json",
+      "source_path": "E:\\r12-current-android-package-20260911\\build-v1-disk-and-exit.json",
+      "bytes": 556,
+      "sha256": "90f9d9503b0387dd0a4e9a06c63c22089232b0f1dcc2e4d536f8f3e45b783c8d"
+    },
+    {
+      "name": "build-v2-exitcode-context.log",
+      "source_path": "E:\\r12-current-android-package-20260911\\build-v2-exitcode-context.log",
+      "bytes": 274,
+      "sha256": "6b54596469ba3c119a1d8df173814f44a425c2dcba5bb8472540cb481e92387a"
+    },
+    {
+      "name": "build-v2-disk-and-exit.json",
+      "source_path": "E:\\r12-current-android-package-20260911\\build-v2-disk-and-exit.json",
+      "bytes": 556,
+      "sha256": "a2e200f6fab17f5ffd2ba450764999f15de4dc169d4f6f0b86f1449280ef837a"
+    },
+    {
+      "name": "build.log",
+      "source_path": "E:\\r12-current-android-package-20260911\\build.log",
+      "bytes": 41865,
+      "sha256": "bea41bcc43cad03638efdb005c984bf6fb9134dce202fc2cb76170d04968bc8e"
+    },
+    {
+      "name": "build-disk-and-exit.json",
+      "source_path": "E:\\r12-current-android-package-20260911\\build-disk-and-exit.json",
+      "bytes": 556,
+      "sha256": "501b2209b5be1a0e41e2e4f3b196dc09fd9b81b4310bf7c5efcda435eadc1d3a"
+    },
+    {
+      "name": "audit-android.py",
+      "source_path": "E:\\r12-current-android-package-20260911\\audit-android.py",
+      "bytes": 4989,
+      "sha256": "f78cdbd7f81b2990dc00c1e4d433a166906878d40379179afc33033350b74aa3"
+    },
+    {
+      "name": "android-package-audit.json",
+      "source_path": "E:\\r12-current-android-package-20260911\\android-package-audit.json",
+      "bytes": 6965,
+      "sha256": "8b0fbb7b598814f7facecc540ed80b54aa6c1200181d26e117ac3899e1a772fc"
+    },
+    {
+      "name": "apk.signing.json",
+      "source_path": "C:\\r12-current-windows-source-20260911\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk.signing.json",
+      "bytes": 793,
+      "sha256": "a6a3b7f7c65aecb09ea5cd1c8b95108d548a669277063cc11f1e6c364ad372e2"
+    },
+    {
+      "name": "retain.py",
+      "source_path": "E:\\r12-current-android-package-20260911\\retain.py",
+      "bytes": 3587,
+      "sha256": "e43b81bc34d756c43af903b8cdd43d93e3e2e83019962148a03cd0313d0a680b"
+    }
+  ],
+  "client_evidence_path": "E:\\r12client\\docs\\operations\\evidence\\2026-09-11-r12-current-android-arm64",
+  "source_product_equals_feature": true,
+  "source_product_delta_from_main": [
+    "apps/android_shell/android/app/build.gradle"
+  ],
+  "source_working_logical_diff_empty": true,
+  "source_status_caveat": "Six existing LFS/CRLF stat entries remain; logical git diff HEAD is empty.",
+  "build_warning": "Kotlin incremental caches reported different C/E roots; compiler fallback completed and package build/signature checks exited 0. No cache was deleted.",
+  "harness_initial_failures_retained": [
+    "Wrong external harness support seed root before signing/build",
+    "Unset LASTEXITCODE in isolated PowerShell context before build; initialized in external harness"
+  ],
+  "phone_used": false,
+  "vm_started": false,
+  "installed": false,
+  "public_candidate_changed": false,
+  "push_merge_deploy_publication": false,
+  "other_current_android_artifacts": "NOT_BUILT_CAPACITY_FLOOR",
+  "full_goal": "OPEN"
+}

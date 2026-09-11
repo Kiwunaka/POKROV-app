@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "artifact": "app-direct-release.apk",
+  "abi": "arm64-v8a",
+  "package_name": "space.pokrov.pokrov_android_shell",
+  "version_name": "1.2.0",
+  "version_code": "4053",
+  "distribution": "direct_apk",
+  "build_mode": "release",
+  "debuggable": false,
+  "signing_state": "production_self_managed",
+  "certificate_sha256": "0A0602A7DF5D96A0B427909D004F3DDF26DEF86587634BF16694DA8D654B2500",
+  "apk_sha256": "3ECFF58793E0F6B354CE49EABD5F84F06052A92176CD12E4C5C7583A91CC41A0",
+  "size_bytes": 101301451,
+  "api_base_url": "https://app.pokrov.space",
+  "emergency_signing_key_id": "emg-20260815-v1",
+  "emergency_public_key_sha256": "fa7967ddbe2fe711532c2becf5e216a3d1fb7e12e8c0f312e563a3a52d7c4a6f",
+  "verified_at_utc": "2026-09-11T05:52:59.1244428Z"
+}

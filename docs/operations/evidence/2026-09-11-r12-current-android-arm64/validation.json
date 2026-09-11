@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "captures": [
+    {
+      "name": "client-seed.log",
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -CoreRoot C:/r12corec02 -PlatformRoot C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "cwd": "E:\\r12client",
+      "exit": 0,
+      "bytes": 1819,
+      "sha256": "e0b9e61e84a5573928af2fbfda3cc45e3291f95e66597cf28db0afdd71332e95"
+    },
+    {
+      "name": "platform-docs.log",
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "exit": 0,
+      "bytes": 102,
+      "sha256": "b6a8272b0eadbcac34a6f98dd8ff077367ae072adbace2d9f43713a068ee43e0"
+    },
+    {
+      "name": "platform-context.log",
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "exit": 0,
+      "bytes": 24,
+      "sha256": "9d4185d85877777557e136d2a0040090f0794b5b79fa17092c153ddb32065e9f"
+    },
+    {
+      "name": "package-validation.log",
+      "command": "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "exit": 0,
+      "bytes": 110,
+      "sha256": "0096edf52ed8829e3bfe86fe4a88fa73c39e80daf2aea15d9608413b8c47a495"
+    }
+  ],
+  "diff_check": "PASS_BOTH_REPOSITORIES",
+  "release_artifact_delta": false,
+  "full_goal": "OPEN"
+}
