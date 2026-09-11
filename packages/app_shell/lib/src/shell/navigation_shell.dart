@@ -592,49 +592,45 @@ class _LazyIndexedStack extends StatefulWidget {
 }
 
 class _LazyIndexedStackState extends State<_LazyIndexedStack> {
-  late List<bool> _initialized;
+  late List<Widget?> _children;
 
   @override
   void initState() {
     super.initState();
-    _initialized = List<bool>.filled(widget.builders.length, false);
-    _markInitialized(widget.index);
+    _children = List<Widget?>.filled(widget.builders.length, null);
   }
 
   @override
   void didUpdateWidget(_LazyIndexedStack oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.builders.length != widget.builders.length) {
-      final previous = _initialized;
-      _initialized = List<bool>.generate(
+      final previous = _children;
+      _children = List<Widget?>.generate(
         widget.builders.length,
-        (index) => index < previous.length && previous[index],
+        (index) => index < previous.length ? previous[index] : null,
       );
-    }
-    _markInitialized(widget.index);
-  }
-
-  void _markInitialized(int index) {
-    if (index >= 0 && index < _initialized.length) {
-      _initialized[index] = true;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    _markInitialized(widget.index);
+    // Keep inactive widget configurations stable. Activation uses the latest
+    // builder so account and runtime changes are visible before the tab paints.
+    for (final entry in widget.builders.indexed) {
+      if (entry.$1 == widget.index) {
+        _children[entry.$1] = entry.$2(context);
+      }
+    }
     return Stack(
       fit: StackFit.expand,
       children: [
-        for (final entry in widget.builders.indexed)
+        for (final entry in _children.indexed)
           Offstage(
             offstage: entry.$1 != widget.index,
             child: TickerMode(
               enabled: entry.$1 == widget.index,
               child: RepaintBoundary(
-                child: _initialized[entry.$1]
-                    ? entry.$2(context)
-                    : const SizedBox.shrink(),
+                child: entry.$2 ?? const SizedBox.shrink(),
               ),
             ),
           ),
