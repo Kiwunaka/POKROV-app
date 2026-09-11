@@ -1471,3 +1471,16 @@ fork and full C05 clearance remain open. Exact local packages for source a24b211
 [final evidence](evidence/2026-09-11-r12-utls-file-attribution/README.md) records
 the six artifacts and fresh module-precision scans. Current installation,
 installer extraction and runtime/device privacy were not tested in this slice.
+
+## 2026-09-12 Core2662 package FFI privacy
+
+The current client212/Core2662 DLL from the exact development package passes
+the previous direct-FFI privacy regression in an isolated user fixture on the
+owned Windows 11 VM: all six synthetic markers are absent from FFI return,
+stdout and stderr, with `CORE-005` preserved and debug disabled. The
+[bounded receipt](evidence/2026-09-12-r12-c05-package-ffi/README.md) records the
+exact DLL hash, unchanged existing installation/session storage, normal VM
+shutdown, 13 retained snapshots and unchanged host network digests.
+Installation and ordinary UI acceptance remain deferred by the owner; this
+fixture does not establish current installed service, TUN or full runtime-log
+coverage. Source publication, complete licensing and public release remain open.

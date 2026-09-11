@@ -1,0 +1,18 @@
+{
+  "utc": "2026-09-11T21:32:52.984320+00:00",
+  "status": "PASS_VM_RESTORED_OFFLINE",
+  "vm_uuid": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "power_state": "poweroff",
+  "nic1": "none",
+  "retained_snapshots": 13,
+  "old_snapshot_leaf_sha256_unchanged": "48cfae5a47c4ae67aa004c9612ea945dd291052399bb8b282c4175be025bde1d",
+  "new_leaf": "E:\\r12-vm-disks-20260912\\{3b8e6fb1-6371-448e-b10f-c0878b875c74}.vdi",
+  "new_leaf_bytes": 3357540352,
+  "growth_bytes": 3355443200,
+  "budget_bytes": 4294967296,
+  "host_routes_unchanged": true,
+  "host_dns_unchanged": true,
+  "installed_package_changed": false,
+  "ui_acceptance": "DEFERRED_BY_OWNER",
+  "screenshot": "UNAVAILABLE: window capture returned occluding game; direct VBox screenshot returned E_FAIL; no host focus or input sent"
+}

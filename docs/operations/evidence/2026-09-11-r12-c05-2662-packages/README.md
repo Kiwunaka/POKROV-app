@@ -30,3 +30,7 @@ assessment and native reconstruction remain open. These packages have not
 been installed, publicly released or submitted to a store. Older installed
 receipts retain their exact earlier bytes. Windows Authenticode remains
 `SKIPPED_BY_OWNER` for the existing direct-beta exception.
+
+The subsequent [package FFI check](../2026-09-12-r12-c05-package-ffi/README.md)
+passes the six-marker direct-FFI regression for this exact DLL in an isolated
+Windows VM fixture. It does not change the uninstalled scope above.

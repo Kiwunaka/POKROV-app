@@ -1,0 +1,15 @@
+{
+    "utc":  "2026-09-11T21:31:26.3986898Z",
+    "client_source":  "7ed18c97c43ba39ce18701220d487af1b0c5a446",
+    "core_source":  "904e440aca98cb6419744c5c04c83223a6d6380e",
+    "matched_files":  304,
+    "state_sha256":  "505d8e3d789bf0a8438c60b26eb571172cc709c6d2692cc38a461d02fb0ed979",
+    "secure_store_sha256":  "7f5657662a3a03476c91d824e762bab70b5aea917b26fe57885460a7b1953130",
+    "outbox_count":  0,
+    "service_state":  "Running",
+    "service_account":  "LocalSystem",
+    "ui_count":  0,
+    "new_setup_sha256":  "04cac45aae8d1490be33bb77ab3f2dc512a7acd5c116040504b8e28bf0d7b953",
+    "os":  "Microsoft Windows 11 Enterprise Evaluation",
+    "build":  "26200"
+}
