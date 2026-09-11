@@ -1063,4 +1063,8 @@ The shared notice asset appends the original `u_prng.go` Psiphon copyright
 and explicit uTLS license reference. All previous bytes and 185 recorded
 bodies are retained. [Source evidence](evidence/2026-09-11-r12-utls-file-attribution/README.md)
 binds the 77 selected files to Core 904. The root license gap of the pinned
-fork and full C05 clearance remain open; exact package checks are pending.
+fork and full C05 clearance remain open. Exact local packages for source a24b211
+(Core 904e440) now pass bounded ABI/native/notices/signing-inventory checks;
+[final evidence](evidence/2026-09-11-r12-utls-file-attribution/README.md) records
+the six artifacts and fresh module-precision scans. Current installation,
+installer extraction and runtime/device privacy were not tested in this slice.

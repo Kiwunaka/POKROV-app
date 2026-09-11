@@ -427,6 +427,8 @@ It also carries the separate prebuilt license for Wintun 0.14.1, whose exact
 amd64 DLL bytes are embedded in the bound Windows Core through sing-tun.
 The asset also preserves the original Psiphon `u_prng.go` copyright and its
 explicit uTLS license reference, linked to the already included BSD body.
+Exact a24b211 local packages retain this notice; final package audits and
+module-precision scan evidence are linked from that record.
 The pinned Psiphon fork still lacks a root LICENSE; this file attribution
 does not establish clearance for the whole fork.
 This notice binding does not establish complete dependency licensing or

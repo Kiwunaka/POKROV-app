@@ -1,0 +1,69 @@
+{
+  "tested": "2d7979e904dd4429774220cc6f2576a17a3b3863",
+  "source": "99b389478370cbccdbd4ed035149ebda312358ae",
+  "parent": "c772160d772fea1450a1c3e94f0df6bb3584fb18",
+  "signed_commit": "a24b211f9c1c4bf83bb5fde9b8a9c98185ea1028",
+  "tree": "0f10fc048705186f9803e1ae80844a88389f5e7e",
+  "signature_valid": true,
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/111",
+  "branch": "codex/utls-file-attribution-signed-20260911",
+  "verified_product_trees": [
+    "apps",
+    "packages",
+    "config",
+    "scripts",
+    "test",
+    ".github"
+  ],
+  "canonical_docs": "Scoped cherry-pick preserves main history; integration has additional local execution history.",
+  "files": [
+    {
+      "path": "config/runtime-artifacts.seed.json",
+      "sha256": "5c18343b8d68513b8a7cac9ae4fec04ab07dfbeb33c6d8513dc3c9e5d17ffe32"
+    },
+    {
+      "path": "docs/architecture/bootstrap-workflow.md",
+      "sha256": "c674ccc18d0bc62e5fdcc3f0ae57c37c4f068d198f1447581939bb5741ff975c"
+    },
+    {
+      "path": "docs/operations/android-release-audit.md",
+      "sha256": "43497b2fbec3d08cd072345c4ae387f06b45e0305d8cba1847a0d1a67c7f5614"
+    },
+    {
+      "path": "docs/operations/windows-release-readiness.md",
+      "sha256": "5a360ecd8e3cdf1f57c9cf1eb9a7143b5081cba60f968c4d53b38ad1098e77d4"
+    },
+    {
+      "path": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
+      "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-11-r12-utls-file-attribution/.gitattributes",
+      "sha256": "22449769920381e469db18016144543e981145b048e4732311667e6e37a3d2bc"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-11-r12-utls-file-attribution/README.md",
+      "sha256": "cc844dc3f121c38a36d000887ccdf6c7c6f6584602d2498446413cdc2d8c8462"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-11-r12-utls-file-attribution/assembly.json",
+      "sha256": "0b6d106b29658b8f146a3ba54c857824bdcc5291eeb6da5cefb5019fdac35beb"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-11-r12-utls-file-attribution/source-license-binding.json",
+      "sha256": "dea9799fff655961d20953934101f7d61472e92ea9bf76ccbfa9ed0d105cd35d"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-11-r12-utls-file-attribution/u_prng-header.txt",
+      "sha256": "d2f2b8067fefd9dfe21de7b51a048b8fa4ac20439bcd5d229d97e87ac010046b"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-11-r12-utls-file-attribution/upstream-LICENSE.txt",
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-11-r12-utls-file-attribution/upstream-projection.json",
+      "sha256": "33ef2c1a41a8f42839ada4be2ab0b0119eea0c315ffebe6d352476804d728d31"
+    }
+  ]
+}

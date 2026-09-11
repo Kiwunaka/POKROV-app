@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "merge": "f4a0a5037ca861b75edbef89bd8bf1186eb93b81",
+  "source": "a24b211f9c1c4bf83bb5fde9b8a9c98185ea1028",
+  "tree": "0f10fc048705186f9803e1ae80844a88389f5e7e",
+  "same_tree": true,
+  "merge_signature_verified": true,
+  "merged_at": "2026-09-10T23:48:36Z",
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/111"
+}

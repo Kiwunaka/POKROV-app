@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "observed_at": "2026-09-11T00:02:48.894170+00:00",
+  "checks": [
+    {
+      "name": "final-client-seed.log",
+      "expected": "Seed scaffold OK",
+      "sha256": "ff026d0d46a27236abc23e9ca31826594488f58027b65bd42464a714ba517cea"
+    },
+    {
+      "name": "final-client-docs.log",
+      "expected": "Client docs contract OK",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "name": "final-platform-docs.log",
+      "expected": "33 passed",
+      "sha256": "46771e8ab8d591ac5d9cddf6da8da599ce05eb84dd50465d0158dc5d444f9cbc"
+    },
+    {
+      "name": "final-platform-context.log",
+      "expected": "PASS platform-context",
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "name": "final-platform-package.log",
+      "expected": "755 local file links",
+      "sha256": "9a0507448fb65c55b35db8c58565ba2ee1b5f029e1129f00ae0702b98e56275d"
+    }
+  ],
+  "client_command": "./scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot C:/r12corec02; ./test/docs-contract.ps1",
+  "platform_commands": [
+    "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+    "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+    "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py"
+  ],
+  "diff_check": "PASS_BOTH_REPOSITORIES",
+  "release_artifacts_delta": "NONE",
+  "screen": "No concrete credential markers in 19 selected evidence text files; no whole-system claim."
+}

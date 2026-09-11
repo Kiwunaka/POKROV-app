@@ -1,0 +1,412 @@
+{
+  "schema": "pokrov.r12.final-android-package-audit/v1",
+  "observed_at": "2026-09-10T23:48:10.589792+00:00",
+  "artifacts": [
+    {
+      "artifact": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+        "size": 101301451,
+        "sha256": "c396d77fcf3f6e5163f255d068d334dda288a3be0df21f9f9bce312962af5e3f"
+      },
+      "signing_receipt": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk.signing.json",
+        "size": 803,
+        "sha256": "a3d93bd05724cd3779f43e99925df4ac8c2b7968409b5d752863f648d492a110"
+      },
+      "abis": [
+        "arm64-v8a"
+      ],
+      "libraries": [
+        {
+          "entry": "lib/arm64-v8a/libapp.so",
+          "size": 8127408,
+          "sha256": "6f428cbdd1a1793e3cd303d8b2ef3a0f1580b568567b7a7dc89e85c950ae273c"
+        },
+        {
+          "entry": "lib/arm64-v8a/libflutter.so",
+          "size": 11107920,
+          "sha256": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d"
+        },
+        {
+          "entry": "lib/arm64-v8a/libpokrov-core.so",
+          "size": 78540664,
+          "sha256": "fe9bf133e0b3ad02a6991a46a8b0a6039531d28be52879ab646c5422c777b7d8"
+        }
+      ],
+      "source_notices": [
+        {
+          "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+          "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+          "size": 4487,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\fonts\\OFL.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+          "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a",
+          "size": 665657,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\licenses\\native-go-NOTICES.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/assets/licenses/maven-NOTICES.txt",
+          "sha256": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+          "size": 176690,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\maven-NOTICES.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt",
+          "sha256": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+          "size": 173535,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\cronet-NOTICES.txt"
+        }
+      ],
+      "flutter_notices": {
+        "size": 108088,
+        "sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f"
+      },
+      "unexpected_private_or_build_file_names": []
+    },
+    {
+      "artifact": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+        "size": 90814993,
+        "sha256": "f4efb0b1fe67a70873b1dd2dda39f5fe0325e76cbe6670fd8250aee2ccf92e0e"
+      },
+      "signing_receipt": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk.signing.json",
+        "size": 806,
+        "sha256": "148c3bd1b1fa29b9777b1294dc90aa585ac7f73fd9d41b03dea132d02c1f8479"
+      },
+      "abis": [
+        "armeabi-v7a"
+      ],
+      "libraries": [
+        {
+          "entry": "lib/armeabi-v7a/libapp.so",
+          "size": 8962652,
+          "sha256": "ce144a077263ea7704f822ae8945a7e8ac251c96450d18d5f7d9f0e42952fe8a"
+        },
+        {
+          "entry": "lib/armeabi-v7a/libflutter.so",
+          "size": 8096376,
+          "sha256": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07"
+        },
+        {
+          "entry": "lib/armeabi-v7a/libpokrov-core.so",
+          "size": 70216888,
+          "sha256": "2a2f16c120bedcc8b82d75742f213a8a383677513257eca4c75be0bbbd5add3a"
+        }
+      ],
+      "source_notices": [
+        {
+          "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+          "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+          "size": 4487,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\fonts\\OFL.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+          "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a",
+          "size": 665657,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\licenses\\native-go-NOTICES.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/assets/licenses/maven-NOTICES.txt",
+          "sha256": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+          "size": 176690,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\maven-NOTICES.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt",
+          "sha256": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+          "size": 173535,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\cronet-NOTICES.txt"
+        }
+      ],
+      "flutter_notices": {
+        "size": 108088,
+        "sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f"
+      },
+      "unexpected_private_or_build_file_names": []
+    },
+    {
+      "artifact": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+        "size": 295352486,
+        "sha256": "e50109dc2bd82803df7b4d9dfe2f2bafb98ee5ec0bde1cd7c83d6680133c1b65"
+      },
+      "signing_receipt": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk.signing.json",
+        "size": 793,
+        "sha256": "ce90b602fa704a40eec1fc04cd8573bc8822ba90a8c58db3da85e4c0c02c6dd4"
+      },
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "libraries": [
+        {
+          "entry": "lib/arm64-v8a/libapp.so",
+          "size": 8127408,
+          "sha256": "6f428cbdd1a1793e3cd303d8b2ef3a0f1580b568567b7a7dc89e85c950ae273c"
+        },
+        {
+          "entry": "lib/arm64-v8a/libflutter.so",
+          "size": 11107920,
+          "sha256": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d"
+        },
+        {
+          "entry": "lib/arm64-v8a/libpokrov-core.so",
+          "size": 78540664,
+          "sha256": "fe9bf133e0b3ad02a6991a46a8b0a6039531d28be52879ab646c5422c777b7d8"
+        },
+        {
+          "entry": "lib/armeabi-v7a/libapp.so",
+          "size": 8962652,
+          "sha256": "ce144a077263ea7704f822ae8945a7e8ac251c96450d18d5f7d9f0e42952fe8a"
+        },
+        {
+          "entry": "lib/armeabi-v7a/libflutter.so",
+          "size": 8096376,
+          "sha256": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07"
+        },
+        {
+          "entry": "lib/armeabi-v7a/libpokrov-core.so",
+          "size": 70216888,
+          "sha256": "2a2f16c120bedcc8b82d75742f213a8a383677513257eca4c75be0bbbd5add3a"
+        },
+        {
+          "entry": "lib/x86_64/libapp.so",
+          "size": 8324016,
+          "sha256": "f6c19985ccd5044c8d191736fe71b037aa928881e8d48638916efffb25d9d55d"
+        },
+        {
+          "entry": "lib/x86_64/libflutter.so",
+          "size": 12344472,
+          "sha256": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd"
+        },
+        {
+          "entry": "lib/x86_64/libpokrov-core.so",
+          "size": 86043040,
+          "sha256": "77c63fd6343ff43d347db745f3f4e40606d2633920b498e4366bad5087de5c26"
+        }
+      ],
+      "source_notices": [
+        {
+          "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+          "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+          "size": 4487,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\fonts\\OFL.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+          "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a",
+          "size": 665657,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\licenses\\native-go-NOTICES.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/assets/licenses/maven-NOTICES.txt",
+          "sha256": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+          "size": 176690,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\maven-NOTICES.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt",
+          "sha256": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+          "size": 173535,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\cronet-NOTICES.txt"
+        }
+      ],
+      "flutter_notices": {
+        "size": 108088,
+        "sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f"
+      },
+      "unexpected_private_or_build_file_names": []
+    },
+    {
+      "artifact": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+        "size": 110245610,
+        "sha256": "65daff8203a7ddc5bb3fb4faebfd20bf411bbca935c62669a596154c642321f8"
+      },
+      "signing_receipt": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk.signing.json",
+        "size": 797,
+        "sha256": "c63186d060f114ce9f5fe91d0ab6853e06b2b75c3e0ca3905beaa4dc8a4df2dd"
+      },
+      "abis": [
+        "x86_64"
+      ],
+      "libraries": [
+        {
+          "entry": "lib/x86_64/libapp.so",
+          "size": 8324016,
+          "sha256": "f6c19985ccd5044c8d191736fe71b037aa928881e8d48638916efffb25d9d55d"
+        },
+        {
+          "entry": "lib/x86_64/libflutter.so",
+          "size": 12344472,
+          "sha256": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd"
+        },
+        {
+          "entry": "lib/x86_64/libpokrov-core.so",
+          "size": 86043040,
+          "sha256": "77c63fd6343ff43d347db745f3f4e40606d2633920b498e4366bad5087de5c26"
+        }
+      ],
+      "source_notices": [
+        {
+          "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+          "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+          "size": 4487,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\fonts\\OFL.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+          "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a",
+          "size": 665657,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\licenses\\native-go-NOTICES.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/assets/licenses/maven-NOTICES.txt",
+          "sha256": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+          "size": 176690,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\maven-NOTICES.txt"
+        },
+        {
+          "entry": "assets/flutter_assets/assets/licenses/cronet-NOTICES.txt",
+          "sha256": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+          "size": 173535,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\cronet-NOTICES.txt"
+        }
+      ],
+      "flutter_notices": {
+        "size": 108088,
+        "sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f"
+      },
+      "unexpected_private_or_build_file_names": []
+    },
+    {
+      "artifact": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\bundle\\storeRelease\\app-store-release.aab",
+        "size": 126522804,
+        "sha256": "c9aff9b81312997cf0bd2ddeb2720b29e62386077491ad5433e1cc9dd736b5af"
+      },
+      "signing_receipt": {
+        "path": "E:\\r12utls\\apps\\android_shell\\build\\app\\outputs\\bundle\\storeRelease\\app-store-release.aab.signing.json",
+        "size": 1178,
+        "sha256": "e02ab79c3b1279b816b8e99555793089afc68659254b9692601fc3e6a84ec431"
+      },
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "libraries": [
+        {
+          "entry": "base/lib/arm64-v8a/libapp.so",
+          "size": 8127408,
+          "sha256": "6f428cbdd1a1793e3cd303d8b2ef3a0f1580b568567b7a7dc89e85c950ae273c"
+        },
+        {
+          "entry": "base/lib/arm64-v8a/libflutter.so",
+          "size": 11107920,
+          "sha256": "fe85e6d883c498c503afb655a3c7606120e2e29297e5555681b159740953693d"
+        },
+        {
+          "entry": "base/lib/arm64-v8a/libpokrov-core.so",
+          "size": 78540664,
+          "sha256": "fe9bf133e0b3ad02a6991a46a8b0a6039531d28be52879ab646c5422c777b7d8"
+        },
+        {
+          "entry": "base/lib/armeabi-v7a/libapp.so",
+          "size": 8962652,
+          "sha256": "ce144a077263ea7704f822ae8945a7e8ac251c96450d18d5f7d9f0e42952fe8a"
+        },
+        {
+          "entry": "base/lib/armeabi-v7a/libflutter.so",
+          "size": 8096376,
+          "sha256": "a4a921f6c02b5bdc52eae98528a7fbd242c2819d06de97014ee932f90c1b7a07"
+        },
+        {
+          "entry": "base/lib/armeabi-v7a/libpokrov-core.so",
+          "size": 70216888,
+          "sha256": "2a2f16c120bedcc8b82d75742f213a8a383677513257eca4c75be0bbbd5add3a"
+        },
+        {
+          "entry": "base/lib/x86_64/libapp.so",
+          "size": 8324016,
+          "sha256": "f6c19985ccd5044c8d191736fe71b037aa928881e8d48638916efffb25d9d55d"
+        },
+        {
+          "entry": "base/lib/x86_64/libflutter.so",
+          "size": 12344472,
+          "sha256": "9e8c7fac2fb253a2c00ec61f0ba5b82545d3e781b220a2563a981c233127defd"
+        },
+        {
+          "entry": "base/lib/x86_64/libpokrov-core.so",
+          "size": 86043040,
+          "sha256": "77c63fd6343ff43d347db745f3f4e40606d2633920b498e4366bad5087de5c26"
+        }
+      ],
+      "source_notices": [
+        {
+          "entry": "base/assets/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+          "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+          "size": 4487,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\fonts\\OFL.txt"
+        },
+        {
+          "entry": "base/assets/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+          "sha256": "3cc96146c0df19fb1752a01abbee95c1404bc2ec8495e82313fbfda2e24b732a",
+          "size": 665657,
+          "source": "E:\\r12utls\\packages\\app_shell\\assets\\licenses\\native-go-NOTICES.txt"
+        },
+        {
+          "entry": "base/assets/flutter_assets/assets/licenses/maven-NOTICES.txt",
+          "sha256": "06b7256830d0d19ec1aeb70326ea8216b830e2c41a29cb3c4314e7ca84f180af",
+          "size": 176690,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\maven-NOTICES.txt"
+        },
+        {
+          "entry": "base/assets/flutter_assets/assets/licenses/cronet-NOTICES.txt",
+          "sha256": "7c60e87757cfefe0f865c64b70eafe7ee2d64e4cb2c7275ab05dadc5292e54b5",
+          "size": 173535,
+          "source": "E:\\r12utls\\apps\\android_shell\\assets\\licenses\\cronet-NOTICES.txt"
+        }
+      ],
+      "flutter_notices": {
+        "size": 108088,
+        "sha256": "85b9c56d6acc3ac409651cb345d4af6861e19f9bf6791422d7a6ef3bfb0ab65f"
+      },
+      "unexpected_private_or_build_file_names": []
+    }
+  ],
+  "flutter_native_prior_binding": {
+    "path": "E:\\r12-c05-flutter-native\\engine-binary-binding.json",
+    "size": 4306,
+    "sha256": "5fc8400a103db31ba0a8b86c845093074e3fea269b42654e7f66ef57f81b318a"
+  },
+  "dex_namespace_check": {
+    "patterns": [
+      "com.google.android.gms.ads",
+      "com.google.firebase.analytics",
+      "com.facebook.ads",
+      "com.appsflyer",
+      "com.adjust.sdk",
+      "io.appmetrica",
+      "com.yandex.metrica"
+    ],
+    "matches": [],
+    "log": {
+      "path": "E:\\r12-c05-utls-license-20260911\\android-dex-packages.log",
+      "size": 958162,
+      "sha256": "ae6c147608681c3e37c32d2d6cc03a0de3e20ac20b04d97c060e44feafe3bbf1"
+    }
+  },
+  "limits": [
+    "File-name and seven DEX namespace checks are bounded static privacy evidence, not a full secret scan or installed runtime audit.",
+    "Flutter binary equivalence reuses retained official-download evidence after exact hash comparison; native source reproduction was not performed.",
+    "Packages use the development version 1.2.0+4053; no successor release manifest, public distribution or store submission was created."
+  ]
+}

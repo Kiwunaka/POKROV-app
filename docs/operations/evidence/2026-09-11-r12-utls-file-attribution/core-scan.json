@@ -1,0 +1,203 @@
+{
+  "schema": "pokrov.r12.final-core-scan/v1",
+  "observed_at": "2026-09-10T23:41:20.662328+00:00",
+  "client_revision": "a24b211f9c1c4bf83bb5fde9b8a9c98185ea1028",
+  "core_revision": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "scanner": {
+    "path": "E:\\r12-c05-artifacts\\tools\\govulncheck.exe",
+    "size": 15486464,
+    "sha256": "fd8811bd8fba451db7ba8588f4b4f6198beb791f22f80276b5c1663e96284bbc"
+  },
+  "go": {
+    "path": "C:\\Users\\kiwun\\go\\pkg\\mod\\golang.org\\toolchain@v0.0.1-go1.26.8.windows-amd64\\bin\\go.exe",
+    "size": 15820800,
+    "sha256": "21761eceb9302062c9623fb699f332c8c7fe000f15f70efe8da01a2cfbbc16b9"
+  },
+  "source_sboms": [
+    {
+      "path": "E:\\r12client\\docs\\operations\\evidence\\2026-09-10-r12-core-privacy-binding\\core-source.cdx.json",
+      "size": 311796,
+      "sha256": "48bb61280e6c6db4621f755be5ea78f6c7b54fa2186fdf841ce9b233fa70564b"
+    },
+    {
+      "path": "E:\\r12client\\docs\\operations\\evidence\\2026-09-10-r12-core-privacy-binding\\engine-source.cdx.json",
+      "size": 267681,
+      "sha256": "bf2f4f2fd8c9d61e7178f19aca6991c0b00448949f1f8809279cc996cacf8672"
+    }
+  ],
+  "binary_scans": [
+    {
+      "binary": {
+        "path": "E:\\r12-c05-utls-license-20260911\\native\\libpokrov-core-armeabi-v7a.so",
+        "size": 70216888,
+        "sha256": "2a2f16c120bedcc8b82d75742f213a8a383677513257eca4c75be0bbbd5add3a"
+      },
+      "command": [
+        "E:\\r12-c05-artifacts\\tools\\govulncheck.exe",
+        "-mode",
+        "binary",
+        "-json",
+        "E:\\r12-c05-utls-license-20260911\\native\\libpokrov-core-armeabi-v7a.so"
+      ],
+      "exit_code": 0,
+      "report": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-armeabi-v7a.govulncheck.jsonl",
+        "size": 654240,
+        "sha256": "c8b6099933dbab90db50358e07108a68c1e206599b5d353b0c6b8c987e8f0fd3"
+      },
+      "stderr": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-armeabi-v7a.govulncheck.stderr.log",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "buildinfo": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-armeabi-v7a.buildinfo.log",
+        "size": 12148,
+        "sha256": "84e2f26f3ad1a7f6053448215f2cbdf1059f26f1b685bd8a2079db4f9928ac0c"
+      },
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21
+    },
+    {
+      "binary": {
+        "path": "E:\\r12-c05-utls-license-20260911\\native\\libpokrov-core-arm64-v8a.so",
+        "size": 78540664,
+        "sha256": "fe9bf133e0b3ad02a6991a46a8b0a6039531d28be52879ab646c5422c777b7d8"
+      },
+      "command": [
+        "E:\\r12-c05-artifacts\\tools\\govulncheck.exe",
+        "-mode",
+        "binary",
+        "-json",
+        "E:\\r12-c05-utls-license-20260911\\native\\libpokrov-core-arm64-v8a.so"
+      ],
+      "exit_code": 0,
+      "report": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-arm64-v8a.govulncheck.jsonl",
+        "size": 654194,
+        "sha256": "fa9732d4888eba14abe32f644b0ef9946ce180613da85af5389af8412ad7da69"
+      },
+      "stderr": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-arm64-v8a.govulncheck.stderr.log",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "buildinfo": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-arm64-v8a.buildinfo.log",
+        "size": 12157,
+        "sha256": "49ade403efc7b53a9c42552cb76541b9a0b0c21b95695dee8a66889ef3613bd6"
+      },
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21
+    },
+    {
+      "binary": {
+        "path": "E:\\r12-c05-utls-license-20260911\\native\\libpokrov-core-x86_64.so",
+        "size": 86043040,
+        "sha256": "77c63fd6343ff43d347db745f3f4e40606d2633920b498e4366bad5087de5c26"
+      },
+      "command": [
+        "E:\\r12-c05-artifacts\\tools\\govulncheck.exe",
+        "-mode",
+        "binary",
+        "-json",
+        "E:\\r12-c05-utls-license-20260911\\native\\libpokrov-core-x86_64.so"
+      ],
+      "exit_code": 0,
+      "report": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-x86_64.govulncheck.jsonl",
+        "size": 654242,
+        "sha256": "163f9e7442989c808c578014de01a29d21e633fe150f2d1a32053c84e3e69908"
+      },
+      "stderr": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-x86_64.govulncheck.stderr.log",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "buildinfo": {
+        "path": "E:\\r12-c05-utls-license-20260911\\libpokrov-core-x86_64.buildinfo.log",
+        "size": 12152,
+        "sha256": "6caf6688c229f2bb062b086780c897f9e0052f2247dec7b37071de6e0356d46c"
+      },
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21
+    },
+    {
+      "binary": {
+        "path": "E:\\r12utls\\apps\\windows_shell\\windows\\runner\\resources\\runtime\\pokrov-core.dll",
+        "size": 55453184,
+        "sha256": "18c5bf90a4e710b4d262f92d9e93bb587c4718d9425af89e265304dfd3a16a3c"
+      },
+      "command": [
+        "E:\\r12-c05-artifacts\\tools\\govulncheck.exe",
+        "-mode",
+        "binary",
+        "-json",
+        "E:\\r12utls\\apps\\windows_shell\\windows\\runner\\resources\\runtime\\pokrov-core.dll"
+      ],
+      "exit_code": 0,
+      "report": {
+        "path": "E:\\r12-c05-utls-license-20260911\\pokrov-core.govulncheck.jsonl",
+        "size": 658519,
+        "sha256": "a8d323cb510f94f1f0569449b8201642ff8c9ddc4f320aedef25e6a004ffa78f"
+      },
+      "stderr": {
+        "path": "E:\\r12-c05-utls-license-20260911\\pokrov-core.govulncheck.stderr.log",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "buildinfo": {
+        "path": "E:\\r12-c05-utls-license-20260911\\pokrov-core.buildinfo.log",
+        "size": 11706,
+        "sha256": "5636d160895ec7aa42b030304b09e94b9cb23068684ab849c754fdeed4fa3d2e"
+      },
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21
+    }
+  ],
+  "limits": [
+    "Go module and symbol scan only; native Cronet/Flutter libraries require separate assessment.",
+    "No installed-runtime privacy, device, trusted Windows signing or publication claim.",
+    "Module-only findings are not proof of reachable vulnerable code or a clean bill of health."
+  ]
+}

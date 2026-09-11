@@ -1,0 +1,135 @@
+{
+  "status": "PASS_BOUNDED_STATIC_TRIAGE_BINDING",
+  "observed_at": "2026-09-10T23:47:23.845247+00:00",
+  "client_revision": "a24b211f9c1c4bf83bb5fde9b8a9c98185ea1028",
+  "core_revision": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "selected_source_files": 6757,
+  "previous_inventory_files": 6751,
+  "additional_embedded_inputs": [
+    "core/v2/config/config.json.template",
+    "module-cache/github.com/sagernet/sing-tun@v0.8.0-beta.17/internal/wintun/amd64/wintun.dll",
+    "module-cache/golang.org/x/net@v0.57.0/publicsuffix/data/children",
+    "module-cache/golang.org/x/net@v0.57.0/publicsuffix/data/nodes",
+    "module-cache/golang.org/x/net@v0.57.0/publicsuffix/data/text",
+    "module-cache/google.golang.org/protobuf@v1.36.11/internal/editiondefaults/editions_defaults.binpb"
+  ],
+  "selected_go_cgo_files": 6488,
+  "changed_core_files_since_triage": [
+    "core/engine/sing-box/common/monitoring/outbound_monitoring.go",
+    "core/engine/sing-box/protocol/awg/contract.go",
+    "core/engine/sing-box/daemon/started_service.go",
+    "core/engine/sing-box/experimental/libbox/command_server.go",
+    "core/internal/observability/emitter.go",
+    "core/v2/hcore/custom.go",
+    "core/v2/hcore/independent_instance.go",
+    "core/v2/hcore/service.go",
+    "core/v2/hcore/stop.go",
+    "core/engine/sing-box/replace/wireguard-go/tun/checksum_generated_amd64.s"
+  ],
+  "external_selected_files_match_prior_authenticated_bytes": 4109,
+  "prior_auth_inventory_sha256": "0117e80656bac4fba78aa341d52a6ce9a257ac035001d6650fa9b6f0d93a42d9",
+  "symbol_matches": [
+    {
+      "path": "module-cache/github.com/go-chi/chi/v5@v5.2.3/middleware/realip.go",
+      "line": 16,
+      "text": "// RealIP is a middleware that sets a http.Request's RemoteAddr to the results",
+      "sha256": "8bf96831b9d8da8aab450e5036b92319a7e9480562e48c143b9e5a38d7adf040"
+    },
+    {
+      "path": "module-cache/github.com/go-chi/chi/v5@v5.2.3/middleware/realip.go",
+      "line": 31,
+      "text": "func RealIP(h http.Handler) http.Handler {",
+      "sha256": "8bf96831b9d8da8aab450e5036b92319a7e9480562e48c143b9e5a38d7adf040"
+    },
+    {
+      "path": "module-cache/github.com/go-chi/chi/v5@v5.2.3/middleware/strip.go",
+      "line": 36,
+      "text": "// RedirectSlashes is a middleware that will match request paths with a trailing",
+      "sha256": "e0043bb1f4a05290599cc756ccd3b60f2a6245708852ff5d057d26848591290b"
+    },
+    {
+      "path": "module-cache/github.com/go-chi/chi/v5@v5.2.3/middleware/strip.go",
+      "line": 39,
+      "text": "// NOTE: RedirectSlashes middleware is *incompatible* with http.FileServer,",
+      "sha256": "e0043bb1f4a05290599cc756ccd3b60f2a6245708852ff5d057d26848591290b"
+    },
+    {
+      "path": "module-cache/github.com/go-chi/chi/v5@v5.2.3/middleware/strip.go",
+      "line": 41,
+      "text": "func RedirectSlashes(next http.Handler) http.Handler {",
+      "sha256": "e0043bb1f4a05290599cc756ccd3b60f2a6245708852ff5d057d26848591290b"
+    },
+    {
+      "path": "module-cache/filippo.io/edwards25519@v1.1.0/extra.go",
+      "line": 240,
+      "text": "// MultiScalarMult sets v = sum(scalars[i] * points[i]), and returns v.",
+      "sha256": "937a65e78ccbd15b7f286b13f3b75b96b0bdcdd1400fa2d638f562c2e5fc9d94"
+    },
+    {
+      "path": "module-cache/filippo.io/edwards25519@v1.1.0/extra.go",
+      "line": 243,
+      "text": "func (v *Point) MultiScalarMult(scalars []*Scalar, points []*Point) *Point {",
+      "sha256": "937a65e78ccbd15b7f286b13f3b75b96b0bdcdd1400fa2d638f562c2e5fc9d94"
+    },
+    {
+      "path": "module-cache/filippo.io/edwards25519@v1.1.0/extra.go",
+      "line": 245,
+      "text": "panic(\"edwards25519: called MultiScalarMult with different size inputs\")",
+      "sha256": "937a65e78ccbd15b7f286b13f3b75b96b0bdcdd1400fa2d638f562c2e5fc9d94"
+    }
+  ],
+  "clash_registration_and_point_consumer_unchanged": true,
+  "five_target_affected_package_matrix_unchanged": true,
+  "advisory_claims": [
+    {
+      "id": "GO-2026-5932",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-07-07T22:15:29Z"
+    },
+    {
+      "id": "GO-2026-5841",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-07-27T16:16:22Z"
+    },
+    {
+      "id": "GO-2026-6179",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-08-13T21:43:54Z"
+    },
+    {
+      "id": "GO-2026-6180",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-08-13T21:43:54Z"
+    },
+    {
+      "id": "GO-2026-4316",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-01-23T02:28:11Z"
+    },
+    {
+      "id": "GO-2026-5774",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-07-24T18:35:55Z"
+    },
+    {
+      "id": "GO-2026-5775",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-07-24T18:35:55Z"
+    },
+    {
+      "id": "GO-2026-5777",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-07-24T18:35:55Z"
+    },
+    {
+      "id": "GO-2026-4503",
+      "affected_packages_and_claim_unchanged": true,
+      "modified": "2026-02-17T21:58:22Z"
+    }
+  ],
+  "source_inventory_sha256": "fa432bd61a8d660c8e523907e2c1f32c4622cdaee49b1d3572740997a7aa24fa",
+  "limits": [
+    "Existing nine Go static dispositions remain applicable under the verified unchanged affected packages, registrations and selected external bytes.",
+    "No new runtime exploit test, native vulnerability assessment or whole-application clearance is established."
+  ]
+}
