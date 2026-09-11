@@ -23,18 +23,19 @@ type eventSink interface {
 }
 
 type Service struct {
-	mu          sync.Mutex
-	probe       host.Probe
-	profiles    *profile.Store
-	authorizer  auth.Checker
-	events      eventSink
-	phase       string
-	generation  uint64
-	lastStop    string
-	lastFailure string
-	core        *coreprocess.Session
-	transaction *networktxn.Transaction
-	closed      bool
+	mu               sync.Mutex
+	probe            host.Probe
+	profiles         *profile.Store
+	authorizer       auth.Checker
+	events           eventSink
+	phase            string
+	generation       uint64
+	lastStop         string
+	lastFailure      string
+	core             *coreprocess.Session
+	transaction      *networktxn.Transaction
+	closed           bool
+	recoveryRequired bool
 }
 
 func New(
@@ -109,7 +110,7 @@ func (service *Service) Handle(peer auth.Peer, request protocol.Request) protoco
 	case "stage_profile":
 		return service.stageProfile(request)
 	case "invalidate_profile":
-		if service.transaction != nil {
+		if service.transaction != nil || service.recoveryRequired {
 			return service.runtimeFailure(request.RequestID)
 		}
 		if err := service.profiles.Invalidate(); err != nil {
@@ -144,6 +145,9 @@ func (service *Service) connect(request protocol.Request) protocol.Response {
 	result := service.probe.Run()
 	if !result.HostReady() {
 		return protocol.Failure(request.RequestID, "linux_host_unsupported", "host_unsupported")
+	}
+	if service.recoveryRequired && service.recoverPending() != nil {
+		return service.runtimeFailure(request.RequestID)
 	}
 	if service.transaction != nil {
 		if service.phase == "running" && service.lastFailure == "" {
@@ -184,17 +188,26 @@ func (service *Service) connect(request protocol.Request) protocol.Response {
 	}
 	service.phase = "running"
 	service.lastFailure = ""
+	go service.watchCore(core)
 	service.event("connect", "pass", request.RequestID, "")
 	return protocol.Success(request.RequestID, service.snapshot(result))
 }
 
 func (service *Service) stop(correlationID string) error {
 	if service.transaction == nil {
+		if service.recoveryRequired {
+			return service.recoverPending()
+		}
 		return nil
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := service.transaction.Restore(ctx); err != nil {
+		if service.core != nil && service.core.Exited() {
+			if recovered := service.recoverPending(); recovered == nil && service.transaction == nil {
+				return nil
+			}
+		}
 		service.lastFailure = "linux_runtime_error"
 		service.event("disconnect", "reject", correlationID, "linux_runtime_error")
 		return err
@@ -220,7 +233,7 @@ func (service *Service) runtimeFailure(requestID string) protocol.Response {
 }
 
 func (service *Service) stageProfile(request protocol.Request) protocol.Response {
-	if service.transaction != nil {
+	if service.transaction != nil || service.recoveryRequired {
 		return service.runtimeFailure(request.RequestID)
 	}
 	result := service.probe.Run()
@@ -266,7 +279,7 @@ func (service *Service) snapshot(result host.Result) protocol.Snapshot {
 		Phase:               phase,
 		SupportsLiveConnect: result.HostReady(),
 		CanInitialize:       result.InMatrix,
-		CanConnect:          result.HostReady() && service.profiles.Exists() && service.transaction == nil,
+		CanConnect:          result.HostReady() && service.profiles.Exists() && service.transaction == nil && !service.recoveryRequired,
 		MessageCode:         message,
 		HostHealth:          health,
 		DNSState:            "unknown",
@@ -280,6 +293,52 @@ func (service *Service) snapshot(result host.Result) protocol.Snapshot {
 		ConnectionPending:   false,
 		HostStack:           result.Stack,
 	}
+}
+
+// Recover runs before IPC begins; failures remain visible and retryable through
+// an authorized disconnect/connect instead of discarding the durable record.
+func (service *Service) Recover() error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+	return service.recoverPending()
+}
+
+func (service *Service) recoverPending() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	found, err := networktxn.RecoverSystem(ctx, service.events)
+	if err != nil {
+		service.recoveryRequired = true
+		service.lastFailure = "linux_runtime_error"
+		service.phase = "config_staged"
+		service.event("recovery", "reject", "daemon-recovery", "linux_runtime_error")
+		return err
+	}
+	service.recoveryRequired = false
+	if found {
+		service.transaction = nil
+		service.core = nil
+		service.lastFailure = ""
+		service.lastStop = "runtime_error"
+		service.phase = "initialized"
+		if service.profiles.Exists() {
+			service.phase = "config_staged"
+		}
+		service.event("recovery", "pass", "daemon-recovery", "")
+	}
+	return nil
+}
+
+func (service *Service) watchCore(core *coreprocess.Session) {
+	<-core.Done()
+	service.mu.Lock()
+	defer service.mu.Unlock()
+	if service.closed || service.core != core {
+		return
+	}
+	_ = service.stop("core-exit")
+	service.lastStop = "runtime_error"
+	service.lastFailure = "linux_runtime_error"
 }
 
 func (service *Service) event(name, outcome, correlationID, errorCode string) {

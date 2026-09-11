@@ -1,0 +1,18 @@
+{
+  "case": "timeout",
+  "uid": 1000,
+  "agent": "pkttyagent",
+  "policy": "FIXTURE_AUTH_SELF",
+  "credential_entered": false,
+  "agent_registered": true,
+  "prompt_observed": true,
+  "elapsed_seconds": 60.17,
+  "response": {
+    "protocol": "pokrov-linuxd-v1",
+    "request_id": "l03-auth-timeout",
+    "ok": false,
+    "error_code": "linux_authorization_denied",
+    "message_code": "authorization_denied"
+  },
+  "result": "PASS"
+}

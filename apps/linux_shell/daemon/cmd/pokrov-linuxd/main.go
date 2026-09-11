@@ -44,6 +44,7 @@ func main() {
 		Outcome:       "started",
 		CorrelationID: "systemd-activation",
 	})
+	_ = daemon.Recover()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)

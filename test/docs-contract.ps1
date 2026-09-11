@@ -1639,7 +1639,7 @@ if (-not (Test-Path -LiteralPath $linuxReadmePath -PathType Leaf)) {
     'IMPLEMENTED_PARTIAL',
     'supports_live_connect',
     'health remain unknown',
-    'L03/L04 gates',
+    'L04 gates',
     'No Linux artifact or availability promise'
   )) {
     if (-not $linuxReadme.Contains($requiredLinuxBoundary)) {

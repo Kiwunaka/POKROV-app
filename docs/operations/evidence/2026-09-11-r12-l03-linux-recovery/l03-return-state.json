@@ -1,0 +1,49 @@
+{
+  "result": "PASS",
+  "temporary_grant_retired": true,
+  "production_denial": {
+    "protocol": "pokrov-linuxd-v1",
+    "request_id": "l03-production-deny",
+    "ok": false,
+    "error_code": "linux_authorization_denied",
+    "message_code": "authorization_denied"
+  },
+  "tun_absent": true,
+  "core_absent": true,
+  "owned_nft_absent": true,
+  "recovery_journal_absent": true,
+  "files": {
+    "/usr/lib/pokrov/pokrov-core": {
+      "sha256": "979e8d77a8d41237a490ada5b129ff0b8f8a7a5cf4d754b1651196a5118aa8ce",
+      "uid": 0,
+      "mode": "0o755"
+    },
+    "/usr/lib/pokrov/pokrov-linuxd": {
+      "sha256": "07a3a0f775a789e2399bff9f4bdeb97948f3d321696ed9bbd4a2edf6f4ff1053",
+      "uid": 0,
+      "mode": "0o755"
+    },
+    "/etc/systemd/system/pokrov-linuxd.service": {
+      "sha256": "f987f2d8385f564dde30e9a7ee12f38e92093c2e47d683b2cd37b5cf12f4e78e",
+      "uid": 0,
+      "mode": "0o644"
+    },
+    "/etc/systemd/system/pokrov-linuxd.socket": {
+      "sha256": "e0962a621828ce090df9b90193336d42dea92d7187dc7e71906bc6adf3903aeb",
+      "uid": 0,
+      "mode": "0o644"
+    },
+    "/etc/systemd/system/pokrov-linux-sleep.service": {
+      "sha256": "0e1fea14425242b091c8a44c3023789c1bd35d85021a296d310aa1abe02e37ff",
+      "uid": 0,
+      "mode": "0o644"
+    },
+    "/usr/share/polkit-1/actions/space.pokrov.linux.policy": {
+      "sha256": "d060c7cafd4d99e582edb5491aa54ceb47c495ef27a614bb9ccb9b41d801dd49",
+      "uid": 0,
+      "mode": "0o644"
+    }
+  },
+  "daemon": "idle/socket activated",
+  "guest_free_bytes": 5080010752
+}

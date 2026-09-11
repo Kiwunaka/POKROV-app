@@ -1,0 +1,80 @@
+{
+  "routes6": [
+    {
+      "dst": "fe80::/64",
+      "dev": "ens2",
+      "protocol": "kernel",
+      "metric": 256,
+      "flags": [],
+      "pref": "medium"
+    },
+    {
+      "dst": "fec0::/64",
+      "dev": "ens2",
+      "protocol": "ra",
+      "metric": 100,
+      "flags": [],
+      "metrics": [
+        {
+          "hoplimit": 64
+        }
+      ],
+      "pref": "medium"
+    },
+    {
+      "dst": "default",
+      "gateway": "fe80::2",
+      "dev": "ens2",
+      "protocol": "ra",
+      "metric": 100,
+      "flags": [],
+      "metrics": [
+        {
+          "hoplimit": 64
+        }
+      ],
+      "pref": "medium"
+    },
+    {
+      "type": "local",
+      "dst": "::1",
+      "dev": "lo",
+      "table": "local",
+      "protocol": "kernel",
+      "metric": 0,
+      "flags": [],
+      "pref": "medium"
+    },
+    {
+      "type": "local",
+      "dst": "fe80::5054:ff:fe12:3456",
+      "dev": "ens2",
+      "table": "local",
+      "protocol": "kernel",
+      "metric": 0,
+      "flags": [],
+      "pref": "medium"
+    },
+    {
+      "type": "local",
+      "dst": "fec0::5054:ff:fe12:3456",
+      "dev": "ens2",
+      "table": "local",
+      "protocol": "kernel",
+      "metric": 0,
+      "flags": [],
+      "pref": "medium"
+    },
+    {
+      "type": "multicast",
+      "dst": "ff00::/8",
+      "dev": "ens2",
+      "table": "local",
+      "protocol": "kernel",
+      "metric": 256,
+      "flags": [],
+      "pref": "medium"
+    }
+  ],
+  "sha256": "65df7d310d4b7a7c0265508b3cc15dec93de553407926ae030b0d22b6327bbda"
+}

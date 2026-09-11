@@ -12,6 +12,7 @@ const (
 	NetworkManager Subsystem = iota + 1
 	Resolved
 	Nftables
+	Routes
 )
 
 type Result uint8
@@ -68,6 +69,7 @@ func (recorder Recorder) record(stage string, subsystem Subsystem, result Result
 		NetworkManager: "network_manager",
 		Resolved:       "resolved",
 		Nftables:       "nftables",
+		Routes:         "routes",
 	}[subsystem]
 	if subsystemName == "" {
 		return errors.New("invalid network transaction subsystem")

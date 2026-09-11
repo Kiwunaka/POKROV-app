@@ -112,10 +112,11 @@ type Transaction struct {
 	state        transactionState
 	core         Core
 	corePending  bool
+	recovery     *recoveryLog
 }
 
 var (
-	checkpointOrder = []Subsystem{NetworkManager, Resolved, Nftables}
+	checkpointOrder = []Subsystem{NetworkManager, Resolved, Nftables, Routes}
 )
 
 func NewTransaction(recorder Recorder, participants ...Participant) (*Transaction, error) {
@@ -171,6 +172,12 @@ func (transaction *Transaction) Execute(ctx context.Context, plan Plan, core Cor
 		transaction.setFailureState(rollbackFailed)
 		return &Failure{Stage: stage, Subsystem: subsystem, RollbackFailed: rollbackFailed}
 	}
+	if transaction.beginRecovery(plan) != nil {
+		return fail(CheckpointStage, 0)
+	}
+	if transaction.checkpoint(ctx, Routes) != nil {
+		return fail(CheckpointStage, Routes)
+	}
 	// Block uplink traffic before Core creates routes. Only Core's fixed mark,
 	// the owned TUN and necessary link configuration pass this filter.
 	if transaction.checkpoint(ctx, Nftables) != nil {
@@ -181,6 +188,12 @@ func (transaction *Transaction) Execute(ctx context.Context, plan Plan, core Cor
 	}
 	if core.Start(ctx) != nil {
 		return fail(ApplyStage, 0)
+	}
+	if transaction.recordStartedLink() != nil {
+		return fail(ApplyStage, 0)
+	}
+	if transaction.apply(ctx, Routes) != nil {
+		return fail(ApplyStage, Routes)
 	}
 	// Both owners refer to the actual newly created TUN, never all host links.
 	if transaction.checkpoint(ctx, NetworkManager) != nil {
@@ -204,12 +217,21 @@ func (transaction *Transaction) checkpoint(ctx context.Context, subsystem Subsys
 		_ = transaction.recorder.Checkpoint(subsystem, Failed)
 		return err
 	}
+	if err := transaction.saveRecovery(); err != nil {
+		return err
+	}
 	return transaction.recorder.Checkpoint(subsystem, Passed)
 }
 
 func (transaction *Transaction) apply(ctx context.Context, subsystem Subsystem) error {
+	if err := transaction.beforeApply(subsystem); err != nil {
+		return err
+	}
 	if err := transaction.participants[subsystem].Apply(ctx, transaction.plan); err != nil {
 		_ = transaction.recorder.Apply(subsystem, Failed)
+		return err
+	}
+	if err := transaction.saveRecovery(); err != nil {
 		return err
 	}
 	return transaction.recorder.Apply(subsystem, Passed)
@@ -250,9 +272,23 @@ func (transaction *Transaction) rollback(ctx context.Context, plan Plan) bool {
 		if err := transaction.recorder.Rollback(subsystem, Passed); err != nil {
 			failed = true
 		}
+		if err := transaction.saveRecovery(); err != nil {
+			failed = true
+		}
 	}
 	if failed {
 		return true
+	}
+	routes := transaction.participants[Routes]
+	if routes.PendingRollback() {
+		if routes.Rollback(ctx, plan) != nil {
+			_ = transaction.recorder.Rollback(Routes, Failed)
+			return true
+		}
+		if transaction.saveRecovery() != nil {
+			return true
+		}
+		_ = transaction.recorder.Rollback(Routes, Passed)
 	}
 	if transaction.corePending {
 		if transaction.core.Stop(ctx) != nil {
@@ -269,6 +305,12 @@ func (transaction *Transaction) rollback(ctx context.Context, plan Plan) bool {
 		if transaction.recorder.Rollback(Nftables, Passed) != nil {
 			return true
 		}
+		if transaction.saveRecovery() != nil {
+			return true
+		}
+	}
+	if transaction.recovery != nil && transaction.recovery.file.Remove() != nil {
+		return true
 	}
 	return false
 }

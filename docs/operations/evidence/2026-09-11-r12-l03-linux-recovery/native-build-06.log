@@ -1,0 +1,1 @@
+{"status": "PASS", "artifacts": [{"name": "pokrov-core-06", "bytes": 54886526, "sha256": "167bfb50eeadc81992f7ac582315d7be6978fbfcf1919d80292f07b86756bdc3"}, {"name": "pokrov-linuxd-06", "bytes": 4658789, "sha256": "3c9b0979341b9871dbe27dccdd04d798e1771e5ad3cc2c8a71f467a2370849b8"}]}

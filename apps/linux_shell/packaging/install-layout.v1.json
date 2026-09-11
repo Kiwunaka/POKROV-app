@@ -5,6 +5,7 @@
   "core": "/usr/lib/pokrov/pokrov-core",
   "socket_unit": "/usr/lib/systemd/system/pokrov-linuxd.socket",
   "service_unit": "/usr/lib/systemd/system/pokrov-linuxd.service",
+  "sleep_unit": "/usr/lib/systemd/system/pokrov-linux-sleep.service",
   "polkit_policy": "/usr/share/polkit-1/actions/space.pokrov.linux.policy",
   "state_root": "/var/lib/pokrov",
   "runtime_socket": "/run/pokrov/pokrov-linuxd.sock",

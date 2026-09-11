@@ -122,6 +122,12 @@ func (session *Session) Start(ctx context.Context) error {
 }
 
 func (session *Session) Stop(ctx context.Context) error {
+	defer func() {
+		if session.Exited() {
+			_ = session.input.Close()
+			_ = session.control.Close()
+		}
+	}()
 	if !session.stopped {
 		// SIGTERM also interrupts a child waiting for its first start command.
 		_ = session.command.Process.Signal(syscall.SIGTERM)
@@ -153,6 +159,8 @@ func (session *Session) Exited() bool {
 		return false
 	}
 }
+
+func (session *Session) Done() <-chan struct{} { return session.done }
 
 func (session *Session) read(ctx context.Context) (reply, error) {
 	deadline := time.Now().Add(30 * time.Second)

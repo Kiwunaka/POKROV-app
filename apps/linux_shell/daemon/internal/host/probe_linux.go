@@ -87,7 +87,7 @@ func (probe Probe) Run() Result {
 		Systemd:        commands.Active("systemd-journald.service"),
 		NetworkManager: commands.Active("NetworkManager.service") && commands.Available("busctl"),
 		Resolved:       commands.Active("systemd-resolved.service") && commands.Available("resolvectl"),
-		Nftables:       commands.Available("nft"),
+		Nftables:       commands.Available("nft") && commands.Available("ip"),
 		CoreArtifact:   secureRootArtifact(corePath),
 	}
 	return Result{

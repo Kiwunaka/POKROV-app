@@ -1,0 +1,16 @@
+{
+  "case": "missing",
+  "uid": 1000,
+  "agent": "none",
+  "policy": "FIXTURE_AUTH_SELF",
+  "credential_entered": false,
+  "elapsed_seconds": 0.1,
+  "response": {
+    "protocol": "pokrov-linuxd-v1",
+    "request_id": "l03-auth-missing",
+    "ok": false,
+    "error_code": "linux_authorization_denied",
+    "message_code": "authorization_denied"
+  },
+  "result": "PASS"
+}

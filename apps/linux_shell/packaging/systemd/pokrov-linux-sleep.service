@@ -1,0 +1,13 @@
+[Unit]
+Description=Restore POKROV network state around system sleep
+Before=sleep.target
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/systemctl stop pokrov-linuxd.socket pokrov-linuxd.service
+ExecStop=/usr/bin/systemctl start pokrov-linuxd.service
+
+[Install]
+RequiredBy=sleep.target
