@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "candidate_signature": "separate Windows verification receipt; not checked by this payload comparison",
+  "candidate_sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+  "baseline_sha256": "f600ae9bdfe37275da311a85d5e774165733953faf4ab98db1902fb069b66ee4",
+  "payload_identical_except_declared_package_version": true,
+  "payload_member_count": 334,
+  "no_group_or_world_writable_regular_files_or_directories": true,
+  "all_payload_owned_by_root": true,
+  "baseline_purpose": "first-beta revision-only upgrade fixture; not an older released application",
+  "installed": false
+}

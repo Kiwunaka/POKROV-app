@@ -1,0 +1,55 @@
+{
+  "status": "PARTIAL_EXACT_PACKAGE_ACCEPTANCE",
+  "candidate": {
+    "version": "1.2.0~beta.30-7",
+    "bytes": 32284552,
+    "sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+    "signature_sha256": "59c387166c10f6609b77042d2ca13597f1478ea33d7b67d21a2a0406044163d6",
+    "signer": "29636EDAF204D6F6101CB083B2281E647B0EDDA0",
+    "retained_artifact_root": "C:\\r12-l04-fix07-20260911\\candidate7-public-evidence"
+  },
+  "source_association": {
+    "package": "a9999f4823d6735a0e15b5ee469bc21d5b9388f8",
+    "native_ui": "2e0d78432c2cd698c533558475195e58f937aef9",
+    "daemon": "19c480c621df79e773288f21fd1aed7348f8844f",
+    "core": "97ec91e3a74c96db3ce5c0c98364b715bf344964",
+    "note": "UI and daemon source trees are unchanged from their build revisions to the package revision; only the systemd unit packaging changed in a9999f4."
+  },
+  "environment": "Ubuntu 24.04.4 amd64 Xfce/X11 LightDM, systemd, NetworkManager, resolved, nftables; isolated QEMU on pokrov-mini",
+  "origin": "pokrov-mini guest origin; not RU-origin",
+  "passed": [
+    "native_detached_signature",
+    "clean_install",
+    "nonroot_uid_1000_gui_first_frame",
+    "real_polkit_dbus_pam_approval",
+    "installed_file_socket_service_permissions",
+    "state_directory_0700_after_socket_activation",
+    "ru_direct_route_observed",
+    "full_mode_no_ru_direct_rule_or_core_socket",
+    "system_dns_resolution",
+    "ipv4_only_plan_owned_ipv6_reject",
+    "gui_disconnect_restoration",
+    "same_payload_version_fixture_rollback_state_preservation",
+    "connected_upgrade_state_preservation",
+    "connected_uninstall_and_purge_state_preservation",
+    "seven_network_baselines_equal_after_upgrade_and_uninstall"
+  ],
+  "open": [
+    "Intermittent curl exit 35 TLS failures on two full-mode connection observations; subsequent two connections each passed six HTTPS requests. Automatic transport selection changed between the two recorded successful sessions; failure-session transport identity was not retained. Cause remains unproven.",
+    "Current package suspend/crash/reboot recovery proof remains separate from older L03 artifact evidence.",
+    "Daemon DNS/egress health remains unknown under the current Linux contract; no validated-health UI claim.",
+    "No public Linux release, final-candidate acceptance or source promotion for these fixes."
+  ],
+  "baseline_fixture": {
+    "version": "1.2.0~beta.30-1",
+    "sha256": "f600ae9bdfe37275da311a85d5e774165733953faf4ab98db1902fb069b66ee4",
+    "same_334_payload_entries_except_version": true,
+    "prior_public_release": false,
+    "migration": "No new Linux profile schema; version-1 session/settings, private profile and secure keyring preserved byte-for-byte across package changes."
+  },
+  "observation_limits": [
+    "First RU port-443 observer sampled too early and missed the direct socket. Eight-second repeated socket observations and an SSH-banner probe confirmed the RU direct path.",
+    "The first uninstall observer expired while waiting for interactive connection approval and performed no uninstall. Its receipt and terminal-unit screenshot are retained outside Git.",
+    "Earlier failed candidates and their native proof remain retained; their pass results are not relabelled as package-7 acceptance."
+  ]
+}

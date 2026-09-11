@@ -1,0 +1,22 @@
+{
+  "distribution": "Ubuntu 24.04.4 LTS",
+  "architecture": "x86_64",
+  "kernel": "6.8.0-138-generic",
+  "desktop": "Xfce X11 via LightDM",
+  "guest_origin": "pokrov-mini isolated QEMU guest; not RU-origin",
+  "ui_uid": 1000,
+  "package_versions": {
+    "systemd": "255.4-1ubuntu8.17",
+    "network-manager": "1.46.0-1ubuntu2.8",
+    "systemd-resolved": "255.4-1ubuntu8.17",
+    "nftables": "1.0.9-1ubuntu0.1",
+    "xfce4-session": "4.18.3-1build2",
+    "lightdm": "1.30.0-0ubuntu14",
+    "policykit-1-gnome": "0.105-7ubuntu5"
+  },
+  "base_image_sha256": "d0fe84bb5f80853425fa6be28e2c106f30104c3cfe8611933f2e65c9b63f0e30",
+  "product_absent_before_clean_install": true,
+  "polkit_dbus_pass_count": 22,
+  "authorization_timeout_count": 2,
+  "timeout_note": "Some operator-observed prompts expired while the automation inspected other evidence; no grant bypass installed."
+}

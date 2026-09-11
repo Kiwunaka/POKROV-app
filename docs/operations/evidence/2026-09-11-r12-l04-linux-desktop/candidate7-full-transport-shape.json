@@ -1,0 +1,8 @@
+{
+  "first_transport_server_sha256": "a19176bf7c9a177c20f213c1646d4d0778fd81d14d72dc6258ee5fa43489798c",
+  "first_transport_server_port": 443,
+  "first_transport_type": "vless",
+  "tls_sni_sha256": "7f42136783f2a6c8ecc1ce4b02c463fe6593732c879a7c262abb25df19fa2661",
+  "utls_fingerprint": "firefox",
+  "core_processes": "1"
+}

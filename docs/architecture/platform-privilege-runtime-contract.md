@@ -502,8 +502,13 @@ adds dual-stack traffic, Core/daemon crash recovery, preserved foreign rules,
 partial rollback retry, actual suspend/resume and connected reboot. Real
 `pkttyagent` verifies missing-agent/timeout behavior using a scoped `AUTH_SELF`
 fixture condition, with no credentials entered; production-policy denial is
-verified after fixture removal. GUI authentication success and exact signed
-package acceptance remain L04 requirements.
+verified after fixture removal. [L04 package-7 desktop evidence](../operations/evidence/2026-09-11-r12-l04-linux-desktop/README.md)
+adds non-root GUI authentication with the production polkit action, native
+permissions, connected upgrade, rollback and connected uninstall/purge.
+All seven captured host network baselines match after upgrade and uninstall;
+profile, settings and keyring bytes are retained. RU/full route observations
+pass, but intermittent full-mode TLS failures remain unresolved. Current
+package crash/suspend/reboot and overall acceptance remain open.
 
 Every mutating request also emits one closed authorization decision before any
 profile or network write. The backend is exactly `peer_credential` for the
@@ -652,8 +657,10 @@ As of 2026-09-03:
   Isolated Ubuntu 24.04 VM evidence covers traffic, restoration, foreign-rule
   preservation and service stop/reactivation. Health fields remain unknown;
   durable crash/suspend/reboot recovery and real-agent authorization negatives
-  now have bounded L03 VM proof. GUI authentication success and exact signed
-  deb acceptance remain open. See the conditional Linux section above.
+  now have bounded L03 VM proof. L04 proves real GUI authentication and the
+  signed package's install/upgrade/rollback/uninstall lifecycle. Intermittent
+  full-mode TLS failures and current package recovery acceptance remain open.
+  See the conditional Linux section above.
 
 These statements describe source progress, not a 1.2.0 candidate or release.
 

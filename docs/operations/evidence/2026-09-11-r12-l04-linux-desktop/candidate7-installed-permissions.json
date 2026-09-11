@@ -1,0 +1,95 @@
+{
+  "candidate_sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+  "permissions": {
+    "/var/lib/pokrov": {
+      "mode": "0o700",
+      "uid": 0,
+      "gid": 0,
+      "type": "directory"
+    },
+    "/var/lib/pokrov/profiles": {
+      "mode": "0o700",
+      "uid": 0,
+      "gid": 0,
+      "type": "directory"
+    },
+    "/var/lib/pokrov/profiles/active-profile.json": {
+      "mode": "0o600",
+      "uid": 0,
+      "gid": 0,
+      "type": "file"
+    },
+    "/run/pokrov": {
+      "mode": "0o755",
+      "uid": 0,
+      "gid": 0,
+      "type": "directory"
+    },
+    "/run/pokrov/pokrov-linuxd.sock": {
+      "mode": "0o666",
+      "uid": 0,
+      "gid": 0,
+      "type": "socket"
+    },
+    "/usr/bin/pokrov": {
+      "mode": "0o755",
+      "uid": 0,
+      "gid": 0,
+      "type": "file"
+    },
+    "/usr/lib/pokrov/ui/pokrov": {
+      "mode": "0o755",
+      "uid": 0,
+      "gid": 0,
+      "type": "file"
+    },
+    "/usr/lib/pokrov/pokrov-linuxd": {
+      "mode": "0o755",
+      "uid": 0,
+      "gid": 0,
+      "type": "file"
+    },
+    "/usr/lib/pokrov/pokrov-core": {
+      "mode": "0o755",
+      "uid": 0,
+      "gid": 0,
+      "type": "file"
+    },
+    "/usr/lib/systemd/system/pokrov-linuxd.service": {
+      "mode": "0o644",
+      "uid": 0,
+      "gid": 0,
+      "type": "file"
+    }
+  },
+  "payload_hashes": {
+    "pokrov-linuxd": "2236009c4815b632c176dfeafcc7bc7c8bc090a0a819ea9a58bcd7ad2688b983",
+    "pokrov-core": "979e8d77a8d41237a490ada5b129ff0b8f8a7a5cf4d754b1651196a5118aa8ce"
+  },
+  "service_properties": {
+    "pokrov-linuxd.service": [
+      "User=root",
+      "Group=root",
+      "StateDirectoryMode=0700",
+      "KillMode=mixed",
+      "LoadState=loaded",
+      "UnitFileState=disabled"
+    ],
+    "pokrov-linuxd.socket": [
+      "User=",
+      "Group=",
+      "StateDirectoryMode=0755",
+      "KillMode=control-group",
+      "LoadState=loaded",
+      "UnitFileState=enabled"
+    ],
+    "pokrov-linux-sleep.service": [
+      "User=",
+      "Group=",
+      "StateDirectoryMode=0755",
+      "KillMode=control-group",
+      "LoadState=loaded",
+      "UnitFileState=enabled"
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "attempt": 1,
+    "target": "app",
+    "curl_exit": 0,
+    "http_code": 200,
+    "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+    "ssl_verify_result": 0,
+    "error_kinds": []
+  },
+  {
+    "attempt": 1,
+    "target": "marker",
+    "curl_exit": 0,
+    "http_code": 204,
+    "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+    "ssl_verify_result": 0,
+    "error_kinds": []
+  },
+  {
+    "attempt": 2,
+    "target": "app",
+    "curl_exit": 0,
+    "http_code": 200,
+    "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+    "ssl_verify_result": 0,
+    "error_kinds": []
+  },
+  {
+    "attempt": 2,
+    "target": "marker",
+    "curl_exit": 0,
+    "http_code": 204,
+    "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+    "ssl_verify_result": 0,
+    "error_kinds": []
+  },
+  {
+    "attempt": 3,
+    "target": "app",
+    "curl_exit": 0,
+    "http_code": 200,
+    "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+    "ssl_verify_result": 0,
+    "error_kinds": []
+  },
+  {
+    "attempt": 3,
+    "target": "marker",
+    "curl_exit": 0,
+    "http_code": 204,
+    "peer_sha256": "9be6f806af79b1429deacbbb5b4b576650e7c645ad8c773b2989bfb42bd77d52",
+    "ssl_verify_result": 0,
+    "error_kinds": []
+  }
+]

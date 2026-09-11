@@ -1,0 +1,29 @@
+{
+  "operation": "rollback_to_explicit_same_payload_version_fixture",
+  "baseline_is_prior_public_release": false,
+  "source_version": "1.2.0~beta.30-7",
+  "target_version": "1.2.0~beta.30-1",
+  "baseline_sha256": "f600ae9bdfe37275da311a85d5e774165733953faf4ab98db1902fb069b66ee4",
+  "signature_verified": true,
+  "state_schema_versions_before": {
+    "session": 1,
+    "experience": 1
+  },
+  "state_file_counts_before": {
+    "profile": 1,
+    "settings": 6,
+    "keyring": 2
+  },
+  "started_epoch": 1789133863.0857263,
+  "apt_exit_code": 0,
+  "installed_version": "1.2.0~beta.30-1",
+  "state_unchanged": {
+    "profile": true,
+    "settings": true,
+    "keyring": true
+  },
+  "socket_enabled": true,
+  "state_root_mode": "0o700",
+  "finished_epoch": 1789133869.7653422,
+  "status": "PASS_ROLLBACK_STATE_PRESERVATION"
+}

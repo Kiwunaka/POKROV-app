@@ -67,5 +67,9 @@ Both remove and purge retain private profiles and user settings. There is no
 profile schema migration in this package revision. Acceptance must verify
 preservation across the exact package upgrade, native file/socket permissions,
 real desktop polkit approval with non-root UI, clean-VM install/remove,
-DNS/IPv6 and full/RU routing modes. Until that evidence exists, these gates
-remain open under [the Linux lane owner](../README.md).
+DNS/IPv6 and full/RU routing modes. [Package-7 desktop evidence](../../../docs/operations/evidence/2026-09-11-r12-l04-linux-desktop/README.md)
+records clean installation, real GUI/polkit, permissions, same-payload version
+rollback, connected upgrade and connected uninstall/purge. All seven captured
+host network baselines match after upgrade and uninstall; profile, settings
+and keyring contents are retained. Intermittent full-mode TLS failures remain
+unresolved, so overall acceptance stays open under [the Linux lane owner](../README.md).

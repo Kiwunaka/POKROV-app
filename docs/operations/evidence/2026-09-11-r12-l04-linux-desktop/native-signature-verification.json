@@ -1,0 +1,12 @@
+[
+  {
+    "artifact": "pokrov_1.2.0~beta.30-7_amd64.deb",
+    "sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+    "status": "PASS_EXACT_SIGNER_AND_BYTES"
+  },
+  {
+    "artifact": "upgrade-baseline/pokrov_1.2.0~beta.30-1_amd64.deb",
+    "sha256": "f600ae9bdfe37275da311a85d5e774165733953faf4ab98db1902fb069b66ee4",
+    "status": "PASS_EXACT_SIGNER_AND_BYTES"
+  }
+]

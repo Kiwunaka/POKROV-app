@@ -1,0 +1,42 @@
+{
+  "operation": "connected_upgrade_from_same_payload_version_fixture",
+  "baseline_is_prior_public_release": false,
+  "source_version": "1.2.0~beta.30-1",
+  "target_version": "1.2.0~beta.30-7",
+  "started_epoch": 1789133948.6666713,
+  "running_observed": true,
+  "nonroot_ui_exited_for_upgrade": true,
+  "runtime_running_with_ui_closed": true,
+  "state_file_counts_before": {
+    "profile": 1,
+    "settings": 6,
+    "keyring": 2
+  },
+  "candidate_sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+  "signature_verified": true,
+  "apt_exit_code": 0,
+  "installed_version": "1.2.0~beta.30-7",
+  "state_unchanged": {
+    "profile": true,
+    "settings": true,
+    "keyring": true
+  },
+  "socket_enabled": true,
+  "state_root_mode": "0o700",
+  "tun_absent": true,
+  "recovery_absent": true,
+  "daemon_phase_after": "config_staged",
+  "host_health_after": "healthy",
+  "state_root_mode_after_activation": "0o700",
+  "network_matches_clean_preinstall": {
+    "routes4": true,
+    "routes6": true,
+    "rules4": true,
+    "rules6": true,
+    "nft": true,
+    "dns": true,
+    "domains": true
+  },
+  "finished_epoch": 1789134067.2994032,
+  "status": "PASS_CONNECTED_UPGRADE"
+}
