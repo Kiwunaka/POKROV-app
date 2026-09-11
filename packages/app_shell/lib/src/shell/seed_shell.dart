@@ -5070,7 +5070,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         setState(() {
           _runtimeSnapshot = current;
           _emergencyRuntimeActive = false;
-          _runtimeHeadline = current.message;
+          _runtimeHeadline = current.phase != RuntimePhase.running &&
+                  current.lastFailureKind == null
+              ? null
+              : current.message;
         });
         if (!reconnectAfterDisconnect) {
           _recordProtectionEvent(
