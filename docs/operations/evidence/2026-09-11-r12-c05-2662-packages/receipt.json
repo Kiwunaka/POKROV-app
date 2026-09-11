@@ -345,8 +345,8 @@
     },
     {
       "name": "retain-packages.py",
-      "bytes": 10194,
-      "sha256": "f9e4b4172c3af396aced76dc0ee9e4b4e66263302cba8d4d51866c905e3c56ec"
+      "bytes": 10236,
+      "sha256": "7eef7e3293b5c8fb68ff82bf060192ab91194999e9b9e61c79f83724566f1452"
     },
     {
       "name": "client-docs-check.log",
