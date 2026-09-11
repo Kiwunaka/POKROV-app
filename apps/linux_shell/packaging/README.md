@@ -71,5 +71,8 @@ DNS/IPv6 and full/RU routing modes. [Package-7 desktop evidence](../../../docs/o
 records clean installation, real GUI/polkit, permissions, same-payload version
 rollback, connected upgrade and connected uninstall/purge. All seven captured
 host network baselines match after upgrade and uninstall; profile, settings
-and keyring contents are retained. Intermittent full-mode TLS failures remain
+and keyring contents are retained. The same installed package also passes
+Core/daemon crash, partial rollback retry, actual suspend/resume and connected
+native reboot/reconnect with the original network and profile restored.
+Intermittent full-mode TLS failures remain
 unresolved, so overall acceptance stays open under [the Linux lane owner](../README.md).

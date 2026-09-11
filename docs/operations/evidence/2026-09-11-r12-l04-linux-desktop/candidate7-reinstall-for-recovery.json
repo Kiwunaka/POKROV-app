@@ -1,0 +1,10 @@
+{
+  "operation": "reinstall_for_current_package_recovery_proof",
+  "clean_install_claim": false,
+  "sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+  "signature_verified": true,
+  "apt_exit_code": 0,
+  "retained_profile_unchanged": true,
+  "installed_version": "1.2.0~beta.30-7",
+  "finished_epoch": 1789135870.435669
+}

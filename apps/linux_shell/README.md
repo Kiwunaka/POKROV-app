@@ -35,7 +35,8 @@ binds the first signed candidate. The later [package-7 desktop evidence](../../d
 proves clean installation, real non-root GUI/polkit, installed permissions,
 rollback, connected upgrade and uninstall/purge on Ubuntu 24.04.4 Xfce/X11.
 Observed RU/full routes and IPv6 rejection pass; intermittent full-mode TLS
-failures remain unresolved. Current package recovery and final acceptance stay open.
+failures remain unresolved. The same package now passes crash, partial rollback,
+actual sleep/resume and native reboot recovery on that guest; final acceptance stays open.
 
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;
@@ -104,8 +105,8 @@ failures remain unresolved. Current package recovery and final acceptance stay o
   Flutter GUI, signed deb or public-candidate test. L03 additionally proves
   dual-stack traffic, crash/suspend/reboot restoration, partial rollback retry
   and real-agent authorization negatives. L04 adds real GUI authorization and
-  exact package lifecycle proof; TLS consistency and current package recovery
-  remain open L04 gates.
+  exact package lifecycle and crash/suspend/reboot recovery proof. TLS
+  consistency and final acceptance remain open L04 gates.
 
 No Linux artifact or availability promise belongs to release 1.2.0 until those
 gates and exact-package evidence close.

@@ -508,7 +508,11 @@ permissions, connected upgrade, rollback and connected uninstall/purge.
 All seven captured host network baselines match after upgrade and uninstall;
 profile, settings and keyring bytes are retained. RU/full route observations
 pass, but intermittent full-mode TLS failures remain unresolved. Current
-package crash/suspend/reboot and overall acceptance remain open.
+package crash/suspend/reboot, foreign-rule preservation and partial rollback
+retry now pass on the same installed guest, with all seven original network
+hashes and profile bytes restored. Recovery fixtures use root peer credentials
+without an API refresh; actual GUI/polkit proof remains separate. Overall
+acceptance remains open.
 
 Every mutating request also emits one closed authorization decision before any
 profile or network write. The backend is exactly `peer_credential` for the
@@ -659,7 +663,8 @@ As of 2026-09-03:
   durable crash/suspend/reboot recovery and real-agent authorization negatives
   now have bounded L03 VM proof. L04 proves real GUI authentication and the
   signed package's install/upgrade/rollback/uninstall lifecycle. Intermittent
-  full-mode TLS failures and current package recovery acceptance remain open.
+  full-mode TLS failures remain open; the same installed package now also has
+  crash/suspend/native reboot recovery proof.
   See the conditional Linux section above.
 
 These statements describe source progress, not a 1.2.0 candidate or release.

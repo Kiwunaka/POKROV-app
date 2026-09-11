@@ -11,7 +11,8 @@ do not establish their cause or resolve them.
 The [receipt](receipt.json) binds the exact package, source associations,
 environment, results and limitations. This is isolated `pokrov-mini` guest
 evidence, not RU-origin or public Linux release acceptance. Current package
-crash/suspend/reboot proof is separate from the older L03 binary evidence.
+crash/suspend/reboot proof is now retained below, separately from older L03
+binary evidence.
 
 | Check | Result | Evidence |
 | --- | --- | --- |
@@ -27,6 +28,9 @@ crash/suspend/reboot proof is separate from the older L03 binary evidence.
 | Remove and purge while connected | PASS | [Uninstall](candidate7b-connected-uninstall.json), [APT remove/purge log](candidate7b-connected-uninstall.log) |
 | Profiles, six settings files and two keyring files retained | PASS, byte-for-byte | Rollback, upgrade and uninstall receipts above |
 | Original IPv4/IPv6 routes/rules, nft, DNS and domains restored | PASS, all seven hashes equal | Upgrade and uninstall receipts above |
+| Current package Core/daemon crash, foreign-rule preservation and partial rollback retry | PASS | [Recovery](candidate7-live-recovery.json) |
+| Actual suspend/resume and reconnect | PASS | [Guest](candidate7-sleep.json), [QMP suspend/wakeup](candidate7-sleep-qmp.json) |
+| Connected native reboot and reconnect | PASS | [Guest](candidate7-reboot-native.json), [same QEMU PID](candidate7-reboot-native-qmp.json), [terminal state](candidate7-recovery-terminal.json) |
 | Full-mode HTTPS consistency | UNRESOLVED | [First TLS failure](candidate7-full-443-sampled-route-proof.json), [four failures in six requests](candidate7-connected-uninstall.json), [no-VPN control](candidate7-no-vpn-http-control.json), [later six passes](candidate7-full-http-diagnostic.json), [another six passes](candidate7b-connected-uninstall.json) |
 
 The lower-version package is a deliberate upgrade fixture with the same 334
@@ -53,6 +57,24 @@ it performed no package operation. These records remain retained. The failed
 full-mode HTTPS run likewise stopped before uninstall. Two later connections
 passed six requests each; their recorded primary transport/SNI fingerprints
 differ, so they do not prove the same path recovered.
+
+After connected purge, the exact signed package was [reinstalled](candidate7-reinstall-for-recovery.json) with the retained profile unchanged. Root-peer
+recovery fixtures then exercised the installed binaries without an API refresh;
+this is separate from the real non-root GUI/polkit proof. Core and daemon
+SIGKILL, same-priority foreign-rule preservation, partial rollback retaining
+the filter/journal/profile, exact fault removal and retry all passed. Sleep
+entered actual QMP `suspended`, resumed in the same boot and restored all seven
+raw network hashes after 6.59 seconds. Connected native reboot changed the
+boot ID while keeping QEMU PID 1908675, then restored the original network.
+Both paths reconnected and retained the exact private profile bytes.
+
+The [first reboot run](candidate7-reboot.json) ended QEMU because the original
+VM had `-no-reboot`. [Its restart receipt](candidate7-reboot-qemu.json) records
+the verified absent old process, same retained disk and removed harness flag.
+That recovery passed; the separate second native reboot above proves normal
+in-process VM reboot. Across crash, sleep and both reboot observations, all
+24 HTTPS marker requests returned HTTP 204. They use one unchanged profile
+and do not resolve the earlier failures on unidentified transport paths.
 
 The daemon still reports DNS/egress health as unknown. The GUI screenshot's
 checking state is not validated-health proof. No production grant override,
