@@ -17,6 +17,9 @@ artifacts/releases/**/pokrov-windows-*.manifest.json binary
 artifacts/releases/release-handoff.json binary
 artifacts/releases/**/release-handoff.json binary
 AGENTS.md text eol=lf
+apps/linux_shell/packaging/debian/postinst text eol=lf
+apps/linux_shell/packaging/debian/prerm text eol=lf
+apps/linux_shell/packaging/debian/postrm text eol=lf
 docs/README.md text eol=lf
 packages/app_shell/test/fixtures/app-first-session-v0.json text eol=lf
 packages/app_shell/test/fixtures/secure-session-v0.txt text eol=lf

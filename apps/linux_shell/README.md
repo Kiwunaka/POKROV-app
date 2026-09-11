@@ -21,6 +21,10 @@ implemented and [verified in an isolated Ubuntu VM](../../docs/operations/eviden
 durable recovery also has [L03 VM evidence](../../docs/operations/evidence/2026-09-11-r12-l03-linux-recovery/README.md).
 Signed desktop-package acceptance remains open:
 
+The [Ubuntu packaging source](packaging/README.md) supplies the GTK runner,
+deb assembler and lifecycle hooks. Exact native build, signing and installed
+desktop acceptance are still required before this becomes a package claim.
+
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;
 - every mutation now records one bounded authorization decision. Root peer

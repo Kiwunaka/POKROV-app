@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=POKROV
+Comment=POKROV VPN
+Exec=pokrov
+Icon=space.pokrov.linux
+Terminal=false
+Categories=Network;
+StartupNotify=true
+StartupWMClass=space.pokrov.linux
