@@ -471,10 +471,20 @@ their recorded unique D-Bus owner still exists. A failed stage retains the recor
 and prevents profile replacement until authorized cleanup succeeds.
 
 The systemd service uses `KillMode=mixed`: linuxd receives the initial stop
-signal and orders Core teardown itself. The socket unit owns `/run/pokrov` and
+signal and orders Core teardown itself. The unit sets `StateDirectoryMode=0700`
+to keep the private state root restricted after socket activation and restart,
+matching the package installer. The socket unit owns `/run/pokrov` and
 the socket path; daemon listener close does not unlink it. The UI's 130-second
 response budget covers authorization, connect, failed-connect restoration and
 the host probe.
+
+The Linux UI uses the existing desktop service-status poll every two seconds.
+It reads local IPC only, allows one outstanding observation, preserves a newer
+explicit UI action and updates the UI when the daemon stops or recovers outside
+that UI action. It does not infer healthy DNS/egress from a running daemon.
+This fixes the observed package-7 GUI retaining its Disconnect/checking state
+after the daemon had stopped and removed TUN; updated installed-UI proof is
+still pending.
 
 The installed `pokrov-linux-sleep.service` is required before `sleep.target`.
 It stops both socket and daemon before sleep and starts the daemon on resume,
@@ -500,8 +510,17 @@ adds dual-stack traffic, Core/daemon crash recovery, preserved foreign rules,
 partial rollback retry, actual suspend/resume and connected reboot. Real
 `pkttyagent` verifies missing-agent/timeout behavior using a scoped `AUTH_SELF`
 fixture condition, with no credentials entered; production-policy denial is
-verified after fixture removal. GUI authentication success and exact signed
-package acceptance remain L04 requirements.
+verified after fixture removal. [L04 package-7 desktop evidence](../operations/evidence/2026-09-11-r12-l04-linux-desktop/README.md)
+adds non-root GUI authentication with the production polkit action, native
+permissions, connected upgrade, rollback and connected uninstall/purge.
+All seven captured host network baselines match after upgrade and uninstall;
+profile, settings and keyring bytes are retained. RU/full route observations
+pass, but intermittent full-mode TLS failures remain unresolved. Current
+package crash/suspend/reboot, foreign-rule preservation and partial rollback
+retry now pass on the same installed guest, with all seven original network
+hashes and profile bytes restored. Recovery fixtures use root peer credentials
+without an API refresh; actual GUI/polkit proof remains separate. Overall
+acceptance remains open.
 
 Every mutating request also emits one closed authorization decision before any
 profile or network write. The backend is exactly `peer_credential` for the
@@ -519,6 +538,23 @@ seconds to write the bounded response. An expired input deadline is never
 reused for the response, so a completed authorization cannot mutate state and
 then silently lose its result solely because the prompt outlived the frame
 read window.
+
+For a runtime-ready Linux profile, full-device mode normalizes the VPN selector
+and route rules before staging: inherited RU/direct exceptions are removed
+except private-address routing. DNS uses the VPN resolver lane while retaining
+transport-domain bootstrap and private-address resolution. The all-except-RU
+mode keeps its managed RU rules; Windows process routing stays Windows-only.
+
+The Linux UI retains the transport's bounded 130-second wait for authorization,
+connect and cleanup instead of applying the shared 18-second runtime deadline.
+Profile API requests keep their existing deadline. Before staging, the Linux
+adapter uses the shared Core config materializer to remove API-only `_meta`
+and unused cache-file settings, with WARP disabled for this beta. Core still
+validates the complete privileged profile boundary before network mutation.
+
+For an IPv4-only plan, the owned IPv6 default is an unreachable route. Recovery
+matches its native `ip -N` representation (`type: 7`, `dev: lo`) together with
+the fixed table, protocol and metric; a different device remains a conflict.
 
 A compiling Core or UI, an unsigned package, or an AppImage containing only UI
 does not prove VPN beta support. Public facts remain unchanged until the exact
@@ -633,8 +669,11 @@ As of 2026-09-03:
   Isolated Ubuntu 24.04 VM evidence covers traffic, restoration, foreign-rule
   preservation and service stop/reactivation. Health fields remain unknown;
   durable crash/suspend/reboot recovery and real-agent authorization negatives
-  now have bounded L03 VM proof. GUI authentication success and exact signed
-  deb acceptance remain open. See the conditional Linux section above.
+  now have bounded L03 VM proof. L04 proves real GUI authentication and the
+  signed package's install/upgrade/rollback/uninstall lifecycle. Intermittent
+  full-mode TLS failures remain open; the same installed package now also has
+  crash/suspend/native reboot recovery proof.
+  See the conditional Linux section above.
 
 These statements describe source progress, not a 1.2.0 candidate or release.
 

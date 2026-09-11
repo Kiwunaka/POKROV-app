@@ -1,0 +1,234 @@
+{
+  "candidate_sha256": "08cba7cded9f3c7dff3790921d55d52394a346c6e3543d9a31b5b6ecce58ff80",
+  "status": "FAIL_IPV4_ONLY_DISCONNECT",
+  "events": [
+    {
+      "__REALTIME_TIMESTAMP": "1789126533670923",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_GENERATION": "0",
+      "POKROV_EVENT": "daemon_start",
+      "POKROV_OUTCOME": "started"
+    },
+    {
+      "POKROV_GENERATION": "0",
+      "__REALTIME_TIMESTAMP": "1789126606540273",
+      "POKROV_EVENT": "host_probe",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_OUTCOME": "pass"
+    },
+    {
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "__REALTIME_TIMESTAMP": "1789126633019309",
+      "POKROV_GENERATION": "0",
+      "POKROV_EVENT": "authorization",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_OUTCOME": "pass"
+    },
+    {
+      "POKROV_EVENT": "profile",
+      "POKROV_GENERATION": "1",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "__REALTIME_TIMESTAMP": "1789126633084304",
+      "POKROV_OUTCOME": "pass"
+    },
+    {
+      "POKROV_EVENT": "authorization",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_GENERATION": "1",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "__REALTIME_TIMESTAMP": "1789126898610179",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1789126898653118",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_EVENT": "profile",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_GENERATION": "2"
+    },
+    {
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "__REALTIME_TIMESTAMP": "1789126898692029",
+      "POKROV_EVENT": "authorization",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_GENERATION": "2"
+    },
+    {
+      "POKROV_ERROR_CODE": "linux_runtime_error",
+      "__REALTIME_TIMESTAMP": "1789126898912891",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_EVENT": "request",
+      "POKROV_GENERATION": "2",
+      "POKROV_OUTCOME": "reject"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1789128111272148",
+      "POKROV_GENERATION": "0",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_EVENT": "daemon_start",
+      "POKROV_OUTCOME": "started"
+    },
+    {
+      "POKROV_GENERATION": "0",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_EVENT": "authorization",
+      "__REALTIME_TIMESTAMP": "1789128201990211"
+    },
+    {
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_EVENT": "profile",
+      "POKROV_GENERATION": "1",
+      "__REALTIME_TIMESTAMP": "1789128202058663",
+      "POKROV_OUTCOME": "pass"
+    },
+    {
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_GENERATION": "1",
+      "POKROV_EVENT": "authorization",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_OUTCOME": "pass",
+      "__REALTIME_TIMESTAMP": "1789128202100195"
+    },
+    {
+      "POKROV_NETWORK_STAGE": "checkpoint",
+      "POKROV_EVENT": "network_transaction",
+      "__REALTIME_TIMESTAMP": "1789128202318038",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_GENERATION": "1",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_NETWORK_SUBSYSTEM": "routes"
+    },
+    {
+      "POKROV_NETWORK_STAGE": "checkpoint",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "__REALTIME_TIMESTAMP": "1789128202406804",
+      "POKROV_GENERATION": "1",
+      "POKROV_NETWORK_SUBSYSTEM": "nftables",
+      "POKROV_OUTCOME": "pass"
+    },
+    {
+      "POKROV_GENERATION": "1",
+      "POKROV_OUTCOME": "pass",
+      "__REALTIME_TIMESTAMP": "1789128202461744",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_NETWORK_SUBSYSTEM": "nftables",
+      "POKROV_NETWORK_STAGE": "apply",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1"
+    },
+    {
+      "POKROV_NETWORK_SUBSYSTEM": "routes",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_OUTCOME": "pass",
+      "__REALTIME_TIMESTAMP": "1789128202701426",
+      "POKROV_NETWORK_STAGE": "apply",
+      "POKROV_GENERATION": "1"
+    },
+    {
+      "POKROV_GENERATION": "1",
+      "POKROV_NETWORK_SUBSYSTEM": "network_manager",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_NETWORK_STAGE": "checkpoint",
+      "__REALTIME_TIMESTAMP": "1789128202772648"
+    },
+    {
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_NETWORK_STAGE": "checkpoint",
+      "POKROV_NETWORK_SUBSYSTEM": "resolved",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_GENERATION": "1",
+      "POKROV_OUTCOME": "pass",
+      "__REALTIME_TIMESTAMP": "1789128202790965"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1789128202855340",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_NETWORK_STAGE": "apply",
+      "POKROV_GENERATION": "1",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_NETWORK_SUBSYSTEM": "resolved"
+    },
+    {
+      "POKROV_GENERATION": "1",
+      "POKROV_NETWORK_STAGE": "apply",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "__REALTIME_TIMESTAMP": "1789128202887050",
+      "POKROV_NETWORK_SUBSYSTEM": "network_manager"
+    },
+    {
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "__REALTIME_TIMESTAMP": "1789128202887241",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_GENERATION": "1",
+      "POKROV_EVENT": "connect"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1789128249926192",
+      "POKROV_GENERATION": "1",
+      "POKROV_EVENT": "authorization",
+      "POKROV_OUTCOME": "pass",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus"
+    },
+    {
+      "POKROV_NETWORK_SUBSYSTEM": "resolved",
+      "POKROV_NETWORK_STAGE": "rollback",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_GENERATION": "1",
+      "__REALTIME_TIMESTAMP": "1789128249945006",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_OUTCOME": "pass"
+    },
+    {
+      "POKROV_NETWORK_STAGE": "rollback",
+      "POKROV_EVENT": "network_transaction",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_NETWORK_SUBSYSTEM": "routes",
+      "__REALTIME_TIMESTAMP": "1789128250003952",
+      "POKROV_ERROR_CODE": "linux_network_rollback_failed",
+      "POKROV_GENERATION": "1",
+      "POKROV_OUTCOME": "reject"
+    },
+    {
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_GENERATION": "1",
+      "POKROV_OUTCOME": "reject",
+      "__REALTIME_TIMESTAMP": "1789128250004327",
+      "POKROV_ERROR_CODE": "linux_runtime_error",
+      "POKROV_EVENT": "disconnect"
+    },
+    {
+      "__REALTIME_TIMESTAMP": "1789128250004450",
+      "POKROV_ERROR_CODE": "linux_runtime_error",
+      "POKROV_OUTCOME": "reject",
+      "POKROV_EVENT": "request",
+      "POKROV_SCHEMA": "pokrov-linux-operational-v1",
+      "POKROV_GENERATION": "1"
+    }
+  ],
+  "native_owned_ipv6_routes": [
+    {
+      "type": "7",
+      "dst": "default",
+      "dev": "lo",
+      "table": "20555",
+      "protocol": "243",
+      "metric": 42700,
+      "flags": [],
+      "pref": "medium"
+    }
+  ],
+  "recovery": "MANUAL_FIXTURE_RECOVERY: after retaining failure, removed exact owned unreachable IPv6 default table 20555 proto 243 metric 42700; real GUI polkit-authorized disconnect then completed",
+  "post_recovery_tun_present": false,
+  "post_recovery_journal_present": false,
+  "epoch": 1789128720.1519604
+}

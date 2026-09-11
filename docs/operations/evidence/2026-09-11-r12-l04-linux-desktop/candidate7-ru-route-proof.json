@@ -1,0 +1,33 @@
+{
+  "candidate_sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+  "selected_gui_mode": "ru",
+  "target_owner": "POKROV pokrov-ru SSH endpoint from current configured host; no authentication attempted",
+  "started_epoch": 1789133202.7332187,
+  "running_observed": true,
+  "ru_direct_rules": 1,
+  "api_metadata_absent": true,
+  "ipv6_tun_address_present": false,
+  "probes": {
+    "app": {
+      "curl_exit": 0,
+      "http_code": "200"
+    },
+    "marker": {
+      "curl_exit": 0,
+      "http_code": "204"
+    },
+    "owned_ru_tcp": {
+      "connected": true,
+      "ssh_banner": true,
+      "ss_exit_code": 0,
+      "core_direct_socket": true
+    },
+    "ipv6_documentation_destination_route_rejected": true,
+    "ipv6_owned_reject_route": true,
+    "system_dns": {
+      "exit_code": 0,
+      "answer_present": true
+    }
+  },
+  "finished_epoch": 1789133220.7825444
+}

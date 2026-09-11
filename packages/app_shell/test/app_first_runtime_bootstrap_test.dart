@@ -8345,10 +8345,19 @@ void main() {
     expect(finalServer['address_resolver'], 'local');
   });
 
-  for (final host in [HostPlatform.android, HostPlatform.windows]) {
-    for (final mode in RouteMode.values) {
-      for (final ready
-          in host == HostPlatform.windows ? [false, true] : [false]) {
+  for (final host in [
+    HostPlatform.android,
+    HostPlatform.windows,
+    HostPlatform.linux,
+  ]) {
+    for (final mode in host == HostPlatform.linux
+        ? [RouteMode.fullTunnel]
+        : RouteMode.values) {
+      for (final ready in host == HostPlatform.linux
+          ? [true]
+          : host == HostPlatform.windows
+              ? [false, true]
+              : [false]) {
         test(
             '${host.name} ${mode.name} removes direct from VPN selector and urltest chains (runtimeReady=$ready)',
             () async {
@@ -8442,6 +8451,10 @@ void main() {
                                 <String, Object?>{
                                   'process_name': <String>['old.exe'],
                                   'server': 'sealed'
+                                },
+                                <String, Object?>{
+                                  'rule_set': <String>['geoip-ru'],
+                                  'server': 'sealed'
                                 }
                               ],
                               'final': 'sealed',
@@ -8491,6 +8504,10 @@ void main() {
                                 <String, Object?>{
                                   'domain_suffix': <String>['.ru'],
                                   'outbound': 'direct'
+                                },
+                                <String, Object?>{
+                                  'rule_set': <String>['geoip-ru'],
+                                  'outbound': 'direct'
                                 }
                               ],
                             'final': ready && mode == RouteMode.selectedApps
@@ -8520,9 +8537,11 @@ void main() {
           final payload = await bootstrapper.resolveManagedProfile(
             hostPlatform: host,
             routeMode: mode,
-            selectedApps: host == HostPlatform.android
-                ? const <String>['org.telegram.messenger']
-                : const <String>['telegram.exe'],
+            selectedApps: host == HostPlatform.linux
+                ? const <String>[]
+                : host == HostPlatform.android
+                    ? const <String>['org.telegram.messenger']
+                    : const <String>['telegram.exe'],
           );
           final config =
               jsonDecode(payload.configPayload) as Map<String, dynamic>;
@@ -8542,7 +8561,8 @@ void main() {
                 'direct');
             final rules = (route['rules'] as List? ?? []).cast<Map>();
             final dnsRules = (dns['rules'] as List? ?? []).cast<Map>();
-            expect(route['find_process'], isTrue);
+            expect(route['find_process'],
+                host == HostPlatform.windows ? isTrue : isNull);
             expect(
                 rules.any((rule) =>
                     (rule['process_name'] as List?)?.contains('old.exe') ==
@@ -8559,6 +8579,17 @@ void main() {
                     true),
                 isFalse);
             expect(rules.first, containsPair('action', 'hijack-dns'));
+            if (mode == RouteMode.fullTunnel) {
+              expect(
+                  rules.any((rule) =>
+                      rule['outbound'] == 'direct' && rule['rule_set'] != null),
+                  isFalse);
+              expect(
+                  dnsRules.any((rule) =>
+                      (rule['rule_set'] as List?)?.contains('geoip-ru') ==
+                      true),
+                  isFalse);
+            }
             if (mode == RouteMode.selectedApps ||
                 mode == RouteMode.excludedApps) {
               final processRule = rules.singleWhere((rule) =>

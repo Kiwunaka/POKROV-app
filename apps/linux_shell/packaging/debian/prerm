@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+case "$1" in
+    remove|upgrade|deconfigure)
+        systemctl stop pokrov-linux-sleep.service
+        systemctl stop pokrov-linuxd.socket pokrov-linuxd.service
+        if test -e /var/lib/pokrov/network-recovery.json; then
+            echo 'POKROV network recovery is pending; package removal or upgrade stopped.' >&2
+            exit 1
+        fi
+        if test "$1" = remove; then
+            systemctl disable pokrov-linuxd.socket pokrov-linuxd.service pokrov-linux-sleep.service
+        fi
+        ;;
+esac

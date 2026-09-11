@@ -1,0 +1,9 @@
+{
+  "phase": "config_staged",
+  "host_health": "healthy",
+  "dns_health": null,
+  "egress_health": null,
+  "tun_present": false,
+  "recovery_present": false,
+  "state_root_mode": "0o700"
+}
