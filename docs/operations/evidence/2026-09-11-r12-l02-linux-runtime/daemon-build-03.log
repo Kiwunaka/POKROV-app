@@ -1,0 +1,10 @@
+?   	github.com/Kiwunaka/pokrov-app/linux-daemon/cmd/pokrov-linuxd	[no test files]
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/auth	0.008s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/coreprocess	0.021s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/host	0.010s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/journal	0.008s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/networktxn	0.007s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/profile	0.082s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/protocol	0.004s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/server	0.058s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/service	0.189s

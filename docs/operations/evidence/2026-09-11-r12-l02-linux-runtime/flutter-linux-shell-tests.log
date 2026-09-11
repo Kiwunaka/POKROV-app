@@ -1,0 +1,7 @@
+00:00 +0: loading E:/r12client/apps/linux_shell/test/linux_packaging_contract_test.dart
+00:00 +0: E:/r12client/apps/linux_shell/test/linux_packaging_contract_test.dart: Linux service packaging keeps UI non-root and mutations behind polkit
+00:00 +1: E:/r12client/apps/linux_shell/test/linux_packaging_contract_test.dart: Linux support matrix has one exact foundation row and explicit backlog
+00:00 +2: E:/r12client/apps/linux_shell/test/linux_packaging_contract_test.dart: Linux network transaction journal fields stay closed
+00:00 +3: E:/r12client/apps/linux_shell/test/linux_packaging_contract_test.dart: Linux polkit D-Bus decisions use a closed authorization trace
+00:00 +4: E:/r12client/apps/linux_shell/test/linux_shell_contract_test.dart: Linux beta uses the non-root system-service boundary
+00:00 +5: All tests passed!

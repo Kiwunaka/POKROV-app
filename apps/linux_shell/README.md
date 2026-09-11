@@ -16,7 +16,9 @@ connectable socket does not grant authority; it only makes the authenticated
 system-service endpoint reachable without placing desktop users in a standing
 privileged group.
 
-Current source status is `IMPLEMENTED_PARTIAL`:
+Current source status is `IMPLEMENTED_PARTIAL`. The L02 live lifecycle is
+implemented and [verified in an isolated Ubuntu VM](../../docs/operations/evidence/2026-09-11-r12-l02-linux-runtime/README.md);
+durable recovery and signed desktop-package acceptance remain open:
 
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;
@@ -34,26 +36,38 @@ Current source status is `IMPLEMENTED_PARTIAL`:
   subsystem/result values and emits transaction/correlation IDs, generation,
   stage, outcome and allowlisted failure code; commands, paths, destinations,
   raw errors and network material have no field;
-- the current unavailable `connect` path emits three honest
-  `checkpoint/unavailable` preflight events, one per required network owner,
-  before the existing `linux_live_connect_unavailable` result. It does not emit
-  synthetic `apply` or `rollback` success;
-- a dormant typed transaction engine now implements a fixed NetworkManager
-  system-D-Bus checkpoint, per-link resolved DNS/default-route settings and one
-  atomic `inet pokrov` nftables output table. It accepts only a `pokrov*`
-  interface, non-zero Core routing mark and validated IP resolvers, runs fixed
-  absolute commands without a shell, and rolls dirty owners back in reverse
-  order while retaining any failed owner for retry. The nft participant never
-  flushes or restores the host ruleset;
+- `connect` starts the fixed root-owned `/usr/lib/pokrov/pokrov-core` child.
+  Core validates the private materialized profile before any network mutation
+  and returns only a bounded `pokrov-linux-core-v1` plan over a private pipe;
+- Core owns `pokrov0`, mark `0x504b`, route table 20555 and rule priorities
+  20555–20565. Existing TUN/table/rule ownership conflicts reject preparation.
+  Profiles cannot choose executable paths, TUN names, marks, namespaces or log
+  files. A loopback mixed inbound is allowed; AWG endpoints and auxiliary
+  services are outside this Linux profile boundary;
+- the daemon installs its atomic `inet pokrov` output filter before starting
+  Core/TUN. NetworkManager checkpoints only the newly created owned TUN, then
+  resolved gets per-link DNS and `~.`; the NM checkpoint is committed last.
+  Commands are fixed absolute executables with typed arguments and no shell;
+- disconnect restores resolved and any pending NM checkpoint while TUN exists,
+  waits for Core's explicit stop acknowledgement, then deletes only its own
+  nft table. A failed owner remains pending for retry; the traffic filter stays
+  in place if earlier cleanup fails. No host ruleset is flushed;
+- systemd sends the initial stop signal only to linuxd (`KillMode=mixed`) so
+  Core cannot disappear before per-link cleanup. The socket unit owns its path
+  and directory across daemon stop and socket reactivation;
 - Ubuntu 24.04 LTS amd64 with the required system stack is the only
   foundation-supported host row; exact desktop-session VM proof remains open;
 - Fedora Workstation remains a package/runtime-proof backlog row;
-- live Core lifecycle does not yet supply or invoke that transaction plan, so
-  no new network command is reachable from `connect`. Durable restart/suspend
-  recovery, native Ubuntu 24.04 mutation/restoration evidence, package signing
-  and VM proof also remain open;
-- therefore the daemon returns `supports_live_connect=false` and rejects
-  `connect` with `linux_live_connect_unavailable`.
+- `supports_live_connect` reflects the required host stack and executable Core;
+  `can_connect` additionally requires a staged profile and no active transaction.
+  Running follows actual Core start and network application. DNS and egress
+  health remain unknown (`null`); the UI must not infer validated health from
+  the running phase alone;
+- retained VM proof covers non-root IPC, TUN/DNS/TLS HTTP, normal disconnect,
+  foreign-rule rejection and active service stop/reactivation. Its temporary
+  polkit fixture grant was removed. It is not a desktop authentication-agent,
+  Flutter GUI, signed deb or public-candidate test. Crash/suspend/reboot recovery
+  and package acceptance remain L03/L04 gates.
 
 No Linux artifact or availability promise belongs to release 1.2.0 until those
 gates and exact-package evidence close.

@@ -1,0 +1,38 @@
+{
+  "initialize": {
+    "protocol": "pokrov-linuxd-v1",
+    "request_id": "l02-baseline-initialize",
+    "ok": true,
+    "snapshot": {
+      "phase": "config_staged",
+      "supports_live_connect": true,
+      "can_initialize": true,
+      "can_connect": true,
+      "message_code": "ready",
+      "host_health": "healthy",
+      "dns_state": "unknown",
+      "uplink_state": "unknown",
+      "dns_ready": null,
+      "core_egress_validated": null,
+      "ipv4_route_count": null,
+      "ipv6_route_count": null,
+      "connection_pending": false,
+      "host_stack": {
+        "systemd": true,
+        "network_manager": true,
+        "resolved": true,
+        "nftables": true,
+        "core_artifact": true
+      }
+    }
+  },
+  "connect": {
+    "protocol": "pokrov-linuxd-v1",
+    "request_id": "l02-baseline-connect",
+    "ok": false,
+    "error_code": "linux_authorization_denied",
+    "message_code": "authorization_denied"
+  },
+  "client_uid": 1000,
+  "production_policy_unchanged": true
+}

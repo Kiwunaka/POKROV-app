@@ -139,7 +139,7 @@ func readOSRelease(path string) (string, string) {
 func secureRootArtifact(path string) bool {
 	info, err := os.Lstat(path)
 	if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 ||
-		info.Mode().Perm()&0o022 != 0 {
+		info.Mode().Perm()&0o022 != 0 || info.Mode().Perm()&0o100 == 0 {
 		return false
 	}
 	stat, ok := info.Sys().(*syscall.Stat_t)

@@ -1,0 +1,39 @@
+{
+  "status": "PASS",
+  "toolchain": "go1.25.13",
+  "commands": [
+    {
+      "command": [
+        "test",
+        "-p",
+        "1",
+        "./..."
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "vet",
+        "-p",
+        "1",
+        "./..."
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "build",
+        "-p",
+        "1",
+        "-trimpath",
+        "-buildvcs=false",
+        "-o",
+        "/home/pokrovtest/r12-l02/pokrov-linuxd-03",
+        "./cmd/pokrov-linuxd"
+      ],
+      "exit": 0
+    }
+  ],
+  "bytes": 4572415,
+  "sha256": "d13e0bcb2efa3cf73a0d85003a814bdc4463db71593c32062b8b592fd928db17"
+}

@@ -3557,7 +3557,7 @@ void main() {
     }
   });
 
-  test('Linux daemon snapshot stays fail closed while mapping safe host facts',
+  test('Linux Core start alone does not claim DNS or egress protection',
       () async {
     final transport = _FakeLinuxDaemonTransport((request) {
       return <String, Object?>{
@@ -3565,8 +3565,8 @@ void main() {
         'request_id': request['request_id'],
         'ok': true,
         'snapshot': <String, Object?>{
-          'phase': 'initialized',
-          'supports_live_connect': false,
+          'phase': 'running',
+          'supports_live_connect': true,
           'can_initialize': true,
           'can_connect': false,
           'message_code': 'ready',
@@ -3589,10 +3589,13 @@ void main() {
 
     expect(snapshot.hostPlatform, HostPlatform.linux);
     expect(snapshot.lane, RuntimeLane.linuxDaemon);
-    expect(snapshot.phase, RuntimePhase.initialized);
-    expect(snapshot.supportsLiveConnect, isFalse);
+    expect(snapshot.phase, RuntimePhase.running);
+    expect(snapshot.supportsLiveConnect, isTrue);
     expect(snapshot.canConnect, isFalse);
     expect(snapshot.coreBinaryPath, isNull);
+    expect(snapshot.dnsReady, isNull);
+    expect(snapshot.coreEgressValidated, isNull);
+    expect(snapshot.coreEgressValidationRequired, isTrue);
     expect(snapshot.hostDiagnosticsSummary, contains('NetworkManager готов'));
     expect(snapshot.isCleanlyHealthy, isFalse);
   });

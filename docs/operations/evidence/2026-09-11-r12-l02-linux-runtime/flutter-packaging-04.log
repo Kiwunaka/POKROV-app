@@ -1,0 +1,6 @@
+00:00 +0: loading E:/r12client/apps/linux_shell/test/linux_packaging_contract_test.dart
+00:00 +0: Linux service packaging keeps UI non-root and mutations behind polkit
+00:00 +1: Linux support matrix has one exact foundation row and explicit backlog
+00:00 +2: Linux network transaction journal fields stay closed
+00:00 +3: Linux polkit D-Bus decisions use a closed authorization trace
+00:00 +4: All tests passed!

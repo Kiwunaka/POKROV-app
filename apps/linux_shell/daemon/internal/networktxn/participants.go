@@ -12,13 +12,18 @@ import (
 
 const (
 	networkManagerCheckpointSeconds = 90
-	networkManagerCheckpointFlags   = 0x02 | 0x04 | 0x20
-	pokrovNftFamily                 = "inet"
-	pokrovNftTable                  = "pokrov"
+	// No flags that delete new connections, disconnect other devices or
+	// restore global DNS. Ubuntu 24.04's NM 1.46 also predates flag 0x20.
+	networkManagerCheckpointFlags = 0
+	pokrovNftFamily               = "inet"
+	pokrovNftTable                = "pokrov"
 )
 
 var networkManagerCheckpointPath = regexp.MustCompile(
 	`^/org/freedesktop/NetworkManager/Checkpoint/[A-Za-z0-9_]+$`,
+)
+var networkManagerDevicePath = regexp.MustCompile(
+	"^/org/freedesktop/NetworkManager/Devices/[0-9]+$",
 )
 
 type commandRunner interface {
@@ -28,6 +33,7 @@ type commandRunner interface {
 type networkManagerParticipant struct {
 	runner         commandRunner
 	checkpointPath string
+	devicePath     string
 }
 
 func (participant *networkManagerParticipant) Subsystem() Subsystem {
@@ -36,10 +42,22 @@ func (participant *networkManagerParticipant) Subsystem() Subsystem {
 
 func (participant *networkManagerParticipant) Checkpoint(
 	ctx context.Context,
-	_ Plan,
+	plan Plan,
 ) error {
 	if participant.runner == nil || participant.checkpointPath != "" {
 		return errors.New("network manager checkpoint unavailable")
+	}
+	device, err := participant.runner.Run(ctx, "busctl", []string{
+		"--system", "--no-pager", "call", "org.freedesktop.NetworkManager",
+		"/org/freedesktop/NetworkManager", "org.freedesktop.NetworkManager",
+		"GetDeviceByIpIface", "s", plan.tunnelInterface,
+	}, nil)
+	if err != nil {
+		return errors.New("network manager owned link unavailable")
+	}
+	participant.devicePath, err = parseNetworkManagerObject(device, networkManagerDevicePath)
+	if err != nil {
+		return err
 	}
 	output, err := participant.runner.Run(ctx, "busctl", []string{
 		"--system",
@@ -50,7 +68,8 @@ func (participant *networkManagerParticipant) Checkpoint(
 		"org.freedesktop.NetworkManager",
 		"CheckpointCreate",
 		"aouu",
-		"0",
+		"1",
+		participant.devicePath,
 		strconv.Itoa(networkManagerCheckpointSeconds),
 		strconv.Itoa(networkManagerCheckpointFlags),
 	}, nil)
@@ -97,7 +116,7 @@ func (participant *networkManagerParticipant) Rollback(
 	if participant.checkpointPath == "" {
 		return nil
 	}
-	_, err := participant.runner.Run(ctx, "busctl", []string{
+	output, err := participant.runner.Run(ctx, "busctl", []string{
 		"--system",
 		"--no-pager",
 		"call",
@@ -111,6 +130,11 @@ func (participant *networkManagerParticipant) Rollback(
 	if err != nil {
 		return errors.New("network manager rollback failed")
 	}
+	fields := strings.Fields(strings.TrimSpace(string(output)))
+	if len(fields) != 4 || fields[0] != "a{su}" || fields[1] != "1" ||
+		strings.Trim(fields[2], "\"") != participant.devicePath || fields[3] != "0" {
+		return errors.New("network manager rollback result rejected")
+	}
 	participant.checkpointPath = ""
 	return nil
 }
@@ -120,6 +144,10 @@ func (participant *networkManagerParticipant) PendingRollback() bool {
 }
 
 func parseCheckpointPath(output []byte) (string, error) {
+	return parseNetworkManagerObject(output, networkManagerCheckpointPath)
+}
+
+func parseNetworkManagerObject(output []byte, pattern *regexp.Regexp) (string, error) {
 	value := strings.TrimSpace(string(output))
 	if !strings.HasPrefix(value, "o ") {
 		return "", errors.New("network manager checkpoint response invalid")
@@ -136,7 +164,7 @@ func parseCheckpointPath(output []byte) (string, error) {
 		}
 		value = unquoted
 	}
-	if !networkManagerCheckpointPath.MatchString(value) {
+	if !pattern.MatchString(value) {
 		return "", errors.New("network manager checkpoint response invalid")
 	}
 	return value, nil

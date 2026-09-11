@@ -17,6 +17,8 @@ void main() {
     expect(socket, contains('SocketMode=0666'));
     expect(socket, contains('RemoveOnStop=yes'));
     expect(service, contains('User=root'));
+    expect(service, contains('KillMode=mixed'));
+    expect(service, isNot(contains('RuntimeDirectory=pokrov')));
     expect(service, contains('NoNewPrivileges=yes'));
     expect(service, contains('ProtectSystem=strict'));
     expect(service, contains('CapabilityBoundingSet=CAP_NET_ADMIN'));
@@ -56,10 +58,9 @@ void main() {
     expect(pending.any((entry) => entry['distro_id'] == 'fedora'), isTrue);
   });
 
-  test('Linux network transaction events stay closed and fail-closed', () {
+  test('Linux network transaction journal fields stay closed', () {
     final journal = _text('daemon/internal/journal/journal.go');
     final recorder = _text('daemon/internal/networktxn/recorder.go');
-    final service = _text('daemon/internal/service/service_linux.go');
 
     for (final value in <String>[
       'network_transaction',
@@ -80,9 +81,6 @@ void main() {
     expect(recorder, contains('func (recorder Recorder) Rollback'));
     expect(recorder, isNot(contains('exec.Command')));
     expect(recorder, isNot(contains('os/exec')));
-    expect(service, contains('recordUnavailableNetworkTransaction'));
-    expect(service, contains('networktxn.Unsupported'));
-    expect(service, contains('linux_live_connect_unavailable'));
   });
 
   test('Linux polkit D-Bus decisions use a closed authorization trace', () {

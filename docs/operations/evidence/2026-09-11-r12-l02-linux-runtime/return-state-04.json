@@ -1,0 +1,1 @@
+{"result": "PASS", "temporary_grant_retired": true, "tun_absent": true, "core_absent": true, "owned_nft_absent": true, "daemon_stopped": true, "socket_listening": true, "policy_sha256": "d060c7cafd4d99e582edb5491aa54ceb47c495ef27a614bb9ccb9b41d801dd49", "guest_free_bytes": 6313140224}
