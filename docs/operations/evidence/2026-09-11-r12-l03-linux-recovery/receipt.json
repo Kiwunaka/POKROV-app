@@ -302,7 +302,7 @@
     {
       "file": "native-build-07.log",
       "raw_sha256": "a6889cf5878de24e9ebd7a821293ffc083737e0a21066f80826b3610f57e812d",
-      "normalized_sha256": "a6889cf5878de24e9ebd7a821293ffc083737e0a21066f80826b3610f57e812d"
+      "normalized_sha256": "d4ba8ce98789892df27cbe966ae15ef6310a2c264b7f30d737b971d570724c09"
     },
     {
       "file": "client-seed-final.log",
@@ -334,7 +334,7 @@
     "l03-sleep-01.json": "094304e348ac860221a41bc3b2c681576dc66ec3c22ef857b54d3ca2cbc1eb87",
     "l03-sleep-02.json": "d3f5c9934d9b2a2e6fb107e15b704b7af671e26366a1ab123b78d55e379bd813",
     "native-build-06.log": "1d5b916f4bfb02fd66acc877c59b58e447585d7f8774757240f1bb402235122d",
-    "native-build-07.log": "a6889cf5878de24e9ebd7a821293ffc083737e0a21066f80826b3610f57e812d",
+    "native-build-07.log": "d4ba8ce98789892df27cbe966ae15ef6310a2c264b7f30d737b971d570724c09",
     "operational-events.json": "de0d0f7ca630806c7121f0995839960fa056b64fd439233e7876c623873370c1",
     "post-resume-route6.json": "bbf61cbd5335f6e6a679f6471b97d508c54c52828764b2e6f815b9630c99231e",
     "README.md": "b3e6d47e8232a4c1455e2035c4fc417b62f4ca270090720f79f09ceac739968f",
