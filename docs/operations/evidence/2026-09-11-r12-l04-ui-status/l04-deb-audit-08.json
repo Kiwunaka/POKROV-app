@@ -1,0 +1,2394 @@
+{
+  "status": "PASS_PACKAGE_CONTENTS",
+  "artifact": "pokrov_1.2.0~beta.30-8_amd64.deb",
+  "sha256": "b71c3190ad56e534bcd0057b68de4f818e775bc89cf1d5470814468ad7ada933",
+  "bytes": 32285006,
+  "client_revision": "aa0874615e2ccdd4213df9f72dfd9a994979edef",
+  "core_revision": "97ec91e3a74c96db3ce5c0c98364b715bf344964",
+  "entries": [
+    {
+      "path": ".",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/bin",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/pokrov-core",
+      "mode": "0o755",
+      "size": 54886526,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/pokrov-linuxd",
+      "mode": "0o755",
+      "size": 4826207,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/AssetManifest.bin",
+      "mode": "0o644",
+      "size": 23970,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/FontManifest.json",
+      "mode": "0o644",
+      "size": 571,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/NOTICES.Z",
+      "mode": "0o644",
+      "size": 108058,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/NativeAssetsManifest.json",
+      "mode": "0o644",
+      "size": 45,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/fonts",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/fonts/MaterialIcons-Regular.otf",
+      "mode": "0o644",
+      "size": 1645184,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ac.si",
+      "mode": "0o644",
+      "size": 35183,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ad.si",
+      "mode": "0o644",
+      "size": 34929,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ae.si",
+      "mode": "0o644",
+      "size": 216,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/af.si",
+      "mode": "0o644",
+      "size": 23274,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ag.si",
+      "mode": "0o644",
+      "size": 495,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ai.si",
+      "mode": "0o644",
+      "size": 18581,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/al.si",
+      "mode": "0o644",
+      "size": 3197,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/am.si",
+      "mode": "0o644",
+      "size": 171,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ao.si",
+      "mode": "0o644",
+      "size": 1153,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/aq.si",
+      "mode": "0o644",
+      "size": 2991,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ar.si",
+      "mode": "0o644",
+      "size": 8411,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/as.si",
+      "mode": "0o644",
+      "size": 36962,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/at.si",
+      "mode": "0o644",
+      "size": 163,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/au.si",
+      "mode": "0o644",
+      "size": 1283,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/aw.si",
+      "mode": "0o644",
+      "size": 7823,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ax.si",
+      "mode": "0o644",
+      "size": 329,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/az.si",
+      "mode": "0o644",
+      "size": 357,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ba.si",
+      "mode": "0o644",
+      "size": 1072,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bb.si",
+      "mode": "0o644",
+      "size": 454,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bd.si",
+      "mode": "0o644",
+      "size": 104,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/be.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bf.si",
+      "mode": "0o644",
+      "size": 224,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bg.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bh.si",
+      "mode": "0o644",
+      "size": 202,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bi.si",
+      "mode": "0o644",
+      "size": 729,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bj.si",
+      "mode": "0o644",
+      "size": 251,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bl.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bm.si",
+      "mode": "0o644",
+      "size": 21272,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bn.si",
+      "mode": "0o644",
+      "size": 15444,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bo.si",
+      "mode": "0o644",
+      "size": 118877,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bq.si",
+      "mode": "0o644",
+      "size": 171,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/br.si",
+      "mode": "0o644",
+      "size": 7905,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bs.si",
+      "mode": "0o644",
+      "size": 347,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bt.si",
+      "mode": "0o644",
+      "size": 24495,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bv.si",
+      "mode": "0o644",
+      "size": 366,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bw.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/by.si",
+      "mode": "0o644",
+      "size": 8617,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/bz.si",
+      "mode": "0o644",
+      "size": 49661,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ca.si",
+      "mode": "0o644",
+      "size": 592,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cc.si",
+      "mode": "0o644",
+      "size": 2765,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cd.si",
+      "mode": "0o644",
+      "size": 298,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cefta.si",
+      "mode": "0o644",
+      "size": 456,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cf.si",
+      "mode": "0o644",
+      "size": 429,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cg.si",
+      "mode": "0o644",
+      "size": 251,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ch.si",
+      "mode": "0o644",
+      "size": 167,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ci.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ck.si",
+      "mode": "0o644",
+      "size": 1852,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cl.si",
+      "mode": "0o644",
+      "size": 348,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cm.si",
+      "mode": "0o644",
+      "size": 405,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cn.si",
+      "mode": "0o644",
+      "size": 277,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/co.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cp.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cr.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cu.si",
+      "mode": "0o644",
+      "size": 383,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cv.si",
+      "mode": "0o644",
+      "size": 1147,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cw.si",
+      "mode": "0o644",
+      "size": 357,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cx.si",
+      "mode": "0o644",
+      "size": 2195,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cy.si",
+      "mode": "0o644",
+      "size": 7106,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/cz.si",
+      "mode": "0o644",
+      "size": 244,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/de.si",
+      "mode": "0o644",
+      "size": 171,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/dg.si",
+      "mode": "0o644",
+      "size": 12157,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/dj.si",
+      "mode": "0o644",
+      "size": 356,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/dk.si",
+      "mode": "0o644",
+      "size": 163,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/dm.si",
+      "mode": "0o644",
+      "size": 8011,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/do.si",
+      "mode": "0o644",
+      "size": 224904,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/dz.si",
+      "mode": "0o644",
+      "size": 221,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ea.si",
+      "mode": "0o644",
+      "size": 79302,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ec.si",
+      "mode": "0o644",
+      "size": 16087,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ee.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/eg.si",
+      "mode": "0o644",
+      "size": 11216,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/eh.si",
+      "mode": "0o644",
+      "size": 415,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/er.si",
+      "mode": "0o644",
+      "size": 3037,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/es-ct.si",
+      "mode": "0o644",
+      "size": 194,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/es-ga.si",
+      "mode": "0o644",
+      "size": 20353,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/es.si",
+      "mode": "0o644",
+      "size": 79302,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/et.si",
+      "mode": "0o644",
+      "size": 903,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/eu.si",
+      "mode": "0o644",
+      "size": 1326,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/fi.si",
+      "mode": "0o644",
+      "size": 163,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/fj.si",
+      "mode": "0o644",
+      "size": 28087,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/fk.si",
+      "mode": "0o644",
+      "size": 31126,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/fm.si",
+      "mode": "0o644",
+      "size": 512,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/fo.si",
+      "mode": "0o644",
+      "size": 417,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/fr.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ga.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gb-eng.si",
+      "mode": "0o644",
+      "size": 163,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gb-nir.si",
+      "mode": "0o644",
+      "size": 18818,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gb-sct.si",
+      "mode": "0o644",
+      "size": 160,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gb-wls.si",
+      "mode": "0o644",
+      "size": 9330,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gb.si",
+      "mode": "0o644",
+      "size": 606,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gd.si",
+      "mode": "0o644",
+      "size": 2510,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ge.si",
+      "mode": "0o644",
+      "size": 1453,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gf.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gg.si",
+      "mode": "0o644",
+      "size": 312,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gh.si",
+      "mode": "0o644",
+      "size": 225,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gi.si",
+      "mode": "0o644",
+      "size": 2929,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gl.si",
+      "mode": "0o644",
+      "size": 168,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gm.si",
+      "mode": "0o644",
+      "size": 333,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gn.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gp.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gq.si",
+      "mode": "0o644",
+      "size": 5652,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gr.si",
+      "mode": "0o644",
+      "size": 518,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gs.si",
+      "mode": "0o644",
+      "size": 32168,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gt.si",
+      "mode": "0o644",
+      "size": 34406,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gu.si",
+      "mode": "0o644",
+      "size": 3825,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gw.si",
+      "mode": "0o644",
+      "size": 467,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/gy.si",
+      "mode": "0o644",
+      "size": 327,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/hk.si",
+      "mode": "0o644",
+      "size": 2074,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/hm.si",
+      "mode": "0o644",
+      "size": 1283,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/hn.si",
+      "mode": "0o644",
+      "size": 744,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/hr.si",
+      "mode": "0o644",
+      "size": 50234,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ht.si",
+      "mode": "0o644",
+      "size": 29706,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/hu.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ic.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/id.si",
+      "mode": "0o644",
+      "size": 126,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ie.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/il.si",
+      "mode": "0o644",
+      "size": 584,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/im.si",
+      "mode": "0o644",
+      "size": 8775,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/in.si",
+      "mode": "0o644",
+      "size": 818,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/io.si",
+      "mode": "0o644",
+      "size": 12157,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/iq.si",
+      "mode": "0o644",
+      "size": 1563,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ir.si",
+      "mode": "0o644",
+      "size": 15920,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/is.si",
+      "mode": "0o644",
+      "size": 391,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/it.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/je.si",
+      "mode": "0o644",
+      "size": 10321,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/jm.si",
+      "mode": "0o644",
+      "size": 280,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/jo.si",
+      "mode": "0o644",
+      "size": 418,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/jp.si",
+      "mode": "0o644",
+      "size": 210,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ke.si",
+      "mode": "0o644",
+      "size": 780,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/kg.si",
+      "mode": "0o644",
+      "size": 2796,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/kh.si",
+      "mode": "0o644",
+      "size": 7475,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ki.si",
+      "mode": "0o644",
+      "size": 3392,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/km.si",
+      "mode": "0o644",
+      "size": 796,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/kn.si",
+      "mode": "0o644",
+      "size": 504,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/kp.si",
+      "mode": "0o644",
+      "size": 490,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/kr.si",
+      "mode": "0o644",
+      "size": 1309,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/kw.si",
+      "mode": "0o644",
+      "size": 305,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ky.si",
+      "mode": "0o644",
+      "size": 29014,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/kz.si",
+      "mode": "0o644",
+      "size": 11985,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/la.si",
+      "mode": "0o644",
+      "size": 233,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/lb.si",
+      "mode": "0o644",
+      "size": 2486,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/lc.si",
+      "mode": "0o644",
+      "size": 218,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/li.si",
+      "mode": "0o644",
+      "size": 8397,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/lk.si",
+      "mode": "0o644",
+      "size": 13945,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/lr.si",
+      "mode": "0o644",
+      "size": 558,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ls.si",
+      "mode": "0o644",
+      "size": 1126,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/lt.si",
+      "mode": "0o644",
+      "size": 226,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/lu.si",
+      "mode": "0o644",
+      "size": 171,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/lv.si",
+      "mode": "0o644",
+      "size": 163,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ly.si",
+      "mode": "0o644",
+      "size": 346,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ma.si",
+      "mode": "0o644",
+      "size": 139,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mc.si",
+      "mode": "0o644",
+      "size": 128,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/md.si",
+      "mode": "0o644",
+      "size": 6233,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/me.si",
+      "mode": "0o644",
+      "size": 70277,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mf.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mg.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mh.si",
+      "mode": "0o644",
+      "size": 608,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mk.si",
+      "mode": "0o644",
+      "size": 295,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ml.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mm.si",
+      "mode": "0o644",
+      "size": 350,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mn.si",
+      "mode": "0o644",
+      "size": 1201,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mo.si",
+      "mode": "0o644",
+      "size": 1093,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mp.si",
+      "mode": "0o644",
+      "size": 16184,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mq.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mr.si",
+      "mode": "0o644",
+      "size": 300,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ms.si",
+      "mode": "0o644",
+      "size": 6187,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mt.si",
+      "mode": "0o644",
+      "size": 8457,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mu.si",
+      "mode": "0o644",
+      "size": 218,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mv.si",
+      "mode": "0o644",
+      "size": 164,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mw.si",
+      "mode": "0o644",
+      "size": 3418,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mx.si",
+      "mode": "0o644",
+      "size": 102582,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/my.si",
+      "mode": "0o644",
+      "size": 1013,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/mz.si",
+      "mode": "0o644",
+      "size": 1979,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/na.si",
+      "mode": "0o644",
+      "size": 608,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/nc.si",
+      "mode": "0o644",
+      "size": 987,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ne.si",
+      "mode": "0o644",
+      "size": 186,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/nf.si",
+      "mode": "0o644",
+      "size": 5984,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ng.si",
+      "mode": "0o644",
+      "size": 163,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ni.si",
+      "mode": "0o644",
+      "size": 15823,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/nl.si",
+      "mode": "0o644",
+      "size": 171,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/no.si",
+      "mode": "0o644",
+      "size": 245,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/np.si",
+      "mode": "0o644",
+      "size": 713,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/nr.si",
+      "mode": "0o644",
+      "size": 421,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/nu.si",
+      "mode": "0o644",
+      "size": 804,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/nz.si",
+      "mode": "0o644",
+      "size": 1710,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/om.si",
+      "mode": "0o644",
+      "size": 10896,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pa.si",
+      "mode": "0o644",
+      "size": 435,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pe.si",
+      "mode": "0o644",
+      "size": 130552,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pf.si",
+      "mode": "0o644",
+      "size": 3747,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pg.si",
+      "mode": "0o644",
+      "size": 1619,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ph.si",
+      "mode": "0o644",
+      "size": 1498,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pk.si",
+      "mode": "0o644",
+      "size": 399,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pl.si",
+      "mode": "0o644",
+      "size": 128,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pm.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pn.si",
+      "mode": "0o644",
+      "size": 12254,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pr.si",
+      "mode": "0o644",
+      "size": 383,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ps.si",
+      "mode": "0o644",
+      "size": 296,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pt.si",
+      "mode": "0o644",
+      "size": 7150,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/pw.si",
+      "mode": "0o644",
+      "size": 223,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/py.si",
+      "mode": "0o644",
+      "size": 16438,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/qa.si",
+      "mode": "0o644",
+      "size": 279,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/re.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ro.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/rs.si",
+      "mode": "0o644",
+      "size": 513292,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ru.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/rw.si",
+      "mode": "0o644",
+      "size": 426,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sa.si",
+      "mode": "0o644",
+      "size": 10711,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sb.si",
+      "mode": "0o644",
+      "size": 715,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sc.si",
+      "mode": "0o644",
+      "size": 237,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sd.si",
+      "mode": "0o644",
+      "size": 296,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/se.si",
+      "mode": "0o644",
+      "size": 203,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sg.si",
+      "mode": "0o644",
+      "size": 696,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sh.si",
+      "mode": "0o644",
+      "size": 35183,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/si.si",
+      "mode": "0o644",
+      "size": 1827,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sj.si",
+      "mode": "0o644",
+      "size": 245,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sk.si",
+      "mode": "0o644",
+      "size": 1079,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sl.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sm.si",
+      "mode": "0o644",
+      "size": 13060,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sn.si",
+      "mode": "0o644",
+      "size": 269,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/so.si",
+      "mode": "0o644",
+      "size": 266,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sr.si",
+      "mode": "0o644",
+      "size": 225,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ss.si",
+      "mode": "0o644",
+      "size": 307,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/st.si",
+      "mode": "0o644",
+      "size": 582,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sv.si",
+      "mode": "0o644",
+      "size": 76469,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sx.si",
+      "mode": "0o644",
+      "size": 12418,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sy.si",
+      "mode": "0o644",
+      "size": 310,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/sz.si",
+      "mode": "0o644",
+      "size": 4290,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ta.si",
+      "mode": "0o644",
+      "size": 35183,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tc.si",
+      "mode": "0o644",
+      "size": 11034,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/td.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tf.si",
+      "mode": "0o644",
+      "size": 655,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tg.si",
+      "mode": "0o644",
+      "size": 508,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/th.si",
+      "mode": "0o644",
+      "size": 208,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tj.si",
+      "mode": "0o644",
+      "size": 926,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tk.si",
+      "mode": "0o644",
+      "size": 677,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tl.si",
+      "mode": "0o644",
+      "size": 388,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tm.si",
+      "mode": "0o644",
+      "size": 27577,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tn.si",
+      "mode": "0o644",
+      "size": 420,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/to.si",
+      "mode": "0o644",
+      "size": 204,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tr.si",
+      "mode": "0o644",
+      "size": 360,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tt.si",
+      "mode": "0o644",
+      "size": 215,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tv.si",
+      "mode": "0o644",
+      "size": 1354,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tw.si",
+      "mode": "0o644",
+      "size": 1934,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/tz.si",
+      "mode": "0o644",
+      "size": 374,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ua.si",
+      "mode": "0o644",
+      "size": 128,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ug.si",
+      "mode": "0o644",
+      "size": 2533,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/um.si",
+      "mode": "0o644",
+      "size": 4911,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/un.si",
+      "mode": "0o644",
+      "size": 24264,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/us.si",
+      "mode": "0o644",
+      "size": 4833,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/uy.si",
+      "mode": "0o644",
+      "size": 1592,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/uz.si",
+      "mode": "0o644",
+      "size": 1465,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/va.si",
+      "mode": "0o644",
+      "size": 18590,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/vc.si",
+      "mode": "0o644",
+      "size": 305,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ve.si",
+      "mode": "0o644",
+      "size": 1074,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/vg.si",
+      "mode": "0o644",
+      "size": 10097,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/vi.si",
+      "mode": "0o644",
+      "size": 7822,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/vn.si",
+      "mode": "0o644",
+      "size": 266,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/vu.si",
+      "mode": "0o644",
+      "size": 1864,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/wf.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ws.si",
+      "mode": "0o644",
+      "size": 566,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/xk.si",
+      "mode": "0o644",
+      "size": 12723,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/xx.si",
+      "mode": "0o644",
+      "size": 138,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/ye.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/yt.si",
+      "mode": "0o644",
+      "size": 173,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/za.si",
+      "mode": "0o644",
+      "size": 592,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/zm.si",
+      "mode": "0o644",
+      "size": 4940,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/country_flags/res/si/zw.si",
+      "mode": "0o644",
+      "size": 7447,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/brand",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark.png",
+      "mode": "0o644",
+      "size": 146850,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark_128.png",
+      "mode": "0o644",
+      "size": 16419,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark_256.png",
+      "mode": "0o644",
+      "size": 47834,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/fonts",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Bold.ttf",
+      "mode": "0o644",
+      "size": 41776,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-ExtraBold.ttf",
+      "mode": "0o644",
+      "size": 41856,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Medium.ttf",
+      "mode": "0o644",
+      "size": 41848,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Regular.ttf",
+      "mode": "0o644",
+      "size": 41860,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-SemiBold.ttf",
+      "mode": "0o644",
+      "size": 41900,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+      "mode": "0o644",
+      "size": 4487,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/licenses",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+      "mode": "0o644",
+      "size": 665657,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/shaders",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/shaders/ink_sparkle.frag",
+      "mode": "0o644",
+      "size": 21320,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/shaders/stretch_effect.frag",
+      "mode": "0o644",
+      "size": 17368,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/flutter_assets/version.json",
+      "mode": "0o644",
+      "size": 107,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/data/icudtl.dat",
+      "mode": "0o644",
+      "size": 778864,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/libapp.so",
+      "mode": "0o644",
+      "size": 8635312,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/libfile_selector_linux_plugin.so",
+      "mode": "0o644",
+      "size": 42016,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/libflutter_linux_gtk.so",
+      "mode": "0o644",
+      "size": 33866304,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/libflutter_secure_storage_linux_plugin.so",
+      "mode": "0o644",
+      "size": 182824,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/liburl_launcher_linux_plugin.so",
+      "mode": "0o644",
+      "size": 30776,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/pokrov/ui/pokrov",
+      "mode": "0o755",
+      "size": 24184,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/systemd",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/systemd/system",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/systemd/system/pokrov-linux-sleep.service",
+      "mode": "0o644",
+      "size": 334,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/systemd/system/pokrov-linuxd.service",
+      "mode": "0o644",
+      "size": 1013,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/lib/systemd/system/pokrov-linuxd.socket",
+      "mode": "0o644",
+      "size": 210,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/share",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/applications",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/applications/space.pokrov.linux.desktop",
+      "mode": "0o644",
+      "size": 198,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/share/doc",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/doc/pokrov",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/doc/pokrov/build.json",
+      "mode": "0o644",
+      "size": 544,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/share/doc/pokrov/native-go-NOTICES.txt",
+      "mode": "0o644",
+      "size": 665657,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/share/icons",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/icons/hicolor",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/icons/hicolor/256x256",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/icons/hicolor/256x256/apps",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/icons/hicolor/256x256/apps/space.pokrov.linux.png",
+      "mode": "0o644",
+      "size": 47834,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/share/polkit-1",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/polkit-1/actions",
+      "mode": "0o755",
+      "size": 0,
+      "type": "5",
+      "link": ""
+    },
+    {
+      "path": "usr/share/polkit-1/actions/space.pokrov.linux.policy",
+      "mode": "0o644",
+      "size": 682,
+      "type": "0",
+      "link": ""
+    },
+    {
+      "path": "usr/bin/pokrov",
+      "mode": "0o777",
+      "size": 0,
+      "type": "2",
+      "link": "../lib/pokrov/ui/pokrov"
+    }
+  ],
+  "elfs": [
+    {
+      "path": "usr/lib/pokrov/pokrov-core",
+      "ldd": "",
+      "exit_code": 1
+    },
+    {
+      "path": "usr/lib/pokrov/pokrov-linuxd",
+      "ldd": "",
+      "exit_code": 1
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/libapp.so",
+      "ldd": "statically linked",
+      "exit_code": 0
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/libfile_selector_linux_plugin.so",
+      "ldd": "linux-vdso.so.1 (0x00007ffe4e5ca000)\n\tlibflutter_linux_gtk.so => /home/pokrovtest/r12-l02/l04-packages/pokrov_1.2.0~beta.30-8_amd64/usr/lib/pokrov/ui/lib/libflutter_linux_gtk.so (0x000078014de00000)\n\tlibgtk-3.so.0 => /lib/x86_64-linux-gnu/libgtk-3.so.0 (0x000078014d600000)\n\tlibgdk-3.so.0 => /lib/x86_64-linux-gnu/libgdk-3.so.0 (0x000078014d505000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x000078014ee45000)\n\tlibpangocairo-1.0.so.0 => /lib/x86_64-linux-gnu/libpangocairo-1.0.so.0 (0x000078014ddef000)\n\tlibpango-1.0.so.0 => /lib/x86_64-linux-gnu/libpango-1.0.so.0 (0x000078014d49a000)\n\tlibharfbuzz.so.0 => /lib/x86_64-linux-gnu/libharfbuzz.so.0 (0x000078014d38d000)\n\tlibatk-1.0.so.0 => /lib/x86_64-linux-gnu/libatk-1.0.so.0 (0x000078014d363000)\n\tlibcairo-gobject.so.2 => /lib/x86_64-linux-gnu/libcairo-gobject.so.2 (0x000078014dde3000)\n\tlibcairo.so.2 => /lib/x86_64-linux-gnu/libcairo.so.2 (0x000078014d21f000)\n\tlibgdk_pixbuf-2.0.so.0 => /lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so.0 (0x000078014d1f1000)\n\tlibgio-2.0.so.0 => /lib/x86_64-linux-gnu/libgio-2.0.so.0 (0x000078014d021000)\n\tlibgobject-2.0.so.0 => /lib/x86_64-linux-gnu/libgobject-2.0.so.0 (0x000078014cfbe000)\n\tlibglib-2.0.so.0 => /lib/x86_64-linux-gnu/libglib-2.0.so.0 (0x000078014ce75000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000078014ca00000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000078014cd8c000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000078014cd5e000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000078014c600000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000078014ddde000)\n\tlibepoxy.so.0 => /lib/x86_64-linux-gnu/libepoxy.so.0 (0x000078014c8dd000)\n\tlibfontconfig.so.1 => /lib/x86_64-linux-gnu/libfontconfig.so.1 (0x000078014cd0d000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000078014ddd9000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000078014ee75000)\n\tlibgmodule-2.0.so.0 => /lib/x86_64-linux-gnu/libgmodule-2.0.so.0 (0x000078014ddd2000)\n\tlibpangoft2-1.0.so.0 => /lib/x86_64-linux-gnu/libpangoft2-1.0.so.0 (0x000078014ccf2000)\n\tlibfribidi.so.0 => /lib/x86_64-linux-gnu/libfribidi.so.0 (0x000078014ccd4000)\n\tlibXi.so.6 => /lib/x86_64-linux-gnu/libXi.so.6 (0x000078014ccc1000)\n\tlibX11.so.6 => /lib/x86_64-linux-gnu/libX11.so.6 (0x000078014c4c3000)\n\tlibatk-bridge-2.0.so.0 => /lib/x86_64-linux-gnu/libatk-bridge-2.0.so.0 (0x000078014cc85000)\n\tlibXfixes.so.3 => /lib/x86_64-linux-gnu/libXfixes.so.3 (0x000078014c8d5000)\n\tlibxkbcommon.so.0 => /lib/x86_64-linux-gnu/libxkbcommon.so.0 (0x000078014c88c000)\n\tlibwayland-client.so.0 => /lib/x86_64-linux-gnu/libwayland-client.so.0 (0x000078014c87c000)\n\tlibwayland-cursor.so.0 => /lib/x86_64-linux-gnu/libwayland-cursor.so.0 (0x000078014c872000)\n\tlibwayland-egl.so.1 => /lib/x86_64-linux-gnu/libwayland-egl.so.1 (0x000078014cc80000)\n\tlibXext.so.6 => /lib/x86_64-linux-gnu/libXext.so.6 (0x000078014c85e000)\n\tlibXcursor.so.1 => /lib/x86_64-linux-gnu/libXcursor.so.1 (0x000078014c852000)\n\tlibXdamage.so.1 => /lib/x86_64-linux-gnu/libXdamage.so.1 (0x000078014c84d000)\n\tlibXcomposite.so.1 => /lib/x86_64-linux-gnu/libXcomposite.so.1 (0x000078014c848000)\n\tlibXrandr.so.2 => /lib/x86_64-linux-gnu/libXrandr.so.2 (0x000078014c83b000)\n\tlibXinerama.so.1 => /lib/x86_64-linux-gnu/libXinerama.so.1 (0x000078014c836000)\n\tlibthai.so.0 => /lib/x86_64-linux-gnu/libthai.so.0 (0x000078014c82b000)\n\tlibfreetype.so.6 => /lib/x86_64-linux-gnu/libfreetype.so.6 (0x000078014c3f7000)\n\tlibgraphite2.so.3 => /lib/x86_64-linux-gnu/libgraphite2.so.3 (0x000078014c3d1000)\n\tlibpng16.so.16 => /lib/x86_64-linux-gnu/libpng16.so.16 (0x000078014c399000)\n\tlibXrender.so.1 => /lib/x86_64-linux-gnu/libXrender.so.1 (0x000078014c81f000)\n\tlibxcb.so.1 => /lib/x86_64-linux-gnu/libxcb.so.1 (0x000078014c370000)\n\tlibxcb-render.so.0 => /lib/x86_64-linux-gnu/libxcb-render.so.0 (0x000078014c361000)\n\tlibxcb-shm.so.0 => /lib/x86_64-linux-gnu/libxcb-shm.so.0 (0x000078014c818000)\n\tlibpixman-1.so.0 => /lib/x86_64-linux-gnu/libpixman-1.so.0 (0x000078014c2b2000)\n\tlibjpeg.so.8 => /lib/x86_64-linux-gnu/libjpeg.so.8 (0x000078014c22f000)\n\tlibmount.so.1 => /lib/x86_64-linux-gnu/libmount.so.1 (0x000078014c1e2000)\n\tlibselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 (0x000078014c1b5000)\n\tlibffi.so.8 => /lib/x86_64-linux-gnu/libffi.so.8 (0x000078014c1a9000)\n\tlibpcre2-8.so.0 => /lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x000078014c10f000)\n\tlibexpat.so.1 => /lib/x86_64-linux-gnu/libexpat.so.1 (0x000078014c0e3000)\n\tlibatspi.so.0 => /lib/x86_64-linux-gnu/libatspi.so.0 (0x000078014c0a9000)\n\tlibdbus-1.so.3 => /lib/x86_64-linux-gnu/libdbus-1.so.3 (0x000078014c05a000)\n\tlibdatrie.so.1 => /lib/x86_64-linux-gnu/libdatrie.so.1 (0x000078014c051000)\n\tlibbz2.so.1.0 => /lib/x86_64-linux-gnu/libbz2.so.1.0 (0x000078014c03d000)\n\tlibbrotlidec.so.1 => /lib/x86_64-linux-gnu/libbrotlidec.so.1 (0x000078014c02f000)\n\tlibXau.so.6 => /lib/x86_64-linux-gnu/libXau.so.6 (0x000078014c029000)\n\tlibXdmcp.so.6 => /lib/x86_64-linux-gnu/libXdmcp.so.6 (0x000078014c021000)\n\tlibblkid.so.1 => /lib/x86_64-linux-gnu/libblkid.so.1 (0x000078014bfe6000)\n\tlibsystemd.so.0 => /lib/x86_64-linux-gnu/libsystemd.so.0 (0x000078014bf06000)\n\tlibbrotlicommon.so.1 => /lib/x86_64-linux-gnu/libbrotlicommon.so.1 (0x000078014bee3000)\n\tlibbsd.so.0 => /lib/x86_64-linux-gnu/libbsd.so.0 (0x000078014becb000)\n\tlibcap.so.2 => /lib/x86_64-linux-gnu/libcap.so.2 (0x000078014bebe000)\n\tlibgcrypt.so.20 => /lib/x86_64-linux-gnu/libgcrypt.so.20 (0x000078014bd75000)\n\tliblz4.so.1 => /lib/x86_64-linux-gnu/liblz4.so.1 (0x000078014bd53000)\n\tliblzma.so.5 => /lib/x86_64-linux-gnu/liblzma.so.5 (0x000078014bd21000)\n\tlibzstd.so.1 => /lib/x86_64-linux-gnu/libzstd.so.1 (0x000078014bc65000)\n\tlibmd.so.0 => /lib/x86_64-linux-gnu/libmd.so.0 (0x000078014bc56000)\n\tlibgpg-error.so.0 => /lib/x86_64-linux-gnu/libgpg-error.so.0 (0x000078014bc31000)",
+      "exit_code": 0
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/libflutter_linux_gtk.so",
+      "ldd": "linux-vdso.so.1 (0x00007fff5869e000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007295da8b0000)\n\tlibgtk-3.so.0 => /lib/x86_64-linux-gnu/libgtk-3.so.0 (0x00007295d9000000)\n\tlibgdk-3.so.0 => /lib/x86_64-linux-gnu/libgdk-3.so.0 (0x00007295d8f05000)\n\tlibpangocairo-1.0.so.0 => /lib/x86_64-linux-gnu/libpangocairo-1.0.so.0 (0x00007295da89f000)\n\tlibpango-1.0.so.0 => /lib/x86_64-linux-gnu/libpango-1.0.so.0 (0x00007295d8e9a000)\n\tlibatk-1.0.so.0 => /lib/x86_64-linux-gnu/libatk-1.0.so.0 (0x00007295da873000)\n\tlibcairo.so.2 => /lib/x86_64-linux-gnu/libcairo.so.2 (0x00007295d8d56000)\n\tlibgio-2.0.so.0 => /lib/x86_64-linux-gnu/libgio-2.0.so.0 (0x00007295d8b86000)\n\tlibgobject-2.0.so.0 => /lib/x86_64-linux-gnu/libgobject-2.0.so.0 (0x00007295d8b23000)\n\tlibglib-2.0.so.0 => /lib/x86_64-linux-gnu/libglib-2.0.so.0 (0x00007295d89da000)\n\tlibepoxy.so.0 => /lib/x86_64-linux-gnu/libepoxy.so.0 (0x00007295d88b7000)\n\tlibfontconfig.so.1 => /lib/x86_64-linux-gnu/libfontconfig.so.1 (0x00007295d8866000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007295da86c000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007295d877d000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007295d8400000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007295da8c0000)\n\tlibgmodule-2.0.so.0 => /lib/x86_64-linux-gnu/libgmodule-2.0.so.0 (0x00007295da865000)\n\tlibharfbuzz.so.0 => /lib/x86_64-linux-gnu/libharfbuzz.so.0 (0x00007295d8670000)\n\tlibpangoft2-1.0.so.0 => /lib/x86_64-linux-gnu/libpangoft2-1.0.so.0 (0x00007295da848000)\n\tlibfribidi.so.0 => /lib/x86_64-linux-gnu/libfribidi.so.0 (0x00007295d97e2000)\n\tlibcairo-gobject.so.2 => /lib/x86_64-linux-gnu/libcairo-gobject.so.2 (0x00007295da83c000)\n\tlibgdk_pixbuf-2.0.so.0 => /lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so.0 (0x00007295d8642000)\n\tlibXi.so.6 => /lib/x86_64-linux-gnu/libXi.so.6 (0x00007295d97cf000)\n\tlibX11.so.6 => /lib/x86_64-linux-gnu/libX11.so.6 (0x00007295d82c3000)\n\tlibatk-bridge-2.0.so.0 => /lib/x86_64-linux-gnu/libatk-bridge-2.0.so.0 (0x00007295d8287000)\n\tlibXfixes.so.3 => /lib/x86_64-linux-gnu/libXfixes.so.3 (0x00007295d863a000)\n\tlibxkbcommon.so.0 => /lib/x86_64-linux-gnu/libxkbcommon.so.0 (0x00007295d823e000)\n\tlibwayland-client.so.0 => /lib/x86_64-linux-gnu/libwayland-client.so.0 (0x00007295d862a000)\n\tlibwayland-cursor.so.0 => /lib/x86_64-linux-gnu/libwayland-cursor.so.0 (0x00007295d8620000)\n\tlibwayland-egl.so.1 => /lib/x86_64-linux-gnu/libwayland-egl.so.1 (0x00007295d8619000)\n\tlibXext.so.6 => /lib/x86_64-linux-gnu/libXext.so.6 (0x00007295d822a000)\n\tlibXcursor.so.1 => /lib/x86_64-linux-gnu/libXcursor.so.1 (0x00007295d821e000)\n\tlibXdamage.so.1 => /lib/x86_64-linux-gnu/libXdamage.so.1 (0x00007295d8614000)\n\tlibXcomposite.so.1 => /lib/x86_64-linux-gnu/libXcomposite.so.1 (0x00007295d8219000)\n\tlibXrandr.so.2 => /lib/x86_64-linux-gnu/libXrandr.so.2 (0x00007295d820c000)\n\tlibXinerama.so.1 => /lib/x86_64-linux-gnu/libXinerama.so.1 (0x00007295d8207000)\n\tlibthai.so.0 => /lib/x86_64-linux-gnu/libthai.so.0 (0x00007295d81fc000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007295d81e0000)\n\tlibpng16.so.16 => /lib/x86_64-linux-gnu/libpng16.so.16 (0x00007295d81a8000)\n\tlibfreetype.so.6 => /lib/x86_64-linux-gnu/libfreetype.so.6 (0x00007295d80dc000)\n\tlibXrender.so.1 => /lib/x86_64-linux-gnu/libXrender.so.1 (0x00007295d80ce000)\n\tlibxcb.so.1 => /lib/x86_64-linux-gnu/libxcb.so.1 (0x00007295d80a5000)\n\tlibxcb-render.so.0 => /lib/x86_64-linux-gnu/libxcb-render.so.0 (0x00007295d8096000)\n\tlibxcb-shm.so.0 => /lib/x86_64-linux-gnu/libxcb-shm.so.0 (0x00007295d8091000)\n\tlibpixman-1.so.0 => /lib/x86_64-linux-gnu/libpixman-1.so.0 (0x00007295d7fe2000)\n\tlibmount.so.1 => /lib/x86_64-linux-gnu/libmount.so.1 (0x00007295d7f93000)\n\tlibselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 (0x00007295d7f66000)\n\tlibffi.so.8 => /lib/x86_64-linux-gnu/libffi.so.8 (0x00007295d7f5a000)\n\tlibpcre2-8.so.0 => /lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x00007295d7ec0000)\n\tlibexpat.so.1 => /lib/x86_64-linux-gnu/libexpat.so.1 (0x00007295d7e94000)\n\tlibgraphite2.so.3 => /lib/x86_64-linux-gnu/libgraphite2.so.3 (0x00007295d7e6c000)\n\tlibjpeg.so.8 => /lib/x86_64-linux-gnu/libjpeg.so.8 (0x00007295d7de9000)\n\tlibatspi.so.0 => /lib/x86_64-linux-gnu/libatspi.so.0 (0x00007295d7daf000)\n\tlibdbus-1.so.3 => /lib/x86_64-linux-gnu/libdbus-1.so.3 (0x00007295d7d60000)\n\tlibdatrie.so.1 => /lib/x86_64-linux-gnu/libdatrie.so.1 (0x00007295d7d55000)\n\tlibbz2.so.1.0 => /lib/x86_64-linux-gnu/libbz2.so.1.0 (0x00007295d7d41000)\n\tlibbrotlidec.so.1 => /lib/x86_64-linux-gnu/libbrotlidec.so.1 (0x00007295d7d33000)\n\tlibXau.so.6 => /lib/x86_64-linux-gnu/libXau.so.6 (0x00007295d7d2d000)\n\tlibXdmcp.so.6 => /lib/x86_64-linux-gnu/libXdmcp.so.6 (0x00007295d7d25000)\n\tlibblkid.so.1 => /lib/x86_64-linux-gnu/libblkid.so.1 (0x00007295d7ce8000)\n\tlibsystemd.so.0 => /lib/x86_64-linux-gnu/libsystemd.so.0 (0x00007295d7c08000)\n\tlibbrotlicommon.so.1 => /lib/x86_64-linux-gnu/libbrotlicommon.so.1 (0x00007295d7be5000)\n\tlibbsd.so.0 => /lib/x86_64-linux-gnu/libbsd.so.0 (0x00007295d7bcf000)\n\tlibcap.so.2 => /lib/x86_64-linux-gnu/libcap.so.2 (0x00007295d7bc2000)\n\tlibgcrypt.so.20 => /lib/x86_64-linux-gnu/libgcrypt.so.20 (0x00007295d7a77000)\n\tliblz4.so.1 => /lib/x86_64-linux-gnu/liblz4.so.1 (0x00007295d7a55000)\n\tliblzma.so.5 => /lib/x86_64-linux-gnu/liblzma.so.5 (0x00007295d7a23000)\n\tlibzstd.so.1 => /lib/x86_64-linux-gnu/libzstd.so.1 (0x00007295d7969000)\n\tlibmd.so.0 => /lib/x86_64-linux-gnu/libmd.so.0 (0x00007295d795a000)\n\tlibgpg-error.so.0 => /lib/x86_64-linux-gnu/libgpg-error.so.0 (0x00007295d7933000)",
+      "exit_code": 0
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/libflutter_secure_storage_linux_plugin.so",
+      "ldd": "linux-vdso.so.1 (0x00007fff2e3d6000)\n\tlibflutter_linux_gtk.so => /home/pokrovtest/r12-l02/l04-packages/pokrov_1.2.0~beta.30-8_amd64/usr/lib/pokrov/ui/lib/libflutter_linux_gtk.so (0x000073c9d3800000)\n\tlibgtk-3.so.0 => /lib/x86_64-linux-gnu/libgtk-3.so.0 (0x000073c9d3000000)\n\tlibgdk-3.so.0 => /lib/x86_64-linux-gnu/libgdk-3.so.0 (0x000073c9d4901000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x000073c9d48e5000)\n\tlibpangocairo-1.0.so.0 => /lib/x86_64-linux-gnu/libpangocairo-1.0.so.0 (0x000073c9d48d4000)\n\tlibpango-1.0.so.0 => /lib/x86_64-linux-gnu/libpango-1.0.so.0 (0x000073c9d4867000)\n\tlibharfbuzz.so.0 => /lib/x86_64-linux-gnu/libharfbuzz.so.0 (0x000073c9d2ef3000)\n\tlibatk-1.0.so.0 => /lib/x86_64-linux-gnu/libatk-1.0.so.0 (0x000073c9d483d000)\n\tlibcairo-gobject.so.2 => /lib/x86_64-linux-gnu/libcairo-gobject.so.2 (0x000073c9d37f4000)\n\tlibcairo.so.2 => /lib/x86_64-linux-gnu/libcairo.so.2 (0x000073c9d2daf000)\n\tlibgdk_pixbuf-2.0.so.0 => /lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so.0 (0x000073c9d2d81000)\n\tlibsecret-1.so.0 => /lib/x86_64-linux-gnu/libsecret-1.so.0 (0x000073c9d2d22000)\n\tlibgio-2.0.so.0 => /lib/x86_64-linux-gnu/libgio-2.0.so.0 (0x000073c9d2b52000)\n\tlibgobject-2.0.so.0 => /lib/x86_64-linux-gnu/libgobject-2.0.so.0 (0x000073c9d2aef000)\n\tlibglib-2.0.so.0 => /lib/x86_64-linux-gnu/libglib-2.0.so.0 (0x000073c9d29a6000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000073c9d2600000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000073c9d28bd000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000073c9d288f000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000073c9d2200000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000073c9d37eb000)\n\tlibepoxy.so.0 => /lib/x86_64-linux-gnu/libepoxy.so.0 (0x000073c9d24dd000)\n\tlibfontconfig.so.1 => /lib/x86_64-linux-gnu/libfontconfig.so.1 (0x000073c9d248c000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000073c9d37e6000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000073c9d4a27000)\n\tlibgmodule-2.0.so.0 => /lib/x86_64-linux-gnu/libgmodule-2.0.so.0 (0x000073c9d37dd000)\n\tlibpangoft2-1.0.so.0 => /lib/x86_64-linux-gnu/libpangoft2-1.0.so.0 (0x000073c9d2471000)\n\tlibfribidi.so.0 => /lib/x86_64-linux-gnu/libfribidi.so.0 (0x000073c9d2453000)\n\tlibXi.so.6 => /lib/x86_64-linux-gnu/libXi.so.6 (0x000073c9d2440000)\n\tlibX11.so.6 => /lib/x86_64-linux-gnu/libX11.so.6 (0x000073c9d20c3000)\n\tlibatk-bridge-2.0.so.0 => /lib/x86_64-linux-gnu/libatk-bridge-2.0.so.0 (0x000073c9d2087000)\n\tlibXfixes.so.3 => /lib/x86_64-linux-gnu/libXfixes.so.3 (0x000073c9d37d3000)\n\tlibxkbcommon.so.0 => /lib/x86_64-linux-gnu/libxkbcommon.so.0 (0x000073c9d203e000)\n\tlibwayland-client.so.0 => /lib/x86_64-linux-gnu/libwayland-client.so.0 (0x000073c9d287f000)\n\tlibwayland-cursor.so.0 => /lib/x86_64-linux-gnu/libwayland-cursor.so.0 (0x000073c9d2436000)\n\tlibwayland-egl.so.1 => /lib/x86_64-linux-gnu/libwayland-egl.so.1 (0x000073c9d2431000)\n\tlibXext.so.6 => /lib/x86_64-linux-gnu/libXext.so.6 (0x000073c9d241d000)\n\tlibXcursor.so.1 => /lib/x86_64-linux-gnu/libXcursor.so.1 (0x000073c9d2032000)\n\tlibXdamage.so.1 => /lib/x86_64-linux-gnu/libXdamage.so.1 (0x000073c9d2418000)\n\tlibXcomposite.so.1 => /lib/x86_64-linux-gnu/libXcomposite.so.1 (0x000073c9d2413000)\n\tlibXrandr.so.2 => /lib/x86_64-linux-gnu/libXrandr.so.2 (0x000073c9d2025000)\n\tlibXinerama.so.1 => /lib/x86_64-linux-gnu/libXinerama.so.1 (0x000073c9d2020000)\n\tlibthai.so.0 => /lib/x86_64-linux-gnu/libthai.so.0 (0x000073c9d2015000)\n\tlibfreetype.so.6 => /lib/x86_64-linux-gnu/libfreetype.so.6 (0x000073c9d1f49000)\n\tlibgraphite2.so.3 => /lib/x86_64-linux-gnu/libgraphite2.so.3 (0x000073c9d1f23000)\n\tlibpng16.so.16 => /lib/x86_64-linux-gnu/libpng16.so.16 (0x000073c9d1eeb000)\n\tlibXrender.so.1 => /lib/x86_64-linux-gnu/libXrender.so.1 (0x000073c9d1edf000)\n\tlibxcb.so.1 => /lib/x86_64-linux-gnu/libxcb.so.1 (0x000073c9d1eb6000)\n\tlibxcb-render.so.0 => /lib/x86_64-linux-gnu/libxcb-render.so.0 (0x000073c9d1ea7000)\n\tlibxcb-shm.so.0 => /lib/x86_64-linux-gnu/libxcb-shm.so.0 (0x000073c9d1ea2000)\n\tlibpixman-1.so.0 => /lib/x86_64-linux-gnu/libpixman-1.so.0 (0x000073c9d1df3000)\n\tlibjpeg.so.8 => /lib/x86_64-linux-gnu/libjpeg.so.8 (0x000073c9d1d6e000)\n\tlibgcrypt.so.20 => /lib/x86_64-linux-gnu/libgcrypt.so.20 (0x000073c9d1c25000)\n\tlibmount.so.1 => /lib/x86_64-linux-gnu/libmount.so.1 (0x000073c9d1bd8000)\n\tlibselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 (0x000073c9d1bab000)\n\tlibffi.so.8 => /lib/x86_64-linux-gnu/libffi.so.8 (0x000073c9d1b9f000)\n\tlibpcre2-8.so.0 => /lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x000073c9d1b03000)\n\tlibexpat.so.1 => /lib/x86_64-linux-gnu/libexpat.so.1 (0x000073c9d1ad7000)\n\tlibatspi.so.0 => /lib/x86_64-linux-gnu/libatspi.so.0 (0x000073c9d1a9d000)\n\tlibdbus-1.so.3 => /lib/x86_64-linux-gnu/libdbus-1.so.3 (0x000073c9d1a4e000)\n\tlibdatrie.so.1 => /lib/x86_64-linux-gnu/libdatrie.so.1 (0x000073c9d1a43000)\n\tlibbz2.so.1.0 => /lib/x86_64-linux-gnu/libbz2.so.1.0 (0x000073c9d1a2f000)\n\tlibbrotlidec.so.1 => /lib/x86_64-linux-gnu/libbrotlidec.so.1 (0x000073c9d1a21000)\n\tlibXau.so.6 => /lib/x86_64-linux-gnu/libXau.so.6 (0x000073c9d1a1b000)\n\tlibXdmcp.so.6 => /lib/x86_64-linux-gnu/libXdmcp.so.6 (0x000073c9d1a13000)\n\tlibgpg-error.so.0 => /lib/x86_64-linux-gnu/libgpg-error.so.0 (0x000073c9d19ec000)\n\tlibblkid.so.1 => /lib/x86_64-linux-gnu/libblkid.so.1 (0x000073c9d19b1000)\n\tlibsystemd.so.0 => /lib/x86_64-linux-gnu/libsystemd.so.0 (0x000073c9d18d1000)\n\tlibbrotlicommon.so.1 => /lib/x86_64-linux-gnu/libbrotlicommon.so.1 (0x000073c9d18ae000)\n\tlibbsd.so.0 => /lib/x86_64-linux-gnu/libbsd.so.0 (0x000073c9d1898000)\n\tlibcap.so.2 => /lib/x86_64-linux-gnu/libcap.so.2 (0x000073c9d1889000)\n\tliblz4.so.1 => /lib/x86_64-linux-gnu/liblz4.so.1 (0x000073c9d1867000)\n\tliblzma.so.5 => /lib/x86_64-linux-gnu/liblzma.so.5 (0x000073c9d1835000)\n\tlibzstd.so.1 => /lib/x86_64-linux-gnu/libzstd.so.1 (0x000073c9d177b000)\n\tlibmd.so.0 => /lib/x86_64-linux-gnu/libmd.so.0 (0x000073c9d176c000)",
+      "exit_code": 0
+    },
+    {
+      "path": "usr/lib/pokrov/ui/lib/liburl_launcher_linux_plugin.so",
+      "ldd": "linux-vdso.so.1 (0x00007ffe2d37a000)\n\tlibflutter_linux_gtk.so => /home/pokrovtest/r12-l02/l04-packages/pokrov_1.2.0~beta.30-8_amd64/usr/lib/pokrov/ui/lib/libflutter_linux_gtk.so (0x00007f9e68c00000)\n\tlibgtk-3.so.0 => /lib/x86_64-linux-gnu/libgtk-3.so.0 (0x00007f9e68400000)\n\tlibgdk-3.so.0 => /lib/x86_64-linux-gnu/libgdk-3.so.0 (0x00007f9e68305000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f9e69c7d000)\n\tlibpangocairo-1.0.so.0 => /lib/x86_64-linux-gnu/libpangocairo-1.0.so.0 (0x00007f9e69c6c000)\n\tlibpango-1.0.so.0 => /lib/x86_64-linux-gnu/libpango-1.0.so.0 (0x00007f9e6829a000)\n\tlibharfbuzz.so.0 => /lib/x86_64-linux-gnu/libharfbuzz.so.0 (0x00007f9e6818d000)\n\tlibatk-1.0.so.0 => /lib/x86_64-linux-gnu/libatk-1.0.so.0 (0x00007f9e69c40000)\n\tlibcairo-gobject.so.2 => /lib/x86_64-linux-gnu/libcairo-gobject.so.2 (0x00007f9e68bf4000)\n\tlibcairo.so.2 => /lib/x86_64-linux-gnu/libcairo.so.2 (0x00007f9e68049000)\n\tlibgdk_pixbuf-2.0.so.0 => /lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so.0 (0x00007f9e6801b000)\n\tlibgio-2.0.so.0 => /lib/x86_64-linux-gnu/libgio-2.0.so.0 (0x00007f9e67e4b000)\n\tlibgobject-2.0.so.0 => /lib/x86_64-linux-gnu/libgobject-2.0.so.0 (0x00007f9e67de8000)\n\tlibglib-2.0.so.0 => /lib/x86_64-linux-gnu/libglib-2.0.so.0 (0x00007f9e67c9f000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f9e67a00000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f9e67917000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f9e678e9000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f9e67600000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f9e68bef000)\n\tlibepoxy.so.0 => /lib/x86_64-linux-gnu/libepoxy.so.0 (0x00007f9e674dd000)\n\tlibfontconfig.so.1 => /lib/x86_64-linux-gnu/libfontconfig.so.1 (0x00007f9e67898000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f9e68bea000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007f9e69cab000)\n\tlibgmodule-2.0.so.0 => /lib/x86_64-linux-gnu/libgmodule-2.0.so.0 (0x00007f9e68be1000)\n\tlibpangoft2-1.0.so.0 => /lib/x86_64-linux-gnu/libpangoft2-1.0.so.0 (0x00007f9e67c84000)\n\tlibfribidi.so.0 => /lib/x86_64-linux-gnu/libfribidi.so.0 (0x00007f9e6787a000)\n\tlibXi.so.6 => /lib/x86_64-linux-gnu/libXi.so.6 (0x00007f9e68bce000)\n\tlibX11.so.6 => /lib/x86_64-linux-gnu/libX11.so.6 (0x00007f9e673a0000)\n\tlibatk-bridge-2.0.so.0 => /lib/x86_64-linux-gnu/libatk-bridge-2.0.so.0 (0x00007f9e6783e000)\n\tlibXfixes.so.3 => /lib/x86_64-linux-gnu/libXfixes.so.3 (0x00007f9e67836000)\n\tlibxkbcommon.so.0 => /lib/x86_64-linux-gnu/libxkbcommon.so.0 (0x00007f9e67357000)\n\tlibwayland-client.so.0 => /lib/x86_64-linux-gnu/libwayland-client.so.0 (0x00007f9e67826000)\n\tlibwayland-cursor.so.0 => /lib/x86_64-linux-gnu/libwayland-cursor.so.0 (0x00007f9e6781c000)\n\tlibwayland-egl.so.1 => /lib/x86_64-linux-gnu/libwayland-egl.so.1 (0x00007f9e67817000)\n\tlibXext.so.6 => /lib/x86_64-linux-gnu/libXext.so.6 (0x00007f9e67343000)\n\tlibXcursor.so.1 => /lib/x86_64-linux-gnu/libXcursor.so.1 (0x00007f9e67337000)\n\tlibXdamage.so.1 => /lib/x86_64-linux-gnu/libXdamage.so.1 (0x00007f9e67812000)\n\tlibXcomposite.so.1 => /lib/x86_64-linux-gnu/libXcomposite.so.1 (0x00007f9e67332000)\n\tlibXrandr.so.2 => /lib/x86_64-linux-gnu/libXrandr.so.2 (0x00007f9e67325000)\n\tlibXinerama.so.1 => /lib/x86_64-linux-gnu/libXinerama.so.1 (0x00007f9e67320000)\n\tlibthai.so.0 => /lib/x86_64-linux-gnu/libthai.so.0 (0x00007f9e67315000)\n\tlibfreetype.so.6 => /lib/x86_64-linux-gnu/libfreetype.so.6 (0x00007f9e67249000)\n\tlibgraphite2.so.3 => /lib/x86_64-linux-gnu/libgraphite2.so.3 (0x00007f9e67223000)\n\tlibpng16.so.16 => /lib/x86_64-linux-gnu/libpng16.so.16 (0x00007f9e671eb000)\n\tlibXrender.so.1 => /lib/x86_64-linux-gnu/libXrender.so.1 (0x00007f9e671df000)\n\tlibxcb.so.1 => /lib/x86_64-linux-gnu/libxcb.so.1 (0x00007f9e671b4000)\n\tlibxcb-render.so.0 => /lib/x86_64-linux-gnu/libxcb-render.so.0 (0x00007f9e671a5000)\n\tlibxcb-shm.so.0 => /lib/x86_64-linux-gnu/libxcb-shm.so.0 (0x00007f9e671a0000)\n\tlibpixman-1.so.0 => /lib/x86_64-linux-gnu/libpixman-1.so.0 (0x00007f9e670f1000)\n\tlibjpeg.so.8 => /lib/x86_64-linux-gnu/libjpeg.so.8 (0x00007f9e6706e000)\n\tlibmount.so.1 => /lib/x86_64-linux-gnu/libmount.so.1 (0x00007f9e6701f000)\n\tlibselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 (0x00007f9e66ff2000)\n\tlibffi.so.8 => /lib/x86_64-linux-gnu/libffi.so.8 (0x00007f9e66fe6000)\n\tlibpcre2-8.so.0 => /lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x00007f9e66f4c000)\n\tlibexpat.so.1 => /lib/x86_64-linux-gnu/libexpat.so.1 (0x00007f9e66f20000)\n\tlibatspi.so.0 => /lib/x86_64-linux-gnu/libatspi.so.0 (0x00007f9e66ee4000)\n\tlibdbus-1.so.3 => /lib/x86_64-linux-gnu/libdbus-1.so.3 (0x00007f9e66e95000)\n\tlibdatrie.so.1 => /lib/x86_64-linux-gnu/libdatrie.so.1 (0x00007f9e66e8c000)\n\tlibbz2.so.1.0 => /lib/x86_64-linux-gnu/libbz2.so.1.0 (0x00007f9e66e78000)\n\tlibbrotlidec.so.1 => /lib/x86_64-linux-gnu/libbrotlidec.so.1 (0x00007f9e66e6a000)\n\tlibXau.so.6 => /lib/x86_64-linux-gnu/libXau.so.6 (0x00007f9e66e62000)\n\tlibXdmcp.so.6 => /lib/x86_64-linux-gnu/libXdmcp.so.6 (0x00007f9e66e5a000)\n\tlibblkid.so.1 => /lib/x86_64-linux-gnu/libblkid.so.1 (0x00007f9e66e1f000)\n\tlibsystemd.so.0 => /lib/x86_64-linux-gnu/libsystemd.so.0 (0x00007f9e66d3f000)\n\tlibbrotlicommon.so.1 => /lib/x86_64-linux-gnu/libbrotlicommon.so.1 (0x00007f9e66d1c000)\n\tlibbsd.so.0 => /lib/x86_64-linux-gnu/libbsd.so.0 (0x00007f9e66d04000)\n\tlibcap.so.2 => /lib/x86_64-linux-gnu/libcap.so.2 (0x00007f9e66cf7000)\n\tlibgcrypt.so.20 => /lib/x86_64-linux-gnu/libgcrypt.so.20 (0x00007f9e66bae000)\n\tliblz4.so.1 => /lib/x86_64-linux-gnu/liblz4.so.1 (0x00007f9e66b8c000)\n\tliblzma.so.5 => /lib/x86_64-linux-gnu/liblzma.so.5 (0x00007f9e66b5a000)\n\tlibzstd.so.1 => /lib/x86_64-linux-gnu/libzstd.so.1 (0x00007f9e66a9e000)\n\tlibmd.so.0 => /lib/x86_64-linux-gnu/libmd.so.0 (0x00007f9e66a8f000)\n\tlibgpg-error.so.0 => /lib/x86_64-linux-gnu/libgpg-error.so.0 (0x00007f9e66a6a000)",
+      "exit_code": 0
+    },
+    {
+      "path": "usr/lib/pokrov/ui/pokrov",
+      "ldd": "linux-vdso.so.1 (0x00007ffca0bb5000)\n\tlibfile_selector_linux_plugin.so => /home/pokrovtest/r12-l02/l04-packages/pokrov_1.2.0~beta.30-8_amd64/usr/lib/pokrov/ui/lib/libfile_selector_linux_plugin.so (0x00007ddce03e7000)\n\tlibflutter_secure_storage_linux_plugin.so => /home/pokrovtest/r12-l02/l04-packages/pokrov_1.2.0~beta.30-8_amd64/usr/lib/pokrov/ui/lib/libflutter_secure_storage_linux_plugin.so (0x00007ddce03c7000)\n\tliburl_launcher_linux_plugin.so => /home/pokrovtest/r12-l02/l04-packages/pokrov_1.2.0~beta.30-8_amd64/usr/lib/pokrov/ui/lib/liburl_launcher_linux_plugin.so (0x00007ddce03c0000)\n\tlibflutter_linux_gtk.so => /home/pokrovtest/r12-l02/l04-packages/pokrov_1.2.0~beta.30-8_amd64/usr/lib/pokrov/ui/lib/libflutter_linux_gtk.so (0x00007ddcdf200000)\n\tlibgtk-3.so.0 => /lib/x86_64-linux-gnu/libgtk-3.so.0 (0x00007ddcdea00000)\n\tlibgdk-3.so.0 => /lib/x86_64-linux-gnu/libgdk-3.so.0 (0x00007ddce02ba000)\n\tlibz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007ddce029e000)\n\tlibpangocairo-1.0.so.0 => /lib/x86_64-linux-gnu/libpangocairo-1.0.so.0 (0x00007ddce028d000)\n\tlibpango-1.0.so.0 => /lib/x86_64-linux-gnu/libpango-1.0.so.0 (0x00007ddcde995000)\n\tlibharfbuzz.so.0 => /lib/x86_64-linux-gnu/libharfbuzz.so.0 (0x00007ddcde888000)\n\tlibatk-1.0.so.0 => /lib/x86_64-linux-gnu/libatk-1.0.so.0 (0x00007ddce0261000)\n\tlibcairo-gobject.so.2 => /lib/x86_64-linux-gnu/libcairo-gobject.so.2 (0x00007ddce0255000)\n\tlibcairo.so.2 => /lib/x86_64-linux-gnu/libcairo.so.2 (0x00007ddcde744000)\n\tlibgdk_pixbuf-2.0.so.0 => /lib/x86_64-linux-gnu/libgdk_pixbuf-2.0.so.0 (0x00007ddcdf1d2000)\n\tlibgio-2.0.so.0 => /lib/x86_64-linux-gnu/libgio-2.0.so.0 (0x00007ddcde574000)\n\tlibgobject-2.0.so.0 => /lib/x86_64-linux-gnu/libgobject-2.0.so.0 (0x00007ddcde511000)\n\tlibglib-2.0.so.0 => /lib/x86_64-linux-gnu/libglib-2.0.so.0 (0x00007ddcde3c8000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007ddcde000000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007ddcde2df000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007ddcde2b1000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007ddcddc00000)\n\tlibsecret-1.so.0 => /lib/x86_64-linux-gnu/libsecret-1.so.0 (0x00007ddcddfa1000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007ddce024c000)\n\tlibepoxy.so.0 => /lib/x86_64-linux-gnu/libepoxy.so.0 (0x00007ddcdde7e000)\n\tlibfontconfig.so.1 => /lib/x86_64-linux-gnu/libfontconfig.so.1 (0x00007ddcdde2d000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007ddce0247000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007ddce03f8000)\n\tlibgmodule-2.0.so.0 => /lib/x86_64-linux-gnu/libgmodule-2.0.so.0 (0x00007ddce023e000)\n\tlibpangoft2-1.0.so.0 => /lib/x86_64-linux-gnu/libpangoft2-1.0.so.0 (0x00007ddcde296000)\n\tlibfribidi.so.0 => /lib/x86_64-linux-gnu/libfribidi.so.0 (0x00007ddcddbe2000)\n\tlibXi.so.6 => /lib/x86_64-linux-gnu/libXi.so.6 (0x00007ddcde283000)\n\tlibX11.so.6 => /lib/x86_64-linux-gnu/libX11.so.6 (0x00007ddcddaa5000)\n\tlibatk-bridge-2.0.so.0 => /lib/x86_64-linux-gnu/libatk-bridge-2.0.so.0 (0x00007ddcdda69000)\n\tlibXfixes.so.3 => /lib/x86_64-linux-gnu/libXfixes.so.3 (0x00007ddcdde25000)\n\tlibxkbcommon.so.0 => /lib/x86_64-linux-gnu/libxkbcommon.so.0 (0x00007ddcdda20000)\n\tlibwayland-client.so.0 => /lib/x86_64-linux-gnu/libwayland-client.so.0 (0x00007ddcdde15000)\n\tlibwayland-cursor.so.0 => /lib/x86_64-linux-gnu/libwayland-cursor.so.0 (0x00007ddcdda16000)\n\tlibwayland-egl.so.1 => /lib/x86_64-linux-gnu/libwayland-egl.so.1 (0x00007ddcdf1cd000)\n\tlibXext.so.6 => /lib/x86_64-linux-gnu/libXext.so.6 (0x00007ddcdda02000)\n\tlibXcursor.so.1 => /lib/x86_64-linux-gnu/libXcursor.so.1 (0x00007ddcdd9f6000)\n\tlibXdamage.so.1 => /lib/x86_64-linux-gnu/libXdamage.so.1 (0x00007ddcdd9f1000)\n\tlibXcomposite.so.1 => /lib/x86_64-linux-gnu/libXcomposite.so.1 (0x00007ddcdd9ec000)\n\tlibXrandr.so.2 => /lib/x86_64-linux-gnu/libXrandr.so.2 (0x00007ddcdd9df000)\n\tlibXinerama.so.1 => /lib/x86_64-linux-gnu/libXinerama.so.1 (0x00007ddcdd9da000)\n\tlibthai.so.0 => /lib/x86_64-linux-gnu/libthai.so.0 (0x00007ddcdd9cf000)\n\tlibfreetype.so.6 => /lib/x86_64-linux-gnu/libfreetype.so.6 (0x00007ddcdd903000)\n\tlibgraphite2.so.3 => /lib/x86_64-linux-gnu/libgraphite2.so.3 (0x00007ddcdd8dd000)\n\tlibpng16.so.16 => /lib/x86_64-linux-gnu/libpng16.so.16 (0x00007ddcdd8a5000)\n\tlibXrender.so.1 => /lib/x86_64-linux-gnu/libXrender.so.1 (0x00007ddcdd899000)\n\tlibxcb.so.1 => /lib/x86_64-linux-gnu/libxcb.so.1 (0x00007ddcdd870000)\n\tlibxcb-render.so.0 => /lib/x86_64-linux-gnu/libxcb-render.so.0 (0x00007ddcdd861000)\n\tlibxcb-shm.so.0 => /lib/x86_64-linux-gnu/libxcb-shm.so.0 (0x00007ddcdd85c000)\n\tlibpixman-1.so.0 => /lib/x86_64-linux-gnu/libpixman-1.so.0 (0x00007ddcdd7ad000)\n\tlibjpeg.so.8 => /lib/x86_64-linux-gnu/libjpeg.so.8 (0x00007ddcdd72a000)\n\tlibmount.so.1 => /lib/x86_64-linux-gnu/libmount.so.1 (0x00007ddcdd6db000)\n\tlibselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 (0x00007ddcdd6ae000)\n\tlibffi.so.8 => /lib/x86_64-linux-gnu/libffi.so.8 (0x00007ddcdd6a2000)\n\tlibpcre2-8.so.0 => /lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x00007ddcdd608000)\n\tlibgcrypt.so.20 => /lib/x86_64-linux-gnu/libgcrypt.so.20 (0x00007ddcdd4bf000)\n\tlibexpat.so.1 => /lib/x86_64-linux-gnu/libexpat.so.1 (0x00007ddcdd491000)\n\tlibatspi.so.0 => /lib/x86_64-linux-gnu/libatspi.so.0 (0x00007ddcdd457000)\n\tlibdbus-1.so.3 => /lib/x86_64-linux-gnu/libdbus-1.so.3 (0x00007ddcdd408000)\n\tlibdatrie.so.1 => /lib/x86_64-linux-gnu/libdatrie.so.1 (0x00007ddcdd3ff000)\n\tlibbz2.so.1.0 => /lib/x86_64-linux-gnu/libbz2.so.1.0 (0x00007ddcdd3e9000)\n\tlibbrotlidec.so.1 => /lib/x86_64-linux-gnu/libbrotlidec.so.1 (0x00007ddcdd3db000)\n\tlibXau.so.6 => /lib/x86_64-linux-gnu/libXau.so.6 (0x00007ddcdd3d5000)\n\tlibXdmcp.so.6 => /lib/x86_64-linux-gnu/libXdmcp.so.6 (0x00007ddcdd3cd000)\n\tlibblkid.so.1 => /lib/x86_64-linux-gnu/libblkid.so.1 (0x00007ddcdd392000)\n\tlibgpg-error.so.0 => /lib/x86_64-linux-gnu/libgpg-error.so.0 (0x00007ddcdd36d000)\n\tlibsystemd.so.0 => /lib/x86_64-linux-gnu/libsystemd.so.0 (0x00007ddcdd28b000)\n\tlibbrotlicommon.so.1 => /lib/x86_64-linux-gnu/libbrotlicommon.so.1 (0x00007ddcdd268000)\n\tlibbsd.so.0 => /lib/x86_64-linux-gnu/libbsd.so.0 (0x00007ddcdd252000)\n\tlibcap.so.2 => /lib/x86_64-linux-gnu/libcap.so.2 (0x00007ddcdd245000)\n\tliblz4.so.1 => /lib/x86_64-linux-gnu/liblz4.so.1 (0x00007ddcdd223000)\n\tliblzma.so.5 => /lib/x86_64-linux-gnu/liblzma.so.5 (0x00007ddcdd1ef000)\n\tlibzstd.so.1 => /lib/x86_64-linux-gnu/libzstd.so.1 (0x00007ddcdd135000)\n\tlibmd.so.0 => /lib/x86_64-linux-gnu/libmd.so.0 (0x00007ddcdd126000)",
+      "exit_code": 0
+    }
+  ],
+  "control": "Package: pokrov\nVersion: 1.2.0~beta.30-8\nArchitecture: amd64\nMaintainer: POKROV <support@pokrov.space>\nSection: net\nPriority: optional\nInstalled-Size: 106955\nDepends: libc6 (>= 2.39), libstdc++6, libgtk-3-0t64, libsecret-1-0, systemd, systemd-resolved, network-manager, nftables, iproute2, polkitd, pkexec\nRecommends: gnome-keyring, policykit-1-gnome\nHomepage: https://pokrov.space/\nDescription: POKROV conditional Linux VPN beta\n Non-root desktop client with a polkit-authorized system runtime.\n Supported package target: Ubuntu 24.04 amd64.\n",
+  "hooks_shell_syntax": "PASS",
+  "signature": "UNSIGNED",
+  "install_runtime": "NOT_RUN"
+}

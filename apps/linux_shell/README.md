@@ -27,6 +27,9 @@ durable recovery also has [L03 VM evidence](../../docs/operations/evidence/2026-
 [Client source integration](../../docs/operations/evidence/2026-09-11-r12-linux-source-promotion/README.md)
 has passed PR/main CI; coordinated Core promotion and signed desktop-package
 acceptance remain open.
+[Desktop fixes and packaging integration](../../docs/operations/evidence/2026-09-11-r12-linux-desktop-promotion/README.md)
+subsequently passed signed PR/main CI at main `b7034e1`; native package results
+below keep their own artifact identities and Linux acceptance remains open.
 
 The [Ubuntu packaging source](packaging/README.md) supplies the GTK runner,
 deb assembler and lifecycle hooks. A [native package and detached-signature
@@ -101,9 +104,10 @@ actual sleep/resume and native reboot recovery on that guest; final acceptance s
   the running phase alone;
 - the shared desktop UI reads local daemon status every two seconds, without
   fetching a profile or repeating network probes. An external stop or recovery
-  clears the cached running state. This source fix follows an observed stale
-  package-7 GUI after daemon disconnect; installed proof for the updated UI is
-  still pending;
+  clears the cached running state. [Package-8 installed proof](../../docs/operations/evidence/2026-09-11-r12-l04-ui-status/README.md)
+  shows the same non-root GUI switching to Retry/error after external Core
+  SIGKILL, without an app click or restart. This fixes the observed stale
+  package-7 GUI after daemon disconnect;
 - retained VM proof covers non-root IPC, TUN/DNS/TLS HTTP, normal disconnect,
   foreign-rule rejection and active service stop/reactivation. Its temporary
   polkit fixture grant was removed. It is not a desktop authentication-agent,

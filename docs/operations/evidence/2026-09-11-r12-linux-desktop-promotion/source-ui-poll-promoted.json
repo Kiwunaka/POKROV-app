@@ -1,0 +1,14 @@
+{
+  "utc": "2026-09-11T15:04:43.523641+00:00",
+  "source": "aa0874615e2ccdd4213df9f72dfd9a994979edef",
+  "parent": "5eee49714426b9920f310f758bfd58b9ca3cad77",
+  "signed_commit": "aa562fe2c54fac6340a3c37b33415c2345925bfc",
+  "tree": "2b2e3858547ff9d09aac9ed6f82a926290fc1073",
+  "signature_valid": true,
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/117",
+  "branch": "codex/linux-desktop-signed-20260911",
+  "file_count": 145,
+  "independent_review_performed": false,
+  "previous_signed_commit": "84a11dcfb3ca4ffbb8d516fc6e0e61422c324964",
+  "additional_change": "reuse desktop status polling for Linux; installed updated UI proof pending"
+}

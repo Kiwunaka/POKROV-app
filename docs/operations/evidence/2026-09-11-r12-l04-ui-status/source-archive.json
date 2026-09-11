@@ -1,0 +1,10 @@
+{
+  "client_revision": "aa0874615e2ccdd4213df9f72dfd9a994979edef",
+  "source_archive_sha256": "a6a6b23603e4dbca076380628975aa2dfb0a327a61720b9d65674e57c1b913e2",
+  "source_archive_bytes": 1377953,
+  "source_files": 262,
+  "expanded_file_bytes": 5232148,
+  "scope": "same source file set as native build08, at exact new commit; no new dependencies",
+  "previous_native_ui": "2e0d78432c2cd698c533558475195e58f937aef9",
+  "changed_runtime_behavior": "Linux shares existing desktop status poll"
+}

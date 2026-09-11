@@ -483,8 +483,9 @@ It reads local IPC only, allows one outstanding observation, preserves a newer
 explicit UI action and updates the UI when the daemon stops or recovers outside
 that UI action. It does not infer healthy DNS/egress from a running daemon.
 This fixes the observed package-7 GUI retaining its Disconnect/checking state
-after the daemon had stopped and removed TUN; updated installed-UI proof is
-still pending.
+after the daemon had stopped and removed TUN. [Installed package-8 proof](../operations/evidence/2026-09-11-r12-l04-ui-status/README.md)
+shows the same non-root GUI changing to Retry/error after external Core SIGKILL,
+without app interaction or restart; all seven network baselines were restored.
 
 The installed `pokrov-linux-sleep.service` is required before `sleep.target`.
 It stops both socket and daemon before sleep and starts the daemon on resume,
