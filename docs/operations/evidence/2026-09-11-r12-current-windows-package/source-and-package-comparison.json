@@ -1,0 +1,31 @@
+{
+  "client_revision": "d9763e8cd7aba9b215015e07c0576f667c1dec09",
+  "previous_installed_source": "7ed18c97c43ba39ce18701220d487af1b0c5a446",
+  "product_source_differences": [
+    "packages/app_shell/lib/src/shell/navigation_shell.dart",
+    "packages/app_shell/test/pokrov_seed_app_test.dart"
+  ],
+  "bundle_files": 304,
+  "unchanged_bundle_hashes": 303,
+  "changed_bundle_files": [
+    {
+      "path": "data/app.so",
+      "old_sha256": "bc027874b414e7284ddfc63ba8e3a9f966552372cd2764d598aff3a34b1e49e9",
+      "new_sha256": "bc17cf420f38ec7bbf61d4f29447d041cde3019d9483778346f33424460b8ba7"
+    }
+  ],
+  "no_product_source_diff_after_build": true,
+  "status_after_normalization": " M apps/android_shell/android/app/libs/pokrov-core.aar\n M apps/windows_shell/windows/flutter/generated_plugin_registrant.cc\n M apps/windows_shell/windows/flutter/generated_plugin_registrant.h\n M apps/windows_shell/windows/flutter/generated_plugins.cmake\n M apps/windows_shell/windows/runner/resources/runtime/libcronet.dll\n M apps/windows_shell/windows/runner/resources/runtime/pokrov-core.dll\n",
+  "main_ci": [
+    {
+      "conclusion": "success",
+      "databaseId": 34559266717,
+      "headSha": "d9763e8cd7aba9b215015e07c0576f667c1dec09",
+      "status": "completed",
+      "updatedAt": "2026-09-11T03:47:48Z",
+      "url": "https://github.com/Kiwunaka/POKROV-app/actions/runs/34559266717",
+      "workflowName": "Release v2 Contract"
+    }
+  ],
+  "installed_current_package": false
+}

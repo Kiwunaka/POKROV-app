@@ -43,3 +43,4 @@ docs/operations/evidence/2026-09-10-r12-huawei-reboot/** -text whitespace=cr-at-
 docs/operations/evidence/2026-09-10-r12-huawei-permission-lockdown/** -text whitespace=cr-at-eol
 docs/operations/evidence/2026-09-10-r12-huawei-alwayson/** -text whitespace=cr-at-eol
 docs/operations/evidence/2026-09-10-r12-huawei-alwayson/alwayson-flutter-analyze.log -whitespace
+docs/operations/evidence/2026-09-11-r12-current-windows-package/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol

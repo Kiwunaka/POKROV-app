@@ -3,6 +3,13 @@
 Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
 lab entries below do not replace its packaged bytes or release decision.
 
+2026-09-11 current main package: [exact local result](evidence/2026-09-11-r12-current-windows-package/README.md).
+Client `d9763e8` / Core904 packaged with 304 staged hashes PASS; 303 match the
+previous 7ed bundle and only Dart AOT changed. Three current navigation tests,
+analyze, seed and main Release v2 Contract CI PASS. Installer SHA-256 starts
+`230ef3eb`; it is not installed or published. The installed VM remains 7ed,
+with its earlier evidence below; full network/fault and release gates stay open.
+
 2026-09-11 installed observations package: [exact result](evidence/2026-09-11-r12-windows-observations-installed/README.md).
 Client `7ed18c9` / Core904: 304 installed hashes, preserved upgrade state,
 non-elevated default UI, unchanged service ACL, ten HTTPS markers and exact
