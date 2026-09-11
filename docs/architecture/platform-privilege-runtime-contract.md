@@ -471,7 +471,9 @@ their recorded unique D-Bus owner still exists. A failed stage retains the recor
 and prevents profile replacement until authorized cleanup succeeds.
 
 The systemd service uses `KillMode=mixed`: linuxd receives the initial stop
-signal and orders Core teardown itself. The socket unit owns `/run/pokrov` and
+signal and orders Core teardown itself. The unit sets `StateDirectoryMode=0700`
+to keep the private state root restricted after socket activation and restart,
+matching the package installer. The socket unit owns `/run/pokrov` and
 the socket path; daemon listener close does not unlink it. The UI's 130-second
 response budget covers authorization, connect, failed-connect restoration and
 the host probe.

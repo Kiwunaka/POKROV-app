@@ -12,6 +12,7 @@ ExecStart=/usr/lib/pokrov/pokrov-linuxd
 User=root
 Group=root
 StateDirectory=pokrov
+StateDirectoryMode=0700
 UMask=0077
 NoNewPrivileges=yes
 PrivateTmp=yes
