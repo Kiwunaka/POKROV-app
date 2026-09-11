@@ -16,6 +16,11 @@ connectable socket does not grant authority; it only makes the authenticated
 system-service endpoint reachable without placing desktop users in a standing
 privileged group.
 
+The Linux entrypoint mounts the shared UI directly with its app-first
+bootstrapper. Operational observability remains limited to Android/Windows;
+calling that unsupported startup API on Linux aborts before the first frame.
+The Linux shell does not initialize that API or claim its telemetry coverage.
+
 Current source status is `IMPLEMENTED_PARTIAL`. The L02 live lifecycle is
 implemented and [verified in an isolated Ubuntu VM](../../docs/operations/evidence/2026-09-11-r12-l02-linux-runtime/README.md);
 durable recovery also has [L03 VM evidence](../../docs/operations/evidence/2026-09-11-r12-l03-linux-recovery/README.md).
