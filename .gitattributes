@@ -20,6 +20,7 @@ AGENTS.md text eol=lf
 apps/linux_shell/packaging/debian/postinst text eol=lf
 apps/linux_shell/packaging/debian/prerm text eol=lf
 apps/linux_shell/packaging/debian/postrm text eol=lf
+apps/linux_shell/packaging/linux-packages-public.asc -text
 docs/README.md text eol=lf
 packages/app_shell/test/fixtures/app-first-session-v0.json text eol=lf
 packages/app_shell/test/fixtures/secure-session-v0.txt text eol=lf
@@ -49,3 +50,4 @@ docs/operations/evidence/2026-09-10-r12-huawei-alwayson/alwayson-flutter-analyze
 docs/operations/evidence/2026-09-11-r12-current-windows-package/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 /docs/operations/evidence/2026-09-11-r12-current-android-arm64/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 docs/operations/evidence/2026-09-11-r12-android-abi-promotion/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+docs/operations/evidence/2026-09-11-r12-l04-linux-package/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol

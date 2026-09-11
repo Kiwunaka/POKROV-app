@@ -1,0 +1,13 @@
+{
+  "client_revision": "b5080d750ab40c53deb35062720500b532e8cc18",
+  "command": [
+    "flutter",
+    "build",
+    "linux",
+    "--release",
+    "--no-pub",
+    "--dart-define-from-file=/home/pokrovtest/r12-l02/l04-public-build-defines.json"
+  ],
+  "exit_code": 1,
+  "seconds": 3.13
+}

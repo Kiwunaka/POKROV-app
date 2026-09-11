@@ -19,11 +19,15 @@ privileged group.
 Current source status is `IMPLEMENTED_PARTIAL`. The L02 live lifecycle is
 implemented and [verified in an isolated Ubuntu VM](../../docs/operations/evidence/2026-09-11-r12-l02-linux-runtime/README.md);
 durable recovery also has [L03 VM evidence](../../docs/operations/evidence/2026-09-11-r12-l03-linux-recovery/README.md).
-Signed desktop-package acceptance remains open:
+[Client source integration](../../docs/operations/evidence/2026-09-11-r12-linux-source-promotion/README.md)
+has passed PR/main CI; coordinated Core promotion and signed desktop-package
+acceptance remain open.
 
 The [Ubuntu packaging source](packaging/README.md) supplies the GTK runner,
-deb assembler and lifecycle hooks. Exact native build, signing and installed
-desktop acceptance are still required before this becomes a package claim.
+deb assembler and lifecycle hooks. A [native package and detached-signature
+receipt](../../docs/operations/evidence/2026-09-11-r12-l04-linux-package/README.md)
+now binds the first signed candidate. Installed desktop, authorization,
+update/remove and exact routing-mode acceptance remain open.
 
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;

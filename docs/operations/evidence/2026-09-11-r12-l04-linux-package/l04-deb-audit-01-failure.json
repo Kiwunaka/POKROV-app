@@ -1,0 +1,89 @@
+{
+  "status": "FAIL_PACKAGE_PERMISSIONS",
+  "artifact": "pokrov_1.2.0~beta.30-1_amd64.deb",
+  "sha256": "f2e2c1368340665e23a21bd74c1a620759e6b077a8700e4f5c8f711292f2c66e",
+  "invalid_paths": [
+    {
+      "path": ".",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/bin",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/lib",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/lib/pokrov",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/lib/pokrov/ui",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/lib/pokrov/ui/data",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/lib/systemd",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/lib/systemd/system",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/applications",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/doc",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/doc/pokrov",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/doc/pokrov/build.json",
+      "mode": "0o664"
+    },
+    {
+      "path": "./usr/share/icons",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/icons/hicolor",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/icons/hicolor/256x256",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/icons/hicolor/256x256/apps",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/polkit-1",
+      "mode": "0o775"
+    },
+    {
+      "path": "./usr/share/polkit-1/actions",
+      "mode": "0o775"
+    }
+  ],
+  "installed": false,
+  "signed": false
+}

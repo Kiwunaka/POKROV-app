@@ -37,6 +37,22 @@ association; they do not independently prove compilation provenance. The
 receipt explicitly says `UNSIGNED`. Package signing, signer pinning and
 verification of the exact resulting artifact are separate acceptance steps.
 
+The conditional Linux package signer is pinned in [signing-key.v1.json](signing-key.v1.json)
+and [its public key](linux-packages-public.asc), fingerprint
+`29636EDAF204D6F6101CB083B2281E647B0EDDA0`. It is separate from the application
+support/emergency signing keys. A detached `.deb.asc` signature authenticates
+the complete unchanged deb. Verify it before installation:
+
+```sh
+gpg --batch --output linux-packages-public.gpg --dearmor linux-packages-public.asc
+gpgv --keyring ./linux-packages-public.gpg pokrov_1.2.0~beta.30-2_amd64.deb.asc \
+  pokrov_1.2.0~beta.30-2_amd64.deb
+sudo apt install ./pokrov_1.2.0~beta.30-2_amd64.deb
+```
+
+Use the reviewed public key whose SHA-256 matches the pin. Signature validity
+does not establish Ubuntu archive trust or public release availability.
+
 The UI bundle resides in `/usr/lib/pokrov/ui`; `/usr/bin/pokrov` starts it as
 the desktop user. The system service owns the fixed Core executable and private
 state. Initial installation enables socket activation and the sleep hook.

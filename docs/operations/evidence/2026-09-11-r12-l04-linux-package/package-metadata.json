@@ -1,0 +1,16 @@
+{
+  "schema": "pokrov-linux-package-v1",
+  "version": "1.2.0~beta.30-2",
+  "client_revision": "0bcb5953b522b4d162e77214dda0211cdbc6df95",
+  "core_revision": "97ec91e3a74c96db3ce5c0c98364b715bf344964",
+  "input_provenance": "Source associations require the retained build receipts.",
+  "binaries": {
+    "ui": "555f97c45c06ff5d9614c5ba321a5b5208b4af49871ff45002c025553495f110",
+    "daemon": "07a3a0f775a789e2399bff9f4bdeb97948f3d321696ed9bbd4a2edf6f4ff1053",
+    "core": "979e8d77a8d41237a490ada5b129ff0b8f8a7a5cf4d754b1651196a5118aa8ce"
+  },
+  "artifact": "pokrov_1.2.0~beta.30-2_amd64.deb",
+  "bytes": 32257190,
+  "sha256": "cb21072ac3552219ff63e59c9adacd323107a431ace4c7346cd9c8370f8c5f53",
+  "signature": "UNSIGNED"
+}

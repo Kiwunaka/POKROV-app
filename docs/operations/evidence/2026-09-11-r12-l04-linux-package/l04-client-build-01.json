@@ -1,0 +1,30 @@
+{
+  "client_revision": "b5080d750ab40c53deb35062720500b532e8cc18",
+  "source_archive_sha256": "35cb06b08605470e5580a59602f16365b8317e5aabf7a9e207d000e4af431891",
+  "flutter_revision": "f6ff1529fd6d8af5f706051d9251ac9231c83407",
+  "steps": [
+    {
+      "command": [
+        "flutter",
+        "pub",
+        "get",
+        "--enforce-lockfile"
+      ],
+      "exit_code": 0,
+      "seconds": 28.62
+    },
+    {
+      "command": [
+        "flutter",
+        "build",
+        "linux",
+        "--release",
+        "--no-pub",
+        "--dart-define-from-file=/home/pokrovtest/r12-l02/l04-public-build-defines.json"
+      ],
+      "exit_code": 1,
+      "seconds": 58.03
+    }
+  ],
+  "exit_code": 1
+}
