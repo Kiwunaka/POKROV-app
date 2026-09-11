@@ -1,0 +1,316 @@
+{
+  "status": "PASS_AUTHENTICATED_TOOL_BUILD_INPUTS",
+  "utc": "2026-09-11T21:42:46.739091+00:00",
+  "purpose": "Offline rebuild of pinned gomobile and gobind; application dependency versions unchanged",
+  "go_toolchain": "go1.26.8",
+  "gomobile_version": "v0.1.11",
+  "source_go_mod_sha256": "4f6ff6e44b2a3886f0c7d11aa3c3715c3c35e1b5d4bcdc595c56cab9bc2e3e35",
+  "proxy": "https://proxy.golang.org",
+  "sumdb": "sum.golang.org",
+  "commands": [
+    {
+      "args": [
+        "mod",
+        "download",
+        "-json",
+        "github.com/sagernet/gomobile@v0.1.11"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "records": [
+        {
+          "Path": "github.com/sagernet/gomobile",
+          "Version": "v0.1.11",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/sagernet/gomobile/@v/v0.1.11.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/sagernet/gomobile/@v/v0.1.11.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/sagernet/gomobile/@v/v0.1.11.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/github.com/sagernet/gomobile@v0.1.11",
+          "Sum": "h1:niMQAspvuThup5eRZQpsGcbM76zAvnsGr7RUIpnQMDQ=",
+          "GoModSum": "h1:A8l3FlHi2D/+mfcd4HHvk5DGFPW/ShFb9jHP5VmSiDY=",
+          "Origin": {
+            "VCS": "git",
+            "URL": "https://github.com/sagernet/gomobile",
+            "Hash": "dc50ee4d9204b283322bcca9ae443783354bc352",
+            "Ref": "refs/tags/v0.1.11"
+          }
+        }
+      ]
+    },
+    {
+      "args": [
+        "mod",
+        "download",
+        "-json",
+        "all"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "records": [
+        {
+          "Path": "github.com/google/go-cmp",
+          "Version": "v0.6.0",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/google/go-cmp/@v/v0.6.0.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/google/go-cmp/@v/v0.6.0.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/google/go-cmp/@v/v0.6.0.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/github.com/google/go-cmp@v0.6.0",
+          "Sum": "h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=",
+          "GoModSum": "h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY="
+        },
+        {
+          "Path": "github.com/yuin/goldmark",
+          "Version": "v1.4.13",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/yuin/goldmark/@v/v1.4.13.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/yuin/goldmark/@v/v1.4.13.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/yuin/goldmark/@v/v1.4.13.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/github.com/yuin/goldmark@v1.4.13",
+          "Sum": "h1:fVcFKWvrslecOb/tg+Cc05dkeYx540o0FuFt3nUVDoE=",
+          "GoModSum": "h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY="
+        },
+        {
+          "Path": "golang.org/x/mod",
+          "Version": "v0.27.0",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/mod/@v/v0.27.0.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/mod/@v/v0.27.0.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/mod/@v/v0.27.0.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/mod@v0.27.0",
+          "Sum": "h1:kb+q2PyFnEADO2IEF935ehFUXlWiNjJWtRNgBLSfbxQ=",
+          "GoModSum": "h1:rWI627Fq0DEoudcK+MBkNkCe0EetEaDSwJJkCcjpazc="
+        },
+        {
+          "Path": "golang.org/x/net",
+          "Version": "v0.43.0",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/net/@v/v0.43.0.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/net/@v/v0.43.0.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/net/@v/v0.43.0.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/net@v0.43.0",
+          "Sum": "h1:lat02VYK2j4aLzMzecihNvTlJNQUq316m2Mr9rnM6YE=",
+          "GoModSum": "h1:vhO1fvI4dGsIjh73sWfUVjj3N7CA9WkKJNQm2svM6Jg="
+        },
+        {
+          "Path": "golang.org/x/sync",
+          "Version": "v0.16.0",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sync/@v/v0.16.0.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sync/@v/v0.16.0.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sync/@v/v0.16.0.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/sync@v0.16.0",
+          "Sum": "h1:ycBJEhp9p4vXvUZNszeOq0kGTPghopOL8q0fq3vstxw=",
+          "GoModSum": "h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA="
+        },
+        {
+          "Path": "golang.org/x/sys",
+          "Version": "v0.35.0",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sys/@v/v0.35.0.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sys/@v/v0.35.0.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sys/@v/v0.35.0.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/sys@v0.35.0",
+          "Sum": "h1:vz1N37gP5bs89s7He8XuIYXpyY0+QlsKmzipCbUtyxI=",
+          "GoModSum": "h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k="
+        },
+        {
+          "Path": "golang.org/x/telemetry",
+          "Version": "v0.0.0-20250807160809-1a19826ec488",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/telemetry@v0.0.0-20250807160809-1a19826ec488",
+          "Sum": "h1:3doPGa+Gg4snce233aCWnbZVFsyFMo/dR40KK/6skyE=",
+          "GoModSum": "h1:fGb/2+tgXXjhjHsTNdVEEMZNWA0quBnfrO+AfoDSAKw="
+        },
+        {
+          "Path": "golang.org/x/tools",
+          "Version": "v0.36.0",
+          "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/tools/@v/v0.36.0.info",
+          "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/tools/@v/v0.36.0.mod",
+          "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/tools/@v/v0.36.0.zip",
+          "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/tools@v0.36.0",
+          "Sum": "h1:kWS0uv/zsvHEle1LbV5LE8QujrxB3wfQyxHfhOk0Qkg=",
+          "GoModSum": "h1:WBDiHKJK8YgLHlcQPYQzNCkUxUypCaa5ZegCVutKm+s="
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "cache/download/github.com/google/go-cmp/@v/v0.6.0.info",
+      "bytes": 189,
+      "sha256": "18c1337e622fd270c158325d02fcdd31865d2777bcd17779449553e82e4a6512"
+    },
+    {
+      "path": "cache/download/github.com/google/go-cmp/@v/v0.6.0.mod",
+      "bytes": 41,
+      "sha256": "e7c7669d4a1dd589ba3e024ba27f43f293db611fe075ce20d7b884370d63febd"
+    },
+    {
+      "path": "cache/download/github.com/google/go-cmp/@v/v0.6.0.zip",
+      "bytes": 129773,
+      "sha256": "4b4e9bf6c48211080651b491dfb48d68b736c66a305bcf94605606e1ba2eaa4a"
+    },
+    {
+      "path": "cache/download/github.com/google/go-cmp/@v/v0.6.0.ziphash",
+      "bytes": 47,
+      "sha256": "996a066a076201014b0ad43ecdf5f43eec8d4d1b9369c3e155b636432f3509f5"
+    },
+    {
+      "path": "cache/download/github.com/sagernet/gomobile/@v/v0.1.11.info",
+      "bytes": 195,
+      "sha256": "b86250f0c2bc3c300871f5c26e375a84f37fc78e5f896167c14163a4fb8646ff"
+    },
+    {
+      "path": "cache/download/github.com/sagernet/gomobile/@v/v0.1.11.mod",
+      "bytes": 141,
+      "sha256": "4f6ff6e44b2a3886f0c7d11aa3c3715c3c35e1b5d4bcdc595c56cab9bc2e3e35"
+    },
+    {
+      "path": "cache/download/github.com/sagernet/gomobile/@v/v0.1.11.zip",
+      "bytes": 294932,
+      "sha256": "b6b186df54e61de713559fdd6d17ba53b4a170a23f1a30b9fdaccb466cab7641"
+    },
+    {
+      "path": "cache/download/github.com/sagernet/gomobile/@v/v0.1.11.ziphash",
+      "bytes": 47,
+      "sha256": "bd9d2ef09376a944409926ee6845696fcd114c902af52370699052343dc6d08a"
+    },
+    {
+      "path": "cache/download/github.com/yuin/goldmark/@v/v1.4.13.info",
+      "bytes": 51,
+      "sha256": "b0302ffb76a1b14e08f0f9aeacf7f6fcc4897f5e19cd00543fe3ddd62f2ada71"
+    },
+    {
+      "path": "cache/download/github.com/yuin/goldmark/@v/v1.4.13.mod",
+      "bytes": 41,
+      "sha256": "ee7fe4466203a01d3ac19adc134cdec99bc6de71992c28f3dd9a74480bff0603"
+    },
+    {
+      "path": "cache/download/github.com/yuin/goldmark/@v/v1.4.13.zip",
+      "bytes": 229017,
+      "sha256": "bb41a602b174345fda392c8ad83fcc93217c285c763699677630be90feb7a5e3"
+    },
+    {
+      "path": "cache/download/github.com/yuin/goldmark/@v/v1.4.13.ziphash",
+      "bytes": 47,
+      "sha256": "a6a7a1c5a491869e7e55a081168210088740d8522b856ce9d303bc2d8c60fd7b"
+    },
+    {
+      "path": "cache/download/golang.org/x/mod/@v/v0.27.0.info",
+      "bytes": 190,
+      "sha256": "04349209629977dda443e3693aac2e1fe69e4ec11f9e2394abd7964562081f77"
+    },
+    {
+      "path": "cache/download/golang.org/x/mod/@v/v0.27.0.mod",
+      "bytes": 86,
+      "sha256": "b20d6c1f4b46742e6af828327160346aeb3e622ab1780ad51b80e1d67adfe95b"
+    },
+    {
+      "path": "cache/download/golang.org/x/mod/@v/v0.27.0.zip",
+      "bytes": 172649,
+      "sha256": "19fb241d46e4397d3193b5fa899e2a9d62bb5d1c41f73d09d29c17c3c0d3953c"
+    },
+    {
+      "path": "cache/download/golang.org/x/mod/@v/v0.27.0.ziphash",
+      "bytes": 47,
+      "sha256": "04a0868750aac8cda3b141d56dea66c9318dd4c42abaadc9344dd4a79564b3c2"
+    },
+    {
+      "path": "cache/download/golang.org/x/net/@v/v0.43.0.info",
+      "bytes": 190,
+      "sha256": "812a8b10039a769334bd87a11cf33cccd16dd9348d9d365ba1e69bf3ee94215b"
+    },
+    {
+      "path": "cache/download/golang.org/x/net/@v/v0.43.0.mod",
+      "bytes": 157,
+      "sha256": "4a24c4398df8c261eae7ba52cdb4b01691725cdc46e4ad497811aad357c25832"
+    },
+    {
+      "path": "cache/download/golang.org/x/net/@v/v0.43.0.zip",
+      "bytes": 1910619,
+      "sha256": "24d4f49b7e781763942533d5a5acc49ebd054e05c50bf4402b264695ef8d10c5"
+    },
+    {
+      "path": "cache/download/golang.org/x/net/@v/v0.43.0.ziphash",
+      "bytes": 47,
+      "sha256": "b0ccca86b30f9539d1588a0cbeaf87634d5741acd83aba648e30b318852c6f93"
+    },
+    {
+      "path": "cache/download/golang.org/x/sync/@v/v0.16.0.info",
+      "bytes": 191,
+      "sha256": "fd24e5454141026609d9f4fc219860cf6b35ba6755d18fea1bb0f8c57a5c21a7"
+    },
+    {
+      "path": "cache/download/golang.org/x/sync/@v/v0.16.0.mod",
+      "bytes": 36,
+      "sha256": "720b98f1bf033d6b64a454ca8c29cdca6e9265ab7d70db3b834dff49560f1587"
+    },
+    {
+      "path": "cache/download/golang.org/x/sync/@v/v0.16.0.zip",
+      "bytes": 25707,
+      "sha256": "ca43984183eb14f7f50d33da350312fed1c42e106dceac2437bfd5084b497dcd"
+    },
+    {
+      "path": "cache/download/golang.org/x/sync/@v/v0.16.0.ziphash",
+      "bytes": 47,
+      "sha256": "82dbee1faf4eaddc4edf8ec0f5e4c0ccb68b2aa6b5dba7d1f65784726a79f0c4"
+    },
+    {
+      "path": "cache/download/golang.org/x/sys/@v/v0.35.0.info",
+      "bytes": 190,
+      "sha256": "629c51c87e17eb316cdb749c8a1136d9efe5bcff9f1297644f93d0d97049073a"
+    },
+    {
+      "path": "cache/download/golang.org/x/sys/@v/v0.35.0.mod",
+      "bytes": 35,
+      "sha256": "f67e3e18f4c08e60a7e80726ab36b691fdcea5b81ae1c696ff64caf518bcfe3d"
+    },
+    {
+      "path": "cache/download/golang.org/x/sys/@v/v0.35.0.zip",
+      "bytes": 1998204,
+      "sha256": "dc3c20611168aaa8fda0d71999be1a5222a0ba57bc767c978a590e41ff2ede35"
+    },
+    {
+      "path": "cache/download/golang.org/x/sys/@v/v0.35.0.ziphash",
+      "bytes": 47,
+      "sha256": "bcf237f9c2285fff31ea11f46b70fefbe4d905af7b2469ce7760571d3de1fb88"
+    },
+    {
+      "path": "cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.info",
+      "bytes": 197,
+      "sha256": "d88aaab4f3aeb3796eeb28dfcf882ed92a0df8e3bf4fe257985525809ac32210"
+    },
+    {
+      "path": "cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.mod",
+      "bytes": 133,
+      "sha256": "0a2f520fac6da1a1d35c6fe76b1aaa39aa4c5b704a3b91c8f9423daaf4b7b60e"
+    },
+    {
+      "path": "cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.zip",
+      "bytes": 1016709,
+      "sha256": "9829c06173ef37d970b47879e67da1d31c8bf36b6e29cea873815b0798bbab74"
+    },
+    {
+      "path": "cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.ziphash",
+      "bytes": 47,
+      "sha256": "fd7c2c60e650cb760f90660b936e51facc70a3b152596f04accb6dc62e1af9d6"
+    },
+    {
+      "path": "cache/download/golang.org/x/tools/@v/v0.36.0.info",
+      "bytes": 192,
+      "sha256": "e216832347c36cd14aef42dc5fc33f5a1cc8715533297beec84806513c697f2a"
+    },
+    {
+      "path": "cache/download/golang.org/x/tools/@v/v0.36.0.mod",
+      "bytes": 301,
+      "sha256": "53792e623827ef40be8f1af36dcf12790e82780b3d33b4b0944f56a3584bc429"
+    },
+    {
+      "path": "cache/download/golang.org/x/tools/@v/v0.36.0.zip",
+      "bytes": 3553586,
+      "sha256": "85b486030e995cd5b4d56dea92f247b32bf4e0ae2fe6816b29d4514b5a43fec8"
+    },
+    {
+      "path": "cache/download/golang.org/x/tools/@v/v0.36.0.ziphash",
+      "bytes": 47,
+      "sha256": "fa7366314a5fe810f1d06b864d5d388acc909a7184235e16996f86a26484b368"
+    }
+  ],
+  "module_count": 9,
+  "bytes": 9334175
+}

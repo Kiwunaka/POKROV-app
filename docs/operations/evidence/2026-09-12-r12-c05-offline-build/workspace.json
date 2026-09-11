@@ -1,0 +1,16 @@
+{
+  "utc": "2026-09-11T21:42:01.611080+00:00",
+  "host": "pokrov-de",
+  "remote_root": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912",
+  "transfer_kbit_per_second": 4096,
+  "build_cpu_quota_percent": 100,
+  "build_memory_max_bytes": 4294967296,
+  "build_nice": 19,
+  "disk_floor_bytes": 32212254720,
+  "budget_usd": 0,
+  "preparation": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912",
+    "status": "PREPARED",
+    "free": 78427435008
+  }
+}

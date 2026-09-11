@@ -1,0 +1,99 @@
+{
+  "status": "PASS_BOUNDED_OFFLINE_CORE_BUILD",
+  "core_source": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "captures": [
+    {
+      "path": "native-evidence/build-offline.py",
+      "bytes": 10004,
+      "sha256": "e50aad3d49d030a900bf39451d33a790599d8334bf33ecc9e094b8ecf4c23f72"
+    },
+    {
+      "path": "native-evidence/build-progress.json",
+      "bytes": 12413,
+      "sha256": "4a38ffdabe45668739b385fb0be7c35c82d0e88dcdb0a2e6b216e58da9a87ed8"
+    },
+    {
+      "path": "native-evidence/build_android.log",
+      "bytes": 562,
+      "sha256": "7b12c57c97f93a51f1b8fd50072c4477d5278bc9aedb876a8dd28258c5952a96"
+    },
+    {
+      "path": "native-evidence/build_tool_gomobile.log",
+      "bytes": 147,
+      "sha256": "b551c92174aa508962b4355eaf6e9aa8f114c225aa5fab10ca7a3a7a3a930ec3"
+    },
+    {
+      "path": "native-evidence/build_windows.log",
+      "bytes": 767,
+      "sha256": "6f756e990cc8b431f442d7938170e7fd850cb854fb26b7b1ebc98d4fd154cf08"
+    },
+    {
+      "path": "native-evidence/prepare-tool-inputs.py",
+      "bytes": 3716,
+      "sha256": "a8f3850c726cd1d0b49744e76d236ce97223d475431e95b9f308dcc4bffbb829"
+    },
+    {
+      "path": "native-evidence/resume-offline.py",
+      "bytes": 6226,
+      "sha256": "51ef0715b1a404eeb9fdaaf71910fb0f31686badde89b14f7f192710ad88fa39"
+    },
+    {
+      "path": "native-evidence/resume-progress.json",
+      "bytes": 18871,
+      "sha256": "7579942d21eeb5d8da17c6a74523b08af6228c3020bea50658bd5af880534426"
+    },
+    {
+      "path": "native-evidence/resume_build_tool_gobind.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "native-evidence/resume_build_tool_gomobile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "native-evidence/bin/go",
+      "bytes": 349,
+      "sha256": "27eaba63c373b1e0e4930651c98a4a130f9eef973508b5c26b7e16a4f626dc0a"
+    },
+    {
+      "path": "native-evidence/tool-inputs/download-progress.json",
+      "bytes": 8463,
+      "sha256": "5faada31b460687e52054e74bee929aa01df58078b8e6544c28770ee1c8d1974"
+    },
+    {
+      "path": "native-evidence/tool-inputs/receipt.json",
+      "bytes": 16000,
+      "sha256": "9a74162ad8e9cd64b0e3c72eb0c310c659ab6bd63cbf6ec4181ce94882106780"
+    },
+    {
+      "path": "collection.json",
+      "bytes": 2689,
+      "sha256": "5af014bc467741485ddabd1362abae154e190a8b36490899ae1c16ec1b946ee8"
+    },
+    {
+      "path": "workspace.json",
+      "bytes": 536,
+      "sha256": "57c4f40d178a55a31deacf16bdecb993c79d70379d4724e589baaa9d160661bd"
+    },
+    {
+      "path": "collect-offline.py",
+      "bytes": 3558,
+      "sha256": "5941554891d9f40bcd91c7805e88f1935b254d98e02d449a25fa87c79550212d"
+    },
+    {
+      "path": "retain.py",
+      "bytes": 5359,
+      "sha256": "0559f1735caaf189cba97546955e9b0a6a50060203dad1a3270b6dd1580d6b2f"
+    }
+  ],
+  "supplement": {
+    "path": "gomobile-source-input-supplement.zip",
+    "bytes": 8619224,
+    "sha256": "f04d3870a3db5ec6255a1477d861461528e738b2790df63a558af68bc0b58abd",
+    "module_count": 9,
+    "source_files": 36
+  },
+  "boundary": "Core and gomobile/gobind rebuilt without network; external prebuilt compilers/SDKs and libcronet reused. Not full corresponding-source or release acceptance."
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "args": [
+      "mod",
+      "download",
+      "-json",
+      "github.com/sagernet/gomobile@v0.1.11"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "records": [
+      {
+        "Path": "github.com/sagernet/gomobile",
+        "Version": "v0.1.11",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/sagernet/gomobile/@v/v0.1.11.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/sagernet/gomobile/@v/v0.1.11.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/sagernet/gomobile/@v/v0.1.11.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/github.com/sagernet/gomobile@v0.1.11",
+        "Sum": "h1:niMQAspvuThup5eRZQpsGcbM76zAvnsGr7RUIpnQMDQ=",
+        "GoModSum": "h1:A8l3FlHi2D/+mfcd4HHvk5DGFPW/ShFb9jHP5VmSiDY=",
+        "Origin": {
+          "VCS": "git",
+          "URL": "https://github.com/sagernet/gomobile",
+          "Hash": "dc50ee4d9204b283322bcca9ae443783354bc352",
+          "Ref": "refs/tags/v0.1.11"
+        }
+      }
+    ]
+  },
+  {
+    "args": [
+      "mod",
+      "download",
+      "-json",
+      "all"
+    ],
+    "exit_code": 0,
+    "stderr": "",
+    "records": [
+      {
+        "Path": "github.com/google/go-cmp",
+        "Version": "v0.6.0",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/google/go-cmp/@v/v0.6.0.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/google/go-cmp/@v/v0.6.0.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/google/go-cmp/@v/v0.6.0.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/github.com/google/go-cmp@v0.6.0",
+        "Sum": "h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=",
+        "GoModSum": "h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY="
+      },
+      {
+        "Path": "github.com/yuin/goldmark",
+        "Version": "v1.4.13",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/yuin/goldmark/@v/v1.4.13.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/yuin/goldmark/@v/v1.4.13.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/github.com/yuin/goldmark/@v/v1.4.13.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/github.com/yuin/goldmark@v1.4.13",
+        "Sum": "h1:fVcFKWvrslecOb/tg+Cc05dkeYx540o0FuFt3nUVDoE=",
+        "GoModSum": "h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY="
+      },
+      {
+        "Path": "golang.org/x/mod",
+        "Version": "v0.27.0",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/mod/@v/v0.27.0.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/mod/@v/v0.27.0.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/mod/@v/v0.27.0.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/mod@v0.27.0",
+        "Sum": "h1:kb+q2PyFnEADO2IEF935ehFUXlWiNjJWtRNgBLSfbxQ=",
+        "GoModSum": "h1:rWI627Fq0DEoudcK+MBkNkCe0EetEaDSwJJkCcjpazc="
+      },
+      {
+        "Path": "golang.org/x/net",
+        "Version": "v0.43.0",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/net/@v/v0.43.0.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/net/@v/v0.43.0.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/net/@v/v0.43.0.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/net@v0.43.0",
+        "Sum": "h1:lat02VYK2j4aLzMzecihNvTlJNQUq316m2Mr9rnM6YE=",
+        "GoModSum": "h1:vhO1fvI4dGsIjh73sWfUVjj3N7CA9WkKJNQm2svM6Jg="
+      },
+      {
+        "Path": "golang.org/x/sync",
+        "Version": "v0.16.0",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sync/@v/v0.16.0.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sync/@v/v0.16.0.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sync/@v/v0.16.0.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/sync@v0.16.0",
+        "Sum": "h1:ycBJEhp9p4vXvUZNszeOq0kGTPghopOL8q0fq3vstxw=",
+        "GoModSum": "h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA="
+      },
+      {
+        "Path": "golang.org/x/sys",
+        "Version": "v0.35.0",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sys/@v/v0.35.0.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sys/@v/v0.35.0.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/sys/@v/v0.35.0.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/sys@v0.35.0",
+        "Sum": "h1:vz1N37gP5bs89s7He8XuIYXpyY0+QlsKmzipCbUtyxI=",
+        "GoModSum": "h1:BJP2sWEmIv4KK5OTEluFJCKSidICx8ciO85XgH3Ak8k="
+      },
+      {
+        "Path": "golang.org/x/telemetry",
+        "Version": "v0.0.0-20250807160809-1a19826ec488",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/telemetry/@v/v0.0.0-20250807160809-1a19826ec488.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/telemetry@v0.0.0-20250807160809-1a19826ec488",
+        "Sum": "h1:3doPGa+Gg4snce233aCWnbZVFsyFMo/dR40KK/6skyE=",
+        "GoModSum": "h1:fGb/2+tgXXjhjHsTNdVEEMZNWA0quBnfrO+AfoDSAKw="
+      },
+      {
+        "Path": "golang.org/x/tools",
+        "Version": "v0.36.0",
+        "Info": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/tools/@v/v0.36.0.info",
+        "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/tools/@v/v0.36.0.mod",
+        "Zip": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/cache/download/golang.org/x/tools/@v/v0.36.0.zip",
+        "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tool-inputs/cache/golang.org/x/tools@v0.36.0",
+        "Sum": "h1:kWS0uv/zsvHEle1LbV5LE8QujrxB3wfQyxHfhOk0Qkg=",
+        "GoModSum": "h1:WBDiHKJK8YgLHlcQPYQzNCkUxUypCaa5ZegCVutKm+s="
+      }
+    ]
+  }
+]

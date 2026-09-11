@@ -1495,3 +1495,12 @@ records the disabled-NIC scope, startup journal, normal guest poweroff,
 13 preserved snapshots and unchanged host network. This supersedes the earlier
 installation deferral for startup only; current TUN/recovery and full privacy,
 license/source and release acceptance remain open.
+
+## 2026-09-12 Core2662 offline library build
+
+The [offline build evidence](evidence/2026-09-12-r12-c05-offline-build/README.md)
+reproduces the exact current Core2662 libraries and rebuilds pinned gomobile/gobind
+without network access. Five outputs match; 3172 source files are unchanged.
+Prebuilt toolchains, SDKs and libcronet remain external inputs. Full licensing,
+corresponding-source delivery and release acceptance remain open. This proof
+predates the separate Windows adapter-cleanup source fix.

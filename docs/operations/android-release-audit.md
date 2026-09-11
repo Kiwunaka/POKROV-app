@@ -1102,3 +1102,12 @@ Native stdout/stderr/logcat have no markers; the caught JNI exception does
 contain them and is not declared safe for display/logging. No tunnel or
 subscription bypass was used. Physical ARM logging, current TUN/recovery,
 extended/crash sinks and full C05/source/release gates remain open.
+
+## 2026-09-12 Core2662 offline library build
+
+The [offline build evidence](evidence/2026-09-12-r12-c05-offline-build/README.md)
+reproduces the exact current Core2662 libraries and rebuilds pinned gomobile/gobind
+without network access. Five outputs match; 3172 source files are unchanged.
+Prebuilt toolchains, SDKs and libcronet remain external inputs. Full licensing,
+corresponding-source delivery and release acceptance remain open. This proof
+predates the separate Windows adapter-cleanup source fix.

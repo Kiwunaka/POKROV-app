@@ -1,0 +1,1 @@
+go: github.com/sagernet/gomobile/cmd/gomobile@v0.1.11: loading deprecation for github.com/sagernet/gomobile: module lookup disabled by GOPROXY=off
