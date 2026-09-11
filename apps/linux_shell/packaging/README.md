@@ -5,6 +5,11 @@ Flutter 3.38.5 with application ID `space.pokrov.linux`; the existing shared
 Flutter application supplies the UI. This packaging source does not establish
 a signed or accepted Linux release.
 
+Build dependencies on Ubuntu 24.04 are `clang`, `lld-18`, `llvm-18`, `cmake`,
+`ninja-build`, `pkg-config`, `libgtk-3-dev`, `libstdc++-12-dev` and
+`libsecret-1-dev`. The Dart native-assets build requires LLVM's linker and archiver even
+when clang was installed without recommended packages.
+
 Build the UI with the pinned Flutter SDK and lockfile, production app/build/Git
 identity defines, and the current emergency/support public signing pins used
 by the other production shells. Build `daemon/cmd/pokrov-linuxd` with the

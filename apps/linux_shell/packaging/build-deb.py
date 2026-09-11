@@ -97,6 +97,12 @@ def main():
         ' Supported package target: Ubuntu 24.04 amd64.\n')
     for hook in ('postinst', 'prerm', 'postrm'):
         copy(packaging / 'debian' / hook, 'DEBIAN/' + hook, 0o755)
+    executable_paths = {lib / 'pokrov-linuxd', lib / 'pokrov-core', lib / 'ui/pokrov'}
+    executable_paths.update(control / hook for hook in ('postinst', 'prerm', 'postrm'))
+    # Build-user umask must not make root-owned package paths group-writable.
+    for path in (stage, *stage.rglob('*')):
+        if not path.is_symlink():
+            path.chmod(0o755 if path.is_dir() or path in executable_paths else 0o644)
     artifact = args.output / f'pokrov_{version}_amd64.deb'
     if artifact.exists():
         parser.error('Refusing to overwrite an existing deb.')
