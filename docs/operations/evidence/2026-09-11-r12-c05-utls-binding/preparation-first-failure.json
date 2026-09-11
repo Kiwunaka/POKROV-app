@@ -1,0 +1,7 @@
+{
+  "status": "FAILED_VALIDATOR_PATH",
+  "reason": "Expected engine/go.mod but repository owner is engine/sing-box/go.mod",
+  "script_sha256": "2ecaf4d778452631f24a8c237514c28a91f1642427408eb009ff0e64ea22386d",
+  "source_changed": false,
+  "archive_created": false
+}

@@ -1,0 +1,6 @@
+{
+  "status": "FAILED_LOCAL_COMMAND_LENGTH",
+  "android_download_complete": true,
+  "remote_audit_started": false,
+  "reason": "Windows CreateProcess argument length exceeded by encoded public audit input; move code to SSH stdin"
+}

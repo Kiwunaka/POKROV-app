@@ -1,0 +1,19 @@
+{
+  "status": "PASS_EXACT_REMOTE_REPRODUCIBILITY_AND_DOWNLOADED_BYTES",
+  "source_commit": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "unit": "MainPID=0\nResult=success\nActiveState=inactive\n",
+  "files": [
+    {
+      "path": "pokrov-core-sources.jar",
+      "size": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "path": "pokrov-core.aar",
+      "size": 106843791,
+      "sha256": "feb452f5f06b865e3ae0655ef4168ffe065c08b759f64e9cfa084cde9d5a5941"
+    }
+  ],
+  "destination": "E:\\r12-c05-utls-2662-artifacts\\android-a",
+  "free_bytes_after": 45518966784
+}

@@ -1,0 +1,177 @@
+{
+  "unit": [
+    "MainPID=0",
+    "Result=exit-code",
+    "ExecMainStatus=1",
+    "MemoryCurrent=[not set]",
+    "CPUUsageNSec=961224480000",
+    "ActiveState=failed",
+    "SubState=failed"
+  ],
+  "progress": {
+    "source_commit": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+    "status": "FAILED",
+    "stage": "sbom_core-source",
+    "started_utc": "2026-09-11T18:36:35.623028+00:00",
+    "commands": [
+      {
+        "stage": "staticcheck_root",
+        "args": [
+          "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/staticcheck",
+          "-checks=SA2*,SA5*,SA6*",
+          "./internal/observability",
+          "./v2/config",
+          "./v2/hcore",
+          "./v2/hutils",
+          "./v2/hcore/tunnelservice",
+          "./ray2sing/ray2sing",
+          "./ray2sing/cmd"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 138.929,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "safe_summary": [],
+        "network_isolated": true,
+        "raw_output_saved": false
+      },
+      {
+        "stage": "staticcheck_engine",
+        "args": [
+          "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/staticcheck",
+          "-checks=SA2*,SA5*,SA6*",
+          "./daemon",
+          "./experimental/libbox",
+          "./protocol/awg"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 40.626,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "safe_summary": [],
+        "network_isolated": true,
+        "raw_output_saved": false
+      },
+      {
+        "stage": "parser_fuzz",
+        "args": [
+          "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+          "test",
+          "-run=^$",
+          "-fuzz=FuzzParseConfigDoesNotPanic",
+          "-fuzztime=30s",
+          "./v2/config"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 613.924,
+        "stdout_sha256": "af79e2884ba764d794c1df7be3880d0f9023560f3b64172f9aea2d4dd3ad3ae0",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "safe_summary": [
+          "PASS",
+          "ok  \tgithub.com/Kiwunaka/POKROV-core/v2/config\t30.227s"
+        ],
+        "network_isolated": true,
+        "raw_output_saved": false
+      },
+      {
+        "stage": "govulncheck_root",
+        "args": [
+          "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/govulncheck",
+          "./internal/observability",
+          "./v2/config",
+          "./v2/hcore",
+          "./v2/hutils",
+          "./ray2sing/ray2sing"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 86.126,
+        "stdout_sha256": "cf8e9cadd96fecd7b46e9dca0b0df30940a727f7af978c145e8f80efce883825",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "safe_summary": [],
+        "network_isolated": false,
+        "raw_output_saved": false
+      },
+      {
+        "stage": "govulncheck_engine",
+        "args": [
+          "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/govulncheck",
+          "./daemon",
+          "./experimental/libbox"
+        ],
+        "exit": 0,
+        "elapsed_seconds": 80.838,
+        "stdout_sha256": "cf8e9cadd96fecd7b46e9dca0b0df30940a727f7af978c145e8f80efce883825",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "safe_summary": [],
+        "network_isolated": false,
+        "raw_output_saved": false
+      },
+      {
+        "stage": "sbom_core-source",
+        "args": [
+          "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+          "mod",
+          "-licenses",
+          "-std",
+          "-json",
+          "-notimestamp",
+          "-noserial",
+          "-output",
+          "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/sbom/core-source.cdx.json",
+          "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/lifecycle-fix/source"
+        ],
+        "exit": 1,
+        "elapsed_seconds": 3.518,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "9b6ab67c95f3488580ad569d50c433aa5461efe3eb42b66ce444d2aa43a31f92",
+        "safe_summary": [],
+        "network_isolated": true,
+        "raw_output_saved": false
+      }
+    ],
+    "resource_limit": {
+      "cpu_quota_percent": 100,
+      "memory_max_bytes": 4294967296,
+      "nice": 19
+    },
+    "host_install": false,
+    "candidate_created": false,
+    "source_tree": "e85be4e008668a2d57465bf49e1f413b020ab156",
+    "validation_sha256": "717342e193750283998eee30d886c8e303066f801960b255f301ad0063404b88",
+    "build_tools": [
+      {
+        "name": "gomobile",
+        "module": "github.com/sagernet/gomobile",
+        "version": "v0.1.11",
+        "sha256": "4ad5d6ace465e3431e8190a0eead83891e0d722e523f13433201f06ed8c5d1fd"
+      },
+      {
+        "name": "gobind",
+        "module": "github.com/sagernet/gomobile",
+        "version": "v0.1.11",
+        "sha256": "2a1ab064b0edfc03ba9b01c78e5e230b6d21d42ca9ff9463ed1d0d955aa41e10"
+      },
+      {
+        "name": "cyclonedx-gomod",
+        "module": "github.com/CycloneDX/cyclonedx-gomod",
+        "version": "v1.10.0",
+        "sha256": "c8ec5e301830631cb0b3d46fc29a95e11619954dbede86c2155c10d707467784"
+      },
+      {
+        "name": "staticcheck",
+        "module": "honnef.co/go/tools",
+        "version": "v0.7.0",
+        "sha256": "ba8a6a17033811deebf3391e4a76006d8bcd7a991a1bf8e41b6301229fee43a4"
+      },
+      {
+        "name": "govulncheck",
+        "module": "golang.org/x/vuln",
+        "version": "v1.7.0",
+        "sha256": "313a49e70ac0cdde947d190c4abf19705dfefca027da3901ce3af7ee2378d734"
+      }
+    ],
+    "error_class": "AssertionError",
+    "finished_utc": "2026-09-11T18:52:40.145009+00:00",
+    "free_bytes_after": 82828726272
+  }
+}
