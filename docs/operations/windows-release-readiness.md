@@ -1,5 +1,12 @@
 # Windows Release Readiness
 
+2026-09-11 Windows egress classification: [bounded source evidence](evidence/2026-09-11-r12-windows-egress-observations/README.md).
+The WinHTTP service now preserves closed DNS/connect/TLS/timeout observations
+through the existing IPC and Dart mapping. Twelve rebuilt native tests,
+81 runtime tests (one opt-in skip), six fallback tests, one observability test
+and three package analyses PASS. PR113 merged `7ed18c9`, both CI PASS; no new installable package
+or installed-device proof. Full N05/N01/N03 and release gates remain open.
+
 2026-09-11 Core904 upgrade: [exact installed result](evidence/2026-09-11-r12-windows-core904-upgrade/README.md).
 Local client `a24b211` / Core `904e440` upgraded the connected Win11 VM through
 the ordinary wizard; all 304 files match and state/secure storage are preserved.

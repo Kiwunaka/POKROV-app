@@ -1,0 +1,190 @@
+Start testing: Sep 11 05:02 RTZ 2 (çèìà)
+----------------------------------------------------------
+1/12 Testing: pokrov_service_cancellation
+1/12 Test: pokrov_service_cancellation
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_cancellation_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_cancellation" start time: Sep 11 05:02 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+ipc_cancel_rollback_ms=16
+<end of output>
+Test time =   0.16 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_cancellation" end time: Sep 11 05:02 RTZ 2 (çèìà)
+"pokrov_service_cancellation" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/12 Testing: pokrov_service_egress_probe
+2/12 Test: pokrov_service_egress_probe
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_egress_probe_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_egress_probe" start time: Sep 11 05:02 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+closed_endpoint_failure=core_egress_connect_failed
+pending_headers_cancel_ms=62
+response_stall_failure=core_egress_response_timeout elapsed_ms=24734
+tls_stall_failure=core_egress_tls_timeout elapsed_ms=23891
+<end of output>
+Test time =  60.13 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_egress_probe" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_service_egress_probe" time elapsed: 00:01:00
+----------------------------------------------------------
+
+3/12 Testing: pokrov_service_client
+3/12 Test: pokrov_service_client
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_client_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_client" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_client" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_service_client" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/12 Testing: pokrov_service_protocol
+4/12 Test: pokrov_service_protocol
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_protocol_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_protocol" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_protocol" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_service_protocol" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/12 Testing: pokrov_service_security
+5/12 Test: pokrov_service_security
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_security_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_security" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_security" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_service_security" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/12 Testing: pokrov_windows_crash_profile
+6/12 Test: pokrov_windows_crash_profile
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_windows_crash_profile_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_windows_crash_profile" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+Windows crash profile checks passed
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_windows_crash_profile" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_windows_crash_profile" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/12 Testing: pokrov_service_runtime
+7/12 Test: pokrov_service_runtime
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_runtime_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_runtime" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.25 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_runtime" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_service_runtime" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/12 Testing: pokrov_service_events
+8/12 Test: pokrov_service_events
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_events_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_events" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+service event journal checks passed
+<end of output>
+Test time =   3.36 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_events" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_service_events" time elapsed: 00:00:03
+----------------------------------------------------------
+
+9/12 Testing: pokrov_service_integration
+9/12 Test: pokrov_service_integration
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_integration_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_integration" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_integration" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_service_integration" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/12 Testing: pokrov_service_pipe_client
+10/12 Test: pokrov_service_pipe_client
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/service/Debug/pokrov_service_pipe_client_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/service
+"pokrov_service_pipe_client" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.27 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_service_pipe_client" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_service_pipe_client" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/12 Testing: pokrov_runtime_task_runner
+11/12 Test: pokrov_runtime_task_runner
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/tests/Debug/pokrov_runtime_task_runner_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/runner
+"pokrov_runtime_task_runner" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_runtime_task_runner" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_runtime_task_runner" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/12 Testing: pokrov_activation_protocol
+12/12 Test: pokrov_activation_protocol
+Command: "E:/r12client/apps/windows_shell/build/windows/x64/tests/Debug/pokrov_activation_protocol_test.exe"
+Directory: E:/r12client/apps/windows_shell/build/windows/x64/runner
+"pokrov_activation_protocol" start time: Sep 11 05:03 RTZ 2 (çèìà)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"pokrov_activation_protocol" end time: Sep 11 05:03 RTZ 2 (çèìà)
+"pokrov_activation_protocol" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 11 05:03 RTZ 2 (çèìà)

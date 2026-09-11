@@ -1,0 +1,16 @@
+Internal ctest changing into directory: E:/r12client/apps/windows_shell/build/windows/x64
+Test project E:/r12client/apps/windows_shell/build/windows/x64
+    Start 2: pokrov_service_egress_probe
+1/1 Test #2: pokrov_service_egress_probe ......***Failed   11.38 sec
+real endpoint connection failure lost its observed category
+closed_endpoint_failure=core_egress_probe_failed
+pending_headers_cancel_ms=63
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =  11.44 sec
+
+The following tests FAILED:
+	  2 - pokrov_service_egress_probe (Failed)
+Errors while running CTest

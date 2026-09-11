@@ -1,0 +1,101 @@
+{
+  "status": "PASS_BOUNDED_LOCAL",
+  "source": "e9dc104d3c6b64e28105dcb08d40ebfe991e13e7",
+  "files": [
+    {
+      "name": "local-source-validation.json",
+      "bytes": 2972,
+      "sha256": "a82c12841b14925fc849863e9d4257b8c73b1f183b3a321a7877a5a4d8a3c739"
+    },
+    {
+      "name": "source-byte-binding.json",
+      "bytes": 5008,
+      "sha256": "47bf16bbb6f122246711828532b091f7baab77e06a1c21a17f226de347d6ed0f"
+    },
+    {
+      "name": "source-promoted.json",
+      "bytes": 3061,
+      "sha256": "9c700812e1a075ed57ab9b2ae2810c9eb5f67c4558ac6e5690cdd1034806b555"
+    },
+    {
+      "name": "disk-budget-before.json",
+      "bytes": 484,
+      "sha256": "47b692922c171cb6a6043eb676b8e2bfa531bcb9e3931d50e75bb6daf99e6292"
+    },
+    {
+      "name": "promotion-disk-budget.json",
+      "bytes": 284,
+      "sha256": "14c429ca32b4c81e926f713b537679278d4135aa4b8e7893fc706d0e124b90a4"
+    },
+    {
+      "name": "native-before-test.log",
+      "bytes": 597,
+      "sha256": "97cf6b32f29b91440785863a82f0ea87b2cfad08c704cd2786ace354f1cee65e"
+    },
+    {
+      "name": "host-before-test.log",
+      "bytes": 508,
+      "sha256": "5cefab91707e4d4583765e1ee3014421c8e1716707c32f47dfde330bc9f1c8b1"
+    },
+    {
+      "name": "native-dependent-test.log",
+      "bytes": 651,
+      "sha256": "0d67449e78732613ab25466f197282d274435195f31ffad6047fcc4f035607c7"
+    },
+    {
+      "name": "native-all-current-build.log",
+      "bytes": 4609,
+      "sha256": "8553c2501517996616491364cf6e73592d43db1fca22066fa5d6cce973ac51b1"
+    },
+    {
+      "name": "native-all-current-test.log",
+      "bytes": 1629,
+      "sha256": "f411b6c08b0e32b104a46d5a24ab39dedae5b5eda61745b86fd406cabadd11f9"
+    },
+    {
+      "name": "native-all-current-observed.log",
+      "bytes": 8711,
+      "sha256": "5131a0c8d1561d397c19e2319ad883fe584abb4163f84b1b0d2f2f1730bfe7a2"
+    },
+    {
+      "name": "runtime-regression.log",
+      "bytes": 6295,
+      "sha256": "8a980a2b090a237a78ecbbb15dce2ecab6b62125caa4d80c6b0130dab260d76a"
+    },
+    {
+      "name": "app-fallback-regression.log",
+      "bytes": 781,
+      "sha256": "008ece787a8c7e5384548a85d459370c1a76df22dcfd6b60f02ea45c3ebed127"
+    },
+    {
+      "name": "observability-focused.log",
+      "bytes": 187,
+      "sha256": "6043ae800dd5ee38ef590809021759da639605eed285f135ec8d23efcb3b9b86"
+    },
+    {
+      "name": "analyze-app_shell.log",
+      "bytes": 98,
+      "sha256": "164dd96954847e91c3a28261e351a0df319f28f14bd59d26d826fffbd9671cb1"
+    },
+    {
+      "name": "analyze-runtime_engine.log",
+      "bytes": 98,
+      "sha256": "3ddbc2168966631f5f6c168e7cf9da4b9d52199b1d583dbd3f777d5aee829c41"
+    },
+    {
+      "name": "analyze-observability_runtime.log",
+      "bytes": 98,
+      "sha256": "dbfb510950118e70e87b0d2f1f59b08a91abd40c1111e36775856b18514712d9"
+    },
+    {
+      "name": "client-seed.log",
+      "bytes": 1818,
+      "sha256": "720676515a5553ab2f7ded3ba21de2efbe10a82f1f1d9cea024f8a9544d3ba22"
+    },
+    {
+      "name": "client-docs.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    }
+  ]
+}
