@@ -1,0 +1,59 @@
+{
+  "utc": "2026-09-11T19:14:23.562434+00:00",
+  "status": "EXACT_UPSTREAM_NOTICE_INPUTS",
+  "mingw_runtime_version": "11.0.1",
+  "gcc_source_version": "13.2.0",
+  "files": [
+    {
+      "repository": "mingw-w64/mingw-w64",
+      "commit": "c3e587c067a00a561899d49d3e63a659e38802ec",
+      "path": "COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt",
+      "retained_name": "COPYING.MinGW-w64-runtime.txt",
+      "git_blob": "ca6a077e24b81d4f0ae9b952b6fbcaf370a78d6a",
+      "sha256": "e9b2dc02451ea29092a1f25fa0f3c07207ed421f1807dffb0c4e6dce69dee7bd",
+      "bytes": 10936,
+      "source_url": "https://github.com/mingw-w64/mingw-w64/blob/c3e587c067a00a561899d49d3e63a659e38802ec/COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt"
+    },
+    {
+      "repository": "mingw-w64/mingw-w64",
+      "commit": "c3e587c067a00a561899d49d3e63a659e38802ec",
+      "path": "COPYING.MinGW-w64/COPYING.MinGW-w64.txt",
+      "retained_name": "COPYING.MinGW-w64.txt",
+      "git_blob": "decbf46bde9d87a0c2250fe33ece1b7e0724ee6e",
+      "sha256": "f38e6194bd3bfa1b654f118e5acefe0aead437bbe669eee43957ccc65a7127f1",
+      "bytes": 5905,
+      "source_url": "https://github.com/mingw-w64/mingw-w64/blob/c3e587c067a00a561899d49d3e63a659e38802ec/COPYING.MinGW-w64/COPYING.MinGW-w64.txt"
+    },
+    {
+      "repository": "gcc-mirror/gcc",
+      "commit": "c891d8dc23e1a46ad9f3e757d09e57b500d40044",
+      "path": "COPYING.RUNTIME",
+      "retained_name": "GCC-COPYING.RUNTIME",
+      "git_blob": "e1b3c69c179dfaff5744ea4bf853e6b0d90c9ef9",
+      "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+      "bytes": 3324,
+      "source_url": "https://github.com/gcc-mirror/gcc/blob/c891d8dc23e1a46ad9f3e757d09e57b500d40044/COPYING.RUNTIME"
+    },
+    {
+      "repository": "gcc-mirror/gcc",
+      "commit": "c891d8dc23e1a46ad9f3e757d09e57b500d40044",
+      "path": "COPYING3",
+      "retained_name": "GCC-COPYING3",
+      "git_blob": "94a9ed024d3859793618152ea559a168bbcbb5e2",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "bytes": 35147,
+      "source_url": "https://github.com/gcc-mirror/gcc/blob/c891d8dc23e1a46ad9f3e757d09e57b500d40044/COPYING3"
+    },
+    {
+      "repository": "gcc-mirror/gcc",
+      "commit": "c891d8dc23e1a46ad9f3e757d09e57b500d40044",
+      "path": "libgcc/libgcc2.c",
+      "retained_name": "gcc13-libgcc2.c",
+      "git_blob": "e0017d106be06ae0092d48d4bd49d40aa50cf355",
+      "sha256": "97d364b0d74d6bf073eb3829ab12884ce243c68af8f7601d84baade12ee15599",
+      "bytes": 55415,
+      "source_url": "https://github.com/gcc-mirror/gcc/blob/c891d8dc23e1a46ad9f3e757d09e57b500d40044/libgcc/libgcc2.c"
+    }
+  ],
+  "scope": "Runtime-library notices for the authenticated native MinGW build inputs; compiler executables are not distributed with the client."
+}

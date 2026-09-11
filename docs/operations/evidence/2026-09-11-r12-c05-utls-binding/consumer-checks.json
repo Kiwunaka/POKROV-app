@@ -1,0 +1,35 @@
+{
+  "status": "PASS_FOCUSED_CONSUMER_CHECKS",
+  "core_commit": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "source_base": "766e466724e7142445b0b47f1dfb5e1c1792d870",
+  "runtime_tests": {
+    "command": "flutter test --no-pub",
+    "cwd": "E:/r12client/packages/runtime_engine",
+    "exit": 0,
+    "passed": 81,
+    "skipped": 1,
+    "skip": "Opt-in DLL test passed separately using existing 100-cycle isolated helper and exact new DLL"
+  },
+  "android_flutter_tests": {
+    "command": "flutter test --no-pub",
+    "cwd": "E:/r12client/apps/android_shell",
+    "exit": 0,
+    "passed": 8
+  },
+  "seed": {
+    "command": "scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot C:/r12corec02",
+    "exit": 0
+  },
+  "docs": {
+    "command": "test/docs-contract.ps1",
+    "exit": 0
+  },
+  "git_diff_check": {
+    "command": "git diff --check",
+    "exit": 0
+  },
+  "powershell_logs": "Some Write-Host output is retained in command execution output rather than redirected files",
+  "license_whitespace": "Original GCC license includes space-before-tab; scoped notice asset attribute preserves exact upstream text",
+  "apk_installer_build": "NOT_RUN_FOR_THIS_BINDING",
+  "installed_acceptance": "NOT_RUN_FOR_THIS_BINDING"
+}

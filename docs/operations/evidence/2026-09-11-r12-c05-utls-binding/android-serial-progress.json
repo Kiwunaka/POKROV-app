@@ -1,0 +1,195 @@
+{
+  "previous_oom_progress_sha256": "56ef3be8bc1947bf313490f2e252859585c1247ff49c9ed661c6f206e9ec9cec",
+  "previous_unit_result": "oom-kill",
+  "windows_pe_imports": {
+    "a": [
+      "KERNEL32.dll",
+      "msvcrt.dll"
+    ],
+    "b": [
+      "KERNEL32.dll",
+      "msvcrt.dll"
+    ]
+  },
+  "android_build_concurrency": "Go build invocations serialized with flock; unchanged pinned compiler arguments",
+  "source_commit": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "status": "PASS",
+  "stage": "evidence_android",
+  "started_utc": "2026-09-11T19:21:24.060998+00:00",
+  "commands": [
+    {
+      "stage": "build_android_a",
+      "args": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-android.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/serialized-go/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/out/android-a",
+        "-AndroidSdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/sdk",
+        "-AndroidNdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/ndk/android-ndk-r29",
+        "-GomobileBinDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 1246.724,
+      "stdout_sha256": "b60f3e050c281fd62e8a2d29ba6ec454f621d6292d729ccd0414f0acd2bcaf63",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "safe_summary": [],
+      "network_isolated": true,
+      "raw_output_saved": false
+    },
+    {
+      "stage": "build_android_b",
+      "args": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-android.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/serialized-go/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/out/android-b",
+        "-AndroidSdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/sdk",
+        "-AndroidNdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/ndk/android-ndk-r29",
+        "-GomobileBinDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 129.203,
+      "stdout_sha256": "b60f3e050c281fd62e8a2d29ba6ec454f621d6292d729ccd0414f0acd2bcaf63",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "safe_summary": [],
+      "network_isolated": true,
+      "raw_output_saved": false
+    },
+    {
+      "stage": "evidence_android",
+      "args": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-Command",
+        "& '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/lifecycle-fix/source/scripts/new-release-artifact-evidence.ps1' -Lane 'android' -FirstBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/out/android-a' -SecondBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/out/android-b' -Output '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/android-evidence.json' -Sbom '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/sbom/core-source.cdx.json','/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/sbom/engine-source.cdx.json' -RequireCleanSource"
+      ],
+      "exit": 0,
+      "elapsed_seconds": 2.643,
+      "stdout_sha256": "93a3776bee761bd148dd21e1e41da25ecff28318ab997d9d37976172849ff9fe",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "safe_summary": [],
+      "network_isolated": true,
+      "raw_output_saved": false
+    }
+  ],
+  "resource_limit": {
+    "cpu_quota_percent": 100,
+    "memory_max_bytes": 4294967296,
+    "nice": 19
+  },
+  "host_install": false,
+  "candidate_created": false,
+  "source_tree": "e85be4e008668a2d57465bf49e1f413b020ab156",
+  "validation_sha256": "717342e193750283998eee30d886c8e303066f801960b255f301ad0063404b88",
+  "build_tools": [
+    {
+      "name": "gomobile",
+      "module": "github.com/sagernet/gomobile",
+      "version": "v0.1.11",
+      "sha256": "4ad5d6ace465e3431e8190a0eead83891e0d722e523f13433201f06ed8c5d1fd"
+    },
+    {
+      "name": "gobind",
+      "module": "github.com/sagernet/gomobile",
+      "version": "v0.1.11",
+      "sha256": "2a1ab064b0edfc03ba9b01c78e5e230b6d21d42ca9ff9463ed1d0d955aa41e10"
+    },
+    {
+      "name": "cyclonedx-gomod",
+      "module": "github.com/CycloneDX/cyclonedx-gomod",
+      "version": "v1.10.0",
+      "sha256": "c8ec5e301830631cb0b3d46fc29a95e11619954dbede86c2155c10d707467784"
+    },
+    {
+      "name": "staticcheck",
+      "module": "honnef.co/go/tools",
+      "version": "v0.7.0",
+      "sha256": "ba8a6a17033811deebf3391e4a76006d8bcd7a991a1bf8e41b6301229fee43a4"
+    },
+    {
+      "name": "govulncheck",
+      "module": "golang.org/x/vuln",
+      "version": "v1.7.0",
+      "sha256": "313a49e70ac0cdde947d190c4abf19705dfefca027da3901ce3af7ee2378d734"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "out/android-a/pokrov-core-sources.jar",
+      "bytes": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "path": "out/android-a/pokrov-core.aar",
+      "bytes": 106843791,
+      "sha256": "feb452f5f06b865e3ae0655ef4168ffe065c08b759f64e9cfa084cde9d5a5941"
+    },
+    {
+      "path": "out/android-b/pokrov-core-sources.jar",
+      "bytes": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "path": "out/android-b/pokrov-core.aar",
+      "bytes": 106843791,
+      "sha256": "feb452f5f06b865e3ae0655ef4168ffe065c08b759f64e9cfa084cde9d5a5941"
+    },
+    {
+      "path": "out/windows-a/libcronet.dll",
+      "bytes": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "path": "out/windows-a/pokrov-core.dll",
+      "bytes": 55012864,
+      "sha256": "e77cc0ab979becc635ec578b8b44248b1146dd96ba34cd4de72e62130089ce2c"
+    },
+    {
+      "path": "out/windows-a/pokrov-core.h",
+      "bytes": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    },
+    {
+      "path": "out/windows-b/libcronet.dll",
+      "bytes": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "path": "out/windows-b/pokrov-core.dll",
+      "bytes": 55012864,
+      "sha256": "e77cc0ab979becc635ec578b8b44248b1146dd96ba34cd4de72e62130089ce2c"
+    },
+    {
+      "path": "out/windows-b/pokrov-core.h",
+      "bytes": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    }
+  ],
+  "sboms": [
+    {
+      "path": "sbom/core-source.cdx.json",
+      "sha256": "b1954594dcecda47ae4bbeccff5e83521081c4f95c8e41327b953a166a182378"
+    },
+    {
+      "path": "sbom/engine-source.cdx.json",
+      "sha256": "c7cbb50a59983e271e892e74d7dc5c3809c48be96b71afde7057cda36c780bb2"
+    }
+  ],
+  "source_clean_after": true,
+  "finished_utc": "2026-09-11T19:44:25.281348+00:00",
+  "free_bytes_after": 78728769536
+}

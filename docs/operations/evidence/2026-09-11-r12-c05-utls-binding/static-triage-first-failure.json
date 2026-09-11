@@ -1,0 +1,5 @@
+{
+  "status": "FAILED_HARNESS_OSV_SCOPE",
+  "reason": "Scanner emits all 254 queried advisory records, while nine IDs have findings; compare current finding IDs to previous nine-ID triage",
+  "script_sha256": "d7bbefc5b625bbabc8770aefa3537dfcb9426c97008fa6ff7eeaf6ec0e4f3960"
+}

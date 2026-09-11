@@ -1,0 +1,70 @@
+{
+  "utc": "2026-09-11T19:11:11.486625+00:00",
+  "source_commit": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "client_commit": "766e466724e7142445b0b47f1dfb5e1c1792d870",
+  "artifact": {
+    "path": "pokrov-core.dll",
+    "size": 55012864,
+    "sha256": "e77cc0ab979becc635ec578b8b44248b1146dd96ba34cd4de72e62130089ce2c"
+  },
+  "status": "PASS_CURRENT_WINDOWS_ABI_AND_100_PROXY_CYCLES",
+  "desktop_abi": 2,
+  "descriptor": {
+    "schema_version": 1,
+    "desktop_abi": 2,
+    "event_abi": 1,
+    "capabilities": [
+      "bounded_stop_reason",
+      "core_start_stop",
+      "materialized_profile",
+      "secure_profile_file",
+      "structured_operational_events",
+      "typed_lifecycle_events"
+    ],
+    "lifecycle_events": [
+      "initialization",
+      "profile",
+      "core_start",
+      "tun",
+      "routes",
+      "dns",
+      "egress",
+      "recovery",
+      "stop"
+    ],
+    "operational_events": {
+      "contract": "config/core-event-abi.json",
+      "schema_version": 1,
+      "event_abi": 1,
+      "callback_symbol": "pokrovCoreSetEventCallback",
+      "context_symbol": "pokrovCoreSetEventContext",
+      "maximum_pending_events": 128
+    }
+  },
+  "exports_found": [
+    "AddGrpcClientPublicKey",
+    "GetServerPublicKey",
+    "StartCoreGrpcServer",
+    "cleanup",
+    "closeGrpc",
+    "freeString",
+    "pokrovCoreAbiVersion",
+    "pokrovCoreCapabilities",
+    "pokrovCoreSetEventCallback",
+    "pokrovCoreSetEventContext",
+    "pokrovSecureFile",
+    "restart",
+    "setup",
+    "start",
+    "stop"
+  ],
+  "cycle_count": 100,
+  "test_log_sha256": "56e7a1937911a90692c13aae89e7051d5e18fe1b82f41cefa0b7c0d7f736cf56",
+  "origin": "current-origin native Windows host",
+  "system_route_mutation": false,
+  "physical_vpn_acceptance": false,
+  "windows_imports": [
+    "KERNEL32.dll",
+    "msvcrt.dll"
+  ]
+}

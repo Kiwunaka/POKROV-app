@@ -1,0 +1,354 @@
+{
+  "utc": "2026-09-11T19:21:04.515958+00:00",
+  "status": "PASS_RETAINED_OOM_GENERATED_FILES",
+  "source": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/lifecycle-fix/source/build",
+  "retained": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/oom-generated-build",
+  "files": [
+    {
+      "path": "386/libpokrov-core/go_libboxmain.go",
+      "bytes": 188286,
+      "sha256": "11cf67340d89b5199d5df323ad2194626c120fc7082d0afb9172da5dfb5829a9"
+    },
+    {
+      "path": "386/libpokrov-core/go_main.go",
+      "bytes": 868,
+      "sha256": "6c554a19db78ec974218aab6d1585cdd167563315f530cb8d5ab03eeb14997f7"
+    },
+    {
+      "path": "386/libpokrov-core/go_mobilemain.go",
+      "bytes": 7056,
+      "sha256": "c9c1c5c7f4de2564a3e1f25400dcf543e76e1218452c6f43587d3fc9fe1ca0e1"
+    },
+    {
+      "path": "386/libpokrov-core/libbox.h",
+      "bytes": 162,
+      "sha256": "e16e5cd6df4d4e61073c09b1a5608e5c1c14fab3b042f4c3560c531e728c6a75"
+    },
+    {
+      "path": "386/libpokrov-core/libbox_android.c",
+      "bytes": 237910,
+      "sha256": "f9fb7f21399d304a9b2555ec6026b3a914d415f7e1180ab94e01c7a628c2d190"
+    },
+    {
+      "path": "386/libpokrov-core/libbox_android.h",
+      "bytes": 16034,
+      "sha256": "efb9c12e2b10e0afbacdb3249077b5d7c2b09197c0be0cdb8ca6c45fd4548b5a"
+    },
+    {
+      "path": "386/libpokrov-core/mobile.h",
+      "bytes": 162,
+      "sha256": "4041534e7b1905cbd8c44f8e441404ebc6e60788f683117429ad493e9313dff7"
+    },
+    {
+      "path": "386/libpokrov-core/mobile_android.c",
+      "bytes": 7574,
+      "sha256": "a12111285936fc9b13fc28bafff68a99a6e00b61a508938588f6b61fc7fd477f"
+    },
+    {
+      "path": "386/libpokrov-core/mobile_android.h",
+      "bytes": 384,
+      "sha256": "91601d35409537a79ee665500d098d51b1ada0e04bd5a6f48228fd92c328d2ac"
+    },
+    {
+      "path": "386/libpokrov-core/seq.go",
+      "bytes": 1261,
+      "sha256": "36c794dacee52dafc86b04a286c4f29509693b4f7e40f70d7d9d6aa6db243edc"
+    },
+    {
+      "path": "386/libpokrov-core/seq.h",
+      "bytes": 156,
+      "sha256": "da2cf07e2ce44f161fe212bc3cd4fc8d4a1ac2d450b51c9dd290c7e845406c90"
+    },
+    {
+      "path": "386/libpokrov-core/seq_android.c",
+      "bytes": 11490,
+      "sha256": "3c18382fa7a7172733db541d3ffcc00cc5b80e2fa225c93e000c388a8dcb6b4f"
+    },
+    {
+      "path": "386/libpokrov-core/seq_android.go",
+      "bytes": 2799,
+      "sha256": "e251858b0019c4689712cfe9dca9a30a6f938f1c52f28d39861b4400e820f74a"
+    },
+    {
+      "path": "386/libpokrov-core/seq_android.h",
+      "bytes": 2839,
+      "sha256": "2f4388126dcfad153597e8075ff25e34a96951ed500fd26d0f29d5af7356b772"
+    },
+    {
+      "path": "386/libpokrov-core/universe.h",
+      "bytes": 166,
+      "sha256": "48ee13c5afc157fc6ff145eed8a99c78aabf67bb47030994af9b8671c59191c3"
+    },
+    {
+      "path": "386/libpokrov-core/universe_android.c",
+      "bytes": 1391,
+      "sha256": "2c5f008d3e9069f868dc1c14b32551ec5e2017a05cd102e56aeb6c6795c557ab"
+    },
+    {
+      "path": "386/libpokrov-core/universe_android.h",
+      "bytes": 361,
+      "sha256": "feca2ff9c79611874a1baaeeb7f87a2c1655334ef9ad3e71cee6963ce4d865dc"
+    },
+    {
+      "path": "amd64/libpokrov-core/go_libboxmain.go",
+      "bytes": 188286,
+      "sha256": "11cf67340d89b5199d5df323ad2194626c120fc7082d0afb9172da5dfb5829a9"
+    },
+    {
+      "path": "amd64/libpokrov-core/go_main.go",
+      "bytes": 868,
+      "sha256": "6c554a19db78ec974218aab6d1585cdd167563315f530cb8d5ab03eeb14997f7"
+    },
+    {
+      "path": "amd64/libpokrov-core/go_mobilemain.go",
+      "bytes": 7056,
+      "sha256": "c9c1c5c7f4de2564a3e1f25400dcf543e76e1218452c6f43587d3fc9fe1ca0e1"
+    },
+    {
+      "path": "amd64/libpokrov-core/libbox.h",
+      "bytes": 162,
+      "sha256": "e16e5cd6df4d4e61073c09b1a5608e5c1c14fab3b042f4c3560c531e728c6a75"
+    },
+    {
+      "path": "amd64/libpokrov-core/libbox_android.c",
+      "bytes": 237910,
+      "sha256": "f9fb7f21399d304a9b2555ec6026b3a914d415f7e1180ab94e01c7a628c2d190"
+    },
+    {
+      "path": "amd64/libpokrov-core/libbox_android.h",
+      "bytes": 16034,
+      "sha256": "efb9c12e2b10e0afbacdb3249077b5d7c2b09197c0be0cdb8ca6c45fd4548b5a"
+    },
+    {
+      "path": "amd64/libpokrov-core/mobile.h",
+      "bytes": 162,
+      "sha256": "4041534e7b1905cbd8c44f8e441404ebc6e60788f683117429ad493e9313dff7"
+    },
+    {
+      "path": "amd64/libpokrov-core/mobile_android.c",
+      "bytes": 7574,
+      "sha256": "a12111285936fc9b13fc28bafff68a99a6e00b61a508938588f6b61fc7fd477f"
+    },
+    {
+      "path": "amd64/libpokrov-core/mobile_android.h",
+      "bytes": 384,
+      "sha256": "91601d35409537a79ee665500d098d51b1ada0e04bd5a6f48228fd92c328d2ac"
+    },
+    {
+      "path": "amd64/libpokrov-core/seq.go",
+      "bytes": 1261,
+      "sha256": "36c794dacee52dafc86b04a286c4f29509693b4f7e40f70d7d9d6aa6db243edc"
+    },
+    {
+      "path": "amd64/libpokrov-core/seq.h",
+      "bytes": 156,
+      "sha256": "da2cf07e2ce44f161fe212bc3cd4fc8d4a1ac2d450b51c9dd290c7e845406c90"
+    },
+    {
+      "path": "amd64/libpokrov-core/seq_android.c",
+      "bytes": 11490,
+      "sha256": "3c18382fa7a7172733db541d3ffcc00cc5b80e2fa225c93e000c388a8dcb6b4f"
+    },
+    {
+      "path": "amd64/libpokrov-core/seq_android.go",
+      "bytes": 2799,
+      "sha256": "e251858b0019c4689712cfe9dca9a30a6f938f1c52f28d39861b4400e820f74a"
+    },
+    {
+      "path": "amd64/libpokrov-core/seq_android.h",
+      "bytes": 2839,
+      "sha256": "2f4388126dcfad153597e8075ff25e34a96951ed500fd26d0f29d5af7356b772"
+    },
+    {
+      "path": "amd64/libpokrov-core/universe.h",
+      "bytes": 166,
+      "sha256": "48ee13c5afc157fc6ff145eed8a99c78aabf67bb47030994af9b8671c59191c3"
+    },
+    {
+      "path": "amd64/libpokrov-core/universe_android.c",
+      "bytes": 1391,
+      "sha256": "2c5f008d3e9069f868dc1c14b32551ec5e2017a05cd102e56aeb6c6795c557ab"
+    },
+    {
+      "path": "amd64/libpokrov-core/universe_android.h",
+      "bytes": 361,
+      "sha256": "feca2ff9c79611874a1baaeeb7f87a2c1655334ef9ad3e71cee6963ce4d865dc"
+    },
+    {
+      "path": "arm/libpokrov-core/go_libboxmain.go",
+      "bytes": 188286,
+      "sha256": "11cf67340d89b5199d5df323ad2194626c120fc7082d0afb9172da5dfb5829a9"
+    },
+    {
+      "path": "arm/libpokrov-core/go_main.go",
+      "bytes": 868,
+      "sha256": "6c554a19db78ec974218aab6d1585cdd167563315f530cb8d5ab03eeb14997f7"
+    },
+    {
+      "path": "arm/libpokrov-core/go_mobilemain.go",
+      "bytes": 7056,
+      "sha256": "c9c1c5c7f4de2564a3e1f25400dcf543e76e1218452c6f43587d3fc9fe1ca0e1"
+    },
+    {
+      "path": "arm/libpokrov-core/libbox.h",
+      "bytes": 162,
+      "sha256": "e16e5cd6df4d4e61073c09b1a5608e5c1c14fab3b042f4c3560c531e728c6a75"
+    },
+    {
+      "path": "arm/libpokrov-core/libbox_android.c",
+      "bytes": 237910,
+      "sha256": "f9fb7f21399d304a9b2555ec6026b3a914d415f7e1180ab94e01c7a628c2d190"
+    },
+    {
+      "path": "arm/libpokrov-core/libbox_android.h",
+      "bytes": 16034,
+      "sha256": "efb9c12e2b10e0afbacdb3249077b5d7c2b09197c0be0cdb8ca6c45fd4548b5a"
+    },
+    {
+      "path": "arm/libpokrov-core/mobile.h",
+      "bytes": 162,
+      "sha256": "4041534e7b1905cbd8c44f8e441404ebc6e60788f683117429ad493e9313dff7"
+    },
+    {
+      "path": "arm/libpokrov-core/mobile_android.c",
+      "bytes": 7574,
+      "sha256": "a12111285936fc9b13fc28bafff68a99a6e00b61a508938588f6b61fc7fd477f"
+    },
+    {
+      "path": "arm/libpokrov-core/mobile_android.h",
+      "bytes": 384,
+      "sha256": "91601d35409537a79ee665500d098d51b1ada0e04bd5a6f48228fd92c328d2ac"
+    },
+    {
+      "path": "arm/libpokrov-core/seq.go",
+      "bytes": 1261,
+      "sha256": "36c794dacee52dafc86b04a286c4f29509693b4f7e40f70d7d9d6aa6db243edc"
+    },
+    {
+      "path": "arm/libpokrov-core/seq.h",
+      "bytes": 156,
+      "sha256": "da2cf07e2ce44f161fe212bc3cd4fc8d4a1ac2d450b51c9dd290c7e845406c90"
+    },
+    {
+      "path": "arm/libpokrov-core/seq_android.c",
+      "bytes": 11490,
+      "sha256": "3c18382fa7a7172733db541d3ffcc00cc5b80e2fa225c93e000c388a8dcb6b4f"
+    },
+    {
+      "path": "arm/libpokrov-core/seq_android.go",
+      "bytes": 2799,
+      "sha256": "e251858b0019c4689712cfe9dca9a30a6f938f1c52f28d39861b4400e820f74a"
+    },
+    {
+      "path": "arm/libpokrov-core/seq_android.h",
+      "bytes": 2839,
+      "sha256": "2f4388126dcfad153597e8075ff25e34a96951ed500fd26d0f29d5af7356b772"
+    },
+    {
+      "path": "arm/libpokrov-core/universe.h",
+      "bytes": 166,
+      "sha256": "48ee13c5afc157fc6ff145eed8a99c78aabf67bb47030994af9b8671c59191c3"
+    },
+    {
+      "path": "arm/libpokrov-core/universe_android.c",
+      "bytes": 1391,
+      "sha256": "2c5f008d3e9069f868dc1c14b32551ec5e2017a05cd102e56aeb6c6795c557ab"
+    },
+    {
+      "path": "arm/libpokrov-core/universe_android.h",
+      "bytes": 361,
+      "sha256": "feca2ff9c79611874a1baaeeb7f87a2c1655334ef9ad3e71cee6963ce4d865dc"
+    },
+    {
+      "path": "arm64/libpokrov-core/go_libboxmain.go",
+      "bytes": 188286,
+      "sha256": "11cf67340d89b5199d5df323ad2194626c120fc7082d0afb9172da5dfb5829a9"
+    },
+    {
+      "path": "arm64/libpokrov-core/go_main.go",
+      "bytes": 868,
+      "sha256": "6c554a19db78ec974218aab6d1585cdd167563315f530cb8d5ab03eeb14997f7"
+    },
+    {
+      "path": "arm64/libpokrov-core/go_mobilemain.go",
+      "bytes": 7056,
+      "sha256": "c9c1c5c7f4de2564a3e1f25400dcf543e76e1218452c6f43587d3fc9fe1ca0e1"
+    },
+    {
+      "path": "arm64/libpokrov-core/libbox.h",
+      "bytes": 162,
+      "sha256": "e16e5cd6df4d4e61073c09b1a5608e5c1c14fab3b042f4c3560c531e728c6a75"
+    },
+    {
+      "path": "arm64/libpokrov-core/libbox_android.c",
+      "bytes": 237910,
+      "sha256": "f9fb7f21399d304a9b2555ec6026b3a914d415f7e1180ab94e01c7a628c2d190"
+    },
+    {
+      "path": "arm64/libpokrov-core/libbox_android.h",
+      "bytes": 16034,
+      "sha256": "efb9c12e2b10e0afbacdb3249077b5d7c2b09197c0be0cdb8ca6c45fd4548b5a"
+    },
+    {
+      "path": "arm64/libpokrov-core/mobile.h",
+      "bytes": 162,
+      "sha256": "4041534e7b1905cbd8c44f8e441404ebc6e60788f683117429ad493e9313dff7"
+    },
+    {
+      "path": "arm64/libpokrov-core/mobile_android.c",
+      "bytes": 7574,
+      "sha256": "a12111285936fc9b13fc28bafff68a99a6e00b61a508938588f6b61fc7fd477f"
+    },
+    {
+      "path": "arm64/libpokrov-core/mobile_android.h",
+      "bytes": 384,
+      "sha256": "91601d35409537a79ee665500d098d51b1ada0e04bd5a6f48228fd92c328d2ac"
+    },
+    {
+      "path": "arm64/libpokrov-core/seq.go",
+      "bytes": 1261,
+      "sha256": "36c794dacee52dafc86b04a286c4f29509693b4f7e40f70d7d9d6aa6db243edc"
+    },
+    {
+      "path": "arm64/libpokrov-core/seq.h",
+      "bytes": 156,
+      "sha256": "da2cf07e2ce44f161fe212bc3cd4fc8d4a1ac2d450b51c9dd290c7e845406c90"
+    },
+    {
+      "path": "arm64/libpokrov-core/seq_android.c",
+      "bytes": 11490,
+      "sha256": "3c18382fa7a7172733db541d3ffcc00cc5b80e2fa225c93e000c388a8dcb6b4f"
+    },
+    {
+      "path": "arm64/libpokrov-core/seq_android.go",
+      "bytes": 2799,
+      "sha256": "e251858b0019c4689712cfe9dca9a30a6f938f1c52f28d39861b4400e820f74a"
+    },
+    {
+      "path": "arm64/libpokrov-core/seq_android.h",
+      "bytes": 2839,
+      "sha256": "2f4388126dcfad153597e8075ff25e34a96951ed500fd26d0f29d5af7356b772"
+    },
+    {
+      "path": "arm64/libpokrov-core/universe.h",
+      "bytes": 166,
+      "sha256": "48ee13c5afc157fc6ff145eed8a99c78aabf67bb47030994af9b8671c59191c3"
+    },
+    {
+      "path": "arm64/libpokrov-core/universe_android.c",
+      "bytes": 1391,
+      "sha256": "2c5f008d3e9069f868dc1c14b32551ec5e2017a05cd102e56aeb6c6795c557ab"
+    },
+    {
+      "path": "arm64/libpokrov-core/universe_android.h",
+      "bytes": 361,
+      "sha256": "feca2ff9c79611874a1baaeeb7f87a2c1655334ef9ad3e71cee6963ce4d865dc"
+    }
+  ],
+  "clean_source_after": true,
+  "unit_terminal_before": [
+    "MainPID=0",
+    "Result=exit-code",
+    "ActiveState=failed"
+  ]
+}

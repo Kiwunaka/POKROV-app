@@ -1,0 +1,199 @@
+{
+  "utc": "2026-09-11T19:20:05.363518+00:00",
+  "unit": "pokrov-r12-artifacts-2662f76-resume-20260911.service",
+  "authoritative_systemd_status": [
+    "MainPID=0",
+    "Result=oom-kill",
+    "ExecMainStatus=15",
+    "MemoryPeak=4294971392",
+    "CPUUsageNSec=1104303603000",
+    "ActiveState=failed",
+    "SubState=failed"
+  ],
+  "progress_record": {
+    "unit": [
+      "MainPID=0",
+      "Result=oom-kill",
+      "ExecMainStatus=15",
+      "MemoryCurrent=[not set]",
+      "CPUUsageNSec=1104303603000",
+      "ActiveState=failed",
+      "SubState=failed"
+    ],
+    "progress": {
+      "previous_failed_progress_sha256": "f32aaeeff938eb3ca7192679a37feeba41d36ac74c0c37c58589d34dbaa6f475",
+      "source_commit": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+      "status": "RUNNING",
+      "stage": "build_android_a",
+      "started_utc": "2026-09-11T18:57:42.119602+00:00",
+      "commands": [
+        {
+          "stage": "sbom_core-source",
+          "args": [
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+            "mod",
+            "-licenses",
+            "-std",
+            "-json",
+            "-notimestamp",
+            "-noserial",
+            "-output",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/sbom/core-source.cdx.json",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/lifecycle-fix/source"
+          ],
+          "exit": 0,
+          "elapsed_seconds": 66.696,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "06c555ad973d9962732805536ea2a19a15bcd407c8b9c81be50394ab8b7528b6",
+          "safe_summary": [],
+          "network_isolated": false,
+          "raw_output_saved": false
+        },
+        {
+          "stage": "sbom_engine-source",
+          "args": [
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+            "mod",
+            "-licenses",
+            "-std",
+            "-json",
+            "-notimestamp",
+            "-noserial",
+            "-output",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/sbom/engine-source.cdx.json",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/lifecycle-fix/source/engine/sing-box"
+          ],
+          "exit": 0,
+          "elapsed_seconds": 37.84,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "f1c19a8e3c35d6a6d2d4ff6aa9dff5491f93ae7c7ec297685ff373efaa7218fa",
+          "safe_summary": [],
+          "network_isolated": false,
+          "raw_output_saved": false
+        },
+        {
+          "stage": "build_windows_a",
+          "args": [
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+            "-NoProfile",
+            "-File",
+            "scripts/build-windows.ps1",
+            "-GoExecutable",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+            "-OutputDirectory",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/out/windows-a",
+            "-CCompiler",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/mingw/usr/bin/x86_64-w64-mingw32-gcc-posix",
+            "-CronetLibrary",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/libcronet.dll"
+          ],
+          "exit": 0,
+          "elapsed_seconds": 451.829,
+          "stdout_sha256": "7dfc0d61d59aab4890a397b96ba3b03257465f26cc79e7fbaeb11646bff6a0b4",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "safe_summary": [
+            "POKROV Core ABI contract OK: desktop=2 descriptor=1 events=1 exports=15",
+            "Windows ABI exports verified: 15 required symbols."
+          ],
+          "network_isolated": true,
+          "raw_output_saved": false
+        },
+        {
+          "stage": "build_windows_b",
+          "args": [
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+            "-NoProfile",
+            "-File",
+            "scripts/build-windows.ps1",
+            "-GoExecutable",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+            "-OutputDirectory",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/out/windows-b",
+            "-CCompiler",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/mingw/usr/bin/x86_64-w64-mingw32-gcc-posix",
+            "-CronetLibrary",
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/libcronet.dll"
+          ],
+          "exit": 0,
+          "elapsed_seconds": 21.391,
+          "stdout_sha256": "7dfc0d61d59aab4890a397b96ba3b03257465f26cc79e7fbaeb11646bff6a0b4",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "safe_summary": [
+            "POKROV Core ABI contract OK: desktop=2 descriptor=1 events=1 exports=15",
+            "Windows ABI exports verified: 15 required symbols."
+          ],
+          "network_isolated": true,
+          "raw_output_saved": false
+        },
+        {
+          "stage": "evidence_windows",
+          "args": [
+            "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+            "-NoProfile",
+            "-Command",
+            "& '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/lifecycle-fix/source/scripts/new-release-artifact-evidence.ps1' -Lane 'windows' -FirstBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/out/windows-a' -SecondBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/out/windows-b' -Output '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/windows-evidence.json' -Sbom '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/sbom/core-source.cdx.json','/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build-2662f76/sbom/engine-source.cdx.json' -RequireCleanSource"
+          ],
+          "exit": 0,
+          "elapsed_seconds": 2.204,
+          "stdout_sha256": "6ec11455e7b90f52a5f3b171a339790fbc975f3beeea0c6adab77405aac4ba53",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "safe_summary": [],
+          "network_isolated": true,
+          "raw_output_saved": false
+        }
+      ],
+      "resource_limit": {
+        "cpu_quota_percent": 100,
+        "memory_max_bytes": 4294967296,
+        "nice": 19
+      },
+      "host_install": false,
+      "candidate_created": false,
+      "source_tree": "e85be4e008668a2d57465bf49e1f413b020ab156",
+      "validation_sha256": "717342e193750283998eee30d886c8e303066f801960b255f301ad0063404b88",
+      "build_tools": [
+        {
+          "name": "gomobile",
+          "module": "github.com/sagernet/gomobile",
+          "version": "v0.1.11",
+          "sha256": "4ad5d6ace465e3431e8190a0eead83891e0d722e523f13433201f06ed8c5d1fd"
+        },
+        {
+          "name": "gobind",
+          "module": "github.com/sagernet/gomobile",
+          "version": "v0.1.11",
+          "sha256": "2a1ab064b0edfc03ba9b01c78e5e230b6d21d42ca9ff9463ed1d0d955aa41e10"
+        },
+        {
+          "name": "cyclonedx-gomod",
+          "module": "github.com/CycloneDX/cyclonedx-gomod",
+          "version": "v1.10.0",
+          "sha256": "c8ec5e301830631cb0b3d46fc29a95e11619954dbede86c2155c10d707467784"
+        },
+        {
+          "name": "staticcheck",
+          "module": "honnef.co/go/tools",
+          "version": "v0.7.0",
+          "sha256": "ba8a6a17033811deebf3391e4a76006d8bcd7a991a1bf8e41b6301229fee43a4"
+        },
+        {
+          "name": "govulncheck",
+          "module": "golang.org/x/vuln",
+          "version": "v1.7.0",
+          "sha256": "313a49e70ac0cdde947d190c4abf19705dfefca027da3901ce3af7ee2378d734"
+        }
+      ],
+      "windows_pe_imports": {
+        "a": [
+          "KERNEL32.dll",
+          "msvcrt.dll"
+        ],
+        "b": [
+          "KERNEL32.dll",
+          "msvcrt.dll"
+        ]
+      }
+    }
+  },
+  "explanation": "The group was killed at 4 GiB. The driver could not update its RUNNING progress; systemd terminal state is authoritative."
+}

@@ -1,6 +1,28 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current lifecycle resource binding — 2026-09-11
+## Current licensed uTLS and lifecycle binding — 2026-09-11
+
+The development client binds Core `2662f76a3303a0518bb07fbbdc449c066de2f95b`.
+The authenticated Psiphon uTLS7a1fc module supplies its own root license;
+URL-test lifecycle hook access is synchronized after a native race failure.
+Android and Windows each reproduce in two native DE builds. Four Android
+ABIs, desktop ABI2, event ABI1 and 15 Windows exports are retained. The Go
+module inventory loses Cloudflare CIRCL; other external module identities
+remain unchanged. The native notice asset preserves prior license bodies and
+adds the exact uTLS root license and MinGW/GCC runtime terms.
+
+[Binding evidence](../operations/evidence/2026-09-11-r12-c05-utls-binding/README.md)
+retains failed SBOM/OOM attempts, exact binaries and source identities.
+The Windows DLL passes 100 Dart proxy cycles and 300 bounded lifecycle cycles
+with 600 cancelled loopback sessions. Core CI passes test, Android, Windows
+and Apple jobs; its strict release contract awaits coordinated client binding.
+Consumer checks pass 81 runtime and 8 Android Flutter tests plus seed/docs
+contracts; all 99 generated Java wrapper files are unchanged. Source promotion
+is pending. Installed
+device acceptance, complete native licensing/source obligations and public
+release are still open for these bytes.
+
+## Previous lifecycle resource binding — 2026-09-11
 
 The development client binds Core `904e440aca98cb6419744c5c04c83223a6d6380e`. Discarded service owners now close
 their background observers; live command servers keep restartable stop/reload.

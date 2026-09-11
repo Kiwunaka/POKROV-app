@@ -1,0 +1,86 @@
+[
+  {
+    "name": "libpokrov-core-arm64-v8a",
+    "command": [
+      "C:/Users/kiwun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.windows-amd64/bin/go.exe",
+      "list",
+      "-deps",
+      "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+      "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack",
+      "github.com/sagernet/sing-box/experimental/libbox",
+      "./platform/mobile"
+    ],
+    "cwd": "E:\\r12-2662-source-20260911\\payload\\core",
+    "exit_code": 0,
+    "offline": true,
+    "GOMODCACHE": "E:\\r12-2662-source-20260911\\payload\\go-module-cache",
+    "errors": ""
+  },
+  {
+    "name": "libpokrov-core-armeabi-v7a",
+    "command": [
+      "C:/Users/kiwun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.windows-amd64/bin/go.exe",
+      "list",
+      "-deps",
+      "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+      "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack",
+      "github.com/sagernet/sing-box/experimental/libbox",
+      "./platform/mobile"
+    ],
+    "cwd": "E:\\r12-2662-source-20260911\\payload\\core",
+    "exit_code": 0,
+    "offline": true,
+    "GOMODCACHE": "E:\\r12-2662-source-20260911\\payload\\go-module-cache",
+    "errors": ""
+  },
+  {
+    "name": "libpokrov-core-x86",
+    "command": [
+      "C:/Users/kiwun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.windows-amd64/bin/go.exe",
+      "list",
+      "-deps",
+      "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+      "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack",
+      "github.com/sagernet/sing-box/experimental/libbox",
+      "./platform/mobile"
+    ],
+    "cwd": "E:\\r12-2662-source-20260911\\payload\\core",
+    "exit_code": 0,
+    "offline": true,
+    "GOMODCACHE": "E:\\r12-2662-source-20260911\\payload\\go-module-cache",
+    "errors": ""
+  },
+  {
+    "name": "libpokrov-core-x86_64",
+    "command": [
+      "C:/Users/kiwun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.windows-amd64/bin/go.exe",
+      "list",
+      "-deps",
+      "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+      "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack",
+      "github.com/sagernet/sing-box/experimental/libbox",
+      "./platform/mobile"
+    ],
+    "cwd": "E:\\r12-2662-source-20260911\\payload\\core",
+    "exit_code": 0,
+    "offline": true,
+    "GOMODCACHE": "E:\\r12-2662-source-20260911\\payload\\go-module-cache",
+    "errors": ""
+  },
+  {
+    "name": "pokrov-core",
+    "command": [
+      "C:/Users/kiwun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.windows-amd64/bin/go.exe",
+      "list",
+      "-deps",
+      "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+      "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack,with_purego",
+      "./platform/desktop"
+    ],
+    "cwd": "E:\\r12-2662-source-20260911\\payload\\core",
+    "exit_code": 0,
+    "offline": true,
+    "GOMODCACHE": "E:\\r12-2662-source-20260911\\payload\\go-module-cache",
+    "errors": ""
+  }
+]

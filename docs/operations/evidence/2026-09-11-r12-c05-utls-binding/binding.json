@@ -1,0 +1,56 @@
+{
+  "status": "PASS_REPRODUCIBLE_C05_UTLS_BINDING_LOCAL",
+  "previous_source": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "source": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "source_tree": "e85be4e008668a2d57465bf49e1f413b020ab156",
+  "compared_files": [
+    {
+      "lane": "android",
+      "path": "pokrov-core-sources.jar",
+      "size": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "lane": "android",
+      "path": "pokrov-core.aar",
+      "size": 106843791,
+      "sha256": "feb452f5f06b865e3ae0655ef4168ffe065c08b759f64e9cfa084cde9d5a5941"
+    },
+    {
+      "lane": "windows",
+      "path": "libcronet.dll",
+      "size": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.dll",
+      "size": 55012864,
+      "sha256": "e77cc0ab979becc635ec578b8b44248b1146dd96ba34cd4de72e62130089ce2c"
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.h",
+      "size": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    }
+  ],
+  "reproducibility_origin": "Two native DE builds per platform; local hashes independently verified against exact remote receipts",
+  "android_abis": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86",
+    "x86_64"
+  ],
+  "desktop_abi": 2,
+  "event_abi": 1,
+  "required_exports": 15,
+  "go_module_change": "Authenticated Psiphon uTLS7a1fc replaces24497; Cloudflare CIRCL no longer linked",
+  "windows_compiler": "MinGW-w64 11.0.1/GCC13.2 authenticated Ubuntu toolchain; system imports KERNEL32.dll and msvcrt.dll",
+  "notices_verbatim_blocks": 191,
+  "missing_recorded_module_root_licenses": [],
+  "complete_license_and_source_clearance": false,
+  "device_acceptance": "NOT_RUN for this binding; older installed receipts retain earlier exact bytes",
+  "promotion": "Core PR12 and coordinated client promotion pending; no public release",
+  "rollback": "C:/r12-c02-20260911/{android-a,windows-a}; previous runtime binding retained"
+}

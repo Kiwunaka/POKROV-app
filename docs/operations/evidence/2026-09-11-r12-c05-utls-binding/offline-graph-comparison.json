@@ -1,0 +1,3063 @@
+[
+  {
+    "name": "libpokrov-core-arm64-v8a",
+    "packages": 1010,
+    "package_set_unchanged": false,
+    "added_packages": [
+      "github.com/Kiwunaka/POKROV-core/v2/linuxruntime",
+      "github.com/Psiphon-Labs/utls/internal/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/fips140tls",
+      "github.com/Psiphon-Labs/utls/internal/hkdf",
+      "github.com/Psiphon-Labs/utls/internal/tls12",
+      "github.com/Psiphon-Labs/utls/internal/tls13"
+    ],
+    "removed_packages": [
+      "github.com/Psiphon-Labs/utls/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/mlkem768",
+      "github.com/cloudflare/circl/dh/x25519",
+      "github.com/cloudflare/circl/dh/x448",
+      "github.com/cloudflare/circl/hpke",
+      "github.com/cloudflare/circl/internal/conv",
+      "github.com/cloudflare/circl/internal/sha3",
+      "github.com/cloudflare/circl/kem",
+      "github.com/cloudflare/circl/kem/kyber/kyber768",
+      "github.com/cloudflare/circl/kem/mlkem/mlkem768",
+      "github.com/cloudflare/circl/kem/xwing",
+      "github.com/cloudflare/circl/math/fp25519",
+      "github.com/cloudflare/circl/math/fp448",
+      "github.com/cloudflare/circl/pke/kyber/internal/common",
+      "github.com/cloudflare/circl/pke/kyber/internal/common/params",
+      "github.com/cloudflare/circl/pke/kyber/kyber768",
+      "github.com/cloudflare/circl/pke/kyber/kyber768/internal",
+      "github.com/cloudflare/circl/simd/keccakf1600"
+    ],
+    "changes_explained_by_utls_and_linux_source": true,
+    "other_dependencies_and_source_selections_unchanged": true,
+    "changes": [
+      {
+        "package": "github.com/Kiwunaka/POKROV-core/v2/hcore",
+        "before": {
+          "GoFiles": [
+            "buildconfighelper.go",
+            "commands.go",
+            "coreinfo.go",
+            "custom.go",
+            "debouncer.go",
+            "grpc_server.go",
+            "hcore.pb.go",
+            "hcore_service.pb.go",
+            "hcore_service_grpc.pb.go",
+            "independent_instance.go",
+            "log_interface.go",
+            "logproto.go",
+            "operational_events.go",
+            "pause.go",
+            "platform_interface.go",
+            "proxy_info.go",
+            "restart.go",
+            "service.go",
+            "service_manager_callback.go",
+            "setup.go",
+            "standalone.go",
+            "start.go",
+            "static_data.go",
+            "stop.go",
+            "system_proxy.go",
+            "warp.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Kiwunaka/POKROV-core",
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "buildconfighelper.go",
+            "commands.go",
+            "coreinfo.go",
+            "custom.go",
+            "debouncer.go",
+            "grpc_server.go",
+            "hcore.pb.go",
+            "hcore_service.pb.go",
+            "hcore_service_grpc.pb.go",
+            "independent_instance.go",
+            "linux_daemon_linux.go",
+            "log_interface.go",
+            "logproto.go",
+            "operational_events.go",
+            "pause.go",
+            "platform_interface.go",
+            "proxy_info.go",
+            "restart.go",
+            "service.go",
+            "service_manager_callback.go",
+            "setup.go",
+            "standalone.go",
+            "start.go",
+            "static_data.go",
+            "stop.go",
+            "system_proxy.go",
+            "warp.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Kiwunaka/POKROV-core",
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "reason": "Linux filename also selected by GOOS=android; already approved Linux daemon source"
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls",
+        "before": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "notboring.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_ech_config.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "client_hello_fragmentation.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_key_schedule.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/dicttls",
+        "before": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/boring",
+        "before": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/helper",
+        "before": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/hpke",
+        "before": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint",
+        "before": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint/protocol",
+        "before": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "libpokrov-core-armeabi-v7a",
+    "packages": 1008,
+    "package_set_unchanged": false,
+    "added_packages": [
+      "github.com/Kiwunaka/POKROV-core/v2/linuxruntime",
+      "github.com/Psiphon-Labs/utls/internal/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/fips140tls",
+      "github.com/Psiphon-Labs/utls/internal/hkdf",
+      "github.com/Psiphon-Labs/utls/internal/tls12",
+      "github.com/Psiphon-Labs/utls/internal/tls13"
+    ],
+    "removed_packages": [
+      "github.com/Psiphon-Labs/utls/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/mlkem768",
+      "github.com/cloudflare/circl/dh/x25519",
+      "github.com/cloudflare/circl/dh/x448",
+      "github.com/cloudflare/circl/hpke",
+      "github.com/cloudflare/circl/internal/conv",
+      "github.com/cloudflare/circl/internal/sha3",
+      "github.com/cloudflare/circl/kem",
+      "github.com/cloudflare/circl/kem/kyber/kyber768",
+      "github.com/cloudflare/circl/kem/mlkem/mlkem768",
+      "github.com/cloudflare/circl/kem/xwing",
+      "github.com/cloudflare/circl/math/fp25519",
+      "github.com/cloudflare/circl/math/fp448",
+      "github.com/cloudflare/circl/pke/kyber/internal/common",
+      "github.com/cloudflare/circl/pke/kyber/internal/common/params",
+      "github.com/cloudflare/circl/pke/kyber/kyber768",
+      "github.com/cloudflare/circl/pke/kyber/kyber768/internal",
+      "github.com/cloudflare/circl/simd/keccakf1600"
+    ],
+    "changes_explained_by_utls_and_linux_source": true,
+    "other_dependencies_and_source_selections_unchanged": true,
+    "changes": [
+      {
+        "package": "github.com/Kiwunaka/POKROV-core/v2/hcore",
+        "before": {
+          "GoFiles": [
+            "buildconfighelper.go",
+            "commands.go",
+            "coreinfo.go",
+            "custom.go",
+            "debouncer.go",
+            "grpc_server.go",
+            "hcore.pb.go",
+            "hcore_service.pb.go",
+            "hcore_service_grpc.pb.go",
+            "independent_instance.go",
+            "log_interface.go",
+            "logproto.go",
+            "operational_events.go",
+            "pause.go",
+            "platform_interface.go",
+            "proxy_info.go",
+            "restart.go",
+            "service.go",
+            "service_manager_callback.go",
+            "setup.go",
+            "standalone.go",
+            "start.go",
+            "static_data.go",
+            "stop.go",
+            "system_proxy.go",
+            "warp.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Kiwunaka/POKROV-core",
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "buildconfighelper.go",
+            "commands.go",
+            "coreinfo.go",
+            "custom.go",
+            "debouncer.go",
+            "grpc_server.go",
+            "hcore.pb.go",
+            "hcore_service.pb.go",
+            "hcore_service_grpc.pb.go",
+            "independent_instance.go",
+            "linux_daemon_linux.go",
+            "log_interface.go",
+            "logproto.go",
+            "operational_events.go",
+            "pause.go",
+            "platform_interface.go",
+            "proxy_info.go",
+            "restart.go",
+            "service.go",
+            "service_manager_callback.go",
+            "setup.go",
+            "standalone.go",
+            "start.go",
+            "static_data.go",
+            "stop.go",
+            "system_proxy.go",
+            "warp.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Kiwunaka/POKROV-core",
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "reason": "Linux filename also selected by GOOS=android; already approved Linux daemon source"
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls",
+        "before": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "notboring.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_ech_config.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "client_hello_fragmentation.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_key_schedule.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/dicttls",
+        "before": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/boring",
+        "before": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/helper",
+        "before": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/hpke",
+        "before": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint",
+        "before": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint/protocol",
+        "before": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "libpokrov-core-x86",
+    "packages": 1008,
+    "package_set_unchanged": false,
+    "added_packages": [
+      "github.com/Kiwunaka/POKROV-core/v2/linuxruntime",
+      "github.com/Psiphon-Labs/utls/internal/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/fips140tls",
+      "github.com/Psiphon-Labs/utls/internal/hkdf",
+      "github.com/Psiphon-Labs/utls/internal/tls12",
+      "github.com/Psiphon-Labs/utls/internal/tls13"
+    ],
+    "removed_packages": [
+      "github.com/Psiphon-Labs/utls/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/mlkem768",
+      "github.com/cloudflare/circl/dh/x25519",
+      "github.com/cloudflare/circl/dh/x448",
+      "github.com/cloudflare/circl/hpke",
+      "github.com/cloudflare/circl/internal/conv",
+      "github.com/cloudflare/circl/internal/sha3",
+      "github.com/cloudflare/circl/kem",
+      "github.com/cloudflare/circl/kem/kyber/kyber768",
+      "github.com/cloudflare/circl/kem/mlkem/mlkem768",
+      "github.com/cloudflare/circl/kem/xwing",
+      "github.com/cloudflare/circl/math/fp25519",
+      "github.com/cloudflare/circl/math/fp448",
+      "github.com/cloudflare/circl/pke/kyber/internal/common",
+      "github.com/cloudflare/circl/pke/kyber/internal/common/params",
+      "github.com/cloudflare/circl/pke/kyber/kyber768",
+      "github.com/cloudflare/circl/pke/kyber/kyber768/internal",
+      "github.com/cloudflare/circl/simd/keccakf1600"
+    ],
+    "changes_explained_by_utls_and_linux_source": true,
+    "other_dependencies_and_source_selections_unchanged": true,
+    "changes": [
+      {
+        "package": "github.com/Kiwunaka/POKROV-core/v2/hcore",
+        "before": {
+          "GoFiles": [
+            "buildconfighelper.go",
+            "commands.go",
+            "coreinfo.go",
+            "custom.go",
+            "debouncer.go",
+            "grpc_server.go",
+            "hcore.pb.go",
+            "hcore_service.pb.go",
+            "hcore_service_grpc.pb.go",
+            "independent_instance.go",
+            "log_interface.go",
+            "logproto.go",
+            "operational_events.go",
+            "pause.go",
+            "platform_interface.go",
+            "proxy_info.go",
+            "restart.go",
+            "service.go",
+            "service_manager_callback.go",
+            "setup.go",
+            "standalone.go",
+            "start.go",
+            "static_data.go",
+            "stop.go",
+            "system_proxy.go",
+            "warp.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Kiwunaka/POKROV-core",
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "buildconfighelper.go",
+            "commands.go",
+            "coreinfo.go",
+            "custom.go",
+            "debouncer.go",
+            "grpc_server.go",
+            "hcore.pb.go",
+            "hcore_service.pb.go",
+            "hcore_service_grpc.pb.go",
+            "independent_instance.go",
+            "linux_daemon_linux.go",
+            "log_interface.go",
+            "logproto.go",
+            "operational_events.go",
+            "pause.go",
+            "platform_interface.go",
+            "proxy_info.go",
+            "restart.go",
+            "service.go",
+            "service_manager_callback.go",
+            "setup.go",
+            "standalone.go",
+            "start.go",
+            "static_data.go",
+            "stop.go",
+            "system_proxy.go",
+            "warp.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Kiwunaka/POKROV-core",
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "reason": "Linux filename also selected by GOOS=android; already approved Linux daemon source"
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls",
+        "before": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "notboring.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_ech_config.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "client_hello_fragmentation.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_key_schedule.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/dicttls",
+        "before": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/boring",
+        "before": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/helper",
+        "before": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/hpke",
+        "before": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint",
+        "before": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint/protocol",
+        "before": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "libpokrov-core-x86_64",
+    "packages": 1011,
+    "package_set_unchanged": false,
+    "added_packages": [
+      "github.com/Kiwunaka/POKROV-core/v2/linuxruntime",
+      "github.com/Psiphon-Labs/utls/internal/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/fips140tls",
+      "github.com/Psiphon-Labs/utls/internal/hkdf",
+      "github.com/Psiphon-Labs/utls/internal/tls12",
+      "github.com/Psiphon-Labs/utls/internal/tls13"
+    ],
+    "removed_packages": [
+      "github.com/Psiphon-Labs/utls/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/mlkem768",
+      "github.com/cloudflare/circl/dh/x25519",
+      "github.com/cloudflare/circl/dh/x448",
+      "github.com/cloudflare/circl/hpke",
+      "github.com/cloudflare/circl/internal/conv",
+      "github.com/cloudflare/circl/internal/sha3",
+      "github.com/cloudflare/circl/kem",
+      "github.com/cloudflare/circl/kem/kyber/kyber768",
+      "github.com/cloudflare/circl/kem/mlkem/mlkem768",
+      "github.com/cloudflare/circl/kem/xwing",
+      "github.com/cloudflare/circl/math/fp25519",
+      "github.com/cloudflare/circl/math/fp448",
+      "github.com/cloudflare/circl/pke/kyber/internal/common",
+      "github.com/cloudflare/circl/pke/kyber/internal/common/params",
+      "github.com/cloudflare/circl/pke/kyber/kyber768",
+      "github.com/cloudflare/circl/pke/kyber/kyber768/internal",
+      "github.com/cloudflare/circl/simd/keccakf1600"
+    ],
+    "changes_explained_by_utls_and_linux_source": true,
+    "other_dependencies_and_source_selections_unchanged": true,
+    "changes": [
+      {
+        "package": "github.com/Kiwunaka/POKROV-core/v2/hcore",
+        "before": {
+          "GoFiles": [
+            "buildconfighelper.go",
+            "commands.go",
+            "coreinfo.go",
+            "custom.go",
+            "debouncer.go",
+            "grpc_server.go",
+            "hcore.pb.go",
+            "hcore_service.pb.go",
+            "hcore_service_grpc.pb.go",
+            "independent_instance.go",
+            "log_interface.go",
+            "logproto.go",
+            "operational_events.go",
+            "pause.go",
+            "platform_interface.go",
+            "proxy_info.go",
+            "restart.go",
+            "service.go",
+            "service_manager_callback.go",
+            "setup.go",
+            "standalone.go",
+            "start.go",
+            "static_data.go",
+            "stop.go",
+            "system_proxy.go",
+            "warp.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Kiwunaka/POKROV-core",
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "buildconfighelper.go",
+            "commands.go",
+            "coreinfo.go",
+            "custom.go",
+            "debouncer.go",
+            "grpc_server.go",
+            "hcore.pb.go",
+            "hcore_service.pb.go",
+            "hcore_service_grpc.pb.go",
+            "independent_instance.go",
+            "linux_daemon_linux.go",
+            "log_interface.go",
+            "logproto.go",
+            "operational_events.go",
+            "pause.go",
+            "platform_interface.go",
+            "proxy_info.go",
+            "restart.go",
+            "service.go",
+            "service_manager_callback.go",
+            "setup.go",
+            "standalone.go",
+            "start.go",
+            "static_data.go",
+            "stop.go",
+            "system_proxy.go",
+            "warp.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Kiwunaka/POKROV-core",
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "reason": "Linux filename also selected by GOOS=android; already approved Linux daemon source"
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls",
+        "before": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "notboring.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_ech_config.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "client_hello_fragmentation.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_key_schedule.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/dicttls",
+        "before": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/boring",
+        "before": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/helper",
+        "before": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/hpke",
+        "before": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint",
+        "before": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint/protocol",
+        "before": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "pokrov-core",
+    "packages": 1000,
+    "package_set_unchanged": false,
+    "added_packages": [
+      "github.com/Psiphon-Labs/utls/internal/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/fips140tls",
+      "github.com/Psiphon-Labs/utls/internal/hkdf",
+      "github.com/Psiphon-Labs/utls/internal/tls12",
+      "github.com/Psiphon-Labs/utls/internal/tls13"
+    ],
+    "removed_packages": [
+      "github.com/Psiphon-Labs/utls/byteorder",
+      "github.com/Psiphon-Labs/utls/internal/mlkem768",
+      "github.com/cloudflare/circl/dh/x25519",
+      "github.com/cloudflare/circl/dh/x448",
+      "github.com/cloudflare/circl/hpke",
+      "github.com/cloudflare/circl/internal/conv",
+      "github.com/cloudflare/circl/internal/sha3",
+      "github.com/cloudflare/circl/kem",
+      "github.com/cloudflare/circl/kem/kyber/kyber768",
+      "github.com/cloudflare/circl/kem/mlkem/mlkem768",
+      "github.com/cloudflare/circl/kem/xwing",
+      "github.com/cloudflare/circl/math/fp25519",
+      "github.com/cloudflare/circl/math/fp448",
+      "github.com/cloudflare/circl/pke/kyber/internal/common",
+      "github.com/cloudflare/circl/pke/kyber/internal/common/params",
+      "github.com/cloudflare/circl/pke/kyber/kyber768",
+      "github.com/cloudflare/circl/pke/kyber/kyber768/internal",
+      "github.com/cloudflare/circl/simd/keccakf1600"
+    ],
+    "changes_explained_by_utls_and_linux_source": true,
+    "other_dependencies_and_source_selections_unchanged": true,
+    "changes": [
+      {
+        "package": "github.com/Psiphon-Labs/utls",
+        "before": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "notboring.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_ech_config.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alert.go",
+            "auth.go",
+            "cache.go",
+            "cipher_suites.go",
+            "client_hello_fragmentation.go",
+            "common.go",
+            "common_string.go",
+            "conn.go",
+            "defaults.go",
+            "ech.go",
+            "handshake_client.go",
+            "handshake_client_tls13.go",
+            "handshake_messages.go",
+            "handshake_server.go",
+            "handshake_server_tls13.go",
+            "key_agreement.go",
+            "key_schedule.go",
+            "prf.go",
+            "quic.go",
+            "ticket.go",
+            "tls.go",
+            "u_alias.go",
+            "u_clienthello_json.go",
+            "u_common.go",
+            "u_conn.go",
+            "u_ech.go",
+            "u_fingerprinter.go",
+            "u_handshake_client.go",
+            "u_handshake_messages.go",
+            "u_hpke.go",
+            "u_key_schedule.go",
+            "u_parrots.go",
+            "u_pre_shared_key.go",
+            "u_prng.go",
+            "u_public.go",
+            "u_quic.go",
+            "u_quic_transport_parameters.go",
+            "u_roller.go",
+            "u_session_controller.go",
+            "u_session_ticket.go",
+            "u_tls_extensions.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/dicttls",
+        "before": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "alerts.go",
+            "authorization_data_formats.go",
+            "cachedinformationtype_values.go",
+            "certificate_compression_algorithm_ids.go",
+            "certificate_status_types.go",
+            "certificte_types.go",
+            "cipher_suites.go",
+            "clientcertificatetype_identifiers.go",
+            "comp_meth_ids.go",
+            "contenttype.go",
+            "ec_curve_types.go",
+            "ec_point_formats.go",
+            "exttype_values.go",
+            "handshaketype.go",
+            "hashalgorithm.go",
+            "heartbeat_message_types.go",
+            "heartbeat_mode.go",
+            "hpke_aead_identifiers.go",
+            "hpke_kdf_identifiers.go",
+            "hpke_kem_identifiers.go",
+            "psk_key_exchange_mode.go",
+            "quic_frame_types.go",
+            "quic_transport_error_codes.go",
+            "quic_transport_parameters.go",
+            "signaturealgorithm.go",
+            "signaturescheme.go",
+            "supplemental_data_formats.go",
+            "supported_groups.go",
+            "usermappingtype_values.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/boring",
+        "before": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "notboring.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/helper",
+        "before": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "typeconv.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/hpke",
+        "before": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "hpke.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint",
+        "before": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "varint.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      },
+      {
+        "package": "github.com/Psiphon-Labs/utls/internal/quicvarint/protocol",
+        "before": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v0.0.0-20260129182755-24497d415a8d",
+            "Sum": "h1:PlKwrArEuQOVqEmThSs9KsXMiBduP8MSu9rlWmQ4jgE=",
+            "GoModSum": "h1:1vv0gVAzq9e2XYkW8HAKrmtuuZrBdDixQFx5H22KAjI="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        },
+        "after": {
+          "GoFiles": [
+            "protocol.go"
+          ],
+          "CgoFiles": [],
+          "SFiles": [],
+          "CFiles": [],
+          "CXXFiles": [],
+          "HFiles": [],
+          "SysoFiles": [],
+          "EmbedFiles": [],
+          "module": {
+            "Path": "github.com/Psiphon-Labs/utls",
+            "Version": "v1.1.1-0.20260729134728-7a1fc711853d",
+            "Sum": "h1:htAwZYlfEn3FJXqmY2iTh/53RRfcbkBahdAjDr25UnA=",
+            "GoModSum": "h1:zoUi6jXnfX7ICJb9Epr8XPmhp28AnGhGz2J+bxyg7Cs="
+          },
+          "replacement": {
+            "Path": null,
+            "Version": null,
+            "Sum": null,
+            "GoModSum": null
+          }
+        }
+      }
+    ]
+  }
+]
