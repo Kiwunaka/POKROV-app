@@ -1,0 +1,24 @@
+{
+  "-4": [
+    {
+      "dst": "default",
+      "dev": "lo",
+      "table": "20555",
+      "protocol": "243",
+      "scope": "253",
+      "metric": 42700,
+      "flags": []
+    }
+  ],
+  "-6": [
+    {
+      "dst": "default",
+      "dev": "lo",
+      "table": "20555",
+      "protocol": "243",
+      "metric": 42700,
+      "flags": [],
+      "pref": "medium"
+    }
+  ]
+}

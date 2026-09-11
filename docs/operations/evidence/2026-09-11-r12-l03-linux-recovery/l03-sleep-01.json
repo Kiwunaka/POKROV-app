@@ -1,0 +1,88 @@
+{
+  "uid": 1000,
+  "authorization": "FIXTURE_GRANT",
+  "gui": false,
+  "signed_package": false,
+  "steps": {
+    "connect": {
+      "protocol": "pokrov-linuxd-v1",
+      "request_id": "l03-sleep-01-connect",
+      "ok": true,
+      "snapshot": {
+        "phase": "running",
+        "supports_live_connect": true,
+        "can_initialize": true,
+        "can_connect": false,
+        "message_code": "ready",
+        "host_health": "healthy",
+        "dns_state": "unknown",
+        "uplink_state": "unknown",
+        "dns_ready": null,
+        "core_egress_validated": null,
+        "last_stop_reason": "requested",
+        "ipv4_route_count": null,
+        "ipv6_route_count": null,
+        "connection_pending": false,
+        "host_stack": {
+          "systemd": true,
+          "network_manager": true,
+          "resolved": true,
+          "nftables": true,
+          "core_artifact": true
+        }
+      }
+    },
+    "disconnect": {
+      "protocol": "pokrov-linuxd-v1",
+      "request_id": "l03-sleep-01-disconnect",
+      "ok": true,
+      "snapshot": {
+        "phase": "config_staged",
+        "supports_live_connect": true,
+        "can_initialize": true,
+        "can_connect": true,
+        "message_code": "stopped",
+        "host_health": "healthy",
+        "dns_state": "unknown",
+        "uplink_state": "unknown",
+        "dns_ready": null,
+        "core_egress_validated": null,
+        "last_stop_reason": "requested",
+        "ipv4_route_count": null,
+        "ipv6_route_count": null,
+        "connection_pending": false,
+        "host_stack": {
+          "systemd": true,
+          "network_manager": true,
+          "resolved": true,
+          "nftables": true,
+          "core_artifact": true
+        }
+      }
+    }
+  },
+  "before": {
+    "nft": "e8e2201c1f9ccf2da32a899d44795084d1168072cc9ddf3a6f57a212767ac173",
+    "rules4": "e79a76eff86a78de4ce5d38c6277dbafbab227656214e1e116d9ac63597dbb9d",
+    "rules6": "78fc521d26d8f02af636ce8e1c74bb782cbfd272b8a81529bea0adb9a68ed0ea",
+    "routes4": "5155dcda5a2a2249be16a9b5f8e5b46f4fd3385ade1315cf0a86efe1d0d1361f",
+    "routes6": "65df7d310d4b7a7c0265508b3cc15dec93de553407926ae030b0d22b6327bbda",
+    "dns": "eb9758bd126dd8b48f7f235fa8b0f9c889b9a2ec52a0fda932fcc098c3af57a4",
+    "domains": "6275bde09816f1082c21fbfd4ac7a8e553e200e03ab53182012ba61896132b8c"
+  },
+  "boot_id_before": "88ba1a7d-9b44-4f9b-88c4-a8314f1577e2",
+  "connected_before_sleep": true,
+  "result": "FAIL",
+  "failure_type": "AssertionError",
+  "failure_message": "",
+  "after": {
+    "nft": "e8e2201c1f9ccf2da32a899d44795084d1168072cc9ddf3a6f57a212767ac173",
+    "rules4": "e79a76eff86a78de4ce5d38c6277dbafbab227656214e1e116d9ac63597dbb9d",
+    "rules6": "78fc521d26d8f02af636ce8e1c74bb782cbfd272b8a81529bea0adb9a68ed0ea",
+    "routes4": "5155dcda5a2a2249be16a9b5f8e5b46f4fd3385ade1315cf0a86efe1d0d1361f",
+    "routes6": "735502fee8b135d4557151db882af2ec20d9f6193f6b6953f27ccb6160559379",
+    "dns": "eb9758bd126dd8b48f7f235fa8b0f9c889b9a2ec52a0fda932fcc098c3af57a4",
+    "domains": "6275bde09816f1082c21fbfd4ac7a8e553e200e03ab53182012ba61896132b8c"
+  },
+  "finished": true
+}

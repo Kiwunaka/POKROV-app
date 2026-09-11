@@ -35,7 +35,7 @@ var (
 		"linux_network_apply_failed": {}, "linux_network_rollback_failed": {},
 	}
 	networkSubsystems = map[string]struct{}{
-		"network_manager": {}, "resolved": {}, "nftables": {},
+		"network_manager": {}, "resolved": {}, "nftables": {}, "routes": {},
 	}
 	networkStages = map[string]struct{}{
 		"checkpoint": {}, "apply": {}, "rollback": {},

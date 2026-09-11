@@ -72,6 +72,8 @@ func TestPlanRejectsUnownedOrOpenNetworkInputs(t *testing.T) {
 
 func TestNetworkManagerUsesBoundedSystemDBusCheckpointLifecycle(t *testing.T) {
 	runner := &scriptedCommandRunner{responses: []commandResponse{
+		{output: `s ":1.42"`},
+		{output: "o \"/org/freedesktop/NetworkManager/Devices/8\"\n"},
 		{output: "o \"/org/freedesktop/NetworkManager/Checkpoint/17\"\n"},
 		{},
 	}}
@@ -88,18 +90,20 @@ func TestNetworkManagerUsesBoundedSystemDBusCheckpointLifecycle(t *testing.T) {
 	if participant.PendingRollback() {
 		t.Fatal("committed checkpoint remained armed")
 	}
-	if got := runner.calls[0].arguments[len(runner.calls[0].arguments)-4:]; !reflect.DeepEqual(got, []string{"aouu", "0", "90", "38"}) {
+	if got := runner.calls[2].arguments[len(runner.calls[2].arguments)-5:]; !reflect.DeepEqual(got, []string{"aouu", "1", "/org/freedesktop/NetworkManager/Devices/8", "90", "0"}) {
 		t.Fatalf("unexpected checkpoint contract: %#v", got)
 	}
-	if got := runner.calls[1].arguments[6]; got != "CheckpointDestroy" {
+	if got := runner.calls[3].arguments[6]; got != "CheckpointDestroy" {
 		t.Fatalf("checkpoint was not committed: %q", got)
 	}
 }
 
 func TestNetworkManagerRollbackUsesOnlyReturnedObjectPath(t *testing.T) {
 	runner := &scriptedCommandRunner{responses: []commandResponse{
+		{output: `s ":1.42"`},
+		{output: "o /org/freedesktop/NetworkManager/Devices/8"},
 		{output: "o /org/freedesktop/NetworkManager/Checkpoint/abc_9"},
-		{},
+		{output: "a{su} 1 \"/org/freedesktop/NetworkManager/Devices/8\" 0"},
 	}}
 	participant := &networkManagerParticipant{runner: runner}
 	if err := participant.Checkpoint(context.Background(), validPlan(t)); err != nil {
@@ -108,7 +112,7 @@ func TestNetworkManagerRollbackUsesOnlyReturnedObjectPath(t *testing.T) {
 	if err := participant.Rollback(context.Background(), validPlan(t)); err != nil {
 		t.Fatal(err)
 	}
-	call := runner.calls[1]
+	call := runner.calls[3]
 	if call.arguments[6] != "CheckpointRollback" ||
 		call.arguments[len(call.arguments)-1] != "/org/freedesktop/NetworkManager/Checkpoint/abc_9" {
 		t.Fatalf("unexpected rollback call: %#v", call)
@@ -166,10 +170,11 @@ func TestNftablesOwnsOneAtomicTableAndRestoresIt(t *testing.T) {
 		{},
 		{},
 		{output: `{"nftables":[{"table":{"family":"inet","name":"pokrov"}}]}`},
+		{output: `{"nftables":[{"table":{"family":"inet","name":"pokrov","comment":"pokrov-linuxd:0123456789abcdef0123456789abcdef"}}]}`},
 		{},
 		{},
 	}}
-	participant := &nftablesParticipant{runner: runner}
+	participant := &nftablesParticipant{runner: runner, owner: "0123456789abcdef0123456789abcdef"}
 	plan := validPlan(t)
 	if err := participant.Checkpoint(context.Background(), plan); err != nil {
 		t.Fatal(err)
@@ -198,7 +203,7 @@ func TestNftablesOwnsOneAtomicTableAndRestoresIt(t *testing.T) {
 		runner.calls[2].arguments[0] != "--file" {
 		t.Fatalf("nft rules were not validated before apply: %#v", runner.calls)
 	}
-	if got := runner.calls[4].input; got != "delete table inet pokrov\n" {
+	if got := runner.calls[5].input; got != "delete table inet pokrov\n" {
 		t.Fatalf("rollback escaped the owned table: %q", got)
 	}
 }
@@ -207,7 +212,7 @@ func TestNftablesRejectsPreexistingOwnedTable(t *testing.T) {
 	runner := &scriptedCommandRunner{responses: []commandResponse{{
 		output: `{"nftables":[{"table":{"family":"inet","name":"pokrov"}}]}`,
 	}}}
-	participant := &nftablesParticipant{runner: runner}
+	participant := &nftablesParticipant{runner: runner, owner: "0123456789abcdef0123456789abcdef"}
 	if err := participant.Checkpoint(context.Background(), validPlan(t)); err == nil {
 		t.Fatal("preexisting owned table was overwritten")
 	}

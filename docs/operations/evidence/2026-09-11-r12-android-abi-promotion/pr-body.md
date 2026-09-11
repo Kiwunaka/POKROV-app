@@ -1,0 +1,5 @@
+An ARM64-only Flutter release build compiled ARM64 app code while Gradle still packaged dependency libraries for three architectures. Derive native ABI filters and split outputs from the same target-platform list, so each selected ABI has matching Flutter and Core libraries. The default three-architecture production command and its four direct APK outputs remain unchanged.
+
+Validation: actual Gradle probes confirm ARM64-only packaging and the existing full production output configuration; release-handoff v2 passed 16 cases; validate-seed passed. A local signed ARM64 release APK passed package/version/ABI, non-debuggable manifest, native identity, notices and embedded revision checks (SHA-256 3ecff58793e0f6b354ce49eabd5f84f06052a92176cd12e4c5c7583a91cc41a0). The complete signed commit tree matches locally tested 90337b3; that APK retains its original 90337b3 diagnostics identity.
+
+No new build option, dependency, runtime code or release pointer changes. Other package variants and installed-device acceptance remain open. Independent review was not performed under the existing owner-solo exception; required CI and branch protection remain in force.

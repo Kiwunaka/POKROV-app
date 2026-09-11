@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"regexp"
 	"sync"
+	"time"
 
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/journal"
 )
@@ -75,6 +76,12 @@ type Participant interface {
 	PendingRollback() bool
 }
 
+// Core is the one child runtime owned by this network transaction.
+type Core interface {
+	Start(context.Context) error
+	Stop(context.Context) error
+}
+
 type Failure struct {
 	Stage          Stage
 	Subsystem      Subsystem
@@ -103,12 +110,13 @@ type Transaction struct {
 	participants map[Subsystem]Participant
 	plan         Plan
 	state        transactionState
+	core         Core
+	corePending  bool
+	recovery     *recoveryLog
 }
 
 var (
-	checkpointOrder = []Subsystem{NetworkManager, Resolved, Nftables}
-	applyOrder      = []Subsystem{Resolved, Nftables, NetworkManager}
-	rollbackOrder   = []Subsystem{Nftables, Resolved, NetworkManager}
+	checkpointOrder = []Subsystem{NetworkManager, Resolved, Nftables, Routes}
 )
 
 func NewTransaction(recorder Recorder, participants ...Participant) (*Transaction, error) {
@@ -139,7 +147,7 @@ func NewTransaction(recorder Recorder, participants ...Participant) (*Transactio
 	}, nil
 }
 
-func (transaction *Transaction) Execute(ctx context.Context, plan Plan) error {
+func (transaction *Transaction) Execute(ctx context.Context, plan Plan, core Core) error {
 	transaction.mu.Lock()
 	defer transaction.mu.Unlock()
 	if !plan.valid() {
@@ -148,45 +156,85 @@ func (transaction *Transaction) Execute(ctx context.Context, plan Plan) error {
 	if transaction.state != transactionFresh {
 		return ErrInvalidState
 	}
-	transaction.plan = plan
-	for _, subsystem := range checkpointOrder {
-		participant := transaction.participants[subsystem]
-		if err := participant.Checkpoint(ctx, plan); err != nil {
-			_ = transaction.recorder.Checkpoint(subsystem, Failed)
-			rollbackFailed := transaction.rollback(ctx, plan)
-			transaction.setFailureState(rollbackFailed)
-			return &Failure{
-				Stage:          CheckpointStage,
-				Subsystem:      subsystem,
-				RollbackFailed: rollbackFailed,
-			}
-		}
-		if err := transaction.recorder.Checkpoint(subsystem, Passed); err != nil {
-			rollbackFailed := transaction.rollback(ctx, plan)
-			transaction.setFailureState(rollbackFailed)
-			return ErrInvalidParticipants
-		}
+	if core == nil {
+		return ErrInvalidParticipants
 	}
-	for _, subsystem := range applyOrder {
-		participant := transaction.participants[subsystem]
-		if err := participant.Apply(ctx, plan); err != nil {
-			_ = transaction.recorder.Apply(subsystem, Failed)
-			rollbackFailed := transaction.rollback(ctx, plan)
-			transaction.setFailureState(rollbackFailed)
-			return &Failure{
-				Stage:          ApplyStage,
-				Subsystem:      subsystem,
-				RollbackFailed: rollbackFailed,
-			}
-		}
-		if err := transaction.recorder.Apply(subsystem, Passed); err != nil {
-			rollbackFailed := transaction.rollback(ctx, plan)
-			transaction.setFailureState(rollbackFailed)
-			return ErrInvalidParticipants
-		}
+	transaction.plan = plan
+	transaction.core = core
+	// Prepare already created the child; stop it even if a checkpoint fails
+	// before the start command reaches Core.
+	transaction.corePending = true
+	fail := func(stage Stage, subsystem Subsystem) error {
+		// Cancellation of connect must not cancel restoration of host state.
+		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+		defer cancel()
+		rollbackFailed := transaction.rollback(cleanup, plan)
+		transaction.setFailureState(rollbackFailed)
+		return &Failure{Stage: stage, Subsystem: subsystem, RollbackFailed: rollbackFailed}
+	}
+	if transaction.beginRecovery(plan) != nil {
+		return fail(CheckpointStage, 0)
+	}
+	if transaction.checkpoint(ctx, Routes) != nil {
+		return fail(CheckpointStage, Routes)
+	}
+	// Block uplink traffic before Core creates routes. Only Core's fixed mark,
+	// the owned TUN and necessary link configuration pass this filter.
+	if transaction.checkpoint(ctx, Nftables) != nil {
+		return fail(CheckpointStage, Nftables)
+	}
+	if transaction.apply(ctx, Nftables) != nil {
+		return fail(ApplyStage, Nftables)
+	}
+	if core.Start(ctx) != nil {
+		return fail(ApplyStage, 0)
+	}
+	if transaction.recordStartedLink() != nil {
+		return fail(ApplyStage, 0)
+	}
+	if transaction.apply(ctx, Routes) != nil {
+		return fail(ApplyStage, Routes)
+	}
+	// Both owners refer to the actual newly created TUN, never all host links.
+	if transaction.checkpoint(ctx, NetworkManager) != nil {
+		return fail(CheckpointStage, NetworkManager)
+	}
+	if transaction.checkpoint(ctx, Resolved) != nil {
+		return fail(CheckpointStage, Resolved)
+	}
+	if transaction.apply(ctx, Resolved) != nil {
+		return fail(ApplyStage, Resolved)
+	}
+	if transaction.apply(ctx, NetworkManager) != nil {
+		return fail(ApplyStage, NetworkManager)
 	}
 	transaction.state = transactionActive
 	return nil
+}
+
+func (transaction *Transaction) checkpoint(ctx context.Context, subsystem Subsystem) error {
+	if err := transaction.participants[subsystem].Checkpoint(ctx, transaction.plan); err != nil {
+		_ = transaction.recorder.Checkpoint(subsystem, Failed)
+		return err
+	}
+	if err := transaction.saveRecovery(); err != nil {
+		return err
+	}
+	return transaction.recorder.Checkpoint(subsystem, Passed)
+}
+
+func (transaction *Transaction) apply(ctx context.Context, subsystem Subsystem) error {
+	if err := transaction.beforeApply(subsystem); err != nil {
+		return err
+	}
+	if err := transaction.participants[subsystem].Apply(ctx, transaction.plan); err != nil {
+		_ = transaction.recorder.Apply(subsystem, Failed)
+		return err
+	}
+	if err := transaction.saveRecovery(); err != nil {
+		return err
+	}
+	return transaction.recorder.Apply(subsystem, Passed)
 }
 
 func (transaction *Transaction) Restore(ctx context.Context) error {
@@ -209,7 +257,9 @@ func (transaction *Transaction) Restore(ctx context.Context) error {
 
 func (transaction *Transaction) rollback(ctx context.Context, plan Plan) bool {
 	failed := false
-	for _, subsystem := range rollbackOrder {
+	// Restore per-link owners while the TUN still exists. Keep the traffic
+	// block and Core available if one needs a retry.
+	for _, subsystem := range []Subsystem{Resolved, NetworkManager} {
 		participant := transaction.participants[subsystem]
 		if !participant.PendingRollback() {
 			continue
@@ -222,8 +272,47 @@ func (transaction *Transaction) rollback(ctx context.Context, plan Plan) bool {
 		if err := transaction.recorder.Rollback(subsystem, Passed); err != nil {
 			failed = true
 		}
+		if err := transaction.saveRecovery(); err != nil {
+			failed = true
+		}
 	}
-	return failed
+	if failed {
+		return true
+	}
+	routes := transaction.participants[Routes]
+	if routes.PendingRollback() {
+		if routes.Rollback(ctx, plan) != nil {
+			_ = transaction.recorder.Rollback(Routes, Failed)
+			return true
+		}
+		if transaction.saveRecovery() != nil {
+			return true
+		}
+		_ = transaction.recorder.Rollback(Routes, Passed)
+	}
+	if transaction.corePending {
+		if transaction.core.Stop(ctx) != nil {
+			return true
+		}
+		transaction.corePending = false
+	}
+	nft := transaction.participants[Nftables]
+	if nft.PendingRollback() {
+		if nft.Rollback(ctx, plan) != nil {
+			_ = transaction.recorder.Rollback(Nftables, Failed)
+			return true
+		}
+		if transaction.recorder.Rollback(Nftables, Passed) != nil {
+			return true
+		}
+		if transaction.saveRecovery() != nil {
+			return true
+		}
+	}
+	if transaction.recovery != nil && transaction.recovery.file.Remove() != nil {
+		return true
+	}
+	return false
 }
 
 func (transaction *Transaction) setFailureState(rollbackFailed bool) {

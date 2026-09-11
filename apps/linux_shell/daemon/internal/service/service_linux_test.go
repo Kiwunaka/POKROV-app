@@ -107,7 +107,7 @@ func TestMutationRequiresAuthorizationBeforeProfileWrite(t *testing.T) {
 	}
 }
 
-func TestRootCanStageButLiveConnectRemainsFailClosed(t *testing.T) {
+func TestStagedProfileCannotConnectWithoutCoreControlProtocol(t *testing.T) {
 	service, store := newReadyService(t, nil)
 	root := auth.Peer{PID: 1, UID: 0, StartTime: 1}
 
@@ -125,12 +125,12 @@ func TestRootCanStageButLiveConnectRemainsFailClosed(t *testing.T) {
 		Action:    "connect",
 		Payload:   json.RawMessage("{}"),
 	})
-	if connect.OK || connect.ErrorCode != "linux_live_connect_unavailable" {
-		t.Fatalf("foundation advertised live connect: %#v", connect)
+	if connect.OK || connect.ErrorCode != "linux_runtime_error" {
+		t.Fatalf("missing Core control protocol accepted: %#v", connect)
 	}
 }
 
-func TestUnavailableConnectEmitsClosedNetworkPreflightReasons(t *testing.T) {
+func TestCorePrepareFailureNeverReachesNetworkParticipants(t *testing.T) {
 	events := &memoryEvents{}
 	service, _ := newReadyServiceWithEvents(t, nil, events)
 	root := auth.Peer{PID: 1, UID: 0, StartTime: 1}
@@ -144,8 +144,8 @@ func TestUnavailableConnectEmitsClosedNetworkPreflightReasons(t *testing.T) {
 		Action:    "connect",
 		Payload:   json.RawMessage("{}"),
 	})
-	if connect.OK || connect.ErrorCode != "linux_live_connect_unavailable" {
-		t.Fatalf("foundation advertised live connect: %#v", connect)
+	if connect.OK || connect.ErrorCode != "linux_runtime_error" {
+		t.Fatalf("missing Core control protocol accepted: %#v", connect)
 	}
 
 	networkEvents := make([]journal.Event, 0, 3)
@@ -154,17 +154,8 @@ func TestUnavailableConnectEmitsClosedNetworkPreflightReasons(t *testing.T) {
 			networkEvents = append(networkEvents, event)
 		}
 	}
-	if len(networkEvents) != 3 {
-		t.Fatalf("expected three network preflight events, got %#v", networkEvents)
-	}
-	wantSubsystems := []string{"network_manager", "resolved", "nftables"}
-	for index, event := range networkEvents {
-		if event.Subsystem != wantSubsystems[index] || event.Stage != "checkpoint" ||
-			event.Outcome != "unavailable" || event.ErrorCode != "linux_network_unsupported" ||
-			event.TransactionID != "linux-connect-observed-1" ||
-			event.CorrelationID != "linux-connect-observed-1" {
-			t.Fatalf("unexpected network event %d: %#v", index, event)
-		}
+	if len(networkEvents) != 0 {
+		t.Fatalf("Core prepare failure reached host networking: %#v", networkEvents)
 	}
 }
 

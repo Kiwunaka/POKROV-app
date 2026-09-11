@@ -1,0 +1,157 @@
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* codex/android-target-abi-signed-20260911 Release v2 Contract Kiwunaka/POKROV-app#115 · 34568361963
+Triggered via pull_request about 1 minute ago
+
+JOBS
+* cross-repository-contract (ID 103165011460)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  * Checkout client candidate
+  * Checkout platform promotion line
+  * Checkout Core promotion line
+  * Materialize bound Core source authority
+  * Setup Python
+  * Setup Java
+  * Setup Go
+  * Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* codex/android-target-abi-signed-20260911 Release v2 Contract Kiwunaka/POKROV-app#115 · 34568361963
+Triggered via pull_request about 1 minute ago
+
+JOBS
+* cross-repository-contract (ID 103165011460)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  * Checkout client candidate
+  * Checkout platform promotion line
+  * Checkout Core promotion line
+  * Materialize bound Core source authority
+  * Setup Python
+  * Setup Java
+  * Setup Go
+  * Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* codex/android-target-abi-signed-20260911 Release v2 Contract Kiwunaka/POKROV-app#115 · 34568361963
+Triggered via pull_request about 2 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103165011460)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  * Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* codex/android-target-abi-signed-20260911 Release v2 Contract Kiwunaka/POKROV-app#115 · 34568361963
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103165011460)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* codex/android-target-abi-signed-20260911 Release v2 Contract Kiwunaka/POKROV-app#115 · 34568361963
+Triggered via pull_request about 3 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103165011460)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* codex/android-target-abi-signed-20260911 Release v2 Contract Kiwunaka/POKROV-app#115 · 34568361963
+Triggered via pull_request about 4 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103165011460)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+failed to get run: Get "https://api.github.com/repos/Kiwunaka/POKROV-app/actions/runs/34568361963?exclude_pull_requests=true": dial tcp 140.82.121.5:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.

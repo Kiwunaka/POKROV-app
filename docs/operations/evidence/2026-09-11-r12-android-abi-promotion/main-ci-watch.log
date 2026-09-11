@@ -1,0 +1,509 @@
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 1 minute ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  * Checkout client candidate
+  * Checkout platform promotion line
+  * Checkout Core promotion line
+  * Materialize bound Core source authority
+  * Setup Python
+  * Setup Java
+  * Setup Go
+  * Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 2 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  * Checkout client candidate
+  * Checkout platform promotion line
+  * Checkout Core promotion line
+  * Materialize bound Core source authority
+  * Setup Python
+  * Setup Java
+  * Setup Go
+  * Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 2 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  * Checkout client candidate
+  * Checkout platform promotion line
+  * Checkout Core promotion line
+  * Materialize bound Core source authority
+  * Setup Python
+  * Setup Java
+  * Setup Go
+  * Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 3 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  * Materialize bound Core source authority
+  * Setup Python
+  * Setup Java
+  * Setup Go
+  * Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 3 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  * Setup Flutter
+  * Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 4 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 4 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 5 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 5 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 6 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 6 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 7 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 8 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 8 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 9 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 9 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 10 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  * Run client unit and Android flavor tests
+  * Validate conditional Linux daemon foundation
+  * Post Setup Flutter
+  * Post Setup Go
+  * Post Setup Java
+  * Post Setup Python
+  * Post Checkout Core promotion line
+  * Post Checkout platform promotion line
+  * Post Checkout client candidate
+Refreshing run status every 30 seconds. Press Ctrl+C to quit.
+
+* main Release v2 Contract · 34569091378
+Triggered via push about 10 minutes ago
+
+JOBS
+* cross-repository-contract (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  ✓ Run client unit and Android flavor tests
+  ✓ Validate conditional Linux daemon foundation
+  ✓ Post Setup Flutter
+  ✓ Post Setup Go
+  ✓ Post Setup Java
+  ✓ Post Setup Python
+  ✓ Post Checkout Core promotion line
+  ✓ Post Checkout platform promotion line
+  * Post Checkout client candidate
+✓ main Release v2 Contract · 34569091378
+Triggered via push about 11 minutes ago
+
+JOBS
+✓ cross-repository-contract in 9m51s (ID 103167162931)
+  ✓ Set up job
+  ✓ Reclaim unused runner disk
+  - Validate exact replay refs
+  ✓ Checkout client candidate
+  ✓ Checkout platform promotion line
+  ✓ Checkout Core promotion line
+  ✓ Materialize bound Core source authority
+  ✓ Setup Python
+  ✓ Setup Java
+  ✓ Setup Go
+  ✓ Setup Flutter
+  ✓ Validate cross-repository release-handoff v2 contract
+  ✓ Run client unit and Android flavor tests
+  ✓ Validate conditional Linux daemon foundation
+  ✓ Post Setup Flutter
+  ✓ Post Setup Go
+  ✓ Post Setup Java
+  ✓ Post Setup Python
+  ✓ Post Checkout Core promotion line
+  ✓ Post Checkout platform promotion line
+  ✓ Post Checkout client candidate
+  ✓ Complete job

@@ -1,0 +1,7 @@
+
+core test
+ok  	github.com/Kiwunaka/POKROV-core/v2/linuxruntime	0.004s
+
+core vet
+v2/hcore/linux_daemon_linux.go:16:2: missing go.sum entry for module providing package github.com/vishvananda/netlink (imported by github.com/Kiwunaka/POKROV-core/v2/hcore); to add:
+	go get github.com/Kiwunaka/POKROV-core/v2/hcore

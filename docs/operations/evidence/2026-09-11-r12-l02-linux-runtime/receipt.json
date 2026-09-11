@@ -1,0 +1,170 @@
+{
+  "schema": "pokrov-l02-isolated-runtime-v1",
+  "date": "2026-09-11",
+  "scope": "conditional Ubuntu24.04 amd64 Linux source and isolated VM",
+  "core_base": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "client_base": "11aaaabb27d08ea54ec9e2e3851cf3f2faef6c2f",
+  "working_source": true,
+  "core_binary": {
+    "revision": "02",
+    "sha256": "2a15dd18b23fb170f7192ed5eb323efcc3c3a5e361b495368b2e5fb56b8e35d5",
+    "bytes": 54886526,
+    "toolchain": "go1.26.8"
+  },
+  "daemon_binary": {
+    "revision": "03",
+    "sha256": "d13e0bcb2efa3cf73a0d85003a814bdc4463db71593c32062b8b592fd928db17",
+    "bytes": 4572415,
+    "toolchain": "go1.25.13"
+  },
+  "service_unit_sha256": "f987f2d8385f564dde30e9a7ee12f38e92093c2e47d683b2cd37b5cf12f4e78e",
+  "source_files": [
+    {
+      "repository": "core",
+      "path": "platform/linux/main.go",
+      "sha256": "bd02da900a656e7fa7e13702abd63f22c362823ed99db5e060fb8bc8a0fce4df"
+    },
+    {
+      "repository": "core",
+      "path": "v2/hcore/linux_daemon_linux.go",
+      "sha256": "98eabb20d87063635b042457e18a028a19c87255556892e45a7ab95f019808ae"
+    },
+    {
+      "repository": "core",
+      "path": "v2/linuxruntime/profile.go",
+      "sha256": "bba2533248337d9efe008e46e971edc9d50ecd949f33ae6d4a440f7d8a865ecf"
+    },
+    {
+      "repository": "core",
+      "path": "v2/linuxruntime/profile_test.go",
+      "sha256": "e3972fea37da66b1b047ae2b10637271ff0ae46ecd9e5c986ac84ad24d5fc69e"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/README.md",
+      "sha256": "3cb71cf442b34d3364721870bd851b06a00e17ce237a91d22c70b36077ead8ad"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/cmd/pokrov-linuxd/main.go",
+      "sha256": "7c95d6cda6dc149173de4b381689fd9e775ccce52c9422e9cbca0081ba8086d0"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/coreprocess/core_linux.go",
+      "sha256": "8b94b49ae947bedac0804677db2f4640dbb5578644822a9c0547d699cc1b4e6e"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/coreprocess/core_linux_test.go",
+      "sha256": "724f90eac4c5d895acc5bd23dbff22e623302dd07d84bb854b8586f091792a42"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/host/probe_linux.go",
+      "sha256": "a055ac59ce950ca7566e499e703af8685e18f10f708b50c7669927937b497e4d"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/participants.go",
+      "sha256": "be4a194fb4032fba31f3eb1711e80969c74aca3b33a512edcd78d34f64bcaf83"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/participants_test.go",
+      "sha256": "f76a2eef03a9a3f46dd94dbc4e5f483c98f146b58d4846c8675b0de8426cda96"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/transaction.go",
+      "sha256": "dfb1740a2863b571552d291990b5e8e5ca75a464d9bed99c3468c61f743ae46d"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/transaction_test.go",
+      "sha256": "42ed7becb41ad98bbc038abbf985c6d660c4486625b57fce4f2cba3883ad7789"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/service/service_linux.go",
+      "sha256": "138899501013dee158f796997f2f17dd86b3ab980e28361f12d5ba9f4f0e3094"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/service/service_linux_test.go",
+      "sha256": "6c4cc052bfcb465a196b6a343d0417bc0188a87f244e86fbfb64bb88a4f3d444"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/packaging/systemd/pokrov-linuxd.service",
+      "sha256": "0c814978389a2d226d1bf518dd9692ff535c721ee429d2396d9a1e992486ecdc"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/test/linux_packaging_contract_test.dart",
+      "sha256": "3d60a8db02d677d825059af483dbee6f7356f47e001a703eb51f731cf23f4069"
+    },
+    {
+      "repository": "client",
+      "path": "packages/runtime_engine/lib/src/linux_daemon_runtime.dart",
+      "sha256": "80025f8f035bca3cf8437808227055e821e4ec8746c38c3afd45e39ff9ba26f9"
+    },
+    {
+      "repository": "client",
+      "path": "packages/runtime_engine/test/runtime_engine_test.dart",
+      "sha256": "a5682919b4d1bb334be14614b0514ca80e1d1228708733c9f750946539f8f1c0"
+    },
+    {
+      "repository": "client",
+      "path": "test/docs-contract.ps1",
+      "sha256": "cba3258ae23ddb0060b4b0c97a33679c0651375a120ec20352bbc67c057a6f00"
+    }
+  ],
+  "source_archive_sha256": "ba8e54ae418f47c939d0d1c7c37ad74c5cbbbfc32e1f12bed65f261a369d6269",
+  "live_result": "PASS_BOUNDED",
+  "authorization_success": "FIXTURE_GRANT",
+  "production_policy_deny": "PASS",
+  "gui": "NOT_RUN",
+  "signed_package": "NOT_RUN",
+  "durable_crash_suspend_reboot_recovery": "NOT_IMPLEMENTED",
+  "route_comparison": "route JSON ignores only expires countdown; all other fields retained",
+  "no_release_artifact_delta": true,
+  "evidence_files": {
+    "current-build-02.json": "9ef2d00d40c90a6d0f1e7830a1dc6c13720fba7877b8b48b5f7d5e063ca8808d",
+    "current-build-02.log": "4a9f86d36eb27db27fce91b6310378cc8b34f063217adc46c54bc4f3d95ea708",
+    "daemon-build-03.json": "c471fba35ec1d67d851385eb97b15b20d74a8c0494bef45b1b160f017f68e156",
+    "daemon-build-03.log": "273d20b17395dfb28a196125cd74711321477800ef40d809bded3124bbb5d121",
+    "flutter-linux-shell-tests.log": "55a10b5842c3e3d1c1be7ea6d70990cab13aacbc22c58dbe0f8ad60bd440591c",
+    "flutter-packaging-04.log": "c73dc2ab61f7366180806db3c174997e54c56ab21cf77c0d102540b15da18b60",
+    "flutter-runtime-analyze.log": "2f33124db6701cfc7585cfcff3cbcbb9ccffe56fce656fe709dd3c7fae4a6a4f",
+    "go-provenance.json": "be66fbf85c46a87f935864d1146000c51e3f06386838990928f271dc8619d303",
+    "guest-install-receipt.json": "6790630b62038f30e417b0d9b10fcab1c2217d06bf5a613003e81e4b33515d9f",
+    "guest-nonroot-baseline.json": "115f70f7ea61279b7d540e9d671c00b0cfd4ec88d6b0b42efdfe87df4e79b0d5",
+    "host-platform.json": "82af86d3fe2152b6643ce9b91210ce2f5ab7dde7c4d99417873b3a3db4637dd2",
+    "host-return-04.json": "b3bb8fb0f6aa51b3e9dc814b9c42a4b8897913242fc0272fb75f5530f6cbaed7",
+    "production-policy-restored.json": "0c850404db88bbab9f8204bf8244895b1f7ba51fa70fcb3cb47ee2921e39a39b",
+    "return-state-04.json": "70223bc18073a226293711c25f21ea5ce8f1f8cbc68f38ad3f2a05411c8bce3d",
+    "runtime-receipts-04.json": "3b02d01f71ac1e88be7ec0c10692b66f1d0830824cb01874359dca94c779cbbc",
+    "unit-install-04.json": "3524d7bca0794068efcb2dd8bd547b27b545f7f2e87f87d19b1ee2ef21985a53"
+  },
+  "raw_evidence_sha256": {
+    "current-build-02.json": "4e882f5a41e8090bbb9dbfe91d2b8375bda86c0c6b0012c4791a2765f86ab78a",
+    "current-build-02.log": "21607077773f115e5213a99984705a3018fe62e6fae61866082a82bce9be58f4",
+    "daemon-build-03.json": "410720bc4ba301b459fd655608817f0994ba4ad7858611f23659b1d18882f671",
+    "daemon-build-03.log": "9989735779be0ad008e30ed428c4099849f3180f3177b2a157c3e9ef3bb06351",
+    "flutter-linux-shell-tests.log": "63bfb9f46f0319f2b1f6c578da2c39619ec130f42d6d9c767bbef2fe9b27abef",
+    "flutter-packaging-04.log": "c73dc2ab61f7366180806db3c174997e54c56ab21cf77c0d102540b15da18b60",
+    "flutter-runtime-analyze.log": "b3fd27e2dafc672b8a52c724c2a2ac15cd2fab35ea3b4a4145df12554989a069",
+    "go-provenance.json": "257b03b8f5bd0806fd6e67b81ecd604a9fa92e51d2074fc02e254343245966dc",
+    "guest-install-receipt.json": "82a545e289ebe1db0a3c1aa8c09491f7af30916175f37e06570a2a5d2762f08c",
+    "guest-nonroot-baseline.json": "df6c40340c2efec3ac069e76a474145329e24797a97daf59bb3e82942c6becc4",
+    "host-platform.json": "b7d6450a73cc8a699e9177bb792d2117a14a819fe9b756a4ba3cc07c7fca1902",
+    "host-return-04.json": "b3bb8fb0f6aa51b3e9dc814b9c42a4b8897913242fc0272fb75f5530f6cbaed7",
+    "production-policy-restored.json": "0c850404db88bbab9f8204bf8244895b1f7ba51fa70fcb3cb47ee2921e39a39b",
+    "return-state-04.json": "70223bc18073a226293711c25f21ea5ce8f1f8cbc68f38ad3f2a05411c8bce3d",
+    "runtime-receipts-04.json": "3b02d01f71ac1e88be7ec0c10692b66f1d0830824cb01874359dca94c779cbbc",
+    "unit-install-04.json": "e9cb0c439ebf76ed9b82630f38a5378c0913356eaa86d85f4c74f25f2e561ac9"
+  },
+  "evidence_encoding": "UTF-8 LF; trailing horizontal whitespace removed from text copies; raw originals retained outside Git with hashes below",
+  "core_commit": "e9205524573811f0192c0dba6f70be66ebf34cb1"
+}

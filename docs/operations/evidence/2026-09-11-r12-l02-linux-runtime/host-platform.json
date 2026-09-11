@@ -1,0 +1,8 @@
+{
+  "os_release": {
+    "VERSION_ID": "24.04",
+    "ID": "ubuntu"
+  },
+  "kernel": "6.8.0-138-generic",
+  "network_manager": "1.46.0"
+}

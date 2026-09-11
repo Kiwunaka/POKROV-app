@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "commands": [
+    {
+      "command": [
+        "/home/pokrovtest/r12-l02/go/bin/go",
+        "test",
+        "-p",
+        "1",
+        "./..."
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "/home/pokrovtest/r12-l02/go/bin/go",
+        "vet",
+        "-p",
+        "1",
+        "./..."
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "/home/pokrovtest/r12-l02/go/bin/go",
+        "build",
+        "-p",
+        "1",
+        "-trimpath",
+        "-buildvcs=false",
+        "-o",
+        "/home/pokrovtest/r12-l02/pokrov-linuxd-09",
+        "./cmd/pokrov-linuxd"
+      ],
+      "exit": 0
+    }
+  ],
+  "core_reused": "pokrov-core-08",
+  "artifacts": [
+    {
+      "name": "pokrov-linuxd-09",
+      "bytes": 4658649,
+      "sha256": "07a3a0f775a789e2399bff9f4bdeb97948f3d321696ed9bbd4a2edf6f4ff1053"
+    }
+  ]
+}

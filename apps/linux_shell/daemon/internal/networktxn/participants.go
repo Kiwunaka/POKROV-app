@@ -12,13 +12,18 @@ import (
 
 const (
 	networkManagerCheckpointSeconds = 90
-	networkManagerCheckpointFlags   = 0x02 | 0x04 | 0x20
-	pokrovNftFamily                 = "inet"
-	pokrovNftTable                  = "pokrov"
+	// No flags that delete new connections, disconnect other devices or
+	// restore global DNS. Ubuntu 24.04's NM 1.46 also predates flag 0x20.
+	networkManagerCheckpointFlags = 0
+	pokrovNftFamily               = "inet"
+	pokrovNftTable                = "pokrov"
 )
 
 var networkManagerCheckpointPath = regexp.MustCompile(
 	`^/org/freedesktop/NetworkManager/Checkpoint/[A-Za-z0-9_]+$`,
+)
+var networkManagerDevicePath = regexp.MustCompile(
+	"^/org/freedesktop/NetworkManager/Devices/[0-9]+$",
 )
 
 type commandRunner interface {
@@ -28,6 +33,8 @@ type commandRunner interface {
 type networkManagerParticipant struct {
 	runner         commandRunner
 	checkpointPath string
+	devicePath     string
+	busOwner       string
 }
 
 func (participant *networkManagerParticipant) Subsystem() Subsystem {
@@ -36,21 +43,48 @@ func (participant *networkManagerParticipant) Subsystem() Subsystem {
 
 func (participant *networkManagerParticipant) Checkpoint(
 	ctx context.Context,
-	_ Plan,
+	plan Plan,
 ) error {
 	if participant.runner == nil || participant.checkpointPath != "" {
 		return errors.New("network manager checkpoint unavailable")
+	}
+	owner, err := participant.runner.Run(ctx, "busctl", []string{
+		"--system", "--no-pager", "call", "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "GetNameOwner", "s", "org.freedesktop.NetworkManager",
+	}, nil)
+	if err != nil {
+		return errors.New("network manager bus owner unavailable")
+	}
+	fields := strings.Fields(strings.TrimSpace(string(owner)))
+	if len(fields) != 2 || fields[0] != "s" {
+		return errors.New("network manager bus owner invalid")
+	}
+	participant.busOwner = strings.Trim(fields[1], "\"")
+	if !busOwnerPattern.MatchString(participant.busOwner) {
+		return errors.New("network manager bus owner invalid")
+	}
+	device, err := participant.runner.Run(ctx, "busctl", []string{
+		"--system", "--no-pager", "call", participant.busOwner,
+		"/org/freedesktop/NetworkManager", "org.freedesktop.NetworkManager",
+		"GetDeviceByIpIface", "s", plan.tunnelInterface,
+	}, nil)
+	if err != nil {
+		return errors.New("network manager owned link unavailable")
+	}
+	participant.devicePath, err = parseNetworkManagerObject(device, networkManagerDevicePath)
+	if err != nil {
+		return err
 	}
 	output, err := participant.runner.Run(ctx, "busctl", []string{
 		"--system",
 		"--no-pager",
 		"call",
-		"org.freedesktop.NetworkManager",
+		participant.busOwner,
 		"/org/freedesktop/NetworkManager",
 		"org.freedesktop.NetworkManager",
 		"CheckpointCreate",
 		"aouu",
-		"0",
+		"1",
+		participant.devicePath,
 		strconv.Itoa(networkManagerCheckpointSeconds),
 		strconv.Itoa(networkManagerCheckpointFlags),
 	}, nil)
@@ -76,7 +110,7 @@ func (participant *networkManagerParticipant) Apply(
 		"--system",
 		"--no-pager",
 		"call",
-		"org.freedesktop.NetworkManager",
+		participant.busOwner,
 		"/org/freedesktop/NetworkManager",
 		"org.freedesktop.NetworkManager",
 		"CheckpointDestroy",
@@ -97,11 +131,11 @@ func (participant *networkManagerParticipant) Rollback(
 	if participant.checkpointPath == "" {
 		return nil
 	}
-	_, err := participant.runner.Run(ctx, "busctl", []string{
+	output, err := participant.runner.Run(ctx, "busctl", []string{
 		"--system",
 		"--no-pager",
 		"call",
-		"org.freedesktop.NetworkManager",
+		participant.busOwner,
 		"/org/freedesktop/NetworkManager",
 		"org.freedesktop.NetworkManager",
 		"CheckpointRollback",
@@ -110,6 +144,11 @@ func (participant *networkManagerParticipant) Rollback(
 	}, nil)
 	if err != nil {
 		return errors.New("network manager rollback failed")
+	}
+	fields := strings.Fields(strings.TrimSpace(string(output)))
+	if len(fields) != 4 || fields[0] != "a{su}" || fields[1] != "1" ||
+		strings.Trim(fields[2], "\"") != participant.devicePath || fields[3] != "0" {
+		return errors.New("network manager rollback result rejected")
 	}
 	participant.checkpointPath = ""
 	return nil
@@ -120,6 +159,10 @@ func (participant *networkManagerParticipant) PendingRollback() bool {
 }
 
 func parseCheckpointPath(output []byte) (string, error) {
+	return parseNetworkManagerObject(output, networkManagerCheckpointPath)
+}
+
+func parseNetworkManagerObject(output []byte, pattern *regexp.Regexp) (string, error) {
 	value := strings.TrimSpace(string(output))
 	if !strings.HasPrefix(value, "o ") {
 		return "", errors.New("network manager checkpoint response invalid")
@@ -136,7 +179,7 @@ func parseCheckpointPath(output []byte) (string, error) {
 		}
 		value = unquoted
 	}
-	if !networkManagerCheckpointPath.MatchString(value) {
+	if !pattern.MatchString(value) {
 		return "", errors.New("network manager checkpoint response invalid")
 	}
 	return value, nil
@@ -221,6 +264,7 @@ func (participant *resolvedParticipant) PendingRollback() bool {
 type nftablesParticipant struct {
 	runner commandRunner
 	dirty  bool
+	owner  string
 }
 
 func (participant *nftablesParticipant) Subsystem() Subsystem {
@@ -248,7 +292,10 @@ func (participant *nftablesParticipant) Apply(
 	if participant.dirty {
 		return errors.New("nftables transaction already active")
 	}
-	rules := nftRules(plan)
+	if !ownerTokenPattern.MatchString(participant.owner) {
+		return errors.New("nftables owner unavailable")
+	}
+	rules := nftRules(plan, participant.owner)
 	if _, err := participant.runner.Run(
 		ctx,
 		"nft",
@@ -285,6 +332,9 @@ func (participant *nftablesParticipant) Rollback(
 		return nil
 	}
 	rollback := []byte("delete table inet pokrov\n")
+	if err := participant.verifyOwner(ctx); err != nil {
+		return err
+	}
 	if _, err := participant.runner.Run(
 		ctx,
 		"nft",
@@ -343,8 +393,9 @@ func containsPokrovTable(output []byte) (bool, error) {
 	return false, nil
 }
 
-func nftRules(plan Plan) []byte {
+func nftRules(plan Plan, owner string) []byte {
 	return []byte(fmt.Sprintf(`table inet pokrov {
+  comment "pokrov-linuxd:%s"
   chain output {
     type filter hook output priority -150; policy drop;
     oifname "lo" accept
@@ -355,5 +406,30 @@ func nftRules(plan Plan) []byte {
     icmpv6 type { nd-router-solicit, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert } accept
   }
 }
-`, plan.tunnelInterface, plan.routingMark))
+`, owner, plan.tunnelInterface, plan.routingMark))
+}
+
+func (participant *nftablesParticipant) verifyOwner(ctx context.Context) error {
+	output, err := participant.runner.Run(ctx, "nft", []string{"--json", "list", "table", "inet", "pokrov"}, nil)
+	if err != nil {
+		return err
+	}
+	var listing struct {
+		Nftables []struct {
+			Table *struct {
+				Family  string `json:"family"`
+				Name    string `json:"name"`
+				Comment string `json:"comment"`
+			} `json:"table"`
+		} `json:"nftables"`
+	}
+	if json.Unmarshal(output, &listing) != nil {
+		return errors.New("nftables owner response invalid")
+	}
+	for _, entry := range listing.Nftables {
+		if entry.Table != nil && entry.Table.Family == "inet" && entry.Table.Name == "pokrov" && entry.Table.Comment == "pokrov-linuxd:"+participant.owner && ownerTokenPattern.MatchString(participant.owner) {
+			return nil
+		}
+	}
+	return errors.New("nftables table ownership changed")
 }

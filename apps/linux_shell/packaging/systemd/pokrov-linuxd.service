@@ -6,10 +6,11 @@ After=NetworkManager.service systemd-resolved.service
 
 [Service]
 Type=simple
+# linuxd restores DNS before stopping Core and releasing its firewall table.
+KillMode=mixed
 ExecStart=/usr/lib/pokrov/pokrov-linuxd
 User=root
 Group=root
-RuntimeDirectory=pokrov
 StateDirectory=pokrov
 UMask=0077
 NoNewPrivileges=yes

@@ -1,0 +1,23 @@
+{
+  "utc": "2026-09-11T06:04:21.038905+00:00",
+  "source": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+  "parent": "d9763e8cd7aba9b215015e07c0576f667c1dec09",
+  "signed_commit": "b5f1edaf33b89c1577678ac862686ca154f09334",
+  "tree": "fcb045f014e5883eae29147dd1a129bef06746e6",
+  "signature_valid": true,
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/115",
+  "branch": "codex/android-target-abi-signed-20260911",
+  "files": [
+    {
+      "path": "apps/android_shell/android/app/build.gradle",
+      "sha256": "203f80fd9bdea73026615b5cc8c312c796a901ef8eeb640aaaa72f95faf10472"
+    },
+    {
+      "path": "docs/operations/android-release-audit.md",
+      "sha256": "ad697dff88d5f3a7d26d8ed6460f75955c2b63c5b7a2255681bbdd6d4a05a460"
+    }
+  ],
+  "local_apk_revision_remains": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+  "local_apk_sha256": "3ecff58793e0f6b354ce49eabd5f84f06052a92176cd12e4c5c7583a91cc41a0",
+  "independent_review_performed": false
+}

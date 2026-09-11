@@ -44,6 +44,7 @@ func main() {
 		Outcome:       "started",
 		CorrelationID: "systemd-activation",
 	})
+	_ = daemon.Recover()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
@@ -51,7 +52,9 @@ func main() {
 		<-stop
 		_ = listener.Close()
 	}()
-	if err := server.New(daemon).Serve(listener); err != nil {
+	serveErr := server.New(daemon).Serve(listener)
+	closeErr := daemon.Close()
+	if serveErr != nil || closeErr != nil {
 		fmt.Fprintln(os.Stderr, "pokrov-linuxd stopped with a bounded server error")
 		os.Exit(1)
 	}
@@ -76,5 +79,7 @@ func activationListener() (*net.UnixListener, error) {
 		_ = listener.Close()
 		return nil, errors.New("systemd listener is not a Unix socket")
 	}
+	// systemd owns the socket path across daemon stop and reactivation.
+	unixListener.SetUnlinkOnClose(false)
 	return unixListener, nil
 }
