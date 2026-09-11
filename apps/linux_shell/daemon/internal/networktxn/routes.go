@@ -151,7 +151,9 @@ func ownedRouteObject(kind, family string, object map[string]json.RawMessage, pl
 			return false
 		}
 		if family == "-6" && !plan.ipv6() {
-			if string(object["type"]) != `"unreachable"` || len(object["dev"]) != 0 {
+			// ip -N reports RTN_UNREACHABLE as 7 and Linux assigns its
+			// reject route to lo even though route add does not name a dev.
+			if number(object["type"]) != 7 || string(object["dev"]) != `"lo"` {
 				return false
 			}
 		} else if string(object["dev"]) != strconv.Quote(plan.tunnelInterface) || (len(object["type"]) != 0 && string(object["type"]) != `"unicast"`) {

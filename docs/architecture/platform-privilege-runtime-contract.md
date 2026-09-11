@@ -527,6 +527,10 @@ adapter uses the shared Core config materializer to remove API-only `_meta`
 and unused cache-file settings, with WARP disabled for this beta. Core still
 validates the complete privileged profile boundary before network mutation.
 
+For an IPv4-only plan, the owned IPv6 default is an unreachable route. Recovery
+matches its native `ip -N` representation (`type: 7`, `dev: lo`) together with
+the fixed table, protocol and metric; a different device remains a conflict.
+
 A compiling Core or UI, an unsigned package, or an AppImage containing only UI
 does not prove VPN beta support. Public facts remain unchanged until the exact
 signed package passes install, upgrade, rollback, uninstall, non-root,
