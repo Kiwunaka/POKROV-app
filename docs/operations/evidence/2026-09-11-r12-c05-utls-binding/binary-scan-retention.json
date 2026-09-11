@@ -1,6 +1,6 @@
 {
-  "status": "PASS_ARCHIVE_HASHES",
-  "archive": "binary-scan-evidence.zip",
+  "status": "PASS_TEXT_REPORTS_TRACKED_ORIGINAL_ARCHIVE_RETAINED_EXTERNALLY",
+  "archive": "C:\\r12-c05-utls-update-20260911\\binary-scan-evidence.zip",
   "bytes": 499276,
   "sha256": "3bc487e713e2f8b58fee9a80eca59095107b727c8993b260d744350e053c7a47",
   "files": [
@@ -154,5 +154,7 @@
       "bytes": 3175,
       "sha256": "9d09c559c18a1ddcccfe0feae4594ec97bdfb9bce45fbc307e2f73995df6f47a"
     }
-  ]
+  ],
+  "tracked_directory": "binary-scans",
+  "hygiene_correction": "Original ZIP bytes preserved outside Git; all30 report bodies extracted without changes"
 }

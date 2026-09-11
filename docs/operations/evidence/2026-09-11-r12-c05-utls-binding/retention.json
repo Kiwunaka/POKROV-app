@@ -66,14 +66,159 @@
       "sha256": "17436746f4c604f190c9342feb21952bdf56680df68904276daaf581609db78a"
     },
     {
-      "path": "binary-scan-evidence.zip",
-      "bytes": 499276,
-      "sha256": "3bc487e713e2f8b58fee9a80eca59095107b727c8993b260d744350e053c7a47"
+      "path": "binary-scan-retention.json",
+      "bytes": 5721,
+      "sha256": "ddc065898dda84a62e8e1f24240216dc981e663ac37829157ae58990529ac850"
     },
     {
-      "path": "binary-scan-retention.json",
-      "bytes": 5488,
-      "sha256": "60d96e84584a1d31c35a076149c7a235ab7f471ad15e0f89120516682af5373e"
+      "path": "binary-scans/libpokrov-core-arm64-v8a.binary-sbom.log",
+      "bytes": 92,
+      "sha256": "444ff3193c86dff309e153ea40824ba01e39e6c48ddb49cb38e563a3bc22fa51"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-arm64-v8a.binary.cdx.json",
+      "bytes": 105718,
+      "sha256": "37fc5aafb701872ce43b42cef47da37e30de8858ce71ba8fbebb3ae2a5f6e2fa"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-arm64-v8a.extract.jsonl",
+      "bytes": 21746,
+      "sha256": "0afc137118ca4e9c5e4f18fecc410e523754f5e7da33fca50e7ef7d457adf6e0"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-arm64-v8a.govulncheck.jsonl",
+      "bytes": 645887,
+      "sha256": "fed521b0c5834ff241fa26d3b9dd6c70ab2d6142f5a1154cbd3f749ae8e7e764"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-arm64-v8a.govulncheck.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-arm64-v8a.scan.json",
+      "bytes": 3325,
+      "sha256": "2f911c548d73d61de85a3a400039bd2d5654435f95e055dc377000b289f6d2a5"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-armeabi-v7a.binary-sbom.log",
+      "bytes": 92,
+      "sha256": "444ff3193c86dff309e153ea40824ba01e39e6c48ddb49cb38e563a3bc22fa51"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-armeabi-v7a.binary.cdx.json",
+      "bytes": 105696,
+      "sha256": "b7cf231e70ef9ca002a9ad467f33202abc0695f50655c5208d54be7aea49c024"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-armeabi-v7a.extract.jsonl",
+      "bytes": 21740,
+      "sha256": "3523d1867a8f718df73cc93af6a5d7ba658a56652ebc4f0250b303b9d1362ce6"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-armeabi-v7a.govulncheck.jsonl",
+      "bytes": 645885,
+      "sha256": "ee843986f8b815dee44190bbbc2c87cc299ae3792111895a443e173e29a32baa"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-armeabi-v7a.govulncheck.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-armeabi-v7a.scan.json",
+      "bytes": 3343,
+      "sha256": "a14507bc658481091996990b48e8dd63d8cb0505a5424a79a26f19a13c8131e7"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86.binary-sbom.log",
+      "bytes": 92,
+      "sha256": "444ff3193c86dff309e153ea40824ba01e39e6c48ddb49cb38e563a3bc22fa51"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86.binary.cdx.json",
+      "bytes": 105688,
+      "sha256": "ad39afa22a0f99d63958da661d73e1444b070a01d92412cfadc1e5775f7f66e6"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86.extract.jsonl",
+      "bytes": 21740,
+      "sha256": "8f5265f4fc463e31f73a97d79232a42c9b3a86fad64edccefe3e53e7befde4f2"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86.govulncheck.jsonl",
+      "bytes": 645885,
+      "sha256": "169112045364ad404224e83f13d11a1ac335b0f4c0405686523db1f34a40efee"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86.govulncheck.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86.scan.json",
+      "bytes": 3271,
+      "sha256": "4895b3b9b9b5712c2375f916f0a0f916704fe0e838784274bbed1e36543337f8"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86_64.binary-sbom.log",
+      "bytes": 92,
+      "sha256": "444ff3193c86dff309e153ea40824ba01e39e6c48ddb49cb38e563a3bc22fa51"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86_64.binary.cdx.json",
+      "bytes": 105715,
+      "sha256": "9e3f00699ad29deb59d11f31431a9faf0579ceba19e19680878489dd0249e769"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86_64.extract.jsonl",
+      "bytes": 21746,
+      "sha256": "80cc819c9827b38bb29cce1b1565f7fdbe68080c2a174085df677b5564151273"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86_64.govulncheck.jsonl",
+      "bytes": 645887,
+      "sha256": "b23f09cfa79dd5e446b38df9aea0ece853d3951948876f853e0fc587b35eac5d"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86_64.govulncheck.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "binary-scans/libpokrov-core-x86_64.scan.json",
+      "bytes": 3298,
+      "sha256": "e2d9ca4ac965ecb5bff9f97a54b407e67900722a945a7699163f8206a0fab5a9"
+    },
+    {
+      "path": "binary-scans/pokrov-core.binary-sbom.log",
+      "bytes": 92,
+      "sha256": "43d6635d5639861957a307f5c5a0b40d0b68ca8be1028311986d87ff7115836d"
+    },
+    {
+      "path": "binary-scans/pokrov-core.binary.cdx.json",
+      "bytes": 101620,
+      "sha256": "1567762ca39fa0099cd794959dd90e2ade9bdf85abcaed11fa024b071e1f6cc1"
+    },
+    {
+      "path": "binary-scans/pokrov-core.extract.jsonl",
+      "bytes": 21002,
+      "sha256": "9d8f9e0086617cd5ef2cfaa0779d451d553b29bb758268a361add6a060f10145"
+    },
+    {
+      "path": "binary-scans/pokrov-core.govulncheck.jsonl",
+      "bytes": 650164,
+      "sha256": "6eff08db15ccd1d731440195a574d384052c95553ce86e75e9ff13e291b99d7e"
+    },
+    {
+      "path": "binary-scans/pokrov-core.govulncheck.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "binary-scans/pokrov-core.scan.json",
+      "bytes": 3175,
+      "sha256": "9d09c559c18a1ddcccfe0feae4594ec97bdfb9bce45fbc307e2f73995df6f47a"
     },
     {
       "path": "bind-static-triage.py",
@@ -89,6 +234,11 @@
       "path": "client-android-tests.log",
       "bytes": 1179,
       "sha256": "31a91c462616088c42a76ce9ecb3feae86daac6688ef3233e360c686cb611b63"
+    },
+    {
+      "path": "client-coordinated-seed-v2.log",
+      "bytes": 1818,
+      "sha256": "43f0f78aead9ac3e5edd42e05f12a0565ffeb7412ebf5b3135a13c039dbc1f25"
     },
     {
       "path": "client-docs.log",
@@ -224,6 +374,11 @@
       "path": "static-triage-first-failure.json",
       "bytes": 283,
       "sha256": "31847e82f6731a02f177635ba3e5ff7e1f977148d6f09f9b0a715bb39e0c1900"
+    },
+    {
+      "path": "tracked-hygiene-correction.json",
+      "bytes": 671,
+      "sha256": "752832ca8d8afd5c379c9558b8f631669424484d5be9502a82dbf71d9d7d5c79"
     },
     {
       "path": "windows-abi-proxy.json",
