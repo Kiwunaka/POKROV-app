@@ -43,7 +43,10 @@ int main() {
          "trailing service field accepted");
   expect(snapshot(digest).size() <= kMaxControlBodySize,
          "snapshot exceeded bounded IPC response");
-  for (const auto* failure : {"deadline_exceeded", "operation_cancelled"}) {
+  for (const auto* failure : {"deadline_exceeded", "operation_cancelled",
+                            "core_egress_dns_failed", "core_egress_connect_failed",
+                            "core_egress_tls_failed", "core_egress_tls_timeout",
+                            "core_egress_response_timeout", "core_egress_timeout"}) {
     const auto body =
         std::string("phase=config_staged;core_ready=1;can_initialize=1;can_connect=1;") +
         "running=0;core_egress_validated=0;dns_ready=0;staged_profile_digest=" +

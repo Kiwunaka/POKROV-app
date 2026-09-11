@@ -1632,6 +1632,19 @@ void main() {
     expect(snapshot.coreEgressValidated, isFalse);
     expect(snapshot.isCleanlyHealthy, isFalse);
     expect(calls, ['runtimeEngine.snapshot']);
+    messenger.setMockMethodCallHandler(channel, (call) async => <String, Object?>{
+          'phase': 'configStaged',
+          'canConnect': true,
+          'coreEgressValidated': false,
+          'dnsReady': false,
+          'lastFailureKind': 'core_egress_response_timeout',
+        });
+    final failed = await engine.snapshot();
+    expect(failed.lastFailureKind, 'core_egress_response_timeout');
+    expect(failed.hasCoreEgressProbeFailure, isTrue);
+    expect(failed.isCleanlyHealthy, isFalse);
+    expect(failed.message,
+        'Сервер проверки не ответил вовремя после установки соединения. POKROV отключил VPN. Причина не установлена.');
   });
 
   test('server revision follows acknowledged and effective content identity',

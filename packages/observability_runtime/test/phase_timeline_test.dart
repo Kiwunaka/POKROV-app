@@ -249,6 +249,9 @@ void main() {
       OperationalFailureMapper.connection('core_egress_probe_failed'),
       'EGRESS-001',
     );
+    expect(OperationalFailureMapper.connection('core_egress_dns_failed'), 'DNS-002');
+    expect(OperationalFailureMapper.connection('core_egress_response_timeout'),
+        'TRANSPORT-007');
     expect(
       OperationalFailureMapper.update(ClientUpdateFailure.identity),
       'UPD-004',

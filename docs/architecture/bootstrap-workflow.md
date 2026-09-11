@@ -586,6 +586,20 @@ that access is absent. Native event consumers retain typed DNS, UDP, TLS timeout
 and response-stall codes from Core, including in the support timeline. Their
 presence is diagnostic evidence and does not authorize automatic fallback.
 
+The Windows service's authenticated egress check retains WinHTTP observations
+through rollback and its closed IPC failure allowlist. `core_egress_dns_failed`,
+`core_egress_connect_failed` and `core_egress_tls_failed` describe the failed check,
+not a proven failure of the VPN node. TLS negotiation and waiting for a response
+have separate `core_egress_tls_timeout` / `core_egress_response_timeout` values;
+timeouts before those stages remain `core_egress_timeout`. Unknown errors and
+invalid HTTP/proof responses remain `core_egress_probe_failed`. The native
+callback stores only numeric errors and phases, never host names or response
+text. Cancellation remains owned by the connection transaction. These codes
+retain the same failed-egress retry eligibility, three verifier attempts and
+bounded managed fallback; they neither publish protection nor diagnose DPI,
+MTU, ASN or UDP blocking. The UI and native service ship together so their
+closed allowlists agree.
+
 ### Ordinary cache outage boundary
 
 The owner's 2026-09-07 restricted-network decision permits normal connection

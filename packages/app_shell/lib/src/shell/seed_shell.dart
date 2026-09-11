@@ -5900,8 +5900,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   bool _handleFailedManagedProfile(RuntimeSnapshot failed) {
     final mustRefreshProfile = _mustRefreshProfileAfterRuntimeFailure(failed);
-    final confirmedFailure =
-        failed.lastFailureKind?.trim() == 'core_egress_probe_failed';
+    final confirmedFailure = failed.hasCoreEgressProbeFailure;
     final failedNodeCode = _stagedNodeCode.trim().toLowerCase();
     final confirmedAutomaticNodeFailure =
         confirmedFailure &&

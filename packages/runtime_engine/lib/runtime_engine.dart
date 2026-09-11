@@ -173,6 +173,9 @@ class RuntimeSnapshot {
   final int? excludePackageCount;
   final bool connectionPending;
 
+  bool get hasCoreEgressProbeFailure =>
+      _coreEgressProbeFailureKinds.contains(lastFailureKind?.trim());
+
   /// Repeated host observations need not notify UI listeners when their values
   /// are unchanged. Profile sources are compared by value, not object identity.
   bool hasSameStateAs(RuntimeSnapshot other) => _stateValues == other._stateValues;
@@ -475,6 +478,16 @@ String? _runtimeNullableText(Object? value) {
   return text.isEmpty ? null : text;
 }
 
+const _coreEgressProbeFailureKinds = <String>{
+  'core_egress_probe_failed',
+  'core_egress_dns_failed',
+  'core_egress_connect_failed',
+  'core_egress_tls_failed',
+  'core_egress_tls_timeout',
+  'core_egress_response_timeout',
+  'core_egress_timeout',
+};
+
 const _publicRuntimeFailureKinds = <String>{
   'desktop_competing_vpn_active',
   'desktop_loopback_port_conflict',
@@ -485,7 +498,7 @@ const _publicRuntimeFailureKinds = <String>{
   'runtime_service_start_failed',
   'foreground_start_failed',
   'runtime_stop_failed',
-  'core_egress_probe_failed',
+  ..._coreEgressProbeFailureKinds,
   'core_egress_probe_unavailable',
   'desktop_tun_egress_probe_failed',
   'emergency_endpoint_unreachable',
@@ -708,6 +721,18 @@ String _publicRuntimeMessage({
       return 'POKROV не смог корректно отключиться.';
     case 'core_egress_probe_failed':
       return 'POKROV не подтвердил защищенное подключение и отключил системный VPN.';
+    case 'core_egress_dns_failed':
+      return 'Не удалось определить адрес сервера проверки через подключение. POKROV отключил VPN.';
+    case 'core_egress_connect_failed':
+      return 'Не удалось соединиться с сервером проверки через подключение. POKROV отключил VPN.';
+    case 'core_egress_tls_failed':
+      return 'Не удалось согласовать TLS с сервером проверки. POKROV отключил VPN.';
+    case 'core_egress_tls_timeout':
+      return 'Согласование TLS с сервером проверки не завершилось вовремя. POKROV отключил VPN. Причина не установлена.';
+    case 'core_egress_response_timeout':
+      return 'Сервер проверки не ответил вовремя после установки соединения. POKROV отключил VPN. Причина не установлена.';
+    case 'core_egress_timeout':
+      return 'Проверка подключения не завершилась вовремя. POKROV отключил VPN. Причина не установлена.';
     case 'core_egress_probe_unavailable':
       return 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
     case 'desktop_tun_egress_probe_failed':
