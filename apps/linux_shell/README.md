@@ -99,6 +99,11 @@ actual sleep/resume and native reboot recovery on that guest; final acceptance s
   Running follows actual Core start and network application. DNS and egress
   health remain unknown (`null`); the UI must not infer validated health from
   the running phase alone;
+- the shared desktop UI reads local daemon status every two seconds, without
+  fetching a profile or repeating network probes. An external stop or recovery
+  clears the cached running state. This source fix follows an observed stale
+  package-7 GUI after daemon disconnect; installed proof for the updated UI is
+  still pending;
 - retained VM proof covers non-root IPC, TUN/DNS/TLS HTTP, normal disconnect,
   foreign-rule rejection and active service stop/reactivation. Its temporary
   polkit fixture grant was removed. It is not a desktop authentication-agent,
