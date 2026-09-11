@@ -1,0 +1,29 @@
+﻿{
+    "utc":  "2026-09-11T00:56:52.0740119Z",
+    "ui_pid":  3696,
+    "ui_session":  1,
+    "ui_elevated":  false,
+    "service_state":  "Running",
+    "service_account":  "LocalSystem",
+    "service_acl_sha256":  "0b96b6801d59335d69880bccc57eae5e0ade1de4a875fb41731c9bda6b193a5d",
+    "service_acl_preserved":  true,
+    "service_broad_group_mutation_allowed":  false,
+    "ui_loaded_core":  false,
+    "status":  {
+                   "client_source":  "0218e89",
+                   "action":  "status",
+                   "elapsed_ms":  15,
+                   "available":  true,
+                   "trusted":  true,
+                   "compatible":  true,
+                   "accepted":  true,
+                   "phase":  "running",
+                   "running":  true,
+                   "core_ready":  true,
+                   "dns_ready":  true,
+                   "egress_validated":  true,
+                   "can_connect":  false,
+                   "effective_matches_staged":  true,
+                   "failure":  "none"
+               }
+}

@@ -1,0 +1,167 @@
+{
+  "status": "PASS_BOUNDED_INSTALLED_UPGRADE",
+  "origin": "current-origin owned Windows 11 VM",
+  "client_source": "a24b211f9c1c4bf83bb5fde9b8a9c98185ea1028",
+  "core_source": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "setup_sha256": "cf28fed53f3e3b9bbe2449a070a6736213265de7c6032f2761339a3903a48e17",
+  "installed_files": 304,
+  "state_and_secure_store_preserved_at_upgrade": true,
+  "flows": [
+    {
+      "label": "post_wizard",
+      "https_markers": 10,
+      "rx_delta": 24876,
+      "tx_delta": 24876,
+      "routes_restored": true,
+      "dns_restored": true
+    },
+    {
+      "label": "limited_ui",
+      "https_markers": 10,
+      "rx_delta": 25036,
+      "tx_delta": 25036,
+      "routes_restored": true,
+      "dns_restored": true
+    }
+  ],
+  "limited_ui_token_elevated": false,
+  "service_acl_preserved": true,
+  "vm_poweroff": true,
+  "vm_nic": "none",
+  "retained_snapshots": 11,
+  "host_network_unchanged": true,
+  "open_observation": "Both ordinary disconnects display a recovery CTA despite config_staged and failure none. The source fix is verified separately; this installed package still contains the defect.",
+  "scope_limits": [
+    "No new public distribution, Win10, uninstall, clean-user install, WARP, physical Android, trusted signing or full release acceptance.",
+    "r12_managed_probe reports its own source 0218e89; installed application identity is bound independently by all 304 hashes.",
+    "NIC byte deltas include ambient guest traffic; HTTPS requests are not individually attributed to a route.",
+    "The post-wizard UI was launched from the installer context. Only the separate limited_ui flow has a measured non-elevated token."
+  ],
+  "files": [
+    {
+      "name": "expected.json",
+      "bytes": 39971,
+      "sha256": "cbb6967cfcc7144449c2b40ac6517c4d0ee6b63c289617d1d8c2b55bba074564"
+    },
+    {
+      "name": "previous-expected.json",
+      "bytes": 39924,
+      "sha256": "3226d6e9c68ecb6a9931bc157e2a2a137cae74a40ab51ab2ed123d46db33ab9d"
+    },
+    {
+      "name": "pre-upgrade-connected.json",
+      "bytes": 1224,
+      "sha256": "05fa75b2cdf0972dc5d25ce1d1c17045acf2f8b31b21d1aeaccd423659d2031c"
+    },
+    {
+      "name": "wizard-readback.json",
+      "bytes": 974,
+      "sha256": "62c6c87c643aa78b92cdb2b49b7185b2a9f9d95b47288ce73ce6d4042c209b88"
+    },
+    {
+      "name": "network-resumed-before.json",
+      "bytes": 1449,
+      "sha256": "53d753bb52ee6ba54f2a58cf8e6f19087fc14a18e7041ccf0c555c813ffaa449"
+    },
+    {
+      "name": "network-current-connected.json",
+      "bytes": 1699,
+      "sha256": "e5ac57deb9aa7043bea9b4721f87668d82f9bfa8e65286fd8528c373d25368fa"
+    },
+    {
+      "name": "network-current-disconnected.json",
+      "bytes": 1463,
+      "sha256": "794a80f8186432dfb2c13b88b25fe64cfd2772fb7359fdcfd4e369202597af4c"
+    },
+    {
+      "name": "network-limited-disconnected.json",
+      "bytes": 1463,
+      "sha256": "0e78597e927b4096355856f5ea3fe827e19861f0895a14d85157cea0e9dd7b16"
+    },
+    {
+      "name": "tunnel-traffic-current.json",
+      "bytes": 3530,
+      "sha256": "d86da1acceb5574950dcff0b757cf892dec8eb119d0563e822c10feb429087f8"
+    },
+    {
+      "name": "tunnel-traffic-limited.json",
+      "bytes": 3530,
+      "sha256": "209fdfaab810c8746e536ea8aa14b322c94c824a85adabe835063edc4f081a19"
+    },
+    {
+      "name": "limited-token.json",
+      "bytes": 1085,
+      "sha256": "1f723b60ef9468fc64978d61cc451add1fe902f9b942a77d71c5a4c93af15586"
+    },
+    {
+      "name": "final-installed-readback.json",
+      "bytes": 1084,
+      "sha256": "28328fd27a2d0f77921935b367b5e5a1d78f72ffd51dc7ee90d194896f17f796"
+    },
+    {
+      "name": "host-network-resumed-before.json",
+      "bytes": 220,
+      "sha256": "29c9725824b64068e1bc394b0b78c76525c582a36418631bc7a671a4ce874382"
+    },
+    {
+      "name": "host-network-resumed-after.json",
+      "bytes": 281,
+      "sha256": "9435f89a78918511a449c5444937c4f3ebf9c39d348a035048c84273978610b6"
+    },
+    {
+      "name": "vm-after.txt",
+      "bytes": 898,
+      "sha256": "d40c199b03c3408ee36e9382604839abd06f7349a20e78cecbfeb0772512426e"
+    },
+    {
+      "name": "resume-disk-budget.json",
+      "bytes": 315,
+      "sha256": "3f37bcc0578ae1fa4e7bc1ffe7f136b9baa8a48ecd187c2ca8602b21725f26b1"
+    },
+    {
+      "name": "wizard-completion-check.png",
+      "bytes": 1371313,
+      "sha256": "4771222c5f8c8cc8ea5ff2332a34cb19cb4e007041a0756c08e33a8baf232ed6"
+    },
+    {
+      "name": "connected-limited.png",
+      "bytes": 888843,
+      "sha256": "4b8ece7db62d340057a5cacba25fe9059405451529fd6a6d14af09c75e5595b5"
+    },
+    {
+      "name": "disconnected-limited.png",
+      "bytes": 893566,
+      "sha256": "f316c85c9ad0efe6072c1a048226e2ba61350d693d0d715f3e4fa37802146156"
+    },
+    {
+      "name": "verify-wizard-current.ps1",
+      "bytes": 2337,
+      "sha256": "e28f4a8d98b1dc59ffadd4b15b423a46dd60a295a5efccecb55e8d73ffe95a6a"
+    },
+    {
+      "name": "network-original.ps1",
+      "bytes": 2288,
+      "sha256": "620c2b2b8b909ee18db3ee9bd3754eca921497e436fbbd088cf95291d0f40197"
+    },
+    {
+      "name": "tunnel-traffic-original.ps1",
+      "bytes": 2002,
+      "sha256": "79747f72cbc023891f5f6c5d0941f37828dce599eb2537140dba932fece1f8d7"
+    },
+    {
+      "name": "read-limited-token.ps1",
+      "bytes": 2906,
+      "sha256": "5e16245892873be9bd5b134f0fd824533ed9eb635b028455e4eac7328f146d0a"
+    },
+    {
+      "name": "final-readback.ps1",
+      "bytes": 1548,
+      "sha256": "2b6d4a0c86d60b58d14ee3ea9075e6745023429c10f271d1dbd63f4eb815255a"
+    },
+    {
+      "name": "launch-limited.ps1",
+      "bytes": 893,
+      "sha256": "4dd871a72a4b9f4da70e1f1a52389fa03d374c073364e852bc2f11a96de0b170"
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+﻿{
+    "utc":  "2026-09-11T00:53:17.8361111Z",
+    "counter_method":  "NetworkInterface.GetIPv4Statistics",
+    "tun_count":  1,
+    "tun_received_delta":  24876,
+    "tun_sent_delta":  24876,
+    "requests":  [
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  287
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  292
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  196
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  209
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  213
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  214
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  174
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  212
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  207
+                     },
+                     {
+                         "status":  204,
+                         "marker_valid":  true,
+                         "elapsed_ms":  227
+                     }
+                 ],
+    "before":  {
+                   "client_source":  "0218e89",
+                   "action":  "status",
+                   "elapsed_ms":  15,
+                   "available":  true,
+                   "trusted":  true,
+                   "compatible":  true,
+                   "accepted":  true,
+                   "phase":  "running",
+                   "running":  true,
+                   "core_ready":  true,
+                   "dns_ready":  true,
+                   "egress_validated":  true,
+                   "can_connect":  false,
+                   "effective_matches_staged":  true,
+                   "failure":  "none"
+               },
+    "after":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  63,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "running",
+                  "running":  true,
+                  "core_ready":  true,
+                  "dns_ready":  true,
+                  "egress_validated":  true,
+                  "can_connect":  false,
+                  "effective_matches_staged":  true,
+                  "failure":  "none"
+              },
+    "scope":  "Current-origin installed service with ambient guest traffic; NIC deltas not per-request attribution"
+}

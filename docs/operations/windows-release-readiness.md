@@ -1,5 +1,15 @@
 # Windows Release Readiness
 
+2026-09-11 Core904 upgrade: [exact installed result](evidence/2026-09-11-r12-windows-core904-upgrade/README.md).
+Local client `a24b211` / Core `904e440` upgraded the connected Win11 VM through
+the ordinary wizard; all 304 files match and state/secure storage are preserved.
+The limited UI token, LocalSystem service ACL, two connection/recovery cycles
+and twenty HTTPS markers pass within the retained bounds. VM off/NIC none;
+eleven snapshots preserved. Successful disconnect incorrectly shows Retry in
+this package; PR112 merged `5d5264f` with both CI PASS and corrects source
+behavior separately. The fixed UI has not been repackaged. No new public package,
+Win10, clean-user install, uninstall or full release acceptance is claimed.
+
 2026-09-10 current crash support: [installed proof](evidence/2026-09-10-r12-crash-support/README.md).
 PR109 merged503979f; installed e18fa60/Corec8 has304 matching files and preserved
 upgrade state. Real UI/service access violations produced closed records; PSM
