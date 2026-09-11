@@ -2180,7 +2180,6 @@ void main() {
       '_LazyIndexedStackState',
       'initState',
       'didUpdateWidget',
-      '_markInitialized',
     ]);
 
     await tester.pumpWidget(
@@ -9294,6 +9293,22 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(controller.isConnected, isTrue);
+    await _tapNav(tester, 'nav-profile');
+    final profileStatus = find.byKey(
+      const ValueKey('profile-connection-status-pill'),
+    );
+    expect(find.descendant(of: profileStatus, matching: find.text('Подключено')),
+        findsOneWidget);
+    await _tapNav(tester, 'nav-protection');
+    var hiddenProfileBuilds = 0;
+    final previousBuildObserver = debugOnRebuildDirtyWidget;
+    debugOnRebuildDirtyWidget = (element, builtOnce) {
+      previousBuildObserver?.call(element, builtOnce);
+      if (element.widget.runtimeType.toString() == '_ProfileSection') {
+        hiddenProfileBuilds += 1;
+      }
+    };
+    addTearDown(() => debugOnRebuildDirtyWidget = previousBuildObserver);
     var statusNotifications = 0;
     controller.addListener(() => statusNotifications += 1);
     await tester.pump(const Duration(minutes: 2));
@@ -9306,11 +9321,22 @@ void main() {
     expect(controller.isConnected, isFalse);
     expect(statusNotifications, 1,
         reason: 'a health change in the running phase must reach the UI');
+    expect(hiddenProfileBuilds, 0,
+        reason: 'runtime observations must not rebuild the hidden profile');
+    await _tapNav(tester, 'nav-profile');
+    expect(find.descendant(of: profileStatus, matching: find.text('Подключено')),
+        findsNothing,
+        reason: 'reactivating the profile must show the latest runtime state');
+    expect(hiddenProfileBuilds, greaterThan(0));
+    await _tapNav(tester, 'nav-protection');
+    hiddenProfileBuilds = 0;
     egressHealthy = true;
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
     expect(controller.isConnected, isTrue);
     expect(statusNotifications, 2);
+    expect(hiddenProfileBuilds, 0);
+    debugOnRebuildDirtyWidget = previousBuildObserver;
     phase = 'initialized'; // SCM restarted; its durable recovery cleared TUN.
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
