@@ -773,8 +773,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     unawaited(_loadConnectHintState());
     unawaited(_restoreClientExperience());
     _refreshRuntimeSnapshot();
-    if (widget.appContext.hostPlatform == HostPlatform.windows) {
-      _diagnosticsCoordinator.startRuntimePolling(_refreshWindowsRuntimeSnapshot);
+    if (widget.appContext.hostPlatform == HostPlatform.windows ||
+        widget.appContext.hostPlatform == HostPlatform.linux) {
+      _diagnosticsCoordinator.startRuntimePolling(_refreshDesktopRuntimeSnapshot);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.observability?.markUiReady();
@@ -4482,13 +4483,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _refreshWindowsRuntimeSnapshot() async {
+  Future<void> _refreshDesktopRuntimeSnapshot() async {
     if (!mounted || _runtimeBusy) return;
     final observed = _runtimeSnapshot;
     RuntimeSnapshot? refreshed;
     try {
       refreshed = await _withRuntimeActionTimeout(
-        'windowsServiceStatus', _runtimeEngine.snapshot,
+        'desktopServiceStatus', _runtimeEngine.snapshot,
       );
     } on Object {
       // An unavailable observer cannot retain the previous protection proof.
