@@ -1,0 +1,16 @@
+[
+  {
+    "drive": "C",
+    "free_gib": 43.3,
+    "expected_growth_gib": 0.05,
+    "remaining_after_gib": 43.25,
+    "required_remaining_gib": 40
+  },
+  {
+    "drive": "E",
+    "free_gib": 40.38,
+    "expected_growth_gib": 0.05,
+    "remaining_after_gib": 40.33,
+    "required_remaining_gib": 40
+  }
+]

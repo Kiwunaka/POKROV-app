@@ -1,0 +1,78 @@
+{
+  "status": "PASS_LOCAL_WIDGET_BOUNDARY",
+  "tested_source": "9b97fec53a6e4f2cad5b1a5b45712c80c26ec673",
+  "signed_source": "b3e435cf9036049d416a9895f7fb400502990aee",
+  "tree": "e0b09d4321b09976d286fa1697492f7512d2fb23",
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/114",
+  "fixture": "Flutter Windows method-channel mock with genuine widget rebuild observer",
+  "reproduced_hidden_profile_builds_per_health_change": 1,
+  "fixed_hidden_profile_builds_per_health_change": 0,
+  "reactivation_displays_current_health": true,
+  "focused_tests": 3,
+  "shell_widget_tests": 191,
+  "analysis": "PASS",
+  "root_changed": false,
+  "part_count_changed": false,
+  "runtime_polling_changed": false,
+  "source_ci": "PR_AND_MERGE_PASS",
+  "new_package": "NOT_BUILT",
+  "remaining": [
+    "C03 dependency",
+    "2-4 Hz traffic experiment",
+    "reference Android/Windows profile traces",
+    "exact packaged acceptance and full release"
+  ],
+  "files": [
+    {
+      "name": "before.log",
+      "bytes": 4090,
+      "sha256": "df5b499ea1e61ad9340c85a35c96ba568e24cc9def43e2c4d6080b28a9cac4be"
+    },
+    {
+      "name": "after-focused.log",
+      "bytes": 2584,
+      "sha256": "e31c086fcf100326ab2907bb627719542dcccae99098f9c39a0721fa26764400"
+    },
+    {
+      "name": "widget-regression.log",
+      "bytes": 14284,
+      "sha256": "ad2162fe0817e1f9c42088d980ac19f3c2016bcdbe90be629a4eb0844639d1e3"
+    },
+    {
+      "name": "analyze.log",
+      "bytes": 98,
+      "sha256": "5b2de910d5297f543395220ffd5dc44a0c70ce20da7301cd108a2f28e7c5bb8e"
+    },
+    {
+      "name": "client-seed.log",
+      "bytes": 1818,
+      "sha256": "a12d9f81106ef27c7c2e1559e7e277fc5dc718efb8b1d2b89a7000fe4a277ced"
+    },
+    {
+      "name": "client-docs.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "name": "local-source-validation.json",
+      "bytes": 577,
+      "sha256": "dc08771109a11de23aa0a9a34e6dfb5fd0c93c072e1aef02167c07afdf217331"
+    },
+    {
+      "name": "source-promoted.json",
+      "bytes": 962,
+      "sha256": "95951d90f5c1e37b6c192ec85040ce84a58e4f4d314b6ab521bb4da9425a4b86"
+    },
+    {
+      "name": "disk-before.json",
+      "bytes": 318,
+      "sha256": "28af22f8a8e6409231dd4d1a5ca0877876b4e9bb478eb914e99b86babc2523f3"
+    },
+    {
+      "name": "disk-source.json",
+      "bytes": 318,
+      "sha256": "3030a8a3dacd13bb58f9fc63e93395894313c09b4429178b12cda963ec588a34"
+    }
+  ],
+  "merged_source": "d9763e8cd7aba9b215015e07c0576f667c1dec09"
+}

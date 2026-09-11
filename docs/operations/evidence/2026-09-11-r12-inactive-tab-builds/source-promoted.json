@@ -1,0 +1,24 @@
+{
+  "tested": "9b97fec53a6e4f2cad5b1a5b45712c80c26ec673",
+  "local_source": "4c123c3965944a81977ef2bc83f66e9067ec0aff",
+  "parent": "7ed18c97c43ba39ce18701220d487af1b0c5a446",
+  "signed_commit": "b3e435cf9036049d416a9895f7fb400502990aee",
+  "tree": "e0b09d4321b09976d286fa1697492f7512d2fb23",
+  "signature_valid": true,
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/114",
+  "branch": "codex/inactive-tab-builds-signed-20260911",
+  "files": [
+    {
+      "path": "packages/app_shell/lib/src/shell/navigation_shell.dart",
+      "sha256": "bea234b770dd5fd2f25e36af0642730cdc85d8d09b9e12ba0c0738d8a9823ad3"
+    },
+    {
+      "path": "packages/app_shell/test/pokrov_seed_app_test.dart",
+      "sha256": "bde8f2f1c4760531c0c967b59e7d0927f988bd35a7e7e258fb3703e9994edeb7"
+    },
+    {
+      "path": "docs/architecture/package-boundaries.md",
+      "sha256": "b4d41a6895d3e1b2d539080665be1f347b6c19803ed5388fae4fb9b4e1b6abda"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "source": "9b97fec53a6e4f2cad5b1a5b45712c80c26ec673",
+  "files": [
+    {
+      "path": "packages/app_shell/lib/src/shell/navigation_shell.dart",
+      "sha256": "bea234b770dd5fd2f25e36af0642730cdc85d8d09b9e12ba0c0738d8a9823ad3"
+    },
+    {
+      "path": "packages/app_shell/test/pokrov_seed_app_test.dart",
+      "sha256": "bde8f2f1c4760531c0c967b59e7d0927f988bd35a7e7e258fb3703e9994edeb7"
+    },
+    {
+      "path": "docs/architecture/package-boundaries.md",
+      "sha256": "b4d41a6895d3e1b2d539080665be1f347b6c19803ed5388fae4fb9b4e1b6abda"
+    }
+  ]
+}

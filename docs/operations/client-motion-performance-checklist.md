@@ -1,6 +1,6 @@
 # Client Motion Performance Checklist
 
-Last updated: 2026-09-08
+Last updated: 2026-09-11
 
 Registry class: `ACTIVE_EXECUTION`.
 
@@ -33,6 +33,12 @@ platform repository; this document owns the client capture procedure only.
 - Connect disc animated region remains inside a `RepaintBoundary`.
 
 ## Shell Motion
+
+- Open Profile, return to Protection and change runtime state. The hidden
+  Profile must not rebuild solely because the shell updates; opening it again
+  must show current status. [2026-09-11 local widget proof](evidence/2026-09-11-r12-inactive-tab-builds/README.md)
+  covers this boundary only. Retain reference-host frame/CPU measurements
+  separately; this deterministic test is not device performance evidence.
 
 - Losing focus (`inactive`), hiding or pausing the app mutes tickers across the
   navigator and modal routes; returning to `resumed` preserves visible state.
