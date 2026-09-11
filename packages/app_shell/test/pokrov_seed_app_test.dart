@@ -9338,6 +9338,9 @@ void main() {
     await controller.toggleConnection();
     await tester.pumpAndSettle();
     expect(controller.isConnected, isFalse);
+    expect(find.text('Нажмите, чтобы повторить'), findsNothing,
+        reason: 'a successful disconnect must not display recovery UI');
+    expect(find.text('Одно нажатие — и готово'), findsOneWidget);
     heldSnapshot.complete(staleRunningSnapshot);
     await tester.pumpAndSettle();
     expect(controller.isConnected, isFalse,
