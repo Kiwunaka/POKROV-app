@@ -1,0 +1,133 @@
+{
+  "schema": "pokrov.r12.l01-source-scope/v1",
+  "status": "PASS_SOURCE_REVIEW",
+  "signed_source": "b5f1edaf33b89c1577678ac862686ca154f09334",
+  "reviewed_tree": "fcb045f014e5883eae29147dd1a129bef06746e6",
+  "files": [
+    {
+      "path": "apps/linux_shell/README.md",
+      "git_blob": "9db3e0de9b7bbf345ffbe60d7ecc25e79e0800db",
+      "sha256": "e96ffbe77932966f1636a885dc455403e88b38317e75683d57d3043108f7fa6f",
+      "bytes": 3358
+    },
+    {
+      "path": "config/platform-matrix.seed.json",
+      "git_blob": "4b56d31499ce420162fc34abfbc08b85cd50a12a",
+      "sha256": "93bc5a24fb97143a99f9603ed59119f9d943ce43a0bb818404c5df7cb697d5df",
+      "bytes": 1021
+    },
+    {
+      "path": "apps/linux_shell/daemon/internal/host/support-matrix.v1.json",
+      "git_blob": "afb173c0724a44c66df2a57cc7ef2a6cc1bab464",
+      "sha256": "e7cde3fd91cf3aa9c2865a708eeb3be5134b5ad1f434492392d8735e30ce450e",
+      "bytes": 842
+    },
+    {
+      "path": "apps/linux_shell/daemon/internal/host/probe_linux.go",
+      "git_blob": "31dfdd19e4214dcad03e43956e1c957b3c3a80e3",
+      "sha256": "0991f4f4600fac87fd88063bfbfd525e729563cae79edaf6aebe9fff7b997cbf",
+      "bytes": 4068
+    },
+    {
+      "path": "apps/linux_shell/daemon/internal/host/probe_linux_test.go",
+      "git_blob": "89a4964ccc5f711f4d3ced9b57f7a2602d6eac21",
+      "sha256": "b50c41c624875d7dc6615b1d26798c4d6e6140ee7291c85efe3e74984f33617b",
+      "bytes": 1875
+    },
+    {
+      "path": "apps/linux_shell/daemon/internal/service/service_linux.go",
+      "git_blob": "9ce31db39c54055f7174efa656bc320fa2e808c9",
+      "sha256": "7a964fa1c39c2bcf236f0f241e53803ab1a50c7e43d6fc182f7095b628caedf6",
+      "bytes": 7588
+    },
+    {
+      "path": "apps/linux_shell/daemon/internal/service/service_linux_test.go",
+      "git_blob": "ad2ea4b4cf0fc42b3982fceb82183773eb121f95",
+      "sha256": "a9af17c9012bb03675b92ea635df7a929cfb40bbe4deca429fc78a6265d110f7",
+      "bytes": 7746
+    },
+    {
+      "path": "apps/linux_shell/daemon/internal/auth/peer_linux.go",
+      "git_blob": "1ed22282444cdf7d7f61c4e0b0522bd7ebdaf1a7",
+      "sha256": "69aa18711c3b91be32f825e4f4ef6cdf8402bea983b567734795655110e95977",
+      "bytes": 3963
+    },
+    {
+      "path": "apps/linux_shell/daemon/internal/auth/peer_linux_test.go",
+      "git_blob": "4877027ae9f82857d1f6adf243447e4174c4ecad",
+      "sha256": "bdd06030747330beae21b74e38c0fcc527290b7fbe11d4db8f89f35bfcca9a00",
+      "bytes": 2403
+    },
+    {
+      "path": "apps/linux_shell/packaging/polkit/space.pokrov.linux.policy",
+      "git_blob": "9a7add1a15d1e3de346e9b236448f2af19bc7f94",
+      "sha256": "d060c7cafd4d99e582edb5491aa54ceb47c495ef27a614bb9ccb9b41d801dd49",
+      "bytes": 665
+    },
+    {
+      "path": "apps/linux_shell/packaging/install-layout.v1.json",
+      "git_blob": "e4c5c2612838093fe53e6dbc4256bde5504ea757",
+      "sha256": "07c5bbefa157fc50935ea481e25d85da07e86a4823eaebbaa5c1b58a34762184",
+      "bytes": 509
+    },
+    {
+      "path": "apps/linux_shell/packaging/systemd/pokrov-linuxd.service",
+      "git_blob": "1d42e415d1f72c201e5dde9bf0c1b2c5d7184029",
+      "sha256": "e745c23a68b9b2fa0bcbd93a2503d1eec8b2e688ea21988b03bb17c46a0323fc",
+      "bytes": 882
+    },
+    {
+      "path": "apps/linux_shell/test/linux_packaging_contract_test.dart",
+      "git_blob": "7ff3f3ab2824725b286833c915cb2e2fbf88ec9c",
+      "sha256": "2d8e7722a0cf6370835ff60f9f751af07c129fcf1d9a9828dbcff4db65621712",
+      "bytes": 4919
+    },
+    {
+      "path": "apps/linux_shell/test/linux_shell_contract_test.dart",
+      "git_blob": "7cb62846980e9dcf29c102603d21703767e35522",
+      "sha256": "a3969c13f60b919d3e97592ab7eabfd72fe589cbb3aec356d3e872cb0ff1c0f9",
+      "bytes": 773
+    },
+    {
+      "path": "scripts/run-tests.ps1",
+      "git_blob": "d72315a4047ae4c780f4260aef1fcfdb3e64b1f2",
+      "sha256": "b6db7b328a9edff1deaca53f949f8e0ef5ba9fdb1f24f088ce1ee9dd02a6571a",
+      "bytes": 2874
+    },
+    {
+      "path": ".github/workflows/release-v2-contract.yml",
+      "git_blob": "241cd1adf39b1e1fbd78b0eaf728d6adac68cd34",
+      "sha256": "04b8f787584113f433f9e5218fa4f7a5ab885952b49c34cf02397ab1a91d51b3",
+      "bytes": 5499
+    }
+  ],
+  "source_feature_and_tested_objects_equal": true,
+  "foundation_row": {
+    "id": "ubuntu-24.04-amd64",
+    "distro_id": "ubuntu",
+    "version_id": "24.04",
+    "desktop": "exact_vm_session_proof_pending",
+    "architecture": "amd64",
+    "init": "systemd",
+    "network_manager": "NetworkManager",
+    "dns_manager": "systemd-resolved",
+    "firewall": "nftables",
+    "package": "deb",
+    "status": "foundation_supported"
+  },
+  "public_targets": [
+    "android",
+    "windows"
+  ],
+  "conditional_beta_targets": [
+    "linux"
+  ],
+  "current_supports_live_connect": false,
+  "current_connect_result": "linux_live_connect_unavailable",
+  "polkit_action": "space.pokrov.linux.manage",
+  "dependency": "R12-G01 verified/I3 EXECUTION-G01-M01.md",
+  "scope_only": true,
+  "linux_live_network_proof": false,
+  "linux_public_release": false,
+  "required_ci": "Existing Linux Flutter scope/packaging tests and Go host/auth/service packages on the exact reviewed tree; final run binding is separate."
+}

@@ -41,6 +41,11 @@ and final channel gates remain open.
 
 ## Target architecture packaging
 
+[PR115 source integration](evidence/2026-09-11-r12-android-abi-promotion/README.md)
+merged the target ABI fix as main `57352ae`; PR and main CI passed. Its complete
+source tree equals the tested `90337b3`. The local APK keeps that original
+revision; this integration did not build or install another package.
+
 Android native dependency filters and ABI splits follow Flutter's
 `--target-platform`. An ARM64-only command packages only `arm64-v8a`; it no
 longer includes other Core ABIs without matching Flutter application libraries.

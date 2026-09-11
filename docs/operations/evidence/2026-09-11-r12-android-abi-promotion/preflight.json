@@ -1,0 +1,65 @@
+{
+  "utc": "2026-09-11T06:04:15.202146+00:00",
+  "source": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+  "parent": "d9763e8cd7aba9b215015e07c0576f667c1dec09",
+  "tree": "fcb045f014e5883eae29147dd1a129bef06746e6",
+  "paths": [
+    "apps/android_shell/android/app/build.gradle",
+    "docs/operations/android-release-audit.md"
+  ],
+  "branch_protection": {
+    "url": "https://api.github.com/repos/Kiwunaka/POKROV-app/branches/main/protection",
+    "required_status_checks": {
+      "url": "https://api.github.com/repos/Kiwunaka/POKROV-app/branches/main/protection/required_status_checks",
+      "strict": true,
+      "contexts": [
+        "cross-repository-contract"
+      ],
+      "contexts_url": "https://api.github.com/repos/Kiwunaka/POKROV-app/branches/main/protection/required_status_checks/contexts",
+      "checks": [
+        {
+          "context": "cross-repository-contract",
+          "app_id": 15368
+        }
+      ]
+    },
+    "required_pull_request_reviews": {
+      "url": "https://api.github.com/repos/Kiwunaka/POKROV-app/branches/main/protection/required_pull_request_reviews",
+      "dismiss_stale_reviews": true,
+      "require_code_owner_reviews": false,
+      "require_last_push_approval": false,
+      "required_approving_review_count": 0
+    },
+    "required_signatures": {
+      "url": "https://api.github.com/repos/Kiwunaka/POKROV-app/branches/main/protection/required_signatures",
+      "enabled": true
+    },
+    "enforce_admins": {
+      "url": "https://api.github.com/repos/Kiwunaka/POKROV-app/branches/main/protection/enforce_admins",
+      "enabled": true
+    },
+    "required_linear_history": {
+      "enabled": true
+    },
+    "allow_force_pushes": {
+      "enabled": false
+    },
+    "allow_deletions": {
+      "enabled": false
+    },
+    "block_creations": {
+      "enabled": false
+    },
+    "required_conversation_resolution": {
+      "enabled": true
+    },
+    "lock_branch": {
+      "enabled": false
+    },
+    "allow_fork_syncing": {
+      "enabled": false
+    }
+  },
+  "local_package_sha": "3ecff58793e0f6b354ce49eabd5f84f06052a92176cd12e4c5c7583a91cc41a0",
+  "independent_review_performed": false
+}

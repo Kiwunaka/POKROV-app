@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "run": "https://github.com/Kiwunaka/POKROV-app/actions/runs/34568361963",
+  "run_id": 34568361963,
+  "source": "b5f1edaf33b89c1577678ac862686ca154f09334",
+  "phase": "pr",
+  "required_steps": "THREE_EXECUTED_SUCCESS",
+  "selected_linux_test_names": [
+    "Linux beta uses the non-root system-service boundary",
+    "Linux service packaging keeps UI non-root and mutations behind polkit",
+    "Linux support matrix has one exact foundation row and explicit backlog",
+    "Linux network transaction events stay closed and fail-closed",
+    "Linux polkit D-Bus decisions use a closed authorization trace"
+  ],
+  "go_packages": [
+    "internal/host",
+    "internal/auth",
+    "internal/service"
+  ],
+  "retained_log": "linux-ci-pr-selected.log",
+  "retained_lines": 8,
+  "retained_sha256": "87f84006dda5ccfd491d9d05f25172cbc52a9eddcf13fc4ef662a509f9c3031f",
+  "full_remote_log_sha256": "35b03cdfa54273538a368c5ab7372a501d581974866d27fbc32db03a1b6d3b51",
+  "full_remote_log_bytes": 459496,
+  "full_remote_log_retained_locally": false,
+  "limits": "CI executes source/fixture tests and build/vet on hosted Linux, not installed Ubuntu24.04 VPN or desktop/polkit-agent proof."
+}

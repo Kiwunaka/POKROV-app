@@ -1,5 +1,10 @@
 # POKROV Linux conditional beta
 
+[R12-L01 scope verification](../../docs/operations/evidence/2026-09-11-r12-android-abi-promotion/README.md#r12-l01--verified--i3--already_fixed)
+confirms the existing Ubuntu 24.04 amd64 boundary and current capability against
+main 57352ae source and CI. It closes the scope decision only; live runtime,
+package and desktop-session acceptance below remain open.
+
 This lane is a non-public foundation for the conditional Linux beta. The
 Flutter UI always runs as the desktop user. Privileged VPN state belongs to the
 systemd-activated `pokrov-linuxd` service and is never performed by the UI.

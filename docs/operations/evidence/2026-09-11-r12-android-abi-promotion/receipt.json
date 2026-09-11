@@ -1,0 +1,129 @@
+{
+  "schema": "pokrov.r12.android-abi-promotion-and-linux-scope/v1",
+  "status": "PASS_SOURCE_INTEGRATION",
+  "source": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+  "signed": "b5f1edaf33b89c1577678ac862686ca154f09334",
+  "main": "57352ae3bfc149c6e21e615b6f751b92dc2afff1",
+  "tree": "fcb045f014e5883eae29147dd1a129bef06746e6",
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/115",
+  "pr_ci": "https://github.com/Kiwunaka/POKROV-app/actions/runs/34568361963",
+  "main_ci": "https://github.com/Kiwunaka/POKROV-app/actions/runs/34569091378",
+  "both_ci": "EXECUTED_SUCCESS",
+  "branch_protection_unchanged": true,
+  "signed_and_merged_signature_verified": true,
+  "reviewed_source_equals_merged_tree": true,
+  "independent_review_performed": false,
+  "retained_files": [
+    {
+      "name": "promote.py",
+      "bytes": 5551,
+      "sha256": "596299c20b138ed6b076c981398ee2a8b0aa0b35e5ced1ee8c86b1ab0d6af472"
+    },
+    {
+      "name": "merge.py",
+      "bytes": 1904,
+      "sha256": "900e24258511da333bf0ff812d59388dc503df17ed70cf843d682ad5a10b4600"
+    },
+    {
+      "name": "verify-ci.py",
+      "bytes": 1573,
+      "sha256": "ee265ff0f69570936975aac4a037602f7e9cf914d42bd592882b84378caa7de5"
+    },
+    {
+      "name": "review-l01.py",
+      "bytes": 3820,
+      "sha256": "3f55a28d0a6d89f0d481b145a6850d8a22e6c742ceb4f87596b7e9cd19dfcea4"
+    },
+    {
+      "name": "capture-linux-ci.py",
+      "bytes": 2407,
+      "sha256": "e1fb7b619db7d4d9963cb9e81580657a0f09672b4c733c0ddd17ea01176e2f54"
+    },
+    {
+      "name": "preflight.json",
+      "bytes": 2204,
+      "sha256": "3252e61d131ae1f0f6effc018f7ae63a7f7bc1d313198ee59094f6f0239c6bda"
+    },
+    {
+      "name": "signed-response.json",
+      "bytes": 333,
+      "sha256": "b8f0fa9fd28bde07dd5b0fbd096734da8e5f4ca0849b41f681692f6d203b0ad4"
+    },
+    {
+      "name": "source-promoted.json",
+      "bytes": 977,
+      "sha256": "405318797dc2f84f8e945fc8801e5055b3d692fc1c17763d5af671a18bce9a48"
+    },
+    {
+      "name": "pr-body.md",
+      "bytes": 1169,
+      "sha256": "7ef2442a91caa4e5760c0119b9e6123b4be4d43bf891d7d6bf4ae6bfbf8e06a9"
+    },
+    {
+      "name": "client-ci-pr.json",
+      "bytes": 7259,
+      "sha256": "1c59efe91f29e8a96db3906d25fd38b75f2855492ad2f3745415dbdf0a84cb72"
+    },
+    {
+      "name": "client-ci-merge.json",
+      "bytes": 7254,
+      "sha256": "b71b4aea673904955caa549c85721acaa37e208f4ddef982cd90b4a9969acbc2"
+    },
+    {
+      "name": "client-merge-binding.json",
+      "bytes": 353,
+      "sha256": "e3b05428ef42045e15cc28428111c35bbf2f7ad23d7b0af9320c8be644d3f00a"
+    },
+    {
+      "name": "l01-source-review.json",
+      "bytes": 5292,
+      "sha256": "2129051f142a057fa1fb6e12b46e2580dddf2dc76c1b523989d04bd91821594e"
+    },
+    {
+      "name": "linux-ci-pr-binding.json",
+      "bytes": 1222,
+      "sha256": "8e74a9122d63117fe73703c7b85e2d70fe0209cf99fb493512e9262d6691859e"
+    },
+    {
+      "name": "linux-ci-pr-selected.log",
+      "bytes": 1851,
+      "sha256": "87f84006dda5ccfd491d9d05f25172cbc52a9eddcf13fc4ef662a509f9c3031f"
+    },
+    {
+      "name": "final-source-check.json",
+      "bytes": 437,
+      "sha256": "b60106c31334815a9ab4b1244d64f06e04474d47225b87719a268d8575bfeedd"
+    },
+    {
+      "name": "pr-ci-watch.log",
+      "bytes": 5656,
+      "sha256": "a6863f859dbc78862b9d4963bb7166d3f8b7d5c323e5987e6248b89845b0e8dc"
+    },
+    {
+      "name": "pr-ci-watch-resume.log",
+      "bytes": 8522,
+      "sha256": "f6f3632fa519972eeec774ce4c2049456fc0b10219f6f68a2b019e2b99e4e61f"
+    },
+    {
+      "name": "main-ci-watch.log",
+      "bytes": 16060,
+      "sha256": "dfe652b21e4e11ce7f0802286df0491d046eaf8f5658bc429f76a26aca236e5b"
+    }
+  ],
+  "local_apk_revision_remains": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+  "local_apk_sha256": "3ecff58793e0f6b354ce49eabd5f84f06052a92176cd12e4c5c7583a91cc41a0",
+  "l01": {
+    "status": "verified",
+    "grade": "I3",
+    "classification": "ALREADY_FIXED",
+    "scope": "Decision and source capability boundary only; Ubuntu24.04 amd64 conditional beta, five declared system prerequisites, current supports_live_connect=false matches unimplemented Core startup.",
+    "dependency": "R12-G01 verified",
+    "source_objects_compared": 16,
+    "linux_flutter_tests_observed": 5,
+    "go_host_auth_service_packages": "PASS",
+    "linux_live_network_or_package_proof": false,
+    "l02_l04": "OPEN"
+  },
+  "new_build_install_deploy_publication": false,
+  "full_goal": "OPEN"
+}
