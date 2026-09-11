@@ -420,51 +420,88 @@ provides the same boundary. NetworkManager is the primary integration for its
 declared matrix; resolved, networkd and nft behavior is explicit and
 fail-closed for IPv4/IPv6.
 
-The daemon's network transaction observability contract is closed before live
-mutation is enabled. Each event names exactly one `network_manager`, `resolved`
-or `nftables` subsystem and one `checkpoint`, `apply` or `rollback` stage. The
-only results are pass, unavailable or stage-specific rejection. The envelope
-contains a bounded transaction ID, request correlation ID, generation and an
-allowlisted error code; it has no command, argument, path, interface, address,
-resolver, rule, destination or raw error field. A current `connect` attempt
-records `checkpoint/unavailable` for all three required owners and then returns
-`linux_live_connect_unavailable`. It does not manufacture apply/rollback success
-before those operations exist.
+The daemon's transaction event envelope remains closed: one `network_manager`,
+`resolved`, `routes` or `nftables` subsystem, one `checkpoint`, `apply` or `rollback`
+stage, a bounded transaction/correlation ID, generation and an allowlisted
+result/error code. No commands, paths, network material or raw errors enter it.
 
-The source also contains a dormant system transaction implementation behind
-that event seam. It accepts only an internal typed plan: a daemon-owned
-`pokrov*` tunnel interface, one non-zero Core routing mark and one to four
-validated IP resolver addresses. None of those values can arrive as a raw
-command or shell fragment through IPC. The transaction order is fixed:
+The live path starts only the fixed root-owned executable
+`/usr/lib/pokrov/pokrov-core`, with no caller-supplied process arguments. Core
+reads the private staged profile, validates the privileged profile boundary and
+engine schema, then emits a bounded `pokrov-linux-core-v1` plan over inherited
+FD 3. That plan is restricted to TUN `pokrov0`, mark `0x504b` and its fixed DNS
+gateway addresses. Core creates the nonpersistent TUN and assigns its fixed
+addresses before its system stack binds listeners. Its private Linux context
+disables sing-tun route/rule mutation, including implicit IPv6 rules. This
+switch is not a profile JSON option. The daemon owns route table and priority
+20555, protocol 243 and metric 42700; pre-existing ownership rejects connect
+before mutation. Cleanup matches exact objects and never deletes a priority range.
 
-1. create a NetworkManager D-Bus checkpoint covering all devices, with a
-   bounded automatic rollback timeout and new-device/connection plus internal
-   DNS tracking;
-2. verify the owned resolved link and absence of the dedicated
-   `inet pokrov` nftables table;
-3. apply per-link DNS, `~.` routing and default-route ownership through
-   `resolvectl`;
-4. validate and atomically apply only the generated `inet pokrov` output table,
-   allowing loopback, the owned tunnel, the Core routing mark and required
-   DHCP/IPv6 link control while dropping other output;
-5. destroy the NetworkManager checkpoint only after the other participants
-   have applied successfully.
+The transaction order is fixed:
 
-Checkpoint and apply failures trigger reverse rollback. Every dirty owner is
-attempted even when an earlier rollback fails, and only failed owners remain
-eligible for an explicit recovery retry. Resolved rollback uses per-link
-`revert`; nftables rollback deletes only `inet pokrov` and never flushes or
-restores a global ruleset; NetworkManager rollback uses only the bounded object
-path returned by its checkpoint call. Native commands are fixed absolute
-paths, run without a shell, have per-call deadlines and bounded stdout, and
-discard stderr. The host probe now requires the system-bus client used by this
-implementation.
+1. persist the private recovery record and reject occupied route ownership;
+2. require absence of `inet pokrov`, validate and atomically install only that
+   output filter. It allows loopback, the owned tunnel, Core's mark and required
+   DHCP/IPv6 link control, dropping other output;
+3. start the prepared Core, record its TUN index and apply the owned IPv4/IPv6
+   policy routes under a persisted write-ahead intent;
+4. create a 90-second NetworkManager checkpoint for that exact TUN only, with
+   no flags that delete other connections or restore global DNS;
+5. apply per-link resolved DNS, `~.` and default-route settings;
+6. commit the NM checkpoint after the other participants have applied.
 
-This engine is source-only and deliberately not wired into `connect`: the
-current Core does not yet provide the exact Linux tunnel/mark/DNS lifecycle
-plan, and there is no durable restart/suspend recovery or clean Ubuntu 24.04
-runtime proof. Therefore no command in this implementation runs in the current
-product path and the unavailable preflight behavior above remains authoritative.
+Disconnect and failed apply restore resolved and any pending NM checkpoint
+while TUN exists. They remove exact owned routes, then wait for Core's explicit stop acknowledgement
+before releasing the nft table. Failure retains the pending owner and traffic
+filter for retry. Existing foreign rules are neither
+flushed nor restored from a whole-host snapshot. Native commands use fixed
+absolute paths, typed arguments, bounded output and deadlines, without a shell.
+
+The root-only mode-0600 `/var/lib/pokrov/network-recovery.json` records schema,
+boot identity, transaction/generation, a random nft ownership comment, link
+index, pending subsystems and the NM checkpoint's unique D-Bus owner. It has
+no profile, provider or credential fields. Atomic replacement includes file
+and directory sync; invalid or unsupported records are retained and fail closed.
+Daemon startup and unexpected Core exit resume cleanup. Recovery refuses a live
+or replaced TUN, checks the nft ownership comment and preserves changed or
+ambiguous route objects. Missing TUN implies removal of its per-link resolved
+state. After a new boot with no owned nft table, recovery retires the old record
+without modifying current-boot routes. NM object paths are used only while
+their recorded unique D-Bus owner still exists. A failed stage retains the record
+and prevents profile replacement until authorized cleanup succeeds.
+
+The systemd service uses `KillMode=mixed`: linuxd receives the initial stop
+signal and orders Core teardown itself. The socket unit owns `/run/pokrov` and
+the socket path; daemon listener close does not unlink it. The UI's 130-second
+response budget covers authorization, connect, failed-connect restoration and
+the host probe.
+
+The installed `pokrov-linux-sleep.service` is required before `sleep.target`.
+It stops both socket and daemon before sleep and starts the daemon on resume,
+so any retained journal is recovered before IPC resumes. Exact suspend/reboot
+acceptance remains a host evidence gate.
+
+Current source advertises live connect on the supported stack with an executable
+Core. A staged profile and absence of an active transaction or pending recovery also gate
+`can_connect`. Running means actual Core/network startup; DNS and egress health
+remain unknown and do not become a validated-health claim. The Linux compiler
+accepts the fixed TUN and loopback mixed profile shape, rejects file/namespace/
+interface/mark control and auxiliary services, and does not yet accept AWG
+endpoint profiles.
+
+[L02 runtime evidence](../operations/evidence/2026-09-11-r12-l02-linux-runtime/README.md)
+proves non-root IPC, real TUN/DNS/TLS HTTP, disconnect restoration, foreign-rule
+rejection and active service stop/reactivation on an isolated Ubuntu 24.04
+amd64 guest. Authentication success used a temporary guest-only polkit fixture
+grant, subsequently removed; production-policy denial was separately verified.
+This is not Flutter GUI, desktop-agent or signed-package proof.
+[L03 recovery evidence](../operations/evidence/2026-09-11-r12-l03-linux-recovery/README.md)
+adds dual-stack traffic, Core/daemon crash recovery, preserved foreign rules,
+partial rollback retry, actual suspend/resume and connected reboot. Real
+`pkttyagent` verifies missing-agent/timeout behavior using a scoped `AUTH_SELF`
+fixture condition, with no credentials entered; production-policy denial is
+verified after fixture removal. GUI authentication success and exact signed
+package acceptance remain L04 requirements.
 
 Every mutating request also emits one closed authorization decision before any
 profile or network write. The backend is exactly `peer_credential` for the
@@ -589,24 +626,15 @@ As of 2026-09-03:
   power/standby, watchdog and direct-updater producers are locally proved by
   both flavor JVM suites. Exact-device file permissions, lifecycle delivery,
   ANR behavior and long-run rotation remain candidate/device gates;
-- Linux remains conditional and absent from public scope. The source now has a
-  non-root Flutter host, a systemd socket-activated Go daemon, kernel peer
-  credentials, polkit authorization for every mutation, bounded typed IPC,
-  fixed private profile storage, a fail-closed Ubuntu 24.04 foundation matrix
-  and allowlisted native journald fields. The polkit D-Bus wrapper now exposes
-  one closed authorization decision for each mutation without peer identity or
-  diagnostic text. A typed NetworkManager/resolved/nft transaction-event seam
-  plus exact unavailable-preflight wiring exposes checkpoint/apply/rollback
-  compatibility reasons without raw details. A dormant typed transaction
-  engine now implements the fixed D-Bus checkpoint, per-link resolved change,
-  dedicated atomic nft table and reverse recovery order with injected source
-  faults; it is not connected to the product path and has no native runtime
-  evidence.
-  `connect` intentionally returns
-  `linux_live_connect_unavailable` and `supports_live_connect=false` until the
-  Core lifecycle supplies the exact internal network plan, the transaction is
-  durably integrated, and suspend recovery plus exact signed package/VM
-  matrices are implemented and retained.
+- Linux remains conditional and absent from public scope. The non-root Flutter
+  host uses authenticated typed IPC to the polkit-gated systemd service. The
+  private Core child now supplies and executes the validated TUN/mark/DNS plan;
+  the daemon applies its dedicated nft table and per-link NM/resolved changes.
+  Isolated Ubuntu 24.04 VM evidence covers traffic, restoration, foreign-rule
+  preservation and service stop/reactivation. Health fields remain unknown;
+  durable crash/suspend/reboot recovery and real-agent authorization negatives
+  now have bounded L03 VM proof. GUI authentication success and exact signed
+  deb acceptance remain open. See the conditional Linux section above.
 
 These statements describe source progress, not a 1.2.0 candidate or release.
 

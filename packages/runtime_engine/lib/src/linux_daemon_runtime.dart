@@ -23,7 +23,9 @@ abstract interface class LinuxDaemonTransport {
 final class LinuxUnixSocketTransport implements LinuxDaemonTransport {
   LinuxUnixSocketTransport({
     this.socketPath = pokrovLinuxDaemonSocketPath,
-    this.timeout = const Duration(seconds: 8),
+    // Allow the daemon's 60s polkit decision, 30s connect and 30s cleanup
+    // budgets plus its host probe; a valid mutation must retain its response.
+    this.timeout = const Duration(seconds: 130),
     this.maximumResponseBytes = 64 * 1024,
   });
 

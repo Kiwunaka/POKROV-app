@@ -17,6 +17,36 @@ type fakeTransactionParticipant struct {
 	pending          bool
 }
 
+type fakeTransactionCore struct {
+	calls        *[]string
+	failStart    bool
+	stopFailures int
+	cancel       context.CancelFunc
+}
+
+func (core *fakeTransactionCore) Start(context.Context) error {
+	*core.calls = append(*core.calls, "core:start")
+	if core.cancel != nil {
+		core.cancel()
+	}
+	if core.failStart {
+		return errors.New("injected Core start failure")
+	}
+	return nil
+}
+
+func (core *fakeTransactionCore) Stop(ctx context.Context) error {
+	*core.calls = append(*core.calls, "core:stop")
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	if core.stopFailures > 0 {
+		core.stopFailures--
+		return errors.New("injected Core stop failure")
+	}
+	return nil
+}
+
 func (participant *fakeTransactionParticipant) Subsystem() Subsystem {
 	return participant.subsystem
 }
@@ -65,6 +95,7 @@ func (participant *fakeTransactionParticipant) name() string {
 		NetworkManager: "network_manager",
 		Resolved:       "resolved",
 		Nftables:       "nftables",
+		Routes:         "routes",
 	}[participant.subsystem]
 }
 
@@ -106,18 +137,20 @@ func allFakeParticipants(calls *[]string) (
 	*fakeTransactionParticipant,
 	*fakeTransactionParticipant,
 	*fakeTransactionParticipant,
+	*fakeTransactionParticipant,
 ) {
 	return &fakeTransactionParticipant{subsystem: NetworkManager, calls: calls},
 		&fakeTransactionParticipant{subsystem: Resolved, calls: calls},
-		&fakeTransactionParticipant{subsystem: Nftables, calls: calls}
+		&fakeTransactionParticipant{subsystem: Nftables, calls: calls},
+		&fakeTransactionParticipant{subsystem: Routes, calls: calls}
 }
 
 func TestTransactionUsesProtectedStageOrderAndRestoresOwnedState(t *testing.T) {
 	calls := []string{}
-	networkManager, resolved, nftables := allFakeParticipants(&calls)
-	transaction, sink := newFakeTransaction(t, nftables, networkManager, resolved)
+	networkManager, resolved, nftables, routes := allFakeParticipants(&calls)
+	transaction, sink := newFakeTransaction(t, nftables, networkManager, resolved, routes)
 	plan := validPlan(t)
-	if err := transaction.Execute(context.Background(), plan); err != nil {
+	if err := transaction.Execute(context.Background(), plan, &fakeTransactionCore{calls: &calls}); err != nil {
 		t.Fatal(err)
 	}
 	if err := transaction.Restore(context.Background()); err != nil {
@@ -131,19 +164,24 @@ func TestTransactionUsesProtectedStageOrderAndRestoresOwnedState(t *testing.T) {
 		t.Fatalf("repeated restore mutated clean state: %#v", calls[callCount:])
 	}
 	wantCalls := []string{
+		"routes:checkpoint",
+		"nftables:checkpoint",
+		"nftables:apply",
+		"core:start",
+		"routes:apply",
 		"network_manager:checkpoint",
 		"resolved:checkpoint",
-		"nftables:checkpoint",
 		"resolved:apply",
-		"nftables:apply",
 		"network_manager:apply",
-		"nftables:rollback",
 		"resolved:rollback",
+		"routes:rollback",
+		"core:stop",
+		"nftables:rollback",
 	}
 	if !reflect.DeepEqual(calls, wantCalls) {
 		t.Fatalf("unexpected transaction order:\n got %#v\nwant %#v", calls, wantCalls)
 	}
-	if len(sink.events) != 8 {
+	if len(sink.events) != 11 {
 		t.Fatalf("unexpected event count: %d", len(sink.events))
 	}
 	for _, event := range sink.events {
@@ -155,21 +193,21 @@ func TestTransactionUsesProtectedStageOrderAndRestoresOwnedState(t *testing.T) {
 
 func TestTransactionRollsBackPartialApplyInReverseOrder(t *testing.T) {
 	calls := []string{}
-	networkManager, resolved, nftables := allFakeParticipants(&calls)
+	networkManager, resolved, nftables, routes := allFakeParticipants(&calls)
 	nftables.failApply = true
-	transaction, sink := newFakeTransaction(t, networkManager, resolved, nftables)
-	err := transaction.Execute(context.Background(), validPlan(t))
+	transaction, sink := newFakeTransaction(t, networkManager, resolved, nftables, routes)
+	err := transaction.Execute(context.Background(), validPlan(t), &fakeTransactionCore{calls: &calls})
 	var failure *Failure
 	if !errors.As(err, &failure) || failure.Stage != ApplyStage ||
 		failure.Subsystem != Nftables || failure.RollbackFailed {
 		t.Fatalf("unexpected transaction failure: %#v", err)
 	}
 	wantSuffix := []string{
-		"resolved:apply",
+		"routes:checkpoint",
+		"nftables:checkpoint",
 		"nftables:apply",
+		"core:stop",
 		"nftables:rollback",
-		"resolved:rollback",
-		"network_manager:rollback",
 	}
 	if !reflect.DeepEqual(calls[len(calls)-len(wantSuffix):], wantSuffix) {
 		t.Fatalf("partial apply did not rollback in reverse: %#v", calls)
@@ -188,11 +226,11 @@ func TestTransactionRollsBackPartialApplyInReverseOrder(t *testing.T) {
 
 func TestTransactionContinuesRollbackAndRetriesOnlyDirtyParticipant(t *testing.T) {
 	calls := []string{}
-	networkManager, resolved, nftables := allFakeParticipants(&calls)
-	nftables.failApply = true
+	networkManager, resolved, nftables, routes := allFakeParticipants(&calls)
+	resolved.failApply = true
 	resolved.rollbackFailures = 1
-	transaction, _ := newFakeTransaction(t, networkManager, resolved, nftables)
-	err := transaction.Execute(context.Background(), validPlan(t))
+	transaction, _ := newFakeTransaction(t, networkManager, resolved, nftables, routes)
+	err := transaction.Execute(context.Background(), validPlan(t), &fakeTransactionCore{calls: &calls})
 	var failure *Failure
 	if !errors.As(err, &failure) || !failure.RollbackFailed {
 		t.Fatalf("rollback failure was not retained: %#v", err)
@@ -204,26 +242,34 @@ func TestTransactionContinuesRollbackAndRetriesOnlyDirtyParticipant(t *testing.T
 	if err := transaction.Restore(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if got := calls[beforeRetry:]; !reflect.DeepEqual(got, []string{"resolved:rollback"}) {
+	if got := calls[beforeRetry:]; !reflect.DeepEqual(got, []string{"resolved:rollback", "routes:rollback", "core:stop", "nftables:rollback"}) {
 		t.Fatalf("recovery retried clean participants: %#v", got)
 	}
 }
 
 func TestTransactionCheckpointFaultRollsBackOnlyArmedOwner(t *testing.T) {
 	calls := []string{}
-	networkManager, resolved, nftables := allFakeParticipants(&calls)
+	networkManager, resolved, nftables, routes := allFakeParticipants(&calls)
 	resolved.failCheckpoint = true
-	transaction, _ := newFakeTransaction(t, networkManager, resolved, nftables)
-	err := transaction.Execute(context.Background(), validPlan(t))
+	transaction, _ := newFakeTransaction(t, networkManager, resolved, nftables, routes)
+	err := transaction.Execute(context.Background(), validPlan(t), &fakeTransactionCore{calls: &calls})
 	var failure *Failure
 	if !errors.As(err, &failure) || failure.Stage != CheckpointStage ||
 		failure.Subsystem != Resolved || failure.RollbackFailed {
 		t.Fatalf("unexpected checkpoint failure: %#v", err)
 	}
 	want := []string{
+		"routes:checkpoint",
+		"nftables:checkpoint",
+		"nftables:apply",
+		"core:start",
+		"routes:apply",
 		"network_manager:checkpoint",
 		"resolved:checkpoint",
 		"network_manager:rollback",
+		"routes:rollback",
+		"core:stop",
+		"nftables:rollback",
 	}
 	if !reflect.DeepEqual(calls, want) {
 		t.Fatalf("checkpoint fault touched an unarmed owner: %#v", calls)
@@ -232,13 +278,51 @@ func TestTransactionCheckpointFaultRollsBackOnlyArmedOwner(t *testing.T) {
 
 func TestTransactionRejectsInvalidPlanBeforeParticipantCall(t *testing.T) {
 	calls := []string{}
-	networkManager, resolved, nftables := allFakeParticipants(&calls)
-	transaction, sink := newFakeTransaction(t, networkManager, resolved, nftables)
-	if err := transaction.Execute(context.Background(), Plan{}); !errors.Is(err, ErrInvalidPlan) {
+	networkManager, resolved, nftables, routes := allFakeParticipants(&calls)
+	transaction, sink := newFakeTransaction(t, networkManager, resolved, nftables, routes)
+	if err := transaction.Execute(context.Background(), Plan{}, &fakeTransactionCore{calls: &calls}); !errors.Is(err, ErrInvalidPlan) {
 		t.Fatalf("invalid plan result: %v", err)
 	}
 	if len(calls) != 0 || len(sink.events) != 0 {
 		t.Fatalf("invalid plan reached transaction participants: %#v %#v", calls, sink.events)
+	}
+}
+
+func TestCancelledCoreStartStillStopsBeforeRemovingTrafficBlock(t *testing.T) {
+	calls := []string{}
+	nm, dns, nft, routes := allFakeParticipants(&calls)
+	transaction, _ := newFakeTransaction(t, nm, dns, nft, routes)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	core := &fakeTransactionCore{calls: &calls, failStart: true, cancel: cancel}
+	err := transaction.Execute(ctx, validPlan(t), core)
+	var failure *Failure
+	if !errors.As(err, &failure) || failure.RollbackFailed {
+		t.Fatalf("cleanup failed: %v", err)
+	}
+	want := []string{"routes:checkpoint", "nftables:checkpoint", "nftables:apply", "core:start", "core:stop", "nftables:rollback"}
+	if !reflect.DeepEqual(calls, want) {
+		t.Fatalf("unsafe cancelled-start order: %#v", calls)
+	}
+}
+
+func TestCoreStopFailureKeepsTrafficBlockedUntilRetry(t *testing.T) {
+	calls := []string{}
+	nm, dns, nft, routes := allFakeParticipants(&calls)
+	transaction, _ := newFakeTransaction(t, nm, dns, nft, routes)
+	core := &fakeTransactionCore{calls: &calls, stopFailures: 1}
+	if err := transaction.Execute(context.Background(), validPlan(t), core); err != nil {
+		t.Fatal(err)
+	}
+	if err := transaction.Restore(context.Background()); err == nil || !nft.pending {
+		t.Fatal("stop failure removed traffic block")
+	}
+	before := len(calls)
+	if err := transaction.Restore(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(calls[before:], []string{"core:stop", "nftables:rollback"}) {
+		t.Fatal("retry repeated clean work")
 	}
 }
 
@@ -249,13 +333,14 @@ func TestTransactionRequiresExactlyOneClosedParticipantSet(t *testing.T) {
 		t.Fatal(err)
 	}
 	calls := []string{}
-	networkManager, resolved, _ := allFakeParticipants(&calls)
+	networkManager, resolved, _, routes := allFakeParticipants(&calls)
 	duplicate := &fakeTransactionParticipant{subsystem: Resolved, calls: &calls}
 	if _, err := NewTransaction(
 		recorder,
 		networkManager,
 		resolved,
 		duplicate,
+		routes,
 	); !errors.Is(err, ErrInvalidParticipants) {
 		t.Fatalf("duplicate participant set accepted: %v", err)
 	}

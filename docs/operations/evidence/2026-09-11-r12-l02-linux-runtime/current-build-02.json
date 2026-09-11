@@ -1,0 +1,99 @@
+[
+  {
+    "directory": "core",
+    "command": [
+      "/home/pokrovtest/r12-l02/go/bin/go",
+      "test",
+      "-p",
+      "1",
+      "./v2/linuxruntime"
+    ],
+    "toolchain": "local",
+    "exit": 0
+  },
+  {
+    "directory": "core",
+    "command": [
+      "/home/pokrovtest/r12-l02/go/bin/go",
+      "vet",
+      "-p",
+      "1",
+      "-tags",
+      "with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0",
+      "./platform/linux",
+      "./v2/linuxruntime"
+    ],
+    "toolchain": "local",
+    "exit": 0
+  },
+  {
+    "directory": "core",
+    "command": [
+      "/home/pokrovtest/r12-l02/go/bin/go",
+      "build",
+      "-p",
+      "1",
+      "-trimpath",
+      "-buildvcs=false",
+      "-tags",
+      "with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0",
+      "-ldflags",
+      "-w -s -checklinkname=0 -buildid= -X github.com/Kiwunaka/POKROV-core/v2/hcommon/constants.Version=1.1.0",
+      "-o",
+      "/home/pokrovtest/r12-l02/pokrov-core-02",
+      "./platform/linux"
+    ],
+    "toolchain": "local",
+    "exit": 0
+  },
+  {
+    "directory": "daemon",
+    "command": [
+      "/home/pokrovtest/r12-l02/go/bin/go",
+      "env",
+      "GOVERSION"
+    ],
+    "toolchain": "go1.25.13",
+    "exit": 0
+  },
+  {
+    "directory": "daemon",
+    "command": [
+      "/home/pokrovtest/r12-l02/go/bin/go",
+      "test",
+      "-p",
+      "1",
+      "./..."
+    ],
+    "toolchain": "go1.25.13",
+    "exit": 0
+  },
+  {
+    "directory": "daemon",
+    "command": [
+      "/home/pokrovtest/r12-l02/go/bin/go",
+      "vet",
+      "-p",
+      "1",
+      "./..."
+    ],
+    "toolchain": "go1.25.13",
+    "exit": 0
+  },
+  {
+    "directory": "daemon",
+    "command": [
+      "/home/pokrovtest/r12-l02/go/bin/go",
+      "build",
+      "-p",
+      "1",
+      "-trimpath",
+      "-buildvcs=false",
+      "-o",
+      "/home/pokrovtest/r12-l02/pokrov-linuxd-02",
+      "./cmd/pokrov-linuxd"
+    ],
+    "toolchain": "go1.25.13",
+    "exit": 0
+  }
+]

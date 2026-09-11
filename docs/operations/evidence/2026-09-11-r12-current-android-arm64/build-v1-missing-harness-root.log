@@ -1,0 +1,5 @@
+Exception: C:\r12-current-windows-source-20260911\scripts\support-signing-pin.ps1:27
+Line |
+  27 |      throw 'The canonical support signing seed is missing.'
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The canonical support signing seed is missing.

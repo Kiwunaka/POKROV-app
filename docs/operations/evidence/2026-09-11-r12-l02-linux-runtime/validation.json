@@ -1,0 +1,17 @@
+{
+  "checks": {
+    "client-seed-exact-binding.log": {
+      "sha256": "d5cb3cb7ca17331951f51b0c715aea893b32b0ff8c4c8bf0a208d99895e77d62",
+      "raw_sha256": "7b90a6f71aa9620911b59f01ff6bcaa529598be0426e6e2b3ce08bed2f9e548d",
+      "exit": 0
+    },
+    "client-docs-contract-final.log": {
+      "sha256": "dc626bea0ae1373e450c8adf29b913cf27a2ec02fdc190c48b75babfbfe95e1a",
+      "raw_sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874",
+      "exit": 0
+    }
+  },
+  "core_artifact_binding_source": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "binding_checkout": "E:/r12core904-bound-source",
+  "linux_working_source_is_separate": true
+}

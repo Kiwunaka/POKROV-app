@@ -20,6 +20,7 @@ var commandPaths = map[string]string{
 	"busctl":     "/usr/bin/busctl",
 	"resolvectl": "/usr/bin/resolvectl",
 	"nft":        "/usr/sbin/nft",
+	"ip":         "/usr/sbin/ip",
 }
 
 type systemCommandRunner struct{}
@@ -76,10 +77,20 @@ func (output *boundedOutput) Write(value []byte) (int, error) {
 
 func NewSystemTransaction(recorder Recorder) (*Transaction, error) {
 	runner := systemCommandRunner{}
-	return NewTransaction(
+	recovery, err := newRecoveryLog(recorder)
+	if err != nil {
+		return nil, err
+	}
+	transaction, err := NewTransaction(
 		recorder,
 		&networkManagerParticipant{runner: runner},
 		&resolvedParticipant{runner: runner},
-		&nftablesParticipant{runner: runner},
+		&nftablesParticipant{runner: runner, owner: recovery.state.Token},
+		&routeParticipant{runner: runner},
 	)
+	if err != nil {
+		return nil, err
+	}
+	transaction.recovery = recovery
+	return transaction, nil
 }

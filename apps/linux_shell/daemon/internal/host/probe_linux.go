@@ -87,7 +87,7 @@ func (probe Probe) Run() Result {
 		Systemd:        commands.Active("systemd-journald.service"),
 		NetworkManager: commands.Active("NetworkManager.service") && commands.Available("busctl"),
 		Resolved:       commands.Active("systemd-resolved.service") && commands.Available("resolvectl"),
-		Nftables:       commands.Available("nft"),
+		Nftables:       commands.Available("nft") && commands.Available("ip"),
 		CoreArtifact:   secureRootArtifact(corePath),
 	}
 	return Result{
@@ -139,7 +139,7 @@ func readOSRelease(path string) (string, string) {
 func secureRootArtifact(path string) bool {
 	info, err := os.Lstat(path)
 	if err != nil || !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 ||
-		info.Mode().Perm()&0o022 != 0 {
+		info.Mode().Perm()&0o022 != 0 || info.Mode().Perm()&0o100 == 0 {
 		return false
 	}
 	stat, ok := info.Sys().(*syscall.Stat_t)

@@ -38,6 +38,7 @@ func TestProbeRequiresExactFoundationMatrixAndHostStack(t *testing.T) {
 				"busctl":     true,
 				"resolvectl": true,
 				"nft":        true,
+				"ip":         true,
 			},
 		},
 		CorePath:  "/bin/true",

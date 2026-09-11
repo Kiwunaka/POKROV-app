@@ -1637,8 +1637,9 @@ if (-not (Test-Path -LiteralPath $linuxReadmePath -PathType Leaf)) {
   $linuxReadme = [IO.File]::ReadAllText($linuxReadmePath)
   foreach ($requiredLinuxBoundary in @(
     'IMPLEMENTED_PARTIAL',
-    'supports_live_connect=false',
-    'linux_live_connect_unavailable',
+    'supports_live_connect',
+    'health remain unknown',
+    'L04 gates',
     'No Linux artifact or availability promise'
   )) {
     if (-not $linuxReadme.Contains($requiredLinuxBoundary)) {

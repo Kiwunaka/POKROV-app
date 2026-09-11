@@ -1,0 +1,16 @@
+
+['/home/pokrovtest/r12-l02/go/bin/go', 'test', '-p', '1', './...']
+?   	github.com/Kiwunaka/pokrov-app/linux-daemon/cmd/pokrov-linuxd	[no test files]
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/auth	0.006s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/coreprocess	0.023s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/host	0.008s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/journal	0.006s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/networktxn	0.059s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/profile	0.013s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/protocol	0.006s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/server	0.064s
+ok  	github.com/Kiwunaka/pokrov-app/linux-daemon/internal/service	0.190s
+
+['/home/pokrovtest/r12-l02/go/bin/go', 'vet', '-p', '1', './...']
+
+['/home/pokrovtest/r12-l02/go/bin/go', 'build', '-p', '1', '-trimpath', '-buildvcs=false', '-o', '/home/pokrovtest/r12-l02/pokrov-linuxd-09', './cmd/pokrov-linuxd']

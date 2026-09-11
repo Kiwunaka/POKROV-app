@@ -1,0 +1,354 @@
+{
+  "schema": "pokrov-l03-isolated-recovery-v1",
+  "date": "2026-09-11",
+  "scope": "conditional Ubuntu24.04 amd64 owned VM",
+  "core_commit": "97ec91e3a74c96db3ce5c0c98364b715bf344964",
+  "client_base": "926d0a1fee2b3842f44677d1208c46188dfd1f24",
+  "client_working_source": true,
+  "core_binary": {
+    "name": "pokrov-core-08",
+    "bytes": 54886526,
+    "sha256": "979e8d77a8d41237a490ada5b129ff0b8f8a7a5cf4d754b1651196a5118aa8ce"
+  },
+  "daemon_binary": {
+    "name": "pokrov-linuxd-09",
+    "bytes": 4658649,
+    "sha256": "07a3a0f775a789e2399bff9f4bdeb97948f3d321696ed9bbd4a2edf6f4ff1053"
+  },
+  "core_toolchain": "go1.26.8",
+  "daemon_toolchain": "go1.25.13",
+  "core_archive_sha256": "1a03303582dbae6adf065bcfdd079d76fc64dcd2c8f4b8f23ac896bbdedcd1f7",
+  "daemon_archive_sha256": "2e66a6b1c95f8d61b5e5770223e4837e996a170040adc5bdd697f1d2aa8fea58",
+  "source_files": [
+    {
+      "repository": "core",
+      "path": "engine/sing-box/protocol/tun/inbound.go",
+      "sha256": "fd51b9898bbd7495f320ce34f5b7fdb03df003ec72070e45e367766f832536d2"
+    },
+    {
+      "repository": "core",
+      "path": "platform/linux/main.go",
+      "sha256": "bd02da900a656e7fa7e13702abd63f22c362823ed99db5e060fb8bc8a0fce4df"
+    },
+    {
+      "repository": "core",
+      "path": "v2/hcore/linux_daemon_linux.go",
+      "sha256": "f68fa18c544ff1e4ef25eb54533d08a0c91998b6941a587880448dd3bc9bfde0"
+    },
+    {
+      "repository": "core",
+      "path": "v2/linuxruntime/profile.go",
+      "sha256": "da54dcfb29729d0506e79aeebcd236dde7e8eebba31e722a83efd77e12e85406"
+    },
+    {
+      "repository": "core",
+      "path": "v2/linuxruntime/profile_test.go",
+      "sha256": "d09eb5b692310da723568467dda215683abe46bc25fab1b8d4d125ea69e6639d"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/README.md",
+      "sha256": "d40ab8d93d7a6f7adce671356c0e5e8f66ed1a49b09b93009c0be50b9f51e070"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/cmd/pokrov-linuxd/main.go",
+      "sha256": "4c10832f7040ce8b8ae9b27030c920fee7d48675aac93a03f7e1636da59a2b9a"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/coreprocess/core_linux.go",
+      "sha256": "eb96a06cd5eb2d9fedf686f486c390cf7110d5ddd770ca306201ebfa8d2f7ccf"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/host/probe_linux.go",
+      "sha256": "ce06d49713e4fdbb337d741854184e0b984fa8cd504ad9808b6610dc7703bdfe"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/host/probe_linux_test.go",
+      "sha256": "313bd0fd6bf268e68373b9667688687d8531d3222fdbf8d7198169f0805c7a05"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/journal/journal.go",
+      "sha256": "55535e4ab30b9c30db4f74a1d19e5b4e25efa4991a35de63552b33e08e0fd574"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/participants.go",
+      "sha256": "63d1a13d81da3ee63d96d98f6b4de2c362a23e5d9e609705ab3faf602108ae2e"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/participants_test.go",
+      "sha256": "8b18f535e35d24bcfb166ebe3065af8253ac45bd2580c531f4ca3870bd504b3f"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/recorder.go",
+      "sha256": "4dd2d6ec8c6e33b550578896c466bda67342adf19cfb6330163b1cfc574db994"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/recovery.go",
+      "sha256": "30416527c9b5fe3affd4214c0322397800f509776a81ea6d8ef0170117e9541f"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/recovery_linux.go",
+      "sha256": "33b073e0b386a3221c9d85ec6b55207721a39689ec8abe873f9a58f027ff27ed"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/recovery_linux_test.go",
+      "sha256": "5d6aa59ca58b3d795cf17f744feefd2a46b1d0aa77629f4f5675602d5d81e69e"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/routes.go",
+      "sha256": "9fb0aa47a4ef76e255fbd5b4a8ec36086a428324594b8794c424a43f7c2f75f1"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/routes_test.go",
+      "sha256": "fb8273bb964b8cf54bfc89410883b99ee5ff7963c9b92c5866508fed09534857"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/runner_linux.go",
+      "sha256": "29b4ba65846ad396bf3c0bddaee19658c6911e7573b1384bd77f0e4227dc9cda"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/transaction.go",
+      "sha256": "96204fe64eefb6318e46df872b82e4e526af1711119c837c3445c66b08739e63"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/networktxn/transaction_test.go",
+      "sha256": "39b3a0466e8b2c7db50c1473fa90e3c96ea739f8739cae005d1557d3c519307a"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/daemon/internal/service/service_linux.go",
+      "sha256": "5fd7d74125197230f602837739982976b658172de72c7f002a6791c1f265c4a5"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/packaging/install-layout.v1.json",
+      "sha256": "5eccf4c0e6e02521a68ee4fe9a9a55a29e5d9b70485241e64090a6a3fe8037a6"
+    },
+    {
+      "repository": "client",
+      "path": "apps/linux_shell/packaging/systemd/pokrov-linux-sleep.service",
+      "sha256": "0e1fea14425242b091c8a44c3023789c1bd35d85021a296d310aa1abe02e37ff"
+    },
+    {
+      "repository": "client",
+      "path": "docs/architecture/platform-privilege-runtime-contract.md",
+      "sha256": "a86bb4928ffe92b74e78c261d498bb929a55523a4bd2916c8f9306689f2aa008"
+    },
+    {
+      "repository": "client",
+      "path": "test/docs-contract.ps1",
+      "sha256": "8971850b4b49191eee1dc43a9d045dda7fdd9cce8386c964092f0db89951359d"
+    }
+  ],
+  "native_tests_vet_build": "PASS",
+  "flutter_linux_shell_tests": {
+    "command": "flutter test --no-pub",
+    "passed": 5,
+    "exit_code": 0
+  },
+  "runtime": "PASS_BOUNDED",
+  "authorization_success": "FIXTURE_GRANT; not production desktop approval",
+  "authorization_negatives": {
+    "production_deny": "PASS",
+    "missing_agent": "PASS; FIXTURE_AUTH_SELF",
+    "timeout": "PASS; real pkttyagent, FIXTURE_AUTH_SELF, no credential entered",
+    "terminal_EOF": "PAM authorization denied; not a graphical cancel proof"
+  },
+  "suspend": "PASS; actual QMP suspended/wakeup and systemd resume",
+  "reboot": "PASS; connected guest reboot with new boot ID and reconnect",
+  "comparison": "All rule/route/nft/DNS fields retained; only IPv6 RA expires countdown ignored. Resume waits for NetworkManager network convergence. sleep02 resume_settle_seconds and samples reflect the final cleanup wait and are not used as resume latency evidence.",
+  "gui": "NOT_RUN",
+  "signed_deb": "NOT_RUN",
+  "promotion": "NOT_RUN",
+  "public_release": "NOT_RUN",
+  "raw_evidence_root": "E:\\r12-l03-linux-recovery-20260911",
+  "normalization": [
+    {
+      "file": "l03-live-01.json",
+      "raw_sha256": "e30db7a761cdbbd996d217bb6eb13db292bb1606504026e311437b345ffa1954",
+      "normalized_sha256": "e30db7a761cdbbd996d217bb6eb13db292bb1606504026e311437b345ffa1954"
+    },
+    {
+      "file": "l03-live-02.json",
+      "raw_sha256": "52463d4fab54661172463b7dd470ac2cb28434f23f381a74e22fc6876e856b11",
+      "normalized_sha256": "52463d4fab54661172463b7dd470ac2cb28434f23f381a74e22fc6876e856b11"
+    },
+    {
+      "file": "l03-live-03.json",
+      "raw_sha256": "07070acd8b9d29a382cc263055d688c4763f14fb84f542cb0246b4878bcc4577",
+      "normalized_sha256": "07070acd8b9d29a382cc263055d688c4763f14fb84f542cb0246b4878bcc4577"
+    },
+    {
+      "file": "l03-sleep-01.json",
+      "raw_sha256": "094304e348ac860221a41bc3b2c681576dc66ec3c22ef857b54d3ca2cbc1eb87",
+      "normalized_sha256": "094304e348ac860221a41bc3b2c681576dc66ec3c22ef857b54d3ca2cbc1eb87"
+    },
+    {
+      "file": "l03-sleep-02.json",
+      "raw_sha256": "d3f5c9934d9b2a2e6fb107e15b704b7af671e26366a1ab123b78d55e379bd813",
+      "normalized_sha256": "d3f5c9934d9b2a2e6fb107e15b704b7af671e26366a1ab123b78d55e379bd813"
+    },
+    {
+      "file": "l03-reboot-01.json",
+      "raw_sha256": "919a6d17ef63acab01d2e369f3641647204a05ae62d67f2fbcc8be2fe3245549",
+      "normalized_sha256": "919a6d17ef63acab01d2e369f3641647204a05ae62d67f2fbcc8be2fe3245549"
+    },
+    {
+      "file": "l03-auth-missing.json",
+      "raw_sha256": "1a89e4f7b7aa795bae4b40dff59c556ccc0fbd1fdd6f3e3549ee01ea62611027",
+      "normalized_sha256": "1a89e4f7b7aa795bae4b40dff59c556ccc0fbd1fdd6f3e3549ee01ea62611027"
+    },
+    {
+      "file": "l03-auth-timeout.json",
+      "raw_sha256": "35258fb440676eac57b0bc5aa9eb166cc01343417cd8bd6f88526d415ead3304",
+      "normalized_sha256": "35258fb440676eac57b0bc5aa9eb166cc01343417cd8bd6f88526d415ead3304"
+    },
+    {
+      "file": "l03-auth-dismiss.json",
+      "raw_sha256": "c175804c16df9c11618826fe98793f65226bbcfaaabb7ecafd2c5b0ad4c0f0ef",
+      "normalized_sha256": "c175804c16df9c11618826fe98793f65226bbcfaaabb7ecafd2c5b0ad4c0f0ef"
+    },
+    {
+      "file": "l03-return-state.json",
+      "raw_sha256": "f7d23c46a2e5aba7860df5d95cfa893bbf7709b3c401a57c79924caaf3860969",
+      "normalized_sha256": "f7d23c46a2e5aba7860df5d95cfa893bbf7709b3c401a57c79924caaf3860969"
+    },
+    {
+      "file": "current-build-08.json",
+      "raw_sha256": "e8c3e1fe369a39222f5caeab3b353d63b7ca103e457b7256d83ba5369c4bb76a",
+      "normalized_sha256": "e8c3e1fe369a39222f5caeab3b353d63b7ca103e457b7256d83ba5369c4bb76a"
+    },
+    {
+      "file": "current-build-08.log",
+      "raw_sha256": "81939dbaf3a4bdd5b4da82abc0838e1c0d6d3850c68fe4417126e920d1d58477",
+      "normalized_sha256": "81939dbaf3a4bdd5b4da82abc0838e1c0d6d3850c68fe4417126e920d1d58477"
+    },
+    {
+      "file": "daemon-build-09.json",
+      "raw_sha256": "53f75b0530e24af96017cdb1655c6418fe71e45ff6ec12a71362be75cd385c5d",
+      "normalized_sha256": "53f75b0530e24af96017cdb1655c6418fe71e45ff6ec12a71362be75cd385c5d"
+    },
+    {
+      "file": "daemon-build-09.log",
+      "raw_sha256": "be5ea40f6def5262a2fd8e18b32974c68840faa4a1b5828c134711be19b3aef8",
+      "normalized_sha256": "be5ea40f6def5262a2fd8e18b32974c68840faa4a1b5828c134711be19b3aef8"
+    },
+    {
+      "file": "operational-events.json",
+      "raw_sha256": "de0d0f7ca630806c7121f0995839960fa056b64fd439233e7876c623873370c1",
+      "normalized_sha256": "de0d0f7ca630806c7121f0995839960fa056b64fd439233e7876c623873370c1"
+    },
+    {
+      "file": "suspend-service.log",
+      "raw_sha256": "873be6710c3049da3df0a33b0824c8701f53ff22207ada0e21ef17647ed7e4f5",
+      "normalized_sha256": "873be6710c3049da3df0a33b0824c8701f53ff22207ada0e21ef17647ed7e4f5"
+    },
+    {
+      "file": "sleep-qmp.json",
+      "raw_sha256": "c5378b11a4468712b4c5ce7de5a40110f0b1bfeb20e23003efc40d258fc6cc64",
+      "normalized_sha256": "c5378b11a4468712b4c5ce7de5a40110f0b1bfeb20e23003efc40d258fc6cc64"
+    },
+    {
+      "file": "sleep-qmp-02.json",
+      "raw_sha256": "c5378b11a4468712b4c5ce7de5a40110f0b1bfeb20e23003efc40d258fc6cc64",
+      "normalized_sha256": "c5378b11a4468712b4c5ce7de5a40110f0b1bfeb20e23003efc40d258fc6cc64"
+    },
+    {
+      "file": "host-return-state-verified.json",
+      "raw_sha256": "5cd3b957fa7882658bd3384f377ed9c76fd4deedb08ee569e3cc0f473f2a77e6",
+      "normalized_sha256": "5cd3b957fa7882658bd3384f377ed9c76fd4deedb08ee569e3cc0f473f2a77e6"
+    },
+    {
+      "file": "route-shape.json",
+      "raw_sha256": "cd4e3844c6ef10a00a5a2626727821fd6633cada5da881786789c013467824ec",
+      "normalized_sha256": "cd4e3844c6ef10a00a5a2626727821fd6633cada5da881786789c013467824ec"
+    },
+    {
+      "file": "post-resume-route6.json",
+      "raw_sha256": "bbf61cbd5335f6e6a679f6471b97d508c54c52828764b2e6f815b9630c99231e",
+      "normalized_sha256": "bbf61cbd5335f6e6a679f6471b97d508c54c52828764b2e6f815b9630c99231e"
+    },
+    {
+      "file": "restart-02b.log",
+      "raw_sha256": "cfaa57236ba840182d7dc55fbd5b664a964f7b144c7b07c09269cb8125de590f",
+      "normalized_sha256": "cfaa57236ba840182d7dc55fbd5b664a964f7b144c7b07c09269cb8125de590f"
+    },
+    {
+      "file": "restart-03.json",
+      "raw_sha256": "e270c7753a3c8becca3133149806e3ffe672558e3da2ae97eae748c830eab1c2",
+      "normalized_sha256": "e270c7753a3c8becca3133149806e3ffe672558e3da2ae97eae748c830eab1c2"
+    },
+    {
+      "file": "native-build-06.log",
+      "raw_sha256": "1d5b916f4bfb02fd66acc877c59b58e447585d7f8774757240f1bb402235122d",
+      "normalized_sha256": "1d5b916f4bfb02fd66acc877c59b58e447585d7f8774757240f1bb402235122d"
+    },
+    {
+      "file": "native-build-07.log",
+      "raw_sha256": "a6889cf5878de24e9ebd7a821293ffc083737e0a21066f80826b3610f57e812d",
+      "normalized_sha256": "d4ba8ce98789892df27cbe966ae15ef6310a2c264b7f30d737b971d570724c09"
+    },
+    {
+      "file": "client-seed-final.log",
+      "raw_sha256": "80457e12388e8e23e5dfa26ae76e3b3655b1b25b5ae02c2629da26136920b529",
+      "normalized_sha256": "80457e12388e8e23e5dfa26ae76e3b3655b1b25b5ae02c2629da26136920b529"
+    },
+    {
+      "file": "client-docs-contract.log",
+      "raw_sha256": "dc626bea0ae1373e450c8adf29b913cf27a2ec02fdc190c48b75babfbfe95e1a",
+      "normalized_sha256": "dc626bea0ae1373e450c8adf29b913cf27a2ec02fdc190c48b75babfbfe95e1a"
+    }
+  ],
+  "evidence_files": {
+    "client-docs-contract.log": "dc626bea0ae1373e450c8adf29b913cf27a2ec02fdc190c48b75babfbfe95e1a",
+    "client-seed-final.log": "80457e12388e8e23e5dfa26ae76e3b3655b1b25b5ae02c2629da26136920b529",
+    "current-build-08.json": "e8c3e1fe369a39222f5caeab3b353d63b7ca103e457b7256d83ba5369c4bb76a",
+    "current-build-08.log": "81939dbaf3a4bdd5b4da82abc0838e1c0d6d3850c68fe4417126e920d1d58477",
+    "daemon-build-09.json": "53f75b0530e24af96017cdb1655c6418fe71e45ff6ec12a71362be75cd385c5d",
+    "daemon-build-09.log": "be5ea40f6def5262a2fd8e18b32974c68840faa4a1b5828c134711be19b3aef8",
+    "host-return-state-verified.json": "5cd3b957fa7882658bd3384f377ed9c76fd4deedb08ee569e3cc0f473f2a77e6",
+    "l03-auth-dismiss.json": "c175804c16df9c11618826fe98793f65226bbcfaaabb7ecafd2c5b0ad4c0f0ef",
+    "l03-auth-missing.json": "1a89e4f7b7aa795bae4b40dff59c556ccc0fbd1fdd6f3e3549ee01ea62611027",
+    "l03-auth-timeout.json": "35258fb440676eac57b0bc5aa9eb166cc01343417cd8bd6f88526d415ead3304",
+    "l03-live-01.json": "e30db7a761cdbbd996d217bb6eb13db292bb1606504026e311437b345ffa1954",
+    "l03-live-02.json": "52463d4fab54661172463b7dd470ac2cb28434f23f381a74e22fc6876e856b11",
+    "l03-live-03.json": "07070acd8b9d29a382cc263055d688c4763f14fb84f542cb0246b4878bcc4577",
+    "l03-reboot-01.json": "919a6d17ef63acab01d2e369f3641647204a05ae62d67f2fbcc8be2fe3245549",
+    "l03-return-state.json": "f7d23c46a2e5aba7860df5d95cfa893bbf7709b3c401a57c79924caaf3860969",
+    "l03-sleep-01.json": "094304e348ac860221a41bc3b2c681576dc66ec3c22ef857b54d3ca2cbc1eb87",
+    "l03-sleep-02.json": "d3f5c9934d9b2a2e6fb107e15b704b7af671e26366a1ab123b78d55e379bd813",
+    "native-build-06.log": "1d5b916f4bfb02fd66acc877c59b58e447585d7f8774757240f1bb402235122d",
+    "native-build-07.log": "d4ba8ce98789892df27cbe966ae15ef6310a2c264b7f30d737b971d570724c09",
+    "operational-events.json": "de0d0f7ca630806c7121f0995839960fa056b64fd439233e7876c623873370c1",
+    "post-resume-route6.json": "bbf61cbd5335f6e6a679f6471b97d508c54c52828764b2e6f815b9630c99231e",
+    "README.md": "b3e6d47e8232a4c1455e2035c4fc417b62f4ca270090720f79f09ceac739968f",
+    "restart-02b.log": "cfaa57236ba840182d7dc55fbd5b664a964f7b144c7b07c09269cb8125de590f",
+    "restart-03.json": "e270c7753a3c8becca3133149806e3ffe672558e3da2ae97eae748c830eab1c2",
+    "route-shape.json": "cd4e3844c6ef10a00a5a2626727821fd6633cada5da881786789c013467824ec",
+    "sleep-qmp-02.json": "c5378b11a4468712b4c5ce7de5a40110f0b1bfeb20e23003efc40d258fc6cc64",
+    "sleep-qmp.json": "c5378b11a4468712b4c5ce7de5a40110f0b1bfeb20e23003efc40d258fc6cc64",
+    "suspend-service.log": "873be6710c3049da3df0a33b0824c8701f53ff22207ada0e21ef17647ed7e4f5"
+  },
+  "docs_contract": "PASS",
+  "seed_validation": {
+    "result": "PASS",
+    "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot E:/r12core904-bound-source",
+    "core_binding_note": "Existing Android/Windows binding uses clean Core904; Linux binary is separately bound to Core97ec91e"
+  }
+}

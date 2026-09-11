@@ -1,0 +1,24 @@
+{
+  "source": "90337b33180b1600f0d6c25029627d0e9dc5b217",
+  "before_bytes": {
+    "C": 45271941120,
+    "E": 43353784320
+  },
+  "projected_growth_gib": {
+    "C": 1.8,
+    "E": 0.15
+  },
+  "minimum_required_free_gib": 40,
+  "stop_threshold_free_gib": 40.25,
+  "started_at": "2026-09-11T05:49:21.343570+00:00",
+  "exit_code": 1,
+  "after_bytes": {
+    "C": 45271896064,
+    "E": 43353784320
+  },
+  "minimum_observed_free_bytes": {
+    "C": 45271941120,
+    "E": 43353784320
+  },
+  "finished_at": "2026-09-11T05:49:24.409846+00:00"
+}
