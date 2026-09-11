@@ -74,9 +74,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Kiwunaka/pokrov-core
-          # PR 110 is the coordinated lifecycle binding before Core PR 11.
+          # PR 118 is the coordinated licensed uTLS binding before Core PR 12.
           # Ordinary push/PR checks return to main outside this exact PR.
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 110 && '904e440aca98cb6419744c5c04c83223a6d6380e' || 'main' }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 118 && '2662f76a3303a0518bb07fbbdc449c066de2f95b' || 'main' }}
           path: POKROV-core
           fetch-depth: 0
           persist-credentials: false

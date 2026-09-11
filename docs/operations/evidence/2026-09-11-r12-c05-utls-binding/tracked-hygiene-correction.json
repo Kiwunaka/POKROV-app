@@ -1,0 +1,11 @@
+{
+  "status": "FAILED_TRACKED_ZIP_HYGIENE_THEN_CORRECTED",
+  "failed_command": "scripts/validate-seed.ps1 with explicit platform/Core roots",
+  "archive_sha256": "3bc487e713e2f8b58fee9a80eca59095107b727c8993b260d744350e053c7a47",
+  "retained_archive": "C:\\r12-c05-utls-update-20260911\\binary-scan-evidence.zip",
+  "tracked_reports": 30,
+  "gate_weakened": false,
+  "repeat_seed": "PASS_EXPLICIT_CORE_PLATFORM_ROOTS_WITH_TRACKED_TEXT_EVIDENCE",
+  "initial_move": "Python rename could not cross drives; native PowerShell Move-Item completed with before/after hashes",
+  "repeat_log_sha256": "43f0f78aead9ac3e5edd42e05f12a0565ffeb7412ebf5b3135a13c039dbc1f25"
+}
