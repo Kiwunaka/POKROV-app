@@ -50,7 +50,7 @@ eight source matches and unchanged affected package registrations.
 The bounded prior nine-ID assessment applies under those unchanged inputs;
 this does not clear other native dependencies or the whole application.
 [Binary SBOMs](binary-sboms.json) and the full scan/tool output are retained in
-[package evidence](package-evidence.zip). Failed harness iterations are included.
+[materialized package evidence](package-evidence/README.md). Failed harness iterations are included.
 
 Build commands: `build.ps1` (offline bootstrap, Core sync, Windows reproducible
 release helper, Android production build); `python audit-windows.py`,
