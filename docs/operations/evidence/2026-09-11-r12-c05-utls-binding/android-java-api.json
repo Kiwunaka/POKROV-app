@@ -1,0 +1,502 @@
+{
+  "status": "PASS_ALL_GENERATED_JAVA_WRAPPER_BYTES_UNCHANGED",
+  "old_aar_sha256": "d2382adeeef8336721de6849b51d68d01576bbf9ae7c614a240bb18b9a4ea021",
+  "new_aar_sha256": "feb452f5f06b865e3ae0655ef4168ffe065c08b759f64e9cfa084cde9d5a5941",
+  "entries": [
+    {
+      "path": "META-INF/MANIFEST.MF",
+      "bytes": 44,
+      "sha256": "76ea5f40350a67044d4bd202c1f5e08c752efa5636250a4d2c6f172cec7b19b2"
+    },
+    {
+      "path": "go/Seq$GoObject.class",
+      "bytes": 179,
+      "sha256": "31e01881b73ebfc952a04f6ed3bc1fa2898cd1b94675d5a045e21eeeb3df1471"
+    },
+    {
+      "path": "go/Seq$GoRef.class",
+      "bytes": 1119,
+      "sha256": "02eec6a473fa4d88d07a635552cdbc0fe08ae1b1b14bedc4aa3ddcdcc25f0704"
+    },
+    {
+      "path": "go/Seq$GoRefQueue$1.class",
+      "bytes": 1044,
+      "sha256": "c8e3890eb75a952fb2ddde909677664d06be4cddd884257b8d382e88bd0aad2a"
+    },
+    {
+      "path": "go/Seq$GoRefQueue.class",
+      "bytes": 1523,
+      "sha256": "5cf2188bbed8c1cc9ead6541ce5dfac8701ef630584926363a6c450063c4e938"
+    },
+    {
+      "path": "go/Seq$Proxy.class",
+      "bytes": 189,
+      "sha256": "70a8c705d6ded02b47befc8c54e3dab534a102ef920aa55d190ed8ffae333cfa"
+    },
+    {
+      "path": "go/Seq$Ref.class",
+      "bytes": 1255,
+      "sha256": "d665a9796b63193e6016a8a1be65874a179bc08cac25d284fad077181d15d33c"
+    },
+    {
+      "path": "go/Seq$RefMap.class",
+      "bytes": 2588,
+      "sha256": "b8106a07b28a9c21a941c6c416c1504baaae3962c68a425137549d53d2842453"
+    },
+    {
+      "path": "go/Seq$RefTracker.class",
+      "bytes": 3001,
+      "sha256": "4b69774ac0fafdf2ee2e3f0ebfbae65d39095945143fe8d47d3e91ad657fc124"
+    },
+    {
+      "path": "go/Seq.class",
+      "bytes": 2772,
+      "sha256": "6ec1bee815fbb0598800c9cae8b5c54e72851192bd8b446bbed2cfea617cb2c0"
+    },
+    {
+      "path": "go/Universe$proxyerror.class",
+      "bytes": 815,
+      "sha256": "e05bd90462bab8e47cece28c9043ab34c6b852e09260d0ec06e3e2c1ad662baa"
+    },
+    {
+      "path": "go/Universe.class",
+      "bytes": 486,
+      "sha256": "98e5db4ed197f0bdbd470a613c432ba0de2b6f0b99cec9bd19e234dab1a7b33c"
+    },
+    {
+      "path": "go/error.class",
+      "bytes": 133,
+      "sha256": "08a3eb0bbe2bbc4ad0530e3062614ca0ba2ba042b6bb28ecfe1d2f05c483e634"
+    },
+    {
+      "path": "space/pokrov/core/libbox/AndroidVPNType.class",
+      "bytes": 2337,
+      "sha256": "7614790029be90b164264a9cd049f7a9e04fafb34a966ad20a0cfa9d34db3665"
+    },
+    {
+      "path": "space/pokrov/core/libbox/CommandClient.class",
+      "bytes": 2886,
+      "sha256": "ce96193836a66d6f918ae8b57b66aa4bc95fcc27708396812264f542fd7203e2"
+    },
+    {
+      "path": "space/pokrov/core/libbox/CommandClientHandler.class",
+      "bytes": 872,
+      "sha256": "45b8bebd9c2cb38460ad5c439c1420362d1ac5b711b8c4d3b2a4db56e725257c"
+    },
+    {
+      "path": "space/pokrov/core/libbox/CommandClientOptions.class",
+      "bytes": 1976,
+      "sha256": "3a6d4cfca92b4d5446c10cdd16707ac732c3380ad167c80af8768ed9454dcb2f"
+    },
+    {
+      "path": "space/pokrov/core/libbox/CommandServer.class",
+      "bytes": 3080,
+      "sha256": "2009a38a8cb16351aaedc1310d532309f1d1fbbbbc597248fbe615861d7b503f"
+    },
+    {
+      "path": "space/pokrov/core/libbox/CommandServerHandler.class",
+      "bytes": 508,
+      "sha256": "3c91ffb431cda4d8d803e9869b2a47b770731c52a1ce6b37604c4cd479b64d2f"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Connection.class",
+      "bytes": 6915,
+      "sha256": "29edde34fdbdeb859475f4325b2b761dcd4f0d19430854c587381997d4f30b1c"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ConnectionEvent.class",
+      "bytes": 3375,
+      "sha256": "2bead19c65411cd1cdd02b863fe484c82eb4d5ec8678f522c56e7938ffebae9f"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ConnectionEventIterator.class",
+      "bytes": 238,
+      "sha256": "6c01f0522c6aa0d2ddce0244692da30f5885eec683118a3e3324b4d644e338be"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ConnectionEvents.class",
+      "bytes": 1952,
+      "sha256": "fbea1a355fd87275fe2ea0a79e1d8860415de40e4667110c73f826143234ae89"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ConnectionIterator.class",
+      "bytes": 223,
+      "sha256": "84aa30682b3c263a3e0e0547006c4cbec812c969c92bcbe2c58f60c6c7a16463"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ConnectionOwner.class",
+      "bytes": 2706,
+      "sha256": "01b9b879861b4929bc7d8346d45d6659ea7cc3fe3906baa6e959da517a0e27d1"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Connections.class",
+      "bytes": 1828,
+      "sha256": "79c4c2e2ae9d7ca2fa06fc51de79687a1bddba157ad508a7a27bf919f5a297f7"
+    },
+    {
+      "path": "space/pokrov/core/libbox/DeprecatedNote.class",
+      "bytes": 3205,
+      "sha256": "cffac16ed6a123bd210938e712c5616f4cb44defb47e1e0cbd67c4314f83305e"
+    },
+    {
+      "path": "space/pokrov/core/libbox/DeprecatedNoteIterator.class",
+      "bytes": 235,
+      "sha256": "9aadd01fbf46c54978cd131b9767aad0049ed3b792350477a09c713a1f137c03"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ErrorMessage.class",
+      "bytes": 1875,
+      "sha256": "55e0457cb919c0416ea0be33363856322005dab6fce5d4f3c4b4bd913b243ee4"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ExchangeContext.class",
+      "bytes": 1795,
+      "sha256": "d2589f3185831207fa218b2c49d758c33e96dab2df79f85672a5771b710ba53d"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Func.class",
+      "bytes": 185,
+      "sha256": "06a766b8212b2816bfb11c426c6ce66d66082d3824683503946ca7b40524c7f7"
+    },
+    {
+      "path": "space/pokrov/core/libbox/HTTPClient.class",
+      "bytes": 429,
+      "sha256": "a44b7dc88d7f76a43c5ab6863f29bc403f08c03df52039861cdc74da5dccb52f"
+    },
+    {
+      "path": "space/pokrov/core/libbox/HTTPRequest.class",
+      "bytes": 623,
+      "sha256": "97e5366df65ee739d1eacf7ce14f27237a0d7a3310c615fb71f352175550e98f"
+    },
+    {
+      "path": "space/pokrov/core/libbox/HTTPResponse.class",
+      "bytes": 329,
+      "sha256": "34afa76c762395c99c809c75d09836211d4153c1d7e8efa88237a9c49ecf1b72"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ImportRemoteProfile.class",
+      "bytes": 2287,
+      "sha256": "0d08c103750330c01901c02f1ea89a7354ad206bd579de5827f331f22fe02136"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Int32Iterator.class",
+      "bytes": 191,
+      "sha256": "da70fb6102d2c95ab3fb092a340fe097eeb893a9b1d49d9836b4bc8e8b18348d"
+    },
+    {
+      "path": "space/pokrov/core/libbox/InterfaceUpdateListener.class",
+      "bytes": 317,
+      "sha256": "d9a977d68c1986fe0b2ecbdc81aab72efb29a4031b7d0ad32cd35099bbb65c1d"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyCommandClientHandler.class",
+      "bytes": 1523,
+      "sha256": "f87d8c870c1c5dd47b0c104f5b705fdfa7c821a7922f109912a5dbb8ea822b40"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyCommandServerHandler.class",
+      "bytes": 1166,
+      "sha256": "5be6a9490b312a8727b84a2152c50190551b6047241b270e0a57ff658bd8fbf3"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyConnectionEventIterator.class",
+      "bytes": 927,
+      "sha256": "5f878c56025f4285b159bdbe2688ff2a5bce3f1a63b6dbcc6d6c6bc8e83a8b6b"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyConnectionIterator.class",
+      "bytes": 902,
+      "sha256": "00a26b6e0f561ece864501eddb613955b742bd181c5f51a4255adad1447e92c5"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyDeprecatedNoteIterator.class",
+      "bytes": 922,
+      "sha256": "da89e85d95d6264f37b204ee7efaf63c0cd02e6fef467bbf01eb5d8919f93dd6"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyFunc.class",
+      "bytes": 830,
+      "sha256": "dae0ebf650912189e106a4df20350a0cab97f9515256ebbe3b8034000699182c"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyHTTPClient.class",
+      "bytes": 1060,
+      "sha256": "3de625efd3dad57f4681d3a23c2dd993969558686fba1077e8a6aab72daeda14"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyHTTPRequest.class",
+      "bytes": 1263,
+      "sha256": "6dbb64dcb43e82155b366c173c1d1973614a6563924d9803910d63ce0b63c66e"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyHTTPResponse.class",
+      "bytes": 977,
+      "sha256": "b58f7b48707f6b2d5fad7f8ab8e78b8e0d749cea7091bb3086bd5422db571fc9"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyInt32Iterator.class",
+      "bytes": 854,
+      "sha256": "7d600821ee5429a04bea1a647609ccff064f525ccafbb6e185cc3f3373d78861"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyInterfaceUpdateListener.class",
+      "bytes": 987,
+      "sha256": "f1780e047e57264dc03c9bffe10f4f5c19ad35d0c6bc08793aaf3edd5de7ec4e"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyLocalDNSTransport.class",
+      "bytes": 1134,
+      "sha256": "fa6196bfad444171879c13517957ee5b3f6032a41e11cc06368302f54100e681"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyLogIterator.class",
+      "bytes": 886,
+      "sha256": "fd8ee01756f888b6650830abf7409d5873a5f12e4c6654fd3a9fdc2a072f607b"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyNetworkInterfaceIterator.class",
+      "bytes": 932,
+      "sha256": "eaeacdec1369381ace22fd61f1e1543139365184c662c4e828f6fc0884042a08"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyOnDemandRule.class",
+      "bytes": 1014,
+      "sha256": "6441c7d7435e121bad119e06f5ea68c6f9b45faa58b17de1cc4d03adf1ecebe0"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyOnDemandRuleIterator.class",
+      "bytes": 912,
+      "sha256": "b8ea14a6cc2e165518e2898b03a50aad34fe3416843c6b2bbcb5b507dc26fd8c"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyOperationalEventHandler.class",
+      "bytes": 941,
+      "sha256": "57b679b3f4972d443b2179193f52e3a4da3b2761594d8faaa52d6af695540b20"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyOutboundGroupItemIterator.class",
+      "bytes": 937,
+      "sha256": "fbd05b27169702a57f98e1da7ac36d3e194851b413337146f71c38c919127e73"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyOutboundGroupIterator.class",
+      "bytes": 917,
+      "sha256": "8a37579128ab99f1d481de2c561c90fb06dc5a6a7ec5169d4fec6f33e6b5f874"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyPlatformInterface.class",
+      "bytes": 2005,
+      "sha256": "9c4b61c86d896429a7f9f2f5fd2c0c51857418c6e35f911e4659c18432fb54c6"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyProfilePreviewIterator.class",
+      "bytes": 922,
+      "sha256": "71dd11a778af04fc8323d4a5d1b4c956eb0ccc11f4cc8aefc4a08929cb7cb502"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyRoutePrefixIterator.class",
+      "bytes": 907,
+      "sha256": "5d5b36a3fce0f3b81b0d91e15befcc53b51880320f71af0fc2b945eb5e9c81e2"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyStringIterator.class",
+      "bytes": 881,
+      "sha256": "5ffa3728a26f797eca13e5c47d99dd55dc82c90921ed14c4155baa9c26ade6f9"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyTunOptions.class",
+      "bytes": 1563,
+      "sha256": "912d408823d3dfc6c2a8c43a74d4f0efee696b461315e963cf18be20822c8585"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox$proxyXPCDialer.class",
+      "bytes": 851,
+      "sha256": "74139ec00f00ef7e462d9997227c80345f6e8ab4992cb02c00bdee6cf083fe1b"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Libbox.class",
+      "bytes": 6477,
+      "sha256": "47995c27d966767a29a5c1b88d8617d63db52d2933ca3146e5b746302ceb38f4"
+    },
+    {
+      "path": "space/pokrov/core/libbox/LocalDNSTransport.class",
+      "bytes": 476,
+      "sha256": "5d53ffbb26f8ef0481be60d41bc2fcc61f6bd2e76a15976f4444f9e4a45b27f5"
+    },
+    {
+      "path": "space/pokrov/core/libbox/LogEntry.class",
+      "bytes": 2135,
+      "sha256": "de4da2d5fda742e8366b18295f6241a96352e02fd444ea9bc08c1df337210552"
+    },
+    {
+      "path": "space/pokrov/core/libbox/LogIterator.class",
+      "bytes": 227,
+      "sha256": "f1552b6eab23c5b2a299c548abbe6c3a0e7e6d6e9fbd8c6f083b2f4868a4486b"
+    },
+    {
+      "path": "space/pokrov/core/libbox/NetworkInterface.class",
+      "bytes": 3749,
+      "sha256": "d09395f9c9c67491aa97ec76647f50ef2812339c40e8e7a22da7b0f98c73afdf"
+    },
+    {
+      "path": "space/pokrov/core/libbox/NetworkInterfaceIterator.class",
+      "bytes": 241,
+      "sha256": "d6a749fe3e848766e890af96a30bb6c6ceb3ffe661620ec463ff46c3902256e4"
+    },
+    {
+      "path": "space/pokrov/core/libbox/Notification.class",
+      "bytes": 3302,
+      "sha256": "b5a1a1539b4668cf8953cef0167e16b31e260d6f527271d3ec6a2cfba8f302e7"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OnDemandRule.class",
+      "bytes": 353,
+      "sha256": "fa1756f390637f93a5e91e458fc37ff162eb4bbab34573994f8441569cf26175"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OnDemandRuleIterator.class",
+      "bytes": 229,
+      "sha256": "54806201ef7032ac22184d4f697cb6419e01e7636264b04238e3e8759acd32db"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OperationalEvent.class",
+      "bytes": 5034,
+      "sha256": "64ac28e9e23b3a471051feaaf4ff4f595d065ff4582689eebf13155370ec9e2d"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OperationalEventHandler.class",
+      "bytes": 271,
+      "sha256": "a8d497cc4901af75a203225d5f12a5d40796fef0aa681000ffff98890c6356fc"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OutboundGroup.class",
+      "bytes": 2905,
+      "sha256": "302d499a2bdc1bb74c08c393057759d07d48c0e727cf33175cfdcc40ca0db371"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OutboundGroupItem.class",
+      "bytes": 2730,
+      "sha256": "149a7c62814869b1940f09119ac6536eecc1ca7929affcac4978e5795e62a19e"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OutboundGroupItemIterator.class",
+      "bytes": 244,
+      "sha256": "094a4b26e913b04f8c9eedb0725e83ea6f74583cbfbc8531cf58d155d27bb070"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OutboundGroupIterator.class",
+      "bytes": 232,
+      "sha256": "60159d6536c9c32f48662f46fec1aa01f25b87ccee67b83414c72121d293916c"
+    },
+    {
+      "path": "space/pokrov/core/libbox/OverrideOptions.class",
+      "bytes": 2687,
+      "sha256": "83ec32570e71064f0fe2cc1b188cc7daf980b33095704d33b8b34909d256ff7d"
+    },
+    {
+      "path": "space/pokrov/core/libbox/PProfServer.class",
+      "bytes": 1701,
+      "sha256": "e370ee4fa72e49cb4e12f8fb7a8ed01f97bd7e0ca867996bce825060deba9ba9"
+    },
+    {
+      "path": "space/pokrov/core/libbox/PlatformInterface.class",
+      "bytes": 1360,
+      "sha256": "720c0f90f9530f0d3a83c0970d58bdb8d9ff3e62ccedeeed49e19d0ae67e9e75"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ProcessInfo.class",
+      "bytes": 2976,
+      "sha256": "8ac459f658a0b366d1be600d5c6fe0fcadd459bdad8c00094a775a46eaa69ade"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ProfileContent.class",
+      "bytes": 3549,
+      "sha256": "09069a46a36b3ec0ac200bfe3d60799cdb03ec1470432f422588186b9dccca59"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ProfileContentRequest.class",
+      "bytes": 1937,
+      "sha256": "4c8096a046405b43f061b52ade5af8aab212f8f9423e31af0c031fb786e77bb5"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ProfileDecoder.class",
+      "bytes": 1706,
+      "sha256": "9207f89e90e1884d6a2cf3b51da2092ddea554267e9f1e114c2d46531644ba19"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ProfileEncoder.class",
+      "bytes": 1642,
+      "sha256": "531b475003f1fab61dac42d8045a7102a6c66c63574207e393e74e10362a7406"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ProfilePreview.class",
+      "bytes": 2460,
+      "sha256": "e1bd9bffa910bb669b3b10f0e13c1590359a186eca9a176fda8238f2c08d8416"
+    },
+    {
+      "path": "space/pokrov/core/libbox/ProfilePreviewIterator.class",
+      "bytes": 235,
+      "sha256": "0e4e8ba803e25e239a715763fe9472579467309badbae6967e65068cee7b4b15"
+    },
+    {
+      "path": "space/pokrov/core/libbox/RoutePrefix.class",
+      "bytes": 1390,
+      "sha256": "2a8419068da60fee751b1fd477182c3ed58cb837151bb4ceaa6a715cf8b988d8"
+    },
+    {
+      "path": "space/pokrov/core/libbox/RoutePrefixIterator.class",
+      "bytes": 226,
+      "sha256": "57febfc67a610dd7362d2071c13fd610a29f75cf6a7537b9d9cc3402a2a62170"
+    },
+    {
+      "path": "space/pokrov/core/libbox/SetupOptions.class",
+      "bytes": 3897,
+      "sha256": "1158ef1a7a006ba05b448da68fb379425f4eb0eb65707177252fe38fa7d0aad5"
+    },
+    {
+      "path": "space/pokrov/core/libbox/StatusMessage.class",
+      "bytes": 3864,
+      "sha256": "5f26ca591a0cced4f1a4f4b491734177782c3e07c2bfe626088eb3df132e9a14"
+    },
+    {
+      "path": "space/pokrov/core/libbox/StringBox.class",
+      "bytes": 1829,
+      "sha256": "557c8d8405c79589344e1d5b14d461e3d7cee77a8d7e6d55f02c3e77afffb95b"
+    },
+    {
+      "path": "space/pokrov/core/libbox/StringIterator.class",
+      "bytes": 216,
+      "sha256": "8d1aa2d606dceb778e7bc56e0ad8dc6808382f701111b892fc8613fc1df3c283"
+    },
+    {
+      "path": "space/pokrov/core/libbox/SystemProxyStatus.class",
+      "bytes": 2102,
+      "sha256": "27cf7d0a66dd8a88380dcb362bc8b28c0cdfe00ada34cd05166340be9c1a49ff"
+    },
+    {
+      "path": "space/pokrov/core/libbox/TunOptions.class",
+      "bytes": 906,
+      "sha256": "68966d834d29649bc5c7cd600aed4fd76a6ffd8e118598770df70953669208f6"
+    },
+    {
+      "path": "space/pokrov/core/libbox/WIFIState.class",
+      "bytes": 2223,
+      "sha256": "024ab11e563351adc9d4c67327c266a62dc9bb395c70d6c3177ac0fca252aa51"
+    },
+    {
+      "path": "space/pokrov/core/libbox/XPCDialer.class",
+      "bytes": 196,
+      "sha256": "78da4ead6f62a4be17df97ef815f46cc737e4e824a1c474cc8090796571009ff"
+    },
+    {
+      "path": "space/pokrov/core/mobile/Mobile.class",
+      "bytes": 1077,
+      "sha256": "bc1624c6aa870254f28943e4e62a25e70c4375877cdd99a4692fe5aef883e8f5"
+    },
+    {
+      "path": "space/pokrov/core/mobile/SetupOptions.class",
+      "bytes": 3632,
+      "sha256": "abdc53fa5076ccb888344c998e2999bc4d10df210af0bb4f55ef3175925a45ae"
+    }
+  ]
+}

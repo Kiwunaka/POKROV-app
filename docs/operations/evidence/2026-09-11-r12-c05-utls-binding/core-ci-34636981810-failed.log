@@ -1,0 +1,40 @@
+release-contract	Materialize bound Core source authority	﻿2026-09-11T19:06:57.3154663Z ##[group]Run $candidateRoot = Join-Path "/home/runner/work/pokrov-core/pokrov-core" "POKROV-core"
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3155483Z ^[[36;1m$candidateRoot = Join-Path "/home/runner/work/pokrov-core/pokrov-core" "POKROV-core"^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3156230Z ^[[36;1m$authorityRoot = Join-Path "/home/runner/work/pokrov-core/pokrov-core" "POKROV-core-authority"^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3157039Z ^[[36;1m$seedPath = Join-Path "/home/runner/work/pokrov-core/pokrov-core" "client/config/runtime-artifacts.seed.json"^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3157884Z ^[[36;1m$boundCore = (Get-Content -Raw -LiteralPath $seedPath | ConvertFrom-Json).core.source_commit^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3158466Z ^[[36;1mif ($boundCore -notmatch "^[0-9a-f]{40}$") {^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3158950Z ^[[36;1m  throw "Client runtime seed does not contain a full Core source commit."^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3159412Z ^[[36;1m}^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3159642Z ^[[36;1m^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3159962Z ^[[36;1m& git -C $candidateRoot cat-file -e "$boundCore^{commit}"^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3160401Z ^[[36;1mif ($LASTEXITCODE -ne 0) {^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3160842Z ^[[36;1m  throw "Bound Core source commit is unavailable in the candidate checkout."^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3161599Z ^[[36;1m}^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3161826Z ^[[36;1m^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3162205Z ^[[36;1m& git -C $candidateRoot diff --quiet $boundCore HEAD -- . ":(exclude).github/**"^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3162683Z ^[[36;1mif ($LASTEXITCODE -ne 0) {^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3163417Z ^[[36;1m  throw "Core candidate changes bound source outside .github while client/main still pins $boundCore."^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3163951Z ^[[36;1m}^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3164172Z ^[[36;1m^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3164543Z ^[[36;1m& git -C $candidateRoot worktree add --detach $authorityRoot $boundCore^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3164996Z ^[[36;1mif ($LASTEXITCODE -ne 0) {^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3165406Z ^[[36;1m  throw "Failed to materialize the bound Core source authority."^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3165812Z ^[[36;1m}^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3218412Z shell: /usr/bin/pwsh -command ". '{0}'"
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3219037Z env:
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3219590Z   POKROV_SOURCE_COMMIT: 8bd0307d56359167e9a822f0edc0e99f810f3fe6
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3220402Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3221495Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3222308Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3223033Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3223765Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3224479Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:57.3225118Z ##[endgroup]
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:59.4380305Z ^[[31;1mException: ^[[0m/home/runner/work/_temp/d684187f-1e0d-4a27-9b39-e348d56f95a0.ps1:17^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:59.4381478Z ^[[31;1m^[[0m^[[36;1mLine |^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:59.4382429Z ^[[31;1m^[[0m^[[36;1m^[[36;1m  17 | ^[[0m   ^[[36;1mthrow "Core candidate changes bound source outside .github while cl^[[0m …^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:59.4383681Z ^[[31;1m^[[0m^[[36;1m^[[36;1m^[[0m^[[36;1m^[[0m^[[36;1m     | ^[[31;1m   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:59.4384989Z ^[[31;1m^[[0m^[[36;1m^[[36;1m^[[0m^[[36;1m^[[0m^[[36;1m^[[31;1m^[[31;1m^[[36;1m     | ^[[31;1mCore candidate changes bound source outside .github while client/main^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:59.4386419Z ^[[31;1m^[[0m^[[36;1m^[[36;1m^[[0m^[[36;1m^[[0m^[[36;1m^[[31;1m^[[31;1m^[[36;1m^[[31;1m^[[36;1m     | ^[[31;1mstill pins 904e440aca98cb6419744c5c04c83223a6d6380e.^[[0m
+release-contract	Materialize bound Core source authority	2026-09-11T19:06:59.4785484Z ##[error]Process completed with exit code 1.

@@ -1,0 +1,3 @@
+{"catalog_entry_count":127,"catalog_sha256":"1cef07aea2f859891794546569431d0e6aab91c6921729389fd63013f3002af1","event_schema_sha256":"24ae72442f778d7f1334ae0a4bf4d774738e4de275707b29420ec733af65cc17","status":"VALID"}
+PASS: client release-v2 CI is strict and the Windows exact-candidate gate retains sanitized failure evidence.
+PASS: standard client gate analyzes testless modules, tests all test-bearing modules and both Android flavors, and resolves Gradle and Python tools on Windows/Linux.

@@ -1,0 +1,88 @@
+{
+  "observed_utc": "2026-09-11T19:48:55.252229+00:00",
+  "binary": {
+    "path": "C:\\r12-c05-utls-update-20260911\\binary-scans\\native\\libpokrov-core-x86_64.so",
+    "bytes": 85501256,
+    "sha256": "9f33bfa1dcabb8f6d987c35652b19b0a2658f43ba0885c6dbd9986fa66cb41da"
+  },
+  "source_commit": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "scanner": {
+    "path": "E:\\r12-c05-artifacts\\tools\\govulncheck.exe",
+    "bytes": 15486464,
+    "sha256": "fd8811bd8fba451db7ba8588f4b4f6198beb791f22f80276b5c1663e96284bbc"
+  },
+  "sbom_tool": {
+    "path": "E:\\POKROV-tools\\go-tools\\bin\\cyclonedx-gomod.exe",
+    "bytes": 26958848,
+    "sha256": "52146112878e776f7ee77f979405aff6144131a41f1d2ec754760abb3325e9a5"
+  },
+  "command": [
+    "E:\\r12-c05-artifacts\\tools\\govulncheck.exe",
+    "-mode",
+    "binary",
+    "-json",
+    "C:\\r12-c05-utls-update-20260911\\binary-scans\\native\\libpokrov-core-x86_64.so"
+  ],
+  "exit_code": 0,
+  "report": {
+    "path": "C:\\r12-c05-utls-update-20260911\\binary-scans\\libpokrov-core-x86_64.govulncheck.jsonl",
+    "bytes": 645887,
+    "sha256": "b23f09cfa79dd5e446b38df9aea0ece853d3951948876f853e0fc587b35eac5d"
+  },
+  "stderr": {
+    "path": "C:\\r12-c05-utls-update-20260911\\binary-scans\\libpokrov-core-x86_64.govulncheck.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "advisories": [
+    "GO-2026-4316",
+    "GO-2026-4503",
+    "GO-2026-5774",
+    "GO-2026-5775",
+    "GO-2026-5777",
+    "GO-2026-5841",
+    "GO-2026-5932",
+    "GO-2026-6179",
+    "GO-2026-6180"
+  ],
+  "symbol_findings": 21,
+  "symbol_extraction": {
+    "report": {
+      "path": "C:\\r12-c05-utls-update-20260911\\binary-scans\\libpokrov-core-x86_64.extract.jsonl",
+      "bytes": 21746,
+      "sha256": "80cc819c9827b38bb29cce1b1565f7fdbe68080c2a174085df677b5564151273"
+    },
+    "extracted_symbols": 0,
+    "interpretation": "Empty extracted symbols cause govulncheck v1.7.0 to report known vulnerable module symbols; function trace records alone do not prove reachability."
+  },
+  "sbom": {
+    "command": [
+      "E:\\POKROV-tools\\go-tools\\bin\\cyclonedx-gomod.exe",
+      "bin",
+      "-std",
+      "-json",
+      "-notimestamp",
+      "-noserial",
+      "-output",
+      "C:\\r12-c05-utls-update-20260911\\binary-scans\\libpokrov-core-x86_64.binary.cdx.json",
+      "C:\\r12-c05-utls-update-20260911\\binary-scans\\native\\libpokrov-core-x86_64.so"
+    ],
+    "exit_code": 0,
+    "artifact": {
+      "path": "C:\\r12-c05-utls-update-20260911\\binary-scans\\libpokrov-core-x86_64.binary.cdx.json",
+      "bytes": 105715,
+      "sha256": "9e3f00699ad29deb59d11f31431a9faf0579ceba19e19680878489dd0249e769"
+    },
+    "log": {
+      "path": "C:\\r12-c05-utls-update-20260911\\binary-scans\\libpokrov-core-x86_64.binary-sbom.log",
+      "bytes": 92,
+      "sha256": "444ff3193c86dff309e153ea40824ba01e39e6c48ddb49cb38e563a3bc22fa51"
+    },
+    "components": 118
+  },
+  "status": "PASS_SCAN_EXECUTION_ONLY_REACHABILITY_TRIAGE_SEPARATE",
+  "limits": [
+    "Go binary modules only; stripped symbol absence is not proof of unreachable code.",
+    "Native libraries and complete licensing require separate assessment."
+  ]
+}

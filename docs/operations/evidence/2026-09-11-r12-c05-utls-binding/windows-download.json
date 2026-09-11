@@ -1,0 +1,32 @@
+{
+  "status": "PASS_EXACT_DOWNLOADED_BYTES",
+  "destination": "E:\\r12-c05-utls-2662-artifacts\\windows-a",
+  "files": [
+    {
+      "path": "libcronet.dll",
+      "size": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "path": "pokrov-core.dll",
+      "size": 55012864,
+      "sha256": "e77cc0ab979becc635ec578b8b44248b1146dd96ba34cd4de72e62130089ce2c"
+    },
+    {
+      "path": "pokrov-core.h",
+      "size": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    }
+  ],
+  "imports": {
+    "a": [
+      "KERNEL32.dll",
+      "msvcrt.dll"
+    ],
+    "b": [
+      "KERNEL32.dll",
+      "msvcrt.dll"
+    ]
+  },
+  "free_after": 43350593536
+}

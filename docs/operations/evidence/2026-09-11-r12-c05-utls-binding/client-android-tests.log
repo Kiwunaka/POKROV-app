@@ -1,0 +1,10 @@
+00:00 +0: loading E:/r12client/apps/android_shell/test/android_manifest_test.dart
+00:00 +0: E:/r12client/apps/android_shell/test/android_manifest_test.dart: android manifest declares special-use foreground service permission
+00:00 +1: E:/r12client/apps/android_shell/test/android_manifest_test.dart: android backup rules exclude secure session material
+00:00 +2: E:/r12client/apps/android_shell/test/android_manifest_test.dart: android acquisition continuation is an exact browsable deep link
+00:00 +3: E:/r12client/apps/android_shell/test/android_manifest_test.dart: android runtime service source keeps foreground failures sanitized
+00:00 +4: E:/r12client/apps/android_shell/test/android_manifest_test.dart: quick settings tile uses active mode and a monochrome vector icon
+00:00 +5: E:/r12client/apps/android_shell/test/android_manifest_test.dart: quick settings tile refreshes when first added
+00:00 +6: E:/r12client/apps/android_shell/test/widget_test.dart: android shell boots the shared protection surface
+00:01 +7: E:/r12client/apps/android_shell/test/widget_test.dart: android shell keeps raw runtime diagnostics out of first layer
+00:01 +8: All tests passed!

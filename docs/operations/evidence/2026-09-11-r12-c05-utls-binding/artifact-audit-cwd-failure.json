@@ -1,0 +1,6 @@
+{
+  "status": "FAILED_HARNESS_CWD",
+  "reason": "Unprivileged audit inherited root SSH working directory; Go could not stat cwd",
+  "binary_mutation": false,
+  "partial_extracted_elfs_retained": true
+}

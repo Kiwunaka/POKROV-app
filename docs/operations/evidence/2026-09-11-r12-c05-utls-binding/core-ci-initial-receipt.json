@@ -1,0 +1,45 @@
+{
+  "run_id": 34636981810,
+  "head": "8bd0307d56359167e9a822f0edc0e99f810f3fe6",
+  "source_tree": "e85be4e008668a2d57465bf49e1f413b020ab156",
+  "native_source_commit": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "conclusion": "FAILURE",
+  "jobs": [
+    {
+      "name": "release-contract",
+      "conclusion": "failure",
+      "url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34636981810/job/103387150178"
+    },
+    {
+      "name": "test",
+      "conclusion": "success",
+      "url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34636981810/job/103387150354"
+    },
+    {
+      "name": "android-artifact-reproducibility",
+      "conclusion": "success",
+      "url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34636981810/job/103390113878"
+    },
+    {
+      "name": "windows-artifact-reproducibility",
+      "conclusion": "success",
+      "url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34636981810/job/103390113903"
+    },
+    {
+      "name": "apple-source-build",
+      "conclusion": "success",
+      "url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34636981810/job/103390114326"
+    }
+  ],
+  "pending": "Coordinated client binding; preserve current strict gate",
+  "files": [
+    {
+      "name": "core-ci-current.json",
+      "sha256": "e0b1a329e63803fa4c4414f087a9c14aaae613e9a631c958af5d75d0b23b8c82"
+    },
+    {
+      "name": "core-ci-34636981810-failed.log",
+      "sha256": "9069e8876b0fefc661209dd9e90f195465dab763702ff9ce929c7f54b0f5f204"
+    }
+  ]
+}
