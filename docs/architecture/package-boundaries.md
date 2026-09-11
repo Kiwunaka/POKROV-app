@@ -55,6 +55,12 @@ Rules:
 | `support_context` | Support-safe snapshot shown in the placeholder UI |
 | `app_shell` | Runnable app-first shell aligned to `Protection / Locations / Rules / Profile`, with redeem and support handoff owned as Profile-level actions |
 
+The navigation stack retains opened tabs and their local state. Inactive tab
+widget configurations stay stable when the shell receives runtime/account
+updates; activating a tab invokes its latest builder before it paints. The
+existing Offstage, TickerMode and RepaintBoundary boundaries remain in place.
+This avoids rebuilding hidden Profile content without caching visible status.
+
 The Support preview shows a bounded versioned `PSD1-*` or `PSD2-*` code,
 categories, virtual files, byte sizes and removal count before any bundle
 export. `PSD2-*` preserves release build numbers above 255 while the decoder
