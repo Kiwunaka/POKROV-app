@@ -15,6 +15,10 @@ that fallback and does not claim the new assignment was applied. The owner's
 last downloaded or last proven profile within its original offline window.
 An explicit authorization denial is separate from an unreachable API.
 
+After an explicit disconnect settles to a non-running snapshot without a
+failure, Home returns to its ordinary Connect action. The runtime's successful
+status message is not a recovery notice. A reported failure keeps its message.
+
 Historical mapping note:
 
 - older docs may still say `external/pokrov-next-client/` or `app-next/`
