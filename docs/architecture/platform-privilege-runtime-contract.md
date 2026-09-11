@@ -520,6 +520,12 @@ reused for the response, so a completed authorization cannot mutate state and
 then silently lose its result solely because the prompt outlived the frame
 read window.
 
+For a runtime-ready Linux profile, full-device mode normalizes the VPN selector
+and route rules before staging: inherited RU/direct exceptions are removed
+except private-address routing. DNS uses the VPN resolver lane while retaining
+transport-domain bootstrap and private-address resolution. The all-except-RU
+mode keeps its managed RU rules; Windows process routing stays Windows-only.
+
 The Linux UI retains the transport's bounded 130-second wait for authorization,
 connect and cleanup instead of applying the shared 18-second runtime deadline.
 Profile API requests keep their existing deadline. Before staging, the Linux

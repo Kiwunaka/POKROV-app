@@ -6927,7 +6927,9 @@ class AppFirstRuntimeBootstrapper
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     final sanitized = Map<String, dynamic>.from(baseConfig)..remove('_meta');
-    if (hostPlatform == HostPlatform.windows) {
+    if (hostPlatform == HostPlatform.windows ||
+        (hostPlatform == HostPlatform.linux &&
+            routeMode == RouteMode.fullTunnel)) {
       final outbounds = _readListOfMaps(sanitized['outbounds']);
       final directTag = _ensureAuxiliaryOutbound(
         outbounds,
@@ -6982,7 +6984,7 @@ class AppFirstRuntimeBootstrapper
         selectedApps: selectedApps,
         clientRuleSetCatalog: clientRuleSetCatalog,
       );
-      sanitized['dns'] = _buildWindowsDnsBlock(
+      sanitized['dns'] = _buildDesktopDnsBlock(
         baseDns: sanitized['dns'],
         outbounds: outbounds,
         finalOutboundTag: vpnTag,
@@ -7767,7 +7769,7 @@ class AppFirstRuntimeBootstrapper
     required _ClientRuleSetCatalog clientRuleSetCatalog,
   }) {
     if (hostPlatform == HostPlatform.windows) {
-      return _buildWindowsDnsBlock(
+      return _buildDesktopDnsBlock(
         baseDns: baseDns,
         outbounds: outbounds,
         finalOutboundTag: finalOutboundTag,
@@ -7866,7 +7868,7 @@ class AppFirstRuntimeBootstrapper
     return dns;
   }
 
-  Map<String, dynamic> _buildWindowsDnsBlock({
+  Map<String, dynamic> _buildDesktopDnsBlock({
     required Object? baseDns,
     required List<Map<String, dynamic>> outbounds,
     required String finalOutboundTag,
@@ -8088,8 +8090,9 @@ class AppFirstRuntimeBootstrapper
     final rules = _readListOfMaps(route['rules'])
         .map((rule) => Map<String, dynamic>.from(rule))
         .toList(growable: true);
-    if (hostPlatform == HostPlatform.windows) {
-      _normalizeWindowsRouteModeRules(
+    if (hostPlatform == HostPlatform.windows ||
+        hostPlatform == HostPlatform.linux) {
+      _normalizeDesktopRouteModeRules(
         rules: rules,
         routeMode: routeMode,
         directTag: directTag,
@@ -8195,7 +8198,7 @@ class AppFirstRuntimeBootstrapper
     return route;
   }
 
-  void _normalizeWindowsRouteModeRules({
+  void _normalizeDesktopRouteModeRules({
     required List<Map<String, dynamic>> rules,
     required RouteMode routeMode,
     required String directTag,
