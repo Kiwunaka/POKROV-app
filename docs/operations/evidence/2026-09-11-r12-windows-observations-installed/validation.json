@@ -1,0 +1,42 @@
+{
+  "status": "PASS",
+  "scope": "Current evidence/documentation; no repeated source suite",
+  "captures": [
+    {
+      "name": "client-seed.log",
+      "status": "PASS",
+      "bytes": 1818,
+      "sha256": "8a75f313c1c1aafd9ccef3d0bda4ecd1c23dbba5cffaead7e9aeb7de97173808"
+    },
+    {
+      "name": "client-docs.log",
+      "status": "PASS",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "name": "platform-docs.log",
+      "status": "PASS",
+      "bytes": 101,
+      "sha256": "9f0b24cb94adafd27631947ea77400ef258ed55d88dc67e653c434b961d6d8a7"
+    },
+    {
+      "name": "platform-context.log",
+      "status": "PASS",
+      "bytes": 23,
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "name": "docs-links-final.json",
+      "status": "PASS",
+      "bytes": 108,
+      "sha256": "db125b1d1ab5226b170a14fee8edbfe84da5f46e359db55e7ca2af925b4d8037"
+    },
+    {
+      "name": "client-seed-initial-fail.log",
+      "status": "FAIL_PRESERVED",
+      "bytes": 2207,
+      "sha256": "0bc0c7226a71fffb54461b1b5c0c58bd55749ae032d12c60e081fd434a911cd9"
+    }
+  ]
+}

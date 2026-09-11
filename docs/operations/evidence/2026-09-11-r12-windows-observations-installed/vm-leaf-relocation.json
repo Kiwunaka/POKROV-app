@@ -1,0 +1,17 @@
+{
+  "status": "PASS_OFFLINE_ROLLBACK_AND_WRITABLE_LEAF_MOVE",
+  "VM": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "snapshot_count": 12,
+  "previous_11_preserved": true,
+  "new_leaf_uuid": "c6fccbf6-c96f-4ea7-bb30-03bac1afa8be",
+  "parent_uuid": "f5f3ee00-e593-4550-a488-d22feb28b39f",
+  "destination": "E:\\r12-vm-disks-20260911\\{c6fccbf6-c96f-4ea7-bb30-03bac1afa8be}.vdi",
+  "size": 2097152,
+  "sha256_before_and_after": "24fe5f2fe2b35c382c78c2a2633271758f5bd58128f6104a491a57bf26f550c1",
+  "poweroff": true,
+  "nic1": "none",
+  "old_disks_moved": false,
+  "old_snapshots_deleted": false,
+  "growth_destination": "E",
+  "utc": "2026-09-11T02:46:00.543805+00:00"
+}

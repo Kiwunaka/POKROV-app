@@ -1,0 +1,202 @@
+{
+  "status": "PASS_BOUNDED_INSTALLED_WINDOWS",
+  "origin": "current-origin owned Windows 11 VM",
+  "client_source": "7ed18c97c43ba39ce18701220d487af1b0c5a446",
+  "core_source": "904e440aca98cb6419744c5c04c83223a6d6380e",
+  "setup_sha256": "68bb5809623265ea6a7b4efe113c906f3eb488f2589cc3dfb12d242b12179ab7",
+  "installed_files": 304,
+  "state_and_secure_store_preserved_at_upgrade": true,
+  "non_elevated_ui_after_installer_finish": true,
+  "service_acl_preserved": true,
+  "https_markers": 10,
+  "tun_received_delta": 26436,
+  "tun_sent_delta": 26436,
+  "routes_restored": true,
+  "dns_restored": true,
+  "disconnect_ui_visual_check": "PASS: Connect CTA and unprotected state; no Retry CTA or settings-ready recovery message",
+  "vm_poweroff": true,
+  "vm_nic": "none",
+  "retained_snapshots": 12,
+  "host_network_unchanged": true,
+  "disk_free_gib": [
+    {
+      "drive": "C",
+      "free_gib": 41.79,
+      "expected_growth_gib": 0.0,
+      "remaining_after_gib": 41.79,
+      "required_remaining_gib": 40
+    },
+    {
+      "drive": "E",
+      "free_gib": 40.38,
+      "expected_growth_gib": 0.0,
+      "remaining_after_gib": 40.38,
+      "required_remaining_gib": 40
+    }
+  ],
+  "scope_limits": [
+    "No new public distribution, Win10, uninstall, clean-user install, WARP, Android, trusted signing or full release acceptance.",
+    "Six typed WinHTTP failure codes are present in the installed service; their injected failure tests remain the prior source/native evidence, not an installed fault matrix.",
+    "r12_managed_probe source 0218e89 identifies the test helper; application identity is independently bound by all 304 installed hashes.",
+    "NIC deltas include ambient guest traffic and do not attribute individual HTTPS requests to routes.",
+    "Initial package-identity and static audit contain pre-install NOT_YET_PERFORMED limits. This receipt adds later installed evidence without rewriting those captures.",
+    "VM growth exceeded the forecast: E free 43.42 GiB before boot to 40.38 GiB after shutdown versus 2 GiB estimated. Minimum 40 GiB remained, but the estimate was insufficient."
+  ],
+  "files": [
+    {
+      "name": "source-ready.json",
+      "bytes": 587,
+      "sha256": "3c079e89400f317ee6d79fd4038a516402ff60cadf0cd0bc3da1a264a9793ad0"
+    },
+    {
+      "name": "package-identity.json",
+      "bytes": 795,
+      "sha256": "860b168564ecef65e5413a875a78c56ea4b0e97da9bed5b604ceb7feb09356da"
+    },
+    {
+      "name": "windows-package-audit.json",
+      "bytes": 134200,
+      "sha256": "6b1e017de2a5cb8f46189a04e7160aaf8864d649c86851b90e44678511ab6a33"
+    },
+    {
+      "name": "windows-expected.json",
+      "bytes": 39924,
+      "sha256": "2e678f829df82d4a57ed7b20f3690f5878c2fed748533b0700410b3c5d57e3a0"
+    },
+    {
+      "name": "baseline-resumed.json",
+      "bytes": 696,
+      "sha256": "4a12ccdde3f4450285fa1369ea082946a13d7793cceae808b155306a0c935d28"
+    },
+    {
+      "name": "wizard-readback.json",
+      "bytes": 974,
+      "sha256": "00446666c62fc0ba3187243fedd4d670ca8d86d09e9520239b2c551ef1546ce2"
+    },
+    {
+      "name": "installed-ui-token.json",
+      "bytes": 480,
+      "sha256": "b890d7bbf7c49e77261685632ba8c1da7ad00938e18733dd36c5fb988ee08926"
+    },
+    {
+      "name": "network-online-before.json",
+      "bytes": 1230,
+      "sha256": "170ffd173034b1e92a6e6ea0cdbef39800ecf4e7968f14de380123a7f13c086b"
+    },
+    {
+      "name": "network-online-ready.json",
+      "bytes": 1450,
+      "sha256": "843d64abb5854446d7e99d19328b84782cf3daba272e04138ebffa930770d11c"
+    },
+    {
+      "name": "network-connected.json",
+      "bytes": 1687,
+      "sha256": "0d6b5849ad8eff36d2c575f55dace8757f7a5728074718504f177f038c16e458"
+    },
+    {
+      "name": "traffic.json",
+      "bytes": 3529,
+      "sha256": "1d1ce2d8b372fccdb7faea94e56d0141867eb566109773e77d83501d265f4c62"
+    },
+    {
+      "name": "network-disconnected.json",
+      "bytes": 1448,
+      "sha256": "d9025fcf0fcca7b524433aae2b437c99fa79f773ca27520d11926fc26f4d47ab"
+    },
+    {
+      "name": "final-installed-readback.json",
+      "bytes": 1084,
+      "sha256": "cde8389fa728b9c66cf95cd5c8bc12330fd72973d230641572d2525094eb65f4"
+    },
+    {
+      "name": "restoration.json",
+      "bytes": 1728,
+      "sha256": "a228925b0140143e21d3bdb72488de6bc2e9ef4ec1480a7013e99502cc4c1d02"
+    },
+    {
+      "name": "host-network-resumed-before.json",
+      "bytes": 220,
+      "sha256": "3b331c6d227936e24f2a908b4179d693189726969c21cbb9f879e462a820fb71"
+    },
+    {
+      "name": "host-network-resumed-after.json",
+      "bytes": 281,
+      "sha256": "51e4ecf68bc07a6606430b7fb4942caf8b2dd020afd820e072b133a282de981b"
+    },
+    {
+      "name": "vm-leaf-relocation.json",
+      "bytes": 681,
+      "sha256": "088c378268c64637b6716ecd28ac3f088576b518a14acdcca33b45a072d6bd5a"
+    },
+    {
+      "name": "disk-budget-build.json",
+      "bytes": 317,
+      "sha256": "bd1f1d5065a43f41dd12cca0b4341b7ee9f5f673f538b0ce6e209ba49bc768f1"
+    },
+    {
+      "name": "disk-budget-vm-start.json",
+      "bytes": 317,
+      "sha256": "992992e7d5c11896c9b3bef07f1d0974ba6c8f4b2445bfcc5c678c266dd8114e"
+    },
+    {
+      "name": "disk-budget-network-check.json",
+      "bytes": 317,
+      "sha256": "b6faba43757adec95d7f7aeeab438a5a4cf0aac562c1ce3f9434bfa17a598913"
+    },
+    {
+      "name": "disk-budget-final.json",
+      "bytes": 317,
+      "sha256": "2fb4b090d36d5564a22c12dd5af72a59afdb3ea64f918004666c909008738372"
+    },
+    {
+      "name": "build-resume.ps1",
+      "bytes": 1124,
+      "sha256": "da57e5c3058a16a07fe5e146bef65dae1265bee9085b8afbaedc5145cfb92a6e"
+    },
+    {
+      "name": "windows-build.log",
+      "bytes": 3294,
+      "sha256": "742d059fdbdd78518e5a19132751a4cc1b833f2e4497fbc3a8858a049258c14d"
+    },
+    {
+      "name": "windows-build-parity-fail.log",
+      "bytes": 314,
+      "sha256": "299a037ecaa702ec022a938672bb0256c68b5b89b0ac21e56bb2fae67ce1412e"
+    },
+    {
+      "name": "installer-extract.log",
+      "bytes": 289,
+      "sha256": "892292f9d6266754c3a7870d5261db375a75d5e281fe5f50e99a1429941fb6f3"
+    },
+    {
+      "name": "verify-installed.ps1",
+      "bytes": 2332,
+      "sha256": "3f1ebbf05ceee91673d094a7b4a9b9bd97b3a7578589a210ff718d03180e63cf"
+    },
+    {
+      "name": "read-installed-token.ps1",
+      "bytes": 2775,
+      "sha256": "83b9d77190bd6b0239fa0484ad81e047b91204eff85ad4d13ee4a564ef352a90"
+    },
+    {
+      "name": "final-readback.ps1",
+      "bytes": 1554,
+      "sha256": "a28dd9ab955e58de3c4d846aae76954f3d08ea34a9f427599c8e804e3d909793"
+    },
+    {
+      "name": "wizard-completion-check.png",
+      "bytes": 1349916,
+      "sha256": "779488cd018f7129aecad881747661d16e0f1c2ddc3fe4a15e2a3e51739fa137"
+    },
+    {
+      "name": "connected.png",
+      "bytes": 888418,
+      "sha256": "179b3b72be0310ac067b002e0a330e482c3752debd0b5c1e1f39104b48014b9d"
+    },
+    {
+      "name": "disconnected.png",
+      "bytes": 887348,
+      "sha256": "6281368cd5f2e38aa4cfae9b1de3c935121210b070d10e924569b141415fc236"
+    }
+  ]
+}

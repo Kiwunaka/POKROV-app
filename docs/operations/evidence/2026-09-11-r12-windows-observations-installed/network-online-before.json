@@ -1,0 +1,33 @@
+﻿{
+    "utc":  "2026-09-11T03:03:32.7314743Z",
+    "label":  "online-before",
+    "counter_method":  "NetworkInterface.GetIPv4Statistics",
+    "routes_count":  12,
+    "routes_sha256":  "214ae2150c1f2502897ca2371178932c65fd885348748a07f2c5924b55800a68",
+    "dns_sha256":  "a51d6fc76bbccbf38d1e875932d0dc57b300b7f54cebb62eb30c53e22e601287",
+    "adapters":  [
+
+                 ],
+    "http_status":  null,
+    "marker_valid":  false,
+    "http_error":  "WebException",
+    "dns_a_count":  null,
+    "dns_error":  "Win32Exception",
+    "status":  {
+                   "client_source":  "0218e89",
+                   "action":  "status",
+                   "elapsed_ms":  0,
+                   "available":  true,
+                   "trusted":  true,
+                   "compatible":  true,
+                   "accepted":  true,
+                   "phase":  "artifact_ready",
+                   "running":  false,
+                   "core_ready":  false,
+                   "dns_ready":  false,
+                   "egress_validated":  false,
+                   "can_connect":  false,
+                   "effective_matches_staged":  false,
+                   "failure":  "none"
+               }
+}

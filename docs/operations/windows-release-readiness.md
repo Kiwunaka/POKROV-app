@@ -1,5 +1,18 @@
 # Windows Release Readiness
 
+Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
+lab entries below do not replace its packaged bytes or release decision.
+
+2026-09-11 installed observations package: [exact result](evidence/2026-09-11-r12-windows-observations-installed/README.md).
+Client `7ed18c9` / Core904: 304 installed hashes, preserved upgrade state,
+non-elevated default UI, unchanged service ACL, ten HTTPS markers and exact
+route/DNS recovery PASS_BOUNDED. Successful disconnect now returns Connect;
+the earlier Retry defect is fixed in this installed package. VM off/NIC none,
+12 snapshots retained. Six WinHTTP failure classes are packaged; installed
+fault injection and full N05/Windows/public release gates remain open.
+Earlier entries below retain their original candidate and observation date.
+
+
 2026-09-11 Windows egress classification: [bounded source evidence](evidence/2026-09-11-r12-windows-egress-observations/README.md).
 The WinHTTP service now preserves closed DNS/connect/TLS/timeout observations
 through the existing IPC and Dart mapping. Twelve rebuilt native tests,
@@ -34,9 +47,6 @@ below retain their original candidate-specific scope.
 2026-09-10 current installed proof: [native support and diagnostics canvas](evidence/2026-09-10-r12-windows-support-native/README.md). First f318265 summary reached the owned HTTPS backend/worker/admin. PR103 merged c179369; installed2edfbde has readable light/dark diagnostics, 304 matching files and preserved state. 10 tests/analyze/seed/docs and both CI PASS. VM off/NIC none. Full planted-secret V01, final public package and broader device gates remain open.
 
 2026-09-10 source update: [encrypted support-outbox bound](evidence/2026-09-10-r12-outbox-bound/README.md), PR102 merged `e547016` / signed source `f318265`. New admission is limited to 24 MiB with existing encrypted retries preserved. 26 focused tests, analyze, seed/docs and both CI PASS. This source update is not installed-package proof; earlier `6816aab` fault evidence remains bound to that package. V03 active/I4; latest-package and V01 gates stay open.
-
-Retained release baseline: `pokrov-1.2.0-candidate.33`. The R12 source and local
-lab entries below do not replace its packaged bytes or release decision.
 
 R12 Core privacy (2026-09-10): [installed proof](evidence/2026-09-10-r12-core-privacy-installed/README.md)
 updates the owned Win11 VM to client `d655e2a` / Core `c8b0461`. The ordinary

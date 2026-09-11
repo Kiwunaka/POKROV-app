@@ -1,0 +1,6 @@
+Done with 1 error and 2 warnings.
+Warning: Unexpected setup loader revision: 2
+Warning: Setup loader checksum mismatch!
+Could not determine setup data version!
+If you are sure the setup file is not corrupted, consider 
+filing a bug report at https://innoextract.constexpr.org/issues
