@@ -1,0 +1,90 @@
+{
+  "status": "PASS_BUILD_COMMANDS_AND_AOT_REVISION_BINDING",
+  "source_revision": "212bd2f30c9f91d80fd3a6c08fb5557be8457f1c",
+  "build_progress": {
+    "source_commit": "212bd2f30c9f91d80fd3a6c08fb5557be8457f1c",
+    "process_id": 39860,
+    "status": "PASS",
+    "stage": "android",
+    "started_utc": "2026-09-11T20:24:17.6975706Z",
+    "commands": [
+      {
+        "elapsed_seconds": 201.7872536,
+        "skipped_local_checks": "Already passed current binding runtime81/Android8/seed/docs; exact PR CI runs full checks separately",
+        "exit": 0,
+        "lane": "windows"
+      },
+      {
+        "elapsed_seconds": 363.3041239,
+        "exit": 0,
+        "lane": "android"
+      }
+    ],
+    "production_deploy": false,
+    "publication": false,
+    "finished_utc": "2026-09-11T20:33:44.9958302Z"
+  },
+  "aot_artifacts": [
+    {
+      "package": "app-arm64-v8a-direct-release.apk",
+      "entry": "lib/arm64-v8a/libapp.so",
+      "sha256": "06fc383dfc412b3a2e6e76ff04a03bf41f626be9912c7d96f1a28ef00c4589d5",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "app-armeabi-v7a-direct-release.apk",
+      "entry": "lib/armeabi-v7a/libapp.so",
+      "sha256": "62a7d0ed485eadefd9490adf17c4c1a5eb027247610896f755b687f3349acd82",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/arm64-v8a/libapp.so",
+      "sha256": "06fc383dfc412b3a2e6e76ff04a03bf41f626be9912c7d96f1a28ef00c4589d5",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/armeabi-v7a/libapp.so",
+      "sha256": "62a7d0ed485eadefd9490adf17c4c1a5eb027247610896f755b687f3349acd82",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/x86_64/libapp.so",
+      "sha256": "8684cfc066b6c78e848446ba053d007a4c3a84bb795df8780484033dc75e86f1",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "app-x86_64-direct-release.apk",
+      "entry": "lib/x86_64/libapp.so",
+      "sha256": "8684cfc066b6c78e848446ba053d007a4c3a84bb795df8780484033dc75e86f1",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/arm64-v8a/libapp.so",
+      "sha256": "06fc383dfc412b3a2e6e76ff04a03bf41f626be9912c7d96f1a28ef00c4589d5",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/armeabi-v7a/libapp.so",
+      "sha256": "62a7d0ed485eadefd9490adf17c4c1a5eb027247610896f755b687f3349acd82",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/x86_64/libapp.so",
+      "sha256": "8684cfc066b6c78e848446ba053d007a4c3a84bb795df8780484033dc75e86f1",
+      "exact_source_revision_string_present": true
+    },
+    {
+      "package": "pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "entry": "data/app.so",
+      "sha256": "a99eaf354317e845de44976c5799561f3722962db25ebd490b01b3b48a5bcaea",
+      "exact_source_revision_string_present": true
+    }
+  ],
+  "limit": "Static revision string presence plus retained build commands; installed runtime identity is a separate check"
+}

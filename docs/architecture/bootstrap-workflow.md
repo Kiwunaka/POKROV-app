@@ -433,8 +433,11 @@ The asset also preserves the original Psiphon `u_prng.go` copyright and its
 explicit uTLS license reference, linked to the already included BSD body.
 Exact a24b211 local packages retain this notice; final package audits and
 module-precision scan evidence are linked from that record.
-The pinned Psiphon fork still lacks a root LICENSE; this file attribution
-does not establish clearance for the whole fork.
+The previous Core904 Psiphon fork lacked a root LICENSE; that file attribution
+did not establish clearance for the whole fork. The current Core2662 binding
+uses authenticated uTLS7a1fc with its own root LICENSE.
+[Exact development packages](../operations/evidence/2026-09-11-r12-c05-2662-packages/README.md)
+retain that notice, fresh package audits and the remaining source/license limits.
 This notice binding does not establish complete dependency licensing or
 corresponding-source delivery; remaining gaps stay explicit in release readiness.
 

@@ -1,0 +1,89 @@
+{
+  "status": "PASS_EXACT_BYTES_REUSE_FRESH_SAME_DAY_SCANS",
+  "core_revision": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "bindings": [
+    {
+      "package": "app-arm64-v8a-direct-release.apk",
+      "entry": "lib/arm64-v8a/libpokrov-core.so",
+      "binary_sha256": "8d992d23711f50a9fab21245236ff9ab12810136ab50beeaacad80c70ed36da5",
+      "fresh_scan": "libpokrov-core-arm64-v8a.scan.json",
+      "scan_sha256": "2f911c548d73d61de85a3a400039bd2d5654435f95e055dc377000b289f6d2a5"
+    },
+    {
+      "package": "app-armeabi-v7a-direct-release.apk",
+      "entry": "lib/armeabi-v7a/libpokrov-core.so",
+      "binary_sha256": "3cb08a90f1d324382dbe98b300cc346b63cfb177c95d1b42ad437c92a8096b86",
+      "fresh_scan": "libpokrov-core-armeabi-v7a.scan.json",
+      "scan_sha256": "a14507bc658481091996990b48e8dd63d8cb0505a5424a79a26f19a13c8131e7"
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/arm64-v8a/libpokrov-core.so",
+      "binary_sha256": "8d992d23711f50a9fab21245236ff9ab12810136ab50beeaacad80c70ed36da5",
+      "fresh_scan": "libpokrov-core-arm64-v8a.scan.json",
+      "scan_sha256": "2f911c548d73d61de85a3a400039bd2d5654435f95e055dc377000b289f6d2a5"
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/armeabi-v7a/libpokrov-core.so",
+      "binary_sha256": "3cb08a90f1d324382dbe98b300cc346b63cfb177c95d1b42ad437c92a8096b86",
+      "fresh_scan": "libpokrov-core-armeabi-v7a.scan.json",
+      "scan_sha256": "a14507bc658481091996990b48e8dd63d8cb0505a5424a79a26f19a13c8131e7"
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/x86_64/libpokrov-core.so",
+      "binary_sha256": "9f33bfa1dcabb8f6d987c35652b19b0a2658f43ba0885c6dbd9986fa66cb41da",
+      "fresh_scan": "libpokrov-core-x86_64.scan.json",
+      "scan_sha256": "e2d9ca4ac965ecb5bff9f97a54b407e67900722a945a7699163f8206a0fab5a9"
+    },
+    {
+      "package": "app-x86_64-direct-release.apk",
+      "entry": "lib/x86_64/libpokrov-core.so",
+      "binary_sha256": "9f33bfa1dcabb8f6d987c35652b19b0a2658f43ba0885c6dbd9986fa66cb41da",
+      "fresh_scan": "libpokrov-core-x86_64.scan.json",
+      "scan_sha256": "e2d9ca4ac965ecb5bff9f97a54b407e67900722a945a7699163f8206a0fab5a9"
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/arm64-v8a/libpokrov-core.so",
+      "binary_sha256": "8d992d23711f50a9fab21245236ff9ab12810136ab50beeaacad80c70ed36da5",
+      "fresh_scan": "libpokrov-core-arm64-v8a.scan.json",
+      "scan_sha256": "2f911c548d73d61de85a3a400039bd2d5654435f95e055dc377000b289f6d2a5"
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/armeabi-v7a/libpokrov-core.so",
+      "binary_sha256": "3cb08a90f1d324382dbe98b300cc346b63cfb177c95d1b42ad437c92a8096b86",
+      "fresh_scan": "libpokrov-core-armeabi-v7a.scan.json",
+      "scan_sha256": "a14507bc658481091996990b48e8dd63d8cb0505a5424a79a26f19a13c8131e7"
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/x86_64/libpokrov-core.so",
+      "binary_sha256": "9f33bfa1dcabb8f6d987c35652b19b0a2658f43ba0885c6dbd9986fa66cb41da",
+      "fresh_scan": "libpokrov-core-x86_64.scan.json",
+      "scan_sha256": "e2d9ca4ac965ecb5bff9f97a54b407e67900722a945a7699163f8206a0fab5a9"
+    },
+    {
+      "package": "pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "entry": "pokrov-core.dll",
+      "binary_sha256": "e77cc0ab979becc635ec578b8b44248b1146dd96ba34cd4de72e62130089ce2c",
+      "fresh_scan": "pokrov-core.scan.json",
+      "scan_sha256": "9d09c559c18a1ddcccfe0feae4594ec97bdfb9bce45fbc307e2f73995df6f47a"
+    }
+  ],
+  "advisories": [
+    "GO-2026-4316",
+    "GO-2026-4503",
+    "GO-2026-5774",
+    "GO-2026-5775",
+    "GO-2026-5777",
+    "GO-2026-5841",
+    "GO-2026-5932",
+    "GO-2026-6179",
+    "GO-2026-6180"
+  ],
+  "precision": "Module-level fallback: extracted symbol count zero; 21 trace records are not function reachability proof",
+  "x86": "Scanned AAR ABI, not one of the three distributed Android ABIs"
+}

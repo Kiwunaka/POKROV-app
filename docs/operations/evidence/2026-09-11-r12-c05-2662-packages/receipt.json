@@ -1,0 +1,367 @@
+{
+  "status": "PASS_BOUNDED_EXACT_PACKAGES",
+  "utc": "2026-09-11T20:50:58.881321+00:00",
+  "client_source": "212bd2f30c9f91d80fd3a6c08fb5557be8457f1c",
+  "core_source": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "package_line": "1.2.0+4053 development, not successor release identity",
+  "artifacts": [
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+      "size": 100927231,
+      "sha256": "45a943dca23587e7b710b33e29ac39b90bf0aaa614566c374f651bb4ceadc348"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+      "size": 90460229,
+      "sha256": "aa82c49f4d6fe89abcec3069805c3fddb4f0d7df3461804757218de6d539cce6"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+      "size": 294072538,
+      "sha256": "352436b741eaf91648e70febc69226d610c8e9e685cb238047ce9b98a2fd8dd7"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+      "size": 109719326,
+      "sha256": "9ffe8e83cfab393ef765acc0631579d236a9363525f3c71bd5e5d54660666fee"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\bundle\\storeRelease\\app-store-release.aab",
+      "size": 126058181,
+      "sha256": "9b1106ea72c17e423f34c0068c4f8d679f23fe8a63f5d007341547db223865d1"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "size": 29181662,
+      "sha256": "04cac45aae8d1490be33bb77ab3f2dc512a7acd5c116040504b8e28bf0d7b953"
+    }
+  ],
+  "android_signer_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+  "windows_signing": "SKIPPED_BY_OWNER",
+  "staged_and_extracted_windows_files": 304,
+  "windows_native_ctest": {
+    "passed": 9,
+    "failed": 0
+  },
+  "public_package_queries": {
+    "Pub": 75,
+    "Maven": 63,
+    "returned_advisory_ids": 0,
+    "direct_store_maven_graph_equal": true
+  },
+  "native_scan": "Exact packaged bytes match same-day Core scans; nine IDs at module precision; no whole-program vulnerability clearance",
+  "source_archive": "E:/r12-2662-source-20260911/pokrov-core-2662f76-source-review.zip",
+  "source_archive_sha256": "988573fde7433cc20c40f40a4696d0fa5b54aea1c936feec39cc7dab3715b25d",
+  "captures": [
+    {
+      "name": "build.ps1",
+      "bytes": 3286,
+      "sha256": "97325e15e53e9238ae648f00f39d443e5795a54b9a24f082fc3d8e71d9b6dc1a"
+    },
+    {
+      "name": "build-retry.ps1",
+      "bytes": 3304,
+      "sha256": "104f15a00b306feba6907e4859949595f9b34ecbbefc09f350f4ef7410c3a65b"
+    },
+    {
+      "name": "build-progress.json",
+      "bytes": 352,
+      "sha256": "aca1c24882d0212148b420da7480ac3f7864649d4f1097eb0941e2bbea80fc78"
+    },
+    {
+      "name": "build-progress-retry.json",
+      "bytes": 645,
+      "sha256": "0196b4aedeab31f8f0cbd6de220f27e0144d27556c1b8b7ecbca7e4c1b1d3718"
+    },
+    {
+      "name": "windows-build.log",
+      "bytes": 6128,
+      "sha256": "8cdf92ecebcb40eec17d3ec059b2438073f64ed349e77e77e9b4f44df8a748c7"
+    },
+    {
+      "name": "windows-build-retry.log",
+      "bytes": 3294,
+      "sha256": "fe4b188e6224e5601210545d42313ee6a966f153173a796d68da06fcdb2961c6"
+    },
+    {
+      "name": "android-build-retry.log",
+      "bytes": 8975,
+      "sha256": "2d8483ab1a25bf50884cf789be9d1afca69785723d0a5e946f61079fe11c4e58"
+    },
+    {
+      "name": "audit-windows.py",
+      "bytes": 4630,
+      "sha256": "d8fd289adcf364ea3d6044752b59ae0f7a2b2048c62840761d7e001853cabba3"
+    },
+    {
+      "name": "audit-android.py",
+      "bytes": 5615,
+      "sha256": "b938370a4f6fbaa2c96862c38a6447aac8e68ba0933c3fe494e0128ca35766af"
+    },
+    {
+      "name": "windows-package-audit.json",
+      "bytes": 126486,
+      "sha256": "69ca9bdfe76d40209fc2e5ec99763fd42e136d951ed221cd7319fff7276cd8ca"
+    },
+    {
+      "name": "android-package-audit.json",
+      "bytes": 17853,
+      "sha256": "b61b4556ddf79476efadd62f5277cd7c5041a295d8929a794da95f3ba0ca8af4"
+    },
+    {
+      "name": "parse-dex.py",
+      "bytes": 1800,
+      "sha256": "b7218e0fa983c4fa813d635043154d9ab865d02d1e4bfa77458851711d8d4ce5"
+    },
+    {
+      "name": "android-dex-identity.json",
+      "bytes": 1616,
+      "sha256": "b71d8d98e462d806548e090b4f3fd2189fbc7e6cee66421db2beddbecafa05bc"
+    },
+    {
+      "name": "android-dex-parsing.json",
+      "bytes": 2638,
+      "sha256": "4b0ef36c205c335f9afdaa8f4af61fbcd5f11999a8c0e30d412e9b8afb9fcf69"
+    },
+    {
+      "name": "android-dex-packages-direct.log",
+      "bytes": 1244270,
+      "sha256": "7adb8a94f651b7cd28fb8c90f48cf402240e2e732f8713b6c7a9194fb4b60fa6"
+    },
+    {
+      "name": "android-dex-packages-store.log",
+      "bytes": 1234555,
+      "sha256": "6288c36744e9a32f8a5211e145c43af2404b212eac99e478df765cc73dcfd2f9"
+    },
+    {
+      "name": "android-dex-packages-direct.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "android-dex-packages-store.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "query-advisories.py",
+      "bytes": 2875,
+      "sha256": "72fbc9e3543c511e1c1594778da0387c0495184d32378983a2d2e6f9f9c273a5"
+    },
+    {
+      "name": "osv-query-public-packages.json",
+      "bytes": 19166,
+      "sha256": "aa7139cf30682e16810dbfa9e041b0515bf249d0a2bcda83bfdef35d379389b7"
+    },
+    {
+      "name": "osv-response-public-packages.json",
+      "bytes": 1126,
+      "sha256": "2aca7e5b136aed5d1c4e694e025df7777f9fe566089a67661a70c3097683863c"
+    },
+    {
+      "name": "osv-runtime-graph-summary.json",
+      "bytes": 27006,
+      "sha256": "add848d8f4f2642c5a44b9b8c5d5f620d2ad3845a81f8a125df639ba0fedd5e5"
+    },
+    {
+      "name": "dependency-advisories.log",
+      "bytes": 54,
+      "sha256": "46c8acd9897c802d6325314cbb03f8d5d16eb7a990562b6f144820e98ddff513"
+    },
+    {
+      "name": "android-pub-deps.json",
+      "bytes": 31391,
+      "sha256": "d26c5994ea34bb8d1ca3acceb1206e589796ac7ab5dcc807367d4b743ac0b00d"
+    },
+    {
+      "name": "windows-pub-deps.json",
+      "bytes": 34429,
+      "sha256": "58b2c88c3452237ce74737e7da59ac45142bcbd7f6619fa61805acad6012adf0"
+    },
+    {
+      "name": "gradle-modules.init.gradle",
+      "bytes": 1147,
+      "sha256": "312f0d50c16ca8f4d8bd7307d0b5f3c8beda61739ab8f005b25ef8466987fd5c"
+    },
+    {
+      "name": "gradle-modules.log",
+      "bytes": 934,
+      "sha256": "786fbcadaa83153611c61ec69b6ea618ab528b35908fb0c339bf324eaf23efad"
+    },
+    {
+      "name": "android-gradle-modules-direct.json",
+      "bytes": 7935,
+      "sha256": "bd00fc2172e49b2cd73dbb8e53846f5c28b11ffab02f39b3b75061dd87a73323"
+    },
+    {
+      "name": "android-gradle-modules-store.json",
+      "bytes": 7935,
+      "sha256": "bd00fc2172e49b2cd73dbb8e53846f5c28b11ffab02f39b3b75061dd87a73323"
+    },
+    {
+      "name": "native-tests.ps1",
+      "bytes": 812,
+      "sha256": "8bab98398184922f5ca4b96467634e9484b0659018b7bdced4d854b855747ca1"
+    },
+    {
+      "name": "windows-native-tests.log",
+      "bytes": 1201,
+      "sha256": "beae55f1de2076204a6259a1c1da53e2999102febaac6825c9bc772e09e45524"
+    },
+    {
+      "name": "package-native-scan-binding.json",
+      "bytes": 4087,
+      "sha256": "62d473a2e0c144483ed2e9e4a64e7869470875f0da67c3b60af4ef1842a0ac6b"
+    },
+    {
+      "name": "package-build-identity.json",
+      "bytes": 3426,
+      "sha256": "c7cf762de161acb0e4dce514f0aec0fb724174637d6daf379963c0e4c532d570"
+    },
+    {
+      "name": "start-extractor.ps1",
+      "bytes": 1754,
+      "sha256": "650cf4f89bf976fb40df79114ba5e9cb88687598a840ea33d6e19ca1729e2082"
+    },
+    {
+      "name": "extract-installer.py",
+      "bytes": 4120,
+      "sha256": "2b48d7343ec378c519c28c96323319d337703b9aafb904bd816fa53a23486695"
+    },
+    {
+      "name": "guest-extract.py",
+      "bytes": 1768,
+      "sha256": "1e10df642c18af9c8d99ffeb89d49361f477f7924d33c8d478b2b54c78554ab2"
+    },
+    {
+      "name": "compare-payload.py",
+      "bytes": 2028,
+      "sha256": "8df04f80225b8562fdb1ef63956a57f2cde7733f782ed96be3e17f4057376ef6"
+    },
+    {
+      "name": "comparison.json",
+      "bytes": 1058,
+      "sha256": "197b75578cc0443f315a16f05c9669c8caad614d114b812e81c69b15b76264ac"
+    },
+    {
+      "name": "extraction.json",
+      "bytes": 555,
+      "sha256": "709929f8650afbf433cfe791d1688c664813b3722f63b0a4e94f614fa65cf608"
+    },
+    {
+      "name": "extract.log",
+      "bytes": 76975,
+      "sha256": "a6f6481a0c6dfb167343d89567ef9f9130210048f05b15f292ed538d6f0d8b15"
+    },
+    {
+      "name": "payload-inventory.json",
+      "bytes": 55132,
+      "sha256": "6b0787ef3f30bb015b044edea40268e2961b193d00ff683d60231e30fd3645ba"
+    },
+    {
+      "name": "extractor-guest-before.json",
+      "bytes": 126,
+      "sha256": "87dfb05533576be072d609bb98a402b827974083075adddc2bb1ae403a0d4aee"
+    },
+    {
+      "name": "extractor-dispatch.json",
+      "bytes": 278,
+      "sha256": "23a6d6f7f9a6feca6f62dd7298a988b529806b50f6778673313a1f457b60e004"
+    },
+    {
+      "name": "extractor-unit.log",
+      "bytes": 767,
+      "sha256": "d4bdbed77b846eef072ee8de11cd9a10c929e8758e094e1e7cccd3b322aa4f45"
+    },
+    {
+      "name": "extractor-vm-budget.json",
+      "bytes": 761,
+      "sha256": "51a82b4d226b18e19a1676c3b0bebc86ed94de8b4a5c67c3b9bb95f0840a94d6"
+    },
+    {
+      "name": "extractor-vm-start.log",
+      "bytes": 130,
+      "sha256": "7eda9b349f15682b6a4b548e538cd8315e65589d3d530478881b0ade9eb9842a"
+    },
+    {
+      "name": "extractor-vm-restoration.json",
+      "bytes": 546,
+      "sha256": "90ded6a195412117a2b29d7a7cf0220614c158632b7bd4ca6fbc60fa8b0b3832"
+    },
+    {
+      "name": "prepare-retry.ps1",
+      "bytes": 2635,
+      "sha256": "04d42236a5191bea618920b310add5c9d0cb353eadbeab134fb560a29d89e9bc"
+    },
+    {
+      "name": "retry-retention.json",
+      "bytes": 136094,
+      "sha256": "1d99297604be50048ef73e0bb4360d1e9458d08c7bb749e900646686a318020c"
+    },
+    {
+      "name": "output-retention.json",
+      "bytes": 495491,
+      "sha256": "ba01d7d5b3a7572986b4c3f4b05a37990d5bcf4f782f1f18d7a0ac5a6ae1eb34"
+    },
+    {
+      "name": "compress-completed-intermediates.py",
+      "bytes": 1845,
+      "sha256": "82af5e425334b47d77902877fafc2fd179a3ef5542de827a1c34a93eaf67188f"
+    },
+    {
+      "name": "completed-intermediates-compression.json",
+      "bytes": 7812,
+      "sha256": "545f3661d324e9ba7572b9ad9961fae34f6963c317de09fc94420e41d79c9a2a"
+    },
+    {
+      "name": "app-arm64-v8a-direct-release.apk.signing.json",
+      "bytes": 803,
+      "sha256": "69c34eb65b59477e9dc88a18b2498f5890a975a3970d73762729fe5a09d0a4d1"
+    },
+    {
+      "name": "app-armeabi-v7a-direct-release.apk.signing.json",
+      "bytes": 806,
+      "sha256": "dd6500f44734f95d65b88224e7d23f09229158429b8a1436a20c27d593e8ec0a"
+    },
+    {
+      "name": "app-direct-release.apk.signing.json",
+      "bytes": 793,
+      "sha256": "22afd927b73630518c2b333e33c333373395296e2e2a22c2312d49026ae8988d"
+    },
+    {
+      "name": "app-x86_64-direct-release.apk.signing.json",
+      "bytes": 797,
+      "sha256": "1aafd202643e2100b5ec90eae84e6d549125cffa6a6cb4e2c3ec718a4845cda1"
+    },
+    {
+      "name": "app-store-release.aab.signing.json",
+      "bytes": 1178,
+      "sha256": "12fed218431e997ce6bc154533fd581e4139119672bab036810ab23230175711"
+    },
+    {
+      "name": "windows-package.manifest.json",
+      "bytes": 5884,
+      "sha256": "b4c94cf36c3304fb08fe274795b56e0d1a4de7da135cf84da9cadda9037d0f28"
+    },
+    {
+      "name": "retain-packages.py",
+      "bytes": 10194,
+      "sha256": "f9e4b4172c3af396aced76dc0ee9e4b4e66263302cba8d4d51866c905e3c56ec"
+    },
+    {
+      "name": "client-docs-check.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "name": "client-hygiene-check.log",
+      "bytes": 110,
+      "sha256": "8affd262b0bdb36499c7d8d5b0334458e94b272e1f079b474b1670eef6648aff"
+    }
+  ],
+  "installed_acceptance": "NOT_PERFORMED_FOR_THESE_PACKAGES",
+  "full_licensing_corresponding_source": "OPEN_BEYOND_EXACT_NEW_UTLS_ROOT_LICENSE",
+  "public_release": false,
+  "production_deploy": false,
+  "store_submission": "NOT_REQUESTED"
+}

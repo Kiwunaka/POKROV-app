@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "utc": "2026-09-11T20:53:25.283727+00:00",
+  "docs_contract": "PASS",
+  "tracked_hygiene": "PASS",
+  "staged_capture_hashes_verified": 61,
+  "git_byte_preservation": "Scoped evidence .gitattributes -text prevents CRLF normalization of raw captured receipts, scripts and logs",
+  "runtime_retest": "NOT_REQUIRED_DOCS_ONLY; package checks retained separately"
+}
