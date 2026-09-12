@@ -1310,3 +1310,14 @@ Russia-direct/SPB/WARP-off state, guest network and final3HTTPS; host unchanged,
 emulators stopped and8MiB growth. This is bounded current-origin/source806/Core6b
 evidence. Independent per-flow egress, RU exceptions, DNS/IPv6/LAN and physical
 matrix remain open; no new package or public release.
+
+## 2026-09-12 current806 Russian destination and repair sheet
+
+[Exact flow observations and source fix](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-exact-russian-destination-flow-and-late-repair-status)
+prove one owned Russian IPv4 destination takes SPB egress under Full and the
+original direct path under Russia-direct. Eight native HTTPS and six exact
+marker captures pass with complete bounded restoration. New York Connect and
+one repair fail; their cause is unknown. The stale protection-sheet defect is
+fixed in source and covered by a late-host-stop widget regression,192 widget
+tests and analyze. Captured APK806 predates the fix; fixed installed proof,
+source promotion, full N08 and physical/platform acceptance remain open.

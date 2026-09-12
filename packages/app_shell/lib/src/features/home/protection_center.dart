@@ -89,6 +89,7 @@ class _ProtectionCheck {
 
 class _ProtectionCenterSheet extends StatefulWidget {
   const _ProtectionCenterSheet({
+    required this.runtimeSnapshot,
     required this.initialData,
     required this.onRefresh,
     required this.onRepair,
@@ -99,6 +100,7 @@ class _ProtectionCenterSheet extends StatefulWidget {
   });
 
   final _ProtectionCenterData initialData;
+  final ValueNotifier<RuntimeSnapshot?> runtimeSnapshot;
   final Future<_ProtectionCenterData> Function() onRefresh;
   final Future<_ProtectionCenterData> Function(
     ValueChanged<_ProtectionRepairStep> onStep,
@@ -118,18 +120,24 @@ enum _ProtectionRepairStep {
   verifyProtection,
 }
 
-enum _ProtectionRepairOutcome { succeeded, needsSupport }
+enum _ProtectionRepairOutcome { awaitingEgress, succeeded, needsSupport }
 
 class _ProtectionCenterController extends ChangeNotifier {
   _ProtectionCenterController({
+    required ValueNotifier<RuntimeSnapshot?> runtimeSnapshot,
     required _ProtectionCenterData initialData,
     required Future<_ProtectionCenterData> Function() onRefresh,
     required Future<_ProtectionCenterData> Function(
       ValueChanged<_ProtectionRepairStep> onStep,
     ) onRepair,
-  })  : _data = initialData,
+  })  : _runtimeSnapshot = runtimeSnapshot,
+        _data = initialData,
         _onRefresh = onRefresh,
-        _onRepair = onRepair;
+        _onRepair = onRepair {
+    _runtimeSnapshot.addListener(_notify);
+  }
+
+  final ValueNotifier<RuntimeSnapshot?> _runtimeSnapshot;
 
   final Future<_ProtectionCenterData> Function() _onRefresh;
   final Future<_ProtectionCenterData> Function(
@@ -145,13 +153,34 @@ class _ProtectionCenterController extends ChangeNotifier {
   _ProtectionRepairOutcome? _repairOutcome;
   bool _disposed = false;
 
-  _ProtectionCenterData get data => _data;
+  // The separate HTTPS probe may finish after the host has stopped the VPN.
+  // Always render the same runtime snapshot as Home, including later polls.
+  _ProtectionCenterData get data => _ProtectionCenterData(
+        snapshot: _runtimeSnapshot.value,
+        liveStats: _data.liveStats,
+        httpsProbe: _data.httpsProbe,
+        history: _data.history,
+        shortcuts: _data.shortcuts,
+        checkedAt: _data.checkedAt,
+      );
   bool get refreshing => _refreshing;
   bool get repairing => _repairing;
   bool get detailsExpanded => _detailsExpanded;
   String? get error => _error;
   _ProtectionRepairStep? get repairStep => _repairStep;
-  _ProtectionRepairOutcome? get repairOutcome => _repairOutcome;
+  _ProtectionRepairOutcome? get repairOutcome {
+    if (_repairOutcome != _ProtectionRepairOutcome.awaitingEgress) {
+      return _repairOutcome;
+    }
+    final snapshot = data.snapshot;
+    if (snapshot?.phase == RuntimePhase.running &&
+        snapshot!.isCoreEgressValidationPending) {
+      return null;
+    }
+    return snapshot?.isCleanlyHealthy ?? false
+        ? _ProtectionRepairOutcome.succeeded
+        : _ProtectionRepairOutcome.needsSupport;
+  }
 
   void toggleDetails() {
     _detailsExpanded = !_detailsExpanded;
@@ -193,9 +222,13 @@ class _ProtectionCenterController extends ChangeNotifier {
         _repairStep = step;
         _notify();
       });
-      _repairOutcome = _data.snapshot?.isCleanlyHealthy ?? false
-          ? _ProtectionRepairOutcome.succeeded
-          : _ProtectionRepairOutcome.needsSupport;
+      final snapshot = data.snapshot;
+      _repairOutcome = snapshot?.phase == RuntimePhase.running &&
+              snapshot!.isCoreEgressValidationPending
+          ? _ProtectionRepairOutcome.awaitingEgress
+          : snapshot?.isCleanlyHealthy ?? false
+              ? _ProtectionRepairOutcome.succeeded
+              : _ProtectionRepairOutcome.needsSupport;
     } on _ProtectionRepairFailed catch (failure) {
       _data = failure.data;
       _repairOutcome = _ProtectionRepairOutcome.needsSupport;
@@ -221,6 +254,7 @@ class _ProtectionCenterController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _runtimeSnapshot.removeListener(_notify);
     super.dispose();
   }
 }
@@ -232,6 +266,7 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
   void initState() {
     super.initState();
     _controller = _ProtectionCenterController(
+      runtimeSnapshot: widget.runtimeSnapshot,
       initialData: widget.initialData,
       onRefresh: widget.onRefresh,
       onRepair: widget.onRepair,

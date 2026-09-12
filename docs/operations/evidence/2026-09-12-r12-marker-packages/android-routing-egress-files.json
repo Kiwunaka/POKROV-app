@@ -1,0 +1,306 @@
+{
+  "archive": {
+    "path": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start\\docs\\developer\\work-orders\\2026-09-05--consolidated-release-and-post12\\evidence\\marker-atomicity-20260912\\android-routing-egress-evidence.zip",
+    "bytes": 54865,
+    "sha256": "b634a2f2c3b8ac0efdf9e568bca6729ff61b7f79f7fd113d482b0fc5e9446e31"
+  },
+  "members": [
+    {
+      "path": "baseline-https.json",
+      "bytes": 695,
+      "sha256": "f3af2a12a0b2e20b81b4aef04d6bee8aefb6f141c8199a903c1dff0c932f414e"
+    },
+    {
+      "path": "baseline-packet.json",
+      "bytes": 1628,
+      "sha256": "e4fe027b60bcd0c1bba10135cb043f79f8989d8ac635a7f519c482d5a25f423c"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 1090,
+      "sha256": "f89f5eb7b30b97ba485ab886c1077b7a1ec469dad95afc121242f244c0d54f13"
+    },
+    {
+      "path": "capture-cleanup.json",
+      "bytes": 93,
+      "sha256": "fe743e5ebb22a5d6c082586f5e2a6804b4b65f1c6fd5d34c9b4d1910747c679b"
+    },
+    {
+      "path": "capture-marker-any-before-ready.py",
+      "bytes": 3281,
+      "sha256": "f57dec72014cb3ed6e35df0e91b0bc41dc2a56c31aa11641a09a69a2dd3107dc"
+    },
+    {
+      "path": "capture-marker-physical.py",
+      "bytes": 3095,
+      "sha256": "42c4e88b3a0d88ea4c31a878c68128ea970610b4542bbdff49469e145691cd2f"
+    },
+    {
+      "path": "capture-marker.py",
+      "bytes": 3375,
+      "sha256": "57123db75ddb970fb255ea818166e580ecec17c6c159f686cfa6982e660fbcd3"
+    },
+    {
+      "path": "commands.md",
+      "bytes": 3873,
+      "sha256": "0635bbceb7b3390d7ba588a133b2b0dc658672d52cc05dd678d8026680c3b6df"
+    },
+    {
+      "path": "compile-0.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "compile-1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "fixture-build.json",
+      "bytes": 850,
+      "sha256": "c7e84bf43e3715b20bc5368e71ab889608e6bfa4ecf08cbb8433e1ece6be7646"
+    },
+    {
+      "path": "full-spb-any-packet.json",
+      "bytes": 587,
+      "sha256": "a22dc544b1888c6738dc937282b33f68b12730dbf4d98ab871244837bac42538"
+    },
+    {
+      "path": "full-spb-any-ready-packet.json",
+      "bytes": 1666,
+      "sha256": "f778ab8fc5893ef36eab6542441e1a7408492b16e8130ec5ec0aec4940ab550c"
+    },
+    {
+      "path": "full-spb-https.json",
+      "bytes": 695,
+      "sha256": "999a0f82c7ed80438a4bba92159ed9d029fb9af54c4f756c7adca47148e96fc1"
+    },
+    {
+      "path": "full-spb-packet.json",
+      "bytes": 986,
+      "sha256": "fa82fd8587225e96756fd9e97f8b1d54fb26fea9cbe6102b383c2d47db476f4f"
+    },
+    {
+      "path": "full-spb-scope.json",
+      "bytes": 2177,
+      "sha256": "f073e11c7cef44a15c5fda8f1ef60c1aa5e26ccfe97d9736233096d6a4fb9b8b"
+    },
+    {
+      "path": "full-spb.json",
+      "bytes": 1181,
+      "sha256": "d5fceadf02110920531a99bbf166c4fbef5230b5560904f6f26cdd69393b7fe9"
+    },
+    {
+      "path": "full-us-failed-details.json",
+      "bytes": 1104,
+      "sha256": "a7fae683716b722dbc84897ef1dc2952f134f203cf18de4830605ae17fe9a18a"
+    },
+    {
+      "path": "full-us-main-terminal.json",
+      "bytes": 1103,
+      "sha256": "7cbec5324e13ffbc949c2dbfa5ed278b4f075456b7bfdae3b07cbb834fe61176"
+    },
+    {
+      "path": "full-us-observation.json",
+      "bytes": 1101,
+      "sha256": "5869d7fde8906f3bdc9046dc7fa3658350f928f7ae653ae04ccb63ed3f859884"
+    },
+    {
+      "path": "full-us-repair-terminal.json",
+      "bytes": 1105,
+      "sha256": "98c77f45813ef7e5ab5f2a47f4379898679e7de237e88a9e944e35eb87b84838"
+    },
+    {
+      "path": "full-us-repair.json",
+      "bytes": 1096,
+      "sha256": "e20f30e70559a07b192f3ef47e9f601c8ed97951b16b06225736fd8817148ad2"
+    },
+    {
+      "path": "guest-cleanup.json",
+      "bytes": 1980,
+      "sha256": "5769dc3e6dc290cbda5b06442e1b0d840b8ea6b7acfd2a0d6c171959cbe475e5"
+    },
+    {
+      "path": "host-network-installed-after.json",
+      "bytes": 281,
+      "sha256": "78a4d5bf59e055e9db28a21037323c56db08fda6ab9c45db2eb00c666687fec4"
+    },
+    {
+      "path": "host-network-installed-before.json",
+      "bytes": 220,
+      "sha256": "a16a73eeb3415acd2eb0f0b24a9655912905b1f1acf1fe7d8aa05494e1a0d4a6"
+    },
+    {
+      "path": "host-network.ps1",
+      "bytes": 1165,
+      "sha256": "1f59f451d8aec325e019852b73dccc7c0261ee743780d9e9aa56df6cf5315db4"
+    },
+    {
+      "path": "http.py",
+      "bytes": 1442,
+      "sha256": "0da371cf551fadf0b373f9f3571ff83ba10660966ccad1971802a6c7857d02ec"
+    },
+    {
+      "path": "ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "ee00a142aded053aa206c2513a66b038a2ff50a47ef5fdbd68075029976388cb"
+    },
+    {
+      "path": "ldplayer-progress.json",
+      "bytes": 24264,
+      "sha256": "75701142aa28f2e3642f258ef5313c69b17b24cc1acbf69044467aed83887861"
+    },
+    {
+      "path": "network.py",
+      "bytes": 3611,
+      "sha256": "bc29a06b795e8c678e180b0a25d89df18a57cd674e49a877379079799e0987a9"
+    },
+    {
+      "path": "observe.py",
+      "bytes": 3824,
+      "sha256": "517161850819ee972b36b6533c8e285a86b63ec68b5bfd267d3f89bf95090dee"
+    },
+    {
+      "path": "OwnedEgressProbe.java",
+      "bytes": 3538,
+      "sha256": "0e6718b2ea147e5d1a7f0ddec2398252d9ce191f581e09890efda763d81f253d"
+    },
+    {
+      "path": "packet-oracle.py",
+      "bytes": 4935,
+      "sha256": "805c223adaa00864e17089011a20226206f94904df1aed18d2aaa88dc157f716"
+    },
+    {
+      "path": "protection-widget-tests.log",
+      "bytes": 14164,
+      "sha256": "deb883d11c5fb4c80613ce50aa91c63b4d82799d6e41e45fe569a5714c759658"
+    },
+    {
+      "path": "reference-current-packet-packet.json",
+      "bytes": 1529,
+      "sha256": "bae9b2563d85d825fccb9c0938ee2c2e861ef9770d825b198ddcdfd3256c9050"
+    },
+    {
+      "path": "reference-us-packet-packet.json",
+      "bytes": 1519,
+      "sha256": "351cde53653e0f48e2fc3b9e7796b89d67416a42b143f165e72012dc86a58abb"
+    },
+    {
+      "path": "restoration.json",
+      "bytes": 24462,
+      "sha256": "e6441de29ba91f5c426a461a18b457432d5bebcc8edb93bfed0a2773476cab35"
+    },
+    {
+      "path": "restored-https.json",
+      "bytes": 695,
+      "sha256": "e32d9e5604869db2662d0c711c6168917ae46d20a3e33d20f0d1c2bb12dd13ab"
+    },
+    {
+      "path": "restored-packet.json",
+      "bytes": 1660,
+      "sha256": "eda97e27b1ba077e7eaca6746be5e99d1a827e0888d9b814091f90b9da6433b7"
+    },
+    {
+      "path": "restored.json",
+      "bytes": 1090,
+      "sha256": "0b7f6e6f3cff970085cbf0607cdc35091471bcd56489e893e0d7bc4d9b31565f"
+    },
+    {
+      "path": "result.json",
+      "bytes": 5064,
+      "sha256": "217e3115f6b55feafa575846b9fa64c7977deb032ba27a143537d2b7474cd631"
+    },
+    {
+      "path": "retain.py",
+      "bytes": 4887,
+      "sha256": "0c374f2537dcb377c87adce2175a58c5e6cd59b6d6e4c10f5095d029ed5f9755"
+    },
+    {
+      "path": "rootless-guest.json",
+      "bytes": 532,
+      "sha256": "54bb5e69a9afb309ece232c85daa9b0560fccce39307e67be4474db42fba9b0e"
+    },
+    {
+      "path": "rootless-observe.py",
+      "bytes": 1084,
+      "sha256": "4ceaa27abb830b6f51049f13a629332e89e2ddcd3e5bd3342d724e617f9b61fa"
+    },
+    {
+      "path": "ru-direct-spb-https.json",
+      "bytes": 700,
+      "sha256": "41aef7682ac5682e542a67c615a752b8462a0109736526bd7c6f5c482b954d54"
+    },
+    {
+      "path": "ru-direct-spb-packet.json",
+      "bytes": 1665,
+      "sha256": "0797fdae4bc310977c64f52fdabb554027cef4c576a5a402e104c7e233be9731"
+    },
+    {
+      "path": "ru-direct-spb-scope.json",
+      "bytes": 2184,
+      "sha256": "ed686b57860118dd6fee6f042792d0a45b3ed0e1d3ec93fabfaf445dcdd5a183"
+    },
+    {
+      "path": "ru-direct-spb.json",
+      "bytes": 1187,
+      "sha256": "da297de65dc0b2ebade9e3335b1e8a8118ad91c3fcbcf9a6a98c8d740fa76ac5"
+    },
+    {
+      "path": "scope.py",
+      "bytes": 882,
+      "sha256": "bacf5a52b8885254b9e6b6a60caa70b818abeeab142987ba69d3562388ce2bf1"
+    },
+    {
+      "path": "socket-oracle.py",
+      "bytes": 2470,
+      "sha256": "84a3442ba31cfe60c7731e4ede6f7435c7b231e340c5c6e938c20e8f4ccdb4a6"
+    },
+    {
+      "path": "ui.py",
+      "bytes": 2375,
+      "sha256": "9747e057e21437eef7e10917b25e67d5bd35b095cedf3fe8e1243f398e833fb8"
+    },
+    {
+      "path": "verify.py",
+      "bytes": 2953,
+      "sha256": "9fad3ea5a95d50282f253da572aae528cdb4ffbef9921126256ac712b393f83b"
+    },
+    {
+      "path": "watch-ldplayer.py",
+      "bytes": 3249,
+      "sha256": "7920c6af03ef879ddae97cfcde11be36696a5ebde765c39811919b170d92b7da"
+    }
+  ],
+  "direct": [
+    {
+      "path": "android-routing-egress-result.json",
+      "bytes": 5064,
+      "sha256": "217e3115f6b55feafa575846b9fa64c7977deb032ba27a143537d2b7474cd631"
+    },
+    {
+      "path": "android-routing-egress-stale-sheet.png",
+      "bytes": 206734,
+      "sha256": "959938c5ee5857d90723db50ed32bc489d40c4de1af70d9c064243f0114613bd"
+    },
+    {
+      "path": "android-routing-egress-stopped-home.png",
+      "bytes": 240460,
+      "sha256": "cd3eaacc8e94733c89b72bf0d1656f6e5afdc80253e958ed0fb38cec72bc1187"
+    },
+    {
+      "path": "android-routing-egress-restored.png",
+      "bytes": 182563,
+      "sha256": "ae91271eb163dae9926ce41804e72daad427693970303730a60b54307991d9a7"
+    },
+    {
+      "path": "android-routing-egress-final-widget-tests.log",
+      "bytes": 14164,
+      "sha256": "9495e76221a26a6152668f8acf7d775066622a7a4399da08ab4c0da1b1d77d18"
+    },
+    {
+      "path": "android-routing-egress-final-seed.log",
+      "bytes": 1818,
+      "sha256": "5874689bc5b3da819f6aa9dc678fc9df5648762e61f4e247fccbe66f70fda15d"
+    }
+  ]
+}

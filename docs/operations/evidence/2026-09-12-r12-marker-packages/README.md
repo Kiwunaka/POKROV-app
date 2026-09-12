@@ -283,3 +283,52 @@ scripts/agent_context_packet_audit.py --platform-context-root .` PASS.
 Archive40/direct3 disk+index hashes, script syntax/JSON, bounded private-material
 patterns, added local links and unchanged83 statuses PASS. Both staged diff
 checks and release-artifact isolation PASS. No additional product tests/builds.
+
+## 2026-09-12 exact Russian destination flow and late repair status
+
+[Result](android-routing-egress-result.json) and [53-member archive receipt](android-routing-egress-files.json)
+bind the source806/Core6b rootless LDPlayer3/API34 observations. Native shell
+UID2000 makes8 successful owned HTTPS requests. Six unique valid SSH markers
+bind actual source-address hashes at the owned SPB server: current-host/US
+references plus guest baseline, Full/SPB, Russia-direct/SPB and restoration.
+Full/SPB arrives from SPB on loopback; Russia-direct reaches the same Russian
+IPv4 target from the original direct path. Capture matches44 unique marker
+bytes, one incoming packet, zero kernel drops; raw addresses/PCAP never leave
+memory. Server/local clocks differ by about45s, so the nonce binds each flow.
+This proves one owned Russian IPv4 destination; it does not close the full N08
+selected/excluded, RU-domain, custom exception, application DNS, IPv6/LAN or
+physical/platform matrix. The US reference is an owned-server observation.
+
+Android New York/Full fails both normal Connect and one explicit repair, with
+no TUN/service. Its cause remains unknown. The [stale protection sheet](android-routing-egress-stale-sheet.png)
+contradicts the [stopped Home screen](android-routing-egress-stopped-home.png).
+The shared-shell fix subscribes the sheet to Home's runtime snapshot updates,
+including updates after a slow independent HTTPS probe. Pending egress no longer
+produces a final repair outcome. No extra polling or reconnect is added.
+The widget regression fails before and passes after; all192 seed-app widget
+tests and Flutter analyze pass. Captured APK806 predates this source fix;
+fixed-package installation and source promotion have not occurred in this slice.
+
+The journal-only oracle, physical-interface loopback miss and initial tcpdump
+readiness failure remain explicit failures in the archive. SHA-verified native
+fixture removal, zero remaining marker captures, guest IPv4/DNS and normalized
+IPv6, host routes/DNS, rootfalse and [original UI](android-routing-egress-restored.png)
+are verified. All emulators stop; growth3MiB and both40GiB free-space floors pass.
+No server configuration, production unit, account, payment, release or publication
+was changed. Raw compile fixtures and additional screenshots remain local; the
+archive contains text instruments, bounded observations and the widget test log.
+
+Final source validation preserves explicit repair failures while only the
+awaiting-egress outcome follows later snapshots. `flutter.bat test --no-pub
+test/pokrov_seed_app_test.dart --reporter expanded` PASS192;
+`flutter.bat analyze --no-pub` PASS/no issues. Retained final logs:
+[widget suite](android-routing-egress-final-widget-tests.log) and
+[seed validation](android-routing-egress-final-seed.log). The seed command is
+`pwsh.exe -NoProfile -ExecutionPolicy Bypass -File scripts/validate-seed.ps1
+-PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start
+-CoreRoot C:/r12corec02`, exit0. `test/docs-contract.ps1` PASS.
+Platform `python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py
+tests/test_agent_context_packet_audit.py -q` PASS33; `python -B
+scripts/agent_context_packet_audit.py --platform-context-root .` PASS.
+Archive53 and6 direct disk/index hashes, appended local links,83 unchanged
+registry statuses, staged diff checks and no release-artifact delta PASS.

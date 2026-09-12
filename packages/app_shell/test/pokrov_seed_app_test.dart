@@ -3593,6 +3593,83 @@ void main() {
     );
   });
 
+  testWidgets('repair sheet follows pending egress through a late host stop',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var phase = 'initialized';
+    final runtimeCalls = <String>[];
+    Map<String, Object?> snapshot() => <String, Object?>{
+          'phase': phase,
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'message': phase == 'running'
+              ? 'Runtime service is running.'
+              : 'Runtime service stopped.',
+          'core_egress_validated': null,
+          'hostHealth': 'healthy',
+          'dnsState': 'healthy',
+          'uplinkState': 'healthy',
+          'ipv4RouteCount': phase == 'running' ? 2 : 0,
+        };
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      runtimeCalls.add(call.method);
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return snapshot();
+        case 'runtimeEngine.stageManagedProfile':
+          phase = 'configStaged';
+          return snapshot();
+        case 'runtimeEngine.connect':
+          phase = 'running';
+          return snapshot();
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    await tester.pumpWidget(
+      PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        bootstrapper: _FakeBootstrapper(
+          const ManagedProfilePayload(
+            profileName: 'managed-from-api',
+            configPayload: _materializedRuntimeConfig,
+            materializedForRuntime: true,
+          ),
+        ),
+        protectionProbe: (_) async => const PokrovHttpsProbeResult.healthy(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await tester.tap(
+      find.byKey(const ValueKey('home-connection-details-action')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('protection-repair-action')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('protection-repair-confirm')));
+    await tester.pumpAndSettle();
+    expect(find.text('Проверяем защиту'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('protection-repair-outcome')), findsNothing);
+
+    phase = 'initialized';
+    await tester.pump(const Duration(milliseconds: 750));
+    await tester.pumpAndSettle();
+    expect(find.text('Защита выключена'), findsOneWidget);
+    expect(find.text('Проверяем защиту'), findsNothing);
+    expect(find.byKey(const ValueKey('protection-repair-support')),
+        findsOneWidget);
+    expect(runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
+        hasLength(1));
+  });
+
   testWidgets('profile uses grouped MVP account sections', (tester) async {
     _expectInfoSheetHelpersCovered(const ['_SettingsRow']);
     await tester.binding.setSurfaceSize(const Size(390, 844));
