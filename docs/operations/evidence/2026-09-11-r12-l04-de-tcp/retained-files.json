@@ -268,5 +268,149 @@
     "bytes": 575,
     "sha256": "748c36961065089ead3cee550f41762cc61ecd7f7f4207671f5e30d5a8e4fb1e",
     "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-de-address-config-20260912.json"
+  },
+  {
+    "path": "observe-de-address-owner-20260912.py",
+    "bytes": 2165,
+    "sha256": "a56fd0be4d321a93dace261fe8b4d9e27f52785d5578bc383277d62e6ddb5f9f",
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-address-owner-20260912.py"
+  },
+  {
+    "path": "candidate8-de-address-owner-20260912.json",
+    "bytes": 678,
+    "sha256": "fbb9f6f511b271fd80e9f0e18c41cbbd90e4f308093f3ba7a74c5749c85656b9",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-de-address-owner-20260912.json"
+  },
+  {
+    "path": "observe-de-secondary-unit-20260912.py",
+    "bytes": 2316,
+    "sha256": "7c0c659ad65516286a8268fdf7cf1aec38f09701720f62a75e27b545a42024ac",
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-secondary-unit-20260912.py"
+  },
+  {
+    "path": "candidate8-de-secondary-unit-redacted-20260912.json",
+    "bytes": 2166,
+    "sha256": "0df45a2ef7c617df3995c31f4f8d1fd78c0e9290341de95ba8dd289160686869",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-de-secondary-unit-redacted-20260912.json"
+  },
+  {
+    "path": "observe-de-secondary-runtime-20260912.py",
+    "bytes": 1855,
+    "sha256": "b3da01aea38b82f5daa6a1d8e9af88d35db9fd0ad49db081980786be440a1d5c",
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-secondary-runtime-20260912.py"
+  },
+  {
+    "path": "candidate8-de-secondary-runtime-20260912.json",
+    "bytes": 961,
+    "sha256": "147fb176f31625b9f23282935dcc3ab19298804bf28e82d1e00a928785de50cd",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-de-secondary-runtime-20260912.json"
+  },
+  {
+    "path": "candidate8-lifecycle-us-20260912-connected-uninstall.json",
+    "bytes": 2732,
+    "sha256": "f78946a73801d72c455308e3f4c7f42393b4992af596ff9e65db0ac624a9e44a",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-20260912-connected-uninstall.json"
+  },
+  {
+    "path": "candidate8-lifecycle-us-20260912-connected-uninstall.log",
+    "bytes": 1862,
+    "sha256": "de07ff9d2dbff118d19d1a4a2e8ec55df980bf3ffcb710da48ca124f09626cab",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-20260912-connected-uninstall.log"
+  },
+  {
+    "path": "candidate8-lifecycle-us-recovery-20260912.json",
+    "bytes": 1087,
+    "sha256": "3a1ca8d71451e0203fc2eb983b55759e400f489d453f5a9e1dd50ec6a1bc6854",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-recovery-20260912.json"
+  },
+  {
+    "path": "candidate8-lifecycle-us-driver-20260912.log",
+    "bytes": 3125,
+    "sha256": "94ffe5a64830ff0d990a2f32904cf8ac1abbbde4b730c797b21426d09c904a4a",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-driver-20260912.log"
+  },
+  {
+    "path": "candidate8-reinstall-us-20260912.log",
+    "bytes": 358,
+    "sha256": "d1f5e05a102077f9dcf0009688a178a073722655f4ef14dba90906bb125183ac",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-reinstall-us-20260912.log"
+  },
+  {
+    "path": "candidate8-lifecycle-us-outer-20260912.log",
+    "bytes": 821,
+    "sha256": "937030bcccbce3c79cd8807ab502002347129f467a6bea2cac9ca999070fb124",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-outer-20260912.log"
+  },
+  {
+    "path": "candidate8-lifecycle-us-fixture-20260912.json",
+    "bytes": 919,
+    "sha256": "ff36e8db51a1f144caf394751cba3df686bed958b3b1fd6c1ed55f0ed6f1aba8",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-fixture-20260912.json"
+  },
+  {
+    "path": "candidate8-lifecycle-us-manual-restore-20260912.json",
+    "bytes": 799,
+    "sha256": "3aa97bfbbb3dc3583ce0f6e02a1bd18d722cee0ddc1318989f55488dd0e72d33",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-manual-restore-20260912.json"
+  },
+  {
+    "path": "candidate8-lifecycle-us-dpkg-restore-20260912.log",
+    "bytes": 648,
+    "sha256": "c7765e5ae04068c3f10be44bb482580119609b01dea594fe1dedd5bb1cababe3",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-dpkg-restore-20260912.log"
+  },
+  {
+    "path": "candidate8-lifecycle-us-collection-20260912.json",
+    "bytes": 2030,
+    "sha256": "e2f91dc47a0c60cdf0db00ba9724852a4687585e73a7d8f55de7f371d8e245d1",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-us-collection-20260912.json"
+  },
+  {
+    "path": "guest-lifecycle8-us-fixture-20260912.py",
+    "bytes": 3481,
+    "sha256": "977a1a6af53d536045526d70fcfa9e4b66d6e5b6350b49d499a60724359ee934",
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-lifecycle8-us-fixture-20260912.py"
+  },
+  {
+    "path": "guest-lifecycle8-us-20260912.py",
+    "bytes": 5518,
+    "sha256": "a2030545c0ab4b7e34c23412a45e36cef8968c7732151daa906bd7dc1327f9bb",
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-lifecycle8-us-20260912.py"
+  },
+  {
+    "path": "guest-connected-uninstall8-us-20260912.py",
+    "bytes": 8060,
+    "sha256": "1db5c5aa79ba869d9e6eaaf0b122b1a01a665620222cec7b456bc3bf00326c1a",
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-connected-uninstall8-us-20260912.py"
+  },
+  {
+    "path": "guest-readback-before-lifecycle8-us.py",
+    "bytes": 2863,
+    "sha256": "f2a5a596a627d53dbacb202ca8225b04656ab7f6412a208053466035f1c7c3f9",
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-readback-before-lifecycle8-us.py"
+  },
+  {
+    "path": "mini-arm-lifecycle8-us-20260912.py",
+    "bytes": 24808,
+    "sha256": "2e482b50a665b7455a0b397b5305ea18869ae1200ddad0ce3568a008fd3210f0",
+    "source": "C:\\r12-l04-ui-poll-20260911\\mini-arm-lifecycle8-us-20260912.py"
+  },
+  {
+    "path": "guest-restore-package8-us-20260912.py",
+    "bytes": 4748,
+    "sha256": "c6caa9060f8d4ab64e7d8d7d38c9a3bac22bee5d441266ed2f51eab11557214e",
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-restore-package8-us-20260912.py"
+  },
+  {
+    "path": "mini-restore-package8-us-20260912.py",
+    "bytes": 5218,
+    "sha256": "3c1e64a70a4a3d1a5cfdfa4d662f5abbd9838dd0acb6034e23917bc10d532934",
+    "source": "C:\\r12-l04-ui-poll-20260911\\mini-restore-package8-us-20260912.py"
+  },
+  {
+    "path": "mini-collect-lifecycle8-us-20260912.py",
+    "bytes": 2144,
+    "sha256": "7df44eb7e70e76fb9b01c5a7036b23028e21b66fba69bbf5827544f8d9ec2260",
+    "source": "C:\\r12-l04-ui-poll-20260911\\mini-collect-lifecycle8-us-20260912.py"
   }
 ]

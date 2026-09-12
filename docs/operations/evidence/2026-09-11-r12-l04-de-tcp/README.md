@@ -157,3 +157,82 @@ network states and four native control timeouts were checked. All83 registry
 statuses are unchanged. Local links, scoped private-material patterns, staged
 diff checks and release-artifact isolation pass. Platform docs tests33 and
 context audit pass. These checks do not close failed runtime acceptance.
+
+## Existing DE secondary-address owner
+
+The [targeted owner inspection](candidate8-de-address-owner-20260912.json)
+finds the default delivery address in the enabled existing service
+`pokrov-de-secondary-ip.service`. Its
+[redacted unit and state](candidate8-de-secondary-unit-redacted-20260912.json)
+show a oneshot with RemainAfterExit, last successful execution on September3,
+and active/exited state. It owns the secondary eth0 address with prefix24,
+source rule12070 and table33770. The
+[current runtime projection](candidate8-de-secondary-runtime-20260912.json)
+finds the address, rule and table absent; eth0 is up and the Xray process
+still owns wildcard443. No selected unit journal entries remain. The exact
+removal cause is unknown. Netplan is not the configuration owner of this
+secondary address, so its absence there alone was not a missing-config proof.
+
+The proposed action is to restart this exact existing service after explicit
+production approval and fresh hash/state guards. Its existing ExecStop provides
+the network rollback; rollback would leave the service inactive rather than
+its prior stale active/exited label. The scoped plan and verification are in the
+[platform execution record](C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start/docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/EXECUTION-L04-DE-TCP-2026-09-11.md#proposed-de-secondary-address-restoration--not-executed).
+No service restart or production mutation has occurred in this follow-up.
+
+## Exact package8 connected purge and separate restoration through US
+
+The existing guest profile contains one direct US VLESS outbound at index29.
+The [fixture wrapper](guest-lifecycle8-us-fixture-20260912.py) temporarily
+selects that existing transport for the lifecycle check, and restores the
+original private profile afterward. It does not change node credentials or
+server settings. The original DE failures remain open and are not reassigned
+to this successful path. Authorization is root fixture IPC; real GUI/polkit
+proof remains separate.
+
+The [native purge result](candidate8-lifecycle-us-20260912-connected-uninstall.json)
+passes six HTTPS requests (three app200 and three marker204), system DNS and
+full-mode rules, then closes the UID1000 GUI while Core remains running.
+The exact signed package8 is removed and purged successfully. Binaries, socket,
+Core and daemon processes are absent; all three units are inactive and disabled.
+Profile/settings/keyring state remains unchanged (1/6/2 files), the state root
+remains0700, and all seven network states match the original clean preinstall.
+This is package8 proof of connected purge, independent of the older package7.
+
+The [automatic reinstall log](candidate8-reinstall-us-20260912.log) retains an
+apt internal pathname error (exit100) with the instrument's `--no-download`
+invocation. The [wrapper result](candidate8-lifecycle-us-recovery-20260912.json)
+stays at RUNNING because its next assertion fails; the
+[authoritative unit state](candidate8-lifecycle-us-collection-20260912.json)
+is terminal failed/MainPID0. No live wait or successful automatic reinstall is
+claimed. The [outer result](candidate8-lifecycle-us-fixture-20260912.json)
+restores the original profile and all seven network states, but at that point
+the package and desktop UI are still absent.
+
+A separate [same-byte dpkg restoration](candidate8-lifecycle-us-manual-restore-20260912.json)
+verifies the detached signature, all11 required packages already installed and
+a clean dpkg audit, then installs the same local deb with `dpkg -i` (exit0).
+All302 payload entries/modes/ownership match; the GUI runs again as UID1000
+(new PID136118), the original profile and all seven network states remain
+unchanged, and no TUN/recovery record remains. The artifact filename's
+`manual-restore` means a separate recovery step; it was executed by the agent,
+not supplied as an operator attestation. The
+[restore log](candidate8-lifecycle-us-dpkg-restore-20260912.log) is retained.
+This successful recovery does not erase the failed apt invocation.
+
+The fresh pre-US [302-entry readback](candidate8-installed-before-lifecycle-20260912.json)
+is byte-identical to the earlier retained file; its new guest filename and
+matching hash are bound by the collection report without duplicating the payload
+listing. The existing manifest now binds69 files. MINI reused the same QEMU
+PID1919043 and disk; host free space after recovery/collection is1,631,399,936
+bytes. The VM was already running and remains running with the restored GUI.
+No new VM, branch, package build or release artifact was created. L04 final
+acceptance remains open on the DE paths and the remaining declared criteria.
+
+Follow-up validation: the same client docs-contract/validate-seed commands
+with explicit Core6b and platform roots PASS; platform docs tests33 and
+context audit PASS. The focused validator checks all69 retained disk/index
+hashes, six old failures, six US successes, apt exit100 preservation, separate
+dpkg restoration/302 entries, seven network baselines, unchanged83 registry
+statuses, local links, script syntax and bounded private-material patterns.
+Staged diff checks and release-artifact isolation PASS. No DE restart is run.
