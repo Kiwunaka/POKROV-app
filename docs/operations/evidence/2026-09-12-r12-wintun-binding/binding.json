@@ -1,0 +1,62 @@
+{
+  "status": "PASS_LOCAL_REPRODUCIBLE_WINTUN_BINDING",
+  "previous_source": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "source_tree": "44f000114429373a53d5e0a7128ed397a6b63305",
+  "compared_files": [
+    {
+      "lane": "android",
+      "path": "pokrov-core-sources.jar",
+      "size": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "lane": "android",
+      "path": "pokrov-core.aar",
+      "size": 106843498,
+      "sha256": "868a4659c0568427c94176c4be62f0f79349fbf7b0cfd392ba09fed98b30662c"
+    },
+    {
+      "lane": "windows",
+      "path": "libcronet.dll",
+      "size": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.dll",
+      "size": 55012864,
+      "sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2"
+    },
+    {
+      "lane": "windows",
+      "path": "pokrov-core.h",
+      "size": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    }
+  ],
+  "reproducibility_origin": "Two native DE builds per platform; hashes independently verified locally",
+  "desktop_abi": 2,
+  "event_abi": 1,
+  "windows_exports": 15,
+  "windows_proxy_cycles": 100,
+  "host_routes_dns_unchanged": true,
+  "android_native_abis": 4,
+  "aar_java_manifest_entries_unchanged": true,
+  "notices_verbatim_blocks": 191,
+  "consumer_checks": {
+    "runtime_flutter": {
+      "passed": 81,
+      "skipped": 1,
+      "skip_reason": "Optional real-DLL test executes separately with explicit CoreRoot"
+    },
+    "android_flutter": 8,
+    "seed_contract": "PASS",
+    "docs_contract": "PASS",
+    "runtime_sync": "PASS"
+  },
+  "installed_tun_acceptance": "PENDING for current bytes",
+  "license_compatibility_and_corresponding_source": "UNRESOLVED_OWNER_DECISION",
+  "promotion": "NOT_PERFORMED",
+  "rollback": "E:/r12-c05-utls-2662-artifacts; previous binding retained in this directory"
+}

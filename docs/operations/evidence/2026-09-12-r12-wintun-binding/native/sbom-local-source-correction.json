@@ -1,0 +1,249 @@
+{
+  "status": "PASS_LOCAL_SOURCE_IDENTITY_CORRECTION",
+  "source_commit": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "reason": "Raw generator assigns local fork commits to upstream module PURLs/VCS references. Corrected components identify retained POKROV source and preserve declared Go require versions separately.",
+  "files": [
+    {
+      "name": "core-source.cdx.json",
+      "raw_sha256": "5e9d195379c714f71a931688bd84dd4129ab24c023886702cc36e9427d7f0636",
+      "corrected_sha256": "e4579e6906c2fe2c20055eb1da5ee8a60670112b97894340cf252bc619a25df5",
+      "corrected_components": [
+        {
+          "module": "github.com/Kiwunaka/POKROV-core",
+          "source_path": ".",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/Kiwunaka/POKROV-core@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/Kiwunaka/POKROV-core@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/Kiwunaka/POKROV-core",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/Kiwunaka/POKROV-core:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/Psiphon-Labs/psiphon-tls",
+          "source_path": "engine/sing-box/replace/psiphon-tls",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/Psiphon-Labs/psiphon-tls@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/Psiphon-Labs/psiphon-tls@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/Psiphon-Labs/psiphon-tls",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/Psiphon-Labs/psiphon-tls:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/Psiphon-Labs/quic-go",
+          "source_path": "engine/sing-box/replace/psiphon-quic-go",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/Psiphon-Labs/quic-go@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/Psiphon-Labs/quic-go@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/Psiphon-Labs/quic-go",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/Psiphon-Labs/quic-go:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/bepass-org/warp-plus",
+          "source_path": "third_party/warp-plus",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/bepass-org/warp-plus@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/bepass-org/warp-plus@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/bepass-org/warp-plus",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/bepass-org/warp-plus:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/sagernet/sing-box",
+          "source_path": "engine/sing-box",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/sagernet/sing-box@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/sagernet/sing-box@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/sagernet/sing-box",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/sagernet/sing-box:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/sagernet/sing-tun",
+          "source_path": "engine/sing-box/replace/sing-tun",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/sagernet/sing-tun@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/sagernet/sing-tun@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/sagernet/sing-tun",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/sagernet/sing-tun:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/sagernet/tailscale",
+          "source_path": "engine/sing-box/replace/tailscale",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/sagernet/tailscale@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/sagernet/tailscale@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/sagernet/tailscale",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/sagernet/tailscale:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/sagernet/wireguard-go",
+          "source_path": "engine/sing-box/replace/wireguard-go",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/sagernet/wireguard-go@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/sagernet/wireguard-go@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/sagernet/wireguard-go",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/sagernet/wireguard-go:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        }
+      ],
+      "components": 239,
+      "dependency_records_preserved": 239
+    },
+    {
+      "name": "engine-source.cdx.json",
+      "raw_sha256": "eb3d479e2dd69b7cd858d4cbc3125ee7b30efcef7a37fff32450f845d2f71ce3",
+      "corrected_sha256": "95fa66ca948402c986d29776c6dd4a1a3ace813458dcbf96e50e3e1ce053e15a",
+      "corrected_components": [
+        {
+          "module": "github.com/sagernet/sing-box",
+          "source_path": "engine/sing-box",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/sagernet/sing-box@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/sagernet/sing-box@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/sagernet/sing-box",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/sagernet/sing-box:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/Psiphon-Labs/psiphon-tls",
+          "source_path": "engine/sing-box/replace/psiphon-tls",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/Psiphon-Labs/psiphon-tls@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/Psiphon-Labs/psiphon-tls@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/Psiphon-Labs/psiphon-tls",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/Psiphon-Labs/psiphon-tls:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/Psiphon-Labs/quic-go",
+          "source_path": "engine/sing-box/replace/psiphon-quic-go",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/Psiphon-Labs/quic-go@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/Psiphon-Labs/quic-go@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/Psiphon-Labs/quic-go",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/Psiphon-Labs/quic-go:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/sagernet/sing-tun",
+          "source_path": "engine/sing-box/replace/sing-tun",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/sagernet/sing-tun@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/sagernet/sing-tun@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/sagernet/sing-tun",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/sagernet/sing-tun:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/sagernet/tailscale",
+          "source_path": "engine/sing-box/replace/tailscale",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/sagernet/tailscale@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/sagernet/tailscale@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/sagernet/tailscale",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/sagernet/tailscale:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        },
+        {
+          "module": "github.com/sagernet/wireguard-go",
+          "source_path": "engine/sing-box/replace/wireguard-go",
+          "previous": {
+            "bom-ref": "pkg:golang/github.com/sagernet/wireguard-go@v0.0.0-20260911232342-880bff65ad66?type=module",
+            "version": "v0.0.0-20260911232342-880bff65ad66",
+            "purl": "pkg:golang/github.com/sagernet/wireguard-go@v0.0.0-20260911232342-880bff65ad66?goarch=amd64&goos=linux&type=module",
+            "externalReferences": [
+              {
+                "url": "https://github.com/sagernet/wireguard-go",
+                "type": "vcs"
+              }
+            ]
+          },
+          "new_ref": "urn:pokrov:go-module:github.com/sagernet/wireguard-go:880bff65ad665844828fe50fc395e9cfc1cd81b4"
+        }
+      ],
+      "components": 226,
+      "dependency_records_preserved": 226
+    }
+  ]
+}

@@ -1,6 +1,27 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current licensed uTLS and lifecycle binding — 2026-09-11
+## Current Windows adapter cleanup binding — 2026-09-12
+
+The development client binds Core `880bff65ad665844828fe50fc395e9cfc1cd81b4`.
+The retained local sing-tun copy fixes the adapter handle passed to WintunCloseAdapter
+and closes a newly created adapter immediately if StartSession fails. Synthetic
+Windows callback tests reproduce both old failures and pass with the fixes.
+The embedded Wintun 0.14.1 binaries remain unchanged and their separate terms
+are retained. This does not establish complete license compatibility.
+
+[Current binding evidence](../operations/evidence/2026-09-12-r12-wintun-binding/README.md)
+records two byte-identical native DE builds per platform, four Android native
+ABIs, unchanged Java wrappers, desktop ABI2/event ABI1, 15 Windows exports and
+100 exact-DLL Dart proxy cycles. Host route and DNS hashes are unchanged.
+Corrected source SBOMs identify local modules by Core commit and source path;
+original generator output remains retained. The same nine Go advisories retain
+their prior bounded static dispositions; stripped symbols do not establish
+reachability or whole-application clearance. Consumer checks pass 81 runtime
+and 8 Android Flutter tests, seed/docs contracts and exact runtime sync.
+Installed TUN acceptance for these bytes, complete licensing/source obligations
+and promotion remain separate gates.
+
+## Previous licensed uTLS and lifecycle binding — 2026-09-11
 
 The development client binds Core `2662f76a3303a0518bb07fbbdc449c066de2f95b`.
 The authenticated Psiphon uTLS7a1fc module supplies its own root license;

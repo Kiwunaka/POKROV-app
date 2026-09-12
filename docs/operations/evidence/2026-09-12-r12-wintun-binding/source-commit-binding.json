@@ -1,0 +1,15 @@
+{
+  "status": "PASS_SOURCE_BINDING_WITH_DECLARED_LINE_ENDINGS",
+  "source_commit": "7040d1fd484596adc51d3c429204205782c671bc",
+  "source_tree": "06f5a9c37203b7bdb8c46eed03413b82da43ba45",
+  "exact_overlay_files": 169,
+  "line_ending_only": [
+    {
+      "path": "scripts/test.ps1",
+      "difference": "Git CRLF to LF normalization only",
+      "tested_sha256": "25c189dc95b9d4bed70b4d14cc04553d9025c740a85e1f2cbec682328b88255c",
+      "committed_sha256": "4e651230b2fd154241d2c2079caef1f187541ad9d98b94b2283bbad3747f69da"
+    }
+  ],
+  "initial_raw_comparison": "FAILED_ON_TEST_PS1_LINE_ENDINGS; commit command continued after shell native-command failure; no source-code differences found by follow-up comparison."
+}

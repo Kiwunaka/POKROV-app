@@ -1,0 +1,27 @@
+{
+  "status": "PASS_BOUNDED_ADVISORY_DELTA_REVIEW",
+  "previous_source": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "previous_triage": {
+    "path": "C:\\r12-c05-utls-update-20260911\\static-triage-binding.json",
+    "sha256": "33b841f980373805f484f8798f4444c6f71e6eba040c27b84abc608aa1b6542b"
+  },
+  "same_nine_advisory_claims": true,
+  "source_changes_outside_new_local_sing_tun": [
+    ".gitattributes",
+    "docs/architecture.md",
+    "engine/sing-box/go.mod",
+    "go.mod",
+    "scripts/test.ps1"
+  ],
+  "affected_package_source_and_registrations_unchanged": true,
+  "go_sums_unchanged": true,
+  "artifact_composition_sha256": "5984668adc65f7d3af28da8d5bbb23739e801bf8d8a02b49573407246a3a8dce",
+  "scan_collection_sha256": "7d2482ad86349d03c6dd6cbc2356f54777f987b9bf041be4550cafc973ea30ad",
+  "limits": [
+    "Carries forward only prior bounded static dispositions; no whole-application or native-code clearance.",
+    "All five scans extract zero symbols; finding traces do not prove reachability.",
+    "Raw binary SBOMs label local replacements by filesystem path and (devel); use corrected source SBOMs and native Go build info for source identity.",
+    "New sing-tun replacement fixes two Windows cleanup defects; native TUN acceptance for these DLL bytes remains pending."
+  ]
+}

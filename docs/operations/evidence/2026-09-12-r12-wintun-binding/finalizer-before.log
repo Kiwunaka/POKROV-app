@@ -1,0 +1,5 @@
+go: downloading golang.org/x/sys v0.35.0
+FAIL	github.com/sagernet/sing-tun/internal/wintun [setup failed]
+# github.com/sagernet/sing-tun/internal/wintun
+internal\wintun\memmod\memmod_windows.go:16:2: module lookup disabled by GOPROXY=off
+FAIL

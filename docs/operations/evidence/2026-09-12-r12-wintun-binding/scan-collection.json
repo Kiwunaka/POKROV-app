@@ -1,0 +1,97 @@
+{
+  "status": "PASS_FIVE_SCANS_COLLECTED_HASH_VERIFIED",
+  "source_commit": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "binaries": [
+    {
+      "binary": "libpokrov-core-arm64-v8a.scan",
+      "sha256": "cfe931b939726c63a58a7f6808caf579c34afa93633d4f7c6be658c38539bea0",
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21,
+      "extracted_symbols": 0,
+      "same_advisory_ids_as_2662": true
+    },
+    {
+      "binary": "libpokrov-core-armeabi-v7a.scan",
+      "sha256": "43365d621ddb0272c903d0f6ded4ceb96953c2587be41e1258c3025688f8383d",
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21,
+      "extracted_symbols": 0,
+      "same_advisory_ids_as_2662": true
+    },
+    {
+      "binary": "libpokrov-core-x86.scan",
+      "sha256": "6fe762d4768d7541b19e49dd9cfe8bd98bf667d85e0f0a48e87b26366698c0b7",
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21,
+      "extracted_symbols": 0,
+      "same_advisory_ids_as_2662": true
+    },
+    {
+      "binary": "libpokrov-core-x86_64.scan",
+      "sha256": "84b0138ab6eab6994194a4fddfa2d20c9b7e14e98b5f935a8cdbb5921b3a76b9",
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21,
+      "extracted_symbols": 0,
+      "same_advisory_ids_as_2662": true
+    },
+    {
+      "binary": "pokrov-core.scan",
+      "sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2",
+      "advisories": [
+        "GO-2026-4316",
+        "GO-2026-4503",
+        "GO-2026-5774",
+        "GO-2026-5775",
+        "GO-2026-5777",
+        "GO-2026-5841",
+        "GO-2026-5932",
+        "GO-2026-6179",
+        "GO-2026-6180"
+      ],
+      "symbol_findings": 21,
+      "extracted_symbols": 0,
+      "same_advisory_ids_as_2662": true
+    }
+  ],
+  "reachability_clearance": false
+}
