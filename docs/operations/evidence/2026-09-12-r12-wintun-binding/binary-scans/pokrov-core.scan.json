@@ -1,0 +1,88 @@
+{
+  "observed_utc": "2026-09-11T23:50:57.325164+00:00",
+  "binary": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/windows-a/pokrov-core.dll",
+    "bytes": 55012864,
+    "sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2"
+  },
+  "source_commit": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "scanner": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/govulncheck",
+    "bytes": 15099395,
+    "sha256": "313a49e70ac0cdde947d190c4abf19705dfefca027da3901ce3af7ee2378d734"
+  },
+  "sbom_tool": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+    "bytes": 26910977,
+    "sha256": "c8ec5e301830631cb0b3d46fc29a95e11619954dbede86c2155c10d707467784"
+  },
+  "command": [
+    "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/govulncheck",
+    "-mode",
+    "binary",
+    "-json",
+    "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/windows-a/pokrov-core.dll"
+  ],
+  "exit_code": 0,
+  "report": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/binary-scans/pokrov-core.govulncheck.jsonl",
+    "bytes": 650163,
+    "sha256": "773a624cae5e7ecf95a549cc28d5717e95135d6bd0636b8613cb2c07d2344841"
+  },
+  "stderr": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/binary-scans/pokrov-core.govulncheck.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "advisories": [
+    "GO-2026-4316",
+    "GO-2026-4503",
+    "GO-2026-5774",
+    "GO-2026-5775",
+    "GO-2026-5777",
+    "GO-2026-5841",
+    "GO-2026-5932",
+    "GO-2026-6179",
+    "GO-2026-6180"
+  ],
+  "symbol_findings": 21,
+  "symbol_extraction": {
+    "report": {
+      "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/binary-scans/pokrov-core.extract.jsonl",
+      "bytes": 21168,
+      "sha256": "801adde3325aa16be58aa6c7526cfdd678d688a2134cbb71f7da4c258ee48b64"
+    },
+    "extracted_symbols": 0,
+    "interpretation": "Empty extracted symbols cause govulncheck v1.7.0 to report known vulnerable module symbols; function trace records alone do not prove reachability."
+  },
+  "sbom": {
+    "command": [
+      "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+      "bin",
+      "-std",
+      "-json",
+      "-notimestamp",
+      "-noserial",
+      "-output",
+      "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/binary-scans/pokrov-core.binary.cdx.json",
+      "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/windows-a/pokrov-core.dll"
+    ],
+    "exit_code": 0,
+    "artifact": {
+      "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/binary-scans/pokrov-core.binary.cdx.json",
+      "bytes": 101311,
+      "sha256": "7cb06ac44618da4841ef1c77b94c3eeea72fcd8f2f74e3b80cc78cf635a94fe7"
+    },
+    "log": {
+      "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/binary-scans/pokrov-core.binary-sbom.log",
+      "bytes": 144,
+      "sha256": "e08d23bd8c540d88bc23e1f3f467f7e200efaf5794f697aab7025902545ef036"
+    },
+    "components": 114
+  },
+  "status": "PASS_SCAN_EXECUTION_ONLY_REACHABILITY_TRIAGE_SEPARATE",
+  "limits": [
+    "Go binary modules only; stripped symbol absence is not proof of unreachable code.",
+    "Native libraries and complete licensing require separate assessment."
+  ]
+}

@@ -1,0 +1,5 @@
+--- FAIL: TestPokrovFailedSessionClosesAdapterImmediately (0.00s)
+    pokrov_session_cleanup_windows_test.go:19: immediate cleanup: calls=0 handle=0x0; want 1 and 0x13572468
+FAIL
+FAIL	github.com/sagernet/sing-tun	0.196s
+FAIL
