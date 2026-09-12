@@ -1,0 +1,26 @@
+{
+  "source": "f0711b69c839274fba5ecb9ee3c8d90341e8029e",
+  "core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "artifact": {
+    "abi": "x86_64",
+    "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+    "size": 109718342,
+    "sha256": "6d4b998756548c980937a1f9de7af39a1d65899ec06319594073daceab993e63",
+    "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-x86_64-release.apk",
+    "duplicate_sha256": "6d4b998756548c980937a1f9de7af39a1d65899ec06319594073daceab993e63",
+    "package_name": "space.pokrov.pokrov_android_shell",
+    "version_code": "4053",
+    "version_name": "1.2.0",
+    "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+    "signature_verified": true,
+    "debuggable": false,
+    "native_abis": [
+      "x86_64"
+    ],
+    "current_core_hashes_verified": true,
+    "compiled_revision_present": true,
+    "native_notices_exact": true,
+    "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+    "aapt_output_sha256": "d20f2d1b087a72f9a3c4152cfc44b79ad7833d91c726e8406f67ebebceeec2e0"
+  }
+}

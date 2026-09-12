@@ -1,0 +1,24 @@
+{
+  "status": "PASS_OWNED_ANDROID_CASE_READBACK",
+  "case_number": 59,
+  "case_status": "open",
+  "created_at": "2026-09-12T06:41:52.565728",
+  "install_sha256": "a8e19d7739f511e191aba5d7bdef9162fc2f91c0709a5d34f516313a7ed8f557",
+  "account_sha256": "409d232148335d35d97036c4541ae7aa9a521d319d4034c12cda95b6cac8d74f",
+  "is_active": true,
+  "expiry_at": "2026-09-13T04:43:09.226882",
+  "bundle": {
+    "status": "validated",
+    "diagnostic_profile": "summary",
+    "app_version": "1.2.0",
+    "build_number": "4053",
+    "platform": "android",
+    "architecture": null,
+    "last_phase": null,
+    "last_error_code": null,
+    "expected_size_bytes": 2398,
+    "received_size_bytes": 2398,
+    "expected_sha256": "4095a6b10b0b2ec30d586a076454e2c082d6ef673c6c819c2a3f7a2fb098f11d"
+  },
+  "raw_identifiers_exported": false
+}

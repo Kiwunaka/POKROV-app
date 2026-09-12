@@ -1,0 +1,13 @@
+{
+  "status": "PASS_ROOT_DISABLED_CONFIG",
+  "utc": "2026-09-12T06:35:09.293123+00:00",
+  "root_fields": {
+    "basicSettings.rootMode": false
+  },
+  "config_sha256": "ebe56c7507418639c2c490ae75e6029e13ea0ca16a395c95d92618bf4a47a4b2",
+  "all_other_current_config_fields_exactly_preserved": true,
+  "method": "scoped config field update after both exact fixture processes exited",
+  "other_configs_unchanged": true,
+  "all_instances_stopped": true,
+  "root_disabled_guest_boot_check": "PENDING"
+}

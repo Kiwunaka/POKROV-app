@@ -1,0 +1,12 @@
+{
+  "status": "BLOCKED_BY_FIXTURE_ADB_OFFLINE",
+  "utc": "2026-09-12T06:34:16.933316+00:00",
+  "current_candidate_installed": false,
+  "private_profile_injection_executed": false,
+  "psm_policy_issued": false,
+  "bounded_observation_seconds": 240,
+  "adb_debug_enabled": true,
+  "root_enabled": true,
+  "guest_display_capture": "VBox zero display width; no screenshot obtained",
+  "next_action": "stop same fixture, disable root with all other current config fields preserved, verify rootless boot"
+}
