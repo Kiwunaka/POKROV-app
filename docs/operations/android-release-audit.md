@@ -1235,3 +1235,16 @@ network, with one retained HTTP timeout followed by two successful requests.
 [Captured scope](evidence/2026-09-12-r12-dart-crash-packages/README.md).
 Dart CRASH-001 on released APK, crash-bundle delivery, physical ARM64 and full
 privacy/license/release acceptance remain open.
+
+
+## 2026-09-12 current ARM64 installed on Huawei
+
+[Exact physical installation and recovery](evidence/2026-09-12-r12-huawei-f711/README.md)
+now proves F711/Core6b primary ARM64 APK78d7a136 on Huawei API31. Same production
+signer, package/version4053/ABI/SDK, UID and first-install continuity pass; access
+remains active and all visible profile text hashes match. Ordinary connect,
+background resume, force-stop cleanup, cold reconnect and final exact routes/rules
+restoration pass. Three final HTTPS probes pass; phone returned with VPN off and
+original Android network settings. This supersedes the physical-not-performed
+boundary for these exact local package bytes only. Local same-version install
+does not prove release-channel delivery; complete D01/D02/D03 gates remain open.

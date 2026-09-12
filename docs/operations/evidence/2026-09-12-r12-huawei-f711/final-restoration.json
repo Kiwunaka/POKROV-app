@@ -1,0 +1,33 @@
+{
+  "checks": {
+    "no_tun": true,
+    "no_service": true,
+    "exact_rules_restored": true,
+    "exact_routes_restored": true,
+    "same_android_settings": true,
+    "three_https_pass": true
+  },
+  "https": [
+    {
+      "status": "HTTP_RESPONSE",
+      "http_status": 200,
+      "bytes": 155573,
+      "sha256": "8bc098e0ef30ca49387dffc1f2fd4b0a8e4fef2acfe70b426826540f819c471a",
+      "elapsed_ms": 346
+    },
+    {
+      "status": "HTTP_RESPONSE",
+      "http_status": 200,
+      "bytes": 155573,
+      "sha256": "8bc098e0ef30ca49387dffc1f2fd4b0a8e4fef2acfe70b426826540f819c471a",
+      "elapsed_ms": 363
+    },
+    {
+      "status": "HTTP_RESPONSE",
+      "http_status": 200,
+      "bytes": 155573,
+      "sha256": "8bc098e0ef30ca49387dffc1f2fd4b0a8e4fef2acfe70b426826540f819c471a",
+      "elapsed_ms": 367
+    }
+  ]
+}

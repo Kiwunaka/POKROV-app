@@ -1,0 +1,29 @@
+{
+  "ui": {
+    "known_labels": [
+      "Не защищено",
+      "Профиль",
+      "Правила",
+      "Локации",
+      "Россия напрямую",
+      "Защита",
+      "Настройки",
+      "OK"
+    ],
+    "node_count": 25,
+    "packages": [
+      "space.pokrov.pokrov_android_shell"
+    ]
+  },
+  "text_sha256": [
+    "220ccde633c3815971ef4be28723d0d4478df5433c08759ae36fd04e0b305293",
+    "288e79a3887b932fd329a4b9c465295b5189e9f9b2f4c4bd1b68a83707da802e",
+    "44dacd9f8c944692691f7b0816a940a15fa40929e4a8576b926b3f44d15df3c5",
+    "47862c71f0711abf6ccf90243d42b6dd88177d84e02c0d3939f39789210f9474",
+    "4ac58413c51937d5bd6198729045981592b54cb07388414272f028deb53eedc2",
+    "53856a240637ed58041d9538dcab85b3a8ff9e67fa984173011c6b30c33f3f4a",
+    "a012b1f7fb62f3f4231387ea5ba82657705069ad8a4bc7d317a8ae752509c6e3",
+    "b3efe293621c70440da3a863bdd11515e56faafea830a7ac275a34aa98fc8d82",
+    "ffc83ca33bc64d1cbee5376aec357f4f3fe1fd190471a989b61d29cbff5647be"
+  ]
+}

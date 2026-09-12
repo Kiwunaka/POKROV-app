@@ -1,0 +1,195 @@
+{
+  "status": "PASS_BOUNDED_PHYSICAL_ARM64",
+  "result": "result.json",
+  "compiled_source": "f7115c505c314a7322481997a46343b03dae1127",
+  "core_source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "captures": [
+    {
+      "path": "background-active.json",
+      "bytes": 2998,
+      "sha256": "c25b04e7397b8df26e35f3a95667a2adfb73e922e9ba5815f8621be790b62278"
+    },
+    {
+      "path": "cold-reconnected-protection.json",
+      "bytes": 3296,
+      "sha256": "997915f996ddac464706e2dcd7441d0ffdb2b79dcab00265109a6381371854a1"
+    },
+    {
+      "path": "cold-reopened.json",
+      "bytes": 2702,
+      "sha256": "e8e03905be7cbab5d0efc695c6a21b0e06d0112b7089cd633dbe8da41ce02930"
+    },
+    {
+      "path": "connected-first.json",
+      "bytes": 3414,
+      "sha256": "6fbb6c1b547db63233e2f49c667b5a8beb64e8b720f2fd2fe198f2246fff4357"
+    },
+    {
+      "path": "connected-protection.json",
+      "bytes": 3289,
+      "sha256": "4d63141ac2681c7edef649c19919318090c1ba317377a403190ede6a70fe2105"
+    },
+    {
+      "path": "device.py",
+      "bytes": 4588,
+      "sha256": "7eb38b79697ae5df8229b2ce70d249be90fda2ca182f264528d6ea7cb266e710"
+    },
+    {
+      "path": "disconnected-first.json",
+      "bytes": 2707,
+      "sha256": "b88dcbc22ff80e65d63bb78f181f0887c138db1b31a21c94e8640b7961ae502c"
+    },
+    {
+      "path": "final-disconnected.json",
+      "bytes": 2707,
+      "sha256": "5c049d06351380843d146f6a7d349711248a68d50d8e56e150061431d7d34205"
+    },
+    {
+      "path": "final-restoration.json",
+      "bytes": 858,
+      "sha256": "223e56b45dc0a9144cc87fc3fad6fcfc54c4bca495188576a91d4d6012ca6997"
+    },
+    {
+      "path": "finish.py",
+      "bytes": 2723,
+      "sha256": "602816794b2d15cd53f8263c503117b4c135f3d6bee63337a4962e1bbf66b227"
+    },
+    {
+      "path": "first-disconnect-result.json",
+      "bytes": 114,
+      "sha256": "125031c0beec05e51900814ced9371abeddb6cd3f8ce1deaaac4938a535ddf65"
+    },
+    {
+      "path": "forced-stop-result.json",
+      "bytes": 764,
+      "sha256": "eb6239953cb0dd05447975c5a669ba9ef36cee8062b49724328fe1450e3b9917"
+    },
+    {
+      "path": "forced-stop.json",
+      "bytes": 2248,
+      "sha256": "46c9b2ae43bf097f767d85e350961b84316109354a61ea125a7f9b8f02c84369"
+    },
+    {
+      "path": "home-ui-preserved.json",
+      "bytes": 95,
+      "sha256": "9384d5500010fba7687043b277aa46fe6c9bc19b7e5ac6f6b31a83efcd148b7a"
+    },
+    {
+      "path": "http-helper-binding.json",
+      "bytes": 255,
+      "sha256": "6cf674a58f579e0a29d432e230f33016e92a5a2db197d01a39888beaf691d730"
+    },
+    {
+      "path": "initial.json",
+      "bytes": 2447,
+      "sha256": "2ff73481f9d698a6bc1f6ae9572304996e6291fd7828e741c42d6fb0d250e025"
+    },
+    {
+      "path": "install-result.json",
+      "bytes": 575,
+      "sha256": "ae5a288b488d04709c13c355e005bdfb871f8486fee709cfb2f1cbb51fbe2cb7"
+    },
+    {
+      "path": "install-start.json",
+      "bytes": 322,
+      "sha256": "835b3bfa988ce9820d03031a8b038ec07060c5f7630df91694513e568c97db0d"
+    },
+    {
+      "path": "install.log",
+      "bytes": 38,
+      "sha256": "c4aa470acafcf8576c15b0f0b5ae7e852d1ec5413372d0e6a9272e788e1306d3"
+    },
+    {
+      "path": "install.py",
+      "bytes": 2588,
+      "sha256": "c5df6b24adcb6f71e9288a47d2e1fb5ad40dc6d6351fa55a04d769629048c4d1"
+    },
+    {
+      "path": "installed.json",
+      "bytes": 2246,
+      "sha256": "56cede76aea5286a2eeaa2a1f60d7e450753c703ff8b7e83894dab70c6184e9c"
+    },
+    {
+      "path": "post-install-home.json",
+      "bytes": 2706,
+      "sha256": "89a3d05ee28d55b0837696daafbcbc769220e6a22f7594b9694cf06556fde35c"
+    },
+    {
+      "path": "post-install-profile-ui.json",
+      "bytes": 1038,
+      "sha256": "b911b76656cdda280f3f3f13a67b37f5e665ad060bd38ac0e12e6c2b02dcd7ad"
+    },
+    {
+      "path": "pre-install-home.json",
+      "bytes": 2705,
+      "sha256": "b47d06ac2b6766d718d63722ea4659c2b2939edc96984641df670b7d311a26ec"
+    },
+    {
+      "path": "pre-install-profile-ui.json",
+      "bytes": 1038,
+      "sha256": "b911b76656cdda280f3f3f13a67b37f5e665ad060bd38ac0e12e6c2b02dcd7ad"
+    },
+    {
+      "path": "profile-ui-preserved.json",
+      "bytes": 82,
+      "sha256": "1bfa41d2e1ec38349e9a7cc603e77050168236c8c788cf892447c08740336e6a"
+    },
+    {
+      "path": "reconnected-before-background.json",
+      "bytes": 3428,
+      "sha256": "948252a394aec0a16322e54607b6e66f22cc819176a8c809ec9ddf478ad3bbae"
+    },
+    {
+      "path": "recovery.py",
+      "bytes": 1889,
+      "sha256": "646c613002f45bb366f2dc952deb2b851230a26e49f33cc9cbc58bef78864d37"
+    },
+    {
+      "path": "result.json",
+      "bytes": 1687,
+      "sha256": "094b31213fca82e3c01095ed0eed182e12d7cf3bec1445a8cf7677c1e19d7d6f"
+    },
+    {
+      "path": "resumed-protection.json",
+      "bytes": 3287,
+      "sha256": "437b01bd8af9a5323390a96eeba36276464ca2e172b4586cd0546d2994b1f065"
+    },
+    {
+      "path": "ui-helper.json",
+      "bytes": 218,
+      "sha256": "3cae940e4b9883fa1c70b788dbc199bda6aebc33451b83710220dcba8e4c259d"
+    },
+    {
+      "path": "android-package-audit.json",
+      "bytes": 18201,
+      "sha256": "a83b18b787dfa102f35b9426fb6ed30a0d6577a0033a0bb16904031429d35fa8"
+    },
+    {
+      "path": "arm64-signing.json",
+      "bytes": 803,
+      "sha256": "08e127526a4ab9df6c210b8836626dd7f1debfa7187d902e670f9872aaf48938"
+    },
+    {
+      "path": "UiTreeProbe.java",
+      "bytes": 2066,
+      "sha256": "66331f0a696affef3ab644928e67609cfc8cb1403a2010ebc9614077e9a6a912"
+    },
+    {
+      "path": "R12Http.java",
+      "bytes": 1304,
+      "sha256": "218cd17ed2a57e794a84f4067149d13e0f6f014a539c79a7229e42abacc6d65a"
+    },
+    {
+      "path": "docs-contract.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "path": "validate-seed.log",
+      "bytes": 1818,
+      "sha256": "f1781896cb89dbe896bdb482ed1dae78c2a9c2094df6f52fc928015e6e310696"
+    }
+  ],
+  "rollback_apk": "Retained only in local task directory; not copied to Git.",
+  "full_release_gate": "OPEN"
+}

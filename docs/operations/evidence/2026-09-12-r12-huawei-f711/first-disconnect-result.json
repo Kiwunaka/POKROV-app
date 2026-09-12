@@ -1,0 +1,6 @@
+{
+  "no_tun": true,
+  "no_service": true,
+  "exact_rules_restored": true,
+  "exact_routes_restored": true
+}

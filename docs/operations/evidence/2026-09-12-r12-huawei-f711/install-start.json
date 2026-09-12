@@ -1,0 +1,8 @@
+{
+  "utc": "2026-09-12T09:19:19.120159+00:00",
+  "before_sha256": "45a943dca23587e7b710b33e29ac39b90bf0aaa614566c374f651bb4ceadc348",
+  "after_expected": "78d7a1361d03d808c6f6554fb65bc7411a9b411ed436c6ccbf79114d13737c91",
+  "same_signer": true,
+  "mode": "adb install -r",
+  "rollback_apk": "android-before.apk"
+}
