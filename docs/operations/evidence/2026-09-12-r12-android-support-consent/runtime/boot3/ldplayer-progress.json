@@ -1,0 +1,882 @@
+{
+  "utc": "2026-09-12T06:35:12.138856+00:00",
+  "instance_index": 3,
+  "before": [
+    "0,pokrov,0,0,0,-1,-1,1080,1920,480",
+    "1,kira,0,0,0,-1,-1,1920,1080,280",
+    "2,moments,0,0,0,-1,-1,1920,1080,280",
+    "3,pokrov-qa-120,0,0,0,-1,-1,1080,1920,480"
+  ],
+  "disk_bytes_before": 5059379200,
+  "entry_margin_e_bytes": 1073741824,
+  "quit_margin_e_bytes": 536870912,
+  "growth_budget_bytes": 536870912,
+  "quit_at_growth_bytes": 402653184,
+  "floor_bytes": 42949672960,
+  "free_before": {
+    "C:/": 43597094912,
+    "E:/": 45319081984
+  },
+  "other_disk_sizes_before": {
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian0\\data.vdi": 19144900608,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian0\\sdcard.vdi": 1225785344,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian1\\data.vdi": 16110321664,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian1\\sdcard.vdi": 1074790400,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian2\\data.vdi": 15886974976,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian2\\sdcard.vdi": 1066401792
+  },
+  "samples": [
+    {
+      "seconds": 5.0,
+      "growth_bytes": 4194304,
+      "free": {
+        "C:/": 43597041664,
+        "E:/": 45311754240
+      },
+      "active": false
+    },
+    {
+      "seconds": 10.1,
+      "growth_bytes": 4194304,
+      "free": {
+        "C:/": 43597033472,
+        "E:/": 45311754240
+      },
+      "active": false
+    },
+    {
+      "seconds": 15.2,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43596914688,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 20.2,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596902400,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 25.3,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596795904,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 30.3,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596795904,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 35.4,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596795904,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 40.5,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596795904,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 45.5,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596791808,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 50.6,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596791808,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 55.7,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596857344,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 60.7,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596853248,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 65.8,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43596853248,
+        "E:/": 45310705664
+      },
+      "active": true
+    },
+    {
+      "seconds": 70.8,
+      "growth_bytes": 115343360,
+      "free": {
+        "C:/": 43596718080,
+        "E:/": 45201784832
+      },
+      "active": true
+    },
+    {
+      "seconds": 75.9,
+      "growth_bytes": 120586240,
+      "free": {
+        "C:/": 43596713984,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 81.0,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596713984,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 86.0,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596713984,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 91.1,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596709888,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 96.2,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596709888,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 101.2,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596709888,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 106.3,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596750848,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 111.4,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596554240,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 116.4,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596546048,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 121.5,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596546048,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 126.5,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596546048,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 131.6,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596537856,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 136.7,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596533760,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 141.8,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596533760,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 146.8,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596533760,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 151.9,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596533760,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 156.9,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596533760,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 162.0,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596529664,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 167.1,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596529664,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 172.1,
+      "growth_bytes": 121634816,
+      "free": {
+        "C:/": 43596566528,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 177.2,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596566528,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 182.3,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596562432,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 187.3,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596558336,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 192.4,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596558336,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 197.5,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596558336,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 202.5,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596554240,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 207.6,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596550144,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 212.7,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596554240,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 217.7,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596550144,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 222.8,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596550144,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 227.8,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596550144,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 232.9,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596550144,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 238.0,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596550144,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 243.0,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596550144,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 248.1,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596554240,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 253.2,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596554240,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 258.2,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596537856,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 263.3,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596505088,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 268.4,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596505088,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 273.4,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596505088,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 278.5,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596496896,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 283.5,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596517376,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 288.6,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596517376,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 293.7,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596488704,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 298.8,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596439552,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 303.8,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596439552,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 308.9,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596374016,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 313.9,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596353536,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 319.0,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596349440,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 324.1,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596333056,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 329.1,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596333056,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 334.2,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596333056,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 339.3,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596341248,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 344.3,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596341248,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 349.4,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596091392,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 354.5,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596091392,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 359.5,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596091392,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 364.6,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596091392,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 369.6,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596091392,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 374.7,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596091392,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 379.8,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596132352,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 384.8,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596132352,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 389.9,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596132352,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 395.0,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596132352,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 400.0,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596197888,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 405.1,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596193792,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 410.2,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596185600,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 415.2,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596185600,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 420.3,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596185600,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 425.4,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596185600,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 430.4,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596144640,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 435.5,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596140544,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 440.5,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596120064,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 445.6,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596120064,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 450.7,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596120064,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 455.7,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596120064,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 460.8,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596120064,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 465.9,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596120064,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 470.9,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596111872,
+        "E:/": 45188546560
+      },
+      "active": true
+    },
+    {
+      "seconds": 476.0,
+      "growth_bytes": 122683392,
+      "free": {
+        "C:/": 43596156928,
+        "E:/": 45195165696
+      },
+      "active": false
+    }
+  ],
+  "status": "MONITORING",
+  "minimum_free": {
+    "C:/": 43590615040,
+    "E:/": 45188546560
+  },
+  "max_growth_bytes": 122683392
+}

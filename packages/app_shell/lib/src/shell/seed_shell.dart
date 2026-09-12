@@ -3774,10 +3774,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       context: context,
       isDismissible: false,
       enableDrag: false,
+      isScrollControlled: true,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
         top: false,
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,

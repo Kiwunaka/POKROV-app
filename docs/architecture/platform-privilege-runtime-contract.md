@@ -710,3 +710,8 @@ actual config before creating a TUN. A missing or unconfirmed profile fails clos
 an already running or pending connection is not restarted by a duplicate system
 start. System lockdown remains Android-owned and can block apps outside the
 selected-app allowlist, including while the selected tunnel is connected.
+
+The temporary support-mode consent sheet uses the available screen height and
+scrolls its disclosure and actions when needed. Both consent choices remain
+reachable on compact Android screens; enabling the mode still requires the
+explicit confirmation after the signed policy has been redeemed.

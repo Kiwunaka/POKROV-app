@@ -1,0 +1,212 @@
+{
+  "utc": "2026-09-12T06:28:01.163136+00:00",
+  "instance_index": 3,
+  "before": [
+    "0,pokrov,0,0,0,-1,-1,1080,1920,480",
+    "1,kira,0,0,0,-1,-1,1920,1080,280",
+    "2,moments,0,0,0,-1,-1,1920,1080,280",
+    "3,pokrov-qa-120,0,0,0,-1,-1,1080,1920,480"
+  ],
+  "disk_bytes_before": 5042601984,
+  "entry_margin_e_bytes": 1073741824,
+  "quit_margin_e_bytes": 536870912,
+  "growth_budget_bytes": 536870912,
+  "quit_at_growth_bytes": 402653184,
+  "floor_bytes": 42949672960,
+  "free_before": {
+    "C:/": 43601690624,
+    "E:/": 45335855104
+  },
+  "other_disk_sizes_before": {
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian0\\data.vdi": 19144900608,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian0\\sdcard.vdi": 1225785344,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian1\\data.vdi": 16110321664,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian1\\sdcard.vdi": 1074790400,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian2\\data.vdi": 15886974976,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian2\\sdcard.vdi": 1066401792
+  },
+  "samples": [
+    {
+      "seconds": 5.0,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43600998400,
+        "E:/": 45332725760
+      },
+      "active": false
+    },
+    {
+      "seconds": 10.1,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43600969728,
+        "E:/": 45332725760
+      },
+      "active": false
+    },
+    {
+      "seconds": 15.2,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43600859136,
+        "E:/": 45332725760
+      },
+      "active": true
+    },
+    {
+      "seconds": 20.2,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43600908288,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 25.3,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43600543744,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 30.4,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43600543744,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 35.4,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43600539648,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 40.5,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43600506880,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 45.5,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43600506880,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 50.6,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597516800,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 55.7,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597516800,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 60.7,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597447168,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 65.8,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597447168,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 70.9,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597430784,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 75.9,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597430784,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 81.0,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597496320,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 86.1,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597496320,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 91.1,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597492224,
+        "E:/": 45327482880
+      },
+      "active": true
+    },
+    {
+      "seconds": 96.2,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43597463552,
+        "E:/": 45330616320
+      },
+      "active": false
+    }
+  ],
+  "status": "PASS_LDPLAYER_STOPPED",
+  "minimum_free": {
+    "C:/": 43596357632,
+    "E:/": 45327482880
+  },
+  "max_growth_bytes": 5242880,
+  "all_instances_stopped": true,
+  "other_disk_sizes_unchanged": true,
+  "floor_sampled_pass": true,
+  "growth_budget_pass": true,
+  "root_network_host_vpn_settings_changed": false
+}

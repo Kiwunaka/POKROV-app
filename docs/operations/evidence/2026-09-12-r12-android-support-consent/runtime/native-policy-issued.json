@@ -1,0 +1,39 @@
+{
+  "status": "PASS_NATIVE_POLICY_ISSUED",
+  "origin": "brain-origin real HTTPS",
+  "backend_source": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "external_oidc_tested": false,
+  "fixture_authentication_used": true,
+  "credentials_exported": false,
+  "ticket_id": 58,
+  "policy_id": "spol-fe3aaad59f7845e5980aeb38",
+  "policy_status": "issued",
+  "expires_at": "2026-09-12T06:52:27Z",
+  "current_roles": [
+    "superadmin"
+  ],
+  "l2_confirmation": true,
+  "idempotent_execution": true,
+  "policy_count_delta": 1,
+  "activation_code_not_in_intent_storage": true,
+  "fixture_session_audit_retained": true,
+  "code_stored_root_0600_only": true,
+  "audience": {
+    "app_version": "1.2.0",
+    "build_number": "4053",
+    "platform": "android"
+  },
+  "categories": [
+    "build",
+    "events",
+    "network",
+    "redaction",
+    "system"
+  ],
+  "maximum_bundles": 2,
+  "maximum_bundle_bytes": 1048576,
+  "maximum_total_bytes": 2097152,
+  "fixture_session_revoked": true,
+  "preexisting_sessions_unchanged": true,
+  "utc": "2026-09-12T06:37:27.514101+00:00"
+}

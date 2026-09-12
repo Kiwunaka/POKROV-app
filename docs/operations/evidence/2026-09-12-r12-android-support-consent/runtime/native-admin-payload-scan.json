@@ -1,0 +1,85 @@
+{
+  "status": "PASS_ANDROID_SUMMARY_ACCESS_SCAN",
+  "case_number": 59,
+  "origin": "brain-origin real HTTPS and worker-key in-memory scan",
+  "source_revision": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "external_oidc_retested": false,
+  "planted_native_to_app_canaries_exercised": false,
+  "plaintext_or_credentials_exported": false,
+  "lookups": [
+    {
+      "kind": "case_number",
+      "own_result_count": 1,
+      "canary_matches": 0
+    },
+    {
+      "kind": "diagnostic_id",
+      "own_result_count": 1,
+      "canary_matches": 0
+    }
+  ],
+  "operator_summary": {
+    "diagnostic_profile": "summary",
+    "app_version": "1.2.0",
+    "build_number": "4053",
+    "platform": "android",
+    "architecture": null,
+    "last_phase": null,
+    "last_error_code": null,
+    "proof_outcome": "unknown",
+    "attempt_link_source": null
+  },
+  "build_identity": {
+    "app_version": "1.2.0",
+    "build_id": "4053",
+    "platform": "android",
+    "channel": "direct"
+  },
+  "payload_scan": {
+    "profile": "summary",
+    "plaintext_bytes": 1430,
+    "plaintext_sha256": "f796022d739f2148f62492b1383e383c83b305deb5dd2159b50988302fb5b8c3",
+    "file_count": 3,
+    "files": [
+      {
+        "path": "build/identity.json",
+        "bytes": 81,
+        "sha256": "a297610cad70d57fe0f2ca5c02c63a99870908bf88265f851988c68ebb77d103",
+        "canary_matches": 0
+      },
+      {
+        "path": "network/summary.json",
+        "bytes": 159,
+        "sha256": "df4ddc208fb0f4dfd0e461ac00b70c356764b30a2f8e653baa5f91abf77adb0a",
+        "canary_matches": 0
+      },
+      {
+        "path": "redaction/report.json",
+        "bytes": 137,
+        "sha256": "72981ff4c6c913c0d559a363f955a67c422e6a8b7d519a06c9fec64ad4f7127f",
+        "canary_matches": 0
+      }
+    ],
+    "canary_matches": 0,
+    "extended_or_crash_included": false
+  },
+  "access": {
+    "without_step_up": "DENIED",
+    "controlled_fixture_step_up": true,
+    "download": "PASS_EXACT_CIPHERTEXT",
+    "replay": "DENIED",
+    "cache_control": "no-store",
+    "audit_rows_before": 0,
+    "audit_rows_after": 2,
+    "audit_actions": [
+      "downloaded",
+      "grant_issued"
+    ]
+  },
+  "existing_case_status_preserved": "open",
+  "session_cleanup": {
+    "fixture_revoked": true,
+    "preexisting_unchanged": true
+  },
+  "utc": "2026-09-12T06:44:21.099409+00:00"
+}
