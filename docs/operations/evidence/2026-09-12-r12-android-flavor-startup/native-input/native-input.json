@@ -1,0 +1,130 @@
+{
+  "status": "PASS_BOUNDED_COMBINED_NATIVE_FAILURE",
+  "utc": "2026-09-12T05:44:22.332010+00:00",
+  "apk_sha256": "23fa86a9421930910e6d95d0fdff85f35c5df4e94f8749b83e3457052b66935d",
+  "marker_values_synthetic": {
+    "credential": "password=R12_ANDROID_CREDENTIAL_a9_20260912",
+    "authorization": "Authorization: Bearer R12_ANDROID_AUTH_a9_20260912",
+    "cookie": "Cookie: session=R12_ANDROID_COOKIE_a9_20260912",
+    "config": "config={private_key:R12_ANDROID_CONFIG_a9_20260912}",
+    "url": "https://example.invalid/R12_ANDROID_URL_a9_20260912?secret=synthetic",
+    "ipv4": "198.51.100.127",
+    "path": "/data/user/0/synthetic/R12_ANDROID_PATH_a9_20260912.conf",
+    "pii": "qa+R12_ANDROID_PII_a9_20260912@example.invalid",
+    "provider": "provider_payload=R12_ANDROID_PROVIDER_a9_20260912"
+  },
+  "payload_sha256": "7ddfbbbf8ee81ae2b327d1d24f6f09facacae7e3a8855a92acf18910462beb25",
+  "profile_digest": "43fd8dd0eb61e75eb506719c4c7ba07ae33da4c79517043b48183a49aabbab68",
+  "native_journal_records": [
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.789Z",
+      "sequence": 1,
+      "event": "doze",
+      "outcome": "inactive",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.790Z",
+      "sequence": 2,
+      "event": "background_restriction",
+      "outcome": "disabled",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.790Z",
+      "sequence": 3,
+      "event": "app_standby",
+      "outcome": "unknown",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.790Z",
+      "sequence": 4,
+      "event": "vpn_service",
+      "outcome": "created",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.792Z",
+      "sequence": 5,
+      "event": "vpn_service",
+      "outcome": "start_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.803Z",
+      "sequence": 6,
+      "event": "vpn_service",
+      "outcome": "session_started",
+      "generation": 1,
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.894Z",
+      "sequence": 7,
+      "event": "network_callback",
+      "outcome": "available",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.894Z",
+      "sequence": 8,
+      "event": "network_callback",
+      "outcome": "capabilities_changed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.901Z",
+      "sequence": 9,
+      "event": "vpn_service",
+      "outcome": "failed",
+      "generation": 1,
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-12T05:44:22.905Z",
+      "sequence": 10,
+      "event": "vpn_service",
+      "outcome": "destroyed",
+      "dropped_before": 0
+    }
+  ],
+  "native_journal_marker_counts": {
+    "credential": 0,
+    "authorization": 0,
+    "cookie": 0,
+    "config": 0,
+    "url": 0,
+    "ipv4": 0,
+    "path": 0,
+    "pii": 0,
+    "provider": 0
+  },
+  "logcat_marker_counts": {
+    "credential": 0,
+    "authorization": 0,
+    "cookie": 0,
+    "config": 0,
+    "url": 0,
+    "ipv4": 0,
+    "path": 0,
+    "pii": 0,
+    "provider": 0
+  },
+  "logcat_bytes": 4322,
+  "logcat_sha256": "700c19dfdc5a26c5ca183219738f1b78e81e5e7207f0eed6b06b3a5f01abc9a6",
+  "app_pid": 3233,
+  "rooted_qa_fixture": true,
+  "private_rollback": "PREPARED_NOT_YET_RESTORED",
+  "gui_and_bundle": "PENDING"
+}

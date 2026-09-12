@@ -1,0 +1,27 @@
+00:00 +0: loading E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart
+00:00 +0: diagnostics creates a case with one encrypted bundle action
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: return normally
+  Actual: <Closure: () => OperationalBuildIdentity>
+   Which: threw ArgumentError:<Invalid argument (channel): "direct">
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart:9133:5)
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:29)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart line 9133
+The test description was:
+  diagnostics creates a case with one encrypted bundle action
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:00 +0 -1: diagnostics creates a case with one encrypted bundle action [E]
+  Test failed. See exception logs above.
+  The test description was: diagnostics creates a case with one encrypted bundle action
+  
+00:00 +0 -1: Some tests failed.

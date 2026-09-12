@@ -3550,7 +3550,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       now: DateTime.now().toUtc(),
       appVersion: pokrovClientVersion,
       buildNumber: pokrovClientBuildNumber,
-      releaseChannel: pokrovClientReleaseChannel,
+      releaseChannel: appFlavor ?? pokrovClientReleaseChannel,
       candidateLabel: pokrovClientCandidateLabel,
       encryptedDeliveryAvailable:
           transferService?.supportBundleEncryptionConfigured ?? false,
