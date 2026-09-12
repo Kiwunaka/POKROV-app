@@ -629,8 +629,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   StreamSubscription<Uri>? _acquisitionUriSubscription;
 
   RuntimeSnapshot? get _runtimeSnapshot => _connectionCoordinator.snapshot;
-  set _runtimeSnapshot(RuntimeSnapshot? value) =>
-      _connectionCoordinator.updateSnapshot(value);
+  final _protectionRuntimeSnapshot = ValueNotifier<RuntimeSnapshot?>(null);
+  set _runtimeSnapshot(RuntimeSnapshot? value) {
+    _connectionCoordinator.updateSnapshot(value);
+    _protectionRuntimeSnapshot.value = value;
+  }
 
   bool get _runtimeBusy => _connectionCoordinator.actionInFlight;
   set _runtimeBusy(bool value) =>
@@ -2269,6 +2272,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   @override
   void dispose() {
+    _protectionRuntimeSnapshot.dispose();
     _managedProfileLifecycle.dispose();
     unawaited(_acquisitionUriSubscription?.cancel());
     _acquisitionUriSubscription = null;
@@ -3511,6 +3515,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       showDragHandle: true,
       sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
       builder: (context) => _ProtectionCenterSheet(
+        runtimeSnapshot: _protectionRuntimeSnapshot,
         initialData: _ProtectionCenterData(
           snapshot: _runtimeSnapshot,
           liveStats: const RuntimeLiveStats.unavailable(),
