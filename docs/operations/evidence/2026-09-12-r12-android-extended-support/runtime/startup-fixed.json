@@ -1,0 +1,34 @@
+{
+  "status": "PASS_INSTALLED_FIXED_STARTUP",
+  "utc": "2026-09-12T07:05:11.717173+00:00",
+  "installed_apk_sha256": "8dc6c2e6671b7ea3d2331c1ec31c5a788458fd10de9dd9a9693abfcd8eab62ad",
+  "ui": [
+    {
+      "text": "Защита\nTab 1 of 4",
+      "bounds": "[60,1692][300,1884]",
+      "clickable": "true"
+    },
+    {
+      "text": "Локации\nTab 2 of 4",
+      "bounds": "[300,1692][540,1884]",
+      "clickable": "true"
+    },
+    {
+      "text": "Правила\nTab 3 of 4",
+      "bounds": "[540,1692][780,1884]",
+      "clickable": "true"
+    },
+    {
+      "text": "Профиль\nTab 4 of 4",
+      "bounds": "[780,1692][1020,1884]",
+      "clickable": "true"
+    }
+  ],
+  "app_pid": 2582,
+  "available_app_logcat_bytes": 13324,
+  "available_app_logcat_sha256": "4995ac3735d1bd7011c3cc8d8117919953d9b1872adfbff689e1863104ed1eed",
+  "unhandled_exception_count": 0,
+  "fatal_exception_count": 0,
+  "su_exit_code": 127,
+  "root_disabled_guest_verified": true
+}

@@ -1,0 +1,10 @@
+{
+  "status": "BLOCKED_BY_FIXTURE_ADB_OFFLINE",
+  "utc": "2026-09-12T07:03:01.632164+00:00",
+  "observed_seconds": 308.9,
+  "root_mode": false,
+  "adb_debug": 1,
+  "scoped_reconnect_attempted": true,
+  "new_apk_installed": false,
+  "new_psm_issued": false
+}

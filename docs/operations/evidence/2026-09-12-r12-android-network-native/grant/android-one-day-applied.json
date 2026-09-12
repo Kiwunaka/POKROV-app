@@ -1,0 +1,22 @@
+{
+  "utc": "2026-09-12T04:43:10.282441+00:00",
+  "status": "PASS",
+  "target_install_sha256": "a8e19d7739f511e191aba5d7bdef9162fc2f91c0709a5d34f516313a7ed8f557",
+  "before": {
+    "is_active": false,
+    "expiry_at": "2026-08-31T12:04:50",
+    "sub_type": "FREE",
+    "current_plan_code": "free_retired"
+  },
+  "after": {
+    "is_active": true,
+    "expiry_at": "2026-09-13T04:43:09.226882",
+    "sub_type": "PAID",
+    "current_plan_code": "admin_grant"
+  },
+  "delta_days": 1,
+  "action": "user.extend",
+  "action_intent_used": true,
+  "payment_or_refund": false,
+  "raw_identifiers_returned": false
+}

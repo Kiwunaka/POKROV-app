@@ -1,0 +1,5 @@
+On a compact Android screen, the support-mode consent bottom sheet clipped its Enable action, so ordinary taps could not activate the mode. Let the existing sheet use the available height and scroll its disclosure and actions.
+
+Validation: 18 existing diagnostics/controller tests, package analysis, docs contract and explicit-root seed validation pass. The exact production-signed x86_64 QA APK built from source 2c370af8 now starts and accepts ordinary consent on the owned Android fixture. Installed checks confirm a persistent active-mode banner, a validated five-file encrypted extended package, two distinct-package usage accounting, rejection of a third distinct package, manual disable and rejection of the reused code. Audited one-use HTTPS admin download and in-memory worker decryption passed. Repeated delivery of identical content is correctly deduplicated. Automatic expiry, native crash/planted-input privacy and final full-platform packages remain separate open checks.
+
+Exact signed PR head c13de6e passed workflow 34679718401. This change promotes source only; no public release or backend/Core deployment is included.

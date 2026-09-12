@@ -1,0 +1,11 @@
+{
+  "status": "PASS_ROOT_DISABLED_CONFIG",
+  "utc": "2026-09-12T05:16:14.021097+00:00",
+  "root_fields": {
+    "basicSettings.rootMode": false
+  },
+  "config_sha256": "b05558fc1597476908e33005efd7035a0af7179070d1a7285b48be12d3847079",
+  "other_configs_unchanged": true,
+  "all_instances_stopped": true,
+  "root_disabled_guest_boot_check": "PENDING"
+}

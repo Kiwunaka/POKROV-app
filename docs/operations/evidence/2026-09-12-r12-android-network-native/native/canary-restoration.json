@@ -1,0 +1,291 @@
+{
+  "utc": "2026-09-12T05:13:49.599422+00:00",
+  "instance_index": 3,
+  "before": [
+    "0,pokrov,0,0,0,-1,-1,1080,1920,480",
+    "1,kira,0,0,0,-1,-1,1920,1080,280",
+    "2,moments,0,0,0,-1,-1,1920,1080,280",
+    "3,pokrov-qa-120,0,0,0,-1,-1,1080,1920,480"
+  ],
+  "disk_bytes_before": 4806672384,
+  "growth_budget_bytes": 536870912,
+  "quit_at_growth_bytes": 402653184,
+  "floor_bytes": 42949672960,
+  "free_before": {
+    "C:/": 43731730432,
+    "E:/": 47496392704
+  },
+  "other_disk_sizes_before": {
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian0\\data.vdi": 19144900608,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian0\\sdcard.vdi": 1225785344,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian1\\data.vdi": 16110321664,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian1\\sdcard.vdi": 1074790400,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian2\\data.vdi": 15886974976,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian2\\sdcard.vdi": 1066401792
+  },
+  "samples": [
+    {
+      "seconds": 5.0,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43731521536,
+        "E:/": 47493259264
+      },
+      "active": false
+    },
+    {
+      "seconds": 10.1,
+      "growth_bytes": 3145728,
+      "free": {
+        "C:/": 43731517440,
+        "E:/": 47493259264
+      },
+      "active": false
+    },
+    {
+      "seconds": 15.2,
+      "growth_bytes": 3145728,
+      "free": {
+        "C:/": 43731394560,
+        "E:/": 47493259264
+      },
+      "active": true
+    },
+    {
+      "seconds": 20.2,
+      "growth_bytes": 4194304,
+      "free": {
+        "C:/": 43731394560,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 25.3,
+      "growth_bytes": 4194304,
+      "free": {
+        "C:/": 43730550784,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 30.4,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43730546688,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 35.4,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730501632,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 40.5,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730432000,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 45.6,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730423808,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 50.6,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730415616,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 55.7,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730411520,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 60.8,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730411520,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 65.8,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730411520,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 70.9,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730411520,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 75.9,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730345984,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 81.0,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730350080,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 86.1,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730345984,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 91.1,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730276352,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 96.2,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730276352,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 101.2,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730276352,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 106.3,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730337792,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 111.4,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730341888,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 116.4,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43730325504,
+        "E:/": 47489064960
+      },
+      "active": true
+    },
+    {
+      "seconds": 121.5,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43730292736,
+        "E:/": 47480676352
+      },
+      "active": true
+    },
+    {
+      "seconds": 126.6,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43730198528,
+        "E:/": 47480676352
+      },
+      "active": true
+    },
+    {
+      "seconds": 131.6,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43730198528,
+        "E:/": 47480676352
+      },
+      "active": true
+    },
+    {
+      "seconds": 136.7,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43730194432,
+        "E:/": 47480676352
+      },
+      "active": true
+    },
+    {
+      "seconds": 141.8,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43730132992,
+        "E:/": 47486771200
+      },
+      "active": false
+    }
+  ],
+  "status": "PASS_LDPLAYER_STOPPED",
+  "minimum_free": {
+    "C:/": 43726348288,
+    "E:/": 47480676352
+  },
+  "max_growth_bytes": 8388608,
+  "all_instances_stopped": true,
+  "other_disk_sizes_unchanged": true,
+  "floor_sampled_pass": true,
+  "growth_budget_pass": true,
+  "root_network_host_vpn_settings_changed": false
+}

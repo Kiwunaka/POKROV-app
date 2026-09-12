@@ -1,0 +1,107 @@
+{
+  "status": "PASS_PRIOR_F071_PACKAGES_RETAINED",
+  "reason": "Keep prior exact native-startup and numeric-summary artifacts before consent-layout rebuild",
+  "source": "f0711b69c839274fba5ecb9ee3c8d90341e8029e",
+  "remote_host": "pokrov-de",
+  "artifacts": [
+    {
+      "abi": "universal",
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+      "size": 294071554,
+      "sha256": "88d3fcc40747f768f336fbbb8365b74bad7c1b43b5c8cbe01aca419e45e1f4cb",
+      "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-universal-release.apk",
+      "duplicate_sha256": "88d3fcc40747f768f336fbbb8365b74bad7c1b43b5c8cbe01aca419e45e1f4cb",
+      "package_name": "space.pokrov.pokrov_android_shell",
+      "version_code": "4053",
+      "version_name": "1.2.0",
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "signature_verified": true,
+      "debuggable": false,
+      "native_abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "current_core_hashes_verified": true,
+      "compiled_revision_present": true,
+      "native_notices_exact": true,
+      "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+      "aapt_output_sha256": "e9163d67c8f02861f7b5b29c684b6f8e6753d8852248b3c56451e3610c1c533f",
+      "remote_path": "/root/portal-r12-evidence/support-consent-20260912/prior-f071-packages/app-direct-release.apk",
+      "remote_sha256": "88d3fcc40747f768f336fbbb8365b74bad7c1b43b5c8cbe01aca419e45e1f4cb"
+    },
+    {
+      "abi": "arm64-v8a",
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+      "size": 100926279,
+      "sha256": "d424839dc8110291af7063f3dc5730f9c8a3d4049722097705275d8625858891",
+      "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-arm64-v8a-release.apk",
+      "duplicate_sha256": "d424839dc8110291af7063f3dc5730f9c8a3d4049722097705275d8625858891",
+      "package_name": "space.pokrov.pokrov_android_shell",
+      "version_code": "4053",
+      "version_name": "1.2.0",
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "signature_verified": true,
+      "debuggable": false,
+      "native_abis": [
+        "arm64-v8a"
+      ],
+      "current_core_hashes_verified": true,
+      "compiled_revision_present": true,
+      "native_notices_exact": true,
+      "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+      "aapt_output_sha256": "c89eefd0e089f4a4a0078620ce11442cda7fd64555fce87c16d688f3e65d583d",
+      "remote_path": "/root/portal-r12-evidence/support-consent-20260912/prior-f071-packages/app-arm64-v8a-direct-release.apk",
+      "remote_sha256": "d424839dc8110291af7063f3dc5730f9c8a3d4049722097705275d8625858891"
+    },
+    {
+      "abi": "armeabi-v7a",
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+      "size": 90459293,
+      "sha256": "0d70c80fdf44047990d150acc2f740ad91e517f68e6725cf3d93f8899c29a492",
+      "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-armeabi-v7a-release.apk",
+      "duplicate_sha256": "0d70c80fdf44047990d150acc2f740ad91e517f68e6725cf3d93f8899c29a492",
+      "package_name": "space.pokrov.pokrov_android_shell",
+      "version_code": "4053",
+      "version_name": "1.2.0",
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "signature_verified": true,
+      "debuggable": false,
+      "native_abis": [
+        "armeabi-v7a"
+      ],
+      "current_core_hashes_verified": true,
+      "compiled_revision_present": true,
+      "native_notices_exact": true,
+      "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+      "aapt_output_sha256": "b5e566848f9b70d54d0eb9d020ef11899f0328ea5d252976b6320d3bc229227d",
+      "remote_path": "/root/portal-r12-evidence/support-consent-20260912/prior-f071-packages/app-armeabi-v7a-direct-release.apk",
+      "remote_sha256": "0d70c80fdf44047990d150acc2f740ad91e517f68e6725cf3d93f8899c29a492"
+    },
+    {
+      "abi": "x86_64",
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+      "size": 109718342,
+      "sha256": "6d4b998756548c980937a1f9de7af39a1d65899ec06319594073daceab993e63",
+      "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-x86_64-release.apk",
+      "duplicate_sha256": "6d4b998756548c980937a1f9de7af39a1d65899ec06319594073daceab993e63",
+      "package_name": "space.pokrov.pokrov_android_shell",
+      "version_code": "4053",
+      "version_name": "1.2.0",
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "signature_verified": true,
+      "debuggable": false,
+      "native_abis": [
+        "x86_64"
+      ],
+      "current_core_hashes_verified": true,
+      "compiled_revision_present": true,
+      "native_notices_exact": true,
+      "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+      "aapt_output_sha256": "d20f2d1b087a72f9a3c4152cfc44b79ad7833d91c726e8406f67ebebceeec2e0",
+      "remote_path": "/root/portal-r12-evidence/support-consent-20260912/prior-f071-packages/app-x86_64-direct-release.apk",
+      "remote_sha256": "6d4b998756548c980937a1f9de7af39a1d65899ec06319594073daceab993e63"
+    }
+  ],
+  "utc": "2026-09-12T06:51:14.422535+00:00"
+}

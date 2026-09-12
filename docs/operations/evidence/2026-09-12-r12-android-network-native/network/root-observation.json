@@ -1,0 +1,7 @@
+{
+  "existing_su_exit": 127,
+  "existing_su_is_root": false,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "fba6d69482fa0b55d7b5f75cee0fa6a4dc4d447cd62cecc8a2b43f8818cf59ba",
+  "root_setting_changed": false
+}

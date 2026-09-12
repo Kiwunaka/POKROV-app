@@ -1,0 +1,60 @@
+{
+  "status": "PASS_OWNED_EXTENDED_CASES_READBACK",
+  "cases": [
+    {
+      "case_number": 60,
+      "created_at": "2026-09-12T07:07:56.038641",
+      "case_status": "open",
+      "bundle": {
+        "status": "validated",
+        "diagnostic_profile": "extended",
+        "app_version": "1.2.0",
+        "build_number": "4053",
+        "platform": "android",
+        "expected_size_bytes": 8631,
+        "received_size_bytes": 8631,
+        "expected_sha256": "84ac7f0d727f9da2a34b59c96b98ef016df7fbc374d2de2795c2456753426636",
+        "bundle_id": "diag-e8593bdc5f34384703837b29"
+      }
+    },
+    {
+      "case_number": 61,
+      "created_at": "2026-09-12T07:09:37.841768",
+      "case_status": "open",
+      "bundle": {
+        "status": "validated",
+        "diagnostic_profile": "extended",
+        "app_version": "1.2.0",
+        "build_number": "4053",
+        "platform": "android",
+        "expected_size_bytes": 8631,
+        "received_size_bytes": 8631,
+        "expected_sha256": "642748da54fd3930bee22a8f3ebf12f04e52330b6798a1edad1276e6404c238c",
+        "bundle_id": "diag-e8593bdc5f34384703837b29"
+      }
+    },
+    {
+      "case_number": 62,
+      "created_at": "2026-09-12T07:09:59.763362",
+      "case_status": "open",
+      "bundle": {
+        "status": "validated",
+        "diagnostic_profile": "extended",
+        "app_version": "1.2.0",
+        "build_number": "4053",
+        "platform": "android",
+        "expected_size_bytes": 8631,
+        "received_size_bytes": 8631,
+        "expected_sha256": "9e66b0088a73f38622ad5f5a584960dcf4e80247855ae6823fdc0262a11e8d17",
+        "bundle_id": "diag-e8593bdc5f34384703837b29"
+      }
+    }
+  ],
+  "policy": {
+    "maximum_total_bytes": 2097152,
+    "maximum_bundles": 2,
+    "status": "redeemed",
+    "expires_at": "2026-09-12 07:21:59"
+  },
+  "utc": "2026-09-12T07:12:33.887479+00:00"
+}

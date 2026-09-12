@@ -1,0 +1,12 @@
+{
+  "status": "PASS_SAME_SIGNER_IN_PLACE_UPGRADE",
+  "utc": "2026-09-12T07:05:08.842131+00:00",
+  "source": "2c370af8deaba07a5361de809d058ce44cdf8146",
+  "core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "previous_apk_sha256": "6d4b998756548c980937a1f9de7af39a1d65899ec06319594073daceab993e63",
+  "installed_apk_sha256": "8dc6c2e6671b7ea3d2331c1ec31c5a788458fd10de9dd9a9693abfcd8eab62ad",
+  "installed_bytes": 109718342,
+  "data_cleared": false,
+  "previous_apk_retained_private_on_owned_de": true,
+  "startup_and_support": "PENDING"
+}

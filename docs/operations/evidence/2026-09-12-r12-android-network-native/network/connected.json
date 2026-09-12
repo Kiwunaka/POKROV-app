@@ -1,0 +1,25 @@
+{
+  "utc": "2026-09-12T04:48:50.704721+00:00",
+  "label": "connected",
+  "installed_apk_sha256": "baa5202957c46e9ba92e3fff4c46418b60ff309311cfa015aef86da685ac0f52",
+  "network_state_hashes": {
+    "ipv4_routes": "82aa04a823b550610ed449a7499347c55ca0db9c8fd5122e674c69280cb6bbfb",
+    "ipv6_routes": "90d7200e4389ae891aeb3c70abf461817b79a74051b1d6bab4c5455457184249",
+    "private_dns_mode": "abdfbffecbe18ed94df9829819e596ee285b52a94aa108514452a9121721c789",
+    "private_dns_host": "abdfbffecbe18ed94df9829819e596ee285b52a94aa108514452a9121721c789",
+    "dns1": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "dns2": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+  },
+  "tun_interfaces": [
+    "tun0"
+  ],
+  "counters": {
+    "tun0": {
+      "rx_bytes": 62938,
+      "tx_bytes": 63899
+    }
+  },
+  "vpn_service_running": true,
+  "ui": [],
+  "raw_network_state_exported": false
+}

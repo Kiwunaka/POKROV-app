@@ -1,0 +1,47 @@
+{
+  "status": "PASS",
+  "utc": "2026-09-12T05:15:46.512543+00:00",
+  "scope": "existing app-private .log .jsonl and previous-exit.v1.json files after six injected native service failures",
+  "sinks": [
+    {
+      "relative_path": "files/pokrov-observability/operational-events.v1.0.jsonl",
+      "bytes": 202510,
+      "sha256": "be973d7c731d91443183dc09266e5c22ffb681edca90bc5874c83f8247331a2b",
+      "markers": {
+        "token": 0,
+        "authorization": 0,
+        "cookie": 0,
+        "url": 0,
+        "ipv4": 0,
+        "provider": 0
+      }
+    },
+    {
+      "relative_path": "files/pokrov-observability/previous-exit.v1.json",
+      "bytes": 191,
+      "sha256": "e06c429ddb5e1f837c1493c8b342907ef0eeaff7dd0b625673bd0ca54a1f3141",
+      "markers": {
+        "token": 0,
+        "authorization": 0,
+        "cookie": 0,
+        "url": 0,
+        "ipv4": 0,
+        "provider": 0
+      }
+    },
+    {
+      "relative_path": "no_backup/observability/android-operational-v1.jsonl",
+      "bytes": 28864,
+      "sha256": "383fffeffa7546d65844a56a1e1e9927a027f60891cfd92aea9a929d7f1ad145",
+      "markers": {
+        "token": 0,
+        "authorization": 0,
+        "cookie": 0,
+        "url": 0,
+        "ipv4": 0,
+        "provider": 0
+      }
+    }
+  ],
+  "raw_content_exported": false
+}

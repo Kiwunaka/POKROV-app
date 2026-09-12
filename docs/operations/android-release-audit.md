@@ -1185,3 +1185,16 @@ The audited one-use admin download also passes. Rootless guest boot is verified.
 The same run finds compact-screen PSM consent clipped and untappable. Source
 now uses available height and scrollable content; 18 focused tests and analyze
 pass. Installed corrected consent and extended/crash flow remain pending.
+
+
+## 2026-09-12 — installed corrected consent, extended delivery and expiry
+
+Client `2c370af8` / Core `6b271dec`, x86_64 APK `8dc6c2e6`: ordinary consent,
+persistent banner, extended case60/admin decrypt, two distinct payloads, rejection
+of a third, manual disable, consumed-code rejection and automatic expiry pass.
+TUN/ten owned HTTPS/disconnect restores IPv4/DNS and IPv6 apart from its observed
+expiry countdown. [Current captures](evidence/2026-09-12-r12-android-extended-support/README.md).
+[Earlier native/network captures](evidence/2026-09-12-r12-android-network-native/README.md)
+retain their original2aa source, JNI/persisted-sink limits and raw IPv6 mismatch.
+PR123/main566d547 CI passes with unchanged policy. Full final packages, native
+planted-input-to-bundle, Android crash and full release gates remain open.

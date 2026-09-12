@@ -1,0 +1,14 @@
+{
+  "utc": "2026-09-12T04:40:19.374092",
+  "status": "PLAN",
+  "target_install_sha256": "a8e19d7739f511e191aba5d7bdef9162fc2f91c0709a5d34f516313a7ed8f557",
+  "before": {
+    "is_active": false,
+    "expiry_at": "2026-08-31T12:04:50",
+    "sub_type": "FREE",
+    "current_plan_code": "free_retired"
+  },
+  "before_digest": "d30b13d2ddfbfebe7654d6757738301a2bb61a339056952b80fdaf5b535ef61f",
+  "delta_days": 1,
+  "raw_identifiers_returned": false
+}

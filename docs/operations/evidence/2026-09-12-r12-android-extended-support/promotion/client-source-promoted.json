@@ -1,0 +1,12 @@
+{
+  "status": "PASS_SIGNED_EXACT_TREE",
+  "source": "2c370af8deaba07a5361de809d058ce44cdf8146",
+  "parent": "33ad8dd602045f2af9195c7e240280ca38d5e44a",
+  "signed_commit": "c13de6e1590fa09ce55023a9375f4cd4f3a67278",
+  "tree": "b1801bcdbe887b1a3d93e6b08a4795180b150d35",
+  "signature_valid": true,
+  "branch": "codex/psm-consent-scroll-signed-20260912",
+  "file_count": 55,
+  "utc": "2026-09-12T07:03:58.558796+00:00",
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/123"
+}
