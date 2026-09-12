@@ -1273,3 +1273,15 @@ connection/disconnect. Per-boot network baselines and host route/DNS restore;
 root=false and all local emulators stopped are verified within disk budgets.
 This is not physical ARM64, Dart CRASH-001/crash-bundle or full privacy/release
 acceptance. Earlier physical F711 and extended-case64 proofs are not transferred.
+
+
+## 2026-09-12 installed806 asynchronous Dart crash marker
+
+[Released handler evidence](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-installed806-dart-asynchronous-error-handler)
+proves one synthetic platform reply reaches the existing AOT asynchronous error
+handler: live PID2369 marks CRASH-001/nine breadcrumbs; new PID4433 recognizes
+that crash once. Two needles have zero hits in four local sinks. Failed instrument
+attempts and the initial storage guard remain retained. Root=false, exact APK,
+3/3 rootless HTTPS, host network and stopped emulators pass. This does not close
+FlutterError framework-handler, crash-bundle delivery, physical ARM64 or full
+privacy/license/release gates. No source/package/build or production change.

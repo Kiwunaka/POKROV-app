@@ -1,0 +1,271 @@
+{
+  "archive": {
+    "path": "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start/docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/marker-atomicity-20260912/dart-handler-evidence.zip",
+    "bytes": 78905,
+    "sha256": "7dbe9adc36c8cb23faebbf069aa426fb43c4c55b60ec6c2a9c18454c4b0cba77"
+  },
+  "members": [
+    {
+      "path": "after-attempt-observability.json",
+      "bytes": 59828,
+      "sha256": "74f78923580d0c90bcfd3a969b7e537b02704b69a72e2638a72aaf6ce3b3ebb3"
+    },
+    {
+      "path": "baseline-observability.json",
+      "bytes": 52119,
+      "sha256": "5b645de0d97359fe3ac16b89908fffb6cc1ebd222f6fce950c6c16c66c73b5c2"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 1090,
+      "sha256": "082f845d8f7c549460d594b347cdb04fb8fda7a2d89b4e9100e5b84c4d4ed38d"
+    },
+    {
+      "path": "hook-result.json",
+      "bytes": 1216,
+      "sha256": "aea424150de563f29b7e1b2d08dac9f7f8c70dc0f133571d86aad82dc3388908"
+    },
+    {
+      "path": "hook-result2.json",
+      "bytes": 1132,
+      "sha256": "4cdec2af50ef97507dadebbd2517656ceaac51a690a6d182fbb6e04b4e4411b8"
+    },
+    {
+      "path": "hook-result3.json",
+      "bytes": 485,
+      "sha256": "d969b7a4a7655c3bdb6a301ed623347c54d3f438793b52ea84af1f262fd0a5db"
+    },
+    {
+      "path": "hook.ts",
+      "bytes": 1424,
+      "sha256": "fe895fa1c0e1eb23edde02f4f1cfb7f8ed6564fd888945acd57c28dcb805fcf6"
+    },
+    {
+      "path": "hook3.ts",
+      "bytes": 1789,
+      "sha256": "f9b73a73d37bbdbe21d849caaf60e7cdbea2f66fb821834b83bf506e09c37579"
+    },
+    {
+      "path": "host-network-installed-after.json",
+      "bytes": 281,
+      "sha256": "bb986e6e144575247c3fb76555137caac540ee794bc1a7944342cf2eea5c9ee0"
+    },
+    {
+      "path": "host-network-installed-before.json",
+      "bytes": 220,
+      "sha256": "6869a21565d631133a979d26cdace6782c688f81325fd35671bffca12b298f09"
+    },
+    {
+      "path": "host-network.ps1",
+      "bytes": 1145,
+      "sha256": "2c4f492e74f24c4336e91afc4ebdff8144435132cd3d40d851b1f77029261029"
+    },
+    {
+      "path": "inject.py",
+      "bytes": 1672,
+      "sha256": "d7f72c5222dde57646f772f08fa9b6c89544d435a0279067c7c2af27c4256a98"
+    },
+    {
+      "path": "inject2.py",
+      "bytes": 1699,
+      "sha256": "dd539bb34c07768c5aca7aa712a3c3c865a8ff13948c80473493f815c806719c"
+    },
+    {
+      "path": "inject3.py",
+      "bytes": 1731,
+      "sha256": "2fb8db8c558b9f62d78779f4f2c5f7fdb95f090752f86ee5158f92c8e7ecde9a"
+    },
+    {
+      "path": "injected-observability.json",
+      "bytes": 59835,
+      "sha256": "4513a6f7f2c668845c94d9ab92fb4f1c6f4f1b29c0c1210e8be48dfd38689bfc"
+    },
+    {
+      "path": "instrument-cleanup.json",
+      "bytes": 247,
+      "sha256": "f71a4f37927b2deebff58c6ad1b631e198879ba96b83888b1c2bf1a9ca19f501"
+    },
+    {
+      "path": "ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "88c1af1a9660a790d2bcc3187b6c6c914ff4f4c8e4bce8e65a3c1b275193090f"
+    },
+    {
+      "path": "network.py",
+      "bytes": 3611,
+      "sha256": "bc29a06b795e8c678e180b0a25d89df18a57cd674e49a877379079799e0987a9"
+    },
+    {
+      "path": "observe.py",
+      "bytes": 3824,
+      "sha256": "517161850819ee972b36b6533c8e285a86b63ec68b5bfd267d3f89bf95090dee"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 527,
+      "sha256": "79d8aff815c7877985bdda0e701991ae86757de3e047cc97461c158f2be23812"
+    },
+    {
+      "path": "package.json",
+      "bytes": 63,
+      "sha256": "8415762b5e634064612472f1b8de8008dd4552575bbad236a57c8d95e2aba216"
+    },
+    {
+      "path": "prepare-hook3.py",
+      "bytes": 1098,
+      "sha256": "6819886081f00c76a243b3a9842234676e015653b68946e64ad44d958e3ee1ba"
+    },
+    {
+      "path": "prepare-resume.py",
+      "bytes": 560,
+      "sha256": "ade56a6c2c635c944aaa04a66aec6ed29bfd99b80bfa8044a679ffec5d976777"
+    },
+    {
+      "path": "recovered-observability.json",
+      "bytes": 63915,
+      "sha256": "b93fafdcfd43ff7631a0acb421c54e87c4f99e95a5505b46739712de5542ef93"
+    },
+    {
+      "path": "restoration.json",
+      "bytes": 4189,
+      "sha256": "250a601d33174df77fa7632616b95920fb615998131f41069561a7c921d32e88"
+    },
+    {
+      "path": "result.json",
+      "bytes": 1352,
+      "sha256": "dec867c70bad99f38be085c30d57505fa2eecf7b5f073f5cd9ab6b04a3ac979e"
+    },
+    {
+      "path": "resume/ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "d079333aff69f9c943a21df1e17cd5df97ecb865cdbfb88ec7b1f985ffcc6496"
+    },
+    {
+      "path": "resume/restoration.json",
+      "bytes": 11147,
+      "sha256": "054916e2030779a1805c5eb95afb52de22cc9ffe18c22ef513b0d3a38ca9fe5a"
+    },
+    {
+      "path": "resume/watch-ldplayer.py",
+      "bytes": 3282,
+      "sha256": "634b6b94b00c830dc40df089d06949225ae920f39cdcfdca2f11ed67ddc66cda"
+    },
+    {
+      "path": "resumed-final.json",
+      "bytes": 1095,
+      "sha256": "f4b4f56f7773e0070e12fd77a9b310ede1b078a1a5d7fd715a2cebee1961570a"
+    },
+    {
+      "path": "resumed-observability.json",
+      "bytes": 58020,
+      "sha256": "296e63b9e19778a0144cdbf0cc608cad6aedfcace1ebbe6c08f40df1e8d55a8d"
+    },
+    {
+      "path": "retain.py",
+      "bytes": 8868,
+      "sha256": "42bdab07b0b8e3b838c8b7eeb5022596813891706c060068eb5e9b6ab13edfc5"
+    },
+    {
+      "path": "root-enabled.json",
+      "bytes": 854,
+      "sha256": "c774d5c998b88324400630a075ae1bf1c65efad16e54df3d8035eff607edfc68"
+    },
+    {
+      "path": "root-restored.json",
+      "bytes": 854,
+      "sha256": "c270cee5e9387d3e5d93fcb9637af2acdbb20a2ad29e95d0b48d8b430438a84d"
+    },
+    {
+      "path": "rootless/ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "c98338fff1b8e8e1cdefa7a634a71b62e1962cf94d068e3a544555a5bd46feda"
+    },
+    {
+      "path": "rootless/restoration.json",
+      "bytes": 2472,
+      "sha256": "10619c21be3a916032cdaed27e461c3242f7e92a46ae204039a9b391a8731510"
+    },
+    {
+      "path": "rootless/watch-ldplayer.py",
+      "bytes": 3282,
+      "sha256": "634b6b94b00c830dc40df089d06949225ae920f39cdcfdca2f11ed67ddc66cda"
+    },
+    {
+      "path": "rootless-before.json",
+      "bytes": 1097,
+      "sha256": "382c7acb17bb372171cb70c97858e7c05b856ded413479c9b428b32cafe0a8f2"
+    },
+    {
+      "path": "rootless-final.json",
+      "bytes": 1096,
+      "sha256": "3b6a069293204f856356e596dfc1c8d80fa3adb0f25227f7ab379639b634171a"
+    },
+    {
+      "path": "rootless-guest.json",
+      "bytes": 532,
+      "sha256": "97b682ae8775835bf9872ca815f2ad1a1f67d5f209275f527020862854714114"
+    },
+    {
+      "path": "rootless-http.json",
+      "bytes": 442,
+      "sha256": "3b1b0e40ab616277a10e02f2511254d965191080b098f44fb67a2c03a719bac2"
+    },
+    {
+      "path": "rootless-observe.py",
+      "bytes": 1084,
+      "sha256": "4ceaa27abb830b6f51049f13a629332e89e2ddcd3e5bd3342d724e617f9b61fa"
+    },
+    {
+      "path": "scan-cleanup.py",
+      "bytes": 2372,
+      "sha256": "b2c5dcdd45ceec734b4f7c6a105e849ddf283bbfe48448068d1502f05b6edb7c"
+    },
+    {
+      "path": "set-root.py",
+      "bytes": 1868,
+      "sha256": "bab62ca527809ee503cc5b0843b28cd56d9f2d983e214a28c454e958508662ff"
+    },
+    {
+      "path": "sink-scan.json",
+      "bytes": 1061,
+      "sha256": "09927023490787f49ee85ac1f1755f9288b59a2edfbe325d3c989744d7d29b6e"
+    },
+    {
+      "path": "source-binding.json",
+      "bytes": 997,
+      "sha256": "3babc20dad507d65184c17d83bc143fffb7eb27ed7a34a07eeb319f585cfc6be"
+    },
+    {
+      "path": "tool-receipt.json",
+      "bytes": 480,
+      "sha256": "44a876bff98ff9af68ac45d3fc5fdeb92e3617474b45df1cad02e1dd8a046323"
+    },
+    {
+      "path": "ui.py",
+      "bytes": 2375,
+      "sha256": "9747e057e21437eef7e10917b25e67d5bd35b095cedf3fe8e1243f398e833fb8"
+    },
+    {
+      "path": "verify.py",
+      "bytes": 3878,
+      "sha256": "6a51159b109d3dde18d89d8f2bf08253d6eef409b8dc818b22b2ed88bc9a3a78"
+    },
+    {
+      "path": "watch-ldplayer.py",
+      "bytes": 3249,
+      "sha256": "7920c6af03ef879ddae97cfcde11be36696a5ebde765c39811919b170d92b7da"
+    },
+    {
+      "path": "prepare-dart-handler.py",
+      "bytes": 1213,
+      "sha256": "4c53fe36e85a7647387a524198c8b748acbef57ed933d46b0bfe4d6cab4957f9"
+    }
+  ],
+  "direct": [
+    {
+      "path": "dart-handler-result.json",
+      "sha256": "dec867c70bad99f38be085c30d57505fa2eecf7b5f073f5cd9ab6b04a3ac979e"
+    }
+  ],
+  "excluded": "Third-party server binaries, node_modules, generated hook bundles, uninspected screenshots and duplicate progress samples; tool and bundle hashes retained."
+}
