@@ -1,0 +1,17 @@
+{
+  "status": "PASS_PRIOR_INSTALLER_RETAINED",
+  "utc": "2026-09-12T01:26:22.698629+00:00",
+  "client_source": "c06cab7776dd3db5282535ba6c5309bf0119f6bb",
+  "core_source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "local": {
+    "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+    "size": 29184678,
+    "sha256": "2e114c6ab88c8c7b898272d978c21b1608cc28c0c6cf1f2d47e2cc6392762caa"
+  },
+  "remote_host": "pokrov-de",
+  "remote_path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-windows-880b-20260912/setup.exe",
+  "remote_sha256": "2e114c6ab88c8c7b898272d978c21b1608cc28c0c6cf1f2d47e2cc6392762caa",
+  "exact_extracted_files": 304,
+  "local_deleted": false,
+  "reason": "Preserve complete prior installer and reconstructable 304-file payload before next setup-privacy package build"
+}

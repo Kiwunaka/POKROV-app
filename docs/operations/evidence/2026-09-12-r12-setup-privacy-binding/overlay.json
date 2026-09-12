@@ -1,0 +1,20 @@
+{
+  "base_source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "files": [
+    {
+      "path": "docs/architecture.md",
+      "bytes": 12537,
+      "sha256": "2c5a1611b69213846eab830b1d91984cad073769caa7adcfe244801db22abfd9"
+    },
+    {
+      "path": "v2/hcore/grpc_server.go",
+      "bytes": 9843,
+      "sha256": "1834cc5015d8f4df3f6f8f9b882897428670ac0eb62518a54d6927d2add4fb93"
+    },
+    {
+      "path": "v2/hcore/privacy_test.go",
+      "bytes": 2629,
+      "sha256": "dba2cba589f25fae8778c7f25eda62ad893e3a02b272be71a353957a0522f643"
+    }
+  ]
+}

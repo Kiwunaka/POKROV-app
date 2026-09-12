@@ -1,0 +1,97 @@
+[
+  {
+    "Path": "github.com/Psiphon-Labs/psiphon-tls",
+    "Version": "v0.0.0-20250318183125-2a2fae2db378",
+    "Replace": {
+      "Path": "./engine/sing-box/replace/psiphon-tls",
+      "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/psiphon-tls",
+      "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/psiphon-tls/go.mod",
+      "GoVersion": "1.23"
+    },
+    "Indirect": true,
+    "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/psiphon-tls",
+    "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/psiphon-tls/go.mod",
+    "GoVersion": "1.23"
+  },
+  {
+    "Path": "github.com/Psiphon-Labs/quic-go",
+    "Version": "v0.0.0-20250527153145-79fe45fb83b1",
+    "Replace": {
+      "Path": "./engine/sing-box/replace/psiphon-quic-go",
+      "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/psiphon-quic-go",
+      "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/psiphon-quic-go/go.mod",
+      "GoVersion": "1.23"
+    },
+    "Indirect": true,
+    "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/psiphon-quic-go",
+    "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/psiphon-quic-go/go.mod",
+    "GoVersion": "1.23"
+  },
+  {
+    "Path": "github.com/bepass-org/warp-plus",
+    "Version": "v1.2.6",
+    "Replace": {
+      "Path": "./third_party/warp-plus",
+      "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/third_party/warp-plus",
+      "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/third_party/warp-plus/go.mod",
+      "GoVersion": "1.22.0"
+    },
+    "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/third_party/warp-plus",
+    "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/third_party/warp-plus/go.mod",
+    "GoVersion": "1.22.0"
+  },
+  {
+    "Path": "github.com/sagernet/sing-box",
+    "Version": "v1.13.0",
+    "Replace": {
+      "Path": "./engine/sing-box",
+      "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box",
+      "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/go.mod",
+      "GoVersion": "1.26.8"
+    },
+    "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box",
+    "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/go.mod",
+    "GoVersion": "1.26.8"
+  },
+  {
+    "Path": "github.com/sagernet/sing-tun",
+    "Version": "v0.8.0-beta.17",
+    "Replace": {
+      "Path": "./engine/sing-box/replace/sing-tun",
+      "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/sing-tun",
+      "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/sing-tun/go.mod",
+      "GoVersion": "1.24.7"
+    },
+    "Indirect": true,
+    "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/sing-tun",
+    "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/sing-tun/go.mod",
+    "GoVersion": "1.24.7"
+  },
+  {
+    "Path": "github.com/sagernet/tailscale",
+    "Version": "v1.92.4-sing-box-1.13-mod.6",
+    "Replace": {
+      "Path": "./engine/sing-box/replace/tailscale",
+      "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/tailscale",
+      "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/tailscale/go.mod",
+      "GoVersion": "1.24.1"
+    },
+    "Indirect": true,
+    "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/tailscale",
+    "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/tailscale/go.mod",
+    "GoVersion": "1.24.1"
+  },
+  {
+    "Path": "github.com/sagernet/wireguard-go",
+    "Version": "v0.0.2-beta.1.0.20250917110311-16510ac47288",
+    "Replace": {
+      "Path": "./engine/sing-box/replace/wireguard-go",
+      "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/wireguard-go",
+      "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/wireguard-go/go.mod",
+      "GoVersion": "1.20"
+    },
+    "Dir": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/wireguard-go",
+    "GoMod": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/source/engine/sing-box/replace/wireguard-go/go.mod",
+    "GoVersion": "1.20"
+  }
+]

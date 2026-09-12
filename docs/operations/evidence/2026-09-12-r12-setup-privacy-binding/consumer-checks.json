@@ -1,0 +1,130 @@
+{
+  "status": "PASS",
+  "core_source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "checks": [
+    {
+      "name": "runtime-analyze",
+      "cwd": "E:\\r12client\\packages\\runtime_engine",
+      "command": [
+        "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat",
+        "analyze",
+        "--no-pub"
+      ],
+      "started": "2026-09-12T01:40:55.057710+00:00",
+      "exit_code": 0,
+      "log": "runtime-analyze.log",
+      "bytes": 97,
+      "sha256": "dc2909acca4bd07acc0de25f5905474ad3519ccfe50b680cc29231ad51430763"
+    },
+    {
+      "name": "runtime-tests",
+      "cwd": "E:\\r12client\\packages\\runtime_engine",
+      "command": [
+        "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat",
+        "test",
+        "--no-pub",
+        "--reporter",
+        "expanded"
+      ],
+      "started": "2026-09-12T01:41:12.117034+00:00",
+      "exit_code": 0,
+      "log": "runtime-tests.log",
+      "bytes": 6203,
+      "sha256": "7bffb6dbcfa9f25e6b51a91f733d131c9139e6b2c81d3dc38ceed84c0e638b15"
+    },
+    {
+      "name": "android-analyze",
+      "cwd": "E:\\r12client\\apps\\android_shell",
+      "command": [
+        "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat",
+        "analyze",
+        "--no-pub"
+      ],
+      "started": "2026-09-12T01:41:32.462301+00:00",
+      "exit_code": 0,
+      "log": "android-analyze.log",
+      "bytes": 96,
+      "sha256": "ec788ecabd12f19c3ef1ef768136592c8d136d35ecd7c7efb85acc6d47d5d250"
+    },
+    {
+      "name": "android-tests",
+      "cwd": "E:\\r12client\\apps\\android_shell",
+      "command": [
+        "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat",
+        "test",
+        "--no-pub",
+        "--reporter",
+        "expanded"
+      ],
+      "started": "2026-09-12T01:41:44.838780+00:00",
+      "exit_code": 0,
+      "log": "android-tests.log",
+      "bytes": 1169,
+      "sha256": "9c0520d4ddd80c8ac18d43b82ae4efd6d1e459f62dbd54e713f7c8d4367591dd"
+    },
+    {
+      "name": "validate-seed",
+      "cwd": "E:\\r12client",
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/validate-seed.ps1",
+        "-PlatformRoot",
+        "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start",
+        "-CoreRoot",
+        "C:/r12corec02"
+      ],
+      "started": "2026-09-12T01:41:51.144231+00:00",
+      "exit_code": 0,
+      "log": "validate-seed.log",
+      "bytes": 1818,
+      "sha256": "13f1a6ba673c5b832a4101e8065f2cd71ce19bc6c5feb6dcd570e5eb7962510b"
+    },
+    {
+      "name": "docs-contract",
+      "cwd": "E:\\r12client",
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-File",
+        "test/docs-contract.ps1"
+      ],
+      "started": "2026-09-12T01:42:51.811485+00:00",
+      "exit_code": 0,
+      "log": "docs-contract.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "name": "diff-check",
+      "cwd": "E:\\r12client",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "started": "2026-09-12T01:42:56.599873+00:00",
+      "exit_code": 0,
+      "log": "diff-check.log",
+      "bytes": 891,
+      "sha256": "297f0698125f8618eff4677221e2df6c9ea3cec0943094ea9889e7b02e069003"
+    },
+    {
+      "name": "release-artifacts-unchanged",
+      "cwd": "E:\\r12client",
+      "command": [
+        "git",
+        "diff",
+        "--exit-code",
+        "--",
+        "artifacts/releases"
+      ],
+      "started": "2026-09-12T01:42:58.323284+00:00",
+      "exit_code": 0,
+      "log": "release-artifacts-unchanged.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

@@ -1,6 +1,24 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current Windows adapter cleanup binding — 2026-09-12
+## Current setup privacy binding — 2026-09-12
+
+The development client binds Core `6b271decead88b708e2fc03984b703b0a4e63ebd`.
+Setup writes fixed status messages and the selected mode; caller directories
+and listen addresses are excluded from stderr and the legacy log observer.
+The new regression test fails on Core880 and passes with this fix. The full
+native Core test script passes. Dependencies, native ABI and Wintun are unchanged.
+
+[Current binding evidence](../operations/evidence/2026-09-12-r12-setup-privacy-binding/README.md)
+retains two byte-identical native DE builds per platform, five current binary
+scans, corrected source SBOMs and 191 unchanged verbatim license blocks.
+The exact source DLL passes 100 Dart proxy cycles and an isolated invalid-config
+privacy check across FFI, stdout, stderr and five generated files, including
+a canary in the setup directory. Host routes and DNS remain unchanged.
+Consumer analyze, 81 runtime tests, 8 Android tests and seed/docs contracts pass.
+This is bounded source-DLL evidence; current packages, installed TUN acceptance
+and complete licensing/source obligations remain separate gates.
+
+## Previous Windows adapter cleanup binding — 2026-09-12
 
 The development client binds Core `880bff65ad665844828fe50fc395e9cfc1cd81b4`.
 The retained local sing-tun copy fixes the adapter handle passed to WintunCloseAdapter

@@ -1,0 +1,73 @@
+{
+  "utc": "2026-09-12T01:32:51.552190+00:00",
+  "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "client_commit": "c06cab7776dd3db5282535ba6c5309bf0119f6bb",
+  "artifact": {
+    "path": "windows-a/pokrov-core.dll",
+    "bytes": 55012864,
+    "sha256": "40101389b7713b869a9472bd3afe3aa19000b1d98f79d50cb88b61a235be531e",
+    "local_path": "C:\\r12corec02\\dist\\windows\\pokrov-core.dll",
+    "previous_sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2",
+    "bytes_changed": true
+  },
+  "status": "PASS_CURRENT_WINDOWS_ABI_AND_100_PROXY_CYCLES",
+  "desktop_abi": 2,
+  "descriptor": {
+    "schema_version": 1,
+    "desktop_abi": 2,
+    "event_abi": 1,
+    "capabilities": [
+      "bounded_stop_reason",
+      "core_start_stop",
+      "materialized_profile",
+      "secure_profile_file",
+      "structured_operational_events",
+      "typed_lifecycle_events"
+    ],
+    "lifecycle_events": [
+      "initialization",
+      "profile",
+      "core_start",
+      "tun",
+      "routes",
+      "dns",
+      "egress",
+      "recovery",
+      "stop"
+    ],
+    "operational_events": {
+      "contract": "config/core-event-abi.json",
+      "schema_version": 1,
+      "event_abi": 1,
+      "callback_symbol": "pokrovCoreSetEventCallback",
+      "context_symbol": "pokrovCoreSetEventContext",
+      "maximum_pending_events": 128
+    }
+  },
+  "exports_found": [
+    "AddGrpcClientPublicKey",
+    "GetServerPublicKey",
+    "StartCoreGrpcServer",
+    "cleanup",
+    "closeGrpc",
+    "freeString",
+    "pokrovCoreAbiVersion",
+    "pokrovCoreCapabilities",
+    "pokrovCoreSetEventCallback",
+    "pokrovCoreSetEventContext",
+    "pokrovSecureFile",
+    "restart",
+    "setup",
+    "start",
+    "stop"
+  ],
+  "cycle_count": 100,
+  "test_log_sha256": "f62c05d133a9aec9630e767ce884e24bc6fc49767ab5f77216391a817181e8e2",
+  "origin": "current-origin native Windows host",
+  "system_route_mutation": false,
+  "physical_vpn_acceptance": false,
+  "windows_imports": [
+    "KERNEL32.dll",
+    "msvcrt.dll"
+  ]
+}

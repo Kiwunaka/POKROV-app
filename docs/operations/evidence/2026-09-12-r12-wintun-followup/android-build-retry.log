@@ -1,0 +1,5 @@
+Client/Core version parity OK: app=1.2.0+4053 public=1.1.6 target_state=PRE_CANDIDATE_LOCAL core_pre_candidate=1.1.0 core_target=1.1.0 desktop_abi=2 core_checkout=NOT_REQUESTED
+warning: in the working copy of 'apps/macos_shell/macos/Flutter/GeneratedPluginRegistrant.swift', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/windows_shell/windows/flutter/generated_plugin_registrant.cc', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/windows_shell/windows/flutter/generated_plugin_registrant.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/windows_shell/windows/flutter/generated_plugins.cmake', LF will be replaced by CRLF the next time Git touches it

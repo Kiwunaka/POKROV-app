@@ -1,0 +1,29 @@
+{
+  "exit_code": 1,
+  "sinks": {
+    "stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    },
+    "stderr": {
+      "bytes": 753,
+      "sha256": "a1eb6207a157a38345b9fc71875ae9a7c6ee244522caa0602c6c993e71b126ab",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    }
+  }
+}

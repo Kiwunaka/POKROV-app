@@ -1,0 +1,610 @@
+Extracting "POKROV VPN" - setup data version 6.7.0 (unicode)
+ - "app/file_selector_windows_plugin.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/file_selector_windows_plugin.dll" to calculate output checksum for multi-part file
+ - "app/flutter_secure_storage_windows_plugin.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/flutter_secure_storage_windows_plugin.dll" to calculate output checksum for multi-part file
+ - "app/flutter_windows.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/flutter_windows.dll" to calculate output checksum for multi-part file
+ - "app/libcronet.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/libcronet.dll" to calculate output checksum for multi-part file
+ - "app/libcronet.NOTICES.txt"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/libcronet.NOTICES.txt" to calculate output checksum for multi-part file
+ - "app/msvcp140.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/msvcp140.dll" to calculate output checksum for multi-part file
+ - "app/pokrov-core.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/pokrov-core.dll" to calculate output checksum for multi-part file
+ - "app/pokrov_tray.ico"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/pokrov_tray.ico" to calculate output checksum for multi-part file
+ - "app/pokrov_windows.exe"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/pokrov_windows.exe" to calculate output checksum for multi-part file
+ - "app/screen_retriever_windows_plugin.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/screen_retriever_windows_plugin.dll" to calculate output checksum for multi-part file
+ - "app/tray_manager_plugin.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/tray_manager_plugin.dll" to calculate output checksum for multi-part file
+ - "app/url_launcher_windows_plugin.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/url_launcher_windows_plugin.dll" to calculate output checksum for multi-part file
+ - "app/vcruntime140.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/vcruntime140.dll" to calculate output checksum for multi-part file
+ - "app/vcruntime140_1.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/vcruntime140_1.dll" to calculate output checksum for multi-part file
+ - "app/window_manager_plugin.dll"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/window_manager_plugin.dll" to calculate output checksum for multi-part file
+ - "app/data/app.so"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/app.so" to calculate output checksum for multi-part file
+ - "app/data/icudtl.dat"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/icudtl.dat" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/AssetManifest.bin"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/AssetManifest.bin" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/FontManifest.json"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/FontManifest.json" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/NativeAssetsManifest.json"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/NativeAssetsManifest.json" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/NOTICES.Z"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/NOTICES.Z" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/assets/brand/pokrov_mark.png"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/assets/brand/pokrov_mark.png" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/assets/brand/pokrov_mark_128.png"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/assets/brand/pokrov_mark_128.png" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/assets/brand/pokrov_mark_256.png"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/assets/brand/pokrov_mark_256.png" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/fonts/MaterialIcons-Regular.otf"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/fonts/MaterialIcons-Regular.otf" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ac.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ac.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ad.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ad.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ae.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ae.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/af.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/af.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ag.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ag.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ai.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ai.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/al.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/al.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/am.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/am.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ao.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ao.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/aq.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/aq.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ar.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ar.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/as.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/as.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/at.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/at.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/au.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/au.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/aw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/aw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ax.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ax.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/az.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/az.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ba.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ba.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bb.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bb.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bd.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bd.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/be.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/be.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bf.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bf.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bh.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bh.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bi.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bi.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bj.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bj.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bl.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bl.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bo.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bo.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bq.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bq.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/br.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/br.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bs.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bs.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bt.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bt.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bv.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bv.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/by.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/by.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/bz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/bz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ca.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ca.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cc.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cc.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cd.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cd.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cefta.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cefta.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cf.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cf.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ch.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ch.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ci.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ci.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ck.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ck.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cl.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cl.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/co.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/co.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cp.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cp.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cu.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cu.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cv.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cv.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cx.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cx.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cy.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cy.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/cz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/cz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/de.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/de.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/dg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/dg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/dj.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/dj.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/dk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/dk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/dm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/dm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/do.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/do.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/dz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/dz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ea.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ea.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ec.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ec.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ee.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ee.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/eg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/eg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/eh.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/eh.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/er.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/er.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/es-ct.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/es-ct.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/es-ga.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/es-ga.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/es.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/es.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/et.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/et.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/eu.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/eu.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/fi.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/fi.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/fj.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/fj.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/fk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/fk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/fm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/fm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/fo.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/fo.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/fr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/fr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ga.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ga.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gb-eng.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gb-eng.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gb-nir.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gb-nir.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gb-sct.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gb-sct.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gb-wls.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gb-wls.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gb.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gb.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gd.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gd.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ge.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ge.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gf.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gf.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gh.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gh.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gi.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gi.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gl.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gl.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gp.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gp.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gq.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gq.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gs.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gs.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gt.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gt.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gu.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gu.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/gy.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/gy.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/hk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/hk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/hm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/hm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/hn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/hn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/hr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/hr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ht.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ht.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/hu.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/hu.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ic.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ic.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/id.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/id.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ie.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ie.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/il.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/il.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/im.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/im.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/in.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/in.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/io.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/io.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/iq.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/iq.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ir.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ir.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/is.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/is.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/it.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/it.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/je.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/je.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/jm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/jm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/jo.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/jo.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/jp.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/jp.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ke.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ke.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/kg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/kg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/kh.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/kh.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ki.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ki.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/km.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/km.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/kn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/kn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/kp.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/kp.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/kr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/kr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/kw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/kw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ky.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ky.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/kz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/kz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/la.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/la.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/lb.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/lb.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/lc.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/lc.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/li.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/li.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/lk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/lk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/lr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/lr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ls.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ls.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/lt.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/lt.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/lu.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/lu.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/lv.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/lv.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ly.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ly.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ma.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ma.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mc.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mc.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/md.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/md.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/me.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/me.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mf.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mf.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mh.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mh.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ml.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ml.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mo.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mo.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mp.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mp.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mq.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mq.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ms.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ms.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mt.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mt.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mu.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mu.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mv.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mv.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mx.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mx.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/my.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/my.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/mz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/mz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/na.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/na.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/nc.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/nc.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ne.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ne.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/nf.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/nf.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ng.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ng.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ni.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ni.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/nl.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/nl.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/no.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/no.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/np.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/np.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/nr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/nr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/nu.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/nu.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/nz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/nz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/om.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/om.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pa.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pa.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pe.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pe.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pf.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pf.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ph.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ph.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pl.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pl.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ps.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ps.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pt.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pt.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/pw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/pw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/py.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/py.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/qa.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/qa.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/re.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/re.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ro.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ro.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/rs.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/rs.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ru.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ru.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/rw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/rw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sa.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sa.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sb.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sb.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sc.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sc.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sd.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sd.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/se.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/se.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sh.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sh.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/si.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/si.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sj.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sj.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sl.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sl.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/so.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/so.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ss.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ss.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/st.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/st.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sv.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sv.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sx.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sx.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sy.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sy.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/sz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/sz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ta.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ta.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tc.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tc.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/td.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/td.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tf.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tf.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/th.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/th.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tj.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tj.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tl.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tl.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/to.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/to.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tr.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tr.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tt.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tt.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tv.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tv.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/tz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/tz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ua.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ua.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ug.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ug.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/um.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/um.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/un.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/un.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/us.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/us.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/uy.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/uy.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/uz.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/uz.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/va.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/va.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/vc.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/vc.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ve.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ve.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/vg.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/vg.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/vi.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/vi.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/vn.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/vn.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/vu.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/vu.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/wf.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/wf.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ws.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ws.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/xk.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/xk.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/xx.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/xx.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/ye.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/ye.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/yt.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/yt.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/za.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/za.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/zm.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/zm.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/country_flags/res/si/zw.si"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/country_flags/res/si/zw.si" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark.png"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark.png" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark_128.png"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark_128.png" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark_256.png"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark_256.png" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Bold.ttf"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Bold.ttf" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-ExtraBold.ttf"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-ExtraBold.ttf" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Medium.ttf"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Medium.ttf" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Regular.ttf"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Regular.ttf" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-SemiBold.ttf"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-SemiBold.ttf" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/shaders/ink_sparkle.frag"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/shaders/ink_sparkle.frag" to calculate output checksum for multi-part file
+ - "app/data/flutter_assets/shaders/stretch_effect.frag"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/data/flutter_assets/shaders/stretch_effect.frag" to calculate output checksum for multi-part file
+ - "app/pokrov_service.exe"
+Warning: Could not read back "/var/tmp/r12-c05-880b-installer-20260912/extracted/app/pokrov_service.exe" to calculate output checksum for multi-part file
+Done with 304 warnings.

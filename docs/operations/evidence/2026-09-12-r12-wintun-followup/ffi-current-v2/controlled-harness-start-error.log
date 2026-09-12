@@ -1,0 +1,8 @@
+Get-FileHash : ��� "Get-FileHash" �� �ᯮ����� ��� ��� ���������, �㭪樨, 䠩�� �業��� ��� �믮��塞�� �ணࠬ��. 
+�஢���� �ࠢ��쭮��� ����ᠭ�� �����, � ⠪�� ����稥 � �ࠢ��쭮��� ���, ��᫥ 祣� ������ ������.
+C:\r12-c05-wintun-20260912\ffi-current-v2\child.ps1:4 ����:8
++ $hash=(Get-FileHash -LiteralPath $dll -Algorithm SHA256).Hash.ToLower ...
++        ~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (Get-FileHash:String) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 

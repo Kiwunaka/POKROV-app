@@ -1,0 +1,141 @@
+{
+  "status": "PASS_ALL_BYTES_PRESERVED",
+  "utc": "2026-09-12T00:35:49.302078+00:00",
+  "reason": "Actual Android build storage overrun; stopped native outputs and Dart compilation caches retained without byte changes",
+  "files": [
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\2e7584474e80faeec59264c36678bee1\\app.dill",
+      "bytes": 39102056,
+      "sha256": "e45c4a6c9fb16f1dc8348f93019f98007c3e82d6cca1663459e3ec31e0e38560",
+      "allocated_before": 39102056,
+      "allocated_after": 11718656
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\37821412e3d8e034ce622772b31407da\\app.dill",
+      "bytes": 39005328,
+      "sha256": "0048530650df2ae585cbd950b2c0bcc3089a03aa6d19221e0822763708c4deac",
+      "allocated_before": 39005328,
+      "allocated_after": 11694080
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\3fb650ecebe022d2705c0ec5a4f99ade\\app.dill",
+      "bytes": 39102056,
+      "sha256": "e45c4a6c9fb16f1dc8348f93019f98007c3e82d6cca1663459e3ec31e0e38560",
+      "allocated_before": 39102056,
+      "allocated_after": 11718656
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\4f1b5fa53056881af4373094c6e9fe96\\app.dill",
+      "bytes": 38991624,
+      "sha256": "1df2e7568158362fe4af53014f7a4d63417a50dff5e9d59c67c91bdb635085ef",
+      "allocated_before": 38991624,
+      "allocated_after": 11694080
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\52135e1ac1be1d84a7ef0b272d56e4c1\\app.dill",
+      "bytes": 39005328,
+      "sha256": "0048530650df2ae585cbd950b2c0bcc3089a03aa6d19221e0822763708c4deac",
+      "allocated_before": 39005328,
+      "allocated_after": 11694080
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\60166ec9746864ae62ed39cbd1a206b7\\app.dill",
+      "bytes": 39102056,
+      "sha256": "ae13b5926a68c8b8b9d0314e736433908efd1b54937d3f633e81bb8a5b62a5bb",
+      "allocated_before": 39102056,
+      "allocated_after": 11718656
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\720a00a63f2c058f3f89e3909f1d0ba8\\app.dill",
+      "bytes": 38933696,
+      "sha256": "53e9fe979be9a1d53e5f069741665891460ca97b419ef275c8d69d124b499935",
+      "allocated_before": 38933696,
+      "allocated_after": 11665408
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\74ce93333ab6bdbc23acd5c88e24c5a1\\app.dill",
+      "bytes": 38992808,
+      "sha256": "882fe36e7927bcdc7648aac55b3842d6b7939756f6ec91082c7c27d01554f5ab",
+      "allocated_before": 38992808,
+      "allocated_after": 11689984
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\82c4c64850d0054a926560abee339913\\app.dill",
+      "bytes": 39102056,
+      "sha256": "ae13b5926a68c8b8b9d0314e736433908efd1b54937d3f633e81bb8a5b62a5bb",
+      "allocated_before": 39102056,
+      "allocated_after": 11718656
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\97960e6e9c385fc304e4acc9d125583e\\app.dill",
+      "bytes": 39102056,
+      "sha256": "e45c4a6c9fb16f1dc8348f93019f98007c3e82d6cca1663459e3ec31e0e38560",
+      "allocated_before": 39102056,
+      "allocated_after": 11718656
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\afaa79d7a229d79564e0fd982d66c0e3\\app.dill",
+      "bytes": 64100096,
+      "sha256": "825770cff1c934f8fdc37355f1891602e996038a8fbc36058644c59344e13e2a",
+      "allocated_before": 64100096,
+      "allocated_after": 17895424
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\b4d90eda90e86fe64c41953bb423507f\\app.dill",
+      "bytes": 38992808,
+      "sha256": "882fe36e7927bcdc7648aac55b3842d6b7939756f6ec91082c7c27d01554f5ab",
+      "allocated_before": 38992808,
+      "allocated_after": 11689984
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\e342cf42c84d041b446fd99ae18ea8a6\\app.dill",
+      "bytes": 64100088,
+      "sha256": "636efb987b549d1ebf2079632b0984f164ca10246f909716ff04da57098ed4f9",
+      "allocated_before": 64100088,
+      "allocated_after": 17895424
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\edaa474804917f7d8f0885d639bcb371\\app.dill",
+      "bytes": 38991624,
+      "sha256": "1df2e7568158362fe4af53014f7a4d63417a50dff5e9d59c67c91bdb635085ef",
+      "allocated_before": 38991624,
+      "allocated_after": 11694080
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build\\f5964a3450f7bb29c177ebd5295ba4d3\\app.dill",
+      "bytes": 38933696,
+      "sha256": "53e9fe979be9a1d53e5f069741665891460ca97b419ef275c8d69d124b499935",
+      "allocated_before": 38933696,
+      "allocated_after": 11665408
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\arm64-v8a\\libpokrov-core.so",
+      "bytes": 78150944,
+      "sha256": "cfe931b939726c63a58a7f6808caf579c34afa93633d4f7c6be658c38539bea0",
+      "allocated_before": 78150944,
+      "allocated_after": 23703552
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\armeabi-v7a\\libpokrov-core.so",
+      "bytes": 69846624,
+      "sha256": "43365d621ddb0272c903d0f6ded4ceb96953c2587be41e1258c3025688f8383d",
+      "allocated_before": 69846624,
+      "allocated_after": 22831104
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\x86\\libpokrov-core.so",
+      "bytes": 75632032,
+      "sha256": "6fe762d4768d7541b19e49dd9cfe8bd98bf667d85e0f0a48e87b26366698c0b7",
+      "allocated_before": 75632032,
+      "allocated_after": 25706496
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\x86_64\\libpokrov-core.so",
+      "bytes": 85501256,
+      "sha256": "84b0138ab6eab6994194a4fddfa2d20c9b7e14e98b5f935a8cdbb5921b3a76b9",
+      "allocated_before": 85501256,
+      "allocated_after": 25686016
+    }
+  ],
+  "saved_bytes": 658889832
+}

@@ -1,0 +1,4 @@
+warning: in the working copy of 'apps/macos_shell/macos/Flutter/GeneratedPluginRegistrant.swift', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/windows_shell/windows/flutter/generated_plugin_registrant.cc', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/windows_shell/windows/flutter/generated_plugin_registrant.h', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apps/windows_shell/windows/flutter/generated_plugins.cmake', LF will be replaced by CRLF the next time Git touches it

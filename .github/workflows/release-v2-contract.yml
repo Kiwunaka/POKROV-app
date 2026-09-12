@@ -74,9 +74,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Kiwunaka/pokrov-core
-          # PR 119 coordinates the Windows adapter cleanup before Core promotion.
+          # PR 120 coordinates the setup privacy fix before Core promotion.
           # Ordinary push/PR checks return to main outside this exact PR.
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 119 && '880bff65ad665844828fe50fc395e9cfc1cd81b4' || 'main' }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.core_ref || github.event_name == 'pull_request' && github.event.pull_request.number == 120 && '6b271decead88b708e2fc03984b703b0a4e63ebd' || 'main' }}
           path: POKROV-core
           fetch-depth: 0
           persist-credentials: false

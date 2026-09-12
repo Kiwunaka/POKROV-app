@@ -1,6 +1,6 @@
 POKROV Core native Go notices
 
-Core source snapshot: 880bff65ad665844828fe50fc395e9cfc1cd81b4
+Core source snapshot: 6b271decead88b708e2fc03984b703b0a4e63ebd
 Go toolchain: go1.26.8
 This file preserves root copyright, license and patent notices from the
 recorded Android AAR and Windows DLL Go module inputs. Not every component
@@ -11,11 +11,11 @@ distributions. License texts are reproduced without modification.
 
 ==============================================================================
 POKROV Core
-Source snapshot: 880bff65ad665844828fe50fc395e9cfc1cd81b4
+Source snapshot: 6b271decead88b708e2fc03984b703b0a4e63ebd
 ==============================================================================
 
 Root file: LICENSE
-Source: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/LICENSE
+Source: core@6b271decead88b708e2fc03984b703b0a4e63ebd/LICENSE
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
@@ -695,11 +695,11 @@ Public License instead of this License.  But first, please read
 
 ==============================================================================
 ray2sing converter
-Source snapshot: 880bff65ad665844828fe50fc395e9cfc1cd81b4
+Source snapshot: 6b271decead88b708e2fc03984b703b0a4e63ebd
 ==============================================================================
 
 Root file: ray2sing/LICENSE
-Source: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/ray2sing/LICENSE
+Source: core@6b271decead88b708e2fc03984b703b0a4e63ebd/ray2sing/LICENSE
 
 Creative Commons Legal Code
 
@@ -1366,11 +1366,11 @@ express Statement of Purpose.
 github.com/Psiphon-Labs/psiphon-tls v0.0.0-20250318183125-2a2fae2db378
 Recorded binary inputs: final-libpokrov-core-arm64-v8a.buildinfo.log, final-libpokrov-core-armeabi-v7a.buildinfo.log, final-libpokrov-core-x86.buildinfo.log, final-libpokrov-core-x86_64.buildinfo.log, final-pokrov-core.buildinfo.log
 Effective replacement: ./engine/sing-box/replace/psiphon-tls (devel)
-Replacement source snapshot: 880bff65ad665844828fe50fc395e9cfc1cd81b4
+Replacement source snapshot: 6b271decead88b708e2fc03984b703b0a4e63ebd
 ==============================================================================
 
 Root file: LICENSE
-Source: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/engine/sing-box/replace/psiphon-tls/LICENSE
+Source: core@6b271decead88b708e2fc03984b703b0a4e63ebd/engine/sing-box/replace/psiphon-tls/LICENSE
 
 Psiphon modifications:
 Copyright (c) 2024, Psiphon Inc. All rights reserved.
@@ -2094,11 +2094,11 @@ Public License instead of this License.  But first, please read
 github.com/Psiphon-Labs/quic-go v0.0.0-20250527153145-79fe45fb83b1
 Recorded binary inputs: final-libpokrov-core-arm64-v8a.buildinfo.log, final-libpokrov-core-armeabi-v7a.buildinfo.log, final-libpokrov-core-x86.buildinfo.log, final-libpokrov-core-x86_64.buildinfo.log, final-pokrov-core.buildinfo.log
 Effective replacement: ./engine/sing-box/replace/psiphon-quic-go (devel)
-Replacement source snapshot: 880bff65ad665844828fe50fc395e9cfc1cd81b4
+Replacement source snapshot: 6b271decead88b708e2fc03984b703b0a4e63ebd
 ==============================================================================
 
 Root file: LICENSE
-Source: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/engine/sing-box/replace/psiphon-quic-go/LICENSE
+Source: core@6b271decead88b708e2fc03984b703b0a4e63ebd/engine/sing-box/replace/psiphon-quic-go/LICENSE
 
 MIT License
 
@@ -2384,11 +2384,11 @@ SOFTWARE.
 github.com/bepass-org/warp-plus v1.2.6
 Recorded binary inputs: final-libpokrov-core-arm64-v8a.buildinfo.log, final-libpokrov-core-armeabi-v7a.buildinfo.log, final-libpokrov-core-x86.buildinfo.log, final-libpokrov-core-x86_64.buildinfo.log, final-pokrov-core.buildinfo.log
 Effective replacement: ./third_party/warp-plus (devel)
-Replacement source snapshot: 880bff65ad665844828fe50fc395e9cfc1cd81b4
+Replacement source snapshot: 6b271decead88b708e2fc03984b703b0a4e63ebd
 ==============================================================================
 
 Root file: LICENSE
-Source: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/third_party/warp-plus/LICENSE
+Source: core@6b271decead88b708e2fc03984b703b0a4e63ebd/third_party/warp-plus/LICENSE
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -7033,11 +7033,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 github.com/sagernet/sing-box v1.13.0
 Recorded binary inputs: final-libpokrov-core-arm64-v8a.buildinfo.log, final-libpokrov-core-armeabi-v7a.buildinfo.log, final-libpokrov-core-x86.buildinfo.log, final-libpokrov-core-x86_64.buildinfo.log, final-pokrov-core.buildinfo.log
 Effective replacement: ./engine/sing-box (devel)
-Replacement source snapshot: 880bff65ad665844828fe50fc395e9cfc1cd81b4
+Replacement source snapshot: 6b271decead88b708e2fc03984b703b0a4e63ebd
 ==============================================================================
 
 Root file: LICENSE
-Source: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/engine/sing-box/LICENSE
+Source: core@6b271decead88b708e2fc03984b703b0a4e63ebd/engine/sing-box/LICENSE
 
 Copyright (C) 2022 by nekohasekai <contact-sagernet@sekai.icu>
 
@@ -7199,7 +7199,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 ==============================================================================
 github.com/sagernet/sing-tun v0.8.0-beta.17
-POKROV replacement: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/engine/sing-box/replace/sing-tun
+POKROV replacement: core@6b271decead88b708e2fc03984b703b0a4e63ebd/engine/sing-box/replace/sing-tun
 Upstream base: 635920688d0a7aa2171afa56be2a0760a69fecb9; Windows adapter cleanup patch.
 Recorded binary inputs: final-libpokrov-core-arm64-v8a.buildinfo.log, final-libpokrov-core-armeabi-v7a.buildinfo.log, final-libpokrov-core-x86.buildinfo.log, final-libpokrov-core-x86_64.buildinfo.log, final-pokrov-core.buildinfo.log
 ==============================================================================
@@ -7280,11 +7280,11 @@ SOFTWARE.
 github.com/sagernet/wireguard-go v0.0.2-beta.1.0.20250917110311-16510ac47288
 Recorded binary inputs: final-libpokrov-core-arm64-v8a.buildinfo.log, final-libpokrov-core-armeabi-v7a.buildinfo.log, final-libpokrov-core-x86.buildinfo.log, final-libpokrov-core-x86_64.buildinfo.log, final-pokrov-core.buildinfo.log
 Effective replacement: ./engine/sing-box/replace/wireguard-go (devel)
-Replacement source snapshot: 880bff65ad665844828fe50fc395e9cfc1cd81b4
+Replacement source snapshot: 6b271decead88b708e2fc03984b703b0a4e63ebd
 ==============================================================================
 
 Root file: LICENSE
-Source: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/engine/sing-box/replace/wireguard-go/LICENSE
+Source: core@6b271decead88b708e2fc03984b703b0a4e63ebd/engine/sing-box/replace/wireguard-go/LICENSE
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -10300,7 +10300,7 @@ implementation in a package directory was linked. File-header obligations,
 other native inputs and corresponding source distribution remain separate.
 
 ==============================================================================
-Source: core@880bff65ad665844828fe50fc395e9cfc1cd81b4/engine/sing-box/common/ja3/LICENSE
+Source: core@6b271decead88b708e2fc03984b703b0a4e63ebd/engine/sing-box/common/ja3/LICENSE
 ==============================================================================
 
 BSD 3-Clause License
