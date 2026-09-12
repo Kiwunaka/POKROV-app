@@ -1,0 +1,51 @@
+[
+  {
+    "type": "Invalid",
+    "source_frames": [
+      [],
+      [
+        "package:pokrov_observability_runtime/src/model.dart:74"
+      ],
+      [
+        "package:pokrov_app_shell/src/observability/client_observability.dart:135"
+      ],
+      [
+        "package:pokrov_app_shell/src/observability/client_observability.dart:845"
+      ],
+      [
+        "package:pokrov_app_shell/src/observability/client_observability.dart:220"
+      ],
+      [
+        "package:pokrov_android_shell/main.dart:23"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      []
+    ],
+    "exception_fixed_terms": {
+      "PlatformException": false,
+      "FileSystemException": false,
+      "MissingPluginException": false,
+      "FormatException": false,
+      "Bad state": false,
+      "LateInitializationError": false,
+      "database": false,
+      "binding": false,
+      "main thread": false,
+      "not initialized": false,
+      "initialize": true,
+      "already": false,
+      "permission": false,
+      "denied": false
+    }
+  }
+]

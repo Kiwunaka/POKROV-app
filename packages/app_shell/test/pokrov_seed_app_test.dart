@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io' show Directory, Platform;
 import 'dart:ui' show PointerDeviceKind;
 
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9129,6 +9130,10 @@ void main() {
 
   testWidgets('diagnostics creates a case with one encrypted bundle action',
       (tester) async {
+    expect(
+      () => pokrovCurrentBuildIdentity(HostPlatform.android),
+      returnsNormally,
+    );
     final service = _FakeEncryptedSupportTicketService(
       const SupportTicketReceipt(
         ticketId: 1204,
@@ -9176,6 +9181,16 @@ void main() {
         reason: 'null asks the transfer service to create the case first');
     expect(service.lastBundleCaseSummary, contains(pokrovClientVersion));
     expect(service.lastPreparedBundle?.preview.profile.name, 'summary');
+    final identity = service.lastPreparedBundle!.preview.files
+        .singleWhere((file) => file.path == 'build/identity.json');
+    final expectedIdentity = await Sha256().hash(utf8.encode(jsonEncode({
+      'app_version': pokrovClientVersion,
+      'build_id': pokrovClientBuildNumber,
+      'channel': appFlavor == 'store' ? 'store' : 'direct',
+      'platform': 'android',
+    })));
+    expect(identity.sha256, expectedIdentity.bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0')).join());
     final delivery = find.byKey(const ValueKey('diagnostics-delivery-result'));
     await tester.ensureVisible(delivery);
     expect(find.textContaining('Обращение #1204 создано'), findsOneWidget);

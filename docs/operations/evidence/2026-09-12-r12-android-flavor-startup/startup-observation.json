@@ -1,0 +1,30 @@
+{
+  "pid": 3233,
+  "logcat_bytes": 754529,
+  "sha256": "cc22f987a47924ad8c7b3908c8f125d060e59a5b5c74c14bd05f9fa622db81fc",
+  "markers": {
+    "credential": 0,
+    "authorization": 0,
+    "cookie": 0,
+    "config": 0,
+    "url": 0,
+    "ipv4": 0,
+    "path": 0,
+    "pii": 0,
+    "provider": 0
+  },
+  "counts": {
+    "FATAL EXCEPTION": 0,
+    "ANR in": 0,
+    "Dart Error": 0,
+    "Could not prepare isolate": 0,
+    "Failed to load": 0,
+    "Unhandled Exception": 1,
+    "flutter": 11,
+    "main_thread_watchdog": 0,
+    "Failed to create": 0,
+    "isolate": 0,
+    "snapshot": 0
+  },
+  "known_engine_error_lines": []
+}

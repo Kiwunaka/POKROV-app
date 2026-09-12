@@ -1,0 +1,42 @@
+{
+  "status": "PASS_ROOTED_INSTALLED_BASELINE",
+  "utc": "2026-09-12T05:44:21.161313+00:00",
+  "apk_sha256": "23fa86a9421930910e6d95d0fdff85f35c5df4e94f8749b83e3457052b66935d",
+  "root_preexisting_before_task": false,
+  "root_enabled_only_in_qa_instance": true,
+  "uid": 10111,
+  "prefs_mode": "660",
+  "profile_sha256": "7693f758085350196c3a1f75e666b41b4e4d617b79bbc6f20c6cd84d4d8ed475",
+  "preferences_sha256": "dd3b094648e216e5b8e5d90f034646deb4ba8048c8e07b2b55c15a6f081fc12f",
+  "route_mode": "device",
+  "quick_settings_eligible": "true",
+  "schema_version": "1",
+  "config_path_sha256": "e15f05aa27d952adf6f49c3cc454a6bfb8b98e55f6d9a0f18d61fed8ba20d844",
+  "safe_file_inventory": [
+    {
+      "relative_path": "files/support-key-set-v1.json",
+      "sha256": "f0b8e4a411840e375a6f426243eb9e35726f5dfa6bc70efb19674332ce856ae9"
+    },
+    {
+      "relative_path": "files/pokrov-first-launch-state.txt",
+      "sha256": "4ddb3e96801a1ee2b77dc5247c0db478d5f97a93b90e7cdb09f5f51d43764b08"
+    },
+    {
+      "relative_path": "files/pokrov-connect-hint-state.txt",
+      "sha256": "a4c3ed04a95a3da14a9d235c83d868bed7c0f45cf7f3faa751ee8f50598d2211"
+    },
+    {
+      "relative_path": "files/pokrov-emergency/android-7f9f0e40ad70656e67d80939519a2da5ebcb34c7d21a5bc3a4c6bf7224c73cee.catalog.cache",
+      "sha256": "cbed28d878d53cf0bad9471394d732d2b851bb8496a43b26269ee992f8bc0206"
+    },
+    {
+      "relative_path": "files/pokrov-observability/operational-events.v1.0.jsonl",
+      "sha256": "76dede94ee5089ca8ae84ad5314fade95e6e1d95ca26645af1eebbc3abccab69"
+    },
+    {
+      "relative_path": "files/pokrov-observability/previous-exit.v1.json",
+      "sha256": "9f8912a35d4714d9da286c8405e2761e68c6ce12ae765c7fdbd74a1aa0ad958c"
+    }
+  ],
+  "profile_content_exported": false
+}

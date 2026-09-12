@@ -1165,3 +1165,12 @@ source now serializes the actual numeric build number and the Android production
 builder sets direct/store channels explicitly. Regression failed before and
 passed after; new fixed packages and installed proof remain pending. No VPN,
 extended/crash or full V01 pass is implied. LDPlayer is stopped; host unchanged.
+
+
+## 2026-09-12 — flavor metadata startup regression
+
+`a9bc280` / Core `6b271de` APK `23fa86a9` fails installed startup: distribution
+flavors were passed as operational release channels. The source fix uses
+Flutter `appFlavor` for support metadata and preserves the operational channel
+contract. Both flavor regressions and 25 focused tests pass; corrected installed
+proof remains pending. [Exact failure, rollback and source checks](evidence/2026-09-12-r12-android-flavor-startup/README.md).
