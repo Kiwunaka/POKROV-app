@@ -1,0 +1,326 @@
+{
+  "status": "OBSERVED_EXACT_CURRENT_MARKER_AND_JOURNAL",
+  "utc": "2026-09-12T08:50:19.008729+00:00",
+  "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+  "app_pid": 3105,
+  "marker": {
+    "state": "active",
+    "sha256": "76635cff47f39cf1134d90a139c4260e19d2d4c5ccd2839625518b78308275d3",
+    "bytes": 191,
+    "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+    "occurred_at_utc": "2026-09-12T08:49:29.477874Z",
+    "error_code": null,
+    "breadcrumb_count": 0
+  },
+  "journal_files": [
+    {
+      "name": "operational-events.v1.0.jsonl",
+      "bytes": 421173,
+      "sha256": "c263ae8c343c68a1e122fa48f2bb7d8bf06f38472f08672ec8896128cb12e8d7"
+    }
+  ],
+  "current_source_events": [
+    {
+      "event_id_sha256": "043da26a84b3251bf3ee2fd0d9222bd8654ca63e143afe4cb7284fda871801a2",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.bootstrap.initialize.started",
+      "error_code": null,
+      "sequence": 0,
+      "occurred_at_utc": "2026-09-12T08:49:29.475499Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "bbb4b9bb23886e163f937a0f577d633f9bcbe11856b8cb86740aefb292155d0d",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.previous_exit.detected",
+      "error_code": "APP-BOOT-006",
+      "sequence": 1,
+      "occurred_at_utc": "2026-09-12T08:49:29.480883Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "b1af464914bd8959ccd6cc0da9f54604c04669bcd9812edaf8e6e491c6c34ccb",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.bootstrap.initialize.finished",
+      "error_code": null,
+      "sequence": 2,
+      "occurred_at_utc": "2026-09-12T08:49:29.481029Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "01f4ba86f72efaddc772dbcd014efdca4680de349e2d3b1c53bc489ebb4f8c1b",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.bootstrap.ui_ready.finished",
+      "error_code": null,
+      "sequence": 3,
+      "occurred_at_utc": "2026-09-12T08:49:29.500809Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "f69e3f866c36f37fed6a268bed109a4186a1cdd7e35dd5079678f50a1112da4c",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.routing.selection.finished",
+      "error_code": null,
+      "sequence": 4,
+      "occurred_at_utc": "2026-09-12T08:49:29.521710Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "f40500aa43320f46e3808a58b2db64f3e03417d6b57c238b1745d44fd146949b",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.auth.request.started",
+      "error_code": null,
+      "sequence": 5,
+      "occurred_at_utc": "2026-09-12T08:49:30.586434Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "0adadf0271ad9df91b8d84ff1d7ca5a92c33bd732c301be04fa18b6c6b70bf74",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.entitlement.refresh.started",
+      "error_code": null,
+      "sequence": 6,
+      "occurred_at_utc": "2026-09-12T08:49:30.586601Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "902c66b5e718381ceff8e4d415e2cded67eb2573565734c14dbf74b6991a205f",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.auth.request.finished",
+      "error_code": null,
+      "sequence": 7,
+      "occurred_at_utc": "2026-09-12T08:49:31.751378Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "8bd2ec07c3da701ca120baa68d21595b49d53e781757043de0054391b22b0426",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.entitlement.refresh.finished",
+      "error_code": null,
+      "sequence": 8,
+      "occurred_at_utc": "2026-09-12T08:49:31.751706Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "987de0782e4086cb83f5e2bf5e4542310ba25ec3dc7cdb18affe2c874a25273e",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.intent.received",
+      "error_code": null,
+      "sequence": 0,
+      "occurred_at_utc": "2026-09-12T08:49:45.745730Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "58ec873753776209f10c1c308794597eaef91b187fe3e3c340c4e2e33931cf2a",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.tun.started",
+      "error_code": null,
+      "sequence": 1,
+      "occurred_at_utc": "2026-09-12T08:49:45.749816Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "585ba092186baedabf0416c5b66a8562f9aa74d15eca69140da242d14890df7d",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.tun.finished",
+      "error_code": null,
+      "sequence": 2,
+      "occurred_at_utc": "2026-09-12T08:49:45.757086Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "85dac8503bfd6b7f67b1e0b386ef87c6b007ba0ea113f91d6ce9cfd526fc1003",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.profile.started",
+      "error_code": null,
+      "sequence": 3,
+      "occurred_at_utc": "2026-09-12T08:49:45.757213Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "fc31f865b274f36069101e0164f7d6753b05437e74387810622f36211c1e2514",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.profile.finished",
+      "error_code": null,
+      "sequence": 4,
+      "occurred_at_utc": "2026-09-12T08:49:48.405305Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "099db799eaa254ca1325b433619fb018e015b7b3f5ed8aa33a0dafcd63c28f7d",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.egress.started",
+      "error_code": null,
+      "sequence": 5,
+      "occurred_at_utc": "2026-09-12T08:49:48.405531Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "2f9c24d3a2dff7e8fd602417d7702953b83495bb98b5b68a792f98b30031f2cc",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.proof.observed",
+      "error_code": null,
+      "sequence": 6,
+      "occurred_at_utc": "2026-09-12T08:49:48.405946Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "8cdfe98de2deb29504367f9a4fed7c3c31674ae554f56b6c6739f591137fd8d1",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.egress.finished",
+      "error_code": null,
+      "sequence": 7,
+      "occurred_at_utc": "2026-09-12T08:49:02.396963Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "2199dd5e8200e3a95af4b7eff6a256dfdd08f57f3b73f78f9b7aaaa1857ae034",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.core.started",
+      "error_code": null,
+      "sequence": 8,
+      "occurred_at_utc": "2026-09-12T08:49:02.398176Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "a920261c779cc25c0a7f7868cf37bd4ce325f30cc3390bdac4367293538b2a1e",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.core.finished",
+      "error_code": null,
+      "sequence": 9,
+      "occurred_at_utc": "2026-09-12T08:49:02.398422Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "a4cce26746f3b2738da9e86b4874c52fab1223dcc7d53b135003206e94cd7fbb",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.tun.started",
+      "error_code": null,
+      "sequence": 10,
+      "occurred_at_utc": "2026-09-12T08:49:02.398550Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "84b7c85cc8738d7b61fcc2e083aa3b64365ad2aaa56737ef88eab2a6330d9063",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.tun.finished",
+      "error_code": null,
+      "sequence": 11,
+      "occurred_at_utc": "2026-09-12T08:49:02.398631Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "fbbe87e1c3f6aea23a71232dd50340a928c469571045cfb60991e2459cca9097",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.routes.started",
+      "error_code": null,
+      "sequence": 12,
+      "occurred_at_utc": "2026-09-12T08:49:02.398726Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "c8f640fca17c55ce460c9add67641f95a7d7951a2277e4849668407086e0c8d7",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.routes.finished",
+      "error_code": null,
+      "sequence": 13,
+      "occurred_at_utc": "2026-09-12T08:49:02.398839Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "03add2e5ceffc473ffed51f44154a65f31948c1ba9a95b2bd6b3742665e197be",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.dns.started",
+      "error_code": null,
+      "sequence": 14,
+      "occurred_at_utc": "2026-09-12T08:49:02.398975Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "063b33060605e099b5d0a95c8689c8e2b14d79d2f9feca033c27d8b20de93522",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.dns.finished",
+      "error_code": null,
+      "sequence": 15,
+      "occurred_at_utc": "2026-09-12T08:49:02.399068Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "e8d61590d41af6a4549d258783b48449362d2001bed9da51f2b5e8a7198f2078",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.egress.started",
+      "error_code": null,
+      "sequence": 16,
+      "occurred_at_utc": "2026-09-12T08:49:02.399161Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "1882a647c117f2ec7460443b9bf980c3aace4049a775ebb75bf75a28d2a5f5c6",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.egress.finished",
+      "error_code": null,
+      "sequence": 17,
+      "occurred_at_utc": "2026-09-12T08:49:02.399274Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "bdae5ac199bc1249c7304b08f4742f753ea343a331a724547f02aec726a54c80",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.verified.started",
+      "error_code": null,
+      "sequence": 18,
+      "occurred_at_utc": "2026-09-12T08:49:02.399406Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "0ac47d29233e9c77752f94979cdd9dc369ac3a6ee055f5e82ae24d3abcbc3bae",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.verified.finished",
+      "error_code": null,
+      "sequence": 19,
+      "occurred_at_utc": "2026-09-12T08:49:02.399607Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    },
+    {
+      "event_id_sha256": "8c4ce2dea3fa7718bf1df18c5fcbafb7009405d6c552e1c1e12aa273b0e12c9a",
+      "run_id_sha256": "51b452252a794ec66c2fb08a088984d403c8f301ed45b6b21ca684adfc998233",
+      "name": "app.connection.attempt.finished",
+      "error_code": null,
+      "sequence": 20,
+      "occurred_at_utc": "2026-09-12T08:49:02.399884Z",
+      "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+      "build_number": "4053"
+    }
+  ],
+  "raw_private_content_exported": false,
+  "rooted_lab": true
+}

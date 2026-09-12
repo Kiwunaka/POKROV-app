@@ -1,0 +1,12 @@
+{
+  "status": "RUNNING",
+  "vm": "POKROV-r12-b08-linux-20260906",
+  "before_state": "poweroff",
+  "disk_path": "E:\\r12-b08-linux-lab\\lab.vdi",
+  "disk_bytes_before": 9446621184,
+  "floor_bytes": 42949672960,
+  "growth_budget_bytes": 367001600,
+  "shutdown_at_growth_bytes": 268435456,
+  "utc": "2026-09-12T08:44:00.611597+00:00",
+  "samples": []
+}

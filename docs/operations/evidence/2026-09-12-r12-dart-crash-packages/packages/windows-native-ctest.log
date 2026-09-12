@@ -1,0 +1,5 @@
+Internal ctest changing into directory: E:/r12client/apps/windows_shell/build/windows/x64
+Test project E:/r12client/apps/windows_shell/build/windows/x64
+Cannot create directory P:/apps/windows_shell/build/windows/x64/Testing/Temporary
+Cannot create log file: LastTest.log
+Errors while running CTest

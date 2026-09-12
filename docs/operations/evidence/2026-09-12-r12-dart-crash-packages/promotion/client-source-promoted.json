@@ -1,0 +1,12 @@
+{
+  "status": "PASS_SIGNED_EXACT_TREE",
+  "source": "f7115c505c314a7322481997a46343b03dae1127",
+  "parent": "566d547fc5e27441b557c16f394c7649a2765f40",
+  "signed_commit": "10d2ac2ff903a199201b1e3615a5aebfb58f179b",
+  "tree": "0b8d74622e387428b34fbb83cc22038290f8c62c",
+  "signature_valid": true,
+  "branch": "codex/dart-crash-privacy-signed-20260912",
+  "file_count": 14,
+  "utc": "2026-09-12T08:22:41.702304+00:00",
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/124"
+}

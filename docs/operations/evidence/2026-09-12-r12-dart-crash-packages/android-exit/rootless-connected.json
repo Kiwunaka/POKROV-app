@@ -1,0 +1,28 @@
+{
+  "utc": "2026-09-12T08:56:14.791129+00:00",
+  "label": "rootless-connected",
+  "installed_apk_sha256": "cd9b28f6f01e6d37aa8bb8436d6c8601f23da73eb23fddb5de923d82e74418f8",
+  "network_state_hashes": {
+    "ipv4_routes": "fdd633a0ec08bc38c74ba1388cbddd224f8816860dfe44c9e8d6e31ab0dda06b",
+    "ipv6_routes": "6d895275629cccc3baf01cae9460cb285483609f43030df27c40053d24a5ff1f",
+    "private_dns_mode": "abdfbffecbe18ed94df9829819e596ee285b52a94aa108514452a9121721c789",
+    "private_dns_host": "abdfbffecbe18ed94df9829819e596ee285b52a94aa108514452a9121721c789",
+    "dns1": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "dns2": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+  },
+  "tun_interfaces": [
+    "tun0"
+  ],
+  "counters": {
+    "tun0": {
+      "rx_bytes": 10663,
+      "tx_bytes": 11833
+    }
+  },
+  "vpn_service_running": true,
+  "ui": [],
+  "raw_network_state_exported": false,
+  "ipv6_semantic_sha256": "0634b883de591ca69f829f33e22231a76447a63098101bc8331c861542160924",
+  "ipv6_expiration_fields_observed": 1,
+  "ipv6_normalization": "only observed expires NUMBERsec countdown; raw hash retained"
+}

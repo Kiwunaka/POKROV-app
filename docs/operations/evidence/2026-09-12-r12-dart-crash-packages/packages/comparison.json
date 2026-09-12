@@ -1,0 +1,24 @@
+{
+  "schema": "pokrov.r12.extracted-installer-identity/v1",
+  "observed_at": "2026-09-12T08:45:14.217748+00:00",
+  "installer": {
+    "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+    "size": 29176653,
+    "sha256": "47a60d309662b689031aaa74ba25728353dd7245275a8c986c2505d733f0e06a"
+  },
+  "prior_staged_inventory": {
+    "path": "C:\\r12-dart-crash-packages-20260912\\windows-package-audit.json",
+    "sha256": "07bb1446233e5b35798977131c97a217b212eb15037253abf5f6c0a7859763e2"
+  },
+  "extracted_inventory": {
+    "path": "C:\\r12-dart-crash-packages-20260912\\payload-inventory.json",
+    "sha256": "5faf1eebe13ebe78ec36d08cef88004d1296a7af007080e71b462a001f50edf7"
+  },
+  "expected_files": 304,
+  "extracted_files": 304,
+  "missing": [],
+  "extra": [],
+  "mismatch": [],
+  "status": "PASS_EXACT_PAYLOAD",
+  "scope": "Installer archive payload compared to all staged bundle bytes; installer not executed, uninstaller generated during installation and SCM/TUN actions not tested."
+}

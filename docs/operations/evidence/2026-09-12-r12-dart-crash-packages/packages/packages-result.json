@@ -1,0 +1,45 @@
+{
+  "status": "PASS_SIX_CURRENT_LOCAL_PACKAGES",
+  "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "utc": "2026-09-12T08:45:56.135399+00:00",
+  "artifacts": [
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+      "size": 100926279,
+      "sha256": "78d7a1361d03d808c6f6554fb65bc7411a9b411ed436c6ccbf79114d13737c91"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+      "size": 90459293,
+      "sha256": "c4774015aa88b77fdb3c355551f45fd6260afa4eef042a24ff3e126415c00057"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+      "size": 294071554,
+      "sha256": "d8c490fddb543d606b24c299f1089ddc68c28f581be5ac7ba64eac8409847919"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+      "size": 109718342,
+      "sha256": "cd9b28f6f01e6d37aa8bb8436d6c8601f23da73eb23fddb5de923d82e74418f8"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\bundle\\storeRelease\\app-store-release.aab",
+      "size": 126056957,
+      "sha256": "14e8ee4718349c9d7b914752313aa54b013b90ee9d9ed20af6f8d80318a2ee8f"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "size": 29176653,
+      "sha256": "47a60d309662b689031aaa74ba25728353dd7245275a8c986c2505d733f0e06a"
+    }
+  ],
+  "windows_extracted_files": 304,
+  "native_tests_passed": 9,
+  "android_signing": "production_self_managed",
+  "windows_signing": "SKIPPED_BY_OWNER",
+  "installed_current_packages": "NOT_YET_PERFORMED",
+  "public_release": "NOT_PERFORMED",
+  "store_submission": "NOT_PERFORMED"
+}

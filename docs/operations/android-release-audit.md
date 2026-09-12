@@ -1220,3 +1220,18 @@ values to default reporting. A real Flutter-engine canary test reproduces this
 and now passes with marker-only handling; eight tests and analyze pass.
 [Exact source proof](evidence/2026-09-12-r12-dart-crash-privacy/README.md).
 Successor packages/installed proof and the native crash/hang matrix remain open.
+
+
+## 2026-09-12 — Dart crash fix packages and actual previous-exit readback
+
+Source f7115c50/Core6b: all four direct APKs and store AAB pass exact signature,
+version, ABI, native/AOT and notice checks. PR124/main268b7556 exact CI passes.
+Current x86_64 update retains UID and six preference files. Native process crash
+keeps the active marker and30 persisted events; relaunch records unclean
+APP-BOOT-006. Same-process recovery from15-second SIGSTOP passes three following
+HTTPS probes; the probe timeout during freeze remains a harness limitation.
+Root is restored and tested absent. Rootless final disconnect restores the
+network, with one retained HTTP timeout followed by two successful requests.
+[Captured scope](evidence/2026-09-12-r12-dart-crash-packages/README.md).
+Dart CRASH-001 on released APK, crash-bundle delivery, physical ARM64 and full
+privacy/license/release acceptance remain open.

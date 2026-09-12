@@ -1,0 +1,24 @@
+{
+  "requests": [
+    {
+      "status": 0,
+      "marker_valid": false,
+      "error_type": "SocketTimeoutException",
+      "elapsed_ms": 12025
+    },
+    {
+      "status": 204,
+      "marker_valid": true,
+      "error_type": "",
+      "elapsed_ms": 378
+    },
+    {
+      "status": 204,
+      "marker_valid": true,
+      "error_type": "",
+      "elapsed_ms": 503
+    }
+  ],
+  "utc": "2026-09-12T08:56:46.239159+00:00",
+  "status": "FAIL"
+}

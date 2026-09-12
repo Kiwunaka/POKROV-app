@@ -1,0 +1,66 @@
+{
+  "status": "PASS_PRIOR_PACKAGE_BYTES_RETAINED",
+  "utc": "2026-09-12T08:21:49.327007+00:00",
+  "mixed_prior_sources": true,
+  "store_aab_locally_absent": true,
+  "remote_host": "pokrov-de",
+  "files": [
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+      "name": "app-arm64-v8a-direct-release.apk",
+      "bytes": 100926279,
+      "sha256": "d424839dc8110291af7063f3dc5730f9c8a3d4049722097705275d8625858891",
+      "remote_path": "/root/portal-r12-evidence/dart-crash-privacy-20260912/prior-packages/app-arm64-v8a-direct-release.apk",
+      "remote_sha256": "d424839dc8110291af7063f3dc5730f9c8a3d4049722097705275d8625858891"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+      "name": "app-armeabi-v7a-direct-release.apk",
+      "bytes": 90459293,
+      "sha256": "0d70c80fdf44047990d150acc2f740ad91e517f68e6725cf3d93f8899c29a492",
+      "remote_path": "/root/portal-r12-evidence/dart-crash-privacy-20260912/prior-packages/app-armeabi-v7a-direct-release.apk",
+      "remote_sha256": "0d70c80fdf44047990d150acc2f740ad91e517f68e6725cf3d93f8899c29a492"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+      "name": "app-direct-release.apk",
+      "bytes": 109718342,
+      "sha256": "8dc6c2e6671b7ea3d2331c1ec31c5a788458fd10de9dd9a9693abfcd8eab62ad",
+      "remote_path": "/root/portal-r12-evidence/dart-crash-privacy-20260912/prior-packages/app-direct-release.apk",
+      "remote_sha256": "8dc6c2e6671b7ea3d2331c1ec31c5a788458fd10de9dd9a9693abfcd8eab62ad"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+      "name": "app-x86_64-direct-release.apk",
+      "bytes": 109718342,
+      "sha256": "8dc6c2e6671b7ea3d2331c1ec31c5a788458fd10de9dd9a9693abfcd8eab62ad",
+      "remote_path": "/root/portal-r12-evidence/dart-crash-privacy-20260912/prior-packages/app-x86_64-direct-release.apk",
+      "remote_sha256": "8dc6c2e6671b7ea3d2331c1ec31c5a788458fd10de9dd9a9693abfcd8eab62ad"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "name": "pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "bytes": 29177989,
+      "sha256": "40341081ab4dbb3d97d3e6545646638da21366ebc4524920184af47711769609",
+      "remote_path": "/root/portal-r12-evidence/dart-crash-privacy-20260912/prior-packages/pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "remote_sha256": "40341081ab4dbb3d97d3e6545646638da21366ebc4524920184af47711769609"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe.iss",
+      "name": "pokrov-windows-x64-1.2.0+4053-setup.exe.iss",
+      "bytes": 13101,
+      "sha256": "8dea939248d7f187ce0945feae3aa3c71a851f3770ab4ffaa8ece76998b5c874",
+      "remote_path": "/root/portal-r12-evidence/dart-crash-privacy-20260912/prior-packages/pokrov-windows-x64-1.2.0+4053-setup.exe.iss",
+      "remote_sha256": "8dea939248d7f187ce0945feae3aa3c71a851f3770ab4ffaa8ece76998b5c874"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053.manifest.json",
+      "name": "pokrov-windows-x64-1.2.0+4053.manifest.json",
+      "bytes": 5884,
+      "sha256": "6b5ac121bd61ede298237138c1eaedbe54144bfbd86ef2a95a9e2f11f9ac73ad",
+      "remote_path": "/root/portal-r12-evidence/dart-crash-privacy-20260912/prior-packages/pokrov-windows-x64-1.2.0+4053.manifest.json",
+      "remote_sha256": "6b5ac121bd61ede298237138c1eaedbe54144bfbd86ef2a95a9e2f11f9ac73ad"
+    }
+  ],
+  "local_deleted": false
+}

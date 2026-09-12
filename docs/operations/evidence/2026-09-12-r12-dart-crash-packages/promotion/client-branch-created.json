@@ -1,0 +1,10 @@
+{
+  "ref": "refs/heads/codex/dart-crash-privacy-signed-20260912",
+  "node_id": "REF_kwDOSJnDs9oAM3JlZnMvaGVhZHMvY29kZXgvZGFydC1jcmFzaC1wcml2YWN5LXNpZ25lZC0yMDI2MDkxMg",
+  "url": "https://api.github.com/repos/Kiwunaka/POKROV-app/git/refs/heads/codex/dart-crash-privacy-signed-20260912",
+  "object": {
+    "sha": "566d547fc5e27441b557c16f394c7649a2765f40",
+    "type": "commit",
+    "url": "https://api.github.com/repos/Kiwunaka/POKROV-app/git/commits/566d547fc5e27441b557c16f394c7649a2765f40"
+  }
+}

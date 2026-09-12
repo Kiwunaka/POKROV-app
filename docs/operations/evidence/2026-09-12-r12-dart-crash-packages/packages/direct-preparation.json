@@ -1,0 +1,9 @@
+{
+  "source": "f7115c505c314a7322481997a46343b03dae1127",
+  "canonical_sha256": "a406e11e4f771d6c2da26c68c12769376430704ab203a15b80f4b05e24deafb3",
+  "execution_sha256": "abaff42c5c1ff4d6a20b3ec920548475bf042c91cef74908129ae9b025377984",
+  "all_three_android_abis": true,
+  "signing_finally_preserved": true,
+  "store_phase_deferred": true,
+  "other_build_defines_unchanged": true
+}

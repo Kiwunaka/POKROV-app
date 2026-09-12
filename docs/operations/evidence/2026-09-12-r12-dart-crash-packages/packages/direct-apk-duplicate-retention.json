@@ -1,0 +1,98 @@
+{
+  "status": "PASS_FOUR_EXACT_DUPLICATES_REMOVED",
+  "utc": "2026-09-12T08:31:32.8113174Z",
+  "free_e_after": 44745232384,
+  "retained_apks": [
+    {
+      "abi": "universal",
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+      "size": 294071554,
+      "sha256": "d8c490fddb543d606b24c299f1089ddc68c28f581be5ac7ba64eac8409847919",
+      "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-universal-release.apk",
+      "duplicate_sha256": "d8c490fddb543d606b24c299f1089ddc68c28f581be5ac7ba64eac8409847919",
+      "package_name": "space.pokrov.pokrov_android_shell",
+      "version_code": "4053",
+      "version_name": "1.2.0",
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "signature_verified": true,
+      "debuggable": false,
+      "native_abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86_64"
+      ],
+      "current_core_hashes_verified": true,
+      "compiled_revision_present": true,
+      "native_notices_exact": true,
+      "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+      "aapt_output_sha256": "e9163d67c8f02861f7b5b29c684b6f8e6753d8852248b3c56451e3610c1c533f"
+    },
+    {
+      "abi": "arm64-v8a",
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+      "size": 100926279,
+      "sha256": "78d7a1361d03d808c6f6554fb65bc7411a9b411ed436c6ccbf79114d13737c91",
+      "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-arm64-v8a-release.apk",
+      "duplicate_sha256": "78d7a1361d03d808c6f6554fb65bc7411a9b411ed436c6ccbf79114d13737c91",
+      "package_name": "space.pokrov.pokrov_android_shell",
+      "version_code": "4053",
+      "version_name": "1.2.0",
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "signature_verified": true,
+      "debuggable": false,
+      "native_abis": [
+        "arm64-v8a"
+      ],
+      "current_core_hashes_verified": true,
+      "compiled_revision_present": true,
+      "native_notices_exact": true,
+      "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+      "aapt_output_sha256": "c89eefd0e089f4a4a0078620ce11442cda7fd64555fce87c16d688f3e65d583d"
+    },
+    {
+      "abi": "armeabi-v7a",
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+      "size": 90459293,
+      "sha256": "c4774015aa88b77fdb3c355551f45fd6260afa4eef042a24ff3e126415c00057",
+      "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-armeabi-v7a-release.apk",
+      "duplicate_sha256": "c4774015aa88b77fdb3c355551f45fd6260afa4eef042a24ff3e126415c00057",
+      "package_name": "space.pokrov.pokrov_android_shell",
+      "version_code": "4053",
+      "version_name": "1.2.0",
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "signature_verified": true,
+      "debuggable": false,
+      "native_abis": [
+        "armeabi-v7a"
+      ],
+      "current_core_hashes_verified": true,
+      "compiled_revision_present": true,
+      "native_notices_exact": true,
+      "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+      "aapt_output_sha256": "b5e566848f9b70d54d0eb9d020ef11899f0328ea5d252976b6320d3bc229227d"
+    },
+    {
+      "abi": "x86_64",
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+      "size": 109718342,
+      "sha256": "cd9b28f6f01e6d37aa8bb8436d6c8601f23da73eb23fddb5de923d82e74418f8",
+      "duplicate_path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-x86_64-release.apk",
+      "duplicate_sha256": "cd9b28f6f01e6d37aa8bb8436d6c8601f23da73eb23fddb5de923d82e74418f8",
+      "package_name": "space.pokrov.pokrov_android_shell",
+      "version_code": "4053",
+      "version_name": "1.2.0",
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "signature_verified": true,
+      "debuggable": false,
+      "native_abis": [
+        "x86_64"
+      ],
+      "current_core_hashes_verified": true,
+      "compiled_revision_present": true,
+      "native_notices_exact": true,
+      "verification_output_sha256": "f6d42b02219bbf66de91deef2be4e5a4a637e800b067195a452bb300e9e75e51",
+      "aapt_output_sha256": "d20f2d1b087a72f9a3c4152cfc44b79ad7833d91c726e8406f67ebebceeec2e0"
+    }
+  ],
+  "free_e_before": 43797315584
+}

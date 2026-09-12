@@ -1,0 +1,14 @@
+{
+  "status": "OBSERVED_BOUNDED_PROCESS_FREEZE_AND_RESUME",
+  "utc": "2026-09-12T08:52:42.644489+00:00",
+  "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+  "installed_apk_sha256": "cd9b28f6f01e6d37aa8bb8436d6c8601f23da73eb23fddb5de923d82e74418f8",
+  "app_pid": 4206,
+  "rooted_lab": true,
+  "method": "SIGSTOP/SIGCONT on verified own process; not an Android ANR injection",
+  "samples": [],
+  "observed_process_state": "State:\tT (stopped)",
+  "resumed": true,
+  "freeze_seconds": 15.26600000000326,
+  "same_process_after_resume": true
+}

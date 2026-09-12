@@ -1568,3 +1568,13 @@ values to default reporting. A real Flutter-engine canary test reproduces this
 and now passes with marker-only handling; eight tests and analyze pass.
 [Exact source proof](evidence/2026-09-12-r12-dart-crash-privacy/README.md).
 Successor packages/installed proof and the native crash/hang matrix remain open.
+
+
+## 2026-09-12 — Current Dart crash privacy installer
+
+Source f7115c50/Core6b installer has the current compiled Dart revision,304
+staged and extracted payload hashes, exact native/notices and nine Release
+CTest passes. PR124 and main268b7556 CI pass with unchanged protections.
+[Captured scope](evidence/2026-09-12-r12-dart-crash-packages/README.md).
+This new installer was not executed; Authenticode stays SKIPPED_BY_OWNER.
+Installed acceptance, full licensing and release gates remain open.

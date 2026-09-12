@@ -1,0 +1,24 @@
+{
+  "status": "PASS_SAME_SIGNER_CURRENT_X64_UPDATE",
+  "utc": "2026-09-12T08:49:12.801665+00:00",
+  "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "before_apk_sha256": "8dc6c2e6671b7ea3d2331c1ec31c5a788458fd10de9dd9a9693abfcd8eab62ad",
+  "after_apk_sha256": "cd9b28f6f01e6d37aa8bb8436d6c8601f23da73eb23fddb5de923d82e74418f8",
+  "local_certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+  "app_uid": 10111,
+  "uid_preserved": true,
+  "shared_preferences_files": 6,
+  "preferences_unchanged": true,
+  "private_preference_name_and_content_hashes": {
+    "3ffc59e412e238044bf392b3fd5f48414788f996e5a3dfe6738c2a912205fdb8": "8c9119d293b1f468bfe619048a07f5e0079daf67275a3a8e982a4ef5842aa6c3",
+    "63507d93c90ba61e238b85996984e04ecfe0daa4aa1acaf71efc27ae0ffe9b45": "945f2e6c5f0d6a97c620c5b81c0e18be6e60e8e102b654d6ea31a5976b433859",
+    "77b87bf055afc7665952da98b26f9d65b6a8794312d37b9e75a366bbeae4cc91": "6a13ffd57236ed25d913b767e911aeb0d830130fb8f3acf9e405aa1caee0a030",
+    "3c7fe35f486ae32501d1e0d4bfa17732541a45456d3bd1c774ca931b56676653": "681786f14c9c6dc7910577a9ce51fb948395dd7fcf6b2cad0e830ea736a8dd5f",
+    "71ae17b1f19dd542399c2313c3489d71c39ec618ca68450de1988e6a8745675c": "413ef42959075a23fd57c0555702e388ab4a7dbaee3a69446e04773c29f118b9",
+    "46ad371f77d859c6059cbf34fa213135df5d78284c24710c4abd04612fa869a9": "4cd3385e323a6045b515414ebfa2c72f625aa04ec1791d4af3554f8e18decd29"
+  },
+  "raw_private_content_exported": false,
+  "rooted_lab": true,
+  "physical_arm64_proof": false
+}

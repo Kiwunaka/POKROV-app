@@ -1,0 +1,8 @@
+{
+  "status": "PASS_ACTUAL_ROOTLESS_BOOT_CURRENT_APK",
+  "utc": "2026-09-12T08:56:07.123394+00:00",
+  "su_exit": 127,
+  "output_sha256": "fba6d69482fa0b55d7b5f75cee0fa6a4dc4d447cd62cecc8a2b43f8818cf59ba",
+  "root_mode": false,
+  "installed_apk_sha256": "cd9b28f6f01e6d37aa8bb8436d6c8601f23da73eb23fddb5de923d82e74418f8"
+}

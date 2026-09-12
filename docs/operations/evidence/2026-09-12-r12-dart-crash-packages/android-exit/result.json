@@ -1,0 +1,32 @@
+{
+  "status": "PASS_BOUNDED_CURRENT_PROCESS_CRASH_MARKER_AND_RECOVERY",
+  "utc": "2026-09-12T08:55:11.377776+00:00",
+  "source_client": "f7115c505c314a7322481997a46343b03dae1127",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "installed_apk_sha256": "cd9b28f6f01e6d37aa8bb8436d6c8601f23da73eb23fddb5de923d82e74418f8",
+  "retained_precrash_event_count": 30,
+  "final_current_source_event_count": 66,
+  "recognized_previous_exit_error": "APP-BOOT-006",
+  "previous_exit_kind": "unclean",
+  "native_crash_did_not_invoke_dart_handler": true,
+  "crash_index_or_CRASH_001_proof": false,
+  "rooted_lab": true,
+  "physical_arm64_proof": false,
+  "freeze": {
+    "method": "SIGSTOP/SIGCONT whole own process",
+    "seconds": 15.26600000000326,
+    "probe_observation": "15 second harness TimeoutExpired; no HTTP result produced before resume",
+    "probe_success_while_frozen": false,
+    "post_resume_https_pass": 3,
+    "same_process_and_marker": true,
+    "ANR_classification_proven": false
+  },
+  "network_recovery": "IPv4 and DNS exact; IPv6 equal after normalizing only observed expiry countdown",
+  "crashed_service_record": "Record presence is not live process: marker observer confirms app PID absent; final disconnect record absent",
+  "harness_limits": [
+    "The first three observability snapshots skipped files due to adb su argument quoting; their zero current-source event counts are not product evidence. Corrected precrash/crashed/relaunched/final snapshots read both bounded journal files.",
+    "The freeze probe exceeded the harness timeout; finally resumed the same PID. No full leak or ANR claim is made."
+  ],
+  "root_restoration": "VERIFY_SEPARATE_ROOTLESS_BOOT_RECEIPT",
+  "crash_bundle_delivery": "NOT_PROVEN_BY_THIS_SLICE"
+}
