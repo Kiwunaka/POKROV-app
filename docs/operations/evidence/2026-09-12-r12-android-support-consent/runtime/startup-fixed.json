@@ -1,0 +1,79 @@
+{
+  "status": "PASS_INSTALLED_FIXED_STARTUP",
+  "utc": "2026-09-12T06:37:01.354657+00:00",
+  "installed_apk_sha256": "6d4b998756548c980937a1f9de7af39a1d65899ec06319594073daceab993e63",
+  "ui": [
+    {
+      "text": "POKROV VPN",
+      "bounds": "[72,120][1008,1385]",
+      "clickable": "false"
+    },
+    {
+      "text": "Уведомления. Непрочитанных: 1",
+      "bounds": "[410,120][554,264]",
+      "clickable": "false"
+    },
+    {
+      "text": "1",
+      "bounds": "[410,120][554,264]",
+      "clickable": "true"
+    },
+    {
+      "text": "Премиум · 1 день. Доступ активен. Открыть профиль",
+      "bounds": "[560,132][996,252]",
+      "clickable": "true"
+    },
+    {
+      "text": "Подключить",
+      "bounds": "[238,330][842,935]",
+      "clickable": "true"
+    },
+    {
+      "text": "Статус защиты: Не защищено. Открыть подробности",
+      "bounds": "[325,754][755,842]",
+      "clickable": "true"
+    },
+    {
+      "text": "Санкт-Петербург",
+      "bounds": "[84,995][528,1127]",
+      "clickable": "true"
+    },
+    {
+      "text": "Россия напрямую",
+      "bounds": "[552,995][996,1127]",
+      "clickable": "true"
+    },
+    {
+      "text": "Дополнительная защита, WARP",
+      "bounds": "[84,1163][996,1385]",
+      "clickable": "true"
+    },
+    {
+      "text": "Защита\nTab 1 of 4",
+      "bounds": "[60,1692][300,1884]",
+      "clickable": "true"
+    },
+    {
+      "text": "Локации\nTab 2 of 4",
+      "bounds": "[300,1692][540,1884]",
+      "clickable": "true"
+    },
+    {
+      "text": "Правила\nTab 3 of 4",
+      "bounds": "[540,1692][780,1884]",
+      "clickable": "true"
+    },
+    {
+      "text": "Профиль\nTab 4 of 4",
+      "bounds": "[780,1692][1020,1884]",
+      "clickable": "true"
+    }
+  ],
+  "app_pid": 2560,
+  "available_app_logcat_bytes": 13165,
+  "available_app_logcat_sha256": "5945c84af8186fe05d00815c12bf8adb4ea6c6dd476fe024924b8bfcfdb4b55e",
+  "unhandled_exception_count": 0,
+  "fatal_exception_count": 0,
+  "su_exit_code": 127,
+  "root_disabled_guest_verified": true
+}

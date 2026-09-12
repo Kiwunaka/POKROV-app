@@ -1063,3 +1063,13 @@ flavors were passed as operational release channels. The source fix uses
 Flutter `appFlavor` for support metadata and preserves the operational channel
 contract. Both flavor regressions and 25 focused tests pass; corrected installed
 proof remains pending. [Exact failure, rollback and source checks](evidence/2026-09-12-r12-android-flavor-startup/README.md).
+
+## 2026-09-12 — fixed startup and numeric support receipt; consent layout
+
+Installed client `f0711b69` / Core `6b271dec` APK `6d4b9987` starts normally
+and creates validated summary case59 with actual build4053/direct identity.
+The audited one-use admin download also passes. Rootless guest boot is verified.
+[Exact native evidence](evidence/2026-09-12-r12-android-support-consent/README.md).
+The same run finds compact-screen PSM consent clipped and untappable. Source
+now uses available height and scrollable content; 18 focused tests and analyze
+pass. Installed corrected consent and extended/crash flow remain pending.

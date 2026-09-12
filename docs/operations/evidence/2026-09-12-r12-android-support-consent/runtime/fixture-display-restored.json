@@ -1,0 +1,22 @@
+{
+  "status": "PASS_QA_DISPLAY_RESTORED",
+  "utc": "2026-09-12T06:27:57.812724+00:00",
+  "before": [
+    "0,pokrov,0,0,0,-1,-1,1080,1920,480",
+    "1,kira,0,0,0,-1,-1,1920,1080,280",
+    "2,moments,0,0,0,-1,-1,1920,1080,280",
+    "3,LDPlayer-3,0,0,0,-1,-1,1280,720,240"
+  ],
+  "after": [
+    "0,pokrov,0,0,0,-1,-1,1080,1920,480",
+    "1,kira,0,0,0,-1,-1,1920,1080,280",
+    "2,moments,0,0,0,-1,-1,1920,1080,280",
+    "3,pokrov-qa-120,0,0,0,-1,-1,1080,1920,480"
+  ],
+  "prior_root_restoration_sha256_matched": true,
+  "cpu": 4,
+  "memory_mib": 4096,
+  "device_property_fields_unchanged": true,
+  "other_configs_unchanged": true,
+  "after_config_sha256": "29c88dd722e0c439fcc7888943b9eb916cbbb21841002e9a1c61bfd31a4ad5aa"
+}
