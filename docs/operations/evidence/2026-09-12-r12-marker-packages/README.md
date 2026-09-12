@@ -375,3 +375,50 @@ PASS33 and `python -B scripts/agent_context_packet_audit.py
 --platform-context-root .` PASS. All62 archive members and four direct receipt
 hashes match disk/index; added local links,83 unchanged registry statuses,
 staged diff checks and no release-artifact delta PASS.
+
+
+## 2026-09-12 US Reality path diagnosis
+
+[Result](ny-path-result.json), [75-member receipt](ny-path-files.json) and
+[SPB Full](ny-path-spb-full.png)/[NY selection](ny-path-ny-selection.png)/
+[NY failure](ny-path-ny-failure.png)/[restored](ny-path-restored.png) captures
+retain exact APK becd25fa, client b93/Core6b. SPB Full protection/TUN passes;
+selected NY Russia-direct fails on two ordinary attempts; SPB Russia-direct
+recovers. Home keeps the last verified SPB label after NY failure by its existing
+contract. The initial filenames mentioning a race are a discarded hypothesis,
+not a selection-loss finding. No new independent Android HTTP proof is claimed.
+
+Brain TCP to both live configured nodes passes. Both nodes HEAD the owned Core
+probe URL with204. The own-install panel/profile identity, enable/expiry/flow,
+Reality key/SNI/short-ID comparisons pass. Both Xray26.6.27/Firefox, unrestricted
+time/version policy and no MLDSA seed; current-process config files agree on
+that policy. Literal endpoint IPv4/peer hashes agree across three origins.
+Remote clock skew is retained and not hidden as network latency.
+
+A temporary Xray on US using this own profile passes204. Unmodified Core6b CLI
+builds for Windows/Linux pass (36.6s/28.8s); they are diagnostic VLESS/uTLS fixtures,
+not release DLL/AARs. The exact Windows CLI6adff9ac fails US with the fixed safe
+term `reality verification failed`, while SPB passes204. Changing only temporary
+fingerprint to Chrome still fails. Linux CLIef022ef1 on US passes204. The same
+Windows bytes/profile through an authenticated SSH forward to US loopback443
+passes204. This establishes a current-origin path-dependent Reality rejection;
+it does not establish DPI, ASN, MTU, packet modification or intermediary cause.
+The ordinary US path remains FAIL; alternate-path success is not readiness.
+
+All temporary Core/Xray/SSH processes and listeners stop; uploaded Linux binary
+and its new directory are removed. Production Xray PID/service remain unchanged.
+Original app choices, guest/host route/DNS and normalized IPv6 restore, root stays
+false, all emulators stop with4MiB/512MiB growth and40GiB floors. No product source,
+production configuration, release pointer or default fingerprint changes.
+Commands, failed attempts, safe log counts/hashes and limitations are in the
+archive. `verify.py` PASS. Full N08/F01/Q01 and physical/Windows/RU-origin/release
+acceptance remain open.
+
+Validation: `pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot
+C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot C:/r12corec02`
+PASS (terminal exit0). Platform `python -B -m pytest -p no:cacheprovider
+tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q`
+PASS33; `python -B scripts/agent_context_packet_audit.py
+--platform-context-root .` PASS. All75 archive/five direct disk and index hashes,
+added local links,83 unchanged registry status tuples and release isolation
+PASS. Core source remains clean; staged diff checks PASS.

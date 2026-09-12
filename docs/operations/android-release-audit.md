@@ -1332,3 +1332,16 @@ stale repair sheet changes pending to off without refresh; SPB healthy/TUN and
 timeout,5/6 controls overall. Root, guest/host network, original UI and emulator
 bounds restore. Other packages and physical/Windows acceptance remain open;
 no release pointer or public delivery changes.
+
+
+## 2026-09-12 NY failure narrowed to current network path
+
+[Exact path comparison](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-us-reality-path-diagnosis)
+retains APK becd25fa: SPB Full healthy and selected NY Russia-direct failing;
+SPB recovery/restoration pass. Unmodified Core6b Windows CLI reproduces Reality
+verification failure on the ordinary US path and passes with the same profile
+through an authenticated SSH forward. Node-origin Core/Xray pass; profile/panel
+consistency and same endpoint digest pass. A particular filtering cause is not
+proven. Ordinary US remains FAIL; full N08 and physical/RU-origin acceptance stay
+open. Temporary fixtures are removed, root/network/UI restored, no source or
+production configuration change.
