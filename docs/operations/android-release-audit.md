@@ -1299,3 +1299,14 @@ external OIDC, physical ARM64 and full privacy/license/release are not re-proved
 Initial pre-APK boot failure is retained. Local mode/root/host network and all
 emulators are restored;6HTTPS and18MiB cumulative boot growth checks pass. No new
 package, source change or deploy; the one owned QA case/policy and audits persist.
+
+## 2026-09-12 current806 Android UID routing
+
+[Retained four-mode matrix](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-android-uid-routing-matrix)
+proves empty-selected refusal, installed Chrome UID selection and native shell
+UID2000 inclusion/exclusion on rootless LDPlayer3/API34. Four modes pass12HTTPS;
+whole-TUN counters remain aggregate. Normal UI restores the original displayed
+Russia-direct/SPB/WARP-off state, guest network and final3HTTPS; host unchanged,
+emulators stopped and8MiB growth. This is bounded current-origin/source806/Core6b
+evidence. Independent per-flow egress, RU exceptions, DNS/IPv6/LAN and physical
+matrix remain open; no new package or public release.

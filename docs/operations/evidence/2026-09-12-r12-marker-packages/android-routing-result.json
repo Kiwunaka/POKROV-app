@@ -1,0 +1,126 @@
+{
+  "status": "PASS_BOUNDED_ANDROID_UID_ROUTING_MATRIX",
+  "utc": "2026-09-12T14:47:54.464779+00:00",
+  "installed_apk_sha256": "7ffacdfae3273d0b03d07a4d2157100606ad49fa8d81e466f3df437ca66184c0",
+  "client_source": "8067520c7b9230ab0c66823fae9ae78791f1a838",
+  "core_source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "environment": "owned LDPlayer3 API34 x86_64 current-origin behind existing host VPN",
+  "empty_selected": "PASS: normal Connect returns to Rules with explicit selection message; no TUN/service",
+  "chrome_scope_only": "VPN ranges10083/20083 observed; Chrome stopped at first-run page, no browser HTTP success claimed",
+  "matrix": [
+    {
+      "mode": "selected-shell",
+      "shell_uid": 2000,
+      "shell_in_vpn": true,
+      "chrome_in_vpn": false,
+      "vpn_uid_ranges": [
+        [
+          2000,
+          2000
+        ]
+      ],
+      "https_pass": 3,
+      "tun_delta_bytes": {
+        "rx_bytes": 11630,
+        "tx_bytes": 11780
+      },
+      "counter_scope": "whole TUN; background traffic is not attributed to the probe"
+    },
+    {
+      "mode": "except-shell",
+      "shell_uid": 2000,
+      "shell_in_vpn": false,
+      "chrome_in_vpn": true,
+      "vpn_uid_ranges": [
+        [
+          0,
+          1999
+        ],
+        [
+          2001,
+          10110
+        ],
+        [
+          10112,
+          20110
+        ],
+        [
+          20112,
+          99999
+        ]
+      ],
+      "https_pass": 3,
+      "tun_delta_bytes": {
+        "rx_bytes": 152,
+        "tx_bytes": 152
+      },
+      "counter_scope": "whole TUN; background traffic is not attributed to the probe"
+    },
+    {
+      "mode": "full",
+      "shell_uid": 2000,
+      "shell_in_vpn": true,
+      "chrome_in_vpn": true,
+      "vpn_uid_ranges": [
+        [
+          0,
+          10110
+        ],
+        [
+          10112,
+          20110
+        ],
+        [
+          20112,
+          99999
+        ]
+      ],
+      "https_pass": 3,
+      "tun_delta_bytes": {
+        "rx_bytes": 11633,
+        "tx_bytes": 11601
+      },
+      "counter_scope": "whole TUN; background traffic is not attributed to the probe"
+    },
+    {
+      "mode": "ru-direct",
+      "shell_uid": 2000,
+      "shell_in_vpn": true,
+      "chrome_in_vpn": true,
+      "vpn_uid_ranges": [
+        [
+          0,
+          10110
+        ],
+        [
+          10112,
+          20110
+        ],
+        [
+          20112,
+          99999
+        ]
+      ],
+      "https_pass": 3,
+      "tun_delta_bytes": {
+        "rx_bytes": 11658,
+        "tx_bytes": 11626
+      },
+      "counter_scope": "whole TUN; background traffic is not attributed to the probe"
+    }
+  ],
+  "final_https_pass": 3,
+  "normal_ui_cleanup": "test Chrome selection replaced with shell then removed; manual input collapsed; original Russia-direct mode/SPB location/WARP-off/disconnected restored",
+  "root_mode_changed": false,
+  "guest_ipv4_dns_restored": true,
+  "guest_ipv6_restored_after_expiry_normalization": true,
+  "host_routes_dns_unchanged": true,
+  "all_emulators_stopped": true,
+  "max_disk_growth_bytes": 8388608,
+  "minimum_free_bytes": {
+    "C:/": 62527676416,
+    "E:/": 137460609024
+  },
+  "full_N08": "OPEN: independent per-flow egress/ru-domain/direct-exception DNS IPv6 LAN and physical/platform matrix not proven",
+  "build_deploy_publication": "NOT_PERFORMED"
+}

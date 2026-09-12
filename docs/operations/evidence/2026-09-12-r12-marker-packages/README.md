@@ -244,3 +244,42 @@ tests/test_agent_context_packet_audit.py -q` PASS33; `python -B
 scripts/agent_context_packet_audit.py --platform-context-root .` PASS.
 Both staged diff checks and release-artifact isolation PASS. No additional
 product builds or broad runtime regressions were run for this evidence-only change.
+
+## 2026-09-12 Android UID routing matrix
+
+[Result](android-routing-result.json) and [archive/member hashes](android-routing-files.json)
+retain rootless source806/Core6b on the existing LDPlayer3/API34. Empty selected
+refuses normal Connect with [explicit guidance](android-routing-empty.png) and
+no TUN. The native installed-app picker includes Chrome UID10083/sandbox20083;
+Chrome stops at first-run welcome, with no browser HTTP claim.
+
+A pre-existing Java HTTPS fixture runs as shell UID2000, selected through the
+normal manual app entry. Android includes it only in selected/Full/Russia-direct
+and excludes it in except-selected; POKROV remains excluded in all four modes.
+All12 owned HTTPS markers pass. Whole-TUN rx/tx deltas are11630/11780,
+152/152,11633/11601 and11658/11626 bytes respectively; background traffic prevents
+per-flow attribution. The archive retains exact commands, observations, parser/
+UI corrections and source of the reused fixture. Its DEX was not rehashed in
+this run. These are bounded UID-routing and reachability checks.
+
+Normal UI removes the test selections and [restores the original displayed
+mode/location/WARP state](android-routing-restored.png). IPv4/DNS and normalized
+IPv6 restore, final3HTTPS pass, root stays false, host routes/DNS match, all
+local emulators stop, and disk growth is8MiB with both40GiB floors satisfied.
+Chrome first-launch state was not erased. Full N08 independent egress,
+RU-domain/direct exceptions, DNS/IPv6/LAN and physical/platform matrix remain
+open. No product build/install, source change, production mutation or publication.
+
+Validation: `test/docs-contract.ps1` PASS; `pwsh.exe -NoProfile -ExecutionPolicy
+Bypass -File scripts/validate-seed.ps1 -PlatformRoot
+C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot C:/r12corec02`
+PASS/exit0. The initial in-process seed invocation failed because the caller
+set PSNativeCommandUseErrorActionPreference=true and intercepted the collector
+contract's expected negative exit1. The ordinary separate-process invocation
+passes without code/test changes. Platform `python -B -m pytest -p
+no:cacheprovider tests/test_agent_docs_contract.py
+tests/test_agent_context_packet_audit.py -q` PASS33; `python -B
+scripts/agent_context_packet_audit.py --platform-context-root .` PASS.
+Archive40/direct3 disk+index hashes, script syntax/JSON, bounded private-material
+patterns, added local links and unchanged83 statuses PASS. Both staged diff
+checks and release-artifact isolation PASS. No additional product tests/builds.
