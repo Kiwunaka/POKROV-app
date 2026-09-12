@@ -1,0 +1,20 @@
+Client/Core version parity OK: app=1.2.0+4053 public=1.1.6 target_state=PRE_CANDIDATE_LOCAL core_pre_candidate=1.1.0 core_target=1.1.0 desktop_abi=2 core_checkout=PASS
+Cross-repository product facts projection OK.
+Cross-repository version truth OK: public=1.1.6 package=1.1.6+29 target=1.2.0+4053 state=PRE_CANDIDATE_LOCAL candidate=False
+{"catalog_entry_count":127,"catalog_sha256":"1cef07aea2f859891794546569431d0e6aab91c6921729389fd63013f3002af1","event_schema_sha256":"24ae72442f778d7f1334ae0a4bf4d774738e4de275707b29420ec733af65cc17","status":"VALID"}
+POKROV Core observability contracts OK: schema=1 contracts=2
+Observability contract parity OK: platform/client/Core snapshots agree.
+Release source logging gate OK: 161 production files.
+Release source logging contract OK: real tree plus 4 negative cases.
+Release-handoff v2 client contract OK: 16 cases.
+Release rollback catalog contract OK: retained pointer plus 5 synthetic cases.
+PASS: client release-v2 CI is strict and the Windows exact-candidate gate retains sanitized failure evidence.
+Repository hygiene OK: effective_tracked=3938 retained_history=138 pending_temp_deletes=0 runtime_binaries=3
+PASS: standard client gate analyzes testless modules, tests all test-bearing modules and both Android flavors, and resolves Gradle and Python tools on Windows/Linux.
+Client presentation boundary OK: aggregate Home state/intents, five coordinators, update feature owner, progressive protection disclosure, 29 parts, centralized haptics.
+Client performance samples: C:\Users\kiwun\AppData\Local\Temp\pokrov-client-performance-816e7b84417647e0ac32619398cbfde5\cpu-counter-0.json
+Mode: WindowsIdleCpu; retained samples: 1; discarded warmups: 0
+Client performance collector contract OK.
+Client docs contract OK.
+Seed scaffold OK:
+E:\r12client

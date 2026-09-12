@@ -1,0 +1,12 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/dart-lang/sdk/3.10.4/runtime/bin/file_win.cc",
+    "sha256": "74d4a237715d6f9198ac7db826370c574ed8014eb05da4b9f6ca8add7aaf4057",
+    "dart_version": "3.10.4"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/dart-lang/sdk/3.10.4/runtime/bin/file_linux.cc",
+    "sha256": "8bc8b86b019028a11ddf314ba5dc43d3a3ccbeebd7959ae3a926ff90879423e5",
+    "dart_version": "3.10.4"
+  }
+]

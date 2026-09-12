@@ -1,0 +1,11 @@
+00:00 +0: loading E:/r12client/packages/observability_runtime/test/phase_timeline_test.dart
+00:00 +0: phase timeline records duration and requires every current proof
+00:00 +1: cancel, supersede, timeout and crash are distinct closed terminals
+00:00 +2: portal correlation scope retains only canonical UUIDv4
+00:00 +3: release-health mirror strips correlation and arbitrary attributes
+00:00 +4: release-health mirrors count only for exact Android routing terminal
+00:00 +5: previous-exit marker recovers safe breadcrumbs and is not authority
+00:00 +6: previous-exit survives a failed async rename
+00:00 +7: previous-exit survives a failed sync rename
+00:00 +8: failure maps and all problem-book paths remain closed
+00:00 +9: All tests passed!

@@ -1,0 +1,70 @@
+{
+  "status": "PASS_REPRODUCED_AND_FIXED_MARKER_REPLACEMENT",
+  "utc": "2026-09-12T10:01:40.232886+00:00",
+  "baseline_commit": "33965ebc317f011958c341fe6ebba444fe76ac5c",
+  "regressions_before": "2 failed: previous marker absent after rename error",
+  "regressions_after": "2 passed in9 phase/timeline tests",
+  "package_regressions": "31 passed",
+  "analyze": "PASS",
+  "native_windows": "both async/sync sharing violation32 preserve old bytes; unlocked rename replaces existing destination",
+  "harness_compile_failure": "before.log has the first test-double return-type mismatch; not product evidence",
+  "production_change": "Remove explicit destination deletion before asynchronous and synchronous rename",
+  "new_packages_and_devices": "NOT_BUILT_OR_TESTED_FOR_THIS_FIX",
+  "captures": [
+    {
+      "path": "before.log",
+      "bytes": 1850,
+      "sha256": "4809c89d51ec880a13314433a2461942ec5e5d4632ca1676a8f417e32de77f99"
+    },
+    {
+      "path": "before-fixed-harness.log",
+      "bytes": 837,
+      "sha256": "aa4f49b94429a2bca15f01cb7d5d022f503660142c0ba1b57d3a655e8de150ad"
+    },
+    {
+      "path": "after.log",
+      "bytes": 754,
+      "sha256": "c3bd51bb61a01f670b6072d77c226fa253034e9027b3ad05d066347cff23a3f3"
+    },
+    {
+      "path": "runtime-tests.log",
+      "bytes": 5322,
+      "sha256": "6b50422dbbd316d993e175cc96b4d7980bb17d22a50da88c685760d15e377958"
+    },
+    {
+      "path": "analyze.log",
+      "bytes": 76,
+      "sha256": "0ebd46b3a991310e1533545147755bb3ffdf2c15148b75dd6d5e2730d1cad347"
+    },
+    {
+      "path": "native-rename.dart",
+      "bytes": 1745,
+      "sha256": "1ca1c8884fca2f4ba8467cbc979678f12a17880d43888d04f8dad9b201faee17"
+    },
+    {
+      "path": "native-rename.json",
+      "bytes": 263,
+      "sha256": "c2f7c2d1c0d0b4ad40ce4462984d406accbdd1a002a9bc70435a52f78d9d5002"
+    },
+    {
+      "path": "sdk-source-binding.json",
+      "bytes": 443,
+      "sha256": "5bd1034fe3278405907a4e81a21bd11baf4cdf25df6f580780e85f292a22e505"
+    },
+    {
+      "path": "source.patch",
+      "bytes": 5546,
+      "sha256": "039160bc4874204019b43b98318890de52597a9ced8a434050c886869bdafc84"
+    },
+    {
+      "path": "docs-contract.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "path": "validate-seed.log",
+      "bytes": 1818,
+      "sha256": "29104e444bd3b151a34d4d825d3cb765527337c1097f8bddf76f2bf7ca359c58"
+    }
+  ]
+}

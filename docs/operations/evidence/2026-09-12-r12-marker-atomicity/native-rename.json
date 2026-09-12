@@ -1,0 +1,1 @@
+{"status":"PASS_WINDOWS_NATIVE_RENAME","results":[{"synchronous":false,"native_failure_code":32,"old_marker_survived":true,"replacement_after_unlock":true},{"synchronous":true,"native_failure_code":32,"old_marker_survived":true,"replacement_after_unlock":true}]}

@@ -239,6 +239,41 @@ void main() {
     expect((await store.readPrevious()).kind, PreviousExitKind.corrupt);
   });
 
+  for (final synchronous in <bool>[false, true]) {
+    test('previous-exit survives a failed ${synchronous ? 'sync' : 'async'} rename',
+        () async {
+      final directory = await Directory.systemTemp.createTemp('pokrov-exit-');
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File('${directory.path}/previous-exit.json');
+      final temporary = File('${file.path}.next');
+      final store = PreviousExitMarkerStore(file: file);
+      final runId = OperationalIdFactory(random: Random(7)).uuidV4();
+      await store.beginRun(runId);
+      final before = await file.readAsBytes();
+
+      await IOOverrides.runZoned(() async {
+        if (synchronous) {
+          store.markCrashSynchronously(
+            errorCode: 'CRASH-001',
+            crashSignature: '0123456789abcdef',
+          );
+        } else {
+          await store.markCleanExit();
+        }
+      }, createFile: (path) {
+        expect(path, temporary.path);
+        return _RenameFailureFile(temporary);
+      });
+
+      expect(store.writeErrors, 1);
+      expect(await file.exists(), isTrue);
+      expect(await file.readAsBytes(), before);
+      final previous = await store.readPrevious();
+      expect(previous.kind, PreviousExitKind.unclean);
+      expect(previous.runId, runId);
+    });
+  }
+
   test('failure maps and all problem-book paths remain closed', () {
     OperationalFailureMapper.validateCatalogCoverage();
     expect(
@@ -367,4 +402,51 @@ final class _MemoryWriter implements OperationalEventWriter {
   Future<void> appendBatch(List<SerializedOperationalEvent> records) async {
     events.addAll(records.map((record) => record.event));
   }
+}
+
+final class _RenameFailureFile implements File {
+  _RenameFailureFile(this.delegate);
+
+  final File delegate;
+
+  @override
+  Future<bool> exists() => delegate.exists();
+
+  @override
+  bool existsSync() => delegate.existsSync();
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) =>
+      delegate.delete(recursive: recursive);
+
+  @override
+  void deleteSync({bool recursive = false}) =>
+      delegate.deleteSync(recursive: recursive);
+
+  @override
+  Future<File> writeAsString(String contents,
+          {FileMode mode = FileMode.write,
+          Encoding encoding = utf8,
+          bool flush = false}) =>
+      delegate.writeAsString(contents,
+          mode: mode, encoding: encoding, flush: flush);
+
+  @override
+  void writeAsStringSync(String contents,
+          {FileMode mode = FileMode.write,
+          Encoding encoding = utf8,
+          bool flush = false}) =>
+      delegate.writeAsStringSync(contents,
+          mode: mode, encoding: encoding, flush: flush);
+
+  @override
+  Future<File> rename(String newPath) async =>
+      throw const FileSystemException('Owned rename failure fixture');
+
+  @override
+  File renameSync(String newPath) =>
+      throw const FileSystemException('Owned rename failure fixture');
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

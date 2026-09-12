@@ -1,0 +1,140 @@
+diff --git a/docs/architecture/persisted-state-contract.md b/docs/architecture/persisted-state-contract.md
+index 82c650d..8641a94 100644
+--- a/docs/architecture/persisted-state-contract.md
++++ b/docs/architecture/persisted-state-contract.md
+@@ -101,6 +101,14 @@ rejection, distinct cancelled/superseded/timeout/crash terminals, and an
+ identity-free aggregate projection. Exact-candidate crash survival and remote
+ delivery remain candidate/environment evidence, not a source-level pass.
+ 
++Previous-exit writes flush a same-directory `.next` file and rename it over the
++existing marker without deleting the destination first. If either asynchronous
++or synchronous rename fails, the last committed marker remains readable and
++`writeErrors` increments. Two fault-injection regressions cover that failure;
++the Windows Dart 3.10.4 native check also verifies sharing-violation preservation
++and replacement after the temporary file is unlocked. This does not establish
++power-loss durability or installed-device crash survival for a new package.
++
+ ### Android staged profile identity
+ 
+ The additive `config_digest` in supported schema `1` is lowercase SHA-256 of
+diff --git a/packages/observability_runtime/lib/src/crash_marker.dart b/packages/observability_runtime/lib/src/crash_marker.dart
+index e726bc4..533fa04 100644
+--- a/packages/observability_runtime/lib/src/crash_marker.dart
++++ b/packages/observability_runtime/lib/src/crash_marker.dart
+@@ -270,9 +270,6 @@ final class PreviousExitMarkerStore {
+         await temporary.delete();
+       }
+       await temporary.writeAsString(encoded, flush: true);
+-      if (await file.exists()) {
+-        await file.delete();
+-      }
+       await temporary.rename(file.path);
+     } on FileSystemException {
+       _writeErrors += 1;
+@@ -289,9 +286,6 @@ final class PreviousExitMarkerStore {
+         temporary.deleteSync();
+       }
+       temporary.writeAsStringSync(encoded, flush: true);
+-      if (file.existsSync()) {
+-        file.deleteSync();
+-      }
+       temporary.renameSync(file.path);
+     } on FileSystemException {
+       _writeErrors += 1;
+diff --git a/packages/observability_runtime/test/phase_timeline_test.dart b/packages/observability_runtime/test/phase_timeline_test.dart
+index 34c63fc..c15808b 100644
+--- a/packages/observability_runtime/test/phase_timeline_test.dart
++++ b/packages/observability_runtime/test/phase_timeline_test.dart
+@@ -239,6 +239,41 @@ void main() {
+     expect((await store.readPrevious()).kind, PreviousExitKind.corrupt);
+   });
+ 
++  for (final synchronous in <bool>[false, true]) {
++    test('previous-exit survives a failed ${synchronous ? 'sync' : 'async'} rename',
++        () async {
++      final directory = await Directory.systemTemp.createTemp('pokrov-exit-');
++      addTearDown(() => directory.delete(recursive: true));
++      final file = File('${directory.path}/previous-exit.json');
++      final temporary = File('${file.path}.next');
++      final store = PreviousExitMarkerStore(file: file);
++      final runId = OperationalIdFactory(random: Random(7)).uuidV4();
++      await store.beginRun(runId);
++      final before = await file.readAsBytes();
++
++      await IOOverrides.runZoned(() async {
++        if (synchronous) {
++          store.markCrashSynchronously(
++            errorCode: 'CRASH-001',
++            crashSignature: '0123456789abcdef',
++          );
++        } else {
++          await store.markCleanExit();
++        }
++      }, createFile: (path) {
++        expect(path, temporary.path);
++        return _RenameFailureFile(temporary);
++      });
++
++      expect(store.writeErrors, 1);
++      expect(await file.exists(), isTrue);
++      expect(await file.readAsBytes(), before);
++      final previous = await store.readPrevious();
++      expect(previous.kind, PreviousExitKind.unclean);
++      expect(previous.runId, runId);
++    });
++  }
++
+   test('failure maps and all problem-book paths remain closed', () {
+     OperationalFailureMapper.validateCatalogCoverage();
+     expect(
+@@ -368,3 +403,50 @@ final class _MemoryWriter implements OperationalEventWriter {
+     events.addAll(records.map((record) => record.event));
+   }
+ }
++
++final class _RenameFailureFile implements File {
++  _RenameFailureFile(this.delegate);
++
++  final File delegate;
++
++  @override
++  Future<bool> exists() => delegate.exists();
++
++  @override
++  bool existsSync() => delegate.existsSync();
++
++  @override
++  Future<FileSystemEntity> delete({bool recursive = false}) =>
++      delegate.delete(recursive: recursive);
++
++  @override
++  void deleteSync({bool recursive = false}) =>
++      delegate.deleteSync(recursive: recursive);
++
++  @override
++  Future<File> writeAsString(String contents,
++          {FileMode mode = FileMode.write,
++          Encoding encoding = utf8,
++          bool flush = false}) =>
++      delegate.writeAsString(contents,
++          mode: mode, encoding: encoding, flush: flush);
++
++  @override
++  void writeAsStringSync(String contents,
++          {FileMode mode = FileMode.write,
++          Encoding encoding = utf8,
++          bool flush = false}) =>
++      delegate.writeAsStringSync(contents,
++          mode: mode, encoding: encoding, flush: flush);
++
++  @override
++  Future<File> rename(String newPath) async =>
++      throw const FileSystemException('Owned rename failure fixture');
++
++  @override
++  File renameSync(String newPath) =>
++      throw const FileSystemException('Owned rename failure fixture');
++
++  @override
++  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
++}

@@ -270,9 +270,6 @@ final class PreviousExitMarkerStore {
         await temporary.delete();
       }
       await temporary.writeAsString(encoded, flush: true);
-      if (await file.exists()) {
-        await file.delete();
-      }
       await temporary.rename(file.path);
     } on FileSystemException {
       _writeErrors += 1;
@@ -289,9 +286,6 @@ final class PreviousExitMarkerStore {
         temporary.deleteSync();
       }
       temporary.writeAsStringSync(encoded, flush: true);
-      if (file.existsSync()) {
-        file.deleteSync();
-      }
       temporary.renameSync(file.path);
     } on FileSystemException {
       _writeErrors += 1;
