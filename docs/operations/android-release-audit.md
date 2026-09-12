@@ -1381,3 +1381,16 @@ retains the initial regression and passing checks: 190 JVM tests per flavor,
 22 focused Flutter tests and two clean package analyses. This is source proof;
 the installed APK has not changed. N05, N01/N03, physical and installed-package
 gates remain open. No release artifact or publication was changed.
+
+
+## Installed Android follow-up — N05, 2026-09-12
+
+The [installed N05 record](evidence/2026-09-12-r12-android-probe-observations/README.md#installed-android-follow-up)
+binds source c2d2e02/Core6b, signed PR127/merge f31ecb22 and both exact CI passes.
+Rootless same-signer/version4053 update to x64 APK e844bf15 preserves UID and
+first-install time. New York/Full failure now reaches the connection-stage
+public copy and stops TUN/service; SPB/ordinary retry clears it and restores
+host protection. Original UI/network/root state is restored, VMs stopped,
+growth13MiB within the guard. The new package is kept; old output/rollback bytes
+are retained. Installed TLS/response/timeout faults, physical/Windows/RU-origin
+and N05/N01/N03 full gates remain open. No public release or pointer changes.

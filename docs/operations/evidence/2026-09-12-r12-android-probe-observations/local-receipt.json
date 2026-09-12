@@ -81,7 +81,7 @@
     "runtime_engine_analyze": "PASS"
   },
   "archive": {
-    "path": "local-checks.zip",
+    "path": "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start/docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/n05-android-probe-observations-20260912/local-checks.zip",
     "bytes": 5392,
     "sha256": "08b1fd94c80f31785b7a9823787378fab4c2f17bbe2cc949d7aaa658f8823456",
     "members": [
@@ -125,7 +125,8 @@
         "bytes": 234,
         "sha256": "1f3e562bef5879cad39645e4aa75694531b4fec413e5e589dc53420e1c582186"
       }
-    ]
+    ],
+    "previous_client_path": "docs/operations/evidence/2026-09-12-r12-android-probe-observations/local-checks.zip"
   },
   "limits": [
     "Reflection fixture exercises exact Core closed strings, not the installed gomobile/Android package",

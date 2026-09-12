@@ -7,7 +7,7 @@
   "platform_docs_tests": 33,
   "platform_context_audit": "PASS",
   "archive": {
-    "path": "final-validation.zip",
+    "path": "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start/docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/n05-android-probe-observations-20260912/final-validation.zip",
     "sha256": "30c52018c8db37495324667871538f9cbce213d9044f92fd2a37f6803a6c694a",
     "bytes": 1774,
     "members": [
@@ -31,6 +31,7 @@
         "bytes": 23,
         "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
       }
-    ]
+    ],
+    "previous_client_path": "docs/operations/evidence/2026-09-12-r12-android-probe-observations/final-validation.zip"
   }
 }
