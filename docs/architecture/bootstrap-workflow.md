@@ -191,7 +191,7 @@ Current blocking dependency:
   method on the server captured for the active lifecycle task. A delayed result
   for another invocation cannot satisfy this call, and the existing session and
   generation fences still guard its application. Shared ABI1 operational events
-  remain diagnostic breadcrumbs. A missing method or invocation failure returns
+  remain diagnostic breadcrumbs. A missing method or unknown invocation failure returns
   `UNAVAILABLE`, never healthy. Selector/urltest groups use the per-call
   `ProbeSelectedOutbound` method, which captures the selected proxy leaf and
   rejects a changed selection, runtime replacement, timeout, direct leaf or
@@ -582,6 +582,20 @@ incomplete DNS/egress proofs. Failed Core startup, unavailable verifier or absen
 network must not become a DNS fault merely because no proof was completed.
 Without an explicit failure, existing proof-gap presentation remains available.
 These mappings grant no route change or retry permission.
+
+Android per-call Core probes also retain the exact closed `ProbeError.Error()`
+observations: connection and TLS negotiation failures become
+`core_egress_connect_failed` and `core_egress_tls_failed`; response-stage and
+unspecified probe failures remain `core_egress_probe_failed`. Only exact known
+messages from the invoked method qualify. Missing APIs and unknown exception
+text remain unavailable; raw exception details never enter the snapshot.
+These failures use the existing completed-failure policy: endpoint probes get
+at most three attempts, group failures are terminal, and session/generation/TUN
+fences still decide whether a result applies. The stop reason stays the generic
+failed-egress reason while the failure kind retains the stage. Existing managed
+and emergency retry limits and the closed AWG degraded-TUN exception remain.
+The stage describes the check, not a proven node fault or filtering cause;
+the closed exception text cannot distinguish DNS, timeout or DPI subcauses.
 
 The shared catalog distinguishes pending profile provisioning (`API-011`),
 unresolved interface (`ROUTE-005`) and an unspecified runtime failure (`CORE-009`).

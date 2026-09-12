@@ -1271,7 +1271,7 @@ void _installReadyRuntimeBridgeMock({
             'supportsLiveConnect': true,
             'canInitialize': true,
             'canConnect': true,
-            'last_failure_kind': 'core_egress_probe_failed',
+            'last_failure_kind': 'core_egress_connect_failed',
             'message': 'Выход через выбранную локацию не подтверждён.',
           };
         }
@@ -9931,7 +9931,7 @@ void main() {
                     egressValidated: false,
                     failureKind: proofUnavailable
                         ? 'core_egress_probe_unavailable'
-                        : 'core_egress_probe_failed',
+                        : 'core_egress_tls_failed',
                     message:
                         'POKROV не подтвердил защищенное подключение и отключил системный VPN.',
                   );

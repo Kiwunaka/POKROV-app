@@ -192,6 +192,48 @@ class AndroidCoreEgressProbeTest {
         fun probeEndpoint(@Suppress("UNUSED_PARAMETER") tag: String): Boolean = error("synthetic private failure")
     }
 
+    class FailedResponseCore(private val message: String) {
+        fun probeEndpoint(@Suppress("UNUSED_PARAMETER") tag: String): Boolean =
+            throw Exception(message)
+
+        fun probeSelectedOutbound(tag: String): Boolean = probeEndpoint(tag)
+    }
+
+    @Test
+    fun completedFailedProbeIsNotAnUnavailableApi() {
+        val cases = mapOf(
+            "URL probe connection failed" to AndroidCoreEgressProbeResult.CONNECT_FAILED,
+            "URL probe TLS negotiation failed" to AndroidCoreEgressProbeResult.TLS_FAILED,
+            "URL probe response failed" to AndroidCoreEgressProbeResult.FAILED,
+            "URL probe failed" to AndroidCoreEgressProbeResult.FAILED,
+            "URL probe connection failed: private detail" to AndroidCoreEgressProbeResult.UNAVAILABLE,
+        )
+        for (kind in AndroidCoreEgressProbeTargetKind.values()) {
+            for ((message, expected) in cases) {
+                assertEquals(expected, AndroidCoreEgressProbe.resultFromCore(
+                    FailedResponseCore(message), AndroidCoreEgressProbeTarget("target", kind),
+                ))
+            }
+        }
+    }
+
+    @Test
+    fun observedStagesKeepFailureRetriesAndGenerationFences() {
+        for ((result, code) in mapOf(
+            AndroidCoreEgressProbeResult.CONNECT_FAILED to "core_egress_connect_failed",
+            AndroidCoreEgressProbeResult.TLS_FAILED to "core_egress_tls_failed",
+        )) {
+            assertEquals(code, result.failureKind())
+            val endpoint = AndroidCoreEgressProbeTarget("target", AndroidCoreEgressProbeTargetKind.ENDPOINT)
+            val group = AndroidCoreEgressProbeTarget("target", AndroidCoreEgressProbeTargetKind.GROUP)
+            assertTrue(AndroidCoreEgressRetryPolicy.shouldRetry(endpoint, result, 2))
+            assertFalse(AndroidCoreEgressRetryPolicy.shouldRetry(endpoint, result, 3))
+            assertFalse(AndroidCoreEgressRetryPolicy.shouldRetry(group, result, 1))
+            assertTrue(AndroidCoreEgressFailClosedPolicy.shouldStopRuntime(result, 7, 7, true))
+            assertFalse(AndroidCoreEgressFailClosedPolicy.shouldStopRuntime(result, 7, 8, true))
+        }
+    }
+
     @Test
     fun missingOrFailingPerCallApiCannotProveHealth() {
         for (kind in AndroidCoreEgressProbeTargetKind.values()) {

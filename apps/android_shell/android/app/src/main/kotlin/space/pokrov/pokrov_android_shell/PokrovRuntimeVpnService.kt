@@ -1099,7 +1099,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     }
                 }
                 if (
-                    result == AndroidCoreEgressProbeResult.FAILED &&
+                    result.isCompletedFailure &&
                     ownsRuntimeSession(session) &&
                     healthGeneration.get() == generation
                 ) {
@@ -1193,7 +1193,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             AndroidOperationalEvent.CORE_EGRESS_PROBE,
             when (probeResult) {
                 AndroidCoreEgressProbeResult.HEALTHY -> AndroidOperationalOutcome.VERIFIED
-                AndroidCoreEgressProbeResult.FAILED -> AndroidOperationalOutcome.FAILED
+                AndroidCoreEgressProbeResult.FAILED,
+                AndroidCoreEgressProbeResult.CONNECT_FAILED,
+                AndroidCoreEgressProbeResult.TLS_FAILED,
+                -> AndroidOperationalOutcome.FAILED
                 AndroidCoreEgressProbeResult.UNAVAILABLE,
                 AndroidCoreEgressProbeResult.TIMED_OUT,
                 -> AndroidOperationalOutcome.STALLED
@@ -1201,11 +1204,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             generation,
         )
         if (keepRuntimeOnFailure && probeResult != AndroidCoreEgressProbeResult.HEALTHY) {
-            val failureKind = if (probeResult == AndroidCoreEgressProbeResult.FAILED) {
-                "core_egress_probe_failed"
-            } else {
-                "core_egress_probe_unavailable"
-            }
+            val failureKind = probeResult.failureKind()
             AndroidRuntimeState.updateCoreEgressValidation(false)
             AndroidRuntimeState.markDegraded(
                 failureKind = failureKind,
@@ -1239,16 +1238,16 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             return
         }
 
-        val failureKind = if (probeResult == AndroidCoreEgressProbeResult.FAILED) {
-            "core_egress_probe_failed"
-        } else {
-            "core_egress_probe_unavailable"
-        }
+        val failureKind = probeResult.failureKind()
         val failureMessage = AndroidRuntimeSafety.publicFailureMessage(failureKind)
         AndroidRuntimeState.updateCoreEgressValidation(false)
         stopRuntime(
             message = failureMessage,
-            stopReason = failureKind,
+            stopReason = if (probeResult.isCompletedFailure) {
+                "core_egress_probe_failed"
+            } else {
+                "core_egress_probe_unavailable"
+            },
             failureKind = failureKind,
         )
         mainHandler.post { stopSelf() }
