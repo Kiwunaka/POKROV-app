@@ -1549,3 +1549,13 @@ The current DLL also passed 300 lifecycle cycles/600 cancellations; exact source
 race/fuzz/resource checks pass. C02 finite DoD is verified/I3. Failed VM budget
 and overlapped-click attempts are retained. Full C05/V01, current Android,
 licensing/source delivery and release gates remain open.
+
+## 2026-09-12 Shared support build metadata correction
+
+[Android runtime finding and shared fix](evidence/2026-09-12-r12-android-support-build/README.md)
+also applies to the retained current Windows case57: admin received
+`pokrov-local-client` in the build-number field. Shared support assembly now
+uses the actual build number. The wire schema is unchanged; 24 focused tests
+and analysis pass. Rebuilding/installing the fixed Windows package and proving
+its numeric-build receipt remain pending. Earlier privacy/access passes remain
+bounded to their stated scope and do not prove corrected build metadata.

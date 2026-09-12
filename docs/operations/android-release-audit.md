@@ -1154,3 +1154,14 @@ log privacy. Six synthetic markers stay in the internal returned JNI exception
 but are absent from stdout/stderr/child logcat. The account is expired, so TUN
 and entitlement-dependent flows were not exercised. Emulator is off; phone,
 host routes/DNS and Hiddify are untouched. Full C05/V01 and release remain open.
+
+## 2026-09-12 Android summary delivery and build metadata correction
+
+[Exact client2aa/Core6b runtime receipt](evidence/2026-09-12-r12-android-support-build/README.md):
+owned LDPlayer case58 summary preview/encryption/validated upload and audited
+single-use admin download PASS_BOUNDED. The accepted metadata reports
+`pokrov-local-client` as its build number; this is a confirmed failure. Shared
+source now serializes the actual numeric build number and the Android production
+builder sets direct/store channels explicitly. Regression failed before and
+passed after; new fixed packages and installed proof remain pending. No VPN,
+extended/crash or full V01 pass is implied. LDPlayer is stopped; host unchanged.

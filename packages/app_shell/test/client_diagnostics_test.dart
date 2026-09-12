@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
@@ -48,7 +51,7 @@ void main() {
   });
 
   test('verified runtime exposes four current proofs and stable message keys',
-      () {
+      () async {
     final report = PokrovDiagnosticsPresenter.fromRuntime(
       hostPlatform: HostPlatform.android,
       routeMode: RouteMode.allExceptRu,
@@ -74,6 +77,13 @@ void main() {
       'diagnostics.causal.proofs_complete',
     );
     expect(report.checkedAtUtc, now);
+    final identity = report.preparedBundle.preview.files
+        .singleWhere((file) => file.path == 'build/identity.json');
+    final expectedIdentityHash = await Sha256().hash(utf8.encode(
+      '{"app_version":"1.2.0","build_id":"30","channel":"store","platform":"android"}',
+    ));
+    expect(identity.sha256, expectedIdentityHash.bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0')).join());
     expect(report.problemBookId, isNull);
     expect(report.errorCode, isNull);
     expect(report.safeActionKeys, isEmpty);

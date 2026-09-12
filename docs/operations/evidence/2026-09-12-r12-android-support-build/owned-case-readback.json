@@ -1,0 +1,24 @@
+{
+  "status": "PASS_OWNED_ANDROID_CASE_READBACK",
+  "case_number": 58,
+  "case_status": "open",
+  "created_at": "2026-09-12T04:28:03.143081",
+  "install_sha256": "a8e19d7739f511e191aba5d7bdef9162fc2f91c0709a5d34f516313a7ed8f557",
+  "account_sha256": "409d232148335d35d97036c4541ae7aa9a521d319d4034c12cda95b6cac8d74f",
+  "is_active": false,
+  "expiry_at": "2026-08-31T12:04:50",
+  "bundle": {
+    "status": "validated",
+    "diagnostic_profile": "summary",
+    "app_version": "1.2.0",
+    "build_number": "pokrov-local-client",
+    "platform": "android",
+    "architecture": null,
+    "last_phase": null,
+    "last_error_code": null,
+    "expected_size_bytes": 2445,
+    "received_size_bytes": 2445,
+    "expected_sha256": "65136a5583657a3e2b9b77ab526e1b614cfcce0dae575ff06bb185265d76df3d"
+  },
+  "raw_identifiers_exported": false
+}

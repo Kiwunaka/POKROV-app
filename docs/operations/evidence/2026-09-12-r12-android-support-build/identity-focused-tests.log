@@ -1,0 +1,26 @@
+00:00 +0: loading E:/r12client/packages/app_shell/test/client_diagnostics_test.dart
+00:00 +0: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +1: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +2: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +3: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +4: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +5: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +6: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +7: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +8: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +9: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +10: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: incomplete native crashes block new export and delivery
+00:00 +11: E:/r12client/packages/app_shell/test/support_mode_controller_test.dart: persistent support-mode indicator exposes open and disable
+00:00 +12: E:/r12client/packages/app_shell/test/support_mode_controller_test.dart: persistent support-mode indicator exposes open and disable
+00:00 +13: E:/r12client/packages/app_shell/test/support_mode_controller_test.dart: persistent support-mode indicator exposes open and disable
+00:00 +14: E:/r12client/packages/app_shell/test/support_mode_controller_test.dart: persistent support-mode indicator exposes open and disable
+00:00 +15: E:/r12client/packages/app_shell/test/support_mode_controller_test.dart: persistent support-mode indicator exposes open and disable
+00:00 +16: E:/r12client/packages/app_shell/test/support_mode_controller_test.dart: persistent support-mode indicator exposes open and disable
+00:00 +17: E:/r12client/packages/app_shell/test/support_mode_controller_test.dart: persistent support-mode indicator exposes open and disable
+00:00 +18: E:/r12client/packages/app_shell/test/support_mode_controller_test.dart: persistent support-mode indicator exposes open and disable
+00:01 +19: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: screen renders catalog rule and sanitized safe actions
+00:01 +20: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: open diagnostics follows support usage and automatic expiry
+00:01 +21: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: screen shows same-build bands without exact cohort numbers
+00:01 +22: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: limit failure leaves a different saved report retryable with mode off
+00:01 +23: E:/r12client/packages/app_shell/test/client_diagnostics_test.dart: encrypted export cancellation never claims a file was saved
+00:01 +24: All tests passed!
