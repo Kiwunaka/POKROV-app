@@ -99,7 +99,7 @@ that candidate-specific release truth.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `2662f76a3303a0518bb07fbbdc449c066de2f95b`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding, `GO-2026-6303`, AWG endpoint use of the configured default bootstrap resolver and legacy raw-settings/error logging; raw Hysteria2 URI conversion stays disabled, AWG2/AWG 3.1 lifecycle proof is retained, and two local builds per platform produced byte-identical AAR/DLL trees
+- the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `880bff65ad665844828fe50fc395e9cfc1cd81b4`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding, `GO-2026-6303`, AWG endpoint use of the configured default bootstrap resolver and legacy raw-settings/error logging; raw Hysteria2 URI conversion stays disabled, AWG2/AWG 3.1 lifecycle proof is retained, and two local builds per platform produced byte-identical AAR/DLL trees
 - the C05 binding uses Go 1.26.8, x/crypto 0.56.0 and tfo-go 2.3.3 to fix two reachable SSH deadlock advisories. Its Psiphon TLS ConnectionState mirror follows the pinned Go layout with a guarded live handshake/conversion test. [C05 two-build evidence](../operations/evidence/2026-09-06-r12-c05-core-binding/android-evidence.json) and [previous D05 binding](../operations/evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json) retain exact identities; this does not transfer candidate, device, SCM/TUN or WARP proof
 - Core lifecycle errors crossing logs, status and platform ABI expose catalog codes while preserving their typed cause internally; the retained Core c8 privacy binding passed direct FFI planted-data checks; the current C02 binding preserves that source policy and records separate lifecycle/resource evidence
 - managed engine log filtering runs before observable writers, subscriptions and replay buffers in normal and debug mode. Arbitrary messages and tags become `runtime_log_redacted`; only fixed AWG categories survive. The retained [D05 binding evidence](../operations/evidence/2026-09-06-r12-d05-core-binding/android-evidence.json) and [previous binding](../operations/evidence/2026-09-06-r12-d05-core-binding/previous-runtime-binding.json) preserve source and rollback identities
@@ -433,8 +433,10 @@ The asset also preserves the original Psiphon `u_prng.go` copyright and its
 explicit uTLS license reference, linked to the already included BSD body.
 Exact a24b211 local packages retain this notice; final package audits and
 module-precision scan evidence are linked from that record.
-The pinned Psiphon fork still lacks a root LICENSE; this file attribution
-does not establish clearance for the whole fork.
+Core2662 introduced authenticated uTLS7a1fc with its own root LICENSE;
+the current Core880b binding retains it. The previous Core904 fork lacked that
+root license. Current artifacts and remaining licensing limits are retained in
+[Windows adapter cleanup evidence](../operations/evidence/2026-09-12-r12-wintun-binding/README.md).
 This notice binding does not establish complete dependency licensing or
 corresponding-source delivery; remaining gaps stay explicit in release readiness.
 

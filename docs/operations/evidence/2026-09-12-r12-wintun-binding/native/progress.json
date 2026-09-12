@@ -1,0 +1,229 @@
+{
+  "status": "PASS_TWO_BUILDS_PER_PLATFORM",
+  "stage": "evidence_android",
+  "source_commit": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "source_tree": "44f000114429373a53d5e0a7128ed397a6b63305",
+  "source_files": 3339,
+  "source_manifest_sha256": "69440bab33f41a8e83c9c59ec4d0dfe9192d7e6389ff9afa85db2f924b9790b1",
+  "commands": [
+    {
+      "stage": "sbom_core-source",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+        "mod",
+        "-licenses",
+        "-std",
+        "-json",
+        "-notimestamp",
+        "-noserial",
+        "-output",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/sbom/core-source.cdx.json",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 57.218,
+      "log_sha256": "68a27fc7187e8bb936addcb4ed7961164d913b8aceeb79af68045db1e03a8455",
+      "network_isolated": false
+    },
+    {
+      "stage": "sbom_engine-source",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+        "mod",
+        "-licenses",
+        "-std",
+        "-json",
+        "-notimestamp",
+        "-noserial",
+        "-output",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/sbom/engine-source.cdx.json",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source/engine/sing-box"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 42.031,
+      "log_sha256": "38b681eca0c114429130a644875a13b92cd77127a1a4ed832e4bc314ebc8cbff",
+      "network_isolated": false
+    },
+    {
+      "stage": "build_windows_a",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-windows.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/bin/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/windows-a",
+        "-CCompiler",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/mingw/usr/bin/x86_64-w64-mingw32-gcc-posix",
+        "-CronetLibrary",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/libcronet.dll"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 25.114,
+      "log_sha256": "7e186278dbdd9c6506de186a026dff5c8a53dfcf1ace13a9de7da226187e26de",
+      "network_isolated": true
+    },
+    {
+      "stage": "build_windows_b",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-windows.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/bin/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/windows-b",
+        "-CCompiler",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/mingw/usr/bin/x86_64-w64-mingw32-gcc-posix",
+        "-CronetLibrary",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/libcronet.dll"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 20.754,
+      "log_sha256": "7e186278dbdd9c6506de186a026dff5c8a53dfcf1ace13a9de7da226187e26de",
+      "network_isolated": true
+    },
+    {
+      "stage": "evidence_windows",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-Command",
+        "& '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source/scripts/new-release-artifact-evidence.ps1' -Lane 'windows' -FirstBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/windows-a' -SecondBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/windows-b' -Output '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/windows-evidence.json' -Sbom '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/sbom/core-source.cdx.json','/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/sbom/engine-source.cdx.json' -RequireCleanSource"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.876,
+      "log_sha256": "4e0331f5b3a18b4a52f55e11da92a714fe4b8df655c31e33a0cf0854ec9b5970",
+      "network_isolated": true
+    },
+    {
+      "stage": "build_android_a",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-android.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/bin/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/android-a",
+        "-AndroidSdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/sdk",
+        "-AndroidNdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/ndk/android-ndk-r29",
+        "-GomobileBinDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/bin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 223.12,
+      "log_sha256": "57e6105d6d3f96865509e68db24bd118b45d220284d724ad350509f65ccf1270",
+      "network_isolated": true
+    },
+    {
+      "stage": "build_android_b",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-android.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/bin/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/android-b",
+        "-AndroidSdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/sdk",
+        "-AndroidNdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/ndk/android-ndk-r29",
+        "-GomobileBinDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/bin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 148.007,
+      "log_sha256": "57e6105d6d3f96865509e68db24bd118b45d220284d724ad350509f65ccf1270",
+      "network_isolated": true
+    },
+    {
+      "stage": "evidence_android",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-Command",
+        "& '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source/scripts/new-release-artifact-evidence.ps1' -Lane 'android' -FirstBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/android-a' -SecondBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/out/android-b' -Output '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/android-evidence.json' -Sbom '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/sbom/core-source.cdx.json','/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/sbom/engine-source.cdx.json' -RequireCleanSource"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.145,
+      "log_sha256": "7acc9187295402a69180ec9ce9329c73271188b02178987878b9a665dd6f6acd",
+      "network_isolated": true
+    }
+  ],
+  "started_utc": "2026-09-11T23:26:20.063022+00:00",
+  "new_release_candidate": false,
+  "source_delta_after_test": "Only .gitattributes, POKROV-PATCHES.md, and verbatim Wintun binary license; Go and build scripts unchanged from tested7040.",
+  "source_test_sha256": "38990579851ae312562c42ae51f419ca12ada15f5eae991841e32944ae5bf50a",
+  "outputs": [
+    {
+      "path": "android-a/pokrov-core-sources.jar",
+      "bytes": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "path": "android-a/pokrov-core.aar",
+      "bytes": 106843498,
+      "sha256": "868a4659c0568427c94176c4be62f0f79349fbf7b0cfd392ba09fed98b30662c"
+    },
+    {
+      "path": "android-b/pokrov-core-sources.jar",
+      "bytes": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "path": "android-b/pokrov-core.aar",
+      "bytes": 106843498,
+      "sha256": "868a4659c0568427c94176c4be62f0f79349fbf7b0cfd392ba09fed98b30662c"
+    },
+    {
+      "path": "windows-a/libcronet.dll",
+      "bytes": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "path": "windows-a/pokrov-core.dll",
+      "bytes": 55012864,
+      "sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2"
+    },
+    {
+      "path": "windows-a/pokrov-core.h",
+      "bytes": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    },
+    {
+      "path": "windows-b/libcronet.dll",
+      "bytes": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "path": "windows-b/pokrov-core.dll",
+      "bytes": 55012864,
+      "sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2"
+    },
+    {
+      "path": "windows-b/pokrov-core.h",
+      "bytes": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    }
+  ],
+  "sboms": [
+    {
+      "path": "sbom/core-source.cdx.json",
+      "sha256": "5e9d195379c714f71a931688bd84dd4129ab24c023886702cc36e9427d7f0636"
+    },
+    {
+      "path": "sbom/engine-source.cdx.json",
+      "sha256": "eb3d479e2dd69b7cd858d4cbc3125ee7b30efcef7a37fff32450f845d2f71ce3"
+    }
+  ],
+  "finished_utc": "2026-09-11T23:35:07.372203+00:00"
+}

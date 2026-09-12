@@ -1,0 +1,1264 @@
+{
+  "status": "PASS_PREPARED_191_UNCHANGED_NOTICE_BODIES",
+  "previous_source": "2662f76a3303a0518bb07fbbdc449c066de2f95b",
+  "source_commit": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "prepared_notice": {
+    "file": "native-go-NOTICES.880bff6.prepared.txt",
+    "bytes": 719085,
+    "sha256": "b2544111e6bd87f3acb1f9a1fbf97df5c218820492fcd0849130129201cc89b4"
+  },
+  "previous_notice_sha256": "8adcab2b966751b2a8a633540c94ff462d57b338a556c5f511af7ec610e2a41b",
+  "verbatim_files": [
+    {
+      "source_ref": "core@2662f76a3303a0518bb07fbbdc449c066de2f95b/LICENSE",
+      "body_offset": 790,
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "source_ref": "core@2662f76a3303a0518bb07fbbdc449c066de2f95b/ray2sing/LICENSE",
+      "body_offset": 36277,
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "source_ref": "go1.26.8/LICENSE",
+      "body_offset": 43591,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "go1.26.8/PATENTS",
+      "body_offset": 45091,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "filippo.io/edwards25519@v1.1.0/LICENSE",
+      "body_offset": 46886,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/AdguardTeam/golibs@v0.32.7/LICENSE",
+      "body_offset": 48871,
+      "bytes": 1210,
+      "sha256": "88d9b4eb60579c191ec391ca04c16130572d7eedc4a86daa58bf28c6e14c9bcd"
+    },
+    {
+      "source_ref": "github.com/Jigsaw-Code/outline-sdk@v0.0.16/LICENSE",
+      "body_offset": 50597,
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/bolt@v0.0.0-20200624191537-23cedaef7ad7/LICENSE",
+      "body_offset": 62512,
+      "bytes": 1078,
+      "sha256": "c15d721c37e277a11584547de6d618541501f7aa10c4e32a945a4f9ff36cb0f6"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/consistent@v0.0.0-20240322131436-20aaa4e05737/LICENSE",
+      "body_offset": 64160,
+      "bytes": 1073,
+      "sha256": "ccad81ce98d570d7d47cbb3b477796c37a92ba24b530c16783a273e7674eae2e"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/goptlib@v0.0.0-20200406165125-c0e32a7a3464/COPYING",
+      "body_offset": 65797,
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "source_ref": "core@2662f76a3303a0518bb07fbbdc449c066de2f95b/engine/sing-box/replace/psiphon-tls/LICENSE",
+      "body_offset": 73567,
+      "bytes": 1609,
+      "sha256": "34060834fa66dd237e40d87d05570c2478c5a69bb7fae371243afc3eeea67396"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/LICENSE",
+      "body_offset": 75770,
+      "bytes": 35148,
+      "sha256": "0ae0485a5bd37a63e63603596417e4eb0e653334fa6c7f932ca3a0e85d4af227"
+    },
+    {
+      "source_ref": "core@2662f76a3303a0518bb07fbbdc449c066de2f95b/engine/sing-box/replace/psiphon-quic-go/LICENSE",
+      "body_offset": 111644,
+      "bytes": 1112,
+      "sha256": "f2aba6ed89d882c7a609576a301721c9183856cb96e0f2ea717116f92462ba0d"
+    },
+    {
+      "source_ref": "github.com/ajg/form@v1.5.1/LICENSE",
+      "body_offset": 115281,
+      "bytes": 1481,
+      "sha256": "a66b5c17a29c5b28713fc55662593eb22fab1332d0060bdae5ff8c890e821c67"
+    },
+    {
+      "source_ref": "github.com/shtorm-7/dnscrypt/v2@v2.4.0-extended-1.0.0/LICENSE",
+      "body_offset": 117362,
+      "bytes": 1212,
+      "sha256": "6a90b88421a0d9b090e121daa11b3c6d55eed5eeb3281a2fcc454d6a28b5547c"
+    },
+    {
+      "source_ref": "github.com/ameshkov/dnsstamps@v1.0.3/LICENSE",
+      "body_offset": 119078,
+      "bytes": 1212,
+      "sha256": "6a90b88421a0d9b090e121daa11b3c6d55eed5eeb3281a2fcc454d6a28b5547c"
+    },
+    {
+      "source_ref": "github.com/amnezia-vpn/amneziawg-go/v3@v3.1.20260814/LICENSE",
+      "body_offset": 120826,
+      "bytes": 1084,
+      "sha256": "9ec168d1f4af53f293be8bd2e882588f0e35af0334292d4ca4e5ede84408420e"
+    },
+    {
+      "source_ref": "github.com/andybalholm/brotli@v1.1.1/LICENSE",
+      "body_offset": 122414,
+      "bytes": 1084,
+      "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94"
+    },
+    {
+      "source_ref": "github.com/anytls/sing-anytls@v0.0.11/LICENSE",
+      "body_offset": 124004,
+      "bytes": 673,
+      "sha256": "df8e304aaa400c40a02bb48836a6172ee9ffb3666a5b28088d7201cf1a8b740e"
+    },
+    {
+      "source_ref": "github.com/axiomhq/hyperloglog@v0.2.6/LICENSE",
+      "body_offset": 125183,
+      "bytes": 1055,
+      "sha256": "23c37f1226d190d522b7e802ca94e8fbf1e00a331abee11c636815ac6191d025"
+    },
+    {
+      "source_ref": "core@2662f76a3303a0518bb07fbbdc449c066de2f95b/third_party/warp-plus/LICENSE",
+      "body_offset": 126900,
+      "bytes": 1040,
+      "sha256": "c118d742cc937fe458812f8cddf5191303b3eab88ed49c0723f5c9ce8a39ab4d"
+    },
+    {
+      "source_ref": "github.com/bifurcation/mint@v0.0.0-20180306135233-198357931e61/LICENSE.md",
+      "body_offset": 128502,
+      "bytes": 1081,
+      "sha256": "26a7e75ecd6ebc45ccb78afda78b833d6c2be36a73470f52b8417238ecc72718"
+    },
+    {
+      "source_ref": "github.com/biter777/countries@v1.7.5/LICENSE",
+      "body_offset": 130087,
+      "bytes": 1331,
+      "sha256": "67f041ee048d3b539234eeb82c5ab22b082285f4679bcddba0a138ab69e333c4"
+    },
+    {
+      "source_ref": "github.com/bits-and-blooms/bitset@v1.10.0/LICENSE",
+      "body_offset": 131932,
+      "bytes": 1480,
+      "sha256": "3ef376b769105f14098dd45e9d08ed3568c77d38ad33c470634606048e62119f"
+    },
+    {
+      "source_ref": "github.com/bits-and-blooms/bloom/v3@v3.6.0/LICENSE",
+      "body_offset": 133928,
+      "bytes": 1296,
+      "sha256": "a008ab764525543af95239bcf2fe9aebea63ea8a8b2f21809a3976ec12509db6"
+    },
+    {
+      "source_ref": "github.com/cespare/xxhash@v1.1.0/LICENSE.txt",
+      "body_offset": 135728,
+      "bytes": 1068,
+      "sha256": "f566a9f97bacdaf00d9f21dd991e81dc11201c4e016c86b470799429a1c9a79c"
+    },
+    {
+      "source_ref": "github.com/cheekybits/genny@v0.0.0-20170328200008-9127e812e1e9/LICENSE",
+      "body_offset": 137352,
+      "bytes": 1078,
+      "sha256": "1a248d1287ff3f6c6f3dd341f467a26dca32ccdadc59dc554b0286869e658e85"
+    },
+    {
+      "source_ref": "github.com/cloudflare/circl@v1.6.3/LICENSE",
+      "body_offset": 138930,
+      "bytes": 3028,
+      "sha256": "b0da1764fe4d13d610b695536fc3f2ebc362482d053a1cd258e36975bc6b97a7"
+    },
+    {
+      "source_ref": "github.com/cognusion/go-cache-lru@v0.0.0-20170419142635-f73e2280ecea/LICENSE",
+      "body_offset": 142526,
+      "bytes": 1101,
+      "sha256": "0070a164e0fc28e82739a764c37b38c56de796f9a8d1862b4413eb6978cd4e04"
+    },
+    {
+      "source_ref": "github.com/cretz/bine@v0.2.0/LICENSE",
+      "body_offset": 144115,
+      "bytes": 1065,
+      "sha256": "9808ceffe450ef163ae04ba0d42149c3742a55ddd8da580c2471f23a7f79a405"
+    },
+    {
+      "source_ref": "github.com/database64128/netx-go@v0.1.1/LICENSE",
+      "body_offset": 145690,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "github.com/database64128/tfo-go/v2@v2.3.3/LICENSE",
+      "body_offset": 147657,
+      "bytes": 1070,
+      "sha256": "092daaeb0ef37d1e9870febdaa8e2e19f263128bf4351f811bd5181d0f4a1081"
+    },
+    {
+      "source_ref": "github.com/dgryski/go-metro@v0.0.0-20250106013310-edb8663e5e33/LICENSE",
+      "body_offset": 149283,
+      "bytes": 1220,
+      "sha256": "4c9aa4187a0088cc5fd5914f89276463d0e1dc1c01d49bdac6fd5bd3d38db476"
+    },
+    {
+      "source_ref": "github.com/ebitengine/purego@v0.9.1/LICENSE",
+      "body_offset": 150828,
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "source_ref": "github.com/enfein/mieru/v3@v3.27.0/LICENSE",
+      "body_offset": 162685,
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "source_ref": "github.com/florianl/go-nfqueue/v2@v2.0.2/LICENSE",
+      "body_offset": 198313,
+      "bytes": 1108,
+      "sha256": "5425254065e61bfe5f0b686aebe1132b4a1596e0e14ede729cfc52cc3e187af6"
+    },
+    {
+      "source_ref": "github.com/flynn/noise@v1.1.0/LICENSE",
+      "body_offset": 199911,
+      "bytes": 1544,
+      "sha256": "42d4cb1b0c67fe32f716fca52b3d7148406b09c8024e3844ac0595707557da49"
+    },
+    {
+      "source_ref": "github.com/fsnotify/fsnotify@v1.7.0/LICENSE",
+      "body_offset": 201957,
+      "bytes": 1531,
+      "sha256": "2dfbe6d2b5eb18b55148f3805d88648a09e0d17e38428123259afb08c8996e37"
+    },
+    {
+      "source_ref": "github.com/fxamacker/cbor/v2@v2.7.0/LICENSE",
+      "body_offset": 203990,
+      "bytes": 1076,
+      "sha256": "78cad457d5ea7318230f3d969d4cdf29cef45524a1fc8ca3a97646da1ad7a841"
+    },
+    {
+      "source_ref": "github.com/go-chi/chi/v5@v5.2.3/LICENSE",
+      "body_offset": 205560,
+      "bytes": 1123,
+      "sha256": "a2d51b7515acfaff2f7a88688650f2fc4fd99561383e72bba2305e3db59a1647"
+    },
+    {
+      "source_ref": "github.com/go-chi/render@v1.0.3/LICENSE",
+      "body_offset": 207177,
+      "bytes": 1098,
+      "sha256": "98e196bb920eee8b82b0ee2001d609b2cfe57cb83ee1d15f315f327e5599d6df"
+    },
+    {
+      "source_ref": "github.com/go-ole/go-ole@v1.3.0/LICENSE",
+      "body_offset": 208592,
+      "bytes": 1119,
+      "sha256": "d883dbca28769ff23dd4368a8edb7ad9f9f23a8f86adde2875c6e41a828aac62"
+    },
+    {
+      "source_ref": "github.com/gobwas/httphead@v0.1.0/LICENSE",
+      "body_offset": 210209,
+      "bytes": 1082,
+      "sha256": "7d168561ad5212bf5b3023d55cba37c9594eb011ba74445d99f82055be662589"
+    },
+    {
+      "source_ref": "github.com/gobwas/pool@v0.2.1/LICENSE",
+      "body_offset": 211781,
+      "bytes": 1106,
+      "sha256": "bcc745631c0144db2c601650c55d108172c80d601cf2346c71594a0bc32f6f1c"
+    },
+    {
+      "source_ref": "github.com/godbus/dbus/v5@v5.2.1/LICENSE",
+      "body_offset": 213350,
+      "bytes": 1328,
+      "sha256": "e4646a82a976369d7ae8f6ed5c11d35dc0af18433a8ccc24c85b459ad8b95128"
+    },
+    {
+      "source_ref": "github.com/gofrs/uuid/v5@v5.4.0/LICENSE",
+      "body_offset": 215172,
+      "bytes": 1082,
+      "sha256": "92a328e1d5f3269b42e2ce32b4494eafdb3132f204a911c5c95cf3d8465490e4"
+    },
+    {
+      "source_ref": "github.com/golang/groupcache@v0.0.0-20210331224755-41bb18bfe9da/LICENSE",
+      "body_offset": 216812,
+      "bytes": 10273,
+      "sha256": "73ba74dfaa520b49a401b5d21459a8523a146f3b7518a833eea5efa85130bf68"
+    },
+    {
+      "source_ref": "github.com/golang/snappy@v0.0.1/LICENSE",
+      "body_offset": 227579,
+      "bytes": 1486,
+      "sha256": "f69f157b0be75da373605dbc8bbf142e8924ee82d8f44f11bcaf351335bf98cf"
+    },
+    {
+      "source_ref": "github.com/google/btree@v1.1.3/LICENSE",
+      "body_offset": 229557,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "github.com/grafov/m3u8@v0.0.0-20171211212457-6ab8f28ed427/LICENSE",
+      "body_offset": 241461,
+      "bytes": 1558,
+      "sha256": "7182cc78969d9792de6115f341207cdb744705f9e70a4edc1533ac9d7536e312"
+    },
+    {
+      "source_ref": "github.com/hashicorp/yamux@v0.1.2/LICENSE",
+      "body_offset": 243517,
+      "bytes": 15956,
+      "sha256": "ba36895caa0717b51eacc64ad50ef0b399482e1b82b93cfcdd065307409b3d9d"
+    },
+    {
+      "source_ref": "github.com/hectane/go-acl@v0.0.0-20230122075934-ca0b05cb1adb/LICENSE.txt",
+      "body_offset": 259856,
+      "bytes": 1079,
+      "sha256": "e8f4d38175a71a0bcb92e9af29ba837a5a35682f1d699df8cf02aec435203416"
+    },
+    {
+      "source_ref": "github.com/kamstrup/intmap@v0.5.2/LICENSE",
+      "body_offset": 261433,
+      "bytes": 1314,
+      "sha256": "656136c00f9d31aa4f9f9876e7180d3f090b93733cfabc3c78b46fce4f6ebfa9"
+    },
+    {
+      "source_ref": "github.com/klauspost/compress@v1.18.0/LICENSE",
+      "body_offset": 263253,
+      "bytes": 16733,
+      "sha256": "0d9e582ee4bff57bf1189c9e514e6da7ce277f9cd3bc2d488b22fbb39a6d87cf"
+    },
+    {
+      "source_ref": "github.com/klauspost/cpuid/v2@v2.3.0/LICENSE",
+      "body_offset": 280490,
+      "bytes": 1078,
+      "sha256": "5d966570d7a442d4e969892860a914e542c97f262c873baee8f0aa48e1f40212"
+    },
+    {
+      "source_ref": "github.com/klauspost/reedsolomon@v1.12.0/LICENSE",
+      "body_offset": 282080,
+      "bytes": 1107,
+      "sha256": "345aa942daa8c117669a85bd75f44a8364faceee962812ddb5a576977e0610ee"
+    },
+    {
+      "source_ref": "github.com/logrusorgru/aurora@v2.0.3+incompatible/LICENSE",
+      "body_offset": 283717,
+      "bytes": 1211,
+      "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c"
+    },
+    {
+      "source_ref": "github.com/mahsanet/dnstt@v0.0.0-20260208072932-d75b50056612/COPYING",
+      "body_offset": 285480,
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "source_ref": "github.com/marusama/semaphore@v0.0.0-20171214154724-565ffd8e868a/LICENSE",
+      "body_offset": 293088,
+      "bytes": 1065,
+      "sha256": "6d259032f167cbb35eb8fce3d075c8e84ba371f4e726e99dad973850b7992aa9"
+    },
+    {
+      "source_ref": "github.com/mdlayher/netlink@v1.7.3-0.20250113171957-fbb4dce95f42/LICENSE.md",
+      "body_offset": 294686,
+      "bytes": 1075,
+      "sha256": "fc7c6fc520ba7d8bded1f601c13ed3918709b13e8b45c37820fdeddaecc9992a"
+    },
+    {
+      "source_ref": "github.com/mdlayher/socket@v0.5.1/LICENSE.md",
+      "body_offset": 296232,
+      "bytes": 1070,
+      "sha256": "7ac20f598f63dfd35c7c6c3844073af0bebfa436cfe58b91af9ac17cd727ea42"
+    },
+    {
+      "source_ref": "github.com/metacubex/utls@v1.8.4/LICENSE",
+      "body_offset": 297798,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/miekg/dns@v1.1.72/COPYRIGHT",
+      "body_offset": 299769,
+      "bytes": 512,
+      "sha256": "66550c0ad5ca7ec1e08683e5f872cc45c741f311eee3b8ee484206ecbf9c740d"
+    },
+    {
+      "source_ref": "github.com/miekg/dns@v1.1.72/LICENSE",
+      "body_offset": 300348,
+      "bytes": 1568,
+      "sha256": "f200ff9bad73385db2ed81e23ee2c1fe069eb5776e17fae4ee85ad0a9e1361a5"
+    },
+    {
+      "source_ref": "github.com/pires/go-proxyproto@v0.9.2/LICENSE",
+      "body_offset": 302422,
+      "bytes": 11341,
+      "sha256": "666f1951be1d543e744818d232bb311a4a310fd1d344288642c796fca39af3c7"
+    },
+    {
+      "source_ref": "github.com/pkg/errors@v0.9.1/LICENSE",
+      "body_offset": 314251,
+      "bytes": 1312,
+      "sha256": "8d427fd87bc9579ea368fde3d49f9ca22eac857f91a9dec7e3004bdfab7dee86"
+    },
+    {
+      "source_ref": "github.com/quic-go/qpack@v0.6.0/LICENSE.md",
+      "body_offset": 316063,
+      "bytes": 1054,
+      "sha256": "1b6a897efd39b20b3cdce8cd306160d115dbded39d855ceeffe21dc11e4d53df"
+    },
+    {
+      "source_ref": "github.com/refraction-networking/utls@v1.8.2/LICENSE",
+      "body_offset": 317637,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/sagernet/bbolt@v0.0.0-20231014093535-ea5cb2fe9f0a/LICENSE",
+      "body_offset": 319668,
+      "bytes": 1078,
+      "sha256": "c15d721c37e277a11584547de6d618541501f7aa10c4e32a945a4f9ff36cb0f6"
+    },
+    {
+      "source_ref": "github.com/sagernet/cors@v1.2.1/LICENSE",
+      "body_offset": 321240,
+      "bytes": 1154,
+      "sha256": "df53da8b4f70a2d6e360b9c86ba7b9cc284654c126686656cbe9029809fca25f"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go@v0.0.0-20260117110918-dc1cda1fe287/LICENSE",
+      "body_offset": 322954,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/all@v0.0.0-20260117110918-dc1cda1fe287/LICENSE",
+      "body_offset": 324196,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/android_386@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 325292,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/android_amd64@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 326395,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/android_arm@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 327499,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/android_arm64@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 328605,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/cronet-go/lib/windows_amd64@v0.0.0-20260117110516-f21660bef13f/LICENSE",
+      "body_offset": 329698,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/fswatch@v0.1.1/LICENSE",
+      "body_offset": 330872,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/gomobile@v0.1.11/LICENSE",
+      "body_offset": 332017,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/sagernet/gomobile@v0.1.11/PATENTS",
+      "body_offset": 333571,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "github.com/sagernet/gvisor@v0.0.0-20250811.0-sing-box-mod.1/LICENSE",
+      "body_offset": 335424,
+      "bytes": 14110,
+      "sha256": "0fbab5c58efbdf6d31e8085214f2dd821659c03d73cff3ed2b08e98826ea1cd9"
+    },
+    {
+      "source_ref": "github.com/sagernet/netlink@v0.0.0-20240612041022-b9a21c07ac6a/LICENSE",
+      "body_offset": 350057,
+      "bytes": 10796,
+      "sha256": "04cf148229e562c643203d1ee8c43aae2022e5130e95ceb8ba8357a27c1a9abe"
+    },
+    {
+      "source_ref": "github.com/sagernet/nftables@v0.3.0-beta.4/LICENSE",
+      "body_offset": 361336,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "github.com/sagernet/quic-go@v0.59.0-sing-box-mod.2/LICENSE",
+      "body_offset": 373226,
+      "bytes": 1091,
+      "sha256": "77d0b7b53e8abb84cf4dd3f9945a7fdf27044240d2e8023966a721a9a46fe96e"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing@v0.8.0-beta.12/LICENSE",
+      "body_offset": 374827,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "core@2662f76a3303a0518bb07fbbdc449c066de2f95b/engine/sing-box/LICENSE",
+      "body_offset": 376149,
+      "bytes": 808,
+      "sha256": "bb3805862b583aee73ad6f7805ec634747a37257a637a3069857843f05ea589c"
+    },
+    {
+      "source_ref": "github.com/shtorm-7/sing-dns@v0.4.6-extended-1.0.0/LICENSE",
+      "body_offset": 377548,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-mux@v0.3.4/LICENSE",
+      "body_offset": 378724,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-quic@v0.6.0-beta.11/LICENSE",
+      "body_offset": 379918,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-shadowsocks@v0.2.8/LICENSE",
+      "body_offset": 381110,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-shadowsocks2@v0.2.1/LICENSE",
+      "body_offset": 382304,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-shadowtls@v0.2.1-0.20250503051639-fcd445d33c11/LICENSE",
+      "body_offset": 383552,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-tun@v0.8.0-beta.17/LICENSE",
+      "body_offset": 384931,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing-vmess@v0.2.8-0.20250909125414-3aed155119a1/LICENSE",
+      "body_offset": 386171,
+      "bytes": 674,
+      "sha256": "2f02b7486bcfa90d115c71a20437f3906b6fd5bef81c5dc0efd341399e89d0fd"
+    },
+    {
+      "source_ref": "github.com/sagernet/smux@v1.5.50-sing-box-mod.1/LICENSE",
+      "body_offset": 387371,
+      "bytes": 1067,
+      "sha256": "4d853d6e64790ccada70727c25334c50529b25ce57048129aaf6f8b0f2208516"
+    },
+    {
+      "source_ref": "core@2662f76a3303a0518bb07fbbdc449c066de2f95b/engine/sing-box/replace/wireguard-go/LICENSE",
+      "body_offset": 389168,
+      "bytes": 1040,
+      "sha256": "c118d742cc937fe458812f8cddf5191303b3eab88ed49c0723f5c9ce8a39ab4d"
+    },
+    {
+      "source_ref": "github.com/sagernet/ws@v0.0.0-20231204124109-acfe8907c854/LICENSE",
+      "body_offset": 390754,
+      "bytes": 1106,
+      "sha256": "db823214b3ef18274418accda3812faac38a1545b8bd589aeb613a849b949c7a"
+    },
+    {
+      "source_ref": "github.com/shadowsocks/go-shadowsocks2@v0.1.5/LICENSE",
+      "body_offset": 392382,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "github.com/syndtr/gocapability@v0.0.0-20200815063812-42c35b437635/LICENSE",
+      "body_offset": 404269,
+      "bytes": 1318,
+      "sha256": "659b62a3a50d253340a078d4e2be746c983d1be6c8b2c8832869d26327dcc008"
+    },
+    {
+      "source_ref": "github.com/syndtr/goleveldb@v1.0.1-0.20200815110645-5c35d600f0ca/LICENSE",
+      "body_offset": 406147,
+      "bytes": 1318,
+      "sha256": "7df695202f82a52f8891a9913438c7fde15bd71034fd1853b9ed46503ea52a19"
+    },
+    {
+      "source_ref": "github.com/tailscale/netlink@v1.1.1-0.20240822203006-4d49adab4de7/LICENSE",
+      "body_offset": 407994,
+      "bytes": 10796,
+      "sha256": "04cf148229e562c643203d1ee8c43aae2022e5130e95ceb8ba8357a27c1a9abe"
+    },
+    {
+      "source_ref": "github.com/tendermint/tm-db@v0.6.7/LICENSE",
+      "body_offset": 419290,
+      "bytes": 11346,
+      "sha256": "4a5fa6c348c75d0e4ebff5bee4f007c3115c41ac29792cefbb4c924008fb6e09"
+    },
+    {
+      "source_ref": "github.com/tidwall/gjson@v1.18.0/LICENSE",
+      "body_offset": 431132,
+      "bytes": 1077,
+      "sha256": "be83ad53208d03a9fe08c7fac231cabf79422989ef5706bff217bd35104ebf07"
+    },
+    {
+      "source_ref": "github.com/tidwall/match@v1.1.1/LICENSE",
+      "body_offset": 432703,
+      "bytes": 1077,
+      "sha256": "be83ad53208d03a9fe08c7fac231cabf79422989ef5706bff217bd35104ebf07"
+    },
+    {
+      "source_ref": "github.com/tidwall/pretty@v1.2.1/LICENSE",
+      "body_offset": 434276,
+      "bytes": 1077,
+      "sha256": "0ca70311227fe097c662dece3f359e3317fa7f9d41f8d29eb45fc5135e216139"
+    },
+    {
+      "source_ref": "github.com/tjfoc/gmsm@v1.4.1/LICENSE",
+      "body_offset": 435841,
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "source_ref": "github.com/vishvananda/netns@v0.0.5/LICENSE",
+      "body_offset": 447700,
+      "bytes": 10796,
+      "sha256": "04cf148229e562c643203d1ee8c43aae2022e5130e95ceb8ba8357a27c1a9abe"
+    },
+    {
+      "source_ref": "github.com/wader/filtertransport@v0.0.0-20200316221534-bdd9e61eee78/LICENSE",
+      "body_offset": 459062,
+      "bytes": 1058,
+      "sha256": "35afdb32beb2cfc1641d373521f4a96efa7279bc9bc90562adefdb70bca68651"
+    },
+    {
+      "source_ref": "github.com/wlynxg/anet@v0.0.5/LICENSE",
+      "body_offset": 460610,
+      "bytes": 1493,
+      "sha256": "6b8970dbe36fe214fd02b438c06daee19897708e435d761ecd18adc9ef7e7a05"
+    },
+    {
+      "source_ref": "github.com/x448/float16@v0.8.4/LICENSE",
+      "body_offset": 462595,
+      "bytes": 1102,
+      "sha256": "a555f1194fdac34da70fb416968f7e2217b02352c26c1eac2fa45fcb4290ae8d"
+    },
+    {
+      "source_ref": "github.com/xmdhs/clash2singbox@v0.1.4/LICENSE",
+      "body_offset": 464203,
+      "bytes": 1062,
+      "sha256": "be41bcb7ec5ed370a472c5740c7c102fbd6ed59588a053a18ba35e2a17bd2133"
+    },
+    {
+      "source_ref": "github.com/xtaci/kcp-go/v5@v5.6.70/LICENSE",
+      "body_offset": 465765,
+      "bytes": 1073,
+      "sha256": "68eb46479424095361384cbb6b056dd10c0f9bb708796a68bdd830fa7baa6ebb"
+    },
+    {
+      "source_ref": "github.com/xtaci/smux@v1.5.24/LICENSE",
+      "body_offset": 467328,
+      "bytes": 1071,
+      "sha256": "d3dc71253c64844d5f9a29f7b247e4e44db6dc049492d370ce43c399a0b54d75"
+    },
+    {
+      "source_ref": "go4.org/netipx@v0.0.0-20231129151722-fdeea329fbba/LICENSE",
+      "body_offset": 468929,
+      "bytes": 1487,
+      "sha256": "1bfc4f32f4ec8ca8fce54bd2d97784f003786753a69a78ca74ffae1574037fb9"
+    },
+    {
+      "source_ref": "golang.org/x/crypto@v0.56.0/LICENSE",
+      "body_offset": 470902,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/crypto@v0.56.0/PATENTS",
+      "body_offset": 472421,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/exp@v0.0.0-20251219203646-944ab1f22d93/LICENSE",
+      "body_offset": 474258,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/exp@v0.0.0-20251219203646-944ab1f22d93/PATENTS",
+      "body_offset": 475801,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/mod@v0.38.0/LICENSE",
+      "body_offset": 477584,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/mod@v0.38.0/PATENTS",
+      "body_offset": 479100,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/net@v0.57.0/LICENSE",
+      "body_offset": 480883,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/net@v0.57.0/PATENTS",
+      "body_offset": 482399,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/sync@v0.22.0/LICENSE",
+      "body_offset": 484151,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/sync@v0.22.0/PATENTS",
+      "body_offset": 485668,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/sys@v0.47.0/LICENSE",
+      "body_offset": 487451,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/sys@v0.47.0/PATENTS",
+      "body_offset": 488967,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/text@v0.41.0/LICENSE",
+      "body_offset": 490752,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/text@v0.41.0/PATENTS",
+      "body_offset": 492269,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.org/x/time@v0.14.0/LICENSE",
+      "body_offset": 494054,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "golang.org/x/time@v0.14.0/PATENTS",
+      "body_offset": 495571,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "golang.zx2c4.com/wintun@v0.0.0-20230126152724-0fa3db229ce2/LICENSE",
+      "body_offset": 497245,
+      "bytes": 1023,
+      "sha256": "91276db973f25602d1aa43491f59cbc84cb88e6f151e1d0cc82a755563ce0195"
+    },
+    {
+      "source_ref": "golang.zx2c4.com/wireguard@v0.0.0-20231211153847-12269c276173/LICENSE",
+      "body_offset": 498822,
+      "bytes": 1023,
+      "sha256": "91276db973f25602d1aa43491f59cbc84cb88e6f151e1d0cc82a755563ce0195"
+    },
+    {
+      "source_ref": "golang.zx2c4.com/wireguard/wgctrl@v0.0.0-20241231184526-a9ab2273dd10/LICENSE.md",
+      "body_offset": 500419,
+      "bytes": 1075,
+      "sha256": "e386a66ee99a45d00b07eb636c934bfb5d3c34b580b9404aaae8a9135ee400f7"
+    },
+    {
+      "source_ref": "golang.zx2c4.com/wireguard/windows@v0.5.3/COPYING",
+      "body_offset": 501831,
+      "bytes": 1084,
+      "sha256": "76ab82fe34e6ad03d064b0fdf4ba892e28fc20f740aeda49b5ac8d58c727a20f"
+    },
+    {
+      "source_ref": "google.golang.org/genproto/googleapis/rpc@v0.0.0-20260414002931-afd174a4e478/LICENSE",
+      "body_offset": 503499,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "google.golang.org/grpc@v1.82.1/LICENSE",
+      "body_offset": 515349,
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "source_ref": "google.golang.org/grpc@v1.82.1/NOTICE.txt",
+      "body_offset": 526782,
+      "bytes": 554,
+      "sha256": "693ff28ec216d5112ac1bbfe64ef539005867d1c7bd427b57d579683293b947f"
+    },
+    {
+      "source_ref": "google.golang.org/protobuf@v1.36.11/LICENSE",
+      "body_offset": 527838,
+      "bytes": 1479,
+      "sha256": "4835612df0098ca95f8e7d9e3bffcb02358d435dbb38057c844c99d7f725eb20"
+    },
+    {
+      "source_ref": "google.golang.org/protobuf@v1.36.11/PATENTS",
+      "body_offset": 529391,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "gopkg.in/yaml.v3@v3.0.1/LICENSE",
+      "body_offset": 531172,
+      "bytes": 2151,
+      "sha256": "d18f6323b71b0b768bb5e9616e36da390fbd39369a81807cca352de4e4e6aa0b"
+    },
+    {
+      "source_ref": "gopkg.in/yaml.v3@v3.0.1/NOTICE",
+      "body_offset": 533383,
+      "bytes": 560,
+      "sha256": "f6c2dd3a67b576eafb89b80200b8b1627230bf3821a0c14cb99a22ac19107d00"
+    },
+    {
+      "source_ref": "gvisor.dev/gvisor@v0.0.0-20240503213918-b7c924bc64f8/LICENSE",
+      "body_offset": 534479,
+      "bytes": 12519,
+      "sha256": "5af94223052169198cfa2195455b7d87209d9aa0fff4705822f328b4b272facb"
+    },
+    {
+      "source_ref": "lukechampine.com/blake3@v1.4.1/LICENSE",
+      "body_offset": 547490,
+      "bytes": 1080,
+      "sha256": "7a576402565d51f9c0c7ee5a639aa91d49ed1a54c21a8d0b56f0d25e72d8b2f1"
+    },
+    {
+      "source_ref": "tailscale.com@v1.58.2/LICENSE",
+      "body_offset": 548867,
+      "bytes": 1510,
+      "sha256": "d1ee1c7947d4b2c1963ea214d5324f1d4c89f2f1d0f0224889b4dfb868dad725"
+    },
+    {
+      "source_ref": "tailscale.com@v1.58.2/PATENTS",
+      "body_offset": 550437,
+      "bytes": 1377,
+      "sha256": "debc5ca73d082a6c7de743fecdba6f75deafdf9200acfbddeb8ca32d66e6e128"
+    },
+    {
+      "source_ref": "core@2662f76a3303a0518bb07fbbdc449c066de2f95b/engine/sing-box/common/ja3/LICENSE",
+      "body_offset": 552494,
+      "bytes": 1515,
+      "sha256": "31cbb9419e5fbd3fe353eb5b5efb2667d5969f42e44f976e8c0b3a28893b3c09",
+      "observed_workspace_sha256": "fbf8be62efaf777900674533141cddef88fe00ca93aa37a2edbb492f5e7a7461"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/crypto/LICENSE",
+      "body_offset": 554290,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "observed_workspace_sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/crypto/PATENTS",
+      "body_offset": 556024,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "observed_workspace_sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/crypto/Yawning/chacha20/LICENSE",
+      "body_offset": 557625,
+      "bytes": 7049,
+      "sha256": "7179683e8000e6bdc9bbc60d85edf0a4ac8e76f951857f54fcb775d5886f1309",
+      "observed_workspace_sha256": "7179683e8000e6bdc9bbc60d85edf0a4ac8e76f951857f54fcb775d5886f1309"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/monotime/COPYING",
+      "body_offset": 564957,
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "observed_workspace_sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/quic/gquic-go/LICENSE",
+      "body_offset": 575419,
+      "bytes": 1091,
+      "sha256": "77d0b7b53e8abb84cf4dd3f9945a7fdf27044240d2e8023966a721a9a46fe96e",
+      "observed_workspace_sha256": "77d0b7b53e8abb84cf4dd3f9945a7fdf27044240d2e8023966a721a9a46fe96e"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/quic/gquic-go/quic-go-certificates/LICENSE",
+      "body_offset": 576819,
+      "bytes": 1071,
+      "sha256": "b1547813eebdfc9e8defa8e935472b133be8ae8173a49033c800805e742c4984",
+      "observed_workspace_sha256": "b1547813eebdfc9e8defa8e935472b133be8ae8173a49033c800805e742c4984"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/regen/LICENSE.txt",
+      "body_offset": 578174,
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "observed_workspace_sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/common/sss/LICENSE",
+      "body_offset": 589809,
+      "bytes": 1076,
+      "sha256": "b75bcef6ff363d18b3d30dbdc997cea48f5681df11fa0ca032a443ce555bc6af",
+      "observed_workspace_sha256": "b75bcef6ff363d18b3d30dbdc997cea48f5681df11fa0ca032a443ce555bc6af"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/upstreamproxy/go-ntlm/License",
+      "body_offset": 591174,
+      "bytes": 1727,
+      "sha256": "07def08bbb00b9fbc30e9a0409fc5797f37fdec1634373a69a03e07b7e814f8a",
+      "observed_workspace_sha256": "07def08bbb00b9fbc30e9a0409fc5797f37fdec1634373a69a03e07b7e814f8a"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/upstreamproxy/go-ntlm/ntlm/md4/LICENSE",
+      "body_offset": 593199,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067",
+      "observed_workspace_sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/utls@v1.1.1-0.20260729134728-7a1fc711853d/dicttls/LICENSE",
+      "body_offset": 594929,
+      "bytes": 1498,
+      "sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec",
+      "observed_workspace_sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec"
+    },
+    {
+      "source_ref": "github.com/enfein/mieru/v3@v3.27.0/pkg/log/LICENSE",
+      "body_offset": 596647,
+      "bytes": 1082,
+      "sha256": "51a0c9ec7f8b7634181b8d4c03e5b5d204ac21d6e72f46c313973424664b2e6b",
+      "observed_workspace_sha256": "51a0c9ec7f8b7634181b8d4c03e5b5d204ac21d6e72f46c313973424664b2e6b"
+    },
+    {
+      "source_ref": "github.com/klauspost/compress@v1.18.0/internal/snapref/LICENSE",
+      "body_offset": 597961,
+      "bytes": 1486,
+      "sha256": "f69f157b0be75da373605dbc8bbf142e8924ee82d8f44f11bcaf351335bf98cf",
+      "observed_workspace_sha256": "f69f157b0be75da373605dbc8bbf142e8924ee82d8f44f11bcaf351335bf98cf"
+    },
+    {
+      "source_ref": "github.com/klauspost/compress@v1.18.0/zstd/internal/xxhash/LICENSE.txt",
+      "body_offset": 599687,
+      "bytes": 1068,
+      "sha256": "f566a9f97bacdaf00d9f21dd991e81dc11201c4e016c86b470799429a1c9a79c",
+      "observed_workspace_sha256": "f566a9f97bacdaf00d9f21dd991e81dc11201c4e016c86b470799429a1c9a79c"
+    },
+    {
+      "source_ref": "github.com/metacubex/utls@v1.8.4/dicttls/LICENSE",
+      "body_offset": 600973,
+      "bytes": 1498,
+      "sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec",
+      "observed_workspace_sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec"
+    },
+    {
+      "source_ref": "github.com/refraction-networking/utls@v1.8.2/dicttls/LICENSE",
+      "body_offset": 602701,
+      "bytes": 1498,
+      "sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec",
+      "observed_workspace_sha256": "ac089a3cb515b32ba1c8c2b401646527f55815a9022013693d515f2e2e4fb6ec"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing@v0.8.0-beta.12/contrab/freelru/LICENSE",
+      "body_offset": 604432,
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "observed_workspace_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "source_ref": "github.com/sagernet/sing@v0.8.0-beta.12/contrab/freelru/NOTICE",
+      "body_offset": 616021,
+      "bytes": 49,
+      "sha256": "0ff9ab6ed7706295e43814a14122085ea139755d065f0ad835317403d4043b00",
+      "observed_workspace_sha256": "0ff9ab6ed7706295e43814a14122085ea139755d065f0ad835317403d4043b00"
+    },
+    {
+      "source_ref": "go1.26.8/src/crypto/internal/boring/LICENSE",
+      "body_offset": 616283,
+      "bytes": 9714,
+      "sha256": "56210f826b8f0fbac3160dfe55c97f4019eb6cdda3963b5a0eab8a8bdb62360e",
+      "observed_workspace_sha256": "56210f826b8f0fbac3160dfe55c97f4019eb6cdda3963b5a0eab8a8bdb62360e"
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/crypto/LICENSE",
+      "body_offset": 626214,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "observed_workspace_sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/crypto/PATENTS",
+      "body_offset": 627884,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "observed_workspace_sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/net/LICENSE",
+      "body_offset": 629401,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "observed_workspace_sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/net/PATENTS",
+      "body_offset": 631068,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "observed_workspace_sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/sys/LICENSE",
+      "body_offset": 632585,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "observed_workspace_sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/sys/PATENTS",
+      "body_offset": 634252,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "observed_workspace_sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/text/LICENSE",
+      "body_offset": 635770,
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "observed_workspace_sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+      "source_ref": "go1.26.8/src/vendor/golang.org/x/text/PATENTS",
+      "body_offset": 637438,
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "observed_workspace_sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    },
+    {
+      "source_ref": "go1.26.8/src/runtime/vlrt.go#L1",
+      "covered_source_refs": [
+        "go1.26.8/src/runtime/memclr_arm.s",
+        "go1.26.8/src/runtime/memmove_386.s",
+        "go1.26.8/src/runtime/memmove_amd64.s",
+        "go1.26.8/src/runtime/memmove_arm.s",
+        "go1.26.8/src/runtime/vlop_386.s",
+        "go1.26.8/src/runtime/vlop_arm.s",
+        "go1.26.8/src/runtime/vlrt.go"
+      ],
+      "body_offset": 639509,
+      "bytes": 1454,
+      "sha256": "6bcb9248659399d8217f8efe2f36ec906175045c9c3f98af79a5ebf3863cd860",
+      "source_file_sha256": "0f2631d71092f7949396b74071d4be1e10bfd06943afa1d493b8e89385342fee"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/tlsDialer.go#L20",
+      "covered_source_refs": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/tlsDialer.go"
+      ],
+      "body_offset": 641236,
+      "bytes": 1484,
+      "sha256": "6c7a44e6ec53093130afa79eeb17f3df5f97cbdd4d5e294740b0ed6fb8e3d18b",
+      "source_file_sha256": "21e78fed0901e39c5ddbb5db6153c5233652bd0bcfa851bfaef266d4a786600a"
+    },
+    {
+      "source_ref": "github.com/sagernet/ws@v0.0.0-20231204124109-acfe8907c854/wsutil/utf8.go#L82",
+      "covered_source_refs": [
+        "github.com/sagernet/ws@v0.0.0-20231204124109-acfe8907c854/wsutil/utf8.go"
+      ],
+      "body_offset": 642963,
+      "bytes": 1228,
+      "sha256": "d790bfd0a5f23501836c012842fad639438307ea374106771dd4e89b4e1b7eb6",
+      "source_file_sha256": "60dfc3dccd18ae6618527443619be65ccd80b85f3ea27d6d43bfd2d6239c1b3d"
+    },
+    {
+      "source_ref": "github.com/sagernet/quic-go@v0.59.0-sing-box-mod.2/internal/utils/tree/tree.go#L6",
+      "covered_source_refs": [
+        "github.com/sagernet/quic-go@v0.59.0-sing-box-mod.2/internal/utils/tree/tree.go"
+      ],
+      "body_offset": 644440,
+      "bytes": 1059,
+      "sha256": "edde81d17ddebb1b666aff4d9daf3cf150f36bd9375a02df0ff2e72f1cfe3098",
+      "source_file_sha256": "9d92a4001171a6dd83529973972713ca1f9caec9db550ae1c9054682c04080be"
+    },
+    {
+      "source_ref": "go1.26.8/src/debug/elf/elf.go#L1",
+      "covered_source_refs": [
+        "go1.26.8/src/debug/elf/elf.go"
+      ],
+      "body_offset": 645699,
+      "bytes": 2566,
+      "sha256": "68a3f301ca5c3b2adfd01239019aac81c90d4290650df205185541a09ddac942",
+      "source_file_sha256": "ff2f811d29a56303bad96c3c7cff1a83814a974503a51cee918a314a96eb476e"
+    },
+    {
+      "source_ref": "google.golang.org/protobuf@v1.36.11/types/known/timestamppb/timestamp.pb.go#L1",
+      "covered_source_refs": [
+        "google.golang.org/protobuf@v1.36.11/types/known/anypb/any.pb.go",
+        "google.golang.org/protobuf@v1.36.11/types/known/durationpb/duration.pb.go",
+        "google.golang.org/protobuf@v1.36.11/types/known/emptypb/empty.pb.go",
+        "google.golang.org/protobuf@v1.36.11/types/known/timestamppb/timestamp.pb.go"
+      ],
+      "body_offset": 648717,
+      "bytes": 1658,
+      "sha256": "7171224f4067f20d06598cff1f01fa4af1ad745562393dc6700f8c3c3d199d38",
+      "source_file_sha256": "a0a10a8152cf08086efc87237bdc8bb19db25df22675ccd43b03a86f4a81de4c"
+    },
+    {
+      "source_ref": "go1.26.8/src/crypto/internal/fips140/edwards25519/scalar.go#L29",
+      "covered_source_refs": [
+        "filippo.io/edwards25519@v1.1.0/scalar.go",
+        "go1.26.8/src/crypto/internal/fips140/edwards25519/scalar.go"
+      ],
+      "body_offset": 650646,
+      "bytes": 1468,
+      "sha256": "4824ed199b3d741cd509af39f74fc18acca2f2504f9b5eaad26fd9e29b0016df",
+      "source_file_sha256": "b9bc9ba5a2160dccee62ccbb4371c90c5d1c654d55b8ae08f33fa29c58876050"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/upstreamproxy/proxy_socks4.go#L19",
+      "covered_source_refs": [
+        "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/upstreamproxy/proxy_http.go",
+        "github.com/Psiphon-Labs/psiphon-tunnel-core@v1.0.11-0.20260202154140-a3384a551c62/psiphon/upstreamproxy/proxy_socks4.go"
+      ],
+      "body_offset": 652522,
+      "bytes": 1619,
+      "sha256": "77cc36f7f28ee986cfdd16297c57a60cef586146afeb4a5888781a1b375ee928",
+      "source_file_sha256": "09a78d128b495f186c19f765bf72f1eb761f06a89d0931004685f1e7499eb3ee"
+    },
+    {
+      "source_ref": "gopkg.in/yaml.v3@v3.0.1/apic.go#L1",
+      "covered_source_refs": [
+        "gopkg.in/yaml.v3@v3.0.1/apic.go",
+        "gopkg.in/yaml.v3@v3.0.1/emitterc.go",
+        "gopkg.in/yaml.v3@v3.0.1/parserc.go",
+        "gopkg.in/yaml.v3@v3.0.1/readerc.go",
+        "gopkg.in/yaml.v3@v3.0.1/scannerc.go",
+        "gopkg.in/yaml.v3@v3.0.1/writerc.go",
+        "gopkg.in/yaml.v3@v3.0.1/yamlh.go",
+        "gopkg.in/yaml.v3@v3.0.1/yamlprivateh.go"
+      ],
+      "body_offset": 654593,
+      "bytes": 1164,
+      "sha256": "c16d3695f61ad5d81cb9189ff9e0d39817b051a42fb29c580356126e707a3b79",
+      "source_file_sha256": "53051cabd9cd9e98d49dea201a11475a11e6cc436b32a54e7d46bebdce88cdc3"
+    },
+    {
+      "source_ref": "github.com/bits-and-blooms/bloom/v3@v3.6.0/murmur.go#L1",
+      "covered_source_refs": [
+        "github.com/bits-and-blooms/bloom/v3@v3.6.0/murmur.go"
+      ],
+      "body_offset": 655980,
+      "bytes": 1878,
+      "sha256": "7211d0328bd7d53697ee3ff229ab34039d9788c925353b61f55ba81feb76327c",
+      "source_file_sha256": "99160b67ce7d07af29dc540d051e8b43631c5152d98d8f2a7fb5497f24caea6b"
+    },
+    {
+      "source_ref": "github.com/xtaci/kcp-go/v5@v5.6.70/ringbuffer.go#L1",
+      "covered_source_refs": [
+        "github.com/xtaci/kcp-go/v5@v5.6.70/ringbuffer.go"
+      ],
+      "body_offset": 658077,
+      "bytes": 1130,
+      "sha256": "df88fe530d6cfe121e222648c58f0c0f7fff69ae18d6f04baad272fceea868a2",
+      "source_file_sha256": "f102b34aafb25f866c0255521b80b684d24d6b8ee6a6c95c1bdd846f9e134df6"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/consistent@v0.0.0-20240322131436-20aaa4e05737/consistent.go#L1",
+      "covered_source_refs": [
+        "github.com/Psiphon-Labs/consistent@v0.0.0-20240322131436-20aaa4e05737/consistent.go"
+      ],
+      "body_offset": 659461,
+      "bytes": 1189,
+      "sha256": "6fb4fdebf617473e79899c98894ae75b3416f3b1409ffe34244946e498bd8792",
+      "source_file_sha256": "8b67be88995b67e6d0ba3122f1abaa7a68743287042e1b535b2ebb31b6d2a0b4"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/utls@v1.1.1-0.20260729134728-7a1fc711853d/LICENSE",
+      "body_offset": 113318,
+      "bytes": 1479,
+      "sha256": "2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067"
+    },
+    {
+      "source_ref": "github.com/Psiphon-Labs/utls@v1.1.1-0.20260729134728-7a1fc711853d/u_prng.go",
+      "body_offset": 667102,
+      "bytes": 161,
+      "sha256": "4a8344ab2649bd551e04453c21452c11e3e9e8549ff15187ae1a6c28d4b7fb6d"
+    },
+    {
+      "source_ref": "mingw-w64@11.0.1/COPYING.MinGW-w64-runtime/COPYING.MinGW-w64-runtime.txt",
+      "body_offset": 668288,
+      "bytes": 10936,
+      "sha256": "e9b2dc02451ea29092a1f25fa0f3c07207ed421f1807dffb0c4e6dce69dee7bd",
+      "upstream_file_sha256": "e9b2dc02451ea29092a1f25fa0f3c07207ed421f1807dffb0c4e6dce69dee7bd",
+      "git_blob": "ca6a077e24b81d4f0ae9b952b6fbcaf370a78d6a"
+    },
+    {
+      "source_ref": "gcc@13.2.0/libgcc/libgcc2.c#license-header",
+      "body_offset": 679385,
+      "bytes": 954,
+      "sha256": "e1d9332403c4d2e3f9fb34ebc109ab4cbca467ba0bcf95b39894df572603a128",
+      "upstream_file_sha256": "97d364b0d74d6bf073eb3829ab12884ce243c68af8f7601d84baade12ee15599",
+      "git_blob": "e0017d106be06ae0092d48d4bd49d40aa50cf355"
+    },
+    {
+      "source_ref": "gcc@13.2.0/COPYING3",
+      "body_offset": 680469,
+      "bytes": 35147,
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "upstream_file_sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "git_blob": "94a9ed024d3859793618152ea559a168bbcbb5e2"
+    },
+    {
+      "source_ref": "gcc@13.2.0/COPYING.RUNTIME",
+      "body_offset": 715760,
+      "bytes": 3324,
+      "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+      "upstream_file_sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+      "git_blob": "e1b3c69c179dfaff5744ea4bf853e6b0d90c9ef9"
+    }
+  ],
+  "new_local_replacement": "github.com/sagernet/sing-tun",
+  "wintun_prebuilt_license_sha256": "183adac21e7d96c508c8fd34d394b7b6708bc81564ad1bad61ab66143a008cd2",
+  "complete_license_compatibility": false
+}

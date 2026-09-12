@@ -1,0 +1,5 @@
+--- FAIL: TestPokrovFinalizerPassesAdapterHandle (0.00s)
+    pokrov_finalizer_windows_test.go:12: close callback: calls=1 handle=0x1; want 1 and 0x13572468
+FAIL
+FAIL	github.com/sagernet/sing-tun/internal/wintun	0.289s
+FAIL
