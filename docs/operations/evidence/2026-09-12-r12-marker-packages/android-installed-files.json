@@ -1,0 +1,328 @@
+{
+  "status": "PASS_BOUND_806_ANDROID_INSTALLED_EVIDENCE",
+  "source_client": "8067520c7b9230ab0c66823fae9ae78791f1a838",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "archive": {
+    "path": "android-installed-evidence.zip",
+    "bytes": 56404,
+    "sha256": "001c260d830c9e5307762a2931c0933e2a14abb22dccc4af2e5f04bad4cec2c1"
+  },
+  "members": [
+    {
+      "path": "after-crash.json",
+      "bytes": 1092,
+      "sha256": "a3b1b18a6de43d1aa10962a296c02e52be6e285da583673c5cb8687c78d69869"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 1090,
+      "sha256": "d017172a0a59f144d6153c500c7b9a03b112f2e6aa40380383627b7538b610a1"
+    },
+    {
+      "path": "before-crash.json",
+      "bytes": 1186,
+      "sha256": "16f19ce96c27656abe0b98f1e6f46863fff54e04a9a6bd8cc84aa7017a349645"
+    },
+    {
+      "path": "capture-ui.py",
+      "bytes": 345,
+      "sha256": "bf719a2e2756124964a6acfacb707f33f8c535561064980062413130a7ef3db2"
+    },
+    {
+      "path": "connected-http.json",
+      "bytes": 442,
+      "sha256": "cb6d8f587252a49b61dcbe3524d1cf934512d32b11994fdcd52e7f408a6338a5"
+    },
+    {
+      "path": "connected-ui.json",
+      "bytes": 1833,
+      "sha256": "a6205046def4a7fae248a9b37c2342f84316270210b6aabcc3afc64bd45830e9"
+    },
+    {
+      "path": "connected.json",
+      "bytes": 1183,
+      "sha256": "31b7463be86477248e22a802d9347768b57a782d75dc9b37609ad31fc16872ff"
+    },
+    {
+      "path": "crash-owned.py",
+      "bytes": 2041,
+      "sha256": "25ea7e2894bb67aefdcfd47b27a471e83d3ad5d465ac0882de35aef1b21a2986"
+    },
+    {
+      "path": "crash.json",
+      "bytes": 970,
+      "sha256": "5378bc5a64fbc1cd1f47e53c4ce0cb5dfc0cc2e4275fd3f501977013bf193fdc"
+    },
+    {
+      "path": "crashed-observability.json",
+      "bytes": 14445,
+      "sha256": "91d3bdf9477a026f6005207a7956f8b63bf03452dcd3ae85124ce6f2e749cc2e"
+    },
+    {
+      "path": "disconnected-http.json",
+      "bytes": 442,
+      "sha256": "722f502515d5fec1cff368ac601bb58e7520d4fbfba7068c008c7611bbb926cb"
+    },
+    {
+      "path": "disconnected.json",
+      "bytes": 1094,
+      "sha256": "eb329eef6c17cde0ba36749afae76be74c423ac63b8b91c7d424bd226ccfcd1e"
+    },
+    {
+      "path": "final-observability.json",
+      "bytes": 33498,
+      "sha256": "3f86df13a820d7364a731ebf3f081a7b6dfa47798091d0172af5ef5b61bd6065"
+    },
+    {
+      "path": "host-network-installed-after.json",
+      "bytes": 281,
+      "sha256": "3896b669031900a91baf1a391c2947d1a9bb029d860c71d43703a35ba0d88705"
+    },
+    {
+      "path": "host-network-installed-before.json",
+      "bytes": 220,
+      "sha256": "565ce1773087f7aea2dd14fa150236c04651f223937a79febb0d89e32cae5c6f"
+    },
+    {
+      "path": "host-network.ps1",
+      "bytes": 1155,
+      "sha256": "41bd4e58b45d91778c07c91ac80e37a84ef30d27d32ceabc0e5d08c4a3786a53"
+    },
+    {
+      "path": "install-current.py",
+      "bytes": 2112,
+      "sha256": "14ef505fea960d31681eac12fb0d108c0ff4261e6b243cd0f123a09443150c28"
+    },
+    {
+      "path": "installed.json",
+      "bytes": 1627,
+      "sha256": "db71673c42bac732d9a0fed294fd41f73c8fe72d0644f18be14f1bb62221d4ab"
+    },
+    {
+      "path": "ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "34f8a084a1a7fa6064e025b665f8d0183721b4faec4989ebdf167a3e4a298888"
+    },
+    {
+      "path": "network.py",
+      "bytes": 3611,
+      "sha256": "bc29a06b795e8c678e180b0a25d89df18a57cd674e49a877379079799e0987a9"
+    },
+    {
+      "path": "observe.py",
+      "bytes": 3824,
+      "sha256": "517161850819ee972b36b6533c8e285a86b63ec68b5bfd267d3f89bf95090dee"
+    },
+    {
+      "path": "owned-case-readback.json",
+      "bytes": 847,
+      "sha256": "70f5cc38846e4b525cdc2843aca8d870f8c208a50a0f247a4e51d8724c3cbcbe"
+    },
+    {
+      "path": "postsummary-observability.json",
+      "bytes": 21249,
+      "sha256": "8717bfffcc6c2330e0f47c7815a1744fb030b699c3a7a7e2527b729fc5c890e3"
+    },
+    {
+      "path": "precrash-observability.json",
+      "bytes": 14445,
+      "sha256": "9ac91811ca34235a95a788dc1ad81c95fbd42afae2fe65f3f79105d957c46280"
+    },
+    {
+      "path": "prepare-case-read.py",
+      "bytes": 641,
+      "sha256": "bc869ec953b3616351bc21640ad4d6963af8891efd15dcf2d7ca53a465d229ec"
+    },
+    {
+      "path": "prepared.json",
+      "bytes": 600,
+      "sha256": "9c437e0377523b7cc5123580fddcc603a38ee67f542a5fb23231eb0613154039"
+    },
+    {
+      "path": "read-case.py",
+      "bytes": 2003,
+      "sha256": "2973fc279417a2f9c8bdfcfead4a02233dead8c4805290728df1572965b6338c"
+    },
+    {
+      "path": "reconnected-http.json",
+      "bytes": 442,
+      "sha256": "48d825090235c632d9061bd6f1ff7ede23fea13dfd9059e6a789df209820e96c"
+    },
+    {
+      "path": "reconnected.json",
+      "bytes": 1183,
+      "sha256": "2f58846f8e7913dcb5b0dac6d0ab3a810404b01f762e1b4d23419fe3ec2a17bc"
+    },
+    {
+      "path": "relaunched-observability.json",
+      "bytes": 16727,
+      "sha256": "b57cac2e6f9a53b805823b5552558687e298122c80c844f5975c660809d4319e"
+    },
+    {
+      "path": "relaunched-ui.json",
+      "bytes": 1859,
+      "sha256": "9ccfaa6325953826b2e532f1239d04a7a9210233919869cb98f9f15dfe21fd27"
+    },
+    {
+      "path": "restoration.json",
+      "bytes": 22184,
+      "sha256": "a5b410766b2eb8460ab9eb943557c580a19dd0ad34534fd6d4fab58369372be7"
+    },
+    {
+      "path": "result.json",
+      "bytes": 1709,
+      "sha256": "a29a1e328f164774e6cf45705398c764b181a5e47b610528e21677d8b5ca1021"
+    },
+    {
+      "path": "root-enabled.json",
+      "bytes": 854,
+      "sha256": "b2d4be81cc3d415c4afc8ae2ce7f697d6b25d10048240a948c964e2bf228e405"
+    },
+    {
+      "path": "root-restored.json",
+      "bytes": 854,
+      "sha256": "e345353dc9690ab35cdaca9ecbce9c844fb54af2eb080dbd566284a48223dde1"
+    },
+    {
+      "path": "rootless/ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "9868179fddd2b90bf405b5b339b6abe4946ae1ac6b8d1887270df12eea06633c"
+    },
+    {
+      "path": "rootless/restoration.json",
+      "bytes": 5846,
+      "sha256": "7fd48ba396064bc16ba79da7ece67a6b7f6633f149cf751f90a8c5aa1d5646d0"
+    },
+    {
+      "path": "rootless/watch-ldplayer.py",
+      "bytes": 3249,
+      "sha256": "7920c6af03ef879ddae97cfcde11be36696a5ebde765c39811919b170d92b7da"
+    },
+    {
+      "path": "rootless-before.json",
+      "bytes": 1097,
+      "sha256": "caf642dae913682955acf31f37f2d03498d0e8d12142222f5adc95106b8535ac"
+    },
+    {
+      "path": "rootless-connected-http.json",
+      "bytes": 442,
+      "sha256": "378c3a9786cf86427d66d3d910705cb58d93db399a41c0adb909582488f27c31"
+    },
+    {
+      "path": "rootless-connected-ui.json",
+      "bytes": 1833,
+      "sha256": "30b3f70ff8e165a6bdbaffed3fd6499bc58767ee86358bfa64c34cab65a38f22"
+    },
+    {
+      "path": "rootless-connected.json",
+      "bytes": 1192,
+      "sha256": "36dcaac3abb7a1eba0628fc0b16c56a659e4b19af4a2ff8bebe39237647c5a52"
+    },
+    {
+      "path": "rootless-final-http.json",
+      "bytes": 442,
+      "sha256": "3e40afaed5d48cb161ab83d417df5bc833478d050adde01ad41b140f69574a2f"
+    },
+    {
+      "path": "rootless-final-ui.json",
+      "bytes": 1836,
+      "sha256": "ff0834868ce255c82840881cad2ebd8e5983b32ac38a0d7f39f75264ce0bd62e"
+    },
+    {
+      "path": "rootless-final.json",
+      "bytes": 1096,
+      "sha256": "539223828259948588129382e0a47012ac568b17f05314da0c2cca98ed006853"
+    },
+    {
+      "path": "rootless-guest.json",
+      "bytes": 532,
+      "sha256": "3152242de34478d279ba8d297d66f8481753cf53f54378a9456a1bf0bdeb01d5"
+    },
+    {
+      "path": "rootless-observe.py",
+      "bytes": 1084,
+      "sha256": "4ceaa27abb830b6f51049f13a629332e89e2ddcd3e5bd3342d724e617f9b61fa"
+    },
+    {
+      "path": "set-root.py",
+      "bytes": 1868,
+      "sha256": "bab62ca527809ee503cc5b0843b28cd56d9f2d983e214a28c454e958508662ff"
+    },
+    {
+      "path": "started-observability.json",
+      "bytes": 4925,
+      "sha256": "70b93ada1a6c90a09a41f2447efd6dcedcb0cad2b72c779685d0e81bdecd2a4d"
+    },
+    {
+      "path": "summary-created-ui.json",
+      "bytes": 2202,
+      "sha256": "fbe2362620f142e33a5b1d5467ef87261c4e33e56e155264aa11797a8cdeabe0"
+    },
+    {
+      "path": "summary-preview.json",
+      "bytes": 2120,
+      "sha256": "83a930c64a022b20d99c8c333d7677c36720ed057c3049fa50fb2b4271cdf1f6"
+    },
+    {
+      "path": "support-before.json",
+      "bytes": 1464,
+      "sha256": "b05a77eb6ad3822f46a319bd815a931814e7414ed57d7c37a94bc93d523f22fb"
+    },
+    {
+      "path": "ui.py",
+      "bytes": 2375,
+      "sha256": "9747e057e21437eef7e10917b25e67d5bd35b095cedf3fe8e1243f398e833fb8"
+    },
+    {
+      "path": "verify.py",
+      "bytes": 4829,
+      "sha256": "46fb7227fc614f4bce90d1df7b87f1ee7f5b445a2d2f6b8c955a2d205588dec6"
+    },
+    {
+      "path": "watch-ldplayer.py",
+      "bytes": 3249,
+      "sha256": "7920c6af03ef879ddae97cfcde11be36696a5ebde765c39811919b170d92b7da"
+    }
+  ],
+  "direct_files": [
+    {
+      "path": "android-installed-result.json",
+      "bytes": 1709,
+      "sha256": "a29a1e328f164774e6cf45705398c764b181a5e47b610528e21677d8b5ca1021",
+      "source": "C:\\r12-marker-packages-20260912\\android-installed\\result.json"
+    },
+    {
+      "path": "android-installed-update.json",
+      "bytes": 1627,
+      "sha256": "db71673c42bac732d9a0fed294fd41f73c8fe72d0644f18be14f1bb62221d4ab",
+      "source": "C:\\r12-marker-packages-20260912\\android-installed\\installed.json"
+    },
+    {
+      "path": "android-installed-case65.json",
+      "bytes": 847,
+      "sha256": "70f5cc38846e4b525cdc2843aca8d870f8c208a50a0f247a4e51d8724c3cbcbe",
+      "source": "C:\\r12-marker-packages-20260912\\android-installed\\owned-case-readback.json"
+    },
+    {
+      "path": "android-installed-rootless.json",
+      "bytes": 532,
+      "sha256": "3152242de34478d279ba8d297d66f8481753cf53f54378a9456a1bf0bdeb01d5",
+      "source": "C:\\r12-marker-packages-20260912\\android-installed\\rootless-guest.json"
+    },
+    {
+      "path": "android-installed-connected.png",
+      "bytes": 236731,
+      "sha256": "10170a01184643452190af3961b6a7fa8c22cc61afc7a8e153d7185a19c9b9ca",
+      "source": "C:\\r12-marker-packages-20260912\\android-installed\\connected.png"
+    },
+    {
+      "path": "android-installed-final.png",
+      "bytes": 182096,
+      "sha256": "94a71d66afb232e2f0b8a5e2ef4aafd2aed2b46217e1147fa8199db308089938",
+      "source": "C:\\r12-marker-packages-20260912\\android-installed\\rootless-final.png"
+    }
+  ],
+  "capture_text_bytes_unchanged": true,
+  "local_raw_logcat_or_private_preferences_exported": false,
+  "release_artifacts_modified": false
+}

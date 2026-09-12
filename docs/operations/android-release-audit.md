@@ -1257,6 +1257,19 @@ binds four direct APKs and store AAB to source8067520c/Core6b. Production signer
 version4053, intended ABI, current compiled revision and native/notices pass.
 PR125/main d6c7c3de CI and unchanged protections pass. The first direct build
 stopped at its storage guard; retained-file cleanup and the repeated build
-preserved the40GiB floor. Current806 APKs have not been installed. The prior
+preserved the40GiB floor. At that packaging capture,806 APKs had not been installed. The prior
 Huawei F711 result is not transferred to these bytes; complete D01/D03 and
 release gates remain open.
+
+## 2026-09-12 installed806 x86_64 update and process-crash recovery
+
+[Exact installed evidence](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-installed806-android-x86_64)
+now verifies source806/Core6b APK7ffacdfa on the existing owned API34 emulator.
+Same-signer update preserves UID and six preference files. Controlled native
+process death preserves the active marker and30 events; the new run records
+APP-BOOT-006. Owned summary case65 reaches worker validation. All15 HTTPS
+checks pass across rooted connection/reconnect/disconnect and a fresh rootless
+connection/disconnect. Per-boot network baselines and host route/DNS restore;
+root=false and all local emulators stopped are verified within disk budgets.
+This is not physical ARM64, Dart CRASH-001/crash-bundle or full privacy/release
+acceptance. Earlier physical F711 and extended-case64 proofs are not transferred.
