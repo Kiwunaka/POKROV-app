@@ -1,0 +1,16 @@
+{
+  "status": "PASS_ROOT_RESTORED_CONFIG",
+  "utc": "2026-09-12T07:53:32.721088+00:00",
+  "instance": 3,
+  "before_sha256": "ea66aec7fc0639d64d49a9eeca4a7f6ca80515bb076d2ad87dd5890a2a45e753",
+  "after_sha256": "ebe56c7507418639c2c490ae75e6029e13ea0ca16a395c95d92618bf4a47a4b2",
+  "root_mode": false,
+  "all_other_current_fields_preserved": true,
+  "all_instances_stopped": true,
+  "other_config_sha256": {
+    "E:\\LDPlayer\\LDPlayer14\\vms\\config\\leidian0.config": "327e8585768bfed3e4214d3d94971242ce5a3e130e59706c7995981c039b2055",
+    "E:\\LDPlayer\\LDPlayer14\\vms\\config\\leidian1.config": "178643c07ee1a36d75134e68b035d421a5f2244d3efbe10b1ae666cc84b70c59",
+    "E:\\LDPlayer\\LDPlayer14\\vms\\config\\leidian2.config": "f564d538a34f7647a1f3e785fbe9fbc02670b869f00c04348af37a50e4a75fb1"
+  },
+  "rootless_guest_check": "PENDING"
+}

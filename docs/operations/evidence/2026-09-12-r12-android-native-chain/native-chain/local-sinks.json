@@ -1,0 +1,89 @@
+{
+  "status": "PASS_BOUNDED_CURRENT_SINKS",
+  "utc": "2026-09-12T07:49:32.441211+00:00",
+  "same_native_failure_process": true,
+  "app_pid": 3179,
+  "sinks": [
+    {
+      "sink": "native_journal",
+      "bytes": 37992,
+      "sha256": "69fdc493362e5f36e61402b3742f47e3dfa9efeea8bce5b1bc22bbcb26a45ab7",
+      "marker_counts": {
+        "credential": 0,
+        "authorization": 0,
+        "cookie": 0,
+        "config": 0,
+        "url": 0,
+        "ipv4": 0,
+        "path": 0,
+        "pii": 0,
+        "provider": 0
+      }
+    },
+    {
+      "sink": "operational_events",
+      "bytes": 317120,
+      "sha256": "3bb05f86f9090a392b88ae80ba0e3db3308a3cf64e6c6db6daa1fd9e02ec8fef",
+      "marker_counts": {
+        "credential": 0,
+        "authorization": 0,
+        "cookie": 0,
+        "config": 0,
+        "url": 0,
+        "ipv4": 0,
+        "path": 0,
+        "pii": 0,
+        "provider": 0
+      }
+    },
+    {
+      "sink": "previous_exit",
+      "bytes": 191,
+      "sha256": "a7b546598ba89af17739fd56a86a0d59b150ece99aaec82b55f490fcdce974a5",
+      "marker_counts": {
+        "credential": 0,
+        "authorization": 0,
+        "cookie": 0,
+        "config": 0,
+        "url": 0,
+        "ipv4": 0,
+        "path": 0,
+        "pii": 0,
+        "provider": 0
+      }
+    },
+    {
+      "sink": "available_app_pid_logcat",
+      "bytes": 14972,
+      "sha256": "e1c3506ad62dd8ff21cb8a7636906d46d129313424401c4d9ab6e01a604cd424",
+      "marker_counts": {
+        "credential": 0,
+        "authorization": 0,
+        "cookie": 0,
+        "config": 0,
+        "url": 0,
+        "ipv4": 0,
+        "path": 0,
+        "pii": 0,
+        "provider": 0
+      }
+    },
+    {
+      "sink": "current_visible_ui",
+      "bytes": 1569,
+      "sha256": "9560fe05710ece25005aae862909fcce346a334b3037ee584666a9c5a447e03a",
+      "marker_counts": {
+        "credential": 0,
+        "authorization": 0,
+        "cookie": 0,
+        "config": 0,
+        "url": 0,
+        "ipv4": 0,
+        "path": 0,
+        "pii": 0,
+        "provider": 0
+      }
+    }
+  ],
+  "raw_private_content_exported": false
+}

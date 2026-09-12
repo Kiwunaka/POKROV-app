@@ -1,0 +1,20 @@
+{
+  "status": "PASS_DISCONNECT_RECOVERY_WITH_RETAINED_HTTP_FAILURE",
+  "utc": "2026-09-12T08:01:11.721209+00:00",
+  "network_hash_match": {
+    "ipv4_routes": true,
+    "ipv6_routes": false,
+    "private_dns_mode": true,
+    "private_dns_host": true,
+    "dns1": true,
+    "dns2": true
+  },
+  "ipv6_normalized_full_text_equal": true,
+  "first_https": "9_OF_10_ONE_SOCKET_EXCEPTION",
+  "followup_without_reconnect": "3_OF_3_PASS",
+  "traffic_full_pass": false,
+  "rootless_guest": "PASS",
+  "profile_rollback_before_connect": "PASS_BYTE_EXACT",
+  "tun_absent_after": true,
+  "service_record_absent_after": true
+}

@@ -1,0 +1,28 @@
+{
+  "status": "PASS_OWNED_EXTENDED_CASES_READBACK",
+  "cases": [
+    {
+      "case_number": 64,
+      "created_at": "2026-09-12T07:49:06.368307",
+      "case_status": "open",
+      "bundle": {
+        "status": "validated",
+        "diagnostic_profile": "extended",
+        "app_version": "1.2.0",
+        "build_number": "4053",
+        "platform": "android",
+        "expected_size_bytes": 2787,
+        "received_size_bytes": 2787,
+        "expected_sha256": "176810f528308df47b02fd60421d714024baa7ee50c0c1f9d0d4abae45d0463a",
+        "bundle_id": "diag-17d715e651cb508935c2d5e4"
+      }
+    }
+  ],
+  "policy": {
+    "maximum_total_bytes": 2097152,
+    "maximum_bundles": 2,
+    "status": "redeemed",
+    "expires_at": "2026-09-12 08:02:22"
+  },
+  "utc": "2026-09-12T07:49:54.672818+00:00"
+}

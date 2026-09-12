@@ -1,0 +1,29 @@
+{
+  "status": "PASS_CONTROLLED_OWN_PROCESS_CRASH",
+  "utc": "2026-09-12T07:59:03.248807+00:00",
+  "installed_apk_sha256": "8dc6c2e6671b7ea3d2331c1ec31c5a788458fd10de9dd9a9693abfcd8eab62ad",
+  "old_app_pid": 2451,
+  "command": "am crash --user current <verified own package PID>",
+  "command_exit": 0,
+  "old_pid_exited": true,
+  "samples": [
+    {
+      "utc": "2026-09-12T07:59:03.330206+00:00",
+      "old_pid_present": true,
+      "current_pid_count": 1
+    },
+    {
+      "utc": "2026-09-12T07:59:04.366803+00:00",
+      "old_pid_present": false,
+      "current_pid_count": 0
+    }
+  ],
+  "available_logcat_bytes": 18590,
+  "available_logcat_sha256": "ae3521301cea5df27d56f4b2ed1519addc15b4d057414d22090fc0f3bde112b2",
+  "fatal_exception_lines": 1,
+  "remote_service_exception_mentions": 6,
+  "raw_logcat_exported": false,
+  "rootless": true,
+  "network_recovery": "PENDING",
+  "crash_bundle": "NOT_YET_PROVEN"
+}

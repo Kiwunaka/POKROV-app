@@ -1198,3 +1198,16 @@ expiry countdown. [Current captures](evidence/2026-09-12-r12-android-extended-su
 retain their original2aa source, JNI/persisted-sink limits and raw IPv6 mismatch.
 PR123/main566d547 CI passes with unchanged policy. Full final packages, native
 planted-input-to-bundle, Android crash and full release gates remain open.
+
+
+## 2026-09-12 — native planted-input chain and controlled process crash
+
+Installed2c370af/Core6b: one combined nine-category invalid native profile
+reaches actual service failure, same-process UI, explicit extended case64 and
+audited admin decryption. Five local sinks and all four decoded files/metadata
+contain zero full/fragment needles. Guest-private profile rollback and rootless
+restart pass. Recovery traffic retains one failure in ten plus3/3 follow-up.
+An actual own-process crash removes TUN/restores network; relaunch, reconnect3/3
+and final disconnect pass. Stale ServiceRecord app=null is not a running process.
+[Exact retained scope](evidence/2026-09-12-r12-android-native-chain/README.md).
+Crash-marker/bundle readback, hangs, full V01/C05 and final release remain open.

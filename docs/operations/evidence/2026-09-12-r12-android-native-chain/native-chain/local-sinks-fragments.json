@@ -1,0 +1,129 @@
+{
+  "status": "PASS_BOUNDED_CURRENT_SINKS",
+  "utc": "2026-09-12T07:52:56.938418+00:00",
+  "same_native_failure_process": true,
+  "app_pid": 3179,
+  "sinks": [
+    {
+      "sink": "native_journal",
+      "bytes": 37992,
+      "sha256": "69fdc493362e5f36e61402b3742f47e3dfa9efeea8bce5b1bc22bbcb26a45ab7",
+      "marker_counts": {
+        "/data/user/0/synthetic/R12_ANDROID_PATH_2c_20260912.conf": 0,
+        "198.51.100.127": 0,
+        "Authorization: Bearer R12_ANDROID_AUTH_2c_20260912": 0,
+        "Cookie: session=R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_AUTH_2c_20260912": 0,
+        "R12_ANDROID_CONFIG_2c_20260912": 0,
+        "R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "R12_ANDROID_PATH_2c_20260912": 0,
+        "R12_ANDROID_PII_2c_20260912": 0,
+        "R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "R12_ANDROID_URL_2c_20260912": 0,
+        "config={private_key:R12_ANDROID_CONFIG_2c_20260912}": 0,
+        "https://example.invalid/R12_ANDROID_URL_2c_20260912?secret=synthetic": 0,
+        "password=R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "provider_payload=R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "qa+R12_ANDROID_PII_2c_20260912@example.invalid": 0
+      }
+    },
+    {
+      "sink": "operational_events",
+      "bytes": 318823,
+      "sha256": "fe2c57c2e6c7eb4e18f048940aa9e0b59e3614410416ec8ad76883308a657a3f",
+      "marker_counts": {
+        "/data/user/0/synthetic/R12_ANDROID_PATH_2c_20260912.conf": 0,
+        "198.51.100.127": 0,
+        "Authorization: Bearer R12_ANDROID_AUTH_2c_20260912": 0,
+        "Cookie: session=R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_AUTH_2c_20260912": 0,
+        "R12_ANDROID_CONFIG_2c_20260912": 0,
+        "R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "R12_ANDROID_PATH_2c_20260912": 0,
+        "R12_ANDROID_PII_2c_20260912": 0,
+        "R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "R12_ANDROID_URL_2c_20260912": 0,
+        "config={private_key:R12_ANDROID_CONFIG_2c_20260912}": 0,
+        "https://example.invalid/R12_ANDROID_URL_2c_20260912?secret=synthetic": 0,
+        "password=R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "provider_payload=R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "qa+R12_ANDROID_PII_2c_20260912@example.invalid": 0
+      }
+    },
+    {
+      "sink": "previous_exit",
+      "bytes": 191,
+      "sha256": "a7b546598ba89af17739fd56a86a0d59b150ece99aaec82b55f490fcdce974a5",
+      "marker_counts": {
+        "/data/user/0/synthetic/R12_ANDROID_PATH_2c_20260912.conf": 0,
+        "198.51.100.127": 0,
+        "Authorization: Bearer R12_ANDROID_AUTH_2c_20260912": 0,
+        "Cookie: session=R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_AUTH_2c_20260912": 0,
+        "R12_ANDROID_CONFIG_2c_20260912": 0,
+        "R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "R12_ANDROID_PATH_2c_20260912": 0,
+        "R12_ANDROID_PII_2c_20260912": 0,
+        "R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "R12_ANDROID_URL_2c_20260912": 0,
+        "config={private_key:R12_ANDROID_CONFIG_2c_20260912}": 0,
+        "https://example.invalid/R12_ANDROID_URL_2c_20260912?secret=synthetic": 0,
+        "password=R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "provider_payload=R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "qa+R12_ANDROID_PII_2c_20260912@example.invalid": 0
+      }
+    },
+    {
+      "sink": "available_app_pid_logcat",
+      "bytes": 15280,
+      "sha256": "30b7514be92ca0ee02aacd471c908712f9a58cbf3330c118c43f884e253287ca",
+      "marker_counts": {
+        "/data/user/0/synthetic/R12_ANDROID_PATH_2c_20260912.conf": 0,
+        "198.51.100.127": 0,
+        "Authorization: Bearer R12_ANDROID_AUTH_2c_20260912": 0,
+        "Cookie: session=R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_AUTH_2c_20260912": 0,
+        "R12_ANDROID_CONFIG_2c_20260912": 0,
+        "R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "R12_ANDROID_PATH_2c_20260912": 0,
+        "R12_ANDROID_PII_2c_20260912": 0,
+        "R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "R12_ANDROID_URL_2c_20260912": 0,
+        "config={private_key:R12_ANDROID_CONFIG_2c_20260912}": 0,
+        "https://example.invalid/R12_ANDROID_URL_2c_20260912?secret=synthetic": 0,
+        "password=R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "provider_payload=R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "qa+R12_ANDROID_PII_2c_20260912@example.invalid": 0
+      }
+    },
+    {
+      "sink": "current_visible_ui",
+      "bytes": 1654,
+      "sha256": "e38b1a8c747d073ed3114fa85f7b0933daa73435aed71c6c20448a0c6a1137f9",
+      "marker_counts": {
+        "/data/user/0/synthetic/R12_ANDROID_PATH_2c_20260912.conf": 0,
+        "198.51.100.127": 0,
+        "Authorization: Bearer R12_ANDROID_AUTH_2c_20260912": 0,
+        "Cookie: session=R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_AUTH_2c_20260912": 0,
+        "R12_ANDROID_CONFIG_2c_20260912": 0,
+        "R12_ANDROID_COOKIE_2c_20260912": 0,
+        "R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "R12_ANDROID_PATH_2c_20260912": 0,
+        "R12_ANDROID_PII_2c_20260912": 0,
+        "R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "R12_ANDROID_URL_2c_20260912": 0,
+        "config={private_key:R12_ANDROID_CONFIG_2c_20260912}": 0,
+        "https://example.invalid/R12_ANDROID_URL_2c_20260912?secret=synthetic": 0,
+        "password=R12_ANDROID_CREDENTIAL_2c_20260912": 0,
+        "provider_payload=R12_ANDROID_PROVIDER_2c_20260912": 0,
+        "qa+R12_ANDROID_PII_2c_20260912@example.invalid": 0
+      }
+    }
+  ],
+  "raw_private_content_exported": false
+}

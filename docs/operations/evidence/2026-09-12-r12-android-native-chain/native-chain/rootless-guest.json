@@ -1,0 +1,6 @@
+{
+  "status": "PASS_ROOTLESS_GUEST",
+  "guest_su_exit": 127,
+  "config_root_mode": false,
+  "utc": "2026-09-12T07:55:14.253532+00:00"
+}

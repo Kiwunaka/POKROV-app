@@ -1,0 +1,108 @@
+{
+  "status": "PASS_ANDROID_EXTENDED_ACCESS_SCAN",
+  "case_number": 64,
+  "origin": "brain-origin real HTTPS and worker-key in-memory scan",
+  "source_revision": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "external_oidc_retested": false,
+  "planted_native_to_app_canaries_exercised": true,
+  "plaintext_or_credentials_exported": false,
+  "lookups": [
+    {
+      "kind": "case_number",
+      "own_result_count": 1,
+      "canary_matches": 0
+    },
+    {
+      "kind": "diagnostic_id",
+      "own_result_count": 1,
+      "canary_matches": 0
+    }
+  ],
+  "operator_summary": {
+    "diagnostic_profile": "extended",
+    "app_version": "1.2.0",
+    "build_number": "4053",
+    "platform": "android",
+    "architecture": "x64",
+    "last_phase": null,
+    "last_error_code": null,
+    "proof_outcome": "unknown",
+    "attempt_link_source": null
+  },
+  "build_identity": {
+    "app_version": "1.2.0",
+    "build_id": "4053",
+    "platform": "android",
+    "channel": "direct"
+  },
+  "network_summary": {
+    "connection_state": "blocked",
+    "dns_state": "unknown",
+    "egress_state": "unknown",
+    "host_health": "unknown",
+    "route_mode": "all_except_ru",
+    "warp_state": "disabled"
+  },
+  "system_keys": [
+    "architecture",
+    "locale",
+    "os_family",
+    "os_version"
+  ],
+  "payload_scan": {
+    "profile": "extended",
+    "plaintext_bytes": 1722,
+    "plaintext_sha256": "3e86e3840a08f32532e6ef32f0b0ae5a1b2effb09da02489dc4a7fa644f3106a",
+    "file_count": 4,
+    "files": [
+      {
+        "path": "build/identity.json",
+        "bytes": 81,
+        "sha256": "a297610cad70d57fe0f2ca5c02c63a99870908bf88265f851988c68ebb77d103",
+        "canary_matches": 0
+      },
+      {
+        "path": "network/summary.json",
+        "bytes": 154,
+        "sha256": "9b6cc9e7dcd1a20562f9524a2b949b328fce3f99d1820b3e16c18a7bb99e57b2",
+        "canary_matches": 0
+      },
+      {
+        "path": "redaction/report.json",
+        "bytes": 137,
+        "sha256": "c08a412c38024d7b63cb9df3f6faa1e84876b7630cf76fa664f1232717eb43ef",
+        "canary_matches": 0
+      },
+      {
+        "path": "system/summary.json",
+        "bytes": 84,
+        "sha256": "9bb58b8715c59c19b14071da9932338f2f9bfceebe810c4084aeb574022085f1",
+        "canary_matches": 0
+      }
+    ],
+    "canary_matches": 0,
+    "extended_included": true,
+    "crash_included": false
+  },
+  "access": {
+    "without_step_up": "DENIED",
+    "controlled_fixture_step_up": true,
+    "download": "PASS_EXACT_CIPHERTEXT",
+    "replay": "DENIED",
+    "cache_control": "no-store",
+    "audit_rows_before": 0,
+    "audit_rows_after": 2,
+    "audit_actions": [
+      "downloaded",
+      "grant_issued"
+    ]
+  },
+  "existing_case_status_preserved": "open",
+  "native_canary_categories": 9,
+  "marker_needles_scanned": 17,
+  "session_cleanup": {
+    "fixture_revoked": true,
+    "preexisting_unchanged": true
+  },
+  "utc": "2026-09-12T07:51:25.505582+00:00"
+}
