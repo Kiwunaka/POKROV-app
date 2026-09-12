@@ -1,0 +1,349 @@
+{
+  "archive": {
+    "path": "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start/docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/marker-atomicity-20260912/uid-flow-evidence.zip",
+    "bytes": 55089,
+    "sha256": "2e813cdff54eff6c61c267308244711ae4842f2b5fe2146e7dbf0a41331f68bf"
+  },
+  "members": [
+    {
+      "path": "aapt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "AndroidManifest.xml",
+      "bytes": 746,
+      "sha256": "ad86f80e8df95b2fdcc76cd006b98072077a891f21b731904ccb48130ea9ec10"
+    },
+    {
+      "path": "baseline-app-packet.json",
+      "bytes": 1864,
+      "sha256": "aa10de691cde3597bc107ff66b0c530c8cea6817f973a1411f8825d464b96d54"
+    },
+    {
+      "path": "baseline-shell-packet.json",
+      "bytes": 1666,
+      "sha256": "d45069c16550b44b48d1e1a7c6a559779e68f740a7c7f2f422b997e30a9cd048"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 2948,
+      "sha256": "49fdc084175e96e9afe4b6e3aa345785a9e12cc7b9f64bf6c5344c6c04415a32"
+    },
+    {
+      "path": "build.json",
+      "bytes": 3999,
+      "sha256": "a546e845864fde593e3dad535db90939ac9aa13f0b59e0e82ea26b5999c79771"
+    },
+    {
+      "path": "build.py",
+      "bytes": 2623,
+      "sha256": "63e39f57869b66fb5a39d3ab94c46263888820564af7d2235a605ebd3935ba61"
+    },
+    {
+      "path": "capture-marker.py",
+      "bytes": 3375,
+      "sha256": "57123db75ddb970fb255ea818166e580ecec17c6c159f686cfa6982e660fbcd3"
+    },
+    {
+      "path": "capture.py",
+      "bytes": 561,
+      "sha256": "90883bb0328893598c1d3473cab8628c496a87f98d00224d2192c45087b99feb"
+    },
+    {
+      "path": "choices-cleared.json",
+      "bytes": 3053,
+      "sha256": "eed476e32e3dfdd2a53bb2628c7320333398e721c6e4e1c6b0b889d7b4ff2a8a"
+    },
+    {
+      "path": "cleanup.py",
+      "bytes": 1137,
+      "sha256": "a9bad1658f5cb5162d9b444e0cde1371cc0eca7a5619fcbbda211b23b82de54d"
+    },
+    {
+      "path": "commands.md",
+      "bytes": 4450,
+      "sha256": "ac7ee39258cf8866dd0a30b6d2e6855804822d459d4fc13a7a5c3daf57c7398d"
+    },
+    {
+      "path": "d8.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "excluded-app-https.json",
+      "bytes": 390,
+      "sha256": "fa937a380b5d65cf1975a171dd46c5c9e4f2c59cec8994c16a6f6d41d738f998"
+    },
+    {
+      "path": "excluded-app-packet.json",
+      "bytes": 1864,
+      "sha256": "56ba0525cd3615389a7c224746925724540dd8c59f3634132e78b508b13f554b"
+    },
+    {
+      "path": "excluded-connected.json",
+      "bytes": 3024,
+      "sha256": "c69470bd788f0e4f60b1b1840e1e3100a34e51047151c8d8866048ef3a51a609"
+    },
+    {
+      "path": "excluded-scope.json",
+      "bytes": 2206,
+      "sha256": "26b775f858db84671e6f3eb8dd6adef1eb5ac7fbddd90d17c323f798ebbd8754"
+    },
+    {
+      "path": "excluded-shell-https.json",
+      "bytes": 468,
+      "sha256": "eb28cc2d5546a435cdbfc7d9a6c1e59fe36e4a36ba72c80cf2dfa12c2f7c1f38"
+    },
+    {
+      "path": "excluded-shell-packet.json",
+      "bytes": 1662,
+      "sha256": "499e194f7be241b77f554ce4795188e3865f6c7b4f9f1cccd2f9462040873476"
+    },
+    {
+      "path": "excluded-start.json",
+      "bytes": 2973,
+      "sha256": "ca130fab2be1465676efcb8205087580381d528367b5ed0a4e285ee589d7a3d9"
+    },
+    {
+      "path": "guest-cleanup.json",
+      "bytes": 271,
+      "sha256": "47c57ab2f2f83ea636274cb1b22b2bbdca26a00573ad58bc1671aeb3076df05d"
+    },
+    {
+      "path": "host-network-installed-after.json",
+      "bytes": 281,
+      "sha256": "0d4d8f8439b573b528f8f2e7c3d3d51b867b40e3f897dbbd8b9e5ccb55e06b42"
+    },
+    {
+      "path": "host-network-installed-before.json",
+      "bytes": 220,
+      "sha256": "895e28ef3d91436046ff1f4388fccbca764fb14522f19416529970e20cad68b9"
+    },
+    {
+      "path": "host-network.ps1",
+      "bytes": 1137,
+      "sha256": "d03ee9cc1957e5c21fc96ca661aaaa9c2301bf574984bf2137bc4ba8f064e20f"
+    },
+    {
+      "path": "http.py",
+      "bytes": 1497,
+      "sha256": "38e968af5d541ff808f5783e882811a21e317d52db0599851a3df7739cafa2ec"
+    },
+    {
+      "path": "install.py",
+      "bytes": 1550,
+      "sha256": "cffaada3f41ac5604953f49ca346b6227635b83fe17021620587515fd4ba88d9"
+    },
+    {
+      "path": "installation.json",
+      "bytes": 517,
+      "sha256": "d29cba9faece71d6dff5cd2274e05e0ee6200bf1b45db4bd522648f55612427c"
+    },
+    {
+      "path": "javac.log",
+      "bytes": 90,
+      "sha256": "807f79b7b8cb6f1858a066e6a463c0c9f5113d8f87aba8e9f4663937c2ff7d3d"
+    },
+    {
+      "path": "keytool.log",
+      "bytes": 147,
+      "sha256": "720f9f6d4be5ccd74b556788be1a532c236392a4aa0d777b9e6f652a60b6903b"
+    },
+    {
+      "path": "ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "10239bf2f59d9a2c86ee427b7a6ff38637df8edca73322757fc733202a7dce72"
+    },
+    {
+      "path": "ldplayer-progress.json",
+      "bytes": 17462,
+      "sha256": "14450a562131db162c66450c9990d5a6f62ed5ee949cd60a429e8a9db9386206"
+    },
+    {
+      "path": "MainActivity.java",
+      "bytes": 2180,
+      "sha256": "69d88d4b43f153c9974a15d55634d794a2f8b299b466aa9a116b12c3c6271b35"
+    },
+    {
+      "path": "network.py",
+      "bytes": 2438,
+      "sha256": "6607c011bd10fed82e703ff187cdf43bf6ecaa6a51d49a54b46f18db0d193634"
+    },
+    {
+      "path": "observe.py",
+      "bytes": 488,
+      "sha256": "2ab32be362a0350445e76dcf9a951f9d40d0ebcc9f50836ed012df9f3cd36941"
+    },
+    {
+      "path": "OwnedEgressProbe.java",
+      "bytes": 3658,
+      "sha256": "e8d1cf08d555eb14451dc96ab31992b4c24045e4a26e5a997c80ac0986377bd8"
+    },
+    {
+      "path": "packet-oracle.py",
+      "bytes": 5286,
+      "sha256": "31be7921329844e05ac1193f774b966177d022036c291c683af47d64deb9d7d2"
+    },
+    {
+      "path": "probe.py",
+      "bytes": 1555,
+      "sha256": "6e02d0ed8d14bcf65415e2777071203566f55abe5971b6c5828756240d1b301b"
+    },
+    {
+      "path": "restoration.json",
+      "bytes": 17660,
+      "sha256": "dd6b05fbc3a7a3fb93f376ba615a3b1024467102bccc4aabdf90f3a4be8efa1d"
+    },
+    {
+      "path": "restored-app-https.json",
+      "bytes": 390,
+      "sha256": "946762b110f6d58998ae52aa376f11f74b6251425c096a5bf9e32ad5bc20a88c"
+    },
+    {
+      "path": "restored-app-packet.json",
+      "bytes": 1864,
+      "sha256": "c31d728a3694c2df4a15da51d3261e248747eb23ef86170c2a5fbbbb2d4d02fd"
+    },
+    {
+      "path": "restored-before-fixture-removal.json",
+      "bytes": 2948,
+      "sha256": "45405385186d13efbb0570bd38933ae01c95f3af42513b96c39252a9576325d2"
+    },
+    {
+      "path": "restored-shell-https.json",
+      "bytes": 468,
+      "sha256": "8bbb3799fd0cd522cef8208be1c1491fec334818ec083c7eec4fcc925417fe5a"
+    },
+    {
+      "path": "restored-shell-packet.json",
+      "bytes": 1666,
+      "sha256": "0091f750151373c9dc1916e4bb2d2af93172d7220820209a0ddaeba5bf0a15b3"
+    },
+    {
+      "path": "restored.json",
+      "bytes": 2925,
+      "sha256": "465725da98711bc6fd8fe57c14cbaca29f364b09baba364bea0cc7723f0c5e2d"
+    },
+    {
+      "path": "result.json",
+      "bytes": 6597,
+      "sha256": "849c1fef13e6c69db08ebf124818b392f459f6c83bdecddb9a139f519b6f8d7b"
+    },
+    {
+      "path": "retain.py",
+      "bytes": 3782,
+      "sha256": "b5483ff1bbc02f17add63fde9c173ee962d197b0cd9e01789c8fb845152c79b9"
+    },
+    {
+      "path": "scope.py",
+      "bytes": 951,
+      "sha256": "59c27398d6df3643164a9c423ee392f8456bb7c6df44502fc8f305ea8cca7801"
+    },
+    {
+      "path": "scroll-up.py",
+      "bytes": 289,
+      "sha256": "1dd621ed3e0569cf2a85f65595b6f1f93ac738211bdc8ce547a450e6ac1cd156"
+    },
+    {
+      "path": "selected-app-https.json",
+      "bytes": 390,
+      "sha256": "fce680b26c00ae2ac8e0958e18f37be1d2ec7e8e8be30425673fff2ede9417b6"
+    },
+    {
+      "path": "selected-app-packet.json",
+      "bytes": 1860,
+      "sha256": "0ffef1123450d7d418738a3f91658aadc8b7d9d751406d7c52de0c75c6dd903d"
+    },
+    {
+      "path": "selected-choice.json",
+      "bytes": 2859,
+      "sha256": "ad23005a61cd320d95267a2084a8b48f1358ed37f8fa43aa20d60d27fbdb75c5"
+    },
+    {
+      "path": "selected-connected.json",
+      "bytes": 3024,
+      "sha256": "d5a47f01aa2f38907ac434ba64580b06e839afa06c28e776c7354b50d410122f"
+    },
+    {
+      "path": "selected-scope.json",
+      "bytes": 2170,
+      "sha256": "46fc5b72da9b075bbb7437ad90494acda23d9ce870110bd303676d6692488e3a"
+    },
+    {
+      "path": "selected-shell-https.json",
+      "bytes": 468,
+      "sha256": "68441e12140c2412b4842ff2baa347b0f241176029d2b575217337a75bbf1d83"
+    },
+    {
+      "path": "selected-shell-packet.json",
+      "bytes": 1666,
+      "sha256": "f2ce81b4b4ecdfae4df297aaf664e3cdf3d2803fe5b38e72ce290639f1d37931"
+    },
+    {
+      "path": "sign.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "ui.py",
+      "bytes": 2375,
+      "sha256": "7b33532e32092e736fae3af0c8017b2b41647b8b6327ff1b8e8212963a2b9c4b"
+    },
+    {
+      "path": "verify-signature.log",
+      "bytes": 350,
+      "sha256": "abffd6e5138d1a98d38fee6078c789fde4407b2431324bd964f03bcf65ac73e4"
+    },
+    {
+      "path": "verify.py",
+      "bytes": 4613,
+      "sha256": "73b4527ca24a12327a6982cfb7e26e97b0370f561d1569fd9523edd6ba2c499f"
+    },
+    {
+      "path": "watch-ldplayer.py",
+      "bytes": 3249,
+      "sha256": "7920c6af03ef879ddae97cfcde11be36696a5ebde765c39811919b170d92b7da"
+    },
+    {
+      "path": "zipalign.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "direct_files": [
+    {
+      "path": "uid-flow-result.json",
+      "bytes": 6597,
+      "sha256": "849c1fef13e6c69db08ebf124818b392f459f6c83bdecddb9a139f519b6f8d7b"
+    },
+    {
+      "path": "uid-flow-selected.png",
+      "bytes": 235258,
+      "sha256": "609dce21abacb871a6ac9ec408366647f7d20a7879439467a39a7f76646af243"
+    },
+    {
+      "path": "uid-flow-excluded.png",
+      "bytes": 237481,
+      "sha256": "502f6e6e2047ccd9240849d56016d1a1e1b8d0fd3553ff41419f837050862b0c"
+    },
+    {
+      "path": "uid-flow-restored.png",
+      "bytes": 183452,
+      "sha256": "ea079d5965aa19c3482858fb16bc6d2fcc5cfd291972ce523840d376e9718d3e"
+    }
+  ],
+  "local_only_binaries": [
+    {
+      "path": "C:/r12-marker-packages-20260912/uid-flow/routing-probe.apk",
+      "bytes": 12689,
+      "sha256": "290b573822f13b78ce2e640f94a7ec4546c84ff93c901d2d155cf63896fb586a"
+    },
+    {
+      "path": "C:/r12-marker-packages-20260912/uid-flow/dex/classes.dex",
+      "bytes": 8016,
+      "sha256": "2566ccc544933276bf8a7f12849b8c67a2c546a267ac1479c7a9208d9ed64367"
+    }
+  ],
+  "excluded": "APK/DEX/classes/signing material and PNGs excluded from archive; no raw IP/pcap/private profiles/provider payloads; test signer removed, not production signing"
+}

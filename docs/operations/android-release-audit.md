@@ -1345,3 +1345,14 @@ consistency and same endpoint digest pass. A particular filtering cause is not
 proven. Ordinary US remains FAIL; full N08 and physical/RU-origin acceptance stay
 open. Temporary fixtures are removed, root/network/UI restored, no source or
 production configuration change.
+
+
+## 2026-09-12 selected and excluded app egress
+
+[Independent per-UID evidence](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-android-per-uid-egress)
+retains exact APK becd25fa on rootless Android emulator/SPB. QA app UID10110
+and shell UID2000 have opposite exact IPv4 TCP sources in Only selected;
+Except selected reverses them. Eight unique marker captures and six HTTPS
+requests pass. Product bytes/UID unchanged, new fixtures removed, choices and
+guest/host network restored, all VMs off within2MiB growth. Full DNS/IPv6/LAN,
+physical/Windows/RU-origin acceptance and N08 remain open; NY failure unchanged.

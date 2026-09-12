@@ -422,3 +422,53 @@ PASS33; `python -B scripts/agent_context_packet_audit.py
 --platform-context-root .` PASS. All75 archive/five direct disk and index hashes,
 added local links,83 unchanged registry status tuples and release isolation
 PASS. Core source remains clean; staged diff checks PASS.
+
+
+## 2026-09-12 Android per-UID egress
+
+[Result](uid-flow-result.json), [archive/direct-file receipt](uid-flow-files.json),
+[Only selected](uid-flow-selected.png), [Except selected](uid-flow-excluded.png)
+and [restored](uid-flow-restored.png) retain APK becd25fa/client b93/Core6b.
+Current-origin rootless LDPlayer3/API34, SPB, WARP off. Temporary Internet-only
+QA app UID10110 and shell UID2000 execute identical Java probe bytecode.
+
+| State | QA app exact TCP source | Shell exact TCP source | HTTPS app / shell |
+| --- | --- | --- | --- |
+| Disconnected baseline | Current direct | Current direct | Not run |
+| Only selected | SPB loopback | Current direct | RU / PL |
+| Except selected | Current direct | SPB loopback | PL / RU |
+| Restored disconnected | Current direct | Current direct | PL / PL |
+
+Eight unique44-byte markers observed at owned SPB TCP22 prove exact independent
+IPv4 flow sources, each capture exit0/zero kernel drops. Six HTTPS requests to
+the fixed owned payload endpoint pass200/schema/digest. VPN UID ranges agree
+with opposite membership; POKROV UID10111 remains excluded. Ready-before-send
+and exact marker equality bind captures despite the known remote clock offset.
+Raw addresses, pcap and private profile data are not retained.
+
+The new QA app and new guest DEX were removed after identities were verified;
+the product APK/UID stay unchanged. UI choices clear and restore Russia-direct,
+SPB/disconnected. Guest IPv4/DNS and expiration-normalized IPv6, host routes/DNS
+restore. Root stays false, all VMs stop;2MiB growth within512MiB/40GiB floors,
+other VM disks unchanged. Three public UI PNGs visually reviewed. Local-only
+APK290b5738/DEX2566ccc5 have exact hashes; temporary test signer removed and
+unrelated to production signing. No product source or release package change.
+
+`verify.py` PASS. Commands and sources are retained in the text evidence archive.
+An extra Close assertion after the app dialog auto-dismissed stopped before
+input; no product failure. This proves these emulator IPv4 TCP/HTTPS flows via
+SPB only. DNS-path/UDP/IPv6/LAN/arbitrary-app, physical Android, installed Windows,
+RU-origin and full N08/Q01 remain open; ordinary NY failure is unchanged.
+No production configuration, release pointer, push, deploy or publication change.
+
+
+Validation: `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-seed.ps1
+-PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start
+-CoreRoot C:/r12corec02` PASS, terminal exit0 including docs contract.
+The first invocation through legacy `powershell` failed at SHA256.HashData;
+the failure log is preserved and does not count as a pass. PowerShell Core
+runs the same script successfully. Platform docs/context pytest PASS33 and
+context audit PASS. Retention audit PASS:61 archive members,4 direct files,
+2 local binary hashes,8 added links,83 unchanged registry status tuples and
+release isolation. `git diff --check` PASS. No release builds were run for
+this documentation step.
