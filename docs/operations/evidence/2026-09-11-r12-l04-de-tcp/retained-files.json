@@ -172,5 +172,101 @@
     "bytes": 4867,
     "sha256": "d5c103706b0a56a0ff053e1801c230a19cac842312a6b0449b6b73e9c195e440",
     "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-port-control-20260912.py"
+  },
+  {
+    "path": "candidate8-lifecycle-recovery-20260912.json",
+    "bytes": 2048,
+    "sha256": "972530bbb8d5cd42bf550f44f319de428fc2bad990a06890a72615bb7cb872e7",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-recovery-20260912.json"
+  },
+  {
+    "path": "candidate8-lifecycle-20260912-connected-uninstall.json",
+    "bytes": 1541,
+    "sha256": "74b1db6efc06be2f4d5e06641be5273c54beda64e622ab164562a59062328e65",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-20260912-connected-uninstall.json"
+  },
+  {
+    "path": "candidate8-installed-before-lifecycle-20260912.json",
+    "bytes": 63353,
+    "sha256": "d8bb8e62e3ad551e7b8903e05afe978e692668777428006416cfb5590dec6b84",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-installed-before-lifecycle-20260912.json"
+  },
+  {
+    "path": "candidate8-lifecycle-driver-20260912.log",
+    "bytes": 894,
+    "sha256": "20cbde8c8d65d1a90bc6f80ccb1f533973e3ec8bae81b715d35ac12b2c435bd2",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-lifecycle-driver-20260912.log"
+  },
+  {
+    "path": "guest-lifecycle8-20260912.py",
+    "bytes": 5497,
+    "sha256": "2b53ecb3eec23ba89b6631fe247201654781889d1911e5e54fe438472d150334",
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-lifecycle8-20260912.py"
+  },
+  {
+    "path": "guest-connected-uninstall8-20260912.py",
+    "bytes": 8054,
+    "sha256": "7d12b0ff557d9015130941798aaf238d1df223c772a9cfac6401cd56be11a9fe",
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-connected-uninstall8-20260912.py"
+  },
+  {
+    "path": "guest-readback-before-lifecycle8.py",
+    "bytes": 2860,
+    "sha256": "550aefe10cec2b1a9e987aa2611b7890a1e2b62daf7e3e9940c0b99a66650b87",
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-readback-before-lifecycle8.py"
+  },
+  {
+    "path": "mini-arm-lifecycle8-20260912.py",
+    "bytes": 20720,
+    "sha256": "53ae3e64f3c8099f8916085fb78293896f49f8276bad251e0d281e0a86f618c3",
+    "source": "C:\\r12-l04-ui-poll-20260911\\mini-arm-lifecycle8-20260912.py"
+  },
+  {
+    "path": "mini-via-brain.py",
+    "bytes": 323,
+    "sha256": "d455ed8624fb3222ce6b19181abaf30ef41042ec8528fc5380932dc5bd246003",
+    "source": "C:\\r12-l04-ui-poll-20260911\\mini-via-brain.py"
+  },
+  {
+    "path": "mini-default-dns8-20260912.py",
+    "bytes": 1250,
+    "sha256": "98272961ec0e342fe3c3983a4225c50d3f18ec45fca42a7bd6a5ed3f868fcf45",
+    "source": "C:\\r12-l04-ui-poll-20260911\\mini-default-dns8-20260912.py"
+  },
+  {
+    "path": "observe-default-node-owner-20260912.py",
+    "bytes": 1959,
+    "sha256": "643d8d44da78d450fb7ad869320849f58f7d38286be18abfe052f118d868e9e2",
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-default-node-owner-20260912.py"
+  },
+  {
+    "path": "candidate8-default-node-owner-20260912.json",
+    "bytes": 617,
+    "sha256": "725797c7209dfb5ebfa61ce47e3c4ce3104724569b9cfc6f42ddf632283680e5",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-default-node-owner-20260912.json"
+  },
+  {
+    "path": "observe-default-path-controls-20260912.py",
+    "bytes": 2978,
+    "sha256": "ca1f5fa0d7ccdede0afff9d3975b2b1ecbe801b429d010e663f874db7240d907",
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-default-path-controls-20260912.py"
+  },
+  {
+    "path": "candidate8-default-path-controls-20260912.json",
+    "bytes": 2524,
+    "sha256": "37a22bfe07f05a0751f5b9b07fda83b10c03baf3ea808f16ab5a13e18be3ca89",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-default-path-controls-20260912.json"
+  },
+  {
+    "path": "observe-de-address-config-20260912.py",
+    "bytes": 1732,
+    "sha256": "a9ea3102c6184ecdf3c1e6c792f3a8b8e3a927471e64b53ca45ebccb892cb5a8",
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-address-config-20260912.py"
+  },
+  {
+    "path": "candidate8-de-address-config-20260912.json",
+    "bytes": 575,
+    "sha256": "748c36961065089ead3cee550f41762cc61ecd7f7f4207671f5e30d5a8e4fb1e",
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-de-address-config-20260912.json"
   }
 ]

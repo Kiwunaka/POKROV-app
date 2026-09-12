@@ -100,3 +100,60 @@ and cannot explain the older unidentified curl35 session. No VM, profile,
 firewall or service setting was changed. Both observer processes exited zero.
 The [script](observe-de-port-control-20260912.py) and result extend the retained
 manifest; earlier captures and their conclusions remain unchanged. L04 stays open.
+
+## 2026-09-12 package-8 lifecycle stopped before purge
+
+The existing MINI Ubuntu guest still has the exact signed package 8. A fresh
+[installed readback](candidate8-installed-before-lifecycle-20260912.json)
+matches all 302 payload entries, modes and ownership. The
+[lifecycle attempt](candidate8-lifecycle-20260912-connected-uninstall.json)
+reaches daemon phase `running` through root fixture IPC, but all six HTTPS
+preconditions time out (`curl 28`, HTTP000) and system DNS lookup fails.
+The [driver](candidate8-lifecycle-driver-20260912.log) stops at that assertion
+before closing the desktop UI or invoking apt. Purge, reinstall and successful
+connected lifecycle are **NOT_EXECUTED**, not passed.
+
+The [finally result](candidate8-lifecycle-recovery-20260912.json) is
+`FAIL_WITH_RESTORATION`: disconnect succeeds, all seven network hashes match
+their pre-attempt values, the private profile hash is unchanged, all 302
+payload entries still match, and the original GUI PID1648 still runs as UID1000.
+No TUN or recovery record remains. The readback's empty authorization-events
+field is not evidence of a real polkit action; that proof remains in the
+separate installed-UI record. Package7 lifecycle evidence is not reassigned.
+
+The selected default server hash differs from the prior alternate DE path.
+A [current read-only node projection](candidate8-default-node-owner-20260912.json)
+matches it to the enabled **DE** row and its delivery endpoint. This corrects
+the provisional interpretation that a different server hash meant another node.
+[Path controls](candidate8-default-path-controls-20260912.json) show the same
+global IPv4 answer in the guest, MINI and Brain; it is not in the fake-IP range.
+Both MINI-host TCP443 attempts and both Brain-host attempts time out after
+four seconds, independently of the guest VPN. That address hash is absent
+from DE's current global interface addresses. A
+[static-config projection](candidate8-de-address-config-20260912.json) also
+finds no default delivery address in the inspected netplan file; the management
+address is present and systemd-networkd is active.
+
+The [September9 address record](../2026-09-09-r12-windows-nat-path/de-public-address-fingerprints.json)
+contained both address hashes, and the
+[September11 endpoint control](../2026-09-11-r12-l04-ui-status/candidate7-path-endpoint-diagnostic.json)
+passed TCP to the default address. These older observations do not establish
+current reachability. Current delivery configuration/DNS and host assignment
+therefore disagree; the time, mechanism and intended status of the missing
+address remain unknown. This is distinct from the intermittent failure of the
+other DE address. No DNS, node row, host address or production network setting
+was changed. Restoring or retiring that delivery address requires an explicit
+operator decision and production scope. L04 remains active/I4.
+
+The exact lifecycle scripts and read-only observers extend the existing
+[retained manifest](retained-files.json) to 45 files. The guest and package
+were reused; no new VM, branch, package build or release artifact was created.
+
+Validation: client `pwsh -NoProfile -File test/docs-contract.ps1` and
+`pwsh -NoProfile -File scripts/validate-seed.ps1 -CoreRoot C:/r12corec02
+-PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start` PASS.
+All45 retained disk/index hashes, six preserved failed probes, seven restored
+network states and four native control timeouts were checked. All83 registry
+statuses are unchanged. Local links, scoped private-material patterns, staged
+diff checks and release-artifact isolation pass. Platform docs tests33 and
+context audit pass. These checks do not close failed runtime acceptance.

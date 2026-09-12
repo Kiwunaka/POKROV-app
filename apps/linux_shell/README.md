@@ -47,6 +47,13 @@ The later [package-8 DE-path investigation](../../docs/operations/evidence/2026-
 reproduces curl35 alongside pending TCP handshakes: repeated SYNs appear at
 MINI egress but not in the simultaneous DE capture. The loss cause is unknown;
 successful no-VPN controls and other paths do not close this acceptance gate.
+The [September12 lifecycle attempt](../../docs/operations/evidence/2026-09-11-r12-l04-de-tcp/README.md#2026-09-12-package-8-lifecycle-stopped-before-purge)
+stops before purge because six traffic checks and system DNS fail. The exact
+302-file package, profile, network and non-root GUI remain restored. The default
+DE delivery address is absent from current DE interfaces while still appearing
+in current node delivery/DNS; native MINI and Brain connections time out.
+The cause and intended address state need operator resolution. Package8
+connected purge/reinstall and final Linux acceptance remain open.
 
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;
