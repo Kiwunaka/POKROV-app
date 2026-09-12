@@ -1418,3 +1418,14 @@ Both required CI runs pass. Phone VPN is off; VM is off and host network is
 unchanged. This is a same-version local update, not channel delivery. The AWG
 retained-TUN failure still needs exact-device material and installed evidence;
 guarded PLAN reported neither lab material ready. Full N05 remains open.
+
+
+## R12-N05 — AWG3.1 active TUN failure, 2026-09-13
+
+[Installed receipt](evidence/2026-09-12-r12-android-probe-observations/awg31-active-tun-fault.json)
+adds exact-material/canonical-AWG3.1 readback and owned HTTPS-path failure to
+x64 ab70712a. UI no longer claims VPN stopped while native TUN/service persists;
+repair restores confirmed protection. Test rules/lab gates/root are cleared,
+all VMs stopped, host network unchanged. Native exported code remains generic;
+TLS taxonomy, other required devices/origins and Frankfurt ordinary failure
+remain open. This is bounded pre-candidate evidence, not release acceptance.

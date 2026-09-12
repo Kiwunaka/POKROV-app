@@ -1,0 +1,88 @@
+{
+  "status": "PASS_BOUNDED_AWG31_ACTIVE_TUN_FAILURE_AND_RECOVERY",
+  "utc": "2026-09-12T22:45:07.186757+00:00",
+  "client_source": "17b9df4446b23d774386be742dcda25c97048ae9",
+  "core_source": "6b271de",
+  "installed_apk_sha256": "ab70712a7e737d71f5293a519e69783526e1570e8d252ef9939124a910d600ad",
+  "origin": "current-origin Windows host LDPlayer14 index3",
+  "profile": "awg31_lab",
+  "profile_verified": true,
+  "canonical_config_sha256": "490cbdd6c9b77b83ead05233438621cda2982e5189595bd7ff916a4ee8722064",
+  "exclusive_peer_public_sha256": "8a0440840098e3b2f29fb113d3c0845036892c9962413488e893a5a15ab2c858",
+  "fault": [
+    {
+      "status": "FAULT_ACTIVE",
+      "mode": "drop non-SYN TCP toward owned HTTPS probe for exact AWG3.1 peer only",
+      "deadline_seconds": 180,
+      "initial": {
+        "syn": {
+          "packets": 0,
+          "bytes": 0
+        },
+        "synack": {
+          "packets": 0,
+          "bytes": 0
+        },
+        "drop": {
+          "packets": 0,
+          "bytes": 0
+        }
+      },
+      "before_firewall_sha256": "137aedf7437bbcdb68d050f652f3e708995362c3f692fa9e4431daa60efbb13d",
+      "observed_utc": "2026-09-12T22:28:56.103656+00:00"
+    },
+    {
+      "status": "FAULT_REMOVED",
+      "elapsed_seconds": 180.13,
+      "final_counts": {
+        "syn": {
+          "packets": 3,
+          "bytes": 180
+        },
+        "synack": {
+          "packets": 18,
+          "bytes": 1080
+        },
+        "drop": {
+          "packets": 50,
+          "bytes": 38048
+        }
+      },
+      "firewall_exact_restored": false,
+      "after_firewall_sha256": "2f30d4203d8de0ea3b0a3fdc3ea8a730e3d9ebc7cbda0828c53d202fd81b4a9e",
+      "observed_utc": "2026-09-12T22:31:56.218223+00:00"
+    }
+  ],
+  "observed": {
+    "native_probe_failed_sequence": 30,
+    "tun_retained": true,
+    "service_retained": true,
+    "ui_health": "needs_attention",
+    "ui_egress": "unconfirmed",
+    "no_false_vpn_stopped_claim": true,
+    "no_dpi_attribution": true,
+    "recovered_native_probe_verified_sequence": 45
+  },
+  "cleanup": {
+    "lab_gate_removed": true,
+    "fault_rules_absent": true,
+    "all_vms_off": true,
+    "root_mode_false": true,
+    "rootless_su_exit": 127,
+    "host_routes_dns_unchanged": true,
+    "same_boot_android_network_restored": true
+  },
+  "limits": [
+    "TLS-path interruption is independently injected; exported native journal has generic failed, not TLS-specific taxonomy proof.",
+    "No Windows/physical/RU-origin failure matrix or final release claim.",
+    "Whole pre/post firewall equality not proved because before hash included changing counters; exact temporary rules absent.",
+    "Post-rootless-reboot IPv6 semantic hash changed; rootful same-boot route/DNS and IPv6 semantics restored.",
+    "Normal Frankfurt failed after lab cleanup twice; SPB succeeded and was disconnected.",
+    "AWG3.1 networkd drop-in persisted and combined-config readback matches; no network reload/reboot persistence test."
+  ],
+  "owner_scope": {
+    "awg2": "SKIPPED_BY_OWNER",
+    "awg31": "ACTIVE_LAB_DEFAULT_OFF"
+  },
+  "spent_usd": 0
+}

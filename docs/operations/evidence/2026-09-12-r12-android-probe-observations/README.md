@@ -147,3 +147,19 @@ ready AWG2 or AWG3.1 material; guarded binder PLAN stops before mutation.
 The retained-TUN failure case requires fresh exclusive peers/material through
 the existing L3 provisioning path. No copied device keys, broader cohort or
 rollout bypass was used. N05 and remaining full-plan gates stay open.
+
+
+## AWG3.1 retained-TUN failure — 2026-09-13
+
+[Exact receipt](awg31-active-tun-fault.json) uses the existing installed x64
+ab70712a/client17b/Core6b bytes. Exclusive AWG3.1 material and canonical profile
+readback now pass. During a180-second exact-peer owned HTTPS-path fault, native
+probe failed with TUN/service retained; refreshed UI correctly showed attention
+and unconfirmed egress. Repair after fault removal recovered native and UI proof
+with the same canonical config. No TLS-specific event-code claim: exported
+native journal only says failed. Temporary rules and lab admission removed;
+root restored and verified unavailable on next boot, all VMs off, host routes/DNS
+unchanged. Same-boot Android networking restored; later boot IPv6 hash differs
+and is not attributed. Ordinary Frankfurt failed, SPB control succeeded.
+Remaining N05 device/origin/taxonomy and full release gates stay open. AWG2
+repeats are excluded by the owner; existing consumers are retained.
