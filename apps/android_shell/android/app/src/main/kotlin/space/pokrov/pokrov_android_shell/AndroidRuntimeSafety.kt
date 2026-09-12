@@ -165,13 +165,13 @@ internal object AndroidRuntimeSafety {
         "runtime_stop_failed" ->
             "POKROV не смог корректно отключиться."
         "core_egress_probe_failed" ->
-            "POKROV не подтвердил защищенное подключение и отключил системный VPN."
+            "POKROV не подтвердил защищенное подключение."
         "core_egress_connect_failed" ->
             "Не удалось соединиться с сервером проверки через подключение."
         "core_egress_tls_failed" ->
             "Не удалось согласовать TLS с сервером проверки."
         "core_egress_probe_unavailable" ->
-            "POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз."
+            "POKROV не завершил проверку защищенного подключения. Попробуйте еще раз."
         "emergency_endpoint_unreachable" ->
             "Этот резерв недоступен в текущей сети. POKROV не включил системный VPN."
         "profile_identity_mismatch" ->

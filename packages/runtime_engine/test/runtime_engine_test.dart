@@ -1130,6 +1130,35 @@ void main() {
     expect(snapshot.diagnosticsLabel, 'DNS требует проверки');
   });
 
+  test('running egress failure preserves its observation without claiming a stop',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final cases = <String, String>{
+      'core_egress_probe_failed': 'POKROV не подтвердил защищенное подключение',
+      'core_egress_connect_failed': 'Не удалось соединиться с сервером проверки',
+      'core_egress_tls_timeout': 'Согласование TLS с сервером проверки не завершилось вовремя',
+      'core_egress_probe_unavailable': 'POKROV не завершил проверку защищенного подключения',
+    };
+    for (final entry in cases.entries) {
+      messenger.setMockMethodCallHandler(channel, (call) async => {
+            'phase': 'running',
+            'last_failure_kind': entry.key,
+            'core_egress_validated': false,
+          });
+      final snapshot =
+          await createRuntimeEngine(hostPlatform: HostPlatform.android).snapshot();
+      expect(snapshot.phase, RuntimePhase.running);
+      expect(snapshot.lastFailureKind, entry.key);
+      expect(snapshot.isCleanlyHealthy, isFalse);
+      expect(snapshot.message, contains(entry.value));
+      expect(snapshot.message, isNot(contains('отключил')));
+      expect(snapshot.message, contains('VPN остаётся включённым'));
+    }
+  });
+
   test('mobile lane derives Android diagnostics from top-level host fields',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

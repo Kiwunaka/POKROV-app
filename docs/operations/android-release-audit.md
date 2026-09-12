@@ -1394,3 +1394,15 @@ host protection. Original UI/network/root state is restored, VMs stopped,
 growth13MiB within the guard. The new package is kept; old output/rollback bytes
 are retained. Installed TLS/response/timeout faults, physical/Windows/RU-origin
 and N05/N01/N03 full gates remain open. No public release or pointer changes.
+
+
+## R12-N05 — active TUN copy, 2026-09-12
+
+[Phase-aware failure copy](evidence/2026-09-12-r12-android-probe-observations/README.md#active-tun-failure-copy--2026-09-12)
+corrects the claim that VPN stopped when the AWG path retains its TUN. Shared
+copy reports the running phase and unconfirmed egress; native stage text makes
+no stop claim. Failure codes, health and lifecycle stay unchanged. Both new
+regressions reproduced the old defect; final 191 JVM tests per flavor, 82 runtime
+tests (one existing skip), 12 shell tests, 8 Android Flutter tests and runtime
+analysis pass. This is source proof; installed e844bf15 and manual/full N05
+gates are unchanged.

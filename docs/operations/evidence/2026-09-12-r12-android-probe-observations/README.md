@@ -93,3 +93,25 @@ The initial failed check and relocation receipt are preserved in that directory.
 No hygiene allowlist or release-history exception was added.
 
 Final [post-relocation gates](C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start/docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/n05-android-probe-observations-20260912/final-gates.json) pass: client seed/docs, 33 platform tests and context audit. All three archive hashes and71 member hashes are verified in Git indexes; the original two committed archives match the platform copies exactly. The direct result JSON records Git LF normalization separately, with identical JSON values. All83 registry status/evidence/inventory tuples and release artifacts remain unchanged.
+
+
+## Active TUN failure copy — 2026-09-12
+
+When Android retains the AWG TUN after a failed egress check, the shared copy
+previously claimed that VPN was disabled. It now uses the reported runtime
+phase: running says the system VPN remains enabled and egress is unconfirmed.
+Non-running snapshots retain their previous stop copy. Native text reports
+the failed check without inferring lifecycle. Codes, health, retry and tunnel
+ownership are unchanged.
+
+[Source receipt](active-tun-copy.json) binds six source/test/owner files and
+retained logs in platform evidence. Both new regressions failed before the fix.
+An old native message expectation failed after the fix and was updated while
+keeping the assertions that runtime stopped and failure metadata survived.
+Final checks: 191 JVM tests per flavor; 82 runtime tests plus one existing
+opt-in skip; 12 app-shell and 8 Android Flutter tests; runtime analyze clean.
+
+This is source/bridge-fixture evidence. Installed APK e844bf15 predates this
+change; retained-TUN device proof, remaining N05, physical Android, Windows,
+RU-origin and N01/N03 gates remain open. No package or release artifact changed.
+Rollback is a scoped source revert. Source promotion is not part of this receipt.

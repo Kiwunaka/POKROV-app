@@ -92,6 +92,14 @@ class AndroidHostSecurityContractTest {
     }
 
     @Test
+    fun egressFailureCopyDoesNotInferThatTheTunStopped() {
+        // This same copy is used when the closed AWG lane retains its TUN.
+        for (kind in listOf("core_egress_probe_failed", "core_egress_probe_unavailable")) {
+            assertFalse(AndroidRuntimeSafety.publicFailureMessage(kind).contains("отключил"))
+        }
+    }
+
+    @Test
     fun hostSources_doNotLogOrSurfaceArbitraryNativeDetails() {
         val bridgeSource = source("RuntimeHostBridge.kt")
         val serviceSource = source("PokrovRuntimeVpnService.kt")
