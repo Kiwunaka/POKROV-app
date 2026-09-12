@@ -332,3 +332,46 @@ tests/test_agent_context_packet_audit.py -q` PASS33; `python -B
 scripts/agent_context_packet_audit.py --platform-context-root .` PASS.
 Archive53 and6 direct disk/index hashes, appended local links,83 unchanged
 registry statuses, staged diff checks and no release-artifact delta PASS.
+
+## 2026-09-12 installed protection status fix
+
+[Result](protection-status-result.json) and [62-member archive/hash receipt](protection-status-files.json)
+retain source b93e17d/Core6b, signed [PR126](https://github.com/Kiwunaka/POKROV-app/pull/126)
+head911b9847 and signed merge d3fefd48. Both exact CI runs pass; branch protection
+is unchanged. Only four reviewed source/contract paths are promoted. No paid
+settings, production service, release pointer or public download changes.
+
+The separately retained x86_64 APK becd25fa is109718342 bytes, same signer/version4053;
+only libapp.so differs from806. Flutter/Core/DEX and four notices match. Build
+PASS148.1s under40GiB floors. Nine prior canonical output/metadata files are
+hash-retained and restored; other APKs/AAB/Windows are not rebuilt. The local
+package path is in the receipt. A normal rootless update preserves UID10111
+and first-install time; private preference bytes are not read.
+
+One normal New York Connect and one explicit repair still fail. The sheet now
+moves from pending text without a help outcome to [off/help](protection-status-stopped.png)
+without any observation-time UI action. JSON sample times are1093/3187/5453ms;
+they do not measure exact latency. No TUN is captured during the pending sample.
+The PNG requested after pending already shows the later off state and is not
+used as a pending screenshot. A separate stable capture confirms no stale tunnel
+message and no TUN/service. The network failure's cause remains unresolved.
+
+[SPB control](protection-status-spb.png) shows healthy with TUN/service and two
+native RU HTTPS responses. Baseline has one timeout and one successful response;
+it remains FAIL. Restored control passes two PL responses, giving5/6 overall.
+[Original UI](protection-status-restored.png), guest IPv4/DNS/normalizedIPv6 and
+host routes/DNS restore. The verified temporary DEX is removed; root staysfalse,
+all emulators/build processes stop and disk growth is1MiB within512MiB budget.
+Both40GiB floors pass. The fixed APK remains installed. This closes the observed
+sheet defect on this emulator; full F01/N08/Q01, physical/Windows/new-package
+matrix and license/release gates stay open. Commands and limitations are retained
+in the archive; no new product source change or repeated product suite here.
+
+Validation: `pwsh -NoProfile -File scripts/validate-seed.ps1 -PlatformRoot
+C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start -CoreRoot C:/r12corec02`
+PASS (terminal exit0). Platform `python -B -m pytest -p no:cacheprovider
+tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q`
+PASS33 and `python -B scripts/agent_context_packet_audit.py
+--platform-context-root .` PASS. All62 archive members and four direct receipt
+hashes match disk/index; added local links,83 unchanged registry statuses,
+staged diff checks and no release-artifact delta PASS.

@@ -1321,3 +1321,14 @@ one repair fail; their cause is unknown. The stale protection-sheet defect is
 fixed in source and covered by a late-host-stop widget regression,192 widget
 tests and analyze. Captured APK806 predates the fix; fixed installed proof,
 source promotion, full N08 and physical/platform acceptance remain open.
+
+## 2026-09-12 installed b93 protection status follow-up
+
+[PR126 and exact installed evidence](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-installed-protection-status-fix)
+retain signed merge d3fefd48/both CI PASS and the separately built b93/Core6b
+x86_64 APK becd25fa. Rootless update keeps UID/first-install time. The formerly
+stale repair sheet changes pending to off without refresh; SPB healthy/TUN and
+2HTTPS control pass. New York still fails; baseline contains one retained HTTP
+timeout,5/6 controls overall. Root, guest/host network, original UI and emulator
+bounds restore. Other packages and physical/Windows acceptance remain open;
+no release pointer or public delivery changes.
