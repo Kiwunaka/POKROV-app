@@ -1538,3 +1538,14 @@ packaged-DLL canaries and five persisted sinks. Client PR120 and Core PR15 plus
 both main CI workflows pass; branch protections are unchanged. Failed storage
 attempts and byte-preserving retention are recorded. Installed acceptance for
 these exact packages, full source/license and release gates remain open.
+
+## 2026-09-12 Core6b installed Windows acceptance
+
+[Current installed evidence](evidence/2026-09-12-r12-6b-installed/README.md)
+proves 304-file upgrade/state preservation, SCM startup, ten TUN HTTPS probes,
+six native secret categories with zero journal markers, summary upload and
+audited operator access, profile restoration and exact GUI disconnect recovery.
+The current DLL also passed 300 lifecycle cycles/600 cancellations; exact source
+race/fuzz/resource checks pass. C02 finite DoD is verified/I3. Failed VM budget
+and overlapped-click attempts are retained. Full C05/V01, current Android,
+licensing/source delivery and release gates remain open.

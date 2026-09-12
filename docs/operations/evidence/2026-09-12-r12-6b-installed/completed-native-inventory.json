@@ -1,0 +1,246 @@
+{
+  "files": [
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\arm64-v8a\\libapp.so",
+      "bytes": 8127408,
+      "allocated": 5304320,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\arm64-v8a\\libflutter.so",
+      "bytes": 144312672,
+      "allocated": 68698112,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\arm64-v8a\\libpokrov-core.so",
+      "bytes": 78149920,
+      "allocated": 42573824,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libapp.so",
+      "bytes": 8962652,
+      "allocated": 5951488,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libflutter.so",
+      "bytes": 131381824,
+      "allocated": 67043328,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libpokrov-core.so",
+      "bytes": 69845616,
+      "allocated": 40607744,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\x86\\libpokrov-core.so",
+      "bytes": 75631008,
+      "allocated": 44646400,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\x86_64\\libapp.so",
+      "bytes": 8324016,
+      "allocated": 5464064,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\x86_64\\libflutter.so",
+      "bytes": 144837816,
+      "allocated": 69160960,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\x86_64\\libpokrov-core.so",
+      "bytes": 85500200,
+      "allocated": 45916160,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\arm64-v8a\\libapp.so",
+      "bytes": 8127408,
+      "allocated": 5304320,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\arm64-v8a\\libflutter.so",
+      "bytes": 144312672,
+      "allocated": 68698112,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\arm64-v8a\\libpokrov-core.so",
+      "bytes": 78149920,
+      "allocated": 42573824,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libapp.so",
+      "bytes": 8962652,
+      "allocated": 5951488,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libflutter.so",
+      "bytes": 131381824,
+      "allocated": 67043328,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libpokrov-core.so",
+      "bytes": 69845616,
+      "allocated": 40607744,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\x86\\libpokrov-core.so",
+      "bytes": 75631008,
+      "allocated": 44646400,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\x86_64\\libapp.so",
+      "bytes": 8324016,
+      "allocated": 5464064,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\x86_64\\libflutter.so",
+      "bytes": 144837816,
+      "allocated": 69160960,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\x86_64\\libpokrov-core.so",
+      "bytes": 85500200,
+      "allocated": 45916160,
+      "group": "merged_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\arm64-v8a\\libapp.so",
+      "bytes": 8127408,
+      "allocated": 5304320,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\arm64-v8a\\libflutter.so",
+      "bytes": 11107920,
+      "allocated": 4894720,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\arm64-v8a\\libpokrov-core.so",
+      "bytes": 78149920,
+      "allocated": 42573824,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\armeabi-v7a\\libapp.so",
+      "bytes": 8962652,
+      "allocated": 5951488,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\armeabi-v7a\\libflutter.so",
+      "bytes": 8096376,
+      "allocated": 4374528,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\armeabi-v7a\\libpokrov-core.so",
+      "bytes": 69845616,
+      "allocated": 40607744,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\x86\\libpokrov-core.so",
+      "bytes": 75631008,
+      "allocated": 44646400,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\x86_64\\libapp.so",
+      "bytes": 8324016,
+      "allocated": 5464064,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\x86_64\\libflutter.so",
+      "bytes": 12344472,
+      "allocated": 5128192,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\directRelease\\stripDirectReleaseDebugSymbols\\out\\lib\\x86_64\\libpokrov-core.so",
+      "bytes": 85500200,
+      "allocated": 45916160,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\arm64-v8a\\libapp.so",
+      "bytes": 8127408,
+      "allocated": 5304320,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\arm64-v8a\\libflutter.so",
+      "bytes": 11107920,
+      "allocated": 4894720,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\arm64-v8a\\libpokrov-core.so",
+      "bytes": 78149920,
+      "allocated": 42573824,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\armeabi-v7a\\libapp.so",
+      "bytes": 8962652,
+      "allocated": 5951488,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\armeabi-v7a\\libflutter.so",
+      "bytes": 8096376,
+      "allocated": 4374528,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\armeabi-v7a\\libpokrov-core.so",
+      "bytes": 69845616,
+      "allocated": 40607744,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\x86\\libpokrov-core.so",
+      "bytes": 75631008,
+      "allocated": 44646400,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\x86_64\\libapp.so",
+      "bytes": 8324016,
+      "allocated": 5464064,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\x86_64\\libflutter.so",
+      "bytes": 12344472,
+      "allocated": 5128192,
+      "group": "stripped_native_libs"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\stripped_native_libs\\storeRelease\\stripStoreReleaseDebugSymbols\\out\\lib\\x86_64\\libpokrov-core.so",
+      "bytes": 85500200,
+      "allocated": 45916160,
+      "group": "stripped_native_libs"
+    }
+  ],
+  "free_c": 43778990080,
+  "free_e": 43242692608
+}

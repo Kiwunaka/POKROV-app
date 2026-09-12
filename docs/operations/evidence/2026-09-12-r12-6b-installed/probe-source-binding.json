@@ -1,0 +1,65 @@
+{
+  "status": "PASS_EXACT_CURRENT_CANARY_HELPER_INPUTS",
+  "source_client": "2aa57015783ceb3415e3be62bbf0a698729011c4",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "files": [
+    {
+      "path": "apps/windows_shell/windows/service/service_client.cpp",
+      "sha256": "dafc9752a62af4eb9acd0b76c0732d3e6d60f87a6d935c3583782f22bccfa2d0"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_client.h",
+      "sha256": "5b68a692542050f4729cd907f5f961baa428371e20ccfe38b1d46ec2bba00efa"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_pipe_client.cpp",
+      "sha256": "b30cec73e159adab1f44c0dcebf614c9f6cfccc121f36300d0ad6571cee1c318"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_pipe_client.h",
+      "sha256": "e3e35182efeec4acac8945e2f27e6910423f32bb72841ef09810a332c97753a6"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_profile_identity.cpp",
+      "sha256": "aeef8b1aae50219669cea3a91e943259fdb1f8c9b55c1295ea78f7a753f6c097"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_profile_identity.h",
+      "sha256": "4830dadd2f17bff454f66e45af09d22ecb75b54114d4fe3034c969c2be4d25ef"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_protocol.cpp",
+      "sha256": "c31756b142f57f30aa5b8a531f6d3a4fded1e9b0dc1e20d06070bdea1f07fea1"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_protocol.h",
+      "sha256": "559b64989a83c35f06d15c58dde6513e54d7ceead081d5750a78e6000b1dcb4f"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_security.cpp",
+      "sha256": "4bd50042062faf27c8100793fb027c933f72f52c7be8ac5f8f4d43b96f8197e5"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_security.h",
+      "sha256": "69c4f8bfb14a09096f79f0b2cfd27ceb5d360e5ddb566a3d5326708839e848f7"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/service_server.h",
+      "sha256": "f2f8b7f304b7d347a3f4c0ef20e794f1aa04fa1a4bfe59403cbfe690bb821660"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/windows_crash_profile.cpp",
+      "sha256": "42d68549b6e519b1857f7ce8e250bb4d12da0fb8b56caf2437730288a81ba1f9"
+    },
+    {
+      "path": "apps/windows_shell/windows/service/windows_crash_profile.h",
+      "sha256": "68445da2b6b106a5280efa88de53182014e5720454fec64666368828ccd849ca"
+    }
+  ],
+  "helper": {
+    "path": "C:\\r12-6b-installed-20260912\\probe-build\\Release\\r12_v01_probe_6b.exe",
+    "size": 120832,
+    "sha256": "f404cef0e74c6b22dfd55549a11fc2abb1d926ae221f2972317e872c3c86fb01"
+  },
+  "fixture": "Six synthetic unknown outbound types using installed protected service IPC; only synthetic secrets"
+}

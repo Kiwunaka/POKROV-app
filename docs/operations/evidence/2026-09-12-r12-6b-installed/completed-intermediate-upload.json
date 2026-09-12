@@ -1,0 +1,10 @@
+{
+  "status": "UPLOADED_AWAITING_VERIFY",
+  "remote_host": "pokrov-de",
+  "archive": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-completed-android-intermediates-6b-20260912/cache.tar.gz",
+  "archive_sha256": "eeb594665132a44770e3c71379a07404f01f863be0e12e0450a2f0ac8e7ecdd7",
+  "archive_bytes": 1058591260,
+  "files": 42,
+  "file_bytes": 2907672192,
+  "files_deleted": 0
+}

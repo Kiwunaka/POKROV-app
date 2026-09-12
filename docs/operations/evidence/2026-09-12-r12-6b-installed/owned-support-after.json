@@ -1,0 +1,121 @@
+{
+  "status": "PASS_OWNED_FIXTURE_READBACK",
+  "backend_source": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "tickets": [
+    {
+      "case_number": 57,
+      "status": "open",
+      "created_at": "2026-09-10T21:11:54.944323",
+      "bundles": [
+        {
+          "status": "validated",
+          "diagnostic_profile": "extended",
+          "app_version": "1.2.0+4053",
+          "build_number": "pokrov-local-client",
+          "platform": "windows",
+          "architecture": "x64",
+          "last_phase": null,
+          "last_error_code": null,
+          "expected_size_bytes": 3617,
+          "received_size_bytes": 3617,
+          "expected_sha256": "b48c69b326713cd9aff8818f7f530eb0a6022e2a9223141feb502fc2dcebcc21"
+        },
+        {
+          "status": "validated",
+          "diagnostic_profile": "summary",
+          "app_version": "1.2.0+4053",
+          "build_number": "pokrov-local-client",
+          "platform": "windows",
+          "architecture": null,
+          "last_phase": null,
+          "last_error_code": null,
+          "expected_size_bytes": 2461,
+          "received_size_bytes": 2461,
+          "expected_sha256": "a33b11cc8d38e396fcfb0c34b8fcb475929a5d7ce056f4e9a3aa9da52ecfbde5"
+        }
+      ]
+    },
+    {
+      "case_number": 56,
+      "status": "open",
+      "created_at": "2026-09-10T18:59:33.250137",
+      "bundles": [
+        {
+          "status": "validated",
+          "diagnostic_profile": "extended",
+          "app_version": "1.2.0+4053",
+          "build_number": "pokrov-local-client",
+          "platform": "windows",
+          "architecture": "x64",
+          "last_phase": "result",
+          "last_error_code": null,
+          "expected_size_bytes": 13123,
+          "received_size_bytes": 13123,
+          "expected_sha256": "b2a70c40a08091c358f54713182b5499ab8a4704e7614575c8df232734771a34"
+        }
+      ]
+    },
+    {
+      "case_number": 55,
+      "status": "open",
+      "created_at": "2026-09-10T18:54:59.905292",
+      "bundles": [
+        {
+          "status": "validated",
+          "diagnostic_profile": "extended",
+          "app_version": "1.2.0+4053",
+          "build_number": "pokrov-local-client",
+          "platform": "windows",
+          "architecture": "x64",
+          "last_phase": "result",
+          "last_error_code": null,
+          "expected_size_bytes": 8490,
+          "received_size_bytes": 8490,
+          "expected_sha256": "d7a421c40291b5a8e050ce42a1fcbd656fb7b9252c5d1062b31fd68fa7075c70"
+        }
+      ]
+    },
+    {
+      "case_number": 54,
+      "status": "open",
+      "created_at": "2026-09-10T18:19:24.295436",
+      "bundles": [
+        {
+          "status": "validated",
+          "diagnostic_profile": "extended",
+          "app_version": "1.2.0+4053",
+          "build_number": "pokrov-local-client",
+          "platform": "windows",
+          "architecture": "x64",
+          "last_phase": null,
+          "last_error_code": null,
+          "expected_size_bytes": 2850,
+          "received_size_bytes": 2850,
+          "expected_sha256": "622611ef6adfda09b46d82e4ebe94135c700be23923038525cb837219d959954"
+        }
+      ]
+    },
+    {
+      "case_number": 53,
+      "status": "open",
+      "created_at": "2026-09-10T17:40:36.541374",
+      "bundles": [
+        {
+          "status": "rejected",
+          "diagnostic_profile": null,
+          "app_version": null,
+          "build_number": null,
+          "platform": null,
+          "architecture": null,
+          "last_phase": null,
+          "last_error_code": null,
+          "expected_size_bytes": 3098,
+          "received_size_bytes": 3098,
+          "expected_sha256": "8f22d8075b19338158c92a600d5c60a0cf61b7ba912f8b6d1fa43948a8911e0a"
+        }
+      ]
+    }
+  ],
+  "utc": "2026-09-12T03:46:07.552881+00:00",
+  "raw_identifiers_exported": false
+}

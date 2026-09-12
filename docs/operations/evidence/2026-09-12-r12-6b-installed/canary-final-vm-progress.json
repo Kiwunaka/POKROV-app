@@ -1,0 +1,379 @@
+{
+  "utc": "2026-09-12T03:51:33.119380+00:00",
+  "vm": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "snapshots_retained": 13,
+  "nic_before": "none",
+  "nic_for_runtime": "bridged",
+  "bridge": "Intel(R) Ethernet Controller (3) I225-V",
+  "leaf": "E:\\r12-vm-disks-20260912\\{3b8e6fb1-6371-448e-b10f-c0878b875c74}.vdi",
+  "leaf_before_bytes": 5275385856,
+  "growth_budget_bytes": 1073741824,
+  "shutdown_at_growth_bytes": 419430400,
+  "pause_at_growth_bytes": 734003200,
+  "floor_bytes": 42949672960,
+  "free_before": {
+    "C:/": 43746435072,
+    "E:/": 47586160640
+  },
+  "host_network_mutation": "NONE",
+  "budget_usd": 0,
+  "samples": [
+    {
+      "seconds": 5.0,
+      "growth_bytes": 0,
+      "free": {
+        "C:/": 43746488320,
+        "E:/": 47586160640
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 10.1,
+      "growth_bytes": 0,
+      "free": {
+        "C:/": 43746439168,
+        "E:/": 47586160640
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 15.2,
+      "growth_bytes": 3145728,
+      "free": {
+        "C:/": 43746439168,
+        "E:/": 47581442048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 20.2,
+      "growth_bytes": -4194304,
+      "free": {
+        "C:/": 43746439168,
+        "E:/": 47590354944
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 25.3,
+      "growth_bytes": -4194304,
+      "free": {
+        "C:/": 43746439168,
+        "E:/": 47590354944
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 30.4,
+      "growth_bytes": -4194304,
+      "free": {
+        "C:/": 43746439168,
+        "E:/": 47590354944
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 35.5,
+      "growth_bytes": -4194304,
+      "free": {
+        "C:/": 43746439168,
+        "E:/": 47590354944
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 40.6,
+      "growth_bytes": -16777216,
+      "free": {
+        "C:/": 43746357248,
+        "E:/": 47590092800
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 45.6,
+      "growth_bytes": -16777216,
+      "free": {
+        "C:/": 43746357248,
+        "E:/": 47589171200
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 50.7,
+      "growth_bytes": -12582912,
+      "free": {
+        "C:/": 43746357248,
+        "E:/": 47589105664
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 55.8,
+      "growth_bytes": -11534336,
+      "free": {
+        "C:/": 43746324480,
+        "E:/": 47589105664
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 60.9,
+      "growth_bytes": -10485760,
+      "free": {
+        "C:/": 43746320384,
+        "E:/": 47589105664
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 65.9,
+      "growth_bytes": -7340032,
+      "free": {
+        "C:/": 43746320384,
+        "E:/": 47588184064
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 71.0,
+      "growth_bytes": -6291456,
+      "free": {
+        "C:/": 43746320384,
+        "E:/": 47587131392
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 76.1,
+      "growth_bytes": -6291456,
+      "free": {
+        "C:/": 43746320384,
+        "E:/": 47587131392
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 81.2,
+      "growth_bytes": -6291456,
+      "free": {
+        "C:/": 43746177024,
+        "E:/": 47587131392
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 86.2,
+      "growth_bytes": -5242880,
+      "free": {
+        "C:/": 43746136064,
+        "E:/": 47587131392
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 91.3,
+      "growth_bytes": -5242880,
+      "free": {
+        "C:/": 43746021376,
+        "E:/": 47587131392
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 96.4,
+      "growth_bytes": -5242880,
+      "free": {
+        "C:/": 43746017280,
+        "E:/": 47587131392
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 101.5,
+      "growth_bytes": -4194304,
+      "free": {
+        "C:/": 43746017280,
+        "E:/": 47587131392
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 106.6,
+      "growth_bytes": -3145728,
+      "free": {
+        "C:/": 43746017280,
+        "E:/": 47570354176
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 111.6,
+      "growth_bytes": 0,
+      "free": {
+        "C:/": 43746017280,
+        "E:/": 47568248832
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 116.7,
+      "growth_bytes": 0,
+      "free": {
+        "C:/": 43745873920,
+        "E:/": 47568248832
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 121.8,
+      "growth_bytes": 0,
+      "free": {
+        "C:/": 43745873920,
+        "E:/": 47568248832
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 126.9,
+      "growth_bytes": 0,
+      "free": {
+        "C:/": 43745873920,
+        "E:/": 47568248832
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 131.9,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43745873920,
+        "E:/": 47568248832
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 137.0,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43745808384,
+        "E:/": 47568248832
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 142.1,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43745808384,
+        "E:/": 47568183296
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 147.2,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43745808384,
+        "E:/": 47568183296
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 152.2,
+      "growth_bytes": 2097152,
+      "free": {
+        "C:/": 43745808384,
+        "E:/": 47568183296
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 157.3,
+      "growth_bytes": 4194304,
+      "free": {
+        "C:/": 43745808384,
+        "E:/": 47568183296
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 162.4,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43745812480,
+        "E:/": 47568117760
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 167.5,
+      "growth_bytes": 5242880,
+      "free": {
+        "C:/": 43745812480,
+        "E:/": 47568117760
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 172.5,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43745714176,
+        "E:/": 47568117760
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 177.6,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43745714176,
+        "E:/": 47568117760
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 182.7,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43745714176,
+        "E:/": 47568117760
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 187.8,
+      "growth_bytes": 6291456,
+      "free": {
+        "C:/": 43745714176,
+        "E:/": 47568117760
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 192.8,
+      "growth_bytes": 7340032,
+      "free": {
+        "C:/": 43745714176,
+        "E:/": 47568117760
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 197.9,
+      "growth_bytes": 28311552,
+      "free": {
+        "C:/": 43745660928,
+        "E:/": 47552389120
+      },
+      "state": "VMState=\"poweroff\""
+    }
+  ],
+  "minimum_free": {
+    "C:/": 43745611776,
+    "E:/": 47551340544
+  },
+  "max_growth_bytes": 28311552,
+  "status": "MONITORING"
+}

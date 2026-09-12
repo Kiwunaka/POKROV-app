@@ -1,0 +1,21 @@
+{
+  "utc": "2026-09-12T03:42:47.392366+00:00",
+  "vm": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "snapshots_retained": 13,
+  "nic_before": "none",
+  "nic_for_runtime": "bridged",
+  "bridge": "Intel(R) Ethernet Controller (3) I225-V",
+  "leaf": "E:\\r12-vm-disks-20260912\\{3b8e6fb1-6371-448e-b10f-c0878b875c74}.vdi",
+  "leaf_before_bytes": 5213519872,
+  "growth_budget_bytes": 1073741824,
+  "shutdown_at_growth_bytes": 419430400,
+  "pause_at_growth_bytes": 734003200,
+  "floor_bytes": 42949672960,
+  "free_before": {
+    "C:/": 43745042432,
+    "E:/": 47657500672
+  },
+  "host_network_mutation": "NONE",
+  "budget_usd": 0,
+  "samples": []
+}

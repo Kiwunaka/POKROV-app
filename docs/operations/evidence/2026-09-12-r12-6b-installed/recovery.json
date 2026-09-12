@@ -1,0 +1,9 @@
+{
+  "routes_sha256": true,
+  "dns_sha256": true,
+  "status_running": false,
+  "failure": "none",
+  "http": 204,
+  "marker_valid": true,
+  "active_tuns": 0
+}

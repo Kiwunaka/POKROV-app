@@ -1,0 +1,18 @@
+{
+  "utc": "2026-09-12T03:09:58.986412+00:00",
+  "vm": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "snapshots_retained": 13,
+  "offline_stage_poweroff": true,
+  "free_before": {
+    "C:/": 43942273024,
+    "E:/": 44768022528
+  },
+  "leaf_growth_offline": 106954752,
+  "nic_before": "none",
+  "nic_for_runtime": "bridged",
+  "bridge": "Intel(R) Ethernet Controller (3) I225-V",
+  "host_network_mutation": "NONE",
+  "budget_usd": 0,
+  "remaining_leaf_growth_budget_bytes": 966787072,
+  "restore_target": "poweroff; nic1 none"
+}

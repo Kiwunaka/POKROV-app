@@ -1,0 +1,649 @@
+﻿2026-09-12T02:20:09.8555850Z Current runner version: '2.337.0'
+2026-09-12T02:20:09.8573801Z ##[group]Runner Image Provisioner
+2026-09-12T02:20:09.8574681Z Hosted Compute Agent
+2026-09-12T02:20:09.8575118Z Version: 20260828.587
+2026-09-12T02:20:09.8575562Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-12T02:20:09.8576069Z Build Date: 2026-08-28T16:44:25Z
+2026-09-12T02:20:09.8576555Z Worker ID: {b9f614db-e6b5-484c-965b-39ecfabe1309}
+2026-09-12T02:20:09.8577022Z Azure Region: centralus
+2026-09-12T02:20:09.8577437Z ##[endgroup]
+2026-09-12T02:20:09.8578363Z ##[group]Operating System
+2026-09-12T02:20:09.8578811Z Ubuntu
+2026-09-12T02:20:09.8579170Z 24.04.5
+2026-09-12T02:20:09.8579509Z LTS
+2026-09-12T02:20:09.8579891Z ##[endgroup]
+2026-09-12T02:20:09.8580264Z ##[group]Runner Image
+2026-09-12T02:20:09.8580841Z Image: ubuntu-24.04
+2026-09-12T02:20:09.8581273Z Version: 20260907.300.1
+2026-09-12T02:20:09.8582208Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-12T02:20:09.8583242Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+2026-09-12T02:20:09.8583931Z ##[endgroup]
+2026-09-12T02:20:09.8584734Z ##[group]GITHUB_TOKEN Permissions
+2026-09-12T02:20:09.8586430Z Contents: read
+2026-09-12T02:20:09.8586836Z Metadata: read
+2026-09-12T02:20:09.8587216Z ##[endgroup]
+2026-09-12T02:20:09.8588693Z Secret source: Actions
+2026-09-12T02:20:09.8589304Z Cache mode: write
+2026-09-12T02:20:09.8589783Z Prepare workflow directory
+2026-09-12T02:20:09.8949083Z Prepare all required actions
+2026-09-12T02:20:09.8985282Z Getting action download info
+2026-09-12T02:20:10.1419865Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-09-12T02:20:10.8531112Z Download action repository 'actions/setup-go@v5' (SHA:40f1582b2485089dde7abd97c1529aa768e1baff)
+2026-09-12T02:20:11.3112026Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-09-12T02:20:11.6425178Z Complete job name: test
+2026-09-12T02:20:11.6895595Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-12T02:20:11.6901116Z ##[group]Run actions/checkout@v4
+2026-09-12T02:20:11.6901527Z with:
+2026-09-12T02:20:11.6901847Z   ref: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:20:11.6902159Z   fetch-depth: 0
+2026-09-12T02:20:11.6902475Z   repository: Kiwunaka/pokrov-core
+2026-09-12T02:20:11.6904336Z   token: ***
+2026-09-12T02:20:11.6904595Z   ssh-strict: true
+2026-09-12T02:20:11.6904859Z   ssh-user: git
+2026-09-12T02:20:11.6905126Z   persist-credentials: true
+2026-09-12T02:20:11.6905384Z   clean: true
+2026-09-12T02:20:11.6905691Z   sparse-checkout-cone-mode: true
+2026-09-12T02:20:11.6906014Z   fetch-tags: false
+2026-09-12T02:20:11.6906362Z   show-progress: true
+2026-09-12T02:20:11.6906621Z   lfs: false
+2026-09-12T02:20:11.6906916Z   submodules: false
+2026-09-12T02:20:11.6907175Z   set-safe-directory: true
+2026-09-12T02:20:11.6907449Z   allow-unsafe-pr-checkout: false
+2026-09-12T02:20:11.6907825Z env:
+2026-09-12T02:20:11.6908118Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:20:11.6908458Z ##[endgroup]
+2026-09-12T02:20:11.7626154Z Syncing repository: Kiwunaka/pokrov-core
+2026-09-12T02:20:11.7627305Z ##[group]Getting Git version info
+2026-09-12T02:20:11.7627702Z Working directory is '/home/runner/work/pokrov-core/pokrov-core'
+2026-09-12T02:20:11.7628341Z [command]/usr/bin/git version
+2026-09-12T02:20:11.8628288Z git version 2.55.0
+2026-09-12T02:20:11.8644103Z ##[endgroup]
+2026-09-12T02:20:11.8655886Z Temporarily overriding HOME='/home/runner/work/_temp/b4e167b5-210f-4943-852e-1c4dd50b4230' before making global git config changes
+2026-09-12T02:20:11.8656830Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-12T02:20:11.8660312Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/pokrov-core/pokrov-core
+2026-09-12T02:20:11.8702724Z Deleting the contents of '/home/runner/work/pokrov-core/pokrov-core'
+2026-09-12T02:20:11.8705717Z ##[group]Initializing the repository
+2026-09-12T02:20:11.8708766Z [command]/usr/bin/git init /home/runner/work/pokrov-core/pokrov-core
+2026-09-12T02:20:11.8810716Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-12T02:20:11.8811418Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-12T02:20:11.8811891Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-12T02:20:11.8812257Z hint: call:
+2026-09-12T02:20:11.8812612Z hint:
+2026-09-12T02:20:11.8812989Z hint: 	git config --global init.defaultBranch <name>
+2026-09-12T02:20:11.8813318Z hint:
+2026-09-12T02:20:11.8813676Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-12T02:20:11.8814159Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-12T02:20:11.8814527Z hint:
+2026-09-12T02:20:11.8814842Z hint: 	git branch -m <name>
+2026-09-12T02:20:11.8815095Z hint:
+2026-09-12T02:20:11.8815449Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-12T02:20:11.8818340Z Initialized empty Git repository in /home/runner/work/pokrov-core/pokrov-core/.git/
+2026-09-12T02:20:11.8828511Z [command]/usr/bin/git remote add origin https://github.com/Kiwunaka/pokrov-core
+2026-09-12T02:20:11.8870434Z ##[endgroup]
+2026-09-12T02:20:11.8871240Z ##[group]Disabling automatic garbage collection
+2026-09-12T02:20:11.8874021Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-12T02:20:11.8897047Z ##[endgroup]
+2026-09-12T02:20:11.8897506Z ##[group]Setting up auth
+2026-09-12T02:20:11.8903811Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-12T02:20:11.8928479Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-12T02:20:11.9199197Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-12T02:20:11.9221629Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-12T02:20:11.9365095Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-12T02:20:11.9388472Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-12T02:20:11.9529215Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-12T02:20:11.9552746Z ##[endgroup]
+2026-09-12T02:20:11.9553409Z ##[group]Fetching the repository
+2026-09-12T02:20:11.9559202Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-09-12T02:20:13.0877287Z From https://github.com/Kiwunaka/pokrov-core
+2026-09-12T02:20:13.0882554Z  * [new branch]      codex/1.2.0-release-v2 -> origin/codex/1.2.0-release-v2
+2026-09-12T02:20:13.0883302Z  * [new branch]      codex/awg-handshake-diagnostics -> origin/codex/awg-handshake-diagnostics
+2026-09-12T02:20:13.0883937Z  * [new branch]      codex/awg31-lab-selected-services -> origin/codex/awg31-lab-selected-services
+2026-09-12T02:20:13.0884584Z  * [new branch]      codex/awg31-runtime-lifecycle-proof -> origin/codex/awg31-runtime-lifecycle-proof
+2026-09-12T02:20:13.0885310Z  * [new branch]      codex/c02-lifecycle-signed-20260911 -> origin/codex/c02-lifecycle-signed-20260911
+2026-09-12T02:20:13.0885971Z  * [new branch]      codex/c05-utls-hook-linux-20260911 -> origin/codex/c05-utls-hook-linux-20260911
+2026-09-12T02:20:13.0886946Z  * [new branch]      codex/c05-utls-hook-signed-20260911 -> origin/codex/c05-utls-hook-signed-20260911
+2026-09-12T02:20:13.0887614Z  * [new branch]      codex/core-1.0.2-egress-probe -> origin/codex/core-1.0.2-egress-probe
+2026-09-12T02:20:13.0888319Z  * [new branch]      codex/fix-core-release-contract-lfs -> origin/codex/fix-core-release-contract-lfs
+2026-09-12T02:20:13.0889048Z  * [new branch]      codex/fix-egress-event-subsystem -> origin/codex/fix-egress-event-subsystem
+2026-09-12T02:20:13.0889675Z  * [new branch]      codex/hy2-owned-lab    -> origin/codex/hy2-owned-lab
+2026-09-12T02:20:13.0890404Z  * [new branch]      codex/lifecycle-privacy-signed-20260910 -> origin/codex/lifecycle-privacy-signed-20260910
+2026-09-12T02:20:13.0891370Z  * [new branch]      codex/r12-core-signed-promotion-20260909 -> origin/codex/r12-core-signed-promotion-20260909
+2026-09-12T02:20:13.0892326Z  * [new branch]      codex/r12-correlated-endpoint-probe -> origin/codex/r12-correlated-endpoint-probe
+2026-09-12T02:20:13.0893150Z  * [new branch]      codex/secret-safe-core-logging -> origin/codex/secret-safe-core-logging
+2026-09-12T02:20:13.0893908Z  * [new branch]      codex/setup-privacy-exact-source-20260912 -> origin/codex/setup-privacy-exact-source-20260912
+2026-09-12T02:20:13.0894714Z  * [new branch]      codex/setup-privacy-signed-20260912 -> origin/codex/setup-privacy-signed-20260912
+2026-09-12T02:20:13.0895535Z  * [new branch]      codex/wintun-cleanup-signed-20260912 -> origin/codex/wintun-cleanup-signed-20260912
+2026-09-12T02:20:13.0896259Z  * [new branch]      codex/wintun-exact-source-20260912 -> origin/codex/wintun-exact-source-20260912
+2026-09-12T02:20:13.0896885Z  * [new branch]      main                   -> origin/main
+2026-09-12T02:20:13.0897324Z  * [new tag]         v1.0.0                 -> v1.0.0
+2026-09-12T02:20:13.0898257Z  * [new tag]         v1.0.1                 -> v1.0.1
+2026-09-12T02:20:13.0898743Z  * [new tag]         v1.0.2                 -> v1.0.2
+2026-09-12T02:20:13.0899370Z  * [new tag]         v1.0.3                 -> v1.0.3
+2026-09-12T02:20:13.0901326Z [command]/usr/bin/git rev-parse --verify --quiet fc301b94aeafc4589cca7b6f8718129187ca3747^{object}
+2026-09-12T02:20:13.0902119Z fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:20:13.0903377Z ##[endgroup]
+2026-09-12T02:20:13.0904004Z ##[group]Determining the checkout info
+2026-09-12T02:20:13.0904693Z ##[endgroup]
+2026-09-12T02:20:13.0905711Z [command]/usr/bin/git sparse-checkout disable
+2026-09-12T02:20:13.1078996Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-12T02:20:13.1104186Z ##[group]Checking out the ref
+2026-09-12T02:20:13.1119189Z [command]/usr/bin/git checkout --progress --force fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:20:13.3427219Z Note: switching to 'fc301b94aeafc4589cca7b6f8718129187ca3747'.
+2026-09-12T02:20:13.3427894Z 
+2026-09-12T02:20:13.3428350Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-09-12T02:20:13.3429009Z changes and commit them, and you can discard any commits you make in this
+2026-09-12T02:20:13.3429586Z state without impacting any branches by switching back to a branch.
+2026-09-12T02:20:13.3430139Z 
+2026-09-12T02:20:13.3430807Z If you want to create a new branch to retain commits you create, you may
+2026-09-12T02:20:13.3431265Z do so (now or later) by using -c with the switch command. Example:
+2026-09-12T02:20:13.3431463Z 
+2026-09-12T02:20:13.3431831Z   git switch -c <new-branch-name>
+2026-09-12T02:20:13.3432022Z 
+2026-09-12T02:20:13.3432136Z Or undo this operation with:
+2026-09-12T02:20:13.3432346Z 
+2026-09-12T02:20:13.3432432Z   git switch -
+2026-09-12T02:20:13.3432592Z 
+2026-09-12T02:20:13.3432777Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-09-12T02:20:13.3433030Z 
+2026-09-12T02:20:13.3433267Z HEAD is now at fc301b9 Omit caller paths and listen addresses from Core setup diagnostics (#15)
+2026-09-12T02:20:13.3792493Z ##[endgroup]
+2026-09-12T02:20:13.3825375Z [command]/usr/bin/git log -1 --format=%H
+2026-09-12T02:20:13.3846131Z fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:20:13.3997988Z ##[group]Run $actual = (& git rev-parse HEAD).Trim()
+2026-09-12T02:20:13.3998446Z [36;1m$actual = (& git rev-parse HEAD).Trim()[0m
+2026-09-12T02:20:13.3998765Z [36;1mif ($actual -cne $env:POKROV_SOURCE_COMMIT) {[0m
+2026-09-12T02:20:13.3999176Z [36;1m  throw "Expected Core source $env:POKROV_SOURCE_COMMIT, got $actual."[0m
+2026-09-12T02:20:13.3999505Z [36;1m}[0m
+2026-09-12T02:20:13.4025028Z shell: /usr/bin/pwsh -command ". '{0}'"
+2026-09-12T02:20:13.4025320Z env:
+2026-09-12T02:20:13.4025687Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:20:13.4025991Z ##[endgroup]
+2026-09-12T02:20:16.5093450Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-12T02:20:16.5094996Z ##[group]Run actions/setup-go@v5
+2026-09-12T02:20:16.5095308Z with:
+2026-09-12T02:20:16.5095529Z   go-version: 1.26.8
+2026-09-12T02:20:16.5095848Z   cache-dependency-path: go.sum
+engine/sing-box/go.sum
+
+2026-09-12T02:20:16.5096180Z   check-latest: false
+2026-09-12T02:20:16.5097842Z   token: ***
+2026-09-12T02:20:16.5098112Z   cache: true
+2026-09-12T02:20:16.5098316Z env:
+2026-09-12T02:20:16.5098579Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:20:16.5098888Z ##[endgroup]
+2026-09-12T02:20:16.6038278Z Setup go version spec 1.26.8
+2026-09-12T02:20:16.6156949Z Found in cache @ /opt/hostedtoolcache/go/1.26.8/x64
+2026-09-12T02:20:16.6157941Z (node:2060) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-12T02:20:16.6158535Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-12T02:20:16.6160346Z Added go to the path
+2026-09-12T02:20:16.6163927Z Successfully set up Go version 1.26.8
+2026-09-12T02:20:18.2352262Z [command]/opt/hostedtoolcache/go/1.26.8/x64/bin/go env GOMODCACHE
+2026-09-12T02:20:18.2378120Z [command]/opt/hostedtoolcache/go/1.26.8/x64/bin/go env GOCACHE
+2026-09-12T02:20:18.2422413Z /home/runner/go/pkg/mod
+2026-09-12T02:20:18.2434284Z /home/runner/.cache/go-build
+2026-09-12T02:20:18.4502802Z Cache hit for: setup-go-Linux-x64-ubuntu24-go-1.26.8-c57f8a57e98ce5b99bb63553d625fb3d5014a61f146778e77d3f4409365edd5c
+2026-09-12T02:20:18.4573924Z (node:2060) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-12T02:20:19.5949888Z Received 113246208 of 1538135848 (7.4%), 108.0 MBs/sec
+2026-09-12T02:20:20.6022804Z Received 268435456 of 1538135848 (17.5%), 127.7 MBs/sec
+2026-09-12T02:20:21.5991639Z Received 427819008 of 1538135848 (27.8%), 135.8 MBs/sec
+2026-09-12T02:20:22.5998423Z Received 620756992 of 1538135848 (40.4%), 147.8 MBs/sec
+2026-09-12T02:20:23.6042507Z Received 788529152 of 1538135848 (51.3%), 150.2 MBs/sec
+2026-09-12T02:20:24.6000350Z Received 935329792 of 1538135848 (60.8%), 148.5 MBs/sec
+2026-09-12T02:20:25.6006241Z Received 1073741824 of 1538135848 (69.8%), 146.2 MBs/sec
+2026-09-12T02:20:26.6012306Z Received 1237319680 of 1538135848 (80.4%), 147.4 MBs/sec
+2026-09-12T02:20:27.6016588Z Received 1379926016 of 1538135848 (89.7%), 146.1 MBs/sec
+2026-09-12T02:20:28.6022590Z Received 1522532352 of 1538135848 (99.0%), 145.1 MBs/sec
+2026-09-12T02:20:28.7293924Z Received 1538135848 of 1538135848 (100.0%), 144.7 MBs/sec
+2026-09-12T02:20:28.7297282Z Cache Size: ~1467 MB (1538135848 B)
+2026-09-12T02:20:28.7407745Z [command]/usr/bin/tar -xf /home/runner/work/_temp/3a658581-33e1-49cd-97b6-83ed42d0081d/cache.tzst -P -C /home/runner/work/pokrov-core/pokrov-core --use-compress-program unzstd
+2026-09-12T02:20:52.1258214Z Cache restored successfully
+2026-09-12T02:20:52.1752815Z Cache restored from key: setup-go-Linux-x64-ubuntu24-go-1.26.8-c57f8a57e98ce5b99bb63553d625fb3d5014a61f146778e77d3f4409365edd5c
+2026-09-12T02:20:52.1776885Z go version go1.26.8 linux/amd64
+2026-09-12T02:20:52.1777128Z 
+2026-09-12T02:20:52.1777878Z ##[group]go env
+2026-09-12T02:20:52.3650755Z AR='ar'
+2026-09-12T02:20:52.3651244Z CC='gcc'
+2026-09-12T02:20:52.3651530Z CGO_CFLAGS='-O2 -g'
+2026-09-12T02:20:52.3651797Z CGO_CPPFLAGS=''
+2026-09-12T02:20:52.3652044Z CGO_CXXFLAGS='-O2 -g'
+2026-09-12T02:20:52.3652336Z CGO_ENABLED='1'
+2026-09-12T02:20:52.3652550Z CGO_FFLAGS='-O2 -g'
+2026-09-12T02:20:52.3652816Z CGO_LDFLAGS='-O2 -g'
+2026-09-12T02:20:52.3653039Z CXX='g++'
+2026-09-12T02:20:52.3653559Z GCCGO='gccgo'
+2026-09-12T02:20:52.3653781Z GO111MODULE=''
+2026-09-12T02:20:52.3653998Z GOAMD64='v1'
+2026-09-12T02:20:52.3654219Z GOARCH='amd64'
+2026-09-12T02:20:52.3654433Z GOAUTH='netrc'
+2026-09-12T02:20:52.3654696Z GOBIN=''
+2026-09-12T02:20:52.3654925Z GOCACHE='/home/runner/.cache/go-build'
+2026-09-12T02:20:52.3655209Z GOCACHEPROG=''
+2026-09-12T02:20:52.3655427Z GODEBUG=''
+2026-09-12T02:20:52.3655664Z GOENV='/home/runner/.config/go/env'
+2026-09-12T02:20:52.3655956Z GOEXE=''
+2026-09-12T02:20:52.3656160Z GOEXPERIMENT=''
+2026-09-12T02:20:52.3656373Z GOFIPS140='off'
+2026-09-12T02:20:52.3656622Z GOFLAGS=''
+2026-09-12T02:20:52.3657160Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build991436824=/tmp/go-build -gno-record-gcc-switches'
+2026-09-12T02:20:52.3657716Z GOHOSTARCH='amd64'
+2026-09-12T02:20:52.3657961Z GOHOSTOS='linux'
+2026-09-12T02:20:52.3658182Z GOINSECURE=''
+2026-09-12T02:20:52.3658453Z GOMOD='/home/runner/work/pokrov-core/pokrov-core/go.mod'
+2026-09-12T02:20:52.3658749Z GOMODCACHE='/home/runner/go/pkg/mod'
+2026-09-12T02:20:52.3659070Z GONOPROXY=''
+2026-09-12T02:20:52.3659272Z GONOSUMDB=''
+2026-09-12T02:20:52.3659481Z GOOS='linux'
+2026-09-12T02:20:52.3659695Z GOPATH='/home/runner/go'
+2026-09-12T02:20:52.3659914Z GOPRIVATE=''
+2026-09-12T02:20:52.3660248Z GOPROXY='https://proxy.golang.org,direct'
+2026-09-12T02:20:52.3660677Z GOROOT='/opt/hostedtoolcache/go/1.26.8/x64'
+2026-09-12T02:20:52.3661036Z GOSUMDB='sum.golang.org'
+2026-09-12T02:20:52.3661268Z GOTELEMETRY='local'
+2026-09-12T02:20:52.3661584Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+2026-09-12T02:20:52.3661877Z GOTMPDIR=''
+2026-09-12T02:20:52.3662084Z GOTOOLCHAIN='auto'
+2026-09-12T02:20:52.3662442Z GOTOOLDIR='/opt/hostedtoolcache/go/1.26.8/x64/pkg/tool/linux_amd64'
+2026-09-12T02:20:52.3662804Z GOVCS=''
+2026-09-12T02:20:52.3663047Z GOVERSION='go1.26.8'
+2026-09-12T02:20:52.3663301Z GOWORK=''
+2026-09-12T02:20:52.3663545Z PKG_CONFIG='pkg-config'
+2026-09-12T02:20:52.3663706Z 
+2026-09-12T02:20:52.3664099Z ##[endgroup]
+2026-09-12T02:20:52.3786148Z ##[group]Run sudo apt-get update && sudo apt-get install --yes ripgrep
+2026-09-12T02:20:52.3786638Z [36;1msudo apt-get update && sudo apt-get install --yes ripgrep[0m
+2026-09-12T02:20:52.3808998Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:20:52.3809296Z env:
+2026-09-12T02:20:52.3809612Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:20:52.3809939Z ##[endgroup]
+2026-09-12T02:20:52.7267912Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-09-12T02:20:52.7588499Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-09-12T02:20:52.7627193Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-09-12T02:20:52.7649836Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-09-12T02:20:52.7666754Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-09-12T02:20:52.7731098Z Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-09-12T02:20:52.8898716Z Get:7 https://dl.google.com/linux/chrome-stable/deb stable InRelease [2548 B]
+2026-09-12T02:20:52.9083976Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1263 kB]
+2026-09-12T02:20:52.9416416Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [292 kB]
+2026-09-12T02:20:53.0843241Z Get:25 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [414 kB]
+2026-09-12T02:20:53.0959797Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [180 kB]
+2026-09-12T02:20:53.0977908Z Get:26 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [463 kB]
+2026-09-12T02:20:53.1469179Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1690 kB]
+2026-09-12T02:20:53.1527816Z Get:27 https://dl.google.com/linux/chrome-stable/deb stable/main amd64 Packages [1413 B]
+2026-09-12T02:20:53.1644984Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [387 kB]
+2026-09-12T02:20:53.1731363Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1544 kB]
+2026-09-12T02:20:53.2029153Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [354 kB]
+2026-09-12T02:20:53.3070653Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+2026-09-12T02:20:53.3556149Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5748 B]
+2026-09-12T02:20:53.3635324Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [12.6 kB]
+2026-09-12T02:20:53.4269187Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1006 kB]
+2026-09-12T02:20:53.4331820Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [213 kB]
+2026-09-12T02:20:53.4644422Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [46.5 kB]
+2026-09-12T02:20:53.5036568Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1206 kB]
+2026-09-12T02:20:53.5149829Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.3 kB]
+2026-09-12T02:20:53.5991487Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1445 kB]
+2026-09-12T02:20:53.6742437Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [336 kB]
+2026-09-12T02:21:00.6196654Z Fetched 11.3 MB in 1s (9981 kB/s)
+2026-09-12T02:21:01.2324110Z Reading package lists...
+2026-09-12T02:21:01.2878863Z Reading package lists...
+2026-09-12T02:21:01.4107191Z Building dependency tree...
+2026-09-12T02:21:01.4112957Z Reading state information...
+2026-09-12T02:21:01.5560020Z The following NEW packages will be installed:
+2026-09-12T02:21:01.5561315Z   ripgrep
+2026-09-12T02:21:01.6059409Z 0 upgraded, 1 newly installed, 0 to remove and 50 not upgraded.
+2026-09-12T02:21:01.6060118Z Need to get 1551 kB of archives.
+2026-09-12T02:21:01.6060494Z After this operation, 5335 kB of additional disk space will be used.
+2026-09-12T02:21:01.6061046Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-09-12T02:21:01.6714490Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 ripgrep amd64 14.1.0-1 [1551 kB]
+2026-09-12T02:21:01.8753174Z Fetched 1551 kB in 0s (18.1 MB/s)
+2026-09-12T02:21:01.8921071Z Selecting previously unselected package ripgrep.
+2026-09-12T02:21:01.9135030Z (Reading database ... 
+2026-09-12T02:21:01.9135378Z (Reading database ... 5%
+2026-09-12T02:21:01.9135720Z (Reading database ... 10%
+2026-09-12T02:21:01.9136000Z (Reading database ... 15%
+2026-09-12T02:21:01.9136278Z (Reading database ... 20%
+2026-09-12T02:21:01.9136595Z (Reading database ... 25%
+2026-09-12T02:21:01.9136881Z (Reading database ... 30%
+2026-09-12T02:21:01.9137179Z (Reading database ... 35%
+2026-09-12T02:21:01.9137516Z (Reading database ... 40%
+2026-09-12T02:21:01.9137839Z (Reading database ... 45%
+2026-09-12T02:21:01.9138135Z (Reading database ... 50%
+2026-09-12T02:21:01.9177470Z (Reading database ... 55%
+2026-09-12T02:21:02.0511404Z (Reading database ... 60%
+2026-09-12T02:21:02.1918514Z (Reading database ... 65%
+2026-09-12T02:21:02.4085399Z (Reading database ... 70%
+2026-09-12T02:21:02.5378574Z (Reading database ... 75%
+2026-09-12T02:21:03.0688167Z (Reading database ... 80%
+2026-09-12T02:21:03.2486485Z (Reading database ... 85%
+2026-09-12T02:21:03.3583827Z (Reading database ... 90%
+2026-09-12T02:21:03.4574015Z (Reading database ... 95%
+2026-09-12T02:21:03.4574350Z (Reading database ... 100%
+2026-09-12T02:21:03.4574978Z (Reading database ... 201818 files and directories currently installed.)
+2026-09-12T02:21:03.4614650Z Preparing to unpack .../ripgrep_14.1.0-1_amd64.deb ...
+2026-09-12T02:21:03.5105388Z Unpacking ripgrep (14.1.0-1) ...
+2026-09-12T02:21:03.9377050Z Setting up ripgrep (14.1.0-1) ...
+2026-09-12T02:21:03.9934606Z Processing triggers for man-db (2.12.0-4build2) ...
+2026-09-12T02:21:03.9960398Z Not building database; man-db/auto-update is not 'true'.
+2026-09-12T02:21:04.6310710Z 
+2026-09-12T02:21:04.6311819Z Running kernel seems to be up-to-date.
+2026-09-12T02:21:04.6312143Z 
+2026-09-12T02:21:04.6312252Z No services need to be restarted.
+2026-09-12T02:21:04.6312510Z 
+2026-09-12T02:21:04.6312715Z No containers need to be restarted.
+2026-09-12T02:21:04.6312904Z 
+2026-09-12T02:21:04.6313099Z No user sessions are running outdated binaries.
+2026-09-12T02:21:04.6313329Z 
+2026-09-12T02:21:04.6313557Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-09-12T02:21:05.2709527Z ##[group]Run ./scripts/test.ps1
+2026-09-12T02:21:05.2709874Z [36;1m./scripts/test.ps1[0m
+2026-09-12T02:21:05.2729939Z shell: /usr/bin/pwsh -command ". '{0}'"
+2026-09-12T02:21:05.2730279Z env:
+2026-09-12T02:21:05.2730681Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:21:05.2731027Z ##[endgroup]
+2026-09-12T02:21:06.1022398Z Brand check OK.
+2026-09-12T02:21:06.2455731Z POKROV Core ABI contract OK: desktop=2 descriptor=1 events=1 exports=15
+2026-09-12T02:21:06.2691466Z POKROV Core observability contracts OK: schema=1 contracts=2
+2026-09-12T02:21:06.3536091Z POKROV AWG2 contract OK: pokrov.awg2.endpoint.v1 sha256=c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8
+2026-09-12T02:21:06.3668490Z POKROV AWG 3.1 contract OK: pokrov.awg31.endpoint.v1 sha256=1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818
+2026-09-12T02:21:06.3786520Z POKROV Hysteria2 contract OK: pokrov.hy2.outbound.v1 sha256=c96b38e58ea33f838f23b80a65f3a9a264e932b7248f206798df9a0b8fa0fb98
+2026-09-12T02:21:06.3888748Z Core release CI contract OK: Linux tests/security, Android/Windows/Apple builds, two-build comparison, SBOM, bounded provenance, app backtest.
+2026-09-12T02:21:15.4984293Z ok  	github.com/Psiphon-Labs/psiphon-tls	0.009s
+2026-09-12T02:21:17.6808933Z ok  	github.com/Kiwunaka/POKROV-core/internal/observability	0.009s
+2026-09-12T02:21:26.8790278Z ?   	github.com/Kiwunaka/POKROV-core/platform/desktop	[no test files]
+2026-09-12T02:21:26.8791291Z ?   	github.com/Kiwunaka/POKROV-core/platform/linux	[no test files]
+2026-09-12T02:21:26.8791963Z ?   	github.com/Kiwunaka/POKROV-core/platform/mobile	[no test files]
+2026-09-12T02:21:26.8792568Z ?   	github.com/Kiwunaka/POKROV-core/ray2sing	[no test files]
+2026-09-12T02:21:26.8793224Z ?   	github.com/Kiwunaka/POKROV-core/ray2sing/cmd	[no test files]
+2026-09-12T02:21:26.8905352Z ok  	github.com/Kiwunaka/POKROV-core/ray2sing/ray2sing	0.010s
+2026-09-12T02:21:26.8983046Z ok  	github.com/Kiwunaka/POKROV-core/v2/config	0.016s
+2026-09-12T02:21:26.8983654Z ?   	github.com/Kiwunaka/POKROV-core/v2/db	[no test files]
+2026-09-12T02:21:26.8984158Z ?   	github.com/Kiwunaka/POKROV-core/v2/hcommon	[no test files]
+2026-09-12T02:21:26.8984662Z ?   	github.com/Kiwunaka/POKROV-core/v2/hcommon/constants	[no test files]
+2026-09-12T02:21:26.8985130Z ?   	github.com/Kiwunaka/POKROV-core/v2/hcommon/request	[no test files]
+2026-09-12T02:21:27.7499560Z ok  	github.com/Kiwunaka/POKROV-core/v2/hcore	0.187s
+2026-09-12T02:21:27.7500096Z ?   	github.com/Kiwunaka/POKROV-core/v2/hcore/tunnelservice	[no test files]
+2026-09-12T02:21:27.7500775Z ?   	github.com/Kiwunaka/POKROV-core/v2/hello	[no test files]
+2026-09-12T02:21:27.7501424Z ?   	github.com/Kiwunaka/POKROV-core/v2/hutils	[no test files]
+2026-09-12T02:21:27.7501881Z ok  	github.com/Kiwunaka/POKROV-core/v2/linuxruntime	0.002s
+2026-09-12T02:21:27.7502316Z ?   	github.com/Kiwunaka/POKROV-core/v2/service_manager	[no test files]
+2026-09-12T02:21:29.1462054Z ok  	github.com/sagernet/sing-box/protocol/awg	0.009s
+2026-09-12T02:21:30.1716863Z ok  	github.com/sagernet/sing-box/common/urltest	0.418s
+2026-09-12T02:21:36.6751007Z ok  	github.com/sagernet/sing-box/daemon	0.064s
+2026-09-12T02:21:36.6751637Z ok  	github.com/sagernet/sing-box/experimental/libbox	0.016s
+2026-09-12T02:21:37.1022150Z ok  	github.com/sagernet/sing-box/common/tls	0.003s
+2026-09-12T02:21:37.6939066Z ok  	github.com/sagernet/sing-box/common/tls	0.004s
+2026-09-12T02:21:37.7025872Z POKROV Core tests OK.
+2026-09-12T02:21:37.7317381Z ##[group]Run go vet ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./ray2sing/ray2sing
+2026-09-12T02:21:37.7317942Z [36;1mgo vet ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./ray2sing/ray2sing[0m
+2026-09-12T02:21:37.7339977Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:21:37.7340266Z env:
+2026-09-12T02:21:37.7340705Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:21:37.7341124Z ##[endgroup]
+2026-09-12T02:21:39.1850099Z ##[group]Run go test -race ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./ray2sing/ray2sing
+2026-09-12T02:21:39.1850893Z [36;1mgo test -race ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./ray2sing/ray2sing[0m
+2026-09-12T02:21:39.1870086Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:21:39.1870382Z env:
+2026-09-12T02:21:39.1871160Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:21:39.1871525Z ##[endgroup]
+2026-09-12T02:21:42.6472282Z ok  	github.com/Kiwunaka/POKROV-core/internal/observability	1.038s
+2026-09-12T02:21:54.9141001Z ok  	github.com/Kiwunaka/POKROV-core/v2/config	1.066s
+2026-09-12T02:21:55.3121003Z ok  	github.com/Kiwunaka/POKROV-core/v2/hcore	1.063s
+2026-09-12T02:21:55.3121726Z ?   	github.com/Kiwunaka/POKROV-core/v2/hutils	[no test files]
+2026-09-12T02:21:55.3122157Z ok  	github.com/Kiwunaka/POKROV-core/ray2sing/ray2sing	1.056s
+2026-09-12T02:21:55.3511537Z ##[group]Run go test -race -count=1 -tags with_clash_api -run '^TestStartStopReleasesServiceObservers$' -v ./v2/hcore
+2026-09-12T02:21:55.3512675Z [36;1mgo test -race -count=1 -tags with_clash_api -run '^TestStartStopReleasesServiceObservers$' -v ./v2/hcore[0m
+2026-09-12T02:21:55.3542986Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:21:55.3543412Z env:
+2026-09-12T02:21:55.3543961Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:21:55.3544460Z ##[endgroup]
+2026-09-12T02:22:01.6654019Z === RUN   TestStartStopReleasesServiceObservers
+2026-09-12T02:22:01.6659121Z [37mDEBUG[0m[0000] POKROV CORE libbox.Setup success
+2026-09-12T02:22:01.6659661Z [37mDEBUG[0m[0000] POKROV CORE StartGrpcServerByMode OLD
+2026-09-12T02:22:01.6999399Z [37mDEBUG[0m[0000] POKROV CORE stored POKROV settings unavailable
+2026-09-12T02:22:01.7754772Z [37mDEBUG[0m[0000] [Service] Restarting
+2026-09-12T02:22:01.8827695Z [37mDEBUG[0m[0000] [Service] Restarting
+2026-09-12T02:22:01.9332974Z [37mDEBUG[0m[0000] [Service] Restarting
+2026-09-12T02:22:02.4329911Z [37mDEBUG[0m[0000] [Service] Restarting
+2026-09-12T02:22:02.5727541Z     lifecycle_test.go:129: cycle=1 goroutines=25 OS resources=14
+2026-09-12T02:22:02.6955786Z [37mDEBUG[0m[0001] [Service] Restarting
+2026-09-12T02:22:02.7581784Z     lifecycle_test.go:129: cycle=2 goroutines=25 OS resources=14
+2026-09-12T02:22:02.7805544Z [37mDEBUG[0m[0001] [Service] Restarting
+2026-09-12T02:22:02.8043578Z     lifecycle_test.go:129: cycle=3 goroutines=28 OS resources=14
+2026-09-12T02:22:02.8647017Z [37mDEBUG[0m[0001] [Service] Restarting
+2026-09-12T02:22:02.8879148Z     lifecycle_test.go:129: cycle=4 goroutines=27 OS resources=14
+2026-09-12T02:22:02.9097375Z [37mDEBUG[0m[0001] [Service] Restarting
+2026-09-12T02:22:02.9342115Z     lifecycle_test.go:129: cycle=5 goroutines=31 OS resources=14
+2026-09-12T02:22:03.2782652Z [37mDEBUG[0m[0001] [Service] Restarting
+2026-09-12T02:22:03.3019385Z     lifecycle_test.go:129: cycle=6 goroutines=28 OS resources=14
+2026-09-12T02:22:03.3522403Z [37mDEBUG[0m[0001] [Service] Restarting
+2026-09-12T02:22:03.4011479Z     lifecycle_test.go:129: cycle=7 goroutines=30 OS resources=14
+2026-09-12T02:22:03.4356055Z [37mDEBUG[0m[0001] [Service] Restarting
+2026-09-12T02:22:03.4584646Z     lifecycle_test.go:129: cycle=8 goroutines=31 OS resources=14
+2026-09-12T02:22:03.5456332Z [37mDEBUG[0m[0001] [Service] Restarting
+2026-09-12T02:22:03.5679910Z     lifecycle_test.go:129: cycle=9 goroutines=32 OS resources=14
+2026-09-12T02:22:03.6542540Z [37mDEBUG[0m[0002] [Service] Restarting
+2026-09-12T02:22:04.0110054Z     lifecycle_test.go:129: cycle=10 goroutines=25 OS resources=14
+2026-09-12T02:22:04.1600369Z [37mDEBUG[0m[0002] [Service] Restarting
+2026-09-12T02:22:04.1871396Z     lifecycle_test.go:129: cycle=11 goroutines=27 OS resources=14
+2026-09-12T02:22:04.2979214Z [37mDEBUG[0m[0002] [Service] Restarting
+2026-09-12T02:22:04.3859716Z     lifecycle_test.go:129: cycle=12 goroutines=26 OS resources=14
+2026-09-12T02:22:04.4288337Z     lifecycle_test.go:138: goroutines before=22 after=24; OS resources before=14 after=12; measured cycles=12 each start/restart/stop; old and new sessions cancelled
+2026-09-12T02:22:04.4291346Z --- PASS: TestStartStopReleasesServiceObservers (2.76s)
+2026-09-12T02:22:04.4291971Z PASS
+2026-09-12T02:22:05.4323288Z ok  	github.com/Kiwunaka/POKROV-core/v2/hcore	3.820s
+2026-09-12T02:22:05.4567531Z ##[group]Run go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+2026-09-12T02:22:05.4567960Z [36;1mgo install golang.org/x/vuln/cmd/govulncheck@v1.7.0[0m
+2026-09-12T02:22:05.4588196Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:22:05.4588498Z env:
+2026-09-12T02:22:05.4588824Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:22:05.4589124Z ##[endgroup]
+2026-09-12T02:22:06.5204173Z ##[group]Run govulncheck ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./ray2sing/ray2sing
+2026-09-12T02:22:06.5204744Z [36;1mgovulncheck ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./ray2sing/ray2sing[0m
+2026-09-12T02:22:06.5223722Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:22:06.5224051Z env:
+2026-09-12T02:22:06.5224337Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:22:06.5224865Z ##[endgroup]
+2026-09-12T02:22:18.9083942Z === Symbol Results ===
+2026-09-12T02:22:18.9084270Z 
+2026-09-12T02:22:18.9084560Z No vulnerabilities found.
+2026-09-12T02:22:18.9084722Z 
+2026-09-12T02:22:18.9084880Z Your code is affected by 0 vulnerabilities.
+2026-09-12T02:22:18.9085275Z This scan also found 5 vulnerabilities in packages you import and 4
+2026-09-12T02:22:18.9085741Z vulnerabilities in modules you require, but your code doesn't appear to call
+2026-09-12T02:22:18.9086178Z these vulnerabilities.
+2026-09-12T02:22:18.9086607Z Use '-show verbose' for more details.
+2026-09-12T02:22:18.9258606Z ##[group]Run go vet ./daemon ./experimental/libbox
+2026-09-12T02:22:18.9259124Z [36;1mgo vet ./daemon ./experimental/libbox[0m
+2026-09-12T02:22:18.9259507Z [36;1mgo test -race ./daemon ./experimental/libbox[0m
+2026-09-12T02:22:18.9282857Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:22:18.9283218Z env:
+2026-09-12T02:22:18.9283510Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:22:18.9283875Z ##[endgroup]
+2026-09-12T02:22:32.5246418Z ok  	github.com/sagernet/sing-box/daemon	1.108s
+2026-09-12T02:22:32.5247097Z ok  	github.com/sagernet/sing-box/experimental/libbox	1.069s
+2026-09-12T02:22:32.5555508Z ##[group]Run govulncheck ./daemon ./experimental/libbox
+2026-09-12T02:22:32.5555877Z [36;1mgovulncheck ./daemon ./experimental/libbox[0m
+2026-09-12T02:22:32.5575055Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:22:32.5575379Z env:
+2026-09-12T02:22:32.5575668Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:22:32.5576117Z ##[endgroup]
+2026-09-12T02:22:44.2080182Z === Symbol Results ===
+2026-09-12T02:22:44.2081079Z 
+2026-09-12T02:22:44.2081283Z No vulnerabilities found.
+2026-09-12T02:22:44.2081530Z 
+2026-09-12T02:22:44.2081733Z Your code is affected by 0 vulnerabilities.
+2026-09-12T02:22:44.2082168Z This scan also found 5 vulnerabilities in packages you import and 4
+2026-09-12T02:22:44.2082717Z vulnerabilities in modules you require, but your code doesn't appear to call
+2026-09-12T02:22:44.2083135Z these vulnerabilities.
+2026-09-12T02:22:44.2083463Z Use '-show verbose' for more details.
+2026-09-12T02:22:44.2249371Z ##[group]Run go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
+2026-09-12T02:22:44.2249835Z [36;1mgo install honnef.co/go/tools/cmd/staticcheck@v0.7.0[0m
+2026-09-12T02:22:44.2250295Z [36;1mgo install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.10.0[0m
+2026-09-12T02:22:44.2271952Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:22:44.2272254Z env:
+2026-09-12T02:22:44.2272547Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:22:44.2272910Z ##[endgroup]
+2026-09-12T02:22:46.1550955Z ##[group]Run staticcheck -checks='SA2*,SA5*,SA6*' ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./v2/hcore/tunnelservice ./ray2sing/ray2sing ./ray2sing/cmd
+2026-09-12T02:22:46.1552200Z [36;1mstaticcheck -checks='SA2*,SA5*,SA6*' ./internal/observability ./v2/config ./v2/hcore ./v2/hutils ./v2/hcore/tunnelservice ./ray2sing/ray2sing ./ray2sing/cmd[0m
+2026-09-12T02:22:46.1552965Z [36;1mcd engine/sing-box[0m
+2026-09-12T02:22:46.1553456Z [36;1mstaticcheck -checks='SA2*,SA5*,SA6*' ./daemon ./experimental/libbox ./protocol/awg[0m
+2026-09-12T02:22:46.1577892Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:22:46.1578237Z env:
+2026-09-12T02:22:46.1578727Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:22:46.1579239Z ##[endgroup]
+2026-09-12T02:23:05.4828662Z ##[group]Run go test -run=^$ -fuzz=FuzzParseConfigDoesNotPanic -fuzztime=30s ./v2/config
+2026-09-12T02:23:05.4829254Z [36;1mgo test -run=^$ -fuzz=FuzzParseConfigDoesNotPanic -fuzztime=30s ./v2/config[0m
+2026-09-12T02:23:05.4848570Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:23:05.4848859Z env:
+2026-09-12T02:23:05.4849209Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:23:05.4849534Z ##[endgroup]
+2026-09-12T02:23:20.2664329Z fuzz: elapsed: 0s, gathering baseline coverage: 0/214 completed
+2026-09-12T02:23:23.2684189Z fuzz: elapsed: 3s, gathering baseline coverage: 148/214 completed
+2026-09-12T02:23:24.4026100Z fuzz: elapsed: 4s, gathering baseline coverage: 214/214 completed, now fuzzing with 4 workers
+2026-09-12T02:23:26.2702450Z fuzz: elapsed: 6s, execs: 6591 (2148/sec), new interesting: 27 (total: 241)
+2026-09-12T02:23:29.2672393Z fuzz: elapsed: 9s, execs: 23200 (5537/sec), new interesting: 38 (total: 252)
+2026-09-12T02:23:32.2732171Z fuzz: elapsed: 12s, execs: 23832 (211/sec), new interesting: 40 (total: 254)
+2026-09-12T02:23:35.2821039Z fuzz: elapsed: 15s, execs: 23832 (0/sec), new interesting: 40 (total: 254)
+2026-09-12T02:23:38.2807313Z fuzz: elapsed: 18s, execs: 45629 (7268/sec), new interesting: 41 (total: 255)
+2026-09-12T02:23:41.2811389Z fuzz: elapsed: 21s, execs: 45629 (0/sec), new interesting: 41 (total: 255)
+2026-09-12T02:23:44.2841948Z fuzz: elapsed: 24s, execs: 45629 (0/sec), new interesting: 41 (total: 255)
+2026-09-12T02:23:47.2800988Z fuzz: elapsed: 27s, execs: 45629 (0/sec), new interesting: 41 (total: 255)
+2026-09-12T02:23:50.2722549Z fuzz: elapsed: 30s, execs: 45629 (0/sec), new interesting: 41 (total: 255)
+2026-09-12T02:23:51.2756132Z fuzz: elapsed: 31s, execs: 45629 (0/sec), new interesting: 41 (total: 255)
+2026-09-12T02:23:51.2757041Z PASS
+2026-09-12T02:23:51.2775902Z ok  	github.com/Kiwunaka/POKROV-core/v2/config	31.029s
+2026-09-12T02:23:51.3188320Z ##[group]Run mkdir -p "$RUNNER_TEMP/core-source-sbom"
+2026-09-12T02:23:51.3188731Z [36;1mmkdir -p "$RUNNER_TEMP/core-source-sbom"[0m
+2026-09-12T02:23:51.3189322Z [36;1mcyclonedx-gomod mod -licenses -std -json -notimestamp -noserial -output "$RUNNER_TEMP/core-source-sbom/pokrov-core.cdx.json" .[0m
+2026-09-12T02:23:51.3190245Z [36;1mcyclonedx-gomod mod -licenses -std -json -notimestamp -noserial -output "$RUNNER_TEMP/core-source-sbom/sing-box.cdx.json" ./engine/sing-box[0m
+2026-09-12T02:23:51.3212338Z shell: /usr/bin/bash -e {0}
+2026-09-12T02:23:51.3212662Z env:
+2026-09-12T02:23:51.3213032Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:23:51.3213383Z ##[endgroup]
+2026-09-12T02:23:55.4829698Z 2:23AM WRN no licenses detected module=github.com/anytls/sing-anytls@v0.0.11
+2026-09-12T02:23:55.6261888Z 2:23AM WRN no licenses detected module=github.com/flynn/noise@v1.1.0
+2026-09-12T02:23:56.0679739Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go@v0.0.0-20260117110918-dc1cda1fe287
+2026-09-12T02:23:56.0706533Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/all@v0.0.0-20260117110918-dc1cda1fe287
+2026-09-12T02:23:56.0716441Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/android_386@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.1016892Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/android_amd64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.1380370Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/android_arm@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.1710809Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/android_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.2100717Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/darwin_amd64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.2379278Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/darwin_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.2643808Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/ios_amd64_simulator@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.2910987Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/ios_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.3166536Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/ios_arm64_simulator@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.3422233Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_386@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.3782026Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_386_musl@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.4074699Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_amd64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.4471597Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_amd64_musl@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.4799564Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_arm@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.5194655Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.5611533Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_arm64_musl@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.5954247Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_arm_musl@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.6288962Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/tvos_amd64_simulator@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.6559417Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/tvos_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.6820023Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/tvos_arm64_simulator@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.7078800Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/windows_amd64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.7141482Z 2:23AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/windows_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:23:56.7199769Z 2:23AM WRN no licenses detected module=github.com/sagernet/fswatch@v0.1.1
+2026-09-12T02:23:56.7911943Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing@v0.8.0-beta.12
+2026-09-12T02:23:56.7964485Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing-box@v1.0.4-0.20260813051440-69a745451017
+2026-09-12T02:23:56.8758789Z 2:23AM WRN no licenses detected module=github.com/shtorm-7/sing-dns@v0.4.6-extended-1.0.0
+2026-09-12T02:23:56.8771843Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing-mux@v0.3.4
+2026-09-12T02:23:56.8784252Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing-quic@v0.6.0-beta.11
+2026-09-12T02:23:56.8806612Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing-shadowsocks@v0.2.8
+2026-09-12T02:23:56.8818750Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing-shadowsocks2@v0.2.1
+2026-09-12T02:23:56.8831708Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing-shadowtls@v0.2.1-0.20250503051639-fcd445d33c11
+2026-09-12T02:23:56.9154961Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing-tun@v1.0.4-0.20260813051440-69a745451017
+2026-09-12T02:23:56.9204181Z 2:23AM WRN no licenses detected module=github.com/sagernet/sing-vmess@v0.2.8-0.20250909125414-3aed155119a1
+2026-09-12T02:23:57.4375357Z 2:23AM WRN no licenses detected module=std@go1.26.8
+2026-09-12T02:24:01.1224155Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing-box@v1.0.4-0.20260813051440-69a745451017
+2026-09-12T02:24:01.2484173Z 2:24AM WRN no licenses detected module=github.com/anytls/sing-anytls@v0.0.11
+2026-09-12T02:24:01.3644393Z 2:24AM WRN no licenses detected module=github.com/flynn/noise@v1.0.1-0.20220214164934-d803f5c4b0f4
+2026-09-12T02:24:01.8266211Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go@v0.0.0-20260117110918-dc1cda1fe287
+2026-09-12T02:24:01.8290707Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/all@v0.0.0-20260117110918-dc1cda1fe287
+2026-09-12T02:24:01.8300134Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/android_386@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:01.8603347Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/android_amd64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:01.8966690Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/android_arm@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:01.9295858Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/android_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:01.9681970Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/darwin_amd64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:01.9962119Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/darwin_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.0230319Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/ios_amd64_simulator@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.0508229Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/ios_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.0767164Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/ios_arm64_simulator@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.1024333Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_386@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.1387381Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_386_musl@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.1682094Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_amd64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.2081263Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_amd64_musl@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.2409747Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_arm@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.2808277Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.3227027Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_arm64_musl@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.3572517Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/linux_arm_musl@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.3909731Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/tvos_amd64_simulator@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.4179778Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/tvos_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.4439548Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/tvos_arm64_simulator@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.4697827Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/windows_amd64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.4759973Z 2:24AM WRN no licenses detected module=github.com/sagernet/cronet-go/lib/windows_arm64@v0.0.0-20260117110516-f21660bef13f
+2026-09-12T02:24:02.4820221Z 2:24AM WRN no licenses detected module=github.com/sagernet/fswatch@v0.1.1
+2026-09-12T02:24:02.5499310Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing@v0.8.0-beta.12
+2026-09-12T02:24:02.5548667Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing-mux@v0.3.4
+2026-09-12T02:24:02.5559814Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing-quic@v0.6.0-beta.11
+2026-09-12T02:24:02.5581952Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing-shadowsocks@v0.2.8
+2026-09-12T02:24:02.5593553Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing-shadowsocks2@v0.2.1
+2026-09-12T02:24:02.5605832Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing-shadowtls@v0.2.1-0.20250503051639-fcd445d33c11
+2026-09-12T02:24:02.5933682Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing-tun@v1.0.4-0.20260813051440-69a745451017
+2026-09-12T02:24:02.5977737Z 2:24AM WRN no licenses detected module=github.com/sagernet/sing-vmess@v0.2.8-0.20250909125414-3aed155119a1
+2026-09-12T02:24:03.0558530Z 2:24AM WRN no licenses detected module=std@go1.26.8
+2026-09-12T02:24:03.1967001Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-12T02:24:03.1968116Z ##[group]Run actions/upload-artifact@v4
+2026-09-12T02:24:03.1968391Z with:
+2026-09-12T02:24:03.1968642Z   name: core-source-sbom
+2026-09-12T02:24:03.1968943Z   path: /home/runner/work/_temp/core-source-sbom/*.json
+2026-09-12T02:24:03.1969285Z   if-no-files-found: error
+2026-09-12T02:24:03.1969559Z   retention-days: 14
+2026-09-12T02:24:03.1969802Z   compression-level: 6
+2026-09-12T02:24:03.1970041Z   overwrite: false
+2026-09-12T02:24:03.1970333Z   include-hidden-files: false
+2026-09-12T02:24:03.1970712Z env:
+2026-09-12T02:24:03.1971066Z   POKROV_SOURCE_COMMIT: fc301b94aeafc4589cca7b6f8718129187ca3747
+2026-09-12T02:24:03.1971455Z ##[endgroup]
+2026-09-12T02:24:03.3185293Z (node:9833) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-12T02:24:03.3186246Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-12T02:24:03.3233881Z With the provided path, there will be 2 files uploaded
+2026-09-12T02:24:03.3238268Z Artifact name is valid!
+2026-09-12T02:24:03.3239216Z Root directory input is valid!
+2026-09-12T02:24:03.5887953Z Beginning upload of artifact content to blob storage
+2026-09-12T02:24:03.6095050Z (node:9833) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-12T02:24:03.8053385Z Uploaded bytes 55208
+2026-09-12T02:24:03.8466686Z Finished uploading artifact content to blob storage!
+2026-09-12T02:24:03.8467351Z SHA256 digest of uploaded artifact zip is 8c580ddc3818ffbfbd952b37c811f7f13d56fb67d60627fb76cdbd1ee9fc8bf7
+2026-09-12T02:24:03.8468125Z Finalizing artifact upload
+2026-09-12T02:24:04.0521193Z Artifact core-source-sbom.zip successfully finalized. Artifact ID 10289419079
+2026-09-12T02:24:04.0521889Z Artifact core-source-sbom has been successfully uploaded! Final size is 55208 bytes. Artifact ID is 10289419079
+2026-09-12T02:24:04.0529150Z Artifact download URL: https://github.com/Kiwunaka/pokrov-core/actions/runs/34667366713/artifacts/10289419079
+2026-09-12T02:24:04.0661646Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-12T02:24:04.0662598Z Post job cleanup.
+2026-09-12T02:24:04.1628569Z (node:9848) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-12T02:24:04.1692260Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-12T02:24:04.1692760Z [command]/opt/hostedtoolcache/go/1.26.8/x64/bin/go env GOMODCACHE
+2026-09-12T02:24:04.1734144Z [command]/opt/hostedtoolcache/go/1.26.8/x64/bin/go env GOCACHE
+2026-09-12T02:24:04.1772630Z /home/runner/go/pkg/mod
+2026-09-12T02:24:04.1798697Z /home/runner/.cache/go-build
+2026-09-12T02:24:04.1801211Z Cache hit occurred on the primary key setup-go-Linux-x64-ubuntu24-go-1.26.8-c57f8a57e98ce5b99bb63553d625fb3d5014a61f146778e77d3f4409365edd5c, not saving cache.
+2026-09-12T02:24:04.1934740Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-12T02:24:04.1936113Z Post job cleanup.
+2026-09-12T02:24:04.2626977Z [command]/usr/bin/git version
+2026-09-12T02:24:04.2658842Z git version 2.55.0
+2026-09-12T02:24:04.2685536Z Temporarily overriding HOME='/home/runner/work/_temp/1a04123d-c296-484e-8935-ba50e6b7e6da' before making global git config changes
+2026-09-12T02:24:04.2686597Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-12T02:24:04.2689935Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/pokrov-core/pokrov-core
+2026-09-12T02:24:04.2718905Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-12T02:24:04.2744411Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-12T02:24:04.2917023Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-12T02:24:04.2934511Z http.https://github.com/.extraheader
+2026-09-12T02:24:04.2941721Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-12T02:24:04.2970288Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-12T02:24:04.3145830Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-12T02:24:04.3167381Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-12T02:24:04.3437632Z Cleaning up orphan processes
+2026-09-12T02:24:04.3613581Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-go@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

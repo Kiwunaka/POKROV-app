@@ -1,0 +1,892 @@
+{
+  "utc": "2026-09-12T03:42:47.392366+00:00",
+  "vm": "e42043a3-dd4d-452b-b151-410ad5d49543",
+  "snapshots_retained": 13,
+  "nic_before": "none",
+  "nic_for_runtime": "bridged",
+  "bridge": "Intel(R) Ethernet Controller (3) I225-V",
+  "leaf": "E:\\r12-vm-disks-20260912\\{3b8e6fb1-6371-448e-b10f-c0878b875c74}.vdi",
+  "leaf_before_bytes": 5213519872,
+  "growth_budget_bytes": 1073741824,
+  "shutdown_at_growth_bytes": 419430400,
+  "pause_at_growth_bytes": 734003200,
+  "floor_bytes": 42949672960,
+  "free_before": {
+    "C:/": 43745042432,
+    "E:/": 47657500672
+  },
+  "host_network_mutation": "NONE",
+  "budget_usd": 0,
+  "samples": [
+    {
+      "seconds": 5.0,
+      "growth_bytes": 0,
+      "free": {
+        "C:/": 43745079296,
+        "E:/": 47657500672
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 10.1,
+      "growth_bytes": 1048576,
+      "free": {
+        "C:/": 43745067008,
+        "E:/": 47656452096
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 15.2,
+      "growth_bytes": 3145728,
+      "free": {
+        "C:/": 43744854016,
+        "E:/": 47654354944
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 20.3,
+      "growth_bytes": 16777216,
+      "free": {
+        "C:/": 43745050624,
+        "E:/": 47626043392
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 25.4,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745050624,
+        "E:/": 47641772032
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 30.4,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745050624,
+        "E:/": 47641772032
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 35.5,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745050624,
+        "E:/": 47641772032
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 40.6,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745050624,
+        "E:/": 47641772032
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 45.7,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745050624,
+        "E:/": 47641772032
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 50.8,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745050624,
+        "E:/": 47641772032
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 55.8,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745017856,
+        "E:/": 47641772032
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 60.9,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745017856,
+        "E:/": 47641772032
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 66.0,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43745017856,
+        "E:/": 47639998464
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 71.1,
+      "growth_bytes": 15728640,
+      "free": {
+        "C:/": 43744976896,
+        "E:/": 47639998464
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 76.2,
+      "growth_bytes": 16777216,
+      "free": {
+        "C:/": 43744960512,
+        "E:/": 47623151616
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 81.2,
+      "growth_bytes": 17825792,
+      "free": {
+        "C:/": 43745026048,
+        "E:/": 47622561792
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 86.3,
+      "growth_bytes": 22020096,
+      "free": {
+        "C:/": 43744432128,
+        "E:/": 47622430720
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 91.4,
+      "growth_bytes": 24117248,
+      "free": {
+        "C:/": 43744432128,
+        "E:/": 47622033408
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 96.5,
+      "growth_bytes": 27262976,
+      "free": {
+        "C:/": 43744428032,
+        "E:/": 47620980736
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 101.5,
+      "growth_bytes": 28311552,
+      "free": {
+        "C:/": 43744428032,
+        "E:/": 47620194304
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 106.6,
+      "growth_bytes": 28311552,
+      "free": {
+        "C:/": 43744428032,
+        "E:/": 47620194304
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 111.7,
+      "growth_bytes": 29360128,
+      "free": {
+        "C:/": 43744428032,
+        "E:/": 47620194304
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 116.8,
+      "growth_bytes": 29360128,
+      "free": {
+        "C:/": 43744296960,
+        "E:/": 47620194304
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 121.9,
+      "growth_bytes": 29360128,
+      "free": {
+        "C:/": 43744296960,
+        "E:/": 47620194304
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 126.9,
+      "growth_bytes": 29360128,
+      "free": {
+        "C:/": 43744296960,
+        "E:/": 47620194304
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 132.0,
+      "growth_bytes": 30408704,
+      "free": {
+        "C:/": 43744296960,
+        "E:/": 47620194304
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 137.1,
+      "growth_bytes": 32505856,
+      "free": {
+        "C:/": 43743170560,
+        "E:/": 47620128768
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 142.2,
+      "growth_bytes": 37748736,
+      "free": {
+        "C:/": 43743002624,
+        "E:/": 47602561024
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 147.2,
+      "growth_bytes": 37748736,
+      "free": {
+        "C:/": 43742998528,
+        "E:/": 47602561024
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 152.3,
+      "growth_bytes": 39845888,
+      "free": {
+        "C:/": 43742875648,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 157.4,
+      "growth_bytes": 39845888,
+      "free": {
+        "C:/": 43742916608,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 162.5,
+      "growth_bytes": 39845888,
+      "free": {
+        "C:/": 43742916608,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 167.5,
+      "growth_bytes": 39845888,
+      "free": {
+        "C:/": 43742916608,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 172.6,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742896128,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 177.7,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742896128,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 182.8,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742896128,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 187.8,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742896128,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 192.9,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742896128,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 198.0,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742822400,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 203.1,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742818304,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 208.2,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742818304,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 213.2,
+      "growth_bytes": 40894464,
+      "free": {
+        "C:/": 43742830592,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 218.3,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742830592,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 223.4,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742683136,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 228.5,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742638080,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 233.5,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742736384,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 238.6,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742736384,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 243.7,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742646272,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 248.8,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 253.8,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 258.9,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 264.0,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 269.1,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 274.1,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 279.2,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 284.3,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 289.4,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 294.4,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 299.5,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742662656,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 304.6,
+      "growth_bytes": 41943040,
+      "free": {
+        "C:/": 43742638080,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 309.7,
+      "growth_bytes": 44040192,
+      "free": {
+        "C:/": 43742633984,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 314.8,
+      "growth_bytes": 45088768,
+      "free": {
+        "C:/": 43742629888,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 319.8,
+      "growth_bytes": 46137344,
+      "free": {
+        "C:/": 43742486528,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 324.9,
+      "growth_bytes": 46137344,
+      "free": {
+        "C:/": 43742355456,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 330.0,
+      "growth_bytes": 46137344,
+      "free": {
+        "C:/": 43742355456,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 335.1,
+      "growth_bytes": 46137344,
+      "free": {
+        "C:/": 43742355456,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 340.1,
+      "growth_bytes": 46137344,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 345.1,
+      "growth_bytes": 47185920,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 350.2,
+      "growth_bytes": 47185920,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 355.3,
+      "growth_bytes": 47185920,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 360.4,
+      "growth_bytes": 47185920,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47601573888
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 365.5,
+      "growth_bytes": 46137344,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47604719616
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 370.5,
+      "growth_bytes": 46137344,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47604719616
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 375.6,
+      "growth_bytes": 46137344,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47604654080
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 380.7,
+      "growth_bytes": 47185920,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47587876864
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 385.8,
+      "growth_bytes": 47185920,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47587876864
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 390.8,
+      "growth_bytes": 49283072,
+      "free": {
+        "C:/": 43742273536,
+        "E:/": 47586627584
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 395.9,
+      "growth_bytes": 51380224,
+      "free": {
+        "C:/": 43742265344,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 401.0,
+      "growth_bytes": 51380224,
+      "free": {
+        "C:/": 43742265344,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 406.1,
+      "growth_bytes": 52428800,
+      "free": {
+        "C:/": 43742261248,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 411.2,
+      "growth_bytes": 52428800,
+      "free": {
+        "C:/": 43742261248,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 416.2,
+      "growth_bytes": 52428800,
+      "free": {
+        "C:/": 43742191616,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 421.3,
+      "growth_bytes": 52428800,
+      "free": {
+        "C:/": 43741913088,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 426.4,
+      "growth_bytes": 52428800,
+      "free": {
+        "C:/": 43741954048,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 431.5,
+      "growth_bytes": 52428800,
+      "free": {
+        "C:/": 43741949952,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 436.5,
+      "growth_bytes": 53477376,
+      "free": {
+        "C:/": 43741945856,
+        "E:/": 47586562048
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 441.6,
+      "growth_bytes": 54525952,
+      "free": {
+        "C:/": 43741945856,
+        "E:/": 47585443840
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 446.7,
+      "growth_bytes": 54525952,
+      "free": {
+        "C:/": 43742007296,
+        "E:/": 47585443840
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 451.8,
+      "growth_bytes": 55574528,
+      "free": {
+        "C:/": 43742007296,
+        "E:/": 47585443840
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 456.9,
+      "growth_bytes": 57671680,
+      "free": {
+        "C:/": 43742003200,
+        "E:/": 47585443840
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 461.9,
+      "growth_bytes": 57671680,
+      "free": {
+        "C:/": 43741990912,
+        "E:/": 47585443840
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 467.0,
+      "growth_bytes": 57671680,
+      "free": {
+        "C:/": 43741925376,
+        "E:/": 47585443840
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 472.1,
+      "growth_bytes": 57671680,
+      "free": {
+        "C:/": 43747139584,
+        "E:/": 47585443840
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 477.2,
+      "growth_bytes": 57671680,
+      "free": {
+        "C:/": 43747131392,
+        "E:/": 47585443840
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 482.2,
+      "growth_bytes": 61865984,
+      "free": {
+        "C:/": 43747151872,
+        "E:/": 47585112064
+      },
+      "state": "VMState=\"running\""
+    },
+    {
+      "seconds": 487.2,
+      "growth_bytes": 61865984,
+      "free": {
+        "C:/": 43747102720,
+        "E:/": 47586160640
+      },
+      "state": "VMState=\"poweroff\""
+    }
+  ],
+  "minimum_free": {
+    "C:/": 43741913088,
+    "E:/": 47585112064
+  },
+  "max_growth_bytes": 61865984,
+  "status": "MONITORING"
+}

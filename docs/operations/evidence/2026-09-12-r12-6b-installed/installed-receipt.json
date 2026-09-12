@@ -1,0 +1,67 @@
+{
+  "status": "PASS_BOUNDED_CURRENT_WINDOWS_INSTALL_PRIVACY_AND_C02",
+  "utc": "2026-09-12T04:02:06.218317+00:00",
+  "client_source": "2aa57015783ceb3415e3be62bbf0a698729011c4",
+  "core_source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "installer_sha256": "40341081ab4dbb3d97d3e6545646638da21366ebc4524920184af47711769609",
+  "installed_files": 304,
+  "install_state_secure_store_outbox_preserved": true,
+  "core_lifecycle": {
+    "status": "PASS_BOUNDED",
+    "dll_cycles": 300,
+    "session_cancellations": 600,
+    "last_twenty_handles": [
+      436,
+      436
+    ],
+    "final_handles": 436,
+    "file_handle_range": [
+      20,
+      20
+    ],
+    "linux_source_goroutines": [
+      22,
+      24
+    ],
+    "linux_source_fd": [
+      14,
+      12
+    ],
+    "fuzz_inputs": 45629,
+    "source_ci_url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34667366713",
+    "steps": {
+      "Test": "success",
+      "Race-test supported runtime packages": "success",
+      "Check release lifecycle resource ownership": "success",
+      "Vet and race-test mobile Core event bridge": "success",
+      "Fuzz the config and profile parser": "success"
+    }
+  },
+  "native_secret_categories": 6,
+  "journal_files": 7,
+  "journal_marker_matches": 0,
+  "summary_upload_case": 57,
+  "summary_ciphertext_sha256": "a33b11cc8d38e396fcfb0c34b8fcb475929a5d7ce056f4e9a3aa9da52ecfbde5",
+  "summary_payload_files": 3,
+  "current_origin_https_requests": 10,
+  "final_gui_disconnect_recovery": "PASS",
+  "host_routes_dns_unchanged": true,
+  "vm_snapshots_retained": 13,
+  "vm_final_power": "poweroff",
+  "vm_final_nic": "none",
+  "source_of_observer_label_0218e89": "Retained status observer executable only; installed app identity is independently bound by 304 hashes and current AOT manifest",
+  "limitations": [
+    "Windows 11 owned VM only; no current Android installed or physical-device claim",
+    "Summary profile omits events/system/crash; no fresh extended/crash acceptance from this upload",
+    "Operator step-up used the controlled owned fixture; external OIDC not retested",
+    "Initial installed VM growth budget exceeded by 192937984 bytes; final floor readback only for that initial run",
+    "Three subsequent guarded runs stayed above sampled 40GiB floor and below their growth budget",
+    "canary-disconnected.json is a failed UI action with active TUN; only canary-final-disconnected.json proves recovery",
+    "canary-state.ps1 name-only adapter count misses tun-numbered adapters; recovery uses network.ps1 full adapter detection",
+    "Secure-store byte preservation applies to installation only; normal subsequent API/diagnostic use updated it",
+    "Windows Authenticode SKIPPED_BY_OWNER; full licensing/source delivery and release remain open"
+  ],
+  "six_artifacts_unchanged": true,
+  "production_deploy": false,
+  "public_release": false
+}
