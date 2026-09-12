@@ -566,8 +566,10 @@ named matrix entry.
 
 Support bundle `build.build_id` and `build/identity.json` carry the same actual
 build number used by the support-mode audience and operational events. The
-candidate label is not the build number. Android production APKs declare the
-`direct` diagnostics channel; store AABs declare `store`.
+candidate label is not the build number. Android diagnostics use Flutter's
+build flavor: `direct` for production APKs and `store` for store AABs. This is
+separate from the operational release channel (`alpha`, `beta`, `rc`, `stable`,
+or `local`); distribution flavors must not be passed as `POKROV_RELEASE_CHANNEL`.
 
 Platform components emit only closed lifecycle identifiers, correlation and
 session/generation identifiers, bounded stage/result enums and sanitized

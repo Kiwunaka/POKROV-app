@@ -1055,3 +1055,11 @@ Consumer analyze, 81 runtime tests, 8 Android tests and seed/docs contracts pass
 Five binary scans retain nine advisory IDs with bounded static dispositions;
 191 verbatim notice blocks and source-packet metadata are retained. Current
 packages, installed TUN/privacy, full source/licensing and release remain open.
+
+## 2026-09-12 — flavor metadata startup regression
+
+`a9bc280` / Core `6b271de` APK `23fa86a9` fails installed startup: distribution
+flavors were passed as operational release channels. The source fix uses
+Flutter `appFlavor` for support metadata and preserves the operational channel
+contract. Both flavor regressions and 25 focused tests pass; corrected installed
+proof remains pending. [Exact failure, rollback and source checks](evidence/2026-09-12-r12-android-flavor-startup/README.md).

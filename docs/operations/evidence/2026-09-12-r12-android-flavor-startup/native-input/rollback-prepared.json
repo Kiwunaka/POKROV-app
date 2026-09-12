@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "profile_sha256": "7693f758085350196c3a1f75e666b41b4e4d617b79bbc6f20c6cd84d4d8ed475",
+  "preferences_sha256": "dd3b094648e216e5b8e5d90f034646deb4ba8048c8e07b2b55c15a6f081fc12f",
+  "backup_guest_private_only": true,
+  "backup_uid": 10111,
+  "backup_directory_mode": "700",
+  "backup_files_mode": "600",
+  "live_profile_exported": false
+}

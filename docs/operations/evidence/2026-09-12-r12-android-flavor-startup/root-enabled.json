@@ -1,0 +1,22 @@
+{
+  "status": "PASS_SCOPED_ROOT_ENABLED",
+  "utc": "2026-09-12T05:43:30.384556+00:00",
+  "instance_index": 3,
+  "before_config_sha256": "b05558fc1597476908e33005efd7035a0af7179070d1a7285b48be12d3847079",
+  "after_config_sha256": "ee2646f95d26cb860fd85b941511356460a15996ae8ed75494164624f3a047f2",
+  "before_root_fields": {
+    "basicSettings.rootMode": false
+  },
+  "after_root_fields": {
+    "basicSettings.rootMode": true
+  },
+  "nonroot_config_sha256": "bc63a1e6306188839de75cee2e02eb67ca8ef0653da6f918872f560bc572f95b",
+  "other_configs_sha256": {
+    "E:\\LDPlayer\\LDPlayer14\\vms\\config\\leidian0.config": "327e8585768bfed3e4214d3d94971242ce5a3e130e59706c7995981c039b2055",
+    "E:\\LDPlayer\\LDPlayer14\\vms\\config\\leidian1.config": "178643c07ee1a36d75134e68b035d421a5f2244d3efbe10b1ae666cc84b70c59",
+    "E:\\LDPlayer\\LDPlayer14\\vms\\config\\leidian2.config": "f564d538a34f7647a1f3e785fbe9fbc02670b869f00c04348af37a50e4a75fb1"
+  },
+  "other_configs_unchanged": true,
+  "original_su_available": false,
+  "restore_required": true
+}

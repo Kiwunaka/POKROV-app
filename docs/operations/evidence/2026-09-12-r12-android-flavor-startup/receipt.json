@@ -1,0 +1,163 @@
+{
+  "status": "FAIL_A9_INSTALLED_STARTUP_SOURCE_FIX_TESTED",
+  "utc": "2026-09-12T06:02:34.320369+00:00",
+  "failed_client_source": "a9bc280e22998550f113e654584058f0881661bd",
+  "core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "failed_apk_sha256": "23fa86a9421930910e6d95d0fdff85f35c5df4e94f8749b83e3457052b66935d",
+  "flavor_regressions_after": {
+    "direct": "PASS",
+    "store": "PASS"
+  },
+  "focused_tests_passed": 25,
+  "analyze": "PASS",
+  "validate_seed": "PASS",
+  "native_profile_rollback": "PASS_BYTE_EXACT",
+  "root_disabled_config": "PASS",
+  "root_disabled_guest_boot_check": "PENDING",
+  "corrected_packages_installed": "PENDING",
+  "source_promotion": "PENDING",
+  "full_R12_V01": "OPEN",
+  "public_release": false,
+  "captures": [
+    {
+      "path": "apk-binding.json",
+      "bytes": 1245,
+      "sha256": "2475b886421989462eb9828b0145eccb168559d36cf683cd4319e576b8d63985"
+    },
+    {
+      "path": "installed-apk.json",
+      "bytes": 552,
+      "sha256": "08a1c204a769fa5d94d2bf20b39d13901fd173d8fd2f1b21f70a5bf7388eaa30"
+    },
+    {
+      "path": "after-native-start.png",
+      "bytes": 127368,
+      "sha256": "5a44a80ffb196f089718177b6dd9616abcf7e5df44da9f3c02f911fca66944f0"
+    },
+    {
+      "path": "startup-observation.json",
+      "bytes": 650,
+      "sha256": "bda509c7f796f85330c7f333c0358b9954edc8d074a2ff19aee66a6499d05adc"
+    },
+    {
+      "path": "startup-exception-location.json",
+      "bytes": 1148,
+      "sha256": "c6e8fa0516208ee0c399d9944162b748e698794e0d8dfff391714e0fe48c90bf"
+    },
+    {
+      "path": "root-enabled.json",
+      "bytes": 1066,
+      "sha256": "91abfa0997abdeaf7def0c8cc1db3bf59f39078e5efa6845377864b320d88f0b"
+    },
+    {
+      "path": "root-restored.json",
+      "bytes": 362,
+      "sha256": "eea858fb9b28713d3e8c9c97f402b38317fced373d62c96f1a598bb56fff36da"
+    },
+    {
+      "path": "restoration.json",
+      "bytes": 9635,
+      "sha256": "5d940f27eefe3756b2b55716110da260b9f3a816fa430fbe16c6ee3d1be012e8"
+    },
+    {
+      "path": "install-current.py",
+      "bytes": 1902,
+      "sha256": "d1e60d72a75398490c92456a5cc809d2f6d6751744afe5db3fcf4ad2bf3cf3b2"
+    },
+    {
+      "path": "watch-ldplayer.py",
+      "bytes": 3249,
+      "sha256": "2c06fe74b55023bbddb068ccdb1c8f54a0ceca28a2f7c6cbb8cb987e9cb8a45a"
+    },
+    {
+      "path": "ui.py",
+      "bytes": 2378,
+      "sha256": "c2e691878aa1518843caf86037b9cc1ce7283375c31331d90bcb5f4b3bb63f62"
+    },
+    {
+      "path": "enable-root.py",
+      "bytes": 1851,
+      "sha256": "5b38a7bcd1b8c21fc853dbec66e7cefec7a02c948975847fecfe8fefbcd0a5af"
+    },
+    {
+      "path": "restore-root.py",
+      "bytes": 1087,
+      "sha256": "f4645b8cf93708931ca373e706a465fe9523011c2670784409d18e530df60a8e"
+    },
+    {
+      "path": "regression-before-direct-v2.log",
+      "bytes": 1862,
+      "sha256": "6c1bbefb126f5a66f3faeab1a32a773c80429e888941150347c493f235a22611"
+    },
+    {
+      "path": "regression-before-store.log",
+      "bytes": 2536,
+      "sha256": "e546a6a1efe3fcd5d332c9df1bd3197a8279cf7a73ba56355b8d3d010596f011"
+    },
+    {
+      "path": "regression-direct-after.log",
+      "bytes": 182,
+      "sha256": "2d96f48a3f0b479b72dd29cdd07c43dcd8c2e3d2e8d79dbadaa66e9a9a4a73dc"
+    },
+    {
+      "path": "regression-store-after.log",
+      "bytes": 182,
+      "sha256": "2d96f48a3f0b479b72dd29cdd07c43dcd8c2e3d2e8d79dbadaa66e9a9a4a73dc"
+    },
+    {
+      "path": "focused-tests-after.log",
+      "bytes": 3568,
+      "sha256": "47574561ed024201268f5689855315f0636053a699b92f6b61e86f14d40c5635"
+    },
+    {
+      "path": "analyze-after.log",
+      "bytes": 99,
+      "sha256": "893e172b70a872401dc887a8ba0df5a631f9480000f41a38bbc50146832f7020"
+    },
+    {
+      "path": "docs-contract-after.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "path": "validate-seed-after.log",
+      "bytes": 1818,
+      "sha256": "a001a3b9fe7a8d7fccc76e2f643d6ecb6daf20a12fcbb3398998d2bfe80bb768"
+    },
+    {
+      "path": "native-input/baseline.py",
+      "bytes": 2751,
+      "sha256": "4fe16247e4a3f534b11cebe07d0ddfd261e06d04db5c2cee4d7142375f7ee2b9"
+    },
+    {
+      "path": "native-input/baseline.json",
+      "bytes": 1822,
+      "sha256": "eae4b2e76cdb918f8be6489b0cbb8ae437883dcaa5534279d32974b0f94931cf"
+    },
+    {
+      "path": "native-input/inject.py",
+      "bytes": 4393,
+      "sha256": "9fd06ff834c4e6092ed404b7ec11ade527c66039ce1c00d899f3c6a0ec3834a2"
+    },
+    {
+      "path": "native-input/native-input.json",
+      "bytes": 3847,
+      "sha256": "750449763ed6d67e3e499d568e8e0e2565046cf261f9bfae2d2cbcf3d2ef1042"
+    },
+    {
+      "path": "native-input/rollback-prepared.json",
+      "bytes": 371,
+      "sha256": "6f6fbda680bdfbb74537b27488cf915aefa0c78233256dd724851a42244bc286"
+    },
+    {
+      "path": "native-input/restore-profile.py",
+      "bytes": 1466,
+      "sha256": "a77df82eea93901d5bc4283a9b139d5e1507a7074f5f268770c8178c82db46b7"
+    },
+    {
+      "path": "native-input/profile-restored.json",
+      "bytes": 488,
+      "sha256": "f81a4215537584e6f8466470d553bcf5b6d98fef9bd18da4feb3660623f73a16"
+    }
+  ]
+}
