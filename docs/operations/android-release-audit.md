@@ -1145,3 +1145,12 @@ packaged-DLL canaries and five persisted sinks. Client PR120 and Core PR15 plus
 both main CI workflows pass; branch protections are unchanged. Failed storage
 attempts and byte-preserving retention are recorded. Installed acceptance for
 these exact packages, full source/license and release gates remain open.
+
+## 2026-09-12 Core6b installed x86_64 acceptance
+
+[Exact current APK on owned LDPlayer index 3](evidence/2026-09-12-r12-6b-android-installed/README.md)
+passes same-signer upgrade, preserved UI selections and bounded startup/JNI
+log privacy. Six synthetic markers stay in the internal returned JNI exception
+but are absent from stdout/stderr/child logcat. The account is expired, so TUN
+and entitlement-dependent flows were not exercised. Emulator is off; phone,
+host routes/DNS and Hiddify are untouched. Full C05/V01 and release remain open.

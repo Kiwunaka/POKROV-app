@@ -1,0 +1,12 @@
+{
+  "status": "PASS_EXACT_SAME_SIGNER_ANDROID_UPGRADE",
+  "utc": "2026-09-12T04:11:14.263745+00:00",
+  "installed_apk_sha256": "baa5202957c46e9ba92e3fff4c46418b60ff309311cfa015aef86da685ac0f52",
+  "previous_apk_sha256": "9ffe8e83cfab393ef765acc0631579d236a9363525f3c71bd5e5d54660666fee",
+  "previous_apk_retained": true,
+  "client_source": "2aa57015783ceb3415e3be62bbf0a698729011c4",
+  "core_source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "install_result": "Performing Streamed Install\r\nSuccess",
+  "app_data_clear": false,
+  "host_vpn_settings_changed": false
+}
