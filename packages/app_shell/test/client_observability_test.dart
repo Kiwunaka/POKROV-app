@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -12,6 +13,50 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 void main() {
+  test('crash handlers retain safe markers without forwarding raw errors',
+      () async {
+    // Flutter 3.38's test dispatcher drops onError assignments; use the real one.
+    WidgetsFlutterBinding.ensureInitialized();
+    final root = await Directory.systemTemp.createTemp('pokrov-crash-sinks-');
+    addTearDown(() => root.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android,
+      directoryResolver: () async => root,
+      buildIdentity: _build(),
+    );
+    final dispatcher = WidgetsBinding.instance.platformDispatcher;
+    final oldFlutterHandler = FlutterError.onError;
+    final oldPlatformHandler = dispatcher.onError;
+    final oldDebugPrint = debugPrint;
+    addTearDown(() {
+      FlutterError.onError = oldFlutterHandler;
+      dispatcher.onError = oldPlatformHandler;
+      debugPrint = oldDebugPrint;
+    });
+    final console = <String?>[];
+    final platformForwarding = <String>[];
+    debugPrint = (message, {wrapWidth}) => console.add(message);
+    FlutterError.onError = FlutterError.dumpErrorToConsole;
+    dispatcher.onError = (error, stack) {
+      platformForwarding.add('$error\n$stack');
+      return false;
+    };
+    installPokrovCrashHandlers(observability);
+    const canary = 'R12_DART_CRASH_SECRET_20260912';
+    final error = StateError('password=$canary https://example.invalid/$canary');
+    final stack = StackTrace.fromString('/private/$canary.dart:1');
+    FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stack));
+    final platformHandled = dispatcher.onError!(error, stack);
+    await observability.flush();
+
+    expect(console, isEmpty);
+    expect(platformForwarding, isEmpty);
+    expect(platformHandled, isTrue);
+    expect(observability.crashDiagnostics.single.errorCode, 'CRASH-001');
+    expect(await observability.markerStore.file.readAsString(),
+        isNot(contains(canary)));
+  });
+
   test('validated crash marker reaches diagnostics after restart', () async {
     final root = await Directory.systemTemp.createTemp('pokrov-crash-preview-');
     addTearDown(() => root.delete(recursive: true));

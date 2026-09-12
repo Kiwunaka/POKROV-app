@@ -576,6 +576,10 @@ session/generation identifiers, bounded stage/result enums and sanitized
 status. Windows service/UI logs are separate; Android release logs stay
 app-private; Linux daemon events use journald with safe fields.
 
+Flutter and isolate error handlers retain the closed crash marker without
+forwarding the original exception or stack to previous/default handlers. The
+isolate callback reports the error handled so the VM does not print raw values.
+
 The Windows UI and service also install `POKROV_WINDOWS_CRASH_V1`. The filter
 unwinds only the faulting thread and retains at most 32 RVAs from fixed
 allowlisted POKROV, Flutter, Core and app modules. It stores one current and one

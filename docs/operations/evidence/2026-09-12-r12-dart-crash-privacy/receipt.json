@@ -1,0 +1,59 @@
+{
+  "status": "PASS_SOURCE_CRASH_PRIVACY_FIX",
+  "utc": "2026-09-12T08:17:51.359650+00:00",
+  "base_source": "20ba66c878ab5bb9208054161a0c6a2745a1944f",
+  "framework_runtime": "Flutter3.38.5 real WidgetsFlutterBinding in test engine",
+  "sdk_revision": "f6ff1529fd6d8af5f706051d9251ac9231c83407",
+  "sdk_source_hashes": [
+    {
+      "path": "packages/flutter/lib/src/foundation/assertions.dart",
+      "sha256": "f9e8baea09d536c2972a6184f1e95828dd887866040301e4d5d6f28c2f19fbfb"
+    },
+    {
+      "path": "packages/flutter_test/lib/src/window.dart",
+      "sha256": "16c261bc4af7d1f78457173c7ac7b0469375ba3d5db9a3376c652a54c1070697"
+    }
+  ],
+  "baseline": "FAIL_SYNTHETIC_SECRET_FORWARDED_TO_DEFAULT_FLUTTER_CONSOLE",
+  "first_test_attempt": "HARNESS_FAILURE_TEST_DISPATCHER_DROPS_ONERROR_ASSIGNMENT",
+  "fixed_focused_tests": 8,
+  "analysis": "PASS",
+  "release_default_logging": "SOURCE_INSPECTED_DUMP_ERROR_TO_CONSOLE_PRINTS_EXCEPTION_AND_STACK",
+  "fixed_callbacks": "safe marker only; isolate returns handled=true; no prior callback forwarding",
+  "installed_successor_packages": "PENDING",
+  "native_crash_and_hang_matrix": "NOT_CLOSED",
+  "captures": [
+    {
+      "path": "before-fix.log",
+      "bytes": 383,
+      "sha256": "387f0d261a793c3ce114beb4d04cc74dcd0273136c512a471ae78733b068fd01"
+    },
+    {
+      "path": "before-fix-real-dispatcher.log",
+      "bytes": 1386,
+      "sha256": "6fd51a6cd8280b3ba1a94df89a13ef174df3b12dc2300d482374e65fc635807a"
+    },
+    {
+      "path": "focused-tests.log",
+      "bytes": 723,
+      "sha256": "5234417ef760c0537cf4fe9e8363d599571f6c091512af90fb2dc50f9092541b"
+    },
+    {
+      "path": "analyze.log",
+      "bytes": 98,
+      "sha256": "678fcfb917ab377cb35d9d7d52cc119080a610a8fcfd56ded917c16969a88ff0"
+    },
+    {
+      "path": "docs-contract.log",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "path": "validate-seed.log",
+      "bytes": 1818,
+      "sha256": "17111216a774254ccf359b14fa36add21c18aec29064e3af2176cc4153daf045"
+    }
+  ],
+  "docs_contract": "PASS",
+  "validate_seed": "PASS_EXPLICIT_PLATFORM_CORE"
+}

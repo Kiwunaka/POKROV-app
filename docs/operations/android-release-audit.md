@@ -1073,3 +1073,11 @@ The audited one-use admin download also passes. Rootless guest boot is verified.
 The same run finds compact-screen PSM consent clipped and untappable. Source
 now uses available height and scrollable content; 18 focused tests and analyze
 pass. Installed corrected consent and extended/crash flow remain pending.
+
+## 2026-09-12 — Dart crash console privacy correction
+
+The shared Flutter/isolate handlers previously forwarded raw exception/stack
+values to default reporting. A real Flutter-engine canary test reproduces this
+and now passes with marker-only handling; eight tests and analyze pass.
+[Exact source proof](evidence/2026-09-12-r12-dart-crash-privacy/README.md).
+Successor packages/installed proof and the native crash/hang matrix remain open.
