@@ -101,6 +101,14 @@ rejection, distinct cancelled/superseded/timeout/crash terminals, and an
 identity-free aggregate projection. Exact-candidate crash survival and remote
 delivery remain candidate/environment evidence, not a source-level pass.
 
+Previous-exit writes flush a same-directory `.next` file and rename it over the
+existing marker without deleting the destination first. If either asynchronous
+or synchronous rename fails, the last committed marker remains readable and
+`writeErrors` increments. Two fault-injection regressions cover that failure;
+the Windows Dart 3.10.4 native check also verifies sharing-violation preservation
+and replacement after the temporary file is unlocked. This does not establish
+power-loss durability or installed-device crash survival for a new package.
+
 ### Android staged profile identity
 
 The additive `config_digest` in supported schema `1` is lowercase SHA-256 of

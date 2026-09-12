@@ -1,0 +1,33 @@
+00:00 +0: loading E:/r12client/packages/observability_runtime/test/fault_chaos_contract_test.dart
+00:00 +0: E:/r12client/packages/observability_runtime/test/fault_chaos_contract_test.dart: 19-case integration fault contract uses canonical closed outcomes
+00:00 +1: E:/r12client/packages/observability_runtime/test/fault_chaos_contract_test.dart: runtime failure strings preserve specific fault codes
+00:00 +2: E:/r12client/packages/observability_runtime/test/fault_chaos_contract_test.dart: loss DNS MTU and IPv6 chaos remain phase-visible and unverified
+00:00 +3: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: typed privacy contract rejects unknown fields and privacy-mode widening
+00:00 +4: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: typed privacy contract allows only a bounded selected-app count in release health
+00:00 +5: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: typed privacy contract planted secret corpus never passes serialized guard
+00:00 +6: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: typed privacy contract generated redaction property corpus always fails closed
+00:00 +7: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: typed privacy contract safe config fingerprint is canonical and never returns source
+00:00 +8: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: bounded queue and dispatcher fatal and security records evict lower-priority traffic
+00:00 +9: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: bounded queue and dispatcher emit path never waits for a blocked writer
+00:00 +10: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: bounded queue and dispatcher emit path never waits for a blocked writer
+00:00 +11: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: bounded queue and dispatcher emit path never waits for a blocked writer
+00:00 +12: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: bounded queue and dispatcher emit path never waits for a blocked writer
+00:00 +13: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: bounded queue and dispatcher generation and sequence fence rejects stale callbacks
+00:00 +14: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: bounded queue and dispatcher breadcrumb and security rings stay separate from disk pressure
+00:00 +15: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: bounded queue and dispatcher writer failure is observable without recursive emission
+00:00 +16: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store platform policies are exactly 24 MiB and 64 MiB
+00:00 +17: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +18: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +19: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +20: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +21: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +22: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +23: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +24: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +25: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +26: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store rotation retains at most two bounded generations
+00:00 +27: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: rotating JSONL store crash-truncated tail is ignored and repaired before append
+00:00 +28: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: legacy translation runtime JSONL translates only allowlisted complete records
+00:00 +29: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: legacy translation Windows service journal translates bounded runtime phases
+00:00 +30: E:/r12client/packages/observability_runtime/test/observability_runtime_test.dart: legacy translation Core ABI records preserve correlation and reject raw codes
+00:01 +31: All tests passed!
