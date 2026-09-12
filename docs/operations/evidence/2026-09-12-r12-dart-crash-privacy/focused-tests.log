@@ -1,0 +1,10 @@
+00:00 +0: loading E:/r12client/packages/app_shell/test/client_observability_test.dart
+00:00 +0: crash handlers retain safe markers without forwarding raw errors
+00:00 +1: validated crash marker reaches diagnostics after restart
+00:00 +2: diagnostic storage failure preserves bootstrap and connection actions
+00:00 +3: client observability follows reducer proof and mirrors safe aggregate
+00:00 +4: connection failure survives interleaved account refresh events
+00:00 +5: active app-first client emits correlation header and aggregate batch
+00:00 +6: release-health baseline is existing-session-only and exact-build scoped
+00:00 +7: bootstrap failures expose stable closed portal codes
+00:00 +8: All tests passed!
