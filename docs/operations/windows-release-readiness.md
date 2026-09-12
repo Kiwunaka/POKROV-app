@@ -1578,3 +1578,15 @@ CTest passes. PR124 and main268b7556 CI pass with unchanged protections.
 [Captured scope](evidence/2026-09-12-r12-dart-crash-packages/README.md).
 This new installer was not executed; Authenticode stays SKIPPED_BY_OWNER.
 Installed acceptance, full licensing and release gates remain open.
+
+
+## 2026-09-12 marker replacement installer
+
+[Exact package and source evidence](evidence/2026-09-12-r12-marker-packages/README.md)
+binds setup ebb3ab95 to source8067520c/Core6b. All304 staged/extracted files,
+current Dart revision, exact native/notices and nine Release CTests pass.
+Only data/app.so changes from the preceding F711 bundle. PR125/main d6c7c3de
+CI passes; protections are unchanged. Current setup was not executed.
+The earlier VM attempt returned an unrelated fullscreen capture and was
+restored off without installation. Authenticode remains SKIPPED_BY_OWNER;
+installed acceptance, licensing and full release gates remain open.

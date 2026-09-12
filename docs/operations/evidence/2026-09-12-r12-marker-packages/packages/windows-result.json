@@ -1,0 +1,16 @@
+{
+  "source_client": "8067520c7b9230ab0c66823fae9ae78791f1a838",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "installer": {
+    "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+    "size": 29176725,
+    "sha256": "ebb3ab95062bca07209dc0d93bbbcb142d6b31be66bdcbe9084207bd5a271030"
+  },
+  "changed_payload": [
+    "data/app.so"
+  ],
+  "same_native_payload": true,
+  "exact_extracted_files": 304,
+  "native_ctest": "PASS_NINE_NATIVE_TESTS",
+  "installed_vm": "NOT_PERFORMED_UI_CAPTURE_UNAVAILABLE"
+}

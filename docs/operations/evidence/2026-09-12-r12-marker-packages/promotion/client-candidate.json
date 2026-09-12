@@ -1,0 +1,132 @@
+{
+  "source": "8067520c7b9230ab0c66823fae9ae78791f1a838",
+  "parent": "268b7556bd80faf98ff0fcf5001aacfb1119ad06",
+  "tree": "ece79d5927f48cf416b51f0fe4e1cdd405e16317",
+  "files": [
+    {
+      "path": "packages/observability_runtime/lib/src/crash_marker.dart",
+      "mode": "100644",
+      "blob": "533fa047b77ae8b9af2f2ea02237d93580521ae9",
+      "bytes": 12023,
+      "sha256": "f71a7e10a6f8bddff406b946374d84d2736cf3f51998698f653d03b5fdde1813"
+    },
+    {
+      "path": "packages/observability_runtime/test/phase_timeline_test.dart",
+      "mode": "100644",
+      "blob": "c15808beb8b0799727fa680dd51ad89a102f99ee",
+      "bytes": 14965,
+      "sha256": "0631f0eec23ca81df3b1e47d48976c97da1236042ef33010b8e5350c18cf7690"
+    },
+    {
+      "path": "docs/architecture/persisted-state-contract.md",
+      "mode": "100644",
+      "blob": "8641a943b5a332188cae426726ac5b706001f540",
+      "bytes": 12367,
+      "sha256": "026398c2b1af797cc98cf12734542a4cdeb872d58b7508c8dec77cf90eda1354"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/.gitattributes",
+      "mode": "100644",
+      "blob": "49a34f9509161bc82a73d0ac3326e4e1bcc71405",
+      "bytes": 70,
+      "sha256": "7de1726252a6266af16995d80316bf9346be2816d099b9de6a1b1a0d579a269a"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/README.md",
+      "mode": "100644",
+      "blob": "719fc3a479994702b6f84fbd84c8ff775be10e33",
+      "bytes": 1733,
+      "sha256": "a365f79161c81d747e37634d7c90f271ffb0af8d0a79999a7804cfd314b4182f"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/after.log",
+      "mode": "100644",
+      "blob": "ef5fd417ca0175904ef2865bff15a886351f5bcb",
+      "bytes": 754,
+      "sha256": "c3bd51bb61a01f670b6072d77c226fa253034e9027b3ad05d066347cff23a3f3"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/analyze.log",
+      "mode": "100644",
+      "blob": "c8362558fd23534a72fcbb462a11c1ca25f6568c",
+      "bytes": 76,
+      "sha256": "0ebd46b3a991310e1533545147755bb3ffdf2c15148b75dd6d5e2730d1cad347"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/before-fixed-harness.log",
+      "mode": "100644",
+      "blob": "293f168d1469bdb77651734d7c06203268ddc417",
+      "bytes": 837,
+      "sha256": "aa4f49b94429a2bca15f01cb7d5d022f503660142c0ba1b57d3a655e8de150ad"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/before.log",
+      "mode": "100644",
+      "blob": "eef68e1a477fd5f5a7998553552482bc80b37d73",
+      "bytes": 1850,
+      "sha256": "4809c89d51ec880a13314433a2461942ec5e5d4632ca1676a8f417e32de77f99"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/docs-contract.log",
+      "mode": "100644",
+      "blob": "c3995f2cd3221109c3d170f1be996e58fa88732d",
+      "bytes": 26,
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/native-rename.dart",
+      "mode": "100644",
+      "blob": "f347390e9b461c921a5c1c3a56d00e315809378b",
+      "bytes": 1745,
+      "sha256": "1ca1c8884fca2f4ba8467cbc979678f12a17880d43888d04f8dad9b201faee17"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/native-rename.json",
+      "mode": "100644",
+      "blob": "91b825c974e11d3fa7976f0d2af4728aea408357",
+      "bytes": 263,
+      "sha256": "c2f7c2d1c0d0b4ad40ce4462984d406accbdd1a002a9bc70435a52f78d9d5002"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/receipt.json",
+      "mode": "100644",
+      "blob": "6ebb4feef12b51db03aa725caaad352ca7755e82",
+      "bytes": 2523,
+      "sha256": "e7383bac18ed604efda5f960396a3205b080ea914382382f53ee79b917bd775d"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/runtime-tests.log",
+      "mode": "100644",
+      "blob": "e8fcb7d0ba74ee1c98ad09e3acd36bdff342f51c",
+      "bytes": 5322,
+      "sha256": "6b50422dbbd316d993e175cc96b4d7980bb17d22a50da88c685760d15e377958"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/sdk-source-binding.json",
+      "mode": "100644",
+      "blob": "d302a70103af83d97f7206e975c47669d37ddf41",
+      "bytes": 443,
+      "sha256": "5bd1034fe3278405907a4e81a21bd11baf4cdf25df6f580780e85f292a22e505"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/source.patch",
+      "mode": "100644",
+      "blob": "ae74f58e266bcefdf08d33b7dd5cf14d2992e58f",
+      "bytes": 5546,
+      "sha256": "039160bc4874204019b43b98318890de52597a9ced8a434050c886869bdafc84"
+    },
+    {
+      "path": "docs/operations/evidence/2026-09-12-r12-marker-atomicity/validate-seed.log",
+      "mode": "100644",
+      "blob": "060efdca617add1777510a7fdbfb7e7fc82329a9",
+      "bytes": 1818,
+      "sha256": "29104e444bd3b151a34d4d825d3cb765527337c1097f8bddf76f2bf7ca359c58"
+    }
+  ],
+  "active_source_difference": [
+    "apps/linux_shell/README.md",
+    "apps/linux_shell/packaging/README.md"
+  ],
+  "total_bytes": 62361,
+  "scope": "Preserve last committed previous-exit marker when native rename fails"
+}

@@ -1,0 +1,47 @@
+{
+  "status": "PASS_EXACT_PRIOR_PARSED_DEX_BYTES",
+  "source_client": "8067520c7b9230ab0c66823fae9ae78791f1a838",
+  "prior_identity_sha256": "b71d8d98e462d806548e090b4f3fd2189fbc7e6cee66421db2beddbecafa05bc",
+  "artifacts": [
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+      "sha256": "f7be1f638991d26d5ef12798f4253c8b5b659b30b8753061c2b9e7d9d3f894b9",
+      "dex": {
+        "classes.dex": "d063ea4910e7ae0ea968eac9f7604d571de08f7637e9371026bfd9a0ff6c121d"
+      },
+      "exact_prior_dex_sha256_match": true
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+      "sha256": "956ca1a38928a6387d5280e9e5b698d09c143c6f15a31b8f90c11ec528c26138",
+      "dex": {
+        "classes.dex": "d063ea4910e7ae0ea968eac9f7604d571de08f7637e9371026bfd9a0ff6c121d"
+      },
+      "exact_prior_dex_sha256_match": true
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+      "sha256": "48e2d8b9eec5ea1cbc476427b51aea10bafc6ddcaadbb3394cdcb237dd1f4819",
+      "dex": {
+        "classes.dex": "d063ea4910e7ae0ea968eac9f7604d571de08f7637e9371026bfd9a0ff6c121d"
+      },
+      "exact_prior_dex_sha256_match": true
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+      "sha256": "7ffacdfae3273d0b03d07a4d2157100606ad49fa8d81e466f3df437ca66184c0",
+      "dex": {
+        "classes.dex": "d063ea4910e7ae0ea968eac9f7604d571de08f7637e9371026bfd9a0ff6c121d"
+      },
+      "exact_prior_dex_sha256_match": true
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\bundle\\storeRelease\\app-store-release.aab",
+      "sha256": "f11b93df576a81ad9f6e9d476d2c3f64c2024feaf01ea8c9495f88808d05a2c3",
+      "dex": {
+        "base/dex/classes.dex": "16f865ec7d649b13c60074e084a7b1c9aec449dd01f88ad7a6b507182ca4397f"
+      },
+      "exact_prior_dex_sha256_match": true
+    }
+  ]
+}

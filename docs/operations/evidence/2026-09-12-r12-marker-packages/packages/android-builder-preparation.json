@@ -1,0 +1,34 @@
+{
+  "source": "8067520c7b9230ab0c66823fae9ae78791f1a838",
+  "builders": [
+    {
+      "name": "build-direct-only.ps1",
+      "sha256": "7557e98078da7954ce02123fddd93a1bd3dd63f998572cf5bb70b41c045e14a0"
+    },
+    {
+      "name": "build-direct-wrapper.ps1",
+      "sha256": "22cc5aecd15ca0f9cd4bfb349dc5c0521a2e0efc6893a0bec425b48e0c4d7ddf"
+    },
+    {
+      "name": "watch-direct.py",
+      "sha256": "032c06c9ce1d2cbd5ecf7bc3282303dfd94973e85c90b3c101c3a750534fab9f"
+    },
+    {
+      "name": "verify-direct-apks.py",
+      "sha256": "b022753dc10a6c7929a96000b87cb6dbbf6b464d4017b0571c8d45b945e3c3e7"
+    },
+    {
+      "name": "prepare-remaining-builds.py",
+      "sha256": "096e5cbdfb98435a416b4322ad92090625728a4b96a03fcd696508ad1c492f00"
+    },
+    {
+      "name": "audit-android.py",
+      "sha256": "b658c006871bcc9a79e4ec0ca089ed6015355fb1f019cab710d66af8aad678e0"
+    },
+    {
+      "name": "bind-current-dex.py",
+      "sha256": "e429f276c7bf7597ac5440184b6aca6e56601f7b1926b2162415d938f586ecc5"
+    }
+  ],
+  "canonical_build_script_unchanged": true
+}

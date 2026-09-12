@@ -1,0 +1,52 @@
+{
+  "status": "PASS_SIX_CURRENT_LOCAL_PACKAGES",
+  "utc": "2026-09-12T10:37:57.807572+00:00",
+  "source_client": "8067520c7b9230ab0c66823fae9ae78791f1a838",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "artifacts": [
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+      "size": 100926279,
+      "sha256": "f7be1f638991d26d5ef12798f4253c8b5b659b30b8753061c2b9e7d9d3f894b9"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+      "size": 90459293,
+      "sha256": "956ca1a38928a6387d5280e9e5b698d09c143c6f15a31b8f90c11ec528c26138"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+      "size": 294071554,
+      "sha256": "48e2d8b9eec5ea1cbc476427b51aea10bafc6ddcaadbb3394cdcb237dd1f4819"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+      "size": 109718342,
+      "sha256": "7ffacdfae3273d0b03d07a4d2157100606ad49fa8d81e466f3df437ca66184c0"
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\bundle\\storeRelease\\app-store-release.aab",
+      "size": 126056489,
+      "sha256": "f11b93df576a81ad9f6e9d476d2c3f64c2024feaf01ea8c9495f88808d05a2c3"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "size": 29176725,
+      "sha256": "ebb3ab95062bca07209dc0d93bbbcb142d6b31be66bdcbe9084207bd5a271030"
+    }
+  ],
+  "source_pr": 125,
+  "merge": "d6c7c3deaed34afde5283ada585ee2860c9e1490",
+  "main_ci": "PASS",
+  "windows_installer_payload_files": 304,
+  "windows_native_ctest": 9,
+  "current_package_installation": "NOT_PERFORMED",
+  "authenticode": "SKIPPED_BY_OWNER",
+  "store_submission": "NOT_REQUESTED",
+  "public_distribution": "NOT_PERFORMED",
+  "full_release_gates": "OPEN",
+  "prior_physical_huawei_proof": "F711_PACKAGE_ONLY_NOT_TRANSFERRED",
+  "stopped_build_evidence": "stopped-android-direct-progress.json",
+  "storage_retention": "storage-retention.json",
+  "storage_removal": "storage-removal.json"
+}

@@ -1248,3 +1248,15 @@ restoration pass. Three final HTTPS probes pass; phone returned with VPN off and
 original Android network settings. This supersedes the physical-not-performed
 boundary for these exact local package bytes only. Local same-version install
 does not prove release-channel delivery; complete D01/D02/D03 gates remain open.
+
+
+## 2026-09-12 marker replacement packages
+
+[Exact package and source evidence](evidence/2026-09-12-r12-marker-packages/README.md)
+binds four direct APKs and store AAB to source8067520c/Core6b. Production signer,
+version4053, intended ABI, current compiled revision and native/notices pass.
+PR125/main d6c7c3de CI and unchanged protections pass. The first direct build
+stopped at its storage guard; retained-file cleanup and the repeated build
+preserved the40GiB floor. Current806 APKs have not been installed. The prior
+Huawei F711 result is not transferred to these bytes; complete D01/D03 and
+release gates remain open.
