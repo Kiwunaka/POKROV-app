@@ -173,3 +173,74 @@ tests/test_agent_context_packet_audit.py -q` PASS33 and `python -B
 scripts/agent_context_packet_audit.py --platform-context-root .` PASS.
 Staged diff checks and release-artifact isolation PASS. These are local checks;
 source, APK, privacy matrix and public-release boundaries remain as stated above.
+
+
+## 2026-09-12 released806 Dart crash bundle delivery
+
+[Exact result](dart-crash-bundle-result.json) follows one synthetic platform
+method error through the existing source806 x86_64 APK into
+[owned case66](dart-crash-bundle-case66.json). Same UID10111/PID2508 remains alive
+from the active-marker baseline through injection, ordinary consent, upload and
+admin access. Nine synthetic categories/18 full values and fragments enter the
+single Clipboard.setData error reply. The real asynchronous AOT handler records
+CRASH-001/thirteen breadcrumbs; the marker stays byte-identical through delivery.
+This is the Flutter platform-message boundary, not a new Core parser-failure test.
+
+A normal L2-confirmed policy for owned case65 allows build/crashes/network/redaction,
+Android4053, one packet,1MiB and15minutes. [Consent](dart-crash-bundle-consent.png)
+and [preview](dart-crash-bundle-preview.png) precede ordinary Create. Case66 receives
+validated2825-byte ciphertext. [Audited access and in-memory worker-key scan](dart-crash-bundle-admin-scan.json)
+verify1750-byte plaintext with exactly four files: build identity, crash/index.jsonl,
+network summary and redaction report. The102-byte crash index has exactly one
+record with only error_code, occurred_at and signature. CRASH-001/c1c1… match the
+injected event; its timestamp follows the same-guest marker by1.462ms. Guest and
+Brain clocks are not asserted synchronized. No raw exception text, stack, profile,
+key, activation code or decrypted payload is exported.
+
+All18 needles are absent from four available local sinks, current captured UI,
+admin search/detail and every decrypted file. The redaction report's two removed
+items are excluded optional categories, not two detected secret values. Metadata
+architecture/last_phase/last_error_code remain null, proof unknown; the crash is
+available inside the access-controlled index. No causal attempt or Core-path
+coverage is inferred from those missing summary fields. Local encrypted outbox
+contents, external OIDC, the separate framework-error handler and physical ARM64
+were not rescanned in this slice.
+
+Case-number and diagnostic-ID search find the case. Download requires step-up;
+one-use grant, no-store response, replay denial and two new access-audit rows pass.
+Both temporary operator sessions are revoked without changing preexisting sessions.
+One new owned case is preserved open. Local Disable returns to summary/three files.
+The server retains the policy's historical redeemed status; local disable is not
+server revocation. The1/1 and1750-byte consumption readings belong to the client's
+signed-policy ledger; no server consumption-counter columns are claimed.
+
+The first guest boot cannot expose ADB and has zero display width before APK input;
+its failure and terminal monitor remain retained. A normal restart of the same
+instance succeeds. Fixture path/timestamp/column corrections are recorded without
+changing product code or recreating policy/case. The test server is hash-verified,
+loopback-only, then stopped/removed with its ADB forward. Empty input XML is removed.
+Root=false and a fresh guest su127 prove restoration. Six HTTPS controls pass;
+per-boot IPv4/DNS and normalized IPv6 match, host routes/DNS match, other instance
+disks/configs remain unchanged, and all local emulators stop. Three boot monitors
+share this slice's original baseline: maximum18MiB of512MiB, sampled40GiB floors
+pass. The preceding handler slice's404MiB measurement remains separate and retained.
+
+[File receipt](dart-crash-bundle-files.json) binds exact public captures and
+[execution instruments](C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start/docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/marker-atomicity-20260912/android-dart-crash-bundle-evidence.zip) in the existing platform evidence family.
+No new VM, package build, code change, source promotion, production configuration,
+push, merge or deploy occurred. The authorized QA policy/case/access records are
+real runtime mutations. C05/V01/V04/Q01 and full privacy/license/release gates
+remain open; earlier native/Windows/device evidence retains its original scope.
+
+Validation: `python C:/r12-marker-packages-20260912/dart-crash-bundle/verify.py`
+PASS for exact native observations. Archive66 member hashes, five direct files,
+six disk/index hashes,281 local links, script syntax/private-material patterns
+and83 unchanged registry statuses PASS. Client `pwsh -NoProfile -File
+test/docs-contract.ps1` and staged-tree `pwsh -NoProfile -File
+scripts/validate-seed.ps1 -CoreRoot C:/r12corec02 -PlatformRoot
+C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start` PASS. Platform
+`python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py
+tests/test_agent_context_packet_audit.py -q` PASS33; `python -B
+scripts/agent_context_packet_audit.py --platform-context-root .` PASS.
+Both staged diff checks and release-artifact isolation PASS. No additional
+product builds or broad runtime regressions were run for this evidence-only change.

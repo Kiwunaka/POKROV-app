@@ -1285,3 +1285,17 @@ attempts and the initial storage guard remain retained. Root=false, exact APK,
 3/3 rootless HTTPS, host network and stopped emulators pass. This does not close
 FlutterError framework-handler, crash-bundle delivery, physical ARM64 or full
 privacy/license/release gates. No source/package/build or production change.
+
+
+## 2026-09-12 released806 crash bundle delivery
+
+[Exact crash bundle chain](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-released806-dart-crash-bundle-delivery)
+keeps PID2508 through one synthetic platform error, confirmed scoped consent and
+case66 upload/admin access. Its four-file payload includes one102-byte CRASH-001
+index with only code/time/signature;18 needles have zero local/UI/admin hits.
+Readiness claims remain bounded to this asynchronous Dart path. Metadata missing
+from the safe summary stays null/unknown; native Core paths, local outbox contents,
+external OIDC, physical ARM64 and full privacy/license/release are not re-proved.
+Initial pre-APK boot failure is retained. Local mode/root/host network and all
+emulators are restored;6HTTPS and18MiB cumulative boot growth checks pass. No new
+package, source change or deploy; the one owned QA case/policy and audits persist.

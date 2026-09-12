@@ -1,0 +1,367 @@
+{
+  "archive": {
+    "path": "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start/docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/marker-atomicity-20260912/android-dart-crash-bundle-evidence.zip",
+    "bytes": 107531,
+    "sha256": "9115cbcad6313f6d46b3a1a148de398285d699d512dc8b2fcfa276bc72aabb72"
+  },
+  "members": [
+    {
+      "path": "admin-scan-remote.py",
+      "bytes": 11441,
+      "sha256": "ed1dae974f5706e35d197911046d5ed34153270532fee75fff7e6937dcc5ab85"
+    },
+    {
+      "path": "admin-scan.py",
+      "bytes": 806,
+      "sha256": "08d55146f92cc7a31af605bae4c52268c65c40d18e7e379d1e814007138b23a6"
+    },
+    {
+      "path": "after-access-observability.json",
+      "bytes": 74817,
+      "sha256": "adc01f95a966187b087c1c7cba560e7876f64550412081636bfb46872879e1ec"
+    },
+    {
+      "path": "after-submit-observability.json",
+      "bytes": 74365,
+      "sha256": "bf80b446ea770a73c6632910474cd5e25250cbe1a42f0f084fac96804ac623e5"
+    },
+    {
+      "path": "baseline-observability.json",
+      "bytes": 70287,
+      "sha256": "e17dd3e80132c6e76fafd140271fc48a20483347721e06b2b7e8fd8a18dbed57"
+    },
+    {
+      "path": "baseline.json",
+      "bytes": 1090,
+      "sha256": "0509d337e92331591bb885ee83dc4358ff121e122ba32773449f3624beffd29c"
+    },
+    {
+      "path": "boot2/ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "594c92dc32362b5d935ee60bf6b053ba7eac0270bf4b8b0aa4a74f2bdc64019f"
+    },
+    {
+      "path": "boot2/restoration.json",
+      "bytes": 23509,
+      "sha256": "b6382630c829d473bafdf4b1ba79a8fac52e5c7609b03f6cfa54fc0fca4adbf7"
+    },
+    {
+      "path": "boot2/watch-ldplayer.py",
+      "bytes": 3223,
+      "sha256": "29de77debc84dc4b80cc9e360d38833000927e9364b2f6725bda18588dcbda89"
+    },
+    {
+      "path": "capture-ui.py",
+      "bytes": 345,
+      "sha256": "bf719a2e2756124964a6acfacb707f33f8c535561064980062413130a7ef3db2"
+    },
+    {
+      "path": "case-created.json",
+      "bytes": 2056,
+      "sha256": "a740c2343f2eccc3dc48e285f7cdfe3d5e36dd4d7afed5f21dcb0d4d7ebef6bd"
+    },
+    {
+      "path": "code-entry.json",
+      "bytes": 268,
+      "sha256": "3fe9541b66b90dfd4cabbeaa4ab9d08b224be4beb92a3dbe9a028ad9809d3593"
+    },
+    {
+      "path": "consent.json",
+      "bytes": 1368,
+      "sha256": "007eebb720ba232fbd8bcb2706a3162b82366fbac35cb5c0b3ecc7b94c8dddaf"
+    },
+    {
+      "path": "crash-admin-payload-scan.json",
+      "bytes": 3490,
+      "sha256": "cda3e82c131e45332707d2bc16ad1a4b5bdfc18623e9b45d0ef3281af39121ca"
+    },
+    {
+      "path": "crash-policy-issued.json",
+      "bytes": 1088,
+      "sha256": "8e11e23ebb5dc12fc43a30942e87110e37b4f42114f7ef988f3c367874edf7b1"
+    },
+    {
+      "path": "crash-preview.json",
+      "bytes": 1971,
+      "sha256": "ef7b966440d74706d54f6c3bb9ee3d3b6d0cb42282876d6590a8d1d3d29f27ce"
+    },
+    {
+      "path": "delivered-observability.json",
+      "bytes": 74817,
+      "sha256": "829047a23484c474d0d4608ffa7aebc0799c2daedd486f36ca25954410c4265e"
+    },
+    {
+      "path": "final-http.json",
+      "bytes": 442,
+      "sha256": "c36e827906dbd1040dc5437638ba6e41eada427f33b66267b33cbe1055a60203"
+    },
+    {
+      "path": "final.json",
+      "bytes": 1087,
+      "sha256": "404a48aeb7ce8ecdbcd0c865e0d704601a40d9a14deedf85c3caa2571ead1ba4"
+    },
+    {
+      "path": "fixture-corrections.json",
+      "bytes": 969,
+      "sha256": "a23195eae06fd15b1af56395427e649c25cbf28f8b694a2239e92238a3c0252e"
+    },
+    {
+      "path": "hook-result.json",
+      "bytes": 484,
+      "sha256": "ceaab54bfe3626622be30eb1644f859dacd4660e74d4d37b6c58ccfb9eb9bbeb"
+    },
+    {
+      "path": "hook.ts",
+      "bytes": 2113,
+      "sha256": "55b0ff5093e545008c16647b9f9cf1ae97b3b96fcd69e5455aab95b99b0c3d5f"
+    },
+    {
+      "path": "host-network-installed-after.json",
+      "bytes": 281,
+      "sha256": "b4d0c795db34aea6332caf8159034c8b109c1c9b635c749121c31d956dedadc8"
+    },
+    {
+      "path": "host-network-installed-before.json",
+      "bytes": 220,
+      "sha256": "086bf72cfd399715a18ab68366bb6d67cab5953c70ad53851978b7275f5ff679"
+    },
+    {
+      "path": "host-network.ps1",
+      "bytes": 1155,
+      "sha256": "9715d6863e07f877a71b8e467b3536d446f0c19b01ef67141219b3cdb80e9fdd"
+    },
+    {
+      "path": "initial-boot-failure.json",
+      "bytes": 725,
+      "sha256": "bdfea8adec96c89fe8a90f72c124c26b40fae1e1ad53e1507df0d35c152cc545"
+    },
+    {
+      "path": "inject.py",
+      "bytes": 1729,
+      "sha256": "709bcc7116fbff4bb69628e9317a09aae0fb2b9198f85600cb5baf142e7e64d3"
+    },
+    {
+      "path": "injected-observability.json",
+      "bytes": 73914,
+      "sha256": "03471bf2b50d2b5554ae2f8fa210ceddeefb1b4d7e0deaf71f49bd97be27a241"
+    },
+    {
+      "path": "instrument-cleanup.json",
+      "bytes": 247,
+      "sha256": "c1395cc240999f1acbda1339a0b90169e60976bb3ef536fbc760ddabc4f323a9"
+    },
+    {
+      "path": "issue-crash-policy.py",
+      "bytes": 5012,
+      "sha256": "4137f68d26a348da6ef0f8b66cdc5e9efb7bd1e6631ae61f95a8d229579c5007"
+    },
+    {
+      "path": "ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "81b154183c142efefa03fe6e5e1f02f3c44beaecd2d08df8c8c20c1045827e54"
+    },
+    {
+      "path": "mode-disabled.json",
+      "bytes": 2205,
+      "sha256": "4f281c0d8a97c246c09832b46108274026abae067029304e5cf6cc8b1e40d518"
+    },
+    {
+      "path": "network.py",
+      "bytes": 3611,
+      "sha256": "bc29a06b795e8c678e180b0a25d89df18a57cd674e49a877379079799e0987a9"
+    },
+    {
+      "path": "observe.py",
+      "bytes": 3824,
+      "sha256": "517161850819ee972b36b6533c8e285a86b63ec68b5bfd267d3f89bf95090dee"
+    },
+    {
+      "path": "operator-preflight.py",
+      "bytes": 5776,
+      "sha256": "626f6ed1eb44dab41e02aa33b6bbb5e7919fb63806f19b39fe2c9425ab7ac47f"
+    },
+    {
+      "path": "owned-case-readback.json",
+      "bytes": 848,
+      "sha256": "2ebb6deb727b95662fcfd56dcf1859c4a9ec0ab8f5e024a450f244f9e90a7591"
+    },
+    {
+      "path": "policy-after-disable.json",
+      "bytes": 518,
+      "sha256": "c08b1d2ba1215a71d9df1c4905c5202a79bcd1fb2aa6551f154860334421e50a"
+    },
+    {
+      "path": "policy-after-disable.py",
+      "bytes": 1652,
+      "sha256": "7e695f1a800dac7274d6438b2248d8890fa9c894776ebd1f731338338e3e6145"
+    },
+    {
+      "path": "policy-target-preflight.json",
+      "bytes": 492,
+      "sha256": "f1863935dbbb20efacc3b2d780e965f9610e3b14b63fc415d76ddc50d336e3d9"
+    },
+    {
+      "path": "policy-target-preflight.py",
+      "bytes": 1687,
+      "sha256": "0f0c9ab02f3284e027f9f3c988b2d501d9e77f79c818f2fcc2ef745eb1b6ef48"
+    },
+    {
+      "path": "preparation.json",
+      "bytes": 623,
+      "sha256": "93a2226f3489a36166ea8544bc2eb5d50447a2ba6c6085bc2f7432f9a02c0b19"
+    },
+    {
+      "path": "read-case-initial.py",
+      "bytes": 2004,
+      "sha256": "fe36f4c3462d3c8c557460b76eaec07c78d8abc046082cd5812928fa2a1ca74a"
+    },
+    {
+      "path": "read-case.py",
+      "bytes": 2007,
+      "sha256": "522af774195726bb9adaef78319ed6d6f784a1ec513dac34af15e8b62550f910"
+    },
+    {
+      "path": "record-boot-failure.py",
+      "bytes": 802,
+      "sha256": "589eff2f28f25d225d5f42b794e2715dbf16025d05fd83c8a643a03a7bff2bf7"
+    },
+    {
+      "path": "restoration.json",
+      "bytes": 11574,
+      "sha256": "30296e2da4bd38810ed9c511c220484fb3fbec652d1077be496c59e94867154e"
+    },
+    {
+      "path": "result.json",
+      "bytes": 2027,
+      "sha256": "81b218af680e3472ffb6698f3015f63720e4456212433024b15b84e928c81d95"
+    },
+    {
+      "path": "root-enabled.json",
+      "bytes": 854,
+      "sha256": "85ff2f836fb6314b28892292f8918880b5ae4ced0c61d02001f19f6fa82a1b98"
+    },
+    {
+      "path": "root-restored.json",
+      "bytes": 854,
+      "sha256": "b6e578417dbe823cb10838226e71440bed4b8b17d90aeb1f61a05b8bd92de70a"
+    },
+    {
+      "path": "rootless/ldplayer-before.json",
+      "bytes": 1051,
+      "sha256": "09fd0a2028c2f4ebaef2aacab544ea1aff194b41dc116e2151aadbc45cc52efb"
+    },
+    {
+      "path": "rootless/restoration.json",
+      "bytes": 6232,
+      "sha256": "f0ee0310a4aa04c0bf81dc9a04b338564883935696efc20601072b49a4647235"
+    },
+    {
+      "path": "rootless/watch-ldplayer.py",
+      "bytes": 3223,
+      "sha256": "29de77debc84dc4b80cc9e360d38833000927e9364b2f6725bda18588dcbda89"
+    },
+    {
+      "path": "rootless-before.json",
+      "bytes": 1097,
+      "sha256": "a26ce8a3df668061cb9c4297cbd28fd55efb3c4a13d960ea59f6e07a916424af"
+    },
+    {
+      "path": "rootless-final.json",
+      "bytes": 1096,
+      "sha256": "a5df787e36cb0e7fd8289224af521e5378ac4870dcaaf5b475748b9f6971b17e"
+    },
+    {
+      "path": "rootless-guest.json",
+      "bytes": 532,
+      "sha256": "f43a98c2899962b47666529259c4a2b1bf0655f660589c20b2ad373af35b7478"
+    },
+    {
+      "path": "rootless-http.json",
+      "bytes": 442,
+      "sha256": "4f1fb28a021eae4c393f8da40697891b5e0fd57696499b83f17eec6f0f9845aa"
+    },
+    {
+      "path": "rootless-observe.py",
+      "bytes": 1084,
+      "sha256": "4ceaa27abb830b6f51049f13a629332e89e2ddcd3e5bd3342d724e617f9b61fa"
+    },
+    {
+      "path": "scan-cleanup.py",
+      "bytes": 2323,
+      "sha256": "2fa7193447ce9a669598d2affd9b3318dd68895f500134e48f9ed6dd69d78cc7"
+    },
+    {
+      "path": "set-root.py",
+      "bytes": 1868,
+      "sha256": "bab62ca527809ee503cc5b0843b28cd56d9f2d983e214a28c454e958508662ff"
+    },
+    {
+      "path": "sink-scan-before-cleanup-failure.json",
+      "bytes": 1829,
+      "sha256": "b1d033e44c6ea4822d3fa4cc8ec943113ef3bcfa44cb4de9f43b48366ac4a81d"
+    },
+    {
+      "path": "sink-scan.json",
+      "bytes": 1829,
+      "sha256": "134c62a83835e513327cc601bb598ec93288a5bee55177997378e7671227afa9"
+    },
+    {
+      "path": "source-binding.json",
+      "bytes": 2536,
+      "sha256": "f2a1d25730c03e204d1e5c35bafed8c0d25209c5b43f3610a743cfdd15dd1f52"
+    },
+    {
+      "path": "synthetic-markers.json",
+      "bytes": 1122,
+      "sha256": "7f5cba569e1656e776bd60803628cd9476d98fe7aba1cc8dcb32e085fb3d96f2"
+    },
+    {
+      "path": "type-code.py",
+      "bytes": 1836,
+      "sha256": "3ae1ca6d607b984ab22b9c0e46d59966291a6857bc68f5a039511bd8cf724f97"
+    },
+    {
+      "path": "ui.py",
+      "bytes": 2375,
+      "sha256": "9747e057e21437eef7e10917b25e67d5bd35b095cedf3fe8e1243f398e833fb8"
+    },
+    {
+      "path": "verify.py",
+      "bytes": 6391,
+      "sha256": "6e2a0544f5fc3fb77bdd5b5af5ba6f4892b684954cb6d4827522a9d9ae52e21f"
+    },
+    {
+      "path": "watch-ldplayer.py",
+      "bytes": 3249,
+      "sha256": "7920c6af03ef879ddae97cfcde11be36696a5ebde765c39811919b170d92b7da"
+    }
+  ],
+  "direct_files": [
+    {
+      "path": "dart-crash-bundle-result.json",
+      "bytes": 2027,
+      "sha256": "81b218af680e3472ffb6698f3015f63720e4456212433024b15b84e928c81d95"
+    },
+    {
+      "path": "dart-crash-bundle-case66.json",
+      "bytes": 848,
+      "sha256": "2ebb6deb727b95662fcfd56dcf1859c4a9ec0ab8f5e024a450f244f9e90a7591"
+    },
+    {
+      "path": "dart-crash-bundle-admin-scan.json",
+      "bytes": 3490,
+      "sha256": "cda3e82c131e45332707d2bc16ad1a4b5bdfc18623e9b45d0ef3281af39121ca"
+    },
+    {
+      "path": "dart-crash-bundle-consent.png",
+      "bytes": 234161,
+      "sha256": "34f4e85e50e76f4d304cb40f3fde3bb5c4e4711d878231290a5356ca62e0f42f"
+    },
+    {
+      "path": "dart-crash-bundle-preview.png",
+      "bytes": 179821,
+      "sha256": "9ae6ca468c5e73459e3462017241604b5fcd89662828ee941e4d20d92743c41f"
+    }
+  ],
+  "excluded": "No third-party binaries, node_modules, generated bridge bundle, raw logcat, activation code, private preferences/profile or decrypted support payload; only two visually inspected PNGs retained."
+}
