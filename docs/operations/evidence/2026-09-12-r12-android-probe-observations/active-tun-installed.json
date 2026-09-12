@@ -1,0 +1,156 @@
+{
+  "status": "PASS_SOURCE_PROMOTION_AND_BOUNDED_ORDINARY_INSTALLED_CHECKS",
+  "utc": "2026-09-12T21:33:03.857829+00:00",
+  "source_client": "17b9df4446b23d774386be742dcda25c97048ae9",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/128",
+  "signed_head": "52d8664206c5bde17d682bfa453549052218c146",
+  "merge": "db445c6905aafdf84b427c69a95f7099f5765055",
+  "tree": "bd569cc8ab9bcb6f18ae741fbe3c022f55bfa491",
+  "required_ci_runs": [
+    34718776833,
+    34719255601
+  ],
+  "branch_protection_unchanged": true,
+  "packages": [
+    {
+      "path": "C:\\r12-active-tun-copy-20260912\\packages\\app-arm64-v8a-direct-release.apk",
+      "sha256": "dd6ffb6f46762c213fad096a6abae959c4da9ead3cbf0ad198d529ea286f7d62",
+      "bytes": 100926279,
+      "abis": [
+        "arm64-v8a"
+      ],
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "version_name": "1.2.0",
+      "version_code": "4053",
+      "prior_apk_sha256": "78d7a1361d03d808c6f6554fb65bc7411a9b411ed436c6ccbf79114d13737c91",
+      "changed_zip_entries_from_installed": [
+        "assets/dexopt/baseline.prof",
+        "classes.dex",
+        "lib/arm64-v8a/libapp.so"
+      ]
+    },
+    {
+      "path": "C:\\r12-active-tun-copy-20260912\\packages\\app-x86_64-direct-release.apk",
+      "sha256": "ab70712a7e737d71f5293a519e69783526e1570e8d252ef9939124a910d600ad",
+      "bytes": 109718342,
+      "abis": [
+        "x86_64"
+      ],
+      "certificate_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+      "version_name": "1.2.0",
+      "version_code": "4053",
+      "prior_apk_sha256": "e844bf15ae97fa9d473920fd0f74cc4499ad418f1dec29182e030d456693b8de",
+      "changed_zip_entries_from_installed": [
+        "assets/dexopt/baseline.prof",
+        "classes.dex",
+        "lib/x86_64/libapp.so"
+      ]
+    }
+  ],
+  "physical": {
+    "status": "PASS_BOUNDED_PHYSICAL_UPDATE_CONNECT_RESTORE",
+    "utc": "2026-09-12T21:23:14.079071+00:00",
+    "checks": {
+      "installed_exact_apk": true,
+      "visible_profile_text_same": true,
+      "access_active": true,
+      "connected_tun": true,
+      "refreshed_protection": true,
+      "final_vpn_off": true,
+      "exact_rules_restored": true,
+      "exact_routes_restored": true,
+      "android_settings_unchanged": true,
+      "direct_https_after_disconnect": true,
+      "observer_processes_stopped": true
+    },
+    "source_client": "17b9df4446b23d774386be742dcda25c97048ae9",
+    "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+    "apk_sha256": "dd6ffb6f46762c213fad096a6abae959c4da9ead3cbf0ad198d529ea286f7d62",
+    "signer_sha256": "0a0602a7df5d96a0b427909d004f3ddf26def86587634bf16694da8d654b2500",
+    "device_model": "ADA-AL00U",
+    "sdk": 31,
+    "abi": "arm64-v8a",
+    "final_wifi_mobile": "ON_UNCHANGED",
+    "final_vpn": "OFF",
+    "probe": {
+      "status": "HTTP_RESPONSE",
+      "http_status": 200,
+      "bytes": 155573,
+      "sha256": "8bc098e0ef30ca49387dffc1f2fd4b0a8e4fef2acfe70b426826540f819c471a",
+      "elapsed_ms": 403
+    },
+    "helper_jar_sha256": "e11e66796575f8a9acc8a7de11ed2668800c3cebebfb0dd68c99c705a01a1616",
+    "helper_source_sha256": "218cd17ed2a57e794a84f4067149d13e0f6f014a539c79a7229e42abacc6d65a",
+    "limits": [
+      "Local same-version adb update, not release-channel delivery or successor version proof.",
+      "Ordinary Warsaw connection; active-TUN failed AWG case not exercised on this phone.",
+      "Protected egress is the refreshed app check; shell HTTPS occurred after disconnect.",
+      "No new physical reboot/Doze/per-app/IPv6/LTE/fault matrix.",
+      "Profile comparison covers visible state; private secure-storage bytes were not read."
+    ],
+    "harness_adjustments": [
+      "First SDK ADB handover briefly returned no phone; retry found the same authorized physical phone.",
+      "Old exact Profile/Home labels did not match current semantics; fresh unique Profile/Protection tab nodes were used. No tap occurred on a failed lookup."
+    ]
+  },
+  "emulator": {
+    "status": "PASS_BOUNDED_ROOTLESS_UPDATE_CONNECT_RESTORE",
+    "utc": "2026-09-12T21:30:07.375698+00:00",
+    "checks": {
+      "installed_source_exact": true,
+      "connected_tun": true,
+      "refreshed_protection": true,
+      "final_tun_off": true,
+      "network_hashes_restored": true,
+      "ipv6_semantics_restored": true,
+      "home_text_restored": true,
+      "root_mode_false": true,
+      "root_unavailable": true,
+      "observers_stopped": true
+    },
+    "source_client": "17b9df4446b23d774386be742dcda25c97048ae9",
+    "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+    "limits": [
+      "SPB ordinary profile with Russia-direct; no new independent per-flow/per-UID oracle.",
+      "Active-TUN failed AWG scenario not exercised: exact isolated install has no ready AWG2/AWG3.1 material.",
+      "Root remained disabled; no raw profile or private preferences read."
+    ]
+  },
+  "all_vms_off": true,
+  "host_network_unchanged": true,
+  "vm_growth_bytes": 5242880,
+  "build_minimum_free": {
+    "C:/": 60801208320,
+    "E:/": 134510981120
+  },
+  "prior_canonical_outputs_restored": 9,
+  "changed_prior_outputs_restored": 4,
+  "retained_tun_awg": {
+    "awg2_source_material_available": false,
+    "awg31_source_material_available": false,
+    "blocker": "owned_awg_device_material_not_ready",
+    "candidate_rank": 1,
+    "matched_device_count": 1,
+    "ok": false,
+    "raw_identifiers_returned": false,
+    "target_install_sha256": "a8e19d7739f511e191aba5d7bdef9162fc2f91c0709a5d34f516313a7ed8f557",
+    "target_tg_id_sha256": "1ec06a6c4a97159002e278658f4c2136d7ed81d794570c198f2556fa43bcd4ef",
+    "instrument_sha256": "dab803b0a5439d4147a8f005c59e13c11f3c498318c5e5dd41703e9995faf72a",
+    "transport": "existing strict SSH alias",
+    "mode": "PLAN",
+    "profile": "awg2_lab"
+  },
+  "archive": {
+    "path": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start\\docs\\developer\\work-orders\\2026-09-05--consolidated-release-and-post12\\evidence\\n05-android-probe-observations-20260912\\active-tun-installed-20260913.zip",
+    "sha256": "4929a1a5eb17bd2de3753540baa867bf8a659d25134cdd017a930754e8487559",
+    "bytes": 577024,
+    "members": 76,
+    "manifest": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start\\docs\\developer\\work-orders\\2026-09-05--consolidated-release-and-post12\\evidence\\n05-android-probe-observations-20260912\\active-tun-installed-20260913-files.json"
+  },
+  "limits": [
+    "The active-TUN failure scenario remains untested on these installed packages; missing exclusive AWG2/AWG3.1 material is a setup prerequisite, not a pass.",
+    "No Windows package, release artifact, public download pointer, store submission or production network configuration changed.",
+    "N05 and the full consolidated plan remain open; bounded ordinary checks do not replace remaining taxonomy/origin/release gates."
+  ]
+}

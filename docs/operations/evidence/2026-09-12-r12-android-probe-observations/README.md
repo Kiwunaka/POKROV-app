@@ -115,3 +115,35 @@ This is source/bridge-fixture evidence. Installed APK e844bf15 predates this
 change; retained-TUN device proof, remaining N05, physical Android, Windows,
 RU-origin and N01/N03 gates remain open. No package or release artifact changed.
 Rollback is a scoped source revert. Source promotion is not part of this receipt.
+
+
+## Active TUN copy installed follow-up — 2026-09-13
+
+[Exact receipt](active-tun-installed.json) binds client `17b9df4` / Core `6b271dec` to
+[PR128](https://github.com/Kiwunaka/POKROV-app/pull/128), signed head `52d86642`
+and signed main db445c69 with the same tree. Required PR run `34718776833` and
+main run `34719255601` CI passed; branch protection is unchanged.
+
+Separate production-signed version 4053 APKs are retained: ARM64 dd6ffb6f,
+100926279 bytes; x86_64 ab70712a, 109718342 bytes. The compiled revision and
+Core match; only classes.dex/libapp.so/baseline.prof differ from the respective
+previous installed packages. Core, Flutter and four license notices match.
+Nine previous canonical outputs were reverified; four overwritten outputs
+were restored after retaining both APKs and the two-ABI combined package.
+
+Huawei ADA-AL00U/API 31 install-r preserves UID 10662, first-install and Android
+settings. Visible profile text hashes match, access remains active. Ordinary
+Warsaw connect and refreshed tunnel/DNS/egress checks pass. Disconnect restores
+exact route/rule hashes; the subsequent shell HTTPS returns 200. Phone remains
+VPN off, Wi-Fi/mobile on. Private secure storage was not read.
+
+LDPlayer 14 / index 3 remains rootless. Install-r preserves UID 10111, first-install
+and boot. SPB ordinary connect plus refreshed app protection passes. Disconnect
+restores Home, route/DNS hashes and IPv6 semantics. VM is off, other disks and
+host routes/DNS are unchanged; disk growth 5 MiB, floor 40 GiB maintained.
+
+These are ordinary installed controls. The exact isolated install has no
+ready AWG2 or AWG3.1 material; guarded binder PLAN stops before mutation.
+The retained-TUN failure case requires fresh exclusive peers/material through
+the existing L3 provisioning path. No copied device keys, broader cohort or
+rollout bypass was used. N05 and remaining full-plan gates stay open.

@@ -1406,3 +1406,15 @@ regressions reproduced the old defect; final 191 JVM tests per flavor, 82 runtim
 tests (one existing skip), 12 shell tests, 8 Android Flutter tests and runtime
 analysis pass. This is source proof; installed e844bf15 and manual/full N05
 gates are unchanged.
+
+
+## R12-N05 — updated physical and emulator packages, 2026-09-13
+
+[Current installed receipt](evidence/2026-09-12-r12-android-probe-observations/active-tun-installed.json)
+binds source `17b9df4` / Core `6b271dec` and PR128/main db445c69 to signed ARM64 dd6ffb6f
+on Huawei API 31 and x64 ab70712a on rootless LDPlayer. Both preserve identity,
+pass ordinary connect/refreshed protection and restore baseline networking.
+Both required CI runs pass. Phone VPN is off; VM is off and host network is
+unchanged. This is a same-version local update, not channel delivery. The AWG
+retained-TUN failure still needs exact-device material and installed evidence;
+guarded PLAN reported neither lab material ready. Full N05 remains open.
