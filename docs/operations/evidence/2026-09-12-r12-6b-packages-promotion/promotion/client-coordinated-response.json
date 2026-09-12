@@ -1,0 +1,16 @@
+{
+  "data": {
+    "createCommitOnBranch": {
+      "commit": {
+        "oid": "dc424ca212785eaeb8e09501fcd30dcf9f335110",
+        "tree": {
+          "oid": "b86fa94839e053ed8b99ddf45cdcdf916a1522ef"
+        },
+        "signature": {
+          "isValid": true,
+          "state": "VALID"
+        }
+      }
+    }
+  }
+}

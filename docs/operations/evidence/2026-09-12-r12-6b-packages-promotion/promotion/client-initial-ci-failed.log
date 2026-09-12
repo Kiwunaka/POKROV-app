@@ -1,0 +1,32 @@
+cross-repository-contract	Materialize bound Core source authority	﻿2026-09-12T01:52:15.3546891Z ##[group]Run $candidateRoot = Join-Path "/home/runner/work/POKROV-app/POKROV-app" "POKROV-core"
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3547728Z ^[[36;1m$candidateRoot = Join-Path "/home/runner/work/POKROV-app/POKROV-app" "POKROV-core"^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3548479Z ^[[36;1m$authorityRoot = Join-Path "/home/runner/work/POKROV-app/POKROV-app" "POKROV-core-authority"^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3549705Z ^[[36;1m$seedPath = Join-Path "/home/runner/work/POKROV-app/POKROV-app" "client/config/runtime-artifacts.seed.json"^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3550517Z ^[[36;1m$boundCore = (Get-Content -Raw -LiteralPath $seedPath | ConvertFrom-Json).core.source_commit^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3551096Z ^[[36;1mif ($boundCore -notmatch "^[0-9a-f]{40}$") {^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3551569Z ^[[36;1m  throw "Client runtime seed does not contain a full Core source commit."^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3551990Z ^[[36;1m}^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3552199Z ^[[36;1m^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3552500Z ^[[36;1m& git -C $candidateRoot cat-file -e "$boundCore^{commit}"^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3552925Z ^[[36;1mif ($LASTEXITCODE -ne 0) {^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3553368Z ^[[36;1m  throw "Bound Core source commit is unavailable in the promotion-line checkout."^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3553830Z ^[[36;1m}^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3554052Z ^[[36;1m^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3554434Z ^[[36;1m& git -C $candidateRoot diff --quiet $boundCore HEAD -- . ":(exclude).github/**"^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3554901Z ^[[36;1mif ($LASTEXITCODE -ne 0) {^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3555442Z ^[[36;1m  throw "Core promotion line changed bound source outside .github while client/main still pins $boundCore."^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3556026Z ^[[36;1m}^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3556450Z ^[[36;1m^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3556798Z ^[[36;1m& git -C $candidateRoot worktree add --detach $authorityRoot $boundCore^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3557226Z ^[[36;1mif ($LASTEXITCODE -ne 0) {^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3557621Z ^[[36;1m  throw "Failed to materialize the bound Core source authority."^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3558012Z ^[[36;1m}^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3599664Z shell: /usr/bin/pwsh -command ". '{0}'"
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:15.3599992Z ##[endgroup]
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:16.8807304Z ^[[31;1mException: ^[[0m/home/runner/work/_temp/7ab52352-3d7a-4e59-96fc-a58846c8556a.ps1:17^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:16.8808633Z ^[[31;1m^[[0m^[[36;1mLine |^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:16.8810085Z ^[[31;1m^[[0m^[[36;1m^[[36;1m  17 | ^[[0m   ^[[36;1mthrow "Core promotion line changed bound source outside .github whi^[[0m …^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:16.8810950Z ^[[31;1m^[[0m^[[36;1m^[[36;1m^[[0m^[[36;1m^[[0m^[[36;1m     | ^[[31;1m   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:16.8812327Z ^[[31;1m^[[0m^[[36;1m^[[36;1m^[[0m^[[36;1m^[[0m^[[36;1m^[[31;1m^[[31;1m^[[36;1m     | ^[[31;1mCore promotion line changed bound source outside .github while^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:16.8814162Z ^[[31;1m^[[0m^[[36;1m^[[36;1m^[[0m^[[36;1m^[[0m^[[36;1m^[[31;1m^[[31;1m^[[36;1m^[[31;1m^[[36;1m     | ^[[31;1mclient/main still pins 6b271decead88b708e2fc03984b703b0a4e63ebd.^[[0m
+cross-repository-contract	Materialize bound Core source authority	2026-09-12T01:52:16.9233245Z ##[error]Process completed with exit code 1.

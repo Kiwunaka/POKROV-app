@@ -1,0 +1,12 @@
+{
+  "utc": "2026-09-12T02:16:05.365601+00:00",
+  "exit": 0,
+  "elapsed_seconds": 2.870714696999997,
+  "installer_sha256": "40341081ab4dbb3d97d3e6545646638da21366ebc4524920184af47711769609",
+  "extractor_sha256": "50ae7bf7b3ae76aed6592c816d5f5eccca0ed14282eaa39dbee344ac81a67322",
+  "files": 304,
+  "installer_executed": false,
+  "origin": "current-origin owned Ubuntu lab VM; nobody; separate empty network namespace",
+  "log_sha256": "5814938f859087d0ef9e69d35fbb22991a6b5543f87ca1e264c483893cd66b1c",
+  "status": "EXTRACTED_AWAITING_BYTE_COMPARISON"
+}

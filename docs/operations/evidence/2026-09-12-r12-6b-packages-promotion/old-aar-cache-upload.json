@@ -1,0 +1,10 @@
+{
+  "status": "UPLOADED_AWAITING_VERIFY",
+  "remote_host": "pokrov-de",
+  "archive": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-old-aar-cache-20260912/cache.tar.gz",
+  "archive_sha256": "388b25cfb3efc99f2c0505b78e7cd58452c01f722fa98e8328356871c50d8a3f",
+  "archive_bytes": 1064167507,
+  "files": 30,
+  "file_bytes": 1073392523,
+  "files_deleted": 0
+}

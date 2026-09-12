@@ -1,0 +1,24 @@
+{
+  "status": "SERVER_ACCEPTED_EXACT_TWO_LFS_OBJECTS",
+  "previous_budget_receipt": "C:/r12-c05-wintun-20260912/promotion/lfs-upload-receipt.json",
+  "previous_budget_observed_utc": "2026-09-11T18:58:59.761513+00:00",
+  "budget_usd": 0,
+  "stop_usage": true,
+  "conservative_existing_bytes": 3323713017,
+  "new_bytes": 161852784,
+  "objects": [
+    {
+      "lane": "android",
+      "bytes": 106839920,
+      "sha256": "5ea2eb7d70d0d010636f0a52e9d16e6e207756a5f08140599f136fbc3fe6e5af"
+    },
+    {
+      "lane": "windows",
+      "bytes": 55012864,
+      "sha256": "40101389b7713b869a9472bd3afe3aa19000b1d98f79d50cb88b61a235be531e"
+    }
+  ],
+  "settings_changed": false,
+  "uploaded_utc": "2026-09-12T01:50:23.592720+00:00",
+  "billing_limitation": "No new billing UI readback; retained zero-dollar stop and conservative quota accounting used. Server acceptance is not billing proof."
+}

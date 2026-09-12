@@ -1,0 +1,10 @@
+{
+  "ref": "refs/heads/codex/setup-privacy-signed-20260912",
+  "node_id": "REF_kwDOTg99tdoALnJlZnMvaGVhZHMvY29kZXgvc2V0dXAtcHJpdmFjeS1zaWduZWQtMjAyNjA5MTI",
+  "url": "https://api.github.com/repos/Kiwunaka/pokrov-core/git/refs/heads/codex/setup-privacy-signed-20260912",
+  "object": {
+    "sha": "442327e316bbef66981af80affae6290962ce8d1",
+    "type": "commit",
+    "url": "https://api.github.com/repos/Kiwunaka/pokrov-core/git/commits/442327e316bbef66981af80affae6290962ce8d1"
+  }
+}

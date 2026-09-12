@@ -1,0 +1,88 @@
+{
+  "status": "PASS_EXACT_PACKAGED_BYTES_MATCH_CURRENT_SCANS",
+  "core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "bindings": [
+    {
+      "package": "app-arm64-v8a-direct-release.apk",
+      "entry": "lib/arm64-v8a/libpokrov-core.so",
+      "sha256": "af9d2415856834194832ab1aea2bfee0ee64de31b757daf7f72337e4c8b6dc1f",
+      "scan": "libpokrov-core-arm64-v8a.scan.json",
+      "scan_sha256": "220382915f5f05f879c56b8d8603f4bf56b3961e925d997d7277f7cc1d55afed"
+    },
+    {
+      "package": "app-armeabi-v7a-direct-release.apk",
+      "entry": "lib/armeabi-v7a/libpokrov-core.so",
+      "sha256": "de8eaf9090fee3ebd2836a4d136f8ed572992a8a5e2f43fd1d9f0a172915ce2b",
+      "scan": "libpokrov-core-armeabi-v7a.scan.json",
+      "scan_sha256": "de2748813415b8a2e7a6129d63452f1652618efcaca5bd29341fafc4ee95bf00"
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/arm64-v8a/libpokrov-core.so",
+      "sha256": "af9d2415856834194832ab1aea2bfee0ee64de31b757daf7f72337e4c8b6dc1f",
+      "scan": "libpokrov-core-arm64-v8a.scan.json",
+      "scan_sha256": "220382915f5f05f879c56b8d8603f4bf56b3961e925d997d7277f7cc1d55afed"
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/armeabi-v7a/libpokrov-core.so",
+      "sha256": "de8eaf9090fee3ebd2836a4d136f8ed572992a8a5e2f43fd1d9f0a172915ce2b",
+      "scan": "libpokrov-core-armeabi-v7a.scan.json",
+      "scan_sha256": "de2748813415b8a2e7a6129d63452f1652618efcaca5bd29341fafc4ee95bf00"
+    },
+    {
+      "package": "app-direct-release.apk",
+      "entry": "lib/x86_64/libpokrov-core.so",
+      "sha256": "4758203faf7fc351db14c00b58c7e0ffed176c16543f55fd667ac1baf04ce811",
+      "scan": "libpokrov-core-x86_64.scan.json",
+      "scan_sha256": "f379438a940173c24eb3a9a6f6f87634c7dde4d3261447a69703efd43f69ab4a"
+    },
+    {
+      "package": "app-x86_64-direct-release.apk",
+      "entry": "lib/x86_64/libpokrov-core.so",
+      "sha256": "4758203faf7fc351db14c00b58c7e0ffed176c16543f55fd667ac1baf04ce811",
+      "scan": "libpokrov-core-x86_64.scan.json",
+      "scan_sha256": "f379438a940173c24eb3a9a6f6f87634c7dde4d3261447a69703efd43f69ab4a"
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/arm64-v8a/libpokrov-core.so",
+      "sha256": "af9d2415856834194832ab1aea2bfee0ee64de31b757daf7f72337e4c8b6dc1f",
+      "scan": "libpokrov-core-arm64-v8a.scan.json",
+      "scan_sha256": "220382915f5f05f879c56b8d8603f4bf56b3961e925d997d7277f7cc1d55afed"
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/armeabi-v7a/libpokrov-core.so",
+      "sha256": "de8eaf9090fee3ebd2836a4d136f8ed572992a8a5e2f43fd1d9f0a172915ce2b",
+      "scan": "libpokrov-core-armeabi-v7a.scan.json",
+      "scan_sha256": "de2748813415b8a2e7a6129d63452f1652618efcaca5bd29341fafc4ee95bf00"
+    },
+    {
+      "package": "app-store-release.aab",
+      "entry": "base/lib/x86_64/libpokrov-core.so",
+      "sha256": "4758203faf7fc351db14c00b58c7e0ffed176c16543f55fd667ac1baf04ce811",
+      "scan": "libpokrov-core-x86_64.scan.json",
+      "scan_sha256": "f379438a940173c24eb3a9a6f6f87634c7dde4d3261447a69703efd43f69ab4a"
+    },
+    {
+      "package": "pokrov-windows-x64-1.2.0+4053-setup.exe",
+      "entry": "pokrov-core.dll",
+      "sha256": "40101389b7713b869a9472bd3afe3aa19000b1d98f79d50cb88b61a235be531e",
+      "scan": "pokrov-core.scan.json",
+      "scan_sha256": "8211ec5acbcff963aae6c23f3b28761e4b4e93284942ae3db87ae497eff56cf4"
+    }
+  ],
+  "advisories": [
+    "GO-2026-4316",
+    "GO-2026-4503",
+    "GO-2026-5774",
+    "GO-2026-5775",
+    "GO-2026-5777",
+    "GO-2026-5841",
+    "GO-2026-5932",
+    "GO-2026-6179",
+    "GO-2026-6180"
+  ],
+  "limit": "Module-level findings in stripped binaries do not prove function reachability; dispositions remain bounded in source binding family"
+}

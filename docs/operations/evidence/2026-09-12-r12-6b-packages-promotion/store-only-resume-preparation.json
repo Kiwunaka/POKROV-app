@@ -1,0 +1,11 @@
+{
+  "status": "PASS_CANONICAL_STORE_AND_VERIFICATION_TAIL_PRESERVED",
+  "source_client": "2aa57015783ceb3415e3be62bbf0a698729011c4",
+  "canonical_script_sha256": "de302b5e593335fe1c5cca8c07641806737cf3a755c4fc3155eb1041ec11547f",
+  "resume_script_sha256": "7b06d4fcdcdea1969833fc72b23e461d11e0a2f332f320de82bc6c9c99a53311",
+  "changes": [
+    "Resolve PSScriptRoot to original scripts directory",
+    "Replace APK build invocation with retained four APK size and SHA-256 verification"
+  ],
+  "repository_script_changed": false
+}

@@ -1,0 +1,13 @@
+{
+  "host_free_e": 45753974784,
+  "utc": "2026-09-12T02:17:48.1677247Z",
+  "host_free_c": 44010983424,
+  "status": "PASS_POWERED_OFF_WITHIN_GROWTH_BUDGET",
+  "growth_budget_bytes": 367001600,
+  "growth_bytes": 132120576,
+  "final_power_state": "poweroff",
+  "disk_bytes_after": 9446621184,
+  "vm": "POKROV-r12-b08-linux-20260906",
+  "installer_executed": false,
+  "disk_bytes_before": 9314500608
+}

@@ -1135,3 +1135,13 @@ Consumer analyze, 81 runtime tests, 8 Android tests and seed/docs contracts pass
 Five binary scans retain nine advisory IDs with bounded static dispositions;
 191 verbatim notice blocks and source-packet metadata are retained. Current
 packages, installed TUN/privacy, full source/licensing and release remain open.
+
+## 2026-09-12 Core6b current package audit and source promotion
+
+[Exact six development artifacts and protected source merges](evidence/2026-09-12-r12-6b-packages-promotion/README.md)
+pass bounded package checks: Android self-managed signatures, exact native
+libraries/notices/revision, Windows 304-file extraction and nine CTest cases,
+packaged-DLL canaries and five persisted sinks. Client PR120 and Core PR15 plus
+both main CI workflows pass; branch protections are unchanged. Failed storage
+attempts and byte-preserving retention are recorded. Installed acceptance for
+these exact packages, full source/license and release gates remain open.

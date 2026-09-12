@@ -1,0 +1,811 @@
+{
+  "status": "PASS",
+  "utc": "2026-09-12T02:45:02.745867+00:00",
+  "source": "fc301b94aeafc4589cca7b6f8718129187ca3747",
+  "phase": "main",
+  "runs": [
+    {
+      "id": 34667366713,
+      "name": "CI",
+      "head_sha": "fc301b94aeafc4589cca7b6f8718129187ca3747",
+      "status": "completed",
+      "conclusion": "success",
+      "event": "push",
+      "run_attempt": 1,
+      "html_url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34667366713",
+      "jobs": [
+        {
+          "id": 103481900749,
+          "run_id": 34667366713,
+          "workflow_name": "CI",
+          "head_branch": "main",
+          "run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/runs/34667366713",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOTg99tc8AAAAYGAB-zQ",
+          "head_sha": "fc301b94aeafc4589cca7b6f8718129187ca3747",
+          "url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/jobs/103481900749",
+          "html_url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34667366713/job/103481900749",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-09-12T02:20:07Z",
+          "started_at": "2026-09-12T02:20:09Z",
+          "completed_at": "2026-09-12T02:22:30Z",
+          "name": "release-contract",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-12T02:20:10Z",
+              "completed_at": "2026-09-12T02:20:11Z"
+            },
+            {
+              "name": "Checkout Core candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-12T02:20:11Z",
+              "completed_at": "2026-09-12T02:20:12Z"
+            },
+            {
+              "name": "Checkout active client promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-12T02:20:12Z",
+              "completed_at": "2026-09-12T02:21:45Z"
+            },
+            {
+              "name": "Verify exact Core source authority",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-12T02:21:45Z",
+              "completed_at": "2026-09-12T02:21:53Z"
+            },
+            {
+              "name": "Checkout platform promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-12T02:21:53Z",
+              "completed_at": "2026-09-12T02:22:00Z"
+            },
+            {
+              "name": "Setup Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-12T02:22:00Z",
+              "completed_at": "2026-09-12T02:22:00Z"
+            },
+            {
+              "name": "Materialize bound Core source authority",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-12T02:22:00Z",
+              "completed_at": "2026-09-12T02:22:02Z"
+            },
+            {
+              "name": "Validate client, Core, and release-handoff v2 parity",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-12T02:22:02Z",
+              "completed_at": "2026-09-12T02:22:26Z"
+            },
+            {
+              "name": "Post Setup Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-12T02:22:26Z",
+              "completed_at": "2026-09-12T02:22:26Z"
+            },
+            {
+              "name": "Post Checkout platform promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-09-12T02:22:26Z",
+              "completed_at": "2026-09-12T02:22:26Z"
+            },
+            {
+              "name": "Post Checkout active client promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-09-12T02:22:26Z",
+              "completed_at": "2026-09-12T02:22:26Z"
+            },
+            {
+              "name": "Post Checkout Core candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16,
+              "started_at": "2026-09-12T02:22:26Z",
+              "completed_at": "2026-09-12T02:22:26Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17,
+              "started_at": "2026-09-12T02:22:26Z",
+              "completed_at": "2026-09-12T02:22:26Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/check-runs/103481900749",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "runner_id": 1000010037,
+          "runner_name": "GitHub Actions 1000010037",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 103481900956,
+          "run_id": 34667366713,
+          "workflow_name": "CI",
+          "head_branch": "main",
+          "run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/runs/34667366713",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOTg99tc8AAAAYGAB_nA",
+          "head_sha": "fc301b94aeafc4589cca7b6f8718129187ca3747",
+          "url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/jobs/103481900956",
+          "html_url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34667366713/job/103481900956",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-09-12T02:20:07Z",
+          "started_at": "2026-09-12T02:20:09Z",
+          "completed_at": "2026-09-12T02:24:05Z",
+          "name": "test",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-12T02:20:09Z",
+              "completed_at": "2026-09-12T02:20:11Z"
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-12T02:20:11Z",
+              "completed_at": "2026-09-12T02:20:13Z"
+            },
+            {
+              "name": "Verify exact Core source authority",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-12T02:20:13Z",
+              "completed_at": "2026-09-12T02:20:16Z"
+            },
+            {
+              "name": "Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-12T02:20:16Z",
+              "completed_at": "2026-09-12T02:20:52Z"
+            },
+            {
+              "name": "Install ripgrep",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-12T02:20:52Z",
+              "completed_at": "2026-09-12T02:21:05Z"
+            },
+            {
+              "name": "Test",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-12T02:21:05Z",
+              "completed_at": "2026-09-12T02:21:37Z"
+            },
+            {
+              "name": "Vet supported runtime packages",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-12T02:21:37Z",
+              "completed_at": "2026-09-12T02:21:39Z"
+            },
+            {
+              "name": "Race-test supported runtime packages",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-12T02:21:39Z",
+              "completed_at": "2026-09-12T02:21:55Z"
+            },
+            {
+              "name": "Check release lifecycle resource ownership",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-12T02:21:55Z",
+              "completed_at": "2026-09-12T02:22:05Z"
+            },
+            {
+              "name": "Install govulncheck",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-12T02:22:05Z",
+              "completed_at": "2026-09-12T02:22:06Z"
+            },
+            {
+              "name": "Scan supported runtime packages for reachable vulnerabilities",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-12T02:22:06Z",
+              "completed_at": "2026-09-12T02:22:18Z"
+            },
+            {
+              "name": "Vet and race-test mobile Core event bridge",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-09-12T02:22:18Z",
+              "completed_at": "2026-09-12T02:22:32Z"
+            },
+            {
+              "name": "Scan mobile Core event bridge for reachable vulnerabilities",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-12T02:22:32Z",
+              "completed_at": "2026-09-12T02:22:44Z"
+            },
+            {
+              "name": "Install pinned static analysis and SBOM tools",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-09-12T02:22:44Z",
+              "completed_at": "2026-09-12T02:22:46Z"
+            },
+            {
+              "name": "Staticcheck supported release packages",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15,
+              "started_at": "2026-09-12T02:22:46Z",
+              "completed_at": "2026-09-12T02:23:05Z"
+            },
+            {
+              "name": "Fuzz the config and profile parser",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16,
+              "started_at": "2026-09-12T02:23:05Z",
+              "completed_at": "2026-09-12T02:23:51Z"
+            },
+            {
+              "name": "Generate deterministic dependency and license SBOMs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17,
+              "started_at": "2026-09-12T02:23:51Z",
+              "completed_at": "2026-09-12T02:24:03Z"
+            },
+            {
+              "name": "Retain source SBOM evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18,
+              "started_at": "2026-09-12T02:24:03Z",
+              "completed_at": "2026-09-12T02:24:04Z"
+            },
+            {
+              "name": "Post Run actions/setup-go@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 35,
+              "started_at": "2026-09-12T02:24:04Z",
+              "completed_at": "2026-09-12T02:24:04Z"
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 36,
+              "started_at": "2026-09-12T02:24:04Z",
+              "completed_at": "2026-09-12T02:24:04Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 37,
+              "started_at": "2026-09-12T02:24:04Z",
+              "completed_at": "2026-09-12T02:24:04Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/check-runs/103481900956",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "runner_id": 1000010038,
+          "runner_name": "GitHub Actions 1000010038",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 103482461428,
+          "run_id": 34667366713,
+          "workflow_name": "CI",
+          "head_branch": "main",
+          "run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/runs/34667366713",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOTg99tc8AAAAYGAkM9A",
+          "head_sha": "fc301b94aeafc4589cca7b6f8718129187ca3747",
+          "url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/jobs/103482461428",
+          "html_url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34667366713/job/103482461428",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-09-12T02:24:06Z",
+          "started_at": "2026-09-12T02:24:08Z",
+          "completed_at": "2026-09-12T02:28:57Z",
+          "name": "android-artifact-reproducibility",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-12T02:24:08Z",
+              "completed_at": "2026-09-12T02:24:11Z"
+            },
+            {
+              "name": "Checkout Core source",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-12T02:24:11Z",
+              "completed_at": "2026-09-12T02:24:12Z"
+            },
+            {
+              "name": "Verify exact Core source authority",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-12T02:24:12Z",
+              "completed_at": "2026-09-12T02:24:16Z"
+            },
+            {
+              "name": "Setup Python for deterministic XCFramework metadata",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-12T02:24:16Z",
+              "completed_at": "2026-09-12T02:24:16Z"
+            },
+            {
+              "name": "Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-12T02:24:16Z",
+              "completed_at": "2026-09-12T02:24:49Z"
+            },
+            {
+              "name": "Setup Java",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-12T02:24:49Z",
+              "completed_at": "2026-09-12T02:24:50Z"
+            },
+            {
+              "name": "Download source SBOM evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-12T02:24:50Z",
+              "completed_at": "2026-09-12T02:24:50Z"
+            },
+            {
+              "name": "Build Android AAR first pass",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-12T02:24:50Z",
+              "completed_at": "2026-09-12T02:28:33Z"
+            },
+            {
+              "name": "Build Android AAR second pass",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-12T02:28:33Z",
+              "completed_at": "2026-09-12T02:28:53Z"
+            },
+            {
+              "name": "Compare Android builds and write bounded provenance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-12T02:28:53Z",
+              "completed_at": "2026-09-12T02:28:54Z"
+            },
+            {
+              "name": "Retain Android pre-candidate evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-12T02:28:54Z",
+              "completed_at": "2026-09-12T02:28:55Z"
+            },
+            {
+              "name": "Post Setup Java",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-09-12T02:28:55Z",
+              "completed_at": "2026-09-12T02:28:55Z"
+            },
+            {
+              "name": "Post Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-09-12T02:28:55Z",
+              "completed_at": "2026-09-12T02:28:55Z"
+            },
+            {
+              "name": "Post Setup Python for deterministic XCFramework metadata",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-09-12T02:28:55Z",
+              "completed_at": "2026-09-12T02:28:55Z"
+            },
+            {
+              "name": "Post Checkout Core source",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22,
+              "started_at": "2026-09-12T02:28:55Z",
+              "completed_at": "2026-09-12T02:28:55Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-09-12T02:28:55Z",
+              "completed_at": "2026-09-12T02:28:55Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/check-runs/103482461428",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "runner_id": 1000010040,
+          "runner_name": "GitHub Actions 1000010040",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 103482461431,
+          "run_id": 34667366713,
+          "workflow_name": "CI",
+          "head_branch": "main",
+          "run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/runs/34667366713",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOTg99tc8AAAAYGAkM9w",
+          "head_sha": "fc301b94aeafc4589cca7b6f8718129187ca3747",
+          "url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/jobs/103482461431",
+          "html_url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34667366713/job/103482461431",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-09-12T02:24:06Z",
+          "started_at": "2026-09-12T02:24:08Z",
+          "completed_at": "2026-09-12T02:30:58Z",
+          "name": "windows-artifact-reproducibility",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-12T02:24:09Z",
+              "completed_at": "2026-09-12T02:24:11Z"
+            },
+            {
+              "name": "Checkout Core source",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-12T02:24:11Z",
+              "completed_at": "2026-09-12T02:24:18Z"
+            },
+            {
+              "name": "Verify exact Core source authority",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-12T02:24:18Z",
+              "completed_at": "2026-09-12T02:24:18Z"
+            },
+            {
+              "name": "Checkout active client for pinned Cronet and 100-cycle backtest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-12T02:24:18Z",
+              "completed_at": "2026-09-12T02:26:02Z"
+            },
+            {
+              "name": "Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-12T02:26:02Z",
+              "completed_at": "2026-09-12T02:26:45Z"
+            },
+            {
+              "name": "Setup Flutter",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-12T02:26:45Z",
+              "completed_at": "2026-09-12T02:28:16Z"
+            },
+            {
+              "name": "Install pinned MinGW-w64",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-12T02:28:16Z",
+              "completed_at": "2026-09-12T02:29:19Z"
+            },
+            {
+              "name": "Download source SBOM evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-12T02:29:19Z",
+              "completed_at": "2026-09-12T02:29:20Z"
+            },
+            {
+              "name": "Build Windows DLL first pass",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-12T02:29:20Z",
+              "completed_at": "2026-09-12T02:30:13Z"
+            },
+            {
+              "name": "Build Windows DLL second pass",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-12T02:30:13Z",
+              "completed_at": "2026-09-12T02:30:22Z"
+            },
+            {
+              "name": "Run the current-source DLL 100-cycle proxy backtest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-12T02:30:22Z",
+              "completed_at": "2026-09-12T02:30:47Z"
+            },
+            {
+              "name": "Compare Windows builds and write bounded provenance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-09-12T02:30:47Z",
+              "completed_at": "2026-09-12T02:30:48Z"
+            },
+            {
+              "name": "Retain Windows pre-candidate evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-12T02:30:48Z",
+              "completed_at": "2026-09-12T02:30:50Z"
+            },
+            {
+              "name": "Post Setup Flutter",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-09-12T02:30:50Z",
+              "completed_at": "2026-09-12T02:30:51Z"
+            },
+            {
+              "name": "Post Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-09-12T02:30:51Z",
+              "completed_at": "2026-09-12T02:30:52Z"
+            },
+            {
+              "name": "Post Checkout active client for pinned Cronet and 100-cycle backtest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-09-12T02:30:52Z",
+              "completed_at": "2026-09-12T02:30:54Z"
+            },
+            {
+              "name": "Post Checkout Core source",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-09-12T02:30:54Z",
+              "completed_at": "2026-09-12T02:30:56Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-09-12T02:30:56Z",
+              "completed_at": "2026-09-12T02:30:56Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/check-runs/103482461431",
+          "labels": [
+            "windows-latest"
+          ],
+          "runner_id": 1000010041,
+          "runner_name": "GitHub Actions 1000010041",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        },
+        {
+          "id": 103482461433,
+          "run_id": 34667366713,
+          "workflow_name": "CI",
+          "head_branch": "main",
+          "run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/runs/34667366713",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOTg99tc8AAAAYGAkM-Q",
+          "head_sha": "fc301b94aeafc4589cca7b6f8718129187ca3747",
+          "url": "https://api.github.com/repos/Kiwunaka/pokrov-core/actions/jobs/103482461433",
+          "html_url": "https://github.com/Kiwunaka/pokrov-core/actions/runs/34667366713/job/103482461433",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-09-12T02:24:06Z",
+          "started_at": "2026-09-12T02:24:14Z",
+          "completed_at": "2026-09-12T02:30:03Z",
+          "name": "apple-source-build",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-12T02:24:14Z",
+              "completed_at": "2026-09-12T02:24:18Z"
+            },
+            {
+              "name": "Checkout Core source",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-12T02:24:18Z",
+              "completed_at": "2026-09-12T02:24:22Z"
+            },
+            {
+              "name": "Verify exact Core source authority",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3,
+              "started_at": "2026-09-12T02:24:22Z",
+              "completed_at": "2026-09-12T02:24:23Z"
+            },
+            {
+              "name": "Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-12T02:24:23Z",
+              "completed_at": "2026-09-12T02:24:59Z"
+            },
+            {
+              "name": "Download source SBOM evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-12T02:24:59Z",
+              "completed_at": "2026-09-12T02:24:59Z"
+            },
+            {
+              "name": "Build Apple XCFramework first pass",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-12T02:24:59Z",
+              "completed_at": "2026-09-12T02:27:53Z"
+            },
+            {
+              "name": "Build Apple XCFramework second pass",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-12T02:27:53Z",
+              "completed_at": "2026-09-12T02:29:52Z"
+            },
+            {
+              "name": "Diagnose Apple reproducibility inputs",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-12T02:29:52Z",
+              "completed_at": "2026-09-12T02:29:57Z"
+            },
+            {
+              "name": "Compare Apple builds and write bounded provenance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-12T02:29:57Z",
+              "completed_at": "2026-09-12T02:29:59Z"
+            },
+            {
+              "name": "Retain Apple source-build evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-12T02:29:59Z",
+              "completed_at": "2026-09-12T02:30:00Z"
+            },
+            {
+              "name": "Post Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19,
+              "started_at": "2026-09-12T02:30:00Z",
+              "completed_at": "2026-09-12T02:30:00Z"
+            },
+            {
+              "name": "Post Checkout Core source",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20,
+              "started_at": "2026-09-12T02:30:00Z",
+              "completed_at": "2026-09-12T02:30:01Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21,
+              "started_at": "2026-09-12T02:30:01Z",
+              "completed_at": "2026-09-12T02:30:02Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/Kiwunaka/pokrov-core/check-runs/103482461433",
+          "labels": [
+            "macos-15"
+          ],
+          "runner_id": 1000010039,
+          "runner_name": "GitHub Actions 1000010039",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        }
+      ]
+    }
+  ],
+  "non_pass_steps": [],
+  "conditional_skips_are_not_pass": true,
+  "scope": "Core6b/client2aa coordinated setup privacy source promotion; exact packages and installed acceptance remain separate"
+}

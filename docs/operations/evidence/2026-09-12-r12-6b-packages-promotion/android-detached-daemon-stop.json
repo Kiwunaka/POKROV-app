@@ -1,0 +1,10 @@
+{
+  "pid": 16100,
+  "matches_gradle_daemon_8_11_1": true,
+  "terminated": true,
+  "raw_command_line_retained": false,
+  "parent_pid": 38896,
+  "reason": "Detached Gradle daemon survived failed build process-tree stop",
+  "created_utc": "2026-09-12T02:18:38.5263900Z",
+  "started_after_owned_retry": true
+}

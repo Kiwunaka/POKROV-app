@@ -1,0 +1,1201 @@
+{
+  "status": "READ_ONLY_RETIRED_CORE_CACHE_INVENTORY",
+  "root": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms",
+  "current_core_source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "current_native_hashes": {
+    "jni/armeabi-v7a/libpokrov-core.so": "de8eaf9090fee3ebd2836a4d136f8ed572992a8a5e2f43fd1d9f0a172915ce2b",
+    "jni/arm64-v8a/libpokrov-core.so": "af9d2415856834194832ab1aea2bfee0ee64de31b757daf7f72337e4c8b6dc1f",
+    "jni/x86/libpokrov-core.so": "a026b88897d28ae93d672f8959d8d51b6eecc37a85cb43f785a97d0ef2596e52",
+    "jni/x86_64/libpokrov-core.so": "4758203faf7fc351db14c00b58c7e0ffed176c16543f55fd667ac1baf04ce811"
+  },
+  "groups": [
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\00b7058f18b9e816de46804e2abec704",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+        "jni/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+        "jni/x86/libpokrov-core.so": "a74663276fd9fb87f1175d13310781fc0ca8583d06eac12cb6472b7738228a1a",
+        "jni/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+      },
+      "files": [
+        {
+          "path": "00b7058f18b9e816de46804e2abec704/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "84979ea1b6b3583315ac0c7ab9859214565d65f17163c5d8c2746549cb86ccc6"
+        },
+        {
+          "path": "00b7058f18b9e816de46804e2abec704/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "00b7058f18b9e816de46804e2abec704/transformed/jetified-pokrov-core.aar",
+          "bytes": 107483275,
+          "allocated": 107483275,
+          "sha256": "bc5ef7ece6ba6c138589307a7c5e30be32ec01cdd396e23dfdb8840011148b29"
+        }
+      ],
+      "bytes": 107483414,
+      "allocated": 107483414
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\0da516ea343eac716c99c839778b44cc",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "ee5e80779fbf6465464da69cfee03675ee7a126db5b207197c908deb2e39fba9",
+        "jni/arm64-v8a/libpokrov-core.so": "96c6a72769066807ce73af9792e3c110040a08629f9a7b2067655984152ff0c8",
+        "jni/x86/libpokrov-core.so": "0bc602a77f321c60132adcfa82054e278ee53cda6bdea6916f8ea993ccba5b88",
+        "jni/x86_64/libpokrov-core.so": "911179b9207113c508605c1b7b2b4fb041259ee8dadebc522e154ec4534b2d63"
+      },
+      "files": [
+        {
+          "path": "0da516ea343eac716c99c839778b44cc/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "e115e5f731eecc4bc9c4196b0938eda2f0571f852fbfac669c0dc87da3141da6"
+        },
+        {
+          "path": "0da516ea343eac716c99c839778b44cc/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "0da516ea343eac716c99c839778b44cc/transformed/jetified-pokrov-core.aar",
+          "bytes": 107490210,
+          "allocated": 107490210,
+          "sha256": "5e2ea69c044ea461b9be352cb7ce73ddd208898b5a364b6a2642024a6215534a"
+        }
+      ],
+      "bytes": 107490349,
+      "allocated": 107490349
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\1ffeae635afabe5b067b50a8c417015e",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e",
+        "jni/arm64-v8a/libpokrov-core.so": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5",
+        "jni/x86/libpokrov-core.so": "a74663276fd9fb87f1175d13310781fc0ca8583d06eac12cb6472b7738228a1a",
+        "jni/x86_64/libpokrov-core.so": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+      },
+      "files": [
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "144f85cb34fadb345d01afedb66a90d118b4650e623ea7139563bbdc1981eedc"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98730,
+          "allocated": 98730,
+          "sha256": "1a49c2bdff585f686bb060bcfba2f7fe622d8d8e6536b81989380919fc2c7fdc"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78530968,
+          "allocated": 78530968,
+          "sha256": "7fc36cbf805a42077424c934267beeb99d84a1c96c6f2de7493abed729f05ca5"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 70207880,
+          "allocated": 70207880,
+          "sha256": "eb423282159b857bed6142d4cd780dd69e8501f4e0a3367d52a0b789eff2732e"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 76037888,
+          "allocated": 76037888,
+          "sha256": "a74663276fd9fb87f1175d13310781fc0ca8583d06eac12cb6472b7738228a1a"
+        },
+        {
+          "path": "1ffeae635afabe5b067b50a8c417015e/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 86032576,
+          "allocated": 86032576,
+          "sha256": "fc1660500ad8578231d277e06da61a752bd1bec26b66babc6b0f6cd7b3679376"
+        }
+      ],
+      "bytes": 310908387,
+      "allocated": 310908387
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\2349c0f36d82790784680f89f558065e",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "d05118952643fac0855d584a9d82b08d2fb4c7fa0bad0806c651bdc4f980c7e9",
+        "jni/arm64-v8a/libpokrov-core.so": "cc6c247fce3450a5ae955b788fa2a307fc24424a42eef6b70b5591fcfece2a69",
+        "jni/x86/libpokrov-core.so": "202f92ea86879bfcda128f95170c79e14eeb97e6e05fe02dea90fc542512890a",
+        "jni/x86_64/libpokrov-core.so": "47a5fa3ca8b31bbb1fcfca210d05d460ae7890cfcdb2b4d39aa0c8c84032d1b4"
+      },
+      "files": [
+        {
+          "path": "2349c0f36d82790784680f89f558065e/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "b503dee4a5d4455af8bb3421dc917f676f67ee6c5ff45365d640e6a3a32f5ab5"
+        },
+        {
+          "path": "2349c0f36d82790784680f89f558065e/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "2349c0f36d82790784680f89f558065e/transformed/jetified-pokrov-core.aar",
+          "bytes": 107429371,
+          "allocated": 107429371,
+          "sha256": "e3a85e750a2a38bb8822b96490cfa8be66eb12b4da4b442c86376d9b0a04da4f"
+        }
+      ],
+      "bytes": 107429510,
+      "allocated": 107429510
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\256508dae0e4140244bcd096a726d94a",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "43365d621ddb0272c903d0f6ded4ceb96953c2587be41e1258c3025688f8383d",
+        "jni/arm64-v8a/libpokrov-core.so": "cfe931b939726c63a58a7f6808caf579c34afa93633d4f7c6be658c38539bea0",
+        "jni/x86/libpokrov-core.so": "6fe762d4768d7541b19e49dd9cfe8bd98bf667d85e0f0a48e87b26366698c0b7",
+        "jni/x86_64/libpokrov-core.so": "84b0138ab6eab6994194a4fddfa2d20c9b7e14e98b5f935a8cdbb5921b3a76b9"
+      },
+      "files": [
+        {
+          "path": "256508dae0e4140244bcd096a726d94a/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "accfaebfc147e9a91ba4e3690335828a82b531028734c994780c3256d95a9f7f"
+        },
+        {
+          "path": "256508dae0e4140244bcd096a726d94a/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "256508dae0e4140244bcd096a726d94a/transformed/jetified-pokrov-core.aar",
+          "bytes": 106843498,
+          "allocated": 106843498,
+          "sha256": "868a4659c0568427c94176c4be62f0f79349fbf7b0cfd392ba09fed98b30662c"
+        }
+      ],
+      "bytes": 106843637,
+      "allocated": 106843637
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\27a87f39165ab5cb0a7dab6bf6982fd2",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "d05118952643fac0855d584a9d82b08d2fb4c7fa0bad0806c651bdc4f980c7e9",
+        "jni/arm64-v8a/libpokrov-core.so": "cc6c247fce3450a5ae955b788fa2a307fc24424a42eef6b70b5591fcfece2a69",
+        "jni/x86/libpokrov-core.so": "202f92ea86879bfcda128f95170c79e14eeb97e6e05fe02dea90fc542512890a",
+        "jni/x86_64/libpokrov-core.so": "47a5fa3ca8b31bbb1fcfca210d05d460ae7890cfcdb2b4d39aa0c8c84032d1b4"
+      },
+      "files": [
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "f61d3aa3883167e19be88428e29d99cbb85713a688fdac84bafa501fb1a1a020"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98702,
+          "allocated": 98702,
+          "sha256": "91f8665e99e4697aa1f3b46140965d740702124b07ca80fb4bc1114dcea7f3c4"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78816456,
+          "allocated": 78816456,
+          "sha256": "cc6c247fce3450a5ae955b788fa2a307fc24424a42eef6b70b5591fcfece2a69"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 70439808,
+          "allocated": 70439808,
+          "sha256": "d05118952643fac0855d584a9d82b08d2fb4c7fa0bad0806c651bdc4f980c7e9"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 76122296,
+          "allocated": 76122296,
+          "sha256": "202f92ea86879bfcda128f95170c79e14eeb97e6e05fe02dea90fc542512890a"
+        },
+        {
+          "path": "27a87f39165ab5cb0a7dab6bf6982fd2/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 85959984,
+          "allocated": 85959984,
+          "sha256": "47a5fa3ca8b31bbb1fcfca210d05d460ae7890cfcdb2b4d39aa0c8c84032d1b4"
+        }
+      ],
+      "bytes": 311437591,
+      "allocated": 311437591
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\4405fe807f494d6c89a5529829c16d72",
+      "kind": "jetified_aar",
+      "current_core": true,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "de8eaf9090fee3ebd2836a4d136f8ed572992a8a5e2f43fd1d9f0a172915ce2b",
+        "jni/arm64-v8a/libpokrov-core.so": "af9d2415856834194832ab1aea2bfee0ee64de31b757daf7f72337e4c8b6dc1f",
+        "jni/x86/libpokrov-core.so": "a026b88897d28ae93d672f8959d8d51b6eecc37a85cb43f785a97d0ef2596e52",
+        "jni/x86_64/libpokrov-core.so": "4758203faf7fc351db14c00b58c7e0ffed176c16543f55fd667ac1baf04ce811"
+      },
+      "files": [
+        {
+          "path": "4405fe807f494d6c89a5529829c16d72/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "45647c70e709df5ccf1e4054d06a954fd095a47891dc7a2b6a32009976281818"
+        },
+        {
+          "path": "4405fe807f494d6c89a5529829c16d72/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "4405fe807f494d6c89a5529829c16d72/transformed/jetified-pokrov-core.aar",
+          "bytes": 106839920,
+          "allocated": 106839920,
+          "sha256": "5ea2eb7d70d0d010636f0a52e9d16e6e207756a5f08140599f136fbc3fe6e5af"
+        }
+      ],
+      "bytes": 106840059,
+      "allocated": 106840059
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\523af8eb748bd986876cfc7537633e5f",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "424ba4c8c1eaf538711e29664656ae54ec7001076b4fd417f9c433deb47eb348",
+        "jni/arm64-v8a/libpokrov-core.so": "2f5ea3bbf92bcbae92dc21d276a7a89f958142adf8f0bf239ef5f04a99c4c4ca",
+        "jni/x86/libpokrov-core.so": "ebe7f64c86a84c7a16f0e954daffe683df59fd1b301a148d2f3a4bd46c543cce",
+        "jni/x86_64/libpokrov-core.so": "1959d1aa7278d83ee30962a03cea56f236bf295cebb13979b2f78c537ab8d618"
+      },
+      "files": [
+        {
+          "path": "523af8eb748bd986876cfc7537633e5f/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "0cc00db08f180fe948b6762afc0edd7a0f5c76e8e068be04d8b2c92f382f83ac"
+        },
+        {
+          "path": "523af8eb748bd986876cfc7537633e5f/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "523af8eb748bd986876cfc7537633e5f/transformed/jetified-pokrov-core.aar",
+          "bytes": 107419397,
+          "allocated": 107419397,
+          "sha256": "2a9677d9e24ed7ef66d4e98f90e7033eb5450c9a2755f0fe6b8bba58036c6a69"
+        }
+      ],
+      "bytes": 107419536,
+      "allocated": 107419536
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\52c6106e8ea0a6e229bb8a706bb3f6fb",
+      "kind": "extracted_core",
+      "current_core": true,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "de8eaf9090fee3ebd2836a4d136f8ed572992a8a5e2f43fd1d9f0a172915ce2b",
+        "jni/arm64-v8a/libpokrov-core.so": "af9d2415856834194832ab1aea2bfee0ee64de31b757daf7f72337e4c8b6dc1f",
+        "jni/x86/libpokrov-core.so": "a026b88897d28ae93d672f8959d8d51b6eecc37a85cb43f785a97d0ef2596e52",
+        "jni/x86_64/libpokrov-core.so": "4758203faf7fc351db14c00b58c7e0ffed176c16543f55fd667ac1baf04ce811"
+      },
+      "files": [
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "4b6247fdbe9c5175b6b9b6955b5db94c5840fab27aa6ae0d579d425900cf1d61"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98730,
+          "allocated": 98730,
+          "sha256": "1a49c2bdff585f686bb060bcfba2f7fe622d8d8e6536b81989380919fc2c7fdc"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78149920,
+          "allocated": 78149920,
+          "sha256": "af9d2415856834194832ab1aea2bfee0ee64de31b757daf7f72337e4c8b6dc1f"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 69845616,
+          "allocated": 69845616,
+          "sha256": "de8eaf9090fee3ebd2836a4d136f8ed572992a8a5e2f43fd1d9f0a172915ce2b"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 75631008,
+          "allocated": 75631008,
+          "sha256": "a026b88897d28ae93d672f8959d8d51b6eecc37a85cb43f785a97d0ef2596e52"
+        },
+        {
+          "path": "52c6106e8ea0a6e229bb8a706bb3f6fb/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 85500200,
+          "allocated": 85500200,
+          "sha256": "4758203faf7fc351db14c00b58c7e0ffed176c16543f55fd667ac1baf04ce811"
+        }
+      ],
+      "bytes": 309225819,
+      "allocated": 309225819
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\6587dd27b079ed9983fada6c70ffb061",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "2a2f16c120bedcc8b82d75742f213a8a383677513257eca4c75be0bbbd5add3a",
+        "jni/arm64-v8a/libpokrov-core.so": "fe9bf133e0b3ad02a6991a46a8b0a6039531d28be52879ab646c5422c777b7d8",
+        "jni/x86/libpokrov-core.so": "b601f0290d6864abd64793d4d46e511808347541834facf09b998e301e772647",
+        "jni/x86_64/libpokrov-core.so": "77c63fd6343ff43d347db745f3f4e40606d2633920b498e4366bad5087de5c26"
+      },
+      "files": [
+        {
+          "path": "6587dd27b079ed9983fada6c70ffb061/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "7ca4266c75a78da91aabc0ef0776e51c8c3df839e1bea138f1daae2ca8b0ea17"
+        },
+        {
+          "path": "6587dd27b079ed9983fada6c70ffb061/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "6587dd27b079ed9983fada6c70ffb061/transformed/jetified-pokrov-core.aar",
+          "bytes": 107493859,
+          "allocated": 107493859,
+          "sha256": "d2382adeeef8336721de6849b51d68d01576bbf9ae7c614a240bb18b9a4ea021"
+        }
+      ],
+      "bytes": 107493998,
+      "allocated": 107493998
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\66b8732b67e416f5c90fbc015c80d0d5",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "424ba4c8c1eaf538711e29664656ae54ec7001076b4fd417f9c433deb47eb348",
+        "jni/arm64-v8a/libpokrov-core.so": "2f5ea3bbf92bcbae92dc21d276a7a89f958142adf8f0bf239ef5f04a99c4c4ca",
+        "jni/x86/libpokrov-core.so": "ebe7f64c86a84c7a16f0e954daffe683df59fd1b301a148d2f3a4bd46c543cce",
+        "jni/x86_64/libpokrov-core.so": "1959d1aa7278d83ee30962a03cea56f236bf295cebb13979b2f78c537ab8d618"
+      },
+      "files": [
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "288d3644b1aa646f2b7bf430f8911a1a07c5e312e81c8dd83aa8db8adb198a33"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98655,
+          "allocated": 98655,
+          "sha256": "99f139bf816820167f03c8f96694176bff2b59ea94537a478f9ffcf840592037"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78809320,
+          "allocated": 78809320,
+          "sha256": "2f5ea3bbf92bcbae92dc21d276a7a89f958142adf8f0bf239ef5f04a99c4c4ca"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 70433264,
+          "allocated": 70433264,
+          "sha256": "424ba4c8c1eaf538711e29664656ae54ec7001076b4fd417f9c433deb47eb348"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 76115320,
+          "allocated": 76115320,
+          "sha256": "ebe7f64c86a84c7a16f0e954daffe683df59fd1b301a148d2f3a4bd46c543cce"
+        },
+        {
+          "path": "66b8732b67e416f5c90fbc015c80d0d5/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 85952848,
+          "allocated": 85952848,
+          "sha256": "1959d1aa7278d83ee30962a03cea56f236bf295cebb13979b2f78c537ab8d618"
+        }
+      ],
+      "bytes": 311409752,
+      "allocated": 311409752
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\9cfd5444bbd5270e83ed9fe3d7186948",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "5653f2a1e51dc20330ce72fdfcd1e8192cd71cf11c091dc49d28a6a2f5697f4e",
+        "jni/arm64-v8a/libpokrov-core.so": "d949282fd7d536cfd144c5723c3f39bb4ac35929faa8d855493aa7698d31dfa2",
+        "jni/x86/libpokrov-core.so": "cce5940b9e96d923b7c67ed8534586d7bc2ecb3b43ca6d9a059af8da75c8d7c6",
+        "jni/x86_64/libpokrov-core.so": "5229cb40eaa685329ecc8938a85dcbc59a2ee0da3b321fed40f4efa4b0d74bdb"
+      },
+      "files": [
+        {
+          "path": "9cfd5444bbd5270e83ed9fe3d7186948/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "01eccc3c636e743f16449dfe3dc9f8ee77a6307d1bce45763b9fa5b13121844a"
+        },
+        {
+          "path": "9cfd5444bbd5270e83ed9fe3d7186948/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "9cfd5444bbd5270e83ed9fe3d7186948/transformed/jetified-pokrov-core.aar",
+          "bytes": 107465916,
+          "allocated": 107465916,
+          "sha256": "9f99134528e8309f60b2fb20bfed9df9db7f5fa978ec1f13b7d329e2a70cf19b"
+        }
+      ],
+      "bytes": 107466055,
+      "allocated": 107466055
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\a7cb8a4e61e4822a12535289bed4d65b",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "0b9c097a36fd0e92f57cd8b199d53ce708578f0b0f8b98c5307e10e526c746aa",
+        "jni/arm64-v8a/libpokrov-core.so": "822ec9a339b8b6f9a835e3d6f5d95ebdd23f60859601e5b87d9b4c2ff25ad2a8",
+        "jni/x86/libpokrov-core.so": "10ea165ec9de02ad7ac77fb4999f3ff2b44a6bcfdabeb2d3df93c021bb04cacd",
+        "jni/x86_64/libpokrov-core.so": "48886349c40141d9e7d1df1136924f6f8651bb8b17998c7f08a68effc23d4fdb"
+      },
+      "files": [
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "827fb95d92f1cbda73410e9f3d91f0790aaba793c9343f7099b0fd2ff8d49c81"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98730,
+          "allocated": 98730,
+          "sha256": "1a49c2bdff585f686bb060bcfba2f7fe622d8d8e6536b81989380919fc2c7fdc"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78857768,
+          "allocated": 78857768,
+          "sha256": "822ec9a339b8b6f9a835e3d6f5d95ebdd23f60859601e5b87d9b4c2ff25ad2a8"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 70467392,
+          "allocated": 70467392,
+          "sha256": "0b9c097a36fd0e92f57cd8b199d53ce708578f0b0f8b98c5307e10e526c746aa"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 76150328,
+          "allocated": 76150328,
+          "sha256": "10ea165ec9de02ad7ac77fb4999f3ff2b44a6bcfdabeb2d3df93c021bb04cacd"
+        },
+        {
+          "path": "a7cb8a4e61e4822a12535289bed4d65b/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 86002416,
+          "allocated": 86002416,
+          "sha256": "48886349c40141d9e7d1df1136924f6f8651bb8b17998c7f08a68effc23d4fdb"
+        }
+      ],
+      "bytes": 311576979,
+      "allocated": 311576979
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\a850be2d9ba49f3b57acc15ff23307a2",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "3cb08a90f1d324382dbe98b300cc346b63cfb177c95d1b42ad437c92a8096b86",
+        "jni/arm64-v8a/libpokrov-core.so": "8d992d23711f50a9fab21245236ff9ab12810136ab50beeaacad80c70ed36da5",
+        "jni/x86/libpokrov-core.so": "039fb30af8bdec6d40535395c3f57d5ea65f1ee6576ab8bb86a2755cab43b356",
+        "jni/x86_64/libpokrov-core.so": "9f33bfa1dcabb8f6d987c35652b19b0a2658f43ba0885c6dbd9986fa66cb41da"
+      },
+      "files": [
+        {
+          "path": "a850be2d9ba49f3b57acc15ff23307a2/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "64b2db0d8eba3fe925a898395317bcdd9d15d862a9f2db6ce96cc59b5e6cdcc5"
+        },
+        {
+          "path": "a850be2d9ba49f3b57acc15ff23307a2/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "a850be2d9ba49f3b57acc15ff23307a2/transformed/jetified-pokrov-core.aar",
+          "bytes": 106843791,
+          "allocated": 106843791,
+          "sha256": "feb452f5f06b865e3ae0655ef4168ffe065c08b759f64e9cfa084cde9d5a5941"
+        }
+      ],
+      "bytes": 106843930,
+      "allocated": 106843930
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\b1a27f4c743ca8becc0ef42e433f14b5",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "45b2a6e9c60e7c26d408b2351bd347982f44b2aaf173268cc3b706a4d1d44055",
+        "jni/arm64-v8a/libpokrov-core.so": "3927157c5d361f3c525440082ae8643e92af90e9b22fc27542f06abc6f6386c8",
+        "jni/x86/libpokrov-core.so": "c77c8a6b87acc36ecea171c7f118d01d803aeed0c9234aa120abfca47aea6ab3",
+        "jni/x86_64/libpokrov-core.so": "5d0638d8dd9fba5c43730361275bacc2050291a5e896c3ec7d2d72b81eaaf305"
+      },
+      "files": [
+        {
+          "path": "b1a27f4c743ca8becc0ef42e433f14b5/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "6c799ddbd6bee168b28100193bfe8f677a681dee1470cddd6c95d56f772daa7a"
+        },
+        {
+          "path": "b1a27f4c743ca8becc0ef42e433f14b5/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "b1a27f4c743ca8becc0ef42e433f14b5/transformed/jetified-pokrov-core.aar",
+          "bytes": 107450158,
+          "allocated": 107450158,
+          "sha256": "c02bc2fcc25f925f9062520f85667c324999b091eb2251a9cf26b8a1f66b0302"
+        }
+      ],
+      "bytes": 107450297,
+      "allocated": 107450297
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\c75314dccdfcbe24fd140f3532db4999",
+      "kind": "jetified_aar",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "0b9c097a36fd0e92f57cd8b199d53ce708578f0b0f8b98c5307e10e526c746aa",
+        "jni/arm64-v8a/libpokrov-core.so": "822ec9a339b8b6f9a835e3d6f5d95ebdd23f60859601e5b87d9b4c2ff25ad2a8",
+        "jni/x86/libpokrov-core.so": "10ea165ec9de02ad7ac77fb4999f3ff2b44a6bcfdabeb2d3df93c021bb04cacd",
+        "jni/x86_64/libpokrov-core.so": "48886349c40141d9e7d1df1136924f6f8651bb8b17998c7f08a68effc23d4fdb"
+      },
+      "files": [
+        {
+          "path": "c75314dccdfcbe24fd140f3532db4999/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "f3bdcc61f426f2e4601cc7fd8dae1884b797e24c24e020d82d6c375cfefb2202"
+        },
+        {
+          "path": "c75314dccdfcbe24fd140f3532db4999/results.bin",
+          "bytes": 28,
+          "allocated": 28,
+          "sha256": "25db6dbf3f12d2bbac03036f5d56b75727a083a06d78c1d2f0fff89e369f2928"
+        },
+        {
+          "path": "c75314dccdfcbe24fd140f3532db4999/transformed/jetified-pokrov-core.aar",
+          "bytes": 107471658,
+          "allocated": 107471658,
+          "sha256": "fa62c1116c55fe770f691bf62c8b3f613a5fb1f889226458f15fee8f62820512"
+        }
+      ],
+      "bytes": 107471797,
+      "allocated": 107471797
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\d6ebd84e3ef7c5f2779ebaf4325ffa3c",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "45b2a6e9c60e7c26d408b2351bd347982f44b2aaf173268cc3b706a4d1d44055",
+        "jni/arm64-v8a/libpokrov-core.so": "3927157c5d361f3c525440082ae8643e92af90e9b22fc27542f06abc6f6386c8",
+        "jni/x86/libpokrov-core.so": "c77c8a6b87acc36ecea171c7f118d01d803aeed0c9234aa120abfca47aea6ab3",
+        "jni/x86_64/libpokrov-core.so": "5d0638d8dd9fba5c43730361275bacc2050291a5e896c3ec7d2d72b81eaaf305"
+      },
+      "files": [
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "4f4b2bcc85704d222a9c2604f39560f692eb69c38293ac37dc2729129f5cb04f"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98729,
+          "allocated": 98729,
+          "sha256": "ac579439f9d731828e9cd038bb863960da887c49d052c071461d9380beadf13a"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78830728,
+          "allocated": 78830728,
+          "sha256": "3927157c5d361f3c525440082ae8643e92af90e9b22fc27542f06abc6f6386c8"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 70452704,
+          "allocated": 70452704,
+          "sha256": "45b2a6e9c60e7c26d408b2351bd347982f44b2aaf173268cc3b706a4d1d44055"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 76135768,
+          "allocated": 76135768,
+          "sha256": "c77c8a6b87acc36ecea171c7f118d01d803aeed0c9234aa120abfca47aea6ab3"
+        },
+        {
+          "path": "d6ebd84e3ef7c5f2779ebaf4325ffa3c/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 85974832,
+          "allocated": 85974832,
+          "sha256": "5d0638d8dd9fba5c43730361275bacc2050291a5e896c3ec7d2d72b81eaaf305"
+        }
+      ],
+      "bytes": 311493106,
+      "allocated": 311493106
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\d88b3d783522598d33266063975442b2",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "43365d621ddb0272c903d0f6ded4ceb96953c2587be41e1258c3025688f8383d",
+        "jni/arm64-v8a/libpokrov-core.so": "cfe931b939726c63a58a7f6808caf579c34afa93633d4f7c6be658c38539bea0",
+        "jni/x86/libpokrov-core.so": "6fe762d4768d7541b19e49dd9cfe8bd98bf667d85e0f0a48e87b26366698c0b7",
+        "jni/x86_64/libpokrov-core.so": "84b0138ab6eab6994194a4fddfa2d20c9b7e14e98b5f935a8cdbb5921b3a76b9"
+      },
+      "files": [
+        {
+          "path": "d88b3d783522598d33266063975442b2/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "0ea6212b9be1f6ece1ff6b490090b92b3c0b7cff395d962a957e9f943f329d9a"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98730,
+          "allocated": 98730,
+          "sha256": "1a49c2bdff585f686bb060bcfba2f7fe622d8d8e6536b81989380919fc2c7fdc"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78150944,
+          "allocated": 78150944,
+          "sha256": "cfe931b939726c63a58a7f6808caf579c34afa93633d4f7c6be658c38539bea0"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 69846624,
+          "allocated": 69846624,
+          "sha256": "43365d621ddb0272c903d0f6ded4ceb96953c2587be41e1258c3025688f8383d"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 75632032,
+          "allocated": 75632032,
+          "sha256": "6fe762d4768d7541b19e49dd9cfe8bd98bf667d85e0f0a48e87b26366698c0b7"
+        },
+        {
+          "path": "d88b3d783522598d33266063975442b2/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 85501256,
+          "allocated": 85501256,
+          "sha256": "84b0138ab6eab6994194a4fddfa2d20c9b7e14e98b5f935a8cdbb5921b3a76b9"
+        }
+      ],
+      "bytes": 309229931,
+      "allocated": 309229931
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\daf01aa68f74d3b61b0b399bd9f42b45",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "5653f2a1e51dc20330ce72fdfcd1e8192cd71cf11c091dc49d28a6a2f5697f4e",
+        "jni/arm64-v8a/libpokrov-core.so": "d949282fd7d536cfd144c5723c3f39bb4ac35929faa8d855493aa7698d31dfa2",
+        "jni/x86/libpokrov-core.so": "cce5940b9e96d923b7c67ed8534586d7bc2ecb3b43ca6d9a059af8da75c8d7c6",
+        "jni/x86_64/libpokrov-core.so": "5229cb40eaa685329ecc8938a85dcbc59a2ee0da3b321fed40f4efa4b0d74bdb"
+      },
+      "files": [
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "fdfc9960f71c1d951d2322fe3d03211ef968e8d1fbbd154e70bf5fda362dca9c"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98729,
+          "allocated": 98729,
+          "sha256": "ac579439f9d731828e9cd038bb863960da887c49d052c071461d9380beadf13a"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78849096,
+          "allocated": 78849096,
+          "sha256": "d949282fd7d536cfd144c5723c3f39bb4ac35929faa8d855493aa7698d31dfa2"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 70462704,
+          "allocated": 70462704,
+          "sha256": "5653f2a1e51dc20330ce72fdfcd1e8192cd71cf11c091dc49d28a6a2f5697f4e"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 76145720,
+          "allocated": 76145720,
+          "sha256": "cce5940b9e96d923b7c67ed8534586d7bc2ecb3b43ca6d9a059af8da75c8d7c6"
+        },
+        {
+          "path": "daf01aa68f74d3b61b0b399bd9f42b45/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 85993456,
+          "allocated": 85993456,
+          "sha256": "5229cb40eaa685329ecc8938a85dcbc59a2ee0da3b321fed40f4efa4b0d74bdb"
+        }
+      ],
+      "bytes": 311550050,
+      "allocated": 311550050
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\e63927ab416457d585c43099cf2b2b62",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "3cb08a90f1d324382dbe98b300cc346b63cfb177c95d1b42ad437c92a8096b86",
+        "jni/arm64-v8a/libpokrov-core.so": "8d992d23711f50a9fab21245236ff9ab12810136ab50beeaacad80c70ed36da5",
+        "jni/x86/libpokrov-core.so": "039fb30af8bdec6d40535395c3f57d5ea65f1ee6576ab8bb86a2755cab43b356",
+        "jni/x86_64/libpokrov-core.so": "9f33bfa1dcabb8f6d987c35652b19b0a2658f43ba0885c6dbd9986fa66cb41da"
+      },
+      "files": [
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "a50b78d22726d4e06a5d84cb8b69815701b284b3a43a41fd880f9d48996971f1"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98730,
+          "allocated": 98730,
+          "sha256": "1a49c2bdff585f686bb060bcfba2f7fe622d8d8e6536b81989380919fc2c7fdc"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78150944,
+          "allocated": 78150944,
+          "sha256": "8d992d23711f50a9fab21245236ff9ab12810136ab50beeaacad80c70ed36da5"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 69846624,
+          "allocated": 69846624,
+          "sha256": "3cb08a90f1d324382dbe98b300cc346b63cfb177c95d1b42ad437c92a8096b86"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 75632032,
+          "allocated": 75632032,
+          "sha256": "039fb30af8bdec6d40535395c3f57d5ea65f1ee6576ab8bb86a2755cab43b356"
+        },
+        {
+          "path": "e63927ab416457d585c43099cf2b2b62/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 85501256,
+          "allocated": 85501256,
+          "sha256": "9f33bfa1dcabb8f6d987c35652b19b0a2658f43ba0885c6dbd9986fa66cb41da"
+        }
+      ],
+      "bytes": 309229931,
+      "allocated": 309229931
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\e8569a9056d91d7f18d13033260238d7",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "ee5e80779fbf6465464da69cfee03675ee7a126db5b207197c908deb2e39fba9",
+        "jni/arm64-v8a/libpokrov-core.so": "96c6a72769066807ce73af9792e3c110040a08629f9a7b2067655984152ff0c8",
+        "jni/x86/libpokrov-core.so": "0bc602a77f321c60132adcfa82054e278ee53cda6bdea6916f8ea993ccba5b88",
+        "jni/x86_64/libpokrov-core.so": "911179b9207113c508605c1b7b2b4fb041259ee8dadebc522e154ec4534b2d63"
+      },
+      "files": [
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "870f474c6a8635bdeb0ee76070e33a1de541c53befc176ee0d49b65d2aab2647"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98730,
+          "allocated": 98730,
+          "sha256": "1a49c2bdff585f686bb060bcfba2f7fe622d8d8e6536b81989380919fc2c7fdc"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78534168,
+          "allocated": 78534168,
+          "sha256": "96c6a72769066807ce73af9792e3c110040a08629f9a7b2067655984152ff0c8"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 70211720,
+          "allocated": 70211720,
+          "sha256": "ee5e80779fbf6465464da69cfee03675ee7a126db5b207197c908deb2e39fba9"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 76042432,
+          "allocated": 76042432,
+          "sha256": "0bc602a77f321c60132adcfa82054e278ee53cda6bdea6916f8ea993ccba5b88"
+        },
+        {
+          "path": "e8569a9056d91d7f18d13033260238d7/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 86036608,
+          "allocated": 86036608,
+          "sha256": "911179b9207113c508605c1b7b2b4fb041259ee8dadebc522e154ec4534b2d63"
+        }
+      ],
+      "bytes": 310924003,
+      "allocated": 310924003
+    },
+    {
+      "directory": "E:\\POKROV-workspace-cache\\gradle-user-home\\caches\\8.11.1\\transforms\\ea34c50f4473395968e5239163590186",
+      "kind": "extracted_core",
+      "current_core": false,
+      "native_sha256": {
+        "jni/armeabi-v7a/libpokrov-core.so": "2a2f16c120bedcc8b82d75742f213a8a383677513257eca4c75be0bbbd5add3a",
+        "jni/arm64-v8a/libpokrov-core.so": "fe9bf133e0b3ad02a6991a46a8b0a6039531d28be52879ab646c5422c777b7d8",
+        "jni/x86/libpokrov-core.so": "b601f0290d6864abd64793d4d46e511808347541834facf09b998e301e772647",
+        "jni/x86_64/libpokrov-core.so": "77c63fd6343ff43d347db745f3f4e40606d2633920b498e4366bad5087de5c26"
+      },
+      "files": [
+        {
+          "path": "ea34c50f4473395968e5239163590186/metadata.bin",
+          "bytes": 111,
+          "allocated": 111,
+          "sha256": "cf382434eb16f427981603783c726229166d1523c515eae8b5c590392b8bb9c7"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/results.bin",
+          "bytes": 24,
+          "allocated": 24,
+          "sha256": "ff0f074459813d60e5b5c54d3a0806b44af9a377a1060b9af40383b65616a962"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/transformed/jetified-pokrov-core/AndroidManifest.xml",
+          "bytes": 145,
+          "allocated": 145,
+          "sha256": "8c798379ca05e945262f80b692b71f301a80c78f5a3b440ec18aaaf4da4be1c3"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/transformed/jetified-pokrov-core/proguard.txt",
+          "bytes": 65,
+          "allocated": 65,
+          "sha256": "7707d52f2a1f5e4da110928d6a6a49de3e7f9692be2cf1ec599da39029aaae9c"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/transformed/jetified-pokrov-core/R.txt",
+          "bytes": 0,
+          "allocated": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/transformed/jetified-pokrov-core/jars/classes.jar",
+          "bytes": 98730,
+          "allocated": 98730,
+          "sha256": "1a49c2bdff585f686bb060bcfba2f7fe622d8d8e6536b81989380919fc2c7fdc"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/transformed/jetified-pokrov-core/jni/arm64-v8a/libpokrov-core.so",
+          "bytes": 78540664,
+          "allocated": 78540664,
+          "sha256": "fe9bf133e0b3ad02a6991a46a8b0a6039531d28be52879ab646c5422c777b7d8"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/transformed/jetified-pokrov-core/jni/armeabi-v7a/libpokrov-core.so",
+          "bytes": 70216888,
+          "allocated": 70216888,
+          "sha256": "2a2f16c120bedcc8b82d75742f213a8a383677513257eca4c75be0bbbd5add3a"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/transformed/jetified-pokrov-core/jni/x86/libpokrov-core.so",
+          "bytes": 76047840,
+          "allocated": 76047840,
+          "sha256": "b601f0290d6864abd64793d4d46e511808347541834facf09b998e301e772647"
+        },
+        {
+          "path": "ea34c50f4473395968e5239163590186/transformed/jetified-pokrov-core/jni/x86_64/libpokrov-core.so",
+          "bytes": 86043040,
+          "allocated": 86043040,
+          "sha256": "77c63fd6343ff43d347db745f3f4e40606d2633920b498e4366bad5087de5c26"
+        }
+      ],
+      "bytes": 310947507,
+      "allocated": 310947507
+    }
+  ]
+}

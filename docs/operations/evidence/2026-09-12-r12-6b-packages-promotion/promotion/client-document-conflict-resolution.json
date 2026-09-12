@@ -1,0 +1,23 @@
+[
+  {
+    "path": ".gitattributes",
+    "resolution": "Preserved entire main file and appended only the new local suffix",
+    "main_sha256": "2f511e914a5ec7295470164993e033ea76dd2e69f5cf36334364884fc34bc507",
+    "suffix_sha256": "1e8ddccc4ace1fa59a9160ae6385b9b37a4466665b9227898155878ec7989d92",
+    "result_sha256": "49ea4000420cceb3de2222bbe4024f44f6eba523caebf6f05ca8ee80b10236d8"
+  },
+  {
+    "path": "docs/operations/android-release-audit.md",
+    "resolution": "Preserved entire main file and appended only the new local suffix",
+    "main_sha256": "ad697dff88d5f3a7d26d8ed6460f75955c2b63c5b7a2255681bbdd6d4a05a460",
+    "suffix_sha256": "ee4a480e5ddf4b8108646d923b838a92a47a0d69fac30b5e50a6d3eda13fb6a6",
+    "result_sha256": "e09fc2c91bd8bd76bc5a4904153d142a60c7efd4f0f2e1d705422fca7dc6b290"
+  },
+  {
+    "path": "docs/operations/windows-release-readiness.md",
+    "resolution": "Preserved entire main file and appended only the new local suffix",
+    "main_sha256": "5a360ecd8e3cdf1f57c9cf1eb9a7143b5081cba60f968c4d53b38ad1098e77d4",
+    "suffix_sha256": "ee4a480e5ddf4b8108646d923b838a92a47a0d69fac30b5e50a6d3eda13fb6a6",
+    "result_sha256": "1eb8e9d1b295f505f8ca64c7723d2558dfa48cb26c12f0416a711cb9c7f12978"
+  }
+]
