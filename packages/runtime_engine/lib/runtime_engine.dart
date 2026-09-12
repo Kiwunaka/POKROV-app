@@ -702,6 +702,9 @@ String _publicRuntimeMessage({
   if (hostBridgeUnavailable) {
     return 'Не удалось связаться с системным модулем.';
   }
+  final egressRuntimeState = phase == RuntimePhase.running
+      ? 'Системный VPN остаётся включённым; выход через него не подтверждён.'
+      : 'POKROV отключил VPN.';
   switch (failureKind) {
     case 'desktop_competing_vpn_active':
       return 'Другой системный VPN уже управляет маршрутами Windows. Отключите его туннель и повторите подключение POKROV.';
@@ -720,21 +723,25 @@ String _publicRuntimeMessage({
     case 'runtime_stop_failed':
       return 'POKROV не смог корректно отключиться.';
     case 'core_egress_probe_failed':
-      return 'POKROV не подтвердил защищенное подключение и отключил системный VPN.';
+      return phase == RuntimePhase.running
+          ? 'POKROV не подтвердил защищенное подключение. $egressRuntimeState'
+          : 'POKROV не подтвердил защищенное подключение и отключил системный VPN.';
     case 'core_egress_dns_failed':
-      return 'Не удалось определить адрес сервера проверки через подключение. POKROV отключил VPN.';
+      return 'Не удалось определить адрес сервера проверки через подключение. $egressRuntimeState';
     case 'core_egress_connect_failed':
-      return 'Не удалось соединиться с сервером проверки через подключение. POKROV отключил VPN.';
+      return 'Не удалось соединиться с сервером проверки через подключение. $egressRuntimeState';
     case 'core_egress_tls_failed':
-      return 'Не удалось согласовать TLS с сервером проверки. POKROV отключил VPN.';
+      return 'Не удалось согласовать TLS с сервером проверки. $egressRuntimeState';
     case 'core_egress_tls_timeout':
-      return 'Согласование TLS с сервером проверки не завершилось вовремя. POKROV отключил VPN. Причина не установлена.';
+      return 'Согласование TLS с сервером проверки не завершилось вовремя. $egressRuntimeState Причина не установлена.';
     case 'core_egress_response_timeout':
-      return 'Сервер проверки не ответил вовремя после установки соединения. POKROV отключил VPN. Причина не установлена.';
+      return 'Сервер проверки не ответил вовремя после установки соединения. $egressRuntimeState Причина не установлена.';
     case 'core_egress_timeout':
-      return 'Проверка подключения не завершилась вовремя. POKROV отключил VPN. Причина не установлена.';
+      return 'Проверка подключения не завершилась вовремя. $egressRuntimeState Причина не установлена.';
     case 'core_egress_probe_unavailable':
-      return 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
+      return phase == RuntimePhase.running
+          ? 'POKROV не завершил проверку защищенного подключения. $egressRuntimeState Попробуйте еще раз.'
+          : 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
     case 'desktop_tun_egress_probe_failed':
       return 'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы не оставить устройство без сети.';
     case 'profile_identity_mismatch':
