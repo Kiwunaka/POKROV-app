@@ -1,0 +1,7 @@
+Packaged privacy check failed
+At C:\r12-c05-wintun-20260912\V01_CANARY_SETUP_PATH\run.ps1:26 char:46
++ ...  -not $child.closed_core_code){throw 'Packaged privacy check failed'}
++                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Packaged privacy check failed:String) [], RuntimeException
+    + FullyQualifiedErrorId : Packaged privacy check failed
+ 

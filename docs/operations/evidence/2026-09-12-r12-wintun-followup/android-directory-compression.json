@@ -1,0 +1,13 @@
+{
+  "status": "PASS_DIRECTORY_COMPRESSION_INHERITANCE",
+  "utc": "2026-09-12T00:39:57.979601+00:00",
+  "directory_count": 1500,
+  "existing_files_unchanged": 5283,
+  "roots": [
+    "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates",
+    "E:\\r12client\\apps\\android_shell\\build\\app\\outputs",
+    "E:\\r12client\\apps\\android_shell\\.dart_tool\\flutter_build"
+  ],
+  "mode": "NTFS LZNT1 directory inheritance for subsequently created files; existing content unchanged",
+  "reason": "Current Android package output peak exceeded disk reserve; compressed output storage avoids extra uncompressed duplicates"
+}

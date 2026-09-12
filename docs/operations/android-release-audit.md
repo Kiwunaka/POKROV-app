@@ -1031,3 +1031,27 @@ and explicit uTLS license reference. All previous bytes and 185 recorded
 bodies are retained. [Source evidence](evidence/2026-09-11-r12-utls-file-attribution/README.md)
 binds the 77 selected files to Core 904. The root license gap of the pinned
 fork and full C05 clearance remain open; exact package checks are pending.
+
+## 2026-09-12 Core880 Wintun follow-up and setup-path finding
+
+The [exact source/Windows follow-up](evidence/2026-09-12-r12-wintun-followup/README.md)
+retains four passing coordinated PR/main CI runs, a 304-file installer extraction,
+nine Windows native tests and the 3902-entry source packet metadata. Android
+packaging stopped twice at the disk reserve and is not complete. Invalid-config
+privacy checks pass, but a separate setup-path marker leaks through Core880
+stderr with debug disabled. Core6b271de fixes that source path; its rebuilt
+libraries/packages and installed acceptance remain separate. Full C05/V01,
+licensing, corresponding source and release gates remain open.
+
+## 2026-09-12 Core6b setup privacy binding
+
+The [new Core binding](evidence/2026-09-12-r12-setup-privacy-binding/README.md)
+removes caller directories and listen addresses from setup diagnostics. The
+regression fails on old source and passes after the fix; the full Core script
+passes. Two native builds per platform are byte-identical. Exact new DLL tests
+pass 100 proxy cycles and six-category canaries in FFI/stdout/stderr plus five
+generated files, including a setup-path marker. Host routes/DNS are unchanged.
+Consumer analyze, 81 runtime tests, 8 Android tests and seed/docs contracts pass.
+Five binary scans retain nine advisory IDs with bounded static dispositions;
+191 verbatim notice blocks and source-packet metadata are retained. Current
+packages, installed TUN/privacy, full source/licensing and release remain open.

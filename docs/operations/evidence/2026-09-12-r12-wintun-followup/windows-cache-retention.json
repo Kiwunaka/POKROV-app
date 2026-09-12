@@ -1,0 +1,7 @@
+{
+  "source": "E:\\r12client\\apps\\windows_shell\\.dart_tool\\flutter_build",
+  "files": 21,
+  "status": "PASS_BYTES_PRESERVED",
+  "reason": "Previous identical build flow failed C1083 with stale Flutter output cache",
+  "destination": "E:\\r12-c05-wintun-prior-flutter-cache-20260912"
+}

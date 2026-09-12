@@ -43,3 +43,10 @@ apps/linux_shell/packaging/debian/postrm text eol=lf
 apps/linux_shell/packaging/linux-packages-public.asc -text
 docs/operations/evidence/2026-09-11-r12-l04-linux-package/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 docs/operations/evidence/2026-09-11-r12-l04-linux-desktop/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+
+docs/operations/evidence/2026-09-12-r12-wintun-followup/** -text whitespace=cr-at-eol
+docs/operations/evidence/2026-09-12-r12-wintun-followup/**/*.log -whitespace
+
+docs/operations/evidence/2026-09-12-r12-setup-privacy-binding/** -text whitespace=cr-at-eol
+docs/operations/evidence/2026-09-12-r12-setup-privacy-binding/**/*.log -whitespace
+docs/operations/evidence/2026-09-12-r12-setup-privacy-binding/setup-source-delta.patch -whitespace

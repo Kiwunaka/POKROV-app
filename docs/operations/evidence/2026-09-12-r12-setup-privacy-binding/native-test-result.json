@@ -1,0 +1,119 @@
+{
+  "status": "PASS",
+  "base_source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "overlay": {
+    "base_source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+    "files": [
+      {
+        "path": "docs/architecture.md",
+        "bytes": 12537,
+        "sha256": "2c5a1611b69213846eab830b1d91984cad073769caa7adcfe244801db22abfd9"
+      },
+      {
+        "path": "v2/hcore/grpc_server.go",
+        "bytes": 9843,
+        "sha256": "1834cc5015d8f4df3f6f8f9b882897428670ac0eb62518a54d6927d2add4fb93"
+      },
+      {
+        "path": "v2/hcore/privacy_test.go",
+        "bytes": 2629,
+        "sha256": "dba2cba589f25fae8778c7f25eda62ad893e3a02b272be71a353957a0522f643"
+      }
+    ]
+  },
+  "network_isolated": true,
+  "uid": 65534,
+  "steps": [
+    {
+      "label": "old_setup_expected_privacy_failure",
+      "command": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+        "test",
+        "-count=1",
+        "-run",
+        "^TestSetupDoesNotLogCallerPathsOrListenAddress$",
+        "./v2/hcore"
+      ],
+      "expected_exit": 1,
+      "exit_code": 1,
+      "elapsed_seconds": 137.096,
+      "stdout_sha256": "01c8713fc97fadd4a1f9022478fa4cf047783a28e9009dd9b2a87b767fc60c8c",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "safe_summary": [
+        "--- FAIL: TestSetupDoesNotLogCallerPathsOrListenAddress (0.02s)",
+        "    privacy_test.go:44: setup stderr is absent or contains caller paths/listen address",
+        "FAIL",
+        "FAIL\tgithub.com/Kiwunaka/POKROV-core/v2/hcore\t0.065s",
+        "FAIL"
+      ],
+      "raw_output_saved": false
+    },
+    {
+      "label": "fixed_setup_and_runtime_failure",
+      "command": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+        "test",
+        "-count=1",
+        "-run",
+        "TestSetupDoesNotLogCallerPathsOrListenAddress|TestRuntimeFailureRedactsEveryDiagnosticOutput",
+        "./v2/hcore"
+      ],
+      "expected_exit": 0,
+      "exit_code": 0,
+      "elapsed_seconds": 10.788,
+      "stdout_sha256": "452205bf227e23ad3e7ee2d352608362edb10eb4e71ee40d6e5efaf3d8cb13ff",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "safe_summary": [
+        "ok  \tgithub.com/Kiwunaka/POKROV-core/v2/hcore\t0.051s"
+      ],
+      "raw_output_saved": false
+    },
+    {
+      "label": "full_core_gate",
+      "command": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/test.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go"
+      ],
+      "expected_exit": 0,
+      "exit_code": 0,
+      "elapsed_seconds": 177.919,
+      "stdout_sha256": "81d4dc53b8cd5b5111d0613c8373188a44d7b98ecfa5bbdc541b6ce2885673ab",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "safe_summary": [
+        "ok  \tgithub.com/Psiphon-Labs/psiphon-tls\t0.028s",
+        "ok  \tgithub.com/Kiwunaka/POKROV-core/internal/observability\t0.013s",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/platform/desktop\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/platform/linux\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/platform/mobile\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/ray2sing\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/ray2sing/cmd\t[no test files]",
+        "ok  \tgithub.com/Kiwunaka/POKROV-core/ray2sing/ray2sing\t0.057s",
+        "ok  \tgithub.com/Kiwunaka/POKROV-core/v2/config\t0.045s",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/v2/db\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/v2/hcommon\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/v2/hcommon/constants\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/v2/hcommon/request\t[no test files]",
+        "ok  \tgithub.com/Kiwunaka/POKROV-core/v2/hcore\t0.054s",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/v2/hcore/tunnelservice\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/v2/hello\t[no test files]",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/v2/hutils\t[no test files]",
+        "ok  \tgithub.com/Kiwunaka/POKROV-core/v2/linuxruntime\t0.006s",
+        "?   \tgithub.com/Kiwunaka/POKROV-core/v2/service_manager\t[no test files]",
+        "ok  \tgithub.com/sagernet/sing-box/protocol/awg\t0.029s",
+        "ok  \tgithub.com/sagernet/sing-box/common/urltest\t0.410s",
+        "ok  \tgithub.com/sagernet/sing-box/daemon\t0.087s",
+        "ok  \tgithub.com/sagernet/sing-box/experimental/libbox\t0.043s",
+        "ok  \tgithub.com/sagernet/sing-box/common/tls\t0.007s",
+        "ok  \tgithub.com/sagernet/sing-box/common/tls\t0.009s",
+        "POKROV Core tests OK."
+      ],
+      "raw_output_saved": false
+    }
+  ],
+  "stage": "full_core_gate",
+  "completed_utc": "2026-09-12T01:12:31.217078+00:00"
+}

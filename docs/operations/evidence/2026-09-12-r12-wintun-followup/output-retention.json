@@ -1,0 +1,9 @@
+{
+  "status": "PASS_ALL_PREVIOUS_OUTPUT_BYTES_RETAINED",
+  "archive_sha256": "cd9b5b9fbdb3c8b0762e018e4a50a88934db268bf6bf63a412eb589ad6696d58",
+  "archive_bytes": 508897778,
+  "files": 1296,
+  "total_file_bytes": 1026005822,
+  "destination": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-client-2662-before-wintun-20260912/outputs.tar.gz",
+  "original_local_outputs_deleted": false
+}

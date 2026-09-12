@@ -1,0 +1,6 @@
+{
+  "status": "PASS_EXACT_SOURCE_BRANCH",
+  "source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "branch": "codex/wintun-exact-source-20260912",
+  "promotion_line_changed": false
+}

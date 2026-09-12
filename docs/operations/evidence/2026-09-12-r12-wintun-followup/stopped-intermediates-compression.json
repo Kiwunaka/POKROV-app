@@ -1,0 +1,148 @@
+{
+  "utc": "2026-09-12T00:32:44.011323+00:00",
+  "status": "PASS_ALL_BYTES_PRESERVED",
+  "reason": "Stopped Android build crossed estimated intermediate storage; preserve 40GiB floor without deleting evidence",
+  "files": [
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\arm64-v8a\\libapp.so",
+      "bytes": 8127408,
+      "sha256": "36acef397fefcdbc510138548957d97934331e5da9932d816ccdc34a42a1d06b",
+      "allocated_before": 8127408,
+      "allocated_after": 3158016
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\arm64-v8a\\libflutter.so",
+      "bytes": 144312672,
+      "sha256": "38fc35b2fe79f8653c9e7c0811cc922c00e885fcfac86c6c42bfb35394c7f097",
+      "allocated_before": 144312672,
+      "allocated_after": 37027840
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\arm64-v8a\\libpokrov-core.so",
+      "bytes": 78150944,
+      "sha256": "cfe931b939726c63a58a7f6808caf579c34afa93633d4f7c6be658c38539bea0",
+      "allocated_before": 78150944,
+      "allocated_after": 23703552
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libapp.so",
+      "bytes": 8962652,
+      "sha256": "cba1cad6592ace590aa9b28134366aa3c2a808e3c72db6fe7ee49fe0c7e762ab",
+      "allocated_before": 8962652,
+      "allocated_after": 3457024
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libflutter.so",
+      "bytes": 131381824,
+      "sha256": "a3e7d86fb605a57bc1e3dc4edf1f9e3b3e3a699aa552a1da0ac83450dc155557",
+      "allocated_before": 131381824,
+      "allocated_after": 36364288
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libpokrov-core.so",
+      "bytes": 69846624,
+      "sha256": "43365d621ddb0272c903d0f6ded4ceb96953c2587be41e1258c3025688f8383d",
+      "allocated_before": 69846624,
+      "allocated_after": 22831104
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\x86\\libpokrov-core.so",
+      "bytes": 75632032,
+      "sha256": "6fe762d4768d7541b19e49dd9cfe8bd98bf667d85e0f0a48e87b26366698c0b7",
+      "allocated_before": 75632032,
+      "allocated_after": 25706496
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\x86_64\\libapp.so",
+      "bytes": 8324016,
+      "sha256": "ca665c4e7e1256292720392e87c176d88204d9fd87ca0eef638c2b169033c796",
+      "allocated_before": 8324016,
+      "allocated_after": 3194880
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\x86_64\\libflutter.so",
+      "bytes": 144837816,
+      "sha256": "614ed89be04229bdc900ca8ffcb91c30b1b9f76cfac3ba6830efff09e5165e29",
+      "allocated_before": 144837816,
+      "allocated_after": 37322752
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\directRelease\\mergeDirectReleaseNativeLibs\\out\\lib\\x86_64\\libpokrov-core.so",
+      "bytes": 85501256,
+      "sha256": "84b0138ab6eab6994194a4fddfa2d20c9b7e14e98b5f935a8cdbb5921b3a76b9",
+      "allocated_before": 85501256,
+      "allocated_after": 25686016
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\arm64-v8a\\libapp.so",
+      "bytes": 8127408,
+      "sha256": "eb35d5b4065daf4ef6df19f94885914675b77c715677bb1d8cbf9b668dcca835",
+      "allocated_before": 3158016,
+      "allocated_after": 3158016
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\arm64-v8a\\libflutter.so",
+      "bytes": 144312672,
+      "sha256": "38fc35b2fe79f8653c9e7c0811cc922c00e885fcfac86c6c42bfb35394c7f097",
+      "allocated_before": 37027840,
+      "allocated_after": 37027840
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\arm64-v8a\\libpokrov-core.so",
+      "bytes": 78150944,
+      "sha256": "8d992d23711f50a9fab21245236ff9ab12810136ab50beeaacad80c70ed36da5",
+      "allocated_before": 23703552,
+      "allocated_after": 23703552
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libapp.so",
+      "bytes": 8962652,
+      "sha256": "e0b4773f5b38786c3a39affd68f76373054ceea9da03a0cc18aa6650d7e99327",
+      "allocated_before": 3457024,
+      "allocated_after": 3457024
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libflutter.so",
+      "bytes": 131381824,
+      "sha256": "a3e7d86fb605a57bc1e3dc4edf1f9e3b3e3a699aa552a1da0ac83450dc155557",
+      "allocated_before": 36364288,
+      "allocated_after": 36364288
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\armeabi-v7a\\libpokrov-core.so",
+      "bytes": 69846624,
+      "sha256": "3cb08a90f1d324382dbe98b300cc346b63cfb177c95d1b42ad437c92a8096b86",
+      "allocated_before": 22831104,
+      "allocated_after": 22831104
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\x86\\libpokrov-core.so",
+      "bytes": 75632032,
+      "sha256": "039fb30af8bdec6d40535395c3f57d5ea65f1ee6576ab8bb86a2755cab43b356",
+      "allocated_before": 25706496,
+      "allocated_after": 25706496
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\x86_64\\libapp.so",
+      "bytes": 8324016,
+      "sha256": "71bea67b1e56efb3384c3e3de5dc031834248dffb761dc939db5da6145955deb",
+      "allocated_before": 3194880,
+      "allocated_after": 3194880
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\x86_64\\libflutter.so",
+      "bytes": 144837816,
+      "sha256": "614ed89be04229bdc900ca8ffcb91c30b1b9f76cfac3ba6830efff09e5165e29",
+      "allocated_before": 37322752,
+      "allocated_after": 37322752
+    },
+    {
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\intermediates\\merged_native_libs\\storeRelease\\mergeStoreReleaseNativeLibs\\out\\lib\\x86_64\\libpokrov-core.so",
+      "bytes": 85501256,
+      "sha256": "9f33bfa1dcabb8f6d987c35652b19b0a2658f43ba0885c6dbd9986fa66cb41da",
+      "allocated_before": 25686016,
+      "allocated_after": 25686016
+    }
+  ],
+  "saved_bytes": 536625276
+}

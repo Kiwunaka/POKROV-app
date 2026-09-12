@@ -1,0 +1,557 @@
+[
+  {
+    "path": "android-analyze.log",
+    "bytes": 96,
+    "sha256": "ec788ecabd12f19c3ef1ef768136592c8d136d35ecd7c7efb85acc6d47d5d250"
+  },
+  {
+    "path": "android-tests.log",
+    "bytes": 1169,
+    "sha256": "9c0520d4ddd80c8ac18d43b82ae4efd6d1e459f62dbd54e713f7c8d4367591dd"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-arm64-v8a.binary-sbom.log",
+    "bytes": 143,
+    "sha256": "4f3801fb9125a6bfeea2e8d81bae571599978fe1d0ac5f72a4f26d8b43a4d5eb"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-arm64-v8a.binary.cdx.json",
+    "bytes": 105409,
+    "sha256": "6308abfa8af0fbd7fe0d6da75333c11053a68ac97159c170acc12b17578f3ac0"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-arm64-v8a.extract.jsonl",
+    "bytes": 21912,
+    "sha256": "412f25443106693ef89bcc161fde1b9278574284d64ffacfa81718fbd3476ee7"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-arm64-v8a.govulncheck.jsonl",
+    "bytes": 645886,
+    "sha256": "ea341c22bdeafc16ccd26c610e48b234611385d6d4ce072844e667cd5014704f"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-arm64-v8a.govulncheck.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-arm64-v8a.scan.json",
+    "bytes": 3782,
+    "sha256": "220382915f5f05f879c56b8d8603f4bf56b3961e925d997d7277f7cc1d55afed"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-armeabi-v7a.binary-sbom.log",
+    "bytes": 143,
+    "sha256": "4f3801fb9125a6bfeea2e8d81bae571599978fe1d0ac5f72a4f26d8b43a4d5eb"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-armeabi-v7a.binary.cdx.json",
+    "bytes": 105387,
+    "sha256": "d80d6c9bd149c6478eeaba45ab460d438eb9144fa0b56cb67a718601dbf129f9"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-armeabi-v7a.extract.jsonl",
+    "bytes": 21906,
+    "sha256": "c0a7f1d8b8701dee92c0b1f73a810a5d6b77a0c3241b013761eab00ad379170c"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-armeabi-v7a.govulncheck.jsonl",
+    "bytes": 645884,
+    "sha256": "23d45502c9f519529e06e7b082826cead950830998e973464695fdbd4e3facd4"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-armeabi-v7a.govulncheck.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-armeabi-v7a.scan.json",
+    "bytes": 3800,
+    "sha256": "de2748813415b8a2e7a6129d63452f1652618efcaca5bd29341fafc4ee95bf00"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86.binary-sbom.log",
+    "bytes": 143,
+    "sha256": "4f3801fb9125a6bfeea2e8d81bae571599978fe1d0ac5f72a4f26d8b43a4d5eb"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86.binary.cdx.json",
+    "bytes": 105379,
+    "sha256": "cb40018604e06031d012fbdfaa2224db6c2abcb3cd0c530c9d1c43b8ac320e41"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86.extract.jsonl",
+    "bytes": 21906,
+    "sha256": "ccf1b9634f21c14110bad75539c73be91cbbdf0b3e6cf9594178992617da4b0c"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86.govulncheck.jsonl",
+    "bytes": 645884,
+    "sha256": "a94ea389ad1a752a5fe05834af3081337777e7bc5de7624bcc2b061fafda24c2"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86.govulncheck.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86.scan.json",
+    "bytes": 3728,
+    "sha256": "5351ca27f6db43990a1b9fad898df408a19ef3f1a914f8fff6ca0f15022a8e19"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86_64.binary-sbom.log",
+    "bytes": 143,
+    "sha256": "c29837491cf996d84b521a1e55ca7fcd1e43dd5fca92cca5afaab4499eda62e7"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86_64.binary.cdx.json",
+    "bytes": 105406,
+    "sha256": "45714694c5ce3a51f1bee764a1fc2254d7363f15010e8c211423c628b26e2fe0"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86_64.extract.jsonl",
+    "bytes": 21912,
+    "sha256": "314376209af636a0fb64ab75d0636f91c57a234c6b0579d165f7279a0ceec73c"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86_64.govulncheck.jsonl",
+    "bytes": 645886,
+    "sha256": "ea793ac1a524b5c4d73b0ee1d8dd8b120357f2cc8b05f1a287588271d15929ae"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86_64.govulncheck.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "binary-scans/libpokrov-core-x86_64.scan.json",
+    "bytes": 3755,
+    "sha256": "f379438a940173c24eb3a9a6f6f87634c7dde4d3261447a69703efd43f69ab4a"
+  },
+  {
+    "path": "binary-scans/pokrov-core.binary-sbom.log",
+    "bytes": 143,
+    "sha256": "4f3801fb9125a6bfeea2e8d81bae571599978fe1d0ac5f72a4f26d8b43a4d5eb"
+  },
+  {
+    "path": "binary-scans/pokrov-core.binary.cdx.json",
+    "bytes": 101311,
+    "sha256": "4e5ceff8fbe30a157c8fafa9cbb4460d1e9487ce3f638a273cc62266a2bf3ac6"
+  },
+  {
+    "path": "binary-scans/pokrov-core.extract.jsonl",
+    "bytes": 21168,
+    "sha256": "801adde3325aa16be58aa6c7526cfdd678d688a2134cbb71f7da4c258ee48b64"
+  },
+  {
+    "path": "binary-scans/pokrov-core.govulncheck.jsonl",
+    "bytes": 650163,
+    "sha256": "94d20fa478489c5a86a6033323fcaa19661adaa26326fb9b24df5a458ff910a5"
+  },
+  {
+    "path": "binary-scans/pokrov-core.govulncheck.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "binary-scans/pokrov-core.scan.json",
+    "bytes": 3692,
+    "sha256": "8211ec5acbcff963aae6c23f3b28761e4b4e93284942ae3db87ae497eff56cf4"
+  },
+  {
+    "path": "bind-client.py",
+    "bytes": 11104,
+    "sha256": "9b992642a7dbb031b027c9d482da27239f3cdba3e0c12157aac573fa8fc08957"
+  },
+  {
+    "path": "binding.json",
+    "bytes": 2224,
+    "sha256": "716515402aebebede71b53a738caf27f02fb9c84f2627d8083e7c1b7cf5e6256"
+  },
+  {
+    "path": "check-windows-descriptor.py",
+    "bytes": 2007,
+    "sha256": "293cbd6e7948747e09e1455c0f0580e9220ee9d4efb1d9a11425d06ad3253dcd"
+  },
+  {
+    "path": "consumer-checks.json",
+    "bytes": 3827,
+    "sha256": "bee34da48cd72d11252f126f1fa22ca682a8e220d4e5318bba51ed15af95d00f"
+  },
+  {
+    "path": "consumer-checks.py",
+    "bytes": 2253,
+    "sha256": "96222fd69868c12c20f1c3cdbd3fde2c54e16d889731ef476a2f6fb5e469b45f"
+  },
+  {
+    "path": "correct-local-sbom.py",
+    "bytes": 5655,
+    "sha256": "28d2756aac6d4b322ebcb950c9d5ea623c011136e493eee92afc7a4294621d9b"
+  },
+  {
+    "path": "diff-check.log",
+    "bytes": 891,
+    "sha256": "297f0698125f8618eff4677221e2df6c9ea3cec0943094ea9889e7b02e069003"
+  },
+  {
+    "path": "docs-contract.log",
+    "bytes": 26,
+    "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+  },
+  {
+    "path": "download.json",
+    "bytes": 2226,
+    "sha256": "7523c3d7465422fb8a1796510e9514b620185d8148ac6d367c05f2a7e3b591d1"
+  },
+  {
+    "path": "final-source.json",
+    "bytes": 949400,
+    "sha256": "2003fdbfb9c88188a89e9e33289fbb45d4d863ca5e10a49982da172a856a89ee"
+  },
+  {
+    "path": "host-network-resumed-after.json",
+    "bytes": 281,
+    "sha256": "2d258aae7a58ac31248f1576e5ddf4a8442b0f01a5b6e3f9182faf058a65468b"
+  },
+  {
+    "path": "host-network-resumed-before.json",
+    "bytes": 220,
+    "sha256": "a7f2bdd993879a10d4ef274046d44f1b3c70c0db996ae2cedca46610dfe4ffe7"
+  },
+  {
+    "path": "native/android-evidence-corrected.json",
+    "bytes": 2114,
+    "sha256": "8a78108e44a62087ce8dc0ccf5694cbfb68d9f83f90e56d5707a56852d93d411"
+  },
+  {
+    "path": "native/android-evidence.json",
+    "bytes": 2114,
+    "sha256": "cc08e7404be6ab0ab66a07ab2a56542eff833144ace7fbeba962e27659955be7"
+  },
+  {
+    "path": "native/audit/artifact-composition.json",
+    "bytes": 22283,
+    "sha256": "f8f30a621095fa4c8e05b412d0e4d30450b8ce6272f71b7126f8756135d3a406"
+  },
+  {
+    "path": "native/audit/final-libpokrov-core-arm64-v8a.buildinfo.log",
+    "bytes": 12125,
+    "sha256": "2549176ac1be9e2c8b1da6069a74012c4b2f8f3d458c78bd5088ad15cd0abf57"
+  },
+  {
+    "path": "native/audit/final-libpokrov-core-armeabi-v7a.buildinfo.log",
+    "bytes": 12116,
+    "sha256": "fd0bcffd663c7cc69320e37a0d4f5969f28abf7d6ddc30cdbaa0132d0cbd7a88"
+  },
+  {
+    "path": "native/audit/final-libpokrov-core-x86.buildinfo.log",
+    "bytes": 12111,
+    "sha256": "86b458d57f223a4bc93b9cd997ab6124bddeb9ac29636c34919fe7a859fe6110"
+  },
+  {
+    "path": "native/audit/final-libpokrov-core-x86_64.buildinfo.log",
+    "bytes": 12120,
+    "sha256": "5b5fc0defad9eac1469fcd4da0f4676bc2bde53275a26513ddd5da6778582bb6"
+  },
+  {
+    "path": "native/audit/final-pokrov-core.buildinfo.log",
+    "bytes": 11659,
+    "sha256": "e1ca06cbf0757ceb3a009d3cf35a3a79c1b332dcc8cb250cdef0e5ad06335876"
+  },
+  {
+    "path": "native/build_android_a.log",
+    "bytes": 562,
+    "sha256": "d1c6d227be6eb8dadf4bec5474a4b8e292c01a97d4a80e497118722072e7cbfd"
+  },
+  {
+    "path": "native/build_android_b.log",
+    "bytes": 562,
+    "sha256": "d1c6d227be6eb8dadf4bec5474a4b8e292c01a97d4a80e497118722072e7cbfd"
+  },
+  {
+    "path": "native/build_windows_a.log",
+    "bytes": 767,
+    "sha256": "f023e49a8e211702f68a8cd31dea41209b78701c640e371e64d80d69eb5c894f"
+  },
+  {
+    "path": "native/build_windows_b.log",
+    "bytes": 767,
+    "sha256": "f023e49a8e211702f68a8cd31dea41209b78701c640e371e64d80d69eb5c894f"
+  },
+  {
+    "path": "native/evidence_android.log",
+    "bytes": 145,
+    "sha256": "491a9cffe0b282412209ab11b01164bd903b8a7a30b9b057650eeb661de6c596"
+  },
+  {
+    "path": "native/evidence_windows.log",
+    "bytes": 145,
+    "sha256": "7d2f71a4f0e6b6bdc20437c9cda79ce070771580034225c065aa562ca8c66a52"
+  },
+  {
+    "path": "native/local-modules.json",
+    "bytes": 5685,
+    "sha256": "83cf38533bf7b449fcbb73a530068c8545be8db8073925c441408d08238f3b8d"
+  },
+  {
+    "path": "native/progress.json",
+    "bytes": 10265,
+    "sha256": "ffb94a5647ce78cd78038196a697257c2d0843460a8964beb69c63a36ae26140"
+  },
+  {
+    "path": "native/sbom/core-source.cdx.json",
+    "bytes": 311896,
+    "sha256": "1009d037b634467f821b7b8d327ce1ef6e3325ac9ba65dc6617a64f0596ec9e7"
+  },
+  {
+    "path": "native/sbom/corrected/core-source.cdx.json",
+    "bytes": 315015,
+    "sha256": "83218131811e2bedbc40afee0274cce6b9ea59d487e21b020be46967e2858152"
+  },
+  {
+    "path": "native/sbom/corrected/engine-source.cdx.json",
+    "bytes": 269137,
+    "sha256": "fa280f688b44b4deff9a83cef6efd17740e693d913d55a5a21b0439b57e429ce"
+  },
+  {
+    "path": "native/sbom/engine-source.cdx.json",
+    "bytes": 267107,
+    "sha256": "f9555ab250aac2476d26444564b7e9268d0147d3785ed6bbe4cb209786104e49"
+  },
+  {
+    "path": "native/sbom-local-source-correction.json",
+    "bytes": 11908,
+    "sha256": "0ced374b004de972134f59c29a39975cc600fcec2c847b42384598230dad36da"
+  },
+  {
+    "path": "native/sbom_core-source.log",
+    "bytes": 5426,
+    "sha256": "9aa9203c9f839572c7dab1abd0b16b996408fee4669e6c96128982218b8aae85"
+  },
+  {
+    "path": "native/sbom_engine-source.log",
+    "bytes": 5331,
+    "sha256": "829b4e8503aabcce89bc6c0a15dcaa22cfbfc515ed6120eefc8aa7ca66f99b55"
+  },
+  {
+    "path": "native/windows-evidence-corrected.json",
+    "bytes": 2262,
+    "sha256": "57e5fb8c9af57a38d90746b45a09a0b86573bd597735c17470a05051b79df5ab"
+  },
+  {
+    "path": "native/windows-evidence.json",
+    "bytes": 2262,
+    "sha256": "f8376916d496305503c6953379fba4aab9ebaaa9f7730822d79d6d501e525629"
+  },
+  {
+    "path": "native-audit.py",
+    "bytes": 4701,
+    "sha256": "157de0af5ab2db2e077071d8ea70c17b5e568200a852736ae01e70815e6f1184"
+  },
+  {
+    "path": "native-final-build.py",
+    "bytes": 6837,
+    "sha256": "6714dd76bd6fed7357118377de96c0277a11178baff499bd1a4a45a4c41e6111"
+  },
+  {
+    "path": "native-source-packet.py",
+    "bytes": 9454,
+    "sha256": "457c57eeae61af5949f490a3855076a80fd309145d2f68ae51e85c4b28e05fe2"
+  },
+  {
+    "path": "native-test-result.json",
+    "bytes": 5026,
+    "sha256": "efc77f36c4e7ac33be89063700ecaec2cad2c466b71713200ab75edf03ff2470"
+  },
+  {
+    "path": "native-test.py",
+    "bytes": 4488,
+    "sha256": "c97d2ee95c2cdf6d6ba2d3275c30170a436ef11733446330c13e56526827c46f"
+  },
+  {
+    "path": "notices-preparation.json",
+    "bytes": 52275,
+    "sha256": "e6b3ee4eb2fdfafaf83cf9ef11337d9427cc86f1b0b8b744958540a735d638dc"
+  },
+  {
+    "path": "overlay.json",
+    "bytes": 574,
+    "sha256": "b53666aca5585cb863a263e3546bf310df4167e1632d66b9f0163acca3159ef8"
+  },
+  {
+    "path": "prepare-binding-inputs.py",
+    "bytes": 4044,
+    "sha256": "e8026e05ba420c6f3a7a4ff4c5cf366ec73dfacce597e741589d51ea9da825fc"
+  },
+  {
+    "path": "previous-runtime-binding.json",
+    "bytes": 8552,
+    "sha256": "158c4265659df02f8ad1064203b35e2b0008bb433a7edbe21ad4577fa46b597c"
+  },
+  {
+    "path": "prior-installer-retention.json",
+    "bytes": 880,
+    "sha256": "b58462a0aaee0fe4c7b426e2a02d0e64130ff46e7a62e24c31b3247e34a9d67b"
+  },
+  {
+    "path": "proxy-100-cycles.log",
+    "bytes": 1717,
+    "sha256": "f62c05d133a9aec9630e767ce884e24bc6fc49767ab5f77216391a817181e8e2"
+  },
+  {
+    "path": "README.md",
+    "bytes": 1995,
+    "sha256": "4d8e8d5a34024c8822fb35abdedf66980d5b9b5c95a57e331892537ed22d37fa"
+  },
+  {
+    "path": "release-artifacts-unchanged.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "runtime-analyze.log",
+    "bytes": 97,
+    "sha256": "dc2909acca4bd07acc0de25f5905474ad3519ccfe50b680cc29231ad51430763"
+  },
+  {
+    "path": "runtime-tests.log",
+    "bytes": 6203,
+    "sha256": "7bffb6dbcfa9f25e6b51a91f733d131c9139e6b2c81d3dc38ceed84c0e638b15"
+  },
+  {
+    "path": "scan-collection.json",
+    "bytes": 2708,
+    "sha256": "9a3fd85df42815b10ee236d96978c2b658be60524b8bb9ed4f3467a7a19d6b7a"
+  },
+  {
+    "path": "setup-source-delta.patch",
+    "bytes": 1760,
+    "sha256": "47978d4f52c501f0dbf945b559534a3d5d29277fda88671fa310e5e3f8d539ae"
+  },
+  {
+    "path": "source-dll-privacy/check-persisted-sinks.py",
+    "bytes": 1961,
+    "sha256": "a4837b3d4b930e335d444076099cc798c951adb5812fa0cbacfefa23d8604b23"
+  },
+  {
+    "path": "source-dll-privacy/child.ps1",
+    "bytes": 2577,
+    "sha256": "8becf4d476df159554ac5859f082166380542f5dd407aa0da524b896fd6fffc1"
+  },
+  {
+    "path": "source-dll-privacy/host-network-ffi-after.json",
+    "bytes": 281,
+    "sha256": "9fabad8c71ba1045e22967793a798bd9e29247ab44ee60a13f48c6c33789b1e9"
+  },
+  {
+    "path": "source-dll-privacy/host-network-ffi-before.json",
+    "bytes": 220,
+    "sha256": "56eb1b14a925f1b1c173a9e023e5c1d600acb6743161b2cbb6202c1a0e81387d"
+  },
+  {
+    "path": "source-dll-privacy/network.ps1",
+    "bytes": 1104,
+    "sha256": "7bdc25aea49b0f0b93dd9c818861664ea5c4ce63247d2f7030c461d640d54a0e"
+  },
+  {
+    "path": "source-dll-privacy/persisted-sinks.json",
+    "bytes": 2440,
+    "sha256": "e23ed4ebb0bca78115c6f25afd74bbb341eb9918ff730a93031b5bbd2b600ffd"
+  },
+  {
+    "path": "source-dll-privacy/receipt.json",
+    "bytes": 2816,
+    "sha256": "02d94f400404636cab843eff254c2a573a1e7cee785db4fa12b60188970b88e8"
+  },
+  {
+    "path": "source-dll-privacy/run.ps1",
+    "bytes": 2729,
+    "sha256": "d61fde5b942b8e69bc225176416c7478e29bed2c396b6ceb6d82b43646963555"
+  },
+  {
+    "path": "source-packet/collection.json",
+    "bytes": 2492,
+    "sha256": "f9a104f970fef8a4bd4773670d6b8bb637a0eebb6026a4f5646d07ec35b8569f"
+  },
+  {
+    "path": "source-packet/libpokrov-core-arm64-v8a.offline.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "source-packet/libpokrov-core-arm64-v8a.offline.stdout.json",
+    "bytes": 868207,
+    "sha256": "6959e350d3eeef281f6b47c4e2ce35ab272211272b296ddc326d983655f33c48"
+  },
+  {
+    "path": "source-packet/libpokrov-core-armeabi-v7a.offline.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "source-packet/libpokrov-core-armeabi-v7a.offline.stdout.json",
+    "bytes": 864615,
+    "sha256": "a9debc3a4ee08411b1289aa79bcd4e99c7865da5ecc2cb8f5b1b11068e6a305b"
+  },
+  {
+    "path": "source-packet/libpokrov-core-x86.offline.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "source-packet/libpokrov-core-x86.offline.stdout.json",
+    "bytes": 864857,
+    "sha256": "3bdbdd12a1e1698c661a79325c47aca9c4f0fe40502909fec4291651f9fe7d0a"
+  },
+  {
+    "path": "source-packet/libpokrov-core-x86_64.offline.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "source-packet/libpokrov-core-x86_64.offline.stdout.json",
+    "bytes": 869140,
+    "sha256": "7f0d4a22553b3a7573b28eaff87e0c23f0396979d6d6183d3e7336abfe824de3"
+  },
+  {
+    "path": "source-packet/offline-graph-checks.json",
+    "bytes": 9486,
+    "sha256": "1111fd9e0df4c291faf99ec2b365ce46c44d2754ccb458b066ac9894cd3eb876"
+  },
+  {
+    "path": "source-packet/pokrov-core.offline.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "source-packet/pokrov-core.offline.stdout.json",
+    "bytes": 858293,
+    "sha256": "10a065ec40d1bc5659b419bd20e54e2acd9c50f0385327e6ace080a1d4db5bd8"
+  },
+  {
+    "path": "source-packet/progress.json",
+    "bytes": 15470,
+    "sha256": "b0f0b3678640f22bf4729bd50ec295e5228feb34a4ea2dc1f3b80aab618e0e80"
+  },
+  {
+    "path": "source-packet/source-manifest.json",
+    "bytes": 776310,
+    "sha256": "b349e9f8a8f04a0af8f1a0b64c5b3c01efbccddd8930f4ed8847c062940febe0"
+  },
+  {
+    "path": "static-triage-binding.json",
+    "bytes": 1396,
+    "sha256": "ab028a0c74a9b17608b5f6f52a19a3a6cd0347a42033c9e449abbdd6a5dccf49"
+  },
+  {
+    "path": "validate-seed.log",
+    "bytes": 1818,
+    "sha256": "13f1a6ba673c5b832a4101e8065f2cd71ce19bc6c5feb6dcd570e5eb7962510b"
+  },
+  {
+    "path": "windows-abi-proxy.json",
+    "bytes": 2096,
+    "sha256": "91dfb3e2b1015cdaf6ccdd1502496d4d7318d748d0389baa837403c134325fa6"
+  }
+]
