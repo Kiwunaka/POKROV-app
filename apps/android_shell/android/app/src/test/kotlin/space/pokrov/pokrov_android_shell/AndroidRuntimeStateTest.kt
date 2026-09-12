@@ -315,7 +315,7 @@ class AndroidRuntimeStateTest {
         assertEquals("core_egress_probe_failed", snapshot["last_failure_kind"])
         assertEquals("core_egress_probe_failed", snapshot["last_stop_reason"])
         assertEquals(
-            "POKROV не подтвердил защищенное подключение и отключил системный VPN.",
+            "POKROV не подтвердил защищенное подключение.",
             snapshot["message"],
         )
     }

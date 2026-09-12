@@ -597,6 +597,15 @@ and emergency retry limits and the closed AWG degraded-TUN exception remain.
 The stage describes the check, not a proven node fault or filtering cause;
 the closed exception text cannot distinguish DNS, timeout or DPI subcauses.
 
+Failure copy keeps the observed stage separate from runtime lifecycle. When
+the host reports `running` after an unsuccessful egress check (including the
+closed AWG retained-TUN lane), the shared message says that the system VPN
+remains enabled and egress is unconfirmed. It must not claim that VPN stopped.
+The existing stop copy remains for non-running snapshots. Native stage text
+alone makes no teardown claim because the same text serves both retained-TUN
+and fail-closed paths. Failure codes, health, retries and TUN ownership do not
+change with this presentation rule.
+
 The shared catalog distinguishes pending profile provisioning (`API-011`),
 unresolved interface (`ROUTE-005`) and an unspecified runtime failure (`CORE-009`).
 Subscription refresh failure keeps its API/auth observation rather than claiming
