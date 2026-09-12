@@ -1,0 +1,27 @@
+[
+  {
+    "path": "windows-resume-baseline.json",
+    "bytes": 696,
+    "sha256": "c7ba88c2b01ff354369522992e526c1d4490e2b430ccc85e8bb05cd404ea946e"
+  },
+  {
+    "path": "windows-resume-pre-cleanup-baseline.json",
+    "bytes": 696,
+    "sha256": "6ea8ce351b851cb2c44e281ea3cdd15d11b69aa0096ac3e0e459c684f2d8a5a8"
+  },
+  {
+    "path": "windows-resume-canary-vm-result.json",
+    "bytes": 9167,
+    "sha256": "443a3b5741acd389e2b080c22d0239c8203b1feea67a83734cafac15a8c80693"
+  },
+  {
+    "path": "windows-resume-resumed-preflight-result.json",
+    "bytes": 1173,
+    "sha256": "f226f41288290846aa5cb113a4c08791827ba51265d6d1cbdcded95ef8e662ea"
+  },
+  {
+    "path": "windows-resume-watch-vm.py",
+    "bytes": 3472,
+    "sha256": "83067844790deadf7f0574bcb7192920740a2cf8ea2c2f1605ca69ae63d3ca71"
+  }
+]

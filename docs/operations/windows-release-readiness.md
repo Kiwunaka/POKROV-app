@@ -1590,3 +1590,9 @@ CI passes; protections are unchanged. Current setup was not executed.
 The earlier VM attempt returned an unrelated fullscreen capture and was
 restored off without installation. Authenticode remains SKIPPED_BY_OWNER;
 installed acceptance, licensing and full release gates remain open.
+
+The later [resumed source806 preflight](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-resumed-windows-preflight)
+verified the previous installed304 files, state and staged setup after local
+cleanup. Manual Windows login was not completed. The storage guard paused
+the VM and it was shut down with all13 snapshots retained. Current source806
+installation and release gates remain open.

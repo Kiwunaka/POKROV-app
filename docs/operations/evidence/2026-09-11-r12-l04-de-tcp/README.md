@@ -81,3 +81,22 @@ and in the Git index, 57 local links, private-material patterns and the native
 host counter interpretation. Platform documentation checks passed 33 tests
 and its context audit. Both scoped `git diff --check` checks passed; no client
 release-artifact delta exists. These are documentation/provenance checks.
+
+## 2026-09-12 existing-port control
+
+The [native port comparison](de-port-control-20260912.json) performs nine
+sequential MINI-host connections: six to the existing DE VPN listener (443)
+and three to its existing SSH listener (22). One 443 connection passes;
+five 443 connections and all three 22 connections time out after four seconds.
+Each attempt has a hashed socket tuple bound to MINI capture counters. Failed
+attempts each show three outgoing SYNs and no local SYN-ACK/RST; the successful
+443 flow appears in both captures. No corresponding failed flow was observed
+in the DE capture. Both observers report zero kernel drops. Capture start/end
+epochs were not retained, so exact overlap of every retransmission is not claimed.
+
+The failure therefore affects both tested ports, rather than only the VPN
+port or a TLS handshake. This does not identify a dropping device or policy,
+and cannot explain the older unidentified curl35 session. No VM, profile,
+firewall or service setting was changed. Both observer processes exited zero.
+The [script](observe-de-port-control-20260912.py) and result extend the retained
+manifest; earlier captures and their conclusions remain unchanged. L04 stays open.

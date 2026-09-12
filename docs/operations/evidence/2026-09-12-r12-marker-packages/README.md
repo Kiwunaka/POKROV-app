@@ -39,3 +39,19 @@ its snapshots retained. That record is in the platform work-order evidence.
 The prior physical Huawei F711 run and earlier Windows installation remain
 valid only for their exact prior bytes. New806 installed acceptance, full
 privacy/license and release gates remain open.
+
+## 2026-09-12 resumed Windows preflight
+
+After local worktree cleanup, the same Windows11 guest booted with NIC none.
+The [resumed preflight](windows-resume-resumed-preflight-result.json) confirms
+all304 previous 2aa570/Core6b files, unchanged state/secure-store hashes and
+the staged source806 installer hash. The guest remained at its lock screen;
+no app input or installer execution occurred. The storage monitor paused it
+when host C: free space approached40GiB, despite only17MiB of active VDI growth
+on E:. The VM was then shut down through ACPI; all13 snapshot IDs remain.
+C: free space later recovered. The temporary host storage change has no
+identified writer; it is not attributed to the guest or another application.
+
+[Retained file hashes](windows-resume-files.json) bind the two baseline
+observations, monitor result/script and final powered-off receipt. This is
+preflight and cleanup evidence; source806 installed acceptance remains open.

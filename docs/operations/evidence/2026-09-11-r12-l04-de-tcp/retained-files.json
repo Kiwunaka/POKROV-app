@@ -160,5 +160,17 @@
     "sha256": "4eb6093fb6aaf5d8b32a840b9ad86182e3ab1345f0aa3f153b9c7999101fcac4",
     "bytes": 4720,
     "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-native-host-wire.py"
+  },
+  {
+    "path": "de-port-control-20260912.json",
+    "bytes": 7912,
+    "sha256": "4e1f37c2797f1ea5786a5b4e82ca85e79733c9142abe5806bbe44a536cbd80ed",
+    "source": "C:\\r12-l04-ui-poll-20260911\\de-port-control-20260912.json"
+  },
+  {
+    "path": "observe-de-port-control-20260912.py",
+    "bytes": 4867,
+    "sha256": "d5c103706b0a56a0ff053e1801c230a19cac842312a6b0449b6b73e9c195e440",
+    "source": "C:\\r12-l04-ui-poll-20260911\\observe-de-port-control-20260912.py"
   }
 ]
