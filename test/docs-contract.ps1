@@ -1491,6 +1491,7 @@ if (-not $androidGradle.Contains('keepDebugSymbols += ["**/libpokrov-core.so"]')
 
 foreach ($requiredDirectBuildMarker in @(
   '"--flavor", "direct"',
+  '"--dart-define=POKROV_RELEASE_CHANNEL=direct"',
   'app-direct-release.apk',
   'app-arm64-v8a-direct-release.apk',
   'app-armeabi-v7a-direct-release.apk',
@@ -1503,6 +1504,7 @@ foreach ($requiredDirectBuildMarker in @(
 foreach ($requiredStoreBuildMarker in @(
   '"appbundle"',
   '"--flavor", "store"',
+  '"--dart-define=POKROV_RELEASE_CHANNEL=store"',
   'app-store-release.aab',
   'jarsigner.exe',
   'keytool.exe',

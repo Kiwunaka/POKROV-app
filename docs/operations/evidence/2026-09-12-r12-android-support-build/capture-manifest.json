@@ -1,0 +1,157 @@
+[
+  {
+    "path": ".gitattributes",
+    "bytes": 49,
+    "sha256": "5c293bc4a8762da239e872f399f00ec843850aaa6fc9192ef734866aef22219b"
+  },
+  {
+    "path": "admin-scan-remote.py",
+    "bytes": 9220,
+    "sha256": "aac0ce679b27f2072f774d6bcb190e9175ed19cc3cacb35534c5a7c3d51c5760"
+  },
+  {
+    "path": "admin-scan.py",
+    "bytes": 812,
+    "sha256": "7d7aaf0fddd2a35c9f3855ca99a895d19dcfc797b807b7ef151b1477764f6f3d"
+  },
+  {
+    "path": "host-network-installed-after.json",
+    "bytes": 281,
+    "sha256": "021e150c927a5c82d3a06d701c9096f197462d4b2b9c30b9ee6c61154a2ab010"
+  },
+  {
+    "path": "host-network.ps1",
+    "bytes": 1106,
+    "sha256": "ae681fdb3e320cedc4b1f198135047136b9ee6b61daa9b2fb75f849059cf2228"
+  },
+  {
+    "path": "identity-analyze.log",
+    "bytes": 98,
+    "sha256": "8a8bda0e2fa50d6bc8e0238070f45d0e229701ba2ffdfa603c8393c6e60bcc05"
+  },
+  {
+    "path": "identity-before-fix-test.log",
+    "bytes": 3062,
+    "sha256": "c9436cfa180cf42a76ade5902356c41357c08b0128557e2425fac8c053d5cc80"
+  },
+  {
+    "path": "identity-docs-contract.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "identity-docs-final.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "identity-focused-tests.log",
+    "bytes": 3433,
+    "sha256": "2fbac53ca62c3effacd9415667d983883c181368e83b15a5919901a79bc8d924"
+  },
+  {
+    "path": "identity-seed-full.log",
+    "bytes": 1818,
+    "sha256": "4bf52b2540b1ea792937d22ae4c7e8f2a7422673486362150b26eae44ffd4185"
+  },
+  {
+    "path": "identity-seed.log",
+    "bytes": 497,
+    "sha256": "5082007bd965f5d37654fbe036ebe5165794ce291c22a3be124e3536847703d9"
+  },
+  {
+    "path": "ldplayer-before.json",
+    "bytes": 974,
+    "sha256": "5b1e5750028b4936d4f42be688084f136b604449655742a915d7e4b52296c37e"
+  },
+  {
+    "path": "ldplayer-progress.json",
+    "bytes": 9139,
+    "sha256": "b697288e6d8d541b4c471de1729df40efef3d90145c4f06de56a402e3d845146"
+  },
+  {
+    "path": "native-admin-payload-scan.json",
+    "bytes": 2515,
+    "sha256": "2a7c211f6beb798f80c0a14a9df44125d6871e63d7ce647ffe260cb641c72cfa"
+  },
+  {
+    "path": "owned-case-readback.json",
+    "bytes": 856,
+    "sha256": "7f7d73712c6026306aad658ebf4b1279ff68130973ca9af74d37fda9b919aa42"
+  },
+  {
+    "path": "prepare-admin.py",
+    "bytes": 1401,
+    "sha256": "58fa8ff6403ba5e546fed1790b406f7f20e30d9e6bae692e502734549ba4bb75"
+  },
+  {
+    "path": "read-case.py",
+    "bytes": 1852,
+    "sha256": "e6ee35f60de75aecd2005730ccc8c72377bcebd2e6da035500cabd91ad5eda81"
+  },
+  {
+    "path": "README.md",
+    "bytes": 3219,
+    "sha256": "8be4f2c62d1b6c0043d2e726aa85825a1d2c8195863f3ceebe2eb12bd84217b3"
+  },
+  {
+    "path": "restoration.json",
+    "bytes": 9337,
+    "sha256": "8f39e20ddb9fb9fac14e8d7a0cfa2cbdb7b6e0cb5f26eebd999bd8595d65a081"
+  },
+  {
+    "path": "retry/ldplayer-before.json",
+    "bytes": 974,
+    "sha256": "3eeb856f3e1f73506e34f2f802f053601c9e2f9a14d1e651dab2c38635738c01"
+  },
+  {
+    "path": "retry/ldplayer-progress.json",
+    "bytes": 14445,
+    "sha256": "d46084c0e29f22e36446203eeb7e57fc136860cb354ef00250efff43a8ed7ab1"
+  },
+  {
+    "path": "retry/restoration.json",
+    "bytes": 14643,
+    "sha256": "59688d16342afc32bb3ec816d18d74c9d8b9d3fa458d5fe46cd83314164361ee"
+  },
+  {
+    "path": "retry/watch-ldplayer.py",
+    "bytes": 3153,
+    "sha256": "7b66bc6e17e7d588572349bf5af7342825074d5e1defe415cbe6b0908762aa03"
+  },
+  {
+    "path": "summary-before.json",
+    "bytes": 1946,
+    "sha256": "f8b2d3e4850d1483545015dde17a37f3826cc7bbc5958d14152a34b6c759cada"
+  },
+  {
+    "path": "summary-before.png",
+    "bytes": 179407,
+    "sha256": "ac57b1465e1af1ad345f2123a6a27674acbef781372016a4bad36a9ac8165cd0"
+  },
+  {
+    "path": "summary-created.json",
+    "bytes": 2028,
+    "sha256": "68b8f102739feaaa81ae096bd3457a5c60ff55cbec4796e45fe67d92fe223d37"
+  },
+  {
+    "path": "summary-created.png",
+    "bytes": 197130,
+    "sha256": "f933fc79621504b3de13d5874543a2db181f752844e659ddd28fc7f4e31c3139"
+  },
+  {
+    "path": "summary-delivered-ui.json",
+    "bytes": 2028,
+    "sha256": "68b8f102739feaaa81ae096bd3457a5c60ff55cbec4796e45fe67d92fe223d37"
+  },
+  {
+    "path": "ui.py",
+    "bytes": 2188,
+    "sha256": "ad8f1a16e099ed9506a055985579877120057b1a168e6cc04779407494fa7162"
+  },
+  {
+    "path": "watch-ldplayer.py",
+    "bytes": 3153,
+    "sha256": "7b66bc6e17e7d588572349bf5af7342825074d5e1defe415cbe6b0908762aa03"
+  }
+]

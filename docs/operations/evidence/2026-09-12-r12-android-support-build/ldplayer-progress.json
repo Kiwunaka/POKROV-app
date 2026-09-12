@@ -1,0 +1,439 @@
+{
+  "utc": "2026-09-12T04:19:45.995994+00:00",
+  "instance_index": 3,
+  "before": [
+    "0,pokrov,0,0,0,-1,-1,1080,1920,480",
+    "1,kira,0,0,0,-1,-1,1920,1080,280",
+    "2,moments,0,0,0,-1,-1,1920,1080,280",
+    "3,pokrov-qa-120,0,0,0,-1,-1,1080,1920,480"
+  ],
+  "disk_bytes_before": 4771020800,
+  "growth_budget_bytes": 536870912,
+  "quit_at_growth_bytes": 402653184,
+  "floor_bytes": 42949672960,
+  "free_before": {
+    "C:/": 43738697728,
+    "E:/": 47534624768
+  },
+  "other_disk_sizes_before": {
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian0\\data.vdi": 19144900608,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian0\\sdcard.vdi": 1225785344,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian1\\data.vdi": 16110321664,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian1\\sdcard.vdi": 1074790400,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian2\\data.vdi": 15886974976,
+    "E:\\LDPlayer\\LDPlayer14\\vms\\leidian2\\sdcard.vdi": 1066401792
+  },
+  "samples": [
+    {
+      "seconds": 5.0,
+      "growth_bytes": 1048576,
+      "free": {
+        "C:/": 43738427392,
+        "E:/": 47533588480
+      },
+      "active": false
+    },
+    {
+      "seconds": 10.1,
+      "growth_bytes": 1048576,
+      "free": {
+        "C:/": 43738390528,
+        "E:/": 47533588480
+      },
+      "active": false
+    },
+    {
+      "seconds": 15.2,
+      "growth_bytes": 1048576,
+      "free": {
+        "C:/": 43738263552,
+        "E:/": 47533588480
+      },
+      "active": true
+    },
+    {
+      "seconds": 20.2,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43738218496,
+        "E:/": 47526248448
+      },
+      "active": true
+    },
+    {
+      "seconds": 25.3,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43737108480,
+        "E:/": 47526248448
+      },
+      "active": true
+    },
+    {
+      "seconds": 30.4,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43737104384,
+        "E:/": 47526248448
+      },
+      "active": true
+    },
+    {
+      "seconds": 35.4,
+      "growth_bytes": 8388608,
+      "free": {
+        "C:/": 43737104384,
+        "E:/": 47526248448
+      },
+      "active": true
+    },
+    {
+      "seconds": 40.5,
+      "growth_bytes": 9437184,
+      "free": {
+        "C:/": 43737100288,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 45.5,
+      "growth_bytes": 9437184,
+      "free": {
+        "C:/": 43737026560,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 50.6,
+      "growth_bytes": 9437184,
+      "free": {
+        "C:/": 43737010176,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 55.7,
+      "growth_bytes": 9437184,
+      "free": {
+        "C:/": 43737010176,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 60.7,
+      "growth_bytes": 9437184,
+      "free": {
+        "C:/": 43736936448,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 65.8,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736961024,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 70.9,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736961024,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 75.9,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736961024,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 81.0,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736952832,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 86.0,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736952832,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 91.1,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43737010176,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 96.2,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43737010176,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 101.2,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43737010176,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 106.3,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43737047040,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 111.4,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43737047040,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 116.4,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43737055232,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 121.5,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736989696,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 126.6,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736920064,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 131.6,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736875008,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 136.7,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736875008,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 141.8,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736875008,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 146.8,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736875008,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 151.8,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736846336,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 156.9,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736322048,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 162.0,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736281088,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 167.0,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736281088,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 172.1,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736281088,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 177.1,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736252416,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 182.2,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736252416,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 187.3,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736252416,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 192.3,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736252416,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 197.4,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736186880,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 202.5,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736072192,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 207.5,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736068096,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 212.6,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736137728,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 217.6,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736133632,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 222.7,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736133632,
+        "E:/": 47517859840
+      },
+      "active": true
+    },
+    {
+      "seconds": 227.8,
+      "growth_bytes": 10485760,
+      "free": {
+        "C:/": 43736137728,
+        "E:/": 47517859840
+      },
+      "active": false
+    }
+  ],
+  "status": "MONITORING",
+  "minimum_free": {
+    "C:/": 43733331968,
+    "E:/": 47517859840
+  },
+  "max_growth_bytes": 10485760
+}
