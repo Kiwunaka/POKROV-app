@@ -683,6 +683,10 @@ observable checks instead of one decorative connected badge:
 - one repair action runs at most one staged cycle: disconnect, resolve a fresh
   managed profile, stage, connect, then refresh the checks. It has no retry loop
   and cannot overlap another repair.
+- the open protection sheet follows the same runtime updates as Home. A late
+  host stop replaces the pending tunnel state even after the separate HTTPS
+  probe returns. A pending egress check has no final repair outcome yet;
+  success or support guidance follows the observed result without reconnecting.
 - first-layer recovery copy must stay actionable and must not expose raw
   exceptions, endpoint hostnames, IP addresses, ports, protocol details, or
   engine internals; those details belong only in bounded support diagnostics.
