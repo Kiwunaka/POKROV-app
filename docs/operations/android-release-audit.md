@@ -1368,3 +1368,16 @@ rule. This is not general leak or complete upstream DNS-path proof. Original
 choices/network restored, temporary DEX/listeners removed, all VMs off within
 1MiB growth. Zero global/two ULA addresses are not IPv6 egress evidence.
 Full N08, physical/Windows/RU-origin and remaining DNS/IPv6 gates stay open.
+
+
+## R12-N05 — per-call probe stages, 2026-09-12
+
+The Android source now preserves the Core probe's exact closed connection/TLS
+failure observations instead of reporting an unavailable API. Response-stage
+failures remain generic failed egress. The existing retry, fail-close and
+session/generation boundaries apply; unknown exception text remains unavailable.
+[Source evidence](evidence/2026-09-12-r12-android-probe-observations/README.md)
+retains the initial regression and passing checks: 190 JVM tests per flavor,
+22 focused Flutter tests and two clean package analyses. This is source proof;
+the installed APK has not changed. N05, N01/N03, physical and installed-package
+gates remain open. No release artifact or publication was changed.

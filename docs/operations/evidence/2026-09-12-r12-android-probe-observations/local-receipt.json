@@ -1,0 +1,136 @@
+{
+  "status": "PASS_LOCAL_SOURCE_CHECKS_NOT_INSTALLED_PACKAGE_PROOF",
+  "client_base": "d04a47d8e7d9446cd930bc84dc771c2da46f0a15",
+  "core_source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "source_files": [
+    {
+      "path": "apps/android_shell/android/app/src/main/kotlin/space/pokrov/pokrov_android_shell/AndroidCoreEgressProbe.kt",
+      "bytes": 12093,
+      "sha256": "260c8621215f632be6b013c0615206e1e2ca5524e82ed765090abe868a3ec6a2",
+      "lf_sha256": "260c8621215f632be6b013c0615206e1e2ca5524e82ed765090abe868a3ec6a2"
+    },
+    {
+      "path": "apps/android_shell/android/app/src/main/kotlin/space/pokrov/pokrov_android_shell/AndroidRuntimeSafety.kt",
+      "bytes": 6995,
+      "sha256": "84f7204ea4bce055005830ad3fdb6794e0fe1a872a99aaca3c8af353a63cd2ce",
+      "lf_sha256": "84f7204ea4bce055005830ad3fdb6794e0fe1a872a99aaca3c8af353a63cd2ce"
+    },
+    {
+      "path": "apps/android_shell/android/app/src/main/kotlin/space/pokrov/pokrov_android_shell/PokrovRuntimeVpnService.kt",
+      "bytes": 64868,
+      "sha256": "9f07e3ce93538f154a85cba41b5e0d237c9e351a9712e1fa41b8767be3e3c612",
+      "lf_sha256": "9f07e3ce93538f154a85cba41b5e0d237c9e351a9712e1fa41b8767be3e3c612"
+    },
+    {
+      "path": "apps/android_shell/android/app/src/test/kotlin/space/pokrov/pokrov_android_shell/AndroidCoreEgressProbeTest.kt",
+      "bytes": 11942,
+      "sha256": "41266c81ec92761a80cdebdde2b80b23cbf3e0da353ad67ddc1b4e004cdf6a39",
+      "lf_sha256": "41266c81ec92761a80cdebdde2b80b23cbf3e0da353ad67ddc1b4e004cdf6a39"
+    },
+    {
+      "path": "packages/app_shell/lib/src/shell/seed_shell.dart",
+      "bytes": 240548,
+      "sha256": "3b7d22e71a743ea7796c006052e4c021297e4c3c0c84ac470ccc1b9676e58070",
+      "lf_sha256": "3b7d22e71a743ea7796c006052e4c021297e4c3c0c84ac470ccc1b9676e58070"
+    },
+    {
+      "path": "packages/app_shell/test/pokrov_seed_app_test.dart",
+      "bytes": 482885,
+      "sha256": "902668180e2234464b19cd1edf81467729d508d6ee519fb41b61d5fa80bbf5c1",
+      "lf_sha256": "902668180e2234464b19cd1edf81467729d508d6ee519fb41b61d5fa80bbf5c1"
+    },
+    {
+      "path": "packages/runtime_engine/test/runtime_engine_test.dart",
+      "bytes": 138549,
+      "sha256": "03d15f8f1a94b1f224bb75a9f281352773be07f0ca0bd307a81bddc6e5cac092",
+      "lf_sha256": "b315d1734a21fbd1dcf04450beb0892231910056667184ba36891c97565d50da"
+    }
+  ],
+  "jvm": {
+    "Direct": {
+      "suites": 33,
+      "tests": 190,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "Store": {
+      "suites": 33,
+      "tests": 190,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "red": {
+    "command": "gradlew.bat :app:testDirectDebugUnitTest --tests space.pokrov.pokrov_android_shell.AndroidCoreEgressProbeTest --offline --no-daemon --max-workers=2",
+    "exit_code": 1,
+    "tests": 13,
+    "failures": 1,
+    "explanation": "Completed response-stage failure was incorrectly UNAVAILABLE; expected FAILED"
+  },
+  "green": {
+    "command": "gradlew.bat :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest --offline --no-daemon --max-workers=2",
+    "exit_code": 0
+  },
+  "flutter": {
+    "runtime_observation_test": 1,
+    "shell_fallback_and_egress_tests": 11,
+    "android_shell_tests": 8,
+    "app_shell_analyze": "PASS",
+    "runtime_engine_analyze": "PASS"
+  },
+  "archive": {
+    "path": "local-checks.zip",
+    "bytes": 5392,
+    "sha256": "08b1fd94c80f31785b7a9823787378fab4c2f17bbe2cc949d7aaa658f8823456",
+    "members": [
+      {
+        "path": "red-gradle.log",
+        "bytes": 11233,
+        "sha256": "6da06a20ca97876bf4effe4d3e3a8cf0494969a0984b05fe8f8165e496633a71"
+      },
+      {
+        "path": "green-gradle.log",
+        "bytes": 12496,
+        "sha256": "fd156194d39ab919a23b78f214fe8cf85b23a0e21a5f2cc9e43f933019effb1f"
+      },
+      {
+        "path": "flutter-runtime.log",
+        "bytes": 195,
+        "sha256": "801a296b969beb0b747a2c20a94928be7179bbf949eb20b3e6ef1bd695749c6e"
+      },
+      {
+        "path": "flutter-shell.log",
+        "bytes": 1157,
+        "sha256": "037affd2a8c06e6bf592204d6e2551948306b4c4aba58e9e70d0b012239542ca"
+      },
+      {
+        "path": "flutter-android.log",
+        "bytes": 1179,
+        "sha256": "31a91c462616088c42a76ce9ecb3feae86daac6688ef3233e360c686cb611b63"
+      },
+      {
+        "path": "flutter-analyze-shell.log",
+        "bytes": 98,
+        "sha256": "de18686e5b0c8592f9910af7ad7609d4b906f88c36195a6c57fdc043bd1ba5be"
+      },
+      {
+        "path": "flutter-analyze-runtime.log",
+        "bytes": 98,
+        "sha256": "89ced4230942365f5227aa5e2bc95aff90394a4045af9ca6d3459f67fc9adda6"
+      },
+      {
+        "path": "jvm-results.json",
+        "bytes": 234,
+        "sha256": "1f3e562bef5879cad39645e4aa75694531b4fec413e5e589dc53420e1c582186"
+      }
+    ]
+  },
+  "limits": [
+    "Reflection fixture exercises exact Core closed strings, not the installed gomobile/Android package",
+    "No APK or release library built or installed",
+    "No new device, network-origin, Windows or production proof",
+    "N05 active/I3/PARTIALLY_FIXED and N01/N03 remain open"
+  ]
+}

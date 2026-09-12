@@ -1478,9 +1478,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           final failureKind = current.lastFailureKind?.trim() ?? '';
           final retryableEmergencyFailure =
               widget.appContext.hostPlatform == HostPlatform.android &&
-                  (const <String>{
+                  (current.hasCoreEgressProbeFailure ||
+                      const <String>{
                         'emergency_endpoint_unreachable',
-                        'core_egress_probe_failed',
                         'core_egress_probe_unavailable',
                       }.contains(failureKind) ||
                       (current.phase == RuntimePhase.running &&
@@ -5863,10 +5863,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (widget.appContext.hostPlatform != HostPlatform.android) {
       return false;
     }
-    return const <String>{
-      'core_egress_probe_failed',
-      'core_egress_probe_unavailable',
-    }.contains(snapshot.lastFailureKind?.trim());
+    return snapshot.hasCoreEgressProbeFailure ||
+        snapshot.lastFailureKind?.trim() == 'core_egress_probe_unavailable';
   }
 
   Set<String> _activeAutomaticNodeExclusions() {

@@ -11,12 +11,25 @@ import space.pokrov.core.libbox.StatusMessage
 import space.pokrov.core.libbox.StringIterator
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.lang.reflect.InvocationTargetException
 
 internal enum class AndroidCoreEgressProbeResult {
     HEALTHY,
     FAILED,
+    CONNECT_FAILED,
+    TLS_FAILED,
     UNAVAILABLE,
-    TIMED_OUT,
+    TIMED_OUT;
+
+    val isCompletedFailure: Boolean
+        get() = this == FAILED || this == CONNECT_FAILED || this == TLS_FAILED
+
+    fun failureKind(): String = when (this) {
+        FAILED -> "core_egress_probe_failed"
+        CONNECT_FAILED -> "core_egress_connect_failed"
+        TLS_FAILED -> "core_egress_tls_failed"
+        else -> "core_egress_probe_unavailable"
+    }
 }
 
 internal object AndroidCoreEgressRetryPolicy {
@@ -30,7 +43,7 @@ internal object AndroidCoreEgressRetryPolicy {
                 result == AndroidCoreEgressProbeResult.UNAVAILABLE ||
                     (
                         target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT &&
-                            result == AndroidCoreEgressProbeResult.FAILED
+                            result.isCompletedFailure
                         )
                 )
 
@@ -159,7 +172,7 @@ internal object AndroidCoreEgressProbe {
         return try {
             handler.arm()
             val result = resultFromCore(server, target)
-            if (captureReady && result == AndroidCoreEgressProbeResult.FAILED) {
+            if (captureReady && result.isCompletedFailure) {
                 handler.awaitSafeFailureCategory()
             }
             result
@@ -182,6 +195,15 @@ internal object AndroidCoreEgressProbe {
             when (method.invoke(server, target.tag)) {
                 true -> AndroidCoreEgressProbeResult.HEALTHY
                 false -> AndroidCoreEgressProbeResult.FAILED
+                else -> AndroidCoreEgressProbeResult.UNAVAILABLE
+            }
+        } catch (error: InvocationTargetException) {
+            // Core ProbeError.Error() exposes only these closed stage strings.
+            // Never publish or infer a cause from arbitrary exception text.
+            when (error.targetException?.message) {
+                "URL probe connection failed" -> AndroidCoreEgressProbeResult.CONNECT_FAILED
+                "URL probe TLS negotiation failed" -> AndroidCoreEgressProbeResult.TLS_FAILED
+                "URL probe response failed", "URL probe failed" -> AndroidCoreEgressProbeResult.FAILED
                 else -> AndroidCoreEgressProbeResult.UNAVAILABLE
             }
         } catch (_: Throwable) {

@@ -1282,6 +1282,14 @@ void main() {
         'resolver_timeout',
         'POKROV не смог подтвердить DNS-подключение устройства.'
       ),
+      'core_egress_connect_failed': (
+        'core_egress_connect_failed',
+        'Не удалось соединиться с сервером проверки через подключение. POKROV отключил VPN.'
+      ),
+      'core_egress_tls_failed': (
+        'core_egress_tls_failed',
+        'Не удалось согласовать TLS с сервером проверки. POKROV отключил VPN.'
+      ),
       'default_network_dpi_detected': (
         'runtime_failure',
         'POKROV не смог завершить действие на устройстве.'
