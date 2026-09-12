@@ -609,7 +609,7 @@ PreparedSupportBundle preparePokrovClientSupportBundle({
       build: DiagnosticBuildSummary(
         platform: platform,
         appVersion: appVersion,
-        buildId: candidateLabel,
+        buildId: buildNumber,
         channel: channel,
       ),
       network: DiagnosticNetworkSummary(

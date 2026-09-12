@@ -1,0 +1,88 @@
+{
+  "status": "PASS_ANDROID_SUMMARY_ACCESS_SCAN",
+  "case_number": 58,
+  "origin": "brain-origin real HTTPS and worker-key in-memory scan",
+  "source_revision": "25c6f7a13a04ee41fa6a86b84fbf90e045580a2f",
+  "external_oidc_retested": false,
+  "planted_native_to_app_canaries_exercised": false,
+  "plaintext_or_credentials_exported": false,
+  "lookups": [
+    {
+      "kind": "case_number",
+      "own_result_count": 1,
+      "canary_matches": 0
+    },
+    {
+      "kind": "diagnostic_id",
+      "own_result_count": 1,
+      "canary_matches": 0
+    }
+  ],
+  "operator_summary": {
+    "diagnostic_profile": "summary",
+    "app_version": "1.2.0",
+    "build_number": "pokrov-local-client",
+    "platform": "android",
+    "architecture": null,
+    "last_phase": null,
+    "last_error_code": null,
+    "proof_outcome": "unknown",
+    "attempt_link_source": null
+  },
+  "build_identity": {
+    "app_version": "1.2.0",
+    "build_number": null,
+    "platform": "android",
+    "channel": "direct",
+    "candidate_label": null,
+    "git_revision": null,
+    "architecture": null
+  },
+  "payload_scan": {
+    "profile": "summary",
+    "plaintext_bytes": 1465,
+    "plaintext_sha256": "af9e693bb67d4acee3c3b1e4cbd43dbfdfde7b1a8514586524d9a25b6d58eeed",
+    "file_count": 3,
+    "files": [
+      {
+        "path": "build/identity.json",
+        "bytes": 96,
+        "sha256": "d112861d4af750186fcb3f529c65cb8442d1616fd25559ec71a7932f100d3e79",
+        "canary_matches": 0
+      },
+      {
+        "path": "network/summary.json",
+        "bytes": 159,
+        "sha256": "df4ddc208fb0f4dfd0e461ac00b70c356764b30a2f8e653baa5f91abf77adb0a",
+        "canary_matches": 0
+      },
+      {
+        "path": "redaction/report.json",
+        "bytes": 137,
+        "sha256": "72981ff4c6c913c0d559a363f955a67c422e6a8b7d519a06c9fec64ad4f7127f",
+        "canary_matches": 0
+      }
+    ],
+    "canary_matches": 0,
+    "extended_or_crash_included": false
+  },
+  "access": {
+    "without_step_up": "DENIED",
+    "controlled_fixture_step_up": true,
+    "download": "PASS_EXACT_CIPHERTEXT",
+    "replay": "DENIED",
+    "cache_control": "no-store",
+    "audit_rows_before": 0,
+    "audit_rows_after": 2,
+    "audit_actions": [
+      "downloaded",
+      "grant_issued"
+    ]
+  },
+  "existing_case_status_preserved": "open",
+  "session_cleanup": {
+    "fixture_revoked": true,
+    "preexisting_unchanged": true
+  },
+  "utc": "2026-09-12T04:30:27.913869+00:00"
+}

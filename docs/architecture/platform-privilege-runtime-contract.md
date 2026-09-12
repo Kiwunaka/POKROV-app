@@ -564,6 +564,11 @@ named matrix entry.
 
 ## Observability boundary
 
+Support bundle `build.build_id` and `build/identity.json` carry the same actual
+build number used by the support-mode audience and operational events. The
+candidate label is not the build number. Android production APKs declare the
+`direct` diagnostics channel; store AABs declare `store`.
+
 Platform components emit only closed lifecycle identifiers, correlation and
 session/generation identifiers, bounded stage/result enums and sanitized
 status. Windows service/UI logs are separate; Android release logs stay
