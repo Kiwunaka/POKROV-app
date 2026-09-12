@@ -1,0 +1,81 @@
+{
+  "status": "PASS_BOUNDED_PERSISTED_SINKS",
+  "utc": "2026-09-12T01:00:50.408211+00:00",
+  "core_source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "dll_sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2",
+  "files": [
+    {
+      "path": "working/data/AppSettings.db/000001.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    },
+    {
+      "path": "working/data/AppSettings.db/CURRENT",
+      "bytes": 16,
+      "sha256": "179aee986b08dd1c9b42165766a9f86be710e30d130c79ff234c4f8fbfb85f76",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    },
+    {
+      "path": "working/data/AppSettings.db/LOCK",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    },
+    {
+      "path": "working/data/AppSettings.db/LOG",
+      "bytes": 425,
+      "sha256": "763853b8d7b3e36b288a9aca1c86ef47831ac58eb188e53119f6c2d3bd73baae",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    },
+    {
+      "path": "working/data/AppSettings.db/MANIFEST-000000",
+      "bytes": 54,
+      "sha256": "135e8bb0b3d297c61e0b989d02d4445d9a16a7d4ffd1c66fcff7b42e1bcc53ac",
+      "contains": {
+        "credentials": false,
+        "config": false,
+        "url": false,
+        "ip": false,
+        "path": false,
+        "pii": false
+      }
+    }
+  ],
+  "excluded_input_fixture": {
+    "path": "input.json",
+    "bytes": 165,
+    "sha256": "f7d92a8f49d2d881da496d0b11d4021300cb6faa239f3679c703f9595ac3badf",
+    "all_six_markers_present": true
+  },
+  "host_routes_dns_unchanged": true,
+  "limits": "Only files created in this isolated invalid-config flow and separately captured FFI/stdout/stderr; no installed service, live connection or crash dump proof."
+}

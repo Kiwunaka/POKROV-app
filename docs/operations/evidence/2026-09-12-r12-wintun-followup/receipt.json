@@ -1,0 +1,615 @@
+{
+  "status": "PARTIAL_WINTUN_SOURCE_AND_WINDOWS_PROOF",
+  "utc": "2026-09-12T01:17:47.777402+00:00",
+  "client_source": "c06cab7776dd3db5282535ba6c5309bf0119f6bb",
+  "core_source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "windows_installer": {
+    "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+    "size": 29184678,
+    "sha256": "2e114c6ab88c8c7b898272d978c21b1608cc28c0c6cf1f2d47e2cc6392762caa"
+  },
+  "windows_staged_and_extracted_files": 304,
+  "windows_native_ctest_passed": 9,
+  "android_packages": "NOT_COMPLETED_TWO_STORAGE_GUARD_STOPS",
+  "source_packet": "SOURCE_PREPARATION_ONLY_3902_HASHED_ENTRIES_FIVE_OFFLINE_GRAPHS",
+  "coordinated_promotion": "PASS_TWO_SIGNED_EXACT_TREE_MERGES_AND_FOUR_CI_RUNS",
+  "conditional_ci_skip": "Validate exact replay refs remains skipped in client push/PR workflows",
+  "privacy_config_fault": "PASS_BOUNDED_FFI_STDOUT_STDERR_AND_FIVE_PERSISTED_FILES",
+  "privacy_setup_path": "FAIL_PRIVACY_DEBUG_FALSE_STDERR",
+  "subsequent_fix": "Core6b271de source fix is separately tested; its binaries and acceptance are not represented here",
+  "installed_880b_acceptance": "NOT_PERFORMED",
+  "full_licensing_corresponding_source": "OPEN",
+  "release_or_deploy": false,
+  "captures": [
+    {
+      "path": "windows-package-audit.json",
+      "bytes": 126486,
+      "sha256": "94959ac7760d4ad1e26e1c7adf4597ea3cc3f7a67a75b59343c711e32fc25bcf"
+    },
+    {
+      "path": "windows-build-progress.json",
+      "bytes": 5163,
+      "sha256": "e48183d55a532c91cc8778a7548f0d938db4db2e897449de6d8ec143557808c8"
+    },
+    {
+      "path": "windows-build.log",
+      "bytes": 3297,
+      "sha256": "bb3b7caca311c6f5cfd259bae855943522fd71c9da7226375079e560b12ff67a"
+    },
+    {
+      "path": "windows-driver.log",
+      "bytes": 694,
+      "sha256": "7de992ef191a6b9d87c4fefa6a605273d67a700664698d51115831af0aad24a0"
+    },
+    {
+      "path": "build-windows.ps1",
+      "bytes": 3834,
+      "sha256": "e7362c075ad628e0a28d856bfed90a561dbbbe78f870e703adb50a16462d4d52"
+    },
+    {
+      "path": "watch-windows-build.py",
+      "bytes": 2283,
+      "sha256": "abfd9b7f9063b8b6c56d8a0f2b172ff7a7b188c3c3f6cc96b729d4a5050a9e6a"
+    },
+    {
+      "path": "native-tests.ps1",
+      "bytes": 810,
+      "sha256": "9a1c2c71487fa18b024ee5ff1b788dfd425dde75d32baa2097e2b8738265c777"
+    },
+    {
+      "path": "windows-native-tests.log",
+      "bytes": 1201,
+      "sha256": "4bd50c26cb9d2517463b40c5e12e02985d3b67910ff61def3630c0b3cfe7e4e5"
+    },
+    {
+      "path": "audit-windows.py",
+      "bytes": 4628,
+      "sha256": "4ac562250132c9bc4552a8a1a57c1e59c2cd70f1d5c24534634b21669e8f9d74"
+    },
+    {
+      "path": "windows-cache-retention.json",
+      "bytes": 296,
+      "sha256": "3544ca9d7564074b6f5b543fc02629577f295699d813dc7bda186088bcd33275"
+    },
+    {
+      "path": "output-retention.json",
+      "bytes": 407,
+      "sha256": "0e1e4b4a1db2759a0df61e40a3070cdb677df93924fc1ec47e6f19654d974603"
+    },
+    {
+      "path": "package-retention-plan.json",
+      "bytes": 343209,
+      "sha256": "bcd4399bda7c213affd8a54e113bc0918378c975e8f5c32cbbca43a2ecea6913"
+    },
+    {
+      "path": "package-retention-upload.json",
+      "bytes": 343358,
+      "sha256": "93c56d992939caeba2eae454777e78c28cae09989e17b02b03bc42fadd3ebc94"
+    },
+    {
+      "path": "retain-old-packages.py",
+      "bytes": 6036,
+      "sha256": "e0b80cfca76ba9eadcfca9f2f25b5c6f4ef83d56e3d9f45c09807b4aa64eca31"
+    },
+    {
+      "path": "comparison.json",
+      "bytes": 1054,
+      "sha256": "b3f2da6d396907acd3877ccee8313c336441b4f1dacc050449ab09da4d0bada1"
+    },
+    {
+      "path": "compare-payload.py",
+      "bytes": 2024,
+      "sha256": "fab0ed3da406673da9e7ca520f87f8891f782baf3e07ac90a4d981588b785ea0"
+    },
+    {
+      "path": "payload-inventory.json",
+      "bytes": 55132,
+      "sha256": "a791324cd1e0f96f69365fd1cb6f0e4759bf131720197b87b2e35fc9de726a84"
+    },
+    {
+      "path": "extraction.json",
+      "bytes": 555,
+      "sha256": "c1e43f5eb9ddb08dd0284080f34e44066054e0f908afd37727e56a81adc3ba54"
+    },
+    {
+      "path": "extract.log",
+      "bytes": 76975,
+      "sha256": "1bb165c1aeb0639597747e02c67b06a9cce565e113be0440e534a0e6d8bdbb5d"
+    },
+    {
+      "path": "start-extractor.ps1",
+      "bytes": 1752,
+      "sha256": "4c9513b27aec680094b42c1127489cbdd329f78b432482f067da2278ae9f5af6"
+    },
+    {
+      "path": "extract-installer.py",
+      "bytes": 4118,
+      "sha256": "fa9611a6b538ee856affd7eca44a25d422b1c0513c7a8cd7765c48ccc80bba2d"
+    },
+    {
+      "path": "guest-extract.py",
+      "bytes": 1768,
+      "sha256": "537eeb5c0aa25d234cfcf05dbfaf32b05f4fb837ae828814724de625edd201fe"
+    },
+    {
+      "path": "extractor-vm-budget.json",
+      "bytes": 761,
+      "sha256": "f4b0f0f5fa62af4bb66f92000a1131631af461689294f4b9edb0bc084f8fd75e"
+    },
+    {
+      "path": "extractor-vm-start.log",
+      "bytes": 130,
+      "sha256": "7eda9b349f15682b6a4b548e538cd8315e65589d3d530478881b0ade9eb9842a"
+    },
+    {
+      "path": "extractor-vm-restoration.json",
+      "bytes": 410,
+      "sha256": "7d478d7ef1d8f4c191835db7747e0329ef27f5c336822f027e3229c9737e98cf"
+    },
+    {
+      "path": "extractor-guest-before.json",
+      "bytes": 126,
+      "sha256": "180518db49558d8db0a866e6843b543a937e809cd35a0bdb2ba1216110468ef6"
+    },
+    {
+      "path": "extractor-dispatch.json",
+      "bytes": 278,
+      "sha256": "af5ef543223f6f25903db0aece6bda65ab4040f4f2197850dbd8078ecdf74f61"
+    },
+    {
+      "path": "extractor-unit.log",
+      "bytes": 818,
+      "sha256": "03032b2b35cf0d0d52cb0798a50cc2ad47ab688f49ca9f4e49cd431a889d59ac"
+    },
+    {
+      "path": "extract-installer-retry-driver.log",
+      "bytes": 36,
+      "sha256": "dcac868482e60eb22a8e87a7c0bf09e0d40731f8744f829120f5bd613ce36387"
+    },
+    {
+      "path": "android-build-progress.json",
+      "bytes": 5382,
+      "sha256": "4f606aa27903660f46d54f796abd97fb047af25e8692366541714f29a95cc4e4"
+    },
+    {
+      "path": "android-build-progress-retry.json",
+      "bytes": 29884,
+      "sha256": "a5487776bcf4c1b7d78f1fe249703112e8750c50e9abb0d08f7919a624336caf"
+    },
+    {
+      "path": "android-build.log",
+      "bytes": 1295,
+      "sha256": "4725c11eadb537fb99beb6bede39be0bc6817d1e371001af27d7487232fe88ab"
+    },
+    {
+      "path": "android-build-retry.log",
+      "bytes": 803,
+      "sha256": "a3f66d548a9cefe095e2194cdb3506e6f32d799e17aa1aea39909787abe45d98"
+    },
+    {
+      "path": "android-driver.log",
+      "bytes": 621,
+      "sha256": "fca8bb03a6c92f7c4936f8e8c286a73963b3d60a95938659c740794f4d1ef18f"
+    },
+    {
+      "path": "android-driver-retry.log",
+      "bytes": 621,
+      "sha256": "fca8bb03a6c92f7c4936f8e8c286a73963b3d60a95938659c740794f4d1ef18f"
+    },
+    {
+      "path": "build-android.ps1",
+      "bytes": 1153,
+      "sha256": "7b4b07d629fa405f9bd88601bc49335776232457b4a3c6803c97c397635d7423"
+    },
+    {
+      "path": "build-android-retry.ps1",
+      "bytes": 1174,
+      "sha256": "9b3c8c4c448875f4c55a55b03a70141379f507ed24800aa0938273664bd0f77a"
+    },
+    {
+      "path": "watch-android-build.py",
+      "bytes": 2243,
+      "sha256": "a77eb2d05ed204ad204ef96071d1d4e1fd54ca1562062b64afc03eb938efde61"
+    },
+    {
+      "path": "watch-android-build-retry.py",
+      "bytes": 2487,
+      "sha256": "6db77479538b506d1ec76724c28b4e689512c7b27de10881f6ebb88a3e780977"
+    },
+    {
+      "path": "android-output-preparation.json",
+      "bytes": 3570,
+      "sha256": "b8ae1b33a18c373e2c7e6425b14d22d571be290e9156e9f5482d830ad8d9dddb"
+    },
+    {
+      "path": "android-output-preparation-plan.json",
+      "bytes": 3541,
+      "sha256": "8acd7f871eb1337758520ae3af1dcb731614393564d96af5e86ec95214e0fdd7"
+    },
+    {
+      "path": "stopped-intermediates-compression.json",
+      "bytes": 7806,
+      "sha256": "8d2890188793010ad7923f43faf33aafb3669d7b3fcce81592af8e50f39d7e38"
+    },
+    {
+      "path": "stopped-cache-compression.json",
+      "bytes": 6646,
+      "sha256": "0c010e16d9eec3a401ae14926b2a9ed6c7821ec8552d5e127e81930848d3cca4"
+    },
+    {
+      "path": "android-directory-compression.json",
+      "bytes": 638,
+      "sha256": "1ded4a050d1cdc416f7c07bf80fe3e68b09e30526ee1d9bb41e0a0c1a6648ea9"
+    },
+    {
+      "path": "android-directory-compression-plan.json",
+      "bytes": 1829903,
+      "sha256": "3d66c00738b8fe3c688bb7a182876062f2133e100f7a9251f8cd08ba1814dab6"
+    },
+    {
+      "path": "source-archive-retention.json",
+      "bytes": 2553,
+      "sha256": "8047c5ae5d98f2997715c9677b190717aa33d8c458563e1903d4d6a31df5da46"
+    },
+    {
+      "path": "source-archive-relocation.json",
+      "bytes": 2646,
+      "sha256": "e7a8ea3512e59250941472b32b69d4383923cb5d0304014349dfa4d99d5354d2"
+    },
+    {
+      "path": "retain-source-archives.py",
+      "bytes": 3432,
+      "sha256": "034928d84d89de9c7bbb18f53b7072a32f258ff3e2a894ffa7983edbc8c3a43e"
+    },
+    {
+      "path": "relocate-verified-archives.ps1",
+      "bytes": 2107,
+      "sha256": "8cbdf2d809a7535ead8c0239729155a74ba0964141db626e04567326766c16a8"
+    },
+    {
+      "path": "collect-source-packet.py",
+      "bytes": 1686,
+      "sha256": "dc4b16822099191f520fc41cdbcf6c7184dc241d954c525f756224f167287b96"
+    },
+    {
+      "path": "source-packet-evidence/collection.json",
+      "bytes": 2485,
+      "sha256": "6ff557301c49b10edb4294fb2f2aa6052ca4e5e524853885a4b6833425d6be8a"
+    },
+    {
+      "path": "source-packet-evidence/libpokrov-core-arm64-v8a.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "source-packet-evidence/libpokrov-core-arm64-v8a.offline.stdout.json",
+      "bytes": 847275,
+      "sha256": "87a132985c4c4f3992912b0e75d75f66b7715a396eb4021756f2092f456d7810"
+    },
+    {
+      "path": "source-packet-evidence/libpokrov-core-armeabi-v7a.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "source-packet-evidence/libpokrov-core-armeabi-v7a.offline.stdout.json",
+      "bytes": 843725,
+      "sha256": "779acee0042343c744e49567903b2e498ff3fd43bc2cf3ee91935716c60afb69"
+    },
+    {
+      "path": "source-packet-evidence/libpokrov-core-x86.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "source-packet-evidence/libpokrov-core-x86.offline.stdout.json",
+      "bytes": 843967,
+      "sha256": "c64c5432fac91dd4aca4e80166edf3aa1f98ad07e0348ced19522df0cf0df322"
+    },
+    {
+      "path": "source-packet-evidence/libpokrov-core-x86_64.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "source-packet-evidence/libpokrov-core-x86_64.offline.stdout.json",
+      "bytes": 848179,
+      "sha256": "b9f29b020d58a75420e3ba9c3440c69e97e68cd2557fed39dbd8b2122e171969"
+    },
+    {
+      "path": "source-packet-evidence/offline-graph-checks.json",
+      "bytes": 9314,
+      "sha256": "c3a0e5bc4d93ad226db61674b37ed71da38d0141305fd7f3f839413516d70cb6"
+    },
+    {
+      "path": "source-packet-evidence/pokrov-core.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "source-packet-evidence/pokrov-core.offline.stdout.json",
+      "bytes": 837243,
+      "sha256": "d1fe98292bf0bbd1d12c75f25ca54b4b410ec494fb7baa01207e7e8ea6ff6374"
+    },
+    {
+      "path": "source-packet-evidence/progress.json",
+      "bytes": 15262,
+      "sha256": "ac8eca42c72dea608b9e4c77024596cf55fb5b3d6dcc52cf712b7048af767668"
+    },
+    {
+      "path": "source-packet-evidence/source-manifest.json",
+      "bytes": 776311,
+      "sha256": "00d1a159eb4ae66884e30f4d0214dd71ec5351c551ee6f69dae92ddc0bf81861"
+    },
+    {
+      "path": "promotion/core-source-promoted.json",
+      "bytes": 486,
+      "sha256": "0b041d9e58fdc82572e9be807a69f0958b95b80fdee11d1539dc7240c47255e2"
+    },
+    {
+      "path": "promotion/client-source-promoted.json",
+      "bytes": 630,
+      "sha256": "c7536050895738d971650caccdabf7c238e15e784f41a7307d40866dfbaa924a"
+    },
+    {
+      "path": "promotion/client-merge-binding.json",
+      "bytes": 353,
+      "sha256": "ce3dba758724be716ee4bfe8629fa34ca98d4407862ad47335b151942bfce019"
+    },
+    {
+      "path": "promotion/core-merge-binding.json",
+      "bytes": 353,
+      "sha256": "6498d9d4a42475ab111fecfa93ffee6556194eb53ca4e523949a553af37e4c2b"
+    },
+    {
+      "path": "promotion/client-ci-pr.json",
+      "bytes": 8557,
+      "sha256": "2319b4d3262bc1c059a75a1b49c1b6ac02415457ed3f6e4ff2a5aa259c9b9c02"
+    },
+    {
+      "path": "promotion/core-ci-pr.json",
+      "bytes": 31317,
+      "sha256": "bbbbfa4f89d40d6f53677b2b07f1f0885b91bf7b223c39195543fec3ad099917"
+    },
+    {
+      "path": "promotion/client-ci-main.json",
+      "bytes": 8646,
+      "sha256": "8787a2a52e24fcddec158d7cc47e994fb286990e717fada43e4cdbc00be11c66"
+    },
+    {
+      "path": "promotion/core-ci-main.json",
+      "bytes": 31278,
+      "sha256": "7dafbcb0143731e692953d76d053e06a110b7585dd11685e5d270b64f6dd4413"
+    },
+    {
+      "path": "promotion/core-protection-before.json",
+      "bytes": 2078,
+      "sha256": "704b729459923f4dc7426deb6e428c46ccf98ecef9ddb5cd25eade0a7d42000e"
+    },
+    {
+      "path": "promotion/core-protection-after.json",
+      "bytes": 2078,
+      "sha256": "704b729459923f4dc7426deb6e428c46ccf98ecef9ddb5cd25eade0a7d42000e"
+    },
+    {
+      "path": "promotion/client-protection-before.json",
+      "bytes": 1602,
+      "sha256": "c007d998871f451f902d28d1f01cfcf0bb03546bb75b7b228623b13b7a128dd6"
+    },
+    {
+      "path": "promotion/client-protection-after.json",
+      "bytes": 1602,
+      "sha256": "c007d998871f451f902d28d1f01cfcf0bb03546bb75b7b228623b13b7a128dd6"
+    },
+    {
+      "path": "promotion/protection-comparison.json",
+      "bytes": 276,
+      "sha256": "d5cb0fbfaab0c2bc3f606b712b51b4a1696a9348688fc16bbdb30d6fc59ba7c8"
+    },
+    {
+      "path": "promotion/core-exact-source-push.json",
+      "bytes": 190,
+      "sha256": "c3a4d4d667b40de3c31969a663f3dd0dfc3a8ad8b4065bd430d407d95122d529"
+    },
+    {
+      "path": "promotion/lfs-upload-plan.json",
+      "bytes": 680,
+      "sha256": "c78a93ce21c050ebfe4e2444836fee06470bc6a6fa655542b066c0924042a5af"
+    },
+    {
+      "path": "promotion/lfs-upload-receipt.json",
+      "bytes": 911,
+      "sha256": "0e6134805d857a8e6ea15adb3755821faf09e682eed90f260b32638159e1518e"
+    },
+    {
+      "path": "promotion/client-initial-ci.json",
+      "bytes": 5258,
+      "sha256": "e6f835007cf6cc3704aecd679db2384b3a905e7526e6064e16db9bcb32294068"
+    },
+    {
+      "path": "promotion/client-initial-ci-failed.log",
+      "bytes": 5329,
+      "sha256": "9896dd180457d5130d714e65d4a35b4d73760cc447efa14b83c67496a79969cf"
+    },
+    {
+      "path": "promotion/client-main-first-failure.json",
+      "bytes": 3375,
+      "sha256": "8e36f730ba24b570b0f39a0ac239c9661fff0b40228c75cd431ee9bc6affc42b"
+    },
+    {
+      "path": "promotion/client-main-first-failure.log",
+      "bytes": 5329,
+      "sha256": "296a1d7a2b359fefc132d96b36c91177d17f12ce80ace44d8f5157ae119cce77"
+    },
+    {
+      "path": "promotion/client-coordinated-seed.log",
+      "bytes": 951,
+      "sha256": "b3ba0cbbeb4734679d04c70f937763deac806f055a5aa6e83921e0b20cbd2c46"
+    },
+    {
+      "path": "promotion/client-coordinated-seed-v2.log",
+      "bytes": 1818,
+      "sha256": "cd29a9a1297d65794aa38133cf4d41329e702b42c2350751172b6c370b2750ae"
+    },
+    {
+      "path": "promotion/verify-main-ci.py",
+      "bytes": 1498,
+      "sha256": "7c00df566d51dad27ad7f93c5a33a0b5407330953f426034e97648f534dd0e10"
+    },
+    {
+      "path": "promotion/verify-core-ci.py",
+      "bytes": 1211,
+      "sha256": "90b8f5a7270ecf956908d8665ce8cec830ccd94e8681bedcdaf3ddd4d6e2e4ae"
+    },
+    {
+      "path": "promotion/verify-client-ci.py",
+      "bytes": 1214,
+      "sha256": "4ff49f2ede42271cab6bd5b97e2e8a7f46c4a997d36ac102d84f442a0fa5edfc"
+    },
+    {
+      "path": "promotion/merge-core.py",
+      "bytes": 1908,
+      "sha256": "c24fc9a4e09a5bb2818e3e2670eb12411a8ce171e999c4cdeeb4e29ebedc2412"
+    },
+    {
+      "path": "promotion/merge-client.py",
+      "bytes": 1918,
+      "sha256": "519b3687909896c06e5681b8bac3910157b39453e93cfebb80b6bd65f4717f8c"
+    },
+    {
+      "path": "promotion/check-protections.py",
+      "bytes": 672,
+      "sha256": "f10c4f302687a19f8095d99a08d75132cd183c51d347c71d2abd7e4cbdf1a302"
+    },
+    {
+      "path": "ffi-current-v3/child.ps1",
+      "bytes": 2790,
+      "sha256": "1d0adaea6678d4a5d8fc2fe3f8e6d377bf80c24ee0284349c7c9a4a93c884ad1"
+    },
+    {
+      "path": "ffi-current-v3/run.ps1",
+      "bytes": 2776,
+      "sha256": "9033c5946dd72a8953e36a2fb89aa9578c86829824beeec68b3edb6c95d9c910"
+    },
+    {
+      "path": "ffi-current-v3/network.ps1",
+      "bytes": 1090,
+      "sha256": "70d525f465ecf1c731396d3034abb651e89b2717e85084e05b849e3a66bc287b"
+    },
+    {
+      "path": "ffi-current-v3/receipt.json",
+      "bytes": 2888,
+      "sha256": "4da0b06aa5bdd92da5d70061fb7e5a7c85b447f53d56ff02afbb8843190eb63a"
+    },
+    {
+      "path": "ffi-current-v3/child-receipt.json",
+      "bytes": 600,
+      "sha256": "6f271652860e41aaee17330440e7dfca0ce99cf4b927c3f49a93a193776ec76c"
+    },
+    {
+      "path": "ffi-current-v3/persisted-sinks.json",
+      "bytes": 2440,
+      "sha256": "842ad8544a15e395a72683992862eff831302615c0941ad136130a4edf4a5ce1"
+    },
+    {
+      "path": "ffi-current-v3/check-persisted-sinks.py",
+      "bytes": 1964,
+      "sha256": "c1acbdbefa586565cd3a9a870dbb6384e9f11ed9284e38b6dfb0db76008e0f12"
+    },
+    {
+      "path": "ffi-current-v3/host-network-ffi-before.json",
+      "bytes": 220,
+      "sha256": "5dd6720889fa3e3307ab942cf452f1ce1858d38ec3e0c6238fe3c9033d7f56af"
+    },
+    {
+      "path": "ffi-current-v3/host-network-ffi-after.json",
+      "bytes": 281,
+      "sha256": "41dc5a333cd2a61951d0a2d59ce61399a30b8ec86b3d02086681603acfcba566"
+    },
+    {
+      "path": "V01_CANARY_SETUP_PATH/child.ps1",
+      "bytes": 2794,
+      "sha256": "23f8296d04f3a5a267a38cacf8588dca591ac6c7572126dd766ab4f48df919f4"
+    },
+    {
+      "path": "V01_CANARY_SETUP_PATH/run.ps1",
+      "bytes": 2787,
+      "sha256": "c1fee145165f20ccc69187e872cdcbdcfd7fe90a8be3be4beea44ba7e33cb038"
+    },
+    {
+      "path": "V01_CANARY_SETUP_PATH/network.ps1",
+      "bytes": 1097,
+      "sha256": "0b3bcae0536dcfaca1ae8aef51fc0d701166ff114e557d3329d06cda914be738"
+    },
+    {
+      "path": "V01_CANARY_SETUP_PATH/receipt.json",
+      "bytes": 2875,
+      "sha256": "54afcfbfbdb7bcd9761856b254eec08387d9f444e83136d970a30a684bd5b95f"
+    },
+    {
+      "path": "V01_CANARY_SETUP_PATH/child-receipt.json",
+      "bytes": 600,
+      "sha256": "6f271652860e41aaee17330440e7dfca0ce99cf4b927c3f49a93a193776ec76c"
+    },
+    {
+      "path": "V01_CANARY_SETUP_PATH/host-network-ffi-before.json",
+      "bytes": 220,
+      "sha256": "accb60e1405021d2f56444193120656966222ce67c1bcd63930a43ae5b22702c"
+    },
+    {
+      "path": "V01_CANARY_SETUP_PATH/host-network-ffi-after.json",
+      "bytes": 281,
+      "sha256": "882bdeb4946a5651b2842fc0337ef117a17299db9ebca52bf2d8782916e0d0a2"
+    },
+    {
+      "path": "V01_CANARY_SETUP_PATH/driver.log",
+      "bytes": 429,
+      "sha256": "b5ef30c2e4df4413833adac6439c2b2e4839b2814614c6e345098cc34f5145ba"
+    },
+    {
+      "path": "ffi-current/child.ps1",
+      "bytes": 2787,
+      "sha256": "ca65c94d6af8ae858b3c936144d0878c5aefa32eb20aab49fd5aa4f06e3783c3"
+    },
+    {
+      "path": "ffi-current/run.ps1",
+      "bytes": 2770,
+      "sha256": "9b8cad56c2c838acc183c3ca4e71151982957b2d67e0af064f52c390fa1578ce"
+    },
+    {
+      "path": "ffi-current/subprocess-failure.json",
+      "bytes": 659,
+      "sha256": "750777a85500526cc044dad29f6b9c70c46567d9acda070bc0387db0db28f649"
+    },
+    {
+      "path": "ffi-current/child-start-diagnostic.log",
+      "bytes": 354,
+      "sha256": "8d39ba94834864bdd03d336b6011ff4ed0ad5204c464044cf6a7f5ed3730db78"
+    },
+    {
+      "path": "ffi-current-v2/child.ps1",
+      "bytes": 2790,
+      "sha256": "56dc43865c9c78f4452fefa0dcf8b4519138c2aa6ed1de3e44259d422dd07e9e"
+    },
+    {
+      "path": "ffi-current-v2/run.ps1",
+      "bytes": 2776,
+      "sha256": "07349cb5895dd21692bc4812ce74d5328813b0d6a4e14de2f7318609463c5c91"
+    },
+    {
+      "path": "ffi-current-v2/subprocess-failure.json",
+      "bytes": 659,
+      "sha256": "d6e69b8ed8f51ef8594be16785a277768c66de3a90748434d71bcafe178de3f5"
+    },
+    {
+      "path": "ffi-current-v2/diagnose-start.ps1",
+      "bytes": 2874,
+      "sha256": "ffa28187ad14db04bbf723f080f725952a9539fe2acfc3e6af6d25671e346ad9"
+    },
+    {
+      "path": "ffi-current-v2/controlled-harness-start-error.log",
+      "bytes": 753,
+      "sha256": "a1eb6207a157a38345b9fc71875ae9a7c6ee244522caa0602c6c993e71b126ab"
+    }
+  ]
+}

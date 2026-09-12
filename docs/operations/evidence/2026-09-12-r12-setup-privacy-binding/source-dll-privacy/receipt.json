@@ -1,0 +1,53 @@
+﻿{
+    "utc":  "2026-09-12T01:27:47.2466410Z",
+    "status":  "PASS_BOUNDED_SOURCE_DLL_FFI",
+    "origin":  "current-origin host isolated subprocess; invalid config before service startup; no TUN",
+    "client_source":  "NOT_YET_BOUND_TO_CLIENT",
+    "core_source":  "6b271decead88b708e2fc03984b703b0a4e63ebd",
+    "source_dll_path":  "C:/r12corec02/dist/windows/pokrov-core.dll",
+    "child":  {
+                  "setup_ok":  true,
+                  "config_rejected":  true,
+                  "dll_sha256":  "40101389b7713b869a9472bd3afe3aa19000b1d98f79d50cb88b61a235be531e",
+                  "ffi_return_contains":  {
+                                              "credentials":  false,
+                                              "config":  false,
+                                              "url":  false,
+                                              "ip":  false,
+                                              "path":  false,
+                                              "pii":  false
+                                          },
+                  "closed_core_code":  true,
+                  "debug":  false,
+                  "live_profile_used":  false
+              },
+    "sinks":  {
+                  "stdout":  {
+                                 "bytes":  0,
+                                 "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                                 "contains":  {
+                                                  "credentials":  false,
+                                                  "config":  false,
+                                                  "url":  false,
+                                                  "ip":  false,
+                                                  "path":  false,
+                                                  "pii":  false
+                                              }
+                             },
+                  "stderr":  {
+                                 "bytes":  223,
+                                 "sha256":  "90ad1eb06d5f9bf7feda3b4f8c5657fb46972a28e4571d0302c5a2ad66daec9f",
+                                 "contains":  {
+                                                  "credentials":  false,
+                                                  "config":  false,
+                                                  "url":  false,
+                                                  "ip":  false,
+                                                  "path":  false,
+                                                  "pii":  false
+                                              }
+                             }
+              },
+    "raw_streams_retained":  false,
+    "host_network_changed":  false,
+    "live_profile_used":  false
+}

@@ -1,0 +1,25 @@
+{
+  "host_free_memory_bytes": 50188599296,
+  "vm_cpus": 2,
+  "volumes": [
+    {
+      "DriveLetter": "C",
+      "SizeRemaining": 44007124992
+    },
+    {
+      "DriveLetter": "E",
+      "SizeRemaining": 43813277696
+    }
+  ],
+  "utc": "2026-09-12T00:49:17.7110898Z",
+  "initial_state": "poweroff",
+  "guest_disk_growth_budget_bytes": 367001600,
+  "status": "PASS_START_BUDGET",
+  "guest_disk_file_bytes": 9226420224,
+  "guest_disk_file": "E:/r12-b08-linux-lab/lab.vdi",
+  "vm_memory_mib": 3072,
+  "paid_services": false,
+  "host_disk_floor_bytes": 42949672960,
+  "operation": "Reuse existing extractor for exact setup archive; unprivileged network-isolated extraction, no installer execution",
+  "vm": "POKROV-r12-b08-linux-20260906"
+}

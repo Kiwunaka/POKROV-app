@@ -1,0 +1,50 @@
+{
+  "status": "PASS_ALL_REMOTE_ARCHIVES_VERIFIED",
+  "utc": "2026-09-12T00:47:28.202182+00:00",
+  "reason": "Two current Android package attempts stopped at disk reserve; retain historical source ZIPs remotely before local relocation",
+  "destination_host": "pokrov-de",
+  "files": [
+    {
+      "local_path": "E:\\r12-2662-source-20260911\\pokrov-core-2662f76-source-review.zip",
+      "bytes": 351472957,
+      "sha256": "988573fde7433cc20c40f40a4696d0fa5b54aea1c936feec39cc7dab3715b25d",
+      "remote_path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/source-review.zip",
+      "uploaded_now": false,
+      "status": "PASS_REMOTE_BYTES_VERIFIED"
+    },
+    {
+      "local_path": "E:\\r12-904-source-20260911\\pokrov-core-904e440-source-review.zip",
+      "bytes": 351105969,
+      "sha256": "cbf6d0dd1e100c136446b615d7b9a2a77c30398664721b278e5e8afd26b02944",
+      "remote_path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-source-archives-20260912/pokrov-core-904e440-source-review.zip",
+      "uploaded_now": true,
+      "status": "PASS_REMOTE_BYTES_VERIFIED"
+    },
+    {
+      "local_path": "E:\\r12-c05-source-packet\\pokrov-core-8dc57a8-source-review-compact.zip",
+      "bytes": 350839950,
+      "sha256": "2cb77e211a8bec3f303a67282befd231a5f7c84d2c712b80771a7a063f232d59",
+      "remote_path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-source-archives-20260912/pokrov-core-8dc57a8-source-review-compact.zip",
+      "uploaded_now": true,
+      "status": "PASS_REMOTE_BYTES_VERIFIED"
+    },
+    {
+      "local_path": "E:\\r12-c05-source-packet\\pokrov-core-8dc57a8-source-review.zip",
+      "bytes": 559302478,
+      "sha256": "4b381e442a4baba04440e6880fd58220a6c672c11695f88cd1e3bd1217bc3352",
+      "remote_path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-source-archives-20260912/pokrov-core-8dc57a8-source-review.zip",
+      "uploaded_now": true,
+      "status": "PASS_REMOTE_BYTES_VERIFIED"
+    },
+    {
+      "local_path": "E:\\r12-current-source-20260910\\pokrov-core-c7a11f7-source-review.zip",
+      "bytes": 351099329,
+      "sha256": "34dbbdd8c81ebcaf838ea2f1df6f7142b623c2ba027ec4d157828a11cb4f0292",
+      "remote_path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-source-archives-20260912/pokrov-core-c7a11f7-source-review.zip",
+      "uploaded_now": true,
+      "status": "PASS_REMOTE_BYTES_VERIFIED"
+    }
+  ],
+  "local_deletion_performed": false,
+  "total_bytes": 1963820683
+}

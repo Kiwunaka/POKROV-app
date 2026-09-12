@@ -1,0 +1,2230 @@
+{
+  "schema": "pokrov.r12.final-windows-package-audit/v1",
+  "observed_at": "2026-09-12T00:25:57.888335+00:00",
+  "installer": {
+    "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+    "size": 29184678,
+    "sha256": "2e114c6ab88c8c7b898272d978c21b1608cc28c0c6cf1f2d47e2cc6392762caa"
+  },
+  "packager_script": {
+    "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe.iss",
+    "size": 13101,
+    "sha256": "8dea939248d7f187ce0945feae3aa3c71a851f3770ab4ffaa8ece76998b5c874"
+  },
+  "manifest": {
+    "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053.manifest.json",
+    "size": 5884,
+    "sha256": "e462c82530d19cf9498bc4b4a7bc9ffafd1d8bbc5a303e9ff5962734fb18efc1"
+  },
+  "required_files_verified": 11,
+  "bundle_file_count": 304,
+  "bundle_inventory": [
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\app.so",
+      "size": 9028528,
+      "sha256": "5a9e30d439d68826400468fb4b36ae64574819ee03c0d63a10a810b29847d968",
+      "relative_path": "data/app.so"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\AssetManifest.bin",
+      "size": 24199,
+      "sha256": "f42bcb6afad482072946e59098998d0a91571bd2af8ab7ea097aea3076833fa2",
+      "relative_path": "data/flutter_assets/AssetManifest.bin"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\assets\\brand\\pokrov_mark.png",
+      "size": 146850,
+      "sha256": "045db222183c15f0c205963963772ac3c3d6890e52aff011ebeea096810ecc81",
+      "relative_path": "data/flutter_assets/assets/brand/pokrov_mark.png"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\assets\\brand\\pokrov_mark_128.png",
+      "size": 16419,
+      "sha256": "6e9a14a5d266d72c7ec99bd11f19bdf90deaaa0ef7ea735cb8854249b6348589",
+      "relative_path": "data/flutter_assets/assets/brand/pokrov_mark_128.png"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\assets\\brand\\pokrov_mark_256.png",
+      "size": 47834,
+      "sha256": "3eea95eb53532c37f328991087fc91fdd684baca87fc746552506cb4d0e2ab87",
+      "relative_path": "data/flutter_assets/assets/brand/pokrov_mark_256.png"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\FontManifest.json",
+      "size": 571,
+      "sha256": "b6925214e97cbe1011b82135f205145f7c2eaf59ec5c6fc8b15a6997e41fc993",
+      "relative_path": "data/flutter_assets/FontManifest.json"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\fonts\\MaterialIcons-Regular.otf",
+      "size": 1645184,
+      "sha256": "d9865b671a09d683d13a863089d8825e0f61a37696ce5d7d448bc8023aa62453",
+      "relative_path": "data/flutter_assets/fonts/MaterialIcons-Regular.otf"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\NativeAssetsManifest.json",
+      "size": 45,
+      "sha256": "9548a31e4a048135c1d94f919328bfb62ae2c7bb3cab96557c7941daa97776cb",
+      "relative_path": "data/flutter_assets/NativeAssetsManifest.json"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\NOTICES.Z",
+      "size": 108716,
+      "sha256": "93ccc75d01bdb9cbe8b0ed13db80d0a0900dbee7b348b8dcf864298cb6de0a5c",
+      "relative_path": "data/flutter_assets/NOTICES.Z"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ac.si",
+      "size": 35183,
+      "sha256": "bc0ae11b614339ce70976762c29059fe8b9bbf3ef810f05fe2862ab6d787b3dd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ac.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ad.si",
+      "size": 34929,
+      "sha256": "7a632219785fdd4f01aeb4ebe08cf6f3a017e077765a127c3b09d90bc3346424",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ad.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ae.si",
+      "size": 216,
+      "sha256": "a0c0406a8c84a4a237a9403532246a638ff720fb65e36d3a5ad16d7f37af05c6",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ae.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\af.si",
+      "size": 23274,
+      "sha256": "f172f4c3546d8d27d4c87ec78b6903c086fcd3f15eb432c320548dda7d5b4774",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/af.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ag.si",
+      "size": 495,
+      "sha256": "8c0d86e6bf0beb9980492e90e8a47dcbd6b3d6860e1a42537a027ee68487a955",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ag.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ai.si",
+      "size": 18581,
+      "sha256": "b887efab0240a695401560f2c1ad00d7d3c138a2cb29a41c8ce4f9f6ca904245",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ai.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\al.si",
+      "size": 3197,
+      "sha256": "124357e1dcf7406f32ecdd4bdc65a4536527bd7ee22d0c8cf53f0e71969bad95",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/al.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\am.si",
+      "size": 171,
+      "sha256": "d64ec5d6ff8d2b212057f2b0fb636da40737911ad597727f7721462d33f4893e",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/am.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ao.si",
+      "size": 1153,
+      "sha256": "5b2c0e794ac7c661ab9237bf4968787001629848f5bf4e977f5a3c82df4cbc41",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ao.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\aq.si",
+      "size": 2991,
+      "sha256": "287a9afbcfa1913e048b0825c0df935dc2deccda196f562f5fe6f2840bca534b",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/aq.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ar.si",
+      "size": 8411,
+      "sha256": "5e77767710ac6ece864a04d9fae6febf3961921c02c394de023a2dda51c2b7f1",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ar.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\as.si",
+      "size": 36962,
+      "sha256": "d00949b855335c292591d75ab1eb6701be972573acc37c734bfdbe338988c5ec",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/as.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\at.si",
+      "size": 163,
+      "sha256": "1715557ec77082f0cdf22b9c49d7e4f6367d310fa2ecbd55248543fb3a8fd85c",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/at.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\au.si",
+      "size": 1283,
+      "sha256": "8edbb759f5fcbbcbd97b3a2d93b7b57bf897bf691f8ca3cd12e3c790f87cfe8f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/au.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\aw.si",
+      "size": 7823,
+      "sha256": "cc68fed43b277c05046d0c914603ff0147c917ead8384cf03c49c827b95f70ca",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/aw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ax.si",
+      "size": 329,
+      "sha256": "294d9fe8be611ea673d7a7a6a196294632d73f6e1debf684b1dcb9978b8edfb9",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ax.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\az.si",
+      "size": 357,
+      "sha256": "8109214153c47951d99d27344b127face04a06016c834dc155cafc3d4e34e581",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/az.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ba.si",
+      "size": 1072,
+      "sha256": "849afa7b53b4981bf641854a65276cb6421ae6d25063cd5ee0176fd56a4670cd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ba.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bb.si",
+      "size": 454,
+      "sha256": "00dd3ac4904fd06ab046769fa1659a9c8d8faf9366f87f06f012cc6b30c94a64",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bb.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bd.si",
+      "size": 104,
+      "sha256": "5a489202766e2b1d65d866859ef7d99fb5fd5396d1a8af676f0aa47312c95eba",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bd.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\be.si",
+      "size": 173,
+      "sha256": "d1240cf9ba06f10db17c296729d2892b2a660494764349f026554ac708d74199",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/be.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bf.si",
+      "size": 224,
+      "sha256": "91f7d6f4096b632d0ff583a768986cd5643ce0ba7840313148e8aa985af43d38",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bf.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bg.si",
+      "size": 173,
+      "sha256": "524a44fbf4a6167f35e22f4cdfd4c29bf4df64a5bc5255936be43493809703f8",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bh.si",
+      "size": 202,
+      "sha256": "24cbfe6403cc2793716426b05c0ea93df2a1aea24fcd4232e9f98c7181adbe25",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bh.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bi.si",
+      "size": 729,
+      "sha256": "1afbd6c0e8e4554cb8bb20ffe32cbc6f6f774965a3f84cd439f47a5560feb20b",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bi.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bj.si",
+      "size": 251,
+      "sha256": "26514f85926a769ab378bfa98e097a10c94ee4488308bf7846d8eb0f9dc49427",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bj.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bl.si",
+      "size": 173,
+      "sha256": "50bdf1f79d20003d6fd36715918d340384e19aea4d79240980dfc21875419eb3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bl.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bm.si",
+      "size": 21272,
+      "sha256": "19f9f66379a4ae6adb9d94d956a9af1e01181ed26dd3839e4d7bf90ca28abafc",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bn.si",
+      "size": 15444,
+      "sha256": "7de51e8cc4f58795f4894be37284362f8f4c3e9575cebdd87076b1391306ae73",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bo.si",
+      "size": 118877,
+      "sha256": "403be85d6a34d14f46347190e26f009ec600fd6cca7f98bcb3645792d5f9279a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bo.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bq.si",
+      "size": 171,
+      "sha256": "cc0880cc76a6eda2818cb624031ae843301a2881df33ec6679ce5928280c8806",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bq.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\br.si",
+      "size": 7905,
+      "sha256": "82b9087d5544c74437f1c60a9323ffcdbb6a6cfed966c79ba90f6057bbfa818b",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/br.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bs.si",
+      "size": 347,
+      "sha256": "1668270cae8d391945f9ef33a4406f30a854d26d010d8bfcf737dd95228a43f9",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bs.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bt.si",
+      "size": 24495,
+      "sha256": "5869eb70a2709744a60ea157e1695496a1c9e960d6b84d454e77be2980e6f727",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bt.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bv.si",
+      "size": 366,
+      "sha256": "a20b1143d92c6936ae22c5db436a4da07e22438f8247cba3d57d0a926efc604b",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bv.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bw.si",
+      "size": 173,
+      "sha256": "b769ae97f4af0de6c9524631030de346f67b67091076d3a848549dedc09dd184",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\by.si",
+      "size": 8617,
+      "sha256": "10fe47338e6cf3907412fd0a50d2db600504013ebed889de3bcd68407c52eb01",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/by.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\bz.si",
+      "size": 49661,
+      "sha256": "761da4972b6ad34b3e1b8c17d97166cabce2b547c771d827492a108f9706c3f5",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/bz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ca.si",
+      "size": 592,
+      "sha256": "267ce7dde325fee8b014b027b1862fbfc6aff67d7524adc7a86f146634c89b38",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ca.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cc.si",
+      "size": 2765,
+      "sha256": "992df76d52a93a6625f1e98217a60c1a010083cd6f451ad027e66bd809446ae8",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cc.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cd.si",
+      "size": 298,
+      "sha256": "c1537a27c3c9fd1ab783da7587f8a9ff55f73cf9dc7805c959d1a42f1816424a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cd.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cefta.si",
+      "size": 456,
+      "sha256": "dc73999668da1da6aa28d519982f7cae098451ce195f9a4c9da1beefa8d1cde3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cefta.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cf.si",
+      "size": 429,
+      "sha256": "0c6b78dff751c5ea38bdf4ce9e358da2226a45eb2d1412c3957866e92e2b44f3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cf.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cg.si",
+      "size": 251,
+      "sha256": "1581eda3f233bb96acc200a9c8d8906f14de3c3e9d91a17ef304c122522959d9",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ch.si",
+      "size": 167,
+      "sha256": "ceb544999999c7fc846e560845267b9db4a81be1f0c3dc2fd262f31559a1d70d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ch.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ci.si",
+      "size": 173,
+      "sha256": "def42a029db3c7b7442e080f69f000f83bfe08e565c2e155eb31c6b28e7e8cb4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ci.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ck.si",
+      "size": 1852,
+      "sha256": "50e9092ccf3651cac2d40424fa8e685a796dc1a339d2c9e2681da77a0e8c4460",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ck.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cl.si",
+      "size": 348,
+      "sha256": "7d36aa4f0a9ea651043e25d687dded514e5bc7a30a28e113c52f2fd03192b61d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cl.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cm.si",
+      "size": 405,
+      "sha256": "acbbe255b0691572ce9b57bfa0997de7513ada47818e42dc21a9a325e0db02e4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cn.si",
+      "size": 277,
+      "sha256": "5ab4951cc61cb50e65711041d527e872961452475597c25dde1f168928d11a34",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\co.si",
+      "size": 173,
+      "sha256": "7c84171dda2946785ba7eb41844f2517885c0b517a2e33b931f090039c409c66",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/co.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cp.si",
+      "size": 173,
+      "sha256": "5448eb004a2d751685a6e2157fad9bc3fdd6fb7a603703201f4dbcd550fb9186",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cp.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cr.si",
+      "size": 173,
+      "sha256": "505cb48b9cf4d899bcb1490bfba4336085f61a1ee178032d683dce7d88e44ae4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cu.si",
+      "size": 383,
+      "sha256": "4f8909eb2fa4866231c0cd2883f41c0002fae15d145ddc92127fb26c495204a4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cu.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cv.si",
+      "size": 1147,
+      "sha256": "85bb8d4ecf87391342a288d7994921d26ce8b90c100ee8c85bf4ace60a5f23c6",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cv.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cw.si",
+      "size": 357,
+      "sha256": "e262b845a58b7c637bfb0fc971ec1c2c0534eac7ea5de52884fc1a96cd9e13d3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cx.si",
+      "size": 2195,
+      "sha256": "6a00d4ff338d3932f58391d85e0cfd89aa605f96cb0381e6cdff01edf7397a1b",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cx.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cy.si",
+      "size": 7106,
+      "sha256": "4c7991982a9ba4908fd7f3479702548881c673e99c2d165e8cb27c8db1b9290d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cy.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\cz.si",
+      "size": 244,
+      "sha256": "3e07901bf3db92acf2b8ae7167961cb687fb2104d51e8678948fe55f4a39dbf9",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/cz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\de.si",
+      "size": 171,
+      "sha256": "75118d92edfee07d63e6adf2422105652925ff77bd214492d1aeae95796ae712",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/de.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\dg.si",
+      "size": 12157,
+      "sha256": "19864068c7db124541aa4b0c98371837c9d66ad3a964681e695ef91d32f70918",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/dg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\dj.si",
+      "size": 356,
+      "sha256": "bc7603fe65533fe561445535e38282735ce4a82a8e4878a5aec2e877e115e07f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/dj.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\dk.si",
+      "size": 163,
+      "sha256": "10a3092735f1d26280a531c2e67539d447b0debcf8601903f292e4d4f91de086",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/dk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\dm.si",
+      "size": 8011,
+      "sha256": "f95b6ac19b6b3478ca88d41846c69c6875de3f383155d3fc83fed6184a6f86cf",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/dm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\do.si",
+      "size": 224904,
+      "sha256": "0573db1cc62e97f3e20558a314dc5e57beaf68dda7deff817697cb142b622ea4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/do.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\dz.si",
+      "size": 221,
+      "sha256": "97ec2a7dbabb320384b732c18a54d0075417a2fbd014f889e41a2451a7b2adf5",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/dz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ea.si",
+      "size": 79302,
+      "sha256": "98452c613353475fa7d9264f29a613fdc9d8bcc269e6faee8e73fc0794b64130",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ea.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ec.si",
+      "size": 16087,
+      "sha256": "831fca19debdbba0f9df54474395c074d709c19b3aea99406e4df643c0c6038b",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ec.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ee.si",
+      "size": 173,
+      "sha256": "22316e6f43b8e15658e9c2ee2d75a7eb979a9101917626160d8b80aeeaed6f69",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ee.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\eg.si",
+      "size": 11216,
+      "sha256": "48be629286de20a85f65277c2142ac6374f906d19b74289fdc865c01036634e1",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/eg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\eh.si",
+      "size": 415,
+      "sha256": "a4dc6c791ee9f5e698e6ced6a79c20da58734bfc0a4feeb7de74b0142438ece6",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/eh.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\er.si",
+      "size": 3037,
+      "sha256": "ab803a7d8254bc18a5d1aa96f46e42e124c6b082c8356a9024ced498d13b4668",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/er.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\es-ct.si",
+      "size": 194,
+      "sha256": "dc02fed8a9f3d6e27e4a08cfc7c3a1dfadc09d924dc08c7bea783d7aa7e17eec",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/es-ct.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\es-ga.si",
+      "size": 20353,
+      "sha256": "4bde7b2666405d807affb208313865436ad63065ba7d899156816669254139bb",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/es-ga.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\es.si",
+      "size": 79302,
+      "sha256": "98452c613353475fa7d9264f29a613fdc9d8bcc269e6faee8e73fc0794b64130",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/es.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\et.si",
+      "size": 903,
+      "sha256": "59b803d9e5558370eb2ad23f4fe89b324c1ad89d6acc93f5e43b2565d9ed717e",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/et.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\eu.si",
+      "size": 1326,
+      "sha256": "af22c756221b34c34f2fd496942117ab3b04d86342e8e1aa21b9c094d9dddadf",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/eu.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\fi.si",
+      "size": 163,
+      "sha256": "d559cd7872f4ab714dfa5bd5bb88529694f1271d5a9eae63a6dbf38348ef655f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/fi.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\fj.si",
+      "size": 28087,
+      "sha256": "f8e97693104d669bc809dee9404364cf9761e714949bc9db2c50d55c3f005862",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/fj.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\fk.si",
+      "size": 31126,
+      "sha256": "f8c784e3dc1a44bbd92342b28618d7c7aa975bf1efde4a4b38313327f02b0ffd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/fk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\fm.si",
+      "size": 512,
+      "sha256": "f8ac8d476a7dc0d756c66884e96ce316deb12048aafaedebba9ba6bc3fdaf7e7",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/fm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\fo.si",
+      "size": 417,
+      "sha256": "ed3564d7050c1ff513341c3e24e11ee86270fc5c3c5b11c5603c82cb6072d83b",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/fo.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\fr.si",
+      "size": 173,
+      "sha256": "5448eb004a2d751685a6e2157fad9bc3fdd6fb7a603703201f4dbcd550fb9186",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/fr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ga.si",
+      "size": 173,
+      "sha256": "935cd3fb0785268354962ef27765fccb57f28d5891a206d4ad1230b2db20acaf",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ga.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gb-eng.si",
+      "size": 163,
+      "sha256": "d377ae7a15bea7e725ef4da7acea750adaccdaa42846f8e11e9ff58e23a90277",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gb-eng.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gb-nir.si",
+      "size": 18818,
+      "sha256": "24790d0b0a7e2bb4882846d657e4907a7f8d3d7d3fd391f473cdb61a8d75b10d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gb-nir.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gb-sct.si",
+      "size": 160,
+      "sha256": "f4da8fafedfe573abe6a7e1203cb402a95eb38826829b7700b06d55aefd62634",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gb-sct.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gb-wls.si",
+      "size": 9330,
+      "sha256": "e9318fed3bdf02c2344a389f6f40e604ff4d25c2df7986df9c9dacb139f9a10f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gb-wls.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gb.si",
+      "size": 606,
+      "sha256": "d0d090f3967b8151f9517caad2dda0af38011da635848b7dc207a2c5d000b0b5",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gb.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gd.si",
+      "size": 2510,
+      "sha256": "8df2b95ef13a787e60b679324f0bc550d36a04a1c1d78ab06073ffc41408db9f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gd.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ge.si",
+      "size": 1453,
+      "sha256": "a9ae7320cf400505af4edbe3da988a215a41d769ddb0a144217dda560970cb11",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ge.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gf.si",
+      "size": 173,
+      "sha256": "5448eb004a2d751685a6e2157fad9bc3fdd6fb7a603703201f4dbcd550fb9186",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gf.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gg.si",
+      "size": 312,
+      "sha256": "0b468cee34af6d7d5e737f4f72362a12153bef8a4cba5fc313dcbbbfaf954289",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gh.si",
+      "size": 225,
+      "sha256": "60f1e27c4097b1dc6464154fd305c4ae8a999f4bf2f1c9a30d159da40242f93e",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gh.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gi.si",
+      "size": 2929,
+      "sha256": "9753af3da86a4045711813cd5cda02ce5eb52628f8c6edc18e113b6481c81f08",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gi.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gl.si",
+      "size": 168,
+      "sha256": "280642f78b1dcba4941dcdec2fbbe6dc971c4cc7121ee959018538fef3fc2816",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gl.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gm.si",
+      "size": 333,
+      "sha256": "7a45bd4f2c506ba322981c49c323068ebf255fb4508d0b74faf9416827e39364",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gn.si",
+      "size": 173,
+      "sha256": "0867f83f992ad4f4976c70f89b41ab4b1aa173a4d5de939b5b357048221535e9",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gp.si",
+      "size": 173,
+      "sha256": "5448eb004a2d751685a6e2157fad9bc3fdd6fb7a603703201f4dbcd550fb9186",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gp.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gq.si",
+      "size": 5652,
+      "sha256": "1b8d9e5a76343a68fbca20e4675b796a6cd7ebdcb3ceb7dd369421e10bfa26fb",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gq.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gr.si",
+      "size": 518,
+      "sha256": "41fd8b256b3acc73d5a3d706b51b36b9d54db4bc147b8158a7633f6c2bc7a1c7",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gs.si",
+      "size": 32168,
+      "sha256": "92ca7524270e7a77bf0decb5c4e7a401073f8b96deaccdc1fe02148b362dd975",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gs.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gt.si",
+      "size": 34406,
+      "sha256": "09cee1f1a4cecb8f375f4c55363b768f5547e6371f5274ec8bc96aa05dfe74cd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gt.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gu.si",
+      "size": 3825,
+      "sha256": "1fc573b1b1c754deae244ed8ff66b89c79ec5802dc486248a5e5694257a3de6c",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gu.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gw.si",
+      "size": 467,
+      "sha256": "213587de0467bab50dbb9c1b4e780dd1e43912b0ce9a6d808767ff6cd00cf4de",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\gy.si",
+      "size": 327,
+      "sha256": "38a22a200a7786ea4f47c1618707c1b2db5202ebb90d82f8e15653ed30fd0cdd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/gy.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\hk.si",
+      "size": 2074,
+      "sha256": "fa3ee89fa1a8f64dd82ad806a54aaa8367ddcbbd9046be7de92f837561fa75fd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/hk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\hm.si",
+      "size": 1283,
+      "sha256": "8edbb759f5fcbbcbd97b3a2d93b7b57bf897bf691f8ca3cd12e3c790f87cfe8f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/hm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\hn.si",
+      "size": 744,
+      "sha256": "d1f28bdcbca6b7f7550509b78de8a62040c3f6929d73588a3e3e37e653cc9cf1",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/hn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\hr.si",
+      "size": 50234,
+      "sha256": "0f1aa3ededa2adc9433054a0140ad4bf6f0ad5b8f68ec0bdeb1af5cd05c7ed50",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/hr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ht.si",
+      "size": 29706,
+      "sha256": "b679df30ac59d09342323e8e817b53d165d4059622e91b4e2186c1207da752c4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ht.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\hu.si",
+      "size": 173,
+      "sha256": "1638ad5f4bb4d250ab1349cbb130156a20fe09f6a6e6eaed71da9b6071f8aa21",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/hu.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ic.si",
+      "size": 173,
+      "sha256": "f6355de9849b85ac4b2705491810da32dab2a46e538c3bcbd4f5ccdf26f7ba8e",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ic.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\id.si",
+      "size": 126,
+      "sha256": "fa509e1f6f3ed9c753ce77491335f8187abf6824065815085754d0c1db74ac13",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/id.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ie.si",
+      "size": 173,
+      "sha256": "127430c8680d41c3addd5e08abf60c4ddcae3a313d7b4b4b8cc3fb6babcf538c",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ie.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\il.si",
+      "size": 584,
+      "sha256": "7ad66786ed605d341ba5f4c38597cdb1140492b61c7fc2a6cc3bb98270782c12",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/il.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\im.si",
+      "size": 8775,
+      "sha256": "f65b52cfe61985b0956f622ea0589e799c54b68ad1e1174e2a0cddf70c7d4b99",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/im.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\in.si",
+      "size": 818,
+      "sha256": "9438ae8b5e5c94874ec681311a32885ae91f90b4fe51ad2bf9dc2ab9e3a6ef7c",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/in.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\io.si",
+      "size": 12157,
+      "sha256": "19864068c7db124541aa4b0c98371837c9d66ad3a964681e695ef91d32f70918",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/io.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\iq.si",
+      "size": 1563,
+      "sha256": "a69ce8a6d0d5626f7176d726e8351cb16a2a290299a2f41307d0bafa553695c2",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/iq.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ir.si",
+      "size": 15920,
+      "sha256": "32a58de8921912134faadefba5c25c7fd5c9e571c58ec2a7595cc02b1f803979",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ir.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\is.si",
+      "size": 391,
+      "sha256": "6aedb01379d692610d76689e9f498ed06d2d2d3add5e6b64132930292042a534",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/is.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\it.si",
+      "size": 173,
+      "sha256": "a0cfe916e0e233d3480c87896fd2e16052e54d317ac4e16766944ca7999c9753",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/it.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\je.si",
+      "size": 10321,
+      "sha256": "ff3b522341a44a9b10c9487409bf4fa8a13f5484706d60728823fa02767bfb45",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/je.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\jm.si",
+      "size": 280,
+      "sha256": "6d52dd32d3b1b4b0455f71bbaed6c554824f308749e14d97821413b6d13206ec",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/jm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\jo.si",
+      "size": 418,
+      "sha256": "9048a1559fb4ffbd32cc2e5cd3eb09792695d27b103b25567e5d42fa63d2a904",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/jo.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\jp.si",
+      "size": 210,
+      "sha256": "64e0b964d289ad56919e9c8829364478bcd31cf1574b8a9dd4ba968a69c06c3a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/jp.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ke.si",
+      "size": 780,
+      "sha256": "23080a62c8cf22f9a3b9d82630abb9703335e868ca9852d9d0341f36fed4ea8a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ke.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\kg.si",
+      "size": 2796,
+      "sha256": "57613d4a6219b1618293ff5f5e3dcb810914567a261e5a0ac850a6e6317fb2fd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/kg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\kh.si",
+      "size": 7475,
+      "sha256": "bb2d3a78f1109f58d18d3532b5276dce1caf7e772a120b75aee03db2c67e2dbe",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/kh.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ki.si",
+      "size": 3392,
+      "sha256": "d8c198d259c5f0308fef50782a377e6730b000852557a6eac27f1bfee6099e12",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ki.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\km.si",
+      "size": 796,
+      "sha256": "8fa3fee6ec1c65dc34ea035b6ec915b0eb6056bff52a88434e78d03960585c0e",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/km.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\kn.si",
+      "size": 504,
+      "sha256": "1df7e2aef99097ddc27f85f84441ce442d670fcc163912c666d910af343ebdff",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/kn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\kp.si",
+      "size": 490,
+      "sha256": "7f00c54cfefa3b41204204c3d1b4d2ee38175a6bdd79d3c050ae185bc46c40a2",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/kp.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\kr.si",
+      "size": 1309,
+      "sha256": "9d6698e53f290932d01b0517c9b0c418c80af64298ded4a86ce6e693d953d3d6",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/kr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\kw.si",
+      "size": 305,
+      "sha256": "a18ddf96361d3e916bca4a1378b4d7723b382036e173570afd67733d1e2148a1",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/kw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ky.si",
+      "size": 29014,
+      "sha256": "ea7284bf8f298c69d34d868ada5ba78a596e205d4186d4fa67b02fad53fd394d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ky.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\kz.si",
+      "size": 11985,
+      "sha256": "81846096d2f8393f6f3c35c69dfc379bfe330ff6194f1e603b792de5a1950659",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/kz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\la.si",
+      "size": 233,
+      "sha256": "495693a11b17dd92b436d3d9f5ea355182182c25bdf3c10f97b2543c68e7af3d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/la.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\lb.si",
+      "size": 2486,
+      "sha256": "d8c8fda9cf1086a2f74daab4a153f0285886c2f66e5d12ed46c5847e14597328",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/lb.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\lc.si",
+      "size": 218,
+      "sha256": "4ff3b260fa5bf047e428e2d113abf334d79d02cd3e22a7205089d39f584c8666",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/lc.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\li.si",
+      "size": 8397,
+      "sha256": "7599d2be67f0b52a733e426f9e0a8bd1fb15267655ca83f2d7a365dbe5199530",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/li.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\lk.si",
+      "size": 13945,
+      "sha256": "a3e62303e26ed029690bea6d4745f67856b9bf904b84d613def3d1e382b12e9a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/lk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\lr.si",
+      "size": 558,
+      "sha256": "1023bb51650ccc6ae7558d4a44de20d0c326254968e9988f7335b69d100680f3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/lr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ls.si",
+      "size": 1126,
+      "sha256": "8c9b4b55fcfbdcabc88a85c2b3a7ced3906e7fab7ecb0ec32fd7003a1219c581",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ls.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\lt.si",
+      "size": 226,
+      "sha256": "bc32236c7b9aceca2504b0f42163ca1f186ec9cd44849b12c58270fbfb8922b4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/lt.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\lu.si",
+      "size": 171,
+      "sha256": "8f42db73cf8dc57b84b3bc3564a5ad3ac411ea1203a5cc87f3a5f983d4e368f9",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/lu.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\lv.si",
+      "size": 163,
+      "sha256": "64d2fe59cd29257c5ecece76b2f6ccbfd460389e6ae9f85169e6167b5e3f42eb",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/lv.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ly.si",
+      "size": 346,
+      "sha256": "554757e8d77204200e1ea52e5779b9ce0430f2a7ded48938340990d9b5f54226",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ly.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ma.si",
+      "size": 139,
+      "sha256": "f23db2518b2900b252eed4005635d0b11c53f719fa4388f229f4e8ac80ffb5c4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ma.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mc.si",
+      "size": 128,
+      "sha256": "60a798aa80e718c1b3581a38deab56fce3b1ebe8377919bc0b6c65d206057f26",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mc.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\md.si",
+      "size": 6233,
+      "sha256": "327615f223aded1fa702d9aacfb8fc8e21ede038a975990c0ee1f453abcc8c67",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/md.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\me.si",
+      "size": 70277,
+      "sha256": "1f6dc0d97dfc877e053a854f3a3c326d9b43372ab3517c2e4eade534fb37c9f3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/me.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mf.si",
+      "size": 173,
+      "sha256": "5448eb004a2d751685a6e2157fad9bc3fdd6fb7a603703201f4dbcd550fb9186",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mf.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mg.si",
+      "size": 173,
+      "sha256": "10e54959e04e21cc8f43a82656f965a738b7a8c92b3b20cb3b444e6e618f0f9e",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mh.si",
+      "size": 608,
+      "sha256": "eff6d8446121a60d74e7762abad99b86e7ec64cfd1b21bdbe088a3f4c07058e5",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mh.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mk.si",
+      "size": 295,
+      "sha256": "2734ae6dd587ad54483ec1eedb533720910c972d59b084b5e90a64be29cdf408",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ml.si",
+      "size": 173,
+      "sha256": "9486b69be6cb2f510abf232107709d72935124fdc83c8c4c148cfa3dc20ccca7",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ml.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mm.si",
+      "size": 350,
+      "sha256": "0f6c0fc23bddc6e68809dcab87075e3ffc3cf9e02f4336634f6de6f7fa844af7",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mn.si",
+      "size": 1201,
+      "sha256": "26aabe4bd6caa2b47894a10e0bf582625ca476eb4928acd685f107fe593a8f0d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mo.si",
+      "size": 1093,
+      "sha256": "1c13e3eb0bdd52bd2bed1171ff223096e4fe619ecb4037dfcaba8dccf1c6786d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mo.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mp.si",
+      "size": 16184,
+      "sha256": "3164425c597dfa714f7272d631df595a6de8e030e14f35a4801d75cf360c0eac",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mp.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mq.si",
+      "size": 173,
+      "sha256": "50bdf1f79d20003d6fd36715918d340384e19aea4d79240980dfc21875419eb3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mq.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mr.si",
+      "size": 300,
+      "sha256": "37cdfbf6b9bf3573a860226ca066e060625e5fd69086a59238c8d24f6cfd2670",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ms.si",
+      "size": 6187,
+      "sha256": "b561f108c047047dd541cffb8452a15c3ccf1d4b65d53146c95572b0f0ff28f5",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ms.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mt.si",
+      "size": 8457,
+      "sha256": "34397bdc0f314d356fe9cf5b2b68d1a5d6f0b0c2520f10bdd67acd300c26f0f3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mt.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mu.si",
+      "size": 218,
+      "sha256": "51474df75beefffee6dda8acf0743db1a911047b449e71d529301412a7ca400a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mu.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mv.si",
+      "size": 164,
+      "sha256": "4ebca893a605f452e10bf1908552ad88bb8b800647af45d38f8482f2e141a281",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mv.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mw.si",
+      "size": 3418,
+      "sha256": "9dfb166ea328fd2e3ce99ef95ff7fa961cc348d26f604b615adc8ad8a8200570",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mx.si",
+      "size": 102582,
+      "sha256": "33dc94bef7d2fa114cdeedc9e64c1a910ede81236c7f1e8542923b7d75d1356e",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mx.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\my.si",
+      "size": 1013,
+      "sha256": "5c52735caec2aabbaf1d7e2dd5d701517ed62bcb861490ce76a074fd73c1e3c6",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/my.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\mz.si",
+      "size": 1979,
+      "sha256": "e4354b9a283a5a965f047648af654b4b69ca586a85465a8b20dddea043de0296",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/mz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\na.si",
+      "size": 608,
+      "sha256": "fa011cdb6220dca92cd11d480aab095ba78c84ecae886d17ed2c459cbc6a6012",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/na.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\nc.si",
+      "size": 987,
+      "sha256": "dc8104197f84d67745041eebc637bdde1d135f16e70ed79ac05da2f745fd8779",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/nc.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ne.si",
+      "size": 186,
+      "sha256": "e0dc93d52f279f8018b4a19af9b45dc272f01e2439bee5ffa085d2bb723fda7c",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ne.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\nf.si",
+      "size": 5984,
+      "sha256": "d09303944e03e6859407f455e665c26dc438b5efe6b0e796f6a09ddea3594485",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/nf.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ng.si",
+      "size": 163,
+      "sha256": "1a99b98ad4073b1b38512ab16fe97fdffddbeb34ba32978cf78599b6dd6171c9",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ng.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ni.si",
+      "size": 15823,
+      "sha256": "67ee7e5620ab99a97b6006e3e902c3bb889a7053c751b5114f57392cac3a153f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ni.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\nl.si",
+      "size": 171,
+      "sha256": "cc0880cc76a6eda2818cb624031ae843301a2881df33ec6679ce5928280c8806",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/nl.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\no.si",
+      "size": 245,
+      "sha256": "7e65cb6fe48dc16ea7cdbf20e868c87f7854487827674f570ba7dd947e446d22",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/no.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\np.si",
+      "size": 713,
+      "sha256": "0271b162c1267149f1ad60a1806d6c1d7620858957450e6e55ebb277fd4f44db",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/np.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\nr.si",
+      "size": 421,
+      "sha256": "e2b30a4952aabb116eb26174234ac1760ed44be83871049765089c68c3f9ffde",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/nr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\nu.si",
+      "size": 804,
+      "sha256": "95c559fa06481da9a8312358db707af49be1d11d2ef97ddcb8af2ba12376a21c",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/nu.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\nz.si",
+      "size": 1710,
+      "sha256": "7cdd07544fc4bc35202a70f973fd7a72c064b0c8a27e33c365bc701d07d2a312",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/nz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\om.si",
+      "size": 10896,
+      "sha256": "2d1db7e90cc0ad79ea0a02f1811f175b88a9a2d193e08600189b3e5d8917449a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/om.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pa.si",
+      "size": 435,
+      "sha256": "11a8d68054914008003e3ff97236d0197f3a26dfe793f8e1ab79b831ff2636e6",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pa.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pe.si",
+      "size": 130552,
+      "sha256": "d65127e1c3e3bb08baeb8be305df81c9e8105847ed4e1c1b02bc4d684d335d47",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pe.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pf.si",
+      "size": 3747,
+      "sha256": "eeb6a87f9e059e63cc4964d481241ee0296b696ff641ba79a3be86ceeb8bdf41",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pf.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pg.si",
+      "size": 1619,
+      "sha256": "828c636e12cab860fd82fba1f1925fd5bff8566f3c011e32a77a12c485320f45",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ph.si",
+      "size": 1498,
+      "sha256": "7fa52642e8d66712e18bd35913f8a7a641449ce2452d24bfc0f4b6ad2f282463",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ph.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pk.si",
+      "size": 399,
+      "sha256": "f90dff78c0ccd062738149c24e25a45e1200990a66c08592d2392176fbf0f8ec",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pl.si",
+      "size": 128,
+      "sha256": "e6c6836560babb44a3fd84900d957aa7ccbd4fd36cd7f427a00372fbb78dde34",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pl.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pm.si",
+      "size": 173,
+      "sha256": "5448eb004a2d751685a6e2157fad9bc3fdd6fb7a603703201f4dbcd550fb9186",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pn.si",
+      "size": 12254,
+      "sha256": "efa7a344fd7516a096b2dcc58461f0eb74e3a0d26ebd3613eb55f14cff5303ad",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pr.si",
+      "size": 383,
+      "sha256": "9cbdfd51efd30c2203295ef39108d37122f6032ad4a164fbb58bd900d65ae2a1",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ps.si",
+      "size": 296,
+      "sha256": "c4abc525988853c718c81ab213880c97be86b183f9f4258ca8d8b967be681a72",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ps.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pt.si",
+      "size": 7150,
+      "sha256": "5992d9bd7f5d85b9abf4ff1484c184f0824d525384b1b2919b0a4b407b4d3621",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pt.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\pw.si",
+      "size": 223,
+      "sha256": "6766e7588380abed60eb053f7414e51a82b546a6f4e24fcefe06132efe858694",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/pw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\py.si",
+      "size": 16438,
+      "sha256": "157a69aedd04185e860ce53c11647caf02ff0c8921ab1de4ebe1219d0917b0f8",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/py.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\qa.si",
+      "size": 279,
+      "sha256": "3fa417434b9dd6dacdaf97bc7d606c40dc3245aed35b1b5ce8c6217e99c34939",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/qa.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\re.si",
+      "size": 173,
+      "sha256": "50bdf1f79d20003d6fd36715918d340384e19aea4d79240980dfc21875419eb3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/re.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ro.si",
+      "size": 173,
+      "sha256": "d68814d82b35873e4592bfa5ce03f9885d5b6a78a4564a22b2b8084bb1ed78db",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ro.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\rs.si",
+      "size": 513292,
+      "sha256": "499d25b698291699e7ff80fd8422d85c05db22dc2d63cf180159e0e2a3dd300f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/rs.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ru.si",
+      "size": 173,
+      "sha256": "b988ad86dfa9cc4bf4e05d03864463ec81e4efb58d70d6e1702893d225d118b5",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ru.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\rw.si",
+      "size": 426,
+      "sha256": "8a3d3dd10cd07fcebd49b0975fda040a6a91ffd5e0443a094e01005025f2fd17",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/rw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sa.si",
+      "size": 10711,
+      "sha256": "a0bf458534f2d2afc26f8acbf0f65e7d58e1df35d9de52debfaddd195b1a0ed7",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sa.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sb.si",
+      "size": 715,
+      "sha256": "6c73ff24e25747e7293ea4d85119ad155f700b49d0cf56884f27a0dc9ac22369",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sb.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sc.si",
+      "size": 237,
+      "sha256": "d4fe24f07293665b4cd2e74e06963502747173839dff1fbc7d469319897964e2",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sc.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sd.si",
+      "size": 296,
+      "sha256": "913b128e296b565b3305fe43db3063a2cc1ef8601fead35c41ce8a4e2e8fbeb4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sd.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\se.si",
+      "size": 203,
+      "sha256": "6005aaf7f8ea5bd8d7e15e1f22134891300b42f081b57af1b2d21edc10bc3cf6",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/se.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sg.si",
+      "size": 696,
+      "sha256": "737f8a66ddeca5a7c5a7f8b3f35571930842efcac9bfe189cb09722cd8364d52",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sh.si",
+      "size": 35183,
+      "sha256": "bc0ae11b614339ce70976762c29059fe8b9bbf3ef810f05fe2862ab6d787b3dd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sh.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\si.si",
+      "size": 1827,
+      "sha256": "1d37e13fc8ba99ac3950d20d62ae7f6f0f4f6dfd5b43a1cf04700397af76d63f",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/si.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sj.si",
+      "size": 245,
+      "sha256": "64b4c53c2b67a81bffa8663a582eb11bfd66da22911f1c8f71179edd9d5cb417",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sj.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sk.si",
+      "size": 1079,
+      "sha256": "b1651250a52b176616c9d54e0158ac5849f549de2f09e1ffaf382b881314f425",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sl.si",
+      "size": 173,
+      "sha256": "3fdb665d6145f9292f9cf6db9dac5e82ee0a769a3a27ec3997feea753f67dc28",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sl.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sm.si",
+      "size": 13060,
+      "sha256": "f8672b2bc91e1ecde98b391864a8e1846180d27070987e1c4af63557ad34eeb5",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sn.si",
+      "size": 269,
+      "sha256": "8d5d8bf03ec4091aa369d6ab0868112e238237a3894d07267ec067ab09a2bd06",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\so.si",
+      "size": 266,
+      "sha256": "30e95a529bd7a01f26f16d135ed6a08b6a8813afafcc27f27847c7a1b19e29ae",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/so.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sr.si",
+      "size": 225,
+      "sha256": "00cb4aad981b47cabf260727ce96f6567c5205e1429ba14b0913285266ad3a54",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ss.si",
+      "size": 307,
+      "sha256": "e008571206f0921dd948310969cd9b7c157452bfce806fc15d59a68146505595",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ss.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\st.si",
+      "size": 582,
+      "sha256": "eb1f0350eda135846b938ccdc8c33019f05b27711002baee6121ec455231ca9e",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/st.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sv.si",
+      "size": 76469,
+      "sha256": "e5491f8c5f5a84dab305232bcb94fc69465e200890b81cbf0b09857fd4e1d4d2",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sv.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sx.si",
+      "size": 12418,
+      "sha256": "77da69654736d0936ee4c20f53c662ef1f425e473a9738a218fe15a2e0cc7796",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sx.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sy.si",
+      "size": 310,
+      "sha256": "4868240c4118dcf038655313fe30e3ca18a57827fe299b0ee1cd068dc908b4bf",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sy.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\sz.si",
+      "size": 4290,
+      "sha256": "13629b8c486fc840808cb7485709d52b3b15ef6e5aaa6c5901f27f582c2e1030",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/sz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ta.si",
+      "size": 35183,
+      "sha256": "bc0ae11b614339ce70976762c29059fe8b9bbf3ef810f05fe2862ab6d787b3dd",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ta.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tc.si",
+      "size": 11034,
+      "sha256": "2884cd5a2f9ae388c98f4ba4deb9a905860d2257739c689e271d9aed243e454c",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tc.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\td.si",
+      "size": 173,
+      "sha256": "0961383072a46d1e151fbe9a96fc5998268ac3f881d9a81067a1444bf520b874",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/td.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tf.si",
+      "size": 655,
+      "sha256": "5d6d6d1a4ae9485329e4ee6af39760b1d5ede94e587236d0470087e9036eed96",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tf.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tg.si",
+      "size": 508,
+      "sha256": "6b9facc25ac672c8b490a02bb3392349380030fb994296f7c676c250addce8e4",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\th.si",
+      "size": 208,
+      "sha256": "442dd3d3aeaf086a470b9f9d3fa3c50a988e5112500eabb7f869df6310f47f89",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/th.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tj.si",
+      "size": 926,
+      "sha256": "60ca2eb3cc338230762670f432ca5efb6478503a7f10f48d7d12ecabb3188750",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tj.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tk.si",
+      "size": 677,
+      "sha256": "0ab0666072ebf7bc563c3d5bc12d51a1cec41eb811e370dfade8534b0b7fefbc",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tl.si",
+      "size": 388,
+      "sha256": "86e4a253ad49e10ba741dfd12afc1a8501ec3838a7d6b78ca767ad78b4a77969",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tl.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tm.si",
+      "size": 27577,
+      "sha256": "46a07e299dd224bba1229b8ffa84348156ec008d0231b742a37266b2ea29cb6d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tn.si",
+      "size": 420,
+      "sha256": "476d4a86a60692aaf8042b1cbc540a083eeb0e530a68f2e639ab34ec33904c48",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\to.si",
+      "size": 204,
+      "sha256": "7dc47bfc9de1adfa882f9e763e234de33ba35df78fe55f845a24660df41afe54",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/to.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tr.si",
+      "size": 360,
+      "sha256": "2c15b1c2d619f8a55ef0990cbff7e1c5fef8dab4bf1370a001a81b7eaceade20",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tr.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tt.si",
+      "size": 215,
+      "sha256": "cbc19d9c7a5509195b9a82463c5039668bfc5fd1f40dd1b7eab90d745b34fcab",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tt.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tv.si",
+      "size": 1354,
+      "sha256": "00d567c5433db2d0338bd4729f0f969f1610b8b4a6c82a3ffa3a58f6e64d72a0",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tv.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tw.si",
+      "size": 1934,
+      "sha256": "98bdef924b39dc7d74fc607e28165d56857aad55f448c1ecd905867873d37c7b",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\tz.si",
+      "size": 374,
+      "sha256": "053bd5268181eb563e092e6991fa7e396b3f722bc5ff9d9c858fd48ee7cc487a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/tz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ua.si",
+      "size": 128,
+      "sha256": "9108ff1d7075cf6a3a60ded2aa4c28135e4190bd53147911cc20f5e79612cf2a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ua.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ug.si",
+      "size": 2533,
+      "sha256": "e28983512fbe9dd73533867248f786927850a7969e5e757ec7fb95a8895c1e25",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ug.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\um.si",
+      "size": 4911,
+      "sha256": "f9366ab64d24647ff981745b7f170948c2ae3e4881c634b81588cca3ac4c99e3",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/um.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\un.si",
+      "size": 24264,
+      "sha256": "5d2fd8aae811df075032779a1e46d14f1fc188cd3e670fae45a020b7918c2ce0",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/un.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\us.si",
+      "size": 4833,
+      "sha256": "4c91aa89ecdc79fd3521830831e264437c69de0165bedeab499631405dba8797",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/us.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\uy.si",
+      "size": 1592,
+      "sha256": "901b374dd6d065d2c3cb74614d04f48f8a68d430de1dbf68dea6a1c536aecae0",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/uy.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\uz.si",
+      "size": 1465,
+      "sha256": "0265ee5b62d733ff9dabbc88c6a9442e0728b3b5d55b767394b208f9dc566703",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/uz.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\va.si",
+      "size": 18590,
+      "sha256": "a8b8ed13f4caf12fc30c1bb62c662d0db58d465f5f32129c245e4363576f175c",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/va.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\vc.si",
+      "size": 305,
+      "sha256": "535c8e41a172bd50d182c7c2ffac8ccc048454c02ded10006021704210ae3464",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/vc.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ve.si",
+      "size": 1074,
+      "sha256": "6cbda4b4394894a03a2e347647250b676e036fe34be87efb8b0a838afaf96620",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ve.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\vg.si",
+      "size": 10097,
+      "sha256": "d1a833367f5bc590d047dd7ee7c78d9f9bf0ed8cc4b07a0d659c9f706c27e6e0",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/vg.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\vi.si",
+      "size": 7822,
+      "sha256": "161966c6adf0518112fb8085f474703edd86f395a33e07abbb06db96f4f57193",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/vi.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\vn.si",
+      "size": 266,
+      "sha256": "0ab5d848c994ab1aab7d75dc3420ae0a1d9394675a080bad2e8c4b414a3f5758",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/vn.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\vu.si",
+      "size": 1864,
+      "sha256": "0049e9fab76b25e7e477b8761e938d65aa4d444eaf19a4ccfea74ea2a900e139",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/vu.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\wf.si",
+      "size": 173,
+      "sha256": "5448eb004a2d751685a6e2157fad9bc3fdd6fb7a603703201f4dbcd550fb9186",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/wf.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ws.si",
+      "size": 566,
+      "sha256": "a3a0037aca3fbc2e939e3b290b18ccab694b586ba837a8d5f0f265fcfdee9031",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ws.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\xk.si",
+      "size": 12723,
+      "sha256": "f261192fd66a3e1ec0000f5472415588f3bc5f677d1610bfe4766b80c80d0a9d",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/xk.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\xx.si",
+      "size": 138,
+      "sha256": "ad4758c0e2a5f17a620fbffad9bde4f1dde0af95c173c8c16c47fb4ed3730d89",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/xx.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\ye.si",
+      "size": 173,
+      "sha256": "7d8c0a1aa0e23b84f2163e000fcc0651517779a1db8c38c8065760180b125855",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/ye.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\yt.si",
+      "size": 173,
+      "sha256": "5448eb004a2d751685a6e2157fad9bc3fdd6fb7a603703201f4dbcd550fb9186",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/yt.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\za.si",
+      "size": 592,
+      "sha256": "b148be5c532e0fe16f40c95cd9a191340a75a30c67b8fb6d5d5fc9f22e9902d6",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/za.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\zm.si",
+      "size": 4940,
+      "sha256": "e5319029d09ea66ce7716947c06d24771187df66766fed71cc1c39ea4d7fab06",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/zm.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\country_flags\\res\\si\\zw.si",
+      "size": 7447,
+      "sha256": "fc9161186e6c05090e04936be2a71da53e472dc30c3d4e392a92c6c34127a83a",
+      "relative_path": "data/flutter_assets/packages/country_flags/res/si/zw.si"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\brand\\pokrov_mark.png",
+      "size": 146850,
+      "sha256": "045db222183c15f0c205963963772ac3c3d6890e52aff011ebeea096810ecc81",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark.png"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\brand\\pokrov_mark_128.png",
+      "size": 16419,
+      "sha256": "6e9a14a5d266d72c7ec99bd11f19bdf90deaaa0ef7ea735cb8854249b6348589",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark_128.png"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\brand\\pokrov_mark_256.png",
+      "size": 47834,
+      "sha256": "3eea95eb53532c37f328991087fc91fdd684baca87fc746552506cb4d0e2ab87",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/brand/pokrov_mark_256.png"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\fonts\\GolosText-Bold.ttf",
+      "size": 41776,
+      "sha256": "7e07c2ba2ae04ffd2db8140400f48026143fe8264ab8c5f16f3e3d13be643608",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Bold.ttf"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\fonts\\GolosText-ExtraBold.ttf",
+      "size": 41856,
+      "sha256": "d94a6d4d7dddbe1aa9e720fa417f45f2f879e3c1181ebf88f0dfd3d8e7843035",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-ExtraBold.ttf"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\fonts\\GolosText-Medium.ttf",
+      "size": 41848,
+      "sha256": "c429a1fc2c4a8e6149523129147441c8267cce8ee67b9e0eb9473625bbac1227",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Medium.ttf"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\fonts\\GolosText-Regular.ttf",
+      "size": 41860,
+      "sha256": "d8aca92c85b2b3830df0013db2c29c0ee0d207a41c1b3181cf49329b2c678daf",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-Regular.ttf"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\fonts\\GolosText-SemiBold.ttf",
+      "size": 41900,
+      "sha256": "064144e697e803b692cb13bf68eb2204ee4db8b9371f440b990b0f9464bdfb74",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/fonts/GolosText-SemiBold.ttf"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\fonts\\OFL.txt",
+      "size": 4487,
+      "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\licenses\\native-go-NOTICES.txt",
+      "size": 719085,
+      "sha256": "b2544111e6bd87f3acb1f9a1fbf97df5c218820492fcd0849130129201cc89b4",
+      "relative_path": "data/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\shaders\\ink_sparkle.frag",
+      "size": 21320,
+      "sha256": "e5e61d50c9549bc35382bbbd1c9548d46c4fb9ddf40c3a698415ac7e005516c8",
+      "relative_path": "data/flutter_assets/shaders/ink_sparkle.frag"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\shaders\\stretch_effect.frag",
+      "size": 17368,
+      "sha256": "3707b8a75ae51668d7bcf4fe72a7b6ac95055555a8afc1723da74ff5eded1378",
+      "relative_path": "data/flutter_assets/shaders/stretch_effect.frag"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\icudtl.dat",
+      "size": 778864,
+      "sha256": "c12537022ef818991a7bfed41a76d8d6ae962ffbc0e6511ac762a5d0845e7f7c",
+      "relative_path": "data/icudtl.dat"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\file_selector_windows_plugin.dll",
+      "size": 105984,
+      "sha256": "7152e4d53bfa733993f9acc4768369d44e301276a9bb9cb130c6314cdb8bff85",
+      "relative_path": "file_selector_windows_plugin.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\flutter_secure_storage_windows_plugin.dll",
+      "size": 152576,
+      "sha256": "3a0bdfd2424fd494955ba4c27be74cd8c6b400c1983e3075bc161a932dd4112e",
+      "relative_path": "flutter_secure_storage_windows_plugin.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\flutter_windows.dll",
+      "size": 18511872,
+      "sha256": "1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1",
+      "relative_path": "flutter_windows.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\libcronet.dll",
+      "size": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7",
+      "relative_path": "libcronet.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\libcronet.NOTICES.txt",
+      "size": 158463,
+      "sha256": "2c24f29748b438f85ad6ef44548395970a4a1d04b89e653e6a4a56601297e267",
+      "relative_path": "libcronet.NOTICES.txt"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\msvcp140.dll",
+      "size": 575592,
+      "sha256": "9057d39b36b6c7d054865ee2bf9cde7a490fe3b01ec4e82514687e24f576269f",
+      "relative_path": "msvcp140.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\pokrov-core.dll",
+      "size": 55012864,
+      "sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2",
+      "relative_path": "pokrov-core.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\pokrov_service.exe",
+      "size": 264192,
+      "sha256": "b076679d696398278c6e3d343bdeda21344a57d5a0f0975e2df2c9abc7c5f489",
+      "relative_path": "pokrov_service.exe"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\pokrov_tray.ico",
+      "size": 110013,
+      "sha256": "9eea4eff6f980edda2b9c61f3d86fa63e6349bed23bc83e09d5fbb3274d9575d",
+      "relative_path": "pokrov_tray.ico"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\pokrov_windows.exe",
+      "size": 290816,
+      "sha256": "e1c9aff3052256c33b42dda71fb96692eadc2b287c26eb08f6c39e8be74a5dea",
+      "relative_path": "pokrov_windows.exe"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\screen_retriever_windows_plugin.dll",
+      "size": 116736,
+      "sha256": "2407257473303c2900930ed1c4269d4aea211d31f650a48b4f59f8ff6524d5ad",
+      "relative_path": "screen_retriever_windows_plugin.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\tray_manager_plugin.dll",
+      "size": 108544,
+      "sha256": "ad32a04b50d7b7fbc980bc31594c48cc24addd841de890fb5d7acc972dbb6f91",
+      "relative_path": "tray_manager_plugin.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\url_launcher_windows_plugin.dll",
+      "size": 89600,
+      "sha256": "5431ba57c5760e190b8de06e6456a59c60a28939b6ffba2ccb8456f243aef742",
+      "relative_path": "url_launcher_windows_plugin.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\vcruntime140.dll",
+      "size": 120432,
+      "sha256": "da72e6677bd1bcd01c453c1998aaa19aeaf6659f4774cf6848409da8232a95b2",
+      "relative_path": "vcruntime140.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\vcruntime140_1.dll",
+      "size": 49744,
+      "sha256": "26e470b29bed3d873e0c328186e53f95e9edbfe0b0fd0cda44743a0b1a04a828",
+      "relative_path": "vcruntime140_1.dll"
+    },
+    {
+      "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\window_manager_plugin.dll",
+      "size": 141824,
+      "sha256": "df9fe2bf5a62bdfdf8c74032ccea2043a0b432e4da881c1c310f957d9362d441",
+      "relative_path": "window_manager_plugin.dll"
+    }
+  ],
+  "pe_imports": [
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\file_selector_windows_plugin.dll",
+        "size": 105984,
+        "sha256": "7152e4d53bfa733993f9acc4768369d44e301276a9bb9cb130c6314cdb8bff85"
+      },
+      "machine": 34404,
+      "imports": [
+        "KERNEL32.dll",
+        "MSVCP140.dll",
+        "SHELL32.dll",
+        "USER32.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "flutter_windows.dll",
+        "ole32.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\flutter_secure_storage_windows_plugin.dll",
+        "size": 152576,
+        "sha256": "3a0bdfd2424fd494955ba4c27be74cd8c6b400c1983e3075bc161a932dd4112e"
+      },
+      "machine": 34404,
+      "imports": [
+        "ADVAPI32.dll",
+        "KERNEL32.dll",
+        "MSVCP140.dll",
+        "SHELL32.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "VERSION.dll",
+        "api-ms-win-crt-convert-l1-1-0.dll",
+        "api-ms-win-crt-filesystem-l1-1-0.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "bcrypt.dll",
+        "flutter_windows.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\flutter_windows.dll",
+        "size": 18511872,
+        "sha256": "1f4215e1072dd9e34f4565b74310e6771364e1470c7e92214bca64947bd012a1"
+      },
+      "machine": 34404,
+      "imports": [
+        "ADVAPI32.dll",
+        "CRYPT32.dll",
+        "GDI32.dll",
+        "IMM32.dll",
+        "IPHLPAPI.DLL",
+        "KERNEL32.dll",
+        "OLEACC.dll",
+        "OLEAUT32.dll",
+        "OPENGL32.dll",
+        "PROPSYS.dll",
+        "PSAPI.DLL",
+        "RPCRT4.dll",
+        "SHLWAPI.dll",
+        "UIAutomationCore.DLL",
+        "USER32.dll",
+        "WINMM.dll",
+        "WS2_32.dll",
+        "api-ms-win-core-path-l1-1-0.dll",
+        "bcrypt.dll",
+        "d3d9.dll",
+        "dbghelp.dll",
+        "dwmapi.dll",
+        "dxgi.dll",
+        "ntdll.dll",
+        "ole32.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\libcronet.dll",
+        "size": 8596992,
+        "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+      },
+      "machine": 34404,
+      "imports": [
+        "ADVAPI32.dll",
+        "CRYPT32.dll",
+        "IPHLPAPI.DLL",
+        "KERNEL32.dll",
+        "SHELL32.dll",
+        "SHLWAPI.dll",
+        "Secur32.dll",
+        "USER32.dll",
+        "WINHTTP.dll",
+        "WINMM.dll",
+        "WS2_32.dll",
+        "api-ms-win-core-winrt-l1-1-0.dll",
+        "dbghelp.dll",
+        "ntdll.dll",
+        "ole32.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\msvcp140.dll",
+        "size": 575592,
+        "sha256": "9057d39b36b6c7d054865ee2bf9cde7a490fe3b01ec4e82514687e24f576269f"
+      },
+      "machine": 34404,
+      "imports": [
+        "KERNEL32.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "api-ms-win-crt-convert-l1-1-0.dll",
+        "api-ms-win-crt-environment-l1-1-0.dll",
+        "api-ms-win-crt-filesystem-l1-1-0.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-locale-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "api-ms-win-crt-time-l1-1-0.dll",
+        "api-ms-win-crt-utility-l1-1-0.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\pokrov-core.dll",
+        "size": 55012864,
+        "sha256": "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2"
+      },
+      "machine": 34404,
+      "imports": [
+        "KERNEL32.dll",
+        "msvcrt.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\pokrov_service.exe",
+        "size": 264192,
+        "sha256": "b076679d696398278c6e3d343bdeda21344a57d5a0f0975e2df2c9abc7c5f489"
+      },
+      "machine": 34404,
+      "imports": [
+        "ADVAPI32.dll",
+        "IPHLPAPI.DLL",
+        "KERNEL32.dll",
+        "MSVCP140.dll",
+        "SHELL32.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "WINHTTP.dll",
+        "WS2_32.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-locale-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "bcrypt.dll",
+        "ole32.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\pokrov_windows.exe",
+        "size": 290816,
+        "sha256": "e1c9aff3052256c33b42dda71fb96692eadc2b287c26eb08f6c39e8be74a5dea"
+      },
+      "machine": 34404,
+      "imports": [
+        "ADVAPI32.dll",
+        "KERNEL32.dll",
+        "MSVCP140.dll",
+        "SHELL32.dll",
+        "USER32.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-locale-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "bcrypt.dll",
+        "dwmapi.dll",
+        "file_selector_windows_plugin.dll",
+        "flutter_secure_storage_windows_plugin.dll",
+        "flutter_windows.dll",
+        "ole32.dll",
+        "screen_retriever_windows_plugin.dll",
+        "tray_manager_plugin.dll",
+        "url_launcher_windows_plugin.dll",
+        "window_manager_plugin.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\screen_retriever_windows_plugin.dll",
+        "size": 116736,
+        "sha256": "2407257473303c2900930ed1c4269d4aea211d31f650a48b4f59f8ff6524d5ad"
+      },
+      "machine": 34404,
+      "imports": [
+        "KERNEL32.dll",
+        "MSVCP140.dll",
+        "USER32.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "flutter_windows.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\tray_manager_plugin.dll",
+        "size": 108544,
+        "sha256": "ad32a04b50d7b7fbc980bc31594c48cc24addd841de890fb5d7acc972dbb6f91"
+      },
+      "machine": 34404,
+      "imports": [
+        "KERNEL32.dll",
+        "MSVCP140.dll",
+        "SHELL32.dll",
+        "USER32.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "flutter_windows.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\url_launcher_windows_plugin.dll",
+        "size": 89600,
+        "sha256": "5431ba57c5760e190b8de06e6456a59c60a28939b6ffba2ccb8456f243aef742"
+      },
+      "machine": 34404,
+      "imports": [
+        "ADVAPI32.dll",
+        "KERNEL32.dll",
+        "MSVCP140.dll",
+        "SHELL32.dll",
+        "SHLWAPI.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "flutter_windows.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\vcruntime140.dll",
+        "size": 120432,
+        "sha256": "da72e6677bd1bcd01c453c1998aaa19aeaf6659f4774cf6848409da8232a95b2"
+      },
+      "machine": 34404,
+      "imports": [
+        "KERNEL32.dll",
+        "api-ms-win-crt-convert-l1-1-0.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\vcruntime140_1.dll",
+        "size": 49744,
+        "sha256": "26e470b29bed3d873e0c328186e53f95e9edbfe0b0fd0cda44743a0b1a04a828"
+      },
+      "machine": 34404,
+      "imports": [
+        "KERNEL32.dll",
+        "VCRUNTIME140.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\window_manager_plugin.dll",
+        "size": 141824,
+        "sha256": "df9fe2bf5a62bdfdf8c74032ccea2043a0b432e4da881c1c310f957d9362d441"
+      },
+      "machine": 34404,
+      "imports": [
+        "ADVAPI32.dll",
+        "KERNEL32.dll",
+        "MSVCP140.dll",
+        "SHELL32.dll",
+        "USER32.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "dwmapi.dll",
+        "flutter_windows.dll",
+        "ole32.dll"
+      ]
+    },
+    {
+      "file": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053-setup.exe",
+        "size": 29184678,
+        "sha256": "2e114c6ab88c8c7b898272d978c21b1608cc28c0c6cf1f2d47e2cc6392762caa"
+      },
+      "machine": 332,
+      "imports": [
+        "advapi32.dll",
+        "comctl32.dll",
+        "kernel32.dll",
+        "oleaut32.dll",
+        "user32.dll"
+      ]
+    }
+  ],
+  "notices": [
+    {
+      "entry": "libcronet.NOTICES.txt",
+      "source": {
+        "path": "E:\\r12client\\apps\\windows_shell\\windows\\runner\\resources\\runtime\\libcronet.NOTICES.txt",
+        "size": 158463,
+        "sha256": "2c24f29748b438f85ad6ef44548395970a4a1d04b89e653e6a4a56601297e267"
+      },
+      "packaged": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\libcronet.NOTICES.txt",
+        "size": 158463,
+        "sha256": "2c24f29748b438f85ad6ef44548395970a4a1d04b89e653e6a4a56601297e267"
+      }
+    },
+    {
+      "entry": "data/flutter_assets/packages/pokrov_app_shell/assets/fonts/OFL.txt",
+      "source": {
+        "path": "E:\\r12client\\packages\\app_shell\\assets\\fonts\\OFL.txt",
+        "size": 4487,
+        "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679"
+      },
+      "packaged": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\fonts\\OFL.txt",
+        "size": 4487,
+        "sha256": "9f73ecbd863e64e5d3d1b34a1860baaaa517c095b28bd1183e43e0b246b14679"
+      }
+    },
+    {
+      "entry": "data/flutter_assets/packages/pokrov_app_shell/assets/licenses/native-go-NOTICES.txt",
+      "source": {
+        "path": "E:\\r12client\\packages\\app_shell\\assets\\licenses\\native-go-NOTICES.txt",
+        "size": 719085,
+        "sha256": "b2544111e6bd87f3acb1f9a1fbf97df5c218820492fcd0849130129201cc89b4"
+      },
+      "packaged": {
+        "path": "E:\\r12client\\apps\\windows_shell\\build\\release_bundle\\pokrov-windows-x64-1.2.0+4053\\data\\flutter_assets\\packages\\pokrov_app_shell\\assets\\licenses\\native-go-NOTICES.txt",
+        "size": 719085,
+        "sha256": "b2544111e6bd87f3acb1f9a1fbf97df5c218820492fcd0849130129201cc89b4"
+      }
+    }
+  ],
+  "flutter_native_prior_binding": {
+    "path": "E:\\r12-c05-flutter-native\\engine-binary-binding.json",
+    "size": 4306,
+    "sha256": "5fc8400a103db31ba0a8b86c845093074e3fea269b42654e7f66ef57f81b318a"
+  },
+  "signing_status": "SKIPPED_BY_OWNER",
+  "installer_extraction": {
+    "status": "NOT_PERFORMED_THIS_SLICE"
+  },
+  "limits": [
+    "Installer container and staged payload were inspected; internal payload extraction was not established.",
+    "PE import inventory and forbidden-extension checks are static and do not prove runtime privacy.",
+    "No install, SCM/TUN action, device acceptance, trusted Authenticode or public promotion was performed."
+  ]
+}

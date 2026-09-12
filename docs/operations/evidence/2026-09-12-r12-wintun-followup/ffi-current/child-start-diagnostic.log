@@ -1,0 +1,4 @@
+DEBUG[0000] POKROV CORE libbox.Setup success C:/r12-c05-wintun-20260912/ffi-current/fixture/base C:/r12-c05-wintun-20260912/ffi-current/fixture/working C:/r12-c05-wintun-20260912/ffi-current/fixture/temp true
+DEBUG[0000] POKROV CORE StartGrpcServerByMode  0
+DEBUG[0000] POKROV CORE stored POKROV settings unavailable
+ERROR[0000] POKROV CORE CORE-005

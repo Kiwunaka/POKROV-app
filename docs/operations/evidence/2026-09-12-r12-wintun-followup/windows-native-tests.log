@@ -1,0 +1,24 @@
+Internal ctest changing into directory: P:/apps/windows_shell/build/windows/x64
+Test project P:/apps/windows_shell/build/windows/x64
+    Start 1: pokrov_service_client
+1/9 Test #1: pokrov_service_client ............   Passed    0.04 sec
+    Start 2: pokrov_service_protocol
+2/9 Test #2: pokrov_service_protocol ..........   Passed    0.06 sec
+    Start 3: pokrov_service_security
+3/9 Test #3: pokrov_service_security ..........   Passed    0.04 sec
+    Start 4: pokrov_windows_crash_profile
+4/9 Test #4: pokrov_windows_crash_profile .....   Passed    0.04 sec
+    Start 5: pokrov_service_runtime
+5/9 Test #5: pokrov_service_runtime ...........   Passed    0.31 sec
+    Start 6: pokrov_service_events
+6/9 Test #6: pokrov_service_events ............   Passed    3.43 sec
+    Start 7: pokrov_service_pipe_client
+7/9 Test #7: pokrov_service_pipe_client .......   Passed    0.31 sec
+    Start 8: pokrov_runtime_task_runner
+8/9 Test #8: pokrov_runtime_task_runner .......   Passed    0.05 sec
+    Start 9: pokrov_activation_protocol
+9/9 Test #9: pokrov_activation_protocol .......   Passed    0.04 sec
+
+100% tests passed, 0 tests failed out of 9
+
+Total Test time (real) =   4.38 sec

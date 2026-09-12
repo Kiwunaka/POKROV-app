@@ -1,0 +1,14 @@
+{
+  "status": "PASS_SIGNED_EXACT_TREE",
+  "source": "c06cab7776dd3db5282535ba6c5309bf0119f6bb",
+  "parent": "8de486a0c8e1518e569c0e801d5b98211a506a19",
+  "signed_commit": "04ec771af6f24f62caa29162b68eaa47ec18a979",
+  "tree": "2c08ebea440db1fc719fb83f54e20711ca2c69c6",
+  "signature_valid": true,
+  "branch": "codex/wintun-binding-signed-20260912",
+  "file_count": 100,
+  "utc": "2026-09-12T00:22:13.364340+00:00",
+  "pr": "https://github.com/Kiwunaka/POKROV-app/pull/119",
+  "previous_signed_commit": "aa6960dc793fd90465e97ea56ddfaca445a5eb23",
+  "coordinated_core_ref": "880bff65ad665844828fe50fc395e9cfc1cd81b4"
+}

@@ -1,0 +1,25 @@
+{
+  "status": "PASS_BOUNDED_ADVISORY_DELTA_REVIEW",
+  "previous_source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "previous_triage": {
+    "path": "C:\\r12-c05-wintun-20260912\\static-triage-binding.json",
+    "sha256": "0f074832c934576de6264b4893b94563a8285bf29d07722f584e653e87060e05"
+  },
+  "same_nine_advisory_claims": true,
+  "source_changes": [
+    "docs/architecture.md",
+    "v2/hcore/grpc_server.go",
+    "v2/hcore/privacy_test.go"
+  ],
+  "source_diff_sha256": "47978d4f52c501f0dbf945b559534a3d5d29277fda88671fa310e5e3f8d539ae",
+  "source_review": "Only two setup log calls and a log-only local boolean change; setup inputs and socket/TLS/service calls retain their behavior. No affected module or registration changed.",
+  "go_manifests_and_sums_unchanged": true,
+  "artifact_composition_sha256": "f8f30a621095fa4c8e05b412d0e4d30450b8ce6272f71b7126f8756135d3a406",
+  "scan_collection_sha256": "9a3fd85df42815b10ee236d96978c2b658be60524b8bb9ed4f3467a7a19d6b7a",
+  "limits": [
+    "Only prior bounded static dispositions carry forward; no whole-application or native-code clearance.",
+    "Five binary scans extract zero symbols; trace findings do not establish reachability.",
+    "Corrected source SBOMs provide local module identity; raw binary path/(devel) labels are not upstream versions."
+  ]
+}

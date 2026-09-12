@@ -1,0 +1,63 @@
+{
+  "free_e_after": 44333318144,
+  "archive": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-client-2662-before-wintun-20260912/outputs.tar.gz",
+  "targets": [
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/flutter-apk/app-arm64-v8a-direct-release.apk",
+      "bytes": 100927231,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-arm64-v8a-direct-release.apk",
+      "sha256": "45a943dca23587e7b710b33e29ac39b90bf0aaa614566c374f651bb4ceadc348"
+    },
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/flutter-apk/app-arm64-v8a-direct-release.apk",
+      "bytes": 100927231,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-arm64-v8a-release.apk",
+      "sha256": "45a943dca23587e7b710b33e29ac39b90bf0aaa614566c374f651bb4ceadc348"
+    },
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/flutter-apk/app-armeabi-v7a-direct-release.apk",
+      "bytes": 90460229,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-armeabi-v7a-direct-release.apk",
+      "sha256": "aa82c49f4d6fe89abcec3069805c3fddb4f0d7df3461804757218de6d539cce6"
+    },
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/flutter-apk/app-armeabi-v7a-direct-release.apk",
+      "bytes": 90460229,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-armeabi-v7a-release.apk",
+      "sha256": "aa82c49f4d6fe89abcec3069805c3fddb4f0d7df3461804757218de6d539cce6"
+    },
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/flutter-apk/app-direct-release.apk",
+      "bytes": 294072538,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-direct-release.apk",
+      "sha256": "352436b741eaf91648e70febc69226d610c8e9e685cb238047ce9b98a2fd8dd7"
+    },
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/flutter-apk/app-direct-release.apk",
+      "bytes": 294072538,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-universal-release.apk",
+      "sha256": "352436b741eaf91648e70febc69226d610c8e9e685cb238047ce9b98a2fd8dd7"
+    },
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/flutter-apk/app-x86_64-direct-release.apk",
+      "bytes": 109719326,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\flutter-apk\\app-x86_64-direct-release.apk",
+      "sha256": "9ffe8e83cfab393ef765acc0631579d236a9363525f3c71bd5e5d54660666fee"
+    },
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/flutter-apk/app-x86_64-direct-release.apk",
+      "bytes": 109719326,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\apk\\direct\\release\\app-direct-x86_64-release.apk",
+      "sha256": "9ffe8e83cfab393ef765acc0631579d236a9363525f3c71bd5e5d54660666fee"
+    },
+    {
+      "retained_entry": "apps/android_shell/build/app/outputs/bundle/storeRelease/app-store-release.aab",
+      "bytes": 126058181,
+      "path": "E:\\r12client\\apps\\android_shell\\build\\app\\outputs\\bundle\\storeRelease\\app-store-release.aab",
+      "sha256": "9b1106ea72c17e423f34c0068c4f8d679f23fe8a63f5d007341547db223865d1"
+    }
+  ],
+  "status": "PASS_OLD_BUILD_OUTPUTS_RETAINED_REMOTELY",
+  "free_e_before": 43795304448,
+  "archive_sha256": "cd9b5b9fbdb3c8b0762e018e4a50a88934db268bf6bf63a412eb589ad6696d58"
+}

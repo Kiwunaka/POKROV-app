@@ -1,0 +1,284 @@
+{
+  "checkout_line_endings": {
+    "engine/sing-box/replace/tailscale/tempfork/spf13/cobra/comp.ps1": {
+      "git_blob_sha256": "1ac16a4181b718bbc709e2dba6b9ef8a8446ef73d12d2259fa1a45fdb6c53fbd",
+      "checkout_sha256": "dffb30cf0c9eeca83cefece6463270b84b6bb9dce05a2512e7915fd219f66e14",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "engine/sing-box/replace/tailscale/tool/go-win.ps1": {
+      "git_blob_sha256": "d64f7d56712b6e2354a0eaaa849beabc96f5684270f5e253f092d665e18ecb4e",
+      "checkout_sha256": "3cf379353ee35e59dc10e2876ec1980bcc9f8606e4dab4db4f1bae156f640eea",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "engine/sing-box/replace/tailscale/tool/gocross/gocross-wrapper.ps1": {
+      "git_blob_sha256": "2ae2ab2f7507b664c199489a9c4b7c75caa3f3ac94c442380444784efb53eaa1",
+      "checkout_sha256": "b79986ea4d3a6589d75ce67a93626c979ee43d68593e8b9b7c538970e1523da0",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/build-android.ps1": {
+      "git_blob_sha256": "f3d153ac880c8e4ee351eab20a789aaacb7587858ef8cf1b237566bc112629ee",
+      "checkout_sha256": "4fbab681a0d4ee5eb1421f38d8e0f5a5e7e92c6419a2127d2924d45f29ffbdbe",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/build-windows.ps1": {
+      "git_blob_sha256": "73be5872ff712df3047f5a99ee3036f30fe1f74023780080adae5b00e73730ca",
+      "checkout_sha256": "b281306b6658d95af6a568abb6dffbb3a6f2d35dab6773d515eabbbc84b276e7",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/new-release-artifact-evidence.ps1": {
+      "git_blob_sha256": "9102da6437702b22731388b0ed2a7fc9c87597d14c84303dbde4ea29fc0ff83a",
+      "checkout_sha256": "9361c96992415ab30e1d73396f9b9d00965340d20782e40599aa94c5e4db8ffc",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/test.ps1": {
+      "git_blob_sha256": "4e651230b2fd154241d2c2079caef1f187541ad9d98b94b2283bbad3747f69da",
+      "checkout_sha256": "4618d7865c9e187c1cf0a537a5169e54e7ef2dc06be29f004a9bac1b748fa310",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/verify-abi-contract.ps1": {
+      "git_blob_sha256": "732085f577338ae659a97061518a6d2555358268e9e373d33605ee3fe23d3f60",
+      "checkout_sha256": "41d9e7850685008ab8b186d10fdcdd47845bdd5ef9469abb1199f82621aabd02",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/verify-awg2-contract.ps1": {
+      "git_blob_sha256": "bbd292ea7f0265680fce92f1454670f761e5d4d24a4ccd661694052001ee3c0a",
+      "checkout_sha256": "632b51ce4b9e50c854a86519707a5e963374df8348a61ccef1ac289c8fc3b738",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/verify-awg31-contract.ps1": {
+      "git_blob_sha256": "62c23fb84f6f0a6298726d08ddddc655763753ef9b3c77412f9702fdec08e991",
+      "checkout_sha256": "c4bc9995e12911dde17b60bcbfd506c91e02a269e479b0e5a64794709fb13499",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/verify-brand.ps1": {
+      "git_blob_sha256": "e9bb2aaf9d38ecf2fd51ad29b8b9700e56c1393e08b5fe892272c25e1feaabeb",
+      "checkout_sha256": "f099cf693f1d4518a8ba21a13ff145f2bdb5184afcfe3392ae8db3da1939991d",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/verify-hy2-contract.ps1": {
+      "git_blob_sha256": "80c5c1c671bb688c4ebdf4473b6912c2352abbe5c7656550604d7ed8f2fd1d04",
+      "checkout_sha256": "b068ebb53621f65d797f634bc6f80635cf5133a8ba27c7663514498cdd1d20e4",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/verify-observability-contracts.ps1": {
+      "git_blob_sha256": "0ebe27e717ff06de1ddb01a44dcb1780b8a4462d94cf6a55a4de9e03d67c30eb",
+      "checkout_sha256": "70d2d017af499c7e2c7e412e1ded23b83febee60ef4c68d4a9e2ab510741d4e2",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    },
+    "scripts/verify-release-ci-contract.ps1": {
+      "git_blob_sha256": "4b9f1ac83c41b8fc1e2914c63f78438985057bddada9d6635023aa53051577e6",
+      "checkout_sha256": "1e98d997acb8c792ae6f5f1fddb3ee118aff58e55ab3722a3de54f4b343d6795",
+      "difference": "Declared PS1 CRLF checkout; exact Git LF bytes retained in source packet"
+    }
+  },
+  "initial_attempt": "Rejected raw checkout CRLF against LF Git blobs; original failed driver/unit retained",
+  "status": "PASS_SOURCE_PREPARATION_ONLY",
+  "source": "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+  "started_utc": "2026-09-12T00:33:24.022614+00:00",
+  "steps": [
+    {
+      "name": "libpokrov-core-arm64-v8a",
+      "command": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+        "list",
+        "-deps",
+        "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+        "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack",
+        "github.com/sagernet/sing-box/experimental/libbox",
+        "./platform/mobile"
+      ],
+      "environment": {
+        "PATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin:/usr/bin:/bin",
+        "HOME": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home",
+        "GOMODCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-module-cache",
+        "GOCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-cache",
+        "GOPATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home/go",
+        "GOTMPDIR": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/tmp",
+        "GOPROXY": "off",
+        "GOSUMDB": "off",
+        "GOENV": "off",
+        "GOWORK": "off",
+        "GOTELEMETRY": "off",
+        "GOMAXPROCS": "1",
+        "LANG": "C.UTF-8",
+        "GOOS": "android",
+        "GOARCH": "arm64",
+        "CGO_ENABLED": "1",
+        "GOTOOLCHAIN": "local",
+        "GOFLAGS": "-buildvcs=false -mod=readonly"
+      },
+      "network_isolated": true,
+      "uid": 65534,
+      "exit_code": 0,
+      "elapsed_seconds": 8.251,
+      "stdout_sha256": "87a132985c4c4f3992912b0e75d75f66b7715a396eb4021756f2092f456d7810",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "libpokrov-core-armeabi-v7a",
+      "command": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+        "list",
+        "-deps",
+        "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+        "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack",
+        "github.com/sagernet/sing-box/experimental/libbox",
+        "./platform/mobile"
+      ],
+      "environment": {
+        "PATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin:/usr/bin:/bin",
+        "HOME": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home",
+        "GOMODCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-module-cache",
+        "GOCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-cache",
+        "GOPATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home/go",
+        "GOTMPDIR": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/tmp",
+        "GOPROXY": "off",
+        "GOSUMDB": "off",
+        "GOENV": "off",
+        "GOWORK": "off",
+        "GOTELEMETRY": "off",
+        "GOMAXPROCS": "1",
+        "LANG": "C.UTF-8",
+        "GOOS": "android",
+        "GOARCH": "arm",
+        "CGO_ENABLED": "1",
+        "GOARM": "7",
+        "GOTOOLCHAIN": "local",
+        "GOFLAGS": "-buildvcs=false -mod=readonly"
+      },
+      "network_isolated": true,
+      "uid": 65534,
+      "exit_code": 0,
+      "elapsed_seconds": 1.337,
+      "stdout_sha256": "779acee0042343c744e49567903b2e498ff3fd43bc2cf3ee91935716c60afb69",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "libpokrov-core-x86",
+      "command": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+        "list",
+        "-deps",
+        "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+        "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack",
+        "github.com/sagernet/sing-box/experimental/libbox",
+        "./platform/mobile"
+      ],
+      "environment": {
+        "PATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin:/usr/bin:/bin",
+        "HOME": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home",
+        "GOMODCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-module-cache",
+        "GOCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-cache",
+        "GOPATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home/go",
+        "GOTMPDIR": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/tmp",
+        "GOPROXY": "off",
+        "GOSUMDB": "off",
+        "GOENV": "off",
+        "GOWORK": "off",
+        "GOTELEMETRY": "off",
+        "GOMAXPROCS": "1",
+        "LANG": "C.UTF-8",
+        "GOOS": "android",
+        "GOARCH": "386",
+        "CGO_ENABLED": "1",
+        "GOTOOLCHAIN": "local",
+        "GOFLAGS": "-buildvcs=false -mod=readonly"
+      },
+      "network_isolated": true,
+      "uid": 65534,
+      "exit_code": 0,
+      "elapsed_seconds": 1.524,
+      "stdout_sha256": "c64c5432fac91dd4aca4e80166edf3aa1f98ad07e0348ced19522df0cf0df322",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "libpokrov-core-x86_64",
+      "command": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+        "list",
+        "-deps",
+        "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+        "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack",
+        "github.com/sagernet/sing-box/experimental/libbox",
+        "./platform/mobile"
+      ],
+      "environment": {
+        "PATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin:/usr/bin:/bin",
+        "HOME": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home",
+        "GOMODCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-module-cache",
+        "GOCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-cache",
+        "GOPATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home/go",
+        "GOTMPDIR": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/tmp",
+        "GOPROXY": "off",
+        "GOSUMDB": "off",
+        "GOENV": "off",
+        "GOWORK": "off",
+        "GOTELEMETRY": "off",
+        "GOMAXPROCS": "1",
+        "LANG": "C.UTF-8",
+        "GOOS": "android",
+        "GOARCH": "amd64",
+        "CGO_ENABLED": "1",
+        "GOTOOLCHAIN": "local",
+        "GOFLAGS": "-buildvcs=false -mod=readonly"
+      },
+      "network_isolated": true,
+      "uid": 65534,
+      "exit_code": 0,
+      "elapsed_seconds": 1.429,
+      "stdout_sha256": "b9f29b020d58a75420e3ba9c3440c69e97e68cd2557fed39dbd8b2122e171969",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "pokrov-core",
+      "command": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go",
+        "list",
+        "-deps",
+        "-json=ImportPath,Dir,Module,Standard,GoFiles,CgoFiles,SFiles,CFiles,CXXFiles,HFiles,SysoFiles,EmbedFiles,Error,DepsErrors",
+        "-tags=with_gvisor,with_quic,with_wireguard,with_utls,with_clash_api,with_grpc,with_awg,tfogo_checklinkname0,with_naive_outbound,with_conntrack,with_purego",
+        "./platform/desktop"
+      ],
+      "environment": {
+        "PATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin:/usr/bin:/bin",
+        "HOME": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home",
+        "GOMODCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-module-cache",
+        "GOCACHE": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/go-cache",
+        "GOPATH": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/home/go",
+        "GOTMPDIR": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/tmp",
+        "GOPROXY": "off",
+        "GOSUMDB": "off",
+        "GOENV": "off",
+        "GOWORK": "off",
+        "GOTELEMETRY": "off",
+        "GOMAXPROCS": "1",
+        "LANG": "C.UTF-8",
+        "GOOS": "windows",
+        "GOARCH": "amd64",
+        "CGO_ENABLED": "1",
+        "GOTOOLCHAIN": "local",
+        "GOFLAGS": "-buildvcs=false -mod=readonly"
+      },
+      "network_isolated": true,
+      "uid": 65534,
+      "exit_code": 0,
+      "elapsed_seconds": 1.621,
+      "stdout_sha256": "d1fe98292bf0bbd1d12c75f25ca54b4b410ec494fb7baa01207e7e8ea6ff6374",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "previous_archive_entries_verified": 3693,
+  "module_cache_inputs": 524,
+  "new_tool_input_files": 32,
+  "core_files": 3339,
+  "packet_entries": 3902,
+  "archive": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2/pokrov-core-880bff6-source-review.zip",
+    "bytes": 361892607,
+    "sha256": "fdbeea7ef126e074820179f6f01cafc0123a8e3531dab61e3084d1a0ca9a6157"
+  },
+  "native_source_archives": 3,
+  "publication": "NOT_PERFORMED",
+  "complete_license_compatibility": false,
+  "free_bytes_after": 70377852928
+}

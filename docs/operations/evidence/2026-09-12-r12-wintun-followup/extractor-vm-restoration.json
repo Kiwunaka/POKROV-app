@@ -1,0 +1,13 @@
+{
+  "disk_bytes_after": 9314500608,
+  "vm": "POKROV-r12-b08-linux-20260906",
+  "disk_bytes_before": 9226420224,
+  "host_free_e": 44986454016,
+  "final_power_state": "poweroff",
+  "installer_executed": false,
+  "utc": "2026-09-12T01:12:31.9027258Z",
+  "status": "PASS_POWERED_OFF_WITHIN_GROWTH_BUDGET",
+  "growth_budget_bytes": 367001600,
+  "growth_bytes": 88080384,
+  "host_free_c": 44001460224
+}

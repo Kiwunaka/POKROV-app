@@ -1,0 +1,53 @@
+﻿{
+    "utc":  "2026-09-12T01:03:24.5951612Z",
+    "status":  "FAIL_PRIVACY",
+    "origin":  "current-origin host isolated subprocess; invalid config before service startup; no TUN",
+    "client_source":  "c06cab7776dd3db5282535ba6c5309bf0119f6bb",
+    "core_source":  "880bff65ad665844828fe50fc395e9cfc1cd81b4",
+    "packaged_dll_path":  "E:/r12client/apps/windows_shell/build/release_bundle/pokrov-windows-x64-1.2.0+4053/pokrov-core.dll",
+    "child":  {
+                  "setup_ok":  true,
+                  "config_rejected":  true,
+                  "dll_sha256":  "6e434c9f92049b67a6a07e7629e8d51a67cbe883c4116e383029a7794855e8e2",
+                  "ffi_return_contains":  {
+                                              "credentials":  false,
+                                              "config":  false,
+                                              "url":  false,
+                                              "ip":  false,
+                                              "path":  false,
+                                              "pii":  false
+                                          },
+                  "closed_core_code":  true,
+                  "debug":  false,
+                  "live_profile_used":  false
+              },
+    "sinks":  {
+                  "stdout":  {
+                                 "bytes":  0,
+                                 "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                                 "contains":  {
+                                                  "credentials":  false,
+                                                  "config":  false,
+                                                  "url":  false,
+                                                  "ip":  false,
+                                                  "path":  false,
+                                                  "pii":  false
+                                              }
+                             },
+                  "stderr":  {
+                                 "bytes":  416,
+                                 "sha256":  "60a0a3a163a2a36fca3976c15920c15a245d1e5c2e9f72163aa3d69a15ff8a58",
+                                 "contains":  {
+                                                  "credentials":  false,
+                                                  "config":  false,
+                                                  "url":  false,
+                                                  "ip":  false,
+                                                  "path":  true,
+                                                  "pii":  false
+                                              }
+                             }
+              },
+    "raw_streams_retained":  false,
+    "host_network_changed":  false,
+    "live_profile_used":  false
+}

@@ -1,0 +1,72 @@
+{
+  "status": "PASS_METADATA_BYTES_RETAINED",
+  "remote_host": "pokrov-de",
+  "remote_path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/wintun-final-880b-20260912/source-packet-v2",
+  "files": [
+    {
+      "name": "progress.json",
+      "bytes": 15262,
+      "sha256": "ac8eca42c72dea608b9e4c77024596cf55fb5b3d6dcc52cf712b7048af767668"
+    },
+    {
+      "name": "offline-graph-checks.json",
+      "bytes": 9314,
+      "sha256": "c3a0e5bc4d93ad226db61674b37ed71da38d0141305fd7f3f839413516d70cb6"
+    },
+    {
+      "name": "source-manifest.json",
+      "bytes": 776311,
+      "sha256": "00d1a159eb4ae66884e30f4d0214dd71ec5351c551ee6f69dae92ddc0bf81861"
+    },
+    {
+      "name": "libpokrov-core-arm64-v8a.offline.stdout.json",
+      "bytes": 847275,
+      "sha256": "87a132985c4c4f3992912b0e75d75f66b7715a396eb4021756f2092f456d7810"
+    },
+    {
+      "name": "libpokrov-core-armeabi-v7a.offline.stdout.json",
+      "bytes": 843725,
+      "sha256": "779acee0042343c744e49567903b2e498ff3fd43bc2cf3ee91935716c60afb69"
+    },
+    {
+      "name": "libpokrov-core-x86.offline.stdout.json",
+      "bytes": 843967,
+      "sha256": "c64c5432fac91dd4aca4e80166edf3aa1f98ad07e0348ced19522df0cf0df322"
+    },
+    {
+      "name": "libpokrov-core-x86_64.offline.stdout.json",
+      "bytes": 848179,
+      "sha256": "b9f29b020d58a75420e3ba9c3440c69e97e68cd2557fed39dbd8b2122e171969"
+    },
+    {
+      "name": "pokrov-core.offline.stdout.json",
+      "bytes": 837243,
+      "sha256": "d1fe98292bf0bbd1d12c75f25ca54b4b410ec494fb7baa01207e7e8ea6ff6374"
+    },
+    {
+      "name": "libpokrov-core-arm64-v8a.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "libpokrov-core-armeabi-v7a.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "libpokrov-core-x86.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "libpokrov-core-x86_64.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "pokrov-core.offline.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
