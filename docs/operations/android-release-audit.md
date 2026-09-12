@@ -1211,3 +1211,12 @@ An actual own-process crash removes TUN/restores network; relaunch, reconnect3/3
 and final disconnect pass. Stale ServiceRecord app=null is not a running process.
 [Exact retained scope](evidence/2026-09-12-r12-android-native-chain/README.md).
 Crash-marker/bundle readback, hangs, full V01/C05 and final release remain open.
+
+
+## 2026-09-12 — Dart crash console privacy correction
+
+The shared Flutter/isolate handlers previously forwarded raw exception/stack
+values to default reporting. A real Flutter-engine canary test reproduces this
+and now passes with marker-only handling; eight tests and analyze pass.
+[Exact source proof](evidence/2026-09-12-r12-dart-crash-privacy/README.md).
+Successor packages/installed proof and the native crash/hang matrix remain open.

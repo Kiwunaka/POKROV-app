@@ -1,0 +1,7 @@
+00:00 +0: loading E:/r12client/packages/app_shell/test/client_observability_test.dart
+00:00 +0: crash handlers retain safe markers without forwarding raw errors
+00:00 +0 -1: crash handlers retain safe markers without forwarding raw errors [E]
+  Null check operator used on a null value
+  test\client_observability_test.dart 48:47  main.<fn>
+  
+00:00 +0 -1: Some tests failed.

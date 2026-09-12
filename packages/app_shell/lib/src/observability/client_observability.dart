@@ -149,16 +149,14 @@ typedef PokrovObservabilityDirectoryResolver = Future<Directory> Function();
 enum PokrovOperationalUpdateChannel { direct, store, windows }
 
 void installPokrovCrashHandlers(PokrovClientObservability observability) {
-  final previousFlutterHandler = FlutterError.onError;
-  FlutterError.onError = (details) {
+  FlutterError.onError = (_) {
     observability.markCrashSynchronously(errorCode: 'CRASH-001');
-    previousFlutterHandler?.call(details);
   };
   final dispatcher = WidgetsBinding.instance.platformDispatcher;
-  final previousPlatformHandler = dispatcher.onError;
-  dispatcher.onError = (error, stack) {
+  dispatcher.onError = (_, __) {
     observability.markCrashSynchronously(errorCode: 'CRASH-001');
-    return previousPlatformHandler?.call(error, stack) ?? false;
+    // The default handlers print the original error and stack, including in release.
+    return true;
   };
 }
 

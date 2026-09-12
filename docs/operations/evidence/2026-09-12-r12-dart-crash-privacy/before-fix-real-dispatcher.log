@@ -1,0 +1,19 @@
+00:00 +0: loading E:/r12client/packages/app_shell/test/client_observability_test.dart
+00:00 +0: crash handlers retain safe markers without forwarding raw errors
+00:00 +0 -1: crash handlers retain safe markers without forwarding raw errors [E]
+  Expected: empty
+    Actual: [
+              '══╡ EXCEPTION CAUGHT BY FLUTTER FRAMEWORK ╞═════════════════════════════════════════════════════════\n'
+                'The following StateError was thrown:\n'
+                'Bad state: password=R12_DART_CRASH_SECRET_20260912\n'
+                'https://example.invalid/R12_DART_CRASH_SECRET_20260912\n'
+                '\n'
+                'When the exception was thrown, this was the stack\n'
+                '════════════════════════════════════════════════════════════════════════════════════════════════════'
+            ]
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\client_observability_test.dart 51:5            main.<fn>
+  
+00:00 +0 -1: Some tests failed.
