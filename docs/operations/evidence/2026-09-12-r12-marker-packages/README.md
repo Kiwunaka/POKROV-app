@@ -472,3 +472,49 @@ context audit PASS. Retention audit PASS:61 archive members,4 direct files,
 2 local binary hashes,8 added links,83 unchanged registry status tuples and
 release isolation. `git diff --check` PASS. No release builds were run for
 this documentation step.
+
+
+## 2026-09-12 Android DNS interception and LAN toggle
+
+[Result](dns-lan-result.json), [receipt](dns-lan-files.json),
+[initial preferences](dns-lan-before.png), [LAN off](dns-lan-off.png),
+[preferences restored](dns-lan-preferences-restored.png) and
+[final Home](dns-lan-restored.png) retain exact APK becd25fa/client b93/Core6b.
+Current-origin rootless LDPlayer3/API34, SPB/Full, WARP off; existing AdGuard
+through VPN. Temporary shell UID2000 DEX targets only this owned computer's
+verified private IPv4. Exclusive short-lived TCP echo and UDP/TCP53 listeners
+match unique nonce payloads/questions and report digests; no raw IP/pcap data.
+
+| Case | Local TCP echo | UDP / TCP DNS | Owned listener received |
+| --- | --- | --- | --- |
+| Disconnected baseline | Exact echo | Sentinel / sentinel | LAN and both DNS |
+| Full, LAN on | Exact echo | NXDOMAIN / NXDOMAIN | LAN only |
+| Full, LAN off | EOF, no echo | NXDOMAIN / NXDOMAIN | None |
+| Full, LAN restored on | Exact echo | NXDOMAIN / NXDOMAIN | LAN only |
+| Restored disconnected | Exact echo | Sentinel / sentinel | LAN and both DNS |
+
+Five LAN attempts and ten DNS responses meet the expected outcomes. This proves
+DNS interception before the LAN rule for these UDP/TCP53 flows, and the tested
+Full-mode LAN toggle. It does not prove the complete upstream resolver path,
+general leak absence, private DNS/DoH/DoT/per-app cases or arbitrary LAN devices.
+LAN-off no echo is not packet-level proof of the alternative path. Observations
+cover each request/response window, not indefinite late-packet monitoring.
+
+LAN/AdGuard/direct-DNS restore. A mode-selector tap assertion stopped before
+input after scroll attempts; normal app restart reset UI scroll, then original
+Russia-direct/SPB/disconnected was restored. Private preferences were not read
+or reset. New DEX removed; all listener threads/sockets close. Guest IPv4/DNS,
+normalized IPv6 and host routes/DNS match. Root false, all VMs off, 1MiB growth
+within 512MiB budget and 40GiB floors. Four public UI PNGs visually reviewed.
+IPv6 address classification: zero global, two ULA; this is not egress proof.
+`verify.py` PASS. No product build/source, firewall, host VPN, production config,
+release pointer, deployment or publication change. Full N08/Q01, physical/
+Windows/RU-origin and general IPv6/DNS acceptance remain open; NY unchanged.
+
+
+Validation: `pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-seed.ps1
+-PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start
+-CoreRoot C:/r12corec02` PASS, terminal exit0 including docs contract.
+Platform docs/context pytest PASS33 (0.44s); context audit PASS. Archive44/five
+separate files/local DEX hashes, nine added links and all83 unchanged registry
+status tuples PASS. `git diff --check` and release isolation PASS; Core clean.

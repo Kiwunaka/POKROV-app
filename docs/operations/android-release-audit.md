@@ -1356,3 +1356,15 @@ Except selected reverses them. Eight unique marker captures and six HTTPS
 requests pass. Product bytes/UID unchanged, new fixtures removed, choices and
 guest/host network restored, all VMs off within2MiB growth. Full DNS/IPv6/LAN,
 physical/Windows/RU-origin acceptance and N08 remain open; NY failure unchanged.
+
+
+## 2026-09-12 bounded DNS and LAN runtime evidence
+
+[Exact Full-mode DNS/LAN evidence](evidence/2026-09-12-r12-marker-packages/README.md#2026-09-12-android-dns-interception-and-lan-toggle)
+retains APK becd25fa on rootless emulator/SPB. Five LAN attempts confirm local
+echo with LAN on, no echo with LAN off, and recovery. Ten DNS responses plus
+owned listener observations demonstrate UDP/TCP53 interception before the LAN
+rule. This is not general leak or complete upstream DNS-path proof. Original
+choices/network restored, temporary DEX/listeners removed, all VMs off within
+1MiB growth. Zero global/two ULA addresses are not IPv6 egress evidence.
+Full N08, physical/Windows/RU-origin and remaining DNS/IPv6 gates stay open.

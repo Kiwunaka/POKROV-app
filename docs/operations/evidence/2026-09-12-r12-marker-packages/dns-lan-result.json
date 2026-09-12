@@ -1,0 +1,319 @@
+{
+  "status": "PASS_BOUNDED_ANDROID_FULL_DNS_INTERCEPTION_AND_LAN_TOGGLE",
+  "origin": "current-origin",
+  "source_client": "b93e17dadec21fa4daa779b2e85413171f06cfdf",
+  "source_core": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "installation": {
+    "status": "PASS_ONLY_NEW_DEX_INSTALLED",
+    "utc": "2026-09-12T17:39:35.813232+00:00",
+    "root_mode": false,
+    "product_apk_sha256": "becd25fac6f2ca45d7d997a9441a78824217fdab06f86f5642b9ad5c615e8f34",
+    "dex_sha256": "1788d65e16a680a32e1d0e7fee26607494558d25321a36c30f0414f90eb00935",
+    "guest_dex": "/data/local/tmp/r12-dns-lan.dex",
+    "product_apk_changed": false
+  },
+  "cases": [
+    {
+      "utc": "2026-09-12T17:39:43.859787+00:00",
+      "label": "baseline",
+      "marker": "93241661564947569c438ac121577b91",
+      "owned_host_address_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+      "fixture_dex_sha256": "1788d65e16a680a32e1d0e7fee26607494558d25321a36c30f0414f90eb00935",
+      "raw_addresses_or_payloads_exported": false,
+      "listeners_ready": true,
+      "lan_port": 60974,
+      "client_exit": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "client": {
+        "uid": 2000,
+        "marker": "93241661564947569c438ac121577b91",
+        "lan": {
+          "status": "EXACT_LAN_ECHO",
+          "echo_sha256": "4de6d0d16f7ef02ab88779e610a1d782904bef373318a34e4877d6ac319555fa"
+        },
+        "dns_udp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 0,
+          "answer_count": 1,
+          "fixture_sentinel": true,
+          "response_sha256": "d2d14e44d083859e175e008c9a26e025cadbdaaf76ccb33d2e3b123edce59ce1",
+          "elapsed_ms": 0
+        },
+        "dns_tcp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 0,
+          "answer_count": 1,
+          "fixture_sentinel": true,
+          "response_sha256": "eaf390de45e91dc7349b12d9c03bb3d3ced7bb4ca7aef45fa5239fb4bdd67188",
+          "elapsed_ms": 30
+        },
+        "non_link_local_ipv6_addresses": 2,
+        "elapsed_ms": 32
+      },
+      "threads_stopped": true,
+      "listeners_closed": true,
+      "server_events": [
+        {
+          "kind": "lan",
+          "request_sha256": "4de6d0d16f7ef02ab88779e610a1d782904bef373318a34e4877d6ac319555fa",
+          "peer_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+          "marker": "93241661564947569c438ac121577b91"
+        },
+        {
+          "kind": "dns_udp",
+          "request_sha256": "a08c64151fa0a192ace24c49eb403c7ce3bdaa7a1ca890ab16b3867c437804bc",
+          "peer_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+          "marker": "93241661564947569c438ac121577b91"
+        },
+        {
+          "kind": "dns_tcp",
+          "request_sha256": "3ae9378e73fbeaaa1ffc39ddfcc97b5a85bafac29f5c7f4995aa06e3d2fe11ee",
+          "peer_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+          "marker": "93241661564947569c438ac121577b91"
+        }
+      ],
+      "server_errors": []
+    },
+    {
+      "utc": "2026-09-12T17:41:59.338474+00:00",
+      "label": "full-lan-on",
+      "marker": "f6ddb17886354842a2dc11227ef15a3b",
+      "owned_host_address_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+      "fixture_dex_sha256": "1788d65e16a680a32e1d0e7fee26607494558d25321a36c30f0414f90eb00935",
+      "raw_addresses_or_payloads_exported": false,
+      "listeners_ready": true,
+      "lan_port": 49740,
+      "client_exit": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "client": {
+        "uid": 2000,
+        "marker": "f6ddb17886354842a2dc11227ef15a3b",
+        "lan": {
+          "status": "EXACT_LAN_ECHO",
+          "echo_sha256": "e6311592e6fb6b2dd5be00f7b2e66b8d2608a5b802b2659102d6bb6632743fe1"
+        },
+        "dns_udp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 3,
+          "answer_count": 0,
+          "fixture_sentinel": false,
+          "response_sha256": "cced66bb385bfdf1023996f043c28a272abebcb1daff0ed5855c191f4a25fb48",
+          "elapsed_ms": 279
+        },
+        "dns_tcp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 3,
+          "answer_count": 0,
+          "fixture_sentinel": false,
+          "response_sha256": "2f9350c2ed2c0dce2ef62c6b215ee5eeacd8b161e9aa733b6b2ed6223ee9f239",
+          "elapsed_ms": 260
+        },
+        "non_link_local_ipv6_addresses": 2,
+        "elapsed_ms": 545
+      },
+      "threads_stopped": true,
+      "listeners_closed": true,
+      "server_events": [
+        {
+          "kind": "lan",
+          "request_sha256": "e6311592e6fb6b2dd5be00f7b2e66b8d2608a5b802b2659102d6bb6632743fe1",
+          "peer_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+          "marker": "f6ddb17886354842a2dc11227ef15a3b"
+        }
+      ],
+      "server_errors": []
+    },
+    {
+      "utc": "2026-09-12T17:43:13.766650+00:00",
+      "label": "full-lan-off",
+      "marker": "e42f92d361fb4dc68096d241175a60d4",
+      "owned_host_address_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+      "fixture_dex_sha256": "1788d65e16a680a32e1d0e7fee26607494558d25321a36c30f0414f90eb00935",
+      "raw_addresses_or_payloads_exported": false,
+      "listeners_ready": true,
+      "lan_port": 52562,
+      "client_exit": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "client": {
+        "uid": 2000,
+        "marker": "e42f92d361fb4dc68096d241175a60d4",
+        "lan": {
+          "status": "FAILED",
+          "error_type": "EOFException"
+        },
+        "dns_udp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 3,
+          "answer_count": 0,
+          "fixture_sentinel": false,
+          "response_sha256": "df4e592d26dbbb80d811c8fa153bd2d383bdbfa791a3a04570e9f9699ba355d3",
+          "elapsed_ms": 336
+        },
+        "dns_tcp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 3,
+          "answer_count": 0,
+          "fixture_sentinel": false,
+          "response_sha256": "5b8fa1a74e6e4651137e939b6c966d4a46d68c3e199896643baa886200a85af7",
+          "elapsed_ms": 232
+        },
+        "non_link_local_ipv6_addresses": 2,
+        "elapsed_ms": 625
+      },
+      "threads_stopped": true,
+      "listeners_closed": true,
+      "server_events": [],
+      "server_errors": []
+    },
+    {
+      "utc": "2026-09-12T17:44:10.528868+00:00",
+      "label": "full-lan-recovery",
+      "marker": "6132953577124deeb7e31624a2a555bd",
+      "owned_host_address_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+      "fixture_dex_sha256": "1788d65e16a680a32e1d0e7fee26607494558d25321a36c30f0414f90eb00935",
+      "raw_addresses_or_payloads_exported": false,
+      "listeners_ready": true,
+      "lan_port": 53593,
+      "client_exit": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "client": {
+        "uid": 2000,
+        "marker": "6132953577124deeb7e31624a2a555bd",
+        "lan": {
+          "status": "EXACT_LAN_ECHO",
+          "echo_sha256": "1c6f3c7cd51dafb3570d4493531205a843abf8133192e0ced4bc42d961bf2a27"
+        },
+        "dns_udp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 3,
+          "answer_count": 0,
+          "fixture_sentinel": false,
+          "response_sha256": "ba5251275e66f333f4a574c8b77ee2519bb382e46bddb8e1f8c3b918f9640250",
+          "elapsed_ms": 272
+        },
+        "dns_tcp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 3,
+          "answer_count": 0,
+          "fixture_sentinel": false,
+          "response_sha256": "52dca59c47e2e31fc59974197fb00be28ccc802b963b8788b87898e9ff2f2326",
+          "elapsed_ms": 334
+        },
+        "non_link_local_ipv6_addresses": 2,
+        "elapsed_ms": 610
+      },
+      "threads_stopped": true,
+      "listeners_closed": true,
+      "server_events": [
+        {
+          "kind": "lan",
+          "request_sha256": "1c6f3c7cd51dafb3570d4493531205a843abf8133192e0ced4bc42d961bf2a27",
+          "peer_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+          "marker": "6132953577124deeb7e31624a2a555bd"
+        }
+      ],
+      "server_errors": []
+    },
+    {
+      "utc": "2026-09-12T17:45:04.030375+00:00",
+      "label": "restored",
+      "marker": "2c1615331dd7444eb34c247064e9214b",
+      "owned_host_address_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+      "fixture_dex_sha256": "1788d65e16a680a32e1d0e7fee26607494558d25321a36c30f0414f90eb00935",
+      "raw_addresses_or_payloads_exported": false,
+      "listeners_ready": true,
+      "lan_port": 63610,
+      "client_exit": 0,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "client": {
+        "uid": 2000,
+        "marker": "2c1615331dd7444eb34c247064e9214b",
+        "lan": {
+          "status": "EXACT_LAN_ECHO",
+          "echo_sha256": "09cf9020e05d3f7d8dfcb65c3d70e6d031b41aaf947590f7b0155a0de772605b"
+        },
+        "dns_udp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 0,
+          "answer_count": 1,
+          "fixture_sentinel": true,
+          "response_sha256": "76f22f9dcf3ac36c117033366802c244744765d6927afad7876a51b1098beeb9",
+          "elapsed_ms": 0
+        },
+        "dns_tcp": {
+          "status": "DNS_RESPONSE",
+          "id_matches": true,
+          "rcode": 0,
+          "answer_count": 1,
+          "fixture_sentinel": true,
+          "response_sha256": "24bf23da3edb3f69d6fd818cf82ff5e9c8b1d0e8142b9605e5e6b5b4886b3447",
+          "elapsed_ms": 42
+        },
+        "non_link_local_ipv6_addresses": 2,
+        "elapsed_ms": 45
+      },
+      "threads_stopped": true,
+      "listeners_closed": true,
+      "server_events": [
+        {
+          "kind": "lan",
+          "request_sha256": "09cf9020e05d3f7d8dfcb65c3d70e6d031b41aaf947590f7b0155a0de772605b",
+          "peer_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+          "marker": "2c1615331dd7444eb34c247064e9214b"
+        },
+        {
+          "kind": "dns_udp",
+          "request_sha256": "f2df85134f1a2f44b219ef145066fbff5ea4febf82d7fe1701f0ed394618de48",
+          "peer_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+          "marker": "2c1615331dd7444eb34c247064e9214b"
+        },
+        {
+          "kind": "dns_tcp",
+          "request_sha256": "f7a7b09870db9c55b4ff83ec7d740a1225de2d46263d07a42be11de306e6ee7e",
+          "peer_sha256": "53c9dd8cbd0237bace9a5c5147ed04a8a901f8561655dd9cbab44ad3d8195451",
+          "marker": "2c1615331dd7444eb34c247064e9214b"
+        }
+      ],
+      "server_errors": []
+    }
+  ],
+  "ipv6": {
+    "status": "ADDRESS_CLASSIFICATION_ONLY_NOT_EGRESS_PROOF",
+    "counts": {
+      "global": 0,
+      "unique_local": 2,
+      "link_local": 2,
+      "loopback": 1,
+      "other": 0
+    },
+    "raw_sha256": "ad869951572d9aa31f093da6a616568dd8e67fb558e836aada352929df4b42bb",
+    "raw_addresses_exported": false
+  },
+  "cleanup": {
+    "status": "PASS_ONLY_NEW_DEX_REMOVED",
+    "utc": "2026-09-12T17:47:32.313245+00:00",
+    "guest_dex_removed": true,
+    "product_apk_unchanged": true,
+    "private_data_read_or_reset": false
+  },
+  "max_emulator_growth_bytes": 1048576,
+  "network_and_original_preferences_restored": true,
+  "product_source_or_package_changed": false,
+  "limitations": [
+    "Five LAN attempts and10 DNS responses, this Full-mode emulator fixture only",
+    "No complete upstream DNS path or general leak proof",
+    "No private DNS, DoH/DoT, per-app or arbitrary LAN protocol proof",
+    "ULA addresses are not IPv6 egress proof",
+    "No physical Android, installed Windows, RU-origin or NY success",
+    "Full N08/Q01 and release gates remain open"
+  ]
+}
