@@ -222,3 +222,20 @@ have disabled tickers and zero opacity range; active/resumed intervals animate.
 The modal remains present. No synthetic lifecycle input or queue attachment.
 This closes the observed Windows hidden-start defect on the owned VM only;
 no CPU/battery/frame or exact-release acceptance follows. C04 remains open.
+
+
+## Windows integration and Android capture availability — 2026-09-13
+
+[Integration and preparation receipt](evidence/2026-09-13-r12-c04-integration/README.md):
+Windows activity fix is in main `780dba6fe72179b8e9f005b70aebba1995e55014` after PR/main CI PASS.
+The isolated Android profile companion built, but two emulator boots lacked
+ADB: installation and runtime capture are NOT_RUN. No physical/reference
+Android acceptance follows. The device/UI 2–4 Hz traffic experiment remains NOT_RUN;
+the current UI reads traffic on demand, Android's producer is 1 Hz, and Windows
+returns no numeric counters. Do not increase service polling or repeat the
+full HTTPS diagnostic collector as a substitute for that experiment.
+A separate source-only cadence experiment on unchanged Core 0138 passes 73
+samples at 1/2/4 Hz with synthetic manager increments and matching cumulative
+totals. It measures the producer's timer through an in-process test stream,
+not tunnel/JNI/gRPC/UI delivery or device overhead; it does not change the 1 Hz
+Android default or establish a recommended frequency.

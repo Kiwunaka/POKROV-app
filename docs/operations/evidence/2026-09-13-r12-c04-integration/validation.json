@@ -1,0 +1,52 @@
+{
+  "status": "PASS",
+  "commands": [
+    {
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "exit": 0,
+      "log": "validation-1.log",
+      "sha256": "b6a8272b0eadbcac34a6f98dd8ff077367ae072adbace2d9f43713a068ee43e0"
+    },
+    {
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "exit": 0,
+      "log": "validation-2.log",
+      "sha256": "9d4185d85877777557e136d2a0040090f0794b5b79fa17092c153ddb32065e9f"
+    },
+    {
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "command": "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+      "exit": 0,
+      "log": "validation-3.log",
+      "sha256": "ea42ab18c95777fbbb1afe5260eac42a00f0ccc0220bd26d6c130028e249ed29"
+    },
+    {
+      "cwd": "E:\\r12client",
+      "command": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/validate-seed.ps1 -CoreRoot C:/r12-core0138-verification-20260913 -PlatformRoot C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "exit": 0,
+      "log": "validation-4.log",
+      "sha256": "8cf72b07b9484d654ceeb214ef4db53e45b2b059df0355c4e3728add7b41b809"
+    },
+    {
+      "cwd": "C:\\Users\\kiwun\\Documents\\ai\\VPN-consolidated-plan-start",
+      "command": "git diff --check",
+      "exit": 0,
+      "log": "validation-5.log",
+      "sha256": "86f35985c3fe15560dee1c7ee34b6ae77462be2d75906723928c87a50edae82c"
+    },
+    {
+      "cwd": "E:\\r12client",
+      "command": "git diff --check",
+      "exit": 0,
+      "log": "validation-6.log",
+      "sha256": "a700993474205914d41574989c2bc49498464f36f0588543c90c6a2fc869d48f"
+    }
+  ],
+  "docs_only": true,
+  "utc": "2026-09-13T13:27:54.073749+00:00",
+  "archive": "validation-checks.zip",
+  "archive_sha256": "2729fc9ad06a6d4bbadc4e8cb99b0ba948c426f4acc76ba7af9ed451c99094f0",
+  "client_artifacts_release_delta": false
+}
