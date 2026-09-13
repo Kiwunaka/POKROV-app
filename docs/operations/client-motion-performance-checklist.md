@@ -187,3 +187,15 @@ All 305 installed files match; VM off/NIC none and host network unchanged.
 Windows 10, physical cold-cache/comparable hardware, connected/tray-hidden
 performance and exact final-channel acceptance remain open. The earlier idle
 report above records its own state before this follow-up.
+
+
+## R12 Windows native lifecycle failure — 2026-09-13
+
+[Native profile captures](evidence/2026-09-13-r12-c04-lifecycle/README.md) on
+client1ecc09b/Core0138 record **FAIL_NATIVE_HIDDEN_ANIMATION**. In three owned
+Windows11 VM captures, native hide is observed but the production modal pulse
+keeps ticking; lifecycle remains null. The final fixture proves foreground
+focus before/after hiding; blur() still does not remove focus. Its inactive
+transition is unverified. This host result does not invalidate the narrower
+deterministic widget test, but that test cannot establish Windows host acceptance.
+No product fix or CPU/battery/frame performance claim; C04 remains open.
