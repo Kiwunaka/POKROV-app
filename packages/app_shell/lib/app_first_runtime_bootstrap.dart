@@ -6327,10 +6327,25 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure('Выбранная локация недоступна.');
     }
     final route = _readMap(config['route']);
-    final finalTag = _readText(route['final']);
-    final finalOutbounds = outbounds
+    var finalTag = _readText(route['final']);
+    var finalOutbounds = outbounds
         .where((outbound) => _readText(outbound['tag']) == finalTag)
         .toList(growable: false);
+    if (finalOutbounds.length == 1 &&
+        _readText(finalOutbounds.single['type']).toLowerCase() == 'direct') {
+      // Selected Windows apps use a process rule; the default stays direct.
+      final processTags = _readListOfMaps(route['rules'])
+          .where((rule) => rule.containsKey('process_name'))
+          .map((rule) => _readText(rule['outbound']))
+          .toSet();
+      finalOutbounds = outbounds.where((outbound) {
+        return processTags.contains(_readText(outbound['tag'])) &&
+            _readText(outbound['type']).toLowerCase() == 'selector';
+      }).toList(growable: false);
+      if (finalOutbounds.length == 1) {
+        finalTag = _readText(finalOutbounds.single['tag']);
+      }
+    }
     if (finalTag.isEmpty ||
         finalOutbounds.length != 1 ||
         _readText(finalOutbounds.single['type']).toLowerCase() != 'selector') {
