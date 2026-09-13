@@ -40,6 +40,13 @@ Every absent, malformed, downgraded or incomplete combination normalizes to
 combination. The field remains convenience policy inside schema `1`, never
 session, entitlement, resolver-account or server capability authority.
 
+The managed-profile cache also retains `last_observed_at` in its version-1
+secure-storage envelope. Reads serialize with mutations and advance this
+observation even when a record is expired. A subsequent earlier wall-clock
+value makes the cache unavailable after restart as well; profile verification
+timestamps are never renewed by this metadata. Existing envelopes establish
+the observation on their first read. This is not an independent trusted clock.
+
 ## Version Routing and Rollback
 
 Version fields must be integer values. The current client accepts only the

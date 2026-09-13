@@ -32,14 +32,14 @@ void main() {
 
   test('process restart restores protected cache without renewing its window', () async {
     await save('a');
-    final saved = Map<String, String>.of(values);
+    final saved = jsonDecode(values.values.single)['downloaded'];
     cache = ManagedProfileCache(now: () => now);
     now = now.add(const Duration(hours: 24));
     expect((await read())?['cache_entry_id'], 'a');
-    expect(values, saved);
+    expect(jsonDecode(values.values.single)['downloaded'], saved);
     now = now.add(const Duration(seconds: 1));
     expect(await read(), isNull);
-    expect(values, saved);
+    expect(jsonDecode(values.values.single)['downloaded'], saved);
   });
 
   test('failed new profile keeps the earlier proven record and its original age', () async {
@@ -63,6 +63,17 @@ void main() {
     expect(await cache.read(platform: 'android', binding: 'account-B/install-A/route-A'), isNull);
     expect(await cache.read(platform: 'android', binding: 'account-A/install-A/route-B'), isNull);
     now = now.subtract(const Duration(seconds: 1));
+    expect(await read(), isNull);
+  });
+
+  test('observed expiry cannot be undone by clock rollback after restart', () async {
+    await save('a');
+    final verifiedAt = now;
+    now = now.add(const Duration(hours: 25));
+    expect(await read(), isNull);
+
+    cache = ManagedProfileCache(now: () => now);
+    now = verifiedAt.add(const Duration(hours: 1));
     expect(await read(), isNull);
   });
 
