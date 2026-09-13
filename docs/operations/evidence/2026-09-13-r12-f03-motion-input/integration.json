@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "source": "c6f0e0b36f23cdcf01201792657001f024341889",
+  "merge": {
+    "status": "PASS",
+    "merge": "e8866f9d9a14bbd806eed3a6d24942862b60a0bb",
+    "source": "c8bc1e63ffbaabde8e2d13a3bb0eb7861ccd87d9",
+    "tree": "7b49b54015d49d83f2da11aff1e6a9c0616315cd",
+    "same_tree": true,
+    "merge_signature_verified": true,
+    "merged_at": "2026-09-13T10:11:59Z",
+    "pr": "https://github.com/Kiwunaka/POKROV-app/pull/136"
+  },
+  "ci": {
+    "pr": {
+      "source": "c8bc1e63ffbaabde8e2d13a3bb0eb7861ccd87d9",
+      "status": "PASS",
+      "runs": [
+        34750702485
+      ]
+    },
+    "main": {
+      "source": "e8866f9d9a14bbd806eed3a6d24942862b60a0bb",
+      "status": "PASS",
+      "runs": [
+        34751224671
+      ]
+    }
+  },
+  "compiled_code_scope_equal_main": true
+}

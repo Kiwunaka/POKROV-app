@@ -1,0 +1,37 @@
+{
+  "status": "PASS_NATIVE_INPUT_SCROLL_FOCUS",
+  "source_client": "c6f0e0b36f23cdcf01201792657001f024341889",
+  "build_mode": "profile",
+  "normal_entrypoint": true,
+  "guest_files_equal_built_files": 301,
+  "vc_runtime_dlls_from_existing_install": 3,
+  "installed_files_unchanged": 304,
+  "mouse_click_profile": true,
+  "keyboard_ctrl1_ctrl4": true,
+  "keyboard_ctrl_shortcuts_require_app_foreground": true,
+  "mouse_wheel_scroll": true,
+  "native_text_input": "F03-NATIVE synthetic; inserted and cleared without submit",
+  "text_field_visual_focus": true,
+  "tab_traversal_to_action": true,
+  "escape_dismisses_dialog": true,
+  "full_uia_semantic_tree": "NOT_PROVEN; UIA exposed only FlutterView; native keyboard/pointer and screenshots are the input evidence",
+  "app_stopped": true,
+  "vm_powered_off": true,
+  "host_routes_dns_unchanged": true,
+  "preexisting_installed_drift": {
+    "path": "data/app.so",
+    "expected_sha256": "ae73fb74b32eccfba7bee30187e6952b7eb6ec9a1ab35c84810190c4da1fca88",
+    "observed_before_sha256": "3487c6bf02e75fc2ed381ab250db1feb4bfa4c4481323626927be8c8214b546a",
+    "provenance": "UNRESOLVED_PREEXISTING; preserved; fixture independent",
+    "other_303_files_match_prior": true
+  },
+  "screenshots": [
+    "profile-ready.png",
+    "ctrl1-focused.png",
+    "ctrl4-focused.png",
+    "profile-wheel-after.png",
+    "input-text.png",
+    "input-cleared-tab.png",
+    "end-home.png"
+  ]
+}

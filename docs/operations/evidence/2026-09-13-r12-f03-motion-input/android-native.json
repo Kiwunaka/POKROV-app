@@ -1,0 +1,44 @@
+{
+  "status": "PASS_NATIVE_INPUT_SCROLL_FOCUS",
+  "package": {
+    "status": "PASS",
+    "before_apk_sha256": "288ec01630b4577d94221f5d16624945efb9a273cd9eac5af2f57c8552cc31f3",
+    "current_apk_sha256": "2df0ef4f2f15eb12c66bb8c17ff64cb6c54e9d48d3f2077ad55255c5e068f9f7",
+    "data_preserved": true,
+    "instance_index": 3,
+    "source": "c6f0e0b36f23cdcf01201792657001f024341889",
+    "core": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126"
+  },
+  "scroll_subscription_before": "[69,353][1211,422]",
+  "scroll_subscription_after": "[69,80][1211,149]",
+  "input_focus": {
+    "status": "PASS",
+    "input": {
+      "index": "2",
+      "text": "F03-NATIVE",
+      "resource-id": "",
+      "class": "android.widget.EditText",
+      "package": "space.pokrov.pokrov_android_shell",
+      "content-desc": "",
+      "checkable": "false",
+      "checked": "false",
+      "clickable": "true",
+      "enabled": "true",
+      "focusable": "true",
+      "focused": "true",
+      "scrollable": "false",
+      "long-clickable": "false",
+      "password": "false",
+      "selected": "false",
+      "bounds": "[187,516][1093,591]"
+    },
+    "input_not_submitted": true
+  },
+  "synthetic_text_cleared": true,
+  "submit_action": false,
+  "back_hides_ime_before_sheet": true,
+  "native_idle_comparison": "NOT_COMPLETED_SHEET_REMAINED_OPEN",
+  "idle_connected_motion_proof": "source widget regression; Android verified egress with production loops enabled",
+  "root_enabled": false,
+  "metadata_restored": true
+}
