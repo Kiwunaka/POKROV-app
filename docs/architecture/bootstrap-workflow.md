@@ -123,6 +123,11 @@ Current blocking dependency:
   budget and generation fence. A manual Home action or location change cancels
   the pending transport choice; there is no persisted cohort mutation. Native
   stage/proof checks still decide whether the new connection is protected.
+  A confirmed failed-egress result also enters this bounded fallback when
+  Android keeps its TUN running. The retry first disconnects that failed
+  runtime through the existing reconnect path, then fetches/stages the managed
+  fallback; a running service alone does not keep the failed lab selected.
+  Pending/unavailable proof still does not authorize a transport change.
 
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings

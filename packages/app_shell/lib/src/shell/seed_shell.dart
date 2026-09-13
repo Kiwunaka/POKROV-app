@@ -5411,7 +5411,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                         : PokrovProtectionEventTone.warning,
           );
         }
-        if (current.phase != RuntimePhase.running &&
+        if ((current.phase != RuntimePhase.running ||
+                current.hasCoreEgressProbeFailure) &&
             _handleFailedManagedProfile(current)) {
           return;
         }
@@ -5691,7 +5692,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           connectedPath != refreshedPath) {
         return;
       }
-      if (refreshed.phase != RuntimePhase.running) {
+      if (refreshed.phase != RuntimePhase.running ||
+          refreshed.hasCoreEgressProbeFailure) {
         _cancelPostConnectHostHealthPolling();
         final shouldFallbackFromWarp = _activeConnectUsedWarp &&
             !_warpFallbackInFlight &&
@@ -5990,7 +5992,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               _tcpFallbackFromRevision.isEmpty)) {
         return;
       }
-      await _toggleRuntime();
+      await _toggleRuntime(reconnectAfterDisconnect: true);
     } finally {
       if (ownerGeneration == _automaticFailoverGeneration) {
         _automaticFailoverInFlight = false;
