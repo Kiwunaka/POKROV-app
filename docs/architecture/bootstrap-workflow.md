@@ -628,6 +628,15 @@ bounded managed fallback; they neither publish protection nor diagnose DPI,
 MTU, ASN or UDP blocking. The UI and native service ship together so their
 closed allowlists agree.
 
+Windows also reads the current IPv4/IPv6 default routes and their interface
+link state on each existing desktop status poll. A running VPN interface alone
+is not an uplink. If no usable external default route remains, the shell keeps
+the running tunnel visible but withdraws green protection and reports
+`network_unavailable`; an unavailable Windows observation remains unknown.
+Returning a usable route allows the unchanged service connection proof to be
+displayed again. This local link check is not a new DNS/HTTPS probe and cannot
+detect an upstream outage while the local link and route remain available.
+
 ### Ordinary cache outage boundary
 
 The owner's 2026-09-07 restricted-network decision permits normal connection

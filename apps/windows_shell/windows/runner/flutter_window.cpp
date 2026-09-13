@@ -10,6 +10,7 @@
 #include "service_client.h"
 #include "service_profile_identity.h"
 #include "utils.h"
+#include "uplink_status.h"
 
 namespace {
 constexpr ULONG_PTR kPokrovAcquisitionCopyData = 0x504F4B52;
@@ -173,6 +174,9 @@ flutter::EncodableValue RuntimeSnapshotValue(
     const std::string& expected_profile_digest = "") {
   snapshot = pokrov::service::BindSnapshotToProfileIntent(
       std::move(snapshot), expected_profile_digest);
+  const auto uplink = snapshot.running ? HasDefaultUplink() : std::nullopt;
+  const bool current_proof =
+      snapshot.core_egress_validated && uplink.value_or(false);
   flutter::EncodableMap values;
   values[flutter::EncodableValue("phase")] =
       flutter::EncodableValue(DartRuntimePhase(snapshot.phase));
@@ -196,19 +200,19 @@ flutter::EncodableValue RuntimeSnapshotValue(
           ? flutter::EncodableValue("service://managed-profile")
           : flutter::EncodableValue();
   const char* diagnostic_state =
-      snapshot.core_egress_validated ? "healthy" : "unknown";
+      current_proof ? "healthy" : "unknown";
   values[flutter::EncodableValue("hostHealth")] =
-      flutter::EncodableValue(diagnostic_state);
+      flutter::EncodableValue(uplink == false ? "degraded" : diagnostic_state);
   values[flutter::EncodableValue("dnsState")] =
       flutter::EncodableValue(diagnostic_state);
   values[flutter::EncodableValue("uplinkState")] =
-      flutter::EncodableValue(diagnostic_state);
-  if (snapshot.core_egress_validated) {
+      flutter::EncodableValue(uplink == false ? "degraded" : diagnostic_state);
+  if (uplink == true) {
     values[flutter::EncodableValue("defaultNetworkInterface")] =
         flutter::EncodableValue("network_available");
   }
   values[flutter::EncodableValue("dnsReady")] =
-      flutter::EncodableValue(snapshot.dns_ready);
+      flutter::EncodableValue(snapshot.dns_ready && uplink.value_or(false));
   values[flutter::EncodableValue("stagedProfileDigest")] =
       flutter::EncodableValue(snapshot.staged_profile_digest);
   values[flutter::EncodableValue("effectiveProfileDigest")] =
@@ -216,7 +220,7 @@ flutter::EncodableValue RuntimeSnapshotValue(
   values[flutter::EncodableValue("profileIdentityOrigin")] =
       flutter::EncodableValue("windows_service_stage_request_sha256");
   values[flutter::EncodableValue("coreEgressValidated")] =
-      flutter::EncodableValue(snapshot.core_egress_validated);
+      flutter::EncodableValue(current_proof);
   values[flutter::EncodableValue("coreEgressValidationRequired")] =
       flutter::EncodableValue(true);
   values[flutter::EncodableValue("connectionPending")] =
@@ -225,6 +229,9 @@ flutter::EncodableValue RuntimeSnapshotValue(
       snapshot.failure != "service_unavailable") {
     values[flutter::EncodableValue("lastFailureKind")] =
         flutter::EncodableValue(snapshot.failure);
+  } else if (uplink == false) {
+    values[flutter::EncodableValue("lastFailureKind")] =
+        flutter::EncodableValue("network_unavailable");
   }
   return flutter::EncodableValue(values);
 }

@@ -12,6 +12,7 @@ add_executable(${BINARY_NAME} WIN32
   "../service/service_pipe_client.cpp"
   "flutter_window.cpp"
   "runtime_task_runner.cpp"
+  "uplink_status.cpp"
   "main.cpp"
   "utils.cpp"
   "win32_window.cpp"
@@ -41,6 +42,7 @@ target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 target_link_libraries(${BINARY_NAME} PRIVATE
   pokrov_service_common
   "bcrypt.lib"
+  "iphlpapi.lib"
 )
 target_include_directories(${BINARY_NAME} PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/../service")
