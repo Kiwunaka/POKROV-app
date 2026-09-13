@@ -9607,6 +9607,40 @@ void main() {
     await tester.pumpAndSettle();
     expect(calls.where((c) => c == 'runtimeEngine.connect'), isEmpty);
     expect(bootstrapper.provenEntries, isEmpty);
+    expect(bootstrapper.calls, 0);
+    expect(find.text('Доступ не активен. Продлите доступ, чтобы подключиться.'),
+      findsOneWidget);
+  });
+
+  testWidgets('renewed subscription permits a fresh profile on connect retry', (tester) async {
+    final calls = <String>[];
+    _installReadyRuntimeBridgeMock(calls: calls,
+      retainHealthyConnectedSnapshot: true);
+    final bootstrapper = _FakeBootstrapper(const ManagedProfilePayload(
+      profileName: 'renewed-profile', configPayload: _materializedRuntimeConfig,
+      materializedForRuntime: true,
+    ));
+    final activeSubscription = bootstrapper.subscriptionInfo;
+    bootstrapper.subscriptionInfo = const ClientSubscriptionInfo(
+      lane: 'expiredOrBlocked', expiresAt: '', daysLeft: 0,
+      autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+    ));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.calls, 0);
+    bootstrapper.subscriptionInfo = activeSubscription;
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.calls, 1);
+    expect(calls.where((c) => c == 'runtimeEngine.connect').length, 1);
+    expect(find.text('Доступ не активен. Продлите доступ, чтобы подключиться.'),
+      findsNothing);
   });
 
   testWidgets('explicit inactive subscription disconnects a cached tunnel on resume', (tester) async {

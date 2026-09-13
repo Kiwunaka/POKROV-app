@@ -5101,6 +5101,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         snapshot = current;
       }
 
+      if (_subscriptionInfo?.lane == 'expiredOrBlocked') {
+        await _refreshSubscriptionInfo();
+        if (!mounted) return;
+        if (_subscriptionInfo?.lane == 'expiredOrBlocked') {
+          setState(() {
+            _runtimeHeadline =
+                'Доступ не активен. Продлите доступ, чтобы подключиться.';
+          });
+          return;
+        }
+      }
+
       failureOperation = 'trusted_wifi';
       if (await _blockConnectOnTrustedWifi()) {
         return;
