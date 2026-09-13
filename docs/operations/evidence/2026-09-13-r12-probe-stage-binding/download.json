@@ -1,0 +1,52 @@
+{
+  "status": "PASS_EXACT_DOWNLOADED_LIBRARIES",
+  "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+  "floor_bytes": 42949672960,
+  "rate_kbit_per_second": 4096,
+  "files": [
+    {
+      "path": "windows-a/libcronet.dll",
+      "bytes": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7",
+      "local_path": "C:\\r12corec02\\dist\\windows\\libcronet.dll",
+      "previous_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7",
+      "bytes_changed": false
+    },
+    {
+      "path": "windows-a/pokrov-core.dll",
+      "bytes": 55010816,
+      "sha256": "607b23ae8871928c241b0818005e59c54fca456a93cb9303f150b1a1496d0fb7",
+      "local_path": "C:\\r12corec02\\dist\\windows\\pokrov-core.dll",
+      "previous_sha256": "40101389b7713b869a9472bd3afe3aa19000b1d98f79d50cb88b61a235be531e",
+      "bytes_changed": true
+    },
+    {
+      "path": "windows-a/pokrov-core.h",
+      "bytes": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f",
+      "local_path": "C:\\r12corec02\\dist\\windows\\pokrov-core.h",
+      "previous_sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f",
+      "bytes_changed": false
+    },
+    {
+      "path": "android-a/pokrov-core-sources.jar",
+      "bytes": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65",
+      "local_path": "C:\\r12corec02\\dist\\android\\pokrov-core-sources.jar",
+      "previous_sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65",
+      "bytes_changed": false
+    },
+    {
+      "path": "android-a/pokrov-core.aar",
+      "bytes": 106840120,
+      "sha256": "eeb6f01e893df5cb9a595471347285075077308b9968467b43f57005759d8084",
+      "local_path": "C:\\r12corec02\\dist\\android\\pokrov-core.aar",
+      "previous_sha256": "5ea2eb7d70d0d010636f0a52e9d16e6e207756a5f08140599f136fbc3fe6e5af",
+      "bytes_changed": true
+    }
+  ],
+  "rollback_root": "pokrov-de:/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/out",
+  "metadata_files": 26,
+  "free_c_after": 59625668608,
+  "free_e_after": 134421315584
+}

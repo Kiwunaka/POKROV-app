@@ -1,0 +1,18 @@
+{
+  "status": "PASS_EXACT_CORE_PROBE_STAGE_BINDING",
+  "previous_source": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+  "source": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+  "source_tree": "4cde973f4e06a6aeb2da0221a73df0a55c5f47eb",
+  "regression": "Endpoint TLS deadline regression failed before fix; affected urltest/daemon packages pass after fix; required native Core gate PASS.",
+  "native_abis": 4,
+  "windows_exports": 15,
+  "desktop_abi": 2,
+  "event_abi": 1,
+  "notice_bodies_unchanged": 191,
+  "dependencies_and_build_settings_unchanged": true,
+  "consumer_checks": "PASS exact runtime sync, seed/docs contracts, followed by focused release-v2 CI contract after scoped coordination delta; diff/release isolation PASS. Unchanged Dart/JVM suites not rerun.",
+  "installed_proof": "PENDING",
+  "previous_evidence": "Prior unrelated Core6b privacy/lifecycle/source receipts retain their original binary identities; no new corresponding-source or licensing clearance inferred.",
+  "rollback": "pokrov-de:/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/setup-privacy-final-6b271de-20260912/out",
+  "source_coordination": "Only owned codex/probe-stage-binding-signed-20260913 PR branch selects Core0138; other ordinary PR/main checks use Core/main. Exact raw source must be retained on origin before PR."
+}

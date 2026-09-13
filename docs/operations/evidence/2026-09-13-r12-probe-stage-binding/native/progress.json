@@ -1,0 +1,243 @@
+{
+  "status": "PASS_TWO_BUILDS_PER_PLATFORM",
+  "stage": "evidence_android",
+  "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+  "source_tree": "4cde973f4e06a6aeb2da0221a73df0a55c5f47eb",
+  "source_files": 3339,
+  "source_manifest_sha256": "e3e7c4e13b8d43472efe84aa3eae69d07e192f1857bd89bac387ce763c25194b",
+  "commands": [
+    {
+      "stage": "required_core_gate",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/test.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 608.708,
+      "log_sha256": "004ae35d9e2fbc8522ba8c181a4beca381c89c0634e7d5ee597758b235968230",
+      "network_isolated": true
+    },
+    {
+      "stage": "sbom_core-source",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+        "mod",
+        "-licenses",
+        "-std",
+        "-json",
+        "-notimestamp",
+        "-noserial",
+        "-output",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/sbom/core-source.cdx.json",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/source"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 44.908,
+      "log_sha256": "f077c86c2913eb4cdae3c14a54293a56e7dc695cec00f4567ea42912b164eeb1",
+      "network_isolated": false
+    },
+    {
+      "stage": "sbom_engine-source",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+        "mod",
+        "-licenses",
+        "-std",
+        "-json",
+        "-notimestamp",
+        "-noserial",
+        "-output",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/sbom/engine-source.cdx.json",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/source/engine/sing-box"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 37.318,
+      "log_sha256": "4b0e23aec66edc813706c84a614b18265a0835cfa80209fcd545aa9103aba63b",
+      "network_isolated": false
+    },
+    {
+      "stage": "build_windows_a",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-windows.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/bin/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/out/windows-a",
+        "-CCompiler",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/mingw/usr/bin/x86_64-w64-mingw32-gcc-posix",
+        "-CronetLibrary",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/libcronet.dll"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 49.759,
+      "log_sha256": "57f89ab77b2717546284628d14104ea0791f4bc07e1431f9f9f3bf1d8cce2eea",
+      "network_isolated": true
+    },
+    {
+      "stage": "build_windows_b",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-windows.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/bin/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/out/windows-b",
+        "-CCompiler",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/mingw/usr/bin/x86_64-w64-mingw32-gcc-posix",
+        "-CronetLibrary",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/libcronet.dll"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 20.053,
+      "log_sha256": "57f89ab77b2717546284628d14104ea0791f4bc07e1431f9f9f3bf1d8cce2eea",
+      "network_isolated": true
+    },
+    {
+      "stage": "evidence_windows",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-Command",
+        "& '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/source/scripts/new-release-artifact-evidence.ps1' -Lane 'windows' -FirstBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/out/windows-a' -SecondBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/out/windows-b' -Output '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/windows-evidence.json' -Sbom '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/sbom/core-source.cdx.json','/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/sbom/engine-source.cdx.json' -RequireCleanSource"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.522,
+      "log_sha256": "dd768c433d118cba99fda0019f885e44fd9c831e7465da700c646572a1a200db",
+      "network_isolated": true
+    },
+    {
+      "stage": "build_android_a",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-android.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/bin/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/out/android-a",
+        "-AndroidSdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/sdk",
+        "-AndroidNdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/ndk/android-ndk-r29",
+        "-GomobileBinDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/bin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 264.925,
+      "log_sha256": "02f63f3e32cdcc8c7797af3185bb14d94fcbb513ae855cd87bf17905af269108",
+      "network_isolated": true
+    },
+    {
+      "stage": "build_android_b",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/build-android.ps1",
+        "-GoExecutable",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/bin/go",
+        "-OutputDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/out/android-b",
+        "-AndroidSdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/sdk",
+        "-AndroidNdk",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-tools/ndk/android-ndk-r29",
+        "-GomobileBinDirectory",
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/bin"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 131.773,
+      "log_sha256": "02f63f3e32cdcc8c7797af3185bb14d94fcbb513ae855cd87bf17905af269108",
+      "network_isolated": true
+    },
+    {
+      "stage": "evidence_android",
+      "argv": [
+        "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/powershell/pwsh",
+        "-NoProfile",
+        "-Command",
+        "& '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/source/scripts/new-release-artifact-evidence.ps1' -Lane 'android' -FirstBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/out/android-a' -SecondBuildRoot '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/out/android-b' -Output '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/android-evidence.json' -Sbom '/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/sbom/core-source.cdx.json','/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/sbom/engine-source.cdx.json' -RequireCleanSource"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.648,
+      "log_sha256": "a4a2ffc23b9d183f30f4756b5aa0e4df86d451358fae65db2981e6aed396ca3f",
+      "network_isolated": true
+    }
+  ],
+  "started_utc": "2026-09-12T23:33:10.067135+00:00",
+  "new_release_candidate": false,
+  "source_delta": "Retain typed TLS/response stage at URL probe deadline; existing two daemon timeout boundaries consume the bounded URLTest result. One failing endpoint regression and affected package pass retained locally. No dependency or build-script changes.",
+  "outputs": [
+    {
+      "path": "android-a/pokrov-core-sources.jar",
+      "bytes": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "path": "android-a/pokrov-core.aar",
+      "bytes": 106840120,
+      "sha256": "eeb6f01e893df5cb9a595471347285075077308b9968467b43f57005759d8084"
+    },
+    {
+      "path": "android-b/pokrov-core-sources.jar",
+      "bytes": 55186,
+      "sha256": "183c6981053df278234fed9a7e9c93c9cb3859da6c1e0fe04415ff93c4361f65"
+    },
+    {
+      "path": "android-b/pokrov-core.aar",
+      "bytes": 106840120,
+      "sha256": "eeb6f01e893df5cb9a595471347285075077308b9968467b43f57005759d8084"
+    },
+    {
+      "path": "windows-a/libcronet.dll",
+      "bytes": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "path": "windows-a/pokrov-core.dll",
+      "bytes": 55010816,
+      "sha256": "607b23ae8871928c241b0818005e59c54fca456a93cb9303f150b1a1496d0fb7"
+    },
+    {
+      "path": "windows-a/pokrov-core.h",
+      "bytes": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    },
+    {
+      "path": "windows-b/libcronet.dll",
+      "bytes": 8596992,
+      "sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
+    },
+    {
+      "path": "windows-b/pokrov-core.dll",
+      "bytes": 55010816,
+      "sha256": "607b23ae8871928c241b0818005e59c54fca456a93cb9303f150b1a1496d0fb7"
+    },
+    {
+      "path": "windows-b/pokrov-core.h",
+      "bytes": 4175,
+      "sha256": "8272978b8a28e6ae4c48c6c3ea230170e0d972ac3af6b54fb836fe1dd4c7331f"
+    }
+  ],
+  "sboms": [
+    {
+      "path": "sbom/core-source.cdx.json",
+      "sha256": "d204b1a9c01f1d6f496f5586333237b6d9200b589110b3cd264352d562e35b41"
+    },
+    {
+      "path": "sbom/engine-source.cdx.json",
+      "sha256": "012fd5dd37827a1f45bb1a243ad3ae470c5ebd635cd75e1dba78c0b13427a9ea"
+    }
+  ],
+  "finished_utc": "2026-09-12T23:52:36.360317+00:00"
+}

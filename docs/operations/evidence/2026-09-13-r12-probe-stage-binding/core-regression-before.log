@@ -1,0 +1,5 @@
+--- FAIL: TestSelectedEndpointDeadlineRetainsTLSStage (0.20s)
+    started_service_test.go:72: endpoint deadline discarded the observed TLS stage
+FAIL
+FAIL	github.com/sagernet/sing-box/daemon	0.318s
+FAIL
