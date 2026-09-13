@@ -44,9 +44,9 @@ class ManagedProfileCache {
     await _storage.write(key: _key(platform), value: raw);
   }
 
-  Future<void> _serialize(Future<void> Function() operation) {
+  Future<T> _serialize<T>(Future<T> Function() operation) {
     final next = _writes.then((_) => operation());
-    _writes = next.catchError((Object _) {});
+    _writes = next.then<void>((_) {}, onError: (Object _) {});
     return next;
   }
 
@@ -82,10 +82,20 @@ class ManagedProfileCache {
     required String platform,
     required String binding,
     bool preferProven = false,
-  }) async {
-    await _writes;
+  }) => _serialize(() async {
     try {
       final value = await _load(platform);
+      if (value.isEmpty) return null;
+      final now = _now().toUtc();
+      final observedValue = value['last_observed_at'];
+      final observedAt = observedValue == null
+          ? null
+          : DateTime.tryParse(observedValue.toString());
+      if ((observedValue != null && observedAt == null) ||
+          (observedAt != null && now.isBefore(observedAt))) return null;
+      // Persist even an expired read, so a later clock rollback cannot revive it.
+      value['last_observed_at'] = now.toIso8601String();
+      await _write(platform, value);
       for (final slot in preferProven
           ? const ['proven', 'downloaded']
           : const ['downloaded', 'proven']) {
@@ -93,7 +103,7 @@ class ManagedProfileCache {
         if (entry is! Map || entry['binding'] != binding) continue;
         final verified = DateTime.tryParse(entry['verified_at']?.toString() ?? '');
         if (verified == null) continue;
-        final age = _now().difference(verified);
+        final age = now.difference(verified);
         if (age.isNegative || age > offlineWindow) continue;
         final payload = entry['payload'];
         if (payload is Map<String, dynamic>) return payload;
@@ -102,7 +112,7 @@ class ManagedProfileCache {
       // Unreadable/future state is unavailable and preserved, never guessed.
     }
     return null;
-  }
+  });
 
   Future<void> markProven({
     required String platform,
