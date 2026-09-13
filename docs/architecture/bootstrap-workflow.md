@@ -297,6 +297,11 @@ Current blocking dependency:
   remain TCP/UDP `1.1.1.1`. Direct resolver copies use local bootstrap instead
   of a self-reference to a generated resolver lane. DNS non-routing actions
   are preserved; user routing preferences apply afterward
+- Windows manual location selection follows the VPN selector referenced by
+  the selected-process rule when the default route is direct. The selected
+  location changes that selector only; unselected processes keep direct routing
+  and selected-process DNS keeps its VPN resolver. This applies to generated
+  and server-materialized profiles.
 - Windows VPN verification is service-owned. After Core starts, WinHTTP uses
   proxy bypass to request the owned HTTPS marker at
   `https://api.pokrov.space/api/public/authenticated-egress-probe`. Windows gets

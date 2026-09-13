@@ -5866,6 +5866,7 @@ void main() {
       }
     });
 
+    var runtimeReady = false;
     Map<String, Object?> managedResponse({
       required bool duplicateRuProxy,
       required bool ambiguousFinalSelector,
@@ -5930,6 +5931,14 @@ void main() {
             ],
           },
           'config_payload': <String, Object?>{
+            if (runtimeReady)
+              'inbounds': <Object?>[
+                <String, Object?>{
+                  'type': 'tun',
+                  'tag': 'tun-in',
+                  'address': <String>['172.19.0.1/28'],
+                },
+              ],
             if (preferredRouteVariant)
               '_meta': <String, Object?>{
                 'ru_bridge': <String, Object?>{
@@ -6208,6 +6217,34 @@ void main() {
       (preferredSelector['outbounds'] as List).first,
       '🇷🇺 Россия Spb',
     );
+
+    for (final ready in <bool>[false, true]) {
+      runtimeReady = ready;
+      final selected = await bootstrapper.resolveManagedProfile(
+        hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.selectedApps,
+        selectedApps: const <String>['powershell.exe'],
+        preferredNodeCode: 'ru-spb',
+      );
+      final config = jsonDecode(selected.configPayload) as Map<String, dynamic>;
+      final route = config['route'] as Map;
+      expect(route['final'], 'direct');
+      final rule = (route['rules'] as List).cast<Map>().singleWhere(
+            (rule) => (rule['process_name'] as List?)
+                ?.contains('powershell.exe') == true,
+          );
+      final selector = (config['outbounds'] as List).cast<Map>().singleWhere(
+            (outbound) => outbound['tag'] == rule['outbound'],
+          );
+      expect(selector['type'], 'selector');
+      expect(selector['default'], '🇷🇺 Россия Spb');
+      expect(selector['outbounds'], isNot(contains('direct')));
+      final dnsRule = ((config['dns'] as Map)['rules'] as List)
+          .cast<Map>().singleWhere((rule) =>
+              (rule['process_name'] as List?)?.contains('powershell.exe') == true);
+      expect(dnsRule['server'], 'dns-remote');
+    }
+    runtimeReady = false;
 
     final bridgePreferred = await bootstrapper.resolveManagedProfile(
       hostPlatform: HostPlatform.android,
