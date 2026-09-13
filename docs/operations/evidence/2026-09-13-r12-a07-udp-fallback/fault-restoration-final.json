@@ -1,0 +1,1 @@
+{"status": "PASS", "firewall_hash": "9c95a6248a0e7bff1472f6daa4b2dc87872edcbe431e541e66baf6d0c19b6d8b", "firewall_matches_before_after_disconnect": true, "network_matches": {"ipv4_routes": true, "private_dns_mode": true, "private_dns_host": true, "dns1": true, "dns2": true, "ipv6_semantic": true}, "host_routes_dns_unchanged": true, "native_egress_failed_observed": true}

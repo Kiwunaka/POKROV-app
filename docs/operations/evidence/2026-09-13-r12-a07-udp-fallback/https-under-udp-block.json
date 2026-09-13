@@ -1,0 +1,28 @@
+{
+  "requests": [
+    {
+      "status": 204,
+      "marker_valid": true,
+      "error_type": "",
+      "elapsed_ms": 703
+    },
+    {
+      "status": 204,
+      "marker_valid": true,
+      "error_type": "",
+      "elapsed_ms": 245
+    },
+    {
+      "status": 204,
+      "marker_valid": true,
+      "error_type": "",
+      "elapsed_ms": 1198
+    }
+  ],
+  "status": "PASS",
+  "utc": "2026-09-13T08:57:13.262084+00:00",
+  "fixture_sha256": "bc15a296ad8eb58faeaf2a2c2b559b7f0721dfb7d450f11b3347cd8c7ab18aa1",
+  "origin": "owned Android x64 guest under UDP data DROP",
+  "authenticated_egress_endpoint": true,
+  "independent_origin_oracle": false
+}

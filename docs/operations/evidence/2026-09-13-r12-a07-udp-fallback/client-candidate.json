@@ -1,0 +1,26 @@
+{
+  "source": "922d9bcaadb35b70c7708ebd6b30457845834f36",
+  "parent": "97bf4f2cc80d7b6f57fcf5cacf4d6a3d9eaff883",
+  "tree": "78bdb53e00b1b7c8266f32f7f08e2e29431a193f",
+  "files": [
+    {
+      "path": "docs/architecture/bootstrap-workflow.md",
+      "blob": "dff6d674e7543bae74964d3d65aaf2fc58b69db6",
+      "bytes": 58837,
+      "sha256": "81ee4866c1d58da019b72f018488f3c9cc359d935c4fd6009a3732851eb6ce1f"
+    },
+    {
+      "path": "packages/app_shell/lib/src/shell/seed_shell.dart",
+      "blob": "fc0228f06eb4062780cdd553a014651898fff30d",
+      "bytes": 241020,
+      "sha256": "2beb47a4a1fac2d1af664636e9d38e63dd9a44d307963677b62e3feda6b2f313"
+    },
+    {
+      "path": "packages/app_shell/test/pokrov_seed_app_test.dart",
+      "blob": "dc80938b8db41df3e38a521554c04e3580f25653",
+      "bytes": 485565,
+      "sha256": "8df54557e93f734a4a55708a9198ef8266fbd17139b1594ea454f1324877a177"
+    }
+  ],
+  "preexisting_main_documentation_preserved": true
+}

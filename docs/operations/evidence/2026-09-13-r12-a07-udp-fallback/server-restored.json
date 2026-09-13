@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "backup_sha256": "474af39a83a8f7f027a82ae849f606d633fde941fc3ff2185e738f62ef6a10f8",
+  "current_sha256": "75ff9b95b73ebe460230efac08feba04a12af1923a0f1de73bcea7af797d558c",
+  "nonblank_bytes_match": true,
+  "difference": "worker retained extra blank separator lines",
+  "service": "active"
+}

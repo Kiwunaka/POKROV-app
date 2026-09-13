@@ -1,0 +1,783 @@
+{
+  "filter": "occurred_at_utc >= initial A07 preflight",
+  "cutoff_utc": "2026-09-13T08:17:16Z",
+  "original_full_projection_retained_in_platform_archive": true,
+  "events": [
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:20:50.070Z",
+      "sequence": 1,
+      "event": "doze",
+      "outcome": "inactive",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:20:50.071Z",
+      "sequence": 2,
+      "event": "background_restriction",
+      "outcome": "disabled",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:20:50.071Z",
+      "sequence": 3,
+      "event": "app_standby",
+      "outcome": "unknown",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.192Z",
+      "sequence": 4,
+      "event": "notification_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.200Z",
+      "sequence": 5,
+      "event": "vpn_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.207Z",
+      "sequence": 6,
+      "event": "vpn_service",
+      "outcome": "created",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.207Z",
+      "sequence": 7,
+      "event": "vpn_service",
+      "outcome": "start_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.217Z",
+      "sequence": 8,
+      "event": "vpn_service",
+      "outcome": "session_started",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.232Z",
+      "sequence": 9,
+      "event": "network_callback",
+      "outcome": "available",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.232Z",
+      "sequence": 10,
+      "event": "network_callback",
+      "outcome": "capabilities_changed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.294Z",
+      "sequence": 11,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.295Z",
+      "sequence": 12,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.332Z",
+      "sequence": 13,
+      "event": "vpn_service",
+      "outcome": "tun_established",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.336Z",
+      "sequence": 14,
+      "event": "core_egress_probe",
+      "outcome": "required",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:10.792Z",
+      "sequence": 15,
+      "event": "core_egress_probe",
+      "outcome": "verified",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:44.067Z",
+      "sequence": 16,
+      "event": "vpn_service",
+      "outcome": "stop_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:44.135Z",
+      "sequence": 17,
+      "event": "vpn_service",
+      "outcome": "stopped",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:21:44.136Z",
+      "sequence": 18,
+      "event": "vpn_service",
+      "outcome": "destroyed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.174Z",
+      "sequence": 19,
+      "event": "notification_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.174Z",
+      "sequence": 20,
+      "event": "vpn_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.176Z",
+      "sequence": 21,
+      "event": "vpn_service",
+      "outcome": "created",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.176Z",
+      "sequence": 22,
+      "event": "vpn_service",
+      "outcome": "start_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.180Z",
+      "sequence": 23,
+      "event": "vpn_service",
+      "outcome": "session_started",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.183Z",
+      "sequence": 24,
+      "event": "network_callback",
+      "outcome": "available",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.184Z",
+      "sequence": 25,
+      "event": "network_callback",
+      "outcome": "capabilities_changed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.241Z",
+      "sequence": 26,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.242Z",
+      "sequence": 27,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.271Z",
+      "sequence": 28,
+      "event": "vpn_service",
+      "outcome": "tun_established",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:02.273Z",
+      "sequence": 29,
+      "event": "core_egress_probe",
+      "outcome": "required",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:25:48.827Z",
+      "sequence": 30,
+      "event": "core_egress_probe",
+      "outcome": "failed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:27:47.729Z",
+      "sequence": 31,
+      "event": "vpn_service",
+      "outcome": "stop_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:27:47.801Z",
+      "sequence": 32,
+      "event": "vpn_service",
+      "outcome": "stopped",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:27:47.803Z",
+      "sequence": 33,
+      "event": "vpn_service",
+      "outcome": "destroyed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:43:32.412Z",
+      "sequence": 1,
+      "event": "doze",
+      "outcome": "inactive",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:43:32.413Z",
+      "sequence": 2,
+      "event": "background_restriction",
+      "outcome": "disabled",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:43:32.415Z",
+      "sequence": 3,
+      "event": "app_standby",
+      "outcome": "unknown",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:02.971Z",
+      "sequence": 4,
+      "event": "notification_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:02.980Z",
+      "sequence": 5,
+      "event": "vpn_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:02.987Z",
+      "sequence": 6,
+      "event": "vpn_service",
+      "outcome": "created",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:02.987Z",
+      "sequence": 7,
+      "event": "vpn_service",
+      "outcome": "start_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:03.003Z",
+      "sequence": 8,
+      "event": "vpn_service",
+      "outcome": "session_started",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:03.010Z",
+      "sequence": 9,
+      "event": "network_callback",
+      "outcome": "available",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:03.012Z",
+      "sequence": 10,
+      "event": "network_callback",
+      "outcome": "capabilities_changed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:03.101Z",
+      "sequence": 11,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:03.102Z",
+      "sequence": 12,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:03.138Z",
+      "sequence": 13,
+      "event": "vpn_service",
+      "outcome": "tun_established",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:03.145Z",
+      "sequence": 14,
+      "event": "core_egress_probe",
+      "outcome": "required",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:44:34.681Z",
+      "sequence": 15,
+      "event": "core_egress_probe",
+      "outcome": "failed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:45:57.137Z",
+      "sequence": 16,
+      "event": "vpn_service",
+      "outcome": "stop_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:45:57.225Z",
+      "sequence": 17,
+      "event": "vpn_service",
+      "outcome": "stopped",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:45:57.227Z",
+      "sequence": 18,
+      "event": "vpn_service",
+      "outcome": "destroyed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:52:56.056Z",
+      "sequence": 1,
+      "event": "doze",
+      "outcome": "inactive",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:52:56.057Z",
+      "sequence": 2,
+      "event": "background_restriction",
+      "outcome": "disabled",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:52:56.072Z",
+      "sequence": 3,
+      "event": "app_standby",
+      "outcome": "unknown",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.212Z",
+      "sequence": 4,
+      "event": "notification_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.217Z",
+      "sequence": 5,
+      "event": "vpn_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.221Z",
+      "sequence": 6,
+      "event": "vpn_service",
+      "outcome": "created",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.221Z",
+      "sequence": 7,
+      "event": "vpn_service",
+      "outcome": "start_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.229Z",
+      "sequence": 8,
+      "event": "vpn_service",
+      "outcome": "session_started",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.242Z",
+      "sequence": 9,
+      "event": "network_callback",
+      "outcome": "available",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.242Z",
+      "sequence": 10,
+      "event": "network_callback",
+      "outcome": "capabilities_changed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.309Z",
+      "sequence": 11,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.309Z",
+      "sequence": 12,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.351Z",
+      "sequence": 13,
+      "event": "vpn_service",
+      "outcome": "tun_established",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:02.354Z",
+      "sequence": 14,
+      "event": "core_egress_probe",
+      "outcome": "required",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:48.900Z",
+      "sequence": 15,
+      "event": "core_egress_probe",
+      "outcome": "failed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:49.473Z",
+      "sequence": 16,
+      "event": "vpn_service",
+      "outcome": "stop_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:49.568Z",
+      "sequence": 17,
+      "event": "vpn_service",
+      "outcome": "stopped",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:49.572Z",
+      "sequence": 18,
+      "event": "vpn_service",
+      "outcome": "destroyed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.430Z",
+      "sequence": 19,
+      "event": "notification_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.431Z",
+      "sequence": 20,
+      "event": "vpn_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.432Z",
+      "sequence": 21,
+      "event": "vpn_service",
+      "outcome": "created",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.432Z",
+      "sequence": 22,
+      "event": "vpn_service",
+      "outcome": "start_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.436Z",
+      "sequence": 23,
+      "event": "vpn_service",
+      "outcome": "session_started",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.628Z",
+      "sequence": 24,
+      "event": "network_callback",
+      "outcome": "available",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.629Z",
+      "sequence": 25,
+      "event": "network_callback",
+      "outcome": "capabilities_changed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.798Z",
+      "sequence": 26,
+      "event": "vpn_service",
+      "outcome": "tun_established",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:51.800Z",
+      "sequence": 27,
+      "event": "core_egress_probe",
+      "outcome": "required",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:53:52.703Z",
+      "sequence": 28,
+      "event": "core_egress_probe",
+      "outcome": "verified",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:39.074Z",
+      "sequence": 29,
+      "event": "vpn_service",
+      "outcome": "stop_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:39.139Z",
+      "sequence": 30,
+      "event": "vpn_service",
+      "outcome": "stopped",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:39.141Z",
+      "sequence": 31,
+      "event": "vpn_service",
+      "outcome": "destroyed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:41.997Z",
+      "sequence": 32,
+      "event": "notification_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:41.997Z",
+      "sequence": 33,
+      "event": "vpn_permission",
+      "outcome": "already_granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:41.998Z",
+      "sequence": 34,
+      "event": "vpn_service",
+      "outcome": "created",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:41.999Z",
+      "sequence": 35,
+      "event": "vpn_service",
+      "outcome": "start_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:42.004Z",
+      "sequence": 36,
+      "event": "vpn_service",
+      "outcome": "session_started",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:42.006Z",
+      "sequence": 37,
+      "event": "network_callback",
+      "outcome": "available",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:42.006Z",
+      "sequence": 38,
+      "event": "network_callback",
+      "outcome": "capabilities_changed",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:42.069Z",
+      "sequence": 39,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:42.069Z",
+      "sequence": 40,
+      "event": "uplink_socket",
+      "outcome": "granted",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:42.077Z",
+      "sequence": 41,
+      "event": "vpn_service",
+      "outcome": "tun_established",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:42.080Z",
+      "sequence": 42,
+      "event": "core_egress_probe",
+      "outcome": "required",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:57:43.320Z",
+      "sequence": 43,
+      "event": "core_egress_probe",
+      "outcome": "verified",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:58:15.266Z",
+      "sequence": 44,
+      "event": "vpn_service",
+      "outcome": "stop_requested",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:58:15.330Z",
+      "sequence": 45,
+      "event": "vpn_service",
+      "outcome": "stopped",
+      "dropped_before": 0
+    },
+    {
+      "schema_version": 1,
+      "occurred_at_utc": "2026-09-13T08:58:15.332Z",
+      "sequence": 46,
+      "event": "vpn_service",
+      "outcome": "destroyed",
+      "dropped_before": 0
+    }
+  ]
+}
