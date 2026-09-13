@@ -1,6 +1,6 @@
 # Client Motion Performance Checklist
 
-Last updated: 2026-09-08
+Last updated: 2026-09-13
 
 Registry class: `ACTIVE_EXECUTION`.
 
@@ -181,3 +181,26 @@ All 305 installed files match; VM off/NIC none and host network unchanged.
 Windows 10, physical cold-cache/comparable hardware, connected/tray-hidden
 performance and exact final-channel acceptance remain open. The earlier idle
 report above records its own state before this follow-up.
+
+## Windows hidden-start activity boundary — 2026-09-13
+
+The Windows host also gates tickers using native window visibility and focus.
+It starts muted, including when the process receives `--startup`, and reads
+native activity before enabling animation. Show/focus/restore refresh activity;
+hide/blur/minimize mute immediately. An older asynchronous focus reply cannot
+reactivate a window after a newer hide or blur. This gate surrounds the shared
+app and its modal routes; it does not change VPN or service lifecycle.
+
+This covers the period before Flutter emits its first lifecycle transition.
+An actual process `--startup` capture on source `abe95c9` kept the window hidden
+and unfocused while lifecycle stayed null and the modal pulse continued.
+Ordinary blur/hide/show after genuine native activation passes on that same
+source. Earlier focus-queue diagnostics and incorrect-startup-argument attempts
+remain separate observations, not a general failure of every Windows lifecycle.
+[After-change native acceptance](evidence/2026-09-13-r12-c04-window-activity/README.md)
+passes on source0651e83: one exact profile bundle, ordinary and actual native
+--startup launches,440 modal samples. Hidden startup and all blur/hide intervals
+have disabled tickers and zero opacity range; active/resumed intervals animate.
+The modal remains present. No synthetic lifecycle input or queue attachment.
+This closes the observed Windows hidden-start defect on the owned VM only;
+no CPU/battery/frame or exact-release acceptance follows. C04 remains open.
