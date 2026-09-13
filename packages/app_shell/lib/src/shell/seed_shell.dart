@@ -5651,13 +5651,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         connectedSnapshot.coreEgressValidated == true) {
       return;
     }
-    // A normal group probe settles in about 19 seconds. WARP receives one
-    // bounded host retry, so keep observing it through the 55-second host
-    // watchdog. A fail-closed stop that lands after a single refresh must not
-    // leave the Home CTA green with no TUN behind it.
+    // Observe every Android transport through the 55-second host watchdog.
+    // An AWG failure can arrive after the normal group-probe window, while its
+    // TUN is still running; the result must reach the bounded TCP fallback.
     _diagnosticsCoordinator.startHealthPolling(
       interval: const Duration(milliseconds: 750),
-      pollCount: _activeConnectUsedWarp ? 76 : 28,
+      pollCount: 76,
       canContinue: () => mounted,
       onPoll: (generation) => unawaited(
         _refreshPostConnectHostHealth(connectedSnapshot, generation),

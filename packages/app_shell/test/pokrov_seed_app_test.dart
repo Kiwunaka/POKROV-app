@@ -9959,7 +9959,13 @@ void main() {
               }
               if (connectCalls == 1) {
                 firstConnectSnapshots += 1;
-                if (firstConnectSnapshots >= 2 ||
+                final failureAfterSnapshots = labFallback &&
+                        host == HostPlatform.android &&
+                        !proofUnavailable &&
+                        !bootstrapRefused
+                    ? 42
+                    : 2;
+                if (firstConnectSnapshots >= failureAfterSnapshots ||
                     host == HostPlatform.windows) {
                   return runtimeState(
                     labFallback &&
@@ -10100,6 +10106,12 @@ void main() {
         );
         await tester.pumpAndSettle();
         await _tapPrimaryConnectAndConfirmRouteScope(tester);
+        if (labFallback && host == HostPlatform.android &&
+            !proofUnavailable && !bootstrapRefused) {
+          for (var i = 0; i < 48; i += 1) {
+            await tester.pump(const Duration(milliseconds: 750));
+          }
+        }
         await tester.pump(const Duration(seconds: 4));
         await tester.pumpAndSettle();
 
