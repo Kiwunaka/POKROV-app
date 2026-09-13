@@ -1,0 +1,81 @@
+{
+  "status": "PASS_LOCAL_CACHE_EXPIRY_FIX",
+  "utc": "2026-09-13T00:50:24.656171+00:00",
+  "base_client": "f3d1ea7a82ed57efcd3ed9b377586ffd62a0bb1d",
+  "source_files": [
+    {
+      "path": "packages/app_shell/lib/src/shell/managed_profile_cache.dart",
+      "git_blob": "207c1149921565303fdc14dc030d895e69318ebc",
+      "sha256": "c255d450d09f298dda5f8f7f635e1d9e339cf7c69a04493ab4f02adbcc145d73",
+      "bytes": 4982
+    },
+    {
+      "path": "packages/app_shell/test/managed_profile_cache_test.dart",
+      "git_blob": "940cae454c0512761839dd1bf2769b65c1214799",
+      "sha256": "a4006aed3fdb92da4f2df3f691a61268ef666e7ebbddf3adc6994293a6fc6687",
+      "bytes": 3998
+    },
+    {
+      "path": "docs/architecture/bootstrap-workflow.md",
+      "git_blob": "a59aac117e7faf47e6a66cfa418f3df9401c22a1",
+      "sha256": "7eade14924e3a9bd79fdf04789df1f1c6a93369caffb9b40de77a2b437a75f30",
+      "bytes": 57205
+    },
+    {
+      "path": "docs/architecture/persisted-state-contract.md",
+      "git_blob": "90c1fbe31a633c11bfa5a358f70a4456a38af82d",
+      "sha256": "6eb99d6bdd1fe87a9a418cb2c3d4340ecacf41e7210e7c036001f5a1d203eb2a",
+      "bytes": 12824
+    }
+  ],
+  "observation": "An expired protected profile returned after process restart and a wall-clock rollback from +25 hours to +1 hour. One regression reproduces this before the fix.",
+  "change": "The existing secure cache persists last_observed_at, including failed expiry reads, and refuses earlier wall time. Reads join the existing serialized mutation queue; original profile timestamps and downloaded/proven content are preserved.",
+  "verification": {
+    "regression_before": "EXPECTED_FAIL",
+    "cache_and_fallback": "10 PASS",
+    "bootstrap_restart_server_denial": "1 PASS",
+    "dart_analyze": "PASS_NO_ISSUES"
+  },
+  "commands": [
+    "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat test --no-pub test/managed_profile_cache_test.dart --plain-name \"observed expiry cannot be undone by clock rollback after restart\"",
+    "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat test --no-pub test/managed_profile_cache_test.dart test/cached_profile_fallback_gate_test.dart",
+    "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/flutter.bat test --no-pub test/app_first_runtime_bootstrap_test.dart --plain-name \"protected managed cache restores exact profile after restart and respects server denial\"",
+    "C:/Users/kiwun/tools/flutter/git-3.38.5/bin/dart.bat analyze lib/src/shell/managed_profile_cache.dart test/managed_profile_cache_test.dart"
+  ],
+  "working_directory": "E:/r12client/packages/app_shell",
+  "initial_invocation": "NOT_RUN: Flutter was absent from PATH; corrected explicit-tool runs are retained.",
+  "archive": {
+    "path": "checks.zip",
+    "sha256": "c3c88528d463c75a45b4dcd3417d7882e436794b83b1d57ef6afb4693d354380",
+    "files": [
+      {
+        "path": "before.log",
+        "sha256": "8ff1c05789e49e5c96830f964cb4eba17c610942fdec957cdc8633873eb57b43",
+        "bytes": 571
+      },
+      {
+        "path": "after.log",
+        "sha256": "ee0493def620b2765e6813a90d42acf030bd727687c1a77dea1cf675214a275b",
+        "bytes": 1623
+      },
+      {
+        "path": "bootstrap.log",
+        "sha256": "db6f7dc0383330b80d2dc941f520a859d507827829559cc5900d53bf79132868",
+        "bytes": 222
+      },
+      {
+        "path": "analyze.log",
+        "sha256": "c387a759c76e21ba313bb0ec500d8512111445f085c5f879f9a7cc8bccac5015",
+        "bytes": 92
+      },
+      {
+        "path": "source.patch",
+        "sha256": "3c7979ae200266ed14783dd91ef657a2666030bcf85e4351e2817b3c5b9dc0e5",
+        "bytes": 6443
+      }
+    ]
+  },
+  "limits": "Observed wall-clock rollback only; no independent trusted elapsed-time claim while the app is absent. No real device clock changed, no new package, no provider call, no backend mutation.",
+  "installed": "NOT_RUN_THIS_CHANGE",
+  "native": "UNCHANGED_CORE0138"
+}

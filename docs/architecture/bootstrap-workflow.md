@@ -639,6 +639,13 @@ server-observation time and expire 24 hours after that observation. Future
 timestamps are unavailable. Offline reads, repeated failures and host restaging
 never extend that window. A cache transaction ID fences delayed proof from
 promoting a different download; it is not a server revision or egress proof.
+Each protected-cache read serializes with cache writes and records
+`last_observed_at`, including when the records have expired. A wall-clock value
+earlier than that observation makes the cache unavailable, including after
+process restart; it cannot revive an expiry already observed by this cache.
+The original profile timestamps remain unchanged. Existing version-1 records
+without this field establish it on their first read. This records observed
+clock movement, not trusted elapsed time while the app was absent.
 
 The app tries refresh on ordinary connect/reconnect, allowing at most three
 seconds when a matching cached profile exists. Timeout or transient
