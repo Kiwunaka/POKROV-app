@@ -215,5 +215,10 @@ and unfocused while lifecycle stayed null and the modal pulse continued.
 Ordinary blur/hide/show after genuine native activation passes on that same
 source. Earlier focus-queue diagnostics and incorrect-startup-argument attempts
 remain separate observations, not a general failure of every Windows lifecycle.
-After-change native acceptance is pending; no CPU/battery/frame claim follows
-from the deterministic widget check.
+[After-change native acceptance](evidence/2026-09-13-r12-c04-window-activity/README.md)
+passes on source0651e83: one exact profile bundle, ordinary and actual native
+--startup launches,440 modal samples. Hidden startup and all blur/hide intervals
+have disabled tickers and zero opacity range; active/resumed intervals animate.
+The modal remains present. No synthetic lifecycle input or queue attachment.
+This closes the observed Windows hidden-start defect on the owned VM only;
+no CPU/battery/frame or exact-release acceptance follows. C04 remains open.
