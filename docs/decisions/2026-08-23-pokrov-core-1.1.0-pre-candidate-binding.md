@@ -1,6 +1,24 @@
 # POKROV Core 1.1.0 Pre-Candidate Runtime Binding
 
-## Current setup privacy binding — 2026-09-12
+## Current probe-stage binding — 2026-09-13
+
+Core `0138d04e5601a3ab1089cbbe5a73fe8e0aee4126` preserves the observed TLS or
+response stage when a URL probe expires. The timeout boundary now lives beside
+the stage observation; endpoint/background callers consume that bounded result.
+The installed Core6b regression lost this stage, producing a generic deadline.
+
+[Binding evidence](../operations/evidence/2026-09-13-r12-probe-stage-binding/README.md)
+retains the failing regression, affected package checks, required native Core
+gate and two byte-identical builds per platform. Four Android ABIs, Java wrappers,
+desktop ABI2/event ABI1, 15 exports, dependencies and 191 license bodies remain
+unchanged. Existing Android diagnostic codes accept the more precise outcome.
+Exact runtime sync and seed/docs checks pass. Only the owned
+`codex/probe-stage-binding-signed-20260913` PR branch selects Core0138 in CI;
+other ordinary checks retain main. The focused CI contract passes after this
+coordination change. Package/install confirmation is pending; no release or
+licensing claim.
+
+## Previous setup privacy binding — 2026-09-12
 
 The development client binds Core `6b271decead88b708e2fc03984b703b0a4e63ebd`.
 Setup writes fixed status messages and the selected mode; caller directories

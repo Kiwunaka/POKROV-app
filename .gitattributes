@@ -50,3 +50,7 @@ docs/operations/evidence/2026-09-12-r12-wintun-followup/**/*.log -whitespace
 docs/operations/evidence/2026-09-12-r12-setup-privacy-binding/** -text whitespace=cr-at-eol
 docs/operations/evidence/2026-09-12-r12-setup-privacy-binding/**/*.log -whitespace
 docs/operations/evidence/2026-09-12-r12-setup-privacy-binding/setup-source-delta.patch -whitespace
+
+docs/operations/evidence/2026-09-13-r12-probe-stage-binding/** -text whitespace=cr-at-eol
+docs/operations/evidence/2026-09-13-r12-probe-stage-binding/**/*.log -whitespace
+docs/operations/evidence/2026-09-13-r12-probe-stage-binding/**/*.patch -whitespace
