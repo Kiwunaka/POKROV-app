@@ -39,7 +39,7 @@ Both scripts restore original private profile bytes and all seven network
 baselines. The same QEMU PID1919043 remains running; MINI free space changed
 from1,779,535,872 to1,777,823,744 bytes. No new VM/package or host network change.
 
-[Exact scripts](scripts.zip) retain public observers and root-IPC fixtures.
+[Exact scripts and original archive provenance](archive-provenance.json) retain public observers and root-IPC fixtures.
 The owned RU target is read only from the prior guest-private observer and
 retained as a hash; no raw endpoint/profile/key material is exported. All
 previous failure captures remain unchanged. Full L04 and Linux publication
@@ -51,3 +51,9 @@ Six payload hashes,10 script syntax checks,2 native script byte matches,25
 focused links, all83 unchanged status tuples and release-artifact isolation
 PASS. [Exact commands/logs/hashes](validation.json) retain the evidence.
 Evidence-only local commits; no push, deploy or publication.
+
+Follow-up: after tracking the ZIPs, validate-seed rejected their binary extension.
+Their exact UTF-8 members are now retained under `scripts/` and `checks/`;
+original ZIP hashes and member hashes are in `archive-provenance.json`. Original
+archives remain in the source commit and local rollback storage. The earlier
+PASS log predates that tracking step and did not prove the committed tree.

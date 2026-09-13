@@ -87,5 +87,9 @@
       "path": "scripts.zip",
       "sha256": "d3b57b192e21b35ef0b4d85406a202f445880e1dca4aff0b53e7e86453db1061"
     }
-  ]
+  ],
+  "archive_representation_followup": {
+    "manifest": "archive-provenance.json",
+    "original_checks_predate_zip_tracking": true
+  }
 }

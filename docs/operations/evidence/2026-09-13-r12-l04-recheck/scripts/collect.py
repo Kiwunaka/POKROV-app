@@ -1,0 +1,4 @@
+from pathlib import Path
+import subprocess
+r=Path('/tmp/pokrov-r12-l04-clean-20260911')
+p=subprocess.run(['ssh','-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile='+str(r/'guest-known-hosts'),'-i',str(r/'guest-key'),'-p','22265','pokrovqa@127.0.0.1','sudo -n python3 -'],input="import subprocess,json,pathlib\np=subprocess.run(['systemctl','show','pokrov-l04-de-recheck-20260913','-p','ActiveState','-p','SubState','-p','Result','-p','MainPID','-p','ExecMainStatus'],capture_output=True,text=True);r=pathlib.Path('/home/pokrovqa/acceptance-inputs/candidate8-de-https-recheck-20260913.json');print(json.dumps({'unit':dict(x.split('=',1) for x in p.stdout.splitlines() if '=' in x),'result':json.loads(r.read_text()) if r.exists() else None}))\n",capture_output=True,text=True,timeout=20);assert p.returncode==0,p.stderr;print(p.stdout)
