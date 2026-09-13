@@ -236,3 +236,11 @@ hashes, six old failures, six US successes, apt exit100 preservation, separate
 dpkg restoration/302 entries, seven network baselines, unchanged83 registry
 statuses, local links, script syntax and bounded private-material patterns.
 Staged diff checks and release-artifact isolation PASS. No DE restart is run.
+
+## September13 current follow-up
+
+The [same-package recheck](../2026-09-13-r12-l04-recheck/README.md) supersedes
+the pending default-address repair above: the separately authorized recovery
+is complete; default DE now passes6HTTPS, while alternate DE fails all6.
+Bounded full/RU/DNS/IPv6 runtime fixtures pass with exact302 payload and full
+profile/network restoration. Earlier captures are preserved; L04 remains open.

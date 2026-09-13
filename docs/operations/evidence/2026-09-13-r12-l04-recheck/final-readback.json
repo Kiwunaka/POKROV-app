@@ -1,0 +1,26 @@
+{
+  "epoch": 1789286290.9839673,
+  "checked_payload_entries": 302,
+  "gui": [
+    {
+      "pid": 136118,
+      "uid": 1000
+    }
+  ],
+  "socket": {
+    "mode": "0o666",
+    "uid": 0,
+    "gid": 0,
+    "is_socket": true
+  },
+  "no_tun": true,
+  "no_recovery": true,
+  "modes_unit_deactivated_successfully": true,
+  "modes_unit_failure_message_present": false,
+  "native_scripts": {
+    "guest-de-recheck-20260913.py": "440e6023ade0f8fd58a08a17ca9994f4317782e4b7af645f9f05838700d5762e",
+    "guest-modes-20260913.py": "919bf3ed40b2c5721da65b9da4f202306407fae65af5bb836505d99becf72ac3"
+  },
+  "mini_qemu_pid": 1919043,
+  "mini_free_bytes": 1777823744
+}

@@ -1,0 +1,54 @@
+{
+  "status": "PASS_DEFAULT_DE_AND_RUNTIME_FIXTURES_ALTERNATE_DE_FAIL_L04_OPEN",
+  "date": "2026-09-13",
+  "origin": "MINI Ubuntu24.04.4 amd64 Xfce/X11 guest; not RU-origin",
+  "artifact_sha256": "b71c3190ad56e534bcd0057b68de4f818e775bc89cf1d5470814468ad7ada933",
+  "package": "1.2.0~beta.30-8",
+  "scope": "existing isolated guest and existing owned endpoints; no production mutation",
+  "counts": {
+    "no_vpn_https_pass": 6,
+    "default_de_https_pass": 6,
+    "alternate_de_https_fail": 6,
+    "runtime_modes_https_pass": 4,
+    "checked_installed_entries_before_and_after": 302
+  },
+  "runtime_mode_limit": "Root IPC fixtures; RU fixture adds direct rule referencing the one retained RU rule set. This is not GUI selection or the complete current client rule catalogue. Full no-direct observation is scoped to its 4-second established test socket sample, not an independent egress oracle.",
+  "failures_preserved": [
+    "alternate DE: one curl28 and five curl35",
+    "first default DE request succeeded in10.51s",
+    "initial inspection quoting and nonroot permission failures before mutation",
+    "first modes SSH banner timeout: unit confirmed not-found before one successful dispatch"
+  ],
+  "restoration": "original profile bytes and all seven network hashes restored; no TUN/recovery; original GUI136118 UID1000 retained",
+  "unchanged_source": {
+    "client_head": "617194f94bcc8979346a93249ec9e22d57544110",
+    "platform_head_before": "9074e598364171c04d04e02a5c2bba588239387f"
+  },
+  "release": "NOT_REQUESTED; no build, signing, publication or candidate promotion",
+  "files": [
+    {
+      "path": "de-comparison.json",
+      "sha256": "18fdcd2b9f7671039476179a8348c52980997a53db8e01b2f785040e0eb97b31"
+    },
+    {
+      "path": "default-path-controls.json",
+      "sha256": "8819de6f7cdb14e65c91f039c5947a63897584992349a03a0bf9012833e7162b"
+    },
+    {
+      "path": "final-readback.json",
+      "sha256": "33d5c62518be8bb5de809af04cf86effb5fdaf4e58fc2b6e6167db217bd5668b"
+    },
+    {
+      "path": "mini-before.json",
+      "sha256": "c1b3b02159ec79cf65df4756c0c90af37e25321ea2a7e19e4bc549b4634dc882"
+    },
+    {
+      "path": "runtime-modes.json",
+      "sha256": "62ced7f670f25a84ae4a30973dbfbd939ec1d98e1068bad40d13c02a945cf931"
+    },
+    {
+      "path": "scripts.zip",
+      "sha256": "d3b57b192e21b35ef0b4d85406a202f445880e1dca4aff0b53e7e86453db1061"
+    }
+  ]
+}

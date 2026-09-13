@@ -49,17 +49,21 @@ MINI egress but not in the simultaneous DE capture. The loss cause is unknown;
 successful no-VPN controls and other paths do not close this acceptance gate.
 The [September12 lifecycle attempt](../../docs/operations/evidence/2026-09-11-r12-l04-de-tcp/README.md#2026-09-12-package-8-lifecycle-stopped-before-purge)
 stops before purge because six traffic checks and system DNS fail. The exact
-302-file package, profile, network and non-root GUI remain restored. The default
-DE delivery address is absent from current DE interfaces while still appearing
-in current node delivery/DNS; native MINI and Brain connections time out.
-The [existing secondary-address service](../../docs/operations/evidence/2026-09-11-r12-l04-de-tcp/README.md#existing-de-secondary-address-owner)
-defines that address and its source routing, but all three runtime components
-are absent despite the active/exited unit label. Production repair awaits approval.
+302-file package, profile, network and non-root GUI were restored. At that
+September12 observation, the default DE delivery address was absent from DE
+interfaces while node delivery/DNS still advertised it; MINI and Brain timed out.
+The missing default address was restored by the separately authorized
+September12 production incident recovery. The [September13 same-package recheck](../../docs/operations/evidence/2026-09-13-r12-l04-recheck/README.md)
+now passes the default-DE path (six HTTPS) and bounded full/RU/DNS/IPv6 runtime
+fixtures; all302 installed entries and profile/network restoration pass.
+The alternate DE path still fails all six requests (one curl28/five curl35).
+Production repair is no longer awaiting approval for that default address;
+this does not close the separate alternate-path or final-package gates.
 The [subsequent existing-US-path check](../../docs/operations/evidence/2026-09-11-r12-l04-de-tcp/README.md#exact-package8-connected-purge-and-separate-restoration-through-us)
 passes exact package8 connected purge and network/state preservation. Automatic
 apt reinstallation fails with an internal pathname error; separate same-byte
 dpkg installation restores all302 files and the UID1000 GUI. The apt failure
-and both DE-path failures remain retained. Final Linux acceptance stays open.
+and historical DE failures remain retained. Final Linux acceptance stays open.
 
 - the non-root UI host, typed protocol, peer identity, polkit action, systemd
   units, fail-closed host matrix and secret-free journald envelope exist;
