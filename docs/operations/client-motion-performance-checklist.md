@@ -199,3 +199,21 @@ focus before/after hiding; blur() still does not remove focus. Its inactive
 transition is unverified. This host result does not invalidate the narrower
 deterministic widget test, but that test cannot establish Windows host acceptance.
 No product fix or CPU/battery/frame performance claim; C04 remains open.
+
+## Windows hidden-start activity boundary — 2026-09-13
+
+The Windows host also gates tickers using native window visibility and focus.
+It starts muted, including when the process receives `--startup`, and reads
+native activity before enabling animation. Show/focus/restore refresh activity;
+hide/blur/minimize mute immediately. An older asynchronous focus reply cannot
+reactivate a window after a newer hide or blur. This gate surrounds the shared
+app and its modal routes; it does not change VPN or service lifecycle.
+
+This covers the period before Flutter emits its first lifecycle transition.
+An actual process `--startup` capture on source `abe95c9` kept the window hidden
+and unfocused while lifecycle stayed null and the modal pulse continued.
+Ordinary blur/hide/show after genuine native activation passes on that same
+source. Earlier focus-queue diagnostics and incorrect-startup-argument attempts
+remain separate observations, not a general failure of every Windows lifecycle.
+After-change native acceptance is pending; no CPU/battery/frame claim follows
+from the deterministic widget check.

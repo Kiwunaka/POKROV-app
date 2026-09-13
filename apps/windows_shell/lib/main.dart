@@ -9,6 +9,7 @@ import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'acquisition_links.dart';
+import 'window_activity.dart';
 
 /// Tray-first desktop sizing: the 700 px minimum keeps the canonical compact
 /// drawer lane reachable; the window opens centered because geometry is not
@@ -49,19 +50,21 @@ Future<void> main(List<String> arguments) async {
     });
   }
   runApp(
-    PokrovSeedApp(
-      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      bootstrapper: bootstrapper,
-      observability: observability,
-      shellController: shellController,
-      initialAcquisitionUri: initialAcquisitionUri,
-      acquisitionUriStream: acquisitionLinks.stream,
-      windowsShellPreferencesReader: () =>
-          readPokrovWindowsShellPreferences(HostPlatform.windows),
-      windowsShellPreferencesUpdater: (preferences) =>
-          updatePokrovWindowsShellPreferences(
-        HostPlatform.windows,
-        preferences,
+    PokrovWindowsActivityGate(
+      child: PokrovSeedApp(
+        appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        bootstrapper: bootstrapper,
+        observability: observability,
+        shellController: shellController,
+        initialAcquisitionUri: initialAcquisitionUri,
+        acquisitionUriStream: acquisitionLinks.stream,
+        windowsShellPreferencesReader: () =>
+            readPokrovWindowsShellPreferences(HostPlatform.windows),
+        windowsShellPreferencesUpdater: (preferences) =>
+            updatePokrovWindowsShellPreferences(
+          HostPlatform.windows,
+          preferences,
+        ),
       ),
     ),
   );

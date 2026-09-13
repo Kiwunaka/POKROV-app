@@ -1,13 +1,82 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_app_shell/src/design_system/pokrov_motion.dart';
+import 'package:pokrov_app_shell/src/design_system/pokrov_skeleton.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_windows_shell/main.dart' as windows_shell;
+import 'package:pokrov_windows_shell/window_activity.dart';
 
 void main() {
+  testWidgets(
+      'native window activity mutes hidden startup and late focus replies',
+      (tester) async {
+    const channel = MethodChannel('window_manager');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var visible = false;
+    var focused = false;
+    Completer<bool>? delayedFocus;
+    final looping = PokrovLoopingMotion.debugLoopingOverride;
+    PokrovLoopingMotion.debugLoopingOverride = true;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'isVisible') return visible;
+      if (call.method == 'isFocused') return delayedFocus?.future ?? focused;
+      throw StateError('Unexpected native method: ${call.method}');
+    });
+    addTearDown(() {
+      PokrovLoopingMotion.debugLoopingOverride = looping;
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+    Future<void> nativeEvent(String name) async {
+      await messenger.handlePlatformMessage(
+        'window_manager',
+        const StandardMethodCodec().encodeMethodCall(
+          MethodCall('onEvent', {'eventName': name}),
+        ),
+        (_) {},
+      );
+      await tester.pump();
+    }
+
+    await tester.pumpWidget(const MaterialApp(
+      home: PokrovWindowsActivityGate(child: PokrovSkeletonList(rows: 1)),
+    ));
+    await tester.pump();
+    double opacity() => tester
+        .widget<FadeTransition>(find.byKey(PokrovSkeletonPulse.motionKey))
+        .opacity
+        .value;
+    final initial = opacity();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(opacity(), initial);
+
+    visible = true;
+    focused = true;
+    await nativeEvent('show');
+    await tester.pump();
+    final shown = opacity();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(opacity(), isNot(shown));
+
+    delayedFocus = Completer<bool>();
+    await nativeEvent('focus');
+    visible = false;
+    focused = false;
+    await nativeEvent('hide');
+    delayedFocus.complete(true);
+    delayedFocus = null;
+    await tester.pump();
+    final hidden = opacity();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(opacity(), hidden);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   test('windows release metadata is stable rather than prerelease', () async {
     final runnerResource = File('windows/runner/Runner.rc');
     expect(await runnerResource.exists(), isTrue);
