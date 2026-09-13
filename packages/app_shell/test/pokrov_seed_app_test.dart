@@ -9536,6 +9536,9 @@ void main() {
     ),
   ]) {
     testWidgets('android running $description', (tester) async {
+      // A verified connection must settle even with production loops enabled.
+      PokrovLoopingMotion.debugLoopingOverride = coreEgressValidated == true;
+      addTearDown(() => PokrovLoopingMotion.debugLoopingOverride = null);
       const channel = MethodChannel('space.pokrov/runtime_engine');
       final messenger =
           TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -12339,6 +12342,8 @@ void main() {
 
   testWidgets('primary connect activates once from pointer and keyboard',
       (tester) async {
+    PokrovLoopingMotion.debugLoopingOverride = true;
+    addTearDown(() => PokrovLoopingMotion.debugLoopingOverride = null);
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;

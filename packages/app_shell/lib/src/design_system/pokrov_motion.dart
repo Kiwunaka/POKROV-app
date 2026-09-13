@@ -71,8 +71,8 @@ abstract final class PokrovMotionTokens {
   static const spring = Cubic(0.34, 1.36, 0.64, 1.0);
 }
 
-/// Gate for endlessly looping motion (skeleton pulse, connected-disc breath,
-/// busy sweep). Loops collapse to a finite, test-safe pass under
+/// Gate for endlessly looping loading motion (skeleton pulse, busy sweep).
+/// Loops collapse to a finite, test-safe pass under
 /// `flutter test` so `pumpAndSettle` contracts stay bounded, while release
 /// builds keep the continuous motion.
 abstract final class PokrovLoopingMotion {

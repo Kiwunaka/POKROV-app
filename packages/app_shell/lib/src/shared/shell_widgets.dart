@@ -335,24 +335,9 @@ class _ConnectOrbButtonState extends State<_ConnectOrbButton>
     final loopingEnabled = PokrovLoopingMotion.enabled;
 
     if (canAnimate && !state.runsSweep) {
-      if (PokrovConnectDiscMotion.breathRepeats(
-        phase: state.phase,
-        disableAnimations: disableAnimations,
-        loopingEnabled: loopingEnabled,
-      )) {
-        // Calm connected breath: slow continuous inhale/exhale loop.
-        if (!_breathController.isAnimating ||
-            _breathController.duration !=
-                PokrovConnectDiscMotion.breathPeriod) {
-          _breathController.duration = PokrovConnectDiscMotion.breathPeriod;
-          _breathController.repeat(reverse: true);
-        }
-      } else {
-        _breathController.duration = PokrovConnectDiscMotion.breathDuration;
-        if (!_breathController.isAnimating &&
-            _breathController.status != AnimationStatus.completed) {
-          _breathController.forward();
-        }
+      if (!_breathController.isAnimating &&
+          _breathController.status != AnimationStatus.completed) {
+        _breathController.forward();
       }
     } else {
       _breathController.stop();
