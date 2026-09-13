@@ -9917,6 +9917,7 @@ void main() {
             TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
         var connectCalls = 0;
         var firstConnectSnapshots = 0;
+        var disconnectCalls = 0;
 
         Map<String, Object?> runtimeState(
           String phase, {
@@ -9958,10 +9959,20 @@ void main() {
               }
               if (connectCalls == 1) {
                 firstConnectSnapshots += 1;
-                if (firstConnectSnapshots >= 2 ||
+                final failureAfterSnapshots = labFallback &&
+                        host == HostPlatform.android &&
+                        !proofUnavailable &&
+                        !bootstrapRefused
+                    ? 42
+                    : 2;
+                if (firstConnectSnapshots >= failureAfterSnapshots ||
                     host == HostPlatform.windows) {
                   return runtimeState(
-                    'configStaged',
+                    labFallback &&
+                            host == HostPlatform.android &&
+                            !proofUnavailable
+                        ? 'running'
+                        : 'configStaged',
                     egressValidated: false,
                     failureKind: proofUnavailable
                         ? 'core_egress_probe_unavailable'
@@ -10004,6 +10015,9 @@ void main() {
               );
             case 'runtimeEngine.invalidateManagedProfile':
               return runtimeState('initialized');
+            case 'runtimeEngine.disconnect':
+              disconnectCalls += 1;
+              return runtimeState('configStaged');
           }
           return null;
         });
@@ -10092,10 +10106,22 @@ void main() {
         );
         await tester.pumpAndSettle();
         await _tapPrimaryConnectAndConfirmRouteScope(tester);
+        if (labFallback && host == HostPlatform.android &&
+            !proofUnavailable && !bootstrapRefused) {
+          for (var i = 0; i < 48; i += 1) {
+            await tester.pump(const Duration(milliseconds: 750));
+          }
+        }
         await tester.pump(const Duration(seconds: 4));
         await tester.pumpAndSettle();
 
         expect(connectCalls, proofUnavailable || bootstrapRefused ? 1 : 2);
+        expect(
+          disconnectCalls,
+          labFallback && host == HostPlatform.android && !proofUnavailable
+              ? 1
+              : 0,
+        );
         expect(bootstrapper.calls, proofUnavailable ? 1 : 2);
         expect(bootstrapper.excludedNodeCodeRequests.first, isEmpty);
         expect(
