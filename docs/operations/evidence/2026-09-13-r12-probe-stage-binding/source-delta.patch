@@ -1,0 +1,181 @@
+diff --git a/docs/architecture.md b/docs/architecture.md
+index d06400a..73cec2c 100644
+--- a/docs/architecture.md
++++ b/docs/architecture.md
+@@ -14,6 +14,9 @@ load a driver or alter networking.
+ 
+ URL probes retain a typed connect/TLS/response stage. Cancellation after dial
+ returns an error, and the optional second request retains the original context.
++The URL probe itself owns the bounded wait and samples its observed stage when
++the context expires. Selected-endpoint and background outbound checks consume
++that result directly, so an outer timer cannot erase a TLS or response timeout.
+ The safe error wrapper exposes no target or raw cause through its message while
+ preserving `errors.Is`/`errors.As`. Typed DNS errors take precedence over generic
+ timeouts; typed UDP timeouts and observed TLS/response timeouts map to separate
+diff --git a/engine/sing-box/common/urltest/urltest.go b/engine/sing-box/common/urltest/urltest.go
+index 70042ec..f216a26 100644
+--- a/engine/sing-box/common/urltest/urltest.go
++++ b/engine/sing-box/common/urltest/urltest.go
+@@ -168,6 +168,34 @@ func (s *HistoryStorage) Close() error {
+ }
+ 
+ func URLTest(ctx context.Context, link string, detour N.Dialer) (t uint16, err error) {
++	// The deadline and the stage observation must share one boundary. A caller
++	// racing this result with ctx.Done() would discard the TLS/response stage.
++	var stage atomic.Uint32
++	type result struct {
++		delay uint16
++		err   error
++	}
++	done := make(chan result, 1)
++	go func() {
++		delay, probeErr := urlTest(ctx, link, detour, &stage)
++		done <- result{delay, probeErr}
++	}()
++	select {
++	case value := <-done:
++		t, err = value.delay, value.err
++	case <-ctx.Done():
++		err = context.Cause(ctx)
++	}
++	if err == nil && ctx.Err() != nil {
++		err = context.Cause(ctx)
++	}
++	if err != nil {
++		err = &ProbeError{Stage: ProbeStage(stage.Load()), Err: err}
++	}
++	return
++}
++
++func urlTest(ctx context.Context, link string, detour N.Dialer, stage *atomic.Uint32) (t uint16, err error) {
+ 	if detour == nil {
+ 		err = fmt.Errorf("urltest dialer is nil")
+ 		return
+@@ -189,13 +217,6 @@ func URLTest(ctx context.Context, link string, detour N.Dialer) (t uint16, err e
+ 	}
+ 
+ 	start := time.Now()
+-	var stage atomic.Uint32
+-	stage.Store(uint32(ProbeStageConnect))
+-	defer func() {
+-		if err != nil {
+-			err = &ProbeError{Stage: ProbeStage(stage.Load()), Err: err}
+-		}
+-	}()
+ 	instance, err := detour.DialContext(ctx, "tcp", M.ParseSocksaddrHostPortStr(hostname, port))
+ 	if err != nil {
+ 		return
+diff --git a/engine/sing-box/daemon/started_service.go b/engine/sing-box/daemon/started_service.go
+index bf518ae..889751d 100644
+--- a/engine/sing-box/daemon/started_service.go
++++ b/engine/sing-box/daemon/started_service.go
+@@ -670,22 +670,7 @@ func (s *StartedService) URLTest(ctx context.Context, request *URLTestRequest) (
+ 			outboundTag := outboundToTest.Tag()
+ 			probeContext, cancelProbe := context.WithTimeout(boxService.ctx, C.TCPTimeout)
+ 			defer cancelProbe()
+-			type probeResult struct {
+-				delay uint16
+-				err   error
+-			}
+-			resultChannel := make(chan probeResult, 1)
+-			go func() {
+-				t, err := urltest.URLTest(probeContext, "", outboundToTest)
+-				resultChannel <- probeResult{delay: t, err: err}
+-			}()
+-			var result probeResult
+-			select {
+-			case result = <-resultChannel:
+-			case <-probeContext.Done():
+-				result.err = context.Cause(probeContext)
+-			}
+-			t, err := result.delay, result.err
++			t, err := urltest.URLTest(probeContext, "", outboundToTest)
+ 			if err != nil {
+ 				if outboundTag == selectedTag {
+ 					category := urlTestErrorCategory(err)
+@@ -759,26 +744,9 @@ func (s *StartedService) testSelectedEndpoint(boxService *Instance, endpoint ada
+ 
+ 	probeContext, cancelProbe := context.WithTimeout(boxService.ctx, C.TCPTimeout)
+ 	defer cancelProbe()
+-	type probeResult struct {
+-		delay uint16
+-		err   error
+-	}
+-	resultChannel := make(chan probeResult, 1)
+-	go func() {
+-		delay, err := urltest.URLTest(probeContext, "", endpoint)
+-		resultChannel <- probeResult{delay: delay, err: err}
+-	}()
+-	var result probeResult
+-	select {
+-	case result = <-resultChannel:
+-	case <-probeContext.Done():
+-		result.err = context.Cause(probeContext)
+-	}
+-	if result.err == nil && probeContext.Err() != nil {
+-		result.err = context.Cause(probeContext)
+-	}
+-	if result.err != nil {
+-		s.writeSelectedEndpointProbeFailure(urlTestErrorCategory(result.err), result.err)
++	_, err := urltest.URLTest(probeContext, "", endpoint)
++	if err != nil {
++		s.writeSelectedEndpointProbeFailure(urlTestErrorCategory(err), err)
+ 		return false
+ 	}
+ 	s.WriteMessage(log.LevelInfo, "selected endpoint URL test succeeded")
+diff --git a/engine/sing-box/daemon/started_service_test.go b/engine/sing-box/daemon/started_service_test.go
+index eeec53b..ecf05bc 100644
+--- a/engine/sing-box/daemon/started_service_test.go
++++ b/engine/sing-box/daemon/started_service_test.go
+@@ -4,6 +4,8 @@ import (
+ 	"bytes"
+ 	"context"
+ 	"errors"
++	"io"
++	"net"
+ 	"os"
+ 	"strings"
+ 	"testing"
+@@ -13,6 +15,7 @@ import (
+ 	"github.com/sagernet/sing-box/common/urltest"
+ 	"github.com/sagernet/sing-box/log"
+ 	"github.com/sagernet/sing-box/option"
++	M "github.com/sagernet/sing/common/metadata"
+ )
+ 
+ func TestStartedServiceCloseEndsObserversAndRejectsReuse(t *testing.T) {
+@@ -42,6 +45,34 @@ func TestStartedServiceCloseEndsObserversAndRejectsReuse(t *testing.T) {
+ 
+ type unreadyProbeEndpoint struct{ adapter.Endpoint }
+ 
++type stalledTLSProbeEndpoint struct {
++	adapter.Endpoint
++	conn net.Conn
++}
++
++func (stalledTLSProbeEndpoint) IsReady() bool { return true }
++
++func (e stalledTLSProbeEndpoint) DialContext(context.Context, string, M.Socksaddr) (net.Conn, error) {
++	return e.conn, nil
++}
++
++func TestSelectedEndpointDeadlineRetainsTLSStage(t *testing.T) {
++	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
++	defer cancel()
++	client, server := net.Pipe()
++	defer server.Close()
++	go io.Copy(io.Discard, server) // Receive ClientHello without replying.
++	s := NewStartedService(ServiceOptions{Context: ctx, LogMaxLines: 4})
++	defer s.Close()
++	if s.testSelectedEndpoint(&Instance{ctx: ctx}, stalledTLSProbeEndpoint{conn: client}) {
++		t.Fatal("stalled TLS negotiation supplied egress proof")
++	}
++	entry := s.logLines.Back()
++	if entry == nil || entry.Value.Message != "selected endpoint URL test failed category=tls_timeout" {
++		t.Fatal("endpoint deadline discarded the observed TLS stage")
++	}
++}
++
+ func (unreadyProbeEndpoint) IsReady() bool { return false }
+ 
+ func TestEndpointCallCannotSucceedWithoutItsRuntime(t *testing.T) {

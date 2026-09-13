@@ -4,7 +4,7 @@
     "version": "1.1.0",
     "release_tag": "v1.1.0",
     "release_tag_created": false,
-    "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+    "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
     "android_package": "space.pokrov.core",
     "sing_box_version": "1.13.0",
     "sing_dependency": "v0.8.0-beta.12",
@@ -20,9 +20,9 @@
       "artifact_evidence": {
         "android": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
-          "tree_sha256": "22fbbd186e2e234c3886f94dd205e7665f896dbefd64275fe3b167dbb46adb97",
-          "evidence_sha256": "8a78108e44a62087ce8dc0ccf5694cbfb68d9f83f90e56d5707a56852d93d411",
+          "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+          "tree_sha256": "38720be630f5ab3fc0e33fa182cc01c1e62c4a83ebbc10cd5147a5b5a7763c93",
+          "evidence_sha256": "be7e31d2a262e085474361c60dd7df662262e1c5ab4df6016c5bd523a0b1ae40",
           "abis": [
             "armeabi-v7a",
             "arm64-v8a",
@@ -32,9 +32,9 @@
         },
         "windows": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
-          "tree_sha256": "82b9742b92e1e3eeb13b2d490b0b73b7e8fbee3510e76d0bd759da96b784c9ae",
-          "evidence_sha256": "57e5fb8c9af57a38d90746b45a09a0b86573bd597735c17470a05051b79df5ab",
+          "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+          "tree_sha256": "30da3a5feda2ef98ecdd5715bc198f73ba4aba05c7c3fe98413e14cea6c5b8b4",
+          "evidence_sha256": "9f3f5097582ec479aa9f5bbedbc0f1a2b3cac32f49423241a0055240736df3c5",
           "required_exports": 15,
           "proxy_only_start_stop_cycles": 100,
           "proxy_only_result": "PASS_LOCAL"
@@ -42,26 +42,26 @@
         "sbom": [
           {
             "name": "core-source.cdx.json",
-            "sha256": "83218131811e2bedbc40afee0274cce6b9ea59d487e21b020be46967e2858152"
+            "sha256": "4a280296ad08b9eb364fffa580068759071c8537fe75e57472d50ead7d1cf8a0"
           },
           {
             "name": "engine-source.cdx.json",
-            "sha256": "fa280f688b44b4deff9a83cef6efd17740e693d913d55a5a21b0439b57e429ce"
+            "sha256": "c148bbadf10b10d0c21f32f08d0b78f5dc6cf7e34e5fd1758529606c47ee20f0"
           }
         ]
       },
       "reproducible_build": {
         "android": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
-          "size": 106839920,
-          "sha256": "5ea2eb7d70d0d010636f0a52e9d16e6e207756a5f08140599f136fbc3fe6e5af"
+          "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+          "size": 106840120,
+          "sha256": "eeb6f01e893df5cb9a595471347285075077308b9968467b43f57005759d8084"
         },
         "windows": {
           "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
-          "size": 55012864,
-          "sha256": "40101389b7713b869a9472bd3afe3aa19000b1d98f79d50cb88b61a235be531e"
+          "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+          "size": 55010816,
+          "sha256": "607b23ae8871928c241b0818005e59c54fca456a93cb9303f150b1a1496d0fb7"
         },
         "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
       },
@@ -132,9 +132,9 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
-        "size": 106839920,
-        "sha256": "5ea2eb7d70d0d010636f0a52e9d16e6e207756a5f08140599f136fbc3fe6e5af",
+        "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+        "size": 106840120,
+        "sha256": "eeb6f01e893df5cb9a595471347285075077308b9968467b43f57005759d8084",
         "sync_policy": "exact_pre_candidate_build",
         "sync_destination": "apps/android_shell/android/app/libs",
         "platform_state": "active_pre_candidate_local_security_fixed_physical_repeat_open"
@@ -157,9 +157,9 @@
       },
       "windows": {
         "entry": "pokrov-core.dll",
-        "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
-        "size": 55012864,
-        "sha256": "40101389b7713b869a9472bd3afe3aa19000b1d98f79d50cb88b61a235be531e",
+        "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+        "size": 55010816,
+        "sha256": "607b23ae8871928c241b0818005e59c54fca456a93cb9303f150b1a1496d0fb7",
         "runtime_dependencies": [
           "libcronet.dll"
         ],
@@ -193,8 +193,8 @@
     },
     "native_go_notices": {
       "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
-      "sha256": "9fe6fabf1e34b076ef4c8454f1eb950468c0a68a4e154d60b5282f7a193ecacc",
-      "source_commit": "6b271decead88b708e2fc03984b703b0a4e63ebd",
+      "sha256": "ae0e80dea59553c2c85a3968a1415257825a435e5660b3f548bc12d1e10c7549",
+      "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
       "go_toolchain": "go1.26.8",
       "scope": "Verbatim root, source-package, bounded full file-header and identified embedded-native license notices for recorded Android/Windows Go inputs; complete licensing and corresponding-source clearance remains separate",
       "missing_root_license_modules": []

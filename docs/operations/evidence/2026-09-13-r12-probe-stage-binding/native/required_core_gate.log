@@ -1,0 +1,33 @@
+Brand check OK.
+POKROV Core ABI contract OK: desktop=2 descriptor=1 events=1 exports=15
+POKROV Core observability contracts OK: schema=1 contracts=2
+POKROV AWG2 contract OK: pokrov.awg2.endpoint.v1 sha256=c473c411025825bfef5a76c64990c5c921e9658b3581210d3a86d72e454fdea8
+POKROV AWG 3.1 contract OK: pokrov.awg31.endpoint.v1 sha256=1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818
+POKROV Hysteria2 contract OK: pokrov.hy2.outbound.v1 sha256=c96b38e58ea33f838f23b80a65f3a9a264e932b7248f206798df9a0b8fa0fb98
+Core release CI contract OK: Linux tests/security, Android/Windows/Apple builds, two-build comparison, SBOM, bounded provenance, app backtest.
+ok  	github.com/Psiphon-Labs/psiphon-tls	0.027s
+ok  	github.com/Kiwunaka/POKROV-core/internal/observability	0.011s
+?   	github.com/Kiwunaka/POKROV-core/platform/desktop	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/platform/linux	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/platform/mobile	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/ray2sing	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/ray2sing/cmd	[no test files]
+ok  	github.com/Kiwunaka/POKROV-core/ray2sing/ray2sing	0.035s
+ok  	github.com/Kiwunaka/POKROV-core/v2/config	0.035s
+?   	github.com/Kiwunaka/POKROV-core/v2/db	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/v2/hcommon	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/v2/hcommon/constants	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/v2/hcommon/request	[no test files]
+ok  	github.com/Kiwunaka/POKROV-core/v2/hcore	0.052s
+?   	github.com/Kiwunaka/POKROV-core/v2/hcore/tunnelservice	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/v2/hello	[no test files]
+?   	github.com/Kiwunaka/POKROV-core/v2/hutils	[no test files]
+ok  	github.com/Kiwunaka/POKROV-core/v2/linuxruntime	0.016s
+?   	github.com/Kiwunaka/POKROV-core/v2/service_manager	[no test files]
+ok  	github.com/sagernet/sing-box/protocol/awg	0.027s
+ok  	github.com/sagernet/sing-box/common/urltest	0.413s
+ok  	github.com/sagernet/sing-box/daemon	0.281s
+ok  	github.com/sagernet/sing-box/experimental/libbox	0.043s
+ok  	github.com/sagernet/sing-box/common/tls	0.006s
+ok  	github.com/sagernet/sing-box/common/tls	0.010s
+POKROV Core tests OK.

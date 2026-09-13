@@ -1,0 +1,88 @@
+{
+  "observed_utc": "2026-09-12T23:54:26.280851+00:00",
+  "binary": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/audit/libpokrov-core-armeabi-v7a.so",
+    "bytes": 69843744,
+    "sha256": "8ec6b027d218cdf830170d4180fb4ce76936eb975236e3147184d2665101edd9"
+  },
+  "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+  "scanner": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/govulncheck",
+    "bytes": 15099395,
+    "sha256": "313a49e70ac0cdde947d190c4abf19705dfefca027da3901ce3af7ee2378d734"
+  },
+  "sbom_tool": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+    "bytes": 26910977,
+    "sha256": "c8ec5e301830631cb0b3d46fc29a95e11619954dbede86c2155c10d707467784"
+  },
+  "command": [
+    "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/govulncheck",
+    "-mode",
+    "binary",
+    "-json",
+    "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/audit/libpokrov-core-armeabi-v7a.so"
+  ],
+  "exit_code": 0,
+  "report": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/binary-scans/libpokrov-core-armeabi-v7a.govulncheck.jsonl",
+    "bytes": 645884,
+    "sha256": "ec0efecdb1279440ba58e0634f2577b4a783532e849134dcb908c587e43dae95"
+  },
+  "stderr": {
+    "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/binary-scans/libpokrov-core-armeabi-v7a.govulncheck.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "advisories": [
+    "GO-2026-4316",
+    "GO-2026-4503",
+    "GO-2026-5774",
+    "GO-2026-5775",
+    "GO-2026-5777",
+    "GO-2026-5841",
+    "GO-2026-5932",
+    "GO-2026-6179",
+    "GO-2026-6180"
+  ],
+  "symbol_findings": 21,
+  "symbol_extraction": {
+    "report": {
+      "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/binary-scans/libpokrov-core-armeabi-v7a.extract.jsonl",
+      "bytes": 21906,
+      "sha256": "c0a7f1d8b8701dee92c0b1f73a810a5d6b77a0c3241b013761eab00ad379170c"
+    },
+    "extracted_symbols": 0,
+    "interpretation": "Empty extracted symbols cause govulncheck v1.7.0 to report known vulnerable module symbols; function trace records alone do not prove reachability."
+  },
+  "sbom": {
+    "command": [
+      "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/artifact-build/bin/cyclonedx-gomod",
+      "bin",
+      "-std",
+      "-json",
+      "-notimestamp",
+      "-noserial",
+      "-output",
+      "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/binary-scans/libpokrov-core-armeabi-v7a.binary.cdx.json",
+      "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/audit/libpokrov-core-armeabi-v7a.so"
+    ],
+    "exit_code": 0,
+    "artifact": {
+      "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/binary-scans/libpokrov-core-armeabi-v7a.binary.cdx.json",
+      "bytes": 105387,
+      "sha256": "431c5cbe6c724913d9b7fb99f14a6c644fbb24f61a482667b58bf789a69c2ec8"
+    },
+    "log": {
+      "path": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/probe-stage-final-0138d04-20260913/binary-scans/libpokrov-core-armeabi-v7a.binary-sbom.log",
+      "bytes": 144,
+      "sha256": "bd1ab9922940281a09579b0287a67a061ff7f605699ad30391f3754bffbbd4b1"
+    },
+    "components": 118
+  },
+  "status": "PASS_SCAN_EXECUTION_ONLY_REACHABILITY_TRIAGE_SEPARATE",
+  "limits": [
+    "Go binary modules only; stripped symbol absence is not proof of unreachable code.",
+    "Native libraries and complete licensing require separate assessment."
+  ]
+}
