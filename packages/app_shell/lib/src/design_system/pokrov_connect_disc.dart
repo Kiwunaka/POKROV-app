@@ -123,9 +123,6 @@ class PokrovConnectDiscMotion {
 
   static const breathDuration = Duration(milliseconds: 900);
 
-  /// One direction of the calm connected breath loop (repeat-reverse), so a
-  /// full inhale/exhale cycle takes twice this period.
-  static const breathPeriod = Duration(milliseconds: 1800);
   static const sweepDuration = Duration(milliseconds: 1250);
   static const pressScale = 0.97;
   static const busyScale = 0.985;
@@ -180,18 +177,6 @@ class PokrovConnectDiscMotion {
     bool loopingEnabled = true,
   }) {
     return runsSweep && !disableAnimations && loopingEnabled;
-  }
-
-  /// The calm breath loops (repeat-reverse) only while connected; every other
-  /// phase keeps the finite single pass so settles stay deterministic.
-  static bool breathRepeats({
-    required PokrovConnectDiscPhase phase,
-    required bool disableAnimations,
-    bool loopingEnabled = true,
-  }) {
-    return phase == PokrovConnectDiscPhase.connected &&
-        !disableAnimations &&
-        loopingEnabled;
   }
 
   static double scale({
