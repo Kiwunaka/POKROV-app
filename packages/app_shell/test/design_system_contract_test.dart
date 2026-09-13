@@ -297,10 +297,6 @@ void main() {
       const Duration(milliseconds: 900),
     );
     expect(
-      PokrovConnectDiscMotion.breathPeriod,
-      const Duration(milliseconds: 1800),
-    );
-    expect(
       PokrovConnectDiscMotion.sweepDuration,
       const Duration(milliseconds: 1250),
     );
@@ -357,42 +353,6 @@ void main() {
     expect(
       PokrovConnectDiscMotion.sweepRepeats(
         runsSweep: true,
-        disableAnimations: false,
-        loopingEnabled: false,
-      ),
-      isFalse,
-    );
-
-    // The calm breath loops only while connected.
-    expect(
-      PokrovConnectDiscMotion.breathRepeats(
-        phase: PokrovConnectDiscPhase.connected,
-        disableAnimations: false,
-      ),
-      isTrue,
-    );
-    for (final phase in PokrovConnectDiscPhase.values) {
-      if (phase == PokrovConnectDiscPhase.connected) {
-        continue;
-      }
-      expect(
-        PokrovConnectDiscMotion.breathRepeats(
-          phase: phase,
-          disableAnimations: false,
-        ),
-        isFalse,
-      );
-    }
-    expect(
-      PokrovConnectDiscMotion.breathRepeats(
-        phase: PokrovConnectDiscPhase.connected,
-        disableAnimations: true,
-      ),
-      isFalse,
-    );
-    expect(
-      PokrovConnectDiscMotion.breathRepeats(
-        phase: PokrovConnectDiscPhase.connected,
         disableAnimations: false,
         loopingEnabled: false,
       ),
