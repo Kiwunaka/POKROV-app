@@ -667,7 +667,10 @@ Known 401/403 denial and a successful subscription response with lane
 `expiredOrBlocked` clear the protected cache. The subscription denial also
 blocks cached reconnect and stops a running tunnel through normal disconnect;
 if a native action is in flight, disconnect follows its completion. A transient
-managed-profile failure cannot override that known denial. Missing credentials
+managed-profile failure cannot override that known denial. A connect attempt
+after known subscription denial refreshes subscription first. If access remains
+inactive, it shows the renewal message without requesting or staging a profile;
+renewed access may continue through the normal fresh-profile flow. Missing credentials
 or an account/input mismatch makes the cache unavailable. A dataplane failure
 alone prefers the proven slot on the next manual retry and does not erase either record.
 
