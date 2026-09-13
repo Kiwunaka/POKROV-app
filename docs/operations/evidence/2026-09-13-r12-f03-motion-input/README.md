@@ -27,3 +27,12 @@ The local production marketing check proves visible no-JS content and a static
 reduced-motion showcase. Both VMs are stopped and host routes/DNS unchanged.
 No final release candidate, physical device, public deployment or store claim.
 The platform work order retains full commands, screenshots, failures and hashes.
+
+
+## 2026-09-13 installed lineage clarification
+
+[Read-only reconciliation](../2026-09-13-r12-windows-lineage/README.md) proves
+the installed `3487c6bf` module belongs to the N08 client `617194f` package. All 304
+F03 hashes match; the earlier comparator was the stale `42df` receipt. The original
+windows-native.json remains retained history. No guest file repair is needed;
+full Windows release gates remain open.

@@ -1,0 +1,106 @@
+{
+  "status": "PASS_RETAINED_INSTALLED_LINEAGE_RECONCILED",
+  "utc": "2026-09-13T10:53:49.413460+00:00",
+  "explanation": "F03 compared against pre-N08 Windows42df receipt; the installed payload was already upgraded to Windows617194f during N08. The observed app.so is the exact retained N08 module, not unexplained corruption.",
+  "source_client": "617194f94bcc8979346a93249ec9e22d57544110",
+  "source_core": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+  "installer_sha256": "0f901f1ac47828e1c0914b9f9f95f3a1e37152947238295e44c4c5ffcc199af1",
+  "app_so_sha256": "3487c6bf02e75fc2ed381ab250db1feb4bfa4c4481323626927be8c8214b546a",
+  "previous_app_so_sha256": "ae73fb74b32eccfba7bee30187e6952b7eb6ec9a1ab35c84810190c4da1fca88",
+  "changed_since_previous": [
+    "data/app.so"
+  ],
+  "current_staged_payload_hashes_checked": 304,
+  "f03_installed_baseline_hashes_matched": 304,
+  "f03_final_preserved_baseline": true,
+  "retained_install_readbacks_matched": 3,
+  "source_revision_present_in_current_staged_aot": true,
+  "evidence_bindings": [
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/windows-routing-flow-20260913/evidence.zip",
+      "archive_sha256": "d98b06b6a0709ccc48833187a5856441a2a1160f6ce0b568f7bea24214b6f636",
+      "member": "expected.json",
+      "sha256": "1ad4d4d232088995c8bed5f3f3c7e3f1c768699c7d5826c86fdd1335d3369c73",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    },
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/windows-routing-flow-20260913/evidence.zip",
+      "archive_sha256": "d98b06b6a0709ccc48833187a5856441a2a1160f6ce0b568f7bea24214b6f636",
+      "member": "fixed/expected.json",
+      "sha256": "76f901ddf94e2d1099ca89fdb97dc050e862261dc4593e814c45193976f07fa5",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    },
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/windows-routing-flow-20260913/evidence.zip",
+      "archive_sha256": "d98b06b6a0709ccc48833187a5856441a2a1160f6ce0b568f7bea24214b6f636",
+      "member": "fixed/installed-before-launch.json",
+      "sha256": "118dd0098d62f8db7ec8bd15d0308390ddaa27b5b136ff70f4c5cb78ed1fc16b",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    },
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/windows-routing-flow-20260913/evidence.zip",
+      "archive_sha256": "d98b06b6a0709ccc48833187a5856441a2a1160f6ce0b568f7bea24214b6f636",
+      "member": "fixed/installed-after-launch.json",
+      "sha256": "3ca443407a43ab5273dc2d0270ce77de94554add4997cc9dafe546299221bdc8",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    },
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/windows-routing-flow-20260913/evidence.zip",
+      "archive_sha256": "d98b06b6a0709ccc48833187a5856441a2a1160f6ce0b568f7bea24214b6f636",
+      "member": "fixed/installed-final.json",
+      "sha256": "1d96864dfa2959515872aa2d41c1b813a2517d416287b521b21d925fa4c1b8db",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    },
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/windows-routing-flow-20260913/evidence.zip",
+      "archive_sha256": "d98b06b6a0709ccc48833187a5856441a2a1160f6ce0b568f7bea24214b6f636",
+      "member": "package-delta.json",
+      "sha256": "5f2a3abcf548b1f8eb09a7b104dee0a0cd408f1dfee890fc4e919aa1051a4da4",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    },
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/windows-routing-flow-20260913/evidence.zip",
+      "archive_sha256": "d98b06b6a0709ccc48833187a5856441a2a1160f6ce0b568f7bea24214b6f636",
+      "member": "windows-package-audit.json",
+      "sha256": "6c126a39b6e154c656c58e56167c344b02a5cb33151c04bba3693be727cdf85e",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    },
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/f03-motion-input-20260913/runtime-evidence.zip",
+      "archive_sha256": "bbadd51548db2a9f6b6a7e14b7db3202647941d973e63efd5e5964e6140194d6",
+      "member": "windows-native/installed-before.json",
+      "sha256": "8ff8bba9a834dc8c7f952916e497d37f31b5416ff8ec26f319fa8f5732ef6886",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    },
+    {
+      "archive": "docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/evidence/f03-motion-input-20260913/runtime-evidence.zip",
+      "archive_sha256": "bbadd51548db2a9f6b6a7e14b7db3202647941d973e63efd5e5964e6140194d6",
+      "member": "windows-native/guest-final.json",
+      "sha256": "2d88d1a6f856ac5848ebcaae660f6c894f0465c3b673bfcc0642147b761c38da",
+      "local_bytes_match": true,
+      "archive_git_blob_matches": true
+    }
+  ],
+  "vm": {
+    "id": "e42043a3-dd4d-452b-b151-410ad5d49543",
+    "state": "poweroff",
+    "nic": "none",
+    "snapshot_ids_retained": 13,
+    "started_this_check": false
+  },
+  "limitations": [
+    "Read-only reconciliation of retained N08/F03 captures and current local artifact bytes; no fresh guest disk or runtime readback.",
+    "Installer container SHA and staged payload verified; no new installer extraction or lifecycle run.",
+    "617194f is a retained local package, not the current final release; W01/W03/full candidate gates remain open."
+  ],
+  "guest_or_product_files_modified": false,
+  "spend_usd": 0
+}

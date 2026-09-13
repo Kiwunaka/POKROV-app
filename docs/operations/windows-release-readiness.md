@@ -1596,3 +1596,13 @@ verified the previous installed304 files, state and staged setup after local
 cleanup. Manual Windows login was not completed. The storage guard paused
 the VM and it was shut down with all13 snapshots retained. Current source806
 installation and release gates remain open.
+
+
+## 2026-09-13 retained installed package lineage
+
+[Reconciliation](evidence/2026-09-13-r12-windows-lineage/README.md) binds F03's
+304 installed hashes to the N08 client `617194f` / Core `0138` package and setup `0f901f1a`.
+The app.so mismatch against `42df` was a stale comparison. Current 304 staged
+hashes and retained archive bytes agree; no guest restart or file repair occurred.
+This adds provenance to the retained installed package, not final-candidate,
+clean install/uninstall, Windows 10 or physical/network release acceptance.
