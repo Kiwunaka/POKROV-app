@@ -123,9 +123,14 @@ and historical DE failures remain retained. Final Linux acceptance stays open.
 - `supports_live_connect` reflects the required host stack and executable Core;
   `can_connect` additionally requires a staged profile, no active transaction
   and no pending recovery.
-  Running follows actual Core start and network application. DNS and egress
-  health remain unknown (`null`); the UI must not infer validated health from
-  the running phase alone;
+  Running follows actual Core start and network application. After that
+  transaction, linuxd requests bounded DNS and selected-proxy HTTPS proof from
+  its private Core child before completing connect. Both proofs must pass for
+  the connected message; a failed or missing reply cannot produce healthy
+  egress. Only the running session exposes those results, and stopped/error
+  snapshots clear them. This is connection-establishment proof, not continuous
+  reachability monitoring. Package 8 predates this behavior and returned unknown
+  (`null`) health, leaving its GUI at “Проверяем…” despite working traffic;
 - the shared desktop UI reads local daemon status every two seconds, without
   fetching a profile or repeating network probes. An external stop or recovery
   clears the cached running state. [Package-8 installed proof](../../docs/operations/evidence/2026-09-11-r12-l04-ui-status/README.md)

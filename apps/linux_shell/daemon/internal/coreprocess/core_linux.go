@@ -26,13 +26,19 @@ const protocol = "pokrov-linux-core-v1"
 var errRuntime = errors.New("linux core child unavailable")
 
 type reply struct {
-	Protocol string `json:"protocol"`
-	Phase    string `json:"phase"`
+	Protocol string  `json:"protocol"`
+	Phase    string  `json:"phase"`
+	Health   *Health `json:"health,omitempty"`
 	Plan     *struct {
 		TunnelInterface string   `json:"tunnel_interface"`
 		RoutingMark     uint32   `json:"routing_mark"`
 		DNSServers      []string `json:"dns_servers"`
 	} `json:"plan,omitempty"`
+}
+
+type Health struct {
+	DNSReady        bool `json:"dns_ready"`
+	EgressValidated bool `json:"core_egress_validated"`
 }
 
 type Session struct {
@@ -121,6 +127,17 @@ func (session *Session) Start(ctx context.Context) error {
 	return nil
 }
 
+func (session *Session) Probe(ctx context.Context) (Health, error) {
+	if _, err := io.WriteString(session.input, "{\"protocol\":\""+protocol+"\",\"action\":\"health\"}\n"); err != nil {
+		return Health{}, errRuntime
+	}
+	response, err := session.read(ctx)
+	if err != nil || response.Phase != "health" || response.Health == nil {
+		return Health{}, errRuntime
+	}
+	return *response.Health, nil
+}
+
 func (session *Session) Stop(ctx context.Context) error {
 	defer func() {
 		if session.Exited() {
@@ -185,7 +202,7 @@ func (session *Session) read(ctx context.Context) (reply, error) {
 		return reply{}, errRuntime
 	}
 	switch response.Phase {
-	case "prepared", "started":
+	case "prepared", "started", "health":
 	case "stopped":
 		session.stopped = true
 	default:

@@ -1645,7 +1645,7 @@ if (-not (Test-Path -LiteralPath $linuxReadmePath -PathType Leaf)) {
   foreach ($requiredLinuxBoundary in @(
     'IMPLEMENTED_PARTIAL',
     'supports_live_connect',
-    'health remain unknown',
+    'a failed or missing reply cannot produce healthy',
     'L04 gates',
     'No Linux artifact or availability promise'
   )) {

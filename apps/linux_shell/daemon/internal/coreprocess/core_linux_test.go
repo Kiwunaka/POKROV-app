@@ -30,6 +30,10 @@ func TestCoreChildFixture(t *testing.T) {
 		reader := bufio.NewReader(os.Stdin)
 		_, _ = reader.ReadString('\n')
 		fmt.Fprintln(control, "{\"protocol\":\""+protocol+"\",\"phase\":\"started\"}")
+		if mode == "health" {
+			_, _ = reader.ReadString('\n')
+			fmt.Fprintln(control, "{\"protocol\":\""+protocol+"\",\"phase\":\"health\",\"health\":{\"dns_ready\":true,\"core_egress_validated\":false}}")
+		}
 	}
 	<-stopping
 	if mode != "missing-stop-ack" {
@@ -65,6 +69,23 @@ func TestChildStartStopWaitsForExplicitCleanupAcknowledgement(t *testing.T) {
 	}
 	if !session.Exited() {
 		t.Fatal("stop returned while child remained alive")
+	}
+}
+
+func TestChildHealthRetainsFailedEgressAndStillAcknowledgesStop(t *testing.T) {
+	session, ctx := child(t, "health")
+	if _, err := session.read(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := session.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	health, err := session.Probe(ctx)
+	if err != nil || !health.DNSReady || health.EgressValidated {
+		t.Fatalf("incorrect health: %#v, %v", health, err)
+	}
+	if err := session.Stop(ctx); err != nil {
+		t.Fatal(err)
 	}
 }
 
