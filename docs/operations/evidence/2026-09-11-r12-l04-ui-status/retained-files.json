@@ -1,0 +1,212 @@
+[
+  {
+    "path": "candidate8-gui-core-loss.json",
+    "sha256": "cac0341f2e35a003b224dd4bc2a37f5468f3f777ce10b0152d1430c975378273",
+    "bytes": 3386,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\candidate8-gui-core-loss.json"
+  },
+  {
+    "path": "candidate8-upgrade.json",
+    "sha256": "8e6c9d4fd1d6890f07523d880f75d42d19146f4aa3c3ce418064ea437116cf82",
+    "bytes": 348,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\candidate8-upgrade.json"
+  },
+  {
+    "path": "de-origin-reachability.json",
+    "sha256": "80c2ccbc04797351a38ecbcc88a9159769f8edebf84d7dc0c7c967944eb3e02f",
+    "bytes": 1017,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\de-origin-reachability.json"
+  },
+  {
+    "path": "l04-client-build-09.json",
+    "sha256": "211beb7136a16b4f79917ee204b4aef6badd889f55d49cae50a4579996237a93",
+    "bytes": 720,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\l04-client-build-09.json"
+  },
+  {
+    "path": "l04-deb-audit-08.json",
+    "sha256": "2b07c46573cc59a26992aca0cb8df860465e63e56a7fab3b0bfec471c7b9aebd",
+    "bytes": 91441,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\l04-deb-audit-08.json"
+  },
+  {
+    "path": "l04-public-build-defines-09.json",
+    "sha256": "94b944679dba9d65d09ea3df7379f7c292772ab4e430c24e1d27be3d3854cf97",
+    "bytes": 491,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\l04-public-build-defines-09.json"
+  },
+  {
+    "path": "package8-gui-visual.json",
+    "sha256": "52f730a1314e15e3e42e0f127c27556cb14b0423f45250b5e9488532713b6510",
+    "bytes": 1615,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\package8-gui-visual.json"
+  },
+  {
+    "path": "package8-signature.json",
+    "sha256": "7cbd103f252e3dac9e4dc5b044372771fff901af00e5f08297ff195a28d07b29",
+    "bytes": 569,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\package8-signature.json"
+  },
+  {
+    "path": "package8-vs7.json",
+    "sha256": "acdd81778cbb27d11c66d8fd299fa7babbd0a5bfe9d5edc2a8e70e0133cf1db2",
+    "bytes": 689,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\package8-vs7.json"
+  },
+  {
+    "path": "pokrov_1.2.0~beta.30-8_amd64.json",
+    "sha256": "1e149b9ac31461dddaf124b12c351e6c21f954422433aab18572d440b8ab8e75",
+    "bytes": 722,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\pokrov_1.2.0~beta.30-8_amd64.json"
+  },
+  {
+    "path": "candidate8-upgrade.log",
+    "sha256": "d6d8ee4dae32e89f3593320f91fad98a03a13a3bb4ba0e9b715fbcd290cb7f37",
+    "bytes": 1548,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\candidate8-upgrade.log"
+  },
+  {
+    "path": "l04-client-build-09.log",
+    "sha256": "f05ec49e0fc835e8b6a71b1edc22fbf7231c65d3386de580ec3537fd5278f82a",
+    "bytes": 181,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\l04-client-build-09.log"
+  },
+  {
+    "path": "l04-deb-assemble-08.log",
+    "sha256": "db553d6f5384467c957a4a3fa5a80eec35ed9af08c478a2cdbe5109093be90ae",
+    "bytes": 797,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\l04-deb-assemble-08.log"
+  },
+  {
+    "path": "package8-signature-verify.log",
+    "sha256": "b85fc2f2f1881fae650809fd41bd8a020d5fd892669d1266909e25529d3c13bb",
+    "bytes": 633,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\package8-signature-verify.log"
+  },
+  {
+    "path": "candidate8-launched.png",
+    "sha256": "b8bb999051826b3d49851626d3512702ddda8e1865098f5cfc263dee59744b3a",
+    "bytes": 117763,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-launched.png"
+  },
+  {
+    "path": "candidate8-auth-prompt.png",
+    "sha256": "2168ffaf714d34a74f0fc047ff425f7d2d0a73c44ab46ebed30f14ce43b0de12",
+    "bytes": 153336,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-auth-prompt.png"
+  },
+  {
+    "path": "candidate8-connected.png",
+    "sha256": "b94c66c6e1f7914ba98dac436d2371db0e2288afadc7694d0abb0aabb625ce2d",
+    "bytes": 119948,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-connected.png"
+  },
+  {
+    "path": "candidate8-after-core-loss.png",
+    "sha256": "9f72670bcd73192c4b1c90d6e6bf79a01df280f546ac46730c9b990c2e81d74c",
+    "bytes": 119994,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-after-core-loss.png"
+  },
+  {
+    "path": "source-archive.json",
+    "sha256": "8db621111c9af2ec31666c927209970db40ae55f8a3baef0c4b0ad388283279d",
+    "bytes": 503,
+    "source": "C:\\r12-l04-ui-poll-20260911\\source-archive.json"
+  },
+  {
+    "path": "guest-gui-core-loss8.py",
+    "sha256": "898beebc1a42e89412366042480ed3da2e3e3ca65f50456e0de41be8692936a8",
+    "bytes": 6512,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-gui-core-loss8.py"
+  },
+  {
+    "path": "guest-install8.py",
+    "sha256": "206e39ded70bc03955e906754a858e356ff656ee1649dd8940255601b284d5ef",
+    "bytes": 1746,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-install8.py"
+  },
+  {
+    "path": "compare-package8.py",
+    "sha256": "f1d436f6bc5065d3209ed8ba083714f75bde036f15d86ed3761d6437a9a79d2e",
+    "bytes": 1858,
+    "source": "C:\\r12-l04-ui-poll-20260911\\compare-package8.py"
+  },
+  {
+    "path": "candidate7-tls-path-comparison.json",
+    "sha256": "50e11f1d4bb037148ee6262ddf8c0d23c2531f103b82917033ca385f2ae41ad9",
+    "bytes": 12872,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-tls-path-comparison.json"
+  },
+  {
+    "path": "candidate7-path-endpoint-diagnostic.json",
+    "sha256": "1f6f76146853efc4dd9274fb72eb41cf8397a7b406cf497228496f1c151ee3c5",
+    "bytes": 1081,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-path-endpoint-diagnostic.json"
+  },
+  {
+    "path": "candidate7-gui-tls01.json",
+    "sha256": "2c3a71e277a3f60d2bef33e16bbfc85319bdff8c486d2dfc65250c7135059c2e",
+    "bytes": 2881,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-gui-tls01.json"
+  },
+  {
+    "path": "candidate7-stale-gui-readonly.json",
+    "sha256": "cd9ae527e0bde7e1d2de8f0b2a34facfc85f74f2aeb780d414df1a8f036e7657",
+    "bytes": 370,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\public-evidence\\candidate7-stale-gui-readonly.json"
+  },
+  {
+    "path": "candidate7-gui-tls01-after.png",
+    "sha256": "55109d54b43a2585926bd045f91d5aee4128cbda44e8e122ba7ed17272d11c1d",
+    "bytes": 119134,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\candidate7-gui-tls01-after.png"
+  },
+  {
+    "path": "guest-tls-path-comparison7.py",
+    "sha256": "22080875a5b2f6fe156aaaabffa2ef85a27df5380a26b968774c48f7574d9450",
+    "bytes": 6289,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-tls-path-comparison7.py"
+  },
+  {
+    "path": "guest-path-endpoint7.py",
+    "sha256": "c0835af5d4eafbb5ab90bd62dbb71c76d5a2d4143b5a4f3f2e218754df710176",
+    "bytes": 1230,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-path-endpoint7.py"
+  },
+  {
+    "path": "guest-gui-tls01.py",
+    "sha256": "101dc28639037e17714d665b3e68e53bc95c9a898ceb5c84b49178b69a5da8c0",
+    "bytes": 5202,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-gui-tls01.py"
+  },
+  {
+    "path": "guest-stale-gui7.py",
+    "sha256": "767b5d8ad453d4912e425d0746fbe001099260cdbc3adf37d4cbd439c30b09a9",
+    "bytes": 1231,
+    "source": "C:\\r12-l04-fix07-20260911\\clean-vm\\guest-stale-gui7.py"
+  },
+  {
+    "path": "candidate8-installed-readback.json",
+    "sha256": "d8bb8e62e3ad551e7b8903e05afe978e692668777428006416cfb5590dec6b84",
+    "bytes": 63353,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\candidate8-installed-readback.json"
+  },
+  {
+    "path": "candidate8-daemon-events.json",
+    "sha256": "93948b5ec48476a168a9191c4c10c3583b69c933ce6f24edc4d87a7b6386ffb9",
+    "bytes": 4827,
+    "source": "C:\\r12-l04-ui-poll-20260911\\candidate8-public-evidence\\candidate8-daemon-events.json"
+  },
+  {
+    "path": "guest-installed-readback8.py",
+    "sha256": "9260349592a1c8e0e4857da35eba00d7a3b04cd1377bfd6c56356e0c95330a2f",
+    "bytes": 2816,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-installed-readback8.py"
+  },
+  {
+    "path": "guest-native-events8.py",
+    "sha256": "c9ad07cd2a7cd68a70ae773664eb6e3d444b4705912ab3b82b31487cec25b5b7",
+    "bytes": 1286,
+    "source": "C:\\r12-l04-ui-poll-20260911\\guest-native-events8.py"
+  }
+]

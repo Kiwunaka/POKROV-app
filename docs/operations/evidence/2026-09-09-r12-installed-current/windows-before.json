@@ -1,0 +1,8 @@
+﻿{
+    "utc":  "2026-09-09T06:33:32.5297121Z",
+    "state_sha256":  "fd541af77737c022f46afc0fe415e2760557bb3a0ec2fa9d3414f693a76eafe5",
+    "install_sha256":  "fe746f1300ba28298736b684b3b272af2f0c3d02cf4934def66ee98f581475d0",
+    "service_state":  "Running",
+    "ui_count":  0,
+    "secure_store_sha256":  "51b4cbe72e10c85537493f6bc1bacfd8c2f5bc9f2b1c301b04bf9e598434f184"
+}

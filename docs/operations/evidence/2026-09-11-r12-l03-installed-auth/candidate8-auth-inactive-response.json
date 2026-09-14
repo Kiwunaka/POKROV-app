@@ -1,0 +1,13 @@
+{
+  "uid": 1000,
+  "origin": "separate non-active SSH session under unchanged allow_any=no allow_inactive=no policy",
+  "started_epoch": 1789144228.222507,
+  "finished_epoch": 1789144228.2366433,
+  "response": {
+    "protocol": "pokrov-linuxd-v1",
+    "request_id": "l03-auth8-inactive",
+    "ok": false,
+    "error_code": "linux_authorization_denied",
+    "message_code": "authorization_denied"
+  }
+}

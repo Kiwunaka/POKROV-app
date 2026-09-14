@@ -1,0 +1,95 @@
+{
+  "status": "PASS",
+  "retained_payload_hashes": 6,
+  "syntax_checked_scripts": 10,
+  "native_script_byte_matches": 2,
+  "focused_local_links": 25,
+  "preserved_status_counts": {
+    "verified": 48,
+    "active": 28,
+    "queued": 6,
+    "blocked": 1
+  },
+  "only_reconciliation_changed": "R12-L04",
+  "client_release_artifacts_unchanged": true,
+  "diff_checks": "PASS",
+  "commands": [
+    {
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "result": "PASS",
+      "log_archive": "checks.zip",
+      "log": "platform-docs.log",
+      "sha256": "3ad662f775402842298035c10f902cca893213e4b20fee94459e60f5dea8e635"
+    },
+    {
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "result": "PASS",
+      "log_archive": "checks.zip",
+      "log": "platform-context.log",
+      "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+    },
+    {
+      "command": "python -B docs/developer/work-orders/2026-09-05--consolidated-release-and-post12/validate_package.py",
+      "result": "PASS",
+      "log_archive": "checks.zip",
+      "log": "platform-links.log",
+      "sha256": "941e45915ce54ce5610102b9479b8ae9e895c0791fc50af1cf07123cce3d6083"
+    },
+    {
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -CoreRoot C:/r12corec02 -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start",
+      "result": "PASS",
+      "log_archive": "checks.zip",
+      "log": "client-seed.log",
+      "sha256": "b880284dd7e3b1aff7395dea91eba1431e856b49c53aff441200d16c824480e7"
+    },
+    {
+      "command": "pwsh -NoProfile -File test/docs-contract.ps1",
+      "result": "PASS",
+      "log_archive": "checks.zip",
+      "log": "client-docs.log",
+      "sha256": "01ed68a810c26d9bef6f98225f2238a25332fa3585d5effd38d0101f87467874"
+    }
+  ],
+  "files": [
+    {
+      "path": "checks.zip",
+      "sha256": "94d84bf6fc64853ce3f3bfec491efdda3b6fe04788c628576287b24c8d1826a8"
+    },
+    {
+      "path": "de-comparison.json",
+      "sha256": "18fdcd2b9f7671039476179a8348c52980997a53db8e01b2f785040e0eb97b31"
+    },
+    {
+      "path": "default-path-controls.json",
+      "sha256": "8819de6f7cdb14e65c91f039c5947a63897584992349a03a0bf9012833e7162b"
+    },
+    {
+      "path": "final-readback.json",
+      "sha256": "33d5c62518be8bb5de809af04cf86effb5fdaf4e58fc2b6e6167db217bd5668b"
+    },
+    {
+      "path": "mini-before.json",
+      "sha256": "c1b3b02159ec79cf65df4756c0c90af37e25321ea2a7e19e4bc549b4634dc882"
+    },
+    {
+      "path": "README.md",
+      "sha256": "d6a4b77be7629336cf54ad809dfa3eaeb6ef83119a631c93dece04ccb5f69bdc"
+    },
+    {
+      "path": "receipt.json",
+      "sha256": "26b204a137b141615bb91b2eec65a22056230ec33a8a4d40dbb46af5e471c733"
+    },
+    {
+      "path": "runtime-modes.json",
+      "sha256": "62ced7f670f25a84ae4a30973dbfbd939ec1d98e1068bad40d13c02a945cf931"
+    },
+    {
+      "path": "scripts.zip",
+      "sha256": "d3b57b192e21b35ef0b4d85406a202f445880e1dca4aff0b53e7e86453db1061"
+    }
+  ],
+  "archive_representation_followup": {
+    "manifest": "archive-provenance.json",
+    "original_checks_predate_zip_tracking": true
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "client": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "core": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "files": [
+    {
+      "file": "abi-package-audit.json",
+      "bytes": 8747,
+      "capture_sha256": "ead90fe0b7794b914fd347810fec555bfbeab77ec59691016b8f5f1e034e7ba6",
+      "normalized_lf_sha256": "c83e4abb5b31c88394db064187a720bf927b258ab983a45488973f1f5027ff78"
+    },
+    {
+      "file": "android-installed.json",
+      "bytes": 669,
+      "capture_sha256": "ccb2a60aff83f23dbede82e00351cd067891b422c1997e35c19090b0bffab3cb",
+      "normalized_lf_sha256": "107fe50bc3174274e66b47da26966c1ba5945853646e40d5fc5ab5dfa7cd4779"
+    },
+    {
+      "file": "android-first-connect.json",
+      "bytes": 529,
+      "capture_sha256": "70e9cef7a010019c14c2619f444da8ef971d6ab41292fd3f6bc4a1ab3328d77c",
+      "normalized_lf_sha256": "eb124df5a8e990a40e430c8493db112ca209372e3b5a6ea59c347a4b00b803c7"
+    },
+    {
+      "file": "android-frankfurt-wifi.json",
+      "bytes": 817,
+      "capture_sha256": "7d3ec3b07c25cbdf0fd4a92ef9c206a3764b33c766cc98a32863663658d00580",
+      "normalized_lf_sha256": "af9806f4fbc7b73b7896673c54d4c60179d73d541c49a660402a146432605e7e"
+    },
+    {
+      "file": "android-frankfurt-mobile.json",
+      "bytes": 823,
+      "capture_sha256": "955da3d73c005489f829a3bcada85fb04a9618996c2a8bb12758fa8a33ace0fd",
+      "normalized_lf_sha256": "bc21d1bcc4b0775341e669c2343978e2ca86b0b73ea92e66783f6280ac863f37"
+    },
+    {
+      "file": "android-frankfurt-wifi-restored.json",
+      "bytes": 826,
+      "capture_sha256": "0fa7ba8060661490bdc7903d044ea8e661f4232d08701281cb5086b11d1bdff4",
+      "normalized_lf_sha256": "4a1371eef80ebe1e608db4bfb2b97c013c2e92a2bc394021883243d93e17a772"
+    },
+    {
+      "file": "android-sample.py",
+      "bytes": 1941,
+      "capture_sha256": "416abde448ac20439184eebdbcb10d8da6574af46b720aeb14585aba0fbc9bbe",
+      "normalized_lf_sha256": "3ac12d3f89a14fc115b4c6dbc65aa5a1cc3435ff8f6de1ca9f877b12e96c3c08"
+    },
+    {
+      "file": "windows-install-result.json",
+      "bytes": 235,
+      "capture_sha256": "190be8c72a87989e75a0882ac7fe3715736623a50dcc4c308cafbabe0bea72ee",
+      "normalized_lf_sha256": "c3ac40042f6ed20e1c2cbde694903f67b43665f1c1f79c29b90de55c53826ddb"
+    },
+    {
+      "file": "windows-installed-readback.json",
+      "bytes": 954,
+      "capture_sha256": "024f4a47d33eea5ead79d040df05f5c3ce115681d68974e4cbfb9b196abfd703",
+      "normalized_lf_sha256": "855300cb421a2874440ef27aae4174902e4030822a20cc902f9cb70c269651fc"
+    },
+    {
+      "file": "verify-installed-windows.ps1",
+      "bytes": 2203,
+      "capture_sha256": "dca06885959d88fab718fb9306ed61f7239a3397eba91ccf017b8561a2435910",
+      "normalized_lf_sha256": "08d23d80c9d6be625b44a6296b89081573a3826f817004bb3b0a3226912d6d20"
+    },
+    {
+      "file": "windows-before.json",
+      "bytes": 387,
+      "capture_sha256": "37ea9d409ec716b59882c110648c347859ee7d82a9f09e99c7f71ccf3b30778d",
+      "normalized_lf_sha256": "651484db42641f7818af88372e1a58ed1d60b6f7b97cc29e1fd859b693383c93"
+    },
+    {
+      "file": "windows-expected.json",
+      "bytes": 40170,
+      "capture_sha256": "95eb9887b85dcc960969a1b8ec2176c5384d79d2d3f79441a75aa4492be2f0e5",
+      "normalized_lf_sha256": "456640850cbe174d8947ec0f39a4cc4ebbdd84b63d551858d990b413fa205afe"
+    }
+  ],
+  "new_candidate_created": false,
+  "full_release_pass": false
+}

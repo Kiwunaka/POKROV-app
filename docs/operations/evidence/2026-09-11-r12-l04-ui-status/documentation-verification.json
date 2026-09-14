@@ -1,0 +1,34 @@
+{
+  "utc": "2026-09-11T15:46:49.530940+00:00",
+  "checks": [
+    {
+      "cwd": "E:/r12client",
+      "command": "pwsh -NoProfile -File scripts/validate-seed.ps1 -CoreRoot E:/r12core904-bound-source -PlatformRoot C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start",
+      "result": "PASS exit0; Core904 Android/Windows binding preserved"
+    },
+    {
+      "cwd": "E:/r12client",
+      "command": "pwsh -NoProfile -File test/docs-contract.ps1",
+      "result": "PASS after final docs edits"
+    },
+    {
+      "command": "python -X utf8 C:/r12-l04-ui-poll-20260911/validate-evidence8.py",
+      "result": "PASS 42 capture hashes; 57 local links; bounded private-material scan"
+    },
+    {
+      "cwd": "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start",
+      "command": "python -B -m pytest -p no:cacheprovider tests/test_agent_docs_contract.py tests/test_agent_context_packet_audit.py -q",
+      "result": "PASS 33 tests"
+    },
+    {
+      "cwd": "C:/Users/kiwun/Documents/ai/VPN-consolidated-plan-start",
+      "command": "python -B scripts/agent_context_packet_audit.py --platform-context-root .",
+      "result": "PASS platform-context"
+    },
+    {
+      "command": "git diff --check in both feature worktrees; git diff --name-only -- artifacts/releases in client",
+      "result": "PASS; no release-artifact delta"
+    }
+  ],
+  "note": "Runtime checks retain separate native receipts; documentation verification is not final release acceptance."
+}

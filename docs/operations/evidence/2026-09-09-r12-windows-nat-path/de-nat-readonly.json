@@ -1,0 +1,53 @@
+{
+  "utc": "2026-09-09T08:58:06.209018+00:00",
+  "origin": "owned-de-node",
+  "raw_addresses_exported": false,
+  "nat_rules": [
+    {
+      "chain": "DOCKER",
+      "protocol": "tcp",
+      "destination_port": "18080",
+      "target": "DNAT",
+      "destination_sha256": "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0",
+      "target_sha256": "16b848c18d34dca903fcf0c4aeb910063a22d977af0109268fe70bfb14d931b9",
+      "target_port": "8080"
+    },
+    {
+      "chain": "DOCKER",
+      "protocol": "tcp",
+      "destination_port": "18082",
+      "target": "DNAT",
+      "destination_sha256": "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0",
+      "target_sha256": "91b1b1435889d19d8608c76051ec1407f2ad48101bf8c7948bb3ae92a456532f",
+      "target_port": "8080"
+    },
+    {
+      "chain": "DOCKER",
+      "protocol": "tcp",
+      "destination_port": "8081",
+      "target": "DNAT",
+      "destination_sha256": "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0",
+      "target_sha256": "20bf492381cbdf0fe85bd20294775e76c03186ba2507817614486827c2e5923f",
+      "target_port": "8080"
+    },
+    {
+      "chain": "DOCKER",
+      "protocol": "tcp",
+      "destination_port": "18083",
+      "target": "DNAT",
+      "destination_sha256": "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0",
+      "target_sha256": "ffc9492cf30c030cae0da069b694717d0beac91e0a7baa28304e2565bce9d539",
+      "target_port": "8080"
+    },
+    {
+      "chain": "DOCKER",
+      "protocol": "tcp",
+      "destination_port": "8008",
+      "target": "DNAT",
+      "destination_sha256": "12ca17b49af2289436f303e0166030a21e525d266e209267433801a8fd4071a0",
+      "target_sha256": "ab36fbe4de1b3c98f279f99c9260f8da0796805deb18e1d3d99cd57babf00ac4",
+      "target_port": "8008"
+    }
+  ],
+  "iptables_exit": 0
+}

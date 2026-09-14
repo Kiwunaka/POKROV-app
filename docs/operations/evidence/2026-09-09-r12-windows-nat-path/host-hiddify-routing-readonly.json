@@ -1,0 +1,56 @@
+{
+  "utc": "2026-09-09T09:02:00.740240+00:00",
+  "scope": "read_only_host_hiddify_routing",
+  "raw_config_exported": false,
+  "files": [
+    {
+      "file": "C:\\Users\\kiwun\\AppData\\Roaming\\Hiddify\\hiddify\\current-config.json",
+      "sha256": "a1577c85708247d2a0bd2d41e0d6ce9bc9a6c600680d5da7c6373d7f68af9f43",
+      "mtime_utc": "2026-02-25T17:55:25.592719+00:00",
+      "inbounds": [
+        {
+          "type": "tun",
+          "sniff": true,
+          "auto_route": true
+        },
+        {
+          "type": "mixed",
+          "sniff": true,
+          "sniff_override_destination": true
+        },
+        {
+          "type": "direct"
+        }
+      ],
+      "sniff_rules": []
+    },
+    {
+      "file": "C:\\Users\\kiwun\\AppData\\Roaming\\Hiddify\\hiddify\\data\\current-config.json",
+      "sha256": "28726e6abee29436b8280ced0b252b5710d4e6bdcdb9ac81f6d62968f5a83f51",
+      "mtime_utc": "2026-09-07T18:33:12.047842+00:00",
+      "inbounds": [
+        {
+          "type": "tun",
+          "auto_route": true
+        },
+        {
+          "type": "mixed"
+        },
+        {
+          "type": "direct"
+        },
+        {
+          "type": "mixed"
+        },
+        {
+          "type": "direct"
+        }
+      ],
+      "sniff_rules": [
+        {
+          "action": "sniff"
+        }
+      ]
+    }
+  ]
+}

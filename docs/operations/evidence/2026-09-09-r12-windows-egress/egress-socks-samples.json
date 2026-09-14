@@ -1,0 +1,913 @@
+[
+    {
+        "utc":  "2026-09-09T07:47:56.9489312Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:47:56.9661012Z",
+        "event":  "probe_started_with_tun"
+    },
+    {
+        "utc":  "2026-09-09T07:47:56.9661012Z",
+        "event":  "mixed_listener",
+        "present":  true
+    },
+    {
+        "utc":  "2026-09-09T07:47:58.5977644Z",
+        "event":  "https_socks5_remote_dns",
+        "exit_code":  97,
+        "http_status":  "000",
+        "tun_still_present":  true
+    },
+    {
+        "utc":  "2026-09-09T07:47:59.0168503Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:47:59.3572273Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:47:59.6807103Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:00.0658702Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:00.4119589Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:00.7807744Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:01.1138242Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:01.4579619Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:01.8200987Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:02.1622139Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:02.4941400Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:02.8521090Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:03.1797224Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:03.5084623Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:03.8483994Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:04.1944524Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:04.5288067Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:04.8527549Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:05.1906704Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:05.5426641Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:05.8659491Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:06.2024941Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:06.5251598Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:06.8515042Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:07.1964919Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:07.5294165Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:07.8604916Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:08.2251905Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:08.5623214Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:08.8810156Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:09.2695980Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:09.6195086Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:09.9789214Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:10.3053645Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:10.6676918Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:11.0106273Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:11.3413646Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:11.6790438Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:12.0203161Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:12.3677692Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:12.7030219Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:13.0316455Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:13.3615238Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:13.7402661Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:14.0942051Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:14.4183552Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:14.7483885Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:15.0835968Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:15.4111397Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:15.7591171Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:16.0869595Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         },
+                         {
+                             "Name":  "tun0",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "sing-tun Tunnel",
+                             "ifIndex":  18
+                         }
+                     ]
+    },
+    {
+        "utc":  "2026-09-09T07:48:16.5303949Z",
+        "adapters":  [
+                         {
+                             "Name":  "Ethernet",
+                             "Status":  "Up",
+                             "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter",
+                             "ifIndex":  13
+                         }
+                     ]
+    }
+]

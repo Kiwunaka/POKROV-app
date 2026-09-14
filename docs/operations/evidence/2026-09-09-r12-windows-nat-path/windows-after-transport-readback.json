@@ -1,0 +1,35 @@
+{
+    "utc":  "2026-09-09T09:15:45.5585889Z",
+    "origin":  "current-origin Windows owned VM",
+    "client_source":  "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+    "core_source":  "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+    "matched_files":  304,
+    "expected_files":  304,
+    "missing":  [
+
+                ],
+    "different":  [
+
+                  ],
+    "service_state":  "Running",
+    "ui_count":  0,
+    "os_version":  "10.0.26200.0",
+    "status":  {
+                   "client_source":  "0218e89",
+                   "action":  "status",
+                   "elapsed_ms":  15,
+                   "available":  true,
+                   "trusted":  true,
+                   "compatible":  true,
+                   "accepted":  true,
+                   "phase":  "artifact_ready",
+                   "running":  false,
+                   "core_ready":  false,
+                   "dns_ready":  false,
+                   "egress_validated":  false,
+                   "can_connect":  false,
+                   "effective_matches_staged":  false,
+                   "failure":  "none"
+               },
+    "raw_profile_exported":  false
+}

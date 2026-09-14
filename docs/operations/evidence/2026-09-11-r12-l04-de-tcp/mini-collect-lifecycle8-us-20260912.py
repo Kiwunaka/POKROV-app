@@ -1,0 +1,10 @@
+from pathlib import Path
+import base64,hashlib,json,subprocess,shutil
+r=Path('/tmp/pokrov-r12-l04-clean-20260911')
+names=['candidate8-installed-before-lifecycle-us-20260912.json','candidate8-lifecycle-us-20260912-connected-uninstall.json','candidate8-lifecycle-us-20260912-connected-uninstall.log','candidate8-lifecycle-us-recovery-20260912.json','candidate8-lifecycle-us-driver-20260912.log','candidate8-reinstall-us-20260912.log','candidate8-lifecycle-us-outer-20260912.log','candidate8-lifecycle-us-fixture-20260912.json','candidate8-lifecycle-us-manual-restore-20260912.json','candidate8-lifecycle-us-dpkg-restore-20260912.log']
+guest="from pathlib import Path\nimport base64,json,subprocess,os,platform\nassert os.getuid()==0 and platform.node()=='pokrov-r12-l04-clean'\nr=Path('/home/pokrovqa/acceptance-inputs');names="+repr(names)+"\nfiles={name:base64.b64encode((r/name).read_bytes()).decode() for name in names}\nunit=subprocess.check_output(['systemctl','show','pokrov-l04-lifecycle8-us-20260912','-p','ActiveState','-p','SubState','-p','Result','-p','MainPID','-p','ExecMainStatus'],text=True)\nprint(json.dumps({'files':files,'unit':unit}))\n"
+p=subprocess.run(['ssh','-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile='+str(r/'guest-known-hosts'),'-i',str(r/'guest-key'),'-p','22265','pokrovqa@127.0.0.1','sudo -n python3 -'],input=guest,capture_output=True,text=True,timeout=25);assert p.returncode==0,'guest collection failed'
+v=json.loads(p.stdout);out=r/'candidate8-public-evidence';assert out.is_dir();rows=[]
+for name,data in v['files'].items():
+ raw=base64.b64decode(data);target=out/name;assert not target.exists();target.write_bytes(raw);target.chmod(0o644);rows.append({'name':name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()})
+summary={'files':rows,'terminal_guest_unit':v['unit'],'host_free_bytes':shutil.disk_usage(r).free,'disk_allocated_bytes':(r/'guest.qcow2').stat().st_blocks*512};target=out/'candidate8-lifecycle-us-collection-20260912.json';assert not target.exists();target.write_text(json.dumps(summary,indent=2)+'\n');target.chmod(0o644);print(json.dumps(summary))

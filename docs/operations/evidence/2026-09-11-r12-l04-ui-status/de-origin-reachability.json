@@ -1,0 +1,38 @@
+{
+  "utc": "2026-09-11T15:34:22.193012+00:00",
+  "target_alias": "pokrov-de",
+  "target_address_sha256": "66624e15725d946c4321da789698aff1d98a64de1af16bb4dc43f2bff20bea67",
+  "results": [
+    {
+      "origin": "pokrov-mini",
+      "ssh_exit": 0,
+      "result": {
+        "origin": "pokrov-mini-origin",
+        "target_alias": "pokrov-de",
+        "port": 443,
+        "tcp": "TimeoutError",
+        "seconds": 5.01
+      }
+    },
+    {
+      "origin": "pokrov-brain",
+      "ssh_exit": 0,
+      "result": {
+        "origin": "pokrov-brain-origin",
+        "target_alias": "pokrov-de",
+        "port": 443,
+        "tcp": "PASS",
+        "seconds": 0.0
+      }
+    },
+    {
+      "origin": "current-origin Windows",
+      "tcp": "PASS",
+      "port": 443,
+      "target_alias": "pokrov-de",
+      "seconds": 0.02
+    }
+  ],
+  "scope": "read-only TCP reachability, no firewall or listener mutation",
+  "cause": "not established; reachability failure is not TLS35 reproduction"
+}

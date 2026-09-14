@@ -1,0 +1,16 @@
+{
+  "status": "PASS_EXACT_PAYLOAD_COMPARISON",
+  "old_sha256": "5fadf99660301b7456e8e0b133b90921b807b992fc58fb27af92183ebc81154d",
+  "new_sha256": "b71c3190ad56e534bcd0057b68de4f818e775bc89cf1d5470814468ad7ada933",
+  "changed_paths": [
+    "control/control",
+    "data/usr/lib/pokrov/ui/lib/libapp.so",
+    "data/usr/lib/pokrov/ui/lib/libfile_selector_linux_plugin.so",
+    "data/usr/lib/pokrov/ui/lib/libflutter_secure_storage_linux_plugin.so",
+    "data/usr/lib/pokrov/ui/lib/liburl_launcher_linux_plugin.so",
+    "data/usr/lib/pokrov/ui/pokrov",
+    "data/usr/share/doc/pokrov/build.json"
+  ],
+  "identical_paths": 299,
+  "daemon_core_unit_hooks_byte_identical": true
+}
