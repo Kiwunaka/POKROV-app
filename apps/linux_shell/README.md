@@ -9,6 +9,13 @@ This lane is a non-public foundation for the conditional Linux beta. The
 Flutter UI always runs as the desktop user. Privileged VPN state belongs to the
 systemd-activated `pokrov-linuxd` service and is never performed by the UI.
 
+[Package10 acceptance](../../docs/operations/evidence/2026-09-14-r12-l04-package10/README.md)
+verifies R12-L04 at I4 for this declared Ubuntu scope: exact signed package,
+connected upgrade/purge, normal APT reinstall, permissions, non-root GUI,
+full/RU DNS/IPv6 and Core-failure GUI recovery. Failed automatic-path and
+initial-health observations remain explicitly retained. This does not publish
+Linux or broaden the support matrix; source promotion remains separate.
+
 The IPC boundary is `/run/pokrov/pokrov-linuxd.sock`. Each request is bounded,
 the daemon authenticates the kernel-provided Unix peer credentials, and every
 mutating action requires `space.pokrov.linux.manage` through polkit. A world
@@ -21,7 +28,7 @@ bootstrapper. Operational observability remains limited to Android/Windows;
 calling that unsupported startup API on Linux aborts before the first frame.
 The Linux shell does not initialize that API or claim its telemetry coverage.
 
-Current source status is `IMPLEMENTED_PARTIAL`. The L02 live lifecycle is
+Public support status remains `IMPLEMENTED_PARTIAL`. The L02 live lifecycle is
 implemented and [verified in an isolated Ubuntu VM](../../docs/operations/evidence/2026-09-11-r12-l02-linux-runtime/README.md);
 durable recovery also has [L03 VM evidence](../../docs/operations/evidence/2026-09-11-r12-l03-linux-recovery/README.md).
 The later [installed criterion review](../../docs/operations/evidence/2026-09-11-r12-l03-installed-auth/README.md)
@@ -146,8 +153,9 @@ and historical DE failures remain retained. Final Linux acceptance stays open.
   Flutter GUI, signed deb or public-candidate test. L03 additionally proves
   dual-stack traffic, crash/suspend/reboot restoration, partial rollback retry
   and real-agent authorization negatives. L04 adds real GUI authorization and
-  exact package lifecycle and crash/suspend/reboot recovery proof. TLS
-  consistency and final acceptance remain open L04 gates.
+  exact package lifecycle and crash/suspend/reboot recovery proof. The later
+  package10 acceptance above closes the declared L04 scenario and retains the
+  failed path and initial-health observations with their original results.
 
-No Linux artifact or availability promise belongs to release 1.2.0 until those
-gates and exact-package evidence close.
+No Linux artifact or availability promise is added to release 1.2.0 merely by
+closing L04 gates. Public Linux distribution requires its separate release decision.

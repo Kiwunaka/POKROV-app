@@ -494,8 +494,12 @@ acceptance remains a host evidence gate.
 
 Current source advertises live connect on the supported stack with an executable
 Core. A staged profile and absence of an active transaction or pending recovery also gate
-`can_connect`. Running means actual Core/network startup; DNS and egress health
-remain unknown and do not become a validated-health claim. The Linux compiler
+`can_connect`. Running means actual Core/network startup. After the network
+transaction, linuxd requests bounded DNS and selected-proxy HTTPS proof from
+its private Core child. Both must pass for the connected/healthy message;
+missing or failed proof remains unhealthy. Results belong to that running
+session and clear on stop or error; they are connection-establishment proof,
+not continuous reachability monitoring. The Linux compiler
 accepts the fixed TUN and loopback mixed profile shape, rejects file/namespace/
 interface/mark control and auxiliary services, and does not yet accept AWG
 endpoint profiles.
