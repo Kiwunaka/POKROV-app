@@ -545,6 +545,11 @@ and route rules before staging: inherited RU/direct exceptions are removed
 except private-address routing. DNS uses the VPN resolver lane while retaining
 transport-domain bootstrap and private-address resolution. The all-except-RU
 mode keeps its managed RU rules; Windows process routing stays Windows-only.
+Both Linux modes resolve proxy hostnames through the materialized `dns-direct`
+resolver with `ipv4_only`, as Windows already does. Inheriting the API's local
+bootstrap resolver would send node resolution back into systemd-resolved after
+its traffic has moved into TUN, creating a dependency on the unestablished VPN.
+Content DNS retains its configured VPN/direct routing policy.
 
 The Linux UI retains the transport's bounded 130-second wait for authorization,
 connect and cleanup instead of applying the shared 18-second runtime deadline.

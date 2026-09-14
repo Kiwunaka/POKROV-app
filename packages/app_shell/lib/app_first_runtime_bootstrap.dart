@@ -8203,12 +8203,16 @@ class AppFirstRuntimeBootstrapper
         ..remove('override_android_vpn');
     }
     if (hostPlatform == HostPlatform.windows) {
-      route
-        ..['find_process'] = true
-        ..['default_domain_resolver'] = <String, dynamic>{
-          'server': 'dns-direct',
-          'strategy': 'ipv4_only',
-        };
+      route['find_process'] = true;
+    }
+    if (hostPlatform == HostPlatform.windows ||
+        hostPlatform == HostPlatform.linux) {
+      // Once Linux redirects resolved into TUN, system DNS cannot bootstrap
+      // the proxy that carries those same DNS requests.
+      route['default_domain_resolver'] = <String, dynamic>{
+        'server': 'dns-direct',
+        'strategy': 'ipv4_only',
+      };
     }
     return route;
   }

@@ -131,6 +131,9 @@ and historical DE failures remain retained. Final Linux acceptance stays open.
   snapshots clear them. This is connection-establishment proof, not continuous
   reachability monitoring. Package 8 predates this behavior and returned unknown
   (`null`) health, leaving its GUI at “Проверяем…” despite working traffic;
+- both route modes use the materialized direct DNS resolver to resolve proxy
+  hostnames over IPv4. They do not inherit the API's system-DNS bootstrap after
+  resolved has moved into TUN. Content DNS keeps the selected routing policy;
 - the shared desktop UI reads local daemon status every two seconds, without
   fetching a profile or repeating network probes. An external stop or recovery
   clears the cached running state. [Package-8 installed proof](../../docs/operations/evidence/2026-09-11-r12-l04-ui-status/README.md)

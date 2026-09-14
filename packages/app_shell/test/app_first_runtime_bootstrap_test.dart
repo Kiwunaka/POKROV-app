@@ -8533,6 +8533,11 @@ void main() {
                           ],
                           'route': <String, Object?>{
                             if (ready)
+                              'default_domain_resolver': <String, Object?>{
+                                'server': 'bootstrap',
+                                'strategy': 'prefer_ipv4',
+                              },
+                            if (ready)
                               'rules': <Object?>[
                                 <String, Object?>{
                                   'process_name': <String>['old.exe'],
@@ -8600,6 +8605,10 @@ void main() {
             final dnsRules = (dns['rules'] as List? ?? []).cast<Map>();
             expect(route['find_process'],
                 host == HostPlatform.windows ? isTrue : isNull);
+            expect(route['default_domain_resolver'], <String, Object?>{
+              'server': 'dns-direct',
+              'strategy': 'ipv4_only',
+            });
             expect(
                 rules.any((rule) =>
                     (rule['process_name'] as List?)?.contains('old.exe') ==
