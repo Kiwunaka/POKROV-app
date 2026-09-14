@@ -1,0 +1,30 @@
+{
+    "utc":  "2026-09-09T07:28:52.1885528Z",
+    "probe_exit_code":  0,
+    "probe":  {
+                  "client_source":  "0218e89",
+                  "action":  "status",
+                  "elapsed_ms":  0,
+                  "available":  true,
+                  "trusted":  true,
+                  "compatible":  true,
+                  "accepted":  true,
+                  "phase":  "config_staged",
+                  "running":  false,
+                  "core_ready":  true,
+                  "dns_ready":  false,
+                  "egress_validated":  false,
+                  "can_connect":  true,
+                  "effective_matches_staged":  false,
+                  "failure":  "core_egress_probe_failed"
+              },
+    "adapters":  [
+                     {
+                         "Name":  "Ethernet",
+                         "Status":  "Up",
+                         "InterfaceDescription":  "Intel(R) PRO/1000 MT Desktop Adapter"
+                     }
+                 ],
+    "source":  "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+    "profile":  "Frankfurt ordinary"
+}

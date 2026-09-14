@@ -1,0 +1,159 @@
+{
+  "utc": "2026-09-09T07:54:19.926326+00:00",
+  "client": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "core": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "origin": "current-origin owned Windows VM",
+  "status": "FAIL_EGRESS_UNCONFIRMED",
+  "files": [
+    {
+      "file": "egress-outside-tunnel-static-v2.log",
+      "capture_bytes": 258,
+      "capture_encoding": "utf-16",
+      "capture_sha256": "09576ff383c0dacca81ee78a4aa89ca4b40c0f97025d4866ec399e63ba414fc5",
+      "normalized_lf_sha256": "683840a55d9485cb4f44ecba1454489b11b9738435ae85556b7692826b2d2de6"
+    },
+    {
+      "file": "egress-connect-result.json",
+      "capture_bytes": 324,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "a75fcb107478c58ce1f03b02a490e19bd97f19b535a7aadc5888f79f9e75ff8c",
+      "normalized_lf_sha256": "700330ea2b83a1535f2cad22e3587bd161095aaeb05f2fe130394363e202aab0"
+    },
+    {
+      "file": "egress-tunnel-samples.json",
+      "capture_bytes": 16463,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "ad071de3a781c4d7090f09a82f225e9f7ded0d0bf4d564543e1e362c7a2d90c1",
+      "normalized_lf_sha256": "b5dcf2ff8960193f7fb965b46610d600be8cc0113876a62b93833963c64da239"
+    },
+    {
+      "file": "egress-during-tunnel.log",
+      "capture_bytes": 918,
+      "capture_encoding": "utf-16",
+      "capture_sha256": "93248542fa69fa2f6c90a4f7f01949d04d72b014c59f531b32c73334ac65f1d3",
+      "normalized_lf_sha256": "6e888b43a9bd319f4e63975ac26fe73786a3890b0335e5da50781b75fe1fa4fc"
+    },
+    {
+      "file": "egress-isolate-v2-samples.json",
+      "capture_bytes": 19990,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "c7c33248df53d90b72ed66d50675f77133ae7a60e60967365be2bcd41c76efdc",
+      "normalized_lf_sha256": "b175f077ca54bd5c8671d01d270d184ad8cb0ba637f816b2e5f12e87478dc39f"
+    },
+    {
+      "file": "egress-isolate-v2-connect-result.json",
+      "capture_bytes": 324,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "aa6cbf69dede8a76f7dee0d5d93cb54cb17782a52f56123081e7aeba1227ba0d",
+      "normalized_lf_sha256": "589f90898791567cc15ae91f1254e55e51658c9b646358e00f7825fe45cb7ff8"
+    },
+    {
+      "file": "egress-socks-samples.json",
+      "capture_bytes": 36006,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "042916a027660a69f9370e8841c8c1626cf9a9e8f36872f371d49020a468db3c",
+      "normalized_lf_sha256": "f78eb35ea67c4367afa63cde3917e56dc0fc99a5861978e0989aefbd8e22d86d"
+    },
+    {
+      "file": "egress-socks-connect-result.json",
+      "capture_bytes": 324,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "0fc2372de174d3a87295acdd5166f80b4e426677709b1d40bde08fd2605680fd",
+      "normalized_lf_sha256": "2c1519f99367e1bef29d3b4a04ef5474fa02472b80071666aa838e8be345fda1"
+    },
+    {
+      "file": "panel-owned-readonly.json",
+      "capture_bytes": 1429,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "df471bc5daaa7b634e39cd121d1fd3f73b968d3fc58ee8e422d8375323551208",
+      "normalized_lf_sha256": "2461edcbba13422440284fbee0ab347752f3a2692497c693c47925524f84fc93"
+    },
+    {
+      "file": "panel-inbound-readonly.json",
+      "capture_bytes": 2630,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "b81ee96ce6d86500785bc28557365ba43ff10219795b76ed08ee997c43f8aecf",
+      "normalized_lf_sha256": "15e65e5d959488c6494f065ee0c73e96ee39956c81b51f88c8839be68d3e9883"
+    },
+    {
+      "file": "panel-traffic-readonly.json",
+      "capture_bytes": 2624,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "48872aac2739e1c621d7f5b413580d2974ebaf8c346a907bb5020c5314d5b1f4",
+      "normalized_lf_sha256": "3a4ad2a0d398505c1d5772b9d91c4d4e0902fc105a0619343aabfbbbcbb16aed"
+    },
+    {
+      "file": "windows-connect-sample.json",
+      "capture_bytes": 1117,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "c5626af89d66e8587c951986e1bf3a615185f9bb9b9c445d45b32196f8044016",
+      "normalized_lf_sha256": "f505f3b18015e0badd268533b60f14695c22c0d85057b10cd0663580129c3907"
+    },
+    {
+      "file": "windows-frankfurt-sample.json",
+      "capture_bytes": 1128,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "98dd04d1cf38fbb315dd255bc6806700aecd57964b779bf4b7f02d4790a257cb",
+      "normalized_lf_sha256": "9e4dd4be02e35c89029a977790d14523d6de8f0d4bf8c500ba22e813ad9a3e56"
+    },
+    {
+      "file": "windows-one-day-applied.json",
+      "capture_bytes": 625,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "aaa003c6d580c3044495863d11861238c09ee29bcfe1d221a5490c31d6d1897f",
+      "normalized_lf_sha256": "849773870cee9302955d35402857808e3ec298a00dfe4a1f89080bb7da5708ad"
+    },
+    {
+      "file": "windows-network-cold-enabled.txt",
+      "capture_bytes": 181,
+      "capture_encoding": "utf-8-sig",
+      "capture_sha256": "4af842eb2f56d998fb5a41b188d645e184fa194e1889c011d3c7e496377ebd4f",
+      "normalized_lf_sha256": "d7f7fe6ad357727b7c71de2461c6f17820eb313b4f19b9fbc1267a10b342ed49"
+    }
+  ],
+  "instruments": [
+    {
+      "local_path": "E:\\r12-win-egress-20260909\\main.cpp",
+      "bytes": 475,
+      "sha256": "6f1e7461f338381a38f7b821d6d8fd4c2650e30ee806a0b736da0d2f17cab33a"
+    },
+    {
+      "local_path": "E:\\r12-win-egress-20260909\\probe.cpp",
+      "bytes": 6745,
+      "sha256": "da0ff0bab944170fdd76b5cdd27daa56e83717a74c7f57b632765aeb30a818d8"
+    },
+    {
+      "local_path": "E:\\r12-win-egress-20260909\\CMakeLists.txt",
+      "bytes": 518,
+      "sha256": "9afb0746808e9eb63f2fa58e7f2ae6d499917abf4ae7db0ec974823f169bb288"
+    },
+    {
+      "local_path": "E:\\r12-win-egress-20260909\\sample-tunnel.ps1",
+      "bytes": 1965,
+      "sha256": "c495e12a5c3c6c791aa51cdaa453819e9a181f576c0fcc93f35e9e476fe14acb"
+    },
+    {
+      "local_path": "E:\\r12-win-egress-20260909\\isolate-dns-v2.ps1",
+      "bytes": 3589,
+      "sha256": "8de3390aa50d845481be9d824b88b6cfe55fbc8348cfe44636380c8706d84983"
+    },
+    {
+      "local_path": "E:\\r12-win-egress-20260909\\isolate-socks.ps1",
+      "bytes": 2790,
+      "sha256": "731171d1af0db43b2531ee52958053014c0631ef4cfd52604e4b24a6effbd73e"
+    },
+    {
+      "local_path": "E:\\r12-win-egress-20260909\\read-protected.ps1",
+      "bytes": 1913,
+      "sha256": "2cc8d20ea75cbc317c1353e61968405f68d24956c07237063293ac051376cb35"
+    },
+    {
+      "local_path": "E:\\r12-win-egress-20260909\\build\\Release\\egress_diagnostic.exe",
+      "bytes": 257024,
+      "sha256": "64a8aec4949e29db4b92a66e4774e18ab71e55688c4eca9cb17dc3878a1d2a2a"
+    }
+  ],
+  "protected_readback": "BLOCKED_BY_ACCESS_OWNER_ACTION_PENDING",
+  "product_source_changed": false,
+  "public_release_pass": false
+}

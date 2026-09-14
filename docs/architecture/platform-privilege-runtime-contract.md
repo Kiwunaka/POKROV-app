@@ -483,8 +483,9 @@ It reads local IPC only, allows one outstanding observation, preserves a newer
 explicit UI action and updates the UI when the daemon stops or recovers outside
 that UI action. It does not infer healthy DNS/egress from a running daemon.
 This fixes the observed package-7 GUI retaining its Disconnect/checking state
-after the daemon had stopped and removed TUN; updated installed-UI proof is
-still pending.
+after the daemon had stopped and removed TUN. [Installed package-8 proof](../operations/evidence/2026-09-11-r12-l04-ui-status/README.md)
+shows the same non-root GUI changing to Retry/error after external Core SIGKILL,
+without app interaction or restart; all seven network baselines were restored.
 
 The installed `pokrov-linux-sleep.service` is required before `sleep.target`.
 It stops both socket and daemon before sleep and starts the daemon on resume,
@@ -493,8 +494,12 @@ acceptance remains a host evidence gate.
 
 Current source advertises live connect on the supported stack with an executable
 Core. A staged profile and absence of an active transaction or pending recovery also gate
-`can_connect`. Running means actual Core/network startup; DNS and egress health
-remain unknown and do not become a validated-health claim. The Linux compiler
+`can_connect`. Running means actual Core/network startup. After the network
+transaction, linuxd requests bounded DNS and selected-proxy HTTPS proof from
+its private Core child. Both must pass for the connected/healthy message;
+missing or failed proof remains unhealthy. Results belong to that running
+session and clear on stop or error; they are connection-establishment proof,
+not continuous reachability monitoring. The Linux compiler
 accepts the fixed TUN and loopback mixed profile shape, rejects file/namespace/
 interface/mark control and auxiliary services, and does not yet accept AWG
 endpoint profiles.
@@ -544,6 +549,11 @@ and route rules before staging: inherited RU/direct exceptions are removed
 except private-address routing. DNS uses the VPN resolver lane while retaining
 transport-domain bootstrap and private-address resolution. The all-except-RU
 mode keeps its managed RU rules; Windows process routing stays Windows-only.
+Both Linux modes resolve proxy hostnames through the materialized `dns-direct`
+resolver with `ipv4_only`, as Windows already does. Inheriting the API's local
+bootstrap resolver would send node resolution back into systemd-resolved after
+its traffic has moved into TUN, creating a dependency on the unestablished VPN.
+Content DNS retains its configured VPN/direct routing policy.
 
 The Linux UI retains the transport's bounded 130-second wait for authorization,
 connect and cleanup instead of applying the shared 18-second runtime deadline.
@@ -714,6 +724,7 @@ actual config before creating a TUN. A missing or unconfirmed profile fails clos
 an already running or pending connection is not restarted by a duplicate system
 start. System lockdown remains Android-owned and can block apps outside the
 selected-app allowlist, including while the selected tunnel is connected.
+
 
 The temporary support-mode consent sheet uses the available screen height and
 scrolls its disclosure and actions when needed. Both consent choices remain

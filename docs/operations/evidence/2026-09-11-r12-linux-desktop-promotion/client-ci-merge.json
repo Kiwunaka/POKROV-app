@@ -1,0 +1,232 @@
+{
+  "status": "PASS",
+  "utc": "2026-09-11T15:43:53.740066+00:00",
+  "source": "b7034e141b52d51438a0923d3d24c59404695d3f",
+  "phase": "merge",
+  "runs": [
+    {
+      "id": 34616615610,
+      "name": "Release v2 Contract",
+      "head_sha": "b7034e141b52d51438a0923d3d24c59404695d3f",
+      "status": "completed",
+      "conclusion": "success",
+      "event": "push",
+      "run_attempt": 1,
+      "html_url": "https://github.com/Kiwunaka/POKROV-app/actions/runs/34616615610",
+      "jobs": [
+        {
+          "id": 103320016156,
+          "run_id": 34616615610,
+          "workflow_name": "Release v2 Contract",
+          "head_branch": "main",
+          "run_url": "https://api.github.com/repos/Kiwunaka/POKROV-app/actions/runs/34616615610",
+          "run_attempt": 1,
+          "node_id": "CR_kwDOSJnDs88AAAAYDlpVHA",
+          "head_sha": "b7034e141b52d51438a0923d3d24c59404695d3f",
+          "url": "https://api.github.com/repos/Kiwunaka/POKROV-app/actions/jobs/103320016156",
+          "html_url": "https://github.com/Kiwunaka/POKROV-app/actions/runs/34616615610/job/103320016156",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-09-11T15:31:20Z",
+          "started_at": "2026-09-11T15:31:22Z",
+          "completed_at": "2026-09-11T15:40:59Z",
+          "name": "cross-repository-contract",
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1,
+              "started_at": "2026-09-11T15:31:23Z",
+              "completed_at": "2026-09-11T15:31:26Z"
+            },
+            {
+              "name": "Reclaim unused runner disk",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2,
+              "started_at": "2026-09-11T15:31:26Z",
+              "completed_at": "2026-09-11T15:31:31Z"
+            },
+            {
+              "name": "Validate exact replay refs",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 3,
+              "started_at": "2026-09-11T15:31:31Z",
+              "completed_at": "2026-09-11T15:31:31Z"
+            },
+            {
+              "name": "Checkout client candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4,
+              "started_at": "2026-09-11T15:31:31Z",
+              "completed_at": "2026-09-11T15:32:37Z"
+            },
+            {
+              "name": "Checkout platform promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5,
+              "started_at": "2026-09-11T15:32:37Z",
+              "completed_at": "2026-09-11T15:32:45Z"
+            },
+            {
+              "name": "Checkout Core promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6,
+              "started_at": "2026-09-11T15:32:45Z",
+              "completed_at": "2026-09-11T15:32:48Z"
+            },
+            {
+              "name": "Materialize bound Core source authority",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7,
+              "started_at": "2026-09-11T15:32:48Z",
+              "completed_at": "2026-09-11T15:32:55Z"
+            },
+            {
+              "name": "Setup Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8,
+              "started_at": "2026-09-11T15:32:55Z",
+              "completed_at": "2026-09-11T15:32:55Z"
+            },
+            {
+              "name": "Setup Java",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9,
+              "started_at": "2026-09-11T15:32:55Z",
+              "completed_at": "2026-09-11T15:32:55Z"
+            },
+            {
+              "name": "Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10,
+              "started_at": "2026-09-11T15:32:55Z",
+              "completed_at": "2026-09-11T15:33:03Z"
+            },
+            {
+              "name": "Setup Flutter",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11,
+              "started_at": "2026-09-11T15:33:03Z",
+              "completed_at": "2026-09-11T15:33:29Z"
+            },
+            {
+              "name": "Validate cross-repository release-handoff v2 contract",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12,
+              "started_at": "2026-09-11T15:33:29Z",
+              "completed_at": "2026-09-11T15:33:51Z"
+            },
+            {
+              "name": "Run client unit and Android flavor tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13,
+              "started_at": "2026-09-11T15:33:51Z",
+              "completed_at": "2026-09-11T15:40:42Z"
+            },
+            {
+              "name": "Validate conditional Linux daemon foundation",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14,
+              "started_at": "2026-09-11T15:40:42Z",
+              "completed_at": "2026-09-11T15:40:53Z"
+            },
+            {
+              "name": "Post Setup Flutter",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22,
+              "started_at": "2026-09-11T15:40:53Z",
+              "completed_at": "2026-09-11T15:40:55Z"
+            },
+            {
+              "name": "Post Setup Go",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23,
+              "started_at": "2026-09-11T15:40:55Z",
+              "completed_at": "2026-09-11T15:40:55Z"
+            },
+            {
+              "name": "Post Setup Java",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24,
+              "started_at": "2026-09-11T15:40:55Z",
+              "completed_at": "2026-09-11T15:40:55Z"
+            },
+            {
+              "name": "Post Setup Python",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25,
+              "started_at": "2026-09-11T15:40:55Z",
+              "completed_at": "2026-09-11T15:40:55Z"
+            },
+            {
+              "name": "Post Checkout Core promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26,
+              "started_at": "2026-09-11T15:40:55Z",
+              "completed_at": "2026-09-11T15:40:55Z"
+            },
+            {
+              "name": "Post Checkout platform promotion line",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27,
+              "started_at": "2026-09-11T15:40:55Z",
+              "completed_at": "2026-09-11T15:40:56Z"
+            },
+            {
+              "name": "Post Checkout client candidate",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28,
+              "started_at": "2026-09-11T15:40:56Z",
+              "completed_at": "2026-09-11T15:40:56Z"
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 29,
+              "started_at": "2026-09-11T15:40:56Z",
+              "completed_at": "2026-09-11T15:40:56Z"
+            }
+          ],
+          "check_run_url": "https://api.github.com/repos/Kiwunaka/POKROV-app/check-runs/103320016156",
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "runner_id": 1000009993,
+          "runner_name": "GitHub Actions 1000009993",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions"
+        }
+      ]
+    }
+  ],
+  "non_pass_steps": [
+    {
+      "job": "cross-repository-contract",
+      "name": "Validate exact replay refs",
+      "conclusion": "skipped"
+    }
+  ],
+  "conditional_skips_are_not_pass": true
+}

@@ -1,0 +1,21 @@
+{
+  "captured_epoch": 1789216485.7334762,
+  "origin": "DE secondary-address service read-only",
+  "unit": "pokrov-de-secondary-ip.service",
+  "unit_file_sha256": "6a4b81507e0b4228be124b1edb0a7572c80f58537798232218d5889b0f0aa054",
+  "redacted_unit": "[Unit]\nDescription=POKROV DE secondary public IPv4 and source route\nAfter=network-online.target\nWants=network-online.target\nBefore=pokrov-awg-lab@pokrovawg2.service pokrov-awg-lab@pokrovawg31.service\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/bin/bash -ec 'ip addr replace IP_SHA256_5a8735db03a9b7134a66eca92a6d2e56f20b0eac54acbb9230024804539500fc/24 dev eth0; ip route replace table 33770 IP_SHA256_be90e5398b58038e746c18f0c7fc3f1e92d958eaab78c008445165c5204b8e04/24 dev eth0 src IP_SHA256_5a8735db03a9b7134a66eca92a6d2e56f20b0eac54acbb9230024804539500fc; ip route replace table 33770 default via IP_SHA256_92fe827b4ec0cfddfdb0e89134d99d63c9a411cfd527b9c93099f62765ed3b19 dev eth0 src IP_SHA256_5a8735db03a9b7134a66eca92a6d2e56f20b0eac54acbb9230024804539500fc; ip rule show | grep -Eq \"^12070:.*from IP_SHA256_5a8735db03a9b7134a66eca92a6d2e56f20b0eac54acbb9230024804539500fc.*lookup 33770\" || ip rule add pref 12070 from IP_SHA256_5a8735db03a9b7134a66eca92a6d2e56f20b0eac54acbb9230024804539500fc/32 table 33770; ip route flush cache'\nExecStop=/bin/bash -ec 'ip rule del pref 12070 from IP_SHA256_5a8735db03a9b7134a66eca92a6d2e56f20b0eac54acbb9230024804539500fc/32 table 33770 2>/dev/null || true; ip route flush table 33770 2>/dev/null || true; ip addr del IP_SHA256_5a8735db03a9b7134a66eca92a6d2e56f20b0eac54acbb9230024804539500fc/24 dev eth0 2>/dev/null || true; ip route flush cache'\n\n[Install]\nWantedBy=multi-user.target\n",
+  "state": {
+    "MainPID": "0",
+    "Result": "success",
+    "ExecMainStartTimestamp": "Thu 2026-09-03 17:30:52 UTC",
+    "ExecMainExitTimestamp": "Thu 2026-09-03 17:30:53 UTC",
+    "ExecMainCode": "1",
+    "ExecMainStatus": "0",
+    "ActiveState": "active",
+    "SubState": "exited",
+    "UnitFileState": "enabled",
+    "ActiveEnterTimestamp": "Thu 2026-09-03 17:30:53 UTC"
+  },
+  "journal_events": [],
+  "production_mutation": false
+}

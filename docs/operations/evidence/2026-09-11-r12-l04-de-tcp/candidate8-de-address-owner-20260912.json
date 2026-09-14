@@ -1,0 +1,26 @@
+{
+  "captured_epoch": 1789216357.729076,
+  "origin": "DE targeted address-owner inspection",
+  "config_files_checked": 11,
+  "target_matches": [
+    {
+      "path": "/etc/systemd/system/pokrov-de-secondary-ip.service",
+      "sha256": "6a4b81507e0b4228be124b1edb0a7572c80f58537798232218d5889b0f0aa054",
+      "bytes": 887
+    }
+  ],
+  "matching_unit_files": [
+    [
+      "pokrov-de-secondary-ip.service",
+      "enabled"
+    ]
+  ],
+  "tcp443_listeners": [
+    {
+      "local_bind_sha256": "f06a00e7ee81bc535deb756e8fe524139597ad48785c85bdcae41c277dff1cf2",
+      "wildcard": true,
+      "xray_owner": false
+    }
+  ],
+  "production_mutation": false
+}

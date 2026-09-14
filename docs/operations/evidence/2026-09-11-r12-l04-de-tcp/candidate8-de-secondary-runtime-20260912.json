@@ -1,0 +1,31 @@
+{
+  "captured_epoch": 1789216571.2570982,
+  "origin": "DE current secondary-address route state",
+  "owned_priority_rules": [],
+  "owned_table_routes": [],
+  "eth0_flags": [
+    "BROADCAST",
+    "MULTICAST",
+    "UP",
+    "LOWER_UP"
+  ],
+  "eth0_operstate": "UP",
+  "eth0_addresses": [
+    {
+      "family": "inet",
+      "local": "sha256:66624e15725d946c4321da789698aff1d98a64de1af16bb4dc43f2bff20bea67",
+      "prefixlen": 24,
+      "broadcast": "sha256:ade2a20bdc3fd3c2f696bc74ca9d30fe98c1ae540dd4d32c2cc604a6cf30e525",
+      "scope": "global",
+      "label": "eth0",
+      "valid_life_time": 4294967295,
+      "preferred_life_time": 4294967295
+    }
+  ],
+  "listener_process_names": [
+    "xray-linux-amd6"
+  ],
+  "all_rules_sha256": "cf8a115af828fff5d01edb191c0c1677911842afbc8de6fe3b239a53d7364496",
+  "all_routes_sha256": "7fb62f63d746c587743b568b67f4a5fbc0da06d6de594d86df57712394142e93",
+  "production_mutation": false
+}

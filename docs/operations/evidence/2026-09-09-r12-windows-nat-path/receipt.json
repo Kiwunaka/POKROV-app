@@ -1,0 +1,286 @@
+{
+  "utc": "2026-09-09T09:17:43.142229+00:00",
+  "status": "PASS_BOUNDED_TRANSPORT_PATH_ISOLATION",
+  "client_source": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
+  "origin": "current-origin owned Windows VM; owned-de-loopback controls labelled separately",
+  "same_config_nat_fail_bridged_pass": true,
+  "profile_sha256": "716567a5451a9993a6f5e44d6c24a86a9966aae0c4f1a3979a09ab7b794299d2",
+  "installed_files_match": 304,
+  "product_source_changed": false,
+  "server_config_changed": false,
+  "host_network_or_hiddify_configuration_changed": false,
+  "nat_failure_mechanism": "UNCONFIRMED; path isolated, no claim of a specific Hiddify or VirtualBox defect",
+  "full_installed_service_connection": "MANUAL_OWNER_TEST after Windows login",
+  "raw_profile_or_credentials_exported": false,
+  "guest_network_at_handoff": "running; bridged adapter; cable disconnected; restore original NIC none after pending UI checks",
+  "raw_capture_directory": "E:\\r12-win-egress-20260909",
+  "files": [
+    {
+      "file": "transport-cache-result-v4.json",
+      "capture_sha256": "7dea2cb8d78bfb6ca61e72fcbbd12714512997bfbd7e55118bcb241e4821f6c7",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "d57da156658f7e157c2eb3fa54b8f3dec82ca11a25d3ceeab033f10c4b749a9b",
+      "bytes": 1897
+    },
+    {
+      "file": "transport-cache-chrome.json",
+      "capture_sha256": "08e1b8fc605fe7f28f37f7d968274a53311aa05ad3ac3a28930e8a8ef960e835",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "60e5aa202e684d1e1f00b4f00318b9fc7462158f03571a4689373ce53aecff16",
+      "bytes": 2001
+    },
+    {
+      "file": "transport-cache-second-direct.json",
+      "capture_sha256": "117f20d6e5bb576f09076c6c43f851283c4a050ee2f97d0805ada44b50d517b9",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "64d5baf24bd8e0af11866c381a4559b5a1e7ec6729adb70c276c510bdb2624d9",
+      "bytes": 2010
+    },
+    {
+      "file": "transport-cache-minimal-tls.json",
+      "capture_sha256": "1b0158e6cfe24f2685e1b8dcbbe4709f4e5e0e0f04de5b4b15ba552ebeadabb1",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "37205c8d8cefa97b530f1229c643aa5a75a98aade26b0d92ae40b124b3b1d91a",
+      "bytes": 2254
+    },
+    {
+      "file": "transport-cache-ipv4.json",
+      "capture_sha256": "f5014223bff1f968dd5f18f38f59eb055a6b9e014e39c13b1fc7f62daf8c099b",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "46a5254e45b683c0abda3b542ee2bab01e64e81859cb70f4feb5113ca23d32d7",
+      "bytes": 1990
+    },
+    {
+      "file": "transport-cache-ssh-control.json",
+      "capture_sha256": "c92e35ffdb05181a85f56bbe143c8400426e62770b1752a4628b6f253e1796a5",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "3d0df1f9295e4dd51c14522df253e3ba3df9f938fb17f494bac00fe442a6e819",
+      "bytes": 1776
+    },
+    {
+      "file": "transport-cache-bridged.json",
+      "capture_sha256": "b9782519168b6c60ae034a52df42e78bc991a5627372d09d7cfb494b4fd59db5",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "373a1516498ed5fa946badf11a75880fa0027170acb85fac7113b6ef0bbb46a1",
+      "bytes": 1612
+    },
+    {
+      "file": "transport-cache-nat-after-update.json",
+      "capture_sha256": "13db663fb6b5860217f594e0ae4e8646a2f06f2b355d491bf03069f844992e43",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "d108db36b2dfdb277c827e77870695eb422850544892b8b6e384b775b0ea993f",
+      "bytes": 1897
+    },
+    {
+      "file": "transport-cache-bridged-repeat.json",
+      "capture_sha256": "ca1d452972437593548ebd0df2e1ede22fcaf25e538b8e5c47322f8074f87041",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "ece5456ce236b47a8a0c193b3bd60f2503bbca32dd6954ec78b30d25156aa49d",
+      "bytes": 1610
+    },
+    {
+      "file": "de-xray-loopback-control.json",
+      "capture_sha256": "0c0c3c3e64e4c02da57127bc00fcbdf333f42fb681ce1fa69f335b1ebc3a682d",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "c1996a1c316805e59982ce00c0f1143af5d668079c2bedf10334d6a13ed2fdb1",
+      "bytes": 374
+    },
+    {
+      "file": "de-core-loopback-control.json",
+      "capture_sha256": "ffcf6deff102380ca1032a80e18a8eeb000fbb290e301ca311c7b00bf108299d",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "d3615ae643cc7b9ee8ebdc5435762af721c1e5dd14e84a217bf9b5b70bcfd650",
+      "bytes": 1420
+    },
+    {
+      "file": "de-runtime-inbound-listener.json",
+      "capture_sha256": "6713ec98834462cad66a472e59355962bf79eabeb4e7e204301d3518fefab173",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "0a67600761ff39346a81aae96d326febd5b2e27b36747740155754354f652704",
+      "bytes": 928
+    },
+    {
+      "file": "de-runtime-client-limits.json",
+      "capture_sha256": "6973b02bcb23bb41cd1c2c61f7252c1d55f8105cf70f43281b3e640c43409738",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "b3a4db9cf1cc7de7a47c96103adc0022f999ee015720f592321a596ed43391bb",
+      "bytes": 659
+    },
+    {
+      "file": "cache-outbound-summary.json",
+      "capture_sha256": "ff510a99b0e44954e6830554b35b0c96ed3e7826745befbc98506cf7016a9093",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "24822f41f9a3ce3b07aa340c1b70131bce8a5f677d3a9ffdaec97e4d707bef1e",
+      "bytes": 617
+    },
+    {
+      "file": "cache-dns-summary.json",
+      "capture_sha256": "2e60bb161e91a1fe3247348f7bd63b63ad975bf1efb9be67c1e5a9ffb6f04d15",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "8c51cc803d3925c4cb61ca74d78f9d89d710f374de2c391c8696e42c8bc9cb93",
+      "bytes": 429
+    },
+    {
+      "file": "de-public-address-fingerprints.json",
+      "capture_sha256": "8740720d4a676e27fbbe9e0b95ff99681aab469d2f8e46b98b3fecf2622d352d",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "34ab9914ea2a2e85214cecdcf7e87d40a3781cbef6629c3fd34d89ae84ccef19",
+      "bytes": 177
+    },
+    {
+      "file": "de-nat-readonly.json",
+      "capture_sha256": "a10afdf1fdaf1c0df8dd6d7cdafbcd3f4c24f0b185ca758b1e0b7f1fd771eef7",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "08db1fa820131bd1e8d5ae27587779f15b10f2b76cb5bdc6fe34f6b3d430c0c5",
+      "bytes": 1838
+    },
+    {
+      "file": "host-hiddify-routing-readonly.json",
+      "capture_sha256": "a5c3be8a02368bcb33434fa0d1c9417dd626da919e1230f91e336df5d8b66fb8",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "ade7a2fc3adc906c21330e0de3b81c2739a4c7ea6e1ce81e4d6f7b6f4cbb8e97",
+      "bytes": 1324
+    },
+    {
+      "file": "host-hiddify-after.json",
+      "capture_sha256": "36790648a0d9da5548a87f628ac0d6b9a975bb3d35c59ced621b0fbea9ed75e3",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "ca83a338768dcca0c34eba41442cc336ffff913283d527f8114dc3feb6a28a70",
+      "bytes": 393
+    },
+    {
+      "file": "windows-after-transport-readback.json",
+      "capture_sha256": "8040d045b8562e87d50d2db70b983122511e12b6392b686fc2d883c575a5eb18",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "deffb10871fa6b4f15372059deff9db5f2e896aaa8ace9e06429f938d41896a2",
+      "bytes": 1149
+    },
+    {
+      "file": "ssh-control-tunnel-cleanup.json",
+      "capture_sha256": "1a0ab49e343253885257721f93a6d4fda71cf4f377969ebfe1597d3bccb6f1c7",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "4e5fdbfb88184fd851a97fcb685913e87b928a2cac9131f9c47e4b14c069df39",
+      "bytes": 79
+    },
+    {
+      "file": "vm-bridged-before-boot.txt",
+      "capture_sha256": "68e976373a34ad0c1c5bdb1420fd72142ffa22ad9768630d6cf71a7f3b65b2a5",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "aa7218a6245635d3032d27194e406cd2ed4f4573bf9f513b6e9838b148d772b8",
+      "bytes": 112
+    },
+    {
+      "file": "vm-current-network.txt",
+      "capture_sha256": "8c00651ee18d4dd032fa25ddba1e54900a3bf4b9bd8d8e512cf9d9526125cd5e",
+      "capture_encoding": "utf-8-sig",
+      "normalized_lf_sha256": "9f20eb97a939b7dcf494bb9d2ee6c196c314f8cb8dfa05508f847c6e56c1575a",
+      "bytes": 112
+    }
+  ],
+  "local_instruments": [
+    {
+      "path": "E:\\r12-win-egress-20260909\\transport-cache-probe-v4.go",
+      "sha256": "7850d5e7a0dc996e4490e7ac6170ac356be573d015bcf60183734e731ae31cb4",
+      "bytes": 6348
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\transport-cache-probe-v4.exe",
+      "sha256": "de437139c1e5bbc73a4b6db4f6853b9157bebb8c9b1a2ddeef5f3446f11c5ddd",
+      "bytes": 39375360
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\transport-cache-probe-v4-linux",
+      "sha256": "060cefcea6b47e568fca50417fa95650b2da79acc18e10282e94c4e2735d4d74",
+      "bytes": 39592098
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\run-cache-transport-v4.ps1",
+      "sha256": "3bd5decafe85381ad7240c24d2c7a66b6ea75cae03c0f2e43bff7f9bde2902cd",
+      "bytes": 3146
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\run-cache-chrome.ps1",
+      "sha256": "5e4f3a55d0c8978cc41037dd70c51b29be35f39770a164780c8929b80373b5af",
+      "bytes": 4011
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\run-cache-second-direct.ps1",
+      "sha256": "15a72936566de370a71b5f1f4e3e75ea0eb08c4caa83ac4fff7dfedfc3e8fc65",
+      "bytes": 4130
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\run-cache-minimal-tls.ps1",
+      "sha256": "37b5b9dcd1e3a3f74d0564b4685a15315f6b8a70b28f0e8e8cd385d4724e7b51",
+      "bytes": 4630
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\run-cache-ipv4.ps1",
+      "sha256": "7ed04ed3f9643ae84e27dcc40bd4de2471f286db717d8253b7b07894deb1186c",
+      "bytes": 4206
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\run-cache-ssh-control.ps1",
+      "sha256": "e61aee9b60b8ed7c53b51b215d1d5ee9cde971f2142aa0d44581b67b7d5d5fcf",
+      "bytes": 4039
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\cache-outbound-summary.ps1",
+      "sha256": "46edf61dc1b855755de313a125062e874a7b24b542b8c64ac8d59bc5d4d8114e",
+      "bytes": 2484
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\read-runtime-listener.py",
+      "sha256": "e324978d8ad15c09b1145983ed2d5de57f2e6c08812b8b046279f2c465588bb1",
+      "bytes": 3519
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\read-runtime-client-limits.py",
+      "sha256": "bf2f1e0636cf7a7d2fb2a3e1d81f9af308586c179509d2eef32797dbf8f6d970",
+      "bytes": 3149
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\xray-loopback-control.py",
+      "sha256": "9d129cba966e0d2e313248531f3039e13dd87e660c73585a7bbeacea5a695ba2",
+      "bytes": 3547
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\core-loopback-control.py",
+      "sha256": "cc887f99f7abf46d2e710d57e235cb8d189d6cfc4990bd2857b2abe847163872",
+      "bytes": 2655
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\read-nat.py",
+      "sha256": "f56a727e557861675eba21b9b355ceeb1f0214b151d1d65b93ba0a4305c705df",
+      "bytes": 1426
+    },
+    {
+      "path": "E:\\r12-win-egress-20260909\\verify-after-transport.ps1",
+      "sha256": "ad0253bba8d4632fc48a28faea73c71007dffefe9943a275ef977d0fcc01295c",
+      "bytes": 1831
+    }
+  ],
+  "verification": {
+    "client_seed": "PASS",
+    "git_diff_check": "PASS",
+    "release_artifact_delta": false,
+    "retained_logs": [
+      {
+        "path": "E:\\r12-win-egress-20260909\\nat-path-client-seed.log",
+        "sha256": "e1aa4d911cd636c334e7cbf4938343d7722d461f126d5493d00f48e194f3f09c"
+      },
+      {
+        "path": "E:\\r12-win-egress-20260909\\nat-path-platform-docs.log",
+        "sha256": "3ad662f775402842298035c10f902cca893213e4b20fee94459e60f5dea8e635"
+      },
+      {
+        "path": "E:\\r12-win-egress-20260909\\nat-path-platform-context.log",
+        "sha256": "0efa10d94f5eab455b68e3294d1fb8c31f726e439b76607b3f406b0eb30f342d"
+      },
+      {
+        "path": "E:\\r12-win-egress-20260909\\nat-path-work-order.log",
+        "sha256": "588a85e192aa0fdfab07e0b2bfef9651874aaab46aa79852cb54deeab634af7d"
+      }
+    ]
+  }
+}

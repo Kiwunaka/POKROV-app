@@ -1,0 +1,6 @@
+﻿{
+    "utc":  "2026-09-09T06:38:38.2762144Z",
+    "status":  "DISPATCH_FAILED",
+    "installer_sha256":  "f91cc7cf85eac292c2206221dce6f95053924bf35c6b081f154dc0b81dbfff1c",
+    "exception_type":  "InvalidOperationException"
+}

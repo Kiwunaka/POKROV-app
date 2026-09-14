@@ -1,0 +1,15 @@
+[
+  {
+    "server_sha256": "9cbe63494f2822fa475d6f2c0d71e9f22e05e841811d12c0472c632f50a5b7a7",
+    "server_port": 443,
+    "uuid_sha256": "c1ede843da00a502d12f3074c7863ae09c7d9f29c76db86be5cc32ebd49285dc",
+    "flow": "xtls-rprx-vision",
+    "tls_enabled": true,
+    "server_name_sha256": "962bbd952510b10c4fed8bd95b112739d604e34daa6313979cb434c87874fbe0",
+    "reality_enabled": true,
+    "public_key_sha256": "bde84d4126f0759fffe9f72e46669f8597fe51fdfd1919275b00d16dc00954c6",
+    "short_id_sha256": "7a98cbe0ce0c09ccdde5e52df86fb64ea5d25fc71b2f9b67ff9f5645d8e4fe0c",
+    "utls_fingerprint": "firefox",
+    "transport_type": null
+  }
+]

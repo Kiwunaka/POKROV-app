@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/auth"
+	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/coreprocess"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/host"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/journal"
 	"github.com/Kiwunaka/pokrov-app/linux-daemon/internal/profile"
@@ -19,6 +20,26 @@ type readyCommands struct{}
 
 func (readyCommands) Active(string) bool {
 	return true
+}
+
+func TestHealthRequiresRunningSessionAndBothProofs(t *testing.T) {
+	service, _ := newReadyService(t, nil)
+	service.phase = "running"
+	service.health = &coreprocess.Health{DNSReady: true, EgressValidated: false}
+	snapshot := service.snapshot(service.probe.Run())
+	if snapshot.CoreEgressValidated == nil || *snapshot.CoreEgressValidated || snapshot.MessageCode == "connected" || snapshot.UplinkState != "degraded" {
+		t.Fatalf("failed egress became healthy: %#v", snapshot)
+	}
+	service.health.EgressValidated = true
+	snapshot = service.snapshot(service.probe.Run())
+	if snapshot.MessageCode != "connected" || snapshot.DNSReady == nil || !*snapshot.DNSReady {
+		t.Fatalf("completed health missing: %#v", snapshot)
+	}
+	service.phase = "config_staged"
+	snapshot = service.snapshot(service.probe.Run())
+	if snapshot.DNSReady != nil || snapshot.CoreEgressValidated != nil || snapshot.MessageCode == "connected" {
+		t.Fatalf("health survived stopped session: %#v", snapshot)
+	}
 }
 
 func (readyCommands) Available(string) bool {

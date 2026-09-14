@@ -76,3 +76,10 @@ Core/daemon crash, partial rollback retry, actual suspend/resume and connected
 native reboot/reconnect with the original network and profile restored.
 Intermittent full-mode TLS failures remain
 unresolved, so overall acceptance stays open under [the Linux lane owner](../README.md).
+
+[Package 8](../../../docs/operations/evidence/2026-09-11-r12-l04-ui-status/README.md)
+rebuilds the UI with local daemon-status polling. Signature, native package
+audit, upgrade preserving the profile, real non-root GUI/polkit, HTTPS and
+automatic UI correction after Core SIGKILL pass for its exact bytes. Core,
+daemon, units and hooks are byte-identical to package 7. Its older lifecycle
+proof retains its original artifact identity; final Linux acceptance is open.

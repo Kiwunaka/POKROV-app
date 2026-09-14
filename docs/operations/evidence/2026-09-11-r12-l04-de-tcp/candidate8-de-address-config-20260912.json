@@ -1,0 +1,20 @@
+{
+  "captured_epoch": 1789215803.7000363,
+  "origin": "owned DE read-only static-address configuration",
+  "boot_epoch": 1788456641,
+  "files": [
+    {
+      "path": "/etc/netplan/50-cloud-init.yaml",
+      "file_sha256": "0ed76268bfa55f5c625eed5d1a6de7b36e9fc957c9f09fafa52e51e1dcaa3f5f",
+      "target_address_present": {
+        "default_delivery": false,
+        "management_delivery": true
+      }
+    }
+  ],
+  "network_units": {
+    "systemd-networkd.service": "active",
+    "NetworkManager.service": "inactive"
+  },
+  "no_runtime_mutation": true
+}

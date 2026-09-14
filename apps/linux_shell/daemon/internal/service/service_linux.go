@@ -36,6 +36,7 @@ type Service struct {
 	transaction      *networktxn.Transaction
 	closed           bool
 	recoveryRequired bool
+	health           *coreprocess.Health
 }
 
 func New(
@@ -189,6 +190,13 @@ func (service *Service) connect(request protocol.Request) protocol.Response {
 	service.phase = "running"
 	service.lastFailure = ""
 	go service.watchCore(core)
+	probeContext, cancelProbe := context.WithTimeout(context.Background(), 20*time.Second)
+	health, probeErr := core.Probe(probeContext)
+	cancelProbe()
+	if probeErr != nil {
+		health = coreprocess.Health{}
+	}
+	service.health = &health
 	service.event("connect", "pass", request.RequestID, "")
 	return protocol.Success(request.RequestID, service.snapshot(result))
 }
@@ -275,7 +283,7 @@ func (service *Service) snapshot(result host.Result) protocol.Snapshot {
 	if !result.HostReady() || service.lastFailure != "" {
 		health = "degraded"
 	}
-	return protocol.Snapshot{
+	snapshot := protocol.Snapshot{
 		Phase:               phase,
 		SupportsLiveConnect: result.HostReady(),
 		CanInitialize:       result.InMatrix,
@@ -293,6 +301,22 @@ func (service *Service) snapshot(result host.Result) protocol.Snapshot {
 		ConnectionPending:   false,
 		HostStack:           result.Stack,
 	}
+	if phase == "running" && service.health != nil && service.lastFailure == "" {
+		snapshot.DNSReady = &service.health.DNSReady
+		snapshot.CoreEgressValidated = &service.health.EgressValidated
+		snapshot.DNSState = "degraded"
+		snapshot.UplinkState = "degraded"
+		if service.health.DNSReady {
+			snapshot.DNSState = "healthy"
+		}
+		if service.health.EgressValidated {
+			snapshot.UplinkState = "healthy"
+		}
+		if service.health.DNSReady && service.health.EgressValidated {
+			snapshot.MessageCode = "connected"
+		}
+	}
+	return snapshot
 }
 
 // Recover runs before IPC begins; failures remain visible and retryable through

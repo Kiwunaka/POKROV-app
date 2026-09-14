@@ -1,0 +1,77 @@
+{
+  "status": "PASS_EXACT_PACKAGE_AUTH_NEGATIVES",
+  "candidate_sha256": "b71c3190ad56e534bcd0057b68de4f818e775bc89cf1d5470814468ad7ada933",
+  "policy_matches_signed_payload": true,
+  "policy_sha256": "b6a183c6148ee02c1d3d65a92374855c69b98593bc8e337280c1cbeec053a44c",
+  "temporary_action_overrides": [],
+  "terminal_units": {
+    "timeout": {
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0"
+    },
+    "cancel": {
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0"
+    },
+    "missing-agent": {
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0"
+    }
+  },
+  "events": [
+    {
+      "POKROV_EVENT": "authorization",
+      "POKROV_OUTCOME": "unavailable",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_ERROR_CODE": "linux_authorization_timeout",
+      "epoch": 1789143979.934611
+    },
+    {
+      "POKROV_EVENT": "authorization",
+      "POKROV_OUTCOME": "denied",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_ERROR_CODE": "linux_authorization_dismissed",
+      "epoch": 1789144111.087892
+    },
+    {
+      "POKROV_EVENT": "authorization",
+      "POKROV_OUTCOME": "unavailable",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_ERROR_CODE": "linux_authorization_agent_unavailable",
+      "epoch": 1789144136.178071
+    },
+    {
+      "POKROV_EVENT": "authorization",
+      "POKROV_OUTCOME": "denied",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_ERROR_CODE": "linux_authorization_denied",
+      "epoch": 1789144228.236383
+    },
+    {
+      "POKROV_EVENT": "authorization",
+      "POKROV_OUTCOME": "denied",
+      "POKROV_AUTHORIZATION_BACKEND": "polkit_dbus",
+      "POKROV_ERROR_CODE": "linux_authorization_dismissed",
+      "epoch": 1789144449.839746
+    }
+  ],
+  "restored_agent_pid": 10886,
+  "restored_agent_uid": 1000,
+  "same_gui_pid": 1648,
+  "same_gui_uid": 1000,
+  "network_unchanged": {
+    "routes4": true,
+    "routes6": true,
+    "rules4": true,
+    "rules6": true,
+    "nft": true,
+    "dns": true,
+    "domains": true
+  },
+  "no_tun_or_recovery": true,
+  "actual_restore_prompt_observed_then_cancelled": true,
+  "finished_epoch": 1789144525.5424492
+}

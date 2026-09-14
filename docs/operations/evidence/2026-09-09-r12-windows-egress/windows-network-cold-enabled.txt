@@ -1,0 +1,7 @@
+name="POKROV-r12-managed-20260908"
+UUID="e42043a3-dd4d-452b-b151-410ad5d49543"
+VMState="poweroff"
+cableconnected1="on"
+nic1="nat"
+clipboard="disabled"
+draganddrop="disabled"

@@ -1,0 +1,22 @@
+{
+    "utc":  "2026-09-09T09:00:14.8881376Z",
+    "owned_install_verified":  true,
+    "raw_addresses_exported":  false,
+    "server_port":  443,
+    "outbound_keys":  [
+                          "type",
+                          "tag",
+                          "server",
+                          "server_port",
+                          "uuid",
+                          "tls",
+                          "packet_encoding",
+                          "flow"
+                      ],
+    "tls_alpn":  [
+
+                 ],
+    "multiplex_enabled":  false,
+    "tcp_fast_open":  false,
+    "tcp_multi_path":  false
+}

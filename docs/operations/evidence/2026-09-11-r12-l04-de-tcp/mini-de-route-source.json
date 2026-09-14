@@ -1,0 +1,7 @@
+{
+  "route_device": "enp3s0",
+  "preferred_source_matches_ssh_alias": true,
+  "source_sha256": "760ec3240b2a4280777b95015afc72e40e35ae46285d75f4411a4930d7c15b8b",
+  "target_alias": "pokrov-de",
+  "tcp_probe_has_no_http_or_tls_payload": true
+}

@@ -1,0 +1,57 @@
+{
+  "files": [
+    {
+      "name": "candidate8-installed-before-lifecycle-us-20260912.json",
+      "bytes": 63353,
+      "sha256": "d8bb8e62e3ad551e7b8903e05afe978e692668777428006416cfb5590dec6b84"
+    },
+    {
+      "name": "candidate8-lifecycle-us-20260912-connected-uninstall.json",
+      "bytes": 2732,
+      "sha256": "f78946a73801d72c455308e3f4c7f42393b4992af596ff9e65db0ac624a9e44a"
+    },
+    {
+      "name": "candidate8-lifecycle-us-20260912-connected-uninstall.log",
+      "bytes": 1862,
+      "sha256": "de07ff9d2dbff118d19d1a4a2e8ec55df980bf3ffcb710da48ca124f09626cab"
+    },
+    {
+      "name": "candidate8-lifecycle-us-recovery-20260912.json",
+      "bytes": 1087,
+      "sha256": "3a1ca8d71451e0203fc2eb983b55759e400f489d453f5a9e1dd50ec6a1bc6854"
+    },
+    {
+      "name": "candidate8-lifecycle-us-driver-20260912.log",
+      "bytes": 3125,
+      "sha256": "94ffe5a64830ff0d990a2f32904cf8ac1abbbde4b730c797b21426d09c904a4a"
+    },
+    {
+      "name": "candidate8-reinstall-us-20260912.log",
+      "bytes": 358,
+      "sha256": "d1f5e05a102077f9dcf0009688a178a073722655f4ef14dba90906bb125183ac"
+    },
+    {
+      "name": "candidate8-lifecycle-us-outer-20260912.log",
+      "bytes": 821,
+      "sha256": "937030bcccbce3c79cd8807ab502002347129f467a6bea2cac9ca999070fb124"
+    },
+    {
+      "name": "candidate8-lifecycle-us-fixture-20260912.json",
+      "bytes": 919,
+      "sha256": "ff36e8db51a1f144caf394751cba3df686bed958b3b1fd6c1ed55f0ed6f1aba8"
+    },
+    {
+      "name": "candidate8-lifecycle-us-manual-restore-20260912.json",
+      "bytes": 799,
+      "sha256": "3aa97bfbbb3dc3583ce0f6e02a1bd18d722cee0ddc1318989f55488dd0e72d33"
+    },
+    {
+      "name": "candidate8-lifecycle-us-dpkg-restore-20260912.log",
+      "bytes": 648,
+      "sha256": "c7765e5ae04068c3f10be44bb482580119609b01dea594fe1dedd5bb1cababe3"
+    }
+  ],
+  "terminal_guest_unit": "MainPID=0\nResult=exit-code\nExecMainStatus=1\nActiveState=failed\nSubState=failed\n",
+  "host_free_bytes": 1631399936,
+  "disk_allocated_bytes": 3455348736
+}

@@ -1,0 +1,32 @@
+{
+  "utc": "2026-09-09T06:36:35.543335+00:00",
+  "label": "frankfurt-mobile",
+  "apk_sha256": "d030288a672b654a70db593f512416113fd2e8ad12025237b94a422c9613f510",
+  "source": "c05b58b268bbd789aa96fb662cb46c9768558ef0",
+  "origin": "RU-origin",
+  "device": "Huawei ADA-AL00U API31",
+  "profile": "Frankfurt ordinary",
+  "wifi_on": "0",
+  "mobile_data": "1",
+  "vpn_service": true,
+  "foreground": true,
+  "tun_interfaces": [
+    "tun0"
+  ],
+  "protection_confirmed": true,
+  "dns_ready": true,
+  "egress_confirmed": true,
+  "routes_assigned": true,
+  "checked_time": null,
+  "network_transport_types": [
+    "CELLULAR",
+    "CELLULAR|VPN",
+    "CELLULAR|WIFI",
+    "CELLULAR|WIFI|ETHERNET",
+    "ETHERNET",
+    "VPN",
+    "WIFI",
+    "WIFI|ETHERNET"
+  ],
+  "raw_identifiers_exported": false
+}

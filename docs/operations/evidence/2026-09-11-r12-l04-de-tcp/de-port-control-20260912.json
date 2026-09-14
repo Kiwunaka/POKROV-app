@@ -1,0 +1,276 @@
+{
+  "utc": "2026-09-12T11:44:57.192846+00:00",
+  "status": "OBSERVATION_COMPLETE",
+  "purpose": "L04 known MINI-to-DE failure: paired existing VPN443 and SSH22 port control",
+  "target_alias": "pokrov-de",
+  "target_sha256": "66624e15725d946c4321da789698aff1d98a64de1af16bb4dc43f2bff20bea67",
+  "results": [
+    {
+      "origin": "pokrov-de",
+      "trials": [],
+      "flows": {
+        "aa51b670de11c7c25cff6cd2f16684d97d65c0212c65f083eedc185120343241": {
+          "port": 443,
+          "syn_client": 1,
+          "synack_server": 1,
+          "rst_client": 0,
+          "rst_server": 0
+        }
+      },
+      "capture_exit": 0,
+      "capture_stats": {
+        "captured": 2,
+        "received by filter": 3,
+        "dropped by kernel": 0
+      },
+      "qdisc_before": [
+        {
+          "kind": "fq_codel",
+          "drops": 0,
+          "overlimits": 0
+        }
+      ],
+      "qdisc_after": [
+        {
+          "kind": "fq_codel",
+          "drops": 0,
+          "overlimits": 0
+        }
+      ],
+      "raw_packets_retained": false
+    },
+    {
+      "origin": "pokrov-mini",
+      "trials": [
+        {
+          "trial": 1,
+          "port": 443,
+          "result": "TimeoutError",
+          "seconds": 4.004,
+          "flow": "80da43232362eecfe662726cef263d6c1745741987a1cf8ccec615a37d836c34",
+          "mini_capture": {
+            "port": 443,
+            "syn_client": 3,
+            "synack_server": 0,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": null
+        },
+        {
+          "trial": 2,
+          "port": 22,
+          "result": "TimeoutError",
+          "seconds": 4.004,
+          "flow": "d56a2c42b0d6bb179061a35c4a5637375a3f32f3bd7526575338c640b90384b5",
+          "mini_capture": {
+            "port": 22,
+            "syn_client": 3,
+            "synack_server": 0,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": null
+        },
+        {
+          "trial": 3,
+          "port": 443,
+          "result": "TimeoutError",
+          "seconds": 4.004,
+          "flow": "f49e21b453046b54ebafa38a8c43483fbbd4d56405f6e97f85ede81396cae81f",
+          "mini_capture": {
+            "port": 443,
+            "syn_client": 3,
+            "synack_server": 0,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": null
+        },
+        {
+          "trial": 4,
+          "port": 443,
+          "result": "TimeoutError",
+          "seconds": 4.004,
+          "flow": "b91afb32188b914bf35b4e3beaa32d7e0ba3d901e548c9a4205829a05198b8f9",
+          "mini_capture": {
+            "port": 443,
+            "syn_client": 3,
+            "synack_server": 0,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": null
+        },
+        {
+          "trial": 5,
+          "port": 22,
+          "result": "TimeoutError",
+          "seconds": 4.004,
+          "flow": "efcfb4621ddef2c2fd0dca52e1da22b0a1043e1269e4909e971acb1cd07b9a4d",
+          "mini_capture": {
+            "port": 22,
+            "syn_client": 3,
+            "synack_server": 0,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": null
+        },
+        {
+          "trial": 6,
+          "port": 443,
+          "result": "PASS",
+          "seconds": 0.044,
+          "flow": "aa51b670de11c7c25cff6cd2f16684d97d65c0212c65f083eedc185120343241",
+          "mini_capture": {
+            "port": 443,
+            "syn_client": 1,
+            "synack_server": 1,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": {
+            "port": 443,
+            "syn_client": 1,
+            "synack_server": 1,
+            "rst_client": 0,
+            "rst_server": 0
+          }
+        },
+        {
+          "trial": 7,
+          "port": 443,
+          "result": "TimeoutError",
+          "seconds": 4.001,
+          "flow": "558ebd1e4bf49e781c8268e2558a108f70ecb7dc2f4b4de812d926780e1ec85c",
+          "mini_capture": {
+            "port": 443,
+            "syn_client": 3,
+            "synack_server": 0,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": null
+        },
+        {
+          "trial": 8,
+          "port": 22,
+          "result": "TimeoutError",
+          "seconds": 4.004,
+          "flow": "cc383875df2236e39ae5a35d3be7c5b4e27f2251393f20e7f5f670d902986d75",
+          "mini_capture": {
+            "port": 22,
+            "syn_client": 3,
+            "synack_server": 0,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": null
+        },
+        {
+          "trial": 9,
+          "port": 443,
+          "result": "TimeoutError",
+          "seconds": 4.004,
+          "flow": "38203ffe27bbe842f604ae9cb9e95f44099b9ec7d544aea0fb11e94f20a82759",
+          "mini_capture": {
+            "port": 443,
+            "syn_client": 3,
+            "synack_server": 0,
+            "rst_client": 0,
+            "rst_server": 0
+          },
+          "de_capture": null
+        }
+      ],
+      "flows": {
+        "80da43232362eecfe662726cef263d6c1745741987a1cf8ccec615a37d836c34": {
+          "port": 443,
+          "syn_client": 3,
+          "synack_server": 0,
+          "rst_client": 0,
+          "rst_server": 0
+        },
+        "d56a2c42b0d6bb179061a35c4a5637375a3f32f3bd7526575338c640b90384b5": {
+          "port": 22,
+          "syn_client": 3,
+          "synack_server": 0,
+          "rst_client": 0,
+          "rst_server": 0
+        },
+        "f49e21b453046b54ebafa38a8c43483fbbd4d56405f6e97f85ede81396cae81f": {
+          "port": 443,
+          "syn_client": 3,
+          "synack_server": 0,
+          "rst_client": 0,
+          "rst_server": 0
+        },
+        "b91afb32188b914bf35b4e3beaa32d7e0ba3d901e548c9a4205829a05198b8f9": {
+          "port": 443,
+          "syn_client": 3,
+          "synack_server": 0,
+          "rst_client": 0,
+          "rst_server": 0
+        },
+        "efcfb4621ddef2c2fd0dca52e1da22b0a1043e1269e4909e971acb1cd07b9a4d": {
+          "port": 22,
+          "syn_client": 3,
+          "synack_server": 0,
+          "rst_client": 0,
+          "rst_server": 0
+        },
+        "aa51b670de11c7c25cff6cd2f16684d97d65c0212c65f083eedc185120343241": {
+          "port": 443,
+          "syn_client": 1,
+          "synack_server": 1,
+          "rst_client": 0,
+          "rst_server": 0
+        },
+        "558ebd1e4bf49e781c8268e2558a108f70ecb7dc2f4b4de812d926780e1ec85c": {
+          "port": 443,
+          "syn_client": 3,
+          "synack_server": 0,
+          "rst_client": 0,
+          "rst_server": 0
+        },
+        "cc383875df2236e39ae5a35d3be7c5b4e27f2251393f20e7f5f670d902986d75": {
+          "port": 22,
+          "syn_client": 3,
+          "synack_server": 0,
+          "rst_client": 0,
+          "rst_server": 0
+        },
+        "38203ffe27bbe842f604ae9cb9e95f44099b9ec7d544aea0fb11e94f20a82759": {
+          "port": 443,
+          "syn_client": 3,
+          "synack_server": 0,
+          "rst_client": 0,
+          "rst_server": 0
+        }
+      },
+      "capture_exit": 0,
+      "capture_stats": {
+        "captured": 26,
+        "received by filter": 26,
+        "dropped by kernel": 0
+      },
+      "qdisc_before": [
+        {
+          "kind": "fq",
+          "drops": 7,
+          "overlimits": 0
+        }
+      ],
+      "qdisc_after": [
+        {
+          "kind": "fq",
+          "drops": 7,
+          "overlimits": 0
+        }
+      ],
+      "raw_packets_retained": false
+    }
+  ],
+  "no_vm_or_firewall_or_service_mutation": true
+}

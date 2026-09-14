@@ -1,0 +1,109 @@
+{
+  "utc": "2026-09-09T07:49:38.084628+00:00",
+  "target_install_sha256": "fe746f1300ba28298736b684b3b272af2f0c3d02cf4934def66ee98f581475d0",
+  "mapping_nodes": [
+    "de",
+    "it",
+    "nl",
+    "pl",
+    "ru",
+    "us"
+  ],
+  "active_keys": 1,
+  "extension_sync_history": [
+    {
+      "utc": "2026-09-09T07:16:59.063678",
+      "access_status": "PAID",
+      "nodes_attempted": 7,
+      "nodes_ok": 6,
+      "sync_ok": false
+    }
+  ],
+  "raw_identifiers_returned": false,
+  "panels": [
+    {
+      "node": "de",
+      "kind": "inbound_compare",
+      "checks": {
+        "inbound_present": true,
+        "enabled_match": true,
+        "port_match": true,
+        "protocol_match": true,
+        "network_match": true,
+        "security_match": true,
+        "sni_match": true,
+        "sid_match": true,
+        "pbk_match": true
+      },
+      "expected_port": 443,
+      "runtime_port": 443,
+      "owned_runtime": {
+        "enable": true,
+        "up": 0,
+        "down": 0,
+        "online": null,
+        "last_online_age_seconds": null
+      }
+    },
+    {
+      "node": "de",
+      "matches": 1,
+      "rows": [
+        {
+          "inbound": 1,
+          "enabled": true,
+          "uuid_matches_user": true,
+          "uuid_matches_mapping": true,
+          "tg_matches": true,
+          "expiry_unlimited": true,
+          "limit_ip": 5,
+          "total_gb": 0,
+          "flow": "xtls-rprx-vision",
+          "transport_profile": "legacy_reality_fallback"
+        }
+      ]
+    },
+    {
+      "node": "it",
+      "kind": "inbound_compare",
+      "checks": {
+        "inbound_present": true,
+        "enabled_match": true,
+        "port_match": false,
+        "protocol_match": true,
+        "network_match": true,
+        "security_match": true,
+        "sni_match": true,
+        "sid_match": true,
+        "pbk_match": true
+      },
+      "expected_port": 443,
+      "runtime_port": 10443,
+      "owned_runtime": {
+        "enable": true,
+        "up": 0,
+        "down": 0,
+        "online": null,
+        "last_online_age_seconds": null
+      }
+    },
+    {
+      "node": "it",
+      "matches": 1,
+      "rows": [
+        {
+          "inbound": 1,
+          "enabled": true,
+          "uuid_matches_user": true,
+          "uuid_matches_mapping": true,
+          "tg_matches": true,
+          "expiry_unlimited": true,
+          "limit_ip": 5,
+          "total_gb": 0,
+          "flow": "xtls-rprx-vision",
+          "transport_profile": "legacy_reality_fallback"
+        }
+      ]
+    }
+  ]
+}
