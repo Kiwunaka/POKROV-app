@@ -304,13 +304,21 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     }
     RefreshBoundNetwork(owner);
     if (owner->cancelled) return {Status::kNotReady, "connect_owner_changed"};
+    if (revocation->terminate_active) {
+      // Status does not hold the execution lock. Once a terminal revoke is
+      // admitted, never project the old lease as active while Core settles it.
+      std::lock_guard<std::mutex> state(state_lock_);
+      if (active_connect_ != owner || owner->cancelled || owner->deadline_expired) {
+        return {Status::kNotReady, "connect_owner_changed"};
+      }
+      owner->transport_terminated = true;
+    }
     const auto result = runtime_->RevokeTransportLease(*revocation);
     RefreshBoundNetwork(owner);
     {
       std::lock_guard<std::mutex> state(state_lock_);
       if (result.status == Status::kOk && active_connect_ == owner && !owner->cancelled &&
           !owner->deadline_expired && owner->promoted_lease_ref == revocation->endpoint_lease_ref) {
-        if (revocation->terminate_active) owner->transport_terminated = true;
         snapshot_ = runtime_->Snapshot();
         return ProjectBoundState(snapshot_);
       }

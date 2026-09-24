@@ -180,8 +180,10 @@ flutter::EncodableValue RuntimeSnapshotValue(
   snapshot = pokrov::service::BindSnapshotToProfileIntent(
       std::move(snapshot), expected_profile_digest);
   const auto uplink = snapshot.running ? HasDefaultUplink() : std::nullopt;
+  const bool proof_pending = snapshot.transport_proof_state_available &&
+      snapshot.transport_proof_pending;
   const bool current_proof =
-      snapshot.core_egress_validated && uplink.value_or(false);
+      snapshot.core_egress_validated && !proof_pending && uplink.value_or(false);
   flutter::EncodableMap values;
   if (snapshot.compatible && snapshot.transport_proof_state_available) {
     values[flutter::EncodableValue("transportProofPending")] =
@@ -243,7 +245,7 @@ flutter::EncodableValue RuntimeSnapshotValue(
         flutter::EncodableValue("network_available");
   }
   values[flutter::EncodableValue("dnsReady")] =
-      flutter::EncodableValue(snapshot.dns_ready && uplink.value_or(false));
+      flutter::EncodableValue(snapshot.dns_ready && !proof_pending && uplink.value_or(false));
   values[flutter::EncodableValue("stagedProfileDigest")] =
       flutter::EncodableValue(snapshot.staged_profile_digest);
   values[flutter::EncodableValue("effectiveProfileDigest")] =

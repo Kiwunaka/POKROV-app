@@ -2027,10 +2027,13 @@ Android likewise changes the exact process owner to proof-pending and clears its
 active-lease marker only after Core confirms terminal revocation. A closed UI
 then stops that owner; a concurrent UI close forces exact service cleanup rather
 than leaving a terminated lease detached. The host bridge checks both markers.
-Windows service applies the same terminal projection after the Core ACK, and
-runner requires those markers in the returned snapshot. A terminated owner no
-longer survives loss of its client process; drain retains its original active
-flow deadline.
+Windows service projects proof-pending and clears active-lease as soon as it
+admits a terminal revoke command: concurrent `Status` cannot report the old
+lease as active while Core settles the command. The markers remain negative
+after Core ACK or uncertain cleanup; runner requires them in the returned
+snapshot and does not publish healthy DNS/egress while proof is pending. A
+terminated owner no longer survives loss of its client process;
+drain retains its original active-flow deadline.
 
 A recreated UI has no exact lease identity and cannot resume signed-policy
 refresh or targeted revocation for that owner. On startup/resume and desktop
