@@ -216,9 +216,10 @@ foreach ($forbidden in @("connectionPresentation:", "runtimeHeadline:", "onToggl
   }
 }
 
+# The consolidated shell includes seven opt-in transport and routing parts.
 $partCount = [regex]::Matches($appShell, "(?m)^part '").Count
-if ($partCount -gt 29) {
-  $errors.Add("app_shell.dart part count increased from the guarded ceiling of 29 to $partCount.")
+if ($partCount -gt 36) {
+  $errors.Add("app_shell.dart part count increased from the guarded ceiling of 36 to $partCount.")
 }
 
 $directHaptics = @(

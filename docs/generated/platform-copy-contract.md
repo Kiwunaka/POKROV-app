@@ -8,8 +8,8 @@ This file maps copy ownership for the active client. It is a digest-pinned refer
 - public URLs SHA-256: `022f7ba577714bdc0bffd3cc00254309af346ef0c8fc62fe9c52e40d72a0de67`
 - commercial revision: `2026-08-21.1`
 - commercial contract SHA-256: `22b7ef26908c23c2bb53322dec959a3bc050a20a6c6d2feff9f78708b45e23cd`
-- copy catalog: `2026-07-23-competitor-style-v2` / `af380ebeee676cc4186a313110cda969c61ab897620b4093e7fee2c73f50d35d`
-- marketing governance: `2026-08-22.1` / `934e1af78e98ca03edcd1bb73ae7259a801248fe73c5f3297d4528fbf1a1312a`
+- copy catalog: `2026-07-23-competitor-style-v2` / `b8b3575372c789fd5d656ce2d83d7437f23d831fb996cc8f865e8a3a8a70b036`
+- marketing governance: `2026-08-22.1` / `ee3b2cca5962716f1bfabca692203d43d059c90e0d2fe57c5e5085ff7f8a61aa`
 - legal launch ready: `false`
 - campaign launch state: `blocked_owner_approval_required`
 

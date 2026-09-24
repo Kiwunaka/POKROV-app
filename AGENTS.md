@@ -25,6 +25,17 @@ This repository is the canonical client-development lane for POKROV. Promote cli
 - Platform-owned facts and API contracts live under `C:/Users/kiwun/Documents/ai/VPN/shared/` and the platform canonical docs. Coordinate cross-repo changes instead of copying new truth here.
 - Client product, shell, runtime, host integration, and client release-readiness truth belongs in this repository and its canonical registry entries.
 
+### 1.2–1.4 Execution Rules
+
+- Complete each stage as working behavior committed on `main` when ready.
+- Keep stage work narrow; do not create new evidence directories, ledgers, or status reports in Git.
+- Update the canonical behavior owner once when behavior changes.
+- Build after code changes, with the signed release build on final stage code.
+- Run affected checks and the stage checklist; repeat only after a relevant change or failure.
+- Use scoped commits; preserve unrelated work and retained rollback material.
+- Ask the owner before production deploys, release publication, destructive cleanup, expenses, prices, or numeric limits.
+- Use saved SSH, hypervisor access, and ADB for owned systems; keep status claims tied to observed results.
+
 ## Runtime And Security
 
 - Authorized defensive validation is limited to local POKROV repositories, POKROV-owned runtime surfaces, and isolated fixtures; third-party systems, accounts, credentials, and data are out of scope.
