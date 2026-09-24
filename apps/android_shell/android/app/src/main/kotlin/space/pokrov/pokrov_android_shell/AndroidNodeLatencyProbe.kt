@@ -97,7 +97,7 @@ internal object AndroidNodeLatencyProbe {
             ?.first
     }
 
-    private fun isEligibleUnderlyingNetwork(capabilities: NetworkCapabilities?): Boolean {
+    internal fun isEligibleUnderlyingNetwork(capabilities: NetworkCapabilities?): Boolean {
         if (capabilities == null ||
             !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
             !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)

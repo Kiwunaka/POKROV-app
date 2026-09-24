@@ -3,6 +3,7 @@
 
 #include <string>
 #include <atomic>
+#include <mutex>
 
 #include "service_protocol.h"
 #include "windows_crash_profile.h"
@@ -32,12 +33,32 @@ struct ServiceRuntimeSnapshot {
   bool trusted = false;
   bool compatible = false;
   bool command_accepted = false;
+  bool connect_stopped = false;  // exact private target, never a global snapshot inference
+  bool smart_access_lease_found = false;
+  bool smart_access_lease_renewed = false;
+  bool smart_access_runtime_control_configured = false;
+  bool smart_access_restrictions_acknowledged = false;
+  std::string smart_access_restriction_journal;
+  std::string smart_access_lease_ids_json;
+  std::string boot_clock_json;
+  std::string transport_network_context_ref;
+  bool routing_catalog_found = false;
   bool core_ready = false;
   bool can_initialize = false;
   bool can_connect = false;
   bool running = false;
   bool core_egress_validated = false;
   bool dns_ready = false;
+  bool transport_proof_state_available = false;
+  bool transport_proof_pending = false;
+  bool transport_lease_state_available = false;
+  bool transport_lease_active = false;
+  int routing_catalog_window_version = 0;
+  int smart_access_lease_version = 0;
+  int routing_catalog_control_version = 0;
+  int smart_access_runtime_control_version = 0;
+  std::string transport_capabilities_json;
+  std::string core_module_sha256;
   std::string staged_profile_digest;
   std::string effective_profile_digest;
   std::string phase = "artifact_missing";
@@ -54,7 +75,14 @@ ClientProbe ProbeInstalledService();
 struct ServiceCallControl {
   std::atomic<bool> cancel_requested{false};
   std::atomic<bool> abandon_wait{false};
+  // Invocation completion is not proof that the service's tunnel is stopped.
+  std::atomic<bool> completed{false};
+  // Bound-connect cancellation survives the response. Keep its secret target
+  // in this invocation owner only, never in snapshots, logs or diagnostics.
+  std::mutex cancellation_lock;
+  std::string bound_cancellation_target;
 };
+bool CancelInstalledServiceConnect(ServiceCallControl* control);
 ServiceRuntimeSnapshot InvokeInstalledService(Command command,
                                               const std::string& body,
                                               ServiceCallControl* control = nullptr);

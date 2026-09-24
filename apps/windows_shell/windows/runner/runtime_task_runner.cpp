@@ -32,6 +32,7 @@ void RuntimeTaskRunner::Work() {
     } catch (...) {
       snapshot.failure = "runtime_failure";
     }
+    task.control->completed = true;
     {
       std::lock_guard<std::mutex> guard(lock_);
       running_.reset();

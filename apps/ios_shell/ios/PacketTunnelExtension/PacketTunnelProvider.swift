@@ -83,6 +83,15 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     _ messageData: Data,
     completionHandler: ((Data?) -> Void)? = nil
   ) {
+    if messageData == PokrovCoreTransportInventory.providerMessage {
+      guard serviceRunning, providerState == .running,
+            let inventory = PokrovCoreTransportInventory.read() else {
+        completionHandler?(nil)
+        return
+      }
+      completionHandler?(Data(inventory.utf8))
+      return
+    }
     switch decodeMessageAction(from: messageData) {
     case .clearError:
       clearErrorArtifact()

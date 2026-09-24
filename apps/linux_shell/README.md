@@ -1,5 +1,12 @@
 # POKROV Linux conditional beta
 
+Local POST12 source, 2026-09-22 (`NOT_VERIFIED`): primary Connect now supports
+same-socket cancellation through the daemon's existing request owner, including
+polkit and Core waits. Rollback retains its independent deadline and dirty state.
+The client waits for the old request and reads current state before reporting
+cancellation. No package/build/install proof is added. See the
+[cancellation contract](../../docs/architecture/platform-privilege-runtime-contract.md#linux-primary-connect-cancellation).
+
 [R12-L01 scope verification](../../docs/operations/evidence/2026-09-11-r12-android-abi-promotion/README.md#r12-l01--verified--i3--already_fixed)
 confirms the existing Ubuntu 24.04 amd64 boundary and current capability against
 main 57352ae source and CI. It closes the scope decision only; package and
@@ -112,7 +119,11 @@ and historical DE failures remain retained. Final Linux acceptance stays open.
   in place if earlier cleanup fails. No host ruleset is flushed;
 - `/var/lib/pokrov/network-recovery.json` retains bounded ownership and pending
   cleanup, with mode 0600, atomic replacement and file/directory sync. Startup
-  and unexpected Core exit resume cleanup. A live/replaced TUN, changed nft
+  and unexpected Core exit resume cleanup. At startup only, a live `pokrov0`
+  from the previous daemon allows up to five seconds for Core's parent-death
+  signal to remove it before one recovery retry. A live `pokrov0` also blocks
+  new admission when the journal is absent; it is never treated as an owned
+  cleanup target. A still-live/replaced TUN, changed nft
   ownership or ambiguous route object blocks cleanup without deleting foreign
   state. A fresh boot with no owned nft table retires the old journal without
   acting on new-boot routes. Invalid journals remain for recovery;
@@ -128,8 +139,8 @@ and historical DE failures remain retained. Final Linux acceptance stays open.
   with LightDM and the production polkit action;
 - Fedora Workstation remains a package/runtime-proof backlog row;
 - `supports_live_connect` reflects the required host stack and executable Core;
-  `can_connect` additionally requires a staged profile, no active transaction
-  and no pending recovery.
+  `can_connect` additionally requires an ordinary staged profile, no active
+  transaction and no pending recovery. A bound-only staged profile reports false.
   Running follows actual Core start and network application. After that
   transaction, linuxd requests bounded DNS and selected-proxy HTTPS proof from
   its private Core child before completing connect. Both proofs must pass for
@@ -159,3 +170,88 @@ and historical DE failures remain retained. Final Linux acceptance stays open.
 
 No Linux artifact or availability promise is added to release 1.2.0 merely by
 closing L04 gates. Public Linux distribution requires its separate release decision.
+
+ATS-005 source adds read-only `clock_snapshot` on the existing daemon socket.
+It returns boot UUID plus CLOCK_BOOTTIME elapsed milliseconds (including suspend)
+for client transport time anchoring. No new listener, polkit flow, network probe
+or tunnel-health assertion is introduced. The standard syscall path is unbuilt
+and untested; boot/suspend/restart and protocol validation remain deferred under
+the implementation-first instruction. This does not change L04 evidence or
+release availability.
+
+ATS-006 source adds Core ingredient metadata to existing daemon snapshots.
+`initialize` uses the fixed root-owned Core metadata command under a three-second
+deadline and bounded output; memory-only reuse checks executable file identity.
+This command exits before profile/state/TUN handling. Once a Core child exists,
+the daemon uses that child's prepared-reply inventory, never the preflight cache.
+An exited child supplies no inventory. The client applies the shared canonical
+feature decoder; these ingredients neither relax Linux's profile allowlist nor
+prove artifact identity, a signed capability reference or connectivity.
+
+Core and linuxd need matching source for the additive prepared-reply field.
+No package was built or installed, no metadata process was executed, and no L04
+evidence is reused for these changes. Source/parser/process deadline, replacement
+and lifecycle checks remain NOT_VERIFIED until the separate verification stage.
+
+The metadata envelope and actual child's prepared reply now include
+`core_module_sha256`, computed inside Core from `/proc/self/exe` with a bounded
+stream. The short-lived preflight process is distinct from the tunnel child;
+after launch only the child's digest is exposed. Missing/malformed digest is
+unavailable, and caller-provided hashes cannot create the selector context.
+Package-container digests remain separate. This is source only: no hash/process
+was executed. Expected-module/profile comparison and Dart dispatch are implemented
+below; the selector executor integration remains pending.
+
+The dedicated daemon action `connect_with_identity` requires a closed payload
+with `expected_core_module_sha256` and `expected_profile_sha256`, each 64
+lowercase hex, `expected_network_context_ref` from `read_network_context`,
+plus `boot_ref`, `started_elapsed_ms` and `deadline_elapsed_ms`.
+It uses the existing polkit authorization and per-socket connect
+cancellation. Old daemons reject this action instead of ignoring expectations
+on ordinary connect. An existing transaction or pending recovery rejects it
+with `linux_runtime_busy`, preserving the prior owner's state.
+
+Before `networktxn.Execute`, the actual child must return identity/deadline schema 1 and
+the exact expected pair. Profile SHA identifies the raw staged bytes, matching
+the staging digest. Missing/mismatched identity returns `core_identity_mismatch`
+after aborting the unstarted child. Its start command repeats the pair; Core
+checks it before TUN start and confirms it in `started`. Failed confirmation
+uses existing rollback. Dart implements `RuntimeCoreIdentityConnect` with the
+original clock sample and duration. Daemon/Core observe CLOCK_BOOTTIME; Core
+retains the deadline after responding, including for a started tunnel. Startup
+does not promote a lease or renew the interval. `cancel_connect` addresses only
+the same peer's exact bound request after the start socket closes; socket
+cancellation handles pending starts. Snapshot input digests come from daemon
+staging and the actual child. Normal Connect does not enable ATS. Selector,
+byte/proof/lease integration and verification remain open; no runtime/build ran.
+
+ATS staging uses `stage_bound_profile`. The daemon writes a private bound-only
+marker before replacing the profile and blocks ordinary `connect` while it is
+present, including after daemon restart. Ordinary restaging or invalidation
+clears the marker after the prior profile is no longer reusable. Bound Connect
+requires a fresh successful stage in the current daemon process. The new action
+is rejected by old daemons. This is source-only and NOT_VERIFIED.
+Busy, unsupported-host and malformed stage requests preserve an earlier bound
+stage; a storage error disables bound admission because the profile file may
+already have changed.
+Stage and invalidate requests while a transaction is running or awaiting
+recovery return `runtime_busy` without changing the current owner's health.
+For a bound connect, linuxd retains the socket peer PID/start time after the
+request returns. If that process exits, it cancels unfinished startup or stops
+the running attempt through the existing serial restoration path. Failed
+restoration remains visible and retryable. This is also NOT_VERIFIED source.
+The daemon issues a process-local random network ref from physical main-table
+default routes, interface addresses, per-link resolved DNS and NetworkManager
+active connection/AP identity. It excludes its own TUN and route table. Bound
+Start validates the ref before mutation and after startup; a running owner is
+cancelled if the physical context changes or can no longer be read. A sampled
+DNS/NetworkManager change also notifies the bound owner immediately. Only the
+opaque ref crosses IPC. A passive NETLINK_ROUTE subscription also invalidates
+the ref on selected physical link/address or default-route events, including
+changes that revert between samples, and cancels the bound call. POKROV's own
+TUN and route table do not trigger this notification. A NetworkManager system-
+bus monitor also revokes refs on selected device/connection/AP/IP/DNS changes,
+NM owner replacement, selected resolved-link signals and resolved owner
+replacement; monitor failure blocks bound reads. Resolved DNS properties can
+change without signals, so short direct changes between samples remain open.
+No Linux runtime or build check has run for this source.

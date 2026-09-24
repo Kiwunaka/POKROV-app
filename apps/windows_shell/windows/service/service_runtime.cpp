@@ -1,6 +1,8 @@
 #include "service_runtime.h"
+#include "service_boot_clock.h"
 #include "windows_crash_profile.h"
 #include "service_profile_identity.h"
+#include "service_core_identity.h"
 
 #include <windows.h>
 
@@ -420,19 +422,109 @@ class InstalledCoreRuntime final : public CoreRuntime {
     events_ = events;
   }
 
+  int RoutingCatalogWindowVersion() const override {
+    return initialized_ ? routing_catalog_window_version_ : 0;
+  }
+
+  std::string TransportCapabilities() const override {
+    return initialized_ ? transport_capabilities_json_ : "";
+  }
+
+  std::string CoreModuleSHA256() const override {
+    return initialized_ ? core_module_sha256_ : "";
+  }
+
+  int SmartAccessLeaseVersion() const override {
+    return initialized_ ? smart_access_lease_version_ : 0;
+  }
+
+  int RoutingCatalogControlVersion() const override {
+    return initialized_ ? routing_catalog_control_version_ : 0;
+  }
+
+  int SmartAccessRuntimeControlVersion() const override {
+    return initialized_ && configure_smart_access_control_ != nullptr && read_smart_access_restrictions_ != nullptr &&
+        configure_smart_access_renewal_ != nullptr && read_smart_access_leases_ != nullptr && acknowledge_smart_access_restrictions_ != nullptr ? 1 : 0;
+  }
+
+  std::string ReadSmartAccessRestrictions() override {
+    return SmartAccessRuntimeControlVersion() == 1 ? StringResult(read_smart_access_restrictions_()) : "";
+  }
+
+  std::string ReadSmartAccessLeases() override {
+    return SmartAccessRuntimeControlVersion() == 1 ? StringResult(read_smart_access_leases_()) : "";
+  }
+
+  int AcknowledgeSmartAccessRestrictions(const std::string& digest) override {
+    return SmartAccessRuntimeControlVersion() == 1 ? acknowledge_smart_access_restrictions_(digest.c_str()) : -1;
+  }
+
+  int ConfigureSmartAccessRuntimeControl(const std::string& profile_digest, const std::string& config) override {
+    return SmartAccessRuntimeControlVersion() == 1
+        ? configure_smart_access_control_(profile_digest.c_str(), config.c_str()) : -1;
+  }
+
+  int ConfigureSmartAccessRenewal(const std::string& profile_digest, const std::string& config) override {
+    return SmartAccessRuntimeControlVersion() == 1
+        ? configure_smart_access_renewal_(profile_digest.c_str(), config.c_str()) : -1;
+  }
+
+  int RevokeRoutingCatalog() override {
+    return RoutingCatalogControlVersion() >= 1 && revoke_catalog_ != nullptr
+        ? revoke_catalog_() : -1;
+  }
+
+  int RevokeSmartAccessPolicy(bool terminate_active) override {
+    return RoutingCatalogControlVersion() >= 2 && revoke_smart_access_policy_ != nullptr
+        ? revoke_smart_access_policy_(terminate_active ? 1 : 0) : -1;
+  }
+
+  int RevokeRoutingCatalogService(const std::string& service_id) override {
+    return RoutingCatalogControlVersion() >= 3 && revoke_catalog_service_ != nullptr
+        ? revoke_catalog_service_(service_id.c_str()) : -1;
+  }
+
+  int RevokeSmartAccessLease(const std::string& lease_id, bool terminate_active) override {
+    return SmartAccessLeaseVersion() == 1 && revoke_smart_access_ != nullptr
+        ? revoke_smart_access_(lease_id.c_str(), terminate_active ? 1 : 0) : -1;
+  }
+
+  int RenewSmartAccessLease(const SmartAccessRenewalTarget& target) override {
+    return RoutingCatalogControlVersion() == 4 && renew_smart_access_ != nullptr
+        ? renew_smart_access_(target.expected_lease_id.c_str(), target.next_lease_id.c_str(),
+            target.issued_at.c_str(), target.new_flows_until.c_str(), target.active_flows_until.c_str()) : -1;
+  }
+
+  int ConfirmATSLease(const TransportLeasePromotion& target) override {
+    return initialized_ && confirm_ats_lease_ != nullptr
+        ? confirm_ats_lease_(target.endpoint_lease_ref.c_str(), target.issued_at.c_str(),
+            target.new_flows_until.c_str(), target.active_flows_until.c_str()) : -1;
+  }
+  int RevokeATSLease(const TransportLeaseRevocation& target) override {
+    return initialized_ && revoke_ats_lease_ != nullptr
+        ? revoke_ats_lease_(target.endpoint_lease_ref.c_str(), target.terminate_active ? 1 : 0) : -1;
+  }
+
   std::string Initialize(const RuntimeDirectories& directories) override {
     if (initialized_) {
       return "";
     }
+    routing_catalog_window_version_ = 0;
+    transport_capabilities_json_.clear();
+    configure_smart_access_control_ = nullptr;
+    configure_smart_access_renewal_ = nullptr;
+    read_smart_access_restrictions_ = nullptr;
+    read_smart_access_leases_ = nullptr;
+    acknowledge_smart_access_restrictions_ = nullptr;
+    smart_access_lease_version_ = 0;
+    routing_catalog_control_version_ = 0;
     const auto directory = CurrentExecutableDirectory();
     const auto library_path = AppendPath(directory, L"pokrov-core.dll");
     if (directory.empty() ||
         ::GetFileAttributesW(library_path.c_str()) == INVALID_FILE_ATTRIBUTES) {
       return "core_missing";
     }
-    module_ = ::LoadLibraryExW(
-        library_path.c_str(), nullptr,
-        LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
+    module_ = LoadCoreModuleWithIdentity(library_path, &core_module_sha256_);
     if (module_ == nullptr) {
       return "core_load_failed";
     }
@@ -451,7 +543,13 @@ class InstalledCoreRuntime final : public CoreRuntime {
         ::GetProcAddress(module_, "pokrovSecureFile"));
     start_ = reinterpret_cast<StartFunction>(
         ::GetProcAddress(module_, "start"));
+    start_interruptible_ = reinterpret_cast<StartInterruptibleFunction>(
+        ::GetProcAddress(module_, "pokrovCoreStartInterruptibleV1"));
     stop_ = reinterpret_cast<StopFunction>(::GetProcAddress(module_, "stop"));
+    confirm_ats_lease_ = reinterpret_cast<ConfirmATSLeaseFunction>(
+        ::GetProcAddress(module_, "pokrovCoreConfirmATSLease"));
+    revoke_ats_lease_ = reinterpret_cast<RevokeATSLeaseFunction>(
+        ::GetProcAddress(module_, "pokrovCoreRevokeATSLease"));
     free_string_ = reinterpret_cast<FreeStringFunction>(
         ::GetProcAddress(module_, "freeString"));
     if (abi_ == nullptr || setup_ == nullptr || secure_file_ == nullptr ||
@@ -461,7 +559,84 @@ class InstalledCoreRuntime final : public CoreRuntime {
     }
     if (capabilities_ != nullptr) {
       const auto descriptor = StringResult(capabilities_());
-      if (descriptor == kCoreCapabilities) {
+      // Match only the additive descriptor emitted by the owned Core. Do not
+      // accept an arbitrary field or unknown lifetime semantics by substring.
+      std::string catalog_descriptor(kCoreCapabilities);
+      const auto fields = catalog_descriptor.find("\"capabilities\"");
+      catalog_descriptor.insert(fields, "\"routing_catalog_window_version\":1,");
+      std::string smart_access_descriptor(catalog_descriptor);
+      smart_access_descriptor.insert(smart_access_descriptor.find("\"capabilities\""),
+          "\"smart_access_lease_version\":1,");
+      std::string catalog_control_descriptor(smart_access_descriptor);
+      catalog_control_descriptor.insert(catalog_control_descriptor.find("\"capabilities\""),
+          "\"routing_catalog_control_version\":1,");
+      std::string policy_control_descriptor(smart_access_descriptor);
+      policy_control_descriptor.insert(policy_control_descriptor.find("\"capabilities\""),
+          "\"routing_catalog_control_version\":2,");
+      std::string service_control_descriptor(smart_access_descriptor);
+      service_control_descriptor.insert(service_control_descriptor.find("\"capabilities\""),
+          "\"routing_catalog_control_version\":3,");
+      std::string renewal_descriptor(smart_access_descriptor);
+      renewal_descriptor.insert(renewal_descriptor.find("\"capabilities\""),
+          "\"routing_catalog_control_version\":4,");
+      std::string runtime_control_descriptor(renewal_descriptor);
+      runtime_control_descriptor.insert(runtime_control_descriptor.find("\"routing_catalog_control_version\""),
+          "\"smart_access_runtime_control_version\":1,");
+      const bool has_renewal = descriptor == renewal_descriptor || descriptor == runtime_control_descriptor;
+      if (descriptor == smart_access_descriptor || descriptor == catalog_control_descriptor ||
+          descriptor == policy_control_descriptor || descriptor == service_control_descriptor || has_renewal) {
+        revoke_smart_access_ = reinterpret_cast<RevokeSmartAccessFunction>(
+            ::GetProcAddress(module_, "pokrovCoreRevokeSmartAccessLease"));
+        if (revoke_smart_access_ == nullptr) {
+          return "core_abi_incompatible";
+        }
+        structured_events_ = true;
+        routing_catalog_window_version_ = 1;
+        smart_access_lease_version_ = 1;
+        if (descriptor == catalog_control_descriptor || descriptor == policy_control_descriptor ||
+            descriptor == service_control_descriptor || has_renewal) {
+          revoke_catalog_ = reinterpret_cast<RevokeCatalogFunction>(
+              ::GetProcAddress(module_, "pokrovCoreRevokeRoutingCatalog"));
+          if (revoke_catalog_ == nullptr) return "core_abi_incompatible";
+          routing_catalog_control_version_ = 1;
+          if (descriptor == policy_control_descriptor || descriptor == service_control_descriptor || has_renewal) {
+            revoke_smart_access_policy_ = reinterpret_cast<RevokeSmartAccessPolicyFunction>(
+                ::GetProcAddress(module_, "pokrovCoreRevokeSmartAccessPolicy"));
+            if (revoke_smart_access_policy_ == nullptr) return "core_abi_incompatible";
+            routing_catalog_control_version_ = 2;
+            if (descriptor == service_control_descriptor || has_renewal) {
+              revoke_catalog_service_ = reinterpret_cast<RevokeCatalogServiceFunction>(
+                  ::GetProcAddress(module_, "pokrovCoreRevokeRoutingCatalogService"));
+              if (revoke_catalog_service_ == nullptr) return "core_abi_incompatible";
+              routing_catalog_control_version_ = 3;
+              if (has_renewal) {
+                renew_smart_access_ = reinterpret_cast<RenewSmartAccessFunction>(
+                    ::GetProcAddress(module_, "pokrovCoreRenewSmartAccessLease"));
+                if (renew_smart_access_ == nullptr) return "core_abi_incompatible";
+                routing_catalog_control_version_ = 4;
+                if (descriptor == runtime_control_descriptor) {
+                  configure_smart_access_control_ = reinterpret_cast<ConfigureSmartAccessControlFunction>(
+                      ::GetProcAddress(module_, "pokrovCoreConfigureSmartAccessRuntimeControl"));
+                  configure_smart_access_renewal_ = reinterpret_cast<ConfigureSmartAccessControlFunction>(
+                      ::GetProcAddress(module_, "pokrovCoreConfigureSmartAccessRenewal"));
+                  read_smart_access_restrictions_ = reinterpret_cast<CapabilitiesFunction>(
+                      ::GetProcAddress(module_, "pokrovCoreReadSmartAccessRestrictions"));
+                  read_smart_access_leases_ = reinterpret_cast<CapabilitiesFunction>(
+                      ::GetProcAddress(module_, "pokrovCoreReadSmartAccessLeases"));
+                  acknowledge_smart_access_restrictions_ = reinterpret_cast<AcknowledgeSmartAccessRestrictionsFunction>(
+                      ::GetProcAddress(module_, "pokrovCoreAcknowledgeSmartAccessRestrictions"));
+                  if (configure_smart_access_control_ == nullptr || read_smart_access_restrictions_ == nullptr ||
+                      configure_smart_access_renewal_ == nullptr || read_smart_access_leases_ == nullptr ||
+                      acknowledge_smart_access_restrictions_ == nullptr) return "core_abi_incompatible";
+                }
+              }
+            }
+          }
+        }
+      } else if (descriptor == catalog_descriptor) {
+        structured_events_ = true;
+        routing_catalog_window_version_ = 1;
+      } else if (descriptor == kCoreCapabilities) {
         structured_events_ = true;
       } else if (descriptor != kLegacyCoreCapabilities) {
         return "core_capabilities_incompatible";
@@ -506,6 +681,24 @@ class InstalledCoreRuntime final : public CoreRuntime {
     if (!error.empty()) {
       return "core_setup_failed";
     }
+    const auto read_transport_capabilities = reinterpret_cast<CapabilitiesFunction>(
+        ::GetProcAddress(module_, "pokrovCoreTransportCapabilities"));
+    if (read_transport_capabilities != nullptr) {
+      char* value = read_transport_capabilities();
+      if (value != nullptr) {
+        std::size_t length = 0;
+        while (length <= 4096 && value[length] != '\0') ++length;
+        // Delimited service metadata must not admit field injection. The Dart
+        // consumer additionally validates the closed inventory schema.
+        if (length > 0 && length <= 4096 &&
+            std::all_of(value, value + length, [](unsigned char character) {
+              return character >= 32 && character <= 126 && character != ';';
+            })) {
+          transport_capabilities_json_.assign(value, length);
+        }
+        free_string_(value);
+      }
+    }
     initialized_ = true;
     return "";
   }
@@ -535,6 +728,29 @@ class InstalledCoreRuntime final : public CoreRuntime {
                : "core_start_failed";
   }
 
+  bool SupportsInterruptibleStart() const override {
+    return start_interruptible_ != nullptr;
+  }
+
+  std::string StartInterruptible(const std::wstring& config_path,
+                                bool disable_memory_limit,
+                                const CheckInterruption& interrupted) override {
+    const auto encoded = Utf8(config_path);
+    if (!initialized_ || encoded.empty()) return "core_not_initialized";
+    if (start_interruptible_ == nullptr || !interrupted) return "core_abi_incompatible";
+    if (structured_events_ && start_attempts_ > 0 && !BeginNextAttempt()) {
+      return "core_event_context_failed";
+    }
+    ++start_attempts_;
+    // The DLL joins its callback observer before returning. This call-scoped
+    // copy never survives the exact serial connect operation.
+    auto check = interrupted;
+    char* result = start_interruptible_(encoded.c_str(), disable_memory_limit,
+                                       CheckCoreInterruption, &check);
+    if (result == nullptr) return "core_start_failed";
+    return StringResult(result).empty() ? "" : "core_start_failed";
+  }
+
   std::string Stop() override {
     if (!initialized_) {
       return "";
@@ -549,6 +765,15 @@ class InstalledCoreRuntime final : public CoreRuntime {
       const char*, const char*);
   using AbiFunction = int(__cdecl*)();
   using CapabilitiesFunction = char*(__cdecl*)();
+  using RevokeSmartAccessFunction = int(__cdecl*)(const char*, int);
+  using RenewSmartAccessFunction = int(__cdecl*)(const char*, const char*, const char*, const char*, const char*);
+  using ConfigureSmartAccessControlFunction = int(__cdecl*)(const char*, const char*);
+  using ConfirmATSLeaseFunction = int(__cdecl*)(const char*, const char*, const char*, const char*);
+  using RevokeATSLeaseFunction = int(__cdecl*)(const char*, int);
+  using AcknowledgeSmartAccessRestrictionsFunction = int(__cdecl*)(const char*);
+  using RevokeCatalogFunction = int(__cdecl*)();
+  using RevokeCatalogServiceFunction = int(__cdecl*)(const char*);
+  using RevokeSmartAccessPolicyFunction = int(__cdecl*)(int);
   using SetEventCallbackFunction = void(__cdecl*)(EventCallback);
   using SetEventContextFunction = char*(__cdecl*)(const char*, const char*,
                                                   long long);
@@ -557,8 +782,21 @@ class InstalledCoreRuntime final : public CoreRuntime {
                                         long long, bool);
   using SecureFileFunction = char*(__cdecl*)(const char*);
   using StartFunction = char*(__cdecl*)(const char*, bool);
+  using InterruptionCallback = int(__cdecl*)(void*);
+  using StartInterruptibleFunction = char*(__cdecl*)(const char*, bool,
+                                                   InterruptionCallback, void*);
   using StopFunction = char*(__cdecl*)();
   using FreeStringFunction = void(__cdecl*)(char*);
+
+  static int __cdecl CheckCoreInterruption(void* owner) noexcept {
+    try {
+      const auto& check = *static_cast<const CheckInterruption*>(owner);
+      return check() == OperationInterruption::kNone ? 0 : 1;
+    } catch (...) {
+      // Never unwind a C++ exception across the Go/C callback boundary.
+      return 1;
+    }
+  }
 
   bool BeginNextAttempt() {
     const auto attempt_id = NewUuid();
@@ -627,11 +865,29 @@ class InstalledCoreRuntime final : public CoreRuntime {
   HMODULE module_ = nullptr;
   AbiFunction abi_ = nullptr;
   CapabilitiesFunction capabilities_ = nullptr;
+  std::string transport_capabilities_json_;
+  std::string core_module_sha256_;
+  RevokeSmartAccessFunction revoke_smart_access_ = nullptr;
+  RenewSmartAccessFunction renew_smart_access_ = nullptr;
+  ConfigureSmartAccessControlFunction configure_smart_access_control_ = nullptr;
+  ConfigureSmartAccessControlFunction configure_smart_access_renewal_ = nullptr;
+  CapabilitiesFunction read_smart_access_restrictions_ = nullptr;
+  CapabilitiesFunction read_smart_access_leases_ = nullptr;
+  AcknowledgeSmartAccessRestrictionsFunction acknowledge_smart_access_restrictions_ = nullptr;
+  ConfirmATSLeaseFunction confirm_ats_lease_ = nullptr;
+  RevokeATSLeaseFunction revoke_ats_lease_ = nullptr;
+  RevokeCatalogFunction revoke_catalog_ = nullptr;
+  RevokeCatalogServiceFunction revoke_catalog_service_ = nullptr;
+  RevokeSmartAccessPolicyFunction revoke_smart_access_policy_ = nullptr;
+  int routing_catalog_control_version_ = 0;
+  int routing_catalog_window_version_ = 0;
+  int smart_access_lease_version_ = 0;
   SetEventCallbackFunction set_event_callback_ = nullptr;
   SetEventContextFunction set_event_context_ = nullptr;
   SetupFunction setup_ = nullptr;
   SecureFileFunction secure_file_ = nullptr;
   StartFunction start_ = nullptr;
+  StartInterruptibleFunction start_interruptible_ = nullptr;
   StopFunction stop_ = nullptr;
   FreeStringFunction free_string_ = nullptr;
   ServiceEventSink* events_ = nullptr;
@@ -717,7 +973,7 @@ RuntimeResult RuntimeHost::Snapshot() const {
 
 RuntimeResult RuntimeHost::PendingSnapshot(Command command) const {
   return RuntimeResult{Status::kOk,
-      SnapshotBody(command == Command::kConnect ? "connecting" : "busy")};
+      SnapshotBody(IsConnectCommand(command) ? "connecting" : "busy")};
 }
 
 RuntimeResult RuntimeHost::RecoverOnStartup() {
@@ -766,7 +1022,7 @@ RuntimeResult RuntimeHost::Initialize() {
   return Snapshot();
 }
 
-RuntimeResult RuntimeHost::StageProfile(const std::string& body) {
+RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_bound_connect) {
   RecordEvent(ServiceEvent::kRuntimeProfileStage,
               ServiceEventOutcome::kAttempted);
   if (!initialized_) {
@@ -838,6 +1094,7 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body) {
     CleanupBundledRuleSets(previous_rule_set_slot);
   }
   staged_profile_digest_ = profile_digest;
+  requires_bound_connect_ = requires_bound_connect;
   effective_profile_digest_.clear();
   profile_staged_ = true;
   phase_ = Phase::kConfigStaged;
@@ -860,6 +1117,7 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
   CleanupBundledRuleSets(bundled_rule_set_slot_);
   bundled_rule_set_slot_ = 0;
   profile_staged_ = false;
+  requires_bound_connect_ = false;
   staged_profile_digest_.clear();
   effective_profile_digest_.clear();
   disable_memory_limit_ = false;
@@ -870,12 +1128,59 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
 
 RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
                                   const CheckInterruption& interrupted) {
+  if (requires_bound_connect_) return Fail(Status::kNotReady, "profile_identity_mismatch");
+  return ConnectImpl(expected_profile_digest, interrupted, "");
+}
+
+RuntimeResult RuntimeHost::ConnectWithIdentity(const BoundConnectTarget& target,
+                                              const CheckInterruption& interrupted) {
+  if (EncodeBoundConnect(target).empty()) return {Status::kInvalid, "invalid_connect_identity"};
+  if (phase_ == Phase::kRunning || phase_ == Phase::kRecoveryRequired) {
+    return {Status::kNotReady, "runtime_busy"};
+  }
+  return ConnectImpl(target.profile_digest, [&target, &interrupted] {
+    const auto pending = interrupted ? interrupted() : OperationInterruption::kNone;
+    if (pending != OperationInterruption::kNone) return pending;
+    return IsConnectDeadlineCurrent(target) ? OperationInterruption::kNone
+                                           : OperationInterruption::kDeadlineExceeded;
+  }, target.core_module_sha256);
+}
+
+RuntimeResult RuntimeHost::PromoteTransportLease(const TransportLeasePromotion& target) {
+  if (EncodeTransportLeasePromotion(target).empty() || !initialized_ ||
+      phase_ != Phase::kRunning || !requires_bound_connect_ ||
+      effective_profile_digest_ != target.profile_digest ||
+      core_->ConfirmATSLease(target) != 1) {
+    return {Status::kNotReady, "transport_lease_handoff_unconfirmed"};
+  }
+  core_egress_validated_ = true;
+  return Snapshot();
+}
+
+RuntimeResult RuntimeHost::RevokeTransportLease(const TransportLeaseRevocation& target) {
+  if (EncodeTransportLeaseRevocation(target).empty() || !initialized_ ||
+      phase_ != Phase::kRunning || !requires_bound_connect_ ||
+      effective_profile_digest_ != target.profile_digest) {
+    return {Status::kNotReady, "transport_lease_revocation_unconfirmed"};
+  }
+  core_egress_validated_ = false;
+  if (core_->RevokeATSLease(target) != 1) {
+    return {Status::kNotReady, "transport_lease_revocation_unconfirmed"};
+  }
+  return Snapshot();
+}
+
+RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_digest,
+                                      const CheckInterruption& interrupted,
+                                      const std::string& expected_core_digest) {
   // Core and network state stay on this serial owner. An interruption never
   // races Stop against Start, and rollback must finish even after the deadline.
   const auto interruption = [&](bool rollback) -> std::optional<RuntimeResult> {
     const auto reason =
         interrupted ? interrupted() : OperationInterruption::kNone;
-    if (reason == OperationInterruption::kNone) return std::nullopt;
+    const bool identity_mismatch = !expected_core_digest.empty() &&
+        core_->CoreModuleSHA256() != expected_core_digest;
+    if (reason == OperationInterruption::kNone && !identity_mismatch) return std::nullopt;
     if (rollback) {
       const auto error = RollbackRuntime();
       effective_profile_digest_.clear();
@@ -887,8 +1192,9 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
         return Fail(Status::kNotReady, error.c_str());
       }
     }
+    if (identity_mismatch) return Fail(Status::kNotReady, "core_identity_mismatch");
     return reason == OperationInterruption::kDeadlineExceeded
-               ? Fail(Status::kDeadlineExceeded, "deadline_exceeded")
+               ? Fail(Status::kDeadlineExceeded, expected_core_digest.empty() ? "deadline_exceeded" : "connect_deadline")
                : Fail(Status::kNotReady, "operation_cancelled");
   };
   if (!initialized_ || !profile_staged_) {
@@ -899,6 +1205,9 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
     return Fail(Status::kNotReady, "profile_identity_mismatch");
   }
   if (const auto result = interruption(false)) return *result;
+  if (!expected_core_digest.empty() && !core_->SupportsInterruptibleStart()) {
+    return Fail(Status::kNotReady, "core_abi_incompatible");
+  }
   if (phase_ == Phase::kRunning) {
     return Snapshot();
   }
@@ -942,7 +1251,12 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
               ServiceEventOutcome::kAttempted);
   RecordEvent(ServiceEvent::kRuntimeDnsApply,
               ServiceEventOutcome::kAttempted);
-  if (!core_->Start(profile_path_, disable_memory_limit_).empty()) {
+  if (const auto result = interruption(true)) return *result;
+  const auto start_error = expected_core_digest.empty()
+      ? core_->Start(profile_path_, disable_memory_limit_)
+      : core_->StartInterruptible(profile_path_, disable_memory_limit_, interrupted);
+  if (!start_error.empty()) {
+    if (const auto result = interruption(true)) return *result;
     RecordEvent(ServiceEvent::kRuntimeCoreStart,
                 ServiceEventOutcome::kFailed);
     RecordEvent(ServiceEvent::kRuntimeWintunStart,
@@ -997,28 +1311,30 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
   RecordEvent(ServiceEvent::kRuntimeDnsApply,
               ServiceEventOutcome::kSucceeded);
   if (const auto result = interruption(true)) return *result;
-  RecordEvent(ServiceEvent::kRuntimeEgressVerify,
-              ServiceEventOutcome::kAttempted);
-  const auto egress_failure = egress_probe_ != nullptr
-      ? egress_probe_->Verify(interrupted) : "core_egress_probe_failed";
-  if (const auto result = interruption(true)) return *result;
-  if (!egress_failure.empty()) {
+  if (!requires_bound_connect_) {
     RecordEvent(ServiceEvent::kRuntimeEgressVerify,
-                ServiceEventOutcome::kFailed);
-    const auto rollback_error = RollbackRuntime();
-    effective_profile_digest_.clear();
-    core_egress_validated_ = false;
-    phase_ = rollback_error.empty() ? Phase::kConfigStaged
-                                    : Phase::kRecoveryRequired;
-    if (!rollback_error.empty()) {
-      RecordEvent(ServiceEvent::kRuntimeRecoveryRequired,
+                ServiceEventOutcome::kAttempted);
+    const auto egress_failure = egress_probe_ != nullptr
+        ? egress_probe_->Verify(interrupted) : "core_egress_probe_failed";
+    if (const auto result = interruption(true)) return *result;
+    if (!egress_failure.empty()) {
+      RecordEvent(ServiceEvent::kRuntimeEgressVerify,
                   ServiceEventOutcome::kFailed);
-      return Fail(Status::kNotReady, rollback_error.c_str());
+      const auto rollback_error = RollbackRuntime();
+      effective_profile_digest_.clear();
+      core_egress_validated_ = false;
+      phase_ = rollback_error.empty() ? Phase::kConfigStaged
+                                      : Phase::kRecoveryRequired;
+      if (!rollback_error.empty()) {
+        RecordEvent(ServiceEvent::kRuntimeRecoveryRequired,
+                    ServiceEventOutcome::kFailed);
+        return Fail(Status::kNotReady, rollback_error.c_str());
+      }
+      return Fail(Status::kNotReady, SafeEgressFailure(egress_failure));
     }
-    return Fail(Status::kNotReady, SafeEgressFailure(egress_failure));
+    RecordEvent(ServiceEvent::kRuntimeEgressVerify,
+                ServiceEventOutcome::kSucceeded);
   }
-  RecordEvent(ServiceEvent::kRuntimeEgressVerify,
-              ServiceEventOutcome::kSucceeded);
   RecordEvent(ServiceEvent::kRuntimeCommit,
               ServiceEventOutcome::kAttempted);
   recovery_error = recovery_->Record(RecoveryStage::kVerified);
@@ -1043,12 +1359,138 @@ RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
   }
   if (const auto result = interruption(true)) return *result;
   effective_profile_digest_ = staged_profile_digest_;
-  core_egress_validated_ = true;
+  core_egress_validated_ = !requires_bound_connect_;
   phase_ = Phase::kRunning;
   failure_.clear();
   RecordEvent(ServiceEvent::kRuntimeCommit,
               ServiceEventOutcome::kSucceeded);
   return Snapshot();
+}
+
+RuntimeResult RuntimeHost::RevokeSmartAccessLease(const std::string& body) {
+  const auto target = DecodeSmartAccessRevocation(body);
+  if (!target) return {Status::kInvalid, "invalid_smart_access_revocation"};
+  if (!initialized_ || phase_ != Phase::kRunning ||
+      effective_profile_digest_ != target->profile_digest) {
+    return {Status::kNotReady, "smart_access_profile_changed"};
+  }
+  const auto result = core_->RevokeSmartAccessLease(target->lease_id, target->terminate_active);
+  if (result != 0 && result != 1) return {Status::kNotReady, "smart_access_revoke_unavailable"};
+  if (result == 1 && staged_profile_digest_ == target->profile_digest) {
+    // Preserve the live instance and its bundled assets for a drain, but do
+    // not recreate a revoked lease from this profile on the next Connect.
+    // A service restart already requires a fresh StageProfile acknowledgement.
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+  }
+  return {Status::kOk, result == 1 ? "revoked=1" : "revoked=0"};
+}
+
+RuntimeResult RuntimeHost::ReadSmartAccessRestrictions() {
+  if (!initialized_ || core_->SmartAccessRuntimeControlVersion() != 1) return {Status::kNotReady, "smart_access_restriction_read_unavailable"};
+  const auto body = core_->ReadSmartAccessRestrictions();
+  if (body.empty() || body.size() > kMaxRestrictionSnapshotBodySize) return {Status::kNotReady, "smart_access_restriction_read_unconfirmed"};
+  return {Status::kOk, body};
+}
+
+RuntimeResult RuntimeHost::ReadSmartAccessLeases(const std::string& profile_digest) {
+  if (!IsProfileDigest(profile_digest)) return {Status::kInvalid, "invalid_smart_access_profile"};
+  if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
+    return {Status::kNotReady, "smart_access_profile_changed"};
+  }
+  if (core_->SmartAccessRuntimeControlVersion() != 1) return {Status::kUnsupported, "smart_access_lease_read_unsupported"};
+  const auto body = core_->ReadSmartAccessLeases();
+  if (body.empty() || body.size() > kMaxSmartAccessLeasesBodySize) return {Status::kNotReady, "smart_access_lease_read_unconfirmed"};
+  return {Status::kOk, body};
+}
+
+RuntimeResult RuntimeHost::AcknowledgeSmartAccessRestrictions(const std::string& digest) {
+  if (!IsProfileDigest(digest)) return {Status::kInvalid, "smart_access_restriction_ack_invalid"};
+  if (!initialized_ || core_->SmartAccessRuntimeControlVersion() != 1) return {Status::kNotReady, "smart_access_restriction_ack_unavailable"};
+  const auto acknowledged = core_->AcknowledgeSmartAccessRestrictions(digest);
+  if (acknowledged != 0 && acknowledged != 1) return {Status::kNotReady, "smart_access_restriction_ack_unconfirmed"};
+  return {Status::kOk, acknowledged == 1 ? "acknowledged=1" : "acknowledged=0"};
+}
+
+RuntimeResult RuntimeHost::ConfigureSmartAccessRuntimeControl(const std::string& body, bool renewal) {
+  if (!IsSmartAccessRuntimeControl(body)) return {Status::kInvalid, "invalid_smart_access_runtime_control"};
+  const auto profile_digest = body.substr(0, 64);
+  if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
+    return {Status::kNotReady, "smart_access_profile_changed"};
+  }
+  if (core_->SmartAccessRuntimeControlVersion() != 1) return {Status::kUnsupported, "smart_access_runtime_control_unsupported"};
+  // Background restriction delivery outlives Flutter. Old saved bytes must not
+  // restart before fresh preparation; the live instance and assets stay intact.
+  if (staged_profile_digest_ == profile_digest) {
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+  }
+  const auto result = renewal ? core_->ConfigureSmartAccessRenewal(profile_digest, body.substr(65))
+                              : core_->ConfigureSmartAccessRuntimeControl(profile_digest, body.substr(65));
+  if (result != 0 && result != 1) return {Status::kNotReady, "smart_access_runtime_control_unconfirmed"};
+  return {Status::kOk, result == 1 ? "configured=1" : "configured=0"};
+}
+
+RuntimeResult RuntimeHost::RenewSmartAccessLease(const std::string& body) {
+  const auto target = DecodeSmartAccessRenewal(body);
+  if (!target) return {Status::kInvalid, "invalid_smart_access_renewal"};
+  if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != target->profile_digest) {
+    return {Status::kNotReady, "smart_access_profile_changed"};
+  }
+  if (core_->RoutingCatalogControlVersion() != 4) return {Status::kUnsupported, "smart_access_renewal_unsupported"};
+  // Retain the running instance/assets, but old profile bytes cannot recreate
+  // the renewed generation. Service restart already requires a fresh stage.
+  if (staged_profile_digest_ == target->profile_digest) {
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+  }
+  const auto result = core_->RenewSmartAccessLease(*target);
+  if (result != 0 && result != 1) return {Status::kNotReady, "smart_access_renewal_unconfirmed"};
+  return {Status::kOk, result == 1 ? "renewed=1" : "renewed=0"};
+}
+
+RuntimeResult RuntimeHost::RevokeRoutingCatalog(const std::string& profile_digest) {
+  if (!IsProfileDigest(profile_digest)) return {Status::kInvalid, "invalid_catalog_revocation"};
+  if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
+    return {Status::kNotReady, "catalog_profile_changed"};
+  }
+  const auto result = core_->RevokeRoutingCatalog();
+  if (result != 0 && result != 1) return {Status::kNotReady, "catalog_revoke_unavailable"};
+  if (result == 1 && staged_profile_digest_ == profile_digest) {
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+  }
+  return {Status::kOk, result == 1 ? "catalog_revoked=1" : "catalog_revoked=0"};
+}
+
+RuntimeResult RuntimeHost::RevokeRoutingCatalogService(const std::string& body) {
+  if (!IsRoutingCatalogServiceRevocation(body)) return {Status::kInvalid, "invalid_catalog_revocation"};
+  const auto profile_digest = body.substr(0, 64);
+  if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
+    return {Status::kNotReady, "catalog_profile_changed"};
+  }
+  const auto result = core_->RevokeRoutingCatalogService(body.substr(65));
+  if (result != 0 && result != 1) return {Status::kNotReady, "catalog_revoke_unavailable"};
+  if (result == 1 && staged_profile_digest_ == profile_digest) {
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+  }
+  return {Status::kOk, result == 1 ? "catalog_revoked=1" : "catalog_revoked=0"};
+}
+
+RuntimeResult RuntimeHost::RevokeSmartAccessPolicy(const std::string& body) {
+  if (!IsSmartAccessPolicyRevocation(body)) return {Status::kInvalid, "invalid_smart_access_revocation"};
+  const auto profile_digest = body.substr(0, 64);
+  if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
+    return {Status::kNotReady, "smart_access_profile_changed"};
+  }
+  const auto result = core_->RevokeSmartAccessPolicy(body[65] == '1');
+  if (result != 0 && result != 1) return {Status::kNotReady, "smart_access_revoke_unavailable"};
+  if (result == 1 && staged_profile_digest_ == profile_digest) {
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+  }
+  return {Status::kOk, result == 1 ? "revoked=1" : "revoked=0"};
 }
 
 RuntimeResult RuntimeHost::Disconnect() {
@@ -1199,6 +1641,7 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
   const bool core_ready = initialized_;
   const bool can_initialize = !pending && core_ != nullptr && !runtime_root_.empty();
   const bool can_connect = !pending && initialized_ && profile_staged_ &&
+                           !requires_bound_connect_ &&
                            phase_ == Phase::kConfigStaged;
   return std::string("phase=") + (pending ? pending_phase : PhaseName(phase)) +
          ";core_ready=" + (core_ready ? "1" : "0") +
@@ -1213,7 +1656,20 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
          ";effective_profile_digest=" +
          (pending || effective_profile_digest_.empty() ? "none" : effective_profile_digest_) +
          ";failure=" +
-         (pending || failure_.empty() ? "none" : failure_);
+         (pending || failure_.empty() ? "none" : failure_) +
+         ";routing_catalog_window_version=" +
+         std::to_string(initialized_ ? core_->RoutingCatalogWindowVersion() : 0) +
+         ";smart_access_lease_version=" +
+         std::to_string(initialized_ ? core_->SmartAccessLeaseVersion() : 0) +
+         ";routing_catalog_control_version=" +
+         std::to_string(initialized_ ? core_->RoutingCatalogControlVersion() : 0) +
+         ";smart_access_runtime_control_version=" +
+         std::to_string(initialized_ ? core_->SmartAccessRuntimeControlVersion() : 0) +
+         ";transport_capabilities=" +
+         (initialized_ && !core_->TransportCapabilities().empty()
+             ? core_->TransportCapabilities() : "none") +
+         ";core_module_sha256=" +
+         (initialized_ && !core_->CoreModuleSHA256().empty() ? core_->CoreModuleSHA256() : "none");
 }
 
 bool RuntimeHost::PrepareDirectories() {

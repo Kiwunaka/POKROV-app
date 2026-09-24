@@ -115,6 +115,7 @@ class PokrovClientExperienceState {
     this.preferredVariantId = 'direct',
     this.automaticNodeQuarantineUntil = const <String, String>{},
     this.selectedAppIds = const <String>[],
+    this.catalogVerifiedRuPreset = false,
     this.routingPreferences = const PokrovRoutingPreferences.defaults(),
     this.firstRouteScopeConfirmed = false,
     this.firstRouteScopeMode,
@@ -138,6 +139,7 @@ class PokrovClientExperienceState {
         preferredVariantId = 'direct',
         automaticNodeQuarantineUntil = const <String, String>{},
         selectedAppIds = const <String>[],
+        catalogVerifiedRuPreset = false,
         routingPreferences = const PokrovRoutingPreferences.defaults(),
         firstRouteScopeConfirmed = false,
         firstRouteScopeMode = null,
@@ -163,6 +165,7 @@ class PokrovClientExperienceState {
 
   /// Device-local identifiers for the selected-apps routing mode.
   final List<String> selectedAppIds;
+  final bool catalogVerifiedRuPreset;
   final PokrovRoutingPreferences routingPreferences;
   final bool firstRouteScopeConfirmed;
   final RouteMode? firstRouteScopeMode;
@@ -185,6 +188,7 @@ class PokrovClientExperienceState {
     String? preferredVariantId,
     Map<String, String>? automaticNodeQuarantineUntil,
     List<String>? selectedAppIds,
+    bool? catalogVerifiedRuPreset,
     PokrovRoutingPreferences? routingPreferences,
     bool? firstRouteScopeConfirmed,
     RouteMode? firstRouteScopeMode,
@@ -209,6 +213,7 @@ class PokrovClientExperienceState {
       automaticNodeQuarantineUntil:
           automaticNodeQuarantineUntil ?? this.automaticNodeQuarantineUntil,
       selectedAppIds: selectedAppIds ?? this.selectedAppIds,
+      catalogVerifiedRuPreset: catalogVerifiedRuPreset ?? this.catalogVerifiedRuPreset,
       routingPreferences: routingPreferences ?? this.routingPreferences,
       firstRouteScopeConfirmed:
           firstRouteScopeConfirmed ?? this.firstRouteScopeConfirmed,
@@ -271,6 +276,7 @@ class PokrovClientExperienceState {
           preferredCodes.isEmpty ? 'direct' : preferredVariantId,
       automaticNodeQuarantineUntil: automaticNodeQuarantineUntil,
       selectedAppIds: selectedAppIds,
+      catalogVerifiedRuPreset: json['catalogVerifiedRuPreset'] == true,
       routingPreferences: PokrovRoutingPreferences.fromJson(
         _experienceMap(json['routingPreferences']),
       ),
@@ -322,6 +328,7 @@ class PokrovClientExperienceState {
             automaticNodeQuarantineUntil.entries.take(8),
           ),
         'selectedAppIds': selectedAppIds.take(128).toList(growable: false),
+        'catalogVerifiedRuPreset': catalogVerifiedRuPreset,
         'routingPreferences': routingPreferences.toJson(),
         'firstRouteScopeConfirmed': firstRouteScopeConfirmed,
         if (firstRouteScopeMode != null)

@@ -674,6 +674,7 @@ String pokrovDiagnosticRouteMode(RouteMode routeMode) => switch (routeMode) {
       RouteMode.allExceptRu => 'all_except_ru',
       RouteMode.excludedApps => 'excluded_apps',
       RouteMode.fullTunnel => 'full_tunnel',
+      RouteMode.selectiveServices => 'selective_services',
       RouteMode.selectedApps => 'selected_apps',
     };
 

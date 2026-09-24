@@ -20,6 +20,9 @@ struct RuntimeDirectories {
   std::wstring config;
 };
 
+enum class OperationInterruption { kNone, kCancelled, kDeadlineExceeded };
+using CheckInterruption = std::function<OperationInterruption()>;
+
 class CoreRuntime {
  public:
   virtual ~CoreRuntime() = default;
@@ -28,8 +31,32 @@ class CoreRuntime {
   virtual std::string SecureFile(const std::wstring& path) = 0;
   virtual std::string Start(const std::wstring& config_path,
                             bool disable_memory_limit) = 0;
+  virtual bool SupportsInterruptibleStart() const { return false; }
+  virtual std::string StartInterruptible(const std::wstring& config_path,
+                                        bool disable_memory_limit,
+                                        const CheckInterruption& interrupted) {
+    return "core_abi_incompatible";
+  }
   virtual std::string Stop() = 0;
   virtual void SetOperationalEventSink(ServiceEventSink* events) {}
+  virtual int RoutingCatalogWindowVersion() const { return 0; }
+  virtual std::string TransportCapabilities() const { return ""; }
+  virtual std::string CoreModuleSHA256() const { return ""; }
+  virtual int SmartAccessLeaseVersion() const { return 0; }
+  virtual int RoutingCatalogControlVersion() const { return 0; }
+  virtual int SmartAccessRuntimeControlVersion() const { return 0; }
+  virtual int ConfigureSmartAccessRuntimeControl(const std::string& profile_digest, const std::string& config) { return -1; }
+  virtual int ConfigureSmartAccessRenewal(const std::string& profile_digest, const std::string& config) { return -1; }
+  virtual std::string ReadSmartAccessRestrictions() { return ""; }
+  virtual std::string ReadSmartAccessLeases() { return ""; }
+  virtual int AcknowledgeSmartAccessRestrictions(const std::string& digest) { return -1; }
+  virtual int RevokeRoutingCatalog() { return -1; }
+  virtual int RevokeRoutingCatalogService(const std::string& service_id) { return -1; }
+  virtual int RevokeSmartAccessPolicy(bool terminate_active) { return -1; }
+  virtual int RevokeSmartAccessLease(const std::string& lease_id, bool terminate_active) { return -1; }
+  virtual int RenewSmartAccessLease(const SmartAccessRenewalTarget& target) { return -1; }
+  virtual int ConfirmATSLease(const TransportLeasePromotion& target) { return -1; }
+  virtual int RevokeATSLease(const TransportLeaseRevocation& target) { return -1; }
 };
 
 class CoreOperationalEventFence {
@@ -44,9 +71,6 @@ class CoreOperationalEventFence {
   std::int64_t generation_ = 0;
   std::int64_t last_sequence_ = 0;
 };
-
-enum class OperationInterruption { kNone, kCancelled, kDeadlineExceeded };
-using CheckInterruption = std::function<OperationInterruption()>;
 
 class RuntimeEgressProbe {
  public:
@@ -73,11 +97,24 @@ class RuntimeHost {
   RuntimeResult PendingSnapshot(Command command) const;
   RuntimeResult RecoverOnStartup();
   RuntimeResult Initialize();
-  RuntimeResult StageProfile(const std::string& body);
+  RuntimeResult StageProfile(const std::string& body, bool requires_bound_connect = false);
   RuntimeResult InvalidateProfile();
   RuntimeResult Connect(const std::string& expected_profile_digest,
                         const CheckInterruption& interrupted = {});
+  RuntimeResult ConnectWithIdentity(const BoundConnectTarget& target,
+                                    const CheckInterruption& interrupted = {});
+  RuntimeResult PromoteTransportLease(const TransportLeasePromotion& target);
+  RuntimeResult RevokeTransportLease(const TransportLeaseRevocation& target);
   RuntimeResult Disconnect();
+  RuntimeResult RevokeSmartAccessLease(const std::string& body);
+  RuntimeResult RevokeRoutingCatalog(const std::string& profile_digest);
+  RuntimeResult RevokeRoutingCatalogService(const std::string& body);
+  RuntimeResult RevokeSmartAccessPolicy(const std::string& body);
+  RuntimeResult RenewSmartAccessLease(const std::string& body);
+  RuntimeResult ConfigureSmartAccessRuntimeControl(const std::string& body, bool renewal = false);
+  RuntimeResult ReadSmartAccessRestrictions();
+  RuntimeResult ReadSmartAccessLeases(const std::string& profile_digest);
+  RuntimeResult AcknowledgeSmartAccessRestrictions(const std::string& digest);
   void Shutdown();
 
  private:
@@ -91,6 +128,9 @@ class RuntimeHost {
   };
 
   RuntimeResult Fail(Status status, const char* failure);
+  RuntimeResult ConnectImpl(const std::string& expected_profile_digest,
+                            const CheckInterruption& interrupted,
+                            const std::string& expected_core_digest);
   std::string SnapshotBody(const char* pending_phase = nullptr) const;
   bool PrepareDirectories();
   std::string WriteProfileAtomically(const std::string& profile);
@@ -112,6 +152,7 @@ class RuntimeHost {
   bool secure_storage_ = true;
   bool initialized_ = false;
   bool profile_staged_ = false;
+  bool requires_bound_connect_ = false;
   std::string staged_profile_digest_;
   std::string effective_profile_digest_;
   bool disable_memory_limit_ = false;

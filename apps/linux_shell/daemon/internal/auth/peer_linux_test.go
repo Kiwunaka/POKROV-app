@@ -3,6 +3,7 @@
 package auth
 
 import (
+	"context"
 	"os"
 	"testing"
 )
@@ -13,7 +14,7 @@ type recordingChecker struct {
 	result  Decision
 }
 
-func (checker *recordingChecker) Check(actionID, process string) Decision {
+func (checker *recordingChecker) Check(_ context.Context, actionID, process string) Decision {
 	checker.action = actionID
 	checker.process = process
 	return checker.result
@@ -33,7 +34,7 @@ func TestAuthorizedBindsPolkitToExactPeerTuple(t *testing.T) {
 	checker := &recordingChecker{result: DecisionAuthorized}
 	peer := Peer{PID: 321, UID: 1000, StartTime: 654}
 
-	result := Authorize(peer, checker)
+	result := Authorize(context.Background(), peer, checker)
 	if !result.Authorized() || result.Backend != BackendPolkitDBus {
 		t.Fatal("authorized peer was rejected")
 	}
@@ -44,7 +45,7 @@ func TestAuthorizedBindsPolkitToExactPeerTuple(t *testing.T) {
 
 func TestAuthorizedRejectsIncompletePeerBeforePolkit(t *testing.T) {
 	checker := &recordingChecker{result: DecisionAuthorized}
-	result := Authorize(Peer{PID: 321, UID: 1000}, checker)
+	result := Authorize(context.Background(), Peer{PID: 321, UID: 1000}, checker)
 	if result.Authorized() || result.Decision != DecisionInvalidSubject ||
 		result.Backend != BackendPeerCredential {
 		t.Fatal("peer without start time was authorized")
@@ -56,7 +57,7 @@ func TestAuthorizedRejectsIncompletePeerBeforePolkit(t *testing.T) {
 
 func TestRootAuthorizationUsesPeerCredentialWithoutPolkit(t *testing.T) {
 	checker := &recordingChecker{result: DecisionDenied}
-	result := Authorize(Peer{PID: 1, UID: 0, StartTime: 1}, checker)
+	result := Authorize(context.Background(), Peer{PID: 1, UID: 0, StartTime: 1}, checker)
 	if !result.Authorized() || result.Backend != BackendPeerCredential {
 		t.Fatalf("unexpected root authorization result: %#v", result)
 	}

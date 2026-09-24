@@ -22,6 +22,8 @@ import (
 const recoveryPath = "/var/lib/pokrov/network-recovery.json"
 const recoveryLimit = 4096
 
+var ErrLiveTunnel = errors.New("live tunnel ownership requires recovery")
+
 type recoveryFile struct {
 	path     string
 	ownerUID uint32
@@ -149,17 +151,17 @@ func RecoverSystem(ctx context.Context, sink Sink) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	if state == nil {
-		return false, nil
-	}
 	links, err := net.Interfaces()
 	if err != nil {
 		return true, err
 	}
 	for _, link := range links {
 		if link.Name == "pokrov0" {
-			return true, errors.New("live tunnel ownership requires recovery")
+			return true, ErrLiveTunnel
 		}
+	}
+	if state == nil {
+		return false, nil
 	}
 	bootID, err := currentBootID()
 	if err != nil {

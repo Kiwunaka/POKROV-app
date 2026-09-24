@@ -24,7 +24,10 @@ namespace {
 
 constexpr std::uint64_t kServiceCapabilities =
     kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
-    kCapabilityProfileIdentity | kCapabilityCancellation | kCapabilitySanitizedDiagnostic;
+    kCapabilityProfileIdentity | kCapabilityCancellation | kCapabilitySanitizedDiagnostic |
+    kCapabilityRoutingCatalogWindow | kCapabilitySmartAccessLease | kCapabilityRoutingCatalogControl |
+    kCapabilitySmartAccessPolicyControl | kCapabilityRoutingCatalogServiceControl | kCapabilitySmartAccessRenewal |
+    kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff;
 constexpr std::uint64_t kMaximumDeadlineLeadMs = 5 * 60 * 1000;
 // Release a stalled session before the normal client's five-second pipe
 // acquisition budget expires. Header and body share one transfer deadline.
@@ -254,10 +257,22 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
       const bool runtime_command =
           request->command == Command::kInitialize ||
           request->command == Command::kStageProfile ||
+          request->command == Command::kStageBoundProfile ||
           request->command == Command::kInvalidateProfile ||
-          request->command == Command::kConnect ||
+          IsConnectCommand(request->command) ||
           request->command == Command::kCancel ||
-          request->command == Command::kDisconnect;
+          request->command == Command::kCancelConnectAndConfirm ||
+          request->command == Command::kDisconnect ||
+          request->command == Command::kRevokeSmartAccessLease ||
+          request->command == Command::kRevokeRoutingCatalog ||
+          request->command == Command::kRevokeSmartAccessPolicy ||
+          request->command == Command::kRevokeRoutingCatalogService ||
+          request->command == Command::kRenewSmartAccessLease || request->command == Command::kConfigureSmartAccessRuntimeControl ||
+          request->command == Command::kReadSmartAccessRestrictions || request->command == Command::kAcknowledgeSmartAccessRestrictions ||
+          request->command == Command::kReadSmartAccessLeases || request->command == Command::kConfigureSmartAccessRenewal ||
+          request->command == Command::kConfigureBoundSmartAccessRuntimeControl ||
+          request->command == Command::kPromoteTransportLease ||
+          request->command == Command::kRevokeTransportLease;
       if (dispatcher == nullptr) {
         status = Status::kNotReady;
         body = "runtime_not_owned";
@@ -265,20 +280,117 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
                  (negotiated_capabilities & kCapabilityRuntimeControl) == 0) {
         status = Status::kUnsupported;
         body = "runtime_capability_required";
+      } else if (request->command == Command::kConfigureBoundSmartAccessRuntimeControl &&
+                 (negotiated_capabilities & (kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl)) !=
+                     (kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl)) {
+        status = Status::kUnsupported;
+        body = "bound_runtime_control_capability_required";
+      } else if (request->command == Command::kConnectWithIdentity &&
+                 (negotiated_capabilities & (kCapabilityBoundConnect | kCapabilityBootClock | kCapabilityProfileIdentity | kCapabilityConnectSettlement | kCapabilityTransportNetworkContext)) !=
+                     (kCapabilityBoundConnect | kCapabilityBootClock | kCapabilityProfileIdentity | kCapabilityConnectSettlement | kCapabilityTransportNetworkContext)) {
+        status = Status::kUnsupported;
+        body = "bound_connect_capability_required";
+      } else if ((request->command == Command::kPromoteTransportLease ||
+                  request->command == Command::kRevokeTransportLease) &&
+                 (negotiated_capabilities & kCapabilityTransportLeaseHandoff) == 0) {
+        status = Status::kUnsupported;
+        body = "transport_lease_handoff_capability_required";
+      } else if (request->command == Command::kStageBoundProfile &&
+                 (negotiated_capabilities & kCapabilityBoundProfileStage) == 0) {
+        status = Status::kUnsupported;
+        body = "bound_profile_stage_capability_required";
+      } else if (request->command == Command::kCancelConnectAndConfirm &&
+                 (negotiated_capabilities & kCapabilityConnectSettlement) == 0) {
+        status = Status::kUnsupported;
+        body = "connect_settlement_capability_required";
+      } else if (request->command == Command::kReadTransportNetworkContext &&
+                 (negotiated_capabilities & kCapabilityTransportNetworkContext) == 0) {
+        status = Status::kUnsupported;
+        body = "network_context_capability_required";
+      } else if (request->command == Command::kReadBootClock &&
+                 (negotiated_capabilities & kCapabilityBootClock) == 0) {
+        status = Status::kUnsupported;
+        body = "runtime_clock_capability_required";
       } else if (request->command == Command::kCancel &&
                  (negotiated_capabilities & kCapabilityCancellation) == 0) {
         status = Status::kUnsupported;
         body = "cancellation_capability_required";
+      } else if ((request->command == Command::kConfigureSmartAccessRuntimeControl ||
+                  request->command == Command::kReadSmartAccessRestrictions || request->command == Command::kAcknowledgeSmartAccessRestrictions ||
+                  request->command == Command::kReadSmartAccessLeases || request->command == Command::kConfigureSmartAccessRenewal) &&
+                 (negotiated_capabilities & kCapabilitySmartAccessRuntimeControl) == 0) {
+        status = Status::kUnsupported;
+        body = "smart_access_runtime_control_capability_required";
+      } else if (request->command == Command::kRenewSmartAccessLease &&
+                 (negotiated_capabilities & kCapabilitySmartAccessRenewal) == 0) {
+        status = Status::kUnsupported;
+        body = "smart_access_renewal_capability_required";
+      } else if (request->command == Command::kRevokeRoutingCatalogService &&
+                 (negotiated_capabilities & kCapabilityRoutingCatalogServiceControl) == 0) {
+        status = Status::kUnsupported;
+        body = "catalog_service_capability_required";
+      } else if (request->command == Command::kRevokeSmartAccessPolicy &&
+                 (negotiated_capabilities & kCapabilitySmartAccessPolicyControl) == 0) {
+        status = Status::kUnsupported;
+        body = "smart_access_policy_capability_required";
+      } else if (request->command == Command::kRevokeRoutingCatalog &&
+                 (negotiated_capabilities & kCapabilityRoutingCatalogControl) == 0) {
+        status = Status::kUnsupported;
+        body = "catalog_control_capability_required";
+      } else if (request->command == Command::kRevokeSmartAccessLease &&
+                 (negotiated_capabilities & kCapabilitySmartAccessLease) == 0) {
+        status = Status::kUnsupported;
+        body = "smart_access_capability_required";
       } else if (request->command == Command::kDiagnosticState &&
                  (negotiated_capabilities & kCapabilitySanitizedDiagnostic) == 0) {
         status = Status::kUnsupported;
         body = "diagnostic_capability_required";
       } else {
         auto result = dispatcher->Execute(*request, stop_event,
-            monotonic_now + request->deadline_unix_ms - now);
+            monotonic_now + request->deadline_unix_ms - now, pipe);
         status = result.status;
         body = std::move(result.body);
       }
+    }
+    // Retained clients parse the snapshot exactly. Send the extension only to
+    // peers that negotiated it; the runtime owner still stores one snapshot.
+    if ((negotiated_capabilities & kCapabilitySmartAccessRuntimeControl) == 0 &&
+        body.rfind("phase=", 0) == 0) {
+      const auto extension = body.find(";smart_access_runtime_control_version=");
+      if (extension != std::string::npos) body.resize(extension);
+    }
+    if ((negotiated_capabilities & kCapabilitySmartAccessRenewal) == 0 &&
+        body.rfind("phase=", 0) == 0) {
+      const std::string extension = ";routing_catalog_control_version=4";
+      const auto position = body.find(extension);
+      if (position != std::string::npos) body[position + extension.size() - 1] = '3';
+    }
+    if ((negotiated_capabilities & kCapabilityRoutingCatalogServiceControl) == 0 &&
+        body.rfind("phase=", 0) == 0) {
+      const std::string extension = ";routing_catalog_control_version=3";
+      const auto position = body.find(extension);
+      if (position != std::string::npos) body[position + extension.size() - 1] = '2';
+    }
+    if ((negotiated_capabilities & kCapabilitySmartAccessPolicyControl) == 0 &&
+        body.rfind("phase=", 0) == 0) {
+      const std::string extension = ";routing_catalog_control_version=2";
+      const auto position = body.find(extension);
+      if (position != std::string::npos) body[position + extension.size() - 1] = '1';
+    }
+    if ((negotiated_capabilities & kCapabilityRoutingCatalogControl) == 0 &&
+        body.rfind("phase=", 0) == 0) {
+      const auto extension = body.find(";routing_catalog_control_version=");
+      if (extension != std::string::npos) body.resize(extension);
+    }
+    if ((negotiated_capabilities & kCapabilitySmartAccessLease) == 0 &&
+        body.rfind("phase=", 0) == 0) {
+      const auto extension = body.find(";smart_access_lease_version=");
+      if (extension != std::string::npos) body.resize(extension);
+    }
+    if ((negotiated_capabilities & kCapabilityRoutingCatalogWindow) == 0 &&
+        body.rfind("phase=", 0) == 0) {
+      const auto extension = body.find(";routing_catalog_window_version=");
+      if (extension != std::string::npos) body.resize(extension);
     }
     const auto response =
         ResponseFor(*request, status, session_token, std::move(body));

@@ -210,10 +210,12 @@ class _DnsAndLanCard extends StatelessWidget {
   const _DnsAndLanCard({
     required this.preferences,
     required this.onChanged,
+    required this.onLanSubnetsChanged,
   });
 
   final PokrovRoutingPreferences preferences;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
+  final ValueChanged<List<String>> onLanSubnetsChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -306,12 +308,33 @@ class _DnsAndLanCard extends StatelessWidget {
           _RoutingToggleRow(
             key: const ValueKey('rules-lan-toggle'),
             title: 'Локальная сеть',
-            subtitle: 'Принтеры, NAS и устройства в домашней сети напрямую.',
+            subtitle: preferences.lanSubnets.isEmpty
+                ? 'Сначала укажите подсети принтера, NAS или других устройств.'
+                : 'Только заданные подсети идут напрямую. Правило действует в любой сети с этими адресами.',
             value: preferences.allowLan,
+            enabled: preferences.lanSubnets.isNotEmpty,
             onChanged: (value) => onChanged(
               preferences.copyWith(allowLan: value),
             ),
           ),
+          _SettingsRow(
+            key: const ValueKey('rules-lan-subnets'),
+            icon: Icons.lan_outlined,
+            title: 'Подсети LAN',
+            value: preferences.lanSubnets.isEmpty ? 'Добавить' : '${preferences.lanSubnets.length}',
+            valueIsAction: true,
+            onTap: () async {
+              final subnets = await _showLanSubnetsSheet(context, preferences.lanSubnets);
+              if (subnets == null || !context.mounted) return;
+              onLanSubnetsChanged(subnets);
+            },
+          ),
+          if (preferences.lanSubnets.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(preferences.lanSubnets.join(', '),
+                style: Theme.of(context).textTheme.bodySmall),
+            ),
         ],
       ),
     );
@@ -880,7 +903,7 @@ class _RouteDecisionProbeState extends State<_RouteDecisionProbe> {
             Text(
               _decision!.action == PokrovRouteAction.vpn
                   ? 'Через POKROV VPN'
-                  : 'Напрямую',
+                  : _decision!.action == PokrovRouteAction.direct ? 'Напрямую' : 'Заблокировано',
               key: const ValueKey('rules-route-explainer-result'),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: _decision!.action == PokrovRouteAction.vpn
@@ -901,6 +924,53 @@ class _RouteDecisionProbeState extends State<_RouteDecisionProbe> {
       ),
     );
   }
+}
+
+Future<List<String>?> _showLanSubnetsSheet(BuildContext context, List<String> initial) {
+  var value = initial.join('\n');
+  String? error;
+  return showModalBottomSheet<List<String>>(
+    context: context, isScrollControlled: true, showDragHandle: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+    builder: (sheetContext) => StatefulBuilder(builder: (context, setSheetState) {
+      return SafeArea(top: false, child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(22, 4, 22, 22 + MediaQuery.viewInsetsOf(context).bottom),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Подсети локальной сети', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            const Text('Укажите адреса из настроек роутера или сети. Например: 192.168.1.0/24 или fd12:3456:789a::/64. До 16 подсетей, каждая с новой строки.'),
+            const SizedBox(height: 12),
+            TextFormField(
+              key: const ValueKey('rules-lan-subnets-input'), initialValue: value,
+              autocorrect: false, enableSuggestions: false, minLines: 3, maxLines: 6,
+              maxLength: 1100, keyboardType: TextInputType.multiline,
+              onChanged: (next) => value = next,
+              decoration: InputDecoration(labelText: 'IPv4 / IPv6 CIDR', errorText: error),
+            ),
+            const SizedBox(height: 8),
+            const Text('Поддерживаются частные IPv4 и IPv6 ULA. Link-local IPv6 требует привязки к интерфейсу и здесь недоступен. Пустой список отключит LAN. После сохранения включите «Локальная сеть».'),
+            const SizedBox(height: 16),
+            FilledButton(
+              key: const ValueKey('rules-lan-subnets-save'),
+              onPressed: () {
+                final lines = value.split(RegExp(r'[\n,;]+')).map((line) => line.trim())
+                    .where((line) => line.isNotEmpty).toList();
+                final subnets = lines.map(normalizePokrovLanSubnet).toList();
+                if (lines.length > 16 || subnets.any((subnet) => subnet == null)) {
+                  setSheetState(() => error = 'Укажите до 16 частных подсетей CIDR. Публичные адреса и диапазон всего интернета недопустимы.');
+                  return;
+                }
+                final normalized = subnets.cast<String>().toSet().toList()..sort();
+                Navigator.of(sheetContext).pop(List<String>.unmodifiable(normalized));
+              },
+              child: const Text('Сохранить подсети'),
+            ),
+          ],
+        ),
+      ));
+    }),
+  );
 }
 
 Future<void> _showAddRouteRuleSheet(

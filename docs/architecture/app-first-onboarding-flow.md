@@ -30,6 +30,54 @@ and the linked privacy policy disclose collection. Manual support bundles
 retain separate consent/custody. Network observations are not persisted as
 client state or added to the operational event journal.
 
+## POST12 signed Routing Catalog transport (NOT_VERIFIED)
+
+`AppFirstRoutingCatalogService.fetchRoutingCatalog` is implemented by the
+existing bootstrapper. It uses `GET /api/client/routing-catalog` with the current
+session and owned API transport; it does not create a trial or replace a denied
+session. Duplicate requests for the same host platform share a flight. Before
+returning, the bootstrapper rechecks account/install/session identity against
+the starting state.
+
+The feature is default-off under the compile-time
+`POKROV_ROUTING_CATALOG_ENABLED`. The pin is explicitly supplied through
+`POKROV_ROUTING_CATALOG_KEY_ID` and `POKROV_ROUTING_CATALOG_PUBLIC_KEY_B64`;
+`POKROV_ROUTING_CATALOG_AUDIENCE` defaults to `production` and permits `lab`.
+No key is generated or inferred from a response. No HTTP request is made when
+the feature is off or trust is unconfigured. An enabled feature without trust
+returns an error rather than silently using legacy routing. Injected verifier instances support
+an explicit map of multiple trusted public keys for rotation.
+
+The verifier checks the exact envelope and top-level v1 shape, canonical ASCII
+JSON SHA-256, Ed25519 signing context, audience, UTC lifetime and retained
+catalog/security revisions. It snapshots the input before asynchronous crypto
+and returns recursively immutable content. This authenticates publisher
+assertions. `RoutingCatalogPolicy.fromVerified` separately checks the consumer
+projection: source/evidence references and lifetimes, service ownership,
+synthetic-production boundary, classification and mode constraints, domain
+scope, package signer sets/lineage and browser Direct prohibition. Store accept
+and read require this projection; invalid nested policy cannot replace the last
+accepted envelope or advance its revision floors. Network metadata does not
+produce CIDR/ASN routes; Windows identities are not yet matched to installed apps.
+
+On a transient transport failure or retryable HTTP outage, only a currently
+verifiable cached envelope can return, with `usingCache=true`. TLS failures,
+malformed replies and invalid signatures do not become cached success.
+401/403 or a fixed `routing_catalog_*` code in `X-POKROV-Error` prevent fallback
+and discard the retained envelope while preserving revision floors. This
+distinguishes a known server disable/revocation from an unclassified 503 outage.
+The shared transport retains the existing auth-error header as a fallback for
+older endpoints.
+
+Ordinary connection preparation now calls this API when enabled and feeds the
+verified catalog to the [profile assembler](bootstrap-workflow.md#connection-preparation-with-the-catalog-not_verified).
+Cached managed-profile restoration explicitly requests `cacheOnly`: no HTTP,
+the same session fence, and fresh verification of retained keys/lifetime/floors.
+No valid cached envelope means preparation fails. Fetching metadata alone still
+does not mutate a native host. No app inventory is sent or provider lease granted.
+The feature remains disabled and artifact pins are unchanged; tests/builds/runtime
+checks are deferred to the separate validation phase.
+
 ## Goal
 
 The app must give the user a real working session after `Try free`, then let the user choose how the device should work before the first live connect.
@@ -451,6 +499,85 @@ after their persisted local completion boundary.
   contains no authorization for a different install, and expires no
   later than the confirmed trial/subscription. A new or reset device still
   needs one successful online activation before it can work offline
+
+## Local Smart Access grant receipt (NOT_VERIFIED)
+
+The existing bootstrapper exposes `AppFirstSmartAccessService` for a fresh
+provider-policy read and a device-bound lease request. It uses normal existing
+session credentials; no trial/account bootstrap or automatic session replacement
+is performed. Public provider policies and grants have separate Ed25519 pins
+and signing contexts. Build flag `POKROV_SMART_ACCESS_ENABLED` is default-off;
+provider key ID/public-key, grant key ID/public-key and audience must be supplied
+explicitly. These pins do not inherit catalog/release/support trust.
+
+Provider reads and lease POSTs have bounded response sizes and no automatic
+retry. The POST binds the verified catalog/provider digests, exact capability,
+requested platform/origin/family/feature, effective-profile hash and a random
+nonce. The platform supplies current access/expiry and verifies an active
+paired device. The client verifies signature, per-request account/install
+binding, nonce, profile, policy revisions/digests, capability and nonshared
+service domains. It rejects expired grants and limits new admission to 10
+minutes and active lifetime to one hour, additionally bounded by authority.
+
+Both operations require an `operationIsCurrent` callback from the existing
+caller and recheck account/install/session around async work. Known denial
+invalidates pending work without deleting retained provider floors. This is
+receipt plumbing; coordinator selection, native route/flow enforcement and
+revocation delivery remain open. No live provider request, API, build or test
+was executed for this implementation.
+
+## Local ATS shortlist and profile resolution (NOT_VERIFIED)
+
+The optional transport selection now has a session-owned HTTPS shortlist read
+for opaque endpoint refs in the signed capability/profile/family scope. It
+checks the original operation clock, exact request echo, canonical response,
+ current session and signed endpoint budget. A hint carries no lease or address;
+ profile resolution still obtains one server-issued endpoint grant and must
+ match the hint's failure domain. Within the budget, the selector prefers the
+ last healthy path on the same network and then untried failure domains. Both sides
+reject new-flow windows over 10 minutes and active-flow windows over one hour.
+The client requests a one-item cold-reserve shortlist when the signed endpoint
+budget has room, retaining a slot after primary hints; if no reserve exists it
+uses the remaining primary slot. A failed optional reserve read cannot erase
+valid primary hints; session or policy withdrawal still closes the selection.
+The same attempt and endpoint counters apply to
+both roles, and neither hint provides a lease until profile resolution.
+Endpoint-specific denial may let the selector try another candidate within its
+original budget; policy or session denial closes it. With the explicit
+`POKROV_TRANSPORT_ENABLED` build flag and pinned trust keys, ordinary Full Tunnel
+and Smart Safe Connect on Android and Windows invoke this source path. Selective
+Services on Android and Windows joins it with the verified catalog and confirmed
+service selection. Android per-app modes also use it when the verified RU-app
+preset is not selected. When the catalog is enabled, Full Tunnel uses the same
+verified catalog layer as its existing path; Smart Safe and Selective Services
+require it. Catalog modes bind fresh authenticated access within the same
+operation deadline. For a fresh Selective Services catalog, the client requests
+approved-gateway grants only after materializing the exact base ATS profile,
+then binds them to its digest before assembling routing rules. A cached catalog
+or temporarily unavailable provider authority uses the catalog's declared VPN
+fallback. The final policy and grant windows reach native restriction persistence
+and runtime control. The verified RU-app preset and remaining route modes retain
+their existing path. The selector can enroll a missing floor only through the authenticated
+online nonce exchange, then uses the signed shortlist and bounded candidate
+attempts. A signed capability must require the Core
+`pokrov_ats_lease_v1` feature. After routing assembly, the client places the
+single VLESS upstream behind `pokrov-ats-lease`, preserving route/DNS references
+to its original tag. Core source enforces the approved new/active flow windows.
+Android, Windows and Linux source paths now transfer an exact proven request to
+the loaded Core gate and an active lease watchdog; the coordinator retains exact
+stop ownership until it accepts the transfer. A committed signed kill or removed
+capability/profile binding fences the client presentation and revokes the exact
+native lease, terminating active flows. Uncertain acknowledgement requests exact
+runtime stop. While this ATS path runs, a bounded manifest refresh occurs
+once per minute; offline Core deadlines remain the final boundary. Native proof
+support is required before Android asks for VPN permission or this path starts
+a TUN. A zero diagnostic-byte budget is rejected before selection. Full wire
+accounting must include DNS, transport handshakes, headers and retransmissions;
+the current Core reservation ledger and native hosts do not enforce it. A new UI
+owner observing a running ATS runtime with native proof pending requests disconnect
+before presenting protection; a failed stop remains unverified. Native proof
+production, host process-restart reconciliation and runtime validation remain
+open. No build or test has run for these changes.
 
 ## Release And Audit Expectations
 

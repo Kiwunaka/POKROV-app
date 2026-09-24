@@ -4,6 +4,10 @@ import 'dart:io';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+import 'routing_catalog_contract.dart';
+import 'routing_catalog_materializer.dart';
+import 'routing_catalog_policy.dart';
+
 enum PokrovPurposeRoute { video, ai, social, games, ruDirect }
 
 enum PokrovRouteAction { vpn, direct }
@@ -138,7 +142,9 @@ class PokrovRoutingPreferences {
     required this.dnsTransport,
     required this.customDnsUrl,
     this.externalSmartDnsEnabled = false,
+    this.selectedCatalogServiceIds = const <String>{},
     required this.allowLan,
+    this.lanSubnets = const <String>[],
     required this.trustedWifiNames,
     required this.pauseOnTrustedWifi,
     required this.windowsConnectionMode,
@@ -152,7 +158,9 @@ class PokrovRoutingPreferences {
         dnsTransport = PokrovDnsTransport.vpn,
         customDnsUrl = '',
         externalSmartDnsEnabled = false,
-        allowLan = true,
+        selectedCatalogServiceIds = const <String>{},
+        allowLan = false,
+        lanSubnets = const <String>[],
         trustedWifiNames = const <String>[],
         pauseOnTrustedWifi = false,
         windowsConnectionMode = PokrovWindowsConnectionMode.vpn,
@@ -164,7 +172,9 @@ class PokrovRoutingPreferences {
   final PokrovDnsTransport dnsTransport;
   final String customDnsUrl;
   final bool externalSmartDnsEnabled;
+  final Set<String> selectedCatalogServiceIds;
   final bool allowLan;
+  final List<String> lanSubnets;
   final List<String> trustedWifiNames;
   final bool pauseOnTrustedWifi;
   final PokrovWindowsConnectionMode windowsConnectionMode;
@@ -177,7 +187,9 @@ class PokrovRoutingPreferences {
     PokrovDnsTransport? dnsTransport,
     String? customDnsUrl,
     bool? externalSmartDnsEnabled,
+    Set<String>? selectedCatalogServiceIds,
     bool? allowLan,
+    List<String>? lanSubnets,
     List<String>? trustedWifiNames,
     bool? pauseOnTrustedWifi,
     PokrovWindowsConnectionMode? windowsConnectionMode,
@@ -191,7 +203,10 @@ class PokrovRoutingPreferences {
       customDnsUrl: customDnsUrl ?? this.customDnsUrl,
       externalSmartDnsEnabled:
           externalSmartDnsEnabled ?? this.externalSmartDnsEnabled,
+      selectedCatalogServiceIds: Set.unmodifiable(
+          selectedCatalogServiceIds ?? this.selectedCatalogServiceIds),
       allowLan: allowLan ?? this.allowLan,
+      lanSubnets: List.unmodifiable(lanSubnets ?? this.lanSubnets),
       trustedWifiNames: trustedWifiNames ?? this.trustedWifiNames,
       pauseOnTrustedWifi: pauseOnTrustedWifi ?? this.pauseOnTrustedWifi,
       windowsConnectionMode:
@@ -248,6 +263,7 @@ class PokrovRoutingPreferences {
         _isExternalSmartDnsUrl(customDns) &&
         dnsTransport == PokrovDnsTransport.direct &&
         purposes.any((purpose) => purpose.supportsExternalSmartDns);
+    final lanSubnets = _readLanSubnets(json['lanSubnets']);
     return PokrovRoutingPreferences(
       purposeRoutes: Set<PokrovPurposeRoute>.unmodifiable(purposes),
       overrides: List<PokrovRouteOverride>.unmodifiable(overrides),
@@ -255,7 +271,9 @@ class PokrovRoutingPreferences {
       dnsTransport: dnsTransport,
       customDnsUrl: customDns,
       externalSmartDnsEnabled: externalSmartDnsEnabled,
-      allowLan: json['allowLan'] != false,
+      selectedCatalogServiceIds: _readCatalogServiceSelection(json['selectedCatalogServiceIds']),
+      allowLan: json['lanScopeEnabled'] == true && lanSubnets.isNotEmpty,
+      lanSubnets: lanSubnets,
       trustedWifiNames: List<String>.unmodifiable(trustedWifi),
       pauseOnTrustedWifi:
           json['pauseOnTrustedWifi'] == true && trustedWifi.isNotEmpty,
@@ -271,7 +289,12 @@ class PokrovRoutingPreferences {
         'dnsTransport': dnsTransport.name,
         'customDnsUrl': customDnsUrl,
         'externalSmartDnsEnabled': externalSmartDnsEnabled,
-        'allowLan': allowLan,
+        'selectedCatalogServiceIds': selectedCatalogServiceIds.toList()..sort(),
+        // Older clients interpret allowLan as a blanket private-IP bypass.
+        // Do not grant that broader permission when they read this file.
+        'allowLan': false,
+        'lanScopeEnabled': allowLan,
+        'lanSubnets': lanSubnets,
         'trustedWifiNames': trustedWifiNames.take(20).toList(),
         'pauseOnTrustedWifi': pauseOnTrustedWifi,
         'windowsConnectionMode': windowsConnectionMode.name,
@@ -302,9 +325,80 @@ class PokrovRouteDecision {
     required this.matchedValue,
   });
 
-  final PokrovRouteAction action;
+  /// Null means a safety block: no Direct or VPN route is selected.
+  final PokrovRouteAction? action;
   final String reason;
   final String matchedValue;
+}
+
+Set<String> _readCatalogServiceSelection(Object? value) {
+  if (value == null) return const {};
+  if (value is! List || value.length > 256 || value.any((id) =>
+      id is! String || !RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$').hasMatch(id))) {
+    // A corrupt protected selection must not be silently truncated. Selective
+    // compilation rejects the empty result until the user selects again.
+    return const {};
+  }
+  return Set<String>.unmodifiable(value.cast<String>());
+}
+
+/// Only explicitly entered RFC1918 / IPv6 ULA networks are LAN exceptions.
+/// Link-local IPv6 requires interface scope and is not admitted by this field.
+String? normalizePokrovLanSubnet(String raw) {
+  final value = raw.trim();
+  if (value.length > 64 || value.contains(RegExp(r'\s|%'))) return null;
+  final parts = value.split('/');
+  if (parts.length != 2 || !RegExp(r'^[0-9]{1,3}$').hasMatch(parts.last)) return null;
+  final address = InternetAddress.tryParse(parts.first);
+  final prefix = int.tryParse(parts.last);
+  if (address == null || prefix == null) return null;
+  final bytes = address.rawAddress;
+  final v4 = address.type == InternetAddressType.IPv4;
+  final minimumPrefix = v4
+      ? (bytes[0] == 10 ? 8
+          : bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31 ? 12
+          : bytes[0] == 192 && bytes[1] == 168 ? 16 : 33)
+      : ((bytes[0] & 0xfe) == 0xfc ? 7 : 129);
+  if (prefix < minimumPrefix || prefix > (v4 ? 32 : 128)) return null;
+  for (var index = 0; index < bytes.length; index++) {
+    final bits = (prefix - index * 8).clamp(0, 8).toInt();
+    bytes[index] &= bits == 0 ? 0 : (0xff << (8 - bits)) & 0xff;
+  }
+  return '${InternetAddress.fromRawAddress(bytes).address}/$prefix';
+}
+
+List<String> _readLanSubnets(Object? value) {
+  if (value is! List || value.length > 16) return const [];
+  final subnets = <String>{};
+  for (final item in value) {
+    final subnet = item is String ? normalizePokrovLanSubnet(item) : null;
+    if (subnet == null) return const [];
+    subnets.add(subnet);
+  }
+  return List.unmodifiable(subnets.toList()..sort());
+}
+
+List<String> _enabledLanSubnets(PokrovRoutingPreferences preferences) {
+  if (!preferences.allowLan) return const [];
+  final subnets = _readLanSubnets(preferences.lanSubnets);
+  if (subnets.isEmpty) throw const FormatException('LAN requires explicit local subnets');
+  return subnets;
+}
+
+bool _isLocalDestination(String value) {
+  var address = InternetAddress.tryParse(value);
+  if (address == null) return false;
+  final bytes = address.rawAddress;
+  if (bytes.length == 16 && bytes.take(10).every((byte) => byte == 0) &&
+      bytes[10] == 0xff && bytes[11] == 0xff) {
+    address = InternetAddress.fromRawAddress(bytes.sublist(12));
+  }
+  // Matches the private/loopback/multicast/link-local/unspecified classes of
+  // the pinned Core's network.IsPublicAddr, not every reserved Internet range.
+  return const ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16',
+    '127.0.0.0/8', '169.254.0.0/16', '224.0.0.0/4', '0.0.0.0/32',
+    'fc00::/7', 'fe80::/10', 'ff00::/8', '::1/128', '::/128']
+      .any((subnet) => _ipInSubnet(address!.address, subnet));
 }
 
 PokrovRouteDecision explainPokrovRouteDecision({
@@ -314,6 +408,17 @@ PokrovRouteDecision explainPokrovRouteDecision({
 }) {
   final normalized = _normalizeRouteMatch(destination);
   if (normalized != null) {
+    if (normalized.$2 == PokrovRouteMatchType.ip && _isLocalDestination(normalized.$1)) {
+      final allowed = _enabledLanSubnets(preferences)
+          .where((subnet) => _ipInSubnet(normalized.$1, subnet)).firstOrNull;
+      return PokrovRouteDecision(
+        action: allowed == null ? null : PokrovRouteAction.direct,
+        reason: allowed == null
+            ? 'Локальный адрес не входит в разрешённые подсети LAN. Перехваченный трафик блокируется.'
+            : 'Разрешённая подсеть LAN идёт напрямую; VPN для этого адреса не используется.',
+        matchedValue: allowed ?? normalized.$1,
+      );
+    }
     for (final rule in preferences.overrides) {
       if (_routeOverrideMatches(rule, normalized.$1, normalized.$2)) {
         return PokrovRouteDecision(
@@ -344,6 +449,11 @@ PokrovRouteDecision explainPokrovRouteDecision({
     }
   }
   return switch (fallbackMode) {
+    RouteMode.selectiveServices => const PokrovRouteDecision(
+        action: PokrovRouteAction.direct,
+        reason: 'Базовый маршрут — напрямую. Правила выбранных сервисов нужно смотреть в каталоге; этот пример их не рассчитывает.',
+        matchedValue: 'selectiveServices',
+      ),
     RouteMode.fullTunnel => const PokrovRouteDecision(
         action: PokrovRouteAction.vpn,
         reason: 'Базовый режим отправляет всё устройство через POKROV VPN.',
@@ -371,7 +481,21 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   ManagedProfilePayload payload,
   PokrovRoutingPreferences preferences, {
   required HostPlatform hostPlatform,
+  CatalogDomainPolicy? catalogPolicy,
+  String? catalogAccessState,
+  int nativeCatalogWindowVersion = 0,
+  int nativeSmartAccessLeaseVersion = 0,
 }) {
+  if (catalogPolicy != null) {
+    return _applyCatalogRoutingPreferences(payload, preferences,
+      hostPlatform: hostPlatform, policy: catalogPolicy,
+      catalogAccessState: catalogAccessState,
+      nativeWindowVersion: nativeCatalogWindowVersion,
+      nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion);
+  }
+  if (payload.routeMode == RouteMode.selectiveServices) {
+    throw const RoutingCatalogFailure('catalog_selective_policy_required');
+  }
   Map<String, dynamic> config;
   try {
     final decoded = jsonDecode(payload.configPayload);
@@ -402,6 +526,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   }
 
   final rules = _routingListOfMaps(route['rules']);
+  final lanSubnets = _enabledLanSubnets(preferences);
   rules.removeWhere(
     (rule) =>
         rule['ip_is_private'] == true &&
@@ -422,6 +547,22 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     ]);
   }
   final injected = <Map<String, dynamic>>[];
+  final safetyTags = outbounds.where((outbound) =>
+      outbound['type'] == 'block' || outbound['type'] == 'dns')
+      .map((outbound) => outbound['tag']).toSet();
+  rules.removeWhere((rule) {
+    final action = _routingText(rule['action']);
+    if (action == 'reject' || action == 'sniff' || action == 'hijack-dns' ||
+        safetyTags.contains(rule['outbound'])) {
+      protectedRules.add(rule);
+      return true;
+    }
+    return false;
+  });
+  injected.addAll([
+    if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'outbound': directTag},
+    {'ip_is_private': true, 'action': 'reject'},
+  ]);
   for (final override in preferences.overrides) {
     final target =
         override.action == PokrovRouteAction.direct ? directTag : proxyTag;
@@ -447,12 +588,6 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
           : proxyTag,
     });
   }
-  if (preferences.allowLan) {
-    _appendUniqueRule(injected, <String, dynamic>{
-      'ip_is_private': true,
-      'outbound': directTag,
-    });
-  }
   rules.insertAll(0, protectedRules);
   rules.insertAll(
     protectedRules.length,
@@ -462,6 +597,15 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   );
   route['rules'] = rules;
   config['route'] = route;
+
+  final existingDns = _routingMap(config['dns']);
+  existingDns['rules'] = [
+    for (final rule in _routingListOfMaps(existingDns['rules']))
+      if (rule['ip_is_private'] == true && _routingText(rule['server']) == 'dns-direct') ...[
+        if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'server': 'dns-direct'},
+      ] else rule,
+  ];
+  config['dns'] = existingDns;
 
   if (hostPlatform == HostPlatform.windows) {
     final inbounds = _routingListOfMaps(config['inbounds']);
@@ -514,7 +658,226 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     config['dns'] = dns;
   }
 
-  return payload.copyWith(configPayload: jsonEncode(config));
+  return payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1);
+}
+
+ManagedProfilePayload _applyCatalogRoutingPreferences(
+  ManagedProfilePayload payload,
+  PokrovRoutingPreferences preferences, {
+  required HostPlatform hostPlatform,
+  required CatalogDomainPolicy policy,
+  String? catalogAccessState,
+  required int nativeWindowVersion,
+  required int nativeSmartAccessLeaseVersion,
+}) {
+  final expectedMode = switch (payload.routeMode) {
+    RouteMode.selectiveServices => CatalogRoutingMode.selective,
+    RouteMode.fullTunnel => CatalogRoutingMode.full,
+    RouteMode.allExceptRu => CatalogRoutingMode.smartSafe,
+    RouteMode.selectedApps => CatalogRoutingMode.includeApps,
+    RouteMode.excludedApps => CatalogRoutingMode.excludeApps,
+  };
+  if (!payload.materializedForRuntime || policy.mode != expectedMode ||
+       policy.platform != hostPlatform.name ||
+       policy.accessState != (catalogAccessState ?? payload.freeProfileAccess?.accessState) ||
+       (catalogAccessState != null && payload.freeProfileAccess != null &&
+         payload.freeProfileAccess!.accessState != catalogAccessState) ||
+      policy.defaultAction != (expectedMode == CatalogRoutingMode.selective
+          ? CatalogRouteAction.direct : CatalogRouteAction.vpn)) {
+    throw const RoutingCatalogFailure('catalog_profile_binding_invalid');
+  }
+  final selective = expectedMode == CatalogRoutingMode.selective;
+  if (policy.smartAccessProfile != null && !policy.smartAccessProfile!.matchesProfile(payload.configPayload)) {
+    throw const RoutingCatalogFailure('smart_access_profile_changed');
+  }
+  final lanSubnets = _enabledLanSubnets(preferences);
+  if (selective && (policy.selectedServiceIds.isEmpty ||
+      policy.selectedServiceIds.length != preferences.selectedCatalogServiceIds.length ||
+      !policy.selectedServiceIds.containsAll(preferences.selectedCatalogServiceIds))) {
+    throw const RoutingCatalogFailure('catalog_service_selection_changed');
+  }
+  if (hostPlatform != HostPlatform.android && hostPlatform != HostPlatform.windows) {
+    throw const RoutingCatalogFailure('catalog_host_unsupported');
+  }
+  if (hostPlatform == HostPlatform.windows &&
+      (payload.routeMode == RouteMode.selectedApps || payload.routeMode == RouteMode.excludedApps)) {
+    // Shared Windows DNS processes do not prove the requesting application's
+    // scope. Do not silently broaden a per-app choice to device-wide policy.
+    throw const RoutingCatalogFailure('catalog_process_dns_scope_unsupported');
+  }
+  if (preferences.externalSmartDnsEnabled) {
+    throw const RoutingCatalogFailure('catalog_gateway_lease_missing');
+  }
+  final decoded = jsonDecode(payload.configPayload);
+  if (decoded is! Map) throw const RoutingCatalogFailure('catalog_profile_invalid');
+  final config = _routingMap(decoded);
+  final outbounds = _routingListOfMaps(config['outbounds']);
+  final endpoints = _routingListOfMaps(config['endpoints']);
+  if (outbounds.any((value) => value['type'] == 'pokrov-smart-access')) {
+    throw const RoutingCatalogFailure('smart_access_profile_already_leased');
+  }
+  final route = _routingMap(config['route']);
+  final dns = _routingMap(config['dns']);
+  final direct = _findOutboundByType(outbounds, 'direct');
+  final vpn = _resolveProxyTag(outbounds, endpoints, route);
+  if (direct.isEmpty || vpn.isEmpty || direct == vpn ||
+      (selective && vpn != _routingText(route['final']))) {
+    throw const RoutingCatalogFailure('catalog_native_targets_invalid');
+  }
+  final inbounds = _routingListOfMaps(config['inbounds']);
+  final tun = inbounds.where((value) => value['type'] == 'tun').firstOrNull;
+  if (tun == null) throw const RoutingCatalogFailure('catalog_tun_scope_missing');
+  if (hostPlatform == HostPlatform.android) {
+    final include = tun['include_package'];
+    final exclude = tun['exclude_package'];
+    if (selective && include is List && include.isNotEmpty) {
+      throw const RoutingCatalogFailure('catalog_tun_scope_missing');
+    }
+    if ((payload.routeMode == RouteMode.selectedApps &&
+            (include is! List || include.isEmpty || (exclude is List && exclude.isNotEmpty))) ||
+        (payload.routeMode == RouteMode.excludedApps &&
+            (exclude is! List || exclude.isEmpty || (include is List && include.isNotEmpty)))) {
+      throw const RoutingCatalogFailure('catalog_tun_scope_missing');
+    }
+  } else {
+    tun['stack'] = preferences.tunStack.name;
+    for (final inbound in inbounds) {
+      if (inbound['type'] == 'mixed') inbound.remove('set_system_proxy');
+    }
+  }
+  config['inbounds'] = inbounds;
+
+  final servers = _routingListOfMaps(dns['servers']);
+  var vpnDns = 'dns-remote';
+  var directDns = 'dns-direct';
+  final dnsAddress = preferences.effectiveDnsAddress;
+  if (dnsAddress != null) {
+    vpnDns = 'pokrov-catalog-user-dns-vpn';
+    directDns = 'pokrov-catalog-user-dns-direct';
+    servers.removeWhere((server) => server['tag'] == vpnDns || server['tag'] == directDns);
+    servers.addAll([
+      {'tag': vpnDns, 'address': dnsAddress, 'address_resolver': 'dns-local', 'detour': vpn},
+      {'tag': directDns, 'address': dnsAddress, 'address_resolver': 'dns-local', 'detour': direct},
+    ]);
+  }
+  for (final (tag, target) in [(vpnDns, vpn), (directDns, direct)]) {
+    final resolver = servers.where((server) => server['tag'] == tag).firstOrNull;
+    if (resolver == null || resolver['detour'] != target) {
+      throw const RoutingCatalogFailure('catalog_dns_lane_invalid');
+    }
+  }
+  final layer = materializeCatalogRuleLayer(policy: policy,
+    nativeWindowVersion: nativeWindowVersion, vpnOutbound: vpn, directOutbound: direct,
+    vpnDnsServer: vpnDns, directDnsServer: directDns, now: DateTime.now(),
+    nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion);
+  final existingOutboundTags = [...outbounds, ...endpoints].map((value) => value['tag']).toSet();
+  final existingDnsTags = servers.map((value) => value['tag']).toSet();
+  if (layer.outbounds.any((value) => existingOutboundTags.contains(value['tag'])) ||
+      layer.dnsServers.any((value) => existingDnsTags.contains(value['tag']))) {
+    throw const RoutingCatalogFailure('smart_access_native_tag_collision');
+  }
+  outbounds.addAll(layer.outbounds.map((value) => Map<String, dynamic>.from(value)));
+  servers.addAll(layer.dnsServers.map((value) => Map<String, dynamic>.from(value)));
+  config['outbounds'] = outbounds;
+  final blockTags = outbounds.where((value) => value['type'] == 'block')
+      .map((value) => value['tag']).toSet();
+  final safety = <Map<String, dynamic>>[];
+  final remaining = <Map<String, dynamic>>[];
+  for (final rule in _routingListOfMaps(route['rules'])) {
+    final action = _routingText(rule['action']);
+    if (action == 'reject' || blockTags.contains(rule['outbound']) ||
+        action == 'sniff' || action == 'hijack-dns') {
+      safety.add(rule);
+    } else if (_routingText(rule['outbound']) != direct &&
+        (!selective || _routingText(rule['outbound']).isEmpty)) {
+      remaining.add(rule);
+    }
+  }
+  // All implicit Direct classifications (including legacy RU lists) are
+  // replaced by this catalog. Explicit local choices are rebuilt below.
+  final manual = <Map<String, dynamic>>[];
+  final manualDns = <Map<String, dynamic>>[];
+  for (final override in preferences.overrides) {
+    final isDirect = override.action == PokrovRouteAction.direct;
+    final match = override.matchType == PokrovRouteMatchType.domain ? 'domain_suffix' : 'ip_cidr';
+    manual.add({match: [override.value], 'outbound': isDirect ? direct : vpn});
+    if (override.matchType == PokrovRouteMatchType.domain) {
+      manualDns.add({match: [override.value], 'server': isDirect ? directDns : vpnDns});
+    }
+  }
+  for (final purpose in PokrovPurposeRoute.values) {
+    if (!preferences.purposeRoutes.contains(purpose)) continue;
+    final isDirect = purpose == PokrovPurposeRoute.ruDirect;
+    manual.add({'domain_suffix': _purposeDomains[purpose], 'outbound': isDirect ? direct : vpn});
+    manualDns.add({'domain_suffix': _purposeDomains[purpose], 'server': isDirect ? directDns : vpnDns});
+  }
+  // Native health must exercise this exact protected target even when the
+  // remainder defaults to Direct. Keep the owned HTTPS probe before user and
+  // catalog classifications, without changing the rest of the device scope.
+  final probeRoute = <String, dynamic>{
+    'domain': ['api.pokrov.space'], 'network': 'tcp', 'port': [443],
+    'action': 'route', 'outbound': vpn,
+  };
+  route['rules'] = [
+    ...safety, if (selective) probeRoute,
+    if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'outbound': direct},
+    {'ip_is_private': true, 'action': 'reject'},
+    ...manual, ...layer.routeRules, ...remaining,
+  ];
+  route['final'] = selective ? direct : vpn;
+  config['route'] = route;
+
+  final blockedDns = servers.where((server) =>
+      _routingText(server['address']).startsWith('rcode://')).map((server) => server['tag']).toSet();
+  final dnsSafety = _routingListOfMaps(dns['rules']).where((rule) =>
+      (_routingText(rule['server']).isEmpty && _routingText(rule['action']) != 'route') ||
+      blockedDns.contains(rule['server'])).toList();
+  final bootstrapDomains = <String>{
+    for (final outbound in [...outbounds, ...endpoints])
+      if (_routingText(outbound['server']).isNotEmpty &&
+          InternetAddress.tryParse(_routingText(outbound['server'])) == null)
+        _routingText(outbound['server']),
+  }.toList()..sort();
+  if (selective && bootstrapDomains.any((domain) =>
+      domain.toLowerCase().replaceFirst(RegExp(r'\.$'), '') == 'api.pokrov.space')) {
+    // A tunnel cannot depend on its own protected proof hostname to bootstrap.
+    throw const RoutingCatalogFailure('catalog_probe_bootstrap_conflict');
+  }
+  dns['servers'] = servers;
+  dns['rules'] = [
+    ...dnsSafety,
+    if (bootstrapDomains.isNotEmpty) {'domain': bootstrapDomains, 'server': directDns},
+    if (selective) {
+      'domain': ['api.pokrov.space'], 'action': 'route', 'server': vpnDns,
+      'disable_cache': true, 'rewrite_ttl': 0,
+    },
+    if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'server': directDns},
+    ...manualDns,
+    ...layer.dnsRules,
+  ];
+  dns['final'] = selective || (dnsAddress != null && preferences.dnsTransport == PokrovDnsTransport.direct)
+      ? directDns : vpnDns;
+  dns['independent_cache'] = true;
+  dns['disable_expire'] = false;
+  config['dns'] = dns;
+  // Removed automatic classifications must not leave unused remote rule sets
+  // that Core would still load. Keep every set referenced by retained rules.
+  final referencedSets = <String>{};
+  void collectSets(Object? rules) {
+    for (final rule in _routingListOfMaps(rules)) {
+      final sets = rule['rule_set'];
+      if (sets is String) referencedSets.add(sets);
+      if (sets is List) referencedSets.addAll(sets.whereType<String>());
+      collectSets(rule['rules']);
+    }
+  }
+  collectSets(route['rules']);
+  collectSets(dns['rules']);
+  if (route['rule_set'] is List) {
+    route['rule_set'] = _routingListOfMaps(route['rule_set'])
+        .where((definition) => referencedSets.contains(definition['tag'])).toList();
+  }
+  return payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1);
 }
 
 const Map<PokrovPurposeRoute, List<String>> _purposeDomains = {

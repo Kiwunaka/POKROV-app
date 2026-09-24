@@ -3,6 +3,7 @@ package space.pokrov.pokrov_android_shell
 import android.annotation.TargetApi
 import android.content.Context
 import android.net.ConnectivityManager
+import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
@@ -64,6 +65,7 @@ internal object AndroidDefaultNetworkMonitor {
     private var registered = false
     private val networkLock = Object()
     private var currentNetworkGeneration = 0L
+    private var currentNetworkLinkProperties: LinkProperties? = null
     private var interfaceResolutionExecutor: ExecutorService? = null
     private var interfaceListenerExecutor: ExecutorService? = null
     private var currentNetworkIsExpensive: Boolean? = null
@@ -93,6 +95,12 @@ internal object AndroidDefaultNetworkMonitor {
             updateCurrentNetwork(network, networkCapabilities)
         }
 
+        override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
+            // A DNS/address/route change on the same Network invalidates a
+            // bound proof just as switching to a different uplink does.
+            if (currentNetwork == network) updateCurrentNetwork(network, linkProperties = linkProperties)
+        }
+
         override fun onLost(network: Network) {
             val missingGeneration = clearCurrentNetworkIfMatches(network)
             if (missingGeneration != null) {
@@ -118,6 +126,14 @@ internal object AndroidDefaultNetworkMonitor {
         if (currentNetwork == null) {
             activeNetwork()?.let(::updateCurrentNetwork)
         }
+    }
+
+    fun contextGeneration(): Long? = synchronized(networkLock) {
+        if (currentNetwork == null) null else currentNetworkGeneration
+    }
+
+    fun matchesTransportContext(network: Network, links: LinkProperties): Boolean = synchronized(networkLock) {
+        currentNetwork == network && currentNetworkLinkProperties == links
     }
 
     fun start(
@@ -249,10 +265,12 @@ internal object AndroidDefaultNetworkMonitor {
     private fun updateCurrentNetwork(
         network: Network,
         capabilities: NetworkCapabilities? = null,
+        linkProperties: LinkProperties? = null,
     ) {
         val context = appContext ?: return
         val connectivityManager = connectivity(context)
         val resolvedCapabilities = capabilities ?: connectivityManager.getNetworkCapabilities(network)
+        val resolvedLinks = linkProperties ?: connectivityManager.getLinkProperties(network)
         if (!isUsableNetwork(resolvedCapabilities)) {
             val missingGeneration = clearCurrentNetworkIfMatches(network)
             if (missingGeneration != null) {
@@ -266,13 +284,17 @@ internal object AndroidDefaultNetworkMonitor {
         val isConstrained =
             resolvedCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED) == false
         val update = synchronized(networkLock) {
-            val networkChanged = currentNetwork != network
+            // A queued link update cannot switch back to an uplink that lost
+            // ownership while ConnectivityManager properties were being read.
+            if (linkProperties != null && currentNetwork != network) return
+            val networkChanged = currentNetwork != network || currentNetworkLinkProperties != resolvedLinks
             val capabilitiesChanged =
                 currentNetworkIsExpensive != isExpensive ||
                     currentNetworkIsConstrained != isConstrained
             if (networkChanged) {
                 currentNetwork = network
                 currentNetworkGeneration += 1
+                currentNetworkLinkProperties = resolvedLinks?.let { LinkProperties(it) }
                 resolvedInterfaceName = null
                 resolvedInterfaceIndex = null
                 interfaceResolutionGeneration = null
@@ -288,6 +310,7 @@ internal object AndroidDefaultNetworkMonitor {
                 resolutionPending = interfaceResolutionGeneration == currentNetworkGeneration,
             )
         }
+        if (update.networkChanged) AndroidConnectRequestOwner.cancelIfNetworkChanged()
         when (
             resolveDefaultNetworkRefreshAction(
                 networkChanged = update.networkChanged,
@@ -369,6 +392,7 @@ internal object AndroidDefaultNetworkMonitor {
         } else {
             currentNetwork = null
             ++currentNetworkGeneration
+            currentNetworkLinkProperties = null
             currentNetworkIsExpensive = null
             currentNetworkIsConstrained = null
             resolvedInterfaceName = null
@@ -410,6 +434,7 @@ internal object AndroidDefaultNetworkMonitor {
         synchronized(networkLock) {
             currentNetwork = null
             ++currentNetworkGeneration
+            currentNetworkLinkProperties = null
             currentNetworkIsExpensive = null
             currentNetworkIsConstrained = null
             resolvedInterfaceName = null
@@ -603,6 +628,8 @@ internal object AndroidDefaultNetworkMonitor {
         synchronized(networkLock) {
             networkLock.notifyAll()
         }
+        // Never enter the request/service owner while holding networkLock.
+        AndroidConnectRequestOwner.cancelIfNetworkChanged()
     }
 
     private data class DefaultNetworkUpdate(

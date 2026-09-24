@@ -16,6 +16,7 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
   private var phase: RuntimePhase = .artifactMissing
   private var stagedConfigPath: String?
   private var didSetupRuntime = false
+  private var transportInventoryGeneration: UInt64 = 0
   private var lastMessage = "Native runtime bridge has not inspected this host yet."
 
   static func register(with messenger: FlutterBinaryMessenger) {
@@ -28,9 +29,19 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
   }
 
   private func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    if ["runtimeEngine.initialize", "runtimeEngine.stageManagedProfile", "runtimeEngine.connect",
+        "runtimeEngine.disconnect", "runtimeEngine.applyWarp"].contains(call.method) {
+      transportInventoryGeneration &+= 1
+    }
     switch call.method {
+    case "runtimeEngine.clockSnapshot":
+      guard let clock = PokrovBootClock.read(platform: "ios") else {
+        result(FlutterError(code: "runtime_clock_unavailable", message: "Boot clock unavailable", details: nil))
+        return
+      }
+      result(clock)
     case "runtimeEngine.snapshot":
-      result(snapshot())
+      snapshotWithTransportInventory(result: result)
     case "runtimeEngine.initialize":
       result(initialize())
     case "runtimeEngine.stageManagedProfile":
@@ -50,11 +61,30 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
     }
   }
 
+  private func snapshotWithTransportInventory(result: @escaping FlutterResult) {
+    var value = snapshot()
+    guard phase == .running, let identifier = packetTunnelBundleIdentifier() else {
+      result(value)
+      return
+    }
+    let generation = transportInventoryGeneration
+    packetTunnelController.readTransportCapabilities(bundleIdentifier: identifier) { [weak self] inventory in
+      guard let self else { result(nil); return }
+      guard self.transportInventoryGeneration == generation, self.phase == .running else {
+        result(self.snapshot())
+        return
+      }
+      // Never substitute the Runner's library for the running extension.
+      value["transportCapabilitiesJson"] = inventory
+      result(value)
+    }
+  }
+
   private func snapshot() -> [String: Any?] {
     guard let environment = runtimeEnvironment() else {
       phase = .artifactMissing
       stagedConfigPath = nil
-      lastMessage = "PokrovCore.framework is not embedded in this iOS host build."
+      lastMessage = "iOS runtime directories are unavailable."
       return buildSnapshot(
         artifactDirectory: nil,
         coreBinaryPath: nil,
@@ -65,7 +95,7 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
 
     if phase == .artifactMissing {
       phase = .artifactReady
-      lastMessage = "iOS host bridge found the bundled POKROV Core framework and can initialize it."
+      lastMessage = "iOS host runtime is ready to initialize."
     }
 
     return buildSnapshot(
@@ -253,14 +283,7 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
 
       self.phase = self.phase(for: seedResult.status)
       self.lastMessage = seedResult.message
-      result(
-        self.buildSnapshot(
-          artifactDirectory: environment.artifactDirectory,
-          coreBinaryPath: environment.coreBinaryPath,
-          canInitialize: true,
-          canConnect: self.stagedConfigPath != nil
-        )
-      )
+      self.snapshotWithTransportInventory(result: result)
     }
   }
 
@@ -319,8 +342,10 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
     canConnect: Bool
   ) -> [String: Any?] {
     let environment = runtimeEnvironment()
-    [
+    return [
       "phase": phase.rawValue,
+      "transportCapabilitiesJson": didSetupRuntime && phase != .running
+        ? PokrovCoreTransportInventory.read() : nil,
       "artifactDirectory": artifactDirectory,
       "coreBinaryPath": coreBinaryPath,
       "helperBinaryPath": nil,
@@ -337,22 +362,21 @@ final class RuntimeHostBridge: NSObject, FlutterPlugin {
 
   private func runtimeEnvironment() -> RuntimeEnvironment? {
     guard
-      let frameworksPath = Bundle.main.privateFrameworksPath,
+      let executable = Bundle.main.executableURL,
       let sharedRuntime = PacketTunnelSharedPaths.hostRuntimeEnvironment(bundle: .main)
     else {
       return nil
     }
 
-    let frameworkPath = URL(fileURLWithPath: frameworksPath)
-      .appendingPathComponent("PokrovCore.framework", isDirectory: true)
-    let binaryPath = frameworkPath.appendingPathComponent("PokrovCore")
-    guard FileManager.default.fileExists(atPath: binaryPath.path) else {
+    // The gomobile XCFramework contains static archives linked into Runner
+    // and PacketTunnelExtension separately; it is not an embedded dylib.
+    guard FileManager.default.fileExists(atPath: executable.path) else {
       return nil
     }
 
     return RuntimeEnvironment(
-      artifactDirectory: frameworkPath.path,
-      coreBinaryPath: binaryPath.path,
+      artifactDirectory: Bundle.main.bundleURL.path,
+      coreBinaryPath: executable.path,
       appGroupIdentifier: sharedRuntime.appGroupIdentifier,
       sharedContainerDirectory: sharedRuntime.sharedContainerDirectory,
       usesSharedAppGroup: sharedRuntime.usesSharedAppGroup,

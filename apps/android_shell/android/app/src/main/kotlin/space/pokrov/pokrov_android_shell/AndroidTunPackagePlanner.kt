@@ -17,6 +17,17 @@ internal object AndroidTunPackagePlanner {
             .map(String::trim)
             .filter(String::isNotEmpty)
             .distinct()
+        val excluded = excludedPackages
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .distinct()
+        if (allowed.isNotEmpty() && excluded.isNotEmpty()) {
+            return AndroidTunPackagePlan(
+                allowedPackages = emptyList(),
+                disallowedPackages = emptyList(),
+                isValid = false,
+            )
+        }
         if (allowed.isNotEmpty()) {
             return AndroidTunPackagePlan(
                 allowedPackages = allowed,
@@ -33,7 +44,7 @@ internal object AndroidTunPackagePlanner {
 
         val disallowed = buildList {
             add(appPackage)
-            addAll(excludedPackages)
+            addAll(excluded)
         }
             .map(String::trim)
             .filter(String::isNotEmpty)

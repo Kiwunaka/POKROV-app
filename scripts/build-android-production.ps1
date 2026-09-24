@@ -5,11 +5,18 @@ param(
   [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
   [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
-  [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64
+  [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
+  [string]$TransportTrustDefinesFile
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+
+$transportTrustArguments = @()
+if ($TransportTrustDefinesFile) {
+  $transportTrustPath = (Resolve-Path -LiteralPath $TransportTrustDefinesFile -ErrorAction Stop).Path
+  $transportTrustArguments = @("--dart-define-from-file=$transportTrustPath")
+}
 
 $EmergencySigningKeyId = [string]$EmergencySigningKeyId
 $EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
@@ -177,7 +184,7 @@ try {
       "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
       "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
     )
-    & flutter @commonBuildArguments
+    & flutter @commonBuildArguments @transportTrustArguments
     if ($LASTEXITCODE -ne 0) {
       throw "Flutter production universal and ABI APK build failed with exit code $LASTEXITCODE."
     }
@@ -197,7 +204,7 @@ try {
       "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
       "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
     )
-    & flutter @storeBundleBuildArguments
+    & flutter @storeBundleBuildArguments @transportTrustArguments
     if ($LASTEXITCODE -ne 0) {
       throw "Flutter production store AAB build failed with exit code $LASTEXITCODE."
     }

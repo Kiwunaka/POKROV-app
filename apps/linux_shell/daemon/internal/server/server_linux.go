@@ -5,6 +5,7 @@ package server
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -75,7 +76,28 @@ func (server *Server) serveConnection(connection *net.UnixConn) {
 		server.writeResponse(connection, protocol.Failure("invalid", "linux_protocol_invalid", "runtime_error"))
 		return
 	}
-	server.writeResponse(connection, server.Service.Handle(peer, request))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var monitorDone chan struct{}
+	if request.IsConnect() {
+		// Connect owns this socket. A cancellation trailer or lost caller only
+		// cancels its context, never a later request or an established session.
+		_ = connection.SetReadDeadline(time.Time{})
+		monitorDone = make(chan struct{})
+		go func() {
+			defer close(monitorDone)
+			_, _ = reader.ReadByte()
+			// 0x03 is the only valid trailer. Any other trailing input or EOF
+			// aborts this invocation as well; it cannot introduce a command.
+			cancel()
+		}()
+	}
+	response := server.Service.Handle(ctx, peer, request)
+	if monitorDone != nil {
+		_ = connection.SetReadDeadline(time.Now())
+		<-monitorDone
+	}
+	server.writeResponse(connection, response)
 }
 
 func decodeRequest(line []byte) (protocol.Request, error) {

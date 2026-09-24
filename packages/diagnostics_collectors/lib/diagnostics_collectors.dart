@@ -88,6 +88,7 @@ final class DiagnosticNetworkSummary {
       'excluded_apps',
       'full_tunnel',
       'selected_apps',
+      'selective_services',
     });
     _requireToken(connectionState, 'connectionState', <String>{
       'blocked',

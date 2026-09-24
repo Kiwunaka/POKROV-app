@@ -106,6 +106,7 @@ const char* CommandName(Command command) {
     case Command::kHello:
       return "hello";
     case Command::kStatus:
+    case Command::kReadTransportNetworkContext:
       return "status";
     case Command::kConnect:
       return "connect";
@@ -113,6 +114,8 @@ const char* CommandName(Command command) {
       return "disconnect";
     case Command::kCancel:
       return "cancel";
+    case Command::kCancelConnectAndConfirm:
+      return "cancel_connect_and_confirm";
     case Command::kRecover:
       return "recover";
     case Command::kDiagnosticState:
@@ -120,9 +123,31 @@ const char* CommandName(Command command) {
     case Command::kInitialize:
       return "initialize";
     case Command::kStageProfile:
+    case Command::kStageBoundProfile:
       return "stage_profile";
     case Command::kInvalidateProfile:
       return "invalidate_profile";
+    case Command::kRevokeSmartAccessLease:
+      return "revoke_smart_access_lease";
+    case Command::kRevokeRoutingCatalog:
+      return "revoke_routing_catalog";
+    case Command::kRevokeRoutingCatalogService:
+      return "revoke_routing_catalog_service";
+    case Command::kRevokeSmartAccessPolicy:
+      return "revoke_smart_access_policy";
+    case Command::kRenewSmartAccessLease:
+      return "renew_smart_access_lease";
+    case Command::kConfigureSmartAccessRuntimeControl:
+    case Command::kConfigureBoundSmartAccessRuntimeControl:
+      return "configure_smart_access_runtime_control";
+    case Command::kConfigureSmartAccessRenewal:
+      return "configure_smart_access_renewal";
+    case Command::kReadSmartAccessRestrictions:
+      return "read_smart_access_restrictions";
+    case Command::kReadSmartAccessLeases:
+      return "read_smart_access_leases";
+    case Command::kAcknowledgeSmartAccessRestrictions:
+      return "acknowledge_smart_access_restrictions";
   }
   return "invalid";
 }

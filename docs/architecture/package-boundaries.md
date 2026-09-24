@@ -16,6 +16,10 @@ Allowed dependency flow:
 Rules:
 
 - `core_domain` stays pure and does not import host or Flutter UI concerns.
+  It also owns `RuntimeTransportFeature`, the typed ingredient vocabulary shared
+  by loaded-Core inventory and signed transport-policy requirement decoding.
+  Runtime loading stays in `runtime_engine`; policy signatures and selection
+  membership stay in `app_shell`. The vocabulary alone grants no capability.
 - `platform_contracts` may depend on `core_domain` but should not know about widgets or navigation.
 - `support_context` may depend on `core_domain` and should only expose support-safe summaries and handoff metadata.
 - `observability_contracts` has no runtime dependency. It exposes only typed
@@ -61,10 +65,13 @@ updates; activating a tab invokes its latest builder before it paints. The
 existing Offstage, TickerMode and RepaintBoundary boundaries remain in place.
 This avoids rebuilding hidden Profile content without caching visible status.
 
-The Support preview shows a bounded versioned `PSD1-*` or `PSD2-*` code,
+The Support preview shows a bounded versioned `PSD1-*`, `PSD2-*` or `PSD3-*` code,
 categories, virtual files, byte sizes and removal count before any bundle
 export. `PSD2-*` preserves release build numbers above 255 while the decoder
-continues to accept the stable `PSD1-*` form. The short code carries no file or
+continues to accept the stable `PSD1-*` form. Selective uses PSD3 with a CRC-covered
+format marker, three route bits and the full build number; it cannot be read as
+an old mode by changing the prefix. This source addition and the matching
+platform decoder are NOT_VERIFIED pending the separate checks stage. The short code carries no file or
 identity and can be decoded without upload. The existing
 support-ticket attachment is explicitly a separate five-field safe summary.
 Full upload or manual export is exposed only when the release embeds an
@@ -87,6 +94,7 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
 ## Runtime Host Bridge Boundary
 
 - `runtime_engine` now owns the shared runtime snapshot and managed-profile staging contract for the next-client lane.
+- `runtime_engine` also owns the explicit `RuntimeCoreIdentityConnect` host boundary. Android carries expected Core/profile SHA values through its request owner, permissions and native start; other hosts remain unsupported for this entry point. `app_shell` must supply admitted candidate values and retain policy/budget/proof ownership; a returned snapshot is not a successful selection.
 - `runtime_engine` is also the host-side AWG2 provenance barrier. It rejects
   missing/stale `pokrov.awg2.endpoint.v1` metadata, multiple AWG endpoints and
   integrated-TUN ownership before invoking either Android or Windows. The

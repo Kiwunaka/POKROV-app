@@ -3746,7 +3746,7 @@ final class _FakeLinuxDaemonTransport implements LinuxDaemonTransport {
   final Map<String, Object?> Function(Map<String, Object?> request) handler;
 
   @override
-  Future<Map<String, Object?>> invoke(Map<String, Object?> request) async {
+  Future<Map<String, Object?>> invoke(Map<String, Object?> request, {Future<void>? cancelled}) async {
     return handler(request);
   }
 }

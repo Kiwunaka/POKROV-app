@@ -40,16 +40,17 @@ type CommandRunner interface {
 	Available(command string) bool
 }
 
-type systemCommands struct{}
+type systemCommands struct{ context context.Context }
 
-func (systemCommands) Active(unit string) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+func (commands systemCommands) Active(unit string) bool {
+	ctx, cancel := context.WithTimeout(commands.context, 2*time.Second)
 	defer cancel()
 	command := exec.CommandContext(ctx, "systemctl", "is-active", "--quiet", unit)
 	return command.Run() == nil
 }
 
-func (systemCommands) Available(command string) bool {
+func (commands systemCommands) Available(command string) bool {
+	if commands.context.Err() != nil { return false }
 	_, err := exec.LookPath(command)
 	return err == nil
 }
@@ -69,9 +70,13 @@ type Result struct {
 }
 
 func (probe Probe) Run() Result {
+	return probe.RunContext(context.Background())
+}
+
+func (probe Probe) RunContext(ctx context.Context) Result {
 	commands := probe.Commands
 	if commands == nil {
-		commands = systemCommands{}
+		commands = systemCommands{context: ctx}
 	}
 	corePath := probe.CorePath
 	if corePath == "" {

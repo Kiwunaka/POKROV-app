@@ -3,6 +3,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -48,7 +49,7 @@ func (readyCommands) Available(string) bool {
 
 type denyingChecker struct{}
 
-func (denyingChecker) Check(string, string) auth.Decision {
+func (denyingChecker) Check(context.Context, string, string) auth.Decision {
 	return auth.DecisionDenied
 }
 
@@ -56,7 +57,7 @@ type fixedChecker struct {
 	decision auth.Decision
 }
 
-func (checker fixedChecker) Check(string, string) auth.Decision {
+func (checker fixedChecker) Check(context.Context, string, string) auth.Decision {
 	return checker.decision
 }
 
@@ -117,6 +118,7 @@ func stageRequest(t *testing.T) protocol.Request {
 func TestMutationRequiresAuthorizationBeforeProfileWrite(t *testing.T) {
 	service, store := newReadyService(t, denyingChecker{})
 	response := service.Handle(
+		context.Background(),
 		auth.Peer{PID: 123, UID: 1000, StartTime: 456},
 		stageRequest(t),
 	)
@@ -132,7 +134,7 @@ func TestStagedProfileCannotConnectWithoutCoreControlProtocol(t *testing.T) {
 	service, store := newReadyService(t, nil)
 	root := auth.Peer{PID: 1, UID: 0, StartTime: 1}
 
-	staged := service.Handle(root, stageRequest(t))
+	staged := service.Handle(context.Background(), root, stageRequest(t))
 	if !staged.OK || staged.Snapshot == nil || staged.Snapshot.Phase != "config_staged" {
 		t.Fatalf("profile stage failed: %#v", staged)
 	}
@@ -140,7 +142,7 @@ func TestStagedProfileCannotConnectWithoutCoreControlProtocol(t *testing.T) {
 		t.Fatal("authorized profile was not staged")
 	}
 
-	connect := service.Handle(root, protocol.Request{
+	connect := service.Handle(context.Background(), root, protocol.Request{
 		Protocol:  protocol.Version,
 		RequestID: "linux-connect-1",
 		Action:    "connect",
@@ -156,10 +158,10 @@ func TestCorePrepareFailureNeverReachesNetworkParticipants(t *testing.T) {
 	service, _ := newReadyServiceWithEvents(t, nil, events)
 	root := auth.Peer{PID: 1, UID: 0, StartTime: 1}
 
-	if staged := service.Handle(root, stageRequest(t)); !staged.OK {
+	if staged := service.Handle(context.Background(), root, stageRequest(t)); !staged.OK {
 		t.Fatalf("profile stage failed: %#v", staged)
 	}
-	connect := service.Handle(root, protocol.Request{
+	connect := service.Handle(context.Background(), root, protocol.Request{
 		Protocol:  protocol.Version,
 		RequestID: "linux-connect-observed-1",
 		Action:    "connect",
@@ -223,6 +225,7 @@ func TestMutationAuthorizationEmitsBoundedPolkitDBusDecision(t *testing.T) {
 				events,
 			)
 			response := service.Handle(
+				context.Background(),
 				auth.Peer{PID: 123, UID: 1000, StartTime: 456},
 				stageRequest(t),
 			)
@@ -259,6 +262,7 @@ func TestRootMutationAuthorizationTraceUsesPeerCredential(t *testing.T) {
 	events := &memoryEvents{}
 	service, _ := newReadyServiceWithEvents(t, nil, events)
 	response := service.Handle(
+		context.Background(),
 		auth.Peer{PID: 1, UID: 0, StartTime: 1},
 		stageRequest(t),
 	)

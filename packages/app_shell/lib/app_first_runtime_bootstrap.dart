@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:cryptography/cryptography.dart' show Sha256;
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -13,10 +15,22 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import 'emergency_network_contract.dart';
+import 'routing_catalog_contract.dart';
+import 'client_routing_preferences.dart';
+import 'routing_catalog_policy.dart';
 import 'src/emergency/emergency_network_store.dart';
+import 'src/features/rules/routing_catalog_store.dart';
+import 'src/features/rules/smart_access_policy_store.dart';
+import 'src/features/rules/transport_manifest_store.dart';
+import 'src/features/rules/transport_manifest_time.dart';
 import 'src/observability/release_health_baseline.dart';
 import 'src/shell/managed_profile_cache.dart';
 import 'src/shell/runtime_connectivity_report.dart';
+
+part 'src/features/rules/transport_manifest_loader.dart';
+part 'src/features/rules/transport_profile_loader.dart';
+part 'src/features/rules/transport_profile_preparation.dart';
+part 'src/features/rules/transport_payload_preparation.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -71,7 +85,70 @@ abstract interface class ManagedProfileBootstrapper {
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Duration? timeout,
+    Future<void>? cancelled,
   });
+}
+
+class _ManagedProfileCancelled implements Exception {
+  const _ManagedProfileCancelled();
+
+  @override
+  String toString() => 'managed_profile_cancelled';
+}
+
+/// Owns network handles created by one bootstrap operation and its children.
+class _ManagedProfileRequests {
+  _ManagedProfileRequests(Future<void>? cancelled) {
+    if (cancelled != null) {
+      unawaited(cancelled.then((_) {
+        _cancelled = true;
+        for (final client in _clients) {
+          client.close(force: true);
+        }
+        _clients.clear();
+        for (final connection in _connections) {
+          connection.cancel();
+        }
+        _connections.clear();
+      }));
+    }
+  }
+
+  bool _cancelled = false;
+  final _clients = <HttpClient>{};
+  final _connections = <ConnectionTask<Socket>>{};
+  bool get isCancelled => _cancelled;
+
+  void requireActive() {
+    if (_cancelled) throw const _ManagedProfileCancelled();
+  }
+
+  HttpClient attach(HttpClient client) {
+    if (_cancelled) {
+      client.close(force: true);
+      throw const _ManagedProfileCancelled();
+    }
+    _clients.add(client);
+    return client;
+  }
+
+  void close(HttpClient client) {
+    _clients.remove(client);
+    client.close(force: true);
+  }
+
+  void attachConnection(ConnectionTask<Socket> connection) {
+    if (_cancelled) {
+      connection.cancel();
+    } else {
+      _connections.add(connection);
+    }
+  }
+
+  void closeConnection(ConnectionTask<Socket> connection) {
+    _connections.remove(connection);
+    connection.cancel();
+  }
 }
 
 class ManagedProfileCacheInputs {
@@ -160,6 +237,17 @@ typedef AppFirstStateFileWriter = Future<void> Function(
 
 final Map<String, Future<void>> _appFirstStateFileWriteQueues =
     <String, Future<void>>{};
+
+// In-memory cancellation only; no token/identity is exported or persisted here.
+final _transportSelectionSessionObservers = <String, Set<void Function(_StoredBootstrapState)>>{};
+
+void _notifyTransportSelectionSessionWrite(File file, _StoredBootstrapState state) {
+  final key = file.absolute.path.toLowerCase();
+  for (final observer in (_transportSelectionSessionObservers[key] ??
+      <void Function(_StoredBootstrapState)>{}).toList(growable: false)) {
+    observer(state);
+  }
+}
 
 Future<T> _withAppFirstStateFileLock<T>(
   File file,
@@ -520,6 +608,7 @@ abstract interface class AppFirstBonusActionService {
 abstract interface class AppFirstWarpActionService {
   Future<WarpControlStatus> fetchWarpStatus({
     required HostPlatform hostPlatform,
+    Future<void>? cancelled,
   });
 
   Future<WarpControlStatus> setWarpConsent({
@@ -666,6 +755,8 @@ abstract interface class AppFirstClientDataService {
 
   Future<ClientSubscriptionInfo> fetchClientSubscription({
     required HostPlatform hostPlatform,
+    Duration? requestTimeout,
+    Future<void>? cancelled,
   });
 
   Future<ClientDeviceList> fetchClientDevices({
@@ -762,6 +853,122 @@ abstract interface class AppFirstEmergencyNetworkService {
     required String reserveId,
     required EmergencyChainMode chainMode,
     required bool manualLimitedNetwork,
+  });
+}
+
+abstract interface class AppFirstRoutingCatalogService {
+  Future<void> discardRoutingCatalog();
+  bool get routingCatalogEnabled;
+
+  Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({
+    required HostPlatform hostPlatform,
+    bool cacheOnly = false,
+    Future<void>? cancelled,
+  });
+}
+
+abstract interface class AppFirstTransportPayloadService {
+  Future<RuntimePayloadProbeExchange> prepareTransportPayloadProbe({
+    required HostPlatform hostPlatform, required TransportManifestSelection selection,
+    required RuntimeBoundProbeRequest request, required bool Function() operationIsCurrent,
+    required Future<void> cancelled,
+  });
+}
+
+abstract interface class AppFirstTransportManifestService {
+  bool get transportManifestEnabled;
+  Future<void> discardTransportManifest();
+  Future<List<TransportEndpointHint>> shortlistTransportEndpoints({
+    required HostPlatform hostPlatform, required TransportManifestSelection selection,
+    required TransportEndpointShortlistQuery query,
+    required RuntimeBootClockSnapshot budgetStartedAt, required Duration budget,
+    required Future<void> cancelled,
+  });
+  Future<AuthenticatedTransportProfile> resolveTransportProfile({
+    required HostPlatform hostPlatform, required TransportManifestSelection selection,
+    required TransportProfileQuery query, required RuntimeBootClockSnapshot budgetStartedAt,
+    required Duration budget, required Future<void> cancelled,
+  });
+  Future<PreparedTransportProfile> prepareTransportProfile({
+    required AuthenticatedTransportProfile resolved, required TransportRoutingIntent routingIntent,
+    required RuntimeSnapshot runtime,
+    required RuntimeBootClockSnapshot budgetStartedAt, required Duration budget,
+    required bool Function() operationIsCurrent, required Future<void> cancelled,
+  });
+  Future<TransportManifestSelection?> openTransportSelection({
+    required HostPlatform hostPlatform,
+    required RuntimeBootClockSnapshot operationStarted,
+    required Duration operationBudget,
+    required bool Function() operationIsCurrent,
+    required Future<void> cancelled,
+    bool cacheOnly = false,
+  });
+  Future<TransportManifestFetchResult?> enrollTransportManifest({
+    required HostPlatform hostPlatform,
+    required Duration remainingBudget,
+    Future<void>? cancelled,
+  });
+  Future<TransportManifestFetchResult?> fetchTransportManifest({
+    required HostPlatform hostPlatform,
+    required Duration remainingBudget,
+    bool cacheOnly = false,
+    Future<void>? cancelled,
+  });
+}
+
+class _RoutingCatalogFlight {
+  final abandoned = Completer<void>();
+  late final Future<RoutingCatalogFetchResult?> result;
+  bool finished = false;
+  int _waiters = 0;
+
+  Future<RoutingCatalogFetchResult?> wait(Future<void>? cancelled) async {
+    _waiters += 1;
+    final pending = cancelled == null ? result : Future.any<RoutingCatalogFetchResult?>([
+      result,
+      cancelled.then<RoutingCatalogFetchResult?>((_) => throw const _ManagedProfileCancelled()),
+    ]);
+    try {
+      return await pending;
+    } finally {
+      _waiters -= 1;
+      if (_waiters == 0 && !finished) {
+        if (!abandoned.isCompleted) abandoned.complete();
+        // The last caller retains ownership until its cancelled HTTP/store
+        // work settles; closing the client alone is not a completion receipt.
+        try { await result; } on Object { /* Preserve the caller's result. */ }
+      }
+    }
+  }
+}
+
+abstract interface class AppFirstSmartAccessRuntimeControlService {
+  Future<String> requestSmartAccessRuntimeRenewal({required HostPlatform hostPlatform, required String profileDigest,
+    required VerifiedSmartAccessLease grant, required VerifiedRoutingCatalog catalog,
+    required bool Function() operationIsCurrent, required Duration remainingBudget, required Future<void> cancelled});
+  Future<String> requestSmartAccessRuntimeControl({required HostPlatform hostPlatform, required String profileDigest,
+    required String? catalogSha256,
+    required bool Function() operationIsCurrent, required Duration remainingBudget, required Future<void> cancelled});
+}
+
+abstract interface class AppFirstSmartAccessService {
+  bool get smartAccessEnabled;
+  bool get smartAccessControlAvailable;
+  Future<VerifiedSmartAccessControl> fetchSmartAccessControl({
+    required HostPlatform hostPlatform, required String profileDigest,
+    required bool Function() operationIsCurrent, required Duration remainingBudget,
+    required Future<void> cancelled,
+  });
+  Future<VerifiedSmartAccessProviderPolicy> fetchSmartAccessProviders({
+    required HostPlatform hostPlatform, required bool Function() operationIsCurrent,
+    required Duration remainingBudget, required Future<void> cancelled,
+  });
+  Future<VerifiedSmartAccessLease> requestSmartAccessLease({
+    required HostPlatform hostPlatform, required VerifiedRoutingCatalog catalog,
+    required VerifiedSmartAccessProviderPolicy providerPolicy, required String capabilityId,
+    required String profileSha256, required String origin, required String family, required String feature,
+    required bool Function() operationIsCurrent,
+    required Duration remainingBudget, required Future<void> cancelled,
   });
 }
 
@@ -1110,6 +1317,7 @@ class ClientLocationVariant {
 class ClientSubscriptionInfo {
   const ClientSubscriptionInfo({
     required this.lane,
+    this.accessState = '',
     required this.expiresAt,
     required this.daysLeft,
     required this.autoRenew,
@@ -1127,6 +1335,7 @@ class ClientSubscriptionInfo {
   });
 
   final String lane;
+  final String accessState;
   final String expiresAt;
   final int daysLeft;
   final bool autoRenew;
@@ -1149,6 +1358,7 @@ class ClientSubscriptionInfo {
     final email = _clientObjectMap(identities['email']);
     return ClientSubscriptionInfo(
       lane: _clientText(json['lane']),
+      accessState: _clientText(json['accessState'] ?? json['access_state']),
       expiresAt: _clientText(json['expiresAt'] ?? json['expires_at']),
       daysLeft: _clientInt(json['daysLeft'] ?? json['days_left']),
       autoRenew: _clientBool(json['autoRenew'] ?? json['auto_renew']),
@@ -2643,7 +2853,12 @@ class AppFirstRuntimeBootstrapper
         AppFirstPromoEventService,
         AppFirstNodePreferenceService,
         AppFirstClientDataService,
-        AppFirstEmergencyNetworkService {
+        AppFirstEmergencyNetworkService,
+        AppFirstRoutingCatalogService,
+        AppFirstTransportManifestService,
+        AppFirstTransportPayloadService,
+        AppFirstSmartAccessService,
+        AppFirstSmartAccessRuntimeControlService {
   AppFirstRuntimeBootstrapper({
     String apiBaseUrl = 'https://app.pokrov.space',
     List<String>? apiFallbackBaseUrls,
@@ -2667,6 +2882,9 @@ class AppFirstRuntimeBootstrapper
     EmergencyEnvelopeVerifier? emergencyEnvelopeVerifier,
     EmergencyNetworkStore? emergencyNetworkStore,
     ManagedProfileCache? managedProfileCache,
+    RoutingCatalogStore? routingCatalogStore,
+    TransportManifestStore? transportManifestStore,
+    SmartAccessPolicyStore? smartAccessPolicyStore,
   })  : apiBaseUrl = _normalizeApiBaseUrl(apiBaseUrl),
         _apiBaseUrls = _buildApiBaseUrls(
           apiBaseUrl,
@@ -2686,7 +2904,10 @@ class AppFirstRuntimeBootstrapper
             emergencyEnvelopeVerifier ?? EmergencyEnvelopeVerifier.pinned(),
         _emergencyNetworkStore =
             emergencyNetworkStore ?? EncryptedEmergencyNetworkStore(),
-        _managedProfileCache = managedProfileCache ?? ManagedProfileCache();
+        _managedProfileCache = managedProfileCache ?? ManagedProfileCache(),
+        _routingCatalogStore = routingCatalogStore ?? RoutingCatalogStore.pinned(),
+        _transportManifestStore = transportManifestStore,
+        _smartAccessPolicyStore = smartAccessPolicyStore ?? SmartAccessPolicyStore.pinned();
 
   final String apiBaseUrl;
   final List<String> _apiBaseUrls;
@@ -2710,6 +2931,10 @@ class AppFirstRuntimeBootstrapper
   final EmergencyEnvelopeVerifier _emergencyEnvelopeVerifier;
   final EmergencyNetworkStore _emergencyNetworkStore;
   final ManagedProfileCache _managedProfileCache;
+  final RoutingCatalogStore _routingCatalogStore;
+  final TransportManifestStore? _transportManifestStore;
+  final SmartAccessPolicyStore _smartAccessPolicyStore;
+  final Map<HostPlatform, _RoutingCatalogFlight> _routingCatalogFlights = {};
   final String _runtimeReportRunId = OperationalIdFactory().uuidV4();
   int _runtimeReportSequence = 0;
   bool _networkContextInFlight = false;
@@ -2916,7 +3141,15 @@ class AppFirstRuntimeBootstrapper
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Duration? timeout,
+    Future<void>? cancelled,
   }) async {
+    final requests = _ManagedProfileRequests(cancelled);
+    if (routeMode == RouteMode.selectiveServices &&
+        (!_routingCatalogStore.available ||
+          (hostPlatform != HostPlatform.android && hostPlatform != HostPlatform.windows))) {
+      throw const BootstrapFailure('Режим выбранных сервисов пока недоступен.',
+        code: 'catalog_selective_unavailable', operation: 'routing_catalog');
+    }
     final normalizedSelectedApps = _normalizeSelectedAppIdentifiers(
       selectedApps,
     );
@@ -2937,7 +3170,8 @@ class AppFirstRuntimeBootstrapper
       );
     }
     var state = await _loadOrCreateState(hostPlatform);
-    final client = _createHttpClient(hostPlatform);
+    requests.requireActive();
+    final client = requests.attach(_createHttpClient(hostPlatform));
     var timedOut = false;
     final timer = timeout == null ? null : Timer(timeout, () {
       timedOut = true;
@@ -2946,6 +3180,7 @@ class AppFirstRuntimeBootstrapper
 
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
+        requests.requireActive();
         if (!state.hasSession) {
           state = await _startTrial(
             state: state,
@@ -2955,6 +3190,7 @@ class AppFirstRuntimeBootstrapper
         }
 
         try {
+          requests.requireActive();
           await _syncRoutePolicy(
             state: state,
             hostPlatform: hostPlatform,
@@ -2962,6 +3198,7 @@ class AppFirstRuntimeBootstrapper
             selectedApps: normalizedSelectedApps,
             client: client,
           );
+          requests.requireActive();
           var manifest = await _fetchManagedManifest(
             tcpFallbackFromRevision: tcpFallbackFromRevision,
             state: state,
@@ -2972,6 +3209,7 @@ class AppFirstRuntimeBootstrapper
             preferredVariantId: preferredVariantId,
             client: client,
           );
+          requests.requireActive();
           if (preferredNodeCode.trim().isEmpty &&
               manifest.payload.smartConnect != null) {
             final deadline = DateTime.now().add(smartConnectTelemetryDeadline);
@@ -2982,7 +3220,9 @@ class AppFirstRuntimeBootstrapper
               hostPlatform: hostPlatform,
               deadline: deadline,
               excludedNodeCodes: normalizedExcludedNodeCodes,
+              requests: requests,
             );
+            requests.requireActive();
             final selectedNodeCode = resolution.selectedNodeCode;
             if (normalizedExcludedNodeCodes.isNotEmpty &&
                 selectedNodeCode.isEmpty) {
@@ -2997,6 +3237,7 @@ class AppFirstRuntimeBootstrapper
                   selectedNodeCode: selectedNodeCode,
                 );
               } on Object {
+                requests.requireActive();
                 try {
                   manifest = await _fetchManagedManifest(
                     tcpFallbackFromRevision: tcpFallbackFromRevision,
@@ -3009,6 +3250,7 @@ class AppFirstRuntimeBootstrapper
                     client: client,
                   ).timeout(_smartConnectProfileRefreshTimeout);
                 } on Object {
+                  requests.requireActive();
                   if (normalizedExcludedNodeCodes.isNotEmpty) {
                     rethrow;
                   }
@@ -3019,6 +3261,7 @@ class AppFirstRuntimeBootstrapper
               }
             }
             if (smartConnect != null && resolution.samplePayload.isNotEmpty) {
+              requests.requireActive();
               unawaited(
                 _uploadSmartConnectLatencySamples(
                   state: state,
@@ -3027,18 +3270,22 @@ class AppFirstRuntimeBootstrapper
                   selectedNodeCode: selectedNodeCode,
                   selection: resolution.selection,
                   samplePayload: resolution.samplePayload,
+                  requests: requests,
                 ),
               );
             }
           }
           if (timedOut) throw TimeoutException('Managed profile refresh');
+          requests.requireActive();
           state = state.copyWith(
             profileRevision: manifest.profileRevision,
             managedManifestPath: manifest.managedManifestPath,
           );
           await _saveState(hostPlatform, state);
+          requests.requireActive();
           try {
             final currentState = await _loadState(hostPlatform);
+            requests.requireActive();
             if (currentState?.accountId == state.accountId &&
                 currentState?.installId == state.installId &&
                 currentState?.hasSession == true) {
@@ -3072,6 +3319,7 @@ class AppFirstRuntimeBootstrapper
           } on Object {
             // Keep online connect available if protected cache storage fails.
           }
+          requests.requireActive();
           return manifest.payload;
         } on BootstrapFailure catch (error) {
           if (error.statusCode == 401 || error.statusCode == 403) {
@@ -3080,7 +3328,9 @@ class AppFirstRuntimeBootstrapper
             } on Object {
               // The explicit denial still propagates; no offline fall-through.
             }
+            if (requests.isCancelled) rethrow;
           }
+          requests.requireActive();
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
               state: state.copyWith(
@@ -3101,7 +3351,7 @@ class AppFirstRuntimeBootstrapper
       );
     } finally {
       timer?.cancel();
-      client.close(force: true);
+      requests.close(client);
     }
   }
 
@@ -3213,12 +3463,6 @@ class AppFirstRuntimeBootstrapper
         );
       }
 
-      if (state.installId != pairedInstallId) {
-        await _sessionSecretStore.deleteSessionToken(
-          hostPlatform: hostPlatform,
-          installId: state.installId,
-        );
-      }
       final nextState = state.copyWith(
         installId: pairedInstallId,
         sessionToken: pair.accessToken,
@@ -3228,6 +3472,15 @@ class AppFirstRuntimeBootstrapper
         profileRevision: '',
         expectsSecureSessionToken: true,
       );
+      if (state.installId != pairedInstallId) {
+        // Pairing removes the old secret before _saveState. Fence selection
+        // before this first identity mutation as well as the later state write.
+        _notifyTransportSelectionSessionWrite(await _stateFile(hostPlatform), nextState);
+        await _sessionSecretStore.deleteSessionToken(
+          hostPlatform: hostPlatform,
+          installId: state.installId,
+        );
+      }
       await _saveState(hostPlatform, nextState);
       return DevicePairingClaimResult(
         ok: response['ok'] != false,
@@ -3311,14 +3564,19 @@ class AppFirstRuntimeBootstrapper
   @override
   Future<WarpControlStatus> fetchWarpStatus({
     required HostPlatform hostPlatform,
+    Future<void>? cancelled,
   }) async {
+    final requests = _ManagedProfileRequests(cancelled);
     final response = await _requestWarpJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'GET',
       path: '/api/client/warp/status',
+      requests: requests,
     );
+    requests.requireActive();
     final status = WarpControlStatus.tryParse(response);
     await _saveWarpConsentCache(hostPlatform, status);
+    requests.requireActive();
     return status;
   }
 
@@ -3662,11 +3920,15 @@ class AppFirstRuntimeBootstrapper
     required String method,
     required String path,
     Map<String, Object?>? body,
+    _ManagedProfileRequests? requests,
   }) async {
+    final ownedRequests = requests ?? _ManagedProfileRequests(null);
     var state = await _loadOrCreateState(hostPlatform);
-    final client = _createHttpClient(hostPlatform);
+    ownedRequests.requireActive();
+    final client = ownedRequests.attach(_createHttpClient(hostPlatform));
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
+        ownedRequests.requireActive();
         if (!state.hasSession) {
           state = await _startTrial(
             state: state,
@@ -3676,7 +3938,8 @@ class AppFirstRuntimeBootstrapper
         }
 
         try {
-          return await _requestJson(
+          ownedRequests.requireActive();
+          final response = await _requestJson(
             method: method,
             path: path,
             client: client,
@@ -3684,7 +3947,12 @@ class AppFirstRuntimeBootstrapper
             hostPlatform: hostPlatform,
             body: body,
           );
+          ownedRequests.requireActive();
+          return response;
         } on BootstrapFailure catch (error) {
+          if (ownedRequests.isCancelled &&
+              (error.statusCode == HttpStatus.unauthorized || error.statusCode == HttpStatus.forbidden)) rethrow;
+          ownedRequests.requireActive();
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
               state: state.copyWith(
@@ -3704,7 +3972,7 @@ class AppFirstRuntimeBootstrapper
         'POKROV could not update extended protection.',
       );
     } finally {
-      client.close(force: true);
+      ownedRequests.close(client);
     }
   }
 
@@ -3727,6 +3995,432 @@ class AppFirstRuntimeBootstrapper
       ).toString(),
     );
     return ClientLocationsCatalog.fromJson(response);
+  }
+
+  @override
+  bool get routingCatalogEnabled => _routingCatalogStore.enabled;
+
+  @override
+  Future<void> discardRoutingCatalog() => _routingCatalogStore.discardEnvelope();
+
+  @override
+  bool get transportManifestEnabled => _transportManifestStore?.enabled ?? false;
+
+  @override
+  Future<List<TransportEndpointHint>> shortlistTransportEndpoints({
+    required HostPlatform hostPlatform, required TransportManifestSelection selection,
+    required TransportEndpointShortlistQuery query,
+    required RuntimeBootClockSnapshot budgetStartedAt, required Duration budget,
+    required Future<void> cancelled,
+  }) => _TransportProfileLoader(this).shortlist(hostPlatform: hostPlatform, selection: selection,
+    query: query, budgetStartedAt: budgetStartedAt, budget: budget, cancelled: cancelled);
+
+  @override
+  Future<AuthenticatedTransportProfile> resolveTransportProfile({
+    required HostPlatform hostPlatform, required TransportManifestSelection selection,
+    required TransportProfileQuery query, required RuntimeBootClockSnapshot budgetStartedAt,
+    required Duration budget, required Future<void> cancelled,
+  }) => _TransportProfileLoader(this).resolve(hostPlatform: hostPlatform, selection: selection,
+    query: query, budgetStartedAt: budgetStartedAt, budget: budget, cancelled: cancelled);
+
+  @override
+  Future<PreparedTransportProfile> prepareTransportProfile({
+    required AuthenticatedTransportProfile resolved, required TransportRoutingIntent routingIntent,
+    required RuntimeSnapshot runtime,
+    required RuntimeBootClockSnapshot budgetStartedAt, required Duration budget,
+    required bool Function() operationIsCurrent, required Future<void> cancelled,
+  }) => _TransportProfilePreparation(this).prepare(resolved: resolved, routingIntent: routingIntent,
+    runtime: runtime, budgetStartedAt: budgetStartedAt, budget: budget,
+    operationIsCurrent: operationIsCurrent, cancelled: cancelled);
+
+  @override
+  Future<void> discardTransportManifest() async {
+    final store = _transportManifestStore;
+    if (store != null && store.enabled) await store.discardEnvelopes();
+  }
+
+  @override
+  Future<TransportManifestSelection?> openTransportSelection({
+    required HostPlatform hostPlatform, required RuntimeBootClockSnapshot operationStarted,
+    required Duration operationBudget, required bool Function() operationIsCurrent,
+    required Future<void> cancelled, bool cacheOnly = false,
+  }) => _TransportManifestLoader(this).openSelection(hostPlatform: hostPlatform,
+    operationStarted: operationStarted, operationBudget: operationBudget,
+    operationIsCurrent: operationIsCurrent, cancelled: cancelled, cacheOnly: cacheOnly);
+
+  @override
+  Future<TransportManifestFetchResult?> enrollTransportManifest({
+    required HostPlatform hostPlatform, required Duration remainingBudget,
+    Future<void>? cancelled,
+  }) => _TransportManifestLoader(this).fetch(hostPlatform: hostPlatform,
+    remainingBudget: remainingBudget, cancelled: cancelled, enrollment: true);
+
+  @override
+  Future<TransportManifestFetchResult?> fetchTransportManifest({
+    required HostPlatform hostPlatform, required Duration remainingBudget,
+    bool cacheOnly = false, Future<void>? cancelled,
+  }) => _TransportManifestLoader(this).fetch(hostPlatform: hostPlatform,
+    remainingBudget: remainingBudget, cacheOnly: cacheOnly, cancelled: cancelled);
+
+  @override
+  Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({
+    required HostPlatform hostPlatform,
+    bool cacheOnly = false,
+    Future<void>? cancelled,
+  }) {
+    if (!_routingCatalogStore.enabled) return Future.value(null);
+    if (!_routingCatalogStore.available) {
+      return Future.error(const RoutingCatalogFailure('catalog_trust_unconfigured'));
+    }
+    if (cacheOnly) return _fetchRoutingCatalog(hostPlatform, cacheOnly: true, cancelled: cancelled);
+    final existing = _routingCatalogFlights[hostPlatform];
+    if (existing != null && !existing.abandoned.isCompleted) return existing.wait(cancelled);
+    final flight = _RoutingCatalogFlight();
+    // Register waiters before dispatch so an already-cancelled sole caller
+    // can abandon the flight without starting its HTTP request.
+    flight.result = Future<RoutingCatalogFetchResult?>(() {
+      if (flight.abandoned.isCompleted) throw const _ManagedProfileCancelled();
+      return _fetchRoutingCatalog(hostPlatform, cancelled: flight.abandoned.future);
+    }).whenComplete(() {
+      flight.finished = true;
+      if (identical(_routingCatalogFlights[hostPlatform], flight)) {
+        _routingCatalogFlights.remove(hostPlatform);
+      }
+    });
+    _routingCatalogFlights[hostPlatform] = flight;
+    return flight.wait(cancelled);
+  }
+
+  Future<RoutingCatalogFetchResult?> _fetchRoutingCatalog(HostPlatform platform, {
+    bool cacheOnly = false,
+    Future<void>? cancelled,
+  }) async {
+    final requests = _ManagedProfileRequests(cancelled);
+    final generation = _routingCatalogStore.invalidationGeneration;
+    final state = await _loadOrCreateState(platform);
+    requests.requireActive();
+    // A policy read must not create a trial/account or replace a denied session.
+    if (!state.hasSession) {
+      throw const BootstrapFailure('Для обновления правил нужен вход.',
+        statusCode: HttpStatus.unauthorized);
+    }
+    Future<void> requireSameSession() async {
+      final current = await _loadOrCreateState(platform);
+      if (_routingCatalogStore.invalidationGeneration != generation) {
+        throw const RoutingCatalogFailure('catalog_fetch_superseded');
+      }
+      if (current.accountId != state.accountId || current.installId != state.installId ||
+          current.sessionToken != state.sessionToken) {
+        throw const RoutingCatalogFailure('catalog_session_changed');
+      }
+    }
+    if (cacheOnly) {
+      final cached = await _routingCatalogStore.read();
+      await requireSameSession();
+      requests.requireActive();
+      if (cached == null) throw const RoutingCatalogFailure('catalog_cache_unavailable');
+      return RoutingCatalogFetchResult(catalog: cached, usingCache: true);
+    }
+    final client = requests.attach(_createHttpClient(platform));
+    try {
+      final response = await _requestJson(
+        method: 'GET', path: '/api/client/routing-catalog', hostPlatform: platform,
+        client: client, bearerToken: state.sessionToken,
+        maximumResponseBytes: routingCatalogMaximumBytes + 1024,
+      );
+      await requireSameSession();
+      requests.requireActive();
+      if (response.length != 2 || response['schema'] != 'routing-catalog-response-v1' ||
+          !response.containsKey('envelope')) {
+        throw const RoutingCatalogFailure('catalog_response_invalid');
+      }
+      final catalog = await _routingCatalogStore.accept(
+        response['envelope'], expectedGeneration: generation,
+      );
+      await requireSameSession();
+      requests.requireActive();
+      return RoutingCatalogFetchResult(catalog: catalog, usingCache: false);
+    } on BootstrapFailure catch (error) {
+      await requireSameSession();
+      if (error.statusCode == HttpStatus.unauthorized ||
+          error.statusCode == HttpStatus.forbidden ||
+          error.code.startsWith('routing_catalog_')) {
+        // Known denial/disable wins over cache. Storage failure cannot turn it
+        // into a cached success; retained monotonic floors are never deleted.
+        try {
+          await _routingCatalogStore.discardEnvelope();
+        } on Object {
+          // The store keeps its process-local suspension if persistence fails.
+        }
+        rethrow;
+      }
+      requests.requireActive();
+      final transient = error.operationalCode == 'API-002' || const {
+        HttpStatus.requestTimeout, HttpStatus.tooManyRequests, HttpStatus.badGateway,
+        HttpStatus.serviceUnavailable, HttpStatus.gatewayTimeout,
+      }.contains(error.statusCode);
+      if (transient) {
+        final cached = await _routingCatalogStore.read();
+        await requireSameSession();
+        requests.requireActive();
+        if (cached != null) return RoutingCatalogFetchResult(catalog: cached, usingCache: true);
+      }
+      rethrow;
+    } finally {
+      requests.close(client);
+    }
+  }
+
+  @override
+  bool get smartAccessEnabled => _smartAccessPolicyStore.available && _routingCatalogStore.available;
+  @override
+  bool get smartAccessControlAvailable => _smartAccessPolicyStore.verifier.controlConfigured;
+
+  @override
+  Future<String> requestSmartAccessRuntimeRenewal({required HostPlatform hostPlatform, required String profileDigest,
+    required VerifiedSmartAccessLease grant, required VerifiedRoutingCatalog catalog,
+    required bool Function() operationIsCurrent, required Duration remainingBudget, required Future<void> cancelled}) async {
+    final elapsed = Stopwatch()..start();
+    if (!smartAccessEnabled || !const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw const RoutingCatalogFailure('smart_access_disabled');
+    }
+    final catalogGeneration = _routingCatalogStore.invalidationGeneration;
+    final policyGeneration = _smartAccessPolicyStore.generation;
+    final state = await _loadOrCreateState(hostPlatform);
+    if (!state.hasSession) throw const BootstrapFailure('Для Smart Access нужен вход.', statusCode: HttpStatus.unauthorized);
+    Future<void> requireCurrent() async {
+      final current = await _loadOrCreateState(hostPlatform);
+      final now = DateTime.now().toUtc();
+      if (elapsed.elapsed >= remainingBudget) throw const RoutingCatalogFailure('smart_access_budget_exhausted');
+      if (!operationIsCurrent() || catalogGeneration != _routingCatalogStore.invalidationGeneration ||
+          policyGeneration != _smartAccessPolicyStore.generation || current.accountId != state.accountId ||
+          current.installId != state.installId || current.sessionToken != state.sessionToken ||
+          !grant.admitsNewFlows(now) || grant.lease['platform'] != hostPlatform.name ||
+          grant.lease['catalog_sha256'] != catalog.payloadSha256 || now.isBefore(catalog.issuedAt) ||
+          !now.isBefore(catalog.expiresAt)) throw const RoutingCatalogFailure('smart_access_fetch_superseded');
+    }
+    await requireCurrent();
+    final random = Random.secure();
+    final nonce = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+    final request = <String, Object?>{'schema_version': 'pokrov-smart-access-runtime-renewal-mint-v1',
+      'request_nonce': nonce, 'profile_digest': profileDigest, 'platform': hostPlatform.name, 'grant': grant.envelope};
+    final client = _createHttpClient(hostPlatform);
+    final expiry = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
+    var finished = false;
+    unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
+    try {
+      final response = await _requestJson(method: 'POST', path: '/api/client/smart-access/runtime-renewal-capability',
+        hostPlatform: hostPlatform, client: client, bearerToken: state.sessionToken, body: request,
+        maximumResponseBytes: 8192, allowRetries: false);
+      await requireCurrent();
+      return _smartAccessPolicyStore.verifier.runtimeRenewalConfig(response, nonce: nonce, profileDigest: profileDigest,
+        platform: hostPlatform.name, grant: grant, catalog: catalog, now: DateTime.now().toUtc());
+    } finally { finished = true; expiry.cancel(); client.close(force: true); }
+  }
+
+  @override
+  Future<RuntimePayloadProbeExchange> prepareTransportPayloadProbe({
+    required HostPlatform hostPlatform, required TransportManifestSelection selection,
+    required RuntimeBoundProbeRequest request, required bool Function() operationIsCurrent,
+    required Future<void> cancelled,
+  }) => _TransportPayloadPreparation(this).prepare(hostPlatform: hostPlatform, selection: selection,
+      request: request, operationIsCurrent: operationIsCurrent, cancelled: cancelled);
+
+  @override
+  Future<String> requestSmartAccessRuntimeControl({required HostPlatform hostPlatform, required String profileDigest,
+    required String? catalogSha256,
+    required bool Function() operationIsCurrent, required Duration remainingBudget, required Future<void> cancelled}) async {
+    final elapsed = Stopwatch()..start();
+    if (!smartAccessControlAvailable || !_routingCatalogStore.available ||
+        !const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw const RoutingCatalogFailure('smart_access_disabled');
+    }
+    final catalogGeneration = _routingCatalogStore.invalidationGeneration;
+    final state = await _loadOrCreateState(hostPlatform);
+    if (!state.hasSession) throw const BootstrapFailure('Для Smart Access нужен вход.', statusCode: HttpStatus.unauthorized);
+    Future<void> requireCurrent() async {
+      final current = await _loadOrCreateState(hostPlatform);
+      if (elapsed.elapsed >= remainingBudget) throw const RoutingCatalogFailure('smart_access_budget_exhausted');
+      if (!operationIsCurrent() || catalogGeneration != _routingCatalogStore.invalidationGeneration ||
+          current.accountId != state.accountId || current.installId != state.installId || current.sessionToken != state.sessionToken) {
+        throw const RoutingCatalogFailure('smart_access_fetch_superseded');
+      }
+    }
+    await requireCurrent();
+    final random = Random.secure();
+    final nonce = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+    final request = <String, Object?>{'schema_version': 'pokrov-smart-access-runtime-control-request-v1',
+      'request_nonce': nonce, 'profile_digest': profileDigest, 'platform': hostPlatform.name};
+    final client = _createHttpClient(hostPlatform);
+    final expiry = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
+    var finished = false;
+    unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
+    try {
+      final response = await _requestJson(method: 'POST', path: '/api/client/smart-access/runtime-capability',
+        hostPlatform: hostPlatform, client: client, bearerToken: state.sessionToken, body: request,
+        maximumResponseBytes: 8192, allowRetries: false);
+      await requireCurrent();
+      return _smartAccessPolicyStore.verifier.runtimeControlConfig(response, nonce: nonce, profileDigest: profileDigest,
+        catalogSha256: catalogSha256,
+        platform: hostPlatform.name, apiBaseUrl: _activeApiBaseUrl ?? _apiBaseUrls.single,
+        now: DateTime.now().toUtc());
+    } finally { finished = true; expiry.cancel(); client.close(force: true); }
+  }
+
+  @override
+  Future<VerifiedSmartAccessControl> fetchSmartAccessControl({
+    required HostPlatform hostPlatform, required String profileDigest,
+    required bool Function() operationIsCurrent, required Duration remainingBudget,
+    required Future<void> cancelled,
+  }) async {
+    final elapsed = Stopwatch()..start();
+    if (!_smartAccessPolicyStore.verifier.controlConfigured ||
+        !const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw const RoutingCatalogFailure('smart_access_disabled');
+    }
+    final state = await _loadOrCreateState(hostPlatform);
+    if (!state.hasSession) throw const BootstrapFailure('Для Smart Access нужен вход.', statusCode: HttpStatus.unauthorized);
+    Future<void> requireCurrent() async {
+      final current = await _loadOrCreateState(hostPlatform);
+      if (elapsed.elapsed >= remainingBudget) throw const RoutingCatalogFailure('smart_access_budget_exhausted');
+      if (!operationIsCurrent() || current.accountId != state.accountId || current.installId != state.installId ||
+          current.sessionToken != state.sessionToken) throw const RoutingCatalogFailure('smart_access_fetch_superseded');
+    }
+    await requireCurrent();
+    final random = Random.secure();
+    final nonce = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+    final request = <String, Object?>{'schema_version': 'pokrov-smart-access-control-request-v1',
+      'request_nonce': nonce, 'profile_digest': profileDigest, 'platform': hostPlatform.name};
+    final client = _createHttpClient(hostPlatform);
+    final expiry = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
+    var finished = false;
+    unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
+    try {
+      final response = await _requestJson(method: 'POST', path: '/api/client/smart-access/control',
+        hostPlatform: hostPlatform, client: client, bearerToken: state.sessionToken, body: request,
+        maximumResponseBytes: smartAccessControlMaximumBytes + 1024, allowRetries: false);
+      await requireCurrent();
+      if (response.length != 2 || response['schema'] != 'smart-access-control-response-v1') {
+        throw const RoutingCatalogFailure('smart_access_response_invalid');
+      }
+      final control = await _smartAccessPolicyStore.verifier.verifyControl(response['envelope'], request: request,
+        accountId: state.accountId, installId: state.installId, now: DateTime.now().toUtc());
+      await requireCurrent();
+      if (!DateTime.now().toUtc().isBefore(control.expiresAt)) {
+        throw const RoutingCatalogFailure('smart_access_control_not_current');
+      }
+      return control;
+    } finally { finished = true; expiry.cancel(); client.close(force: true); }
+  }
+
+  @override
+  Future<VerifiedSmartAccessProviderPolicy> fetchSmartAccessProviders({
+    required HostPlatform hostPlatform, required bool Function() operationIsCurrent,
+    required Duration remainingBudget, required Future<void> cancelled,
+  }) async {
+    final elapsed = Stopwatch()..start();
+    if (!smartAccessEnabled || !const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw const RoutingCatalogFailure('smart_access_disabled');
+    }
+    final generation = _smartAccessPolicyStore.generation;
+    final state = await _loadOrCreateState(hostPlatform);
+    if (!state.hasSession) throw const BootstrapFailure('Для Smart Access нужен вход.', statusCode: HttpStatus.unauthorized);
+    Future<void> requireCurrent() async {
+      final current = await _loadOrCreateState(hostPlatform);
+      if (elapsed.elapsed >= remainingBudget) throw const RoutingCatalogFailure('smart_access_budget_exhausted');
+      if (!operationIsCurrent() || generation != _smartAccessPolicyStore.generation ||
+          current.accountId != state.accountId || current.installId != state.installId ||
+          current.sessionToken != state.sessionToken) {
+        throw const RoutingCatalogFailure('smart_access_fetch_superseded');
+      }
+    }
+    await requireCurrent();
+    final client = _createHttpClient(hostPlatform);
+    final expiry = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
+    var finished = false;
+    unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
+    try {
+      final response = await _requestJson(method: 'GET', path: '/api/client/smart-access/providers',
+        hostPlatform: hostPlatform, client: client, bearerToken: state.sessionToken,
+        maximumResponseBytes: smartAccessPolicyMaximumBytes + 1024, allowRetries: false);
+      await requireCurrent();
+      if (response.length != 2 || response['schema'] != 'smart-access-providers-response-v1') {
+        throw const RoutingCatalogFailure('smart_access_response_invalid');
+      }
+      final policy = await _smartAccessPolicyStore.accept(response['envelope'], expectedGeneration: generation);
+      await requireCurrent();
+      if (!DateTime.now().toUtc().isBefore(policy.expiresAt)) {
+        throw const RoutingCatalogFailure('smart_access_policy_not_current');
+      }
+      return policy;
+    } on BootstrapFailure catch (error) {
+      if (error.statusCode == HttpStatus.unauthorized || error.statusCode == HttpStatus.forbidden ||
+          error.code.startsWith('smart_access_')) _smartAccessPolicyStore.invalidate();
+      rethrow;
+    } finally { finished = true; expiry.cancel(); client.close(force: true); }
+  }
+
+  @override
+  Future<VerifiedSmartAccessLease> requestSmartAccessLease({
+    required HostPlatform hostPlatform, required VerifiedRoutingCatalog catalog,
+    required VerifiedSmartAccessProviderPolicy providerPolicy, required String capabilityId,
+    required String profileSha256, required String origin, required String family, required String feature,
+    required bool Function() operationIsCurrent,
+    required Duration remainingBudget, required Future<void> cancelled,
+  }) async {
+    final elapsed = Stopwatch()..start();
+    if (!smartAccessEnabled || !const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw const RoutingCatalogFailure('smart_access_disabled');
+    }
+    final generation = _smartAccessPolicyStore.generation;
+    final catalogGeneration = _routingCatalogStore.invalidationGeneration;
+    final state = await _loadOrCreateState(hostPlatform);
+    if (!state.hasSession) throw const BootstrapFailure('Для Smart Access нужен вход.', statusCode: HttpStatus.unauthorized);
+    Future<void> requireCurrent() async {
+      final current = await _loadOrCreateState(hostPlatform);
+      final now = DateTime.now().toUtc();
+      if (elapsed.elapsed >= remainingBudget) throw const RoutingCatalogFailure('smart_access_budget_exhausted');
+      if (!operationIsCurrent() || generation != _smartAccessPolicyStore.generation ||
+          catalogGeneration != _routingCatalogStore.invalidationGeneration ||
+          current.accountId != state.accountId || current.installId != state.installId ||
+          current.sessionToken != state.sessionToken || now.isBefore(catalog.issuedAt) ||
+          now.isBefore(providerPolicy.issuedAt) || !now.isBefore(catalog.expiresAt) ||
+          !now.isBefore(providerPolicy.expiresAt)) {
+        throw const RoutingCatalogFailure('smart_access_fetch_superseded');
+      }
+    }
+    await requireCurrent();
+    final random = Random.secure();
+    final nonce = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+    final request = <String, Object?>{
+      'schema_version': 'pokrov-smart-access-lease-request-v1', 'request_nonce': nonce,
+      'capability_id': capabilityId, 'catalog_sha256': catalog.payloadSha256,
+      'provider_policy_sha256': providerPolicy.payloadSha256, 'profile_sha256': profileSha256,
+      'platform': hostPlatform.name, 'origin': origin, 'family': family, 'feature': feature, 'route_mode': 'selective',
+    };
+    final client = _createHttpClient(hostPlatform);
+    final expiry = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
+    var finished = false;
+    unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
+    try {
+      final response = await _requestJson(method: 'POST', path: '/api/client/smart-access/lease',
+        hostPlatform: hostPlatform, client: client, bearerToken: state.sessionToken, body: request,
+        maximumResponseBytes: smartAccessLeaseMaximumBytes + 1024, allowRetries: false);
+      await requireCurrent();
+      if (response.length != 2 || response['schema'] != 'smart-access-lease-response-v1') {
+        throw const RoutingCatalogFailure('smart_access_response_invalid');
+      }
+      final lease = await _smartAccessPolicyStore.verifier.verifyLease(response['envelope'], request: request,
+        accountId: state.accountId, installId: state.installId, catalog: catalog, providerPolicy: providerPolicy,
+        now: DateTime.now().toUtc());
+      await requireCurrent();
+      if (!lease.admitsNewFlows(DateTime.now())) throw const RoutingCatalogFailure('smart_access_lease_not_current');
+      return lease;
+    } on BootstrapFailure catch (error) {
+      if (error.statusCode == HttpStatus.unauthorized || error.statusCode == HttpStatus.forbidden ||
+          error.code.startsWith('smart_access_')) _smartAccessPolicyStore.invalidate();
+      rethrow;
+    } finally { finished = true; expiry.cancel(); client.close(force: true); }
   }
 
   @override
@@ -4327,11 +5021,15 @@ class AppFirstRuntimeBootstrapper
   @override
   Future<ClientSubscriptionInfo> fetchClientSubscription({
     required HostPlatform hostPlatform,
+    Duration? requestTimeout,
+    Future<void>? cancelled,
   }) async {
     final response = await _requestClientJsonWithSession(
       hostPlatform: hostPlatform,
       method: 'GET',
       path: '/api/client/subscription',
+      requestTimeoutOverride: requestTimeout,
+      cancelled: cancelled,
     );
     final info = ClientSubscriptionInfo.fromJson(response);
     if (info.lane == 'expiredOrBlocked') {
@@ -4553,21 +5251,26 @@ class AppFirstRuntimeBootstrapper
     required String path,
     Map<String, Object?>? body,
     Duration? requestTimeoutOverride,
+    Future<void>? cancelled,
   }) async {
+    final requests = _ManagedProfileRequests(cancelled);
     var state = await _loadOrCreateState(hostPlatform);
-    final client = _createHttpClient(hostPlatform);
+    requests.requireActive();
+    final client = requests.attach(_createHttpClient(hostPlatform));
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
+        requests.requireActive();
         if (!state.hasSession) {
           state = await _startTrial(
             state: state,
             hostPlatform: hostPlatform,
             client: client,
           );
+          requests.requireActive();
         }
 
         try {
-          return await _requestJson(
+          final response = await _requestJson(
             method: method,
             path: path,
             client: client,
@@ -4576,7 +5279,10 @@ class AppFirstRuntimeBootstrapper
             body: body,
             requestTimeoutOverride: requestTimeoutOverride,
           );
+          requests.requireActive();
+          return response;
         } on BootstrapFailure catch (error) {
+          requests.requireActive();
           if (attempt == 0 && _isSessionFailure(error.statusCode)) {
             state = await _startTrial(
               state: state.copyWith(
@@ -4586,6 +5292,7 @@ class AppFirstRuntimeBootstrapper
               hostPlatform: hostPlatform,
               client: client,
             );
+            requests.requireActive();
             continue;
           }
           rethrow;
@@ -4594,7 +5301,7 @@ class AppFirstRuntimeBootstrapper
 
       throw const BootstrapFailure('POKROV could not update app data.');
     } finally {
-      client.close(force: true);
+      requests.close(client);
     }
   }
 
@@ -5686,6 +6393,7 @@ class AppFirstRuntimeBootstrapper
     required File file,
     required _StoredBootstrapState state,
   }) async {
+    _notifyTransportSelectionSessionWrite(file, state);
     await file.parent.create(recursive: true);
     if (state.sessionToken.trim().isNotEmpty) {
       await _sessionSecretStore.writeSessionPair(
@@ -6625,8 +7333,11 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required DateTime deadline,
     required Set<String> excludedNodeCodes,
+    required _ManagedProfileRequests requests,
   }) async {
-    final probe = smartConnectLatencyProbe ?? _probeSmartConnectNode;
+    requests.requireActive();
+    final SmartConnectLatencyProbe probe = smartConnectLatencyProbe ??
+        ((node) => _probeSmartConnectNode(node, requests: requests));
     if (smartConnect == null ||
         !smartConnect.eligible ||
         smartConnect.shortlist.isEmpty ||
@@ -6650,7 +7361,9 @@ class AppFirstRuntimeBootstrapper
       probe: probe,
       deadline: deadline,
       excludedNodeCodes: excludedNodeCodes,
+      requests: requests,
     );
+    requests.requireActive();
     final selection = samples.isEmpty
         ? null
         : _selectSmartConnectNode(
@@ -6668,7 +7381,7 @@ class AppFirstRuntimeBootstrapper
     var selectedNodeCode = '';
     final selectionRequestBudget = _smartConnectRemaining(deadline);
     if (selectionRequestBudget > Duration.zero) {
-      final selectionClient = _createHttpClient(hostPlatform);
+      final selectionClient = requests.attach(_createHttpClient(hostPlatform));
       try {
         final response = await _requestJson(
           method: 'POST',
@@ -6689,6 +7402,7 @@ class AppFirstRuntimeBootstrapper
               'excluded_node_codes': excludedNodeCodes.toList(growable: false),
           },
         ).timeout(selectionRequestBudget);
+        requests.requireActive();
         final candidate =
             _readText(response['selected_node_code']).toLowerCase();
         final allowedCodes = <String>{
@@ -6698,10 +7412,11 @@ class AppFirstRuntimeBootstrapper
           selectedNodeCode = candidate;
         }
       } on Object {
+        requests.requireActive();
         // The exact profile refresh below can still apply the bounded local
         // choice; a slow advisory selector must not discard that identity.
       } finally {
-        selectionClient.close(force: true);
+        requests.close(selectionClient);
       }
     }
     final locallySelectedCode =
@@ -6735,9 +7450,11 @@ class AppFirstRuntimeBootstrapper
     required String selectedNodeCode,
     required _SmartConnectSelection? selection,
     required List<Map<String, Object?>> samplePayload,
+    required _ManagedProfileRequests requests,
   }) async {
     final client = _createHttpClient(hostPlatform);
     try {
+      requests.attach(client);
       await _requestJson(
         method: 'POST',
         path: '/api/client/nodes/latency-samples',
@@ -6760,7 +7477,7 @@ class AppFirstRuntimeBootstrapper
     } on Object {
       // RTT upload is telemetry only. The selected manifest is authoritative.
     } finally {
-      client.close(force: true);
+      requests.close(client);
     }
   }
 
@@ -6769,6 +7486,7 @@ class AppFirstRuntimeBootstrapper
     required SmartConnectLatencyProbe probe,
     required DateTime deadline,
     Set<String> excludedNodeCodes = const <String>{},
+    required _ManagedProfileRequests requests,
   }) async {
     final nodes = smartConnect.shortlist
         .take(_smartConnectTelemetryMaxNodes)
@@ -6792,6 +7510,7 @@ class AppFirstRuntimeBootstrapper
     Future<void> collectOne() async {
       while (
           nextIndex < nodes.length && !_smartConnectDeadlineExpired(deadline)) {
+        requests.requireActive();
         final index = nextIndex++;
         final node = nodes[index];
         final remaining = _smartConnectRemaining(deadline);
@@ -6815,6 +7534,7 @@ class AppFirstRuntimeBootstrapper
           final rttMs = await pendingProbe.timeout(
             probeBudget,
           );
+          requests.requireActive();
           if (rttMs == null || rttMs < 1 || rttMs > 60000) {
             continue;
           }
@@ -6826,10 +7546,12 @@ class AppFirstRuntimeBootstrapper
             rank: node.rank,
           );
         } on TimeoutException {
+          requests.requireActive();
           if (probeBudget == remaining) {
             return;
           }
         } on Object {
+          requests.requireActive();
           // One unavailable candidate must not hold up the profile.
         }
       }
@@ -6854,7 +7576,10 @@ class AppFirstRuntimeBootstrapper
   Duration _shorterDuration(Duration left, Duration right) =>
       left <= right ? left : right;
 
-  Future<int?> _probeSmartConnectNode(SmartConnectNode node) async {
+  Future<int?> _probeSmartConnectNode(SmartConnectNode node, {
+    required _ManagedProfileRequests requests,
+  }) async {
+    requests.requireActive();
     final host = node.probeHost.trim();
     final port = node.probePort;
     if (host.isEmpty || port <= 0 || port > 65535) {
@@ -6862,13 +7587,23 @@ class AppFirstRuntimeBootstrapper
     }
 
     Socket? socket;
+    ConnectionTask<Socket>? connection;
+    var finished = false;
     final stopwatch = Stopwatch()..start();
     try {
-      socket = await Socket.connect(
-        host,
-        port,
-        timeout: smartConnectProbeTimeout,
-      );
+      connection = await Socket.startConnect(host, port);
+      // DNS resolution may finish after cancellation. Attach the socket
+      // listener before cancelling the returned task so its error is consumed.
+      final pendingSocket = connection.socket.then((connected) {
+        if (finished || requests.isCancelled) {
+          connected.destroy();
+          throw const _ManagedProfileCancelled();
+        }
+        return connected;
+      });
+      requests.attachConnection(connection);
+      socket = await pendingSocket.timeout(smartConnectProbeTimeout);
+      requests.requireActive();
       stopwatch.stop();
       return max(1, min(60000, stopwatch.elapsedMilliseconds));
     } on SocketException {
@@ -6876,7 +7611,9 @@ class AppFirstRuntimeBootstrapper
     } on TimeoutException {
       return null;
     } finally {
+      finished = true;
       stopwatch.stop();
+      if (connection != null) requests.closeConnection(connection);
       socket?.destroy();
     }
   }
@@ -7383,6 +8120,7 @@ class AppFirstRuntimeBootstrapper
       dns['rules'] = existingRules;
       final existingFinal = _readText(dns['final']);
       if (routeMode == RouteMode.fullTunnel ||
+          routeMode == RouteMode.selectiveServices ||
           routeMode == RouteMode.excludedApps) {
         var resolvedFinal = existingFinal;
         Map<String, dynamic>? existingFinalServer;
@@ -7619,6 +8357,7 @@ class AppFirstRuntimeBootstrapper
     required String currentFinalOutboundTag,
   }) {
     if (routeMode != RouteMode.fullTunnel &&
+        routeMode != RouteMode.selectiveServices &&
         routeMode != RouteMode.excludedApps) {
       return currentFinalOutboundTag;
     }
@@ -8239,7 +8978,7 @@ class AppFirstRuntimeBootstrapper
     required RouteMode routeMode,
     required HttpClient client,
   }) async {
-    if (routeMode != RouteMode.allExceptRu ||
+    if (_routingCatalogStore.enabled || routeMode != RouteMode.allExceptRu ||
         (hostPlatform != HostPlatform.android &&
             hostPlatform != HostPlatform.windows)) {
       return _ClientRuleSetCatalog.empty;
@@ -9163,13 +9902,17 @@ class AppFirstRuntimeBootstrapper
     List<int>? rawBody,
     String rawContentType = 'application/octet-stream',
     Duration? requestTimeoutOverride,
+    int maximumResponseBytes = _maxJsonResponseBytes,
+    bool allowRetries = true,
+    Map<String, dynamic> Function(String)? responseDecoder,
+    bool requireHttps = false,
   }) async {
     if (body != null && rawBody != null) {
       throw ArgumentError('JSON body and raw body are mutually exclusive.');
     }
     BootstrapFailure? lastFailure;
     final operation = '$method $path';
-    final retryable = method.trim().toUpperCase() == 'GET';
+    final retryable = allowRetries && method.trim().toUpperCase() == 'GET';
     final attemptLimit = retryable ? maxRequestAttempts : 1;
     for (var attempt = 0; attempt < attemptLimit; attempt += 1) {
       Uri? requestUri;
@@ -9179,10 +9922,15 @@ class AppFirstRuntimeBootstrapper
           hostPlatform: hostPlatform,
         );
         requestUri = Uri.parse(selectedBaseUrl).resolve(path);
+        if (requireHttps && (requestUri.scheme != 'https' || requestUri.userInfo.isNotEmpty)) {
+          throw const BootstrapFailure('Для получения политики требуется защищённое соединение.',
+            code: 'transport_https_required', operationalCode: 'API-008');
+        }
         final request = await client.openUrl(
           method,
           requestUri,
         );
+        if (requireHttps) request.followRedirects = false;
         request.headers.set(HttpHeaders.acceptHeader, 'application/json');
         request.headers.set(
           HttpHeaders.userAgentHeader,
@@ -9217,10 +9965,11 @@ class AppFirstRuntimeBootstrapper
         final response = await request.close().timeout(effectiveRequestTimeout);
         final bytes = await _readBoundedResponseBytes(
           response,
-          maxBytes: _maxJsonResponseBytes,
+          maxBytes: maximumResponseBytes,
           timeout: effectiveRequestTimeout,
         );
-        final text = utf8.decode(bytes, allowMalformed: true);
+        final text = utf8.decode(bytes, allowMalformed: responseDecoder == null ||
+            response.statusCode < 200 || response.statusCode >= 300);
         if (response.statusCode < 200 || response.statusCode >= 300) {
           final failure = BootstrapFailure(
             _errorMessageForResponse(text, response.statusCode),
@@ -9237,6 +9986,8 @@ class AppFirstRuntimeBootstrapper
           await _delayScheduler(_retryDelayForAttempt(attempt));
           continue;
         }
+
+        if (responseDecoder != null) return responseDecoder(text);
 
         if (text.trim().isEmpty) {
           return const <String, dynamic>{};
@@ -9538,7 +10289,8 @@ class AppFirstRuntimeBootstrapper
       statusCode == HttpStatus.gatewayTimeout;
 
   String _platformErrorCode(HttpClientResponse response) {
-    final normalized = (response.headers.value(_platformErrorCodeHeader) ?? '')
+    final normalized = (response.headers.value('X-POKROV-Error') ??
+            response.headers.value(_platformErrorCodeHeader) ?? '')
         .trim()
         .toLowerCase();
     return _platformErrorCodePattern.hasMatch(normalized) ? normalized : '';
@@ -9554,6 +10306,7 @@ class AppFirstRuntimeBootstrapper
       case RouteMode.selectedApps:
         return 'selected_apps';
       case RouteMode.excludedApps:
+      case RouteMode.selectiveServices:
       case RouteMode.fullTunnel:
       case RouteMode.allExceptRu:
         return 'all_traffic';
@@ -10865,6 +11618,7 @@ class AppFirstSupportTicketService
     return switch (routeMode) {
       RouteMode.allExceptRu => 'all_except_ru',
       RouteMode.fullTunnel => 'full_tunnel',
+      RouteMode.selectiveServices => 'selective_services',
       RouteMode.selectedApps => 'selected_apps',
       RouteMode.excludedApps => 'excluded_apps',
     };

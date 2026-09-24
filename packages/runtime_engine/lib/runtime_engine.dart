@@ -5,14 +5,18 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math' as math;
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+export 'package:pokrov_core_domain/core_domain.dart' show RuntimeTransportFeature;
 
 part 'src/linux_daemon_runtime.dart';
+part 'src/transport_capabilities.dart';
+part 'src/bound_connectivity_probe.dart';
 
 enum RuntimeLane {
   desktopFfi,
@@ -129,6 +133,14 @@ class RuntimeSnapshot {
     this.includePackageCount,
     this.excludePackageCount,
     this.connectionPending = false,
+    this.transportProofPending,
+    this.transportLeaseActive,
+    this.routingCatalogWindowVersion = 0,
+    this.smartAccessLeaseVersion = 0,
+    this.smartAccessRuntimeControlVersion = 0,
+    this.routingCatalogControlVersion = 0,
+    this.transportCapabilities,
+    this.coreModuleSha256,
   });
 
   final HostPlatform hostPlatform;
@@ -172,6 +184,20 @@ class RuntimeSnapshot {
   final int? includePackageCount;
   final int? excludePackageCount;
   final bool connectionPending;
+  /// Native bound owner lacks ATS handoff, or this UI lost the accepted lease's
+  /// exact request owner; null means unsupported. This is never positive proof.
+  final bool? transportProofPending;
+  /// Native owner has accepted a bound ATS lease. A recreated UI has no exact
+  /// lease authority and must reconcile this state before claiming protection.
+  final bool? transportLeaseActive;
+  /// Reported by the loaded host Core; zero means unavailable or unnegotiated.
+  final int routingCatalogWindowVersion;
+  final int smartAccessLeaseVersion;
+  final int smartAccessRuntimeControlVersion;
+  final int routingCatalogControlVersion;
+  final RuntimeTransportCapabilities? transportCapabilities;
+  /// Native-observed executable/module digest. Never a profile/package hash.
+  final String? coreModuleSha256;
 
   bool get hasCoreEgressProbeFailure =>
       _coreEgressProbeFailureKinds.contains(lastFailureKind?.trim());
@@ -217,6 +243,14 @@ class RuntimeSnapshot {
         includePackageCount,
         excludePackageCount,
         connectionPending,
+        transportProofPending,
+        transportLeaseActive,
+        routingCatalogWindowVersion,
+        smartAccessLeaseVersion,
+        smartAccessRuntimeControlVersion,
+        routingCatalogControlVersion,
+        transportCapabilities?.canonicalJson,
+        coreModuleSha256,
       );
 
   /// The host may advertise whether a selected-outbound Core probe is an
@@ -240,6 +274,7 @@ class RuntimeSnapshot {
 
   bool get isCleanlyHealthy =>
       phase == RuntimePhase.running &&
+      transportProofPending != true &&
       hostHealth == RuntimeHostHealth.healthy &&
       dnsState == RuntimeDiagnosticState.healthy &&
       uplinkState == RuntimeDiagnosticState.healthy &&
@@ -505,6 +540,8 @@ const _publicRuntimeFailureKinds = <String>{
   'profile_staging_failed',
   'profile_identity_failed',
   'profile_identity_mismatch',
+  'core_identity_mismatch',
+  'connect_deadline',
   'config_apply_failed',
   'vpn_permission_denied',
   'notification_permission_denied',
@@ -744,6 +781,10 @@ String _publicRuntimeMessage({
           : 'POKROV не завершил проверку защищенного подключения и отключил системный VPN. Попробуйте еще раз.';
     case 'desktop_tun_egress_probe_failed':
       return 'Туннель запущен, но Windows не пропускает трафик. POKROV отключил его, чтобы не оставить устройство без сети.';
+    case 'core_identity_mismatch':
+      return 'Модуль подключения изменился. Обновите POKROV и повторите подключение.';
+    case 'connect_deadline':
+      return 'Время подготовки подключения истекло. Попробуйте подключиться снова.';
     case 'profile_identity_mismatch':
       return 'Изменение профиля не применено. Повторите подключение, чтобы загрузить актуальные настройки.';
     case 'profile_identity_failed':
@@ -1251,6 +1292,7 @@ class ManagedProfilePayload {
     this.disableMemoryLimit = false,
     this.materializedForRuntime = false,
     this.quickSettingsEligible = false,
+    this.lanScopeVersion = 0,
     this.coreEgressProbeRequired = true,
     this.routeMode = RouteMode.fullTunnel,
     this.smartConnect,
@@ -1258,6 +1300,10 @@ class ManagedProfilePayload {
     this.warpPolicy = WarpRuntimePolicy.disabled,
     this.freeProfileAccess,
     this.cacheEntryId = '',
+    this.catalogAppDigest = '',
+    this.catalogAppExpiresAt = '',
+    this.catalogAppSigners = const {},
+    this.catalogAppLineages = const {},
   });
 
   final String profileName;
@@ -1272,6 +1318,9 @@ class ManagedProfilePayload {
   /// Android only: set after Flutter confirms first-connect route scope for
   /// this newly resolved manifest. Hosts fail closed when it is omitted.
   final bool quickSettingsEligible;
+
+  /// Set by the final preferences assembler after replacing blanket LAN bypass.
+  final int lanScopeVersion;
 
   /// Ordinary Android profiles prove their selected outbound after TUN start.
   /// A locally verified emergency offline profile disables only that live
@@ -1288,18 +1337,30 @@ class ManagedProfilePayload {
   /// App-local cache transaction identity; never a server revision or proof.
   final String cacheEntryId;
 
+  /// Android catalog-backed app scope, re-observed before this exact stage.
+  final String catalogAppDigest;
+  final String catalogAppExpiresAt;
+  final Map<String, List<String>> catalogAppSigners;
+  /// Ordered OS-proven rotation history for those exact package names.
+  final Map<String, List<String>> catalogAppLineages;
+
   ManagedProfilePayload copyWith({
     String? profileName,
     String? configPayload,
     bool? disableMemoryLimit,
     bool? materializedForRuntime,
     bool? quickSettingsEligible,
+    int? lanScopeVersion,
     bool? coreEgressProbeRequired,
     RouteMode? routeMode,
     SmartConnectProfile? smartConnect,
     String? resolvedNodeCode,
     WarpRuntimePolicy? warpPolicy,
     FreeProfileAccess? freeProfileAccess,
+    String? catalogAppDigest,
+    String? catalogAppExpiresAt,
+    Map<String, List<String>>? catalogAppSigners,
+    Map<String, List<String>>? catalogAppLineages,
   }) {
     return ManagedProfilePayload(
       profileName: profileName ?? this.profileName,
@@ -1311,6 +1372,7 @@ class ManagedProfilePayload {
           materializedForRuntime ?? this.materializedForRuntime,
       quickSettingsEligible:
           quickSettingsEligible ?? this.quickSettingsEligible,
+      lanScopeVersion: lanScopeVersion ?? this.lanScopeVersion,
       coreEgressProbeRequired:
           coreEgressProbeRequired ?? this.coreEgressProbeRequired,
       routeMode: routeMode ?? this.routeMode,
@@ -1319,8 +1381,202 @@ class ManagedProfilePayload {
       warpPolicy: warpPolicy ?? this.warpPolicy,
       freeProfileAccess: freeProfileAccess ?? this.freeProfileAccess,
       cacheEntryId: cacheEntryId,
+      catalogAppDigest: catalogAppDigest ?? this.catalogAppDigest,
+      catalogAppExpiresAt: catalogAppExpiresAt ?? this.catalogAppExpiresAt,
+      catalogAppSigners: catalogAppSigners ?? this.catalogAppSigners,
+      catalogAppLineages: catalogAppLineages ?? this.catalogAppLineages,
     );
   }
+}
+
+/// Local cancellation of an exact connect invocation, not an unscoped stop.
+abstract interface class RuntimeConnectCancellation {
+  String? get activeConnectRequestId;
+  String? connectRequestForSnapshot(RuntimeSnapshot snapshot);
+  Future<void> cancelConnectRequest(String requestId);
+}
+
+/// Confirmation that this exact invocation and its native resources have ended.
+/// false/throw retains ownership; a cancellation ACK or idle snapshot is not proof.
+abstract interface class RuntimeConnectSettlement {
+  Future<bool> cancelAndConfirmConnectStopped(String requestId);
+}
+
+/// Reads progress for an admitted invocation that returned before native Start
+/// completed. This is owner-bound lifecycle state, never a connectivity proof.
+abstract interface class RuntimeConnectProgress {
+  Future<RuntimeSnapshot> snapshotForConnectRequest(String requestId);
+}
+
+/// Explicit native admission for the selector's exact Core and staged profile.
+/// A returned snapshot acknowledges this request, not tunnel health or proof.
+abstract interface class RuntimeCoreIdentityConnect {
+  /// Publish the exact owner before any clock/channel/socket await or dispatch.
+  /// If publication never occurs, this invocation acquired no native resources.
+  Future<RuntimeSnapshot> connectWithCoreIdentity({
+    required String expectedCoreModuleSha256,
+    required String expectedProfileDigest,
+    String? expectedNetworkContextRef,
+    required RuntimeBootClockSnapshot budgetStartedAt,
+    required Duration budget,
+    required void Function(String requestId) onRequestCreated,
+  });
+}
+
+/// Native transfer of one proven running request from the startup watchdog to
+/// its already-loaded Core lease gate. The host checks exact request/profile/
+/// lease ownership and returns a fresh snapshot with proof pending cleared.
+/// A failed or uncertain receipt leaves startup ownership in force.
+abstract interface class RuntimeTransportLeaseHandoff {
+  Future<RuntimeSnapshot> promoteBoundTransportLease({
+    required String requestId,
+    required String profileDigest,
+    required String endpointLeaseRef,
+    required DateTime issuedAt,
+    required DateTime newFlowsUntil,
+    required DateTime activeFlowsUntil,
+  });
+}
+
+/// Exact revocation of a previously promoted ordinary ATS endpoint lease.
+/// An uncertain result must leave the caller in an unverified state.
+abstract interface class RuntimeTransportLeaseRevocation {
+  Future<RuntimeSnapshot> revokeBoundTransportLease({
+    required String requestId,
+    required String profileDigest,
+    required String endpointLeaseRef,
+    required bool terminateActive,
+  });
+}
+
+String _transportLeaseUtc(DateTime value) {
+  final utc = value.toUtc();
+  String two(int part) => part.toString().padLeft(2, '0');
+  return '${utc.year.toString().padLeft(4, '0')}-${two(utc.month)}-${two(utc.day)}T'
+      '${two(utc.hour)}:${two(utc.minute)}:${two(utc.second)}Z';
+}
+
+/// Binds the final host input after Core materialization/rule-set bundling.
+/// identityInput is private profile material and must never be logged or saved.
+abstract interface class RuntimeCoreIdentityStage {
+  Future<RuntimeSnapshot> stageWithCoreIdentity(ManagedProfilePayload payload, {
+    required String expectedCoreModuleSha256,
+    required Future<String> Function(String identityInput, RuntimeSnapshot current) bindIdentity,
+    required bool Function() operationIsCurrent,
+    Future<String> Function(String identityInput, RuntimeSnapshot current)? persistRestrictions,
+  });
+}
+
+void _requireIdentityStageOwner(RuntimeSnapshot snapshot, String expectedCoreModuleSha256,
+    bool Function() operationIsCurrent) {
+  if (!operationIsCurrent()) throw StateError('core_identity_stage_superseded');
+  if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(expectedCoreModuleSha256) ||
+      snapshot.coreModuleSha256 != expectedCoreModuleSha256) {
+    throw StateError('core_identity_mismatch');
+  }
+  if (snapshot.connectionPending ||
+      !const {RuntimePhase.initialized, RuntimePhase.configStaged}.contains(snapshot.phase)) {
+    throw StateError('core_identity_stage_busy');
+  }
+}
+
+/// Host elapsed time includes suspend and is bound to one OS boot. These local
+/// identifiers must not enter diagnostics, telemetry or API requests.
+class RuntimeBootClockSnapshot {
+  const RuntimeBootClockSnapshot._(this.bootRef, this.elapsedMilliseconds);
+  final String bootRef;
+  final int elapsedMilliseconds;
+  static const quantumMilliseconds = 1;
+
+  factory RuntimeBootClockSnapshot.fromWire(Object? input, HostPlatform platform) {
+    if (input is! Map || input.length != 4 || input['schema'] is! int || input['schema'] != 1 ||
+        input['quantum_ms'] is! int || input['quantum_ms'] != quantumMilliseconds || input['elapsed_ms'] is! int ||
+        (input['elapsed_ms'] as int) < 0 || (input['elapsed_ms'] as int) > 9007199254740991 ||
+        input['boot_ref'] is! String) {
+      throw StateError('runtime_clock_invalid');
+    }
+    final pattern = switch (platform) {
+      HostPlatform.android => r'^android:[0-9]{1,10}$',
+      HostPlatform.windows => r'^windows:[a-f0-9]{32}$',
+      HostPlatform.linux => r'^linux:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$',
+      HostPlatform.ios => r'^ios:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$',
+      HostPlatform.macos => r'^macos:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$',
+      _ => null,
+    };
+    if (pattern == null || !RegExp(pattern).hasMatch(input['boot_ref'] as String)) {
+      throw StateError('runtime_clock_invalid');
+    }
+    return RuntimeBootClockSnapshot._(input['boot_ref'] as String, input['elapsed_ms'] as int);
+  }
+}
+
+abstract interface class RuntimeBootClock {
+  Future<RuntimeBootClockSnapshot> readBootClock();
+}
+
+/// Process-local opaque network identity. Never persist, log or send to an API.
+abstract interface class RuntimeTransportNetworkContext {
+  Future<String> readTransportNetworkContext();
+}
+
+abstract interface class RuntimeCatalogControl {
+  Future<bool> revokeRoutingCatalog({required String profileDigest});
+  Future<bool> revokeRoutingCatalogService({required String profileDigest, required String serviceId});
+  Future<bool> revokeSmartAccessPolicy({required String profileDigest, required bool terminateActive});
+}
+
+abstract interface class RuntimeSmartAccessControl {
+  /// Persist restriction identities before native stage can enable profile reuse.
+  /// The callback receives the exact private identity input; never log/store it.
+  Future<RuntimeSnapshot> stageSmartAccessProfile(ManagedProfilePayload payload, {
+    required Future<String> Function(String identityInput, RuntimeSnapshot current) persistRestrictions,
+    required bool Function() operationIsCurrent,
+  });
+  Future<bool> revokeSmartAccessLease({required String profileDigest,
+    required String leaseId, required bool terminateActive});
+}
+
+class RuntimeSmartAccessSelection {
+  const RuntimeSmartAccessSelection({required this.leaseId, required this.selectionIndex,
+    required this.state, required this.available});
+  final String leaseId;
+  final int selectionIndex;
+  final String state;
+  final bool available;
+}
+
+class RuntimeSmartAccessLeaseState {
+  const RuntimeSmartAccessLeaseState({required this.profileDigest, required this.leaseIds,
+    required this.selections});
+  final String profileDigest;
+  final Set<String> leaseIds;
+  final Map<String, RuntimeSmartAccessSelection> selections;
+}
+
+abstract interface class RuntimeBoundSmartAccessControl {
+  /// Configures only the still-running invocation; an identical successor's
+  /// profile digest is insufficient. An ambiguous IPC failure requires exact
+  /// connection settlement before relinquishing its native owner.
+  Future<bool> configureBoundSmartAccessRuntimeControl({required String requestId,
+    required String profileDigest, required String configJson});
+}
+
+abstract interface class RuntimeSmartAccessBackgroundControl {
+  /// Memory-only restriction capability. Hosts invalidate reusable profiles
+  /// before enabling the worker; never log or persist the JSON command.
+  Future<bool> configureSmartAccessRuntimeControl({required String profileDigest, required String configJson});
+  Future<bool> configureSmartAccessRenewal({required String profileDigest, required String configJson});
+  Future<String> readSmartAccessRestrictions();
+  Future<RuntimeSmartAccessLeaseState> readSmartAccessLeases(String profileDigest);
+  Future<bool> acknowledgeSmartAccessRestrictions(String snapshotSha256);
+}
+
+abstract interface class RuntimeSmartAccessRenewalControl {
+  /// Caller verifies unchanged grant scope and retains both restriction
+  /// identities before dispatch. The host fences the actual running profile.
+  Future<bool> renewSmartAccessLease({required String profileDigest,
+    required String expectedLeaseId, required String nextLeaseId,
+    required String issuedAt, required String newFlowsUntil, required String activeFlowsUntil});
 }
 
 abstract interface class PokrovRuntimeEngine {
@@ -1384,7 +1640,7 @@ class _DesktopProbeFailure {
   final String message;
 }
 
-class DesktopRuntimeEngine implements PokrovRuntimeEngine {
+class DesktopRuntimeEngine implements PokrovRuntimeEngine, RuntimeBootClock {
   DesktopRuntimeEngine({
     required this.hostPlatform,
     this.assetRootOverride,
@@ -1406,6 +1662,16 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
   final Future<String?> Function()? _systemTunnelProbe;
   final Future<bool> Function()? _competingVpnProbe;
   final DesktopRuntimeBindings Function(String libraryPath) _bindingsLoader;
+
+  @override
+  Future<RuntimeBootClockSnapshot> readBootClock() async {
+    if (hostPlatform != HostPlatform.macos) {
+      throw StateError('runtime_clock_unavailable');
+    }
+    final value = await const MethodChannel('space.pokrov/runtime_engine')
+        .invokeMethod<Object?>('runtimeEngine.clockSnapshot');
+    return RuntimeBootClockSnapshot.fromWire(value, hostPlatform);
+  }
 
   _RuntimeDirectories? _directories;
   DesktopRuntimeBindings? _bindings;
@@ -2273,9 +2539,13 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine {
     final verifiedRunning = phase == RuntimePhase.running &&
         _desktopVerificationPassed &&
         _lastFailureKind == null;
+    final binding = _bindings;
     return RuntimeSnapshot(
       hostPlatform: hostPlatform,
       lane: RuntimeLane.desktopFfi,
+      transportCapabilities: binding is RuntimeTransportCapabilitySource &&
+              const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase)
+          ? binding.transportCapabilities : null,
       phase: phase,
       artifactDirectory: artifacts.artifactDirectory?.path,
       coreBinaryPath: artifacts.coreBinary?.path,
@@ -2888,7 +3158,7 @@ void _mergeNativeWarpConfig(
     ..['peers'] = peers;
 }
 
-class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
+class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeConnectSettlement, RuntimeConnectProgress, RuntimeCoreIdentityConnect, RuntimeCoreIdentityStage, RuntimeTransportLeaseHandoff, RuntimeTransportLeaseRevocation, RuntimeSmartAccessControl, RuntimeCatalogControl, RuntimeSmartAccessRenewalControl, RuntimeSmartAccessBackgroundControl, RuntimeBoundSmartAccessControl, RuntimeBootClock, RuntimeTransportNetworkContext {
   MobileArtifactRuntimeEngine({
     required this.hostPlatform,
     this.assetRootOverride,
@@ -2900,10 +3170,379 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   final RuntimeLane runtimeLane;
   ManagedProfilePayload? _stagedPayload;
   RuntimeProfileSource? _fetchedSource;
+  bool _stagedRequiresBoundConnect = false;
   bool? _previousFullProof;
   DateTime? _proofObservedAt;
   String? _lastProofDigest;
   String? _acknowledgedProfileDigest;
+  String? _activeConnectRequestId;
+  String? _boundConnectRequestId;
+  Completer<void>? _boundConnectCancellation;
+  bool _boundConnectDispatched = false;
+  Future<void>? _boundConnectOperationSettled;
+  String? _stoppedConnectRequestId;
+  final _connectSnapshots = Expando<String>('runtime-connect-request');
+
+  @override
+  Future<String> readTransportNetworkContext() async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw StateError('network_context_unavailable');
+    }
+    final value = await _runtimeChannel.invokeMethod<Object?>('runtimeEngine.transportNetworkContext');
+    if (value is! Map || value.length != 2 || value['schema'] is! int || value['schema'] != 1 ||
+        value['network_context_ref'] is! String ||
+        !RegExp(r'^network_[a-f0-9]{32}$').hasMatch(value['network_context_ref'] as String)) {
+      throw StateError('network_context_unavailable');
+    }
+    return value['network_context_ref'] as String;
+  }
+
+  @override
+  Future<RuntimeBootClockSnapshot> readBootClock() async {
+    if (!const {HostPlatform.android, HostPlatform.windows, HostPlatform.ios}.contains(hostPlatform)) {
+      throw StateError('runtime_clock_unavailable');
+    }
+    final response = await _runtimeChannel.invokeMethod<Object?>('runtimeEngine.clockSnapshot');
+    final value = response is String ? jsonDecode(response) : response;
+    return RuntimeBootClockSnapshot.fromWire(value, hostPlatform);
+  }
+
+  @override
+  Future<bool> revokeRoutingCatalog({required String profileDigest}) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest)) {
+      throw StateError('invalid_catalog_revocation');
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.revokeRoutingCatalog', {'profileDigest': profileDigest});
+    if (response == null || response.length != 3 || response['schema'] != 1 ||
+        response['profileDigest'] != profileDigest || response['revoked'] is! bool) {
+      throw StateError('catalog_revoke_unconfirmed');
+    }
+    return response['revoked']! as bool;
+  }
+
+  @override
+  Future<bool> revokeRoutingCatalogService({required String profileDigest, required String serviceId}) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest) ||
+        !RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$').hasMatch(serviceId)) throw StateError('invalid_catalog_revocation');
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.revokeRoutingCatalogService', {'profileDigest': profileDigest, 'serviceId': serviceId});
+    if (response == null || response.length != 4 || response['schema'] != 1 ||
+        response['profileDigest'] != profileDigest || response['serviceId'] != serviceId || response['revoked'] is! bool) {
+      throw StateError('catalog_revoke_unconfirmed');
+    }
+    return response['revoked']! as bool;
+  }
+
+  @override
+  Future<bool> revokeSmartAccessPolicy({required String profileDigest, required bool terminateActive}) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest)) {
+      throw StateError('invalid_smart_access_revocation');
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.revokeSmartAccessPolicy', {'profileDigest': profileDigest, 'terminateActive': terminateActive});
+    if (response == null || response.length != 4 || response['schema'] != 1 ||
+        response['profileDigest'] != profileDigest || response['terminateActive'] != terminateActive ||
+        response['revoked'] is! bool) throw StateError('smart_access_revoke_unconfirmed');
+    return response['revoked']! as bool;
+  }
+
+  @override
+  Future<bool> renewSmartAccessLease({required String profileDigest,
+    required String expectedLeaseId, required String nextLeaseId,
+    required String issuedAt, required String newFlowsUntil, required String activeFlowsUntil}) async {
+    final id = RegExp(r'^[a-f0-9]{32}$');
+    final utc = RegExp(r'^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$');
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest) || !id.hasMatch(expectedLeaseId) || !id.hasMatch(nextLeaseId) ||
+        !utc.hasMatch(issuedAt) || !utc.hasMatch(newFlowsUntil) || !utc.hasMatch(activeFlowsUntil)) {
+      throw StateError('invalid_smart_access_renewal');
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.renewSmartAccessLease', {'profileDigest': profileDigest, 'expectedLeaseId': expectedLeaseId,
+        'nextLeaseId': nextLeaseId, 'issuedAt': issuedAt, 'newFlowsUntil': newFlowsUntil, 'activeFlowsUntil': activeFlowsUntil});
+    if (response == null || response.length != 5 || response['schema'] != 1 ||
+        response['profileDigest'] != profileDigest || response['expectedLeaseId'] != expectedLeaseId ||
+        response['nextLeaseId'] != nextLeaseId || response['renewed'] is! bool) {
+      throw StateError('smart_access_renewal_unconfirmed');
+    }
+    return response['renewed']! as bool;
+  }
+
+  @override
+  Future<bool> configureSmartAccessRuntimeControl({required String profileDigest, required String configJson}) =>
+      _configureSmartAccessWorker('runtimeEngine.configureSmartAccessRuntimeControl', profileDigest, configJson);
+
+  @override
+  Future<bool> configureBoundSmartAccessRuntimeControl({required String requestId,
+      required String profileDigest, required String configJson}) {
+    if (!RegExp(r'^[a-f0-9]{32}$').hasMatch(requestId) || activeConnectRequestId != requestId) {
+      throw StateError('smart_access_connect_owner_changed');
+    }
+    return _configureSmartAccessWorker('runtimeEngine.configureBoundSmartAccessRuntimeControl',
+      profileDigest, configJson, requestId: requestId);
+  }
+
+  @override
+  Future<bool> configureSmartAccessRenewal({required String profileDigest, required String configJson}) =>
+      _configureSmartAccessWorker('runtimeEngine.configureSmartAccessRenewal', profileDigest, configJson);
+
+  Future<bool> _configureSmartAccessWorker(String method, String profileDigest, String configJson, {String? requestId}) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest) || utf8.encode(configJson).length > 16384) {
+      throw StateError('invalid_smart_access_runtime_control');
+    }
+    if (_acknowledgedProfileDigest == profileDigest) {
+      _stagedPayload = null;
+      _acknowledgedProfileDigest = null;
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      method, {'profileDigest': profileDigest, 'configJson': configJson,
+        if (requestId != null) 'requestId': requestId});
+    if (response == null || response.length != (requestId == null ? 3 : 4) || response['schema'] != 1 ||
+        (requestId != null && (response['requestId'] != requestId || activeConnectRequestId != requestId)) ||
+        response['profileDigest'] != profileDigest || response['configured'] is! bool) {
+      throw StateError('smart_access_runtime_control_unconfirmed');
+    }
+    return response['configured']! as bool;
+  }
+
+  @override
+  Future<String> readSmartAccessRestrictions() async {
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>('runtimeEngine.readSmartAccessRestrictions');
+    final journal = response?['journalJson'];
+    if (response == null || response.length != 2 || response['schema'] != 1 ||
+        journal is! String || utf8.encode(journal).length > 1024 * 1024) {
+      throw StateError('smart_access_restriction_read_unconfirmed');
+    }
+    return journal;
+  }
+
+  @override
+  Future<RuntimeSmartAccessLeaseState> readSmartAccessLeases(String profileDigest) async {
+    if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest)) throw StateError('smart_access_lease_read_invalid');
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.readSmartAccessLeases', {'profileDigest': profileDigest});
+    final encoded = response?['leaseIdsJson'];
+    if (response == null || response.length != 3 || response['schema'] != 1 || response['profileDigest'] != profileDigest ||
+        encoded is! String || utf8.encode(encoded).length > 65536) throw StateError('smart_access_lease_read_unconfirmed');
+    Object? decoded;
+    try { decoded = jsonDecode(encoded); }
+    on FormatException { throw StateError('smart_access_lease_read_unconfirmed'); }
+    if (decoded is! Map<String, dynamic> || decoded.length != 3 || decoded['schema'] != 1 ||
+        decoded['selections'] is! List) throw StateError('smart_access_lease_read_unconfirmed');
+    final ids = decoded['lease_ids'];
+    if (ids is! List || ids.length > 256 || ids.any((id) => id is! String || !RegExp(r'^[a-f0-9]{32}$').hasMatch(id)) ||
+        ids.toSet().length != ids.length) throw StateError('smart_access_lease_read_unconfirmed');
+    final leaseIds = Set<String>.unmodifiable(ids.cast<String>());
+    final rows = decoded['selections'] as List;
+    if (rows.length > 256) throw StateError('smart_access_lease_read_unconfirmed');
+    final selections = <String, RuntimeSmartAccessSelection>{};
+    for (final row in rows) {
+      if (row is! Map<String, dynamic> || row.length != 5 || row['service_id'] is! String ||
+          !RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$').hasMatch(row['service_id'] as String) ||
+          row['lease_id'] is! String || row['selection_index'] is! int || row['available'] is! bool ||
+          !const {'pending', 'gateway', 'unavailable'}.contains(row['state']) ||
+          selections.containsKey(row['service_id'])) throw StateError('smart_access_lease_read_unconfirmed');
+      final index = row['selection_index'] as int;
+      final id = row['lease_id'] as String;
+      if (row['state'] == 'unavailable' ? (index != -1 || id.isNotEmpty || row['available'] != false) :
+          (index < 0 || index >= 16 || !leaseIds.contains(id))) throw StateError('smart_access_lease_read_unconfirmed');
+      selections[row['service_id'] as String] = RuntimeSmartAccessSelection(leaseId: id,
+        selectionIndex: index, state: row['state'] as String, available: row['available'] as bool);
+    }
+    return RuntimeSmartAccessLeaseState(profileDigest: profileDigest, leaseIds: leaseIds,
+      selections: Map.unmodifiable(selections));
+  }
+
+  @override
+  Future<bool> acknowledgeSmartAccessRestrictions(String snapshotSha256) async {
+    if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(snapshotSha256)) throw StateError('smart_access_restriction_ack_invalid');
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.acknowledgeSmartAccessRestrictions', {'snapshotSha256': snapshotSha256});
+    if (response == null || response.length != 3 || response['schema'] != 1 ||
+        response['snapshotSha256'] != snapshotSha256 || response['acknowledged'] is! bool) {
+      throw StateError('smart_access_restriction_ack_unconfirmed');
+    }
+    return response['acknowledged']! as bool;
+  }
+
+  @override
+  Future<bool> revokeSmartAccessLease({required String profileDigest,
+    required String leaseId, required bool terminateActive}) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest) ||
+        !RegExp(r'^[a-f0-9]{32}$').hasMatch(leaseId)) {
+      throw StateError('invalid_smart_access_revocation');
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.revokeSmartAccessLease', {'profileDigest': profileDigest,
+        'leaseId': leaseId, 'terminateActive': terminateActive});
+    if (response == null || response.length != 4 || response['schema'] != 1 ||
+        response['profileDigest'] != profileDigest || response['leaseId'] != leaseId || response['revoked'] is! bool) {
+      throw StateError('smart_access_revoke_unconfirmed');
+    }
+    return response['revoked']! as bool;
+  }
+
+  @override
+  String? get activeConnectRequestId => _activeConnectRequestId;
+
+  @override
+  String? connectRequestForSnapshot(RuntimeSnapshot snapshot) => _connectSnapshots[snapshot];
+
+  @override
+  Future<RuntimeSnapshot> snapshotForConnectRequest(String requestId) async {
+    // Windows bound Start already joins its native startup. Only Android's
+    // permission/service dispatch returns a pending admission receipt today.
+    if (hostPlatform != HostPlatform.android) throw UnsupportedError('connect_progress_unavailable');
+    bool current() => _boundConnectRequestId == requestId && _activeConnectRequestId == requestId &&
+      _boundConnectCancellation?.isCompleted == false;
+    if (!RegExp(r'^[a-f0-9]{32}$').hasMatch(requestId) || !current()) {
+      throw StateError('connect_progress_superseded');
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.snapshotForConnectRequest', {'requestId': requestId});
+    if (!current() || response == null || response.length != 3 || response['schema'] is! int ||
+        response['schema'] != 1 || response['requestId'] != requestId || response['snapshot'] is! Map) {
+      throw StateError('connect_progress_unconfirmed');
+    }
+    final value = _snapshotFromHostMap(Map<String, Object?>.from(response['snapshot'] as Map));
+    _connectSnapshots[value] = requestId;
+    return value;
+  }
+
+  @override
+  Future<RuntimeSnapshot> promoteBoundTransportLease({
+    required String requestId,
+    required String profileDigest,
+    required String endpointLeaseRef,
+    required DateTime issuedAt,
+    required DateTime newFlowsUntil,
+    required DateTime activeFlowsUntil,
+  }) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) ||
+        _boundConnectRequestId != requestId ||
+        _activeConnectRequestId != requestId || _boundConnectCancellation?.isCompleted != false ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest) ||
+        !RegExp(r'^lease_[a-f0-9]{32}$').hasMatch(endpointLeaseRef)) {
+      throw StateError('transport_lease_handoff_unavailable');
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.promoteBoundTransportLease', {
+        'requestId': requestId, 'profileDigest': profileDigest, 'endpointLeaseRef': endpointLeaseRef,
+        'issuedAt': _transportLeaseUtc(issuedAt),
+        'newFlowsUntil': _transportLeaseUtc(newFlowsUntil),
+        'activeFlowsUntil': _transportLeaseUtc(activeFlowsUntil),
+      });
+    if (_boundConnectRequestId != requestId || _activeConnectRequestId != requestId ||
+        _boundConnectCancellation?.isCompleted != false || response == null || response.length != 3 ||
+        response['schema'] != 1 || response['requestId'] != requestId || response['snapshot'] is! Map) {
+      throw StateError('transport_lease_handoff_unconfirmed');
+    }
+    final native = _snapshotFromHostMap(Map<String, Object?>.from(response['snapshot'] as Map));
+    if (native.phase != RuntimePhase.running || native.transportProofPending != false ||
+        native.transportLeaseActive != true ||
+        native.effectiveProfileDigest != profileDigest) {
+      throw StateError('transport_lease_handoff_unconfirmed');
+    }
+    _connectSnapshots[native] = requestId;
+    return native;
+  }
+
+  @override
+  Future<RuntimeSnapshot> revokeBoundTransportLease({
+    required String requestId,
+    required String profileDigest,
+    required String endpointLeaseRef,
+    required bool terminateActive,
+  }) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) ||
+        _boundConnectRequestId != requestId || _activeConnectRequestId != requestId ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest) ||
+        !RegExp(r'^lease_[a-f0-9]{32}$').hasMatch(endpointLeaseRef)) {
+      throw StateError('transport_lease_revocation_unavailable');
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.revokeBoundTransportLease', {
+        'requestId': requestId, 'profileDigest': profileDigest,
+        'endpointLeaseRef': endpointLeaseRef, 'terminateActive': terminateActive,
+      });
+    if (_boundConnectRequestId != requestId || _activeConnectRequestId != requestId ||
+        response == null || response.length != 3 || response['schema'] != 1 ||
+        response['requestId'] != requestId || response['snapshot'] is! Map) {
+      throw StateError('transport_lease_revocation_unconfirmed');
+    }
+    final native = _snapshotFromHostMap(Map<String, Object?>.from(response['snapshot'] as Map));
+    if (native.phase != RuntimePhase.running || native.coreEgressValidated != false ||
+        native.effectiveProfileDigest != profileDigest) {
+      throw StateError('transport_lease_revocation_unconfirmed');
+    }
+    _connectSnapshots[native] = requestId;
+    return native;
+  }
+
+  @override
+  Future<void> cancelConnectRequest(String requestId) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) return;
+    final bound = _boundConnectRequestId == requestId;
+    if (bound) {
+      if (!await cancelAndConfirmConnectStopped(requestId)) throw StateError('connect_cancel_unconfirmed');
+      return;
+    }
+    final response = await _runtimeChannel.invokeMapMethod<String, Object?>(
+      'runtimeEngine.cancelConnectRequest', {'requestId': requestId},
+    ).timeout(const Duration(seconds: 60));
+    if (response == null || response.length != 3 || response['schema'] != 1 ||
+        response['requestId'] != requestId || response['cancelled'] is! bool) {
+      throw StateError('connect_cancel_unconfirmed');
+    }
+    if (_activeConnectRequestId == requestId) _activeConnectRequestId = null;
+  }
+
+  @override
+  Future<bool> cancelAndConfirmConnectStopped(String requestId) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw UnsupportedError('connect_settlement_unavailable');
+    }
+    if (_boundConnectRequestId != requestId) return _stoppedConnectRequestId == requestId;
+    final operationSettled = _boundConnectOperationSettled;
+    final cancellation = _boundConnectCancellation!;
+    if (!cancellation.isCompleted) cancellation.complete();
+    // Dispatch now: waiting for Start first would prevent cooperative cancellation.
+    final confirmed = !_boundConnectDispatched || await _requestConnectStopped(requestId);
+    await operationSettled;
+    if (_boundConnectRequestId != requestId) return _stoppedConnectRequestId == requestId;
+    if (!confirmed) return false;
+    _releaseBoundConnectRequest(requestId);
+    return true;
+  }
+
+  bool _connectStoppedReceipt(Object? value, String requestId) => value is Map && value.length == 3 &&
+      value['schema'] is int && value['schema'] == 1 && value['requestId'] == requestId && value['settled'] == true;
+
+  Future<bool> _requestConnectStopped(String requestId) async {
+    try {
+      final receipt = await _runtimeChannel.invokeMapMethod<String, Object?>(
+        'runtimeEngine.cancelAndConfirmConnectStopped', {'requestId': requestId});
+      return _connectStoppedReceipt(receipt, requestId);
+    } on Object {
+      return false;
+    }
+  }
+
+  void _releaseBoundConnectRequest(String requestId) {
+    if (_boundConnectRequestId != requestId) return;
+    _stoppedConnectRequestId = requestId;
+    _boundConnectRequestId = null;
+    _boundConnectCancellation = null;
+    _boundConnectDispatched = false;
+    _boundConnectOperationSettled = null;
+    if (_activeConnectRequestId == requestId) _activeConnectRequestId = null;
+  }
 
   static const defaultCoreTag = DesktopRuntimeEngine.defaultCoreTag;
   static const _runtimeChannel = MethodChannel('space.pokrov/runtime_engine');
@@ -2963,9 +3602,46 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   @override
   Future<RuntimeSnapshot> stageManagedProfile(
     ManagedProfilePayload payload,
-  ) async {
+  ) => _stageManagedProfile(payload);
+
+  @override
+  Future<RuntimeSnapshot> stageSmartAccessProfile(ManagedProfilePayload payload, {
+    required Future<String> Function(String identityInput, RuntimeSnapshot current) persistRestrictions,
+    required bool Function() operationIsCurrent,
+  }) {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw StateError('smart_access_stage_unsupported');
+    }
+    return _stageManagedProfile(payload, persistRestrictions: persistRestrictions,
+      operationIsCurrent: operationIsCurrent);
+  }
+
+  @override
+  Future<RuntimeSnapshot> stageWithCoreIdentity(ManagedProfilePayload payload, {
+    required String expectedCoreModuleSha256,
+    required Future<String> Function(String identityInput, RuntimeSnapshot current) bindIdentity,
+    required bool Function() operationIsCurrent,
+    Future<String> Function(String identityInput, RuntimeSnapshot current)? persistRestrictions,
+  }) {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw StateError('core_identity_stage_unsupported');
+    }
+    return _stageManagedProfile(payload, persistRestrictions: persistRestrictions,
+      operationIsCurrent: operationIsCurrent, bindIdentity: bindIdentity,
+      expectedCoreModuleSha256: expectedCoreModuleSha256);
+  }
+
+  Future<RuntimeSnapshot> _stageManagedProfile(ManagedProfilePayload payload, {
+    Future<String> Function(String identityInput, RuntimeSnapshot current)? persistRestrictions,
+    bool Function()? operationIsCurrent,
+    Future<String> Function(String identityInput, RuntimeSnapshot current)? bindIdentity,
+    String? expectedCoreModuleSha256,
+  }) async {
     if (!payload.materializedForRuntime) {
       throw StateError('managed_profile_stage_failed');
+    }
+    if (bindIdentity != null && operationIsCurrent?.call() != true) {
+      throw StateError('core_identity_stage_superseded');
     }
     _fetchedSource = payload.source;
     final configPayload = _materializePokrovCoreConfig(
@@ -2973,6 +3649,10 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       payload.warpPolicy,
       preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
     );
+    final config = jsonDecode(configPayload) as Map;
+    if (persistRestrictions == null && _profileRequiresRestrictions(config)) {
+      throw StateError('smart_access_restrictions_required');
+    }
     final serviceProfileBundle = hostPlatform == HostPlatform.windows
         ? await _buildWindowsServiceProfileBundle(configPayload)
         : null;
@@ -2990,32 +3670,80 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
         break;
       }
     }
+    String? expectedProfileDigest;
+    if (persistRestrictions != null || bindIdentity != null) {
+      final current = await snapshot();
+      if (operationIsCurrent?.call() != true) throw StateError('smart_access_stage_superseded');
+      if (bindIdentity != null) _requireIdentityStageOwner(current, expectedCoreModuleSha256!, operationIsCurrent!);
+      if (persistRestrictions != null && current.routingCatalogControlVersion != 4) {
+        throw StateError('catalog_native_control_unsupported');
+      }
+      // These are the existing host digest inputs, after materialization and
+      // Windows rule-set bundling. The signed grant's base digest is separate.
+      final serviceRouteMode = switch (payload.routeMode) {
+        RouteMode.selectedApps => 'selected_apps',
+        RouteMode.excludedApps => 'excluded_apps',
+        _ => 'device',
+      };
+      final identityInput = hostPlatform == HostPlatform.windows
+          ? '${payload.disableMemoryLimit ? 1 : 0}\n${serviceProfileBundle ?? configPayload}'
+          : '${payload.coreEgressProbeRequired ? 1 : 0}\n$serviceRouteMode\n$configPayload';
+      if (bindIdentity != null) expectedProfileDigest = await bindIdentity(identityInput, current);
+      if (operationIsCurrent?.call() != true) throw StateError('core_identity_stage_superseded');
+      if (persistRestrictions != null) {
+        final retained = await persistRestrictions(identityInput, current);
+        if (expectedProfileDigest != null && retained != expectedProfileDigest) {
+          throw StateError('core_identity_stage_binding_mismatch');
+        }
+        expectedProfileDigest = retained;
+      }
+      if (operationIsCurrent?.call() != true) throw StateError('smart_access_stage_superseded');
+      if (expectedProfileDigest == null || !RegExp(r'^[a-f0-9]{64}$').hasMatch(expectedProfileDigest)) {
+        throw StateError('smart_access_stage_identity_invalid');
+      }
+    }
     final hostSnapshot = await _invokeHostSnapshot(
       'runtimeEngine.stageManagedProfile',
       stagedPayload: payload,
       arguments: <String, Object?>{
         'profileName': payload.profileName,
         'configPayload': configPayload,
+        if (expectedProfileDigest != null) 'expectedProfileDigest': expectedProfileDigest,
         if (serviceProfileBundle != null)
           'serviceProfileBundle': serviceProfileBundle,
         'disableMemoryLimit': payload.disableMemoryLimit,
         'materializedForRuntime': true,
         'quickSettingsEligible': payload.quickSettingsEligible,
+        if (const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform))
+          'requiresBoundConnect': bindIdentity != null,
+        'lanScopeVersion': payload.lanScopeVersion,
         'coreEgressProbeRequired': payload.coreEgressProbeRequired,
         'routeMode': payload.routeMode.name,
+        if (hostPlatform == HostPlatform.android && payload.catalogAppSigners.isNotEmpty) ...{
+          'catalogAppDigest': payload.catalogAppDigest,
+          'catalogAppExpiresAt': payload.catalogAppExpiresAt,
+          'catalogAppSigners': payload.catalogAppSigners,
+          'catalogAppLineages': payload.catalogAppLineages,
+        },
         'displayCountry': displayNode?.country.trim() ?? '',
         'displayNodeCode': payload.resolvedNodeCode.trim(),
         'displayRouteMode': payload.routeMode.name,
       },
     );
+    if (bindIdentity != null) {
+      if (hostSnapshot == null) throw StateError('core_identity_stage_unconfirmed');
+      _requireIdentityStageOwner(hostSnapshot, expectedCoreModuleSha256!, operationIsCurrent!);
+    }
     if (hostSnapshot == null ||
         hostSnapshot.phase != RuntimePhase.configStaged ||
+        (expectedProfileDigest != null && hostSnapshot.stagedProfileDigest != expectedProfileDigest) ||
         (hostSnapshot.stagedConfigPath ?? '').isEmpty ||
         ((hostSnapshot.lastFailureKind?.isNotEmpty ?? false) &&
             hostSnapshot.lastFailureKind != 'notification_permission_denied')) {
       throw StateError('managed_profile_stage_failed');
     }
     _stagedPayload = payload;
+    _stagedRequiresBoundConnect = bindIdentity != null;
     _acknowledgedProfileDigest = hostSnapshot.stagedProfileDigest;
     return hostSnapshot;
   }
@@ -3023,6 +3751,7 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   @override
   Future<RuntimeSnapshot> invalidateManagedProfile() async {
     _stagedPayload = null;
+    _stagedRequiresBoundConnect = false;
     _acknowledgedProfileDigest = null;
     final hostSnapshot = await _invokeHostSnapshot(
       'runtimeEngine.invalidateManagedProfile',
@@ -3031,13 +3760,145 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   }
 
   @override
+  Future<RuntimeSnapshot> connectWithCoreIdentity({
+    required String expectedCoreModuleSha256,
+    required String expectedProfileDigest,
+    String? expectedNetworkContextRef,
+    required RuntimeBootClockSnapshot budgetStartedAt,
+    required Duration budget,
+    required void Function(String requestId) onRequestCreated,
+  }) async {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw UnsupportedError('core_identity_connect_unavailable');
+    }
+    if (expectedNetworkContextRef == null || !RegExp(r'^network_[a-f0-9]{32}$').hasMatch(expectedNetworkContextRef)) {
+      throw StateError('network_context_unavailable');
+    }
+    if (_boundConnectRequestId != null) {
+      throw StateError('runtime_busy');
+    }
+    if (_coreModuleDigestFromWire(expectedCoreModuleSha256) == null ||
+        _coreModuleDigestFromWire(expectedProfileDigest) == null) {
+      throw ArgumentError('invalid_connect_identity');
+    }
+    final budgetMs = budget.inMilliseconds;
+    final deadlineMs = budgetStartedAt.elapsedMilliseconds + budgetMs;
+    if (budgetMs <= 0 || budgetMs > 86400000 || deadlineMs > 9007199254740991) {
+      throw ArgumentError('invalid_connect_deadline');
+    }
+    void requireCurrentClock(RuntimeBootClockSnapshot now) {
+      if (now.bootRef != budgetStartedAt.bootRef || now.elapsedMilliseconds < budgetStartedAt.elapsedMilliseconds ||
+          now.elapsedMilliseconds >= deadlineMs) throw StateError('connect_deadline');
+    }
+    final random = math.Random.secure();
+    final requestId = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+    _activeConnectRequestId = requestId;
+    final cancellation = Completer<void>();
+    final operationSettled = Completer<void>();
+    final pending = <Future<void>>[];
+    _boundConnectRequestId = requestId;
+    _boundConnectCancellation = cancellation;
+    _boundConnectDispatched = false;
+    _boundConnectOperationSettled = operationSettled.future;
+    var deadlineElapsed = false;
+    final outerDeadline = Timer(budget, () {
+      deadlineElapsed = true;
+      if (!cancellation.isCompleted) cancellation.complete();
+    });
+    Timer? nativeDeadline;
+    Future<T> awaitAttempt<T>(Future<T> operation) {
+      pending.add(operation.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
+      return Future.any<T>([
+        operation,
+        cancellation.future.then<T>((_) => throw StateError(
+          deadlineElapsed ? 'connect_deadline' : 'operation_cancelled')),
+      ]);
+    }
+    try {
+      onRequestCreated(requestId);
+      final before = await awaitAttempt(readBootClock());
+      requireCurrentClock(before);
+      if (_activeConnectRequestId != requestId || cancellation.isCompleted) throw StateError('core_identity_connect_superseded');
+      nativeDeadline = Timer(Duration(milliseconds: deadlineMs - before.elapsedMilliseconds), () {
+        deadlineElapsed = true;
+        if (!cancellation.isCompleted) cancellation.complete();
+      });
+      // Do not use _invokeHostSnapshot: an ordinary snapshot after a platform
+      // error cannot acknowledge identity-bound admission of this invocation.
+      _boundConnectDispatched = true;
+      final response = await awaitAttempt(_runtimeChannel.invokeMapMethod<String, Object?>(
+        'runtimeEngine.connectWithCoreIdentity', {
+          'requestId': requestId,
+          'expectedCoreModuleSha256': expectedCoreModuleSha256,
+          'expectedProfileDigest': expectedProfileDigest,
+          if (expectedNetworkContextRef != null) 'expectedNetworkContextRef': expectedNetworkContextRef,
+          'bootRef': budgetStartedAt.bootRef,
+          'startedElapsedMs': budgetStartedAt.elapsedMilliseconds,
+          'deadlineElapsedMs': deadlineMs,
+        },
+      ).catchError((Object error) {
+        if (error is PlatformException &&
+            error.code == 'core_identity_connect_not_dispatched' &&
+            _boundConnectRequestId == requestId && _connectStoppedReceipt(error.details, requestId)) {
+          _boundConnectDispatched = false;
+        }
+        throw error;
+      }));
+      if (response == null || response.length != 3 || response['schema'] is! int ||
+          response['schema'] != 1 || response['requestId'] != requestId || response['snapshot'] is! Map) {
+        throw StateError('core_identity_connect_unacknowledged');
+      }
+      final result = _snapshotFromHostMap(Map<String, Object?>.from(response['snapshot'] as Map));
+      requireCurrentClock(await awaitAttempt(readBootClock()));
+      if (_activeConnectRequestId != requestId || cancellation.isCompleted || result.coreModuleSha256 != expectedCoreModuleSha256 ||
+          result.stagedProfileDigest != expectedProfileDigest ||
+          (hostPlatform == HostPlatform.windows && (result.phase != RuntimePhase.running ||
+            result.effectiveProfileDigest != expectedProfileDigest))) {
+        throw StateError('core_identity_connect_mismatch');
+      }
+      _connectSnapshots[result] = requestId;
+      return result;
+    } catch (_) {
+      if (!cancellation.isCompleted) cancellation.complete();
+      final stop = _boundConnectDispatched ? _requestConnectStopped(requestId) : Future.value(true);
+      await Future.wait(pending);
+      final confirmed = await stop;
+      if (_boundConnectDispatched && !confirmed) throw StateError('core_identity_connect_cancel_unconfirmed');
+      _releaseBoundConnectRequest(requestId);
+      rethrow;
+    } finally {
+      outerDeadline.cancel();
+      nativeDeadline?.cancel();
+      await Future.wait(pending);
+      operationSettled.complete();
+    }
+  }
+
+  @override
   Future<RuntimeSnapshot> connect() async {
-    final hostSnapshot = await _invokeHostSnapshot('runtimeEngine.connect');
-    return hostSnapshot ?? await snapshot();
+    if (_boundConnectRequestId != null) {
+      throw StateError('runtime_busy');
+    }
+    String? requestId;
+    if (const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      final random = math.Random.secure();
+      requestId = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+      _activeConnectRequestId = requestId;
+    }
+    final hostSnapshot = await _invokeHostSnapshot('runtimeEngine.connect',
+      arguments: requestId == null ? null : {'requestId': requestId});
+    final result = hostSnapshot ?? await snapshot();
+    if (requestId != null) _connectSnapshots[result] = requestId;
+    return result;
   }
 
   @override
   Future<RuntimeSnapshot> disconnect() async {
+    final boundRequestId = _boundConnectRequestId;
+    if (boundRequestId != null) {
+      if (!await cancelAndConfirmConnectStopped(boundRequestId)) throw StateError('connect_cancel_unconfirmed');
+      return snapshot();
+    }
     final hostSnapshot = await _invokeHostSnapshot('runtimeEngine.disconnect');
     return hostSnapshot ?? await snapshot();
   }
@@ -3047,6 +3908,9 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
     final staged = _stagedPayload;
     if (staged == null) {
       return const WarpApplyResult.notApplied(reason: 'no_staged_profile');
+    }
+    if (_stagedRequiresBoundConnect) {
+      return const WarpApplyResult.notApplied(reason: 'core_identity_restage_required');
     }
     final basePolicy = staged.warpPolicy.canOfferRuntime
         ? staged.warpPolicy
@@ -3061,6 +3925,12 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       nextPolicy,
       preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
     );
+    final config = jsonDecode(configPayload) as Map;
+    if (_profileRequiresRestrictions(config)) {
+      // Changing a leased profile needs fresh preparation and its durable
+      // restriction binding; the ordinary WARP rewrite cannot preserve either.
+      return const WarpApplyResult.notApplied(reason: 'smart_access_restage_required');
+    }
     final serviceProfileBundle = hostPlatform == HostPlatform.windows
         ? await _buildWindowsServiceProfileBundle(configPayload)
         : null;
@@ -3404,7 +4274,13 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
             stagedDigest == effectiveDigest
         ? _stagedPayload?.source
         : null;
-    final fullProof = phase == RuntimePhase.running &&
+    final transportLeaseActive = response['transportLeaseActive'] is bool
+        ? response['transportLeaseActive'] as bool : null;
+    final transportProofPending = response.containsKey('transportProofPending')
+        ? response['transportProofPending'] != false ||
+            (transportLeaseActive == true && _boundConnectRequestId == null)
+        : null;
+    final fullProof = phase == RuntimePhase.running && transportProofPending != true &&
         resolvedHostHealth == RuntimeHostHealth.healthy &&
         resolvedDnsState == RuntimeDiagnosticState.healthy &&
         resolvedUplinkState == RuntimeDiagnosticState.healthy &&
@@ -3464,6 +4340,26 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
       includePackageCount: includePackageCount,
       excludePackageCount: excludePackageCount,
       connectionPending: connectionPending,
+      transportProofPending: transportProofPending,
+      transportLeaseActive: transportLeaseActive,
+      transportCapabilities: const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase)
+          ? RuntimeTransportCapabilities.fromWire(response['transportCapabilitiesJson']) : null,
+      coreModuleSha256: const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase)
+          ? _coreModuleDigestFromWire(response['coreModuleSha256']) : null,
+      routingCatalogWindowVersion:
+          response['routingCatalogWindowVersion'] is int &&
+                  response['routingCatalogWindowVersion'] == 1 ? 1 : 0,
+      smartAccessLeaseVersion:
+          response['smartAccessLeaseVersion'] is int &&
+                  response['smartAccessLeaseVersion'] == 1 ? 1 : 0,
+      smartAccessRuntimeControlVersion: response['smartAccessRuntimeControlVersion'] == 1 &&
+              const {2, 3, 4}.contains(response['routingCatalogControlVersion']) ? 1 : 0,
+      routingCatalogControlVersion:
+          response['routingCatalogControlVersion'] is int &&
+                  const {1, 2, 3, 4}.contains(response['routingCatalogControlVersion']) &&
+                  response['routingCatalogWindowVersion'] == 1 &&
+                  (response['routingCatalogControlVersion'] == 1 || response['smartAccessLeaseVersion'] == 1)
+              ? response['routingCatalogControlVersion']! as int : 0,
     );
   }
 
@@ -3811,6 +4707,16 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine {
   }
 }
 
+bool _profileRequiresRestrictions(Map config) {
+  if ((config['outbounds'] as List? ?? const []).any(
+      (value) => value is Map && value['type'] == 'pokrov-smart-access')) return true;
+  for (final section in const ['route', 'dns']) {
+    final rules = _runtimeObjectMap(config[section])['rules'];
+    if (rules is List && rules.any((rule) => rule is Map && rule.containsKey('pokrov_catalog_window'))) return true;
+  }
+  return false;
+}
+
 const _windowsServiceProfileBundleHeader = 'POKROV_PROFILE_BUNDLE_V1';
 const _windowsServiceProfileJsonMarker = 'POKROV_PROFILE_JSON';
 const _windowsServiceRuleSetSlotMarker = '__POKROV_RULE_SET_SLOT__';
@@ -3964,6 +4870,10 @@ class CoreRuntimeCapabilityContract {
     required this.eventAbi,
     required this.capabilities,
     required this.lifecycleEvents,
+    this.routingCatalogWindowVersion = 0,
+    this.smartAccessLeaseVersion = 0,
+    this.smartAccessRuntimeControlVersion = 0,
+    this.routingCatalogControlVersion = 0,
   });
 
   factory CoreRuntimeCapabilityContract.parse(String encoded) {
@@ -3979,6 +4889,14 @@ class CoreRuntimeCapabilityContract {
       eventAbi: _requiredInt(json, 'event_abi'),
       capabilities: _requiredStringSet(json, 'capabilities'),
       lifecycleEvents: _requiredStringSet(json, 'lifecycle_events'),
+      routingCatalogWindowVersion: json.containsKey('routing_catalog_window_version')
+          ? _requiredInt(json, 'routing_catalog_window_version') : 0,
+      smartAccessLeaseVersion: json.containsKey('smart_access_lease_version')
+          ? _requiredInt(json, 'smart_access_lease_version') : 0,
+      smartAccessRuntimeControlVersion: json.containsKey('smart_access_runtime_control_version')
+          ? _requiredInt(json, 'smart_access_runtime_control_version') : 0,
+      routingCatalogControlVersion: json.containsKey('routing_catalog_control_version')
+          ? _requiredInt(json, 'routing_catalog_control_version') : 0,
     );
   }
 
@@ -3987,6 +4905,10 @@ class CoreRuntimeCapabilityContract {
   final int eventAbi;
   final Set<String> capabilities;
   final Set<String> lifecycleEvents;
+  final int routingCatalogWindowVersion;
+  final int smartAccessLeaseVersion;
+  final int smartAccessRuntimeControlVersion;
+  final int routingCatalogControlVersion;
 
   static int _requiredInt(Map<String, dynamic> json, String key) {
     final value = json[key];
@@ -4074,6 +4996,14 @@ class CoreRuntimeCompatibility {
     if (contract.schemaVersion != supportedCapabilitySchema ||
         contract.desktopAbi != desktopAbi ||
         contract.eventAbi != supportedEventAbi ||
+        !const {0, 1}.contains(contract.routingCatalogWindowVersion) ||
+        !const {0, 1}.contains(contract.smartAccessLeaseVersion) ||
+        (contract.smartAccessLeaseVersion == 1 && contract.routingCatalogWindowVersion != 1) ||
+        !const {0, 1, 2, 3, 4}.contains(contract.routingCatalogControlVersion) ||
+        (contract.routingCatalogControlVersion != 0 && contract.routingCatalogWindowVersion != 1) ||
+        (contract.routingCatalogControlVersion >= 2 && contract.smartAccessLeaseVersion != 1) ||
+        !const {0, 1}.contains(contract.smartAccessRuntimeControlVersion) ||
+        (contract.smartAccessRuntimeControlVersion == 1 && contract.routingCatalogControlVersion != 4) ||
         !(_sameSet(contract.capabilities, supportedCapabilities) ||
             _sameSet(contract.capabilities, legacyCapabilities)) ||
         !_sameSet(contract.lifecycleEvents, supportedLifecycleEvents)) {
@@ -4159,7 +5089,7 @@ class _PokrovCoreBindingsLoader {
   }
 }
 
-class _PokrovCoreBindings implements DesktopRuntimeBindings {
+class _PokrovCoreBindings implements DesktopRuntimeBindings, RuntimeTransportCapabilitySource {
   _PokrovCoreBindings._({
     required Pointer<Char> Function(
       Pointer<Char>,
@@ -4175,6 +5105,7 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings {
     required Pointer<Char> Function() stop,
     required Pointer<Char> Function(Pointer<Char>) secureFile,
     required void Function(Pointer<Char>) freeString,
+    required this.transportCapabilities,
   })  : _setup = setup,
         _start = start,
         _stop = stop,
@@ -4195,6 +5126,8 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings {
   final Pointer<Char> Function() _stop;
   final Pointer<Char> Function(Pointer<Char>) _secureFile;
   final void Function(Pointer<Char>) _freeString;
+  @override
+  final RuntimeTransportCapabilities? transportCapabilities;
 
   static DesktopRuntimeBindings load(DynamicLibrary dynamicLibrary) {
     final setup = dynamicLibrary.lookupFunction<
@@ -4236,6 +5169,7 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings {
       stop: stop,
       secureFile: secureFile,
       freeString: freeString,
+      transportCapabilities: _readCoreTransportCapabilities(dynamicLibrary),
     );
   }
 

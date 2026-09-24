@@ -164,6 +164,7 @@ abstract final class SupportDiagnosticCode {
     'all_except_ru',
     'selected_apps',
     'excluded_apps',
+    'selective_services',
   ];
   static const _connectionStates = <String>[
     'disconnected',
@@ -219,9 +220,12 @@ abstract final class SupportDiagnosticCode {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final hash = id.group(1)!;
-    final legacy = buildNumber <= 0xff;
+    final selective = routeMode == 'selective_services';
+    final legacy = !selective && buildNumber <= 0xff;
     final raw = <int>[
-      (platformIndex << 5) | (routeIndex << 3) | stateIndex,
+      selective
+          ? 0x80 | (platformIndex << 6) | (routeIndex << 3) | stateIndex
+          : (platformIndex << 5) | (routeIndex << 3) | stateIndex,
       (days >> 8) & 0xff,
       days & 0xff,
       ...versionParts,
@@ -242,7 +246,8 @@ abstract final class SupportDiagnosticCode {
       return 'PSD1-${body.substring(0, 4)}-${body.substring(4, 8)}-'
           '${body.substring(8, 12)}-${body.substring(12, 16)}';
     }
-    return 'PSD2-${body.substring(0, 4)}-${body.substring(4, 8)}-'
+    final prefix = selective ? 'PSD3' : 'PSD2';
+    return '$prefix-${body.substring(0, 4)}-${body.substring(4, 8)}-'
         '${body.substring(8, 12)}-${body.substring(12, 16)}-'
         '${body.substring(16, 21)}';
   }
@@ -256,7 +261,9 @@ abstract final class SupportDiagnosticCode {
         RegExp(r'^PSD1[0-9A-HJKMNPQRSTVWXYZ]{16}$').hasMatch(rawCode);
     final extended =
         RegExp(r'^PSD2[0-9A-HJKMNPQRSTVWXYZ]{21}$').hasMatch(rawCode);
-    if (!legacy && !extended) {
+    final selective =
+        RegExp(r'^PSD3[0-9A-HJKMNPQRSTVWXYZ]{21}$').hasMatch(rawCode);
+    if (!legacy && !extended && !selective) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final packed = _decodeCrockford(rawCode.substring(4));
@@ -266,10 +273,13 @@ abstract final class SupportDiagnosticCode {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final facts = packed[0];
-    final platformIndex = (facts >> 5) & 1;
-    final routeIndex = (facts >> 3) & 3;
+    final platformIndex = (facts >> (selective ? 6 : 5)) & 1;
+    final routeIndex = (facts >> 3) & (selective ? 7 : 3);
     final stateIndex = facts & 7;
-    if (stateIndex >= _connectionStates.length) {
+    final invalidFormat = selective
+        ? (facts & 0x80) == 0 || routeIndex != 4
+        : (facts & 0xc0) != 0;
+    if (invalidFormat || stateIndex >= _connectionStates.length) {
       throw const SupportBundleFailure('support_diagnostic_code_invalid');
     }
     final issuedOn = _epoch.add(
@@ -285,6 +295,9 @@ abstract final class SupportDiagnosticCode {
         ? packed[6]
         : (packed[6] << 24) | (packed[7] << 16) | (packed[8] << 8) | packed[9];
     final hashIndex = legacy ? 7 : 10;
+    if (buildNumber > 0x7fffffff) {
+      throw const SupportBundleFailure('support_diagnostic_code_invalid');
+    }
     return SupportDiagnosticCodeFacts(
       platform: const <String>['android', 'windows'][platformIndex],
       routeMode: _routeModes[routeIndex],

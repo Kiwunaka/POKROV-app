@@ -26,6 +26,9 @@ internal data class PendingRuntimeConnect(
     val id: Long,
     val configPath: String,
     val profileDigest: String,
+    val clientRequestId: String? = null,
+    val coreModuleSha256: String? = null,
+    val deadline: AndroidConnectDeadline? = null,
 )
 
 /** Owns only consent callbacks; a dispatched service start must release it. */
@@ -34,18 +37,25 @@ internal class PendingRuntimeConnectGate {
     private var current: PendingRuntimeConnect? = null
 
     @Synchronized
-    fun acquire(configPath: String, profileDigest: String): Pair<PendingRuntimeConnect, Boolean> {
+    fun acquire(configPath: String, profileDigest: String, clientRequestId: String? = null,
+        coreModuleSha256: String? = null, deadline: AndroidConnectDeadline? = null): Pair<PendingRuntimeConnect, Boolean> {
         val existing = current
-        if (existing != null && existing.configPath == configPath && existing.profileDigest == profileDigest) {
+        if (existing != null && existing.configPath == configPath && existing.profileDigest == profileDigest &&
+            existing.clientRequestId == clientRequestId && existing.coreModuleSha256 == coreModuleSha256 &&
+            existing.deadline == deadline) {
             return existing to false
         }
-        return PendingRuntimeConnect(id = ++nextId, configPath = configPath, profileDigest = profileDigest).also {
+        return PendingRuntimeConnect(id = ++nextId, configPath = configPath, profileDigest = profileDigest,
+            clientRequestId = clientRequestId, coreModuleSha256 = coreModuleSha256, deadline = deadline).also {
             current = it
         } to true
     }
 
     @Synchronized
     fun isCurrent(pending: PendingRuntimeConnect): Boolean = current == pending
+
+    @Synchronized
+    fun ownsClientRequest(request: String): Boolean = current?.clientRequestId == request
 
     @Synchronized
     fun completeDispatch(pending: PendingRuntimeConnect) {
@@ -57,6 +67,13 @@ internal class PendingRuntimeConnectGate {
     @Synchronized
     fun invalidate() {
         current = null
+    }
+
+    @Synchronized
+    fun cancelClientRequest(request: String): Boolean {
+        if (current?.clientRequestId != request) return false
+        current = null
+        return true
     }
 }
 
@@ -71,6 +88,8 @@ class RuntimeHostBridge(
     private var handledDebugPath: String? = null
     private val pendingConnectLock = Any()
     private val pendingConnectGate = PendingRuntimeConnectGate()
+    private val connectDeadlineHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var pendingConnectDeadlineWatchdog: Runnable? = null
     private var notificationPermissionRequest: PendingRuntimeConnect? = null
     private var vpnPermissionRequest: PendingRuntimeConnect? = null
     @Volatile
@@ -79,24 +98,77 @@ class RuntimeHostBridge(
     private var pendingVerifiedUpdate: AndroidVerifiedClientUpdate? = null
     @Volatile
     private var updateDownloadProgress = AndroidClientUpdateProgress.idle()
+    private val catalogIdentityResolver = lazy { AndroidCatalogIdentityResolver(activity) }
+    private val transportNetworkContext = lazy { AndroidTransportNetworkContext(activity) }
 
     init {
         AndroidOperationalRuntime.start(activity)
     }
 
     fun close() {
+        connectDeadlineHandler.removeCallbacksAndMessages(null)
         invalidatePendingConnect()
+        if (transportNetworkContext.isInitialized()) {
+            val network = transportNetworkContext.value
+            if (!AndroidConnectRequestOwner.bridgeClosing(network)) network.close()
+        }
         hostTaskScope.close()
+        if (catalogIdentityResolver.isInitialized()) catalogIdentityResolver.value.close()
         updateDownloadInProgress = false
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
+            "runtimeEngine.clockSnapshot" -> {
+                try {
+                    val bootCount = Settings.Global.getInt(activity.contentResolver, Settings.Global.BOOT_COUNT)
+                    if (bootCount < 0) throw IllegalStateException()
+                    result.success(mapOf("schema" to 1, "boot_ref" to "android:$bootCount",
+                        "elapsed_ms" to android.os.SystemClock.elapsedRealtime(), "quantum_ms" to 1))
+                } catch (_: Exception) {
+                    result.error("runtime_clock_unavailable", "System clock unavailable.", null)
+                }
+            }
             METHOD_SNAPSHOT -> result.success(snapshot())
+            "runtimeEngine.transportNetworkContext" -> {
+                val reference = runCatching { transportNetworkContext.value.read() }.getOrNull()
+                if (reference == null) result.error("network_context_unavailable", "Network context unavailable.", null)
+                else result.success(mapOf("schema" to 1, "network_context_ref" to reference))
+            }
+            "runtimeEngine.snapshotForConnectRequest" -> snapshotForConnectRequest(call, result)
             METHOD_INITIALIZE -> result.success(initialize())
             METHOD_STAGE_MANAGED_PROFILE -> result.success(stageManagedProfile(call))
             METHOD_INVALIDATE_MANAGED_PROFILE -> result.success(invalidateManagedProfile())
-            METHOD_CONNECT -> result.success(connect())
+            METHOD_CONNECT -> {
+                val request = call.argument<Any>("requestId")
+                if (request != null && (request !is String || !AndroidConnectRequestOwner.valid(request))) {
+                    result.error("invalid_connect_request", "Invalid connection request.", null)
+                } else {
+                    val requestId = request as? String
+                    if (AndroidConnectRequestOwner.blocksStart(requestId) ||
+                        (requestId != null && !AndroidConnectRequestOwner.begin(requestId))) {
+                        result.error("runtime_busy", "Stop the current request first.", null)
+                        return
+                    }
+                    result.success(connect(clientRequestId = requestId))
+                }
+            }
+            "runtimeEngine.cancelConnectRequest" -> cancelConnectRequest(call, result)
+            "runtimeEngine.cancelAndConfirmConnectStopped" -> cancelAndConfirmConnectStopped(call, result)
+            "runtimeEngine.connectWithCoreIdentity" -> connectWithCoreIdentity(call, result)
+            "runtimeEngine.promoteBoundTransportLease" -> promoteBoundTransportLease(call, result)
+            "runtimeEngine.revokeBoundTransportLease" -> revokeBoundTransportLease(call, result)
+            "runtimeEngine.revokeSmartAccessLease" -> revokeSmartAccessLease(call, result)
+            "runtimeEngine.renewSmartAccessLease" -> renewSmartAccessLease(call, result)
+            "runtimeEngine.configureSmartAccessRuntimeControl" -> configureSmartAccessRuntimeControl(call, result)
+            "runtimeEngine.configureBoundSmartAccessRuntimeControl" -> configureSmartAccessRuntimeControl(call, result, bound = true)
+            "runtimeEngine.configureSmartAccessRenewal" -> configureSmartAccessRuntimeControl(call, result, renewal = true)
+            "runtimeEngine.readSmartAccessRestrictions" -> readSmartAccessRestrictions(call, result)
+            "runtimeEngine.readSmartAccessLeases" -> readSmartAccessLeases(call, result)
+            "runtimeEngine.acknowledgeSmartAccessRestrictions" -> acknowledgeSmartAccessRestrictions(call, result)
+            "runtimeEngine.revokeRoutingCatalog" -> revokeRoutingCatalog(call, result)
+            "runtimeEngine.revokeRoutingCatalogService" -> revokeRoutingCatalogService(call, result)
+            "runtimeEngine.revokeSmartAccessPolicy" -> revokeSmartAccessPolicy(call, result)
             METHOD_DISCONNECT -> result.success(disconnect())
             METHOD_APPLY_WARP -> result.success(applyWarp(call))
             METHOD_LIVE_STATS -> result.success(AndroidRuntimeState.liveStats())
@@ -104,6 +176,7 @@ class RuntimeHostBridge(
             METHOD_DEVICE_NAME -> result.success(deviceName())
             METHOD_SUPPORTED_ABIS -> result.success(supportedAbis())
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
+            "runtimeEngine.catalogAppIdentities" -> catalogAppIdentities(call, result)
             METHOD_CURRENT_WIFI -> result.success(currentWifi())
             METHOD_MEASURE_NODE_LATENCIES -> measureNodeLatencies(call, result)
             "runtimeEngine.observeNetworkContext" -> executeHostTask(result, emptyMap<String, Any?>()) {
@@ -267,6 +340,9 @@ class RuntimeHostBridge(
                     pending.configPath,
                     profile?.routeMode.orEmpty(),
                     pending.profileDigest,
+                    connectRequestId = pending.clientRequestId,
+                    expectedCoreModuleSha256 = pending.coreModuleSha256,
+                    deadline = pending.deadline,
                 )
             }.onFailure {
                 AndroidRuntimeState.markFailure(
@@ -408,7 +484,7 @@ class RuntimeHostBridge(
         val materializedForRuntime = call.argument<Boolean>("materializedForRuntime") ?: false
         val routeMode = call.argument<String>("routeMode")
             ?.trim()
-            ?.takeIf { it in setOf("allExceptRu", "fullTunnel", "selectedApps", "excludedApps") }
+            ?.takeIf { it in setOf("allExceptRu", "fullTunnel", "selectedApps", "excludedApps", "selectiveServices") }
             ?: run {
                 AndroidRuntimeState.markFailure(
                     kind = "missing_route_mode",
@@ -420,6 +496,7 @@ class RuntimeHostBridge(
         // routing scope choice for this new managed manifest. Omitted/legacy
         // MethodChannel calls remain ineligible for Quick Settings reuse.
         val quickSettingsEligible = call.argument<Boolean>("quickSettingsEligible") == true
+        val requiresBoundConnect = call.argument<Boolean>("requiresBoundConnect") == true
         val coreEgressProbeRequired =
             call.argument<Boolean>("coreEgressProbeRequired") != false
         val displayCountry = call.argument<String>("displayCountry")
@@ -432,7 +509,7 @@ class RuntimeHostBridge(
             .orEmpty()
         val displayRouteMode = call.argument<String>("displayRouteMode")
             ?.trim()
-            ?.takeIf { it in setOf("allExceptRu", "fullTunnel", "selectedApps", "excludedApps") }
+            ?.takeIf { it in setOf("allExceptRu", "fullTunnel", "selectedApps", "excludedApps", "selectiveServices") }
             .orEmpty()
         val finalPath = File(runtimeEnvironment.configDirectory, "managed-profile.json")
 
@@ -448,21 +525,34 @@ class RuntimeHostBridge(
                 else -> "device"
             }
             val profileDigest = runtimeProfileDigest(configPayload, serviceRouteMode, coreEgressProbeRequired)
-            writePrivateConfig(finalPath, configPayload)
+            val expectedDigest = call.argument<String>("expectedProfileDigest")
+            require(expectedDigest == null || expectedDigest == profileDigest) { "profile_identity_mismatch" }
+            val catalogAppBinding = AndroidCatalogAppBinding.fromStage(profileDigest,
+                call.argument<Any>("catalogAppDigest"), call.argument<Any>("catalogAppExpiresAt"),
+                call.argument<Any>("catalogAppSigners"), call.argument<Any>("catalogAppLineages"), routeMode)
+            // Persist reuse authority before replacing bytes at the shared path.
+            // A failed disk commit must not leave ATS bytes under old metadata.
+            AndroidCatalogAppBinding.clear()
             AndroidRuntimeProfileStore.save(
                 activity,
                 PersistedRuntimeProfile(
                     configPath = finalPath.absolutePath,
                     configDigest = profileDigest,
                     routeMode = serviceRouteMode,
-                    quickSettingsEligible = quickSettingsEligible,
+                    quickSettingsEligible = quickSettingsEligible && catalogAppBinding == null,
+                    requiresBoundConnect = requiresBoundConnect,
+                    catalogAppIdentityRequired = catalogAppBinding != null,
+                    lanScopeVersion = call.argument<Int>("lanScopeVersion") ?: 0,
                     coreEgressProbeRequired = coreEgressProbeRequired,
                     displayCountry = displayCountry,
                     displayNodeCode = displayNodeCode,
                     displayRouteMode = displayRouteMode,
                 ),
             )
-            AndroidRuntimeState.markProfileStaged(finalPath.absolutePath, profileDigest = profileDigest)
+            writePrivateConfig(finalPath, configPayload)
+            AndroidRuntimeState.markProfileStaged(finalPath.absolutePath, profileDigest = profileDigest,
+                requiresBoundConnect = requiresBoundConnect)
+            AndroidCatalogAppBinding.publish(catalogAppBinding)
             AndroidRuntimeState.snapshot()
         } catch (error: Throwable) {
             AndroidRuntimeState.markFailure(
@@ -476,12 +566,46 @@ class RuntimeHostBridge(
     private fun connect(
         checkNotificationPermission: Boolean = true,
         pendingRequest: PendingRuntimeConnect? = null,
+        clientRequestId: String? = pendingRequest?.clientRequestId,
+        expectedCoreModuleSha256: String? = pendingRequest?.coreModuleSha256,
+        expectedProfileDigest: String? = pendingRequest?.takeIf { it.coreModuleSha256 != null }?.profileDigest,
+        deadline: AndroidConnectDeadline? = pendingRequest?.deadline,
     ): Map<String, Any?> {
+        if (clientRequestId != null && !AndroidConnectRequestOwner.owns(clientRequestId)) {
+            return AndroidRuntimeState.snapshot()
+        }
         val persistedProfile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(activity)
         if (AndroidRuntimeState.resolveEnvironment(activity) == null) {
             return snapshot()
         }
         if (!AndroidRuntimeState.initialize(activity)) {
+            return AndroidRuntimeState.snapshot()
+        }
+        if (persistedProfile?.catalogAppIdentityRequired == true &&
+            AndroidCatalogAppBinding.forProfile(persistedProfile.configDigest) == null) {
+            AndroidRuntimeState.markFailure("profile_identity_mismatch",
+                AndroidRuntimeSafety.publicFailureMessage("profile_identity_mismatch"))
+            return AndroidRuntimeState.snapshot()
+        }
+        if (deadline != null && !deadline.isCurrent()) {
+            invalidatePendingConnect()
+            AndroidRuntimeState.markFailure("connect_deadline",
+                AndroidRuntimeSafety.publicFailureMessage("connect_deadline"))
+            return AndroidRuntimeState.snapshot()
+        }
+
+        if (expectedCoreModuleSha256 != null &&
+            !AndroidRuntimeState.matchesCoreModuleSha256(expectedCoreModuleSha256)) {
+            invalidatePendingConnect()
+            AndroidRuntimeState.markFailure("core_identity_mismatch",
+                AndroidRuntimeSafety.publicFailureMessage("core_identity_mismatch"))
+            return AndroidRuntimeState.snapshot()
+        }
+        if (expectedProfileDigest != null && (persistedProfile?.configDigest != expectedProfileDigest ||
+                !AndroidRuntimeState.isStagedProfileCurrent(expectedProfileDigest))) {
+            invalidatePendingConnect()
+            AndroidRuntimeState.markFailure("profile_identity_mismatch",
+                AndroidRuntimeSafety.publicFailureMessage("profile_identity_mismatch"))
             return AndroidRuntimeState.snapshot()
         }
 
@@ -503,7 +627,8 @@ class RuntimeHostBridge(
             )
             return AndroidRuntimeState.snapshot()
         }
-        val pending = pendingRequest ?: currentOrBeginPendingConnect(stagedConfigPath, persistedProfile?.configDigest.orEmpty())
+        val pending = pendingRequest ?: currentOrBeginPendingConnect(
+            stagedConfigPath, persistedProfile?.configDigest.orEmpty(), clientRequestId, expectedCoreModuleSha256, deadline)
         if (!isCurrentPendingConnect(pending)) {
             return AndroidRuntimeState.snapshot()
         }
@@ -570,6 +695,9 @@ class RuntimeHostBridge(
         runCatching {
             PokrovRuntimeVpnService.start(
                 activity, stagedConfigPath, routeMode, pending.profileDigest,
+                connectRequestId = pending.clientRequestId,
+                expectedCoreModuleSha256 = pending.coreModuleSha256,
+                deadline = pending.deadline,
             )
         }.onFailure {
             AndroidRuntimeState.markFailure(
@@ -583,7 +711,388 @@ class RuntimeHostBridge(
         return AndroidRuntimeState.snapshot()
     }
 
+    private fun connectWithCoreIdentity(call: MethodCall, result: MethodChannel.Result) {
+        val request = call.argument<Any>("requestId") as? String
+        fun rejectBeforeAdmission(code: String, message: String) {
+            if (request != null && AndroidConnectRequestOwner.valid(request) && !AndroidConnectRequestOwner.knows(request)) {
+                result.error("core_identity_connect_not_dispatched", message,
+                    mapOf("schema" to 1, "requestId" to request, "settled" to true))
+            } else result.error(code, message, null)
+        }
+        val core = call.argument<Any>("expectedCoreModuleSha256") as? String
+        val profile = call.argument<Any>("expectedProfileDigest") as? String
+        val networkRef = call.argument<Any>("expectedNetworkContextRef") as? String
+        val boot = call.argument<Any>("bootRef") as? String
+        val startValue = call.argument<Any>("startedElapsedMs")
+        val endValue = call.argument<Any>("deadlineElapsedMs")
+        val started = when (startValue) { is Int -> startValue.toLong(); is Long -> startValue; else -> null }
+        val expires = when (endValue) { is Int -> endValue.toLong(); is Long -> endValue; else -> null }
+        val digestPattern = Regex("[0-9a-f]{64}")
+        if ((call.arguments as? Map<*, *>)?.size != 7 || request == null || !AndroidConnectRequestOwner.valid(request) ||
+            networkRef == null || !Regex("network_[0-9a-f]{32}").matches(networkRef) ||
+            core == null || !digestPattern.matches(core) || profile == null || !digestPattern.matches(profile)) {
+            rejectBeforeAdmission("invalid_connect_identity", "Invalid connection identity.")
+            return
+        }
+        val bootCount = runCatching { Settings.Global.getInt(activity.contentResolver, Settings.Global.BOOT_COUNT) }.getOrNull()
+        if (bootCount == null || bootCount < 0 || boot == null || boot != "android:$bootCount" ||
+            started == null || expires == null || started < 0 || expires > 9007199254740991L ||
+            expires <= started || expires-started > 86400000L) {
+            rejectBeforeAdmission("invalid_connect_deadline", "Invalid connection deadline.")
+            return
+        }
+        val deadline = AndroidConnectDeadline(boot, started, expires)
+        if (!deadline.isCurrent()) {
+            rejectBeforeAdmission("connect_deadline", "Connection deadline expired.")
+            return
+        }
+        val network = if (transportNetworkContext.isInitialized()) transportNetworkContext.value else null
+        if (network == null || network.read() != networkRef) {
+            rejectBeforeAdmission("network_context_changed", "Network context changed.")
+            return
+        }
+        if (!AndroidConnectRequestOwner.beginBound(request, core, profile, deadline, network, networkRef)) {
+            rejectBeforeAdmission("conflicting_connect_identity", "Connection request identity changed.")
+            return
+        }
+        connect(clientRequestId = request, expectedCoreModuleSha256 = core,
+            expectedProfileDigest = profile, deadline = deadline)
+        watchPendingConnectDeadline(request)
+        val value = AndroidConnectRequestOwner.snapshotForBoundRequest(request)
+        if (value == null) {
+            result.error("core_identity_connect_unacknowledged", "Connection owner is unavailable.", null)
+            return
+        }
+        result.success(mapOf("schema" to 1, "requestId" to request, "snapshot" to value))
+    }
+
+    private fun snapshotForConnectRequest(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val request = arguments?.get("requestId") as? String
+        if (arguments?.size != 1 || request == null || !AndroidConnectRequestOwner.valid(request)) {
+            result.error("invalid_connect_request", "Invalid connection request.", null)
+            return
+        }
+        val value = AndroidConnectRequestOwner.snapshotForBoundRequest(request)
+        if (value == null) {
+            result.error("connect_progress_unconfirmed", "Connection owner is unavailable.", null)
+        } else {
+            result.success(mapOf("schema" to 1, "requestId" to request, "snapshot" to value))
+        }
+    }
+
+    private fun promoteBoundTransportLease(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val request = arguments?.get("requestId") as? String
+        val profile = arguments?.get("profileDigest") as? String
+        val lease = arguments?.get("endpointLeaseRef") as? String
+        val issued = arguments?.get("issuedAt") as? String
+        val newUntil = arguments?.get("newFlowsUntil") as? String
+        val activeUntil = arguments?.get("activeFlowsUntil") as? String
+        if (arguments?.size != 6 || request == null || !AndroidConnectRequestOwner.valid(request) ||
+            profile == null || !Regex("[a-f0-9]{64}").matches(profile) ||
+            lease == null || !Regex("lease_[a-f0-9]{32}").matches(lease) ||
+            issued == null || newUntil == null || activeUntil == null) {
+            result.error("invalid_transport_lease_handoff", "Invalid transport lease.", null)
+            return
+        }
+        PokrovRuntimeVpnService.promoteBoundTransportLease(request, profile, lease,
+            issued, newUntil, activeUntil) { promoted ->
+            activity.runOnUiThread {
+                if (!hostTaskScope.isActive()) return@runOnUiThread
+                val snapshot = if (promoted) AndroidConnectRequestOwner.snapshotForBoundRequest(request) else null
+                if (snapshot == null || snapshot["transportProofPending"] != false ||
+                    snapshot["core_egress_validated"] != true) {
+                    result.error("transport_lease_handoff_unconfirmed", "Transport lease unavailable.", null)
+                } else {
+                    result.success(mapOf("schema" to 1, "requestId" to request, "snapshot" to snapshot))
+                }
+            }
+        }
+    }
+
+    private fun revokeBoundTransportLease(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val request = arguments?.get("requestId") as? String
+        val profile = arguments?.get("profileDigest") as? String
+        val lease = arguments?.get("endpointLeaseRef") as? String
+        val terminateActive = arguments?.get("terminateActive") as? Boolean
+        if (arguments?.size != 4 || request == null || !AndroidConnectRequestOwner.valid(request) ||
+            profile == null || !Regex("[a-f0-9]{64}").matches(profile) ||
+            lease == null || !Regex("lease_[a-f0-9]{32}").matches(lease) || terminateActive == null) {
+            result.error("invalid_transport_lease_revocation", "Invalid transport lease.", null)
+            return
+        }
+        PokrovRuntimeVpnService.revokeBoundTransportLease(request, profile, lease, terminateActive) { revoked ->
+            activity.runOnUiThread {
+                if (!hostTaskScope.isActive()) return@runOnUiThread
+                val snapshot = if (revoked) AndroidConnectRequestOwner.snapshotForBoundRequest(request) else null
+                if (snapshot == null || snapshot["core_egress_validated"] != false ||
+                    (terminateActive && (snapshot["transportProofPending"] != true ||
+                        snapshot["transportLeaseActive"] != false))) {
+                    result.error("transport_lease_revocation_unconfirmed", "Transport lease unavailable.", null)
+                } else {
+                    result.success(mapOf("schema" to 1, "requestId" to request, "snapshot" to snapshot))
+                }
+            }
+        }
+    }
+
+    private fun watchPendingConnectDeadline(request: String) {
+        pendingConnectDeadlineWatchdog?.let(connectDeadlineHandler::removeCallbacks)
+        val watchdog = object : Runnable {
+            override fun run() {
+                if (!pendingConnectGate.ownsClientRequest(request)) return
+                if (AndroidConnectRequestOwner.expire(request)) {
+                    pendingConnectGate.cancelClientRequest(request)
+                    synchronized(pendingConnectLock) {
+                        if (notificationPermissionRequest?.clientRequestId == request) notificationPermissionRequest = null
+                        if (vpnPermissionRequest?.clientRequestId == request) vpnPermissionRequest = null
+                    }
+                    AndroidRuntimeState.markFailure("connect_deadline",
+                        AndroidRuntimeSafety.publicFailureMessage("connect_deadline"))
+                } else if (AndroidConnectRequestOwner.owns(request)) {
+                    connectDeadlineHandler.postDelayed(this, 100L)
+                }
+            }
+        }
+        pendingConnectDeadlineWatchdog = watchdog
+        connectDeadlineHandler.post(watchdog)
+    }
+
+    private fun cancelConnectRequest(call: MethodCall, result: MethodChannel.Result) {
+        val request = call.argument<Any>("requestId") as? String
+        if (request == null || !AndroidConnectRequestOwner.valid(request)) {
+            result.error("invalid_connect_request", "Invalid connection request.", null)
+            return
+        }
+        val accepted = AndroidConnectRequestOwner.cancel(request)
+        if (accepted) {
+            val awaitingPermission = pendingConnectGate.cancelClientRequest(request)
+            synchronized(pendingConnectLock) {
+                if (notificationPermissionRequest?.clientRequestId == request) notificationPermissionRequest = null
+                if (vpnPermissionRequest?.clientRequestId == request) vpnPermissionRequest = null
+            }
+            // The service checks this exact request again when the intent is
+            // received. A queued cancellation must not stop a newer request.
+            try {
+                if (awaitingPermission) AndroidRuntimeState.cancelPendingConnection()
+                else PokrovRuntimeVpnService.cancelConnectRequest(activity, request)
+            } catch (_: Exception) {
+                result.error("connect_cancel_dispatch_failed", "Connection cancellation was not confirmed.", null)
+                return
+            }
+        }
+        result.success(mapOf("schema" to 1, "requestId" to request, "cancelled" to accepted))
+    }
+
+    private fun cancelAndConfirmConnectStopped(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val request = arguments?.get("requestId") as? String
+        if (arguments?.size != 1 || request == null || !AndroidConnectRequestOwner.valid(request)) {
+            result.error("invalid_connect_request", "Invalid connection request.", null)
+            return
+        }
+        fun respond(settled: Boolean) {
+            result.success(mapOf("schema" to 1, "requestId" to request, "settled" to settled))
+        }
+        if (AndroidConnectRequestOwner.isStopped(request)) { respond(true); return }
+        if (!AndroidConnectRequestOwner.cancel(request)) { respond(false); return }
+        pendingConnectGate.cancelClientRequest(request)
+        synchronized(pendingConnectLock) {
+            if (notificationPermissionRequest?.clientRequestId == request) notificationPermissionRequest = null
+            if (vpnPermissionRequest?.clientRequestId == request) vpnPermissionRequest = null
+        }
+        if (AndroidConnectRequestOwner.settleBeforeServiceAdmission(request)) {
+            AndroidRuntimeState.cancelPendingConnection()
+            respond(true)
+            return
+        }
+        val owner = AndroidConnectRequestOwner.serviceFor(request)
+        if (owner == null) { respond(false); return }
+        owner.cancelAndConfirmConnectStopped(request) { settled ->
+            activity.runOnUiThread { respond(settled) }
+        }
+    }
+
+    private fun revokeRoutingCatalog(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val profile = arguments?.get("profileDigest") as? String
+        if (arguments?.size != 1 || profile == null || !Regex("^[a-f0-9]{64}$").matches(profile)) {
+            result.error("invalid_catalog_revocation", "Invalid catalog revocation.", null)
+            return
+        }
+        PokrovRuntimeVpnService.revokeRoutingCatalog(profile) { revoked ->
+            activity.runOnUiThread {
+                if (hostTaskScope.isActive()) {
+                    if (revoked == null) result.error("catalog_revoke_unconfirmed", "Catalog revocation was not confirmed.", null)
+                    else result.success(mapOf("schema" to 1, "profileDigest" to profile, "revoked" to revoked))
+                }
+            }
+        }
+    }
+
+    private fun revokeRoutingCatalogService(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val profile = arguments?.get("profileDigest") as? String
+        val service = arguments?.get("serviceId") as? String
+        if (arguments?.size != 2 || profile == null || service == null ||
+            !Regex("^[a-f0-9]{64}$").matches(profile) || !Regex("^[a-z0-9][a-z0-9._-]{0,63}$").matches(service)) {
+            result.error("invalid_catalog_revocation", "Invalid service revocation.", null)
+            return
+        }
+        PokrovRuntimeVpnService.revokeRoutingCatalogService(profile, service) { revoked ->
+            activity.runOnUiThread {
+                if (hostTaskScope.isActive()) {
+                    if (revoked == null) result.error("catalog_revoke_unconfirmed", "Service revocation was not confirmed.", null)
+                    else result.success(mapOf("schema" to 1, "profileDigest" to profile, "serviceId" to service, "revoked" to revoked))
+                }
+            }
+        }
+    }
+
+    private fun readSmartAccessRestrictions(call: MethodCall, result: MethodChannel.Result) {
+        if (call.arguments != null || AndroidRuntimeState.snapshot()["smartAccessRuntimeControlVersion"] != 1) {
+            result.error("smart_access_restriction_read_unavailable", "Restriction recovery is unavailable.", null)
+            return
+        }
+        executeHostTask(result, emptyMap<String, Any?>()) {
+            val journal = space.pokrov.core.libbox.Libbox::class.java.getMethod("readSmartAccessRestrictions").invoke(null) as? String
+            if (journal == null || journal.toByteArray(Charsets.UTF_8).size > 1024 * 1024) emptyMap()
+            else mapOf("schema" to 1, "journalJson" to journal)
+        }
+    }
+
+    private fun readSmartAccessLeases(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val profile = arguments?.get("profileDigest") as? String
+        if (arguments?.size != 1 || profile == null || !Regex("^[a-f0-9]{64}$").matches(profile) ||
+            AndroidRuntimeState.snapshot()["smartAccessRuntimeControlVersion"] != 1) {
+            result.error("smart_access_lease_read_unavailable", "Lease recovery is unavailable.", null)
+            return
+        }
+        PokrovRuntimeVpnService.readSmartAccessLeases(profile) { encoded ->
+            activity.runOnUiThread {
+                if (hostTaskScope.isActive()) {
+                    if (encoded == null) result.error("smart_access_lease_read_unconfirmed", "Lease recovery was not confirmed.", null)
+                    else result.success(mapOf("schema" to 1, "profileDigest" to profile, "leaseIdsJson" to encoded))
+                }
+            }
+        }
+    }
+
+    private fun acknowledgeSmartAccessRestrictions(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val digest = arguments?.get("snapshotSha256") as? String
+        if (arguments?.size != 1 || digest == null || !Regex("^[a-f0-9]{64}$").matches(digest) ||
+            AndroidRuntimeState.snapshot()["smartAccessRuntimeControlVersion"] != 1) {
+            result.error("smart_access_restriction_ack_invalid", "Invalid restriction acknowledgement.", null)
+            return
+        }
+        executeHostTask(result, emptyMap<String, Any?>()) {
+            val accepted = space.pokrov.core.libbox.Libbox::class.java.getMethod("acknowledgeSmartAccessRestrictions", String::class.java)
+                .invoke(null, digest) as? Boolean
+            if (accepted == null) emptyMap() else mapOf("schema" to 1, "snapshotSha256" to digest, "acknowledged" to accepted)
+        }
+    }
+
+    private fun configureSmartAccessRuntimeControl(call: MethodCall, result: MethodChannel.Result, renewal: Boolean = false, bound: Boolean = false) {
+        val arguments = call.arguments as? Map<*, *>
+        val profile = arguments?.get("profileDigest") as? String
+        val config = arguments?.get("configJson") as? String
+        val request = arguments?.get("requestId") as? String
+        if (arguments?.size != (if (bound) 3 else 2) || profile == null || config == null ||
+            (bound && (request == null || !AndroidConnectRequestOwner.valid(request))) ||
+            !Regex("^[a-f0-9]{64}$").matches(profile) || config.toByteArray(Charsets.UTF_8).size > 16384) {
+            result.error("invalid_smart_access_runtime_control", "Invalid runtime control request.", null)
+            return
+        }
+        if (AndroidRuntimeState.snapshot()["smartAccessRuntimeControlVersion"] != 1) {
+            result.error("smart_access_runtime_control_unsupported", "Runtime control is unavailable.", null)
+            return
+        }
+        PokrovRuntimeVpnService.configureSmartAccessRuntimeControl(profile, config, renewal, if (bound) request else null) { configured ->
+            activity.runOnUiThread {
+                if (hostTaskScope.isActive()) {
+                    if (configured == null) result.error("smart_access_runtime_control_unconfirmed", "Runtime control was not confirmed.", null)
+                    else result.success(mapOf("schema" to 1, "profileDigest" to profile, "configured" to configured) +
+                        (if (bound) mapOf("requestId" to request) else emptyMap()))
+                }
+            }
+        }
+    }
+
+    private fun renewSmartAccessLease(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val profile = arguments?.get("profileDigest") as? String
+        val expected = arguments?.get("expectedLeaseId") as? String
+        val next = arguments?.get("nextLeaseId") as? String
+        val issued = arguments?.get("issuedAt") as? String
+        val newUntil = arguments?.get("newFlowsUntil") as? String
+        val activeUntil = arguments?.get("activeFlowsUntil") as? String
+        if (arguments?.size != 6 || profile == null || expected == null || next == null ||
+            issued == null || newUntil == null || activeUntil == null ||
+            !Regex("^[a-f0-9]{64}$").matches(profile)) {
+            result.error("invalid_smart_access_renewal", "Invalid lease renewal.", null)
+            return
+        }
+        if (AndroidRuntimeState.snapshot()["routingCatalogControlVersion"] != 4) {
+            result.error("smart_access_renewal_unsupported", "Lease renewal is unavailable.", null)
+            return
+        }
+        PokrovRuntimeVpnService.renewSmartAccessLease(profile, expected, next, issued, newUntil, activeUntil) { renewed ->
+            activity.runOnUiThread {
+                if (hostTaskScope.isActive()) {
+                    if (renewed == null) result.error("smart_access_renewal_unconfirmed", "Lease renewal was not confirmed.", null)
+                    else result.success(mapOf("schema" to 1, "profileDigest" to profile,
+                        "expectedLeaseId" to expected, "nextLeaseId" to next, "renewed" to renewed))
+                }
+            }
+        }
+    }
+
+    private fun revokeSmartAccessLease(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val profile = arguments?.get("profileDigest") as? String
+        val lease = arguments?.get("leaseId") as? String
+        val terminate = arguments?.get("terminateActive") as? Boolean
+        if (arguments?.size != 3 || profile == null || lease == null || terminate == null ||
+            !Regex("^[a-f0-9]{64}$").matches(profile) || !Regex("^[a-f0-9]{32}$").matches(lease)) {
+            result.error("invalid_smart_access_revocation", "Invalid lease revocation.", null)
+            return
+        }
+        PokrovRuntimeVpnService.revokeSmartAccessLease(profile, lease, terminate) { revoked ->
+            activity.runOnUiThread {
+                if (hostTaskScope.isActive()) {
+                    if (revoked == null) result.error("smart_access_revoke_unconfirmed", "Lease revocation was not confirmed.", null)
+                    else result.success(mapOf("schema" to 1, "profileDigest" to profile,
+                        "leaseId" to lease, "revoked" to revoked))
+                }
+            }
+        }
+    }
+
+    private fun revokeSmartAccessPolicy(call: MethodCall, result: MethodChannel.Result) {
+        val arguments = call.arguments as? Map<*, *>
+        val profile = arguments?.get("profileDigest") as? String
+        val terminate = arguments?.get("terminateActive") as? Boolean
+        if (arguments?.size != 2 || profile == null || terminate == null || !Regex("^[a-f0-9]{64}$").matches(profile)) {
+            result.error("invalid_smart_access_revocation", "Invalid policy revocation.", null)
+            return
+        }
+        PokrovRuntimeVpnService.revokeSmartAccessPolicy(profile, terminate) { revoked ->
+            activity.runOnUiThread {
+                if (hostTaskScope.isActive()) {
+                    if (revoked == null) result.error("smart_access_revoke_unconfirmed", "Policy revocation was not confirmed.", null)
+                    else result.success(mapOf("schema" to 1, "profileDigest" to profile,
+                        "terminateActive" to terminate, "revoked" to revoked))
+                }
+            }
+        }
+    }
+
     private fun disconnect(): Map<String, Any?> {
+        AndroidConnectRequestOwner.invalidate()
         invalidatePendingConnect()
         AndroidRuntimeState.markStopRequested(stopReason = "user_requested")
         runCatching {
@@ -619,6 +1128,9 @@ class RuntimeHostBridge(
         return try {
             val existingProfile = AndroidRuntimeProfileStore.load(activity)
                 ?: error("missing staged profile")
+            // A config replacement changes the digest. Rebuild the signed app
+            // scope through the normal stage instead of carrying old signers.
+            check(!existingProfile.catalogAppIdentityRequired) { "catalog_app_scope_requires_restage" }
             val profileDigest = runtimeProfileDigest(
                 configPayload, existingProfile.routeMode, existingProfile.coreEgressProbeRequired,
             )
@@ -786,8 +1298,10 @@ class RuntimeHostBridge(
         }
     }
 
-    private fun currentOrBeginPendingConnect(configPath: String, profileDigest: String): PendingRuntimeConnect {
-        val (pending, created) = pendingConnectGate.acquire(configPath, profileDigest)
+    private fun currentOrBeginPendingConnect(configPath: String, profileDigest: String,
+        clientRequestId: String? = null, coreModuleSha256: String? = null,
+        deadline: AndroidConnectDeadline? = null): PendingRuntimeConnect {
+        val (pending, created) = pendingConnectGate.acquire(configPath, profileDigest, clientRequestId, coreModuleSha256, deadline)
         if (created) {
             synchronized(pendingConnectLock) {
                 notificationPermissionRequest = null
@@ -807,7 +1321,8 @@ class RuntimeHostBridge(
     }
 
     private fun isCurrentPendingConnect(pending: PendingRuntimeConnect): Boolean =
-        pendingConnectGate.isCurrent(pending) && AndroidRuntimeState.isConnectionPending()
+        pendingConnectGate.isCurrent(pending) && AndroidRuntimeState.isConnectionPending() &&
+            (pending.clientRequestId == null || AndroidConnectRequestOwner.owns(pending.clientRequestId))
 
     private fun setNotificationPermissionRequest(pending: PendingRuntimeConnect): Boolean =
         synchronized(pendingConnectLock) {
@@ -970,6 +1485,23 @@ class RuntimeHostBridge(
     private fun listInstalledApps(result: MethodChannel.Result) {
         executeHostTask(result, emptyList<Map<String, String>>()) {
             installedLauncherApps()
+        }
+    }
+
+    private fun catalogAppIdentities(call: MethodCall, result: MethodChannel.Result) {
+        val packages = call.argument<Any>("packages") as? List<*>
+        val digest = call.argument<Any>("catalogDigest") as? String
+        if (!hostTaskScope.isActive() || packages == null || packages.size > 256 ||
+            packages.any { it !is String } || digest == null) {
+            result.success(AndroidCatalogIdentityResolver.unavailable())
+            return
+        }
+        // Initialize the lifecycle-bound receiver on this bridge's UI thread,
+        // before dispatch, so close cannot race a late lazy registration.
+        val resolver = catalogIdentityResolver.value
+        val fresh = call.argument<Any>("fresh") == true
+        executeHostTask(result, AndroidCatalogIdentityResolver.unavailable()) {
+            resolver.scan(digest, packages.filterIsInstance<String>(), fresh)
         }
     }
 

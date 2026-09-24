@@ -23,6 +23,12 @@ type Peer struct {
 	StartTime uint64
 }
 
+func (peer Peer) Alive() bool {
+	if peer.PID <= 0 || peer.StartTime == 0 { return false }
+	current, err := processStartTime(peer.PID)
+	return err == nil && current == peer.StartTime
+}
+
 func PeerFrom(connection *net.UnixConn) (Peer, error) {
 	raw, err := connection.SyscallConn()
 	if err != nil {
@@ -51,7 +57,7 @@ func PeerFrom(connection *net.UnixConn) (Peer, error) {
 }
 
 type Checker interface {
-	Check(actionID, process string) Decision
+	Check(context.Context, string, string) Decision
 }
 
 type PolkitChecker struct{}
@@ -84,8 +90,8 @@ func (result Result) Authorized() bool {
 	return result.Decision == DecisionAuthorized
 }
 
-func (PolkitChecker) Check(actionID, process string) Decision {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+func (PolkitChecker) Check(parent context.Context, actionID, process string) Decision {
+	ctx, cancel := context.WithTimeout(parent, 60*time.Second)
 	defer cancel()
 	command := exec.CommandContext(
 		ctx,
@@ -102,6 +108,9 @@ func (PolkitChecker) Check(actionID, process string) Decision {
 	}
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		return DecisionTimeout
+	}
+	if errors.Is(ctx.Err(), context.Canceled) {
+		return DecisionDismissed
 	}
 	var exitError *exec.ExitError
 	if !errors.As(err, &exitError) {
@@ -125,7 +134,7 @@ func decisionFromExitCode(exitCode int) Decision {
 	}
 }
 
-func Authorize(peer Peer, checker Checker) Result {
+func Authorize(ctx context.Context, peer Peer, checker Checker) Result {
 	if peer.PID <= 0 || peer.StartTime == 0 {
 		return Result{
 			Backend:  BackendPeerCredential,
@@ -144,7 +153,7 @@ func Authorize(peer Peer, checker Checker) Result {
 	process := fmt.Sprintf("%d,%d,%d", peer.PID, peer.StartTime, peer.UID)
 	return Result{
 		Backend:  BackendPolkitDBus,
-		Decision: checker.Check(ManageActionID, process),
+		Decision: checker.Check(ctx, ManageActionID, process),
 	}
 }
 
@@ -161,6 +170,9 @@ func processStartTime(pid int) (uint64, error) {
 	// The suffix begins with field 3 (state); index 19 is field 22 (starttime).
 	if len(fields) <= 19 {
 		return 0, errors.New("process stat incomplete")
+	}
+	if fields[0] == "Z" || fields[0] == "X" || fields[0] == "x" {
+		return 0, errors.New("process exited")
 	}
 	value, err := strconv.ParseUint(fields[19], 10, 64)
 	if err != nil || value == 0 {

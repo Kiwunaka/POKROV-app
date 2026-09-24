@@ -10,6 +10,11 @@ class _RulesSection extends StatelessWidget {
     required this.onSelectedAppAdded,
     required this.onSelectedAppRemoved,
     required this.onRuAppPresetApplied,
+    this.loadVerifiedCatalogApps,
+    this.loadCatalogPreview,
+    this.catalogPreviewIdentity,
+    this.onEditCatalogServices,
+    this.catalogServicesBusy = false,
     required this.onRoutingPreferencesChanged,
     required this.onRoutingPreferencesApply,
     required this.connectionActive,
@@ -26,7 +31,12 @@ class _RulesSection extends StatelessWidget {
   final ValueChanged<RouteMode> onRouteModeSelected;
   final ValueChanged<String> onSelectedAppAdded;
   final ValueChanged<String> onSelectedAppRemoved;
-  final void Function(RouteMode mode, List<String> appIds) onRuAppPresetApplied;
+  final void Function(RouteMode mode, List<String> appIds, bool verifiedCatalog) onRuAppPresetApplied;
+  final Future<Set<String>> Function(bool fresh)? loadVerifiedCatalogApps;
+  final Future<_RoutingCatalogPreview?> Function()? loadCatalogPreview;
+  final Object? catalogPreviewIdentity;
+  final VoidCallback? onEditCatalogServices;
+  final bool catalogServicesBusy;
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesChanged;
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesApply;
   final bool connectionActive;
@@ -116,7 +126,33 @@ class _RulesSection extends StatelessWidget {
             ],
           ),
         ),
-        if (selectedRouteMode == RouteMode.allExceptRu &&
+        if (onEditCatalogServices != null || selectedRouteMode == RouteMode.selectiveServices)
+          _SectionCard(
+            key: const ValueKey('rules-selective-services'),
+            title: 'Выбранные сервисы',
+            lines: [
+              if (selectedRouteMode == RouteMode.selectiveServices)
+                'Выбран режим доступа к отдельным сервисам. Сохранено: ${routingPreferences.selectedCatalogServiceIds.length}.',
+              'Остальной трафик идёт напрямую. Режим не защищает всё устройство.',
+              if (selectedRouteMode == RouteMode.selectiveServices)
+                'Шлюз сервиса может видеть IP-адрес, домен, время и объём соединения, но не содержимое корректного HTTPS.',
+              if (onEditCatalogServices == null)
+                'Режим сейчас недоступен. Выбор сохранён; для подключения выберите другой режим.',
+              if (catalogServicesBusy) 'Дождитесь завершения текущего подключения.',
+            ],
+            child: TextButton.icon(
+              onPressed: catalogServicesBusy ? null : onEditCatalogServices,
+              icon: const Icon(Icons.checklist_rounded),
+              label: const Text('Выбрать сервисы и режим'),
+            ),
+          ),
+        if (loadCatalogPreview != null)
+          _RoutingCatalogPreviewCard(
+            key: ValueKey(catalogPreviewIdentity),
+            load: loadCatalogPreview!,
+            routeMode: selectedRouteMode,
+          ),
+        if (loadCatalogPreview == null && selectedRouteMode == RouteMode.allExceptRu &&
             directPresets.isNotEmpty)
           _SectionCard(
             title: 'Напрямую без POKROV',
@@ -145,6 +181,7 @@ class _RulesSection extends StatelessWidget {
             selectedRouteMode: selectedRouteMode,
             selectedAppIds: selectedAppIds,
             onApply: onRuAppPresetApplied,
+            loadVerifiedCatalogApps: loadVerifiedCatalogApps,
           ),
         if (selectedAppsActive || excludedAppsActive || selectedAppsStaged)
           _SectionCard(
@@ -238,10 +275,15 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
   }
 
   void _stage(PokrovRoutingPreferences next) {
+    // Service selection is edited outside this advanced-settings draft.
+    // A modal opened earlier must not replace that newer selection on save.
+    final merged = next.copyWith(
+      selectedCatalogServiceIds: widget.preferences.selectedCatalogServiceIds,
+    );
     setState(() {
-      _draftPreferences = next;
+      _draftPreferences = merged;
     });
-    widget.onChanged(next);
+    widget.onChanged(merged);
   }
 
   void _apply() {
@@ -271,7 +313,8 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
             ? 1
             : 0) +
         (_draftPreferences.externalSmartDnsEnabled ? 1 : 0) +
-        (_draftPreferences.allowLan ? 0 : 1) +
+        (_draftPreferences.allowLan ? 1 : 0) +
+        _draftPreferences.lanSubnets.length +
         (widget.hostPlatform == HostPlatform.windows &&
                 _draftPreferences.tunStack != PokrovTunStack.system
             ? 1
@@ -312,6 +355,10 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                     _DnsAndLanCard(
                       preferences: _draftPreferences,
                       onChanged: _stage,
+                      onLanSubnetsChanged: (subnets) => _stage(_draftPreferences.copyWith(
+                        lanSubnets: subnets,
+                        allowLan: _draftPreferences.allowLan && subnets.isNotEmpty,
+                      )),
                     ),
                     _PurposeRoutingCard(
                       preferences: _draftPreferences,
@@ -382,6 +429,8 @@ bool _sameRoutingPreferences(
     left.customDnsUrl == right.customDnsUrl &&
     left.externalSmartDnsEnabled == right.externalSmartDnsEnabled &&
     left.allowLan == right.allowLan &&
+    listEquals(left.lanSubnets, right.lanSubnets) &&
+    setEquals(left.selectedCatalogServiceIds, right.selectedCatalogServiceIds) &&
     listEquals(left.trustedWifiNames, right.trustedWifiNames) &&
     left.pauseOnTrustedWifi == right.pauseOnTrustedWifi &&
     left.windowsConnectionMode == right.windowsConnectionMode &&
@@ -396,7 +445,8 @@ List<String> _routingPreferenceChangeLabels(
           applied.dnsTransport != draft.dnsTransport ||
           applied.customDnsUrl != draft.customDnsUrl ||
           applied.externalSmartDnsEnabled != draft.externalSmartDnsEnabled ||
-          applied.allowLan != draft.allowLan)
+          applied.allowLan != draft.allowLan ||
+          !listEquals(applied.lanSubnets, draft.lanSubnets))
         'DNS и локальная сеть',
       if (!setEquals(applied.purposeRoutes, draft.purposeRoutes))
         'готовые маршруты',
@@ -461,6 +511,7 @@ class _RouteModeSegment extends StatelessWidget {
     final icon = switch (mode) {
       RouteMode.allExceptRu => Icons.public_rounded,
       RouteMode.fullTunnel => Icons.shield_outlined,
+      RouteMode.selectiveServices => Icons.checklist_rounded,
       RouteMode.selectedApps => Icons.apps_rounded,
       RouteMode.excludedApps => Icons.mobile_off_rounded,
     };
@@ -549,38 +600,74 @@ class _RuAppsPresetCard extends StatefulWidget {
     required this.selectedRouteMode,
     required this.selectedAppIds,
     required this.onApply,
+    this.loadVerifiedCatalogApps,
   });
 
   final RouteMode selectedRouteMode;
   final List<String> selectedAppIds;
-  final void Function(RouteMode mode, List<String> appIds) onApply;
+  final void Function(RouteMode mode, List<String> appIds, bool verifiedCatalog) onApply;
+  final Future<Set<String>> Function(bool fresh)? loadVerifiedCatalogApps;
 
   @override
   State<_RuAppsPresetCard> createState() => _RuAppsPresetCardState();
 }
 
-class _RuAppsPresetCardState extends State<_RuAppsPresetCard> {
-  late Future<List<_SelectedAppCandidate>> _installedFuture;
+class _RuAppPresetCandidates {
+  const _RuAppPresetCandidates(this.apps, this.verifiedCatalog);
+  final List<_SelectedAppCandidate> apps;
+  final bool verifiedCatalog;
+}
+
+class _RuAppsPresetCardState extends State<_RuAppsPresetCard> with WidgetsBindingObserver {
+  late Future<_RuAppPresetCandidates> _installedFuture;
+
+  Future<_RuAppPresetCandidates> _loadCandidates({bool fresh = false}) async {
+    final installed = await _loadAndroidInstalledAppCandidates();
+    final verified = await widget.loadVerifiedCatalogApps?.call(fresh);
+    final ids = verified ?? pokrovInstalledRuAppIds(
+      installed.map((candidate) => candidate.identifier)).toSet();
+    return _RuAppPresetCandidates(installed.where((candidate) => ids.contains(candidate.identifier)).toList(),
+      verified != null);
+  }
 
   @override
   void initState() {
     super.initState();
-    _installedFuture = _loadAndroidInstalledAppCandidates();
+    WidgetsBinding.instance.addObserver(this);
+    _installedFuture = _loadCandidates();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RuAppsPresetCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if ((oldWidget.loadVerifiedCatalogApps == null) != (widget.loadVerifiedCatalogApps == null)) {
+      _installedFuture = _loadCandidates();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refresh();
   }
 
   void _refresh() {
     setState(() {
-      _installedFuture = _loadAndroidInstalledAppCandidates();
+      _installedFuture = _loadCandidates(fresh: true);
     });
   }
 
   Future<void> _previewAndApply(
     RouteMode mode,
     List<_SelectedAppCandidate> candidates,
+    bool verifiedCatalog,
   ) async {
-    final appIds = pokrovInstalledRuAppIds(
-      candidates.map((candidate) => candidate.identifier),
-    );
+    final appIds = candidates.map((candidate) => candidate.identifier).toList()..sort();
     if (appIds.isEmpty) {
       showPokrovSnack(
         context,
@@ -637,14 +724,14 @@ class _RuAppsPresetCardState extends State<_RuAppsPresetCard> {
                     separatorBuilder: (_, __) => Divider(color: p.line),
                     itemBuilder: (context, index) {
                       final id = appIds[index];
-                      final entry = pokrovRuAppCatalogEntry(id)!;
+                      final candidate = candidates.firstWhere((value) => value.identifier == id);
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.apps_rounded),
-                        title: Text(entry.label),
+                        title: Text(candidate.label),
                         subtitle: Text(
-                          pokrovRuAppCategoryLabel(entry.category),
+                          candidate.subtitle,
                         ),
                         trailing: Icon(
                           direct
@@ -682,7 +769,22 @@ class _RuAppsPresetCardState extends State<_RuAppsPresetCard> {
       },
     );
     if (confirmed == true && mounted) {
-      widget.onApply(mode, appIds);
+      try {
+        final refreshed = await _loadCandidates(fresh: true);
+        if (!mounted) return;
+        if (refreshed.verifiedCatalog != verifiedCatalog ||
+            !setEquals(refreshed.apps.map((app) => app.identifier).toSet(), appIds.toSet())) {
+          showPokrovSnack(context, 'Список приложений изменился. Обновите и подтвердите его снова.',
+            tone: PokrovSnackTone.danger);
+          _refresh();
+          return;
+        }
+      } on Object {
+        if (mounted) showPokrovSnack(context, 'Не удалось проверить приложения. Повторите попытку.',
+          tone: PokrovSnackTone.danger);
+        return;
+      }
+      widget.onApply(mode, appIds, verifiedCatalog);
     }
   }
 
@@ -694,20 +796,23 @@ class _RuAppsPresetCardState extends State<_RuAppsPresetCard> {
       lines: const [
         'POKROV найдёт известные приложения на устройстве. Список остаётся локально.'
       ],
-      child: FutureBuilder<List<_SelectedAppCandidate>>(
+      child: FutureBuilder<_RuAppPresetCandidates>(
         future: _installedFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const _MotionSkeletonList(rows: 2);
           }
-          final candidates = (snapshot.data ?? const <_SelectedAppCandidate>[])
-              .where((candidate) => candidate.ruCatalogEntry != null)
-              .toList(growable: false);
+          if (snapshot.hasError) {
+            return _SettingsRow(icon: Icons.refresh_rounded,
+              title: 'Не удалось проверить приложения', value: 'Повторить', onTap: _refresh);
+          }
+          final candidates = snapshot.data?.apps ?? const <_SelectedAppCandidate>[];
           if (candidates.isEmpty) {
             return _SettingsRow(
               key: const ValueKey('rules-ru-app-presets-empty'),
               icon: Icons.refresh_rounded,
-              title: 'Не нашли RU-приложения',
+              title: snapshot.data?.verifiedCatalog == true
+                  ? 'Нет подтверждённых приложений' : 'Не нашли RU-приложения',
               value: 'Обновить',
               onTap: _refresh,
             );
@@ -724,13 +829,17 @@ class _RuAppsPresetCardState extends State<_RuAppsPresetCard> {
                       );
           return Column(
             children: [
+              if (snapshot.data?.verifiedCatalog == true)
+                const Padding(padding: EdgeInsets.only(bottom: 8),
+                  child: Text('Подписи найденных приложений совпали с каталогом. Маршрут изменится после подтверждения.')),
               _SettingsRow(
                 key: const ValueKey('rules-ru-apps-direct-preset'),
                 icon: Icons.public_off_outlined,
                 title: 'RU напрямую',
                 value: directSelected ? 'Включено' : '${candidates.length}',
                 onTap: () => unawaited(
-                  _previewAndApply(RouteMode.excludedApps, candidates),
+                  _previewAndApply(RouteMode.excludedApps, candidates,
+                    snapshot.data?.verifiedCatalog == true),
                 ),
               ),
               _SettingsRow(
@@ -739,7 +848,8 @@ class _RuAppsPresetCardState extends State<_RuAppsPresetCard> {
                 title: 'Только RU через VPN',
                 value: vpnSelected ? 'Включено' : '${candidates.length}',
                 onTap: () => unawaited(
-                  _previewAndApply(RouteMode.selectedApps, candidates),
+                  _previewAndApply(RouteMode.selectedApps, candidates,
+                    snapshot.data?.verifiedCatalog == true),
                 ),
               ),
             ],

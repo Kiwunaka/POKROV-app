@@ -2,6 +2,7 @@ add_library(pokrov_service_common STATIC
   "service_protocol.cpp"
   "service_profile_identity.cpp"
   "service_security.cpp"
+  "service_boot_clock.cpp"
   "windows_crash_profile.cpp"
 )
 apply_standard_settings(pokrov_service_common)
@@ -14,9 +15,11 @@ target_link_libraries(pokrov_service_common PUBLIC
 )
 
 add_library(pokrov_service_runtime STATIC
+  "service_core_identity.cpp"
   "service_egress_probe.cpp"
   "service_events.cpp"
   "service_network_state.cpp"
+  "service_network_observer.cpp"
   "service_recovery.cpp"
   "service_runtime.cpp"
 )
@@ -30,6 +33,7 @@ target_link_libraries(pokrov_service_runtime PUBLIC
   "iphlpapi.lib"
   "shell32.lib"
   "winhttp.lib"
+  "wlanapi.lib"
   "ws2_32.lib"
 )
 

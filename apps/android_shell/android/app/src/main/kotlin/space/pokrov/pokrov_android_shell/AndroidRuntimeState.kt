@@ -91,8 +91,15 @@ internal object AndroidRuntimeState {
     private var vpnValidated: Boolean? = null
     private var coreEgressValidated: Boolean? = null
     private var stagedProfileDigest: String? = null
+    private var stagedRequiresBoundConnect: Boolean = false
     private var activeProfileDigest: String? = null
     private var coreEgressValidationRequired: Boolean = true
+    private var routingCatalogWindowVersion: Int = 0
+    private var smartAccessLeaseVersion: Int = 0
+    private var smartAccessRuntimeControlVersion: Int = 0
+    private var routingCatalogControlVersion: Int = 0
+    private var transportCapabilitiesJson: String? = null
+    private var coreModuleSha256: String? = null
     private var lastFailureKind: String? = null
     private var lastStopReason: String? = null
     private var awgSafeDiagnosticCode: String? = null
@@ -126,6 +133,7 @@ internal object AndroidRuntimeState {
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
             stagedProfileDigest = null
+            stagedRequiresBoundConnect = false
             activeProfileDigest = null
             coreEgressValidated = null
             runningSince = null
@@ -165,6 +173,12 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun initialize(context: Context): Boolean {
+        routingCatalogWindowVersion = 0
+        smartAccessLeaseVersion = 0
+        smartAccessRuntimeControlVersion = 0
+        routingCatalogControlVersion = 0
+        transportCapabilitiesJson = null
+        coreModuleSha256 = null
         val resolved = resolveEnvironment(context) ?: return false
         return try {
             Seq.setContext(context.applicationContext)
@@ -183,6 +197,14 @@ internal object AndroidRuntimeState {
                     setLogMaxLines(3000)
                 },
             )
+            // The retained AAR has no catalog getter. Read the loaded binding
+            // without advertising a source-only capability on that artifact.
+            routingCatalogWindowVersion = readRoutingCatalogWindowVersion()
+            smartAccessLeaseVersion = readSmartAccessLeaseVersion()
+            routingCatalogControlVersion = readRoutingCatalogControlVersion()
+            smartAccessRuntimeControlVersion = readSmartAccessRuntimeControlVersion()
+            transportCapabilitiesJson = readTransportCapabilities()
+            coreModuleSha256 = readCoreModuleSha256()
             phase = if (phase == AndroidRuntimePhase.RUNNING) {
                 AndroidRuntimePhase.RUNNING
             } else {
@@ -202,13 +224,99 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
+    fun matchesCoreModuleSha256(expected: String): Boolean =
+        expected.length == 64 && expected.all { it in '0'..'9' || it in 'a'..'f' } &&
+            readCoreModuleSha256() == expected
+
+    private fun readCoreModuleSha256(): String? = try {
+        val value = Class.forName("space.pokrov.core.mobile.Mobile")
+            .getMethod("coreModuleSHA256").invoke(null)
+        (value as? String)?.takeIf { digest ->
+            digest.length == 64 && digest.all { it in '0'..'9' || it in 'a'..'f' }
+        }
+    } catch (_: ReflectiveOperationException) {
+        null
+    } catch (_: LinkageError) {
+        null
+    }
+
+    private fun readTransportCapabilities(): String? = try {
+        val value = Libbox::class.java.getMethod("transportCapabilities").invoke(null)
+        // The shared Dart decoder admits the closed feature schema. Keep the
+        // bridge bounded and ASCII-only; never log the native return value.
+        (value as? String)?.takeIf { it.length in 1..4096 && it.all { char -> char.code in 32..126 } }
+    } catch (_: ReflectiveOperationException) {
+        null
+    } catch (_: LinkageError) {
+        null
+    }
+
+    private fun readSmartAccessRuntimeControlVersion(): Int = try {
+        val version = Libbox::class.java.getMethod("smartAccessRuntimeControlVersion").invoke(null)
+        space.pokrov.core.libbox.CommandServer::class.java.getMethod("configureSmartAccessRuntimeControl", String::class.java, String::class.java)
+        space.pokrov.core.libbox.CommandServer::class.java.getMethod("configureSmartAccessRenewal", String::class.java, String::class.java)
+        Libbox::class.java.getMethod("readSmartAccessRestrictions")
+        space.pokrov.core.libbox.CommandServer::class.java.getMethod("readSmartAccessLeases")
+        Libbox::class.java.getMethod("acknowledgeSmartAccessRestrictions", String::class.java)
+        if (version == 1 && routingCatalogControlVersion >= 2) 1 else 0
+    } catch (_: ReflectiveOperationException) {
+        0
+    } catch (_: LinkageError) {
+        0
+    }
+
+    private fun readRoutingCatalogControlVersion(): Int = try {
+        val version = Libbox::class.java.getMethod("routingCatalogControlVersion").invoke(null)
+        space.pokrov.core.libbox.CommandServer::class.java.getMethod("revokeRoutingCatalog")
+        if (version == 2 || version == 3 || version == 4) {
+            space.pokrov.core.libbox.CommandServer::class.java.getMethod("revokeSmartAccessPolicy", java.lang.Boolean.TYPE)
+        }
+        if (version == 3 || version == 4) {
+            space.pokrov.core.libbox.CommandServer::class.java.getMethod("revokeRoutingCatalogService", String::class.java)
+        }
+        if (version == 4) {
+            space.pokrov.core.libbox.CommandServer::class.java.getMethod("renewSmartAccessLease",
+                String::class.java, String::class.java, String::class.java, String::class.java, String::class.java)
+        }
+        if (version is Int && version in 1..4 && routingCatalogWindowVersion == 1 &&
+            (version == 1 || smartAccessLeaseVersion == 1)) version else 0
+    } catch (_: ReflectiveOperationException) {
+        0
+    } catch (_: LinkageError) {
+        0
+    }
+
+    private fun readSmartAccessLeaseVersion(): Int = try {
+        val version = Libbox::class.java.getMethod("smartAccessLeaseVersion").invoke(null)
+        space.pokrov.core.libbox.CommandServer::class.java.getMethod(
+            "revokeSmartAccessLease", String::class.java, java.lang.Boolean.TYPE,
+        )
+        if (version is Int && version == 1 && routingCatalogWindowVersion == 1) 1 else 0
+    } catch (_: ReflectiveOperationException) {
+        0
+    } catch (_: LinkageError) {
+        0
+    }
+
+    private fun readRoutingCatalogWindowVersion(): Int = try {
+        val version = Libbox::class.java.getMethod("routingCatalogWindowVersion").invoke(null)
+        if (version is Int && version == 1) 1 else 0
+    } catch (_: ReflectiveOperationException) {
+        0
+    } catch (_: LinkageError) {
+        0
+    }
+
+    @Synchronized
     fun markProfileStaged(
         path: String,
         preserveConnectionPending: Boolean = false,
         profileDigest: String? = null,
+        requiresBoundConnect: Boolean = false,
     ) {
         stagedConfigPath = path
         stagedProfileDigest = profileDigest?.takeIf(::isRuntimeProfileDigest)
+        stagedRequiresBoundConnect = requiresBoundConnect
         if (activeProfileDigest != stagedProfileDigest) coreEgressValidated = null
         phase = AndroidRuntimePhase.CONFIG_STAGED
         if (!preserveConnectionPending) {
@@ -231,9 +339,11 @@ internal object AndroidRuntimeState {
      * staged profile for Quick Settings to restart.
      */
     @Synchronized
-    fun invalidateStagedProfile() {
+    fun invalidateStagedProfile(expectedDigest: String? = null) {
+        if (expectedDigest != null && stagedProfileDigest != expectedDigest) return
         stagedConfigPath = null
         stagedProfileDigest = null
+        stagedRequiresBoundConnect = false
         connectionPending = false
         if (phase != AndroidRuntimePhase.RUNNING) {
             phase = if (environment != null) {
@@ -367,6 +477,7 @@ internal object AndroidRuntimeState {
         // The profile must not remain staged for Quick Settings reuse.
         stagedConfigPath = null
         stagedProfileDigest = null
+        stagedRequiresBoundConnect = false
         phase = when {
             environment != null -> AndroidRuntimePhase.INITIALIZED
             else -> AndroidRuntimePhase.ARTIFACT_MISSING
@@ -584,6 +695,10 @@ internal object AndroidRuntimeState {
     fun stagedConfigPath(): String? = stagedConfigPath
 
     @Synchronized
+    fun isStagedProfileCurrent(profileDigest: String?): Boolean =
+        profileDigest != null && stagedConfigPath != null && stagedProfileDigest == profileDigest
+
+    @Synchronized
     fun liveStats(): Map<String, Any?> {
         val trafficAvailable = phase == AndroidRuntimePhase.RUNNING &&
             tunnelTrafficState != AndroidTunnelTrafficSampleState.UNAVAILABLE
@@ -604,10 +719,29 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
+    fun snapshotForBoundConnect(expectedCore: String, expectedProfile: String,
+        startCompleted: Boolean): Map<String, Any?>? {
+        if (coreModuleSha256 != expectedCore || (!startCompleted && stagedProfileDigest != expectedProfile)) return null
+        val value = snapshot()
+        if (phase != AndroidRuntimePhase.RUNNING) return value
+        if (!startCompleted) {
+            // TUN publication can precede Core Start returning. Do not let that
+            // intermediate state, or an older running instance, finish this wait.
+            val diagnostics = value.getValue("hostDiagnostics") as Map<*, *>
+            return value + mapOf("connection_pending" to true, "effectiveProfileDigest" to null,
+                "hostDiagnostics" to (diagnostics + mapOf("connection_pending" to true)))
+        }
+        if (activeProfileDigest != expectedProfile) return null
+        // This is the identity of a running owned instance, not the legacy
+        // egress oracle. Health fields keep their actual, possibly unknown state.
+        return value + mapOf("effectiveProfileDigest" to activeProfileDigest)
+    }
+
+    @Synchronized
     fun snapshot(): Map<String, Any?> {
         val resolved = environment
         val canInitialize = resolved != null
-        val canConnect = resolved != null && stagedConfigPath != null
+        val canConnect = resolved != null && stagedConfigPath != null && !stagedRequiresBoundConnect
         val hostHealth = currentHostHealth()
         val dnsState = currentDnsState()
         val uplinkState = currentUplinkState()
@@ -640,6 +774,14 @@ internal object AndroidRuntimeState {
         )
         return mapOf(
             "phase" to phase.wireValue,
+            "transportProofPending" to AndroidConnectRequestOwner.requiresTransportProof(),
+            "transportLeaseActive" to AndroidConnectRequestOwner.hasPromotedTransportLease(),
+            "routingCatalogWindowVersion" to routingCatalogWindowVersion,
+            "smartAccessLeaseVersion" to smartAccessLeaseVersion,
+            "smartAccessRuntimeControlVersion" to smartAccessRuntimeControlVersion,
+            "routingCatalogControlVersion" to routingCatalogControlVersion,
+            "transportCapabilitiesJson" to transportCapabilitiesJson,
+            "coreModuleSha256" to coreModuleSha256,
             "artifactDirectory" to resolved?.artifactDirectory,
             "coreBinaryPath" to resolved?.coreBinaryPath,
             "helperBinaryPath" to null,

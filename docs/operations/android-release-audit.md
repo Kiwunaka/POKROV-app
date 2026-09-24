@@ -55,6 +55,33 @@ A single-architecture local build does not satisfy that complete release set.
 
 ## Current Truth
 
+2026-09-22 source addition (NOT_VERIFIED): the optional gomobile module identity
+getter now feeds `coreModuleSha256` after setup. The runtime-boundary owner
+defines loader-address, backing inode and ELF-offset binding for extracted and
+direct APK loading. Retained AAR/APK evidence does not cover this addition.
+Generated binding/retention, all target ABIs, extracted/direct/split APK behavior,
+loader/proc permissions, exact module digest parity and process replacement
+must be checked after the functionality stage. No native/hash/build/device
+operation ran for this source addition; public release identity is unchanged.
+
+The same source queue now adds a dedicated identity-bound connect method with
+expected Core/profile SHA values, exact request reply and cancellation. Before
+acceptance, cover old host rejection, malformed/conflicting or dropped identity,
+both permission resumptions, cancellation/replacement races, profile/Core
+mismatch before start, and no TUN on refusal. Ordinary Connect is not wired to
+the selector method; executor/policy/lease/proof integration remains open. No
+new tests or native/hash/random/build operations ran during implementation.
+
+The source queue now carries the original boot-relative connect deadline through
+the method request, permission token and service session. Defer verification of
+boot mismatch/elapsed regression, expired queued START, duplicate request without
+budget renewal, consent delay, sleep/resume and cancellation during clock reads.
+Exercise the 100 ms watchdog scheduling/native-interruption behavior and prove
+an old timeout cannot stop a replacement or clear a newer staged profile. No
+healthy-flow handoff exists yet: a tunnel started through this entry point still
+expires at its attempt deadline. These are NOT_VERIFIED implementation changes;
+no device, clock, native, random, hash, build or test operation ran.
+
 [Connectivity telemetry preparation](evidence/2026-09-10-r12-connectivity-report/README.md)
 binds source `64fe01d` / merged `bf3d1c4` to four audited APKs; ARM64
 `c0fca985…a7e52`, 101229131 bytes. Exact PR/main CI, 110 shell tests,

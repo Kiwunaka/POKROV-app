@@ -64,6 +64,31 @@ The target user journey is:
 4. receive a real working subscription
 5. tap `Connect`
 
+During Android, Windows and conditional Linux beta primary connection preparation and native start, the main action
+changes to `Отменить`. Cancellation keeps
+the action busy until the old attempt settles and the host state is read. Pending
+or running host state is not labelled stopped; unconfirmed cancellation shows a
+warning. Profile requests, Smart Connect probes and WARP-status receive the
+cancellation signal. A shared catalog read continues for another screen that
+still needs it; the cancelled connection stops waiting for that result.
+On Windows, cancellation may arrive after the service has completed connect;
+the client reads the actual state and keeps a warning if the tunnel is running,
+the host is busy or its state is unavailable. The existing Disconnect action
+remains available after the running state is observed.
+Linux sends cancellation on the same Unix socket as its connect request, waits
+for that request to settle and reads daemon state. Pending network restoration
+remains unconfirmed. This does not expand Linux availability or release support.
+Repeated connection and the runtime cycle of «Проверить и восстановить» use the
+same cancellation owner. The protection sheet offers «Отменить восстановление»
+while its own cycle is active and waits for settlement/readback. It then shows
+«Восстановление прервано», without claiming the tunnel stopped or protection was
+restored. Already-started disconnect/cleanup finishes; cancellation prevents the
+remaining profile preparation/connect. A fresh cycle cannot start while that
+work is settling. Supplemental checks after a normally completed repair keep
+their separate read-only behavior and do not expose runtime cancellation.
+This local POST12 source change is `NOT_VERIFIED`. See
+the [runtime owner](../architecture/bootstrap-workflow.md#shell-operation-ownership-local-post12-implementation).
+
 Telegram is optional for first launch, trial activation, and normal daily use.
 It remains a recovery, reward, community, and fallback-support surface rather than the primary login wall.
 Browser continuation currently starts from app handoff, Telegram, and the evidence-backed email continuation lane where delivery readiness is green.
@@ -94,6 +119,69 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
 - the current client direction is `pokrov-clear`, approved on `2026-06-13`,
   and keeps the shell on `Protection / Locations / Rules / Profile` while
   public acquisition stays platform-owned
+
+## Signed routing catalog preview (source work, NOT_VERIFIED)
+
+When that feature is enabled on Android/Windows, Rules also offers “Выбрать
+сервисы и режим”. The user explicitly selects supported services and sees that
+remaining traffic is Direct, not device-wide protection. Selected fallback or
+block decisions and known overlap with other services are shown before save.
+The chooser and saved-mode card disclose that a selected gateway can observe
+IP address, domain, timing and volume, while valid HTTPS content stays encrypted.
+Unavailable saved services remain visible for removal. A fresh catalog check
+precedes saving; expiry, empty selection, conflict or changed inputs prevent it.
+Save affects the next connection and does not reconnect a healthy current one.
+While a tunnel is running and local profile settings are dirty, Home retains a
+visible notice beside the mode/location controls that the selected settings
+apply on the next connection. The saved choice is not current routing proof.
+Actual connect still requires the native catalog capability. A restored
+Selective choice survives feature disable and directs the user to Rules instead
+of silently connecting in another mode. This is source implementation only;
+public seeds, rollout and provider support claims remain unchanged.
+
+With Smart Access enabled, services referencing provider capabilities also expose
+“Подтверждения Smart Access”. The sheet reads the signed provider policy through
+the existing authenticated adapter. The policy retrieval time is separate from
+each declared observation time and expiry. Each record retains its feature,
+platform, origin, IP family and bounded domain-rule count; one web request never
+implies login, streaming or gaming support. Disabled use, missing/expired provider
+permission, source-only assertions and another platform are explained. Provider
+and proof identifiers/digests remain in secondary technical details.
+
+These are publisher assertions, not a check performed by opening the sheet or
+evidence that the current gateway serves the function. The current automatic
+selection implementation remains `web_request/current-origin`; other scopes are
+visibly unimplemented. A missing or expired policy shows unknown metadata and
+does not prevent catalog-based VPN/block selection. Refresh, close and save
+invalidate earlier metadata reads; policy, permission, evidence and catalog time
+boundaries update the visible state without starting probes or an automatic fetch.
+The UI stores no policy or evidence payload on disk and issues no lease.
+The evidence details distinguish DNS-service transport, DNS answer, certificate
+validation and the named function's request. A skipped check or operator statement
+keeps its own label; neither is shown as a passed check performed on this device.
+
+When the existing signed-catalog feature is enabled, Rules replaces the static
+RU service preset summary with a prospective catalog view for the selected
+mode. It uses the same domain compiler as profile preparation, lists eligible
+Direct/VPN/block decisions and unavailable services, and shows native/platform
+limitations before connection. Manual rules and OS app scope still take
+precedence. The preview does not apply settings, start a tunnel, attest the
+effective running policy or claim service/provider health.
+Its summary counts compiled domain rules, including gateway rules, and shows
+mixed gateway/VPN/block decisions per service instead of assigning the first
+domain's route to the whole service.
+
+The view shows validity, retained-cache use and secondary revision/signature
+check time. It removes expired decisions, refreshes on foreground resume and
+explicit request, and discards responses for an obsolete view or mode/access
+state. A failed refresh shows unavailable rules, without retaining a stale
+success or restoring the static RU summary. With the feature disabled this
+view makes no catalog requests and the existing screen remains in use. The RU
+app preset likewise uses the static list only with the catalog disabled; when
+enabled, unavailable catalog identity proof cannot offer an unverified Direct
+preset. Changing the flag refreshes the visible candidates.
+Source implementation is not UI/device acceptance; checks remain deferred to
+the owner's separate verification stage.
 
 ## Release Gate Reality
 
@@ -546,7 +634,9 @@ Support contract rules:
   after 14 days and contains only platform, route/connection class, app/build
   and a short diagnostic hash prefix. `PSD1-*` remains the stable compact form
   for legacy one-byte build numbers; `PSD2-*` preserves the full release build
-  number when it is larger than 255. Copying either form uploads no file and it
+  number when it is larger than 255. Selective source adds `PSD3-*` with an
+  explicit format marker and fifth route value (`NOT_VERIFIED`). Copying any
+  form uploads no file and it
   is not account, device or installation identity
 - Android and Windows may manually export only the encrypted
   `.pokrov-support` envelope through the system document/save picker. Cancelling
@@ -741,7 +831,12 @@ staged. They include:
   POKROV policy is allowlist-only and non-recursive: outside names are refused,
   so it is not a general DNS service. Invalid, incomplete, downgraded, or future
   persisted state disables the lab mode;
-- LAN direct access;
+- LAN access to explicitly entered RFC1918 / IPv6 ULA subnets (up to 16), disabled
+  by default. The editor normalizes CIDRs and refuses public or whole-Internet
+  ranges; an empty list disables access. Old blanket LAN permission requires
+  a fresh explicit selection. The range applies on any network using those
+  addresses; it is not an interface or trusted-Wi-Fi identity. Intercepted local
+  traffic outside the enabled list is blocked before ordinary manual rules;
 - trusted Wi-Fi names with optional disconnect on an exact current-SSID match.
 
 Changing a route, DNS, or LAN preference marks the managed profile dirty and

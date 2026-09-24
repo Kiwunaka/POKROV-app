@@ -1,6 +1,7 @@
 package space.pokrov.pokrov_android_shell
 
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ThreadFactory
@@ -25,6 +26,8 @@ internal class AndroidLifecycleTaskScope(
     executorFactory: ((ThreadFactory) -> ExecutorService)? = null,
 ) : AutoCloseable {
     private val active = AtomicBoolean(true)
+    private val cancellationFinished = CountDownLatch(1)
+    private val cancellationFailed = AtomicBoolean(false)
     private val cancellationLock = Any()
     private val cancellationActions = mutableListOf<() -> Unit>()
     private val threadSequence = AtomicLong(0L)
@@ -72,7 +75,7 @@ internal class AndroidLifecycleTaskScope(
             }
         }
         if (invokeNow) {
-            runCatching(action)
+            runCatching(action).onFailure { cancellationFailed.set(true) }
         }
     }
 
@@ -80,11 +83,29 @@ internal class AndroidLifecycleTaskScope(
         if (!active.compareAndSet(true, false)) {
             return
         }
-        executor.shutdownNow()
-        val actions = synchronized(cancellationLock) {
-            cancellationActions.asReversed().toList().also { cancellationActions.clear() }
+        try {
+            executor.shutdownNow()
+            val actions = synchronized(cancellationLock) {
+                cancellationActions.asReversed().toList().also { cancellationActions.clear() }
+            }
+            actions.forEach { action -> runCatching(action).onFailure { cancellationFailed.set(true) } }
+        } finally {
+            cancellationFinished.countDown()
         }
-        actions.forEach { action -> runCatching(action) }
+    }
+
+    // Called from the separate serial runtime executor, never this scope's pool.
+    fun awaitClosed(timeoutMs: Long): Boolean {
+        if (active.get()) return false
+        val expires = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+        return try {
+            cancellationFinished.await(timeoutMs, TimeUnit.MILLISECONDS) &&
+                executor.awaitTermination((expires - System.nanoTime()).coerceAtLeast(0L), TimeUnit.NANOSECONDS) &&
+                !cancellationFailed.get()
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            false
+        }
     }
 
     private companion object {

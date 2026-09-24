@@ -2,6 +2,48 @@ import Foundation
 import NetworkExtension
 
 final class PacketTunnelSeedController {
+  // Read-only lookup: this path never creates/saves a manager or starts a VPN.
+  func readTransportCapabilities(bundleIdentifier: String, completion: @escaping (String?) -> Void) {
+    var finished = false
+    func finish(_ value: String?) {
+      DispatchQueue.main.async {
+        guard !finished else { return }
+        finished = true
+        completion(value)
+      }
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 3) { finish(nil) }
+    NETunnelProviderManager.loadAllFromPreferences { managers, error in
+      DispatchQueue.main.async {
+        guard !finished else { return }
+        let matching = (managers ?? []).filter {
+          ($0.protocolConfiguration as? NETunnelProviderProtocol)?.providerBundleIdentifier == bundleIdentifier
+        }
+        guard error == nil, matching.count == 1,
+              let session = matching[0].connection as? NETunnelProviderSession,
+              session.status == .connected else {
+          finish(nil)
+          return
+        }
+        do {
+          try session.sendProviderMessage(PokrovCoreTransportInventory.providerMessage) { data in
+            DispatchQueue.main.async {
+              guard !finished, session.status == .connected,
+                    let data, data.count <= 4096,
+                    let value = String(data: data, encoding: .utf8) else {
+                finish(nil)
+                return
+              }
+              finish(PokrovCoreTransportInventory.bounded(value))
+            }
+          }
+        } catch {
+          finish(nil)
+        }
+      }
+    }
+  }
+
   func connect(
     stagedConfigPath: String,
     displayName: String,

@@ -25,6 +25,11 @@ constexpr wchar_t kWindowsRunKey[] =
 constexpr wchar_t kPokrovRunValue[] = L"POKROV";
 constexpr wchar_t kCloseToTrayValue[] = L"CloseToTray";
 
+bool IsConnectRequestId(const std::string& value) {
+  return value.size() == 32 &&
+      value.find_first_not_of("0123456789abcdef") == std::string::npos;
+}
+
 std::wstring CurrentExecutablePath() {
   std::wstring path(32768, L'\0');
   const DWORD length = ::GetModuleFileNameW(
@@ -178,6 +183,32 @@ flutter::EncodableValue RuntimeSnapshotValue(
   const bool current_proof =
       snapshot.core_egress_validated && uplink.value_or(false);
   flutter::EncodableMap values;
+  if (snapshot.compatible && snapshot.transport_proof_state_available) {
+    values[flutter::EncodableValue("transportProofPending")] =
+        flutter::EncodableValue(snapshot.transport_proof_pending);
+  }
+  if (snapshot.compatible && snapshot.transport_lease_state_available) {
+    values[flutter::EncodableValue("transportLeaseActive")] =
+        flutter::EncodableValue(snapshot.transport_lease_active);
+  }
+  values[flutter::EncodableValue("routingCatalogWindowVersion")] =
+      flutter::EncodableValue(snapshot.compatible
+          ? snapshot.routing_catalog_window_version : 0);
+  values[flutter::EncodableValue("transportCapabilitiesJson")] =
+      snapshot.compatible && !snapshot.transport_capabilities_json.empty()
+          ? flutter::EncodableValue(snapshot.transport_capabilities_json)
+          : flutter::EncodableValue();
+  values[flutter::EncodableValue("coreModuleSha256")] =
+      snapshot.compatible && !snapshot.core_module_sha256.empty()
+          ? flutter::EncodableValue(snapshot.core_module_sha256) : flutter::EncodableValue();
+  values[flutter::EncodableValue("smartAccessLeaseVersion")] =
+      flutter::EncodableValue(snapshot.compatible
+          ? snapshot.smart_access_lease_version : 0);
+  values[flutter::EncodableValue("routingCatalogControlVersion")] =
+      flutter::EncodableValue(snapshot.compatible
+          ? snapshot.routing_catalog_control_version : 0);
+  values[flutter::EncodableValue("smartAccessRuntimeControlVersion")] =
+      flutter::EncodableValue(snapshot.compatible ? snapshot.smart_access_runtime_control_version : 0);
   values[flutter::EncodableValue("phase")] =
       flutter::EncodableValue(DartRuntimePhase(snapshot.phase));
   values[flutter::EncodableValue("supportsLiveConnect")] =
@@ -224,7 +255,7 @@ flutter::EncodableValue RuntimeSnapshotValue(
   values[flutter::EncodableValue("coreEgressValidationRequired")] =
       flutter::EncodableValue(true);
   values[flutter::EncodableValue("connectionPending")] =
-      flutter::EncodableValue(snapshot.phase == "connecting");
+      flutter::EncodableValue(snapshot.phase == "connecting" || snapshot.phase == "busy");
   if (snapshot.failure != "none" &&
       snapshot.failure != "service_unavailable") {
     values[flutter::EncodableValue("lastFailureKind")] =
@@ -250,6 +281,18 @@ const std::string* StringArgument(const flutter::EncodableMap* arguments,
   return iterator == arguments->end()
              ? nullptr
              : std::get_if<std::string>(&iterator->second);
+}
+
+std::optional<std::uint64_t> ElapsedArgument(const flutter::EncodableMap* arguments,
+                                          const char* key) {
+  if (arguments == nullptr) return std::nullopt;
+  const auto field = arguments->find(flutter::EncodableValue(key));
+  if (field == arguments->end()) return std::nullopt;
+  std::int64_t value = -1;
+  if (const auto* number = std::get_if<std::int64_t>(&field->second)) value = *number;
+  else if (const auto* number = std::get_if<std::int32_t>(&field->second)) value = *number;
+  if (value < 0 || value > 9007199254740991LL) return std::nullopt;
+  return static_cast<std::uint64_t>(value);
 }
 
 const bool* BoolArgument(const flutter::EncodableMap* arguments,
@@ -278,8 +321,13 @@ FlutterWindow::~FlutterWindow() {
 }
 
 bool FlutterWindow::QueueRuntime(pokrov::service::Command command, std::string body,
-                                RuntimeTaskRunner::Completion completion) {
+                                RuntimeTaskRunner::Completion completion,
+                                std::string connect_request_id) {
   using pokrov::service::Command;
+  if (pending_connect_bound_ && pending_connect_ &&
+      (pokrov::service::IsConnectCommand(command) || command == Command::kStageProfile ||
+       command == Command::kStageBoundProfile ||
+       command == Command::kInvalidateProfile || command == Command::kInitialize)) return false;
   if (command == Command::kDiagnosticState && !diagnostic_tasks_) {
     const HWND window = GetHandle();
     diagnostic_tasks_ = std::make_unique<RuntimeTaskRunner>([window] {
@@ -291,11 +339,18 @@ bool FlutterWindow::QueueRuntime(pokrov::service::Command command, std::string b
   auto control = std::make_shared<pokrov::service::ServiceCallControl>();
   if (!tasks || !tasks->Submit(command, std::move(body), control,
                                                 std::move(completion))) return false;
-  if (command == Command::kConnect || command == Command::kDisconnect ||
-      command == Command::kStageProfile || command == Command::kInvalidateProfile) {
+  if (pokrov::service::IsConnectCommand(command) || command == Command::kDisconnect ||
+      command == Command::kStageProfile || command == Command::kStageBoundProfile ||
+      command == Command::kInvalidateProfile) {
     if (pending_connect_) pending_connect_->cancel_requested = true;
+    if (!pending_connect_bound_) pending_connect_request_id_.clear();
   }
-  if (command == Command::kConnect) pending_connect_ = std::move(control);
+  if (pokrov::service::IsConnectCommand(command)) {
+    pending_connect_ = std::move(control);
+    pending_connect_request_id_ = std::move(connect_request_id);
+    pending_connect_bound_ = command == Command::kConnectWithIdentity;
+    pending_connect_promoted_ = false;
+  }
   return true;
 }
 
@@ -419,6 +474,267 @@ bool FlutterWindow::OnCreate() {
           snapshot_call(Command::kStatus, "", expected_profile_digest_);
           return;
         }
+        if (call.method_name() == "runtimeEngine.clockSnapshot") {
+          if (!QueueRuntime(Command::kReadBootClock, "", [reply](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible || snapshot.boot_clock_json.empty()) {
+                  reply->Error("runtime_clock_unavailable", "System clock unavailable.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(snapshot.boot_clock_json));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.transportNetworkContext") {
+          if (!QueueRuntime(Command::kReadTransportNetworkContext, "", [reply](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible ||
+                    !pokrov::service::IsTransportNetworkContextRef(snapshot.transport_network_context_ref)) {
+                  reply->Error("network_context_unavailable", "Network context unavailable.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("network_context_ref"), flutter::EncodableValue(snapshot.transport_network_context_ref)},
+                }));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.revokeRoutingCatalog") {
+          const auto* arguments = MapArguments(call);
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          if (arguments == nullptr || arguments->size() != 1 || profile == nullptr ||
+              !pokrov::service::IsProfileDigest(*profile)) {
+            reply->Error("invalid_catalog_revocation", "Invalid catalog revocation.");
+            return;
+          }
+          if (!QueueRuntime(Command::kRevokeRoutingCatalog, *profile,
+              [reply, profile = *profile](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible) {
+                  reply->Error("catalog_revoke_unconfirmed", "Catalog revocation was not confirmed.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("profileDigest"), flutter::EncodableValue(profile)},
+                    {flutter::EncodableValue("revoked"), flutter::EncodableValue(snapshot.routing_catalog_found)}}));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.revokeRoutingCatalogService") {
+          const auto* arguments = MapArguments(call);
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          const auto* service = StringArgument(arguments, "serviceId");
+          if (arguments == nullptr || arguments->size() != 2 || profile == nullptr || service == nullptr ||
+              !pokrov::service::IsRoutingCatalogServiceRevocation(*profile + ":" + *service)) {
+            reply->Error("invalid_catalog_revocation", "Invalid service revocation.");
+            return;
+          }
+          if (!QueueRuntime(Command::kRevokeRoutingCatalogService, *profile + ":" + *service,
+              [reply, profile = *profile, service = *service](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible) {
+                  reply->Error("catalog_revoke_unconfirmed", "Service revocation was not confirmed.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("profileDigest"), flutter::EncodableValue(profile)},
+                    {flutter::EncodableValue("serviceId"), flutter::EncodableValue(service)},
+                    {flutter::EncodableValue("revoked"), flutter::EncodableValue(snapshot.routing_catalog_found)}}));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.readSmartAccessRestrictions") {
+          if (call.arguments() != nullptr && !std::holds_alternative<std::monostate>(*call.arguments())) {
+            reply->Error("smart_access_restriction_read_invalid", "Invalid restriction recovery request.");
+            return;
+          }
+          if (!QueueRuntime(Command::kReadSmartAccessRestrictions, "", [reply](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible || snapshot.smart_access_restriction_journal.empty()) {
+                  reply->Error("smart_access_restriction_read_unconfirmed", "Restriction recovery was not confirmed.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("journalJson"), flutter::EncodableValue(snapshot.smart_access_restriction_journal)}}));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.readSmartAccessLeases") {
+          const auto* arguments = MapArguments(call);
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          if (arguments == nullptr || arguments->size() != 1 || profile == nullptr || !pokrov::service::IsProfileDigest(*profile)) {
+            reply->Error("smart_access_lease_read_invalid", "Invalid lease recovery request.");
+            return;
+          }
+          if (!QueueRuntime(Command::kReadSmartAccessLeases, *profile, [reply, profile = *profile](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible || snapshot.smart_access_lease_ids_json.empty()) {
+                  reply->Error("smart_access_lease_read_unconfirmed", "Lease recovery was not confirmed.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("profileDigest"), flutter::EncodableValue(profile)},
+                    {flutter::EncodableValue("leaseIdsJson"), flutter::EncodableValue(snapshot.smart_access_lease_ids_json)}}));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.acknowledgeSmartAccessRestrictions") {
+          const auto* arguments = MapArguments(call);
+          const auto* digest = StringArgument(arguments, "snapshotSha256");
+          if (arguments == nullptr || arguments->size() != 1 || digest == nullptr || !pokrov::service::IsProfileDigest(*digest)) {
+            reply->Error("smart_access_restriction_ack_invalid", "Invalid restriction acknowledgement.");
+            return;
+          }
+          if (!QueueRuntime(Command::kAcknowledgeSmartAccessRestrictions, *digest, [reply, digest = *digest](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible) {
+                  reply->Error("smart_access_restriction_ack_unconfirmed", "Restriction acknowledgement was not confirmed.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("snapshotSha256"), flutter::EncodableValue(digest)},
+                    {flutter::EncodableValue("acknowledged"), flutter::EncodableValue(snapshot.smart_access_restrictions_acknowledged)}}));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.configureSmartAccessRuntimeControl" ||
+            call.method_name() == "runtimeEngine.configureBoundSmartAccessRuntimeControl" ||
+            call.method_name() == "runtimeEngine.configureSmartAccessRenewal") {
+          const auto* arguments = MapArguments(call);
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          const auto* config = StringArgument(arguments, "configJson");
+          const bool bound = call.method_name() == "runtimeEngine.configureBoundSmartAccessRuntimeControl";
+          const auto* request_id = StringArgument(arguments, "requestId");
+          if (arguments == nullptr || arguments->size() != (bound ? 3 : 2) || profile == nullptr || config == nullptr ||
+              (bound && (request_id == nullptr || !IsConnectRequestId(*request_id))) ||
+              !pokrov::service::IsSmartAccessRuntimeControl(*profile + "|" + *config)) {
+            reply->Error("invalid_smart_access_runtime_control", "Invalid runtime control request.");
+            return;
+          }
+          std::string body = *profile + "|" + *config;
+          std::string id;
+          if (bound) {
+            if (!pending_connect_bound_ || !pending_connect_ || pending_connect_request_id_ != *request_id ||
+                !pending_connect_->completed || pending_connect_->cancel_requested) {
+              reply->Error("connect_owner_changed", "Runtime control owner is unavailable.");
+              return;
+            }
+            std::string target;
+            {
+              std::lock_guard<std::mutex> guard(pending_connect_->cancellation_lock);
+              target = pending_connect_->bound_cancellation_target;
+            }
+            if (!pokrov::service::DecodeCancellationTarget(target)) {
+              reply->Error("connect_owner_changed", "Runtime control owner is unavailable.");
+              return;
+            }
+            id = *request_id;
+            body = target + "|" + body;
+          }
+          const auto command = bound ? Command::kConfigureBoundSmartAccessRuntimeControl
+              : call.method_name() == "runtimeEngine.configureSmartAccessRenewal"
+              ? Command::kConfigureSmartAccessRenewal : Command::kConfigureSmartAccessRuntimeControl;
+          if (!QueueRuntime(command, std::move(body),
+              [this, reply, profile = *profile, id](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible ||
+                    (!id.empty() && (!pending_connect_bound_ || !pending_connect_ ||
+                      pending_connect_request_id_ != id || pending_connect_->cancel_requested))) {
+                  reply->Error("smart_access_runtime_control_unconfirmed", "Runtime control was not confirmed.");
+                  return;
+                }
+                flutter::EncodableMap receipt{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("profileDigest"), flutter::EncodableValue(profile)},
+                    {flutter::EncodableValue("configured"), flutter::EncodableValue(snapshot.smart_access_runtime_control_configured)}};
+                if (!id.empty()) receipt.emplace(flutter::EncodableValue("requestId"), flutter::EncodableValue(id));
+                reply->Success(flutter::EncodableValue(std::move(receipt)));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.renewSmartAccessLease") {
+          const auto* arguments = MapArguments(call);
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          const auto* expected = StringArgument(arguments, "expectedLeaseId");
+          const auto* next = StringArgument(arguments, "nextLeaseId");
+          const auto* issued = StringArgument(arguments, "issuedAt");
+          const auto* new_until = StringArgument(arguments, "newFlowsUntil");
+          const auto* active_until = StringArgument(arguments, "activeFlowsUntil");
+          if (arguments == nullptr || arguments->size() != 6 || profile == nullptr || expected == nullptr ||
+              next == nullptr || issued == nullptr || new_until == nullptr || active_until == nullptr) {
+            reply->Error("invalid_smart_access_renewal", "Invalid lease renewal.");
+            return;
+          }
+          const auto body = pokrov::service::EncodeSmartAccessRenewal({*profile, *expected, *next, *issued, *new_until, *active_until});
+          if (body.empty()) {
+            reply->Error("invalid_smart_access_renewal", "Invalid lease renewal.");
+            return;
+          }
+          if (!QueueRuntime(Command::kRenewSmartAccessLease, body,
+              [reply, profile = *profile, expected = *expected, next = *next](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible) {
+                  reply->Error("smart_access_renewal_unconfirmed", "Lease renewal was not confirmed.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("profileDigest"), flutter::EncodableValue(profile)},
+                    {flutter::EncodableValue("expectedLeaseId"), flutter::EncodableValue(expected)},
+                    {flutter::EncodableValue("nextLeaseId"), flutter::EncodableValue(next)},
+                    {flutter::EncodableValue("renewed"), flutter::EncodableValue(snapshot.smart_access_lease_renewed)}}));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.revokeSmartAccessLease") {
+          const auto* arguments = MapArguments(call);
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          const auto* lease = StringArgument(arguments, "leaseId");
+          const auto* terminate = BoolArgument(arguments, "terminateActive");
+          if (arguments == nullptr || arguments->size() != 3 || profile == nullptr ||
+              lease == nullptr || terminate == nullptr) {
+            reply->Error("invalid_smart_access_revocation", "Invalid lease revocation.");
+            return;
+          }
+          const auto body = pokrov::service::EncodeSmartAccessRevocation({*profile, *lease, *terminate});
+          if (body.empty()) {
+            reply->Error("invalid_smart_access_revocation", "Invalid lease revocation.");
+            return;
+          }
+          if (!QueueRuntime(Command::kRevokeSmartAccessLease, body,
+              [reply, profile = *profile, lease = *lease](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible) {
+                  reply->Error("smart_access_revoke_unconfirmed", "Lease revocation was not confirmed.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("profileDigest"), flutter::EncodableValue(profile)},
+                    {flutter::EncodableValue("leaseId"), flutter::EncodableValue(lease)},
+                    {flutter::EncodableValue("revoked"), flutter::EncodableValue(snapshot.smart_access_lease_found)}}));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.revokeSmartAccessPolicy") {
+          const auto* arguments = MapArguments(call);
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          const auto* terminate = BoolArgument(arguments, "terminateActive");
+          if (arguments == nullptr || arguments->size() != 2 || profile == nullptr ||
+              terminate == nullptr || !pokrov::service::IsProfileDigest(*profile)) {
+            reply->Error("invalid_smart_access_revocation", "Invalid policy revocation.");
+            return;
+          }
+          if (!QueueRuntime(Command::kRevokeSmartAccessPolicy, *profile + (*terminate ? ":1" : ":0"),
+              [reply, profile = *profile, terminate = *terminate](auto snapshot) {
+                if (!snapshot.command_accepted || !snapshot.compatible) {
+                  reply->Error("smart_access_revoke_unconfirmed", "Policy revocation was not confirmed.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("profileDigest"), flutter::EncodableValue(profile)},
+                    {flutter::EncodableValue("terminateActive"), flutter::EncodableValue(terminate)},
+                    {flutter::EncodableValue("revoked"), flutter::EncodableValue(snapshot.smart_access_lease_found)}}));
+              })) reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          return;
+        }
         if (call.method_name() == "runtimeEngine.crashDiagnostics") {
           if (!QueueRuntime(Command::kDiagnosticState, "", [reply](auto snapshot) {
             if (!snapshot.command_accepted) {
@@ -449,8 +765,11 @@ bool FlutterWindow::OnCreate() {
               BoolArgument(arguments, "disableMemoryLimit");
           const auto* materialized =
               BoolArgument(arguments, "materializedForRuntime");
+          const auto* requires_bound_connect =
+              BoolArgument(arguments, "requiresBoundConnect");
           if (profile == nullptr || disable_memory_limit == nullptr ||
-              materialized == nullptr || !*materialized) {
+              materialized == nullptr || !*materialized ||
+              requires_bound_connect == nullptr) {
             reply->Error("invalid_arguments",
                           "A materialized managed profile is required.");
             return;
@@ -461,7 +780,13 @@ bool FlutterWindow::OnCreate() {
           const std::string body =
               (*disable_memory_limit ? "1\n" : "0\n") + service_profile;
           const auto expected = pokrov::service::ProfileDigest(body);
-          if (snapshot_call(Command::kStageProfile, body, expected)) {
+          const auto* persisted_digest = StringArgument(arguments, "expectedProfileDigest");
+          if (persisted_digest != nullptr && *persisted_digest != expected) {
+            reply->Error("profile_identity_mismatch", "Prepared profile identity changed.");
+            return;
+          }
+          if (snapshot_call(*requires_bound_connect ? Command::kStageBoundProfile
+                                                    : Command::kStageProfile, body, expected)) {
             expected_profile_digest_ = expected;
           }
           return;
@@ -470,8 +795,248 @@ bool FlutterWindow::OnCreate() {
           if (snapshot_call(Command::kInvalidateProfile, "", "")) expected_profile_digest_.clear();
           return;
         }
+        if (call.method_name() == "runtimeEngine.connectWithCoreIdentity") {
+          const auto* arguments = MapArguments(call);
+          const auto* request_id = StringArgument(arguments, "requestId");
+          const auto* core = StringArgument(arguments, "expectedCoreModuleSha256");
+          const auto* profile = StringArgument(arguments, "expectedProfileDigest");
+          const auto* network = StringArgument(arguments, "expectedNetworkContextRef");
+          const auto* boot = StringArgument(arguments, "bootRef");
+          const auto started = ElapsedArgument(arguments, "startedElapsedMs");
+          const auto deadline = ElapsedArgument(arguments, "deadlineElapsedMs");
+          if (arguments == nullptr || arguments->size() != 7 || request_id == nullptr ||
+              !IsConnectRequestId(*request_id) || *request_id == pending_connect_request_id_ ||
+              core == nullptr || profile == nullptr || boot == nullptr || network == nullptr || !started || !deadline) {
+            reply->Error("invalid_connect_request", "Exact connection identity and deadline are required.");
+            return;
+          }
+          const pokrov::service::BoundConnectTarget target{*core, *profile, *boot, *started, *deadline, *network};
+          const auto body = pokrov::service::EncodeBoundConnect(target);
+          const auto not_dispatched = [reply, id = *request_id] {
+            reply->Error("core_identity_connect_not_dispatched", "Connection request was not dispatched.",
+                flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("requestId"), flutter::EncodableValue(id)},
+                    {flutter::EncodableValue("settled"), flutter::EncodableValue(true)},
+                }));
+          };
+          if (body.empty() || *profile != expected_profile_digest_) {
+            not_dispatched();
+            return;
+          }
+          if (!QueueRuntime(Command::kConnectWithIdentity, body,
+              [this, reply, id = *request_id, target](auto snapshot) {
+                if (pending_connect_request_id_ != id || !pending_connect_ || pending_connect_->cancel_requested) {
+                  reply->Error("operation_cancelled", "Connection request was cancelled.");
+                  return;
+                }
+                if (!snapshot.command_accepted || !snapshot.running ||
+                    snapshot.core_module_sha256 != target.core_module_sha256 ||
+                    snapshot.effective_profile_digest != target.profile_digest) {
+                  reply->Error("core_identity_connect_failed", "Service did not acknowledge this connection.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("requestId"), flutter::EncodableValue(id)},
+                    {flutter::EncodableValue("snapshot"), RuntimeSnapshotValue(std::move(snapshot), target.profile_digest)},
+                }));
+              }, *request_id)) {
+            not_dispatched();
+          }
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.promoteBoundTransportLease") {
+          const auto* arguments = MapArguments(call);
+          const auto* request_id = StringArgument(arguments, "requestId");
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          const auto* lease = StringArgument(arguments, "endpointLeaseRef");
+          const auto* issued = StringArgument(arguments, "issuedAt");
+          const auto* new_until = StringArgument(arguments, "newFlowsUntil");
+          const auto* active_until = StringArgument(arguments, "activeFlowsUntil");
+          if (arguments == nullptr || arguments->size() != 6 || request_id == nullptr ||
+              profile == nullptr || lease == nullptr || issued == nullptr || new_until == nullptr ||
+              active_until == nullptr || !pending_connect_bound_ || !pending_connect_ ||
+              pending_connect_request_id_ != *request_id || !pending_connect_->completed ||
+              pending_connect_->cancel_requested || *profile != expected_profile_digest_) {
+            reply->Error("transport_lease_handoff_unavailable", "Bound connection unavailable.");
+            return;
+          }
+          std::string encoded_target;
+          {
+            std::lock_guard<std::mutex> guard(pending_connect_->cancellation_lock);
+            encoded_target = pending_connect_->bound_cancellation_target;
+          }
+          const auto target = pokrov::service::DecodeCancellationTarget(encoded_target);
+          const auto body = target ? pokrov::service::EncodeTransportLeasePromotion(
+              pokrov::service::TransportLeasePromotion{*target, *profile, *lease,
+                  *issued, *new_until, *active_until}) : "";
+          if (body.empty()) {
+            reply->Error("invalid_transport_lease_handoff", "Invalid transport lease.");
+            return;
+          }
+          if (!QueueRuntime(Command::kPromoteTransportLease, body,
+              [this, reply, id = *request_id, profile = *profile](auto snapshot) {
+                if (pending_connect_request_id_ != id || !pending_connect_bound_ || !pending_connect_ ||
+                    pending_connect_->cancel_requested || !snapshot.command_accepted ||
+                    !snapshot.compatible || !snapshot.running || !snapshot.core_egress_validated ||
+                    !snapshot.transport_proof_state_available || snapshot.transport_proof_pending ||
+                    snapshot.effective_profile_digest != profile) {
+                  reply->Error("transport_lease_handoff_unconfirmed", "Transport lease unavailable.");
+                  return;
+                }
+                pending_connect_promoted_ = true;
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("requestId"), flutter::EncodableValue(id)},
+                    {flutter::EncodableValue("snapshot"), RuntimeSnapshotValue(std::move(snapshot), profile)},
+                }));
+              })) {
+            reply->Error("transport_lease_handoff_unavailable", "Runtime request queue unavailable.");
+          }
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.revokeBoundTransportLease") {
+          const auto* arguments = MapArguments(call);
+          const auto* request_id = StringArgument(arguments, "requestId");
+          const auto* profile = StringArgument(arguments, "profileDigest");
+          const auto* lease = StringArgument(arguments, "endpointLeaseRef");
+          const auto* terminate = BoolArgument(arguments, "terminateActive");
+          if (arguments == nullptr || arguments->size() != 4 || request_id == nullptr ||
+              profile == nullptr || lease == nullptr || terminate == nullptr ||
+              !pending_connect_bound_ || !pending_connect_ ||
+              pending_connect_request_id_ != *request_id || !pending_connect_->completed ||
+              pending_connect_->cancel_requested || *profile != expected_profile_digest_) {
+            reply->Error("transport_lease_revocation_unavailable", "Bound connection unavailable.");
+            return;
+          }
+          std::string encoded_target;
+          {
+            std::lock_guard<std::mutex> guard(pending_connect_->cancellation_lock);
+            encoded_target = pending_connect_->bound_cancellation_target;
+          }
+          const auto target = pokrov::service::DecodeCancellationTarget(encoded_target);
+          const auto body = target ? pokrov::service::EncodeTransportLeaseRevocation(
+              pokrov::service::TransportLeaseRevocation{*target, *profile, *lease, *terminate}) : "";
+          if (body.empty()) {
+            reply->Error("invalid_transport_lease_revocation", "Invalid transport lease.");
+            return;
+          }
+          if (!QueueRuntime(Command::kRevokeTransportLease, body,
+              [this, reply, id = *request_id, profile = *profile, terminal = *terminate](auto snapshot) {
+                if (pending_connect_request_id_ != id || !pending_connect_bound_ || !pending_connect_ ||
+                    pending_connect_->cancel_requested || !snapshot.command_accepted ||
+                    !snapshot.compatible || !snapshot.running || snapshot.core_egress_validated ||
+                    (terminal && (!snapshot.transport_proof_state_available || !snapshot.transport_proof_pending ||
+                                  !snapshot.transport_lease_state_available || snapshot.transport_lease_active)) ||
+                    snapshot.effective_profile_digest != profile) {
+                  reply->Error("transport_lease_revocation_unconfirmed", "Transport lease unavailable.");
+                  return;
+                }
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                    {flutter::EncodableValue("requestId"), flutter::EncodableValue(id)},
+                    {flutter::EncodableValue("snapshot"), RuntimeSnapshotValue(std::move(snapshot), profile)},
+                }));
+              })) {
+            reply->Error("transport_lease_revocation_unavailable", "Runtime request queue unavailable.");
+          }
+          return;
+        }
         if (call.method_name() == "runtimeEngine.connect") {
-          snapshot_call(Command::kConnect, expected_profile_digest_, expected_profile_digest_);
+          const auto* arguments = MapArguments(call);
+          const auto* request_id = StringArgument(arguments, "requestId");
+          if (arguments == nullptr || arguments->size() != 1 || request_id == nullptr ||
+              !IsConnectRequestId(*request_id) || *request_id == pending_connect_request_id_) {
+            reply->Error("invalid_connect_request", "A fresh connection request ID is required.");
+            return;
+          }
+          if (!QueueRuntime(Command::kConnect, expected_profile_digest_,
+              [reply, expected = expected_profile_digest_](auto snapshot) {
+                reply->Success(RuntimeSnapshotValue(std::move(snapshot), expected));
+              }, *request_id)) {
+            reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
+          }
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.cancelAndConfirmConnectStopped") {
+          const auto* arguments = MapArguments(call);
+          const auto* request_id = StringArgument(arguments, "requestId");
+          if (arguments == nullptr || arguments->size() != 1 || request_id == nullptr || !IsConnectRequestId(*request_id)) {
+            reply->Error("invalid_connect_request", "A connection request ID is required.");
+            return;
+          }
+          const auto respond = [reply, id = *request_id](bool settled) {
+            reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                {flutter::EncodableValue("requestId"), flutter::EncodableValue(id)},
+                {flutter::EncodableValue("settled"), flutter::EncodableValue(settled)},
+            }));
+          };
+          if (!pending_connect_bound_ || !pending_connect_ || pending_connect_request_id_ != *request_id) {
+            respond(stopped_connect_request_id_ == *request_id);
+            return;
+          }
+          const auto owner = pending_connect_;
+          owner->cancel_requested = true;
+          if (!runtime_tasks_ || !runtime_tasks_->Submit(Command::kCancelConnectAndConfirm, "", owner,
+              [this, owner, respond, id = *request_id](auto snapshot) {
+                if (!snapshot.command_accepted) {
+                  respond(false);
+                  return;
+                }
+                if (snapshot.connect_stopped && pending_connect_ == owner) {
+                  stopped_connect_request_id_ = id;
+                  pending_connect_.reset();
+                  pending_connect_request_id_.clear();
+                  pending_connect_bound_ = false;
+                  pending_connect_promoted_ = false;
+                }
+                respond(snapshot.connect_stopped);
+              })) {
+            reply->Error("connect_cancel_unconfirmed", "Cancellation queue is unavailable.");
+          }
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.cancelConnectRequest") {
+          const auto* arguments = MapArguments(call);
+          const auto* request_id = StringArgument(arguments, "requestId");
+          if (arguments == nullptr || arguments->size() != 1 || request_id == nullptr ||
+              !IsConnectRequestId(*request_id)) {
+            reply->Error("invalid_connect_request", "A connection request ID is required.");
+            return;
+          }
+          if (pending_connect_bound_ && pending_connect_ && *request_id == pending_connect_request_id_) {
+            const auto owner = pending_connect_;
+            owner->cancel_requested = true;
+            // The atomic flag reaches an in-flight call immediately. This
+            // queued exact lookup also handles an already completed response.
+            if (!runtime_tasks_ || !runtime_tasks_->Submit(Command::kCancel, "", owner,
+                [reply, id = *request_id](auto snapshot) {
+                  if (!snapshot.command_accepted) {
+                    reply->Error("connect_cancel_unconfirmed", "Service cancellation was not acknowledged.");
+                    return;
+                  }
+                  // ACK only admits cancellation. The exact settlement call
+                  // must confirm restoration before this bound owner retires.
+                  reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                      {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                      {flutter::EncodableValue("requestId"), flutter::EncodableValue(id)},
+                      {flutter::EncodableValue("cancelled"), flutter::EncodableValue(true)},
+                  }));
+                })) {
+              reply->Error("connect_cancel_unconfirmed", "Cancellation queue is unavailable.");
+            }
+            return;
+          }
+          const bool accepted = pending_connect_ != nullptr &&
+              *request_id == pending_connect_request_id_ && !pending_connect_->completed.load();
+          if (accepted) pending_connect_->cancel_requested = true;
+          reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+              {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+              {flutter::EncodableValue("requestId"), flutter::EncodableValue(*request_id)},
+              {flutter::EncodableValue("cancelled"), flutter::EncodableValue(accepted)},
+          }));
           return;
         }
         if (call.method_name() == "runtimeEngine.disconnect") {
@@ -554,6 +1119,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  if (pending_connect_bound_ && pending_connect_ && !pending_connect_promoted_) pending_connect_->cancel_requested = true;
   if (diagnostic_tasks_) {
     diagnostic_tasks_->Shutdown();
     diagnostic_tasks_.reset();
@@ -562,7 +1128,16 @@ void FlutterWindow::OnDestroy() {
     runtime_tasks_->Shutdown();
     runtime_tasks_.reset();
   }
+  if (pending_connect_bound_ && pending_connect_ &&
+      (!pending_connect_promoted_ || pending_connect_->cancel_requested)) {
+    // An unpromoted attempt or explicit stop still needs the exact lookup.
+    // An accepted lease stays with the service after this window closes.
+    pokrov::service::CancelInstalledServiceConnect(pending_connect_.get());
+  }
   pending_connect_.reset();
+  pending_connect_request_id_.clear();
+  pending_connect_bound_ = false;
+  pending_connect_promoted_ = false;
   runtime_engine_channel_.reset();
   windows_shell_channel_.reset();
   acquisition_links_channel_.reset();

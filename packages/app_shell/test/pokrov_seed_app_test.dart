@@ -405,6 +405,7 @@ class _FakeBootstrapper
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Duration? timeout,
+    Future<void>? cancelled,
   }) async {
     calls += 1;
     if (managedProfileFailure != null) {
@@ -536,6 +537,8 @@ class _FakeBootstrapper
   @override
   Future<ClientSubscriptionInfo> fetchClientSubscription({
     required HostPlatform hostPlatform,
+    Duration? requestTimeout,
+    Future<void>? cancelled,
   }) async {
     subscriptionCalls += 1;
     accountSummaryCallOrder.add('subscription:start');
@@ -678,6 +681,7 @@ class _FakeBootstrapper
   @override
   Future<WarpControlStatus> fetchWarpStatus({
     required HostPlatform hostPlatform,
+    Future<void>? cancelled,
   }) async {
     warpStatusCalls += 1;
     return warpStatus;
@@ -1089,6 +1093,7 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Duration? timeout,
+    Future<void>? cancelled,
   }) async {
     calls += 1;
     throw BootstrapFailure(message);

@@ -15,10 +15,17 @@ var (
 	requestIDPattern = regexp.MustCompile(`^[A-Za-z0-9_.:-]{1,96}$`)
 	actions          = map[string]struct{}{
 		"status":             {},
+		"clock_snapshot":     {},
+		"read_network_context": {},
 		"initialize":         {},
 		"stage_profile":      {},
+		"stage_bound_profile": {},
 		"invalidate_profile": {},
 		"connect":            {},
+		"connect_with_identity": {},
+		"cancel_connect":     {},
+		"promote_transport_lease": {},
+		"revoke_transport_lease": {},
 		"disconnect":         {},
 		"live_stats":         {},
 	}
@@ -75,7 +82,13 @@ type Snapshot struct {
 	IPv4RouteCount      *int      `json:"ipv4_route_count"`
 	IPv6RouteCount      *int      `json:"ipv6_route_count"`
 	ConnectionPending   bool      `json:"connection_pending"`
+	TransportProofPending bool `json:"transport_proof_pending"`
+	TransportLeaseActive bool `json:"transport_lease_active"`
 	HostStack           HostStack `json:"host_stack"`
+	TransportCapabilities string `json:"transport_capabilities_json,omitempty"`
+	CoreModuleSHA256 string `json:"core_module_sha256,omitempty"`
+	StagedProfileDigest string `json:"staged_profile_digest,omitempty"`
+	EffectiveProfileDigest string `json:"effective_profile_digest,omitempty"`
 }
 
 type Stats struct {
@@ -90,6 +103,47 @@ type Response struct {
 	MessageCode string    `json:"message_code,omitempty"`
 	Snapshot    *Snapshot `json:"snapshot,omitempty"`
 	Stats       *Stats    `json:"stats,omitempty"`
+	Clock       *BootClock `json:"clock,omitempty"`
+	NetworkContext *NetworkContext `json:"network_context,omitempty"`
+	ConnectCancellation *ConnectCancellation `json:"connect_cancellation,omitempty"`
+	TransportLeaseHandoff *TransportLeaseHandoff `json:"transport_lease_handoff,omitempty"`
+	TransportLeaseRevocation *TransportLeaseRevocation `json:"transport_lease_revocation,omitempty"`
+}
+
+type TransportLeaseHandoff struct {
+	Schema int `json:"schema"`
+	ConnectRequestID string `json:"connect_request_id"`
+	EndpointLeaseRef string `json:"endpoint_lease_ref"`
+}
+
+type TransportLeaseRevocation struct {
+	Schema int `json:"schema"`
+	ConnectRequestID string `json:"connect_request_id"`
+	EndpointLeaseRef string `json:"endpoint_lease_ref"`
+	TerminateActive bool `json:"terminate_active"`
+}
+
+// Settled is scoped to this invocation, not the current runtime snapshot.
+type ConnectCancellation struct {
+	Schema int `json:"schema"`
+	ConnectRequestID string `json:"connect_request_id"`
+	Settled bool `json:"settled"`
+}
+
+func (request Request) IsConnect() bool {
+	return request.Action == "connect" || request.Action == "connect_with_identity"
+}
+
+type BootClock struct {
+	Schema int `json:"schema"`
+	BootRef string `json:"boot_ref"`
+	ElapsedMS int64 `json:"elapsed_ms"`
+	QuantumMS int `json:"quantum_ms"`
+}
+
+type NetworkContext struct {
+	Schema int `json:"schema"`
+	Ref string `json:"network_context_ref"`
 }
 
 func Success(requestID string, snapshot Snapshot) Response {

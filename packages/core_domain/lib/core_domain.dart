@@ -1,5 +1,21 @@
 library pokrov_core_domain;
 
+/// Compiled Core ingredients, not profile permission or connectivity proof.
+enum RuntimeTransportFeature {
+  atsLease('pokrov_ats_lease_v1'),
+  awg31('pokrov_awg31_endpoint_v1'),
+  grpc('singbox_grpc_v1'),
+  hysteria2('singbox_hysteria2_v1'),
+  reality('singbox_reality_v1'),
+  tls('singbox_tls_v1'),
+  utls('singbox_utls_v1'),
+  vless('singbox_vless_v1'),
+  xhttp('singbox_xhttp_v1');
+
+  const RuntimeTransportFeature(this.wireName);
+  final String wireName;
+}
+
 enum HostPlatform {
   android,
   ios,
@@ -35,6 +51,7 @@ enum RouteMode {
   selectedApps,
   excludedApps,
   allExceptRu,
+  selectiveServices,
 }
 
 enum TransportKind {
@@ -147,6 +164,8 @@ extension RouteModePresentation on RouteMode {
     switch (this) {
       case RouteMode.fullTunnel:
         return 'Всё устройство';
+      case RouteMode.selectiveServices:
+        return 'Выбранные сервисы';
       case RouteMode.selectedApps:
         return 'Выбранные приложения';
       case RouteMode.excludedApps:
@@ -160,6 +179,8 @@ extension RouteModePresentation on RouteMode {
     switch (this) {
       case RouteMode.fullTunnel:
         return 'Весь трафик этого устройства идет через POKROV.';
+      case RouteMode.selectiveServices:
+        return 'Выбранные сервисы используют защищённый маршрут. Остальной трафик идёт напрямую; это не защита всего устройства.';
       case RouteMode.selectedApps:
         return 'POKROV используют только выбранные приложения. Остальное идет напрямую.';
       case RouteMode.excludedApps:

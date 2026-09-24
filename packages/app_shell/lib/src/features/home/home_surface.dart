@@ -372,6 +372,7 @@ class _HomeStageState extends State<_HomeStage>
               : _HomeModeChips(
                   locationLabel: widget.protectionState.locationLabel,
                   routeMode: widget.protectionState.routeMode,
+                  changesPending: widget.protectionState.routeChangesPending,
                   onOpenLocations: widget.protectionIntents.openLocations,
                   onOpenRules: widget.protectionIntents.openRules,
                 ),
@@ -784,6 +785,7 @@ class _HomeConnectPanel extends StatelessWidget {
               : _HomeModeChips(
                   locationLabel: protection.locationLabel,
                   routeMode: protection.routeMode,
+                  changesPending: protection.routeChangesPending,
                   onOpenLocations: intents.openLocations,
                   onOpenRules: intents.openRules,
                 ),
@@ -1018,36 +1020,52 @@ class _HomeModeChips extends StatelessWidget {
   const _HomeModeChips({
     required this.locationLabel,
     required this.routeMode,
+    this.changesPending = false,
     required this.onOpenLocations,
     required this.onOpenRules,
   });
 
   final String locationLabel;
   final RouteMode routeMode;
+  final bool changesPending;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenRules;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: _HomeChip(
-            key: const ValueKey('home-location-chip'),
-            icon: Icons.public_rounded,
-            label: locationLabel,
-            onTap: onOpenLocations,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _HomeChip(
+                key: const ValueKey('home-location-chip'),
+                icon: Icons.public_rounded,
+                label: locationLabel,
+                onTap: onOpenLocations,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _HomeChip(
+                key: const ValueKey('home-route-chip'),
+                icon: Icons.alt_route_rounded,
+                label: _routeModeShortLabel(routeMode),
+                onTap: onOpenRules,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _HomeChip(
-            key: const ValueKey('home-route-chip'),
-            icon: Icons.alt_route_rounded,
-            label: _routeModeShortLabel(routeMode),
-            onTap: onOpenRules,
+        if (changesPending) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Выбранные настройки применятся при следующем подключении.',
+            key: const ValueKey('home-route-changes-pending'),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
-        ),
+        ],
       ],
     );
   }

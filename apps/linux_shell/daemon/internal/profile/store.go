@@ -41,11 +41,24 @@ func (store *Store) Exists() bool {
 		info.Mode().Perm()&0o077 == 0
 }
 
+func (store *Store) BoundOnly() bool {
+	_, err := os.Lstat(filepath.Join(store.root, "active-profile.bound-only"))
+	return !errors.Is(err, os.ErrNotExist)
+}
+
 func NewStore(root string) *Store {
 	return &Store{root: root}
 }
 
 func (store *Store) Stage(request StageRequest) (Staged, error) {
+	return store.stage(request, false)
+}
+
+func (store *Store) StageBound(request StageRequest) (Staged, error) {
+	return store.stage(request, true)
+}
+
+func (store *Store) stage(request StageRequest, boundOnly bool) (Staged, error) {
 	config := []byte(request.ConfigPayload)
 	if !profileNamePattern.MatchString(request.ProfileName) ||
 		len(config) == 0 || len(config) > MaximumConfigBytes {
@@ -59,6 +72,36 @@ func (store *Store) Stage(request StageRequest) (Staged, error) {
 	}
 	if err := ensurePrivateDirectory(store.root); err != nil {
 		return Staged{}, err
+	}
+	markerPath := filepath.Join(store.root, "active-profile.bound-only")
+	if boundOnly {
+		marker, err := os.CreateTemp(store.root, ".active-profile-bound-*.tmp")
+		if err != nil {
+			return Staged{}, fmt.Errorf("create bound profile marker: %w", err)
+		}
+		markerTempPath := marker.Name()
+		defer os.Remove(markerTempPath)
+		if err := marker.Chmod(0o600); err != nil {
+			marker.Close()
+			return Staged{}, fmt.Errorf("chmod bound profile marker: %w", err)
+		}
+		if _, err := marker.WriteString("bound\n"); err != nil {
+			marker.Close()
+			return Staged{}, fmt.Errorf("write bound profile marker: %w", err)
+		}
+		if err := marker.Sync(); err != nil {
+			marker.Close()
+			return Staged{}, fmt.Errorf("sync bound profile marker: %w", err)
+		}
+		if err := marker.Close(); err != nil {
+			return Staged{}, fmt.Errorf("close bound profile marker: %w", err)
+		}
+		if err := os.Rename(markerTempPath, markerPath); err != nil {
+			return Staged{}, fmt.Errorf("promote bound profile marker: %w", err)
+		}
+		if err := syncDirectory(store.root); err != nil {
+			return Staged{}, fmt.Errorf("persist bound profile marker: %w", err)
+		}
 	}
 
 	finalPath := filepath.Join(store.root, "active-profile.json")
@@ -90,6 +133,16 @@ func (store *Store) Stage(request StageRequest) (Staged, error) {
 		return Staged{}, fmt.Errorf("promote staged profile: %w", err)
 	}
 	committed = true
+	if !boundOnly {
+		if store.BoundOnly() {
+			if err := syncDirectory(store.root); err != nil {
+				return Staged{}, fmt.Errorf("persist staged profile: %w", err)
+			}
+		}
+		if err := os.Remove(markerPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return Staged{}, fmt.Errorf("clear bound profile marker: %w", err)
+		}
+	}
 	store.generation++
 	digest := sha256.Sum256(config)
 	return Staged{
@@ -98,20 +151,36 @@ func (store *Store) Stage(request StageRequest) (Staged, error) {
 	}, nil
 }
 
+func syncDirectory(path string) error {
+	directory, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer directory.Close()
+	return directory.Sync()
+}
+
 func (store *Store) Invalidate() error {
 	path := filepath.Join(store.root, "active-profile.json")
 	info, err := os.Lstat(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("inspect staged profile: %w", err)
 	}
-	if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
-		return errors.New("staged profile is not a regular file")
+	if err == nil {
+		if !info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0 {
+			return errors.New("staged profile is not a regular file")
+		}
+		if err := os.Remove(path); err != nil {
+			return fmt.Errorf("remove staged profile: %w", err)
+		}
 	}
-	if err := os.Remove(path); err != nil {
-		return fmt.Errorf("remove staged profile: %w", err)
+	if store.BoundOnly() {
+		if err := syncDirectory(store.root); err != nil {
+			return fmt.Errorf("persist profile invalidation: %w", err)
+		}
+	}
+	if err := os.Remove(filepath.Join(store.root, "active-profile.bound-only")); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("remove bound profile marker: %w", err)
 	}
 	return nil
 }

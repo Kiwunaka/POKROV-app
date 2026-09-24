@@ -174,6 +174,10 @@ internal object AndroidRuntimeSafety {
             "POKROV не завершил проверку защищенного подключения. Попробуйте еще раз."
         "emergency_endpoint_unreachable" ->
             "Этот резерв недоступен в текущей сети. POKROV не включил системный VPN."
+        "core_identity_mismatch" ->
+            "Модуль подключения изменился. Обновите POKROV и повторите подключение."
+        "connect_deadline" ->
+            "Время подготовки подключения истекло. Попробуйте подключиться снова."
         "profile_identity_mismatch" ->
             "Изменение профиля не применено. Обновите настройки подключения POKROV."
         "profile_staging_failed" ->

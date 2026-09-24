@@ -12,6 +12,7 @@ param(
   [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
+  [string]$TransportTrustDefinesFile,
   [switch]$RequireTrustedWindowsSigning,
   [switch]$CheckTrustedWindowsSigningReadinessOnly,
   [string]$WindowsSigningCertificateThumbprint = $env:POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT,
@@ -30,6 +31,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+$transportTrustArguments = @()
+if ($TransportTrustDefinesFile) {
+  $transportTrustPath = (Resolve-Path -LiteralPath $TransportTrustDefinesFile -ErrorAction Stop).Path
+  $transportTrustArguments = @("--dart-define-from-file=$transportTrustPath")
+}
 
 if (-not $CheckTrustedWindowsSigningReadinessOnly) {
   $versionParityArguments = @{}
@@ -718,7 +725,7 @@ if (-not $SkipBuild) {
   if (Test-Path -LiteralPath $windowsBuildDirectory) {
     Remove-Item -Recurse -Force -LiteralPath $windowsBuildDirectory
   }
-  Invoke-External -FilePath "flutter" -Arguments @(
+  $windowsBuildArguments = @(
     "build",
     "windows",
     "--release",
@@ -730,7 +737,8 @@ if (-not $SkipBuild) {
     "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
     "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
     "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
-  ) -WorkingDirectory $appDirectory
+  ) + $transportTrustArguments
+  Invoke-External -FilePath "flutter" -Arguments $windowsBuildArguments -WorkingDirectory $appDirectory
 }
 
 function Write-Utf8BomFile {

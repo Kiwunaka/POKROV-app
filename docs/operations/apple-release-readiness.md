@@ -1,6 +1,6 @@
 # Apple Release Readiness
 
-Last updated: 2026-08-22
+Last updated: 2026-09-22
 
 Registry class: `ACTIVE_EXECUTION`.
 
@@ -96,6 +96,48 @@ xcrun notarytool submit build/Runner.zip --keychain-profile "REPLACE_WITH_NOTARY
 xcrun stapler staple build/POKROV.app
 spctl -a -vv build/POKROV.app
 ```
+
+## Transport Clock Source And Deferred Gates
+
+ATS-005 clock source now lives in
+`packages/runtime_engine/apple/TransportBootClock.swift`, referenced by both
+Runner source phases. The host bridges return a local boot UUID and
+suspend-inclusive continuous counter; Dart consumes the existing version-2
+transport time-anchor contract. The source is NOT_VERIFIED and transport policy
+is still disabled by default. The following remain deferred to the verification
+stage: Xcode compilation for both deployment targets, sandbox access to
+`kern.bootsessionuuid`, sleep/wake and reboot/app-restart behavior, channel codec
+parity, timebase conversion and unavailable-clock rejection. Privacy/API-use
+review and any required privacy-manifest declarations must be resolved for the
+chosen Apple distribution path before publication; this change asserts no
+approved reason code, signing, entitlement or store readiness.
+
+## Transport Inventory Source And Deferred Gates
+
+ATS-006 now shares `CoreTransportInventory.swift` between iOS Runner and
+PacketTunnelExtension. The generated direct gomobile binding supplies
+Runner preflight metadata; connected snapshots request inventory from the
+running extension through a bounded read-only provider message. Missing/unknown
+inventory stays unavailable. The source adds no tunnel start, manager save,
+entitlement, signing change or user-facing capability claim.
+
+The pinned gomobile source builds c-archive static libraries. Both Xcode targets
+link the XCFramework; the static archive has been removed from Runner's Embed
+Frameworks phase. Runner's runtime locator now names its own executable rather
+than requiring an embedded `PokrovCore.framework/PokrovCore`. The direct getter
+requires matching generated headers/archive and removes the optional dlsym
+ownership/visibility assumption. Older archives without the getter cannot build
+these updated sources. No replacement framework or application was built here.
+
+Before accepting an Apple artifact, verify generated Swift binding import,
+static link/strip retention in both targets, the absence of a copied static
+framework, runtime path resolution without one, both target source phases, and
+extension round-trip plus timeout/cancel/disconnect/restart behavior. Old
+extension replies must remain unavailable. Runner and extension image identity,
+signed/encrypted executable handling and preflight-to-extension policy binding
+are still pending implementation; feature names do not prove those identities.
+These are deferred NOT_VERIFIED gates; no Xcode
+build, native API call or physical-device execution has occurred in this step.
 
 ## What These Placeholders Do Not Mean
 

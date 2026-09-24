@@ -104,6 +104,7 @@ class _ProtectionCenterSheet extends StatefulWidget {
   final Future<_ProtectionCenterData> Function() onRefresh;
   final Future<_ProtectionCenterData> Function(
     ValueChanged<_ProtectionRepairStep> onStep,
+    ValueChanged<Future<void> Function()?> onCancelAvailable,
   ) onRepair;
   final String? Function(String label, String href) onAddShortcut;
   final ValueChanged<String> onRemoveShortcut;
@@ -120,7 +121,7 @@ enum _ProtectionRepairStep {
   verifyProtection,
 }
 
-enum _ProtectionRepairOutcome { awaitingEgress, succeeded, needsSupport }
+enum _ProtectionRepairOutcome { awaitingEgress, succeeded, interrupted, needsSupport }
 
 class _ProtectionCenterController extends ChangeNotifier {
   _ProtectionCenterController({
@@ -129,6 +130,7 @@ class _ProtectionCenterController extends ChangeNotifier {
     required Future<_ProtectionCenterData> Function() onRefresh,
     required Future<_ProtectionCenterData> Function(
       ValueChanged<_ProtectionRepairStep> onStep,
+      ValueChanged<Future<void> Function()?> onCancelAvailable,
     ) onRepair,
   })  : _runtimeSnapshot = runtimeSnapshot,
         _data = initialData,
@@ -142,11 +144,14 @@ class _ProtectionCenterController extends ChangeNotifier {
   final Future<_ProtectionCenterData> Function() _onRefresh;
   final Future<_ProtectionCenterData> Function(
     ValueChanged<_ProtectionRepairStep> onStep,
+    ValueChanged<Future<void> Function()?> onCancelAvailable,
   ) _onRepair;
 
   _ProtectionCenterData _data;
   bool _refreshing = true;
   bool _repairing = false;
+  bool _cancellingRepair = false;
+  Future<void> Function()? _cancelRepair;
   bool _detailsExpanded = false;
   String? _error;
   _ProtectionRepairStep? _repairStep;
@@ -164,7 +169,9 @@ class _ProtectionCenterController extends ChangeNotifier {
         checkedAt: _data.checkedAt,
       );
   bool get refreshing => _refreshing;
-  bool get repairing => _repairing;
+  bool get repairing => _repairing || _cancellingRepair;
+  bool get cancellingRepair => _cancellingRepair;
+  bool get canCancelRepair => _repairing && !_cancellingRepair && _cancelRepair != null;
   bool get detailsExpanded => _detailsExpanded;
   String? get error => _error;
   _ProtectionRepairStep? get repairStep => _repairStep;
@@ -209,7 +216,7 @@ class _ProtectionCenterController extends ChangeNotifier {
   }
 
   Future<void> repair() async {
-    if (_repairing || _refreshing) {
+    if (repairing || _refreshing) {
       return;
     }
     _repairing = true;
@@ -221,6 +228,9 @@ class _ProtectionCenterController extends ChangeNotifier {
       _data = await _onRepair((step) {
         _repairStep = step;
         _notify();
+      }, (cancel) {
+        _cancelRepair = cancel;
+        _notify();
       });
       final snapshot = data.snapshot;
       _repairOutcome = snapshot?.phase == RuntimePhase.running &&
@@ -229,18 +239,39 @@ class _ProtectionCenterController extends ChangeNotifier {
           : snapshot?.isCleanlyHealthy ?? false
               ? _ProtectionRepairOutcome.succeeded
               : _ProtectionRepairOutcome.needsSupport;
+    } on ConnectionOperationSuperseded {
+      _repairOutcome = _ProtectionRepairOutcome.interrupted;
+      _error = null;
     } on _ProtectionRepairFailed catch (failure) {
       _data = failure.data;
       _repairOutcome = _ProtectionRepairOutcome.needsSupport;
       _error =
-          'Восстановление не завершилось. Показано состояние после остановки туннеля.';
+          'Восстановление не завершилось. Показано последнее состояние туннеля.';
     } on Object {
       _repairOutcome = _ProtectionRepairOutcome.needsSupport;
       _error =
           'Восстановление не завершилось. Не удалось получить свежие проверки.';
     } finally {
       _repairing = false;
+      _cancelRepair = null;
       _repairStep = null;
+      _notify();
+    }
+  }
+
+  Future<void> cancelRepair() async {
+    final cancel = _cancelRepair;
+    if (!canCancelRepair || cancel == null) return;
+    _cancellingRepair = true;
+    _notify();
+    try {
+      // The callback is bound to this repair's coordinator generation.
+      // Keep the sheet busy through native settlement and readback.
+      await cancel();
+    } on Object {
+      _error = 'Отмена восстановления не подтверждена. Проверьте состояние POKROV.';
+    } finally {
+      _cancellingRepair = false;
       _notify();
     }
   }
@@ -437,9 +468,11 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   key: const ValueKey('protection-repair-action'),
-                  onPressed: _controller.refreshing || _controller.repairing
-                      ? null
-                      : _confirmRepair,
+                  onPressed: _controller.canCancelRepair
+                      ? _controller.cancelRepair
+                      : _controller.refreshing || _controller.repairing
+                          ? null
+                          : _confirmRepair,
                   icon: _controller.repairing
                       ? const SizedBox.square(
                           dimension: 18,
@@ -447,9 +480,13 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                         )
                       : const Icon(Icons.build_circle_outlined),
                   label: Text(
-                    _controller.repairing
-                        ? 'Восстанавливаем…'
-                        : 'Проверить и восстановить',
+                    _controller.cancellingRepair
+                        ? 'Отменяем восстановление…'
+                        : _controller.canCancelRepair
+                            ? 'Отменить восстановление'
+                            : _controller.repairing
+                                ? 'Восстанавливаем…'
+                                : 'Проверить и восстановить',
                   ),
                 ),
               ),
@@ -465,7 +502,7 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
                 const SizedBox(height: 12),
                 _ProtectionRepairProgress(current: _controller.repairStep),
               ],
-              if (_controller.repairOutcome != null) ...[
+              if (!_controller.repairing && _controller.repairOutcome != null) ...[
                 const SizedBox(height: 12),
                 _ProtectionRepairOutcomeCard(
                   outcome: _controller.repairOutcome!,
@@ -709,6 +746,7 @@ class _ProtectionRepairOutcomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
     final succeeded = outcome == _ProtectionRepairOutcome.succeeded;
+    final interrupted = outcome == _ProtectionRepairOutcome.interrupted;
     final color = succeeded ? p.success : p.warning;
     return Container(
       key: const ValueKey('protection-repair-outcome'),
@@ -723,7 +761,7 @@ class _ProtectionRepairOutcomeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            succeeded ? 'Защита восстановлена' : 'Нужна помощь',
+            succeeded ? 'Защита восстановлена' : interrupted ? 'Восстановление прервано' : 'Нужна помощь',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: color,
                   fontWeight: FontWeight.w700,
@@ -733,9 +771,11 @@ class _ProtectionRepairOutcomeCard extends StatelessWidget {
           Text(
             succeeded
                 ? 'Туннель, DNS и выход через VPN подтверждены.'
-                : 'Откройте поддержку: диагностические данные будут показаны перед отправкой.',
+                : interrupted
+                    ? 'Повторное подключение не продолжается. Текущее состояние туннеля показано выше.'
+                    : 'Откройте поддержку: диагностические данные будут показаны перед отправкой.',
           ),
-          if (!succeeded) ...[
+          if (!succeeded && !interrupted) ...[
             const SizedBox(height: 8),
             TextButton.icon(
               key: const ValueKey('protection-repair-support'),

@@ -79,15 +79,12 @@ internal data class AndroidCoreEgressProbeSelection(
     val sample: AndroidCoreEgressProbeSample?,
 )
 
-/** Runs the core's own URL test for the outbound selected by route.final. */
+/** Runs the core's own URL test for the profile's protected outbound. */
 internal object AndroidCoreEgressProbe {
     fun finalTarget(configContent: String): AndroidCoreEgressProbeTarget? {
         return runCatching {
             val config = JSONObject(configContent)
-            val tag = config.optJSONObject("route")?.optString("final")?.trim().orEmpty()
-            if (!isSafeTag(tag)) {
-                return@runCatching null
-            }
+            val tag = protectedTargetTag(config) ?: return@runCatching null
             val outbounds = config.optJSONArray("outbounds") ?: return@runCatching null
             val outboundTypes = mutableMapOf<String, String>()
             for (index in 0 until outbounds.length()) {
@@ -113,6 +110,53 @@ internal object AndroidCoreEgressProbe {
             )
         }.getOrNull()
     }
+
+    internal fun protectedTargetTag(config: JSONObject): String? {
+        val route = config.optJSONObject("route") ?: return null
+        val finalTag = route.optString("final").trim()
+        if (!isSafeTag(finalTag)) return null
+        val outbounds = config.optJSONArray("outbounds") ?: return null
+        val finalIsDirect = (0 until outbounds.length()).any { index ->
+            val outbound = outbounds.optJSONObject(index) ?: return@any false
+            outbound.optString("tag") == finalTag && outbound.optString("type") == "direct"
+        }
+        if (!finalIsDirect) return finalTag
+
+        // Selective has a Direct default. Bind both startup and Core proof to
+        // the exact owned HTTPS rule emitted by the catalog assembler, never
+        // to an arbitrary unused VPN group. This survives _meta stripping.
+        val rules = route.optJSONArray("rules") ?: return null
+        val probeRules = (0 until rules.length()).mapNotNull { rules.optJSONObject(it) }
+            .filter { rule ->
+                rule.keys().asSequence().toSet() ==
+                    setOf("domain", "network", "port", "action", "outbound") &&
+                    isOwnedProbeDomain(rule) && rule.optString("network") == "tcp" &&
+                    rule.optJSONArray("port")?.let { it.length() == 1 && it.opt(0) == 443 } == true &&
+                    rule.optString("action") == "route"
+            }
+        val target = probeRules.singleOrNull()?.optString("outbound") ?: return null
+        if (!isSafeTag(target) || target == finalTag) return null
+        val dns = config.optJSONObject("dns") ?: return null
+        val dnsRules = dns.optJSONArray("rules") ?: return null
+        val probeDns = (0 until dnsRules.length()).mapNotNull { dnsRules.optJSONObject(it) }
+            .filter { rule ->
+                rule.keys().asSequence().toSet() ==
+                    setOf("domain", "action", "server", "disable_cache", "rewrite_ttl") &&
+                    isOwnedProbeDomain(rule) && rule.optString("action") == "route" &&
+                    rule.opt("disable_cache") == true && rule.opt("rewrite_ttl") == 0
+            }.singleOrNull() ?: return null
+        val dnsTag = probeDns.optString("server")
+        if (!isSafeTag(dnsTag)) return null
+        val servers = dns.optJSONArray("servers") ?: return null
+        val resolver = (0 until servers.length()).mapNotNull { servers.optJSONObject(it) }
+            .filter { it.optString("tag") == dnsTag }.singleOrNull() ?: return null
+        return target.takeIf { resolver.optString("detour") == target }
+    }
+
+    private fun isOwnedProbeDomain(rule: JSONObject): Boolean =
+        rule.optJSONArray("domain")?.let {
+            it.length() == 1 && it.opt(0) == "api.pokrov.space"
+        } == true
 
     internal fun resolveFinalTarget(
         finalTag: String,

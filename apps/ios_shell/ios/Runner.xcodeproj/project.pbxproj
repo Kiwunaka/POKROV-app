@@ -12,6 +12,9 @@
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		A1F0C0012F2A000100000001 /* RuntimeHostBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000011 /* RuntimeHostBridge.swift */; };
+		A1F0C0012F2A000100000030 /* TransportBootClock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000031 /* TransportBootClock.swift */; };
+		A1F0C0012F2A000100000032 /* CoreTransportInventory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000034 /* CoreTransportInventory.swift */; };
+		A1F0C0012F2A000100000033 /* CoreTransportInventory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000034 /* CoreTransportInventory.swift */; };
 		A1F0C0012F2A000100000004 /* PacketTunnelSeedController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000013 /* PacketTunnelSeedController.swift */; };
 		A1F0C0012F2A000100000005 /* PacketTunnelSharedPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000014 /* PacketTunnelSharedPaths.swift */; };
 		A1F0C0012F2A000100000006 /* PacketTunnelExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000015 /* PacketTunnelExtension.appex */; };
@@ -19,7 +22,6 @@
 		A1F0C0012F2A000100000008 /* PacketTunnelSharedPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000014 /* PacketTunnelSharedPaths.swift */; };
 		A1F0C0012F2A000100000009 /* PokrovCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000012 /* PokrovCore.xcframework */; };
 		A1F0C0012F2A000100000002 /* PokrovCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000012 /* PokrovCore.xcframework */; };
-		A1F0C0012F2A000100000003 /* PokrovCore.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A1F0C0012F2A000100000012 /* PokrovCore.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -60,7 +62,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				A1F0C0012F2A000100000003 /* PokrovCore.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -77,6 +78,8 @@
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		A1F0C0012F2A000100000011 /* RuntimeHostBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeHostBridge.swift; sourceTree = "<group>"; };
+		A1F0C0012F2A000100000031 /* TransportBootClock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TransportBootClock.swift; path = "../../../packages/runtime_engine/apple/TransportBootClock.swift"; sourceTree = SOURCE_ROOT; };
+		A1F0C0012F2A000100000034 /* CoreTransportInventory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoreTransportInventory.swift; path = "../../../packages/runtime_engine/apple/CoreTransportInventory.swift"; sourceTree = SOURCE_ROOT; };
 		A1F0C0012F2A000100000012 /* PokrovCore.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = Frameworks/PokrovCore.xcframework; sourceTree = "<group>"; };
 		A1F0C0012F2A000100000013 /* PacketTunnelSeedController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketTunnelSeedController.swift; sourceTree = "<group>"; };
 		A1F0C0012F2A000100000014 /* PacketTunnelSharedPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketTunnelSharedPaths.swift; sourceTree = "<group>"; };
@@ -183,6 +186,8 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				A1F0C0012F2A000100000011 /* RuntimeHostBridge.swift */,
+				A1F0C0012F2A000100000031 /* TransportBootClock.swift */,
+				A1F0C0012F2A000100000034 /* CoreTransportInventory.swift */,
 				A1F0C0012F2A000100000013 /* PacketTunnelSeedController.swift */,
 				A1F0C0012F2A000100000014 /* PacketTunnelSharedPaths.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
@@ -360,6 +365,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1F0C0012F2A000100000007 /* PacketTunnelProvider.swift in Sources */,
+				A1F0C0012F2A000100000033 /* CoreTransportInventory.swift in Sources */,
 				A1F0C0012F2A000100000008 /* PacketTunnelSharedPaths.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -378,6 +384,8 @@
 			files = (
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				A1F0C0012F2A000100000001 /* RuntimeHostBridge.swift in Sources */,
+				A1F0C0012F2A000100000030 /* TransportBootClock.swift in Sources */,
+				A1F0C0012F2A000100000032 /* CoreTransportInventory.swift in Sources */,
 				A1F0C0012F2A000100000004 /* PacketTunnelSeedController.swift in Sources */,
 				A1F0C0012F2A000100000005 /* PacketTunnelSharedPaths.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
