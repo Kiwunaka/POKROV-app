@@ -25,6 +25,13 @@ RuntimeResult WithFailure(RuntimeResult result, Status status, const char* code)
 RuntimeResult WithTransportState(RuntimeResult result, bool pending, bool active) {
   // Only runtime snapshots carry these fields, never control/settlement receipts.
   if (result.body.rfind("phase=", 0) == 0) {
+    if (pending) {
+      const std::string healthy = ";core_egress_validated=1;dns_ready=1";
+      const auto offset = result.body.find(healthy);
+      if (offset != std::string::npos) {
+        result.body.replace(offset, healthy.size(), ";core_egress_validated=0;dns_ready=0");
+      }
+    }
     result.body += std::string(";transport_proof_pending=") + (pending ? "1" : "0");
     result.body += std::string(";transport_lease_active=") +
         (active && result.body.rfind("phase=running;", 0) == 0 ? "1" : "0");

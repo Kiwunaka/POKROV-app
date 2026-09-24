@@ -1,0 +1,51 @@
+{
+  "status": "FAIL",
+  "artifact_sha256": "d4c3ead8786cfdd91ff7851e3634d7025e899323db13636803f3064551628f17",
+  "started_epoch": 1789355918.0007236,
+  "control": "connect via installed non-root GUI and production polkit; package upgrade via apt",
+  "signature_verified": true,
+  "apt_simulation_actions": [
+    "Inst pokrov [1.2.0~beta.30-9] (1.2.0~beta.30-10 local-deb [amd64])"
+  ],
+  "running_before": {
+    "phase": "running",
+    "supports_live_connect": true,
+    "can_initialize": true,
+    "can_connect": false,
+    "message_code": "ready",
+    "host_health": "healthy",
+    "dns_state": "degraded",
+    "uplink_state": "healthy",
+    "dns_ready": false,
+    "core_egress_validated": true,
+    "ipv4_route_count": null,
+    "ipv6_route_count": null,
+    "connection_pending": false,
+    "host_stack": {
+      "systemd": true,
+      "network_manager": true,
+      "resolved": true,
+      "nftables": true,
+      "core_artifact": true
+    }
+  },
+  "connected_epoch": 1789355990.7503574,
+  "private_state_hashes_before": {
+    "profile": "6be2f1b34cdf812b40b813d9783a0b577d7e3856cfd33c6bf1f6c37b6dfd9237",
+    "settings": "6f991407a3687412f36b3c5d8b9183eb000a68b071a09690d8df2f7296e65ea7",
+    "keyring": "49132ba6259d8314d2a32aefe55dea34fe7e06adfca42e396ea0ebd1c1bff53d"
+  },
+  "apt_exit": 0,
+  "installed_version": "1.2.0~beta.30-10",
+  "network_restored": true,
+  "no_tun": true,
+  "no_recovery": true,
+  "private_state_preserved": {
+    "profile": true,
+    "settings": false,
+    "keyring": true
+  },
+  "verified_installed_entries": 302,
+  "failure_class": "AssertionError",
+  "finished_epoch": 1789356001.9924362
+}

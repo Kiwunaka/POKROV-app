@@ -1,0 +1,10 @@
+C:\r12-l04-gui-modes-20260913\pokrov-linuxd-health: go1.25.13
+	path	github.com/Kiwunaka/pokrov-app/linux-daemon/cmd/pokrov-linuxd
+	mod	github.com/Kiwunaka/pokrov-app/linux-daemon	(devel)	
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	-trimpath=true
+	build	CGO_ENABLED=0
+	build	GOARCH=amd64
+	build	GOOS=linux
+	build	GOAMD64=v1

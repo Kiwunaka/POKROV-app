@@ -13,9 +13,13 @@ claimed. UI source is `361b0e4`, daemon/packaging source is `318801a`
 (unchanged at the UI revision), and Core source is `86aca40`.
 
 The [receipt](receipt.json) identifies all source/artifact hashes, custody,
-checks and limitations. [proof.zip](proof.zip) retains 47 named receipts,
-build/test logs, scripts and desktop captures with an internal hash manifest.
-Private profiles, keys and raw packet contents are excluded.
+checks and limitations. The [proof manifest](proof/manifest.json) binds 47 named
+receipts, build/test logs, scripts and desktop captures in `proof/`.
+The files were unpacked without byte changes to satisfy the repository's ban
+on tracked candidate/build archives. Original proof/validation archive hashes
+in the receipts refer to the preserved platform evidence and local custody;
+`validation/` holds the unpacked check logs. Private profiles, keys and raw
+packet contents are excluded.
 
 ## Results
 
@@ -60,7 +64,7 @@ same address/443. Port22/80 established-socket attempts were inconclusive;
 the first packet observer also used an incoming-only protocol subscription.
 The final physical-interface `ETH_P_ALL` observation excludes all proxy ports
 and proves the full/RU difference without retaining packets. Earlier failed
-and inconclusive records remain in the archive.
+and inconclusive records remain in the retained proof files.
 
 The Core recovery receipt inherited a misleading “read-only observer” label.
 Its actual script performs one scoped root SIGKILL of the owned Core child;

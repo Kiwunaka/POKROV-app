@@ -1,0 +1,121 @@
+{
+  "status": "PASS_GUI_REINSTALLED_CORE_RECOVERY",
+  "started_epoch": 1789358395.3505294,
+  "candidate_sha256": "d4c3ead8786cfdd91ff7851e3634d7025e899323db13636803f3064551628f17",
+  "control": "unmodified installed GUI and production polkit; observer uses read-only status only",
+  "steps": [],
+  "network_before": {
+    "routes4": "4c17891a726a7fa6bcb2b6250486b0f3d22b09c19b501ffd07680e6a0b8f0d01",
+    "routes6": "6677a96ff304086c57809fabcb41e8252e354d3cb011f0226bf44c8645da84a0",
+    "rules4": "e79a76eff86a78de4ce5d38c6277dbafbab227656214e1e116d9ac63597dbb9d",
+    "rules6": "78fc521d26d8f02af636ce8e1c74bb782cbfd272b8a81529bea0adb9a68ed0ea",
+    "nft": "e8e2201c1f9ccf2da32a899d44795084d1168072cc9ddf3a6f57a212767ac173",
+    "dns": "9fc34b8019cb213b2ed161e532123f02ff21f655bb32231e148b9fe6a3966267",
+    "domains": "ce9364bf1cf29bf3bb55c5d7b43dba6d4b6b79a55f089117b21d361d8c1961eb"
+  },
+  "gui": {
+    "pid": 12345,
+    "uid": 1000,
+    "cgroup": "0::/user.slice/user-1000.slice/session-c2.scope"
+  },
+  "first_connected": {
+    "phase": "running",
+    "supports_live_connect": true,
+    "can_initialize": true,
+    "can_connect": false,
+    "message_code": "connected",
+    "host_health": "healthy",
+    "dns_state": "healthy",
+    "uplink_state": "healthy",
+    "dns_ready": true,
+    "core_egress_validated": true,
+    "ipv4_route_count": null,
+    "ipv6_route_count": null,
+    "connection_pending": false,
+    "host_stack": {
+      "systemd": true,
+      "network_manager": true,
+      "resolved": true,
+      "nftables": true,
+      "core_artifact": true
+    }
+  },
+  "reinstalled_https": {
+    "exit": 0,
+    "code": "204"
+  },
+  "after_core_sigkill": {
+    "phase": "config_staged",
+    "supports_live_connect": true,
+    "can_initialize": true,
+    "can_connect": true,
+    "message_code": "ready",
+    "host_health": "degraded",
+    "dns_state": "unknown",
+    "uplink_state": "unknown",
+    "dns_ready": null,
+    "core_egress_validated": null,
+    "last_failure_kind": "linux_runtime_error",
+    "last_stop_reason": "runtime_error",
+    "ipv4_route_count": null,
+    "ipv6_route_count": null,
+    "connection_pending": false,
+    "host_stack": {
+      "systemd": true,
+      "network_manager": true,
+      "resolved": true,
+      "nftables": true,
+      "core_artifact": true
+    }
+  },
+  "network_restored_after_fault": true,
+  "gui_survived": true,
+  "second_connected": {
+    "phase": "running",
+    "supports_live_connect": true,
+    "can_initialize": true,
+    "can_connect": false,
+    "message_code": "connected",
+    "host_health": "healthy",
+    "dns_state": "healthy",
+    "uplink_state": "healthy",
+    "dns_ready": true,
+    "core_egress_validated": true,
+    "last_stop_reason": "runtime_error",
+    "ipv4_route_count": null,
+    "ipv6_route_count": null,
+    "connection_pending": false,
+    "host_stack": {
+      "systemd": true,
+      "network_manager": true,
+      "resolved": true,
+      "nftables": true,
+      "core_artifact": true
+    }
+  },
+  "final_network_restored": true,
+  "final_snapshot": {
+    "phase": "config_staged",
+    "supports_live_connect": true,
+    "can_initialize": true,
+    "can_connect": true,
+    "message_code": "ready",
+    "host_health": "healthy",
+    "dns_state": "unknown",
+    "uplink_state": "unknown",
+    "dns_ready": null,
+    "core_egress_validated": null,
+    "last_stop_reason": "requested",
+    "ipv4_route_count": null,
+    "ipv6_route_count": null,
+    "connection_pending": false,
+    "host_stack": {
+      "systemd": true,
+      "network_manager": true,
+      "resolved": true,
+      "nftables": true,
+      "core_artifact": true
+    }
+  },
+  "finished_epoch": 1789358566.73011
+}

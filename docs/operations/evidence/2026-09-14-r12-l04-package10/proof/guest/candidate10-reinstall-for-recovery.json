@@ -1,0 +1,17 @@
+{
+  "operation": "reinstall_for_current_package_recovery_proof",
+  "clean_install_claim": false,
+  "sha256": "d4c3ead8786cfdd91ff7851e3634d7025e899323db13636803f3064551628f17",
+  "signature_verified": true,
+  "apt_exit_code": 0,
+  "retained_profile_unchanged": true,
+  "installed_version": "1.2.0~beta.30-10",
+  "finished_epoch": 1789358271.7785728,
+  "verified_installed_entries": 302,
+  "private_state_preserved": true,
+  "socket_enabled": true,
+  "socket_mode": "0o666",
+  "socket_uid": 0,
+  "state_mode": "0o700",
+  "status": "PASS"
+}
