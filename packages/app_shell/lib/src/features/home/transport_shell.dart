@@ -12,7 +12,9 @@ extension _TransportShellOperations on _PokrovSeedShellState {
   void _startTransportPolicyRefresh() {
     _stopTransportPolicyRefresh();
     final service = _bootstrapper;
-    if (service is! AppFirstTransportManifestService || !service.transportManifestEnabled) return;
+    if (service is! AppFirstTransportManifestService ||
+        !(service as AppFirstTransportManifestService).transportManifestEnabled) return;
+    final manifestService = service as AppFirstTransportManifestService;
     final cancelled = Completer<void>();
     _transportPolicyCancelled = cancelled;
     _transportPolicyTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
@@ -24,12 +26,13 @@ extension _TransportShellOperations on _PokrovSeedShellState {
       if (_transportPolicyRefreshInFlight || _runtimeBusy) return;
       _transportPolicyRefreshInFlight = true;
       try {
-        await service.fetchTransportManifest(hostPlatform: widget.appContext.hostPlatform,
+        await manifestService.fetchTransportManifest(hostPlatform: widget.appContext.hostPlatform,
           remainingBudget: const Duration(seconds: 10), cancelled: cancelled.future);
       } on BootstrapFailure catch (error) {
         if (error.statusCode == HttpStatus.unauthorized || error.statusCode == HttpStatus.forbidden) {
           final native = await _connectionCoordinator.withdrawTransportAuthority();
-          if (native != null && mounted) setState(() => _runtimeSnapshot = native);
+           // ignore: invalid_use_of_protected_member
+           if (native != null && mounted) setState(() => _runtimeSnapshot = native);
         }
       } on Object {
         // Offline Core deadlines remain the authority until a signed update is received.
@@ -43,37 +46,40 @@ extension _TransportShellOperations on _PokrovSeedShellState {
       int generation) async {
     final service = _bootstrapper;
     final engine = _runtimeEngine;
-    if (service is! AppFirstTransportManifestService || !service.transportManifestEnabled ||
+    if (service is! AppFirstTransportManifestService ||
+        !(service as AppFirstTransportManifestService).transportManifestEnabled ||
         engine is! RuntimeBootClock || engine is! RuntimeConnectCancellation ||
         engine is! RuntimeCoreIdentityStage || engine is! RuntimeCoreIdentityConnect ||
         engine is! RuntimeBoundConnectivityProbe) {
       _transportSelectionFail('transport_runtime_unavailable');
     }
-    final started = await engine.readBootClock();
+    final manifestService = service as AppFirstTransportManifestService;
+    final bootClock = engine as RuntimeBootClock;
+    final started = await bootClock.readBootClock();
     const budget = Duration(seconds: 60);
     final cancelled = _connectionCoordinator.whenOperationEnds(generation);
     bool current() => mounted && _connectionCoordinator.ownsOperation(generation) &&
       _connectionCoordinator.actionInFlight;
     TransportManifestSelection? source;
     try {
-      source = await service.openTransportSelection(hostPlatform: widget.appContext.hostPlatform,
+      source = await manifestService.openTransportSelection(hostPlatform: widget.appContext.hostPlatform,
         operationStarted: started, operationBudget: budget,
         operationIsCurrent: current, cancelled: cancelled);
     } on TransportManifestFailure catch (error) {
       if (error.code != 'transport_floor_missing') rethrow;
       // First enrollment is a fresh authenticated nonce exchange, never a
       // cached policy or an arbitrary response supplied by the caller.
-      final enrollmentClock = await engine.readBootClock();
+      final enrollmentClock = await bootClock.readBootClock();
       if (enrollmentClock.bootRef != started.bootRef ||
           enrollmentClock.elapsedMilliseconds < started.elapsedMilliseconds ||
           enrollmentClock.elapsedMilliseconds >= started.elapsedMilliseconds + budget.inMilliseconds) {
         _transportSelectionFail('transport_budget_exhausted');
       }
-      await service.enrollTransportManifest(hostPlatform: widget.appContext.hostPlatform,
+      await manifestService.enrollTransportManifest(hostPlatform: widget.appContext.hostPlatform,
         remainingBudget: Duration(milliseconds: started.elapsedMilliseconds +
           budget.inMilliseconds - enrollmentClock.elapsedMilliseconds), cancelled: cancelled);
       if (!current()) throw const ConnectionOperationSuperseded();
-      source = await service.openTransportSelection(hostPlatform: widget.appContext.hostPlatform,
+      source = await manifestService.openTransportSelection(hostPlatform: widget.appContext.hostPlatform,
         operationStarted: started, operationBudget: budget,
         operationIsCurrent: current, cancelled: cancelled);
     }
@@ -94,27 +100,30 @@ extension _TransportShellOperations on _PokrovSeedShellState {
       final catalogHost = const {HostPlatform.android, HostPlatform.windows}
         .contains(widget.appContext.hostPlatform);
       if (catalogRequired && (!catalogHost || service is! AppFirstRoutingCatalogService ||
-          !service.routingCatalogEnabled)) _transportSelectionFail('routing_catalog_unavailable');
-      if (catalogHost && service is AppFirstRoutingCatalogService && service.routingCatalogEnabled) {
-        final catalogClock = await engine.readBootClock();
+          !(service as AppFirstRoutingCatalogService).routingCatalogEnabled)) _transportSelectionFail('routing_catalog_unavailable');
+      if (catalogHost && service is AppFirstRoutingCatalogService &&
+          (service as AppFirstRoutingCatalogService).routingCatalogEnabled) {
+        final catalogService = service as AppFirstRoutingCatalogService;
+        final catalogClock = await bootClock.readBootClock();
         if (catalogClock.bootRef != started.bootRef ||
             catalogClock.elapsedMilliseconds < started.elapsedMilliseconds ||
             catalogClock.elapsedMilliseconds >= started.elapsedMilliseconds + budget.inMilliseconds) {
           _transportSelectionFail('transport_budget_exhausted');
         }
-        final catalog = await service.fetchRoutingCatalog(
+        final catalog = await catalogService.fetchRoutingCatalog(
           hostPlatform: widget.appContext.hostPlatform, cancelled: source.whenClosed);
         if (!current()) _transportSelectionFail('routing_catalog_unavailable');
         if (catalog == null && catalogRequired) _transportSelectionFail('routing_catalog_unavailable');
         if (catalog != null) {
           if (service is! AppFirstClientDataService) _transportSelectionFail('routing_access_unavailable');
-          final accessClock = await engine.readBootClock();
+          final dataService = service as AppFirstClientDataService;
+          final accessClock = await bootClock.readBootClock();
           if (accessClock.bootRef != started.bootRef ||
               accessClock.elapsedMilliseconds < catalogClock.elapsedMilliseconds ||
               accessClock.elapsedMilliseconds >= started.elapsedMilliseconds + budget.inMilliseconds) {
             _transportSelectionFail('transport_budget_exhausted');
           }
-          final info = await service.fetchClientSubscription(
+          final info = await dataService.fetchClientSubscription(
             hostPlatform: widget.appContext.hostPlatform,
             requestTimeout: Duration(milliseconds: started.elapsedMilliseconds +
               budget.inMilliseconds - accessClock.elapsedMilliseconds),
@@ -123,7 +132,8 @@ extension _TransportShellOperations on _PokrovSeedShellState {
               'free_monthly', 'free_soft_mode'}.contains(info.accessState)) {
             _transportSelectionFail('routing_access_unavailable');
           }
-          setState(() => _subscriptionInfo = info);
+           // ignore: invalid_use_of_protected_member
+           setState(() => _subscriptionInfo = info);
           final accessState = info.accessState;
           catalogAccessState = accessState;
           final observed = await source.sample();
@@ -144,16 +154,16 @@ extension _TransportShellOperations on _PokrovSeedShellState {
             accessState: accessState, vpnAvailable: true, now: observed.latest,
             selectedServiceIds: selectedServices);
           catalogPolicy = baseline;
-          if (_selectedRouteMode == RouteMode.selectiveServices && !catalog.usingCache &&
-              runtime.smartAccessLeaseVersion == 1 && service is AppFirstSmartAccessService &&
-              service.smartAccessEnabled) {
+            if (_selectedRouteMode == RouteMode.selectiveServices && !catalog.usingCache &&
+               runtime.smartAccessLeaseVersion == 1 && service is AppFirstSmartAccessService &&
+               (service as AppFirstSmartAccessService).smartAccessEnabled) {
             final wanted = verified.services.where((item) =>
               selectedServices.contains(item.id) &&
               item.intents[CatalogRoutingMode.selective] == CatalogRouteAction.approvedGateway)
               .map((item) => item.id).toSet();
             if (wanted.isNotEmpty) {
               final smartService = service as AppFirstSmartAccessService;
-              final grantSource = source!;
+               final grantSource = source;
               var providerUnavailable = false;
               smartAccessGrantResolver = (baseProfile, remainingBudget, operationIsCurrent, grantCancelled) async {
                 bool grantCurrent() => current() && operationIsCurrent();
@@ -267,7 +277,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
               'artifact_sha256': selection.context.artifactSha256,
               'core_capability_revision': binding.coreCapabilityRevision,
               'family': family, 'selection_role': role, 'max_endpoints': limit,
-            }), service);
+             }), manifestService);
           final primaries = await fetchRole('primary', maxEndpoints);
           final remainingSlots = maxEndpoints - selection._endpoints.length;
           var coldReserve = <TransportEndpointHint>[];
@@ -332,7 +342,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
             });
             try {
               final acknowledgement = await _connectionCoordinator.resolveAndConnectTransportProfile(
-                attemptRef: attemptRef, query: query, hint: hint, service: service, engine: engine,
+                 attemptRef: attemptRef, query: query, hint: hint, service: manifestService, engine: engine,
                 generation: generation, repair: false);
               final proof = await _connectionCoordinator.proveTransportConnection(
                 acknowledgement, generation: generation);
@@ -368,7 +378,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
     if (service is! AppFirstTransportPayloadService) {
       _transportSelectionFail('payload_preparation_unconfigured');
     }
-    return service.prepareTransportPayloadProbe(hostPlatform: selection.context.hostPlatform,
+    return (service as AppFirstTransportPayloadService).prepareTransportPayloadProbe(hostPlatform: selection.context.hostPlatform,
       selection: selection.source, request: request, operationIsCurrent: operationIsCurrent, cancelled: cancelled);
   }
 
@@ -376,10 +386,12 @@ extension _TransportShellOperations on _PokrovSeedShellState {
     final service = _bootstrapper;
     final catalog = scope.staged.prepared.catalogPolicy;
     if (!identical(scope.engine, _runtimeEngine) || catalog == null ||
-        service is! AppFirstSmartAccessService || !service.smartAccessControlAvailable ||
+        service is! AppFirstSmartAccessService ||
+        !(service as AppFirstSmartAccessService).smartAccessControlAvailable ||
         service is! AppFirstSmartAccessRuntimeControlService) {
       _transportSelectionFail('runtime_control_unconfigured');
     }
+    final controlService = service as AppFirstSmartAccessRuntimeControlService;
     final native = await scope.readRunningSnapshot();
     _connectionCoordinator.updateSnapshot(native);
     final retained = await scope.wait(_smartAccessRuntimeStore.readNativeRestrictions());
@@ -402,7 +414,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
       _connectionCoordinator.receivedSmartAccessRevocations(binding).isEmpty &&
       _connectionCoordinator.pendingSmartAccessPolicyRevocation(binding) == null;
     await scope.sample();
-    final control = await scope.wait(service.fetchSmartAccessControl(
+    final control = await scope.wait((service as AppFirstSmartAccessService).fetchSmartAccessControl(
       hostPlatform: scope.hostPlatform, profileDigest: scope.profileDigest,
       operationIsCurrent: () => scope.isCurrent, remainingBudget: scope.remainingBudget, cancelled: scope.cancelled));
     if (control.profileDigest != scope.profileDigest || !scope.latestObservedTime.isBefore(control.expiresAt)) {
@@ -418,7 +430,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
       // exact start instead of enabling a worker against withdrawn authority.
       _transportSelectionFail('runtime_control_revoked');
     }
-    final config = await scope.wait(service.requestSmartAccessRuntimeControl(
+    final config = await scope.wait(controlService.requestSmartAccessRuntimeControl(
       hostPlatform: scope.hostPlatform, profileDigest: scope.profileDigest, catalogSha256: catalog.payloadSha256,
       operationIsCurrent: () => scope.isCurrent, remainingBudget: scope.remainingBudget, cancelled: scope.cancelled));
     if (!scope.latestObservedTime.isBefore(control.expiresAt)) _transportSelectionFail('runtime_control_expired');
@@ -432,7 +444,8 @@ extension _TransportShellOperations on _PokrovSeedShellState {
     if (!identical(stage.engine, _runtimeEngine)) _transportSelectionFail('restriction_engine_mismatch');
     final catalog = stage.prepared.catalogPolicy;
     final service = _bootstrapper;
-    if (catalog == null || service is! AppFirstSmartAccessService || !service.smartAccessControlAvailable) {
+    if (catalog == null || service is! AppFirstSmartAccessService ||
+        !(service as AppFirstSmartAccessService).smartAccessControlAvailable) {
       throw const RoutingCatalogFailure('catalog_control_trust_unconfigured');
     }
     if (native.routingCatalogControlVersion != 4) {

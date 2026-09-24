@@ -394,6 +394,7 @@ void main() {
       },
       ConnectionExperiencePhase.connecting: {
         ConnectionExperiencePhase.idle,
+        ConnectionExperiencePhase.disconnecting,
         ConnectionExperiencePhase.connectedUnverified,
         ConnectionExperiencePhase.connectedVerified,
         ConnectionExperiencePhase.blocked,
@@ -421,6 +422,7 @@ void main() {
       },
       ConnectionExperiencePhase.reconnecting: {
         ConnectionExperiencePhase.idle,
+        ConnectionExperiencePhase.disconnecting,
         ConnectionExperiencePhase.connectedUnverified,
         ConnectionExperiencePhase.connectedVerified,
         ConnectionExperiencePhase.blocked,

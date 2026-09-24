@@ -331,10 +331,13 @@ class AndroidHostSecurityContractTest {
     fun runtimeReplacementReleasesDnsCallbackBeforeOldResourcesClose() {
         val serviceSource = source("PokrovRuntimeVpnService.kt")
 
-        assertTrue(serviceSource.contains("val session = replaceRuntimeSession()"))
+        val sessionStart = serviceSource.indexOf("val session = replaceRuntimeSession(")
+        val dnsRelease = serviceSource.indexOf("releaseDnsFailureToken()", sessionStart)
+        val oldTunClose = serviceSource.indexOf("runCatching { activeTun?.close() }", dnsRelease)
+        assertTrue(sessionStart >= 0)
+        assertTrue(dnsRelease > sessionStart)
+        assertTrue(oldTunClose > dnsRelease)
         assertTrue(serviceSource.contains("cancelRuntimeSession()"))
-        assertTrue(serviceSource.contains("releaseDnsFailureToken()"))
-        assertTrue(serviceSource.contains("runCatching { activeTun?.close() }"))
         assertTrue(serviceSource.contains("val dnsFailureToken = dnsFailureTokenGate.activate()"))
         assertTrue(serviceSource.contains("!dnsFailureTokenGate.owns(token)"))
     }

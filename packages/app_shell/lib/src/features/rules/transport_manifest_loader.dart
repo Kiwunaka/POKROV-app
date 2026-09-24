@@ -67,8 +67,8 @@ class _TransportManifestLoader {
       handle = await store.openSelection(admission: result.admission, expectedGeneration: generation,
         operationStarted: operationStarted, operationBudget: operationBudget,
         operationIsCurrent: isCurrent, requireSession: requireSameSession);
-      handle!.requireCurrent();
-      unawaited(handle!.whenClosed.then((_) => removeSessionObserver?.call()));
+      handle.requireCurrent();
+      unawaited(handle.whenClosed.then((_) => removeSessionObserver?.call()));
       return handle;
     } on Object {
       stop();

@@ -245,7 +245,7 @@ class TransportConnectAcknowledgement {
       if (engine is! RuntimeConnectProgress || _owner.requestId == null) {
         _transportSelectionFail('connect_progress_unsupported');
       }
-      return engine.snapshotForConnectRequest(_owner.requestId!);
+      return (engine as RuntimeConnectProgress).snapshotForConnectRequest(_owner.requestId!);
     }
     return engine.snapshot();
   }
@@ -493,7 +493,7 @@ class TransportSelection {
     String? expectedDigest;
     TransportTimeWindow? settledAt;
     try {
-      final staged = await engine.stageWithCoreIdentity(prepared.payload,
+      final staged = await (engine as RuntimeCoreIdentityStage).stageWithCoreIdentity(prepared.payload,
         expectedCoreModuleSha256: context.artifactSha256, operationIsCurrent: current,
         persistRestrictions: persistRestrictions == null ? null : (identityInput, native) async {
           await persistence.sample();
@@ -533,6 +533,8 @@ class TransportSelection {
     final engine = staged._engine;
     if (engine is! RuntimeCoreIdentityConnect || engine is! RuntimeConnectCancellation ||
         engine is! RuntimeConnectSettlement) _transportSelectionFail('connect_unsupported');
+    final connectEngine = engine as RuntimeCoreIdentityConnect;
+    final cancellationEngine = engine as RuntimeConnectCancellation;
     final now = await sample();
     staged.requireCurrent(this, now);
     late final _TransportNativeConnect owner;
@@ -545,7 +547,8 @@ class TransportSelection {
         if (wake != null && !wake.isCompleted) wake.complete();
         await owner.stop();
       });
-    owner = _TransportNativeConnect(this, staged.attemptRef, permit, engine);
+    owner = _TransportNativeConnect(this, staged.attemptRef, permit,
+      engine as RuntimeConnectSettlement);
     _nativeConnect = owner;
     owner.deadlineTimer = Timer(permit.remainingBudget, () => _stopAttempt('stage_deadline'));
     TransportTimeWindow? settledAt;
@@ -556,7 +559,7 @@ class TransportSelection {
     }
     void requireSnapshot(RuntimeSnapshot value) {
       requireOwner();
-      if (owner.requestId == null || engine.connectRequestForSnapshot(value) != owner.requestId ||
+      if (owner.requestId == null || cancellationEngine.connectRequestForSnapshot(value) != owner.requestId ||
           value.transportProofPending != true ||
           !context.matchesRuntimeCore(value) || value.stagedProfileDigest != staged.nativeProfileDigest ||
           (!value.connectionPending && (value.phase != RuntimePhase.running ||
@@ -576,7 +579,7 @@ class TransportSelection {
           before.connectionPending || before.stagedProfileDigest != staged.nativeProfileDigest) {
         _transportSelectionFail('stage_superseded');
       }
-      var result = await engine.connectWithCoreIdentity(
+      var result = await connectEngine.connectWithCoreIdentity(
         expectedCoreModuleSha256: context.artifactSha256,
         expectedProfileDigest: staged.nativeProfileDigest,
         expectedNetworkContextRef: context._networkSource == null ? null : context.networkContextRef,
@@ -599,7 +602,7 @@ class TransportSelection {
         progressWake = wake;
         progressTimer = Timer(const Duration(milliseconds: 100), wake.complete);
         await wake.future;
-        progressTimer?.cancel();
+        progressTimer.cancel();
         progressTimer = null;
         progressWake = null;
         final beforeRead = await sample();
@@ -607,7 +610,7 @@ class TransportSelection {
         requireOwner();
         // Await the actual channel read even after cancellation; the original
         // tunnel child and owner remain retained until this Future settles.
-        result = await engine.snapshotForConnectRequest(owner.requestId!);
+        result = await (engine as RuntimeConnectProgress).snapshotForConnectRequest(owner.requestId!);
         settledAt = await sample();
         staged.requireCurrent(this, settledAt);
         requireSnapshot(result);
@@ -656,7 +659,7 @@ class TransportSelection {
     final engine = acknowledgement.staged._engine;
     if (candidate == null || !identical(_nativeConnect, owner) || owner.requestId == null ||
         engine is! RuntimeTransportLeaseHandoff) _transportSelectionFail('lease_handoff_unavailable');
-    final native = await engine.promoteBoundTransportLease(
+    final native = await (engine as RuntimeTransportLeaseHandoff).promoteBoundTransportLease(
       requestId: owner.requestId!, profileDigest: acknowledgement.staged.nativeProfileDigest,
       endpointLeaseRef: candidate.endpointLeaseRef,
       issuedAt: candidate.authorizedFrom,

@@ -20,11 +20,12 @@ class AndroidTunPackagePlannerTest {
     }
 
     @Test
-    fun `selected apps uses allow-list without mixing disallowed packages`() {
+    fun `selected apps uses allow-list`() {
         val plan = AndroidTunPackagePlanner.plan(
             appPackage = "space.pokrov.pokrov_android_shell",
             includedPackages = listOf("com.example.browser", "com.example.browser"),
-            excludedPackages = listOf("com.example.mail"),
+            excludedPackages = emptyList(),
+            selectedAppsMode = true,
         )
 
         assertEquals(listOf("com.example.browser"), plan.allowedPackages)

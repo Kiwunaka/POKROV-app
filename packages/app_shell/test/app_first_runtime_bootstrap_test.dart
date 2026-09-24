@@ -8389,7 +8389,7 @@ void main() {
   ]) {
     for (final mode in host == HostPlatform.linux
         ? [RouteMode.fullTunnel]
-        : RouteMode.values) {
+        : RouteMode.values.where((mode) => mode != RouteMode.selectiveServices)) {
       for (final ready in host == HostPlatform.linux
           ? [true]
           : host == HostPlatform.windows

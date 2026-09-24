@@ -220,7 +220,7 @@ class _RoutingCatalogPreviewCardState extends State<_RoutingCatalogPreviewCard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (current && preview != null) ...[
+          if (current) ...[
             Text('Правил каталога: напрямую ${preview.policy.rules.where((rule) => rule.action == CatalogRouteAction.direct).length} · '
                 'через VPN ${preview.policy.rules.where((rule) => rule.action == CatalogRouteAction.vpn).length} · '
                 'через шлюз ${preview.policy.rules.where((rule) => rule.action == CatalogRouteAction.approvedGateway).length} · '

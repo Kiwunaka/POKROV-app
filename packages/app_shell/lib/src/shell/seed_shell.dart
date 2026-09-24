@@ -4720,7 +4720,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     // The shorter UI deadline must not discard an authorized mutation's outcome.
     final engine = _runtimeEngine;
     final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
-    final RuntimeConnectCancellation? cancellation = engine is RuntimeConnectCancellation ? engine : null;
+    final RuntimeConnectCancellation? cancellation = engine is RuntimeConnectCancellation
+        ? engine as RuntimeConnectCancellation : null;
     String? startedRequest;
     try {
       return await _connectionCoordinator.runWithTimeout(
@@ -4764,7 +4765,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   bool get _routingCatalogEnabled {
     final service = _bootstrapper;
-    return service is AppFirstRoutingCatalogService && service.routingCatalogEnabled;
+    return service is AppFirstRoutingCatalogService &&
+        (service as AppFirstRoutingCatalogService).routingCatalogEnabled;
   }
 
   bool get _selectiveServicesAvailable => _routingCatalogEnabled &&
@@ -4784,7 +4786,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         access == null || !access.hasKnownAccessState || !access.isConsistent) {
       throw const RoutingCatalogFailure('catalog_selective_unavailable');
     }
-    final result = await service.fetchRoutingCatalog(hostPlatform: widget.appContext.hostPlatform)
+    final result = await (service as AppFirstRoutingCatalogService)
+        .fetchRoutingCatalog(hostPlatform: widget.appContext.hostPlatform)
         .timeout(widget.runtimeActionTimeout);
     if (result == null) throw const RoutingCatalogFailure('catalog_selective_unavailable');
     final catalog = RoutingCatalogPolicy.fromVerified(result.catalog);
@@ -4808,20 +4811,23 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (engine is RuntimeSmartAccessBackgroundControl && native.phase == RuntimePhase.running &&
         native.smartAccessRuntimeControlVersion == 1 && digest != null && runtimeCurrent()) {
       try {
-        final state = await engine.readSmartAccessLeases(digest).timeout(widget.runtimeActionTimeout);
+        final state = await (engine as RuntimeSmartAccessBackgroundControl)
+            .readSmartAccessLeases(digest).timeout(widget.runtimeActionTimeout);
         if (runtimeCurrent()) { runtime = state; runtimeObservedAt = DateTime.now().toUtc(); }
       } on Object {
         // Native state is optional presentation data, never inferred from the
         // prepared catalog or retained inventory when readback is unavailable.
       }
     }
-    final smartAccessEnabled = service is AppFirstSmartAccessService && service.smartAccessEnabled;
+    final smartAccessEnabled = service is AppFirstSmartAccessService &&
+        (service as AppFirstSmartAccessService).smartAccessEnabled;
     VerifiedSmartAccessProviderPolicy? providers;
     DateTime? providersObservedAt;
     if (smartAccessEnabled && service is AppFirstSmartAccessService && metadataCurrent() &&
         catalog.services.any((item) => item.providerCapabilityRefs.isNotEmpty)) {
       try {
-        providers = await service.fetchSmartAccessProviders(hostPlatform: widget.appContext.hostPlatform,
+        providers = await (service as AppFirstSmartAccessService)
+            .fetchSmartAccessProviders(hostPlatform: widget.appContext.hostPlatform,
           operationIsCurrent: metadataCurrent, remainingBudget: widget.runtimeActionTimeout,
           cancelled: Future.any<void>([cancelled, _connectionCoordinator.whenOperationChanges(generation)]))
           .timeout(widget.runtimeActionTimeout);
@@ -4874,14 +4880,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<_RoutingCatalogPreview?> _loadRoutingCatalogPreview() async {
     final service = _bootstrapper;
-    if (service is! AppFirstRoutingCatalogService || !service.routingCatalogEnabled) return null;
+    if (service is! AppFirstRoutingCatalogService ||
+        !(service as AppFirstRoutingCatalogService).routingCatalogEnabled) return null;
     final revision = _managedProfileRevision;
     final mode = _selectedRouteMode;
     final access = _freeProfileAccess;
     if (access == null || !access.hasKnownAccessState || !access.isConsistent) {
       throw const RoutingCatalogFailure('catalog_profile_access_invalid');
     }
-    final result = await service.fetchRoutingCatalog(hostPlatform: widget.appContext.hostPlatform)
+    final result = await (service as AppFirstRoutingCatalogService)
+        .fetchRoutingCatalog(hostPlatform: widget.appContext.hostPlatform)
         .timeout(widget.runtimeActionTimeout);
     if (result == null) return null;
     final native = await _runtimeEngine.snapshot().timeout(widget.runtimeActionTimeout);
@@ -4930,10 +4938,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<CatalogAndroidDiscoveryResult> _inspectVerifiedCatalogDirectApps(bool fresh) async {
     final service = _bootstrapper;
-    if (service is! AppFirstRoutingCatalogService || !service.routingCatalogEnabled) {
+    if (service is! AppFirstRoutingCatalogService ||
+        !(service as AppFirstRoutingCatalogService).routingCatalogEnabled) {
       throw const RoutingCatalogFailure('catalog_discovery_unavailable');
     }
-    final result = await service.fetchRoutingCatalog(hostPlatform: HostPlatform.android)
+    final result = await (service as AppFirstRoutingCatalogService)
+        .fetchRoutingCatalog(hostPlatform: HostPlatform.android)
         .timeout(widget.runtimeActionTimeout);
     if (result == null || !_routingCatalogEnabled) {
       throw const RoutingCatalogFailure('catalog_discovery_unavailable');
@@ -5089,7 +5099,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         throw const RoutingCatalogFailure('catalog_discovery_unavailable');
       }
       if (catalogService is AppFirstRoutingCatalogService) {
-        final result = await catalogService.fetchRoutingCatalog(
+        final result = await (catalogService as AppFirstRoutingCatalogService).fetchRoutingCatalog(
           hostPlatform: widget.appContext.hostPlatform, cacheOnly: offline,
           cancelled: cancelled,
         ).timeout(widget.runtimeActionTimeout);
@@ -5153,7 +5163,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           catalogPolicy = compile(null);
           if (!offline && !result.usingCache && catalogMode == CatalogRoutingMode.selective &&
               nativeSmartAccessLeaseVersion == 1 && catalogService is AppFirstSmartAccessService &&
-              catalogService.smartAccessEnabled) {
+              (catalogService as AppFirstSmartAccessService).smartAccessEnabled) {
             final wanted = catalogProjection.services.where((service) =>
                 catalogPolicy!.selectedServiceIds.contains(service.id) &&
                 service.intents[CatalogRoutingMode.selective] == CatalogRouteAction.approvedGateway)
@@ -5175,7 +5185,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                     HttpStatus.serviceUnavailable, HttpStatus.gatewayTimeout}.contains(error.statusCode);
               VerifiedSmartAccessProviderPolicy? providers;
               try {
-                providers = await catalogService.fetchSmartAccessProviders(
+                providers = await (catalogService as AppFirstSmartAccessService).fetchSmartAccessProviders(
                   hostPlatform: widget.appContext.hostPlatform, operationIsCurrent: current,
                   remainingBudget: remaining(), cancelled: cancelled);
               } on BootstrapFailure catch (error) {
@@ -5193,7 +5203,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 final digest = await smartAccessProfileSha256(runtimePayload.configPayload);
                 for (final candidate in candidates) {
                   try {
-                    grants.add(await catalogService.requestSmartAccessLease(
+                    grants.add(await (catalogService as AppFirstSmartAccessService).requestSmartAccessLease(
                       hostPlatform: widget.appContext.hostPlatform, catalog: result.catalog,
                       providerPolicy: providers, capabilityId: candidate['capability_id']! as String,
                       profileSha256: digest, origin: candidate['origin']! as String,
@@ -5233,7 +5243,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       final grants = catalogPolicy?.smartAccessProfile?.byService.values.expand((group) => group);
       if (catalogPolicy != null && catalogPolicy.rules.any((rule) => rule.action != CatalogRouteAction.block)) {
-        if (catalogService is! AppFirstSmartAccessService || !catalogService.smartAccessControlAvailable) {
+        if (catalogService is! AppFirstSmartAccessService ||
+            !(catalogService as AppFirstSmartAccessService).smartAccessControlAvailable) {
           throw const RoutingCatalogFailure('catalog_control_trust_unconfigured');
         }
         if (nativeCatalogControlVersion != 4) {
@@ -5850,7 +5861,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
         final transportService = _bootstrapper;
         if (transportService is AppFirstTransportManifestService &&
-            transportService.transportManifestEnabled &&
+            (transportService as AppFirstTransportManifestService).transportManifestEnabled &&
             (_selectedRouteMode == RouteMode.fullTunnel ||
              (_selectedRouteMode == RouteMode.allExceptRu &&
                const {HostPlatform.android, HostPlatform.windows}.contains(widget.appContext.hostPlatform)) ||
@@ -6273,7 +6284,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     try {
       Object? cancellationError;
       try {
-        await _cancelOwnedConnect(engine, requestId);
+        await _cancelOwnedConnect(engine as RuntimeConnectCancellation, requestId);
       } on Object catch (error) {
         cancellationError = error;
       }
@@ -6934,7 +6945,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     int? ownerGeneration,
   }) async {
     final engine = _runtimeEngine;
-    final RuntimeConnectCancellation? cancellation = engine is RuntimeConnectCancellation ? engine : null;
+    final RuntimeConnectCancellation? cancellation = engine is RuntimeConnectCancellation
+        ? engine as RuntimeConnectCancellation : null;
     final requestId = cancellation?.connectRequestForSnapshot(snapshot);
     try {
       return await _settleOwnedRuntimeTransition(snapshot, ownerGeneration: ownerGeneration,

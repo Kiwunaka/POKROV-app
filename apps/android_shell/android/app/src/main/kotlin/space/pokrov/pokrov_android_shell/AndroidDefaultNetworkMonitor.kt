@@ -294,7 +294,7 @@ internal object AndroidDefaultNetworkMonitor {
             if (networkChanged) {
                 currentNetwork = network
                 currentNetworkGeneration += 1
-                currentNetworkLinkProperties = resolvedLinks?.let { LinkProperties(it) }
+                currentNetworkLinkProperties = resolvedLinks
                 resolvedInterfaceName = null
                 resolvedInterfaceIndex = null
                 interfaceResolutionGeneration = null

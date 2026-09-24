@@ -134,7 +134,7 @@ internal class AndroidTransportNetworkContext(context: Context) {
             if (selected != network || properties != links || currentCapabilities != capabilities ||
                 (reference == null && selected != null && properties != null && currentCapabilities != null)) {
                 network = selected
-                links = properties?.let(::LinkProperties)
+                links = properties
                 capabilities = currentCapabilities
                 reference = if (selected != null && properties != null && currentCapabilities != null)
                     "network_" + UUID.randomUUID().toString().replace("-", "") else null

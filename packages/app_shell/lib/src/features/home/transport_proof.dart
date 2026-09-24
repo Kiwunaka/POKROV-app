@@ -98,7 +98,7 @@ extension _TransportProofExecution on TransportSelection {
             _transportSelectionFail('payload_preparation_superseded');
           }
         }
-        final result = await engine.probeBoundConnection(request,
+        final result = await (engine as RuntimeBoundConnectivityProbe).probeBoundConnection(request,
           payloadExchange: payloadExchange,
           cancelled: payloadExchange == null ? cancelled.future :
             Future.any<void>([cancelled.future, payloadExchange.whenClosed]),

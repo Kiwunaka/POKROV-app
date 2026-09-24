@@ -63,7 +63,7 @@ class TransportRuntimeControl {
     await sample();
     final bound = engine;
     if (bound is! RuntimeBoundSmartAccessControl) _transportSelectionFail('bound_runtime_control_unsupported');
-    final configured = await wait(bound.configureBoundSmartAccessRuntimeControl(
+    final configured = await wait((bound as RuntimeBoundSmartAccessControl).configureBoundSmartAccessRuntimeControl(
       requestId: acknowledgement._owner.requestId!, profileDigest: profileDigest, configJson: configJson));
     if (!configured) _transportSelectionFail('runtime_control_unconfirmed');
     await readRunningSnapshot();

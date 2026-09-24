@@ -149,6 +149,7 @@ class PokrovQuickSettingsTileServiceTest {
                     configPath = "/tmp/fresh-profile.json",
                     routeMode = "device",
                     quickSettingsEligible = true,
+                    lanScopeVersion = 1,
                     configDigest = "a".repeat(64),
                 ).canStartFromQuickSettings(),
                 vpnPermissionRequired = false,

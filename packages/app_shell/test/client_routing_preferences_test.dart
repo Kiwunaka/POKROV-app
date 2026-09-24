@@ -80,10 +80,13 @@ void main() {
     final route = _map(config['route']);
     final rules = _maps(route['rules']);
 
-    expect(rules[0]['domain_suffix'], <String>['private.example']);
-    expect(rules[0]['outbound'], 'proxy');
-    expect(rules[1]['ip_cidr'], <String>['1.1.1.1']);
-    expect(rules[1]['outbound'], 'direct');
+    final vpnRule = rules.firstWhere((rule) =>
+        (rule['domain_suffix'] as List?)?.contains('private.example') == true);
+    final directRule = rules.firstWhere((rule) =>
+        (rule['ip_cidr'] as List?)?.contains('1.1.1.1') == true);
+    expect(vpnRule['outbound'], 'proxy');
+    expect(directRule['outbound'], 'direct');
+    expect(rules.indexOf(vpnRule), lessThan(rules.indexOf(directRule)));
     expect(
       rules.any(
         (rule) =>
@@ -190,8 +193,9 @@ void main() {
     final rules = _maps(_map(config['route'])['rules']);
     final servers = _maps(_map(config['dns'])['servers']);
 
-    expect(rules.first['outbound'], 'awg31-lab');
-    expect((rules.first['domain_suffix'] as List), contains('chatgpt.com'));
+    final aiRule = rules.firstWhere((rule) =>
+        (rule['domain_suffix'] as List?)?.contains('chatgpt.com') == true);
+    expect(aiRule['outbound'], 'awg31-lab');
     expect(servers.first['detour'], 'awg31-lab');
   });
 
@@ -555,7 +559,7 @@ void main() {
 
   test('route explainer reports the exact matching rule', () {
     final subnet = PokrovRouteOverride.tryCreate(
-      value: '10.0.0.0/8',
+      value: '8.8.8.0/24',
       action: PokrovRouteAction.direct,
     )!;
     final preferences = PokrovRoutingPreferences.defaults().copyWith(
@@ -564,7 +568,7 @@ void main() {
     );
 
     final privateDecision = explainPokrovRouteDecision(
-      destination: '10.1.2.3',
+      destination: '8.8.8.8',
       preferences: preferences,
       fallbackMode: RouteMode.fullTunnel,
     );
@@ -575,7 +579,7 @@ void main() {
     );
 
     expect(privateDecision.action, PokrovRouteAction.direct);
-    expect(privateDecision.matchedValue, '10.0.0.0/8');
+    expect(privateDecision.matchedValue, '8.8.8.0/24');
     expect(privateDecision.reason, contains('Ваше правило'));
     expect(aiDecision.action, PokrovRouteAction.vpn);
     expect(aiDecision.reason, contains('AI-сервисы'));

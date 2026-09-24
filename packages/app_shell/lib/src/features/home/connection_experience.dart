@@ -638,7 +638,7 @@ class ConnectionCoordinator {
     try {
       if (const {HostPlatform.android, HostPlatform.windows, HostPlatform.linux}.contains(runtime.hostPlatform)) {
         if (engine is! RuntimeTransportNetworkContext) _transportSelectionFail('network_context_unavailable');
-        networkSource = engine;
+        networkSource = engine as RuntimeTransportNetworkContext;
         capturedNetworkRef = await networkSource.readTransportNetworkContext();
       }
       now = await source.sample();
@@ -700,11 +700,12 @@ class ConnectionCoordinator {
     _transportProofPending = true;
     final engine = active.engine;
     try {
-      if (engine is! RuntimeConnectCancellation || engine.activeConnectRequestId != active.requestId) {
+      if (engine is! RuntimeConnectCancellation ||
+          (engine as RuntimeConnectCancellation).activeConnectRequestId != active.requestId) {
         throw StateError('transport_lease_owner_unavailable');
       }
       if (engine is! RuntimeTransportLeaseRevocation) throw StateError('transport_lease_revocation_unavailable');
-      final native = await engine.revokeBoundTransportLease(requestId: active.requestId,
+      final native = await (engine as RuntimeTransportLeaseRevocation).revokeBoundTransportLease(requestId: active.requestId,
         profileDigest: active.profileDigest, endpointLeaseRef: active.endpointLeaseRef,
         terminateActive: true);
       if (!identical(active, _activeTransportLease)) return null;
@@ -714,7 +715,7 @@ class ConnectionCoordinator {
     } on Object {
       if (engine is RuntimeConnectSettlement) {
         try {
-          if (await engine.cancelAndConfirmConnectStopped(active.requestId)) {
+          if (await (engine as RuntimeConnectSettlement).cancelAndConfirmConnectStopped(active.requestId)) {
             _activeTransportLease = null;
             final native = await engine.snapshot();
             updateSnapshot(native);
@@ -851,7 +852,7 @@ class ConnectionCoordinator {
           try {
             if (canRetry) {
               final now = await selection.sample();
-              final observation = failure!;
+              final observation = failure;
               final outcome = observation.outcome == RuntimeBoundProbeOutcome.fail && observation.receipt != null
                   ? TransportAttemptResult.fail
                   : observation.outcome == RuntimeBoundProbeOutcome.unavailable

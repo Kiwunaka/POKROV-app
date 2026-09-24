@@ -15,6 +15,7 @@ class AndroidRuntimeProfileIdentityTest {
             configDigest = digest,
             routeMode = "selected_apps",
             quickSettingsEligible = true,
+            lanScopeVersion = 1,
         )
         assertTrue(runtimeProfileMatchesIntent(profile, digest, profile.configPath, profile.routeMode, content))
         assertFalse(runtimeProfileMatchesIntent(profile, digest, profile.configPath, profile.routeMode, "{}"))

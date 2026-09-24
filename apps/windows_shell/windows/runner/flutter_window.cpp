@@ -292,7 +292,7 @@ std::optional<std::uint64_t> ElapsedArgument(const flutter::EncodableMap* argume
   if (field == arguments->end()) return std::nullopt;
   std::int64_t value = -1;
   if (const auto* number = std::get_if<std::int64_t>(&field->second)) value = *number;
-  else if (const auto* number = std::get_if<std::int32_t>(&field->second)) value = *number;
+  else if (const auto* number32 = std::get_if<std::int32_t>(&field->second)) value = *number32;
   if (value < 0 || value > 9007199254740991LL) return std::nullopt;
   return static_cast<std::uint64_t>(value);
 }

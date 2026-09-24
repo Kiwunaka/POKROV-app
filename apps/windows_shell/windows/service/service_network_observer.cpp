@@ -149,12 +149,12 @@ struct ServiceNetworkObserver::State {
           FALSE, WifiChanged, this, nullptr, nullptr) != ERROR_SUCCESS) return std::nullopt;
       wlan_notifications = true;
     }
-    PWLAN_INTERFACE_INFO_LIST interfaces = nullptr;
-    if (::WlanEnumInterfaces(wlan, nullptr, &interfaces) != ERROR_SUCCESS) return std::nullopt;
+    PWLAN_INTERFACE_INFO_LIST wifi_interfaces = nullptr;
+    if (::WlanEnumInterfaces(wlan, nullptr, &wifi_interfaces) != ERROR_SUCCESS) return std::nullopt;
     std::vector<std::string> rows;
-    bool valid = interfaces->dwNumberOfItems > 0 && interfaces->dwNumberOfItems <= 256;
-    for (DWORD index = 0; valid && index < interfaces->dwNumberOfItems; ++index) {
-      const auto& info = interfaces->InterfaceInfo[index];
+    bool valid = wifi_interfaces->dwNumberOfItems > 0 && wifi_interfaces->dwNumberOfItems <= 256;
+    for (DWORD index = 0; valid && index < wifi_interfaces->dwNumberOfItems; ++index) {
+      const auto& info = wifi_interfaces->InterfaceInfo[index];
       NET_LUID luid{};
       if (::ConvertInterfaceGuidToLuid(&info.InterfaceGuid, &luid) != NO_ERROR) {
         valid = false;
@@ -192,7 +192,7 @@ struct ServiceNetworkObserver::State {
       }
       rows.push_back(std::move(row));
     }
-    ::WlanFreeMemory(interfaces);
+    ::WlanFreeMemory(wifi_interfaces);
     if (!valid || !required_luids.empty()) return std::nullopt;
     std::string result;
     AppendRows(result, std::move(rows));

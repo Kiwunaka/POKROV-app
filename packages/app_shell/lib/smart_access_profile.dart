@@ -355,7 +355,7 @@ Future<List<Map<String, Object?>>> selectSmartAccessWebCapabilities({
         await _smartAccessRendezvous(remaining, [selectionSeed, ...scope, 'provider'], isCurrent);
       remaining.remove(providerId);
       final members = compatible.where((row) => row['provider_id'] == providerId &&
-        (first == null || _sameGatewayDomains(row['domains'], first!['domains']))).toList();
+        (first == null || _sameGatewayDomains(row['domains'], first['domains']))).toList();
       if (members.isEmpty) continue;
       final capabilityId = first == null && preferred.isNotEmpty ? preferred.single['capability_id']! as String :
         await _smartAccessRendezvous(members.map((row) => row['capability_id']! as String).toSet(),
