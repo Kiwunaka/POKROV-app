@@ -2545,7 +2545,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine, RuntimeBootClock {
       lane: RuntimeLane.desktopFfi,
       transportCapabilities: binding is RuntimeTransportCapabilitySource &&
               const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase)
-          ? binding.transportCapabilities : null,
+          ? (binding as RuntimeTransportCapabilitySource).transportCapabilities : null,
       phase: phase,
       artifactDirectory: artifacts.artifactDirectory?.path,
       coreBinaryPath: artifacts.coreBinary?.path,
