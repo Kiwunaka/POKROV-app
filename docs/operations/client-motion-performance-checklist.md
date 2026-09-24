@@ -1,6 +1,6 @@
 # Client Motion Performance Checklist
 
-Last updated: 2026-09-11
+Last updated: 2026-09-13
 
 Registry class: `ACTIVE_EXECUTION`.
 
