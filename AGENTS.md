@@ -1,68 +1,45 @@
-# POKROV-app Codex Contract
+# POKROV-app Contract
 
-This repository is the canonical client-development lane for POKROV. Promote client work through `POKROV-app/main`. The separate platform repository owns backend behavior, public web surfaces, and cross-surface shared facts.
+## Scope
 
-## Start Every Task
+- Client repo: Android and Windows are public; iOS and macOS are readiness work only. Main branch: `main`.
+- Platform facts and APIs live in `C:/Users/kiwun/Documents/ai/VPN` (`shared/` and platform docs); do not copy new truth here. Core runtime: `C:/Users/kiwun/Documents/ai/POKROV-core`.
+- Current work follows the owner's execution plan `C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md`, one stage per task. Older plans and evidence are history, not instructions.
 
-1. Classify the task with the route in `docs/README.md`; do not read every document by default.
-2. State the intended write set, authority owners, verification, and documentation impact.
-3. Inspect current code, tests, Git worktrees, and conflicting evidence before changing a contract.
-4. Preserve concurrent work. Never edit or clean another branch or worktree.
+## How To Work
 
-## Authority
+- Done means working code in `main`, plus a release to users when the stage says so. Reports, ledgers, status labels and evidence files are not results.
+- Make the smallest change that solves the task; reuse existing code and patterns. No speculative abstractions, dependencies, configuration, fallbacks or future-proofing.
+- Test only the changed behavior plus the stage checklist: `flutter analyze` and tests for the changed packages; Gradle or Windows packaging checks only when their files change. Repeat a check only after a change or a failure.
+- Build only after code changes. Never rebuild to refresh hashes, licenses, provenance or a "fresh candidate".
+- When behavior changes, update the owning doc with a short paragraph. Do not create evidence folders, ledgers or decision diaries.
+- Other agents may work in the same repos. Check `git status` and the diff first; never overwrite, revert or reformat work outside your task.
+- Stay inside the stage. List unrelated ideas in one line at the end of the report.
 
-- Task authority: Codex system/developer instructions, the user's current instruction, this contract, then the task router and process docs.
-- Intended product authority: owner-approved decisions and machine-readable contracts, canonical client docs, current code/tests, active execution records, then history.
-- Observed runtime authority: current provider/runtime state, candidate-specific evidence, provenance-bearing reports, then older evidence.
-- Release-claim authority: exact candidate identity, current candidate evidence, required manual gates, then the current release decision.
-- When code and intended canon disagree, record the conflict. Do not silently promote either side.
-- Archive and evidence can explain why a decision happened. They cannot decide what to implement now.
+## Git And GitHub
 
-## Repository Boundary
+- GitHub is plain storage for code and history. Actions results, PR reviews, commit signatures and LFS are not gates, and nothing paid is used.
+- Work on `main` or a short-lived branch; merge right after local checks and delete the branch. Keep only `main` and the current branch locally, with at most one extra worktree.
+- Never force-push `main`. Never use `git reset --hard` or a blanket restore on someone else's changes.
+- Do not add new release packages (APK, AAB, EXE, MSIX) or Core libraries to git or LFS. Release files go to GitHub Releases of `Kiwunaka/pokrov`. Delete local build outputs after use.
 
-- `Android` and `Windows` are the current public outside-store client surfaces.
-- `iOS` and `macOS` are readiness tracks only until signing, packaging, store, and device evidence closes their gates.
-- Platform-owned facts and API contracts live under `C:/Users/kiwun/Documents/ai/VPN/shared/` and the platform canonical docs. Coordinate cross-repo changes instead of copying new truth here.
-- Client product, shell, runtime, host integration, and client release-readiness truth belongs in this repository and its canonical registry entries.
+## Client Rules
 
-### 1.2–1.4 Execution Rules
+- Do not replace the runtime core or change the tunnel/WARP lifecycle or platform privileges without focused tests for that change.
+- Never downgrade secure storage or log session and auth values.
+- Signing, store and physical-device checks are done by the owner or on the owner's device. Do not fake them.
 
-- Complete each stage as working behavior committed on `main` when ready.
-- Keep stage work narrow; do not create new evidence directories, ledgers, or status reports in Git.
-- Update the canonical behavior owner once when behavior changes.
-- Build after code changes, with the signed release build on final stage code.
-- Run affected checks and the stage checklist; repeat only after a relevant change or failure.
-- Use scoped commits; preserve unrelated work and retained rollback material.
-- Ask the owner before production deploys, release publication, destructive cleanup, expenses, prices, or numeric limits.
-- Use saved SSH, hypervisor access, and ADB for owned systems; keep status claims tied to observed results.
+## Ask The Owner Only For
 
-## Runtime And Security
+Release publication, deleting data or folders, spending money, prices and tariffs. Decide everything else inside the task.
 
-- Authorized defensive validation is limited to local POKROV repositories, POKROV-owned runtime surfaces, and isolated fixtures; third-party systems, accounts, credentials, and data are out of scope.
-- Do not replace the default runtime core, alter tunnel or WARP lifecycle, or change platform privileges without the matching architecture route and focused tests.
-- Keep tokens, credentials, signing material, private keys, raw profiles, and provider data out of Git, logs, fixtures, screenshots, and handoffs.
-- Never downgrade secure storage to plaintext or log authentication/session values. Preserve logout, revocation, migration, and corrupt-state behavior.
-- Signing identities, entitlements, provisioning, device proof, and store access are operator-owned gates. Do not fabricate or bypass them.
-- Do not add a dependency, service, generator, external agent adapter, or retrieval system unless the task explicitly requires it.
+## Safety
 
-## Evidence And Destructive Operations
+- Never print, commit or expose secrets, keys, tokens, signing material, raw profiles or customer data.
+- Work only on POKROV-owned repos, servers and devices. Third-party systems and accounts are out of scope.
+- Devices: VMs through the hypervisor API with the saved guest access; the phone through ADB. Do not take over the owner's desktop with computer use without asking.
+- Never claim a check, push, build or release that did not happen. State plainly what was not checked.
 
-- Do not modify `artifacts/releases/**` unless the current task is an explicitly approved release-artifact task with candidate and rollback scope.
-- Preserve audit evidence, retained release lineage, historical decisions, and generated references. Reclassify or index them instead of rewriting history.
-- Never run broad clean, reset, stash drop, worktree removal, recursive deletion, or bulk regeneration without explicit scope and before/after proof.
-- Inspect ignored and untracked files before cleanup. Machine-local files are not automatically disposable.
+## Report (up to 10 lines)
 
-## Release Honesty
-
-- Never infer stable, signed, store-ready, device-proven, WARP-proven, or publicly downloadable status from code, old handoffs, or historical authorization.
-- Label inaccessible or operator-only checks precisely, including `MANUAL_OWNER_TEST`, `BLOCKED_BY_ACCESS`, `SKIPPED_BY_OWNER`, `OPERATOR_ATTESTED`, or `NOT_REQUESTED`.
-- Documentation-only work must not run Android or Windows release builds merely to manufacture evidence.
-
-## Verification And Documentation
-
-- Shell, domain, or runtime changes: run the narrowest relevant Flutter analyze/tests first, then the affected host checks.
-- Android host changes: run focused Flutter and Gradle tests. Windows or Apple packaging checks run only when their files or contracts change.
-- Docs/config changes: run `powershell -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1`.
-- Every task runs `git diff --check`; release-related tasks also prove no unintended `artifacts/releases/**` delta.
-- Update the owning canonical doc in the same task when behavior, scope, API use, runtime, security, release gates, or user-facing copy changes.
-- Handoff with changed files, commands and results, remaining manual gates, blockers, and rollback notes. Never claim checks you did not run.
+Stage and status; what changed for users; code merged (yes/no); how it was checked and what was not; what is left; the blocker; what is needed from the owner.

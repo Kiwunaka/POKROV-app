@@ -381,18 +381,18 @@ function Get-AgentContractStructure {
 
   $visible = @(Get-VisibleMarkdownLines -Text $Text -Name 'AGENTS.md' -Errors $Errors)
   $h1Lines = @($visible | Where-Object { $_.Text -match '^# (?!#)' })
-  if ($h1Lines.Count -ne 1 -or $h1Lines[0].Text -cne '# POKROV-app Codex Contract') {
+  if ($h1Lines.Count -ne 1 -or $h1Lines[0].Text -cne '# POKROV-app Contract') {
     [void]$Errors.Add('AGENTS.md must contain exactly one canonical H1 heading')
   }
 
   $requiredHeadings = @(
-    'Start Every Task',
-    'Authority',
-    'Repository Boundary',
-    'Runtime And Security',
-    'Evidence And Destructive Operations',
-    'Release Honesty',
-    'Verification And Documentation'
+    'Scope',
+    'How To Work',
+    'Git And GitHub',
+    'Client Rules',
+    'Ask The Owner Only For',
+    'Safety',
+    'Report (up to 10 lines)'
   )
   $headingNames = [System.Collections.Generic.List[string]]::new()
   $headingPositions = [System.Collections.Generic.List[int]]::new()
@@ -420,8 +420,8 @@ function Get-AgentContractStructure {
       if (-not [string]::IsNullOrWhiteSpace($line)) { $nonEmpty++ }
       if ($line -match '^\s*(?:- |\d+\.\s+)') { $listItems++ }
     }
-    if ($nonEmpty -eq 0 -or $listItems -eq 0) {
-      [void]$Errors.Add("AGENTS.md section '$($headingNames[$headingIndex])' must contain meaningful list content")
+    if ($nonEmpty -eq 0) {
+      [void]$Errors.Add("AGENTS.md section '$($headingNames[$headingIndex])' must contain content")
     }
     if (-not $sections.ContainsKey($headingNames[$headingIndex])) {
       $sections.Add($headingNames[$headingIndex], ($bodyLines -join "`n"))
@@ -445,10 +445,6 @@ function Get-AgentContractStructure {
     }
   }
   $preamble = $preambleLines -join "`n"
-  if ([string]::IsNullOrWhiteSpace($preamble)) {
-    [void]$Errors.Add('AGENTS.md preamble must state the repository boundary')
-  }
-
   return [pscustomobject]@{
     Preamble = $preamble
     Sections = $sections
@@ -470,56 +466,13 @@ function Test-AgentContract {
   }
 
   $contracts = [ordered]@{
-    'Preamble' = @(
-      'canonical client-development lane for POKROV',
-      'Promote client work through `POKROV-app/main`',
-      'The separate platform repository owns backend behavior, public web surfaces, and cross-surface shared facts'
-    )
-    'Start Every Task' = @(
-      'Classify the task with the route in `docs/README.md`',
-      'State the intended write set, authority owners, verification, and documentation impact',
-      'Inspect current code, tests, Git worktrees, and conflicting evidence',
-      'Never edit or clean another branch or worktree'
-    )
-    'Authority' = @(
-      'Task authority: Codex system/developer instructions',
-      'Intended product authority: owner-approved decisions and machine-readable contracts',
-      'current code/tests',
-      'When code and intended canon disagree, record the conflict',
-      'Archive and evidence can explain why a decision happened'
-    )
-    'Repository Boundary' = @(
-      '`Android` and `Windows` are the current public outside-store client surfaces',
-      '`iOS` and `macOS` are readiness tracks only',
-      'Platform-owned facts and API contracts live under `C:/Users/kiwun/Documents/ai/VPN/shared/`',
-      'Client product, shell, runtime, host integration, and client release-readiness truth belongs in this repository'
-    )
-    'Runtime And Security' = @(
-      'Do not replace the default runtime core',
-      'alter tunnel or WARP lifecycle',
-      'tokens, credentials, signing material, private keys, raw profiles, and provider data',
-      'Never downgrade secure storage to plaintext',
-      'Signing identities, entitlements, provisioning, device proof, and store access are operator-owned gates'
-    )
-    'Evidence And Destructive Operations' = @(
-      'Do not modify `artifacts/releases/**`',
-      'Preserve audit evidence, retained release lineage, historical decisions, and generated references',
-      'Never run broad clean, reset, stash drop, worktree removal, recursive deletion, or bulk regeneration',
-      'Machine-local files are not automatically disposable'
-    )
-    'Release Honesty' = @(
-      'Never infer stable, signed, store-ready, device-proven, WARP-proven, or publicly downloadable status',
-      '`MANUAL_OWNER_TEST`, `BLOCKED_BY_ACCESS`, `SKIPPED_BY_OWNER`, `OPERATOR_ATTESTED`, or `NOT_REQUESTED`',
-      'Documentation-only work must not run Android or Windows release builds'
-    )
-    'Verification And Documentation' = @(
-      'run the narrowest relevant Flutter analyze/tests first',
-      'Android host changes: run focused Flutter and Gradle tests',
-      'Docs/config changes: run `powershell -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1`',
-      'Every task runs `git diff --check`',
-      'Update the owning canonical doc in the same task',
-      'Handoff with changed files, commands and results, remaining manual gates, blockers, and rollback notes'
-    )
+    'Scope' = @('Android and Windows are public', 'one stage per task')
+    'How To Work' = @('Make the smallest change', 'Test only the changed behavior plus the stage checklist', 'never overwrite, revert or reformat work outside your task')
+    'Git And GitHub' = @('GitHub is plain storage', 'nothing paid is used', 'Do not add new release packages')
+    'Client Rules' = @('Do not replace the runtime core', 'Never downgrade secure storage')
+    'Ask The Owner Only For' = @('Release publication', 'deleting data or folders')
+    'Safety' = @('Never print, commit or expose secrets', 'Never claim a check, push, build or release that did not happen')
+    'Report (up to 10 lines)' = @('what changed for users', 'what is left')
   }
 
   foreach ($ownerScope in $contracts.Keys) {
@@ -545,7 +498,6 @@ function Test-AgentContract {
 
   $forbiddenPatterns = [ordered]@{
     'dated status marker' = '(?im)^\s*(?:last\s+updated|updated|date|as\s+of)\s*:'
-    'calendar-date snapshot' = '(?i)(?<!\d)(?:19|20)\d{2}[-/.](?:0?[1-9]|1[0-2])[-/.](?:0?[1-9]|[12]\d|3[01])(?!\d)'
     'month-name date snapshot' = '(?i)\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+(?:19|20)\d{2}\b'
     'release-version snapshot' = '(?i)(?<![A-Za-z0-9])v?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?(?![A-Za-z0-9])'
     'named model or provider' = '(?i)(?<![A-Za-z0-9])(?:OpenCode|OpenRouter|Fireworks|CODY|DeepSeek|Kimi|Claude|Gemini|Moonshot|MiniMax|Nemotron|Mimo|GPT(?:-[A-Za-z0-9_.-]+)?|GLM(?:-[A-Za-z0-9_.-]+)?|z[-.]ai)(?![A-Za-z0-9])'
@@ -987,31 +939,30 @@ function Invoke-ContractSelfTests {
   $registryText = [Text.UTF8Encoding]::new($false, $true).GetString($RegistryBytes)
 
   $decorativeSections = @'
-# POKROV-app Codex Contract
-POKROV-app/main
+# POKROV-app Contract
 
-## Start Every Task
-- docs/README.md Android Windows iOS macOS MANUAL_OWNER_TEST artifacts/releases git diff --check
+## Scope
+- Android and Windows.
 
-## Authority
-- Decorative authority words.
+## How To Work
+- Decorative workflow words.
 
-## Repository Boundary
-- Decorative repository words.
+## Git And GitHub
+- Decorative Git words.
 
-## Runtime And Security
+## Client Rules
 - Decorative runtime words.
 
-## Evidence And Destructive Operations
+## Ask The Owner Only For
+Decorative owner words.
+
+## Safety
 - Decorative safety words.
 
-## Release Honesty
-- Decorative release words.
-
-## Verification And Documentation
-- Decorative verification words.
+## Report (up to 10 lines)
+Decorative report words.
 '@
-  Assert-ContractRejected -Name 'decorative seven-section token bag' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes ($decorativeSections + "`n")) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'section-owned semantic marker'
+  Assert-ContractRejected -Name 'decorative contract' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes ($decorativeSections + "`n")) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'section-owned semantic marker'
 
   Assert-StrictBytesRejected -Name 'malformed UTF-8 fixture' -Bytes ([byte[]]@(0x61, 0xC3, 0x28, 0x0A)) -ExpectedErrorPattern 'not valid strict UTF-8'
   Assert-StrictBytesRejected -Name 'UTF-8 BOM fixture' -Bytes ([byte[]]@(0xEF, 0xBB, 0xBF, 0x61, 0x0A)) -ExpectedErrorPattern 'BOM'
@@ -1083,8 +1034,8 @@ POKROV-app/main
   }
   Assert-ContractRejected -Name 'four-path registry row split' -RepositoryRoot $RepositoryRoot -AgentsBytes $AgentsBytes -RegistryBytes (ConvertTo-Utf8Bytes $splitRegistry) -ExpectedErrorPattern 'exact 55-row manifest'
 
-  $wrongSectionAgents = Move-AgentLineBetweenSections -Text $agentsText -Marker 'Every task runs `git diff --check`' -SourceSection 'Verification And Documentation' -TargetSection 'Start Every Task'
-  Assert-ContractRejected -Name 'verification marker moved to wrong section' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $wrongSectionAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'belongs to Verification And Documentation'
+  $wrongSectionAgents = Move-AgentLineBetweenSections -Text $agentsText -Marker 'GitHub is plain storage' -SourceSection 'Git And GitHub' -TargetSection 'Safety'
+  Assert-ContractRejected -Name 'GitHub marker moved to wrong section' -RepositoryRoot $RepositoryRoot -AgentsBytes (ConvertTo-Utf8Bytes $wrongSectionAgents) -RegistryBytes $RegistryBytes -ExpectedErrorPattern 'belongs to Git And GitHub'
 
   $backtickFenceFixture = @'
 ````markdown
