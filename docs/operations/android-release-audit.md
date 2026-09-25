@@ -21,6 +21,17 @@ From the same emulator, the CH TCP listener on port 443 accepted a connection
 and `api.pokrov.space` resolved to its public address. Those checks do not
 authenticate REALITY or explain the failed in-app egress probe.
 
+On 2026-09-25, the same Android 9 x86_64 LDPlayer instance repeated the DE
+failure on installed 4055. Its authenticated cabinet opened and copied the
+private subscription directly into the emulator clipboard. Hiddify 4.1.1
+imported it and showed the trial expiry, but its VPN start stopped at
+`startService - starting background core...`. Happ 4.4.1 imported the Happ
+format and listed CH and DE. Happ reported a VPN connection on each node, yet
+the owned HTTPS probe timed out with and without a pinned API address. With
+Happ disconnected, the same probe returned HTTP 200 immediately. These are
+LDPlayer failures, not proof that the production nodes or the subscription
+work through either client. No client or Core fix is attributed to this result.
+
 The owner deferred physical-phone testing. When resumed, on the Huawei device
 update over 1.1.6, grant VPN permission, and connect to
 CH plus two other nodes on Wi-Fi and Beeline LTE. Verify “everything except

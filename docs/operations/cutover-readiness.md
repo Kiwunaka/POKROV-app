@@ -14,7 +14,7 @@ same final package before publication.
 | Android “everything except Russia”, Wi-Fi/LTE switch, internet after disconnect | Not run on 4055 |
 | Windows clean install and update over 1.1.6, connect/disconnect, connected reboot, uninstall | Exact 4055 installer updated over 4054 on the owned VM; DE connected and disconnected. Clean install, 1.1.6 update, reboot and uninstall remain open. |
 | New account, trial, connection; expired account, renewal and provider invoice creation | A trial was created on LDPlayer with 4055; connection failed. Expired-account and payment checks were not run. |
-| Hiddify and Happ subscriptions on CH and another node | Not run on 4055 |
+| Hiddify and Happ subscriptions on CH and another node | On Android 9 LDPlayer, Hiddify 4.1.1 imported the live trial subscription but failed before Core startup. Happ 4.4.1 imported CH and DE and reported connected on each, but the owned HTTPS probe timed out through its VPN and passed immediately after disconnect. Third-party egress remains unproved. |
 
 After those checks, publish Android APK and unsigned Windows beta through the
 existing `Kiwunaka/pokrov` release-index flow. Public announcement text needs
