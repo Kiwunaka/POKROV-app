@@ -23,6 +23,7 @@ namespace {
 constexpr wchar_t kProductionServiceName[] = L"POKROVService";
 constexpr wchar_t kLocalSystemServiceAccount[] = L"LocalSystem";
 constexpr DWORD kProductionPipeConnectTimeoutMs = 5000;
+constexpr DWORD kStandardConnectIpcWaitMs = 90000;
 // The service rejects frame deadlines more than five minutes ahead.
 constexpr std::uint64_t kMaximumBoundIpcWaitMs = 299000;
 
@@ -346,6 +347,9 @@ ExchangeResult Exchange(Command command, const std::string& body,
     ::CloseHandle(pipe);
     return result;
   }
+  const DWORD ipc_wait_ms = short_control ? 3000
+      : command == Command::kConnect ? kStandardConnectIpcWaitMs
+      : bound_wait_ms.value_or(30000);
   const Frame request{
       FrameKind::kRequest,
       command,
@@ -353,7 +357,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
       request_correlation,
       hello_response->session_token,
       operation_nonce,
-      UnixTimeMilliseconds() + (short_control ? 3000 : bound_wait_ms.value_or(30000)),
+      UnixTimeMilliseconds() + ipc_wait_ms,
       0,
       body,
   };
@@ -397,7 +401,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
     });
   }
   result.response = ReadFrame(pipe,
-      ::GetTickCount64() + (short_control ? 3000 : bound_wait_ms.value_or(30000) + 3000), control);
+      ::GetTickCount64() + ipc_wait_ms + (short_control ? 0 : 3000), control);
   if (!result.response && IsConnectCommand(command) && control) {
     // Publish cancellation before completion so the companion cannot exit on
     // the lost-response path without making its final bounded cancel attempt.

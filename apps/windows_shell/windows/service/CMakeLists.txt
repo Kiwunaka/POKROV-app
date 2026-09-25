@@ -57,7 +57,7 @@ if(BUILD_TESTING)
   target_link_libraries(pokrov_service_cancellation_test PRIVATE pokrov_service_runtime)
   add_test(NAME pokrov_service_cancellation COMMAND pokrov_service_cancellation_test
     CONFIGURATIONS Debug)
-  set_tests_properties(pokrov_service_cancellation PROPERTIES TIMEOUT 30)
+  set_tests_properties(pokrov_service_cancellation PROPERTIES TIMEOUT 50)
 
   add_executable(pokrov_service_egress_probe_test "service_egress_probe_test.cpp")
   apply_standard_settings(pokrov_service_egress_probe_test)

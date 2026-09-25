@@ -105,7 +105,7 @@ class BlockingProbe final : public RuntimeEgressProbe {
  public:
   std::string Verify(const CheckInterruption& interrupted) override {
     const auto generation = ++entered;
-    const auto deadline = ::GetTickCount64() + 5000;
+    const auto deadline = ::GetTickCount64() + hold_ms.load();
     while (released < generation && ::GetTickCount64() < deadline) {
       if (!ignore_interruption && interrupted &&
           interrupted() != OperationInterruption::kNone) return "cancelled";
@@ -120,6 +120,7 @@ class BlockingProbe final : public RuntimeEgressProbe {
   }
   std::atomic<int> entered{0}, released{0};
   std::atomic<bool> ignore_interruption{false};
+  std::atomic<DWORD> hold_ms{5000};
 };
 class FakeRecovery final : public RuntimeRecovery {
  public:
@@ -287,6 +288,28 @@ int main() {
       const auto rollback_deadline = ::GetTickCount64() + 3000;
       while (core_state->stops < 5 && ::GetTickCount64() < rollback_deadline) ::Sleep(1);
       Expect(core_state->stops == 5, "abandoned wait failed to request remote cancellation");
+
+      // Core startup and egress verification can exceed the former
+      // 30-second Connect frame deadline.
+      probe_state->ignore_interruption = false;
+      probe_state->hold_ms = 45000;
+      ServiceRuntimeSnapshot slow_result;
+      std::thread slow_client([&] {
+        slow_result = InvokeServiceForTest(pipe, Command::kConnect,
+                                           ProfileDigest(profile));
+      });
+      probe_state->WaitFor(6);
+      ::Sleep(35000);
+      probe_state->released = 6;
+      slow_client.join();
+      Expect(slow_result.command_accepted && slow_result.running &&
+                 slow_result.core_egress_validated,
+             "ordinary Connect timed out before a slow Core could finish");
+      const auto slow_disconnect = InvokeServiceForTest(
+          pipe, Command::kDisconnect, "");
+      Expect(slow_disconnect.command_accepted &&
+                 slow_disconnect.phase == "config_staged",
+             "slow Connect did not release its network owner");
     }
     ::SetEvent(stop);
     server.join();

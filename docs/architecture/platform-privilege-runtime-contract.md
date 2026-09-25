@@ -1608,7 +1608,9 @@ Times are canonical unsigned decimal milliseconds, end at most JS-safe integer,
 start < end, and duration at most 24h (schema ceiling, not an operational default
 or lease grant). For bound connect, the IPC request and reply wait use the
 remaining original boot-clock budget, capped below the service's five-minute
-frame limit, instead of the ordinary 30-second command timeout. The service
+frame limit. Ordinary Connect has a 90-second frame deadline and a 93-second
+reply wait so cold Core startup and egress verification can finish; other
+ordinary commands keep their existing timeouts. The service
 still checks that original deadline during startup and rolls back on expiry.
 Older services reject the opcode/capability rather than silently treating
 it as ordinary Connect.
