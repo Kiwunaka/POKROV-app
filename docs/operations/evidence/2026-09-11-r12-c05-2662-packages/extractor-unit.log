@@ -1,8 +1,0 @@
-{"utc": "2026-09-11T20:40:02.940497+00:00", "exit": 0, "elapsed_seconds": 3.6239618880000037, "installer_sha256": "04cac45aae8d1490be33bb77ab3f2dc512a7acd5c116040504b8e28bf0d7b953", "extractor_sha256": "50ae7bf7b3ae76aed6592c816d5f5eccca0ed14282eaa39dbee344ac81a67322", "files": 304, "installer_executed": false, "origin": "current-origin owned Ubuntu lab VM; nobody; separate empty network namespace", "log_sha256": "a6f6481a0c6dfb167343d89567ef9f9130210048f05b15f292ed538d6f0d8b15", "status": "EXTRACTED_AWAITING_BYTE_COMPARISON"}
-Running as unit: pokrov-r12-c05-extract-2662-20260911.service
-Finished with result: success
-Main processes terminated with: code=exited/status=0
-Service runtime: 4.000s
-CPU time consumed: 3.965s
-Memory peak: 2.8M
-Memory swap peak: 0B

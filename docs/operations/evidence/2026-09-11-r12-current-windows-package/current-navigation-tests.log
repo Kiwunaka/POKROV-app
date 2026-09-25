@@ -1,5 +1,0 @@
-00:00 +0: loading C:/r12-current-windows-source-20260911/packages/app_shell/test/pokrov_seed_app_test.dart
-00:00 +0: seed shell lazily builds tabs and keeps opened tabs alive
-00:01 +1: windows observes service loss after a long connected session
-00:01 +2: tab changes animate through the shared tab transition wrapper
-00:02 +3: All tests passed!

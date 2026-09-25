@@ -7,6 +7,7 @@ Thumbs.db
 
 # Flutter and Dart
 .dart_tool/
+.kotlin/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
@@ -23,6 +24,10 @@ outputs/
 
 # Runtime artifact cache
 artifacts/pokrov-core/
+artifacts/releases/
+apps/android_shell/android/app/libs/pokrov-core.aar
+apps/windows_shell/windows/runner/resources/runtime/pokrov-core.dll
+apps/windows_shell/windows/runner/resources/runtime/libcronet.dll
 !artifacts/README.md
 
 # Local candidate assembly; signed publication belongs to the separate release index

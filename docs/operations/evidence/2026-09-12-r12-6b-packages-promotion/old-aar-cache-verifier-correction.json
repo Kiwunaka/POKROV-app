@@ -1,9 +1,0 @@
-{
-  "initial_outcome": "Local status assertion failed after remote verification",
-  "reason": "Global ARCHIVE replacement also changed the result status string",
-  "correction": "Replace only quoted path and digest literals; repeat full archive and member hashing",
-  "initial_script_sha256": "11aadebab634ce9b55986111da886367e3a8c89e2f1c3e1d155dd90373aaaeae",
-  "archive_uploaded_again": false,
-  "files_removed_before_corrected_verification": 0,
-  "status": "PASS_CORRECTED_VERIFICATION"
-}

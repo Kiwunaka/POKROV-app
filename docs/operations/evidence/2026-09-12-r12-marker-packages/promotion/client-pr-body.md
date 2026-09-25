@@ -1,3 +1,0 @@
-A failed rename used to lose the last previous-exit marker because both write paths deleted it first. Keep the old file until the flushed temporary file replaces it through the existing Dart rename API. Update the saved-state contract and retain the failing and passing evidence.
-
-Validation: both async/sync failure regressions fail before the fix and pass after; all31 observability-runtime tests and targeted analyze pass. Real Windows sharing violation32 preserves the destination, and rename replaces it after unlocking. Client docs/seed/diff checks pass. No new dependencies or production test hook. This is a source fix; current F711 packages/device evidence precede it, and no new package or release-channel acceptance is claimed.

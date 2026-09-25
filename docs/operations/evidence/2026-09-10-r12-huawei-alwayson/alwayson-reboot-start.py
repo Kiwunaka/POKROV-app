@@ -1,4 +1,0 @@
-import sys,json
-sys.path.insert(0,'E:/r12-huawei-current-20260910')
-from device import *
-s=snapshot('alwayson-reboot-before');r={'apk_sha256':s['apk_sha256'],'always_on':run('shell','settings','get','secure','always_on_vpn_app'),'lockdown':run('shell','settings','get','secure','always_on_vpn_lockdown'),'boot_id_sha256':hashlib.sha256(run('shell','cat','/proc/sys/kernel/random/boot_id').encode()).hexdigest(),'utc':datetime.datetime.now(datetime.timezone.utc).isoformat()};assert s['apk_sha256']=='03924eee799e15b1e1486646331de832d46bb5857fcfbf94d414afb6ff36847c' and s['vpn_service'] and s['foreground'] and s['tun_interfaces'] and r['always_on']==PACKAGE and r['lockdown']=='0';(ROOT/'alwayson-reboot-start.json').write_text(json.dumps(r,indent=2)+'\n');run('reboot');print('AUTHORIZED_ALWAYS_ON_REBOOT_SENT')

@@ -1,8 +1,0 @@
-{
-  "status": "FAIL_WRONG_CORE_SOURCE_FOR_BOUND_ARTIFACT",
-  "command": "scripts/validate-seed.ps1 -CoreRoot E:/r12core-implementation",
-  "observed_core_source": "e4ad514f023719fac12c9192a2ff04db4ed9b29f",
-  "required_bound_core_source": "c7a11f7d2fd974726095ad7aa0619c055273dd15",
-  "reason": "Core source checkout advanced beyond the installed candidate; gate correctly refused parity",
-  "replacement": "Clean detached C:/r12-core-c7-proof-20260910"
-}

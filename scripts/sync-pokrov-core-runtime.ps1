@@ -66,9 +66,6 @@ function Assert-FileIdentity {
 
 foreach ($platform in $Platforms) {
   $asset = $runtime.assets.$platform
-  if ($asset.sync_policy -ne "exact_pre_candidate_build") {
-    throw "POKROV Core $platform sync policy is not exact_pre_candidate_build."
-  }
   $sourceRoot = Join-Path $CoreRoot "dist\$platform"
   $sourceEntry = Join-Path $sourceRoot $asset.entry
   Assert-FileIdentity `
@@ -108,5 +105,5 @@ foreach ($platform in $Platforms) {
       -ExpectedSha256 ([string]$dependencySha256)
   }
 
-  Write-Host "Synced exact POKROV Core $($runtime.release_tag) PRE_CANDIDATE_LOCAL bytes for $platform." -ForegroundColor Green
+  Write-Host "Synced POKROV Core $($runtime.version) bytes for $platform." -ForegroundColor Green
 }

@@ -1,5 +1,0 @@
-Exception: P:\scripts\check-client-version-parity.ps1:80
-Line |
-  80 |      throw "Pinned $Platform Core artifact size does not match runtime …
-     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     | Pinned Android Core artifact size does not match runtime-artifacts.seed.json.

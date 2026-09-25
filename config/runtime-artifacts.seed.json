@@ -1,203 +1,33 @@
 {
   "core": {
-    "repository": "Kiwunaka/POKROV-core",
+    "repository": "Kiwunaka/pokrov-core",
     "version": "1.1.0",
     "release_tag": "v1.1.0",
-    "release_tag_created": false,
-    "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
+    "source_commit": "1aa713b37fa41491a92127cfb7a461608e3d96d7",
     "android_package": "space.pokrov.core",
-    "sing_box_version": "1.13.0",
-    "sing_dependency": "v0.8.0-beta.12",
-    "go_toolchain": "go1.26.8",
-    "artifact_provenance": {
-      "status": "clean_reproducible_pre_candidate_local",
-      "vcs_stamp": "disabled_for_reproducible_release_artifacts",
-      "source_identity": "exact_single_source_commit_without_release_tag_or_publication",
-      "release_url": null,
-      "evidence_ceiling": "PRE_CANDIDATE_LOCAL",
-      "candidate_created": false,
-      "promotion_authorized": false,
-      "artifact_evidence": {
-        "android": {
-          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
-          "tree_sha256": "38720be630f5ab3fc0e33fa182cc01c1e62c4a83ebbc10cd5147a5b5a7763c93",
-          "evidence_sha256": "be7e31d2a262e085474361c60dd7df662262e1c5ab4df6016c5bd523a0b1ae40",
-          "abis": [
-            "armeabi-v7a",
-            "arm64-v8a",
-            "x86",
-            "x86_64"
-          ]
-        },
-        "windows": {
-          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
-          "tree_sha256": "30da3a5feda2ef98ecdd5715bc198f73ba4aba05c7c3fe98413e14cea6c5b8b4",
-          "evidence_sha256": "9f3f5097582ec479aa9f5bbedbc0f1a2b3cac32f49423241a0055240736df3c5",
-          "required_exports": 15,
-          "proxy_only_start_stop_cycles": 100,
-          "proxy_only_result": "PASS_LOCAL"
-        },
-        "sbom": [
-          {
-            "name": "core-source.cdx.json",
-            "sha256": "4a280296ad08b9eb364fffa580068759071c8537fe75e57472d50ead7d1cf8a0"
-          },
-          {
-            "name": "engine-source.cdx.json",
-            "sha256": "c148bbadf10b10d0c21f32f08d0b78f5dc6cf7e34e5fd1758529606c47ee20f0"
-          }
-        ]
-      },
-      "reproducible_build": {
-        "android": {
-          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
-          "size": 106840120,
-          "sha256": "eeb6f01e893df5cb9a595471347285075077308b9968467b43f57005759d8084"
-        },
-        "windows": {
-          "result": "PASS_BYTE_IDENTICAL_TWO_BUILDS",
-          "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
-          "size": 55010816,
-          "sha256": "607b23ae8871928c241b0818005e59c54fca456a93cb9303f150b1a1496d0fb7"
-        },
-        "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
-      },
-      "promotion_rule": "exact_bytes_require_platform_source_convergence_candidate_signing_manual_gates_and_publication"
-    },
-    "retained_public_release": {
-      "version": "1.0.3",
-      "release_tag": "v1.0.3",
-      "source_commit": "69a74545101708e56183c92e31f2b4c7b2509884",
-      "release_url": "https://github.com/Kiwunaka/pokrov-core/releases/tag/v1.0.3",
-      "android": {
-        "size": 106861671,
-        "sha256": "6e6f3b688fe415c9392e19aa4f8660885316897cfc369cf8c3ff3d01100ee14f"
-      },
-      "windows": {
-        "size": 55134208,
-        "sha256": "7cc83854fc4022b759e9de3d0942b90a24c859cfd51e3231d04e7c7a6b7d5054"
-      },
-      "libcronet_sha256": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
-    },
-    "development_target": {
-      "required_for_product": "1.2.0",
-      "version": "1.1.0",
-      "release_tag": "v1.1.0",
-      "state": "PRE_CANDIDATE_LOCAL",
-      "candidate_created": false,
-      "artifact_state": "exact_local_replacement_bound"
-    },
-    "activation_state": "active_pre_candidate_local",
     "desktop_abi": {
-      "name": "pokrov-core",
-      "version": 2,
-      "required_symbol": "pokrovCoreAbiVersion",
-      "secure_file_symbol": "pokrovSecureFile",
-      "optional_capabilities_symbol": "pokrovCoreCapabilities",
-      "capability_schema": 1,
-      "event_abi": 1,
-      "legacy_without_capabilities_symbol": [
-        2
-      ],
-      "required_capabilities": [
-        "bounded_stop_reason",
-        "core_start_stop",
-        "materialized_profile",
-        "secure_profile_file",
-        "structured_operational_events",
-        "typed_lifecycle_events"
-      ],
-      "structured_events": {
-        "required_for_release": "1.2.0",
-        "callback_symbol": "pokrovCoreSetEventCallback",
-        "context_symbol": "pokrovCoreSetEventContext",
-        "retained_v1_0_3_artifact_mode": "legacy_without_structured_events",
-        "exact_replacement_artifact": "bound_pre_candidate_local"
-      },
-      "lifecycle_events": [
-        "initialization",
-        "profile",
-        "core_start",
-        "tun",
-        "routes",
-        "dns",
-        "egress",
-        "recovery",
-        "stop"
-      ]
+      "version": 2
     },
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
-        "size": 106840120,
-        "sha256": "eeb6f01e893df5cb9a595471347285075077308b9968467b43f57005759d8084",
-        "sync_policy": "exact_pre_candidate_build",
-        "sync_destination": "apps/android_shell/android/app/libs",
-        "platform_state": "active_pre_candidate_local_security_fixed_physical_repeat_open"
-      },
-      "ios": {
-        "entry": "PokrovCore.xcframework",
-        "size": null,
-        "sha256": null,
-        "sync_policy": "manual_core_build",
-        "sync_destination": "apps/ios_shell/ios/Frameworks",
-        "platform_state": "MANUAL_OWNER_TEST"
-      },
-      "macos": {
-        "entry": "pokrov-core.dylib",
-        "size": null,
-        "sha256": null,
-        "sync_policy": "manual_core_build",
-        "sync_destination": "apps/macos_shell/macos/Runner/Frameworks",
-        "platform_state": "MANUAL_OWNER_TEST"
+        "size": 107482411,
+        "sha256": "e216c5190d007c39c0e6cbb342c1ede35bba36303766e4790a660c1ed548d1a3",
+        "sync_destination": "apps/android_shell/android/app/libs"
       },
       "windows": {
         "entry": "pokrov-core.dll",
-        "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
-        "size": 55010816,
-        "sha256": "607b23ae8871928c241b0818005e59c54fca456a93cb9303f150b1a1496d0fb7",
-        "runtime_dependencies": [
-          "libcronet.dll"
-        ],
+        "size": 55334400,
+        "sha256": "744853b68289db7bf90ef64990b437f109ff775d171f3bab300f165fd461ba84",
+        "sync_destination": "apps/windows_shell/windows/runner/resources/runtime",
+        "runtime_dependencies": ["libcronet.dll"],
         "runtime_dependency_size": {
           "libcronet.dll": 8596992
         },
         "runtime_dependency_sha256": {
           "libcronet.dll": "8ef1f8bbde77f954af1ae47bee1819ac8dc2354bb0e1d4baba3dad9e58d7a6f7"
-        },
-        "sync_policy": "exact_pre_candidate_build",
-        "sync_destination": "apps/windows_shell/windows/runner/resources/runtime",
-        "platform_state": "active_pre_candidate_local_security_fixed_reproducible_abi_proxy_recheck_passed",
-        "runtime_dependency_origin": {
-          "libcronet.dll": {
-            "status": "UPSTREAM_RELEASE_ASSET_MATCH",
-            "release_url": "https://github.com/SagerNet/cronet-go/releases/tag/143.0.7499.109-2",
-            "release_asset": "libcronet-windows-amd64.dll",
-            "tag_commit": "82e152101769e4655794c3c33518be224d7e9b9e",
-            "declared_native_gitlink": "2be061b6c2e9b316f75ec1e329e345406cd4c62d",
-            "evidence": "docs/operations/evidence/2026-09-06-r12-c05-cronet-origin/provenance.json",
-            "source_reproducibility": "NOT_ESTABLISHED",
-            "complete_notices": "OPEN",
-            "notices": {
-              "file": "apps/windows_shell/windows/runner/resources/runtime/libcronet.NOTICES.txt",
-              "sha256": "2c24f29748b438f85ad6ef44548395970a4a1d04b89e653e6a4a56601297e267",
-              "scope": "Identified OSS components in the declared Windows native source graph; other Core/Flutter/Microsoft notices remain separate"
-            }
-          }
         }
       }
-    },
-    "native_go_notices": {
-      "file": "packages/app_shell/assets/licenses/native-go-NOTICES.txt",
-      "sha256": "ae0e80dea59553c2c85a3968a1415257825a435e5660b3f548bc12d1e10c7549",
-      "source_commit": "0138d04e5601a3ab1089cbbe5a73fe8e0aee4126",
-      "go_toolchain": "go1.26.8",
-      "scope": "Verbatim root, source-package, bounded full file-header and identified embedded-native license notices for recorded Android/Windows Go inputs; complete licensing and corresponding-source clearance remains separate",
-      "missing_root_license_modules": []
     }
   }
 }

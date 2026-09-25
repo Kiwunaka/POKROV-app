@@ -1,8 +1,0 @@
-{
-  "client_revision": "361b0e4399fde51ab0be42d7350900fc4886571c",
-  "source_sha256": "517db9550c196cd681d01c9952c5cc709ed9da1e1de6b4965368a9091c42cc3b",
-  "source_bytes": 1399216,
-  "source_files": 262,
-  "changed_source_files": 11,
-  "scope": "same source list as prior Linux UI build; exact committed fix"
-}

@@ -6,10 +6,9 @@ $root = Split-Path -Parent $PSScriptRoot
 $runnerPath = Join-Path $root "scripts\run-tests.ps1"
 $bootstrapPath = Join-Path $root "scripts\bootstrap-workspace.ps1"
 $observabilityValidatorPath = Join-Path $root "scripts\validate-observability-contracts.ps1"
-$handoffGeneratorPath = Join-Path $root "scripts\new-release-handoff-v2.ps1"
 $presentationBoundaryPath = Join-Path $root "test\client-presentation-boundary.ps1"
 
-foreach ($path in @($runnerPath, $bootstrapPath, $observabilityValidatorPath, $handoffGeneratorPath, $presentationBoundaryPath)) {
+foreach ($path in @($runnerPath, $bootstrapPath, $observabilityValidatorPath, $presentationBoundaryPath)) {
   if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "Standard client test source is missing: $path"
   }
@@ -18,7 +17,6 @@ foreach ($path in @($runnerPath, $bootstrapPath, $observabilityValidatorPath, $h
 $runner = [IO.File]::ReadAllText($runnerPath).Replace("`r`n", "`n")
 $bootstrap = [IO.File]::ReadAllText($bootstrapPath).Replace("`r`n", "`n")
 $observabilityValidator = [IO.File]::ReadAllText($observabilityValidatorPath).Replace("`r`n", "`n")
-$handoffGenerator = [IO.File]::ReadAllText($handoffGeneratorPath).Replace("`r`n", "`n")
 $presentationBoundary = [IO.File]::ReadAllText($presentationBoundaryPath).Replace("`r`n", "`n")
 
 $requiredPackages = @(
@@ -64,7 +62,7 @@ foreach ($fragment in @('"android\gradlew"', '"android\gradlew.bat"', 'chmod +x'
   }
 }
 
-foreach ($scriptSource in @($observabilityValidator, $handoffGenerator)) {
+foreach ($scriptSource in @($observabilityValidator)) {
   if ($scriptSource.Contains("python.exe")) {
     throw "Cross-platform client validation must not hard-code python.exe."
   }

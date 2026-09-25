@@ -1,4 +1,0 @@
-VMState="poweroff"
-bridgeadapter1="Intel(R) Ethernet Controller (3) I225-V"
-cableconnected1="on"
-nic1="bridged"

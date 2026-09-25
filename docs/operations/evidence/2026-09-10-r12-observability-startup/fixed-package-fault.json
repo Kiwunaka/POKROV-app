@@ -1,9 +1,0 @@
-{
-    "utc":  "2026-09-10T10:22:51.7583728Z",
-    "source":  "6816aaba1e9526ba84182d8b13ecd20569e37d23",
-    "scope":  "Installed fixed package while identical diagnostic path conflict remains",
-    "ui_process_count":  1,
-    "visible_window_count":  1,
-    "seconds_since_process_start":  26.0126909,
-    "installed_app_sha256":  "18E618F39E05AC526437128F9E0B1FA6B61EE38E9A0A007F5EAC00951CB8185C"
-}

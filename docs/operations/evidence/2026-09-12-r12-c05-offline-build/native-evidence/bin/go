@@ -1,6 +1,0 @@
-#!/bin/sh
-set -eu
-if [ "${1-}" = build ] && [ "${GOOS-}" = android ]; then
-  exec /usr/bin/flock -x /tmp/pokrov-r12-core-validation-1c8b33f6a771409a/offline-source-2662-20260912/tmp/android-build.lock /tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go "$@"
-fi
-exec /tmp/pokrov-r12-core-validation-1c8b33f6a771409a/tools/go/bin/go "$@"

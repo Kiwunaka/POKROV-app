@@ -1,9 +1,0 @@
-{
-  "old_leaf_sha256_unchanged": true,
-  "status": "PASS_BYTES_AND_MEDIUM_ID_UNCHANGED",
-  "sha256": "5e08dafa805b97fdc7b67c595baadab9b78b45a79a84c56da0446ce0f55531c8",
-  "medium_uuid": "3b8e6fb1-6371-448e-b10f-c0878b875c74",
-  "bytes": 2097152,
-  "path": "E:\\r12-vm-disks-20260912\\{3b8e6fb1-6371-448e-b10f-c0878b875c74}.vdi",
-  "retained_snapshots": 13
-}

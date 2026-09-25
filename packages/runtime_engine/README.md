@@ -11,9 +11,8 @@ Current scope:
 - fail-closed capability/event ABI negotiation; the exact retained 1.0.3
   identity remains an explicit legacy mode, while release 1.2.0 requires the
   structured operational-event capability
-- Core `1.1.0` is the exact reproducible `PRE_CANDIDATE_LOCAL` replacement
-  bound for product `1.2.0`; it does not claim a tag, signed candidate or
-  publication
+- Core `1.1.0` local AAR/DLL with the REALITY fix are bound to the
+  `1.2.0+4054` build; installed-device checks and publication remain open
 - private, separate `awg2_lab` and `awg31_lab` boundaries for Android and
   Windows: an `awg` endpoint is accepted only with the exact contract ID/SHA,
   an enabled generation marker and `useIntegratedTun=false`; AWG 3.1 also

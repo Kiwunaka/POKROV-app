@@ -819,17 +819,17 @@ The clean-room starter now includes:
 
 ## Runtime Boundary
 
-This workflow proves that the Flutter workspace and shared shell are runnable.
-The current `1.0.0-beta` public handoff is owned by
-`config/release-handoff.seed.json`; regenerated workflow output cannot replace
-that candidate-specific release truth.
+This workflow describes the client runtime. The current public version is
+1.1.6; the next target is 1.2.0+4054.
 
 Current blocking dependency:
 
-- the active local pre-candidate runtime has exact single-source platform bindings: Android and Windows use security-fixed Core commit `0138d04e5601a3ab1089cbbe5a73fe8e0aee4126`, retaining the egress, AWG, Android outer-socket and default-off provenance-bound `pokrov.hy2.outbound.v1` lanes while correcting AWG allocated-port binding, `GO-2026-6303`, AWG endpoint use of the configured default bootstrap resolver and legacy raw-settings/error logging; raw Hysteria2 URI conversion stays disabled, AWG2/AWG 3.1 lifecycle proof is retained, and two local builds per platform produced byte-identical AAR/DLL trees
-- the C05 binding uses Go 1.26.8, x/crypto 0.56.0 and tfo-go 2.3.3 to fix two reachable SSH deadlock advisories. Its Psiphon TLS ConnectionState mirror follows the pinned Go layout with a guarded live handshake/conversion test. [C05 two-build evidence](../operations/evidence/2026-09-06-r12-c05-core-binding/android-evidence.json) and [previous D05 binding](../operations/evidence/2026-09-06-r12-c05-core-binding/previous-runtime-binding.json) retain exact identities; this does not transfer candidate, device, SCM/TUN or WARP proof
+- Android and Windows bind POKROV Core 1.1.0 at source commit
+  `1aa713b37fa41491a92127cfb7a461608e3d96d7`. The local AAR and DLL
+  include the REALITY handshake fix. Their sizes and hashes are checked by
+  `config/runtime-artifacts.seed.json`; installed-device behavior is still open.
 - Core lifecycle errors crossing logs, status and platform ABI expose catalog codes while preserving their typed cause internally; the retained Core c8 privacy binding passed direct FFI planted-data checks; the current C02 binding preserves that source policy and records separate lifecycle/resource evidence
-- managed engine log filtering runs before observable writers, subscriptions and replay buffers in normal and debug mode. Arbitrary messages and tags become `runtime_log_redacted`; only fixed AWG categories survive. The retained [D05 binding evidence](../operations/evidence/2026-09-06-r12-d05-core-binding/android-evidence.json) and [previous binding](../operations/evidence/2026-09-06-r12-d05-core-binding/previous-runtime-binding.json) preserve source and rollback identities
+- managed engine log filtering runs before observable writers, subscriptions and replay buffers in normal and debug mode. Arbitrary messages and tags become `runtime_log_redacted`; only fixed AWG categories survive.
 - device-bound `awg2_lab`, `awg31_lab` and `hy2_lab` envelopes do not participate in ordinary Smart Connect selection or automatic-node quarantine. Their typed endpoint is already the complete route decision. The bootstrapper clears `smartConnect` for those profiles and skips selection when no Smart Connect profile is present, so an unrelated VLESS egress failure cannot block a fresh lab fetch before Core starts
 - owner decision 2026-09-13 leaves AWG3.1 as the only active AWG release-acceptance and development lane. Separate AWG2 gates and AWG2/AWG3.1 switching repeats are `SKIPPED_BY_OWNER`, not PASS. Existing AWG2 implementation and historical evidence remain retained pending consumer inventory. AWG3.1 still requires exact revision, device, failure, route and egress proof within its existing lab/default-off boundary; this decision does not enable public AWG.
 - Those lab envelopes may advertise ordinary `legacy_reality_fallback` in
@@ -1112,13 +1112,13 @@ Current blocking dependency:
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
 
-## POKROV Core 1.1.0 Pre-Candidate Binding
+## POKROV Core 1.1.0 Binding
 
-POKROV Core is an independent repository and release line. The local client
-pre-candidate pins version `1.1.0` and one Android/Windows source commit,
-`cd8f0f4169d570d693992a959d81d17c2c44884d`. The version-derived `v1.1.0`
-label is not a created Git tag or public release in this state. Local source
-convergence is proved; candidate, signing and platform-runtime gates remain.
+POKROV Core is an independent repository and release line. The client now
+binds local Android and Windows artifacts from source commit
+`1aa713b37fa41491a92127cfb7a461608e3d96d7`. The version-derived
+`v1.1.0` label is not yet a published Core release. Device and installed-VM
+checks remain open.
 
 - Android package namespace: `space.pokrov.core`.
 - Android artifact: `pokrov-core.aar`.
@@ -1232,7 +1232,6 @@ It does not validate:
 The Apple placeholder inputs that now shape later operator work live in:
 
 - `config/apple-release.seed.json`
-- `config/cutover-readiness.seed.json`
 - `apps/ios_shell/ios/Flutter/AppleSigning.xcconfig`
 - `apps/macos_shell/macos/Runner/Configs/AppleSigning.xcconfig`
 

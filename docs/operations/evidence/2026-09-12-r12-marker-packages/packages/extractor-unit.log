@@ -1,8 +1,0 @@
-{"utc": "2026-09-12T10:14:37.591367+00:00", "exit": 0, "elapsed_seconds": 3.3152426740000003, "installer_sha256": "ebb3ab95062bca07209dc0d93bbbcb142d6b31be66bdcbe9084207bd5a271030", "extractor_sha256": "50ae7bf7b3ae76aed6592c816d5f5eccca0ed14282eaa39dbee344ac81a67322", "files": 304, "installer_executed": false, "origin": "current-origin owned Ubuntu lab VM; nobody; separate empty network namespace", "log_sha256": "e1b8a514f7e17bf8e79998fe911c8f7fb48b327c7a2824253490026c2df5b5bb", "status": "EXTRACTED_AWAITING_BYTE_COMPARISON"}
-Running as unit: pokrov-r12-marker-extract-806-20260912.service
-Finished with result: success
-Main processes terminated with: code=exited/status=0
-Service runtime: 3.559s
-CPU time consumed: 3.543s
-Memory peak: 3.5M
-Memory swap peak: 0B

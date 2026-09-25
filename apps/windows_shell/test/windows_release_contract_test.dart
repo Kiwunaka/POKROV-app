@@ -117,10 +117,8 @@ void main() {
     final windows = assets['windows'] as Map<String, dynamic>;
     expect(windows.containsKey('helper'), isFalse);
     expect(core['release_tag'], 'v1.1.0');
-    expect(core['release_tag_created'], isFalse);
-    expect(core['activation_state'], 'active_pre_candidate_local');
     expect((core['desktop_abi'] as Map<String, dynamic>)['version'], 2);
-    expect(windows['sync_policy'], 'exact_pre_candidate_build');
+    expect(windows['entry'], 'pokrov-core.dll');
     expect(
       (windows['runtime_dependencies'] as List<dynamic>).cast<String>(),
       contains('libcronet.dll'),

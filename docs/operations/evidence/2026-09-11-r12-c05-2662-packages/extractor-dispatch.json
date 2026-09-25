@@ -1,7 +1,0 @@
-{
-  "utc": "2026-09-11T20:40:00.627346+00:00",
-  "unit": "pokrov-r12-c05-extract-2662-20260911",
-  "remote": "/var/tmp/r12-c05-2662-installer-20260911",
-  "installer_sha256": "04cac45aae8d1490be33bb77ab3f2dc512a7acd5c116040504b8e28bf0d7b953",
-  "status": "DISPATCHING"
-}

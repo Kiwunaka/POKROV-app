@@ -1,9 +1,0 @@
-{
-    "status":  "PASS",
-    "utc":  "2026-09-10T10:27:52.2340187Z",
-    "mode":  "restore",
-    "preserved_files":  2,
-    "fixture_text_only":  true,
-    "original_diagnostic_hashes_match":  true,
-    "raw_diagnostics_exported":  false
-}

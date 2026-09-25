@@ -1,9 +1,0 @@
-{
-  "status": "PASS_EXACT_RETIRED_NATIVE_CORE_CACHE_ARCHIVE",
-  "archive": "/tmp/pokrov-r12-core-validation-1c8b33f6a771409a/retained-old-native-core-cache-20260912/cache.tar.gz",
-  "archive_sha256": "877b382331ca88da6893448c369ca416484d3ffa0f33acb63fee224c88284f41",
-  "archive_bytes": 1179486822,
-  "files": 100,
-  "file_bytes": 3108707237,
-  "local_files_deleted": false
-}

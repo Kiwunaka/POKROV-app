@@ -1,8 +1,0 @@
-{"utc": "2026-09-12T08:44:48.363312+00:00", "exit": 0, "elapsed_seconds": 2.6913893900000048, "installer_sha256": "47a60d309662b689031aaa74ba25728353dd7245275a8c986c2505d733f0e06a", "extractor_sha256": "50ae7bf7b3ae76aed6592c816d5f5eccca0ed14282eaa39dbee344ac81a67322", "files": 304, "installer_executed": false, "origin": "current-origin owned Ubuntu lab VM; nobody; separate empty network namespace", "log_sha256": "a2b19d5bb548dc281973bf08a9207945057cd65ead628fc8795d80344575a295", "status": "EXTRACTED_AWAITING_BYTE_COMPARISON"}
-Running as unit: pokrov-r12-dart-extract-f711-20260912.service
-Finished with result: success
-Main processes terminated with: code=exited/status=0
-Service runtime: 2.909s
-CPU time consumed: 2.901s
-Memory peak: 3.0M
-Memory swap peak: 0B

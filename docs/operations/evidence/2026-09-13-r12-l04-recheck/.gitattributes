@@ -1,2 +1,0 @@
-checks/** -text whitespace=cr-at-eol
-scripts/** -text whitespace=cr-at-eol

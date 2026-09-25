@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "E:\r12-c05-utls-license-20260911\bind-static-triage.py", line 39, in <module>
-    assert set(before) == set(files)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError

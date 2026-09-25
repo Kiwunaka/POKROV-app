@@ -1,7 +1,0 @@
-{
-  "status": "PASS_COMPLETED_BUILD_JAVA_STOPPED",
-  "utc": "2026-09-12T06:57:10.994312+00:00",
-  "owned_kotlin_pid": 41764,
-  "gradle_stopped_before_kotlin_guard_detected": true,
-  "all_java_absent": true
-}

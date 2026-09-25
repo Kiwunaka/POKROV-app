@@ -1,9 +1,0 @@
-{
-  "status": "PASS_PRIOR_ARTIFACT_BYTES_UNCHANGED",
-  "free_e_before": 43908194304,
-  "files_deleted": 0,
-  "utc": "2026-09-12T02:43:42.9150213Z",
-  "files": 583,
-  "free_e_after": 44133801984,
-  "method": "NTFS native compression"
-}

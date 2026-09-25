@@ -1,9 +1,0 @@
-{
-  "status": "PASS",
-  "utc": "2026-09-10T11:02:38.926018+00:00",
-  "state": "poweroff",
-  "nic1": "none",
-  "original_journals_restored": true,
-  "isolated_vhd_detached": true,
-  "host_network_changed": false
-}

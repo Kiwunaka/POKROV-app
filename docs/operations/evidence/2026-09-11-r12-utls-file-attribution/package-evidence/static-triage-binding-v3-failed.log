@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "E:\r12-c05-utls-license-20260911\bind-static-triage.py", line 79, in <module>
-    assert set(osvs) == {x['id'] for x in matrix}
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError

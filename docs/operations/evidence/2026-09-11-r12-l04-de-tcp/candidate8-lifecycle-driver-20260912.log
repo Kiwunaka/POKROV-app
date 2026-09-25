@@ -1,6 +1,0 @@
-{"status": "PASS_INSTALLED_PAYLOAD_READBACK", "artifact_sha256": "b71c3190ad56e534bcd0057b68de4f818e775bc89cf1d5470814468ad7ada933", "version": "1.2.0~beta.30-8", "checked_payload_entries": 302, "all_bytes_modes_ownership_match_deb": true, "private_directory_modes": "0700/0700; active profile 0600", "no_tun": true, "no_recovery": true, "authorization_events": [], "gui_pid_unchanged": true}
-Traceback (most recent call last):
-  File "/home/pokrovqa/acceptance-inputs/guest-connected-uninstall8-20260912.py", line 33, in <module>
-    save();assert result['pre_uninstall_ru_direct_rules']==0 and all(x['pass'] for x in result['pre_uninstall_full_mode_http_probes']) and result['pre_uninstall_system_dns']
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError

@@ -1,9 +1,0 @@
-﻿{
-    "status":  "PASS_RECOVERY_AFTER_PARTIAL_POLICY_FAILURE",
-    "utc":  "2026-09-10T17:31:11.4718951Z",
-    "installed_304_unchanged":  true,
-    "route_dns_restored":  true,
-    "no_tun":  true,
-    "profile_canary_removed_by_normal_ui":  true,
-    "secure_store_preserved":  true
-}

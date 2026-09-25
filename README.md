@@ -1,158 +1,31 @@
-# POKROV App
+# POKROV client
 
-Canonical client repository for POKROV on Android and Windows. The same tree
-keeps iOS and macOS readiness work without presenting either Apple host as a
-public release.
+This repository builds the Android and Windows client. The public version is
+1.1.6; the next target is `1.2.0+4054`. Android and Windows use POKROV Core
+1.1.0 from `C:/Users/kiwun/Documents/ai/POKROV-core`. The target has not
+been published to users.
 
-Use [docs/README.md](docs/README.md) to choose a task-specific reading route.
-The root [AGENTS.md](AGENTS.md) is the short Codex operating contract.
+## Local build
 
-## Current Product Truth
-
-- Client strategy: `consumer-first` and `app-first`.
-- Public outside-store stable surfaces: Android and Windows.
-- Retained public line: `1.1.6` (`1.1.6+29`).
-- Development seed: `1.2.0+4053`, state `PRE_CANDIDATE_LOCAL`,
-  `candidate_created=false`. The latest exact private candidate is signed
-  `pokrov-1.2.0-candidate.23`, build `4052`; its private signed supply and exact
-  Windows installation are retained, but the ordinary client can report
-  `CORE-001` while the service remains running under serial-pipe contention.
-  Candidate.23 is therefore immutable `NO_GO`. Build-4053 working source adds a
-  bounded retry and passes the local 32-client VM preflight; a new exact
-  candidate is still required. Candidate.22 and earlier candidates remain
-  rejected history.
-- Apple surfaces: readiness, packaging, signing, and device-proof work only.
-- Default runtime: `sing-box`; `xray` is an advanced compatibility fallback.
-- Default device-wide rule: `All except RU`; `Full tunnel` remains available.
-- `Only selected apps` is beta-active on Android and Windows. Picker, policy,
-  persistence, and runtime materialization exist; exact-artifact OS proof is
-  still a production gate.
-- Client UI follows the `pokrov-clear` direction approved on `2026-06-13` and
-  the active root [DESIGN.md](DESIGN.md).
-- The support-scoped assistant uses the implemented app-session endpoint
-  `POST /api/client/support/assistant`; ticket-backed operator escalation
-  remains the fallback.
-
-## Release Truth
-
-`config/release-handoff.seed.json` is the machine-readable owner for the latest
-repo-backed public handoff and the current development target. It retains the
-observed public `Kiwunaka/pokrov`
-GitHub Release, candidate hashes, download evidence, and manual gates without
-turning old evidence into approval for a later candidate.
-
-`config/release-rollback-catalog.seed.json` owns the stable pointer location and
-the exact versioned handoffs eligible for rollback. The pointer helper is
-read-only unless `-Apply` is explicit, requires the expected current release,
-creates an exact backup outside retained history, and records a receipt. Local
-fixture reversal is not an exact-candidate rollback drill or mutation authority.
-
-The retained `1.1.6` publication is evidence for that exact artifact set. The
-working seed remains pre-candidate source truth for build `4053`. Private
-candidate.23 binds exact build-4052 bytes through strict-v2 handoff
-`457bbf71…ef50`, refreshed SBOM/provenance and signed public-index
-manifest/signature/receipt `5073c201…01a1` / `92027334…863` /
-`d11e24ac…8ba6`; output is Actions-artifact-only with promotion false.
-Candidate.23 is immutable `NO_GO` because valid service requests can fail under
-serial-pipe contention while the service remains running; candidate.22 remains
-earlier immutable
-`NO_GO` history. Android production signing is fail-closed by default; debug
-signing requires an explicit non-public smoke opt-in. The handoff does not
-prove:
-
-- a public or stable `1.2.0` publication;
-- Play, Microsoft Store, WinGet, TestFlight, App Store, or notarized delivery;
-- trusted Windows signing and reputation;
-- a physical-device or real-user pass for an exact build-4053 successor;
-- production WARP behavior on Android or Windows;
-- RU-origin readiness.
-
-Generated host outputs under `apps/**/build/`, local materializations under
-`config/local/`, and other generated `build/**` trees are disposable local
-verification output. They never override the release handoff or candidate
-evidence. Retained bundles under `artifacts/releases/**` are evidence and must
-not be edited during ordinary development or documentation work. Local
-candidate assembly belongs under ignored `artifacts/candidate-staging/**`; the
-signed public release index is a separate repository and is never mirrored as
-client source truth.
-
-## Authority Boundaries
-
-This repository owns client product behavior, shell and host integration,
-runtime materialization, client security, and client release readiness.
-
-The platform repository owns backend behavior, shared public facts, public
-delivery contracts, and publishing policy:
-
-- [Platform product](C:/Users/kiwun/Documents/ai/VPN/docs/product/portal-vpn-product.md)
-- [App-first and bonus flows](C:/Users/kiwun/Documents/ai/VPN/docs/architecture/app-first-and-bonus-flows.md)
-- [Client downloads flow](C:/Users/kiwun/Documents/ai/VPN/docs/architecture/client-downloads-flow.md)
-- [Publishing and signing guide](C:/Users/kiwun/Documents/ai/VPN/docs/operations/publishing-and-signing-guide.md)
-- [Shared product facts](C:/Users/kiwun/Documents/ai/VPN/shared/product-facts.json)
-- [Shared design tokens](C:/Users/kiwun/Documents/ai/VPN/shared/design-tokens.json)
-
-When a client change alters one of those contracts, update the platform owner
-in the same coordinated change. Do not copy a second source of truth here.
-
-## Repository Map
-
-- `apps/`: Android, Windows, iOS, and macOS host shells.
-- `packages/app_shell/`: shared product shell, app-first API client, support,
-  routing, and UI contracts.
-- `packages/runtime_engine/`: shared runtime initialization and config
-  materialization.
-- `packages/core_domain/`: client domain values.
-- `packages/platform_contracts/`: host boundary contracts.
-- `packages/observability_contracts/`: checked platform event/error identities.
-- `packages/observability_runtime/`: privacy-safe local event dispatch and bounded retention.
-- `packages/support_context/`: redacted support context.
-- `config/`: machine-readable product, runtime, platform, cutover, and release
-  contracts.
-- `docs/`: canonical docs, active execution state, evidence, and history.
-- `scripts/`: local validation, runtime sync, packaging, and release checks.
-- `test/`: repository-level contract and layout checks.
-- `artifacts/releases/`: frozen historical lineage/evidence, not a candidate
-  destination or public release index.
-- `artifacts/candidate-staging/`: ignored local candidate assembly.
-
-## Quick Validation
-
-For docs or seed changes:
+Sync the Core AAR, DLL and libcronet.dll from the Core checkout, then validate
+the version and artifact hashes:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\test\docs-contract.ps1
-powershell -ExecutionPolicy Bypass -File .\scripts\validate-seed.ps1
-git diff --check
-git diff --name-only -- artifacts/releases
+./scripts/sync-pokrov-core-runtime.ps1 -CoreRoot ../POKROV-core
+./scripts/validate-seed.ps1 -CoreRoot ../POKROV-core -PlatformRoot ../VPN
 ```
 
-For the current non-release client test lane:
+Use `flutter analyze` and `flutter test` in changed packages. For Android
+host changes, run both app unit-test flavors from
+`apps/android_shell/android`. For Windows host changes, build on Windows.
+Release packaging scripts are in `scripts/`.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\run-tests.ps1
-```
+Core libraries and client packages stay outside git and LFS. Core libraries
+come from the local Core build or its GitHub Release. Public client files live
+in [GitHub Releases for pokrov](https://github.com/Kiwunaka/pokrov/releases).
+The 1.1.6 release remains the rollback target.
 
-Run host builds only when the task changes host or packaging behavior. A docs
-task must not manufacture release evidence by rebuilding Android or Windows.
-
-## Guardrails
-
-- Keep secrets, session values, raw profiles, keys, topology, and signing
-  material out of Git, logs, screenshots, fixtures, and handoffs.
-- Keep local control surfaces loopback-only and authenticated where enabled.
-- Preserve secure-storage migration, logout, revocation, and corrupt-state
-  recovery behavior.
-- Keep raw config and operator topology out of normal consumer UI.
-- Treat WARP as a user-visible feature label, not permission to expose raw
-  WireGuard material or claim production-proof privacy.
-- Keep historical bridge/Karing/clean-room material as history. It may explain
-  earlier decisions but cannot reopen the active client lane by itself.
-- Never clean another worktree or rewrite retained evidence during routine
-  development.
-
-## Historical Mapping
-
-Older records may call this lane `app-next`,
-`external/pokrov-next-client`, or the clean-room Wave 7 client. Those names are
-bootstrap provenance only. `POKROV-app/main` is the active client-development
-and client-documentation line; retained bridge bundles are archive evidence.
+Current release state and outstanding device checks are in
+`docs/operations/cutover-readiness.md`. Product behavior is in
+`docs/product/client-product-contract.md`; the document map is
+`docs/README.md`.

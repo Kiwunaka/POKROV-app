@@ -1,1 +1,0 @@
-{"target_is_outbound_server": [{"index": 26, "type": "vless", "server_port": 443}, {"index": 31, "type": "vless", "server_port": 443}], "explicit_target_rules": [], "ipv4_route_test_not_isolated_from_endpoint_traffic": true}

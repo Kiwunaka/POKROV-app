@@ -1,6 +1,0 @@
-import pathlib,socket,json,subprocess,time
-r=pathlib.Path('/home/pokrovqa/acceptance-inputs');p=r/'candidate7-stale-gui-readonly.json';assert not p.exists()
-with socket.socket(socket.AF_UNIX) as s:
- s.settimeout(15);s.connect('/run/pokrov/pokrov-linuxd.sock');s.sendall(b'{"protocol":"pokrov-linuxd-v1","request_id":"l04-stale-gui7","action":"status","payload":{}}\n');v=json.loads(s.makefile('rb').readline(65537)).get('snapshot',{})
-prior=json.loads((r/'candidate7-gui-tls01.json').read_text());result={'daemon_phase':v.get('phase'),'last_stop_reason':v.get('last_stop_reason'),'no_tun':not pathlib.Path('/sys/class/net/pokrov0').exists(),'no_recovery':not pathlib.Path('/var/lib/pokrov/network-recovery.json').exists(),'gui_process_count':int(subprocess.check_output(['pgrep','-c','-x','pokrov'],text=True)),'seconds_since_completed_disconnect':round(time.time()-prior['finished_epoch'],1),'gui_screenshot':'candidate7-gui-tls01-after.png','observed_ui':'Disconnect CTA and checking state after daemon completed disconnect; screenshot separate from native receipt'}
-assert result['daemon_phase']!='running' and result['no_tun'] and result['no_recovery'];p.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))

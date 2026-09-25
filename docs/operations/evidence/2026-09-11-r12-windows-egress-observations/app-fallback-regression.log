@@ -1,8 +1,0 @@
-00:00 +0: loading E:/r12client/packages/app_shell/test/pokrov_seed_app_test.dart
-00:00 +0: managed fallback on android (lab: false, baseline failure: false, unavailable: false, refused: false)
-00:01 +1: managed fallback on android (lab: true, baseline failure: false, unavailable: false, refused: false)
-00:01 +2: managed fallback on windows (lab: true, baseline failure: false, unavailable: false, refused: false)
-00:01 +3: managed fallback on android (lab: true, baseline failure: true, unavailable: false, refused: false)
-00:01 +4: managed fallback on android (lab: true, baseline failure: false, unavailable: true, refused: false)
-00:02 +5: managed fallback on android (lab: true, baseline failure: false, unavailable: false, refused: true)
-00:02 +6: All tests passed!
