@@ -9,11 +9,20 @@ failed the protected-egress check, after which the app removed the system VPN.
 This is an observed LDPlayer result, not a pass for Android connectivity.
 
 The published x86_64 1.1.6 APK (build 4029) also failed its CH and DE
-protected-egress checks in a separate fresh LDPlayer instance. Different
-instances and trial accounts make that comparison insufficient to assign the
-4055 failure to the client or to LDPlayer.
+protected-egress checks in a separate fresh LDPlayer instance. On 2026-09-25,
+that same 1.1.6 installation was updated in place with the x86_64 direct 4055
+APK (`adb install -r`). Android reported `versionCode=4055` and
+`versionName=1.2.0`; the existing five-day trial was still shown. A DE connect
+then ended with `core_egress_probe_unavailable`, and the app removed the VPN.
+The emulator's ordinary network worked after the failure. This closes the
+LDPlayer update and session-preservation check, but neither version passed
+protected egress, so the cause of the Android connection failure is still open.
+From the same emulator, the CH TCP listener on port 443 accepted a connection
+and `api.pokrov.space` resolved to its public address. Those checks do not
+authenticate REALITY or explain the failed in-app egress probe.
 
-On the Huawei device, update over 1.1.6, grant VPN permission, and connect to
+The owner deferred physical-phone testing. When resumed, on the Huawei device
+update over 1.1.6, grant VPN permission, and connect to
 CH plus two other nodes on Wi-Fi and Beeline LTE. Verify “everything except
 Russia”: a Russian site opens directly and a foreign site uses VPN. Switch
 Wi-Fi to LTE and back while connected. After disconnect, ordinary internet
