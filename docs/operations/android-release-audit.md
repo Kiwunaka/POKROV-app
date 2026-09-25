@@ -1,7 +1,7 @@
 # Android 1.2.0 acceptance
 
-Target: `1.2.0+4054`, direct APK, POKROV Core 1.1.0. Current public version
-is 1.1.6. The 4054 physical-device checks are still open.
+Target: `1.2.0+4055`, direct APK, POKROV Core 1.1.0. Current public version
+is 1.1.6. Use LDPlayer for interim checks; physical-device checks remain open.
 
 On the Huawei device, update over 1.1.6, grant VPN permission, and connect to
 CH plus two other nodes on Wi-Fi and Beeline LTE. Verify “everything except

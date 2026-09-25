@@ -12,7 +12,7 @@ Current scope:
   identity remains an explicit legacy mode, while release 1.2.0 requires the
   structured operational-event capability
 - Core `1.1.0` local AAR/DLL with the REALITY fix are bound to the
-  `1.2.0+4054` build; installed-device checks and publication remain open
+  `1.2.0+4055` build; installed-device checks and publication remain open
 - private, separate `awg2_lab` and `awg31_lab` boundaries for Android and
   Windows: an `awg` endpoint is accepted only with the exact contract ID/SHA,
   an enabled generation marker and `useIntegratedTun=false`; AWG 3.1 also

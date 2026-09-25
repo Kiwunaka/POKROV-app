@@ -1,7 +1,7 @@
 # POKROV client
 
 This repository builds the Android and Windows client. The public version is
-1.1.6; the next target is `1.2.0+4054`. Android and Windows use POKROV Core
+1.1.6; the next target is `1.2.0+4055`. Android and Windows use POKROV Core
 1.1.0 from `C:/Users/kiwun/Documents/ai/POKROV-core`. The target has not
 been published to users.
 

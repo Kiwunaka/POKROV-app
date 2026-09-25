@@ -1,7 +1,9 @@
 # Windows 1.2.0 acceptance
 
-Target: `1.2.0+4054`, unsigned Windows beta, POKROV Core 1.1.0. Current public
-version is 1.1.6. The 4054 installed-VM checks are still open.
+Target: `1.2.0+4055`, unsigned Windows beta, POKROV Core 1.1.0. Current public
+version is 1.1.6. The 4055 installed-VM checks are still open. On the same VM,
+4053 connected to DE while 4054 timed out; replacing only Core with the fixed
+DLL restored the connection. The 4055 installer still needs its own checks.
 
 On the owned Windows VM, install from a clean state and update over 1.1.6.
 Connect and disconnect; reboot while VPN is connected and check that network

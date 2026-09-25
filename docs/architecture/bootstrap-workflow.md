@@ -820,12 +820,12 @@ The clean-room starter now includes:
 ## Runtime Boundary
 
 This workflow describes the client runtime. The current public version is
-1.1.6; the next target is 1.2.0+4054.
+1.1.6; the next target is 1.2.0+4055.
 
 Current blocking dependency:
 
 - Android and Windows bind POKROV Core 1.1.0 at source commit
-  `1aa713b37fa41491a92127cfb7a461608e3d96d7`. The local AAR and DLL
+  `acc892bb97b6ae4a00deaf77776a609f900310de`. The local AAR and DLL
   include the REALITY handshake fix. Their sizes and hashes are checked by
   `config/runtime-artifacts.seed.json`; installed-device behavior is still open.
 - Core lifecycle errors crossing logs, status and platform ABI expose catalog codes while preserving their typed cause internally; the retained Core c8 privacy binding passed direct FFI planted-data checks; the current C02 binding preserves that source policy and records separate lifecycle/resource evidence
