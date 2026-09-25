@@ -8,10 +8,10 @@ started, created a trial, and received Android VPN permission. DE and CH both
 failed the protected-egress check, after which the app removed the system VPN.
 This is an observed LDPlayer result, not a pass for Android connectivity.
 
-The published x86_64 1.1.6 APK (build 4029) also failed its CH protected-egress
-check in a separate fresh LDPlayer instance. Different instances and trial
-accounts make that comparison insufficient to assign the 4055 failure to the
-client or to LDPlayer.
+The published x86_64 1.1.6 APK (build 4029) also failed its CH and DE
+protected-egress checks in a separate fresh LDPlayer instance. Different
+instances and trial accounts make that comparison insufficient to assign the
+4055 failure to the client or to LDPlayer.
 
 On the Huawei device, update over 1.1.6, grant VPN permission, and connect to
 CH plus two other nodes on Wi-Fi and Beeline LTE. Verify “everything except
