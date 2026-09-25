@@ -4,7 +4,7 @@
   libcronet.dll after checking their sizes and SHA-256 values.
 - `check-client-version-parity.ps1`: compare Android, Windows, app shell,
   Core and release-target versions and validate local Core binaries.
-- `validate-seed.ps1`: parse build inputs and run version/artifact parity.
+- `validate-seed.ps1`: run version/artifact parity and the optional client/platform contract check.
 - `run-tests.ps1`: run package Flutter checks and both Android unit-test
   flavors.
 - `build-android-production.ps1`, `build-windows-release.ps1`: package
