@@ -8,11 +8,11 @@ abstract final class PlatformProductFacts {
       '2c135eeee91adaca52bc35b103ce5839e7f670e557ff7b55970c4375a2916f54';
   static const publicUrlsSha256 =
       '022f7ba577714bdc0bffd3cc00254309af346ef0c8fc62fe9c52e40d72a0de67';
-  static const commercialRevision = '2026-08-21.1';
+  static const commercialRevision = '2026-09-25.1';
   static const commercialContractSha256 =
-      '22b7ef26908c23c2bb53322dec959a3bc050a20a6c6d2feff9f78708b45e23cd';
+      '09b4353aad4bee5ba537da244af3b6fbfc79844de14460cd6ab53d13d1b57039';
   static const tariffCatalogSha256 =
-      '0e5acae30601854cee4c44c33af84e84bbdcd24d2788a7da1463bb3ee4a40d43';
+      '2f9992d170f4b20b7175a83e5db28230e853fef5e3ff057b9afb6161b9421b6b';
   static const trialDays = 5;
   static const telegramRewardDays = 5;
   static const referralFriendDays = 5;
