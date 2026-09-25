@@ -59,6 +59,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private val dnsFailureTokenGate = AndroidDnsFailureTokenGate()
     private val runtimeExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val healthGeneration = AtomicLong(0L)
+    @Volatile private var pendingCoreEgressProbeGeneration: Long? = null
     private val runtimeSessionGeneration = AtomicLong(0L)
     private val serviceCommandGeneration = AtomicLong(0L)
     private val serviceCommandLock = Any()
@@ -816,10 +817,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             nextServer.startOrReloadService(content, OverrideOptions())
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
             activeCoreStartCompleted = true
+            schedulePendingCoreEgressProbe(session)
             startTunnelTrafficMonitor(session)
             // Staging belongs to the bridge/store. A delayed Core start must
             // not overwrite a newer staged identity with its older profile.
         } catch (error: Throwable) {
+            pendingCoreEgressProbeGeneration = null
             if (error is SupersededRuntimeStart || !ownsRuntimeSession(session)) {
                 // The serial owner still owns only this attempt's resources;
                 // the queued replacement/stop owns user-visible completion.
@@ -1492,8 +1495,18 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             activeTileStartGeneration,
         )
         activeTileStartGeneration = null
-        scheduleCoreEgressProbe(session, tunGeneration)
+        // Core opens the TUN before startOrReloadService marks it STARTED.
+        // Probe only after that call returns, or Core reports unavailable.
+        pendingCoreEgressProbeGeneration = tunGeneration
         return tun.fd
+    }
+
+    private fun schedulePendingCoreEgressProbe(session: AndroidLifecycleTaskScope) {
+        val generation = pendingCoreEgressProbeGeneration ?: return
+        pendingCoreEgressProbeGeneration = null
+        if (ownsRuntimeSession(session) && healthGeneration.get() == generation && activeTun != null) {
+            scheduleCoreEgressProbe(session, generation)
+        }
     }
 
     private fun scheduleCoreEgressProbe(
@@ -1854,11 +1867,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                         session.generation,
                     )
                     server.startOrReloadService(content, OverrideOptions())
+                    schedulePendingCoreEgressProbe(session)
                 }.onSuccess {
                     if (activeTun !== previousTun) {
                         runCatching { previousTun?.close() }
                     }
                 }.onFailure {
+                    pendingCoreEgressProbeGeneration = null
                     if (ownsRuntimeSession(session)) AndroidRuntimeState.markDegraded(
                         failureKind = "default_network_unavailable",
                         message = AndroidRuntimeSafety.publicFailureMessage(
@@ -1920,7 +1935,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
             if (cancelBoundRuntimeForReload(session)) return@execute
             val content = activeConfigContent ?: return@execute
-            commandServer?.startOrReloadService(content, OverrideOptions())
+            val server = commandServer ?: return@execute
+            try {
+                server.startOrReloadService(content, OverrideOptions())
+                schedulePendingCoreEgressProbe(session)
+            } catch (error: Throwable) {
+                pendingCoreEgressProbeGeneration = null
+                throw error
+            }
         }
     }
 

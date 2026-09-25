@@ -1514,6 +1514,10 @@ observations: connection and TLS negotiation failures become
 unspecified probe failures remain `core_egress_probe_failed`. Only exact known
 messages from the invoked method qualify. Missing APIs and unknown exception
 text remain unavailable; raw exception details never enter the snapshot.
+Android schedules the selected-egress probe only after Core's
+`startOrReloadService` returns successfully. Core opens the TUN while it is
+still starting, so probing from the TUN callback can report unavailable before
+the selected route exists. Reloads apply the same ordering to the new TUN.
 These failures use the existing completed-failure policy: endpoint probes get
 at most three attempts, group failures are terminal, and session/generation/TUN
 fences still decide whether a result applies. The stop reason stays the generic
