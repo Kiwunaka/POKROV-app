@@ -103,7 +103,7 @@ function Invoke-External {
     [string]$WorkingDirectory
   )
 
-  $commandLabel = "$FilePath $($Arguments -join ' ')".Trim()
+  $commandLabel = ("$FilePath $($Arguments -join ' ')" -replace '(POKROV_(?:EMERGENCY|SUPPORT)_SIGNING_PUBLIC_KEY_B64=)[^\s]+', '$1[redacted]').Trim()
   Write-Host ">> $commandLabel" -ForegroundColor Cyan
 
   Push-Location $WorkingDirectory
