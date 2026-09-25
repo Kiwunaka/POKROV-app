@@ -329,6 +329,7 @@ class _FakeBootstrapper
   WarpControlStatus warpStatus;
   final tcpFallbackRequests = <String>[];
   RouteMode? lastRouteMode;
+  List<String> lastSelectedApps = const <String>[];
   HostPlatform? lastHostPlatform;
   String? lastRedeemCode;
   String? lastPairingCode;
@@ -413,6 +414,7 @@ class _FakeBootstrapper
     }
     tcpFallbackRequests.add(tcpFallbackFromRevision);
     lastRouteMode = routeMode;
+    lastSelectedApps = List<String>.unmodifiable(selectedApps);
     lastHostPlatform = hostPlatform;
     lastPreferredNodeCode = preferredNodeCode;
     lastPreferredVariantId = preferredVariantId;
@@ -1231,6 +1233,7 @@ class _FakeEmergencyBootstrapper extends _FakeBootstrapper
 void _installReadyRuntimeBridgeMock({
   List<String>? calls,
   List<String>? stagedPayloads,
+  List<Map<Object?, Object?>>? stagedArguments,
   Map<String, Object?>? variantProbeSnapshot,
   bool reportDegradedAfterConnect = false,
   bool failFirstConnect = false,
@@ -1353,6 +1356,7 @@ void _installReadyRuntimeBridgeMock({
       case 'runtimeEngine.stageManagedProfile':
         final arguments = call.arguments as Map<Object?, Object?>?;
         stagedPayloads?.add(arguments?['configPayload'] as String? ?? '');
+        if (arguments != null) stagedArguments?.add(arguments);
         return <String, Object?>{
           'phase': 'configStaged',
           'artifactDirectory': '/host/runtime',
@@ -12228,6 +12232,47 @@ void main() {
     expect(bootstrapper.lastRouteMode, isNull);
     expect(bootstrapper.calls, 0);
     expect(calls, isNot(contains('runtimeEngine.connect')));
+  });
+
+  testWidgets('disabled catalog ignores a saved verified app preset',
+      (tester) async {
+    final calls = <String>[];
+    final staged = <Map<Object?, Object?>>[];
+    _installReadyRuntimeBridgeMock(calls: calls, stagedArguments: staged);
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'managed-selected-apps',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+        routeMode: RouteMode.selectedApps,
+      ),
+    );
+    final store = _FakeClientExperienceStore(
+      const PokrovClientExperienceState.empty().copyWith(
+        firstRouteScopeConfirmed: true,
+        firstRouteScopeMode: RouteMode.selectedApps,
+        selectedAppIds: const <String>['com.yandex.browser'],
+        catalogVerifiedRuPreset: true,
+      ),
+    );
+
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      clientExperienceStore: store,
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
+    await tester.pumpAndSettle();
+
+    expect(bootstrapper.lastRouteMode, RouteMode.selectedApps);
+    expect(bootstrapper.lastSelectedApps, const <String>['com.yandex.browser']);
+    expect(calls, contains('runtimeEngine.connect'));
+    expect(staged, hasLength(1));
+    expect(staged.single['routeMode'], RouteMode.selectedApps.name);
+    expect(staged.single['quickSettingsEligible'], isTrue);
+    expect(staged.single, isNot(contains('catalogAppDigest')));
   });
 
   testWidgets(

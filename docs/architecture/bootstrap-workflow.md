@@ -668,6 +668,12 @@ profile write, entitlement creation or native connection is triggered by this
 view. Core version zero means missing/unnegotiated support, not proof that an
 update alone resolves the limitation.
 
+When the routing catalog is disabled, a previously saved verified RU app preset
+remains an ordinary selected/excluded-app choice. Connection staging does not
+request the catalog or require fresh catalog app attestations for that choice;
+the selected app IDs still go into the managed profile request and the chosen
+route mode is staged on Android.
+
 `routing_catalog_preview.dart` displays the compiler's decisions, including
 deduplicated domains shared by service entries. Source-only, disabled,
 ineligible, app-only and unselected-mode services receive explicit unavailable

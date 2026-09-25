@@ -5031,7 +5031,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     final profileRevision = _managedProfileRevision;
     final preparationClock = Stopwatch()..start();
-    final catalogAppScopeRequired = widget.appContext.hostPlatform == HostPlatform.android &&
+    final catalogAppScopeRequired = _routingCatalogEnabled &&
+        widget.appContext.hostPlatform == HostPlatform.android &&
         _clientExperience.catalogVerifiedRuPreset &&
         (payload.routeMode == RouteMode.selectedApps || payload.routeMode == RouteMode.excludedApps);
     final cancelled = _connectionCoordinator.actionInFlight
@@ -5084,8 +5085,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           widget.appContext.hostPlatform == HostPlatform.android &&
               _clientExperience.firstRouteScopeConfirmed &&
               _clientExperience.firstRouteScopeMode == _selectedRouteMode &&
-              !(_clientExperience.catalogVerifiedRuPreset &&
-                (payload.routeMode == RouteMode.selectedApps || payload.routeMode == RouteMode.excludedApps)),
+              !catalogAppScopeRequired,
     );
     late final ManagedProfilePayload configuredPayload;
     var catalogUsingCache = false;
@@ -5095,10 +5095,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       var nativeCatalogControlVersion = 0;
       var nativeSmartAccessLeaseVersion = 0;
       final catalogService = _bootstrapper;
-      if (catalogAppScopeRequired && catalogService is! AppFirstRoutingCatalogService) {
-        throw const RoutingCatalogFailure('catalog_discovery_unavailable');
-      }
-      if (catalogService is AppFirstRoutingCatalogService) {
+      if (_routingCatalogEnabled && catalogService is AppFirstRoutingCatalogService) {
         final result = await (catalogService as AppFirstRoutingCatalogService).fetchRoutingCatalog(
           hostPlatform: widget.appContext.hostPlatform, cacheOnly: offline,
           cancelled: cancelled,
@@ -5869,7 +5866,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                const {HostPlatform.android, HostPlatform.windows}.contains(widget.appContext.hostPlatform)) ||
              (const {RouteMode.selectedApps, RouteMode.excludedApps}.contains(_selectedRouteMode) &&
               widget.appContext.hostPlatform == HostPlatform.android &&
-              !_clientExperience.catalogVerifiedRuPreset))) {
+              (!_routingCatalogEnabled || !_clientExperience.catalogVerifiedRuPreset)))) {
         failureOperation = 'transport_manifest_connect';
         failureStage = ConnectionStage.profile;
         if (_runtimeEngine is! RuntimeBoundConnectivityProbe) {
