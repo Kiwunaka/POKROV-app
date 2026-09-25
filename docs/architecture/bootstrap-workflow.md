@@ -958,6 +958,12 @@ Current blocking dependency:
 - the Android Quick Settings tile uses Android active-tile mode, reconciles both the live TUN and the app-owned VPN-service presence before choosing start or stop, publishes only the resulting on/off state, and explicitly requests a new SystemUI listen after committed runtime transitions; the notification remains the owner of country, route and speed details
 - the shared shell now refreshes Android runtime truth again on foreground resume, and keeps polling a host-owned pending-connect signal through Android notification/VPN consent even when no lifecycle resume reaches Flutter; the host bridge reconciles a live TUN back to `running` and demotes a stale `running` snapshot when the app-owned TUN is absent, so a relaunch or interrupted service cannot leave the button lane falsely connected
 - the shared shell now treats `Connect with sing-box` as a one-tap lane on supported hosts: it auto-initializes the runtime, syncs a live app-first managed profile from the platform API, stages that profile, and then requests live connect instead of forcing manual `initialize -> stage -> connect`
+  After `initialize`, the shell proceeds to profile preparation only when the
+  returned phase is initialized, config-staged or running. An unconfirmed phase,
+  including a Windows IPC timeout returned as a snapshot, stops the attempt
+  before staging and shows a retry message.
+  This guard was added after build 4059; the existing 4059 build and device
+  acceptance do not cover it.
 - Smart Connect promotes the selected direct outbound inside that authorized profile by canonical `outbound_tag` (with bounded compatibility mapping for older manifests); a second exact managed-profile fetch is a six-second fallback only when local identity cannot be proven, not part of the normal connect path
 - Smart Connect probe concurrency (default three) counts unresolved probes across
   profile resolutions on the same bootstrapper. A wrapper timeout ends the wait

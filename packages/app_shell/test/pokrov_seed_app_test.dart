@@ -12108,6 +12108,66 @@ void main() {
     );
   });
 
+  testWidgets('Windows does not stage after unconfirmed initialize',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'managed-from-api',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+    );
+
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      switch (call.method) {
+        case 'runtimeEngine.snapshot':
+          return <String, Object?>{
+            'phase': 'artifactReady',
+            'artifactDirectory': '/host/runtime',
+            'coreBinaryPath': '/host/runtime/pokrov-core.dll',
+            'supportsLiveConnect': true,
+            'canInitialize': true,
+            'canConnect': false,
+            'message': 'Host bridge ready.',
+          };
+        case 'runtimeEngine.initialize':
+          return <String, Object?>{
+            'phase': 'artifactMissing',
+            'supportsLiveConnect': false,
+            'canInitialize': false,
+            'canConnect': false,
+            'message': 'Service initialize timed out.',
+          };
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      windowsTunnelAuthorizer: () async =>
+          PokrovWindowsTunnelAuthorization.allowed,
+    ));
+    await tester.pumpAndSettle();
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+
+    expect(calls, contains('runtimeEngine.initialize'));
+    expect(calls, isNot(contains('runtimeEngine.stageManagedProfile')));
+    expect(calls, isNot(contains('runtimeEngine.connect')));
+    expect(bootstrapper.calls, 0);
+    expect(find.textContaining('Запуск POKROV Core не подтверждён'),
+        findsWidgets);
+  });
+
   testWidgets('long connect exposes the current stage and details after 10s',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

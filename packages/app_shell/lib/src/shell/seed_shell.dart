@@ -5854,6 +5854,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _runtimeSnapshot = current;
           _runtimeHeadline = null;
         });
+        if (!const {
+          RuntimePhase.initialized,
+          RuntimePhase.configStaged,
+          RuntimePhase.running,
+        }.contains(current.phase)) {
+          throw const BootstrapFailure(
+            'Запуск POKROV Core не подтверждён. Попробуйте подключиться ещё раз.',
+            operation: 'initialize',
+            code: 'core_initialize_unconfirmed',
+          );
+        }
       }
 
         final transportService = _bootstrapper;
