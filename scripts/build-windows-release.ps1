@@ -582,8 +582,10 @@ $appDirectory = Join-Path $root "apps\\windows_shell"
 $pubspecPath = Join-Path $appDirectory "pubspec.yaml"
 $version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
 if (-not $SkipBuild) {
-  $clientRevision = ([string](& git -C $root rev-parse HEAD 2>&1 | Select-Object -First 1)).Trim()
-  if ($LASTEXITCODE -ne 0 -or $clientRevision -notmatch '^[0-9a-fA-F]{40}$') {
+  $revisionOutput = & git -C $root rev-parse --verify HEAD
+  $revisionExit = $LASTEXITCODE
+  $clientRevision = ([string]$revisionOutput).Trim()
+  if ($revisionExit -ne 0 -or $clientRevision -notmatch '^[0-9a-fA-F]{40}$') {
     throw "Could not bind Windows diagnostics to the client revision."
   }
   & git -C $root diff --quiet HEAD --
