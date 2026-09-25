@@ -463,6 +463,77 @@ void main() {
     expect((config['route'] as Map<String, dynamic>)['final'], 'pokrov-warp');
   });
 
+  test('bound ATS app modes stage without catalog native control', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final coreDigest = 'a' * 64;
+    final profileDigest = 'b' * 64;
+    final stagedModes = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        final arguments = Map<Object?, Object?>.from(call.arguments as Map);
+        stagedModes.add(arguments['routeMode']! as String);
+        expect(arguments['requiresBoundConnect'], isTrue);
+        expect(arguments['expectedProfileDigest'], profileDigest);
+        return <String, Object?>{
+          'phase': 'configStaged',
+          'coreModuleSha256': coreDigest,
+          'stagedProfileDigest': profileDigest,
+          'stagedConfigPath': '/host/runtime/ats.json',
+          'routingCatalogControlVersion': 0,
+        };
+      }
+      if (call.method == 'runtimeEngine.snapshot') {
+        return <String, Object?>{
+          'phase': 'initialized',
+          'coreModuleSha256': coreDigest,
+          'routingCatalogControlVersion': 0,
+        };
+      }
+      return null;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android)
+        as RuntimeCoreIdentityStage;
+    for (final mode in const [RouteMode.selectedApps, RouteMode.excludedApps]) {
+      final staged = await engine.stageWithCoreIdentity(
+        ManagedProfilePayload(
+          profileName: 'ats-${mode.name}',
+          configPayload:
+              '{"outbounds":[{"type":"vless","tag":"pokrov-ats-upstream"},{"type":"pokrov-ats-lease","tag":"pokrov-ats","upstream_tag":"pokrov-ats-upstream"},{"type":"direct","tag":"direct"}],"route":{"final":"pokrov-ats"}}',
+          materializedForRuntime: true,
+          routeMode: mode,
+          coreEgressProbeRequired: false,
+        ),
+        expectedCoreModuleSha256: coreDigest,
+        operationIsCurrent: () => true,
+        bindIdentity: (input, native) async => profileDigest,
+      );
+      expect(staged.phase, RuntimePhase.configStaged);
+      expect(staged.routingCatalogControlVersion, 0);
+    }
+    expect(stagedModes, ['selectedApps', 'excludedApps']);
+
+    await expectLater(
+      engine.stageWithCoreIdentity(
+        const ManagedProfilePayload(
+          profileName: 'ats-catalog-rule',
+          configPayload:
+              '{"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"pokrov_catalog_window":{"version":1},"outbound":"direct"}],"final":"direct"}}',
+          materializedForRuntime: true,
+          routeMode: RouteMode.selectedApps,
+        ),
+        expectedCoreModuleSha256: coreDigest,
+        operationIsCurrent: () => true,
+        bindIdentity: (input, native) async => profileDigest,
+      ),
+      throwsStateError,
+    );
+    expect(stagedModes, ['selectedApps', 'excludedApps']);
+  });
+
   test('mobile lane forwards materialized runtime configs without re-parsing',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

@@ -495,7 +495,8 @@ class TransportSelection {
     try {
       final staged = await (engine as RuntimeCoreIdentityStage).stageWithCoreIdentity(prepared.payload,
         expectedCoreModuleSha256: context.artifactSha256, operationIsCurrent: current,
-        persistRestrictions: persistRestrictions == null ? null : (identityInput, native) async {
+        persistRestrictions: persistRestrictions == null || prepared.catalogPolicy == null
+            ? null : (identityInput, native) async {
           await persistence.sample();
           return persistence.wait(persistRestrictions(persistence, identityInput, native));
         },

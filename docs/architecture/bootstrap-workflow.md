@@ -672,7 +672,9 @@ When the routing catalog is disabled, a previously saved verified RU app preset
 remains an ordinary selected/excluded-app choice. Connection staging does not
 request the catalog or require fresh catalog app attestations for that choice;
 the selected app IDs still go into the managed profile request and the chosen
-route mode is staged on Android.
+route mode is staged on Android. Transport Manifest profiles without a catalog
+policy bind their Core identity without catalog restriction persistence; native
+staging still rejects a config that contains catalog or Smart Access restrictions.
 
 `routing_catalog_preview.dart` displays the compiler's decisions, including
 deduplicated domains shared by service entries. Source-only, disabled,
