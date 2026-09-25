@@ -23,6 +23,24 @@ namespace {
 constexpr wchar_t kProductionServiceName[] = L"POKROVService";
 constexpr wchar_t kLocalSystemServiceAccount[] = L"LocalSystem";
 constexpr DWORD kProductionPipeConnectTimeoutMs = 5000;
+// The service rejects frame deadlines more than five minutes ahead.
+constexpr std::uint64_t kMaximumBoundIpcWaitMs = 299000;
+
+std::optional<DWORD> BoundIpcWaitMs(const std::string& body) {
+  const auto target = DecodeBoundConnect(body);
+  if (!target) return std::nullopt;
+  using QueryTime = VOID(WINAPI*)(PULONGLONG);
+  const auto query = reinterpret_cast<QueryTime>(::GetProcAddress(
+      ::GetModuleHandleW(L"kernel32.dll"), "QueryInterruptTimePrecise"));
+  if (query == nullptr) return std::nullopt;
+  ULONGLONG ticks = 0;
+  query(&ticks);
+  const auto elapsed_ms = ticks / 10000ULL;
+  if (elapsed_ms < target->started_elapsed_ms ||
+      elapsed_ms >= target->deadline_elapsed_ms) return std::nullopt;
+  return static_cast<DWORD>((std::min)(target->deadline_elapsed_ms - elapsed_ms,
+                                        kMaximumBoundIpcWaitMs));
+}
 
 std::uint64_t UnixTimeMilliseconds() {
   FILETIME file_time{};
@@ -322,6 +340,12 @@ ExchangeResult Exchange(Command command, const std::string& body,
       command == Command::kAcknowledgeSmartAccessRestrictions || command == Command::kReadSmartAccessLeases ||
       command == Command::kConfigureSmartAccessRenewal || command == Command::kConfigureBoundSmartAccessRuntimeControl ||
       command == Command::kPromoteTransportLease || command == Command::kRevokeTransportLease;
+  const auto bound_wait_ms = command == Command::kConnectWithIdentity
+      ? BoundIpcWaitMs(body) : std::optional<DWORD>{};
+  if (command == Command::kConnectWithIdentity && !bound_wait_ms) {
+    ::CloseHandle(pipe);
+    return result;
+  }
   const Frame request{
       FrameKind::kRequest,
       command,
@@ -329,7 +353,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
       request_correlation,
       hello_response->session_token,
       operation_nonce,
-      UnixTimeMilliseconds() + (short_control ? 3000 : 30000),
+      UnixTimeMilliseconds() + (short_control ? 3000 : bound_wait_ms.value_or(30000)),
       0,
       body,
   };
@@ -373,7 +397,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
     });
   }
   result.response = ReadFrame(pipe,
-      ::GetTickCount64() + (short_control ? 3000 : 33000), control);
+      ::GetTickCount64() + (short_control ? 3000 : bound_wait_ms.value_or(30000) + 3000), control);
   if (!result.response && IsConnectCommand(command) && control) {
     // Publish cancellation before completion so the companion cannot exit on
     // the lost-response path without making its final bounded cancel attempt.

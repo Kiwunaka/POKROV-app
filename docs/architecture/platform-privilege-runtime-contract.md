@@ -1606,8 +1606,11 @@ capabilities. Its bounded canonical ASCII body is
 Both digests are 64 lowercase hex; boot ref is `windows:` plus 32 lowercase hex.
 Times are canonical unsigned decimal milliseconds, end at most JS-safe integer,
 start < end, and duration at most 24h (schema ceiling, not an operational default
-or lease grant). The ordinary frame deadline remains an additional IPC/start
-limit. Older services reject the opcode/capability rather than silently treating
+or lease grant). For bound connect, the IPC request and reply wait use the
+remaining original boot-clock budget, capped below the service's five-minute
+frame limit, instead of the ordinary 30-second command timeout. The service
+still checks that original deadline during startup and rolls back on expiry.
+Older services reject the opcode/capability rather than silently treating
 it as ordinary Connect.
 
 `RuntimeHost::ConnectWithIdentity` rejects an already running or recovery-owned
