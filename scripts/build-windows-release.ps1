@@ -1138,6 +1138,7 @@ end;
 procedure MigrateLegacyPerUserInstall(const CreatedBySetup: Boolean);
 var
   ResultCode: Integer;
+  WaitAttempt: Integer;
   LegacyBinary: String;
   LegacyUninstallRegistryKey: String;
 begin
@@ -1148,11 +1149,39 @@ begin
   LegacyUninstallRegistryKey :=
     'Software\Microsoft\Windows\CurrentVersion\Uninstall\' +
     '{A8EE9193-93A9-4B13-A7AD-8441D98A48E1}_is1';
+  if not Exec(ExpandConstant('{sys}\taskkill.exe'),
+      '/IM "$($windowsReleaseConfig.binary_name)" /T /F', '', SW_HIDE,
+      ewWaitUntilTerminated, ResultCode) or
+      ((ResultCode <> 0) and (ResultCode <> 128)) then
+    AbortServiceSetup('POKROV_LEGACY_PER_USER_UI_CLOSE_FAILED',
+      CreatedBySetup, ResultCode);
+  { taskkill and Wait-Process can return while the old UI is still listed. }
+  if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+      '-NoProfile -NonInteractive -Command ' +
+      '"`$deadline=(Get-Date).AddSeconds(60); ' +
+      'while ((Get-Date) -lt `$deadline) { ' +
+      'if (-not (Get-Process -Name pokrov_windows ' +
+      '-ErrorAction SilentlyContinue)) { Start-Sleep -Seconds 1; ' +
+      'if (-not (Get-Process -Name pokrov_windows ' +
+      '-ErrorAction SilentlyContinue)) { exit 0 } }; ' +
+      'Start-Sleep -Milliseconds 250 }; exit 1"',
+      '', SW_HIDE, ewWaitUntilTerminated,
+      ResultCode) or (ResultCode <> 0) then
+    AbortServiceSetup('POKROV_LEGACY_PER_USER_UI_EXIT_FAILED',
+      CreatedBySetup, ResultCode);
   if not Exec(LegacyPerUserUninstaller,
       '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE,
       ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
     AbortServiceSetup('POKROV_LEGACY_PER_USER_UNINSTALL_FAILED',
       CreatedBySetup, ResultCode);
+  { The old Inno uninstaller removes its files in a spawned second phase. }
+  WaitAttempt := 0;
+  while (RegKeyExists(HKCU, LegacyUninstallRegistryKey) or
+      FileExists(LegacyBinary)) and (WaitAttempt < 40) do
+  begin
+    Sleep(500);
+    WaitAttempt := WaitAttempt + 1;
+  end;
   if RegKeyExists(HKCU, LegacyUninstallRegistryKey) or
       FileExists(LegacyBinary) then
     AbortServiceSetup('POKROV_LEGACY_PER_USER_RESIDUAL_FOUND',
