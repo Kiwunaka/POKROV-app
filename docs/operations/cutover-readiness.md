@@ -1,7 +1,7 @@
 # Client 1.2.0 release status
 
 Public version: **1.1.6** in GitHub Releases. Working target:
-**1.2.0+4059** with POKROV Core 1.1.0. The new target is not published.
+**1.2.0+4061** with POKROV Core 1.1.0. The new target is not published.
 
 The client source and local Core artifact binding are in `main`. A local
 build proves compilation only; device and account checks below must run on the
@@ -44,8 +44,24 @@ checks without treating an earlier build as proof of 4059.
 | Windows VM | **PARTIAL** for the local 4059 installer built from `7388cbd`. Upgrade from published 1.1.6+29 with its UI running passed: the old EXE, uninstaller, and HKCU entry disappeared, and the new EXE, HKLM entry, and service remained. Clean installation and UI launch passed. An ordinary reboot without VPN kept the service running and the network available. Uninstalling with the UI running removed the EXE, registry entry, and service; Ethernet and TCP to the owned API on port 443 still worked. The VM was left without POKROV. VPN connect/disconnect and reboot with VPN active remain unverified: earlier 4057 and published 1.1.6 both failed connection on this same VM, so further VPN testing stopped under the owner's A/B instruction. |
 | Expired-account renewal and payment | **PASS for invoice creation** on 2026-09-26. A separate production test account was created through the trial API, expired in the account and trial grant, and disabled on the panels. Its one-month SBP renewal request returned HTTP 200, an HTTPS checkout URL, and a provider invoice ID with Lava status `new`; the local order is `pending` for 250 RUB. No payment or fulfillment was performed. The other Lava orders in the preceding four days belonged to tests; there was no real-user attempt in that window to establish a real-user success rate. |
 
-**Release decision: HOLD.** Android 4059 has focused DE/CH physical-device
-coverage, and the Windows 4059 installation paths passed, but the IT network
-path and Windows VPN acceptance remain open. Happ VPN connectivity and
-test-account invoice creation passed. Publication and the bot announcement
-need the owner's approval after those items are resolved or explicitly waived.
+## Э1 acceptance, 2026-09-27: 4061
+
+The signed Android APK and unsigned Windows installer were built from `be0f86a`
+with the existing Core 1.1.0 binaries. They include `ee80b51` and removal of the
+GitHub-key emergency network. Routing rule-set downloads remain unchanged.
+The 4060 clean Windows run exposed an invisible welcome when animation tickers
+were muted. A regression test reproduced it; `22e9db9` makes that state show
+content immediately. The final 4061 clean launch passed without reopening.
+
+| Check | Final 4061 result |
+| --- | --- |
+| Huawei update | **PASS:** 4059 → 4060 → 4061 without clearing data; trial and routing preferences preserved. |
+| Huawei DE/CH | **PASS:** ordinary mode, «Россия напрямую», Wi-Fi. Connected UI and Android VPN state matched increased traffic for the exact test account on both Xray nodes; no unknown-user or REALITY warnings in the matching logs. The existing WARP preference was preserved. A fresh browser request was not checked because automatic tool policy rejected the ADB browser launch. LTE and whitelist-mode checks were not repeated on 4061. |
+| Windows update and clean install | **PASS** on POKROV-Win11-Test, VT-x, 4 vCPU, 8 GB, with host builds stopped. Updating the running 1.1.6 UI preserved the trial and removed the old installation. After clearing only test POKROV state, the clean 4061 welcome appeared on its first launch and created a new trial. |
+| Windows DE/CH and reboot | **PASS:** ordinary mode, «Россия напрямую», verified TUN/routes/DNS/egress and fresh owned API HTTP 200 on both nodes. DE Core start took 884 ms. Rebooting with CH connected restored ordinary networking before login; the service was running and TUN absent. VPN did not reconnect automatically. A subsequent CH connection passed. |
+| Windows uninstall | **PASS** with CH VPN and UI active: EXE, service, processes, uninstall entry and TUN disappeared; Ethernet and the owned API remained available. |
+
+The phone remains on 4061 with VPN off. The VM is left without POKROV.
+**Release decision: HOLD by owner instruction.** Nothing was published;
+public 1.1.6 and its release index remain unchanged. Earlier IT reachability
+results above were not retested in this scoped DE/CH acceptance.
