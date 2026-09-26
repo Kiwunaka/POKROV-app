@@ -370,7 +370,7 @@ class _FirstLaunchReveal extends StatelessWidget {
     final duration = motion.duration(
       PokrovMotionTokens.homeReveal + PokrovMotionTokens.short * order,
     );
-    if (duration == Duration.zero) {
+    if (duration == Duration.zero || !TickerMode.of(context)) {
       return child;
     }
     final start = (order * 0.14).clamp(0.0, 0.6);

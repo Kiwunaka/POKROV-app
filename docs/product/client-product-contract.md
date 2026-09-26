@@ -238,6 +238,9 @@ place without showing its opaque handle; invalid or expired attribution never
 blocks either choice. Account refresh and trial provisioning do not start merely
 because the choice screen rendered.
 
+When window tickers are muted or motion is disabled, welcome content appears
+immediately in its final state so the first-launch choices remain visible.
+
 Before the first Android system VPN request, the app explains why the
 permission is needed and offers `Не сейчас`. If Android denies it, Home remains
 honestly disconnected and shows `Разрешить VPN`; retry reopens the explanation

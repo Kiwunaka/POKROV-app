@@ -1801,6 +1801,35 @@ void main() {
     }
   });
 
+  testWidgets('first launch stays visible while window tickers are muted',
+      (tester) async {
+    final app = PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      firstLaunchStore: _FakeFirstLaunchStore(),
+    );
+    await tester.pumpWidget(TickerMode(enabled: false, child: app));
+    await tester.pump(const Duration(seconds: 1));
+
+    void expectWelcomeVisible() {
+      for (final content in [
+        find.text('Добро пожаловать'),
+        find.byKey(const ValueKey('first-launch-new-user')),
+        find.byKey(const ValueKey('first-launch-returning-user')),
+      ]) {
+        expect(content, findsOneWidget);
+        final opacity = tester.widgetList<Opacity>(
+          find.ancestor(of: content, matching: find.byType(Opacity)),
+        );
+        expect(opacity.map((widget) => widget.opacity), everyElement(1.0));
+      }
+    }
+
+    expectWelcomeVisible();
+    await tester.pumpWidget(TickerMode(enabled: true, child: app));
+    await tester.pumpAndSettle();
+    expectWelcomeVisible();
+  });
+
   testWidgets('first launch keeps Home visible and offers soft recovery',
       (tester) async {
     await tester.pumpWidget(
