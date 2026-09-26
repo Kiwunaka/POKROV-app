@@ -1,7 +1,8 @@
 # Android 1.2.0 acceptance
 
-Target: `1.2.0+4055`, direct APK, POKROV Core 1.1.0. Current public version
-is 1.1.6. Use LDPlayer for interim checks; physical-device checks remain open.
+Published version: `1.2.0+4061`, direct APK, POKROV Core 1.1.0. Current
+Huawei acceptance is recorded in `cutover-readiness.md`. The 4055 emulator
+results below are historical; LDPlayer is not used for VPN acceptance.
 
 The x86_64 direct 4055 APK was installed in a fresh LDPlayer instance. It
 started, created a trial, and received Android VPN permission. DE and CH both

@@ -1,7 +1,7 @@
 # Windows 1.2.0 acceptance
 
-Target: `1.2.0+4061`, unsigned Windows beta, POKROV Core 1.1.0. Current public
-version is 1.1.6. The earlier 4055 installed-VM checks remain historical. On
+Published: `1.2.0+4061`, unsigned Windows beta, POKROV Core 1.1.0.
+Version 1.1.6 remains available for rollback. The earlier 4055 installed-VM checks remain historical. On
 the same VM, 4053 connected to DE while 4054 timed out; replacing only Core
 with the fixed DLL restored the connection. The exact 4055 installer was then
 installed over 4054 on that VM: its bundled Core DLL matched the staged artifact, DE connected,
@@ -41,4 +41,5 @@ network access remained available. The VM was left without POKROV.
 The first 4060 clean launch had an invisible welcome until reopening. A focused
 regression test reproduced muted animation tickers leaving opacity at zero;
 `22e9db9` fixed that path, and the first clean 4061 launch confirmed the fix.
-The candidate is not published; the owner keeps release 1.2.0 on hold.
+The owner approved publication on 2026-09-27. The same installer is available
+in `Kiwunaka/pokrov` release `v1.2.0`, with the SmartScreen warning.

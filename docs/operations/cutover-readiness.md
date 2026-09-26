@@ -1,7 +1,8 @@
 # Client 1.2.0 release status
 
-Public version: **1.1.6** in GitHub Releases. Working target:
-**1.2.0+4061** with POKROV Core 1.1.0. The new target is not published.
+Public version: **1.2.0+4061** with POKROV Core 1.1.0 in
+`Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
+beta with a SmartScreen warning. Version 1.1.6 remains available for rollback.
 
 The client source and local Core artifact binding are in `main`. A local
 build proves compilation only; device and account checks below must run on the
@@ -62,6 +63,20 @@ content immediately. The final 4061 clean launch passed without reopening.
 | Windows uninstall | **PASS** with CH VPN and UI active: EXE, service, processes, uninstall entry and TUN disappeared; Ethernet and the owned API remained available. |
 
 The phone remains on 4061 with VPN off. The VM is left without POKROV.
-**Release decision: HOLD by owner instruction.** Nothing was published;
-public 1.1.6 and its release index remain unchanged. Earlier IT reachability
-results above were not retested in this scoped DE/CH acceptance.
+**Release decision: published by owner approval on 2026-09-27.** The accepted
+4061 files were published without rebuilding. Platform metadata recommends
+1.2.0 to 1.1.6 clients; no news, LiveUpdate or broadcast was created. Earlier
+IT reachability results above were not retested in this scoped DE/CH acceptance.
+
+Publication checks: Android 1.1.6+4029 in a fresh LDPlayer instance showed the
+1.2.0 offer; its Update button downloaded all 101,611,855 bytes of the ARM64
+APK and opened the Android installer. The downloaded file matched the public
+SHA-256, versionName 1.2.0 and versionCode 4061. Installation was not confirmed;
+this was an updater check, not VPN acceptance. Windows 1.1.6+29 showed the 1.2.0 offer and unsigned-beta
+SmartScreen warning. Its Update button opened the canonical GitHub EXE in Edge;
+all 29,357,349 bytes downloaded with the published SHA-256 and file version
+1.2.0+4061. Edge retained the file pending its uncommon-download confirmation;
+that browser protection was not bypassed. The eight 1.1.6 rollback assets remain
+available. The owner cancelled the 48-hour monitoring period and approved
+starting Э2 task 1. Any 1.2.0 hotfix must branch from the 4061 build commit
+`be0f86a` and needs separate owner approval before publication.
