@@ -172,8 +172,6 @@ internal object AndroidRuntimeSafety {
             "Не удалось согласовать TLS с сервером проверки."
         "core_egress_probe_unavailable" ->
             "POKROV не завершил проверку защищенного подключения. Попробуйте еще раз."
-        "emergency_endpoint_unreachable" ->
-            "Этот резерв недоступен в текущей сети. POKROV не включил системный VPN."
         "core_identity_mismatch" ->
             "Модуль подключения изменился. Обновите POKROV и повторите подключение."
         "connect_deadline" ->

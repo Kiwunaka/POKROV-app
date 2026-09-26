@@ -348,52 +348,34 @@ class _HomeStageState extends State<_HomeStage>
             ),
           ),
         ],
-        if (widget.protectionState.whitelistRecoverySuggested) ...[
-          const SizedBox(height: 10),
-          _HomeRevealSlice(
-            controller: _revealController,
-            begin: 0.34,
-            end: 0.82,
-            child: _WhitelistRecoveryCard(
-              onTap: widget.protectionIntents.openRecovery,
-            ),
-          ),
-        ],
         const SizedBox(height: 20),
         _HomeRevealSlice(
           controller: _revealController,
           begin: 0.38,
           end: 0.88,
-          child: widget.protectionState.emergencyRuntimeActive
-              ? _HomeEmergencyRuntimeCard(
-                  chainMode: widget.protectionState.emergencyChainMode,
-                  onTap: widget.protectionIntents.openRecovery,
-                )
-              : _HomeModeChips(
-                  locationLabel: widget.protectionState.locationLabel,
-                  routeMode: widget.protectionState.routeMode,
-                  changesPending: widget.protectionState.routeChangesPending,
-                  onOpenLocations: widget.protectionIntents.openLocations,
-                  onOpenRules: widget.protectionIntents.openRules,
-                ),
-        ),
-        if (!widget.protectionState.emergencyRuntimeActive) ...[
-          const SizedBox(height: 12),
-          _HomeRevealSlice(
-            controller: _revealController,
-            begin: 0.50,
-            end: 1,
-            child: _HomeWarpTile(
-              policy: widget.warpPolicy,
-              runtimeConsent: widget.warpRuntimeConsent,
-              runtimeActive: widget.warpRuntimeActive,
-              busy: widget.warpBusy,
-              compact: true,
-              onOpen: widget.onOpenWarp,
-              onChanged: widget.onWarpConsentChanged,
-            ),
+          child: _HomeModeChips(
+            locationLabel: widget.protectionState.locationLabel,
+            routeMode: widget.protectionState.routeMode,
+            changesPending: widget.protectionState.routeChangesPending,
+            onOpenLocations: widget.protectionIntents.openLocations,
+            onOpenRules: widget.protectionIntents.openRules,
           ),
-        ],
+        ),
+        const SizedBox(height: 12),
+        _HomeRevealSlice(
+          controller: _revealController,
+          begin: 0.50,
+          end: 1,
+          child: _HomeWarpTile(
+            policy: widget.warpPolicy,
+            runtimeConsent: widget.warpRuntimeConsent,
+            runtimeActive: widget.warpRuntimeActive,
+            busy: widget.warpBusy,
+            compact: true,
+            onOpen: widget.onOpenWarp,
+            onChanged: widget.onWarpConsentChanged,
+          ),
+        ),
         if (widget.infoNotice != null) ...[
           const SizedBox(height: 8),
           _HomeRevealSlice(
@@ -531,21 +513,20 @@ class _HomeStageState extends State<_HomeStage>
                     ),
                     const SizedBox(height: 10),
                   ],
-                  if (!widget.protectionState.emergencyRuntimeActive)
-                    _HomeRevealSlice(
-                      controller: _revealController,
-                      begin: 0.22,
-                      end: 0.76,
-                      child: _HomeWarpTile(
-                        policy: widget.warpPolicy,
-                        runtimeConsent: widget.warpRuntimeConsent,
-                        runtimeActive: widget.warpRuntimeActive,
-                        busy: widget.warpBusy,
-                        compact: false,
-                        onOpen: widget.onOpenWarp,
-                        onChanged: widget.onWarpConsentChanged,
-                      ),
+                  _HomeRevealSlice(
+                    controller: _revealController,
+                    begin: 0.22,
+                    end: 0.76,
+                    child: _HomeWarpTile(
+                      policy: widget.warpPolicy,
+                      runtimeConsent: widget.warpRuntimeConsent,
+                      runtimeActive: widget.warpRuntimeActive,
+                      busy: widget.warpBusy,
+                      compact: false,
+                      onOpen: widget.onOpenWarp,
+                      onChanged: widget.onWarpConsentChanged,
                     ),
+                  ),
                   if (widget.infoNotice != null) ...[
                     const SizedBox(height: 10),
                     _HomeRevealSlice(
@@ -612,115 +593,7 @@ class _HomeStageState extends State<_HomeStage>
           const SizedBox(height: 14),
           _MotionRecoveryBanner(message: widget.recoveryNotice!),
         ],
-        if (widget.protectionState.whitelistRecoverySuggested) ...[
-          const SizedBox(height: 10),
-          _WhitelistRecoveryCard(onTap: widget.protectionIntents.openRecovery),
-        ],
       ],
-    );
-  }
-}
-
-class _WhitelistRecoveryCard extends StatelessWidget {
-  const _WhitelistRecoveryCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = PokrovPalette.of(context);
-    return Material(
-      color: p.reward.withValues(alpha: 0.10),
-      shape: RoundedRectangleBorder(
-        borderRadius: PokrovRadii.card,
-        side: BorderSide(color: p.reward.withValues(alpha: 0.28)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: const ValueKey('home-whitelist-recovery'),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Icon(Icons.route_rounded, color: p.reward),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Открываются только отдельные сайты?',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    SizedBox(height: 2),
-                    Text('Попробовать режим белых списков'),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: p.muted),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomeEmergencyRuntimeCard extends StatelessWidget {
-  const _HomeEmergencyRuntimeCard({
-    required this.chainMode,
-    required this.onTap,
-  });
-
-  final EmergencyChainMode chainMode;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = PokrovPalette.of(context);
-    return Material(
-      color: p.reward.withValues(alpha: 0.10),
-      shape: RoundedRectangleBorder(
-        borderRadius: PokrovRadii.card,
-        side: BorderSide(color: p.reward.withValues(alpha: 0.28)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: const ValueKey('home-whitelist-active'),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: p.reward.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(Icons.route_rounded, color: p.reward),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Режим белых списков',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(_emergencyChainModeTitle(chainMode)),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: p.muted),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -777,18 +650,13 @@ class _HomeConnectPanel extends StatelessWidget {
             onTap: intents.openConnectionDetails,
           ),
           const SizedBox(height: 30),
-          protection.emergencyRuntimeActive
-              ? _HomeEmergencyRuntimeCard(
-                  chainMode: protection.emergencyChainMode,
-                  onTap: intents.openRecovery,
-                )
-              : _HomeModeChips(
-                  locationLabel: protection.locationLabel,
-                  routeMode: protection.routeMode,
-                  changesPending: protection.routeChangesPending,
-                  onOpenLocations: intents.openLocations,
-                  onOpenRules: intents.openRules,
-                ),
+          _HomeModeChips(
+            locationLabel: protection.locationLabel,
+            routeMode: protection.routeMode,
+            changesPending: protection.routeChangesPending,
+            onOpenLocations: intents.openLocations,
+            onOpenRules: intents.openRules,
+          ),
         ],
       ),
     );

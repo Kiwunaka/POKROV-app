@@ -83,7 +83,7 @@ enum RuntimeStopReason {
   final String wireName;
 }
 
-enum RuntimeProfileSourceOrigin { managedManifest, signedEmergencyEnvelope }
+enum RuntimeProfileSourceOrigin { managedManifest }
 
 /// Upstream revision carried alongside its materialized local execution input.
 /// This does not prove the server still desires this revision after the fetch.
@@ -536,7 +536,6 @@ const _publicRuntimeFailureKinds = <String>{
   ..._coreEgressProbeFailureKinds,
   'core_egress_probe_unavailable',
   'desktop_tun_egress_probe_failed',
-  'emergency_endpoint_unreachable',
   'profile_staging_failed',
   'profile_identity_failed',
   'profile_identity_mismatch',
@@ -808,7 +807,6 @@ String _publicRuntimeMessage({
     case 'default_network_index_unresolved':
       return 'POKROV не смог определить сетевой интерфейс устройства.';
     case 'endpoint_connect_failed':
-    case 'emergency_endpoint_unreachable':
       return 'Не удалось установить соединение с точкой подключения.';
     case 'endpoint_connect_refused':
       return 'Точка подключения отклонила соединение.';
@@ -1323,7 +1321,7 @@ class ManagedProfilePayload {
   final int lanScopeVersion;
 
   /// Ordinary Android profiles prove their selected outbound after TUN start.
-  /// A locally verified emergency offline profile disables only that live
+  /// A transport profile using bound proof disables only that live
   /// control-plane-dependent probe while retaining fail-closed routing.
   final bool coreEgressProbeRequired;
   final RouteMode routeMode;

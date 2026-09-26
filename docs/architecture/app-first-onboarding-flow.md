@@ -479,27 +479,6 @@ active. The first-session events are `app_first_open`,
 `first_verified_connect`. First-open/home/verified milestones do not replay
 after their persisted local completion boundary.
 
-### Emergency offline readiness
-
-- once `/api/client/subscription` confirms `trialPremium` or `paidUnlimited`,
-  the app refreshes the authenticated signed emergency bundle with the
-  explicit precache flag in the background without blocking the home screen
-- the precached bundle stays hidden until trusted RU evidence or the user's
-  `Ограниченная сеть` confirmation; precaching is not automatic country proof
-- a valid encrypted bundle is reused immediately on cold start when POKROV
-  control-plane domains are unavailable; server refresh resumes whenever the
-  normal network is reachable
-- a reserve whose probe age is marked `stale` remains a selectable signed
-  last-known-good path until the bounded catalog lease expires
-- on Android, an offline emergency connection probes only the root reserve on
-  the active non-VPN network before starting Core. An unreachable root is
-  rejected without creating a TUN, and the app rotates through the other
-  signed compatible reserves before reporting that none work on this network
-- the bundle binds to the active paired-device install from the access token,
-  contains no authorization for a different install, and expires no
-  later than the confirmed trial/subscription. A new or reset device still
-  needs one successful online activation before it can work offline
-
 ## Local Smart Access grant receipt (NOT_VERIFIED)
 
 The existing bootstrapper exposes `AppFirstSmartAccessService` for a fresh

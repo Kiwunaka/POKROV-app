@@ -32,7 +32,6 @@ accepted the request, not that retained state or a live TUN was erased.
 | App-first access/refresh pair | `FlutterSecureAppFirstSessionSecretStore`; platform secure storage | `version: 1`; raw access-token string `v0` | A raw legacy value is decoded and best-effort rewritten as the `v1` JSON pair. Unknown object versions return no credential and are neither overwritten nor deleted. Tokens never enter ordinary JSON state or fixtures. |
 | Client experience | `PokrovFileClientExperienceStore`; `pokrov-client-experience-v1.json` | `version: 1`; unversioned `v0` | `v0` is bounded by the normalizers and rewritten as `v1`. Unknown versions produce empty convenience state and the original file is preserved. Routing preferences from a future schema therefore cannot silently control the current client. |
 | Android staged-profile reuse | `AndroidRuntimeProfileStore`; private `pokrov_runtime_profile` SharedPreferences | `schema_version: 1`; key set without a schema is `v0` | A valid `v0` record is rewritten as `v1`. Missing safety metadata defaults to Quick Settings disabled and Core egress proof required. Unknown versions are not restored into runtime state and are not cleared, preserving downgrade recovery. A missing staged config file clears only a supported record. |
-| Emergency bundle/envelope | `PokrovFileEmergencyNetworkStore`; application support plus platform secure storage | existing `schema_version: 1` | Already version-routed, encrypted/verified, atomic, and fail-closed. WO-004C changes no emergency schema. |
 | Signed Routing Catalog (POST12, NOT_VERIFIED) | `RoutingCatalogStore`; platform secure storage, `pokrov-routing-catalog-<audience>-v1` | `version: 1`; no legacy route | One signed public envelope plus catalog/security floors, payload digest and last observed UTC time. Reverify current pinned keys, audience, signature and lifetime on each read. Missing state bootstraps revision 0; corrupt/future state is unavailable and preserved. Discard removes only the envelope, retaining rollback floors. No account, install ID, app inventory or credentials are stored. |
 | WARP consent readback | `AppFirstRuntimeBootstrapper`; `warp-consent-<platform>.json` | emitted with `schema_version: 1` | Safe, secret-free, write-only readback. It is replaced by the next authoritative server status and never authorizes runtime behavior. There is no local decoder or legacy migration. |
 | Materialized runtime config | runtime engine and Android host; private working/config directories | derived sing-box JSON, no saved-state schema | It is regenerated from the current authorized managed profile. Desktop never restores it as user state. Android retains only the versioned pointer/attestation above. Core owns no independently persisted client-state format. |
@@ -366,7 +365,7 @@ synthetic test value named by the test; no fixture contains a real credential,
 provider endpoint, private key or account/customer identifier.
 
 Update discovery, direct/store source separation, native APK identity policy,
-emergency storage, and typed runtime journaling keep focused tests. They are
+and typed runtime journaling keep focused tests. They are
 inventory entries, not evidence that a production-signed artifact,
 physical-device upgrade/downgrade, store submission, or exact release candidate
 was tested.

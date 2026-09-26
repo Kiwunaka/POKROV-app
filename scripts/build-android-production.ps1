@@ -2,8 +2,6 @@
 param(
   [string]$SigningDirectory = (Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "POKROV\android-signing"),
   [string]$ApiBaseUrl = "https://app.pokrov.space",
-  [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
-  [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
   [string]$TransportTrustDefinesFile
@@ -18,8 +16,6 @@ if ($TransportTrustDefinesFile) {
   $transportTrustArguments = @("--dart-define-from-file=$transportTrustPath")
 }
 
-$EmergencySigningKeyId = [string]$EmergencySigningKeyId
-$EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
 $SupportSigningKeyId = [string]$SupportSigningKeyId
 $SupportSigningPublicKey = [string]$SupportSigningPublicKey
 . (Join-Path $PSScriptRoot 'support-signing-pin.ps1')
@@ -29,22 +25,6 @@ $supportSigningPin = Resolve-PokrovSupportSigningPin `
   -ProvidedPublicKeyB64Url $SupportSigningPublicKey
 $SupportSigningKeyId = $supportSigningPin.key_id
 $SupportSigningPublicKey = $supportSigningPin.public_key_b64url
-if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
-  throw "A canonical POKROV emergency signing key id is required for a production build."
-}
-if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
-  throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
-}
-$sha256 = [Security.Cryptography.SHA256]::Create()
-try {
-  $emergencyPublicKeySha256 = -join (
-    $sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($EmergencySigningPublicKey)) |
-      ForEach-Object { $_.ToString("x2") }
-  )
-} finally {
-  $sha256.Dispose()
-}
-
 function Resolve-AndroidBuildTool {
   param([Parameter(Mandatory = $true)][string]$FileName)
 
@@ -154,8 +134,6 @@ try {
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
       "--dart-define=POKROV_BUILD_NUMBER=$declaredVersionCode",
       "--dart-define=POKROV_GIT_REVISION=$clientRevision",
-      "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
-      "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
       "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
       "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
     )
@@ -281,8 +259,6 @@ foreach ($artifact in $artifacts) {
     apk_sha256 = $artifactHash
     size_bytes = [int64]$apk.Length
     api_base_url = $ApiBaseUrl
-    emergency_signing_key_id = $EmergencySigningKeyId
-    emergency_public_key_sha256 = $emergencyPublicKeySha256
     verified_at_utc = [DateTime]::UtcNow.ToString("o")
   }
   $evidencePath = "$apkPath.signing.json"

@@ -546,7 +546,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   late final AppFirstNodePreferenceService? _nodePreferenceService;
   late final AppFirstClientDataService? _clientDataService;
   late final AppFirstReleaseHealthService? _releaseHealthService;
-  late final AppFirstEmergencyNetworkService? _emergencyNetworkService;
   late final SupportTicketService _supportTicketService;
   late final PokrovSupportModeController _supportModeController;
   late final bool _ownsSupportModeController;
@@ -562,7 +561,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool _notificationsUsingCache = false;
   final TextEditingController _firstLaunchRestoreCodeController =
       TextEditingController();
-  bool _emergencyRuntimeActive = false;
   late final ManagedProfileLifecycle _managedProfileLifecycle;
   bool get _managedProfileDirty => _managedProfileLifecycle.dirty;
   set _managedProfileDirty(bool value) =>
@@ -580,7 +578,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   String _telegramBonusStatus = 'Получить код';
   bool _telegramBonusBusy = false;
   bool _telegramLinkVerificationPending = false;
-  bool _whitelistRecoverySuggested = false;
   bool _telegramBonusCanClaim = false;
   String? _telegramBonusError;
   AppFirstBonusSummary? _bonusSummary;
@@ -771,9 +768,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         : null;
     _releaseHealthService = bootstrapper is AppFirstReleaseHealthService
         ? bootstrapper as AppFirstReleaseHealthService
-        : null;
-    _emergencyNetworkService = bootstrapper is AppFirstEmergencyNetworkService
-        ? bootstrapper as AppFirstEmergencyNetworkService
         : null;
     _supportTicketService = widget.supportTicketService ??
         AppFirstSupportTicketService(apiBaseUrl: widget.appContext.apiBaseUrl);
@@ -1341,278 +1335,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     _queueClientExperienceWrite();
   }
 
-  void _saveEmergencyPreferences({
-    required bool manualLimitedNetwork,
-    required String disclosureRevision,
-    required String reserveId,
-    required EmergencyChainMode chainMode,
-    required bool automaticRoute,
-  }) {
-    setState(() {
-      _clientExperience = _clientExperience.copyWith(
-        emergencyManualLimitedNetwork: manualLimitedNetwork,
-        emergencyDisclosureRevision: disclosureRevision,
-        emergencyReserveId: reserveId,
-        emergencyChainMode: chainMode.wireValue,
-        emergencyAutomaticRoute: automaticRoute,
-      );
-    });
-    _queueClientExperienceWrite();
-  }
-
-  Future<void> _openEmergencyNetwork() async {
-    final service = _emergencyNetworkService;
-    if (service == null) {
-      showPokrovSnack(
-        context,
-        'Экстренная сеть недоступна в этой версии приложения.',
-        tone: PokrovSnackTone.danger,
-      );
-      return;
-    }
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (context) => _EmergencyNetworkSurface(
-          appContext: widget.appContext,
-          service: service,
-          initialManualLimitedNetwork:
-              _clientExperience.emergencyManualLimitedNetwork,
-          acceptedDisclosureRevision:
-              _clientExperience.emergencyDisclosureRevision,
-          initialReserveId: _clientExperience.emergencyReserveId,
-          initialChainMode: EmergencyChainMode.tryParse(
-                _clientExperience.emergencyChainMode,
-              ) ??
-              EmergencyChainMode.reserveForeign,
-          initialAutomaticRoute: _clientExperience.emergencyAutomaticRoute,
-          onPreferencesChanged: _saveEmergencyPreferences,
-          onConnect: _connectEmergencyProfile,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _connectEmergencyProfile({
-    required EmergencyCatalog catalog,
-    required EmergencyReserve reserve,
-    required EmergencyChainMode chainMode,
-    required bool automaticRoute,
-    required bool manualLimitedNetwork,
-    required _EmergencyConnectProgress onProgress,
-  }) async {
-    final service = _emergencyNetworkService;
-    if (service == null) {
-      throw const BootstrapFailure('Экстренная сеть недоступна.');
-    }
-    if (_runtimeBusy) {
-      throw const BootstrapFailure(
-          'POKROV уже меняет подключение. Подождите немного.');
-    }
-    setState(() {
-      _runtimeBusy = true;
-      _runtimeIntent = _runtimeSnapshot?.phase == RuntimePhase.running
-          ? ConnectionTransitionIntent.reconnect
-          : ConnectionTransitionIntent.connect;
-      _runtimeHeadline = 'Готовим экстренный маршрут…';
-    });
-    final generation = _connectionCoordinator.operationGeneration;
-    Future<T> runOwnedRuntimeAction<T>(
-      String operation,
-      Future<T> Function() action,
-    ) =>
-        _withRuntimeActionTimeout(operation, action, ownerGeneration: generation);
-    try {
-      RuntimeSnapshot current = _runtimeSnapshot ??
-          await runOwnedRuntimeAction('snapshot', _runtimeEngine.snapshot);
-      if (current.phase == RuntimePhase.running) {
-        current = await runOwnedRuntimeAction(
-          'disconnectEmergencyPrevious',
-          _runtimeEngine.disconnect,
-        );
-        current = await _settleRuntimeDisconnectTransition(
-          current,
-          ownerGeneration: generation,
-        );
-      }
-      if (current.canInitialize &&
-          current.phase == RuntimePhase.artifactReady) {
-        current = await runOwnedRuntimeAction(
-          'initializeEmergency',
-          _runtimeEngine.initialize,
-        );
-      }
-      final candidates = <EmergencyReserve>[
-        reserve,
-        ...catalog.items.where(
-          (item) => item.id != reserve.id && item.available,
-        ),
-      ];
-      final modeOrder = automaticRoute
-          ? const <EmergencyChainMode>[
-              EmergencyChainMode.reserveForeign,
-              EmergencyChainMode.reserveDirect,
-              EmergencyChainMode.reserveRuForeign,
-            ]
-          : <EmergencyChainMode>[chainMode];
-      final eligibleCandidates = candidates
-          .where(
-            (candidate) =>
-                candidate.available && modeOrder.any(candidate.modes.contains),
-          )
-          .toList(growable: false);
-      AppFirstEmergencyProfileResult? connectedResult;
-      EmergencyReserve? connectedReserve;
-      EmergencyChainMode? connectedMode;
-      candidateLoop:
-      for (var candidateIndex = 0;
-          candidateIndex < eligibleCandidates.length;
-          candidateIndex += 1) {
-        final candidate = eligibleCandidates[candidateIndex];
-        onProgress(
-          reserveId: candidate.id,
-          current: candidateIndex + 1,
-          total: eligibleCandidates.length,
-          working: null,
-        );
-        final candidateModes =
-            modeOrder.where(candidate.modes.contains).toList(growable: false);
-        for (final candidateMode in candidateModes) {
-          final result = await service.resolveEmergencyProfile(
-            hostPlatform: widget.appContext.hostPlatform,
-            catalogRevision: catalog.revision,
-            reserveId: candidate.id,
-            chainMode: candidateMode,
-            manualLimitedNetwork: true,
-          );
-          current = await runOwnedRuntimeAction(
-            'stageEmergencyProfile',
-            () => _stageManagedProfileWithLeaseBinding(result.managedProfile),
-          );
-          current = await runOwnedRuntimeAction(
-            'connectEmergency',
-            _runtimeEngine.connect,
-          );
-          current = await _settleRuntimeTransition(
-            current,
-            ownerGeneration: generation,
-          );
-          if (current.phase == RuntimePhase.running &&
-              widget.appContext.hostPlatform == HostPlatform.android) {
-            if (mounted && _connectionCoordinator.ownsOperation(generation)) {
-              setState(() {
-                _runtimeSnapshot = current;
-                _runtimeHeadline =
-                    'Проверяем канал ${candidateIndex + 1} из ${eligibleCandidates.length}…';
-              });
-            }
-            current = await _settleEmergencyEgressValidation(
-              current,
-              ownerGeneration: generation,
-            );
-          }
-          if (_isConnectionProven(current)) {
-            connectedResult = result;
-            connectedReserve = candidate;
-            connectedMode = candidateMode;
-            onProgress(
-              reserveId: candidate.id,
-              current: candidateIndex + 1,
-              total: eligibleCandidates.length,
-              working: true,
-            );
-            break candidateLoop;
-          }
-          final failureKind = current.lastFailureKind?.trim() ?? '';
-          final retryableEmergencyFailure =
-              widget.appContext.hostPlatform == HostPlatform.android &&
-                  (current.hasCoreEgressProbeFailure ||
-                      const <String>{
-                        'emergency_endpoint_unreachable',
-                        'core_egress_probe_unavailable',
-                      }.contains(failureKind) ||
-                      (current.phase == RuntimePhase.running &&
-                          current.isCoreEgressValidationPending));
-          if (!retryableEmergencyFailure) {
-            throw BootstrapFailure(
-              current.message.trim().isEmpty
-                  ? 'Экстренный маршрут не подключился.'
-                  : current.message,
-            );
-          }
-          current = await runOwnedRuntimeAction(
-            'disconnectUnavailableEmergencyReserve',
-            _runtimeEngine.disconnect,
-          );
-          current = await _settleRuntimeDisconnectTransition(
-            current,
-            ownerGeneration: generation,
-          );
-          if (failureKind == 'emergency_endpoint_unreachable') {
-            break;
-          }
-        }
-        onProgress(
-          reserveId: candidate.id,
-          current: candidateIndex + 1,
-          total: eligibleCandidates.length,
-          working: false,
-        );
-      }
-      if (connectedResult == null ||
-          connectedReserve == null ||
-          connectedMode == null) {
-        throw const BootstrapFailure(
-          'Ни один сохранённый резерв не доступен в текущей сети.',
-          code: 'emergency_reserves_unreachable',
-        );
-      }
-      if (!mounted || !_connectionCoordinator.ownsOperation(generation)) {
-        return;
-      }
-      setState(() {
-        _runtimeSnapshot = current;
-        _emergencyRuntimeActive = true;
-        _runtimeHeadline = connectedResult!.usingCache
-            ? 'Экстренная сеть подключена по подписанной офлайн-копии.'
-            : 'Экстренная сеть подключена.';
-        _managedProfileDirty = true;
-        _stagedProfileUsesWarp = false;
-        _activeConnectUsedWarp = false;
-        _stagedNodeCode = '';
-        _stagedVariantId = 'direct';
-        _activeNodeCode = '';
-        _activeVariantId = 'direct';
-      });
-      if (connectedReserve.id != reserve.id || connectedMode != chainMode) {
-        _saveEmergencyPreferences(
-          manualLimitedNetwork: true,
-          disclosureRevision: catalog.disclosureRevision,
-          reserveId: connectedReserve.id,
-          chainMode: connectedMode,
-          automaticRoute: automaticRoute,
-        );
-      }
-      _cachedProfileFallbackGate.markUserChange();
-      _recordProtectionEvent(
-        kind: 'emergency_connected',
-        title: 'Режим белых списков подключён',
-        detail: automaticRoute
-            ? 'Маршрут ${_emergencyChainModeTitle(connectedMode)} выбран автоматически.'
-            : 'Подключён маршрут ${_emergencyChainModeTitle(connectedMode)}.',
-        tone: PokrovProtectionEventTone.warning,
-      );
-    } on ConnectionOperationSuperseded {
-      return;
-    } finally {
-      if (mounted && _connectionCoordinator.ownsOperation(generation)) {
-        setState(() {
-          _runtimeBusy = false;
-          _runtimeIntent = ConnectionTransitionIntent.none;
-        });
-      }
-    }
-  }
-
   void _addSelectedAppId(String value) {
     final normalized = normalizePokrovSelectedAppIdentifier(
       value,
@@ -2042,20 +1764,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _managedProfileDirty = true;
         _accessDenialPending = true;
         await _enforceKnownAccessDenial();
-      }
-      if (const {'trialPremium', 'paidUnlimited'}.contains(info.lane)) {
-        final emergencyService = _emergencyNetworkService;
-        if (emergencyService != null) {
-          unawaited(
-            emergencyService
-                .prepareEmergencyOfflineCache(
-                  hostPlatform: widget.appContext.hostPlatform,
-                  manualLimitedNetwork:
-                      _clientExperience.emergencyManualLimitedNetwork,
-                )
-                .catchError((Object _) {}),
-          );
-        }
       }
       return true;
     } on Object catch (error) {
@@ -4098,9 +3806,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         // displaying the pre-repair running snapshot as active protection.
         setState(() {
           _runtimeSnapshot = current;
-          if (current.phase == RuntimePhase.running) {
-            _whitelistRecoverySuggested = false;
-          }
           _runtimeHeadline = current.message;
         });
         if (!_runtimeStopConfirmed(current)) {
@@ -4184,9 +3889,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeSnapshot = current;
-        if (current.phase == RuntimePhase.running) {
-          _emergencyRuntimeActive = false;
-        }
         _runtimeHeadline = current.phase == RuntimePhase.running
             ? current.isCoreEgressValidationPending
                 ? 'Проверяем выход через VPN…'
@@ -4232,7 +3934,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeHeadline = error.message;
-        _whitelistRecoverySuggested = _isTransientProfileFailure(error);
       });
       unawaited(_reportClientRuntimeError('connect_failed'));
       showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
@@ -4250,7 +3951,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final message = _runtimeUnexpectedErrorMessage(error);
       setState(() {
         _runtimeHeadline = message;
-        _whitelistRecoverySuggested = true;
       });
       unawaited(_reportClientRuntimeError('connect_unexpected'));
       showPokrovSnack(context, message, tone: PokrovSnackTone.danger);
@@ -4548,7 +4248,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!mounted || !_connectionCoordinator.ownsOperation(generation)) return;
       setState(() {
         _runtimeSnapshot = current;
-        _emergencyRuntimeActive = false;
         _runtimeHeadline = 'Доступ не активен. Продлите доступ, чтобы подключиться.';
       });
       _invalidateQuickSettingsProfile();
@@ -4590,11 +4289,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
       setState(() {
         _runtimeSnapshot = snapshot;
-        if (snapshot.phase != RuntimePhase.running) {
-          _emergencyRuntimeActive = false;
-        } else if (snapshot.coreEgressValidationRequired == false) {
-          _emergencyRuntimeActive = true;
-        }
         _runtimeHeadline = null;
       });
       widget.shellController?.refresh();
@@ -4699,9 +4393,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     setState(() {
       _runtimeSnapshot = refreshed;
-      if (refreshed?.phase != RuntimePhase.running) {
-        _emergencyRuntimeActive = false;
-      }
       if (observed?.phase != refreshed?.phase ||
           observed?.isCleanlyHealthy != refreshed?.isCleanlyHealthy) {
         _runtimeHeadline = null;
@@ -5770,7 +5461,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
         setState(() {
           _runtimeSnapshot = current;
-          _emergencyRuntimeActive = false;
           _runtimeHeadline = current.phase != RuntimePhase.running &&
                   current.lastFailureKind == null
               ? null
@@ -5890,7 +5580,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _finishAndroidVpnPermission(proven);
         setState(() {
           _runtimeSnapshot = proven;
-          _emergencyRuntimeActive = false;
           _managedProfileDirty = false;
           _runtimeHeadline = proven.isCleanlyHealthy
               ? 'POKROV подключен.' : 'Туннель запущен, проверка защиты не завершена.';
@@ -6129,12 +5818,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
         setState(() {
           _runtimeSnapshot = current;
-          if (current.phase == RuntimePhase.running) {
-            _emergencyRuntimeActive = false;
-          }
-          if (current.phase == RuntimePhase.running) {
-            _whitelistRecoverySuggested = false;
-          }
           _runtimeHeadline = warpFallbackUsed
               ? 'POKROV подключен. WARP временно на паузе.'
               : current.phase == RuntimePhase.running && usedCachedProfile
@@ -6225,7 +5908,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeHeadline = error.message;
-        _whitelistRecoverySuggested = _isTransientProfileFailure(error);
       });
       unawaited(_reportClientRuntimeError('connect_failed'));
       showPokrovSnack(context, error.message, tone: PokrovSnackTone.danger);
@@ -6241,7 +5923,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final message = _runtimeUnexpectedErrorMessage(error);
       setState(() {
         _runtimeHeadline = message;
-        _whitelistRecoverySuggested = true;
       });
       _recordProtectionEvent(
         kind: 'connect_unexpected_$failureOperation',
@@ -6314,7 +5995,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _runtimeHeadline = 'Попытка подключения отменена.';
-        _emergencyRuntimeActive = false;
       });
     } on ConnectionOperationSuperseded {
       return;
@@ -6471,7 +6151,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void _finalizeProvenConnection(RuntimeSnapshot snapshot) {
     final cacheService = _bootstrapper;
     final cacheInputs = _stagedCacheInputs;
-    if (!_emergencyRuntimeActive && snapshot.isCleanlyHealthy &&
+    if (snapshot.isCleanlyHealthy &&
         cacheService is CachedManagedProfileBootstrapper && cacheInputs != null) {
       unawaited((cacheService as CachedManagedProfileBootstrapper).markManagedProfileProven(
         cacheInputs, _stagedProfileCacheEntryId));
@@ -7026,50 +6706,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     return current;
   }
 
-  Future<RuntimeSnapshot> _settleEmergencyEgressValidation(
-    RuntimeSnapshot snapshot, {
-    int? ownerGeneration,
-  }) async {
-    final generation =
-        ownerGeneration ?? _connectionCoordinator.operationGeneration;
-    if (!_connectionCoordinator.ownsOperation(generation)) {
-      throw const ConnectionOperationSuperseded();
-    }
-    if (widget.appContext.hostPlatform != HostPlatform.android ||
-        snapshot.phase != RuntimePhase.running ||
-        !snapshot.isCoreEgressValidationPending) {
-      return snapshot;
-    }
-
-    var current = snapshot;
-    // The Android host owns the fail-closed full-chain probe. A saved reserve
-    // is usable only after that probe confirms real DNS and web egress through
-    // every hop; a reachable first hop alone is not enough. Keep this bounded
-    // slightly above the normal 19-second group probe, then rotate channels.
-    for (var attempt = 0; attempt < 32; attempt += 1) {
-      await Future<void>.delayed(const Duration(milliseconds: 750));
-      current = await _withRuntimeActionTimeout(
-        'settleEmergencyEgressSnapshot',
-        _runtimeEngine.snapshot,
-        ownerGeneration: generation,
-      );
-      if (!_connectionCoordinator.ownsOperation(generation)) {
-        throw const ConnectionOperationSuperseded();
-      }
-      if (!mounted) {
-        return current;
-      }
-      setState(() {
-        _runtimeSnapshot = current;
-      });
-      if (current.phase != RuntimePhase.running ||
-          !current.isCoreEgressValidationPending) {
-        return current;
-      }
-    }
-    return current;
-  }
-
   bool _runtimeStopConfirmed(RuntimeSnapshot snapshot) =>
       snapshot.phase != RuntimePhase.running && snapshot.phase != RuntimePhase.artifactMissing &&
       !snapshot.connectionPending && snapshot.supportsLiveConnect;
@@ -7276,14 +6912,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       routeMode: _selectedRouteMode,
       routeChangesPending: _runtimeSnapshot?.phase == RuntimePhase.running && _managedProfileDirty,
       locationLabel: _homeLocationLabel,
-      emergencyRuntimeActive:
-          connectionPresentation.isVerified && _emergencyRuntimeActive,
-      emergencyChainMode: EmergencyChainMode.tryParse(
-            _clientExperience.emergencyChainMode,
-          ) ??
-          EmergencyChainMode.reserveForeign,
       connectHintVisible: !_connectHintDismissed,
-      whitelistRecoverySuggested: _whitelistRecoverySuggested,
       slowConnectionVisible: _connectionCoordinator.slowStageVisible,
       vpnPermissionRecoveryVisible:
           _firstSessionCoordinator.vpnPermissionDenied,
@@ -7294,9 +6923,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       openConnectionDetails: _openProtectionCenter,
       openLocations: () => _selectTab(SeedTab.locations),
       openRules: () => _selectTab(SeedTab.rules),
-      openRecovery: () {
-        unawaited(_openEmergencyNetwork());
-      },
     );
     final sectionBuilders = <WidgetBuilder>[
       (context) => _QuickConnectSection(
@@ -7350,9 +6976,6 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             favoriteNodeCodes: _clientExperience.favoriteNodeCodes,
             recentNodeCodes: _clientExperience.recentNodeCodes,
             onFavoriteNodeToggle: _toggleFavoriteLocation,
-            onOpenEmergencyNetwork: () {
-              unawaited(_openEmergencyNetwork());
-            },
           ),
       (context) => _RulesSection(
             appContext: widget.appContext,

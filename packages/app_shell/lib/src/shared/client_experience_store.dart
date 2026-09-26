@@ -119,11 +119,6 @@ class PokrovClientExperienceState {
     this.routingPreferences = const PokrovRoutingPreferences.defaults(),
     this.firstRouteScopeConfirmed = false,
     this.firstRouteScopeMode,
-    this.emergencyManualLimitedNetwork = false,
-    this.emergencyDisclosureRevision = '',
-    this.emergencyReserveId = '',
-    this.emergencyChainMode = 'reserve_foreign',
-    this.emergencyAutomaticRoute = true,
   });
 
   const PokrovClientExperienceState.empty()
@@ -142,12 +137,7 @@ class PokrovClientExperienceState {
         catalogVerifiedRuPreset = false,
         routingPreferences = const PokrovRoutingPreferences.defaults(),
         firstRouteScopeConfirmed = false,
-        firstRouteScopeMode = null,
-        emergencyManualLimitedNetwork = false,
-        emergencyDisclosureRevision = '',
-        emergencyReserveId = '',
-        emergencyChainMode = 'reserve_foreign',
-        emergencyAutomaticRoute = true;
+        firstRouteScopeMode = null;
 
   final List<String> favoriteNodeCodes;
   final List<String> recentNodeCodes;
@@ -169,11 +159,6 @@ class PokrovClientExperienceState {
   final PokrovRoutingPreferences routingPreferences;
   final bool firstRouteScopeConfirmed;
   final RouteMode? firstRouteScopeMode;
-  final bool emergencyManualLimitedNetwork;
-  final String emergencyDisclosureRevision;
-  final String emergencyReserveId;
-  final String emergencyChainMode;
-  final bool emergencyAutomaticRoute;
 
   PokrovClientExperienceState copyWith({
     List<String>? favoriteNodeCodes,
@@ -192,11 +177,6 @@ class PokrovClientExperienceState {
     PokrovRoutingPreferences? routingPreferences,
     bool? firstRouteScopeConfirmed,
     RouteMode? firstRouteScopeMode,
-    bool? emergencyManualLimitedNetwork,
-    String? emergencyDisclosureRevision,
-    String? emergencyReserveId,
-    String? emergencyChainMode,
-    bool? emergencyAutomaticRoute,
   }) {
     return PokrovClientExperienceState(
       favoriteNodeCodes: favoriteNodeCodes ?? this.favoriteNodeCodes,
@@ -218,14 +198,6 @@ class PokrovClientExperienceState {
       firstRouteScopeConfirmed:
           firstRouteScopeConfirmed ?? this.firstRouteScopeConfirmed,
       firstRouteScopeMode: firstRouteScopeMode ?? this.firstRouteScopeMode,
-      emergencyManualLimitedNetwork:
-          emergencyManualLimitedNetwork ?? this.emergencyManualLimitedNetwork,
-      emergencyDisclosureRevision:
-          emergencyDisclosureRevision ?? this.emergencyDisclosureRevision,
-      emergencyReserveId: emergencyReserveId ?? this.emergencyReserveId,
-      emergencyChainMode: emergencyChainMode ?? this.emergencyChainMode,
-      emergencyAutomaticRoute:
-          emergencyAutomaticRoute ?? this.emergencyAutomaticRoute,
     );
   }
 
@@ -282,22 +254,6 @@ class PokrovClientExperienceState {
       ),
       firstRouteScopeConfirmed: json['firstRouteScopeConfirmed'] == true,
       firstRouteScopeMode: _experienceRouteMode(json['firstRouteScopeMode']),
-      emergencyManualLimitedNetwork:
-          json['emergencyManualLimitedNetwork'] == true,
-      emergencyDisclosureRevision: _boundedExperienceText(
-        json['emergencyDisclosureRevision'],
-        maxLength: 32,
-      ),
-      emergencyReserveId: RegExp(r'^emg_[a-f0-9]{24}$').hasMatch(
-        _experienceText(json['emergencyReserveId']),
-      )
-          ? _experienceText(json['emergencyReserveId'])
-          : '',
-      emergencyChainMode: EmergencyChainMode.tryParse(
-            json['emergencyChainMode'],
-          )?.wireValue ??
-          'reserve_foreign',
-      emergencyAutomaticRoute: json['emergencyAutomaticRoute'] != false,
     );
   }
 
@@ -333,13 +289,6 @@ class PokrovClientExperienceState {
         'firstRouteScopeConfirmed': firstRouteScopeConfirmed,
         if (firstRouteScopeMode != null)
           'firstRouteScopeMode': firstRouteScopeMode!.name,
-        'emergencyManualLimitedNetwork': emergencyManualLimitedNetwork,
-        if (emergencyDisclosureRevision.isNotEmpty)
-          'emergencyDisclosureRevision': emergencyDisclosureRevision,
-        if (emergencyReserveId.isNotEmpty)
-          'emergencyReserveId': emergencyReserveId,
-        'emergencyChainMode': emergencyChainMode,
-        'emergencyAutomaticRoute': emergencyAutomaticRoute,
       };
 }
 

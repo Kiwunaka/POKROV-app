@@ -132,7 +132,7 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
 - Home consumes one immutable `ProtectionViewState` plus one
   `ProtectionIntents` boundary. The view retains the exact
   `ConnectionPresentation` instance and adds only protection context such as
-  route, location, emergency mode, recovery notice and connect-hint state. The
+  route, location, recovery notice and connect-hint state. The
   composition root must not pass parallel connection copy, CTA or callbacks
   through the Home constructor.
 - `ConnectionCoordinator` owns the mutable runtime snapshot, explicit intent,

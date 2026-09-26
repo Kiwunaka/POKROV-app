@@ -202,7 +202,6 @@ abstract final class OperationalFailureMapper {
     'core_egress_timeout': 'TRANSPORT-001',
     'core_egress_probe_unavailable': 'CONN-008',
     'desktop_tun_egress_probe_failed': 'EGRESS-001',
-    'emergency_endpoint_unreachable': 'CONN-006',
     'profile_staging_failed': 'CONN-005',
     'profile_identity_failed': 'CONN-005',
     'profile_identity_mismatch': 'CONN-005',

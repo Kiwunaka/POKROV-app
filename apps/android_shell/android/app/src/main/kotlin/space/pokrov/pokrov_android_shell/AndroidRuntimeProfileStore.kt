@@ -19,7 +19,7 @@ internal data class PersistedRuntimeProfile(
     val catalogAppIdentityRequired: Boolean = false,
     /** Final client assembler applied explicit LAN scope; legacy profiles need restaging. */
     val lanScopeVersion: Int = 0,
-    /** Mandatory for ordinary profiles; false only for signed offline emergency profiles. */
+    /** Mandatory for ordinary profiles; false for transport profiles using bound proof. */
     val coreEgressProbeRequired: Boolean = true,
     /** Safe display-only metadata; never contains provider hosts or credentials. */
     val displayCountry: String = "",

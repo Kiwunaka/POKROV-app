@@ -721,46 +721,22 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 endpointHops += "detour${index + 1}" to detourOutbound
                 detourTag = detourOutbound.optString("detour")
             }
-            var rootEndpointPreflightCategory: String? = null
             // ATS owns a separate bounded proof ladder. The legacy direct
             // endpoint preflight has no diagnostic-byte reservation and the
             // selected outbound is a lease gate, not a raw server endpoint.
-            if (persistedProfile?.requiresBoundConnect != true) endpointHops.forEachIndexed { index, (_, endpoint) ->
+            if (persistedProfile?.requiresBoundConnect != true) endpointHops.forEach { (_, endpoint) ->
                 if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
                 val endpointServer = endpoint.optString("server").trim()
                 val endpointPort = endpoint.optInt("server_port")
                 if (endpointServer.isBlank() || endpointPort !in 1..65535) {
-                    if (index == endpointHops.lastIndex) {
-                        rootEndpointPreflightCategory = "endpoint_invalid"
-                    }
-                    return@forEachIndexed
+                    return@forEach
                 }
-                val preflight = AndroidStartupEndpointProbe.run(
+                AndroidStartupEndpointProbe.run(
                     context = this, scope = session, ownsSession = { ownsRuntimeSession(session) },
                     server = endpointServer, port = endpointPort,
                     timeoutMillis = ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS,
                 )
                 if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
-                if (index == endpointHops.lastIndex) {
-                    rootEndpointPreflightCategory = preflight
-                }
-            }
-            if (persistedProfile?.requiresBoundConnect != true && !offlineEmergencyRootPreflightAccepted(
-                    coreEgressProbeRequired = activeCoreEgressProbeRequired,
-                    rootCategory = rootEndpointPreflightCategory,
-                )
-            ) {
-                val failureKind = "emergency_endpoint_unreachable"
-                val failureMessage = AndroidRuntimeSafety.publicFailureMessage(failureKind)
-                AndroidRuntimeState.markFailure(
-                    kind = failureKind,
-                    message = failureMessage,
-                )
-                cleanupFailedStartup()
-                activeTileStartGeneration = null
-                PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
-                stopSelf()
-                return
             }
             val content = runtimeConfig.toString()
             runCatching { commandServer?.closeService() }
@@ -2333,8 +2309,3 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private class SupersededRuntimeStart : IllegalStateException("Runtime start superseded.")
 
 }
-
-internal fun offlineEmergencyRootPreflightAccepted(
-    coreEgressProbeRequired: Boolean,
-    rootCategory: String?,
-): Boolean = coreEgressProbeRequired || rootCategory == "reachable"

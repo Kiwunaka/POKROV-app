@@ -571,8 +571,7 @@ An authorized cached managed profile uses `cacheOnly` catalog retrieval. This
 does no HTTP request, rechecks the current session and re-verifies the retained
 public envelope; it neither extends the catalog lifetime nor renews the managed
 profile's offline allowance. A missing/expired/disabled catalog cannot silently
-restore legacy broad RU rules. The signed emergency-profile path remains its
-separate existing authority and is not converted to a routing-catalog grant.
+restore legacy broad RU rules.
 
 ### POST12 catalog policy preview (NOT_VERIFIED)
 
@@ -890,32 +889,6 @@ Current blocking dependency:
 - the Android DNS block also keeps resolver caches independent so direct bootstrap lookups do not poison the remote resolver lane used for blocked-service traffic
 - the Android host route planner now adds IPv4 and IPv6 default routes only for address families that are actually present in the staged profile, and `ipv4_only` sessions no longer keep an unnecessary IPv6 tunnel lane for blocked-service traffic
 - the Android default-network monitor now filters out VPN networks before exposing the current uplink to `DnsResolver` or libbox, and it retries interface-index lookup before publishing interface updates
-- emergency profiles use the same host/runtime ABI but a separate signed
-  materialization path. Only the undetoured reserve root may receive the local
-  Android bootstrap resolver; detoured RU and foreign hops must resolve through
-  their preceding hop, otherwise the emergency chain leaks or fails under the
-  exact blocked-network condition it is intended to recover from
-- the emergency materializer accepts only the three documented acyclic chains,
-  exact owned-hop placement, exact DNS/ruleset shape, no WARP and no foreign
-  direct bypass. A signed catalog is necessary but not sufficient: the final
-  managed profile is validated again before staging on Android or Windows
-- after an online trial/paid check, the client prewarms one signed bundle for
-  every fresh or still-valid signed last-known-good reserve and supported
-  chain, encrypts it with a device-local key, and keeps it for at most seven
-  days and never beyond account, catalog, or RU/manual-eligibility expiry
-- emergency catalog and profile selection are cache-first. Starting a valid
-  offline copy performs no control-plane request and does not download the
-  normal client rule-set catalog before TUN start; the signed emergency
-  ruleset is fetched through the selected reserve-first path after Core starts
-- online refresh is best-effort and deduplicated. It replaces catalog and
-  profile bundle only after every expected envelope passes signature, device,
-  entitlement, revision, reserve, chain, topology, DNS, and expiry checks
-- Android keeps an emergency profile's signed terminal proxy as `route.final`
-  instead of wrapping it in the normal mandatory selected-outbound probe. A
-  blocked control-plane probe therefore cannot tear down an otherwise usable
-  emergency TUN. The profile still has no direct foreign fallback: if its
-  reserve cannot carry traffic, packets remain closed inside the VPN while
-  online catalog verification resumes when the control plane is reachable
 - the Android host runtime snapshot now carries structured health fields for the shared shell, including default uplink interface and index, DNS readiness, route counts, package-filter counts, last failure kind, and last stop reason
 - the Android lane now has a real repo-local test lane: Flutter tests assert the Android shell keeps the route-mode and runtime-diagnostics affordances visible, and Gradle unit tests cover manifest guards, platform monitoring, runtime-state handling, DNS planning, and TUN route planning
 - the Android diagnostics story is now support/internal rather than first-layer UI: local smoke-profile staging and raw runtime controls stay out of the consumer shell while the physical-device gate remains separate
@@ -953,7 +926,7 @@ Current blocking dependency:
   [Android start ownership](platform-privilege-runtime-contract.md#android-stagestart-identity).
   These additions are NOT_VERIFIED pending the separate checks stage;
   a completed stop may release foreground state or call `stopSelf()` only when
-  no newer start owns the service, so changing an emergency reserve cannot be
+  no newer start owns the service, so a new connection cannot be
   torn down by the previous connection's delayed cleanup
 - the Android Quick Settings tile uses Android active-tile mode, reconciles both the live TUN and the app-owned VPN-service presence before choosing start or stop, publishes only the resulting on/off state, and explicitly requests a new SystemUI listen after committed runtime transitions; the notification remains the owner of country, route and speed details
 - the shared shell now refreshes Android runtime truth again on foreground resume, and keeps polling a host-owned pending-connect signal through Android notification/VPN consent even when no lifecycle resume reaches Flutter; the host bridge reconciles a live TUN back to `running` and demotes a stale `running` snapshot when the app-owned TUN is absent, so a relaunch or interrupted service cannot leave the button lane falsely connected
@@ -1287,8 +1260,7 @@ The host digest is local identity and does not manufacture server revision truth
 ### Fetched revision to service identity
 
 `ManagedProfilePayload.source` carries the exact managed-manifest revision and
-`managedManifest` origin; validated emergency material uses
-`signedEmergencyEnvelope`. Routing/materialization copies retain that upstream
+`managedManifest` origin. Routing/materialization copies retain that upstream
 source. The runtime stores the most recently supplied fetched source separately
 from the source of the acknowledged stage digest. Its snapshot exposes
 `fetchedProfileSource`, `stagedProfileSource` and `effectiveProfileSource`.
@@ -1308,7 +1280,7 @@ fallback retains its original source and the existing entitlement restrictions.
 `ConnectionCoordinator` owns a process-local operation generation. Starting a
 runtime action advances it; disposal invalidates it. Native-call wrappers check
 the captured generation before dispatch and after completion, including errors.
-Connect, disconnect and emergency-egress polling retain that original generation
+Connect and disconnect polling retain that original generation
 across their waits. A superseded result is discarded; action cleanup only clears
 busy/intent state when the operation still owns the coordinator. The same rule
 covers repair, trusted-Wi-Fi pause, access-denial disconnect and WARP fallback.
@@ -1528,7 +1500,7 @@ These failures use the existing completed-failure policy: endpoint probes get
 at most three attempts, group failures are terminal, and session/generation/TUN
 fences still decide whether a result applies. The stop reason stays the generic
 failed-egress reason while the failure kind retains the stage. Existing managed
-and emergency retry limits and the closed AWG degraded-TUN exception remain.
+retry limits and the closed AWG degraded-TUN exception remain.
 The stage describes the check, not a proven node fault or filtering cause;
 the closed exception text cannot distinguish DNS, timeout or DPI subcauses.
 
@@ -1616,9 +1588,8 @@ checks. An offline attempt never implies that a new server assignment applied.
 
 This owner-approved grace is not a signed offline entitlement lease. The client
 cannot learn a new remote revocation during a complete control-plane outage;
-server-side credential enforcement remains authoritative. The separate signed
-emergency bundle has its own account/catalog/eligibility expiry checks. Neither
-path creates a new trial or subscription. Exact outage/revocation behavior still needs the
+server-side credential enforcement remains authoritative. This path does not
+create a new trial or subscription. Exact outage/revocation behavior still needs the
 candidate and owned server scenario; a local cache test does not prove it.
 
 ## Transport manifest admission boundary (ATS-005, source only)
@@ -2111,7 +2082,7 @@ Neither path frees an uncertain owner.
 
 Current host adapters do not implement this interface. The consumer returns
 unavailable without substituting snapshot health, Core URL-test success, the
-public 204 marker or the deterministic emergency payload. Native producers,
+public 204 marker. Native producers,
 verifier-origin inventory, two-origin policy/independence, diagnostic-byte
 unit/enforcement and proof freshness/healthy-lease handoff remain required.
 No probe/network/hash/native operation or tests were executed.

@@ -45,6 +45,10 @@ void main() {
     expect(first.firstRouteScopeConfirmed, isTrue);
     final migrated = await stateFile.readAsString();
     expect(
+      (jsonDecode(migrated) as Map).keys,
+      isNot(anyElement(startsWith('emergency'))),
+    );
+    expect(
       (jsonDecode(migrated) as Map<String, dynamic>)['version'],
       1,
     );
@@ -194,9 +198,6 @@ void main() {
           )!,
         ],
       ),
-      emergencyReserveId: 'emg_000000000000000000000001',
-      emergencyChainMode: EmergencyChainMode.reserveRuForeign.wireValue,
-      emergencyAutomaticRoute: false,
     );
 
     await store.write(state);
@@ -243,11 +244,6 @@ void main() {
     expect(restored.routingPreferences.tunStack, PokrovTunStack.mixed);
     expect(
         restored.routingPreferences.overrides.single.value, 'private.example');
-    expect(restored.emergencyAutomaticRoute, isFalse);
-    expect(
-      restored.emergencyChainMode,
-      EmergencyChainMode.reserveRuForeign.wireValue,
-    );
 
     final file =
         await directory.list().where((item) => item is File).single as File;

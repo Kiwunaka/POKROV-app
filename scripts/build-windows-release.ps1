@@ -8,8 +8,6 @@ param(
   [switch]$SkipInstaller,
   [switch]$OfflinePubGet,
   [string]$CoreRoot,
-  [string]$EmergencySigningKeyId = $env:POKROV_EMERGENCY_SIGNING_KEY_ID,
-  [string]$EmergencySigningPublicKey = $env:POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
   [string]$TransportTrustDefinesFile,
@@ -46,8 +44,6 @@ if (-not $CheckTrustedWindowsSigningReadinessOnly) {
   & (Join-Path $PSScriptRoot "check-client-version-parity.ps1") @versionParityArguments
 }
 
-$EmergencySigningKeyId = [string]$EmergencySigningKeyId
-$EmergencySigningPublicKey = [string]$EmergencySigningPublicKey
 $SupportSigningKeyId = [string]$SupportSigningKeyId
 $SupportSigningPublicKey = [string]$SupportSigningPublicKey
 $WindowsSigningCertificateThumbprint = ([string]$WindowsSigningCertificateThumbprint).Replace(" ", "").ToUpperInvariant()
@@ -63,12 +59,6 @@ if (-not $CheckTrustedWindowsSigningReadinessOnly) {
     -ProvidedPublicKeyB64Url $SupportSigningPublicKey
   $SupportSigningKeyId = $supportSigningPin.key_id
   $SupportSigningPublicKey = $supportSigningPin.public_key_b64url
-  if ($EmergencySigningKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$') {
-    throw "A canonical POKROV emergency signing key id is required for a production build."
-  }
-  if ($EmergencySigningPublicKey -notmatch '^[A-Za-z0-9_-]{43}$') {
-    throw "A 32-byte base64url POKROV emergency signing public key is required for a production build."
-  }
 }
 $trustedWindowsSigningRequested = [bool]$RequireTrustedWindowsSigning -or
   [bool]$CheckTrustedWindowsSigningReadinessOnly -or
@@ -103,7 +93,7 @@ function Invoke-External {
     [string]$WorkingDirectory
   )
 
-  $commandLabel = ("$FilePath $($Arguments -join ' ')" -replace '(POKROV_(?:EMERGENCY|SUPPORT)_SIGNING_PUBLIC_KEY_B64=)[^\s]+', '$1[redacted]').Trim()
+  $commandLabel = ("$FilePath $($Arguments -join ' ')" -replace '(POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=)[^\s]+', '$1[redacted]').Trim()
   Write-Host ">> $commandLabel" -ForegroundColor Cyan
 
   Push-Location $WorkingDirectory
@@ -735,8 +725,6 @@ if (-not $SkipBuild) {
     "--dart-define=POKROV_APP_VERSION=$version",
     "--dart-define=POKROV_BUILD_NUMBER=$clientBuildNumber",
     "--dart-define=POKROV_GIT_REVISION=$clientRevision",
-    "--dart-define=POKROV_EMERGENCY_SIGNING_KEY_ID=$EmergencySigningKeyId",
-    "--dart-define=POKROV_EMERGENCY_SIGNING_PUBLIC_KEY_B64=$EmergencySigningPublicKey",
     "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
     "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
   ) + $transportTrustArguments

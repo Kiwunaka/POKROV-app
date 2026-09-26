@@ -11,7 +11,7 @@ Build dependencies on Ubuntu 24.04 are `clang`, `lld-18`, `llvm-18`, `cmake`,
 when clang was installed without recommended packages.
 
 Build the UI with the pinned Flutter SDK and lockfile, production app/build/Git
-identity defines, and the current emergency/support public signing pins used
+identity defines, and the current support public signing pins used
 by the other production shells. Build `daemon/cmd/pokrov-linuxd` with the
 declared Go toolchain. The Core executable must come from a retained native
 Linux build of the exact Linux Core source; Android/Windows artifact binding
@@ -40,7 +40,7 @@ verification of the exact resulting artifact are separate acceptance steps.
 The conditional Linux package signer is pinned in [signing-key.v1.json](signing-key.v1.json)
 and [its public key](linux-packages-public.asc), fingerprint
 `29636EDAF204D6F6101CB083B2281E647B0EDDA0`. It is separate from the application
-support/emergency signing keys. A detached `.deb.asc` signature authenticates
+support signing keys. A detached `.deb.asc` signature authenticates
 the complete unchanged deb. Verify it before installation:
 
 ```sh

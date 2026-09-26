@@ -169,10 +169,7 @@ void main() {
       connection: presentation,
       routeMode: RouteMode.fullTunnel,
       locationLabel: 'Автоматически',
-      emergencyRuntimeActive: false,
-      emergencyChainMode: EmergencyChainMode.reserveForeign,
       connectHintVisible: false,
-      whitelistRecoverySuggested: true,
       runtimeNotice: 'Настройки применятся при переподключении.',
     );
 
@@ -180,7 +177,6 @@ void main() {
     expect(view.connection.semanticLabel, 'Отключить');
     expect(view.routeMode, RouteMode.fullTunnel);
     expect(view.locationLabel, 'Автоматически');
-    expect(view.whitelistRecoverySuggested, isTrue);
     expect(
       view.runtimeNotice,
       'Настройки применятся при переподключении.',
@@ -192,22 +188,19 @@ void main() {
     var details = 0;
     var locations = 0;
     var rules = 0;
-    var recovery = 0;
     final intents = ProtectionIntents(
       toggleConnection: () async => toggles += 1,
       openConnectionDetails: () => details += 1,
       openLocations: () => locations += 1,
       openRules: () => rules += 1,
-      openRecovery: () => recovery += 1,
     );
 
     await intents.toggleConnection();
     intents.openConnectionDetails();
     intents.openLocations();
     intents.openRules();
-    intents.openRecovery();
 
-    expect((toggles, details, locations, rules, recovery), (1, 1, 1, 1, 1));
+    expect((toggles, details, locations, rules), (1, 1, 1, 1));
   });
 
   test('connection coordinator owns snapshot intent action and attempt state',

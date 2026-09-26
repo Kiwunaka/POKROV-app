@@ -460,10 +460,7 @@ class ProtectionViewState {
     required this.connection,
     required this.routeMode,
     required this.locationLabel,
-    required this.emergencyRuntimeActive,
-    required this.emergencyChainMode,
     required this.connectHintVisible,
-    required this.whitelistRecoverySuggested,
     this.slowConnectionVisible = false,
     this.vpnPermissionRecoveryVisible = false,
     this.routeChangesPending = false,
@@ -473,10 +470,7 @@ class ProtectionViewState {
   final ConnectionPresentation connection;
   final RouteMode routeMode;
   final String locationLabel;
-  final bool emergencyRuntimeActive;
-  final EmergencyChainMode emergencyChainMode;
   final bool connectHintVisible;
-  final bool whitelistRecoverySuggested;
   final bool slowConnectionVisible;
   final bool vpnPermissionRecoveryVisible;
   final bool routeChangesPending;
@@ -497,14 +491,12 @@ class ProtectionIntents {
     required this.openConnectionDetails,
     required this.openLocations,
     required this.openRules,
-    required this.openRecovery,
   });
 
   final Future<void> Function() toggleConnection;
   final VoidCallback openConnectionDetails;
   final VoidCallback openLocations;
   final VoidCallback openRules;
-  final VoidCallback openRecovery;
 }
 
 /// A superseded async result must not change the current connection projection.

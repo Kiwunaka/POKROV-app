@@ -8,17 +8,17 @@ import org.junit.Test
 
 class PokrovQuickSettingsTileServiceTest {
     @Test
-    fun coreEgressProbeDefaultsClosedAndSkipsOnlyMatchingEmergencyProfile() {
+    fun coreEgressProbeDefaultsClosedAndSkipsOnlyMatchingBoundProofProfile() {
         val ordinary = PersistedRuntimeProfile(configPath = "/private/ordinary.json")
-        val emergency = PersistedRuntimeProfile(
-            configPath = "/private/emergency.json",
+        val boundProof = PersistedRuntimeProfile(
+            configPath = "/private/boundProof.json",
             coreEgressProbeRequired = false,
         )
 
         assertEquals(true, coreEgressProbeRequiredForRuntime(null, ordinary.configPath))
         assertEquals(true, coreEgressProbeRequiredForRuntime(ordinary, ordinary.configPath))
-        assertEquals(true, coreEgressProbeRequiredForRuntime(emergency, ordinary.configPath))
-        assertEquals(false, coreEgressProbeRequiredForRuntime(emergency, emergency.configPath))
+        assertEquals(true, coreEgressProbeRequiredForRuntime(boundProof, ordinary.configPath))
+        assertEquals(false, coreEgressProbeRequiredForRuntime(boundProof, boundProof.configPath))
     }
 
     @Test
