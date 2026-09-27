@@ -2980,6 +2980,12 @@ void _validateHy2TransportContract(Map<String, Object?> config) {
           _runtimeText(obfs['password']).length >= 16 &&
           _runtimeText(obfs['password']).length <= 128);
   final route = _runtimeObjectMap(config['route']);
+  final domainResolver = outbound?['domain_resolver'];
+  final domainResolverValid = domainResolver == null ||
+      (domainResolver is String && domainResolver.isNotEmpty &&
+          _runtimeMapList(_runtimeObjectMap(config['dns'])['servers']).any(
+            (server) => _runtimeText(server['tag']) == domainResolver,
+          ));
   final allowedOutboundFields = <String>{
     'type',
     'tag',
@@ -2990,6 +2996,7 @@ void _validateHy2TransportContract(Map<String, Object?> config) {
     'down_mbps',
     'obfs',
     'tls',
+    'domain_resolver',
   };
   final contractIsCurrent = outbound != null &&
       _runtimeText(contract['id']) == _pokrovHy2ContractId &&
@@ -3001,8 +3008,11 @@ void _validateHy2TransportContract(Map<String, Object?> config) {
         _runtimeText(contract['generation']),
       ) &&
       outbound.keys.toSet().difference(allowedOutboundFields).isEmpty &&
+      domainResolverValid &&
       tag.isNotEmpty &&
-      route['final'] == tag &&
+      (route['final'] == tag || _runtimeMapList(route['rules']).any(
+        (rule) => _runtimeText(rule['outbound']) == tag,
+      )) &&
       server.isNotEmpty &&
       server.length <= 253 &&
       _pokrovHy2HostPattern.hasMatch(server) &&

@@ -5460,6 +5460,128 @@ void main() {
     expect(realityOutbound['tcp_fast_open'], false);
   });
 
+  test('ordinary UDP candidates reach runtime staging through the managed API', () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    TestWidgetsFlutterBinding.ensureInitialized();
+    HttpOverrides.global = originalHttpOverrides;
+    final directory = await Directory.systemTemp.createTemp('pokrov-ordinary-udp-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    Map? staged;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile') {
+        staged = jsonDecode((call.arguments as Map)['configPayload'] as String) as Map;
+        return {'phase': 'configStaged', 'stagedConfigPath': '/host/synthetic-profile.json',
+          'supportsLiveConnect': true, 'canInitialize': true, 'canConnect': true};
+      }
+      return null;
+    });
+    addTearDown(() async {
+      messenger.setMockMethodCallHandler(channel, null);
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    var awg = true;
+    final queries = <Map<String, String>>[];
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'ordinary-test-session', 'account_id': 'ordinary-test'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          queries.add(request.uri.queryParameters);
+          final profile = awg ? 'awg31_lab' : 'hy2_lab';
+          final protocol = awg ? 'awg' : 'hysteria2';
+          final tag = 'secure-transport';
+          request.response.write(jsonEncode({
+            ..._readyManagedProfile('udp-revision'),
+            'transport_profile': profile, 'transport_kind': awg ? 'awg31' : 'hysteria2',
+            'client_policy': {'transport_profile': 'legacy_reality_fallback'},
+            'transport_catalog': {
+              'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'udp-revision',
+              'selected_candidate_ref': 'de:$profile', 'candidates': [{
+                'candidate_ref': 'de:$profile', 'profile_ref': profile, 'node_code': 'de',
+                'country_code': 'DE', 'protocol': protocol, 'transport': 'udp',
+                'protection': awg ? 'awg31' : 'tls', 'priority': 0,
+                'parameters': {'network': 'udp', 'flow': ''},
+                'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+                  'platforms': ['android', 'windows'], 'required_features': [
+                    awg ? 'pokrov_awg31_endpoint_v1' : 'singbox_hysteria2_v1']},
+              }],
+            },
+            'smart_connect': {'eligible': true, 'shortlist': [{'code': 'de', 'country': 'DE'}]},
+            'config_payload': {
+              '_meta': {'transport_contract': {
+                'id': awg ? 'pokrov.awg31.endpoint.v1' : 'pokrov.hy2.outbound.v1',
+                'sha256': awg
+                    ? '1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818'
+                    : 'c96b38e58ea33f838f23b80a65f3a9a264e932b7248f206798df9a0b8fa0fb98',
+                'profile': profile, 'state': 'enabled', 'generation': 'ordinary-v1',
+              }},
+              if (awg) 'endpoints': [{'type': 'awg', 'tag': tag,
+                'contract_id': 'pokrov.awg31.endpoint.v1', 'useIntegratedTun': false}],
+              'outbounds': [
+                if (!awg) {'type': 'hysteria2', 'tag': tag,
+                  'server': 'hy2.example.invalid', 'server_port': 443,
+                  'password': 'synthetic-password', 'up_mbps': 10, 'down_mbps': 50,
+                  'tls': {'enabled': true, 'server_name': 'hy2.example.invalid',
+                    'insecure': false, 'alpn': ['h3']}},
+                {'type': 'direct', 'tag': 'direct'},
+              ],
+              'route': {'final': tag},
+            },
+          }));
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/', supportDirectoryResolver: () async => directory,
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(), maxRequestAttempts: 1,
+    );
+    for (final scenario in [
+      (HostPlatform.android, true, RouteMode.fullTunnel),
+      (HostPlatform.android, false, RouteMode.fullTunnel),
+      (HostPlatform.windows, false, RouteMode.selectedApps),
+    ]) {
+      awg = scenario.$2;
+      final profile = awg ? 'awg31_lab' : 'hy2_lab';
+      final payload = await bootstrapper.resolveManagedProfile(hostPlatform: scenario.$1,
+        routeMode: scenario.$3, selectedApps: scenario.$3 == RouteMode.selectedApps ? ['browser.exe'] : [],
+        runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+        selectedCandidateRef: 'de:$profile', selectCandidate: false, cacheResult: false);
+      expect(queries.last['catalog_version'], '1');
+      expect(queries.last['selected_candidate_ref'], 'de:$profile');
+      expect(payload.transportCatalog?.selectedCandidateRef, 'de:$profile');
+      expect(payload.resolvedNodeCode, 'de');
+      expect(payload.smartConnect?.shortlist.single.code, 'de');
+      final config = jsonDecode(payload.configPayload) as Map;
+      expect(config['_meta']?['transport_contract']?['profile'], profile);
+      expect(config['route']['final'], scenario.$3 == RouteMode.selectedApps ? 'direct' : 'secure-transport');
+      if (!awg && scenario.$1 == HostPlatform.android) {
+        final outbound = (config['outbounds'] as List).singleWhere((row) => row['type'] == 'hysteria2') as Map;
+        expect(outbound['domain_resolver'], 'dns-local');
+      }
+      await expectLater(createRuntimeEngine(hostPlatform: scenario.$1).stageManagedProfile(payload),
+        completes, reason: '${scenario.$1.name} $profile ${scenario.$3.name}');
+      expect(staged, isNot(contains('_meta')));
+      if (awg) {
+        expect((staged!['endpoints'] as List).single['contract_id'], 'pokrov.awg31.endpoint.v1');
+      } else {
+        final transport = (staged!['outbounds'] as List).singleWhere((row) => row['type'] == 'hysteria2');
+        expect(transport['password'], 'synthetic-password');
+        expect(transport['tls']['insecure'], isFalse);
+      }
+    }
+  });
+
   test('materializes managed AWG2 and AWG31 endpoints for Android', () async {
     const labs = <Map<String, String>>[
       <String, String>{

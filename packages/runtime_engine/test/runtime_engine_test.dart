@@ -812,6 +812,8 @@ void main() {
       'contract_hash': List<String>.filled(64, '0').join(),
     },
     <String, Object?>{'name': 'insecure TLS', 'tls_insecure': true},
+    <String, Object?>{'name': 'unknown DNS resolver', 'domain_resolver': 'missing-dns'},
+    <String, Object?>{'name': 'unreferenced transport', 'route_final': 'direct'},
     <String, Object?>{
       'name': 'port hopping',
       'server_ports': <String>['443', '8443'],
@@ -849,6 +851,8 @@ void main() {
                   'password': 'synthetic-password',
                   'up_mbps': 10,
                   'down_mbps': 50,
+                  if (rejectedCase['domain_resolver'] != null)
+                    'domain_resolver': rejectedCase['domain_resolver'],
                   'tls': <String, Object?>{
                     'enabled': true,
                     'server_name': 'hy2.example.invalid',
@@ -857,7 +861,7 @@ void main() {
                   },
                 },
               ],
-              'route': <String, Object?>{'final': 'pokrov-hy2-lab'},
+              'route': <String, Object?>{'final': rejectedCase['route_final'] ?? 'pokrov-hy2-lab'},
               if (rejectedCase['name'] != 'missing provenance')
                 '_meta': <String, Object?>{
                   'transport_contract': <String, Object?>{

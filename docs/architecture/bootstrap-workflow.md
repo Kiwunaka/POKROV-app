@@ -40,6 +40,15 @@ for an ordinary running tunnel or retained handoff guard. It keeps cancellation
 and the original action owner, and reports failure instead of success when
 replacement is unverified; only explicit Disconnect releases the guard.
 
+AWG 3.1 and Hysteria2 use the ordinary managed candidate path when the server
+offers a ready device-bound profile and the loaded Core supports it. The internal
+`awg31_lab` and `hy2_lab` contract IDs do not require a laboratory UI or client
+allowlist. The catalog contains public descriptors; credentials remain in the
+authenticated profile and existing encrypted cache. Bootstrap preserves both
+typed contracts through runtime materialization. Hysteria2 accepts the existing
+registered DNS resolver and selected-app route rules without weakening TLS or
+contract validation; candidate probes and protected recovery remain shared.
+
 After an explicit disconnect settles to a non-running snapshot without a
 failure, Home returns to its ordinary Connect action. The runtime's successful
 status message is not a recovery notice. A reported failure keeps its message.
@@ -862,8 +871,8 @@ Current blocking dependency:
   `config/runtime-artifacts.seed.json`; installed-device behavior is still open.
 - Core lifecycle errors crossing logs, status and platform ABI expose catalog codes while preserving their typed cause internally; the retained Core c8 privacy binding passed direct FFI planted-data checks; the current C02 binding preserves that source policy and records separate lifecycle/resource evidence
 - managed engine log filtering runs before observable writers, subscriptions and replay buffers in normal and debug mode. Arbitrary messages and tags become `runtime_log_redacted`; only fixed AWG categories survive.
-- device-bound `awg2_lab`, `awg31_lab` and `hy2_lab` envelopes do not participate in ordinary Smart Connect selection or automatic-node quarantine. Their typed endpoint is already the complete route decision. The bootstrapper clears `smartConnect` for those profiles and skips selection when no Smart Connect profile is present, so an unrelated VLESS egress failure cannot block a fresh lab fetch before Core starts
-- owner decision 2026-09-13 leaves AWG3.1 as the only active AWG release-acceptance and development lane. Separate AWG2 gates and AWG2/AWG3.1 switching repeats are `SKIPPED_BY_OWNER`, not PASS. Existing AWG2 implementation and historical evidence remain retained pending consumer inventory. AWG3.1 still requires exact revision, device, failure, route and egress proof within its existing lab/default-off boundary; this decision does not enable public AWG.
+- legacy device-bound `awg2_lab`, `awg31_lab` and `hy2_lab` envelopes without an ordinary transport catalog do not participate in Smart Connect selection or automatic-node quarantine. Their typed endpoint is already the complete route decision. The bootstrapper clears `smartConnect` only for those legacy responses; catalog responses use the shared candidate selector.
+- the historical owner decision of 2026-09-13 retained AWG3.1 as the AWG development lane and skipped separate AWG2 gates. Existing AWG2 implementation remains retained; the current ordinary candidate path uses AWG3.1 with exact device, contract, route and egress validation.
 - Those lab envelopes may advertise ordinary `legacy_reality_fallback` in
   `fallback_order`. Only then does the client retain their exact source revision
   as a TCP fallback candidate. A confirmed `core_egress_probe_failed` can make

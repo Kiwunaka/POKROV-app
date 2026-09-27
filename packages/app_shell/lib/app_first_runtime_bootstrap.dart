@@ -7183,7 +7183,7 @@ class AppFirstRuntimeBootstrapper
       if (experimental.isNotEmpty) {
         runtimeConfig['experimental'] = experimental;
       }
-      _preserveManagedAwgRuntimeContract(
+      _preserveManagedTransportRuntimeContract(
         runtimeConfig: runtimeConfig,
         baseConfig: baseConfig,
         endpoints: endpoints,
@@ -7222,7 +7222,7 @@ class AppFirstRuntimeBootstrapper
         clientRuleSetCatalog: clientRuleSetCatalog,
       ),
     };
-    _preserveManagedAwgRuntimeContract(
+    _preserveManagedTransportRuntimeContract(
       runtimeConfig: runtimeConfig,
       baseConfig: baseConfig,
       endpoints: endpoints,
@@ -7231,16 +7231,19 @@ class AppFirstRuntimeBootstrapper
     return runtimeConfig;
   }
 
-  void _preserveManagedAwgRuntimeContract({
+  void _preserveManagedTransportRuntimeContract({
     required Map<String, dynamic> runtimeConfig,
     required Map<String, dynamic> baseConfig,
     required List<Map<String, dynamic>> endpoints,
     required List<String> awgEndpointTags,
   }) {
-    if (awgEndpointTags.isEmpty) {
+    if (awgEndpointTags.isNotEmpty) {
+      runtimeConfig['endpoints'] = endpoints;
+    } else if (!_readListOfMaps(runtimeConfig['outbounds']).any(
+      (outbound) => _readText(outbound['type']).toLowerCase() == 'hysteria2',
+    )) {
       return;
     }
-    runtimeConfig['endpoints'] = endpoints;
     final transportContract = _readMap(
       _readMap(baseConfig['_meta'])['transport_contract'],
     );
