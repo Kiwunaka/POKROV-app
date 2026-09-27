@@ -144,6 +144,12 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   routes, DNS and egress separately without treating missing facts as success.
   Bootstrap delegates Smart Connect selection to `_SmartConnectResolver`, keeping
   the existing probe limits, selection rules and cancellation behavior.
+  Private Windows build 4062 passed DE/CH connect, disconnect, reconnect,
+  cancellation, switching from DE to CH and UI restart with an active service
+  tunnel. HTTP requests succeeded with VPN and after disconnect. This used the
+  accepted 4061 Core/service and preserved the migrated 1.1.6 session; it was
+  not a private-installer acceptance test. After UI restart, both 4061 and 4062
+  still displayed “Location is being checked” at the 42-second observation.
 - `FirstSessionCoordinator` owns the welcome/restore/ready step, restore busy
   state, handover animation decision, ephemeral acquisition dedupe/status,
   Android VPN-permission explanation/recovery state, and first-home/first-
