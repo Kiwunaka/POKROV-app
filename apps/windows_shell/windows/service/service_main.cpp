@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <shlobj.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -14,6 +15,39 @@
 namespace {
 
 constexpr wchar_t kServiceName[] = L"POKROVService";
+
+int ClearTransitionGuardExplicitly() {
+  if (!::IsUserAnAdmin()) return ERROR_ACCESS_DENIED;
+  SC_HANDLE manager = ::OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
+  if (manager == nullptr) return static_cast<int>(::GetLastError());
+  SC_HANDLE service = ::OpenServiceW(manager, kServiceName, SERVICE_STOP | SERVICE_QUERY_STATUS);
+  const auto open_error = service == nullptr ? ::GetLastError() : ERROR_SUCCESS;
+  ::CloseServiceHandle(manager);
+  if (service == nullptr && open_error != ERROR_SERVICE_DOES_NOT_EXIST) return static_cast<int>(open_error);
+  if (service != nullptr) {
+    SERVICE_STATUS status{};
+    if (!::QueryServiceStatus(service, &status)) {
+      const auto error = ::GetLastError();
+      ::CloseServiceHandle(service);
+      return static_cast<int>(error);
+    }
+    if (status.dwCurrentState != SERVICE_STOPPED && status.dwCurrentState != SERVICE_STOP_PENDING &&
+        !::ControlService(service, SERVICE_CONTROL_STOP, &status)) {
+      const auto error = ::GetLastError();
+      ::CloseServiceHandle(service);
+      return static_cast<int>(error);
+    }
+    const auto deadline = ::GetTickCount64() + 30000;
+    while (status.dwCurrentState != SERVICE_STOPPED && ::GetTickCount64() < deadline) {
+      ::Sleep(100);
+      if (!::QueryServiceStatus(service, &status)) break;
+    }
+    ::CloseServiceHandle(service);
+    if (status.dwCurrentState != SERVICE_STOPPED) return ERROR_SERVICE_REQUEST_TIMEOUT;
+  }
+  auto guard = pokrov::service::CreateWindowsTransitionGuard();
+  return guard->ExplicitOff().empty() && !guard->IsArmed() ? ERROR_SUCCESS : ERROR_CAN_NOT_COMPLETE;
+}
 SERVICE_STATUS_HANDLE service_status_handle = nullptr;
 SERVICE_STATUS service_status{};
 HANDLE service_stop_event = nullptr;
@@ -178,6 +212,9 @@ std::size_t DebugTestClientLimit(int argument_count, wchar_t** arguments) {
 }  // namespace
 
 int wmain(int argument_count, wchar_t** arguments) {
+  if (argument_count == 2 && std::wstring(arguments[1]) == L"--clear-transition-guard") {
+    return ClearTransitionGuardExplicitly();
+  }
 #ifdef _DEBUG
   const std::size_t test_client_limit =
       DebugTestClientLimit(argument_count, arguments);

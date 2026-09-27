@@ -457,6 +457,11 @@ bool FlutterWindow::OnCreate() {
   runtime_tasks_ = std::make_unique<RuntimeTaskRunner>([runtime_window] {
     ::PostMessageW(runtime_window, kRuntimeCompletionMessage, 0, 0);
   });
+  for (auto& worker : candidate_tasks_) {
+    worker = std::make_unique<RuntimeTaskRunner>([runtime_window] {
+      ::PostMessageW(runtime_window, kRuntimeCompletionMessage, 0, 0);
+    });
+  }
   runtime_engine_channel_->SetMethodCallHandler(
       [this](const flutter::MethodCall<flutter::EncodableValue>& call,
          std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
@@ -474,6 +479,90 @@ bool FlutterWindow::OnCreate() {
         };
         if (call.method_name() == "runtimeEngine.snapshot") {
           snapshot_call(Command::kStatus, "", expected_profile_digest_);
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.candidateNetwork") {
+          if (!QueueRuntime(Command::kReadCandidateNetwork, "", [reply](auto snapshot) {
+                const auto available = HasDefaultUplink();
+                const auto captive = HasCaptivePortal();
+                reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                    {flutter::EncodableValue("selection_key"), snapshot.candidate_selection_key.empty()
+                        ? flutter::EncodableValue() : flutter::EncodableValue(snapshot.candidate_selection_key)},
+                    {flutter::EncodableValue("context_ref"), snapshot.transport_network_context_ref.empty()
+                        ? flutter::EncodableValue() : flutter::EncodableValue(snapshot.transport_network_context_ref)},
+                    {flutter::EncodableValue("network_available"), available.has_value()
+                        ? flutter::EncodableValue(*available) : flutter::EncodableValue()},
+                    {flutter::EncodableValue("captive_portal"), captive.has_value()
+                        ? flutter::EncodableValue(*captive) : flutter::EncodableValue()},
+                }));
+              })) reply->Error("runtime_busy", "Network observation unavailable.");
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.probeCandidate") {
+          if (candidate_settlement_lost_) {
+            reply->Error("candidate_probe_unconfirmed", "A previous candidate completion is unavailable.");
+            return;
+          }
+          const auto* arguments = MapArguments(call);
+          const auto* id = StringArgument(arguments, "probeId");
+          const auto* config = StringArgument(arguments, "configContent");
+          const auto* network = StringArgument(arguments, "expectedNetworkContext");
+          const auto timeout = ElapsedArgument(arguments, "timeoutMs");
+          if (arguments == nullptr || arguments->size() != 4 || id == nullptr || config == nullptr ||
+              network == nullptr || !timeout || *timeout > 30000) {
+            reply->Error("invalid_probe_request", "Candidate probe parameters are required.");
+            return;
+          }
+          const auto body = pokrov::service::EncodeCandidateProbe({*id, static_cast<std::uint32_t>(*timeout), *network, *config});
+          if (body.empty() || pending_candidates_.count(*id) != 0) {
+            reply->Error("invalid_probe_request", "Candidate probe identity is invalid or active.");
+            return;
+          }
+          std::array<bool, 4> used{};
+          for (const auto& entry : pending_candidates_) used[entry.second.worker] = true;
+          const auto free = std::find(used.begin(), used.end(), false);
+          if (free == used.end()) {
+            reply->Error("runtime_busy", "Four candidate probes are already active.");
+            return;
+          }
+          const auto slot = static_cast<std::size_t>(free - used.begin());
+          auto control = std::make_shared<pokrov::service::ServiceCallControl>();
+          pending_candidates_.emplace(*id, PendingCandidate{control, slot, {}});
+          if (!candidate_tasks_[slot]->Submit(Command::kProbeCandidate, body, control,
+              [this, reply, id = *id](auto snapshot) {
+                auto found = pending_candidates_.find(id);
+                if (found == pending_candidates_.end()) return;
+                const bool settled = snapshot.command_accepted && !snapshot.candidate_probe_json.empty();
+                if (!settled) candidate_settlement_lost_ = true;
+                auto completions = std::move(found->second.cancellation_completions);
+                pending_candidates_.erase(found);
+                if (settled) reply->Success(flutter::EncodableValue(snapshot.candidate_probe_json));
+                else reply->Error("candidate_probe_unconfirmed", "Candidate probe completion is unavailable.");
+                for (auto& complete : completions) complete(settled);
+              })) {
+            pending_candidates_.erase(*id);
+            reply->Error("runtime_busy", "Candidate probe worker unavailable.");
+          }
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.cancelCandidateProbe") {
+          const auto* arguments = MapArguments(call);
+          const auto* id = StringArgument(arguments, "probeId");
+          if (arguments == nullptr || arguments->size() != 1 || id == nullptr || !pokrov::service::IsCandidateProbeId(*id)) {
+            reply->Error("invalid_probe_request", "Candidate probe identity is required.");
+            return;
+          }
+          const auto found = pending_candidates_.find(*id);
+          if (found == pending_candidates_.end()) {
+            if (candidate_settlement_lost_) reply->Error("candidate_probe_unconfirmed", "Candidate settlement is unavailable.");
+            else reply->Success();
+            return;
+          }
+          found->second.control->cancel_requested = true;
+          found->second.cancellation_completions.push_back([reply](bool settled) {
+            if (settled) reply->Success();
+            else reply->Error("candidate_probe_unconfirmed", "Candidate cancellation did not settle.");
+          });
           return;
         }
         if (call.method_name() == "runtimeEngine.clockSnapshot") {
@@ -758,7 +847,8 @@ bool FlutterWindow::OnCreate() {
           snapshot_call(Command::kInitialize, "", expected_profile_digest_);
           return;
         }
-        if (call.method_name() == "runtimeEngine.stageManagedProfile") {
+        if (call.method_name() == "runtimeEngine.stageManagedProfile" ||
+            call.method_name() == "runtimeEngine.replaceManagedProfile") {
           const auto* arguments = MapArguments(call);
           const auto* profile = StringArgument(arguments, "configPayload");
           const auto* service_profile_bundle =
@@ -769,9 +859,12 @@ bool FlutterWindow::OnCreate() {
               BoolArgument(arguments, "materializedForRuntime");
           const auto* requires_bound_connect =
               BoolArgument(arguments, "requiresBoundConnect");
+          const bool replace = call.method_name() == "runtimeEngine.replaceManagedProfile";
+          const auto* request_id = StringArgument(arguments, "requestId");
           if (profile == nullptr || disable_memory_limit == nullptr ||
               materialized == nullptr || !*materialized ||
-              requires_bound_connect == nullptr) {
+              requires_bound_connect == nullptr || (replace && (*requires_bound_connect ||
+                  request_id == nullptr || !IsConnectRequestId(*request_id)))) {
             reply->Error("invalid_arguments",
                           "A materialized managed profile is required.");
             return;
@@ -785,6 +878,14 @@ bool FlutterWindow::OnCreate() {
           const auto* persisted_digest = StringArgument(arguments, "expectedProfileDigest");
           if (persisted_digest != nullptr && *persisted_digest != expected) {
             reply->Error("profile_identity_mismatch", "Prepared profile identity changed.");
+            return;
+          }
+          if (replace) {
+            if (QueueRuntime(Command::kReplaceManagedProfile, body,
+                [reply, expected](auto snapshot) {
+                  reply->Success(RuntimeSnapshotValue(std::move(snapshot), expected));
+                }, *request_id)) expected_profile_digest_ = expected;
+            else reply->Error("runtime_busy", "Protected handoff was not dispatched.");
             return;
           }
           if (snapshot_call(*requires_bound_connect ? Command::kStageBoundProfile
@@ -1121,6 +1222,12 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  for (auto& entry : pending_candidates_) entry.second.control->cancel_requested = true;
+  for (auto& worker : candidate_tasks_) {
+    if (worker) worker->Shutdown();
+    worker.reset();
+  }
+  pending_candidates_.clear();
   if (pending_connect_bound_ && pending_connect_ && !pending_connect_promoted_) pending_connect_->cancel_requested = true;
   if (diagnostic_tasks_) {
     diagnostic_tasks_->Shutdown();
@@ -1164,6 +1271,7 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     return 0;
   }
   if (message == kRuntimeCompletionMessage) {
+    for (auto& worker : candidate_tasks_) if (worker) worker->Drain();
     if (runtime_tasks_) runtime_tasks_->Drain();
     if (diagnostic_tasks_) diagnostic_tasks_->Drain();
     return 0;

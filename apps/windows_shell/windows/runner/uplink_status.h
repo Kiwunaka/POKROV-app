@@ -6,5 +6,7 @@
 // Current local route/link availability, not an Internet or DNS probe.
 // Unknown means Windows could not provide a complete observation.
 std::optional<bool> HasDefaultUplink();
+// OS NCSI observation. Missing/failed metadata stays unknown.
+std::optional<bool> HasCaptivePortal();
 
 #endif  // POKROV_RUNNER_UPLINK_STATUS_H_

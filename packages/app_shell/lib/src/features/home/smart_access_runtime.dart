@@ -69,7 +69,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     throw const RoutingCatalogFailure('smart_access_recovery_changed');
   }
 
-  Future<RuntimeSnapshot> _stageManagedProfileWithLeaseBinding(ManagedProfilePayload payload) async {
+  Future<RuntimeSnapshot> _stageManagedProfileWithLeaseBinding(ManagedProfilePayload payload, {bool replaceProtected = false}) async {
     final generation = _connectionCoordinator.operationGeneration;
     final elapsed = Stopwatch()..start();
     bool current() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
@@ -89,8 +89,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     final RuntimeSnapshot staged;
     if (grants.isNotEmpty || catalog != null) {
       if (engine is! RuntimeSmartAccessControl) throw const RoutingCatalogFailure('smart_access_stage_unsupported');
-      staged = await (engine as RuntimeSmartAccessControl).stageSmartAccessProfile(payload, operationIsCurrent: current,
-        persistRestrictions: (identityInput, native) async {
+      Future<String> persistRestrictions(String identityInput, RuntimeSnapshot native) async {
           await _recoverNativeSmartAccessRestrictions(native, forStage: true, current: current,
             waitFor: <T>(Future<T> operation) => operation.timeout(_actionTimeout - elapsed.elapsed));
           if (!current()) throw const ConnectionOperationSuperseded();
@@ -102,9 +101,16 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
             activeDigest: native.effectiveProfileDigest, stagedDigest: native.stagedProfileDigest,
             isCurrent: current);
           return digest;
-        });
+      }
+      staged = replaceProtected
+          ? await (engine as RuntimeProtectedHandoff).replaceManagedProfile(payload,
+              operationIsCurrent: current, persistRestrictions: persistRestrictions)
+          : await (engine as RuntimeSmartAccessControl).stageSmartAccessProfile(payload,
+              operationIsCurrent: current, persistRestrictions: persistRestrictions);
     } else {
-      staged = await engine.stageManagedProfile(payload);
+      staged = replaceProtected
+          ? await (engine as RuntimeProtectedHandoff).replaceManagedProfile(payload, operationIsCurrent: current)
+          : await engine.stageManagedProfile(payload);
     }
     if (current()) {
       _connectionCoordinator.acknowledgeSmartAccessStage(staged,

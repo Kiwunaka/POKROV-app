@@ -22,6 +22,7 @@ add_library(pokrov_service_runtime STATIC
   "service_network_observer.cpp"
   "service_recovery.cpp"
   "service_runtime.cpp"
+  "service_transition_guard.cpp"
 )
 apply_standard_settings(pokrov_service_runtime)
 target_include_directories(pokrov_service_runtime PUBLIC
@@ -35,6 +36,7 @@ target_link_libraries(pokrov_service_runtime PUBLIC
   "winhttp.lib"
   "wlanapi.lib"
   "ws2_32.lib"
+  "fwpuclnt.lib"
 )
 
 add_executable(pokrov_service
@@ -50,6 +52,16 @@ target_link_libraries(pokrov_service PRIVATE
 )
 
 if(BUILD_TESTING)
+  add_executable(pokrov_service_candidate_probe_test "service_candidate_probe_test.cpp" "service_dispatcher.cpp")
+  apply_standard_settings(pokrov_service_candidate_probe_test)
+  target_link_libraries(pokrov_service_candidate_probe_test PRIVATE pokrov_service_runtime)
+  add_test(NAME pokrov_service_candidate_probe COMMAND pokrov_service_candidate_probe_test)
+  set_tests_properties(pokrov_service_candidate_probe PROPERTIES TIMEOUT 15)
+  add_executable(pokrov_service_transition_guard_test "service_transition_guard_test.cpp")
+  apply_standard_settings(pokrov_service_transition_guard_test)
+  target_link_libraries(pokrov_service_transition_guard_test PRIVATE pokrov_service_runtime)
+  add_test(NAME pokrov_service_transition_guard COMMAND pokrov_service_transition_guard_test CONFIGURATIONS Debug)
+
   add_executable(pokrov_service_cancellation_test
     "service_cancellation_test.cpp" "service_server.cpp" "service_dispatcher.cpp"
     "service_pipe_client.cpp" "service_client.cpp")

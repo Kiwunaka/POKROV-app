@@ -42,6 +42,18 @@ constexpr std::uint64_t kCapabilityBoundRuntimeControl = 1ULL << 17;
 constexpr std::uint64_t kCapabilityTransportNetworkContext = 1ULL << 18;
 constexpr std::uint64_t kCapabilityBoundProfileStage = 1ULL << 19;
 constexpr std::uint64_t kCapabilityTransportLeaseHandoff = 1ULL << 20;
+constexpr std::uint64_t kCapabilityCandidateProbe = 1ULL << 21;
+constexpr std::uint64_t kCapabilityProtectedHandoff = 1ULL << 22;
+
+struct CandidateProbeRequest {
+  std::string probe_id;
+  std::uint32_t timeout_ms = 0;
+  std::string network_context_ref;
+  std::string config;
+};
+bool IsCandidateProbeId(const std::string& value);
+std::string EncodeCandidateProbe(const CandidateProbeRequest& request);
+std::optional<CandidateProbeRequest> DecodeCandidateProbe(const std::string& body);
 
 struct BoundConnectTarget {
   std::string core_module_sha256;
@@ -143,6 +155,10 @@ enum class Command : std::uint16_t {
   kStageBoundProfile = 25,
   kPromoteTransportLease = 26,
   kRevokeTransportLease = 27,
+  kReadCandidateNetwork = 28,
+  kProbeCandidate = 29,
+  kCancelCandidateProbe = 30,
+  kReplaceManagedProfile = 31,
 };
 
 bool IsConnectCommand(Command command);

@@ -4,6 +4,13 @@ import 'dart:math';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+class ManagedProfileCacheRead {
+  const ManagedProfileCacheRead({this.payload, this.accessEnded = false});
+
+  final Map<String, dynamic>? payload;
+  final bool accessEnded;
+}
+
 /// Account-bound downloaded and last-proven profiles. Connection failures and
 /// offline restaging never renew the original server-observation timestamp.
 class ManagedProfileCache {
@@ -14,6 +21,7 @@ class ManagedProfileCache {
         _now = now ?? DateTime.now;
 
   static const offlineWindow = Duration(hours: 24);
+  static const refreshInterval = Duration(hours: 6);
   static String newEntryId() {
     final random = Random.secure();
     return base64UrlEncode(List<int>.generate(16, (_) => random.nextInt(256)));
@@ -22,6 +30,9 @@ class ManagedProfileCache {
   final FlutterSecureStorage _storage;
   final DateTime Function() _now;
   Future<void> _writes = Future<void>.value();
+  final Map<String, int> _invalidations = {};
+
+  int generation(String platform) => _invalidations[platform] ?? 0;
 
   String _key(String platform) => 'pokrov-managed-profile-$platform-v1';
 
@@ -56,8 +67,13 @@ class ManagedProfileCache {
     required String revision,
     required DateTime verifiedAt,
     required Map<String, Object?> payload,
+    int? expectedGeneration,
+    bool Function()? isCurrent,
   }) =>
       _serialize(() async {
+        bool current() => (expectedGeneration == null ||
+            expectedGeneration == generation(platform)) && (isCurrent?.call() ?? true);
+        if (!current()) return;
         final value = await _load(platform);
         final previous = value['downloaded'];
         final previousAt = previous is Map
@@ -75,27 +91,40 @@ class ManagedProfileCache {
         if (proven is Map && proven['binding'] != binding) {
           value.remove('proven');
         }
-        await _write(platform, value);
+        if (current()) await _write(platform, value);
       });
 
   Future<Map<String, dynamic>?> read({
     required String platform,
     required String binding,
     bool preferProven = false,
+  }) async => (await readResult(platform: platform, binding: binding,
+      preferProven: preferProven)).payload;
+
+  Future<ManagedProfileCacheRead> readResult({
+    required String platform,
+    required String binding,
+    bool preferProven = false,
   }) => _serialize(() async {
     try {
       final value = await _load(platform);
-      if (value.isEmpty) return null;
+      if (value.isEmpty) return const ManagedProfileCacheRead();
       final now = _now().toUtc();
       final observedValue = value['last_observed_at'];
       final observedAt = observedValue == null
           ? null
           : DateTime.tryParse(observedValue.toString());
       if ((observedValue != null && observedAt == null) ||
-          (observedAt != null && now.isBefore(observedAt))) return null;
+          (observedAt != null && now.isBefore(observedAt))) {
+        return const ManagedProfileCacheRead();
+      }
       // Persist even an expired read, so a later clock rollback cannot revive it.
       value['last_observed_at'] = now.toIso8601String();
       await _write(platform, value);
+      var accessEnded = false;
+      final latest = value['downloaded'];
+      final latestPayload = latest is Map && latest['binding'] == binding ? latest['payload'] : null;
+      final latestAccess = latestPayload is Map ? latestPayload['access'] : null;
       for (final slot in preferProven
           ? const ['proven', 'downloaded']
           : const ['downloaded', 'proven']) {
@@ -104,20 +133,47 @@ class ManagedProfileCache {
         final verified = DateTime.tryParse(entry['verified_at']?.toString() ?? '');
         if (verified == null) continue;
         final age = now.difference(verified);
-        if (age.isNegative || age > offlineWindow) continue;
+        if (age.isNegative) continue;
         final payload = entry['payload'];
-        if (payload is Map<String, dynamic>) return payload;
+        if (payload is! Map<String, dynamic>) continue;
+        // The latest authorized access window also bounds an older proven profile.
+        final access = latestAccess is Map && latestAccess.containsKey('expiry_at')
+            ? latestAccess : payload['access'];
+        if (access is Map && access.containsKey('expiry_at')) {
+          final rawExpiry = access['expiry_at'];
+          if (rawExpiry != null) {
+            if (rawExpiry is! String || rawExpiry.isEmpty) continue;
+            // Platform timestamps without a suffix are UTC, not local time.
+            final expiry = DateTime.tryParse(RegExp(r'(Z|[+-]\d\d:\d\d)$').hasMatch(rawExpiry)
+                ? rawExpiry : '${rawExpiry}Z');
+            if (expiry == null) continue;
+            if (now.isAfter(expiry.add(offlineWindow))) {
+              accessEnded = true;
+              continue;
+            }
+          }
+        } else if (age > offlineWindow) {
+          // Actual older records did not carry an access expiry.
+          continue;
+        }
+        return ManagedProfileCacheRead(payload: {
+          ...payload,
+          if (slot == 'proven' && entry['network_selection_key'] is String)
+            'proven_network_selection_key': entry['network_selection_key'],
+        });
       }
+      return ManagedProfileCacheRead(accessEnded: accessEnded);
     } on Object {
       // Unreadable/future state is unavailable and preserved, never guessed.
     }
-    return null;
+    return const ManagedProfileCacheRead();
   });
 
   Future<void> markProven({
     required String platform,
     required String binding,
     required String entryId,
+    String? networkSelectionKey,
   }) =>
       _serialize(() async {
         final value = await _load(platform);
@@ -127,10 +183,16 @@ class ManagedProfileCache {
             downloaded['payload'] is! Map ||
             downloaded['payload']['cache_entry_id'] != entryId ||
             entryId.isEmpty) return;
-        value['proven'] = downloaded;
+        value['proven'] = {
+          ...downloaded,
+          if (networkSelectionKey != null && networkSelectionKey.isNotEmpty)
+            'network_selection_key': networkSelectionKey,
+        };
         await _write(platform, value);
       });
 
-  Future<void> clear(String platform) =>
-      _serialize(() => _storage.delete(key: _key(platform)));
+  Future<void> clear(String platform) {
+    _invalidations[platform] = generation(platform) + 1;
+    return _serialize(() => _storage.delete(key: _key(platform)));
+  }
 }

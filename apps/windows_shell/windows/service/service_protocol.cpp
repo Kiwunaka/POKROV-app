@@ -89,6 +89,10 @@ bool IsKnownCommand(Command command) {
     case Command::kReadTransportNetworkContext:
     case Command::kPromoteTransportLease:
     case Command::kRevokeTransportLease:
+    case Command::kReadCandidateNetwork:
+    case Command::kProbeCandidate:
+    case Command::kCancelCandidateProbe:
+    case Command::kReplaceManagedProfile:
       return true;
   }
   return false;
@@ -131,13 +135,17 @@ bool IsValidFrame(const Frame& frame) {
              frame.deadline_unix_ms != 0 && frame.capabilities == 0 &&
              (frame.command == Command::kConfigureBoundSmartAccessRuntimeControl
                   ? IsBoundSmartAccessRuntimeControl(frame.body)
+                  : frame.command == Command::kProbeCandidate
+                  ? DecodeCandidateProbe(frame.body).has_value()
+                  : frame.command == Command::kCancelCandidateProbe
+                  ? DecodeCancellationTarget(frame.body).has_value()
                   : frame.command == Command::kPromoteTransportLease
                   ? DecodeTransportLeasePromotion(frame.body).has_value()
                   : frame.command == Command::kRevokeTransportLease
                   ? DecodeTransportLeaseRevocation(frame.body).has_value()
                   : frame.command == Command::kConnectWithIdentity
                   ? DecodeBoundConnect(frame.body).has_value()
-                  : (frame.command == Command::kStageProfile || frame.command == Command::kStageBoundProfile)
+                  : (frame.command == Command::kStageProfile || frame.command == Command::kStageBoundProfile || frame.command == Command::kReplaceManagedProfile)
                   ? IsBoundedProfile(frame.body)
                   : (frame.command == Command::kConnect || frame.command == Command::kRevokeRoutingCatalog ||
                          frame.command == Command::kAcknowledgeSmartAccessRestrictions || frame.command == Command::kReadSmartAccessLeases
@@ -187,12 +195,40 @@ std::optional<FrameKind> DecodeKind(std::uint16_t raw_kind) {
 }  // namespace
 
 bool IsConnectCommand(Command command) {
-  return command == Command::kConnect || command == Command::kConnectWithIdentity;
+  return command == Command::kConnect || command == Command::kConnectWithIdentity || command == Command::kReplaceManagedProfile;
 }
 
 bool IsTransportNetworkContextRef(const std::string& value) {
   return value.size() == 40 && value.compare(0, 8, "network_") == 0 &&
       value.find_first_not_of("0123456789abcdef", 8) == std::string::npos;
+}
+
+bool IsCandidateProbeId(const std::string& value) {
+  return !value.empty() && value.size() <= 128 &&
+      value.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-") == std::string::npos;
+}
+
+std::string EncodeCandidateProbe(const CandidateProbeRequest& request) {
+  if (!IsCandidateProbeId(request.probe_id) || request.timeout_ms < 1 ||
+      request.timeout_ms > 30000 || !IsTransportNetworkContextRef(request.network_context_ref) ||
+      request.config.empty() || request.config.find('\0') != std::string::npos ||
+      request.config.size() > kMaxProfileBodySize - 256) return "";
+  return request.probe_id + "\n" + std::to_string(request.timeout_ms) + "\n" +
+      request.network_context_ref + "\n" + request.config;
+}
+
+std::optional<CandidateProbeRequest> DecodeCandidateProbe(const std::string& body) {
+  if (body.size() > kMaxProfileBodySize) return std::nullopt;
+  const auto first = body.find('\n');
+  const auto second = first == std::string::npos ? first : body.find('\n', first + 1);
+  const auto third = second == std::string::npos ? second : body.find('\n', second + 1);
+  if (third == std::string::npos) return std::nullopt;
+  CandidateProbeRequest request{body.substr(0, first), 0,
+      body.substr(second + 1, third - second - 1), body.substr(third + 1)};
+  const auto parsed = std::from_chars(body.data() + first + 1, body.data() + second, request.timeout_ms);
+  if (parsed.ec != std::errc{} || parsed.ptr != body.data() + second ||
+      EncodeCandidateProbe(request) != body) return std::nullopt;
+  return request;
 }
 
 std::string EncodeBoundConnect(const BoundConnectTarget& target) {

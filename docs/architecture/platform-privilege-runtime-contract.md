@@ -516,6 +516,18 @@ host bridge owns a separate Activity/Flutter-engine scope for latency, variant,
 installed-app and verified-update jobs. Service destruction, runtime
 replacement and Flutter-engine cleanup cancel their respective parent scopes.
 
+Ordinary candidate selection runs at most three isolated Core probes in the
+bridge. Each uses a captured physical `Network`, protects sockets when an owned
+VPN exists, and resolves DNS on that same network (cancellable socket DNS before
+API 29, `DnsResolver` afterwards). Cancellation waits for the native call and its
+IO to settle; probes cannot create a TUN or borrow the live runtime monitor.
+`candidateNetwork` exposes nullable availability/captive-portal observations;
+unknown is never treated as no network. Ordinary `replaceManagedProfile` uses
+the existing Core reload with a retained Android TUN. Failed reload or late
+cancellation retains the current descriptor as protection until explicit stop;
+a new TUN established during cancellation is retained too. ATS and catalog app
+identity-bound profiles keep their separate admission paths.
+
 The foreground notification and its public lockscreen version use
 `VISIBILITY_PRIVATE` and a generic protection state. Country, route, selected
 applications, endpoint and speed are available only inside the authenticated

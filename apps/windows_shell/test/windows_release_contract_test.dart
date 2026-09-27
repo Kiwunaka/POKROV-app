@@ -324,7 +324,7 @@ void main() {
       () async {
     final window = File('windows/runner/flutter_window.cpp');
     final sharedShell =
-        File('../../packages/app_shell/lib/src/shell/seed_shell.dart');
+        File('../../packages/app_shell/lib/src/connection/connection_manager.dart');
     final content = await window.readAsString();
     final sharedContent = await sharedShell.readAsString();
 

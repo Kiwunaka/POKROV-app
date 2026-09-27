@@ -160,6 +160,15 @@ void TestRejectsInvalidFrames() {
 }  // namespace
 
 int main() {
+  using namespace pokrov::service;
+  const CandidateProbeRequest probe{"candidate_1", 4000, "network_" + std::string(32, 'a'), "{\"outbounds\":[]}"};
+  const auto encoded_probe = EncodeCandidateProbe(probe);
+  const auto decoded_probe = DecodeCandidateProbe(encoded_probe);
+  Expect(decoded_probe && decoded_probe->config == probe.config && decoded_probe->probe_id == probe.probe_id &&
+         decoded_probe->timeout_ms == 4000 && decoded_probe->network_context_ref == probe.network_context_ref,
+         "candidate probe lost exact config or cancellation identity");
+  Expect(!DecodeCandidateProbe("bad\nid\n4000\n" + probe.network_context_ref + "\n{}"),
+         "candidate probe admitted an injected ID boundary");
   TestRoundTrips();
   TestRejectsInvalidFrames();
   return failures == 0 ? 0 : 1;

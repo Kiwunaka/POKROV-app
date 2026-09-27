@@ -85,6 +85,9 @@ abstract interface class ManagedProfileBootstrapper {
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
+    bool selectCandidate = true,
+    String selectedCandidateRef = '',
+    bool cacheResult = true,
     Duration? timeout,
     Future<void>? cancelled,
   });
@@ -181,11 +184,44 @@ abstract interface class CachedManagedProfileBootstrapper {
   Future<ManagedProfilePayload?> loadCachedManagedProfile(
     ManagedProfileCacheInputs inputs, {
     bool preferProven = false,
+    Set<RuntimeTransportFeature>? runtimeFeatures,
+    String? coreRelease,
+  });
+  Future<void> cacheResolvedManagedProfile(
+    ManagedProfileCacheInputs inputs,
+    ManagedProfilePayload payload, {
+    Future<void>? cancelled,
+  });
+  Future<void> refreshCachedManagedProfile(
+    ManagedProfileCacheInputs inputs, {
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
+    Future<void>? cancelled,
+  });
+  Future<ManagedProfileOfflineState> classifyManagedProfileFailure(
+    ManagedProfileCacheInputs inputs, {
+    bool? networkAvailable,
+    bool? captivePortal,
   });
   Future<void> markManagedProfileProven(
     ManagedProfileCacheInputs inputs,
-    String entryId,
-  );
+    String entryId, {
+    String? networkSelectionKey,
+  });
+}
+
+enum ManagedProfileOfflineState {
+  noNetwork,
+  apiUnavailable,
+  accessEnded,
+  captivePortal;
+
+  String get message => switch (this) {
+    noNetwork => 'Нет сети. Подключитесь к Wi-Fi или мобильной сети.',
+    apiUnavailable => 'Сервис недоступен. Используем сохранённый профиль, если он действителен.',
+    accessEnded => 'Доступ закончился. Продлите доступ, чтобы подключиться.',
+    captivePortal => 'Войдите в сеть Wi-Fi, затем повторите подключение.',
+  };
 }
 
 typedef SmartConnectLatencyProbe = Future<int?> Function(
@@ -2867,6 +2903,7 @@ class AppFirstRuntimeBootstrapper
   final int smartConnectProbeConcurrency;
   final int maxRequestAttempts;
   final Duration _allExceptRuRuleSetCacheMaxAge;
+  Future<void> _ruleSetWrites = Future<void>.value();
   final List<String> Function(String tag)? _allExceptRuRuleSetUrlsResolver;
   final SmartConnectLatencyProbe? smartConnectLatencyProbe;
   final AppFirstDeviceNameResolver? deviceNameResolver;
@@ -2874,6 +2911,14 @@ class AppFirstRuntimeBootstrapper
   final AppFirstStateFileWriter _stateFileWriter;
   final AppFirstAndroidAbiResolver _androidAbiResolver;
   final ManagedProfileCache _managedProfileCache;
+  final _resolvedProfileCache = Expando<({
+    _StoredBootstrapState state,
+    _ManagedManifestEnvelope manifest,
+    String binding,
+    int generation,
+    Set<RuntimeTransportFeature> runtimeFeatures,
+    String? coreRelease,
+  })>();
   final RoutingCatalogStore _routingCatalogStore;
   final TransportManifestStore? _transportManifestStore;
   final SmartAccessPolicyStore _smartAccessPolicyStore;
@@ -3016,24 +3061,41 @@ class AppFirstRuntimeBootstrapper
   Future<ManagedProfilePayload?> loadCachedManagedProfile(
     ManagedProfileCacheInputs inputs, {
     bool preferProven = false,
+    Set<RuntimeTransportFeature>? runtimeFeatures,
+    String? coreRelease,
   }) async {
     try {
       final state = await _loadState(inputs.hostPlatform);
       if (state == null || !state.hasSession || state.accountId.isEmpty) {
         return null;
       }
+      final cacheGeneration = _managedProfileCache.generation(inputs.hostPlatform.name);
       final value = await _managedProfileCache.read(
         platform: inputs.hostPlatform.name,
         binding: inputs.binding(state.accountId, state.installId),
         preferProven: preferProven,
       );
       if (value == null) return null;
+      final current = await _loadState(inputs.hostPlatform);
+      if (current == null || !current.hasSession || current.accountId != state.accountId ||
+          current.installId != state.installId || current.sessionToken != state.sessionToken ||
+          _managedProfileCache.generation(inputs.hostPlatform.name) != cacheGeneration) return null;
       final config = value['config_payload'];
       final revision = _readText(value['revision']);
       if (config is! String || revision.isEmpty ||
           _readMap(jsonDecode(config))['outbounds'] is! List) return null;
+      final storedFeatures = (value['runtime_features'] is List ? value['runtime_features'] as List : const [])
+          .map((name) => RuntimeTransportFeature.values.where((feature) => feature.wireName == name))
+          .expand((features) => features).toSet();
+      final catalog = value.containsKey('transport_catalog')
+          ? decodeManagedTransportCatalog(value['transport_catalog'],
+              platform: inputs.hostPlatform, clientRelease: pokrovClientVersion,
+              runtimeFeatures: runtimeFeatures ?? storedFeatures,
+              coreRelease: coreRelease ?? (runtimeFeatures == null ? _readText(value['core_release']) : null))
+          : null;
       return ManagedProfilePayload(
         cacheEntryId: _readText(value['cache_entry_id']),
+        provenNetworkSelectionKey: value['proven_network_selection_key'] as String?,
         profileName: _profileName(
           hostPlatform: inputs.hostPlatform, profileRevision: revision),
         configPayload: config,
@@ -3045,6 +3107,7 @@ class AppFirstRuntimeBootstrapper
         routeMode: inputs.routeMode,
         resolvedNodeCode: _readText(value['resolved_node_code']),
         smartConnect: SmartConnectProfile.tryParse(value['smart_connect']),
+        transportCatalog: catalog,
         warpPolicy: WarpRuntimePolicy.tryParse(value['warp_policy']),
         freeProfileAccess: FreeProfileAccess.tryParse(
           access: value['access'], freeCaps: value['free_caps']),
@@ -3055,10 +3118,107 @@ class AppFirstRuntimeBootstrapper
   }
 
   @override
+  Future<void> cacheResolvedManagedProfile(
+    ManagedProfileCacheInputs inputs,
+    ManagedProfilePayload payload, {
+    Future<void>? cancelled,
+  }) async {
+    final record = _resolvedProfileCache[payload];
+    if (record == null) throw const BootstrapFailure('Подготовка подключения отменена.',
+      code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
+    final requests = _ManagedProfileRequests(cancelled);
+    requests.requireActive();
+    final file = await _stateFile(inputs.hostPlatform);
+    await _withAppFirstStateFileLock(file, () async {
+      final current = await _loadStateFromFile(inputs.hostPlatform, file);
+      requests.requireActive();
+      if (current == null || !current.hasSession ||
+          current.accountId != record.state.accountId ||
+          current.installId != record.state.installId ||
+          current.sessionToken != record.state.sessionToken ||
+          inputs.binding(current.accountId, current.installId) != record.binding ||
+          _managedProfileCache.generation(inputs.hostPlatform.name) != record.generation) {
+        throw const BootstrapFailure('Подготовка подключения отменена.',
+          code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
+      }
+      final manifest = record.manifest;
+      await _persistStateToFile(hostPlatform: inputs.hostPlatform, file: file, state: current.copyWith(
+        profileRevision: manifest.profileRevision,
+        managedManifestPath: manifest.managedManifestPath,
+      ));
+      requests.requireActive();
+      final response = manifest.response;
+      await _managedProfileCache.saveDownloaded(
+        platform: inputs.hostPlatform.name, binding: record.binding,
+        revision: manifest.profileRevision, verifiedAt: manifest.verifiedAt,
+        expectedGeneration: record.generation,
+        isCurrent: () => !requests.isCancelled,
+        payload: <String, Object?>{
+          'cache_entry_id': payload.cacheEntryId,
+          'revision': manifest.profileRevision,
+          'protocol': payload.source?.protocol,
+          'config_payload': payload.configPayload,
+          'resolved_node_code': payload.resolvedNodeCode,
+          'tcp_fallback_from_revision': payload.tcpFallbackFromRevision,
+          'smart_connect': payload.smartConnect == null ? null : response['smart_connect'],
+          if (response.containsKey('transport_catalog')) 'transport_catalog': response['transport_catalog'],
+          'runtime_features': record.runtimeFeatures.map((feature) => feature.wireName).toList(),
+          'core_release': record.coreRelease,
+          'warp_policy': response['warp_policy'] ?? _readMap(response['client_policy'])['warp_policy'],
+          'access': response['access'], 'free_caps': response['free_caps'],
+        },
+      );
+      requests.requireActive();
+      if (_managedProfileCache.generation(inputs.hostPlatform.name) != record.generation) {
+        throw const BootstrapFailure('Подготовка подключения отменена.',
+          code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
+      }
+    });
+  }
+
+  @override
+  Future<void> refreshCachedManagedProfile(
+    ManagedProfileCacheInputs inputs, {
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
+    Future<void>? cancelled,
+  }) async {
+    final state = await _loadState(inputs.hostPlatform);
+    if (state == null || !state.hasSession) return;
+    await resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+      selectedApps: inputs.selectedApps, preferredNodeCode: inputs.preferredNodeCode,
+      preferredVariantId: inputs.preferredVariantId,
+      runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
+      selectCandidate: false, timeout: const Duration(seconds: 3), cancelled: cancelled,
+    );
+  }
+
+  @override
+  Future<ManagedProfileOfflineState> classifyManagedProfileFailure(
+    ManagedProfileCacheInputs inputs, {
+    bool? networkAvailable,
+    bool? captivePortal,
+  }) async {
+    if (networkAvailable == false) return ManagedProfileOfflineState.noNetwork;
+    if (captivePortal == true) return ManagedProfileOfflineState.captivePortal;
+    final state = await _loadState(inputs.hostPlatform);
+    if (state != null && state.hasSession) {
+      final cached = await _managedProfileCache.readResult(
+        platform: inputs.hostPlatform.name,
+        binding: inputs.binding(state.accountId, state.installId),
+      );
+      if (cached.accessEnded) return ManagedProfileOfflineState.accessEnded;
+    }
+    return ManagedProfileOfflineState.apiUnavailable;
+  }
+
+  @override
   Future<void> markManagedProfileProven(
     ManagedProfileCacheInputs inputs,
-    String entryId,
-  ) async {
+    String entryId, {
+    String? networkSelectionKey,
+  }) async {
     try {
       final state = await _loadState(inputs.hostPlatform);
       if (state == null || !state.hasSession || entryId.isEmpty) return;
@@ -3066,6 +3226,7 @@ class AppFirstRuntimeBootstrapper
         platform: inputs.hostPlatform.name,
         binding: inputs.binding(state.accountId, state.installId),
         entryId: entryId,
+        networkSelectionKey: networkSelectionKey,
       );
     } on Object {
       // A cache write cannot change the state of an already proven tunnel.
@@ -3083,10 +3244,14 @@ class AppFirstRuntimeBootstrapper
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
+    bool selectCandidate = true,
+    String selectedCandidateRef = '',
+    bool cacheResult = true,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
     final requests = _ManagedProfileRequests(cancelled);
+    var cacheGeneration = _managedProfileCache.generation(hostPlatform.name);
     if (routeMode == RouteMode.selectiveServices &&
         (!_routingCatalogStore.available ||
           (hostPlatform != HostPlatform.android && hostPlatform != HostPlatform.windows))) {
@@ -3145,6 +3310,7 @@ class AppFirstRuntimeBootstrapper
           var manifest = await _fetchManagedManifest(
             runtimeFeatures: runtimeFeatures,
             coreRelease: coreRelease,
+            selectedCandidateRef: selectedCandidateRef,
             tcpFallbackFromRevision: tcpFallbackFromRevision,
             state: state,
             hostPlatform: hostPlatform,
@@ -3155,7 +3321,7 @@ class AppFirstRuntimeBootstrapper
             client: client,
           );
           requests.requireActive();
-          if (preferredNodeCode.trim().isEmpty &&
+          if (selectCandidate && selectedCandidateRef.isEmpty && preferredNodeCode.trim().isEmpty &&
               manifest.payload.smartConnect != null) {
             final deadline = DateTime.now().add(smartConnectTelemetryDeadline);
             final smartConnect = manifest.payload.smartConnect;
@@ -3240,47 +3406,35 @@ class AppFirstRuntimeBootstrapper
           }
           if (timedOut) throw TimeoutException('Managed profile refresh');
           requests.requireActive();
-          state = state.copyWith(
-            profileRevision: manifest.profileRevision,
-            managedManifestPath: manifest.managedManifestPath,
-          );
-          await _saveState(hostPlatform, state);
+          final currentState = await _loadState(hostPlatform);
           requests.requireActive();
-          try {
-            final currentState = await _loadState(hostPlatform);
-            requests.requireActive();
-            if (currentState?.accountId == state.accountId &&
-                currentState?.installId == state.installId &&
-                currentState?.hasSession == true) {
-              final payload = manifest.payload;
-              final response = manifest.response;
-              await _managedProfileCache.saveDownloaded(
-                platform: hostPlatform.name,
-                binding: ManagedProfileCacheInputs(
-                  hostPlatform: hostPlatform, routeMode: routeMode,
-                  selectedApps: normalizedSelectedApps,
-                  preferredNodeCode: preferredNodeCode,
-                  preferredVariantId: preferredVariantId,
-                ).binding(state.accountId, state.installId),
-                revision: manifest.profileRevision,
-                verifiedAt: manifest.verifiedAt,
-                payload: <String, Object?>{
-                  'cache_entry_id': payload.cacheEntryId,
-                  'revision': manifest.profileRevision,
-                  'protocol': payload.source?.protocol,
-                  'config_payload': payload.configPayload,
-                  'resolved_node_code': payload.resolvedNodeCode,
-                  'tcp_fallback_from_revision': payload.tcpFallbackFromRevision,
-                  'smart_connect': payload.smartConnect == null
-                      ? null : response['smart_connect'],
-                  'warp_policy': response['warp_policy'] ??
-                      _readMap(response['client_policy'])['warp_policy'],
-                  'access': response['access'], 'free_caps': response['free_caps'],
-                },
-              );
+          if (currentState == null || !currentState.hasSession ||
+              currentState.accountId != state.accountId || currentState.installId != state.installId ||
+              currentState.sessionToken != state.sessionToken ||
+              _managedProfileCache.generation(hostPlatform.name) != cacheGeneration) {
+            throw const BootstrapFailure('Подготовка подключения отменена.',
+              code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
+          }
+          final inputs = ManagedProfileCacheInputs(
+            hostPlatform: hostPlatform, routeMode: routeMode,
+            selectedApps: normalizedSelectedApps,
+            preferredNodeCode: preferredNodeCode,
+            preferredVariantId: preferredVariantId,
+          );
+          _resolvedProfileCache[manifest.payload] = (
+            state: state, manifest: manifest,
+            binding: inputs.binding(state.accountId, state.installId),
+            generation: cacheGeneration,
+            runtimeFeatures: Set.unmodifiable(runtimeFeatures), coreRelease: coreRelease,
+          );
+          if (cacheResult) {
+            try {
+              await cacheResolvedManagedProfile(inputs, manifest.payload, cancelled: cancelled);
+            } on BootstrapFailure catch (error) {
+              if (error.code == 'managed_profile_superseded') rethrow;
+            } on Object {
+              // Keep online connect available if protected cache storage fails.
             }
-          } on Object {
-            // Keep online connect available if protected cache storage fails.
           }
           requests.requireActive();
           return manifest.payload;
@@ -3303,6 +3457,7 @@ class AppFirstRuntimeBootstrapper
               hostPlatform: hostPlatform,
               client: client,
             );
+            cacheGeneration = _managedProfileCache.generation(hostPlatform.name);
             continue;
           }
           rethrow;
@@ -6114,7 +6269,11 @@ class AppFirstRuntimeBootstrapper
     String selectedCandidateRef = '',
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
-    final normalizedPreferredNode = preferredNodeCode.trim().toLowerCase();
+    // The user preference remains in cache inputs; an exact candidate can use
+    // another exit in that country and must request/validate its own node.
+    final normalizedPreferredNode = selectedCandidateRef.isEmpty
+        ? preferredNodeCode.trim().toLowerCase()
+        : selectedCandidateRef.split(':').first;
     var requestPath = normalizedPreferredNode.isEmpty
         ? path
         : '$path${path.contains('?') ? '&' : '?'}selected_node_code=${Uri.encodeQueryComponent(normalizedPreferredNode)}';
@@ -8210,20 +8369,24 @@ class AppFirstRuntimeBootstrapper
   Future<void> _writeRuleSetBytes({
     required File cachedFile,
     required List<int> bytes,
-  }) async {
-    final tempFile = File('${cachedFile.path}.download');
-    try {
-      await cachedFile.parent.create(recursive: true);
-      await tempFile.writeAsBytes(bytes, flush: true);
-      if (await cachedFile.exists()) {
-        await cachedFile.delete();
+  }) {
+    final next = _ruleSetWrites.then((_) async {
+      final tempFile = File('${cachedFile.path}.download');
+      try {
+        await cachedFile.parent.create(recursive: true);
+        await tempFile.writeAsBytes(bytes, flush: true);
+        if (await cachedFile.exists()) {
+          await cachedFile.delete();
+        }
+        await tempFile.rename(cachedFile.path);
+      } finally {
+        if (await tempFile.exists()) {
+          await tempFile.delete();
+        }
       }
-      await tempFile.rename(cachedFile.path);
-    } finally {
-      if (await tempFile.exists()) {
-        await tempFile.delete();
-      }
-    }
+    });
+    _ruleSetWrites = next.then<void>((_) {}, onError: (Object _) {});
+    return next;
   }
 
   void _injectAllExceptRuRuleSetCatalog({

@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
+import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
@@ -239,9 +240,11 @@ void main() {
     final probes = <String>[];
     var returnWrongSelection = false;
     var returnWrongKind = false;
+    Completer<void>? managedRequested;
+    Completer<void>? releaseManaged;
     Map<String, Object?> descriptor(String node, String profile, String transport) => {
       'candidate_ref': '$node:$profile', 'profile_ref': profile, 'node_code': node,
-      'country_code': node.toUpperCase(), 'protocol': 'vless', 'transport': transport,
+      'country_code': node.split('-').first.toUpperCase(), 'protocol': 'vless', 'transport': transport,
       'protection': transport == 'tcp' ? 'reality' : 'tls', 'priority': 0,
       'parameters': {'network': 'tcp', 'flow': transport == 'tcp' ? 'xtls-rprx-vision' : ''},
       'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
@@ -260,18 +263,23 @@ void main() {
         } else if (request.uri.path == '/api/client/profile/managed') {
           final query = request.uri.queryParameters;
           queries.add(query);
+          managedRequested?.complete();
+          if (releaseManaged != null) await releaseManaged.future;
           final chosen = !returnWrongSelection && query['selected_candidate_ref'] == 'de:grpc_443_primary';
-          final node = chosen ? 'de' : 'pl';
-          final profile = chosen ? 'grpc_443_primary' : 'legacy_reality_fallback';
+          final sibling = query['selected_candidate_ref'] == 'ru-spb:grpc_443_primary';
+          final grpc = chosen || sibling;
+          final node = sibling ? 'ru-spb' : chosen ? 'de' : 'pl';
+          final profile = grpc ? 'grpc_443_primary' : 'legacy_reality_fallback';
           request.response.write(jsonEncode({
             ..._readyManagedProfile('catalog-rev'),
             'transport_profile': profile,
-            'transport_kind': chosen ? (returnWrongKind ? 'xhttp' : 'grpc') : 'reality',
+            'transport_kind': grpc ? (returnWrongKind ? 'xhttp' : 'grpc') : 'reality',
             'transport_catalog': {
               'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'catalog-rev',
               'selected_candidate_ref': '$node:$profile', 'candidates': [
                 descriptor('pl', 'legacy_reality_fallback', 'tcp'),
                 descriptor('de', 'grpc_443_primary', 'grpc'),
+                if (sibling) descriptor('ru-spb', 'grpc_443_primary', 'grpc'),
               ],
             },
             'smart_connect': {
@@ -287,7 +295,7 @@ void main() {
               'outbounds': [
                 {'type': 'selector', 'tag': 'proxy', 'outbounds': [node], 'default': node},
                 {'type': 'vless', 'tag': node, 'server': '$node.example.test', 'server_port': 443,
-                  if (chosen) 'transport': {'type': 'grpc', 'service_name': 'test'}},
+                  if (grpc) 'transport': {'type': 'grpc', 'service_name': 'test'}},
               ],
               'route': {'final': 'proxy'},
             },
@@ -323,6 +331,41 @@ void main() {
     expect(selected['transport']['type'], 'grpc', reason: 'winner comes from secure server profile');
     expect((config['outbounds'] as List).where((item) => item['tag'] == 'pl'), isEmpty);
 
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
+    final restored = await bootstrapper.loadCachedManagedProfile(inputs,
+      runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    expect(restored?.transportCatalog?.selectedCandidateRef, 'de:grpc_443_primary');
+    expect(restored?.configPayload, payload.configPayload);
+    expect(await bootstrapper.loadCachedManagedProfile(inputs, runtimeFeatures: const {}), isNull);
+    probes.clear();
+    final discovery = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      selectCandidate: false, cacheResult: false);
+    expect(probes, isEmpty);
+    expect(discovery.transportCatalog?.selectedCandidateRef, 'pl:legacy_reality_fallback');
+    expect((await bootstrapper.loadCachedManagedProfile(inputs))?.cacheEntryId, payload.cacheEntryId,
+      reason: 'discovery and losing probes do not replace the saved winner');
+    final cancellation = Completer<void>()..complete();
+    await expectLater(bootstrapper.cacheResolvedManagedProfile(inputs, discovery,
+      cancelled: cancellation.future), throwsA(isA<Exception>()));
+    expect((await bootstrapper.loadCachedManagedProfile(inputs))?.cacheEntryId, payload.cacheEntryId);
+    await bootstrapper.cacheResolvedManagedProfile(inputs, discovery);
+    expect((await bootstrapper.loadCachedManagedProfile(inputs))?.cacheEntryId, discovery.cacheEntryId);
+
+    const countryInputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredNodeCode: 'ru');
+    final sibling = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredNodeCode: 'ru',
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      selectedCandidateRef: 'ru-spb:grpc_443_primary', selectCandidate: false, cacheResult: false);
+    expect(queries.last['selected_node_code'], 'ru-spb');
+    expect(sibling.transportCatalog?.selected.nodeCode, 'ru-spb');
+    await bootstrapper.cacheResolvedManagedProfile(countryInputs, sibling);
+    expect((await bootstrapper.loadCachedManagedProfile(countryInputs))?.cacheEntryId, sibling.cacheEntryId);
+    expect(await bootstrapper.loadCachedManagedProfile(const ManagedProfileCacheInputs(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel, preferredNodeCode: 'ru-spb')), isNull,
+      reason: 'exact egress does not rewrite the user country preference binding');
+
     returnWrongKind = true;
     await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet()),
@@ -335,6 +378,24 @@ void main() {
       routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet()),
       throwsA(isA<TransportManifestFailure>()
         .having((failure) => failure.code, 'code', 'transport_catalog_selection_mismatch')));
+
+    managedRequested = Completer<void>();
+    releaseManaged = Completer<void>();
+    final late = bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      selectCandidate: false, cacheResult: false);
+    await managedRequested.future;
+    final sessionFile = File('${directory.path}/app-first-session-windows.json');
+    final changedAccount = jsonDecode(await sessionFile.readAsString()) as Map<String, dynamic>;
+    changedAccount['account_id'] = 'new-account';
+    await sessionFile.writeAsString(jsonEncode(changedAccount));
+    final superseded = throwsA(isA<BootstrapFailure>()
+      .having((error) => error.code, 'code', 'managed_profile_superseded'));
+    final rejected = expectLater(late, superseded);
+    releaseManaged.complete();
+    await rejected;
+    await expectLater(bootstrapper.cacheResolvedManagedProfile(inputs, discovery), superseded);
+    expect((jsonDecode(await sessionFile.readAsString()) as Map)['account_id'], 'new-account');
   });
 
   test('managed TUN MTU rejects missing malformed and unsafe values', () {
@@ -361,6 +422,8 @@ void main() {
     var denied = false;
     var subscriptionDenied = false;
     var stall = false;
+    DateTime? now;
+    final expiry = DateTime.now().toUtc().add(const Duration(days: 2));
     unawaited(() async {
       await for (final request in server) {
         await utf8.decoder.bind(request).join();
@@ -381,7 +444,9 @@ void main() {
           request.response.write('{"ok":true}');
         } else if (request.uri.path == '/api/client/profile/managed') {
           if (stall) continue;
-          request.response.write(jsonEncode(_readyManagedProfile(revision)));
+          request.response.write(jsonEncode({..._readyManagedProfile(revision),
+            'access': {'expiry_at': expiry.toIso8601String(), 'access_state': 'paid_unlimited'},
+          }));
         } else {
           request.response.statusCode = 404;
           request.response.write('{}');
@@ -394,6 +459,7 @@ void main() {
       supportDirectoryResolver: () async => directory,
       maxRequestAttempts: 1, delayScheduler: (_) async {},
       httpClientFactory: offline ? () => throw StateError('offline cache used HTTP') : null,
+      managedProfileCache: ManagedProfileCache(now: () => now ?? DateTime.now().toUtc()),
     );
     const inputs = ManagedProfileCacheInputs(
       hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
@@ -436,6 +502,19 @@ void main() {
     await expectLater(online.resolveManagedProfile(
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode), throwsA(isA<BootstrapFailure>()));
     expect(await restarted.loadCachedManagedProfile(inputs), isNull);
+    denied = false;
+    await online.refreshCachedManagedProfile(inputs);
+    now = expiry.add(const Duration(hours: 23));
+    expect(await restarted.loadCachedManagedProfile(inputs), isNotNull,
+      reason: 'local expiry during API outage keeps the following 24 hours');
+    expect(await restarted.classifyManagedProfileFailure(inputs), ManagedProfileOfflineState.apiUnavailable);
+    now = expiry.add(const Duration(hours: 24, seconds: 1));
+    expect(await restarted.loadCachedManagedProfile(inputs), isNull);
+    expect(await restarted.classifyManagedProfileFailure(inputs), ManagedProfileOfflineState.accessEnded);
+    expect(await restarted.classifyManagedProfileFailure(inputs, networkAvailable: false),
+      ManagedProfileOfflineState.noNetwork);
+    expect(await restarted.classifyManagedProfileFailure(inputs, networkAvailable: true, captivePortal: true),
+      ManagedProfileOfflineState.captivePortal);
   });
 
   test('automatic Android network context reports unknown origin through API and throttles duplicates', () async {

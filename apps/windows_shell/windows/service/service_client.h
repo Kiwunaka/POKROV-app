@@ -42,6 +42,8 @@ struct ServiceRuntimeSnapshot {
   std::string smart_access_lease_ids_json;
   std::string boot_clock_json;
   std::string transport_network_context_ref;
+  std::string candidate_selection_key;
+  std::string candidate_probe_json;
   bool routing_catalog_found = false;
   bool core_ready = false;
   bool can_initialize = false;

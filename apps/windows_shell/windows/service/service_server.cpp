@@ -27,7 +27,7 @@ constexpr std::uint64_t kServiceCapabilities =
     kCapabilityProfileIdentity | kCapabilityCancellation | kCapabilitySanitizedDiagnostic |
     kCapabilityRoutingCatalogWindow | kCapabilitySmartAccessLease | kCapabilityRoutingCatalogControl |
     kCapabilitySmartAccessPolicyControl | kCapabilityRoutingCatalogServiceControl | kCapabilitySmartAccessRenewal |
-    kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff;
+    kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff | kCapabilityCandidateProbe | kCapabilityProtectedHandoff;
 constexpr std::uint64_t kMaximumDeadlineLeadMs = 5 * 60 * 1000;
 // Release a stalled session before the normal client's five-second pipe
 // acquisition budget expires. Header and body share one transfer deadline.
@@ -280,6 +280,16 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
                  (negotiated_capabilities & kCapabilityRuntimeControl) == 0) {
         status = Status::kUnsupported;
         body = "runtime_capability_required";
+      } else if (request->command == Command::kReplaceManagedProfile &&
+                 (negotiated_capabilities & kCapabilityProtectedHandoff) == 0) {
+        status = Status::kUnsupported;
+        body = "protected_handoff_capability_required";
+      } else if ((request->command == Command::kProbeCandidate ||
+                  request->command == Command::kCancelCandidateProbe ||
+                  request->command == Command::kReadCandidateNetwork) &&
+                 (negotiated_capabilities & kCapabilityCandidateProbe) == 0) {
+        status = Status::kUnsupported;
+        body = "candidate_probe_capability_required";
       } else if (request->command == Command::kConfigureBoundSmartAccessRuntimeControl &&
                  (negotiated_capabilities & (kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl)) !=
                      (kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl)) {
@@ -528,7 +538,7 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
                       test_client_limit == 0
                           ? CreateRuntimeRecovery(runtime_root) : nullptr,
                       runtime_root, true,
-                      events);
+                      events, test_client_limit == 0 ? CreateWindowsTransitionGuard() : nullptr);
   runtime.RecoverOnStartup();
   const DWORD result = ServeClients(pipe_name, owner_sid, stop_event,
                                     test_client_limit, events, &runtime);

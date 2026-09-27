@@ -11,6 +11,21 @@ import java.util.UUID
 
 /** Bridge-owned observation only: no requestNetwork, sockets or runtime monitor ownership. */
 internal class AndroidTransportNetworkContext(context: Context) {
+    internal data class CandidateNetwork(
+        val network: Network?,
+        val links: LinkProperties?,
+        val contextRef: String?,
+        val networkAvailable: Boolean?,
+        val captivePortal: Boolean?,
+    ) {
+        fun channelValue(): Map<String, Any?> = mapOf(
+            "selection_key" to network?.let { "android:${it.networkHandle}" },
+            "context_ref" to contextRef,
+            "network_available" to networkAvailable,
+            "captive_portal" to captivePortal,
+        )
+    }
+
     private data class UplinkCapabilities(
         val wifi: Boolean,
         val cellular: Boolean,
@@ -84,6 +99,28 @@ internal class AndroidTransportNetworkContext(context: Context) {
         refresh()
         return reference
     }
+
+    fun candidateNetwork(): CandidateNetwork {
+        refresh()
+        return synchronized(lock) {
+            if (closed) return@synchronized CandidateNetwork(null, null, null, null, null)
+            val observed = capabilities
+            if (network != null && observed != null) {
+                CandidateNetwork(network, links, reference, true, observed.captivePortal)
+            } else {
+                // A failed/racing capability read is unknown, not proof of no network.
+                val available = runCatching {
+                    val observedNetworks = manager.allNetworks.map { manager.getNetworkCapabilities(it) }
+                    if (observedNetworks.any { it == null }) null
+                    else observedNetworks.any(AndroidNodeLatencyProbe::isEligibleUnderlyingNetwork)
+                        .let { if (it) null else false }
+                }.getOrNull()
+                CandidateNetwork(null, null, null, available, if (available == false) false else null)
+            }
+        }
+    }
+
+    fun isCurrent(expected: String): Boolean = reference == expected
 
     fun matches(expected: String): Boolean = synchronized(lock) {
         !closed && reference == expected && matchesCurrentCapabilities()

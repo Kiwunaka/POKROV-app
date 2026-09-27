@@ -107,8 +107,14 @@ const char* CommandName(Command command) {
       return "hello";
     case Command::kStatus:
     case Command::kReadTransportNetworkContext:
+    case Command::kReadCandidateNetwork:
       return "status";
+    case Command::kProbeCandidate:
+      return "candidate_probe";
+    case Command::kCancelCandidateProbe:
+      return "cancel_candidate_probe";
     case Command::kConnect:
+    case Command::kReplaceManagedProfile:
       return "connect";
     case Command::kDisconnect:
       return "disconnect";

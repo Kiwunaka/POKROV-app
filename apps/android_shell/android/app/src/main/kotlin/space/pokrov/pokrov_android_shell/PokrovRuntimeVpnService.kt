@@ -56,6 +56,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     @Volatile private var activeCatalogAppBinding: AndroidCatalogAppBinding? = null
     @Volatile private var activeCatalogAppRequired = false
     private var activeTun: ParcelFileDescriptor? = null
+    private val protectedHandoff = AndroidProtectedHandoff()
     private val dnsFailureTokenGate = AndroidDnsFailureTokenGate()
     private val runtimeExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val healthGeneration = AtomicLong(0L)
@@ -232,6 +233,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 }
             }
             ACTION_START -> {
+                if (protectedHandoff.retainsTun && activeTun != null) {
+                    AndroidRuntimeState.markDegraded("protected_handoff_required",
+                        "Для смены подключения нужна защищенная передача профиля.")
+                    return START_NOT_STICKY
+                }
                 val connectRequestId = commandIntent.getStringExtra(EXTRA_CONNECT_REQUEST)
                 val expectedCoreModuleSha256 = commandIntent.getStringExtra(EXTRA_CORE_MODULE_SHA256)
                 val expectedDigest = commandIntent.getStringExtra(EXTRA_PROFILE_DIGEST).orEmpty()
@@ -598,74 +604,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             if (rawContent.isBlank()) {
                 throw IllegalStateException("Staged runtime config is missing or empty.")
             }
-            val runtimeConfig = JSONObject(rawContent).apply { remove("_meta") }
-            // This app package is excluded from its own VpnService TUN below.
-            // Keep Core interface auto-detection off: AWG requests platform
-            // socket protection directly, while ordinary transports must not
-            // select the VPN interface and loop back into the TUN.
-            val route = runtimeConfig.optJSONObject("route") ?: JSONObject().also {
-                runtimeConfig.put("route", it)
-            }
-            route.put("auto_detect_interface", false)
-            val inbounds = runtimeConfig.optJSONArray("inbounds") ?: JSONArray().also {
-                runtimeConfig.put("inbounds", it)
-            }
-            val platformMtuCeiling = activePlatformInterfaceMtu()
-            val tunInboundIndexes = (0 until inbounds.length()).filter { index ->
-                inbounds.optJSONObject(index)?.optString("type") == "tun"
-            }
-            tunInboundIndexes.forEach { index ->
-                val tunInbound = inbounds.getJSONObject(index)
-                tunInbound.put(
-                    "mtu",
-                    AndroidTunMtuPolicy.select(
-                        requested = tunInbound.opt("mtu"),
-                        platformInterfaceMtu = platformMtuCeiling,
-                    ),
-                )
-            }
-            val hasTunInbound = tunInboundIndexes.isNotEmpty()
-            if (!hasTunInbound) {
-                if (routeMode != ROUTE_MODE_DEVICE) {
-                    throw IllegalStateException(
-                        "A scoped app route requires a freshly materialized TUN profile.",
-                    )
-                }
-                inbounds.put(
-                    JSONObject()
-                        .put("type", "tun")
-                        .put("tag", "tun-in")
-                        .put(
-                            "mtu",
-                            AndroidTunMtuPolicy.select(
-                                requested = null,
-                                platformInterfaceMtu = platformMtuCeiling,
-                            ),
-                        )
-                        .put("auto_route", true)
-                        .put("strict_route", true)
-                        .put("endpoint_independent_nat", true)
-                        .put("stack", "mixed")
-                        .put("sniff", true)
-                        .put("inet4_address", "172.19.0.1/28")
-                        .put("inet6_address", "fdfe:dcba:9876::1/126")
-                        .put("domain_strategy", "prefer_ipv4")
-                        .put("exclude_package", JSONArray().put(packageName)),
-                )
-            }
+            val runtimeConfig = prepareRuntimeConfig(rawContent, routeMode)
             val endpoints = runtimeConfig.optJSONArray("endpoints")
-            val hasWarpEndpoint = endpoints != null && (0 until endpoints.length()).any { index ->
-                endpoints.optJSONObject(index)?.optString("type") == "warp"
-            }
-            runtimeConfig.optJSONObject("experimental")
-                ?.optJSONObject("cache_file")
-                ?.let { cacheFile ->
-                    if (hasWarpEndpoint) {
-                        cacheFile.put("path", "pokrov-cache.db")
-                    } else {
-                        runtimeConfig.optJSONObject("experimental")?.remove("cache_file")
-                    }
-                }
             val outbounds = runtimeConfig.optJSONArray("outbounds")
             fun outboundByTag(tag: String): JSONObject? {
                 if (tag.isBlank() || outbounds == null) {
@@ -822,6 +762,147 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
             stopSelf()
         }
+    }
+
+    private fun replaceProtectedProfile(request: String, prepare: () -> PersistedRuntimeProfile?,
+        completion: () -> Unit): Boolean {
+        val session = activeRuntimeSession ?: return false
+        val generation = activeServiceCommandGeneration
+        synchronized(serviceCommandLock) {
+            if (!ownsRuntimeSession(session) || activeTun == null || commandServer == null ||
+                activeConnectDeadline != null || activePromotedUntilElapsed != null ||
+                activeCatalogAppRequired || (!activeCoreStartCompleted && !protectedHandoff.retainsTun) ||
+                AndroidConnectRequestOwner.blocksStart(request)) return false
+        }
+        if (!protectedHandoff.begin(request)) return false
+        if (!AndroidConnectRequestOwner.begin(request)) {
+            protectedHandoff.settle(request)
+            return false
+        }
+        runtimeExecutor.execute {
+            try {
+                if (!ownsServiceCommand(generation) || !protectedHandoff.owns(request)) return@execute
+                val profile = prepare() ?: error("protected profile staging failed")
+                check(!profile.requiresBoundConnect && !profile.catalogAppIdentityRequired)
+                val raw = File(profile.configPath).readText().removePrefix("\uFEFF")
+                check(runtimeProfileMatchesIntent(profile, profile.configDigest, profile.configPath, profile.routeMode, raw))
+                val content = prepareRuntimeConfig(raw, profile.routeMode).toString()
+                check(protectedHandoff.owns(request) && ownsServiceCommand(generation))
+                healthGeneration.incrementAndGet()
+                pendingCoreEgressProbeGeneration = null
+                releaseDnsFailureToken()
+                activeConnectRequestId = request
+                acceptedConnectRequestId = request
+                activeStartupProfileDigest = profile.configDigest
+                activeCoreStartCompleted = false
+                activeSelectedAppsMode = profile.routeMode == ROUTE_MODE_SELECTED_APPS
+                activeCoreEgressProbeRequired = profile.coreEgressProbeRequired
+                AndroidRuntimeState.updateCoreEgressRequirement(activeCoreEgressProbeRequired)
+                AndroidRuntimeState.bindActiveProfile(profile.configDigest)
+                activeConfigContent = content
+                activeVariantConfigContent = raw
+                val oldTun = activeTun
+                commandServer!!.startOrReloadService(content, OverrideOptions())
+                check(protectedHandoff.owns(request) && ownsServiceCommand(generation))
+                check(activeTun != null && activeTun !== oldTun)
+                activeCoreStartCompleted = true
+                schedulePendingCoreEgressProbe(session)
+            } catch (_: Throwable) {
+                if (ownsServiceCommand(generation)) retainProtectedFailure(
+                    if (protectedHandoff.owns(request)) "protected_handoff_failed" else "connect_cancelled")
+            } finally {
+                protectedHandoff.settle(request)
+                mainHandler.post(completion)
+            }
+        }
+        return true
+    }
+
+    private fun retainProtectedFailure(kind: String) {
+        healthGeneration.incrementAndGet()
+        pendingCoreEgressProbeGeneration = null
+        releaseDnsFailureToken()
+        runCatching { commandServer?.closeService() }
+        activeCoreStartCompleted = false
+        activeConfigContent = null
+        activeVariantConfigContent = null
+        AndroidRuntimeState.markRunning("Защита сохранена. Повторите подключение или отключите POKROV.")
+        AndroidRuntimeState.updateCoreEgressValidation(false)
+        AndroidRuntimeState.markDegraded(kind,
+            "Защита сохранена. Повторите подключение или отключите POKROV.")
+        updateRuntimeNotification()
+    }
+
+    private fun prepareRuntimeConfig(rawContent: String, routeMode: String): JSONObject {
+        val runtimeConfig = JSONObject(rawContent).apply { remove("_meta") }
+        // This app package is excluded from its own VpnService TUN below.
+        // Keep Core interface auto-detection off: AWG requests platform
+        // socket protection directly, while ordinary transports must not
+        // select the VPN interface and loop back into the TUN.
+        val route = runtimeConfig.optJSONObject("route") ?: JSONObject().also {
+            runtimeConfig.put("route", it)
+        }
+        route.put("auto_detect_interface", false)
+        val inbounds = runtimeConfig.optJSONArray("inbounds") ?: JSONArray().also {
+            runtimeConfig.put("inbounds", it)
+        }
+        val platformMtuCeiling = activePlatformInterfaceMtu()
+        val tunInboundIndexes = (0 until inbounds.length()).filter { index ->
+            inbounds.optJSONObject(index)?.optString("type") == "tun"
+        }
+        tunInboundIndexes.forEach { index ->
+            val tunInbound = inbounds.getJSONObject(index)
+            tunInbound.put(
+                "mtu",
+                AndroidTunMtuPolicy.select(
+                    requested = tunInbound.opt("mtu"),
+                    platformInterfaceMtu = platformMtuCeiling,
+                ),
+            )
+        }
+        val hasTunInbound = tunInboundIndexes.isNotEmpty()
+        if (!hasTunInbound) {
+            if (routeMode != ROUTE_MODE_DEVICE) {
+                throw IllegalStateException(
+                    "A scoped app route requires a freshly materialized TUN profile.",
+                )
+            }
+            inbounds.put(
+                JSONObject()
+                    .put("type", "tun")
+                    .put("tag", "tun-in")
+                    .put(
+                        "mtu",
+                        AndroidTunMtuPolicy.select(
+                            requested = null,
+                            platformInterfaceMtu = platformMtuCeiling,
+                        ),
+                    )
+                    .put("auto_route", true)
+                    .put("strict_route", true)
+                    .put("endpoint_independent_nat", true)
+                    .put("stack", "mixed")
+                    .put("sniff", true)
+                    .put("inet4_address", "172.19.0.1/28")
+                    .put("inet6_address", "fdfe:dcba:9876::1/126")
+                    .put("domain_strategy", "prefer_ipv4")
+                    .put("exclude_package", JSONArray().put(packageName)),
+            )
+        }
+        val endpoints = runtimeConfig.optJSONArray("endpoints")
+        val hasWarpEndpoint = endpoints != null && (0 until endpoints.length()).any { index ->
+            endpoints.optJSONObject(index)?.optString("type") == "warp"
+        }
+        runtimeConfig.optJSONObject("experimental")
+            ?.optJSONObject("cache_file")
+            ?.let { cacheFile ->
+                if (hasWarpEndpoint) {
+                    cacheFile.put("path", "pokrov-cache.db")
+                } else {
+                    runtimeConfig.optJSONObject("experimental")?.remove("cache_file")
+                }
+            }
+        return runtimeConfig
     }
 
     private class CoreIdentityMismatch : IllegalStateException()
@@ -995,6 +1076,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         failureKind: String? = null,
         commandGeneration: Long? = null,
     ) {
+        protectedHandoff.release()
         val stoppedGeneration = activeRuntimeSession?.generation
         if (AndroidConnectRequestOwner.ownsService(this) && !closeBoundResources()) {
             reportBoundCleanupFailure()
@@ -1269,7 +1351,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         return openTunForSession(options, session)
     }
 
-    private fun openTunForSession(options: TunOptions, session: AndroidLifecycleTaskScope): Int {
+    private fun openTunForSession(options: TunOptions, session: AndroidLifecycleTaskScope): Int =
+        protectedHandoff.publishTun { establishTunForSession(options, session) }
+
+    private fun establishTunForSession(options: TunOptions, session: AndroidLifecycleTaskScope): Int {
         if (prepare(this) != null) {
             error("android: missing vpn permission")
         }
@@ -1439,7 +1524,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 synchronized(AndroidRuntimeState) {
                     if (!ownsRuntimeSession(session) ||
                         (activeCatalogAppRequired && activeCatalogAppBinding?.isValid() != true)) {
-                        runCatching { tun.close() }
+                        if (protectedHandoff.retainsTun) {
+                            // establish() already replaced the system VPN. Keep the new
+                            // descriptor as a drop guard until the explicit stop settles.
+                            val previous = activeTun
+                            activeTun = tun
+                            runCatching { previous?.close() }
+                        } else runCatching { tun.close() }
                         throw SupersededRuntimeStart()
                     }
                     replacedTun = activeTun
@@ -1754,7 +1845,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             },
             generation,
         )
-        if (keepRuntimeOnFailure && probeResult != AndroidCoreEgressProbeResult.HEALTHY) {
+        if ((keepRuntimeOnFailure || protectedHandoff.retainsTun) && probeResult != AndroidCoreEgressProbeResult.HEALTHY) {
             val failureKind = probeResult.failureKind()
             AndroidRuntimeState.updateCoreEgressValidation(false)
             AndroidRuntimeState.markDegraded(
@@ -1939,6 +2030,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private fun stopRuntimeFromCore(session: AndroidLifecycleTaskScope) {
         runtimeExecutor.execute {
             if (!ownsRuntimeSession(session)) return@execute
+            if (protectedHandoff.retainsTun) {
+                retainProtectedFailure("protected_handoff_failed")
+                return@execute
+            }
             val commandGeneration = activeServiceCommandGeneration
             stopRuntime(
                 message = "POKROV выключен на этом устройстве.",
@@ -2020,6 +2115,28 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     companion object {
         @Volatile private var runtimeOwner: PokrovRuntimeVpnService? = null
+
+        internal fun protectCandidateSocket(fd: Int) {
+            val owner = runtimeOwner ?: return
+            check(owner.protect(fd)) { "candidate socket protection refused" }
+        }
+
+        internal fun replaceManagedProfile(request: String, prepare: () -> PersistedRuntimeProfile?,
+            completion: () -> Unit): Boolean =
+            runtimeOwner?.replaceProtectedProfile(request, prepare, completion) ?: false
+
+        internal fun cancelProtectedReplacement(request: String, completion: () -> Unit): Boolean {
+            val owner = runtimeOwner ?: return false
+            if (!owner.protectedHandoff.cancel(request)) return false
+            AndroidConnectRequestOwner.cancel(request)
+            val generation = owner.activeServiceCommandGeneration
+            owner.runtimeExecutor.execute {
+                if (runtimeOwner === owner && owner.ownsServiceCommand(generation) &&
+                    owner.protectedHandoff.isCancelled(request)) owner.retainProtectedFailure("connect_cancelled")
+                owner.mainHandler.post(completion)
+            }
+            return true
+        }
 
         fun promoteBoundTransportLease(request: String, profile: String, lease: String,
             issuedAt: String, newFlowsUntil: String, activeFlowsUntil: String,

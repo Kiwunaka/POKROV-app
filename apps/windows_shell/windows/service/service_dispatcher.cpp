@@ -2,6 +2,7 @@
 #include "service_boot_clock.h"
 #include <chrono>
 #include <utility>
+#include <algorithm>
 
 namespace pokrov::service {
 namespace {
@@ -40,8 +41,13 @@ RuntimeResult WithTransportState(RuntimeResult result, bool pending, bool active
 }
 }
 
-RuntimeDispatcher::RuntimeDispatcher(RuntimeHost* runtime)
-    : runtime_(runtime), snapshot_(runtime->Snapshot()),
+RuntimeDispatcher::RuntimeDispatcher(RuntimeHost* runtime,
+    std::function<std::optional<CandidateNetworkContext>()> candidate_network,
+    std::function<bool(std::uint64_t)> candidate_current)
+    : runtime_(runtime),
+      candidate_network_(candidate_network ? std::move(candidate_network) : [this] { return network_.ReadCandidateContext(); }),
+      candidate_current_(candidate_current ? std::move(candidate_current) : [this](std::uint64_t revision) { return network_.IsCurrent(revision); }),
+      snapshot_(runtime->Snapshot()),
       watcher_([this] { WatchBoundConnect(); }) {}
 
 RuntimeDispatcher::~RuntimeDispatcher() {
@@ -192,6 +198,13 @@ RuntimeResult RuntimeDispatcher::CancelAndConfirm(const std::string& body) {
 
 RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event,
                                          ULONGLONG deadline, HANDLE client_pipe) {
+  if (request.command == Command::kProbeCandidate) return ProbeCandidate(request, stop_event, deadline, client_pipe);
+  if (request.command == Command::kCancelCandidateProbe) return CancelCandidateProbe(request.body);
+  if (request.command == Command::kReadCandidateNetwork) {
+    if (!request.body.empty()) return {Status::kInvalid, "invalid_network_context_request"};
+    const auto context = candidate_network_();
+    return {Status::kOk, context ? context->selection_key + ";" + context->network.reference : "unavailable"};
+  }
   if (request.command == Command::kCancel) return Cancel(request.body);
   if (request.command == Command::kCancelConnectAndConfirm) return CancelAndConfirm(request.body);
   if (request.command == Command::kReadBootClock) {
@@ -237,9 +250,9 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     return ProjectBoundState(WithFailure(snapshot_, Status::kNotReady, "runtime_busy"));
   }
   std::optional<std::uint64_t> network_revision;
-  if (bound) {
+  if (bound || request.command == Command::kReplaceManagedProfile) {
     const auto context = network_.ReadContext();
-    if (!context || context->reference != bound->network_context_ref || !network_.IsCurrent(context->revision)) {
+    if (!context || (bound && context->reference != bound->network_context_ref) || !network_.IsCurrent(context->revision)) {
       std::lock_guard<std::mutex> state(state_lock_);
       stopped_connect_ = CancellationTarget{request.session_token, request.operation_nonce};
       return ProjectBoundState(WithFailure(snapshot_, Status::kNotReady, "operation_cancelled"));
@@ -397,6 +410,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       operation->target = {request.session_token, request.operation_nonce};
       operation->bound = bound;
       operation->network_revision = network_revision;
+      operation->protected_handoff = request.command == Command::kReplaceManagedProfile || runtime_->TransitionGuardArmed();
       if (bound) operation->stopping_snapshot = runtime_->PendingSnapshot(Command::kDisconnect);
       active_connect_ = operation;
     }
@@ -414,12 +428,12 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     case Command::kStageBoundProfile: result = runtime_->StageProfile(request.body, true); break;
     case Command::kInvalidateProfile: result = runtime_->InvalidateProfile(); break;
     case Command::kConnect:
-    case Command::kConnectWithIdentity: {
+    case Command::kConnectWithIdentity:
+    case Command::kReplaceManagedProfile: {
       const CheckInterruption interrupted = [this, operation, stop_event, deadline] {
         if (operation->bound && (operation->client_process == nullptr ||
             ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) operation->cancelled = true;
-        if (operation->bound && (!operation->network_revision ||
-            !network_.IsCurrent(*operation->network_revision))) operation->cancelled = true;
+        if (operation->network_revision && !network_.IsCurrent(*operation->network_revision)) operation->cancelled = true;
         if (operation->cancelled ||
             ::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0) {
           return OperationInterruption::kCancelled;
@@ -431,8 +445,10 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
         return ::GetTickCount64() >= deadline
                    ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
       };
-      result = bound ? runtime_->ConnectWithIdentity(*bound, interrupted)
-                     : runtime_->Connect(request.body, interrupted);
+      result = request.command == Command::kReplaceManagedProfile
+          ? runtime_->ReplaceManagedProfile(request.body, interrupted)
+          : bound ? runtime_->ConnectWithIdentity(*bound, interrupted)
+                  : runtime_->Connect(request.body, interrupted);
       break;
     }
     case Command::kDisconnect: result = runtime_->Disconnect(); break;
@@ -450,6 +466,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
   }
   bool cancel_after_commit = false;
   RefreshBoundNetwork(operation);
+  if (operation && operation->network_revision && !network_.IsCurrent(*operation->network_revision)) operation->cancelled = true;
   {
     std::lock_guard<std::mutex> state(state_lock_);
     // Bound owners survive successful start. Retire other owners under the
@@ -468,7 +485,8 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     }
   }
   if (cancel_after_commit) {
-    result = runtime_->Disconnect();
+    result = operation->protected_handoff
+        ? runtime_->CancelProtectedHandoff() : runtime_->Disconnect();
     if (result.status == Status::kOk) {
       const bool expired = bound && (operation->deadline_expired || !IsConnectDeadlineCurrent(*bound));
       result = WithFailure(std::move(result), expired ? Status::kDeadlineExceeded : Status::kNotReady,
@@ -485,6 +503,75 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
   watch_changed_.notify_all();
   std::lock_guard<std::mutex> state(state_lock_);
   return ProjectBoundState(std::move(result));
+}
+
+RuntimeResult RuntimeDispatcher::CancelCandidateProbe(const std::string& body) {
+  const auto target = DecodeCancellationTarget(body);
+  if (!target) return {Status::kInvalid, "invalid_cancel_target"};
+  std::lock_guard<std::mutex> lock(probes_lock_);
+  for (const auto& probe : probes_) {
+    if (SameTarget(probe->target, *target)) {
+      probe->cancelled = true;
+      return {Status::kOk, "cancel_requested"};
+    }
+  }
+  // The request may still be entering the dispatcher. The client retries until
+  // the original response; only that response proves Close/join completed.
+  return {Status::kNotReady, "operation_not_active"};
+}
+
+RuntimeResult RuntimeDispatcher::ProbeCandidate(const Frame& frame, HANDLE stop_event,
+                                                ULONGLONG deadline, HANDLE client_pipe) {
+  const auto request = DecodeCandidateProbe(frame.body);
+  if (!request) return {Status::kInvalid, "invalid_probe_request"};
+  const auto failed = [](const char* kind) {
+    return RuntimeResult{Status::kOk, std::string("{\"success\":false,\"failure_kind\":\"") + kind + "\",\"duration_ms\":0}"};
+  };
+  auto operation = std::make_shared<ActiveProbe>();
+  operation->target = {frame.session_token, frame.operation_nonce};
+  operation->id = request->probe_id;
+  {
+    std::lock_guard<std::mutex> lock(probes_lock_);
+    if (probes_.size() >= 4 || std::any_of(probes_.begin(), probes_.end(), [&](const auto& row) {
+          return row->id == request->probe_id;
+        })) return failed("unavailable");
+    probes_.push_back(operation);
+  }
+  // Retire after the blocking Core call has closed its isolated instance.
+  struct Retire {
+    RuntimeDispatcher* owner;
+    std::shared_ptr<ActiveProbe> operation;
+    ~Retire() {
+      std::lock_guard<std::mutex> lock(owner->probes_lock_);
+      auto& rows = owner->probes_;
+      rows.erase(std::remove(rows.begin(), rows.end(), operation), rows.end());
+    }
+  } retire{this, operation};
+  CoreRuntime* core = nullptr;
+  {
+    std::lock_guard<std::mutex> execution(execution_lock_);
+    core = runtime_->CandidateProbeCore();
+  }
+  if (core == nullptr) return failed("unavailable");
+  const auto network = candidate_network_();
+  if (!network || network->network.reference != request->network_context_ref) return failed("network_changed");
+  const CheckInterruption interrupted = [&, revision = network->network.revision] {
+    DWORD available = 0;
+    if (operation->cancelled || ::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0 ||
+        !candidate_current_(revision) ||
+        (client_pipe != nullptr && !::PeekNamedPipe(client_pipe, nullptr, 0, nullptr, &available, nullptr))) {
+      return OperationInterruption::kCancelled;
+    }
+    return ::GetTickCount64() >= deadline ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+  };
+  const auto result = core->ProbeCandidate(*request, network->bind_interface, interrupted);
+  if (!candidate_current_(network->network.revision)) return failed("network_changed");
+  if (operation->cancelled) return failed("cancelled");
+  if (result.empty() || result.size() > kMaxControlBodySize ||
+      std::any_of(result.begin(), result.end(), [](unsigned char c) { return c < 32 || c > 126; })) {
+    return failed("unavailable");
+  }
+  return {Status::kOk, result};
 }
 
 }  // namespace pokrov::service

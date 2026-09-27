@@ -954,6 +954,14 @@ begin
     Result := False;
     Exit;
   end;
+  Result := Exec(ExpandConstant('{app}\pokrov_service.exe'),
+    '--clear-transition-guard', '', SW_HIDE, ewWaitUntilTerminated, ResultCode)
+    and (ResultCode = 0);
+  if not Result then
+  begin
+    Log(Format('POKROV_TRANSITION_GUARD_CLEANUP_FAILED: exit %d', [ResultCode]));
+    Exit;
+  end;
   Result := True;
 end;
 

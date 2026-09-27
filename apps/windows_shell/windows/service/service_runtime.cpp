@@ -545,6 +545,8 @@ class InstalledCoreRuntime final : public CoreRuntime {
         ::GetProcAddress(module_, "start"));
     start_interruptible_ = reinterpret_cast<StartInterruptibleFunction>(
         ::GetProcAddress(module_, "pokrovCoreStartInterruptibleV1"));
+    probe_candidate_ = reinterpret_cast<ProbeCandidateFunction>(
+        ::GetProcAddress(module_, "pokrovCoreProbeCandidateV1"));
     stop_ = reinterpret_cast<StopFunction>(::GetProcAddress(module_, "stop"));
     confirm_ats_lease_ = reinterpret_cast<ConfirmATSLeaseFunction>(
         ::GetProcAddress(module_, "pokrovCoreConfirmATSLease"));
@@ -732,6 +734,15 @@ class InstalledCoreRuntime final : public CoreRuntime {
     return start_interruptible_ != nullptr;
   }
 
+  std::string ProbeCandidate(const CandidateProbeRequest& request,
+                             const std::string& bind_interface,
+                             const CheckInterruption& interrupted) override {
+    if (probe_candidate_ == nullptr || bind_interface.empty()) return "";
+    return StringResult(probe_candidate_(request.config.c_str(), request.probe_id.c_str(),
+        static_cast<int>(request.timeout_ms), bind_interface.c_str(),
+        CheckCoreInterruption, const_cast<CheckInterruption*>(&interrupted)));
+  }
+
   std::string StartInterruptible(const std::wstring& config_path,
                                 bool disable_memory_limit,
                                 const CheckInterruption& interrupted) override {
@@ -785,6 +796,8 @@ class InstalledCoreRuntime final : public CoreRuntime {
   using InterruptionCallback = int(__cdecl*)(void*);
   using StartInterruptibleFunction = char*(__cdecl*)(const char*, bool,
                                                    InterruptionCallback, void*);
+  using ProbeCandidateFunction = char*(__cdecl*)(const char*, const char*, int,
+                                                 const char*, InterruptionCallback, void*);
   using StopFunction = char*(__cdecl*)();
   using FreeStringFunction = void(__cdecl*)(char*);
 
@@ -888,6 +901,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
   SecureFileFunction secure_file_ = nullptr;
   StartFunction start_ = nullptr;
   StartInterruptibleFunction start_interruptible_ = nullptr;
+  ProbeCandidateFunction probe_candidate_ = nullptr;
   StopFunction stop_ = nullptr;
   FreeStringFunction free_string_ = nullptr;
   ServiceEventSink* events_ = nullptr;
@@ -949,10 +963,12 @@ RuntimeHost::RuntimeHost(std::unique_ptr<CoreRuntime> core,
                          std::unique_ptr<RuntimeEgressProbe> egress_probe,
                          std::unique_ptr<RuntimeRecovery> recovery,
                          std::wstring runtime_root, bool secure_storage,
-                         ServiceEventSink* events)
+                         ServiceEventSink* events,
+                         std::unique_ptr<RuntimeTransitionGuard> transition_guard)
     : core_(std::move(core)),
       egress_probe_(std::move(egress_probe)),
       recovery_(std::move(recovery)),
+      transition_guard_(std::move(transition_guard)),
       runtime_root_(std::move(runtime_root)),
       events_(events),
       secure_storage_(secure_storage) {
@@ -1172,7 +1188,8 @@ RuntimeResult RuntimeHost::RevokeTransportLease(const TransportLeaseRevocation& 
 
 RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_digest,
                                       const CheckInterruption& interrupted,
-                                      const std::string& expected_core_digest) {
+                                      const std::string& expected_core_digest,
+                                      bool finish_transition_guard) {
   // Core and network state stay on this serial owner. An interruption never
   // races Stop against Start, and rollback must finish even after the deadline.
   const auto interruption = [&](bool rollback) -> std::optional<RuntimeResult> {
@@ -1364,6 +1381,11 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   failure_.clear();
   RecordEvent(ServiceEvent::kRuntimeCommit,
               ServiceEventOutcome::kSucceeded);
+  if (finish_transition_guard && core_egress_validated_ && TransitionGuardArmed() &&
+      !transition_guard_->Finish().empty()) {
+    core_egress_validated_ = false;
+    return Fail(Status::kNotReady, "transition_guard_failed");
+  }
   return Snapshot();
 }
 
@@ -1493,10 +1515,52 @@ RuntimeResult RuntimeHost::RevokeSmartAccessPolicy(const std::string& body) {
   return {Status::kOk, result == 1 ? "revoked=1" : "revoked=0"};
 }
 
-RuntimeResult RuntimeHost::Disconnect() {
+RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
+                                                 const CheckInterruption& interrupted) {
+  if (transition_guard_ == nullptr || requires_bound_connect_ ||
+      (phase_ != Phase::kRunning && !transition_guard_->IsArmed())) {
+    return Fail(Status::kNotReady, "protected_handoff_unavailable");
+  }
+  const auto guard_error = transition_guard_->Start();
+  if (!guard_error.empty()) return Fail(Status::kNotReady, "transition_guard_failed");
+  const auto stopped = Disconnect(false);
+  if (stopped.status != Status::kOk) return stopped;
+  if (interrupted && interrupted() != OperationInterruption::kNone) {
+    return Fail(Status::kNotReady, "operation_cancelled");
+  }
+  const auto staged = StageProfile(body);
+  if (staged.status != Status::kOk) return staged;
+  const auto connected = ConnectImpl(ProfileDigest(body), interrupted, "", false);
+  if (connected.status != Status::kOk) return connected;
+  if (phase_ != Phase::kRunning || !core_egress_validated_ ||
+      effective_profile_digest_ != ProfileDigest(body)) {
+    return Fail(Status::kNotReady, "protected_handoff_unavailable");
+  }
+  if (interrupted && interrupted() != OperationInterruption::kNone) {
+    const auto cancelled = Disconnect(false);
+    return cancelled.status == Status::kOk ? Fail(Status::kNotReady, "operation_cancelled") : cancelled;
+  }
+  if (!transition_guard_->Finish().empty()) {
+    core_egress_validated_ = false;
+    return Fail(Status::kNotReady, "transition_guard_failed");
+  }
+  return Snapshot();
+}
+
+RuntimeResult RuntimeHost::CancelProtectedHandoff() {
+  if (transition_guard_ == nullptr || !transition_guard_->Start().empty()) {
+    return Fail(Status::kNotReady, "transition_guard_failed");
+  }
+  return Disconnect(false);
+}
+
+RuntimeResult RuntimeHost::Disconnect(bool explicit_disconnect) {
   if (!initialized_ ||
       (phase_ != Phase::kRunning &&
        phase_ != Phase::kRecoveryRequired)) {
+    if (explicit_disconnect && transition_guard_ != nullptr && !transition_guard_->ExplicitOff().empty()) {
+      return Fail(Status::kNotReady, "transition_guard_failed");
+    }
     return Snapshot();
   }
   const auto rollback_error = RollbackRuntime();
@@ -1512,6 +1576,9 @@ RuntimeResult RuntimeHost::Disconnect() {
     return Fail(Status::kNotReady, rollback_error.c_str());
   }
   failure_.clear();
+  if (explicit_disconnect && transition_guard_ != nullptr && !transition_guard_->ExplicitOff().empty()) {
+    return Fail(Status::kNotReady, "transition_guard_failed");
+  }
   return Snapshot();
 }
 
@@ -1638,6 +1705,7 @@ RuntimeResult RuntimeHost::Fail(Status status, const char* failure) {
 std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
   const auto phase = static_cast<int>(phase_);
   const bool pending = pending_phase != nullptr;
+  const bool guarded = TransitionGuardArmed();
   const bool core_ready = initialized_;
   const bool can_initialize = !pending && core_ != nullptr && !runtime_root_.empty();
   const bool can_connect = !pending && initialized_ && profile_staged_ &&
@@ -1649,14 +1717,14 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
          ";can_connect=" + (can_connect ? "1" : "0") +
          ";running=" + (!pending && phase_ == Phase::kRunning ? "1" : "0") +
          ";core_egress_validated=" +
-         (!pending && core_egress_validated_ ? "1" : "0") +
-         ";dns_ready=" + (!pending && core_egress_validated_ ? "1" : "0") +
+         (!pending && !guarded && core_egress_validated_ ? "1" : "0") +
+         ";dns_ready=" + (!pending && !guarded && core_egress_validated_ ? "1" : "0") +
          ";staged_profile_digest=" +
          (staged_profile_digest_.empty() ? "none" : staged_profile_digest_) +
          ";effective_profile_digest=" +
          (pending || effective_profile_digest_.empty() ? "none" : effective_profile_digest_) +
          ";failure=" +
-         (pending || failure_.empty() ? "none" : failure_) +
+         (pending ? "none" : failure_.empty() ? (guarded ? "transition_guard_active" : "none") : failure_) +
          ";routing_catalog_window_version=" +
          std::to_string(initialized_ ? core_->RoutingCatalogWindowVersion() : 0) +
          ";smart_access_lease_version=" +

@@ -10,6 +10,7 @@
 #include <wlanapi.h>
 
 #include "service_network_observer.h"
+#include "service_profile_identity.h"
 
 #include <algorithm>
 #include <atomic>
@@ -73,8 +74,14 @@ struct ServiceNetworkObserver::State {
   std::optional<std::string> previous;
   std::mutex reference_lock;
   std::optional<ServiceNetworkContext> retained_context;
+  std::string selection_salt;
 
   State() {
+    std::array<BYTE, 32> salt{};
+    if (::BCryptGenRandom(nullptr, salt.data(), static_cast<ULONG>(salt.size()),
+                         BCRYPT_USE_SYSTEM_PREFERRED_RNG) >= 0) {
+      selection_salt.assign(reinterpret_cast<const char*>(salt.data()), salt.size());
+    }
     if (::NotifyIpInterfaceChange(AF_UNSPEC, InterfaceChanged, this, FALSE, &interfaces) == NO_ERROR &&
         ::NotifyUnicastIpAddressChange(AF_UNSPEC, AddressChanged, this, FALSE, &addresses) == NO_ERROR &&
         ::NotifyRouteChange2(AF_UNSPEC, RouteChanged, this, FALSE, &routes) == NO_ERROR) {
@@ -305,6 +312,77 @@ std::optional<ServiceNetworkContext> ServiceNetworkObserver::ReadContext() {
   }
   if (!IsCurrent(*revision)) return std::nullopt;
   return state_->retained_context;
+}
+
+std::optional<CandidateNetworkContext> ServiceNetworkObserver::ReadCandidateContext() {
+  const auto context = ReadContext();
+  if (!context || state_->selection_salt.empty()) return std::nullopt;
+  MIB_IPFORWARD_TABLE2* routes = nullptr;
+  if (::GetIpForwardTable2(AF_UNSPEC, &routes) != NO_ERROR) return std::nullopt;
+  std::optional<MIB_IPFORWARD_ROW2> chosen;
+  MIB_IF_ROW2 chosen_adapter{};
+  std::uint64_t best_metric = UINT64_MAX;
+  for (ULONG index = 0; index < routes->NumEntries; ++index) {
+    const auto& route = routes->Table[index];
+    if (route.DestinationPrefix.PrefixLength != 0 || route.Loopback || route.ValidLifetime == 0) continue;
+    MIB_IF_ROW2 adapter{};
+    adapter.InterfaceLuid = route.InterfaceLuid;
+    if (::GetIfEntry2(&adapter) != NO_ERROR || !adapter.InterfaceAndOperStatusFlags.HardwareInterface ||
+        adapter.OperStatus != IfOperStatusUp || adapter.MediaConnectState == MediaConnectStateDisconnected ||
+        adapter.Type == IF_TYPE_SOFTWARE_LOOPBACK || adapter.Type == IF_TYPE_TUNNEL ||
+        adapter.Type == IF_TYPE_PROP_VIRTUAL || state_->IsOwned(route.InterfaceLuid)) continue;
+    MIB_IPINTERFACE_ROW family{};
+    family.Family = route.DestinationPrefix.Prefix.si_family;
+    family.InterfaceLuid = route.InterfaceLuid;
+    if (::GetIpInterfaceEntry(&family) != NO_ERROR) continue;
+    const auto metric = static_cast<std::uint64_t>(route.Metric) + family.Metric;
+    if (metric < best_metric) { chosen = route; chosen_adapter = adapter; best_metric = metric; }
+  }
+  ::FreeMibTable(routes);
+  if (!chosen) return std::nullopt;
+  std::string identity = state_->selection_salt;
+  Append(identity, chosen->InterfaceLuid.Value);
+  // Metrics/DNS/address renewals fence an in-flight probe, but do not erase
+  // the manager's remembered failures for the same physical network.
+  Append(identity, chosen->NextHop.si_family);
+  if (chosen->NextHop.si_family == AF_INET) Append(identity, chosen->NextHop.Ipv4.sin_addr);
+  else {
+    Append(identity, chosen->NextHop.Ipv6.sin6_addr);
+    Append(identity, chosen->NextHop.Ipv6.sin6_scope_id);
+  }
+  if (chosen_adapter.Type == IF_TYPE_IEEE80211) {
+    HANDLE wlan = nullptr;
+    DWORD version = 0;
+    if (::WlanOpenHandle(2, nullptr, &version, &wlan) != ERROR_SUCCESS) return std::nullopt;
+    DWORD size = 0;
+    PVOID raw = nullptr;
+    const auto status = ::WlanQueryInterface(wlan, &chosen_adapter.InterfaceGuid,
+        wlan_intf_opcode_current_connection, nullptr, &size, &raw, nullptr);
+    bool valid = status == ERROR_SUCCESS && raw != nullptr && size >= sizeof(WLAN_CONNECTION_ATTRIBUTES);
+    if (valid) {
+      const auto* connection = static_cast<WLAN_CONNECTION_ATTRIBUTES*>(raw);
+      const auto& ssid = connection->wlanAssociationAttributes.dot11Ssid;
+      valid = ssid.uSSIDLength <= sizeof(ssid.ucSSID);
+      if (valid) {
+        Append(identity, ssid.uSSIDLength);
+        identity.append(reinterpret_cast<const char*>(ssid.ucSSID), ssid.uSSIDLength);
+        Append(identity, connection->wlanSecurityAttributes.dot11AuthAlgorithm);
+      }
+    }
+    if (raw != nullptr) ::WlanFreeMemory(raw);
+    ::WlanCloseHandle(wlan, nullptr);
+    if (!valid) return std::nullopt;
+  }
+  const auto length = ::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, chosen_adapter.Alias,
+      -1, nullptr, 0, nullptr, nullptr);
+  if (length <= 1 || !IsCurrent(context->revision)) return std::nullopt;
+  std::string alias(static_cast<std::size_t>(length), '\0');
+  if (::WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, chosen_adapter.Alias,
+      -1, alias.data(), length, nullptr, nullptr) != length) return std::nullopt;
+  alias.pop_back();
+  const auto digest = ProfileDigest(identity);
+  if (digest.empty()) return std::nullopt;
+  return CandidateNetworkContext{*context, "selection_" + digest, std::move(alias)};
 }
 
 }  // namespace pokrov::service

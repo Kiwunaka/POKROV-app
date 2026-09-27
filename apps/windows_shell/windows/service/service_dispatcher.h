@@ -8,6 +8,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #include "service_runtime.h"
 #include "service_network_observer.h"
@@ -18,7 +19,9 @@ namespace pokrov::service {
 // and network mutations remain serialized, including cancellation rollback.
 class RuntimeDispatcher {
  public:
-  explicit RuntimeDispatcher(RuntimeHost* runtime);
+  explicit RuntimeDispatcher(RuntimeHost* runtime,
+      std::function<std::optional<CandidateNetworkContext>()> candidate_network = {},
+      std::function<bool(std::uint64_t)> candidate_current = {});
   ~RuntimeDispatcher();
   RuntimeResult Execute(const Frame& request, HANDLE stop_event,
                         ULONGLONG monotonic_deadline, HANDLE client_pipe);
@@ -37,15 +40,26 @@ class RuntimeDispatcher {
     HANDLE client_process = nullptr;  // duplicated from the kernel-owned pipe peer PID
     RuntimeResult stopping_snapshot;
     bool cleanup_attempted = false;  // protected by state_lock_
+    bool protected_handoff = false;
   };
   RuntimeResult Cancel(const std::string& body);
   RuntimeResult CancelAndConfirm(const std::string& body);
+  struct ActiveProbe {
+    CancellationTarget target;
+    std::string id;
+    std::atomic<bool> cancelled{false};
+  };
+  RuntimeResult ProbeCandidate(const Frame& request, HANDLE stop_event,
+                               ULONGLONG deadline, HANDLE client_pipe);
+  RuntimeResult CancelCandidateProbe(const std::string& body);
   void RetireConnect();  // caller holds state_lock_; native cleanup has ended
   void WatchBoundConnect();
   void RefreshBoundNetwork(const std::shared_ptr<ActiveConnect>& operation);
   RuntimeResult ProjectBoundState(RuntimeResult result);  // state_lock_ held
   RuntimeHost* runtime_;
   ServiceNetworkObserver network_;
+  std::function<std::optional<CandidateNetworkContext>()> candidate_network_;
+  std::function<bool(std::uint64_t)> candidate_current_;
   std::mutex execution_lock_;
   std::mutex state_lock_;
   RuntimeResult snapshot_;
@@ -54,6 +68,8 @@ class RuntimeDispatcher {
   std::condition_variable watch_changed_;
   bool closing_ = false;
   std::thread watcher_;
+  std::mutex probes_lock_;
+  std::vector<std::shared_ptr<ActiveProbe>> probes_;
 };
 
 }  // namespace pokrov::service

@@ -21,6 +21,8 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import space.pokrov.core.mobile.Mobile
+import space.pokrov.core.mobile.CandidateProbeCancellation
 
 internal data class PendingRuntimeConnect(
     val id: Long,
@@ -100,12 +102,14 @@ class RuntimeHostBridge(
     private var updateDownloadProgress = AndroidClientUpdateProgress.idle()
     private val catalogIdentityResolver = lazy { AndroidCatalogIdentityResolver(activity) }
     private val transportNetworkContext = lazy { AndroidTransportNetworkContext(activity) }
+    private val candidateProbes = AndroidCandidateProbeJobs()
 
     init {
         AndroidOperationalRuntime.start(activity)
     }
 
     fun close() {
+        candidateProbes.close()
         connectDeadlineHandler.removeCallbacksAndMessages(null)
         invalidatePendingConnect()
         if (transportNetworkContext.isInitialized()) {
@@ -130,6 +134,11 @@ class RuntimeHostBridge(
                 }
             }
             METHOD_SNAPSHOT -> result.success(snapshot())
+            "runtimeEngine.candidateNetwork" -> result.success(runCatching {
+                transportNetworkContext.value.candidateNetwork().channelValue()
+            }.getOrDefault(emptyMap<String, Any?>()))
+            "runtimeEngine.probeCandidate" -> probeCandidate(call, result)
+            "runtimeEngine.cancelCandidateProbe" -> cancelCandidateProbe(call, result)
             "runtimeEngine.transportNetworkContext" -> {
                 val reference = runCatching { transportNetworkContext.value.read() }.getOrNull()
                 if (reference == null) result.error("network_context_unavailable", "Network context unavailable.", null)
@@ -138,6 +147,7 @@ class RuntimeHostBridge(
             "runtimeEngine.snapshotForConnectRequest" -> snapshotForConnectRequest(call, result)
             METHOD_INITIALIZE -> result.success(initialize())
             METHOD_STAGE_MANAGED_PROFILE -> result.success(stageManagedProfile(call))
+            "runtimeEngine.replaceManagedProfile" -> replaceManagedProfile(call, result)
             METHOD_INVALIDATE_MANAGED_PROFILE -> result.success(invalidateManagedProfile())
             METHOD_CONNECT -> {
                 val request = call.argument<Any>("requestId")
@@ -458,12 +468,14 @@ class RuntimeHostBridge(
         return AndroidRuntimeState.snapshot()
     }
 
-    private fun stageManagedProfile(call: MethodCall): Map<String, Any?> {
-        invalidatePendingConnect()
-        AndroidRuntimeState.cancelPendingConnection()
+    private fun stageManagedProfile(call: MethodCall, preserveActiveRuntime: Boolean = false): Map<String, Any?> {
+        if (!preserveActiveRuntime) {
+            invalidatePendingConnect()
+            AndroidRuntimeState.cancelPendingConnection()
+        }
         val runtimeEnvironment = AndroidRuntimeState.resolveEnvironment(activity)
             ?: return snapshot()
-        initialize()
+        if (!preserveActiveRuntime) initialize()
 
         val profileName = call.argument<String>("profileName")
             ?: run {
@@ -561,6 +573,24 @@ class RuntimeHostBridge(
             )
             AndroidRuntimeState.snapshot()
         }
+    }
+
+    private fun replaceManagedProfile(call: MethodCall, result: MethodChannel.Result) {
+        val request = call.argument<Any>("requestId") as? String
+        if (request == null || !AndroidConnectRequestOwner.valid(request) ||
+            call.argument<Any>("requiresBoundConnect") == true || call.argument<Any>("catalogAppDigest") != null) {
+            result.error("protected_handoff_unavailable", "Protected replacement is unavailable for this request.", null)
+            return
+        }
+        val accepted = PokrovRuntimeVpnService.replaceManagedProfile(request, prepare = {
+            val staged = stageManagedProfile(call, preserveActiveRuntime = true)
+            if (staged["last_failure_kind"] !in setOf(null, "notification_permission_denied") ||
+                staged["phase"] != "configStaged") null
+            else AndroidRuntimeProfileStore.load(activity)
+        }) {
+            activity.runOnUiThread { if (hostTaskScope.isActive()) result.success(snapshot()) }
+        }
+        if (!accepted) result.error("protected_handoff_unavailable", "Protected replacement is unavailable.", null)
     }
 
     private fun connect(
@@ -866,6 +896,12 @@ class RuntimeHostBridge(
             result.error("invalid_connect_request", "Invalid connection request.", null)
             return
         }
+        if (PokrovRuntimeVpnService.cancelProtectedReplacement(request) {
+                activity.runOnUiThread {
+                    if (hostTaskScope.isActive()) result.success(mapOf("schema" to 1,
+                        "requestId" to request, "cancelled" to true))
+                }
+            }) return
         val accepted = AndroidConnectRequestOwner.cancel(request)
         if (accepted) {
             val awaitingPermission = pendingConnectGate.cancelClientRequest(request)
@@ -1503,6 +1539,73 @@ class RuntimeHostBridge(
         executeHostTask(result, AndroidCatalogIdentityResolver.unavailable()) {
             resolver.scan(digest, packages.filterIsInstance<String>(), fresh)
         }
+    }
+
+    private fun probeCandidate(call: MethodCall, result: MethodChannel.Result) {
+        val id = call.argument<Any>("probeId") as? String
+        val content = call.argument<Any>("configContent") as? String
+        val timeout = call.argument<Any>("timeoutMs") as? Int
+        val expected = call.argument<Any>("expectedNetworkContext") as? String
+        fun failure(kind: String, duration: Long = 0L): Map<String, Any> =
+            mapOf("success" to false, "failure_kind" to kind, "duration_ms" to duration)
+        if (id == null || !id.matches(Regex("[A-Za-z0-9_-]{1,128}")) ||
+            content.isNullOrBlank() || timeout == null || timeout !in 1..30_000 || expected.isNullOrBlank()) {
+            result.success(failure("invalid_request"))
+            return
+        }
+        val context = runCatching { transportNetworkContext.value }.getOrNull()
+        val captured = runCatching { context?.candidateNetwork() }.getOrNull()
+        if (context == null || captured?.network == null || captured.links == null || captured.contextRef != expected) {
+            result.success(failure("network_changed"))
+            return
+        }
+        val accepted = candidateProbes.start(id) { cancelled ->
+            val started = System.nanoTime()
+            val cancellation = object : CandidateProbeCancellation {
+                override fun isCancelled(): Boolean = cancelled.get() || !context.isCurrent(expected)
+            }
+            val response: Any = try {
+                if (cancellation.isCancelled()) failure(if (cancelled.get()) "cancelled" else "network_changed")
+                else Mobile.probeCandidate(content, id, timeout,
+                    AndroidCandidateProbePlatform(captured.network, captured.links, cancellation::isCancelled),
+                    cancellation)
+            } catch (_: Throwable) {
+                failure("unavailable")
+            }
+            val elapsed = (System.nanoTime() - started) / 1_000_000
+            activity.runOnUiThread {
+                candidateProbes.publish(id) { publicationCancelled ->
+                    if (hostTaskScope.isActive()) result.success(when {
+                        publicationCancelled.get() -> failure("cancelled", elapsed)
+                        context.read() != expected -> failure("network_changed", elapsed)
+                        else -> response
+                    })
+                }
+            }
+        }
+        if (!accepted) result.success(failure("duplicate_probe"))
+    }
+
+    private fun cancelCandidateProbe(call: MethodCall, result: MethodChannel.Result) {
+        val id = call.argument<Any>("probeId") as? String
+        if (id == null || !id.matches(Regex("[A-Za-z0-9_-]{1,128}"))) {
+            result.error("invalid_request", "Invalid candidate probe identifier.", null)
+            return
+        }
+        val job = candidateProbes.cancel(id)
+        if (job == null) {
+            result.success(null)
+            return
+        }
+        val accepted = hostTaskScope.execute {
+            try {
+                job.awaitFinished()
+                activity.runOnUiThread { if (hostTaskScope.isActive()) result.success(null) }
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
+        }
+        if (!accepted) result.error("unavailable", "Candidate cancellation owner is closed.", null)
     }
 
     private fun <T> executeHostTask(

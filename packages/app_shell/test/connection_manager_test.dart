@@ -1,12 +1,26 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
+import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
+import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+final _candidates = List.generate(4, (index) => TransportCandidate(
+  candidateRef: 'de:profile_$index', profileRef: 'profile_$index', nodeCode: 'de',
+  countryCode: 'DE', protocol: 'vless', transport: 'tcp', protection: 'reality',
+  priority: index, network: 'tcp', flow: '', minimumClientRelease: '1.2.0',
+  minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {},
+));
+
 class _Bootstrapper implements ManagedProfileBootstrapper {
-  _Bootstrapper({this.warpEnabled = false});
+  _Bootstrapper({this.warpEnabled = false, this.catalog = false});
+  final bool catalog;
+  final resolutions = <({String selected, bool select, bool cache})>[];
   final bool warpEnabled;
   Completer<void>? gate;
   final entered = Completer<void>();
@@ -23,14 +37,22 @@ class _Bootstrapper implements ManagedProfileBootstrapper {
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
+    bool selectCandidate = true,
+    String selectedCandidateRef = '',
+    bool cacheResult = true,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
+    resolutions.add((selected: selectedCandidateRef, select: selectCandidate, cache: cacheResult));
     if (!entered.isCompleted) entered.complete();
     unawaited(cancelled?.then((_) => this.cancelled = true));
     await gate?.future;
     return ManagedProfilePayload(
-      profileName: 'test-profile',
+      profileName: selectedCandidateRef.isEmpty ? 'de:profile_0' : selectedCandidateRef,
+      transportCatalog: catalog ? TransportCandidateCatalog(revision: 'test',
+          selectedCandidateRef: selectedCandidateRef.isEmpty ? 'de:profile_0' : selectedCandidateRef,
+          candidates: _candidates) : null,
+      resolvedNodeCode: 'de',
       configPayload:
           '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
       materializedForRuntime: true,
@@ -49,9 +71,73 @@ class _ManifestBootstrapper extends _Bootstrapper implements AppFirstTransportMa
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation {
+class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
+  bool supportsCandidates = false;
+  bool holdProbes = false;
+  bool failProbeCancellation = false;
+  bool failHandoff = false;
+  bool restoredHandoffGuard = false;
+  final probeRelease = Completer<void>();
+  final probeStarted = Completer<void>();
+  final handoffStarted = Completer<void>();
+  Completer<void>? handoffRelease;
+  final activeProbes = <String, Completer<void>>{};
+  String? stagedProfile;
+  int handoffCalls = 0;
+  bool? networkAvailable = true;
+  bool? captivePortal;
+
+  @override
+  Future<RuntimeNetworkStatusObservation> readNetworkAvailability() async => RuntimeNetworkStatusObservation(
+      networkAvailable: networkAvailable, captivePortal: captivePortal);
+
+  @override
+  Future<RuntimeCandidateNetwork> readCandidateNetwork() async => const RuntimeCandidateNetwork(
+      selectionKey: 'network-a', contextRef: 'context-a', networkAvailable: true);
+  @override
+  Future<RuntimeCandidateProbeResult> probeCandidate({required String probeId,
+      required ManagedProfilePayload payload, required Duration timeout, required String expectedNetworkContext}) async {
+    expect(calls.contains('initialize') || restoredHandoffGuard, isTrue);
+    final cancelled = Completer<void>();
+    activeProbes[probeId] = cancelled;
+    if (!probeStarted.isCompleted) probeStarted.complete();
+    if (holdProbes) {
+      if (payload.profileName == 'de:profile_1') { await Future.any([probeRelease.future, cancelled.future]); }
+      else { await cancelled.future; }
+    }
+    activeProbes.remove(probeId);
+    final success = !cancelled.isCompleted;
+    return RuntimeCandidateProbeResult(success: success, failureKind: success ? '' : 'cancelled', duration: Duration.zero);
+  }
+  @override
+  Future<void> cancelCandidateProbe(String probeId) async {
+    final pending = activeProbes[probeId];
+    if (pending != null && !pending.isCompleted) {
+      if (failProbeCancellation) {
+        unawaited(Future<void>.delayed(const Duration(milliseconds: 10), pending.complete));
+        throw StateError('candidate_cancel_channel_unavailable');
+      }
+      pending.complete();
+    }
+  }
+  @override
+  Future<RuntimeSnapshot> replaceManagedProfile(ManagedProfilePayload payload, {
+    required bool Function() operationIsCurrent,
+    Future<String> Function(String, RuntimeSnapshot)? persistRestrictions,
+  }) async {
+    calls.add('replace');
+    handoffCalls++;
+    _request = 'handoff-$handoffCalls';
+    expect(activeProbes, isEmpty);
+    if (!handoffStarted.isCompleted) handoffStarted.complete();
+    await handoffRelease?.future;
+    warpEgressFailure = failHandoff || cancelled.contains(_request);
+    phase = RuntimePhase.running;
+    return value(phase);
+  }
+
   final HostPlatform hostPlatform;
   final operationEntered = Completer<void>();
   final releaseOperation = Completer<void>();
@@ -83,6 +169,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation {
         canInitialize: phase == RuntimePhase.artifactReady,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
         message: '',
+        transportCapabilities: supportsCandidates ? RuntimeTransportCapabilities.fromWire('{"schema":1,"features":["singbox_tls_v1"]}') : null,
         hostHealth: phase == RuntimePhase.running
             ? RuntimeHostHealth.healthy
             : RuntimeHostHealth.unknown,
@@ -98,7 +185,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation {
                 ? !warpEgressFailure
                 : null,
         coreEgressValidationRequired: true,
-        lastFailureKind: phase == RuntimePhase.running &&
+        lastFailureKind: restoredHandoffGuard ? 'protected_handoff_failed' : phase == RuntimePhase.running &&
                 warpEgressFailure &&
                 !pendingFirstEgress
             ? 'core_egress_probe_failed'
@@ -136,8 +223,11 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation {
   Future<RuntimeSnapshot> initialize() =>
       mutate('initialize', RuntimePhase.initialized);
   @override
-  Future<RuntimeSnapshot> stageManagedProfile(ManagedProfilePayload payload) =>
-      mutate('stage', RuntimePhase.configStaged);
+  Future<RuntimeSnapshot> stageManagedProfile(ManagedProfilePayload payload) {
+    expect(activeProbes, isEmpty, reason: 'all candidate workers must settle before the single TUN owner starts');
+    stagedProfile = payload.profileName;
+    return mutate('stage', RuntimePhase.configStaged);
+  }
   @override
   Future<RuntimeSnapshot> invalidateManagedProfile() async => value(phase);
   @override
@@ -196,7 +286,7 @@ class _FirstLaunchStore implements PokrovFirstLaunchStore {
 
 ConnectionManager _manager(
   _Runtime runtime,
-  _Bootstrapper bootstrapper, {
+  ManagedProfileBootstrapper bootstrapper, {
   Future<PokrovWindowsTunnelAuthorization> Function()? authorizeWindows,
 }) =>
     ConnectionManager(
@@ -216,6 +306,162 @@ ConnectionManager _manager(
     );
 
 void main() {
+  test('API outage connects the protected profile through expiry grace and exposes offline states', () async {
+    final originalStorage = FlutterSecureStoragePlatform.instance;
+    final protectedValues = <String, String>{};
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(protectedValues);
+    final directory = await Directory.systemTemp.createTemp('pokrov-offline-connect-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+      FlutterSecureStoragePlatform.instance = originalStorage;
+    });
+    var apiUnavailable = false;
+    var failedRequests = 0;
+    var clientsCreated = 0;
+    DateTime? cacheNow;
+    final expiry = DateTime.now().toUtc().add(const Duration(days: 2));
+    final inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android,
+      routeMode: buildSeedAppContext(hostPlatform: HostPlatform.android).runtimeProfile.defaultRouteMode);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (apiUnavailable) {
+          failedRequests++;
+          request.response.statusCode = HttpStatus.serviceUnavailable;
+          request.response.write('{"detail":"temporarily unavailable"}');
+        } else if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'offline-test-session', 'account_id': 'offline-test-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          request.response.write(jsonEncode({
+            'profile_revision': 'offline-test-profile', 'config_format': 'singbox-json',
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+            'access': {'access_state': 'paid_unlimited', 'expiry_at': expiry.toIso8601String()},
+            'config_payload': {
+              'outbounds': [
+                {'type': 'selector', 'tag': 'proxy', 'outbounds': ['test-node'], 'default': 'test-node'},
+                {'type': 'vless', 'tag': 'test-node', 'server': 'vpn.example.test', 'server_port': 443,
+                  'uuid': '11111111-1111-4111-8111-111111111111'},
+              ],
+              'route': {'final': 'proxy'},
+            },
+          }));
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    AppFirstRuntimeBootstrapper bootstrapper() => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      supportDirectoryResolver: () async => directory,
+      managedProfileCache: ManagedProfileCache(now: () => cacheNow ?? DateTime.now().toUtc()),
+      httpClientFactory: () { clientsCreated++; return HttpClient(); },
+      allExceptRuRuleSetUrlsResolver: (_) => const [], maxRequestAttempts: 1,
+    );
+    final downloaded = await bootstrapper().resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+    expect(protectedValues, isNotEmpty);
+    apiUnavailable = true;
+    cacheNow = expiry.add(const Duration(hours: 23));
+    final runtime = _Runtime()..networkAvailable = null;
+    // A fresh bootstrap instance must restore the protected record after restart.
+    final manager = _manager(runtime, bootstrapper());
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(failedRequests, greaterThan(0));
+    expect(clientsCreated, greaterThan(1));
+    expect(runtime.stagedProfile, downloaded.profileName);
+    expect(runtime.connectCalls, 1);
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.offlineState, ManagedProfileOfflineState.apiUnavailable,
+      reason: 'unknown native network status is not evidence of no network');
+
+    await manager.disconnect();
+    cacheNow = expiry.add(const Duration(hours: 24, seconds: 1));
+    runtime.networkAvailable = true;
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(manager.offlineState, ManagedProfileOfflineState.accessEnded);
+    expect(runtime.connectCalls, 1, reason: 'an expired cache cannot reuse the already staged host profile');
+    runtime.networkAvailable = false;
+    await manager.connect();
+    expect(manager.offlineState, ManagedProfileOfflineState.noNetwork);
+    runtime.networkAvailable = true;
+    runtime.captivePortal = true;
+    await manager.connect();
+    expect(manager.offlineState, ManagedProfileOfflineState.captivePortal);
+    expect(runtime.calls.where((call) => call == 'stage'), hasLength(1));
+  });
+
+  test('catalog winner settles every probe before staging its exact profile', () async {
+    final runtime = _Runtime()..supportsCandidates = true..holdProbes = true..failProbeCancellation = true;
+    final bootstrapper = _Bootstrapper(catalog: true);
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    final connection = manager.connect();
+    await runtime.probeStarted.future;
+    await Future<void>.delayed(Duration.zero);
+    expect(manager.status.phase, ConnectionPhase.probing);
+    expect(runtime.activeProbes, hasLength(3));
+    runtime.probeRelease.complete();
+    await connection;
+    expect(runtime.activeProbes, isEmpty);
+    expect(runtime.stagedProfile, 'de:profile_1');
+    expect(bootstrapper.resolutions.every((call) => !call.select && !call.cache), isTrue);
+    expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
+  test('failed protected recovery never disconnects and explicit off releases it', () async {
+    final runtime = _Runtime()..supportsCandidates = true..warpEgressFailure = true..failHandoff = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    await runtime.handoffStarted.future;
+    while (manager.busy) { await Future<void>.delayed(Duration.zero); }
+    expect(runtime.handoffCalls, 1);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    await manager.connect();
+    expect(runtime.handoffCalls, 2, reason: 'a retry also keeps the native guard');
+    expect(runtime.calls, isNot(contains('disconnect')));
+    await manager.disconnect();
+    expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(1));
+  });
+
+  test('retry after UI restart preserves a guard without in-memory candidate state', () async {
+    final runtime = _Runtime()..supportsCandidates = true..phase = RuntimePhase.running
+      ..restoredHandoffGuard = true..warpEgressFailure = true..failHandoff = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(runtime.handoffCalls, 1);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+  });
+
+  test('cancelling a protected handoff joins it without implicit disconnect', () async {
+    final runtime = _Runtime()..supportsCandidates = true..warpEgressFailure = true
+      ..handoffRelease = Completer<void>();
+    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    await runtime.handoffStarted.future;
+    final cancellation = manager.cancel();
+    await Future<void>.delayed(Duration.zero);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    runtime.handoffRelease!.complete();
+    await cancellation;
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(manager.busy, isFalse);
+  });
+
   test('enabled signed transport mode cannot fall through to ordinary catalog profiles', () async {
     final runtime = _Runtime();
     final bootstrapper = _ManifestBootstrapper();

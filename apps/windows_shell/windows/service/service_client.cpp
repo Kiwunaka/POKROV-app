@@ -219,6 +219,7 @@ bool IsExpectedServer(HANDLE pipe) {
 }
 
 struct ExchangeResult {
+  bool request_dispatched = false;
   ClientProbe probe;
   std::optional<Frame> response;
   // Kept only for semantic response rejection by InvokeService; never exposed
@@ -266,7 +267,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
           kCapabilityProfileIdentity | kCapabilityCancellation | kCapabilitySanitizedDiagnostic |
           kCapabilityRoutingCatalogWindow | kCapabilitySmartAccessLease | kCapabilityRoutingCatalogControl |
           kCapabilitySmartAccessPolicyControl | kCapabilityRoutingCatalogServiceControl | kCapabilitySmartAccessRenewal |
-          kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff,
+          kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff | kCapabilityCandidateProbe | kCapabilityProtectedHandoff,
       "",
   };
   if (!WriteFrame(pipe, hello, ::GetTickCount64() + 3000, control)) {
@@ -289,6 +290,21 @@ ExchangeResult Exchange(Command command, const std::string& body,
     return result;
   }
   result.probe.compatible = true;
+  if (command == Command::kReplaceManagedProfile &&
+      (hello_response->capabilities & kCapabilityProtectedHandoff) == 0) {
+    result.probe.compatible = false;
+    result.probe.state = ClientState::kProtocolIncompatible;
+    ::CloseHandle(pipe);
+    return result;
+  }
+  if ((command == Command::kProbeCandidate || command == Command::kCancelCandidateProbe ||
+       command == Command::kReadCandidateNetwork) &&
+      (hello_response->capabilities & kCapabilityCandidateProbe) == 0) {
+    result.probe.compatible = false;
+    result.probe.state = ClientState::kProtocolIncompatible;
+    ::CloseHandle(pipe);
+    return result;
+  }
   if ((command == Command::kConfigureBoundSmartAccessRuntimeControl &&
        (hello_response->capabilities & (kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl)) !=
            (kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl)) ||
@@ -332,7 +348,8 @@ ExchangeResult Exchange(Command command, const std::string& body,
     ::CloseHandle(pipe);
     return result;
   }
-  const bool short_control = command == Command::kCancel || command == Command::kReadBootClock ||
+  const bool short_control = command == Command::kCancel || command == Command::kCancelCandidateProbe ||
+      command == Command::kReadCandidateNetwork || command == Command::kReadBootClock ||
       command == Command::kReadTransportNetworkContext ||
       command == Command::kDiagnosticState || command == Command::kRevokeSmartAccessLease ||
       command == Command::kRevokeRoutingCatalog || command == Command::kRevokeSmartAccessPolicy ||
@@ -348,7 +365,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
     return result;
   }
   const DWORD ipc_wait_ms = short_control ? 3000
-      : command == Command::kConnect ? kStandardConnectIpcWaitMs
+      : (command == Command::kConnect || command == Command::kReplaceManagedProfile) ? kStandardConnectIpcWaitMs
       : bound_wait_ms.value_or(30000);
   const Frame request{
       FrameKind::kRequest,
@@ -361,10 +378,12 @@ ExchangeResult Exchange(Command command, const std::string& body,
       0,
       body,
   };
-  const auto cancellation_target = IsConnectCommand(command)
+  const bool cancellable = IsConnectCommand(command) || command == Command::kProbeCandidate;
+  const auto cancellation_command = command == Command::kProbeCandidate ? Command::kCancelCandidateProbe : Command::kCancel;
+  const auto cancellation_target = cancellable
       ? EncodeCancellationTarget({request.session_token, request.operation_nonce})
       : std::string{};
-  if (IsConnectCommand(command) && control && control->cancel_requested) {
+  if (cancellable && control && control->cancel_requested) {
     ::CloseHandle(pipe);
     return result;
   }
@@ -373,24 +392,25 @@ ExchangeResult Exchange(Command command, const std::string& body,
     // From this point a failed write is ambiguous and requires native proof.
     control->bound_cancellation_target = cancellation_target;
   }
+  result.request_dispatched = true;
   if (!WriteFrame(pipe, request, ::GetTickCount64() + 3000, control)) {
     ::CloseHandle(pipe);
-    if (IsConnectCommand(command)) {
+    if (cancellable) {
       // A failed overlapped write does not prove the server received no request.
       // Cancel only this authenticated request; never substitute Disconnect.
-      Exchange(Command::kCancel, cancellation_target, nullptr, pipe_name, verify_server);
+      Exchange(cancellation_command, cancellation_target, nullptr, pipe_name, verify_server);
     }
     return result;
   }
   std::atomic<bool> finished{false};
   std::thread cancellation;
-  if (IsConnectCommand(command) && control != nullptr) {
+  if (cancellable && control != nullptr) {
     const auto target = cancellation_target;
     cancellation = std::thread([&, target] {
       for (;;) {
         const bool done = finished.load();
         if (control->cancel_requested) {
-          const auto cancelled = Exchange(Command::kCancel, target, nullptr, pipe_name, verify_server);
+          const auto cancelled = Exchange(cancellation_command, target, nullptr, pipe_name, verify_server);
           if ((cancelled.response && cancelled.response->status == Status::kOk) ||
               done || finished.load()) break;
         } else if (done) {
@@ -402,7 +422,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
   }
   result.response = ReadFrame(pipe,
       ::GetTickCount64() + ipc_wait_ms + (short_control ? 0 : 3000), control);
-  if (!result.response && IsConnectCommand(command) && control) {
+  if (!result.response && cancellable && control) {
     // Publish cancellation before completion so the companion cannot exit on
     // the lost-response path without making its final bounded cancel attempt.
     control->cancel_requested = true;
@@ -411,8 +431,8 @@ ExchangeResult Exchange(Command command, const std::string& body,
   if (cancellation.joinable()) cancellation.join();
   ::CloseHandle(pipe);
   if (!result.response.has_value()) {
-    if (IsConnectCommand(command) && control == nullptr) {
-      Exchange(Command::kCancel, cancellation_target, nullptr, pipe_name, verify_server);
+    if (cancellable && control == nullptr) {
+      Exchange(cancellation_command, cancellation_target, nullptr, pipe_name, verify_server);
     }
     result.probe.state = ClientState::kUnavailable;
     return result;
@@ -421,8 +441,8 @@ ExchangeResult Exchange(Command command, const std::string& body,
       result.response->command != command ||
       result.response->correlation_id != request_correlation ||
       result.response->session_token != hello_response->session_token) {
-    if (IsConnectCommand(command)) {
-      Exchange(Command::kCancel, cancellation_target, nullptr, pipe_name, verify_server);
+    if (cancellable) {
+      Exchange(cancellation_command, cancellation_target, nullptr, pipe_name, verify_server);
     }
     result.probe.state = ClientState::kProtocolIncompatible;
     result.probe.compatible = false;
@@ -469,7 +489,7 @@ bool IsKnownPhase(const std::string& value) {
 }
 
 bool IsKnownFailure(const std::string& value) {
-  static constexpr std::array<const char*, 46> failures = {
+  static constexpr std::array<const char*, 49> failures = {
       "none",
       "core_not_initialized",
       "core_missing",
@@ -491,6 +511,9 @@ bool IsKnownFailure(const std::string& value) {
       "connect_deadline",
       "core_start_failed",
       "core_egress_probe_failed",
+      "protected_handoff_unavailable",
+      "transition_guard_failed",
+      "transition_guard_active",
       "core_egress_dns_failed",
       "core_egress_connect_failed",
       "core_egress_tls_failed",
@@ -702,10 +725,32 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
   result.trusted = exchange.probe.trusted;
   result.compatible = exchange.probe.compatible;
   if (!exchange.response.has_value()) {
+    if (command == Command::kProbeCandidate && !exchange.request_dispatched &&
+        control != nullptr && control->cancel_requested) {
+      result.command_accepted = true;
+      result.candidate_probe_json = "{\"success\":false,\"failure_kind\":\"cancelled\",\"duration_ms\":0}";
+    }
     return result;
   }
   result.status = exchange.response->status;
   result.command_accepted = result.status == Status::kOk;
+  if (command == Command::kProbeCandidate) {
+    if (result.command_accepted && !exchange.response->body.empty() && exchange.response->body.size() <= kMaxControlBodySize) {
+      result.candidate_probe_json = exchange.response->body;
+    } else { result.command_accepted = false; }
+    return result;
+  }
+  if (command == Command::kReadCandidateNetwork) {
+    const auto& value = exchange.response->body;
+    const auto delimiter = value.find(';');
+    if (result.command_accepted && value == "unavailable") return result;
+    if (result.command_accepted && delimiter == 74 && value.compare(0, 10, "selection_") == 0 &&
+        IsProfileDigest(value.substr(10, 64)) && IsTransportNetworkContextRef(value.substr(delimiter + 1))) {
+      result.candidate_selection_key = value.substr(0, delimiter);
+      result.transport_network_context_ref = value.substr(delimiter + 1);
+    } else { result.command_accepted = false; }
+    return result;
+  }
   if (command == Command::kCancelConnectAndConfirm) {
     if (result.command_accepted && (exchange.response->body == "settled=0" || exchange.response->body == "settled=1")) {
       result.connect_stopped = exchange.response->body == "settled=1";
@@ -810,7 +855,8 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
       (((command == Command::kStageProfile || command == Command::kStageBoundProfile) &&
         result.staged_profile_digest != ProfileDigest(body)) ||
        (IsConnectCommand(command) &&
-        (result.effective_profile_digest != (bound ? bound->profile_digest : body) ||
+        (result.effective_profile_digest != (bound ? bound->profile_digest :
+            command == Command::kReplaceManagedProfile ? ProfileDigest(body) : body) ||
          (bound && result.core_module_sha256 != bound->core_module_sha256))))) {
     if (IsConnectCommand(command)) {
       Exchange(Command::kCancel, exchange.connect_cancellation_target, nullptr,

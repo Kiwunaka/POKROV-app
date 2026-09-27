@@ -42,15 +42,43 @@ void main() {
     expect(jsonDecode(values.values.single)['downloaded'], saved);
   });
 
+  test('known access expiry allows offline reuse through its following day', () async {
+    final expiry = now.add(const Duration(days: 10));
+    await cache.saveDownloaded(platform: 'android', binding: 'account-A/install-A/route-A',
+      revision: 'a', verifiedAt: now, payload: {
+        'cache_entry_id': 'a', 'access': {'expiry_at': expiry.toIso8601String()},
+      });
+    now = expiry.add(const Duration(hours: 24));
+    cache = ManagedProfileCache(now: () => now);
+    expect((await read())?['cache_entry_id'], 'a');
+    now = now.add(const Duration(seconds: 1));
+    final expired = await cache.readResult(platform: 'android', binding: 'account-A/install-A/route-A');
+    expect(expired.payload, isNull);
+    expect(expired.accessEnded, isTrue);
+  });
+
+  test('explicit denial fences downloads already in flight', () async {
+    final generation = cache.generation('android');
+    await save('a');
+    await cache.clear('android');
+    await cache.saveDownloaded(platform: 'android', binding: 'account-A/install-A/route-A',
+      revision: 'late', verifiedAt: now, expectedGeneration: generation,
+      payload: {'cache_entry_id': 'late', 'access': {'expiry_at': null}});
+    expect(await read(), isNull);
+  });
+
   test('failed new profile keeps the earlier proven record and its original age', () async {
     await save('a');
-    await cache.markProven(platform: 'android', binding: 'account-A/install-A/route-A', entryId: 'a');
+    await cache.markProven(platform: 'android', binding: 'account-A/install-A/route-A', entryId: 'a',
+      networkSelectionKey: 'network-fixture');
     now = now.add(const Duration(hours: 1));
     await save('b');
     // A delayed proof for A cannot promote B, even with identical server revision.
     await cache.markProven(platform: 'android', binding: 'account-A/install-A/route-A', entryId: 'a');
     expect((await read())?['cache_entry_id'], 'b');
     expect((await read(preferProven: true))?['cache_entry_id'], 'a');
+    expect((await read())?['proven_network_selection_key'], isNull);
+    expect((await read(preferProven: true))?['proven_network_selection_key'], 'network-fixture');
     now = now.add(const Duration(hours: 23, seconds: 1));
     expect((await read(preferProven: true))?['cache_entry_id'], 'b');
     await cache.clear('android');

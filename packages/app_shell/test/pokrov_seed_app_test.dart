@@ -407,6 +407,9 @@ class _FakeBootstrapper
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
+    bool selectCandidate = true,
+    String selectedCandidateRef = '',
+    bool cacheResult = true,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
@@ -1070,13 +1073,29 @@ class _CachedBootstrapper extends _FakeBootstrapper
 
   @override
   Future<ManagedProfilePayload?> loadCachedManagedProfile(
-    ManagedProfileCacheInputs inputs, {bool preferProven = false}) async {
+    ManagedProfileCacheInputs inputs, {bool preferProven = false,
+      Set<RuntimeTransportFeature>? runtimeFeatures, String? coreRelease}) async {
     cacheReads.add(preferProven);
     return payload;
   }
 
   @override
-  Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId) async {
+  Future<void> cacheResolvedManagedProfile(ManagedProfileCacheInputs inputs,
+      ManagedProfilePayload payload, {Future<void>? cancelled}) async {}
+
+  @override
+  Future<void> refreshCachedManagedProfile(ManagedProfileCacheInputs inputs, {
+    Set<RuntimeTransportFeature> runtimeFeatures = const {}, String? coreRelease,
+    Future<void>? cancelled,
+  }) async {}
+
+  @override
+  Future<ManagedProfileOfflineState> classifyManagedProfileFailure(ManagedProfileCacheInputs inputs, {
+    bool? networkAvailable, bool? captivePortal,
+  }) async => ManagedProfileOfflineState.apiUnavailable;
+
+  @override
+  Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId, {String? networkSelectionKey}) async {
     provenEntries.add(entryId);
   }
 }
@@ -1098,6 +1117,9 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
+    bool selectCandidate = true,
+    String selectedCandidateRef = '',
+    bool cacheResult = true,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {

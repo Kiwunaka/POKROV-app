@@ -1550,7 +1550,10 @@ when the API is unreachable but a VPN endpoint from the last downloaded profile
 is still reachable. `ManagedProfileCache` stores two records in platform secure
 storage: downloaded and last proven. They bind account, install, platform,
 route mode, selected apps and preferred node/variant. They preserve the original
-server-observation time and expire 24 hours after that observation. Future
+server-observation time. A known access expiry permits offline reuse through
+the following 24 hours; an explicitly unlimited expiry has no local deadline.
+Older records without expiry retain their 24-hour observation window. The latest
+downloaded access window also bounds the older proven profile. Future
 timestamps are unavailable. Offline reads, repeated failures and host restaging
 never extend that window. A cache transaction ID fences delayed proof from
 promoting a different download; it is not a server revision or egress proof.
@@ -1561,6 +1564,17 @@ process restart; it cannot revive an expiry already observed by this cache.
 The original profile timestamps remain unchanged. Existing version-1 records
 without this field establish it on their first read. This records observed
 clock movement, not trusted elapsed time while the app was absent.
+
+The same encrypted record stores the managed candidate catalog and rechecks its
+compatibility before reuse. Only a proven profile carries its network selection
+key. Parallel candidate resolution does not write session profile metadata or
+cache entries; the current winner commits under the existing account-state lock.
+An explicit denial invalidates downloads still in flight. Startup and roughly
+six-hour refresh download through the same managed endpoint without probes or
+changing the running tunnel. Connect still attempts a fresh managed profile.
+After a transient failure, real OS observations distinguish no network and a
+captive portal from an unavailable API; expiry beyond the local grace is shown
+as ended access. Unknown OS status is not treated as a disconnected network.
 
 The app tries refresh on ordinary connect/reconnect, allowing at most three
 seconds when a matching cached profile exists. Timeout or transient

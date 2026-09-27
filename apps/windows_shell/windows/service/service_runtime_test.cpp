@@ -80,6 +80,16 @@ class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
   std::function<void()> on_verify;
 };
 
+class FakeTransitionGuard final : public pokrov::service::RuntimeTransitionGuard {
+ public:
+  std::string Start() override { armed = true; ++starts; return ""; }
+  std::string Finish() override { armed = false; ++finishes; return ""; }
+  std::string ExplicitOff() override { armed = false; ++offs; return ""; }
+  bool IsArmed() const override { return armed; }
+  bool armed = false;
+  int starts = 0, finishes = 0, offs = 0;
+};
+
 class FakeRecovery final : public pokrov::service::RuntimeRecovery {
  public:
   bool RequiresRecovery() const override { return requires_recovery; }
@@ -1141,9 +1151,54 @@ void TestInterruptedConnectNeverPublishesProtection() {
   }
 }
 
+void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
+  using namespace pokrov::service;
+  for (int scenario = 0; scenario != 3; ++scenario) {
+    const auto root = CreateTestRoot();
+    {
+      auto core = std::make_unique<FakeCoreRuntime>();
+      auto* core_state = core.get();
+      auto probe = std::make_unique<FakeEgressProbe>();
+      auto* probe_state = probe.get();
+      auto guard = std::make_unique<FakeTransitionGuard>();
+      auto* guard_state = guard.get();
+      RuntimeHost host(std::move(core), std::move(probe), std::make_unique<FakeRecovery>(),
+          root, false, nullptr, std::move(guard));
+      Expect(host.StageProfile("0\n{}").status == Status::kOk &&
+             host.Connect(ProfileDigest("0\n{}")).status == Status::kOk,
+             "protected handoff fixture could not connect");
+      OperationInterruption interruption = OperationInterruption::kNone;
+      core_state->on_start = [&] { Expect(guard_state->armed, "handoff Start ran without guard"); };
+      probe_state->on_verify = [&] {
+        Expect(guard_state->armed && guard_state->finishes == 0, "guard released before new egress verification");
+        if (scenario == 2) interruption = OperationInterruption::kCancelled;
+      };
+      if (scenario == 1) core_state->start_error = "fixture failure";
+      const auto result = host.ReplaceManagedProfile("1\n{}", [&] { return interruption; });
+      Expect(guard_state->starts == 1, "handoff did not arm the guard exactly once");
+      if (scenario == 0) {
+        Expect(result.status == Status::kOk && !guard_state->armed && guard_state->finishes == 1 &&
+                   Contains(result, ";core_egress_validated=1;") &&
+                   result.body.find(";effective_profile_digest=" + ProfileDigest("1\n{}")) != std::string::npos,
+               "verified replacement did not finish with its exact identity");
+        Expect(host.CancelProtectedHandoff().status == Status::kOk && guard_state->armed,
+               "late cancellation stopped replacement without rearming guard");
+      } else {
+        Expect(result.status != Status::kOk && guard_state->armed && guard_state->finishes == 0 &&
+                   Contains(host.Snapshot(), ";core_egress_validated=0;"),
+               "failed/cancelled replacement released guard or reported protection");
+      }
+      Expect(host.Disconnect().status == Status::kOk && !guard_state->armed && guard_state->offs == 1,
+             "explicit off did not clear retained guard");
+    }
+    RemoveTestRoot(root);
+  }
+}
+
 }  // namespace
 
 int main() {
+  TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff();
   TestInterruptedConnectNeverPublishesProtection();
   TestProfileIdentityFollowsCommittedRuntime();
   TestFailedProfileSecurityPreservesPreviouslyStagedBytes();

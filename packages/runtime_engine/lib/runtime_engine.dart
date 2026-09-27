@@ -17,6 +17,7 @@ export 'package:pokrov_core_domain/core_domain.dart' show RuntimeTransportFeatur
 part 'src/linux_daemon_runtime.dart';
 part 'src/transport_capabilities.dart';
 part 'src/bound_connectivity_probe.dart';
+part 'src/candidate_probe.dart';
 
 enum RuntimeLane {
   desktopFfi,
@@ -533,6 +534,8 @@ const _publicRuntimeFailureKinds = <String>{
   'runtime_service_start_failed',
   'foreground_start_failed',
   'runtime_stop_failed',
+  'protected_handoff_failed',
+  'connect_cancelled',
   ..._coreEgressProbeFailureKinds,
   'core_egress_probe_unavailable',
   'desktop_tun_egress_probe_failed',
@@ -758,6 +761,10 @@ String _publicRuntimeMessage({
       return 'POKROV не смог запустить системное подключение.';
     case 'runtime_stop_failed':
       return 'POKROV не смог корректно отключиться.';
+    case 'protected_handoff_failed':
+      return 'Не удалось восстановить подключение. Повторите попытку или отключите POKROV.';
+    case 'connect_cancelled':
+      return 'Подключение отменено.';
     case 'core_egress_probe_failed':
       return phase == RuntimePhase.running
           ? 'POKROV не подтвердил защищенное подключение. $egressRuntimeState'
@@ -1295,6 +1302,7 @@ class ManagedProfilePayload {
     this.routeMode = RouteMode.fullTunnel,
     this.smartConnect,
     this.transportCatalog,
+    this.provenNetworkSelectionKey,
     this.resolvedNodeCode = '',
     this.warpPolicy = WarpRuntimePolicy.disabled,
     this.freeProfileAccess,
@@ -1328,6 +1336,7 @@ class ManagedProfilePayload {
   final RouteMode routeMode;
   final SmartConnectProfile? smartConnect;
   final TransportCandidateCatalog? transportCatalog;
+  final String? provenNetworkSelectionKey;
 
   /// Exact Smart Connect node materialized into the selector default.
   final String resolvedNodeCode;
@@ -1378,6 +1387,7 @@ class ManagedProfilePayload {
       routeMode: routeMode ?? this.routeMode,
       smartConnect: smartConnect ?? this.smartConnect,
       transportCatalog: transportCatalog,
+      provenNetworkSelectionKey: provenNetworkSelectionKey,
       resolvedNodeCode: resolvedNodeCode ?? this.resolvedNodeCode,
       warpPolicy: warpPolicy ?? this.warpPolicy,
       freeProfileAccess: freeProfileAccess ?? this.freeProfileAccess,
@@ -1391,6 +1401,15 @@ class ManagedProfilePayload {
 }
 
 /// Local cancellation of an exact connect invocation, not an unscoped stop.
+/// Replaces an ordinary profile while the host retains TUN/firewall protection.
+/// Failure keeps that protection until a successful retry or explicit disconnect.
+abstract interface class RuntimeProtectedHandoff {
+  Future<RuntimeSnapshot> replaceManagedProfile(ManagedProfilePayload payload, {
+    required bool Function() operationIsCurrent,
+    Future<String> Function(String identityInput, RuntimeSnapshot current)? persistRestrictions,
+  });
+}
+
 abstract interface class RuntimeConnectCancellation {
   String? get activeConnectRequestId;
   String? connectRequestForSnapshot(RuntimeSnapshot snapshot);
@@ -3159,7 +3178,7 @@ void _mergeNativeWarpConfig(
     ..['peers'] = peers;
 }
 
-class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeConnectSettlement, RuntimeConnectProgress, RuntimeCoreIdentityConnect, RuntimeCoreIdentityStage, RuntimeTransportLeaseHandoff, RuntimeTransportLeaseRevocation, RuntimeSmartAccessControl, RuntimeCatalogControl, RuntimeSmartAccessRenewalControl, RuntimeSmartAccessBackgroundControl, RuntimeBoundSmartAccessControl, RuntimeBootClock, RuntimeTransportNetworkContext {
+class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovRuntimeEngine, RuntimeProtectedHandoff, RuntimeConnectCancellation, RuntimeConnectSettlement, RuntimeConnectProgress, RuntimeCoreIdentityConnect, RuntimeCoreIdentityStage, RuntimeTransportLeaseHandoff, RuntimeTransportLeaseRevocation, RuntimeSmartAccessControl, RuntimeCatalogControl, RuntimeSmartAccessRenewalControl, RuntimeSmartAccessBackgroundControl, RuntimeBoundSmartAccessControl, RuntimeBootClock, RuntimeTransportNetworkContext {
   MobileArtifactRuntimeEngine({
     required this.hostPlatform,
     this.assetRootOverride,
@@ -3632,11 +3651,25 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine, RuntimeConnect
       expectedCoreModuleSha256: expectedCoreModuleSha256);
   }
 
+  @override
+  Future<RuntimeSnapshot> replaceManagedProfile(ManagedProfilePayload payload, {
+    required bool Function() operationIsCurrent,
+    Future<String> Function(String identityInput, RuntimeSnapshot current)? persistRestrictions,
+  }) {
+    if (_boundConnectRequestId != null || !operationIsCurrent()) throw StateError('runtime_busy');
+    final random = math.Random.secure();
+    final requestId = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+    _activeConnectRequestId = requestId;
+    return _stageManagedProfile(payload, operationIsCurrent: operationIsCurrent,
+        persistRestrictions: persistRestrictions, replacementRequestId: requestId);
+  }
+
   Future<RuntimeSnapshot> _stageManagedProfile(ManagedProfilePayload payload, {
     Future<String> Function(String identityInput, RuntimeSnapshot current)? persistRestrictions,
     bool Function()? operationIsCurrent,
     Future<String> Function(String identityInput, RuntimeSnapshot current)? bindIdentity,
     String? expectedCoreModuleSha256,
+    String? replacementRequestId,
   }) async {
     if (!payload.materializedForRuntime) {
       throw StateError('managed_profile_stage_failed');
@@ -3703,10 +3736,12 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine, RuntimeConnect
         throw StateError('smart_access_stage_identity_invalid');
       }
     }
+    if (replacementRequestId != null && operationIsCurrent?.call() != true) throw StateError('managed_profile_superseded');
     final hostSnapshot = await _invokeHostSnapshot(
-      'runtimeEngine.stageManagedProfile',
+      replacementRequestId == null ? 'runtimeEngine.stageManagedProfile' : 'runtimeEngine.replaceManagedProfile',
       stagedPayload: payload,
       arguments: <String, Object?>{
+        if (replacementRequestId != null) 'requestId': replacementRequestId,
         'profileName': payload.profileName,
         'configPayload': configPayload,
         if (expectedProfileDigest != null) 'expectedProfileDigest': expectedProfileDigest,
@@ -3734,6 +3769,16 @@ class MobileArtifactRuntimeEngine implements PokrovRuntimeEngine, RuntimeConnect
     if (bindIdentity != null) {
       if (hostSnapshot == null) throw StateError('core_identity_stage_unconfirmed');
       _requireIdentityStageOwner(hostSnapshot, expectedCoreModuleSha256!, operationIsCurrent!);
+    }
+    if (replacementRequestId != null) {
+      if (hostSnapshot == null) throw StateError('protected_handoff_unconfirmed');
+      _connectSnapshots[hostSnapshot] = replacementRequestId;
+      if (hostSnapshot.phase == RuntimePhase.running && hostSnapshot.lastFailureKind == null) {
+        _stagedPayload = payload;
+        _stagedRequiresBoundConnect = false;
+        _acknowledgedProfileDigest = hostSnapshot.stagedProfileDigest;
+      }
+      return hostSnapshot;
     }
     if (hostSnapshot == null ||
         hostSnapshot.phase != RuntimePhase.configStaged ||

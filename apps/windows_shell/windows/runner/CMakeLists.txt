@@ -43,6 +43,8 @@ target_link_libraries(${BINARY_NAME} PRIVATE
   pokrov_service_common
   "bcrypt.lib"
   "iphlpapi.lib"
+  "ole32.lib"
+  "oleaut32.lib"
 )
 target_include_directories(${BINARY_NAME} PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/../service")

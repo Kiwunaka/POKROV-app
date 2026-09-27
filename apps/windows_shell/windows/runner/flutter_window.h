@@ -6,6 +6,9 @@
 #include <flutter/method_channel.h>
 
 #include <memory>
+#include <array>
+#include <map>
+#include <vector>
 
 #include "win32_window.h"
 #include "runtime_task_runner.h"
@@ -32,6 +35,14 @@ class FlutterWindow : public Win32Window {
                     std::string connect_request_id = "");
   std::unique_ptr<RuntimeTaskRunner> runtime_tasks_;
   std::unique_ptr<RuntimeTaskRunner> diagnostic_tasks_;
+  std::array<std::unique_ptr<RuntimeTaskRunner>, 4> candidate_tasks_;
+  struct PendingCandidate {
+    std::shared_ptr<pokrov::service::ServiceCallControl> control;
+    std::size_t worker;
+    std::vector<std::function<void(bool)>> cancellation_completions;
+  };
+  std::map<std::string, PendingCandidate> pending_candidates_;
+  bool candidate_settlement_lost_ = false;
   std::shared_ptr<pokrov::service::ServiceCallControl> pending_connect_;
   std::string pending_connect_request_id_;
   std::string stopped_connect_request_id_;

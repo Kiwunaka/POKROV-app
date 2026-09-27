@@ -56,6 +56,9 @@ class _StubBootstrapper
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
+    bool selectCandidate = true,
+    String selectedCandidateRef = '',
+    bool cacheResult = true,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {

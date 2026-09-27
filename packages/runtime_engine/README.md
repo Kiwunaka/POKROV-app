@@ -27,3 +27,13 @@ Current limits:
 - AWG source/host tests do not prove an exact AAR/DLL, owned-server
   interoperability, physical-device behavior, battery/thermal behavior or
   mobile/RU-origin reachability
+
+## Private candidate-probe builds
+
+Ordinary catalogue probes require the additive Core candidate-probe API. For a
+private build, build the changed Core with its existing Android/Windows scripts
+and copy the resulting AAR or DLL (plus its existing runtime dependency) into the
+ignored native runtime slots used by Gradle/CMake. Build the client directly;
+the release-pinned sync/packaging script and `runtime-artifacts.seed.json` still
+describe the published runtime and are not updated for this private build.
+Missing native probe APIs return unavailable, never a socket-only success.

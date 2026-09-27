@@ -10,6 +10,7 @@
 #include "service_protocol.h"
 #include "service_recovery.h"
 #include "service_events.h"
+#include "service_transition_guard.h"
 
 namespace pokrov::service {
 
@@ -38,6 +39,11 @@ class CoreRuntime {
     return "core_abi_incompatible";
   }
   virtual std::string Stop() = 0;
+  virtual std::string ProbeCandidate(const CandidateProbeRequest& request,
+                                    const std::string& bind_interface,
+                                    const CheckInterruption& interrupted) {
+    return "";
+  }
   virtual void SetOperationalEventSink(ServiceEventSink* events) {}
   virtual int RoutingCatalogWindowVersion() const { return 0; }
   virtual std::string TransportCapabilities() const { return ""; }
@@ -89,7 +95,8 @@ class RuntimeHost {
               std::unique_ptr<RuntimeEgressProbe> egress_probe,
               std::unique_ptr<RuntimeRecovery> recovery,
               std::wstring runtime_root, bool secure_storage,
-              ServiceEventSink* events = nullptr);
+              ServiceEventSink* events = nullptr,
+              std::unique_ptr<RuntimeTransitionGuard> transition_guard = nullptr);
   ~RuntimeHost();
 
   RuntimeResult Snapshot() const;
@@ -105,7 +112,9 @@ class RuntimeHost {
                                     const CheckInterruption& interrupted = {});
   RuntimeResult PromoteTransportLease(const TransportLeasePromotion& target);
   RuntimeResult RevokeTransportLease(const TransportLeaseRevocation& target);
-  RuntimeResult Disconnect();
+  RuntimeResult Disconnect(bool explicit_disconnect = true);
+  RuntimeResult ReplaceManagedProfile(const std::string& body, const CheckInterruption& interrupted);
+  RuntimeResult CancelProtectedHandoff();
   RuntimeResult RevokeSmartAccessLease(const std::string& body);
   RuntimeResult RevokeRoutingCatalog(const std::string& profile_digest);
   RuntimeResult RevokeRoutingCatalogService(const std::string& body);
@@ -114,6 +123,9 @@ class RuntimeHost {
   RuntimeResult ConfigureSmartAccessRuntimeControl(const std::string& body, bool renewal = false);
   RuntimeResult ReadSmartAccessRestrictions();
   RuntimeResult ReadSmartAccessLeases(const std::string& profile_digest);
+  // Available after Initialize; probes never read/write the TUN lifecycle state.
+  CoreRuntime* CandidateProbeCore() { return initialized_ ? core_.get() : nullptr; }
+  bool TransitionGuardArmed() const { return transition_guard_ && transition_guard_->IsArmed(); }
   RuntimeResult AcknowledgeSmartAccessRestrictions(const std::string& digest);
   void Shutdown();
 
@@ -130,7 +142,8 @@ class RuntimeHost {
   RuntimeResult Fail(Status status, const char* failure);
   RuntimeResult ConnectImpl(const std::string& expected_profile_digest,
                             const CheckInterruption& interrupted,
-                            const std::string& expected_core_digest);
+                            const std::string& expected_core_digest,
+                            bool finish_transition_guard = true);
   std::string SnapshotBody(const char* pending_phase = nullptr) const;
   bool PrepareDirectories();
   std::string WriteProfileAtomically(const std::string& profile);
@@ -145,6 +158,7 @@ class RuntimeHost {
   std::unique_ptr<CoreRuntime> core_;
   std::unique_ptr<RuntimeEgressProbe> egress_probe_;
   std::unique_ptr<RuntimeRecovery> recovery_;
+  std::unique_ptr<RuntimeTransitionGuard> transition_guard_;
   std::wstring runtime_root_;
   ServiceEventSink* events_ = nullptr;
   RuntimeDirectories directories_;

@@ -142,8 +142,9 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   The manager retains `ConnectionCoordinator` for the runtime snapshot, intent,
   attempt clock, reducer/presenter and timeout. Its status exposes transport,
   routes, DNS and egress separately without treating missing facts as success.
-  Bootstrap delegates Smart Connect selection to `_SmartConnectResolver`, keeping
-  the existing probe limits, selection rules and cancellation behavior.
+  Bootstrap retains `_SmartConnectResolver` only for servers without an ordinary
+  candidate catalog. Catalog selection belongs to `SmartConnectCandidateSelector`
+  in the same Smart Connect module and is invoked by the connection owner.
   Private Windows build 4062 passed DE/CH connect, disconnect, reconnect,
   cancellation, switching from DE to CH and UI restart with an active service
   tunnel. HTTP requests succeeded with VPN and after disconnect. This used the
@@ -154,14 +155,23 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   feature inventory. The existing profile-resolution contract validates its
   public candidate descriptions; credentials remain in the protected profile.
   `ConnectionManager` exposes the catalog carried by `ManagedProfilePayload`.
-  Smart Connect keeps its probe limits, ranking and timeouts, restricts its
-  egress nodes to that catalog and requests the winning exact candidate from the
-  same managed endpoint. A country/node preference does not select a protocol.
+  Smart Connect tries the last proven candidate for the current opaque network
+  first, then server priority with at most three phone or four PC probes. Each
+  isolated Core probe performs a real handshake and authenticated HTTP 204 check;
+  losing probes are cancelled and joined before TUN activation. Four-second probe
+  limits, a twelve-second selection window, thirty-minute failure memory and UDP
+  failure promotion of TCP bound retries. A country preference includes its other
+  egress nodes and never selects a protocol. Exact profiles come from the same
+  managed endpoint, with only the accepted winner written to protected storage.
+  Recovery tries the current candidate first and at most three candidates total.
+  Replacement retains the Android TUN or the Windows service firewall guard;
+  failure/cancellation requires action and keeps protection until retry or explicit
+  disconnect. Existing signed routing restriction checks still apply.
   An absent catalog keeps the legacy API path; invalid catalog data is rejected.
   Unknown Core versions are omitted. The opt-in signed POST12 mode retains its
   existing policy, kill and lease gates and does not request an ordinary catalog;
-  a connection attempt runs only its selected mode. Catalog persistence and new
-  probe algorithms are outside this change.
+  a connection attempt runs only its selected mode. Proven network/candidate
+  memory is restored from the protected profile cache, not from a server default.
 - `FirstSessionCoordinator` owns the welcome/restore/ready step, restore busy
   state, handover animation decision, ephemeral acquisition dedupe/status,
   Android VPN-permission explanation/recovery state, and first-home/first-

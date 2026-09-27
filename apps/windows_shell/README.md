@@ -36,6 +36,16 @@ Current responsibility:
 
 Current local truth:
 
+Candidate selection uses up to four isolated Core probes through authenticated
+service IPC, bound to the physical uplink and fenced by its network context.
+Cancellation waits for the probe instance to close. Ordinary profile replacement
+keeps a persistent, service-owned WFP transition guard until the exact replacement
+passes the existing authenticated egress check; failure or service exit retains
+the guard. Explicit disconnect, or the elevated `pokrov_service.exe
+--clear-transition-guard` repair/uninstall command, removes only its owned rules.
+Network and captive-portal observations come from local adapter/NCSI metadata;
+unavailable observations remain unknown.
+
 - `flutter build windows --release` bundles `pokrov_windows.exe`,
   `pokrov_service.exe`, POKROV Core `pokrov-core.dll`, and pinned
   `libcronet.dll`

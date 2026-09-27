@@ -13,6 +13,12 @@ struct ServiceNetworkContext {
   std::string reference;
 };
 
+struct CandidateNetworkContext {
+  ServiceNetworkContext network;
+  std::string selection_key;
+  std::string bind_interface;  // Private: never returned over IPC.
+};
+
 // Local OS metadata only. Revisions and adapter material never leave the service.
 class ServiceNetworkObserver {
  public:
@@ -20,6 +26,7 @@ class ServiceNetworkObserver {
   ~ServiceNetworkObserver();
   std::optional<std::uint64_t> Sample();
   std::optional<ServiceNetworkContext> ReadContext();
+  std::optional<CandidateNetworkContext> ReadCandidateContext();
   bool IsCurrent(std::uint64_t revision) const;
 
  private:
