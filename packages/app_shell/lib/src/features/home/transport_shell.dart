@@ -1,6 +1,6 @@
 part of pokrov_app_shell;
 
-extension _TransportShellOperations on _PokrovSeedShellState {
+extension _TransportShellOperations on ConnectionManager {
   void _stopTransportPolicyRefresh() {
     _transportPolicyTimer?.cancel();
     _transportPolicyTimer = null;
@@ -16,9 +16,10 @@ extension _TransportShellOperations on _PokrovSeedShellState {
         !(service as AppFirstTransportManifestService).transportManifestEnabled) return;
     final manifestService = service as AppFirstTransportManifestService;
     final cancelled = Completer<void>();
+    final generation = _connectionCoordinator.operationGeneration;
     _transportPolicyCancelled = cancelled;
     _transportPolicyTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
-      if (!mounted || cancelled.isCompleted || _runtimeSnapshot?.phase != RuntimePhase.running ||
+      if (_disposed || cancelled.isCompleted || _runtimeSnapshot?.phase != RuntimePhase.running ||
           !_connectionCoordinator.hasActiveTransportLease) {
         _stopTransportPolicyRefresh();
         return;
@@ -26,13 +27,14 @@ extension _TransportShellOperations on _PokrovSeedShellState {
       if (_transportPolicyRefreshInFlight || _runtimeBusy) return;
       _transportPolicyRefreshInFlight = true;
       try {
-        await manifestService.fetchTransportManifest(hostPlatform: widget.appContext.hostPlatform,
+        await manifestService.fetchTransportManifest(hostPlatform: _appContext.hostPlatform,
           remainingBudget: const Duration(seconds: 10), cancelled: cancelled.future);
       } on BootstrapFailure catch (error) {
-        if (error.statusCode == HttpStatus.unauthorized || error.statusCode == HttpStatus.forbidden) {
+        if (!_disposed && !cancelled.isCompleted && _connectionCoordinator.ownsOperation(generation) &&
+            (error.statusCode == HttpStatus.unauthorized || error.statusCode == HttpStatus.forbidden)) {
           final native = await _connectionCoordinator.withdrawTransportAuthority();
            // ignore: invalid_use_of_protected_member
-           if (native != null && mounted) setState(() => _runtimeSnapshot = native);
+           if (native != null && !_disposed && !cancelled.isCompleted && _connectionCoordinator.ownsOperation(generation)) _update(() => _runtimeSnapshot = native);
         }
       } on Object {
         // Offline Core deadlines remain the authority until a signed update is received.
@@ -46,6 +48,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
       int generation) async {
     final service = _bootstrapper;
     final engine = _runtimeEngine;
+    _setPhase(ConnectionPhase.probing, generation);
     if (service is! AppFirstTransportManifestService ||
         !(service as AppFirstTransportManifestService).transportManifestEnabled ||
         engine is! RuntimeBootClock || engine is! RuntimeConnectCancellation ||
@@ -58,11 +61,11 @@ extension _TransportShellOperations on _PokrovSeedShellState {
     final started = await bootClock.readBootClock();
     const budget = Duration(seconds: 60);
     final cancelled = _connectionCoordinator.whenOperationEnds(generation);
-    bool current() => mounted && _connectionCoordinator.ownsOperation(generation) &&
+    bool current() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
       _connectionCoordinator.actionInFlight;
     TransportManifestSelection? source;
     try {
-      source = await manifestService.openTransportSelection(hostPlatform: widget.appContext.hostPlatform,
+      source = await manifestService.openTransportSelection(hostPlatform: _appContext.hostPlatform,
         operationStarted: started, operationBudget: budget,
         operationIsCurrent: current, cancelled: cancelled);
     } on TransportManifestFailure catch (error) {
@@ -75,11 +78,11 @@ extension _TransportShellOperations on _PokrovSeedShellState {
           enrollmentClock.elapsedMilliseconds >= started.elapsedMilliseconds + budget.inMilliseconds) {
         _transportSelectionFail('transport_budget_exhausted');
       }
-      await manifestService.enrollTransportManifest(hostPlatform: widget.appContext.hostPlatform,
+      await manifestService.enrollTransportManifest(hostPlatform: _appContext.hostPlatform,
         remainingBudget: Duration(milliseconds: started.elapsedMilliseconds +
           budget.inMilliseconds - enrollmentClock.elapsedMilliseconds), cancelled: cancelled);
       if (!current()) throw const ConnectionOperationSuperseded();
-      source = await manifestService.openTransportSelection(hostPlatform: widget.appContext.hostPlatform,
+      source = await manifestService.openTransportSelection(hostPlatform: _appContext.hostPlatform,
         operationStarted: started, operationBudget: budget,
         operationIsCurrent: current, cancelled: cancelled);
     }
@@ -98,7 +101,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
       final catalogRequired = const {RouteMode.allExceptRu, RouteMode.selectiveServices}
         .contains(_selectedRouteMode);
       final catalogHost = const {HostPlatform.android, HostPlatform.windows}
-        .contains(widget.appContext.hostPlatform);
+        .contains(_appContext.hostPlatform);
       if (catalogRequired && (!catalogHost || service is! AppFirstRoutingCatalogService ||
           !(service as AppFirstRoutingCatalogService).routingCatalogEnabled)) _transportSelectionFail('routing_catalog_unavailable');
       if (catalogHost && service is AppFirstRoutingCatalogService &&
@@ -111,7 +114,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
           _transportSelectionFail('transport_budget_exhausted');
         }
         final catalog = await catalogService.fetchRoutingCatalog(
-          hostPlatform: widget.appContext.hostPlatform, cancelled: source.whenClosed);
+          hostPlatform: _appContext.hostPlatform, cancelled: source.whenClosed);
         if (!current()) _transportSelectionFail('routing_catalog_unavailable');
         if (catalog == null && catalogRequired) _transportSelectionFail('routing_catalog_unavailable');
         if (catalog != null) {
@@ -124,7 +127,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
             _transportSelectionFail('transport_budget_exhausted');
           }
           final info = await dataService.fetchClientSubscription(
-            hostPlatform: widget.appContext.hostPlatform,
+            hostPlatform: _appContext.hostPlatform,
             requestTimeout: Duration(milliseconds: started.elapsedMilliseconds +
               budget.inMilliseconds - accessClock.elapsedMilliseconds),
             cancelled: source.whenClosed);
@@ -133,7 +136,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
             _transportSelectionFail('routing_access_unavailable');
           }
            // ignore: invalid_use_of_protected_member
-           setState(() => _subscriptionInfo = info);
+           _update(() => _subscriptionInfo = info);
           final accessState = info.accessState;
           catalogAccessState = accessState;
           final observed = await source.sample();
@@ -150,7 +153,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
               RouteMode.fullTunnel => CatalogRoutingMode.full,
               RouteMode.selectiveServices => CatalogRoutingMode.selective,
             },
-            platform: widget.appContext.hostPlatform.name,
+            platform: _appContext.hostPlatform.name,
             accessState: accessState, vpnAvailable: true, now: observed.latest,
             selectedServiceIds: selectedServices);
           catalogPolicy = baseline;
@@ -177,7 +180,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
                 VerifiedSmartAccessProviderPolicy? providers;
                 try {
                   providers = await smartService.fetchSmartAccessProviders(
-                    hostPlatform: widget.appContext.hostPlatform, operationIsCurrent: grantCurrent,
+                    hostPlatform: _appContext.hostPlatform, operationIsCurrent: grantCurrent,
                     remainingBudget: await remainingBudget(), cancelled: grantCancelled);
                 } on BootstrapFailure catch (error) {
                   if (!authorityUnavailable(error)) rethrow;
@@ -189,14 +192,14 @@ extension _TransportShellOperations on _PokrovSeedShellState {
                 if (!grantCurrent()) throw const ConnectionOperationSuperseded();
                 final candidates = await _connectionCoordinator.selectSmartAccessCapabilities(
                   catalog: catalog.catalog, providers: providers, serviceIds: wanted,
-                  platform: widget.appContext.hostPlatform.name, now: now.latest,
+                  platform: _appContext.hostPlatform.name, now: now.latest,
                   isCurrent: grantCurrent);
                 final digest = await smartAccessProfileSha256(baseProfile);
                 final grants = <VerifiedSmartAccessLease>[];
                 for (final candidate in candidates) {
                   try {
                     grants.add(await smartService.requestSmartAccessLease(
-                      hostPlatform: widget.appContext.hostPlatform, catalog: catalog.catalog,
+                      hostPlatform: _appContext.hostPlatform, catalog: catalog.catalog,
                       providerPolicy: providers, capabilityId: candidate['capability_id']! as String,
                       profileSha256: digest, origin: candidate['origin']! as String,
                       family: candidate['family']! as String, feature: candidate['feature']! as String,
@@ -216,7 +219,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
                 final grantedAt = await grantSource.sample();
                 if (!grantCurrent()) throw const ConnectionOperationSuperseded();
                 return compileCatalogDomainPolicy(policy: verified, mode: CatalogRoutingMode.selective,
-                  platform: widget.appContext.hostPlatform.name, accessState: accessState,
+                  platform: _appContext.hostPlatform.name, accessState: accessState,
                   vpnAvailable: true, now: grantedAt.latest,
                   selectedServiceIds: selectedServices, smartAccessProfile: bound);
               };
@@ -271,7 +274,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
           }
           Future<List<TransportEndpointHint>> fetchRole(String role, int limit) =>
             selection.fetchShortlist(TransportEndpointShortlistQuery({
-              'platform': widget.appContext.hostPlatform.name,
+              'platform': _appContext.hostPlatform.name,
               'capability_ref': binding.capabilityRef, 'profile_ref': profileRef,
               'bootstrap_set_ref': bootstrapRefs.first, 'probe_set_ref': probeRefs.first,
               'artifact_sha256': selection.context.artifactSha256,
@@ -330,7 +333,7 @@ extension _TransportShellOperations on _PokrovSeedShellState {
             final attemptRef = 'attempt_${List.generate(16,
               (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join()}';
             final query = TransportProfileQuery({
-              'platform': widget.appContext.hostPlatform.name,
+              'platform': _appContext.hostPlatform.name,
               'profile_ref': profileRef, 'endpoint_ref': hint.endpointRef,
               'capability_ref': binding.capabilityRef,
               'bootstrap_set_ref': bootstrapRefs.first, 'probe_set_ref': probeRefs.first,
@@ -491,13 +494,13 @@ extension _TransportShellOperations on _PokrovSeedShellState {
     final preferences = _clientExperience.routingPreferences;
     final apps = List<String>.unmodifiable(_selectedAppIds);
     final access = _freeProfileAccess;
-    final platform = widget.appContext.hostPlatform;
+    final platform = _appContext.hostPlatform;
     // Reading settings never approves an unconfirmed first-run routing choice.
     if (!_clientExperienceLoaded || !_clientExperience.firstRouteScopeConfirmed ||
         _clientExperience.firstRouteScopeMode != mode || _selectedAppsRouteNeedsSelection ||
         (mode == RouteMode.selectiveServices
           ? !_selectiveServicesAvailable || preferences.selectedCatalogServiceIds.isEmpty
-          : !widget.appContext.runtimeProfile.supportedRouteModes.contains(mode))) {
+          : !_appContext.runtimeProfile.supportedRouteModes.contains(mode))) {
       _transportSelectionFail('routing_intent_unconfirmed');
     }
     final catalogMode = switch (mode) {
@@ -514,9 +517,9 @@ extension _TransportShellOperations on _PokrovSeedShellState {
           !setEquals(catalogPolicy.selectedServiceIds, preferences.selectedCatalogServiceIds)))) {
       _transportSelectionFail('routing_catalog_mismatch');
     }
-    bool current() => mounted && _connectionCoordinator.ownsOperation(generation) &&
+    bool current() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
       _connectionCoordinator.actionInFlight && revision == _managedProfileRevision &&
-      mode == _selectedRouteMode && platform == widget.appContext.hostPlatform &&
+      mode == _selectedRouteMode && platform == _appContext.hostPlatform &&
       identical(preferences, _clientExperience.routingPreferences) &&
        listEquals(apps, _selectedAppIds) && identical(access, _freeProfileAccess) &&
        (catalogAccessState == null || _subscriptionInfo?.accessState == catalogAccessState);

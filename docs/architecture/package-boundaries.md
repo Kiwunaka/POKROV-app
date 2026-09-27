@@ -135,11 +135,15 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   route, location, recovery notice and connect-hint state. The
   composition root must not pass parallel connection copy, CTA or callbacks
   through the Home constructor.
-- `ConnectionCoordinator` owns the mutable runtime snapshot, explicit intent,
-  action-in-flight flag, attempt clock/number, reducer/presenter derivation and
-  runtime-action timeout. The bootstrap shell may coordinate product services
-  around it, but must not restore parallel raw connection fields or derive a
-  second presentation.
+- `ConnectionManager` owns runtime commands, profile preparation, reconnect,
+  WARP/AWG fallback and egress observation. A new command supersedes the previous
+  attempt, joins native cleanup and ignores late results from the old attempt.
+  The shell sends commands and observes state; it does not call the runtime.
+  The manager retains `ConnectionCoordinator` for the runtime snapshot, intent,
+  attempt clock, reducer/presenter and timeout. Its status exposes transport,
+  routes, DNS and egress separately without treating missing facts as success.
+  Bootstrap delegates Smart Connect selection to `_SmartConnectResolver`, keeping
+  the existing probe limits, selection rules and cancellation behavior.
 - `FirstSessionCoordinator` owns the welcome/restore/ready step, restore busy
   state, handover animation decision, ephemeral acquisition dedupe/status,
   Android VPN-permission explanation/recovery state, and first-home/first-

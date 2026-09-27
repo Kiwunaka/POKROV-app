@@ -1,6 +1,6 @@
 part of pokrov_app_shell;
 
-extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
+extension _SmartAccessRuntimeOperations on ConnectionManager {
   void _applyNativeSmartAccessRestrictions(Iterable<NativeSmartAccessRestriction> restrictions) {
     final binding = _connectionCoordinator.activeSmartAccessLeases;
     if (binding == null) return;
@@ -72,8 +72,8 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
   Future<RuntimeSnapshot> _stageManagedProfileWithLeaseBinding(ManagedProfilePayload payload) async {
     final generation = _connectionCoordinator.operationGeneration;
     final elapsed = Stopwatch()..start();
-    bool current() => mounted && _connectionCoordinator.ownsOperation(generation) &&
-        elapsed.elapsed < widget.runtimeActionTimeout;
+    bool current() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
+        elapsed.elapsed < _actionTimeout;
     final grants = _preparedSmartAccessGrants[payload] ?? const <VerifiedSmartAccessLease>[];
     final catalog = _preparedCatalogPolicies[payload];
     if (catalog != null && _connectionCoordinator.isCatalogRevoked(catalog.payloadSha256, DateTime.now().toUtc())) {
@@ -92,7 +92,7 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
       staged = await (engine as RuntimeSmartAccessControl).stageSmartAccessProfile(payload, operationIsCurrent: current,
         persistRestrictions: (identityInput, native) async {
           await _recoverNativeSmartAccessRestrictions(native, forStage: true, current: current,
-            waitFor: <T>(Future<T> operation) => operation.timeout(widget.runtimeActionTimeout - elapsed.elapsed));
+            waitFor: <T>(Future<T> operation) => operation.timeout(_actionTimeout - elapsed.elapsed));
           if (!current()) throw const ConnectionOperationSuperseded();
           final digest = await smartAccessProfileSha256(identityInput);
           await _smartAccessRuntimeStore.prepareStage(
@@ -121,21 +121,21 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
     final engine = _runtimeEngine;
     final snapshot = _runtimeSnapshot;
     final digest = snapshot?.effectiveProfileDigest;
-    if (!mounted || _runtimeBusy || _smartAccessRefreshInFlight ||
+    if (_disposed || _runtimeBusy || _smartAccessRefreshInFlight ||
         engine is! RuntimeSmartAccessControl || snapshot?.phase != RuntimePhase.running ||
         (snapshot?.smartAccessLeaseVersion != 1 && !const {1, 2, 3, 4}.contains(snapshot?.routingCatalogControlVersion)) || digest == null ||
-        !const {HostPlatform.android, HostPlatform.windows}.contains(widget.appContext.hostPlatform)) return;
+        !const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform)) return;
     final controlEngine = engine as RuntimeSmartAccessControl;
     _smartAccessRefreshInFlight = true;
     final generation = _connectionCoordinator.operationGeneration;
     final elapsed = Stopwatch()..start();
-    bool current() => mounted && !_runtimeBusy &&
+    bool current() => !_disposed && !_runtimeBusy &&
         _connectionCoordinator.ownsOperation(generation) &&
         _runtimeSnapshot?.phase == RuntimePhase.running && _runtimeSnapshot?.effectiveProfileDigest == digest &&
-        elapsed.elapsed < widget.runtimeActionTimeout;
+        elapsed.elapsed < _actionTimeout;
     Duration remaining() {
       if (!current()) throw const ConnectionOperationSuperseded();
-      return widget.runtimeActionTimeout - elapsed.elapsed;
+      return _actionTimeout - elapsed.elapsed;
     }
     try {
       if (!(_connectionCoordinator.activeSmartAccessLeases?.hasRestrictionMetadata ?? false)) {
@@ -197,7 +197,7 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
       var runtimeWorkerReady = false;
       try {
         final control = await smartService.fetchSmartAccessControl(
-          hostPlatform: widget.appContext.hostPlatform, profileDigest: digest, operationIsCurrent: current,
+          hostPlatform: _appContext.hostPlatform, profileDigest: digest, operationIsCurrent: current,
           remainingBudget: remaining(), cancelled: _connectionCoordinator.whenOperationChanges(generation));
         if (!current() || control.profileDigest != digest ||
             !DateTime.now().toUtc().isBefore(control.expiresAt)) return;
@@ -236,7 +236,7 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
         try {
           final config = await (service as AppFirstSmartAccessRuntimeControlService).requestSmartAccessRuntimeControl(
             catalogSha256: binding.catalogSha256,
-            hostPlatform: widget.appContext.hostPlatform, profileDigest: digest, operationIsCurrent: current,
+            hostPlatform: _appContext.hostPlatform, profileDigest: digest, operationIsCurrent: current,
             remainingBudget: remaining(), cancelled: _connectionCoordinator.whenOperationChanges(generation));
           if (!current()) return;
           _connectionCoordinator.invalidateSmartAccessStagedReuse(digest);
@@ -252,7 +252,7 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
           (service as AppFirstRoutingCatalogService).routingCatalogEnabled) {
         try {
           final replacement = await (service as AppFirstRoutingCatalogService).fetchRoutingCatalog(
-            hostPlatform: widget.appContext.hostPlatform).timeout(remaining());
+            hostPlatform: _appContext.hostPlatform).timeout(remaining());
           if (!current()) return;
           if (replacement != null) {
             final replacementPolicy = RoutingCatalogPolicy.fromVerified(replacement.catalog);
@@ -280,7 +280,7 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
       }
       if (!current() || !smartService.smartAccessEnabled || binding.leases.isEmpty) return;
       final policy = await smartService.fetchSmartAccessProviders(
-          hostPlatform: widget.appContext.hostPlatform, operationIsCurrent: current,
+          hostPlatform: _appContext.hostPlatform, operationIsCurrent: current,
           remainingBudget: remaining(), cancelled: _connectionCoordinator.whenOperationChanges(generation));
       if (!current()) return;
       // Evaluate the whole response before retaining or issuing a mutation.
@@ -355,7 +355,7 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
       if (!enrollmentCurrent()) continue;
       // One mint per foreground refresh. Only public receipt metadata is kept;
       // the capability remains local to this call and the live native worker.
-      final config = await service.requestSmartAccessRuntimeRenewal(hostPlatform: widget.appContext.hostPlatform,
+      final config = await service.requestSmartAccessRuntimeRenewal(hostPlatform: _appContext.hostPlatform,
         profileDigest: binding.profileDigest, grant: grant, catalog: catalog, operationIsCurrent: enrollmentCurrent,
         remainingBudget: remaining(), cancelled: _connectionCoordinator.whenOperationChanges(generation));
       if (!enrollmentCurrent()) return;
@@ -413,7 +413,7 @@ extension _SmartAccessRuntimeOperations on _PokrovSeedShellState {
       if (!attemptedServices.add(previous.lease['service_id'])) continue;
       try {
         if (renewal == null) {
-          final next = await service.requestSmartAccessLease(hostPlatform: widget.appContext.hostPlatform,
+          final next = await service.requestSmartAccessLease(hostPlatform: _appContext.hostPlatform,
             catalog: catalog, providerPolicy: providers, capabilityId: previous.lease['capability_id']! as String,
             profileSha256: previous.lease['profile_sha256']! as String,
             origin: previous.lease['origin']! as String, family: previous.lease['family']! as String,

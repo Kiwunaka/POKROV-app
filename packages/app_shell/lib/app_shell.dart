@@ -66,6 +66,7 @@ part 'app_shell_ui_helpers.dart';
 
 part 'src/seed/seed_context.dart';
 part 'src/shell/seed_shell.dart';
+part 'src/connection/connection_manager.dart';
 part 'src/shell/navigation_shell.dart';
 part 'src/shared/info_sheet.dart';
 part 'src/features/support/support_chat.dart';

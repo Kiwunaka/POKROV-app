@@ -16,6 +16,7 @@ function Read-RepoText([string]$RelativePath) {
 
 $homeSurface = Read-RepoText "packages\app_shell\lib\src\features\home\home_surface.dart"
 $seed = Read-RepoText "packages\app_shell\lib\src\shell\seed_shell.dart"
+$manager = Read-RepoText "packages\app_shell\lib\src\connection\connection_manager.dart"
 $connection = Read-RepoText "packages\app_shell\lib\src\features\home\connection_experience.dart"
 $onboarding = Read-RepoText "packages\app_shell\lib\src\features\onboarding\onboarding_flow.dart"
 $protectionCenter = Read-RepoText "packages\app_shell\lib\src\features\home\protection_center.dart"
@@ -23,8 +24,17 @@ $clientUpdate = Read-RepoText "packages\app_shell\lib\src\features\update\client
 $bootstrap = Read-RepoText "packages\app_shell\lib\app_first_runtime_bootstrap.dart"
 $appShell = Read-RepoText "packages\app_shell\lib\app_shell.dart"
 
-if ($seed -notmatch [regex]::Escape("late final ManagedProfileLifecycle _managedProfileLifecycle;")) {
-  $errors.Add("Composition root must delegate profile lifecycle to its standalone owner.")
+if ([regex]::Matches($seed, [regex]::Escape("late final ConnectionManager _connectionManager;")).Count -ne 1 -or
+    [regex]::Matches($seed, "\bConnectionManager\s*\(").Count -ne 1) {
+  $errors.Add("Composition root must own exactly one ConnectionManager boundary.")
+}
+foreach ($owner in @("ManagedProfileLifecycle", "ConnectionCoordinator", "DiagnosticsCoordinator")) {
+  if ([regex]::Matches($manager, "\b$owner\s*\(").Count -ne 1) {
+    $errors.Add("ConnectionManager must own exactly one $owner boundary.")
+  }
+  if ($seed -match "\b$owner\b") {
+    $errors.Add("Composition root must delegate $owner ownership to ConnectionManager.")
+  }
 }
 foreach ($forbidden in @("bool _managedProfileDirty =", "int _managedProfileRevision =", "_quickSettingsInvalidationInFlight", "_managedProfileInvalidationTimer")) {
   if ($seed -match [regex]::Escape($forbidden)) {
@@ -32,9 +42,6 @@ foreach ($forbidden in @("bool _managedProfileDirty =", "int _managedProfileRevi
   }
 }
 
-if ($seed -notmatch [regex]::Escape("late final ConnectionCoordinator _connectionCoordinator;")) {
-  $errors.Add("Composition root must own one ConnectionCoordinator boundary.")
-}
 foreach ($forbidden in @(
   "RuntimeSnapshot? _runtimeSnapshot;",
   "bool _runtimeBusy = false;",
@@ -45,6 +52,23 @@ foreach ($forbidden in @(
   if ($seed -match [regex]::Escape($forbidden)) {
     $errors.Add("Composition root retained raw connection state: '$forbidden'.")
   }
+}
+foreach ($forbidden in @(
+  "_runtimeEngine",
+  "_cachedProfileFallbackGate",
+  "_warpFallbackInFlight",
+  "_retryWithoutWarpAfterEgressFailure",
+  "_reportWarpRuntimeFallback",
+  "_retryAutomaticLocationAfterEgressFailure",
+  "_automaticFailoverGeneration",
+  "_tcpFallbackFromRevision"
+)) {
+  if ($seed -match [regex]::Escape($forbidden)) {
+    $errors.Add("Composition root retained runtime/fallback orchestration: '$forbidden'.")
+  }
+}
+if ($seed -match "\bruntimeEngine\s*\.") {
+  $errors.Add("Composition root must delegate runtime calls to ConnectionManager.")
 }
 if ($seed -match [regex]::Escape("_processedAcquisitionHandles")) {
   $errors.Add("Composition root must not own or persist opaque acquisition handles.")
@@ -71,9 +95,6 @@ foreach ($required in @(
   }
 }
 
-if ($seed -notmatch [regex]::Escape("late final DiagnosticsCoordinator _diagnosticsCoordinator;")) {
-  $errors.Add("Composition root must own one DiagnosticsCoordinator boundary.")
-}
 foreach ($forbidden in @(
   "bool _runtimeResumeRefreshPending = false;",
   "Timer? _postConnectHealthTimer;",
@@ -239,5 +260,5 @@ if ($errors.Count -gt 0) {
   exit 1
 }
 
-Write-Host "Client presentation boundary OK: aggregate Home state/intents, five coordinators, update feature owner, progressive protection disclosure, $partCount parts, centralized haptics." -ForegroundColor Green
+Write-Host "Client presentation boundary OK: aggregate Home state/intents, one connection manager with profile/connection/diagnostics owners, shell account/first-session coordinators, update feature owner, progressive protection disclosure, $partCount parts, centralized haptics." -ForegroundColor Green
 exit 0

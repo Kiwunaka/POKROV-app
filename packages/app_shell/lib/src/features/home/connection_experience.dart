@@ -708,8 +708,10 @@ class ConnectionCoordinator {
       if (engine is RuntimeConnectSettlement) {
         try {
           if (await (engine as RuntimeConnectSettlement).cancelAndConfirmConnectStopped(active.requestId)) {
-            _activeTransportLease = null;
+            if (!identical(active, _activeTransportLease)) return null;
             final native = await engine.snapshot();
+            if (!identical(active, _activeTransportLease)) return null;
+            _activeTransportLease = null;
             updateSnapshot(native);
             return native;
           }
