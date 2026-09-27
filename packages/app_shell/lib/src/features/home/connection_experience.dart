@@ -278,6 +278,7 @@ class ConnectionPresentation {
     ConnectionExperienceState experience, {
     required bool primaryConnectEnabled,
     bool canCancelConnect = false,
+    bool retainsProtection = false,
   }) {
     final phase = experience.phase;
     final snapshot = experience.snapshot;
@@ -286,7 +287,7 @@ class ConnectionPresentation {
         !snapshot!.hasDegradedHostDiagnostics &&
         snapshot.dnsReady != false &&
         snapshot.coreEgressValidated != false;
-    final verified = experience is ConnectionConnectedVerified;
+    final verified = experience is ConnectionConnectedVerified && !retainsProtection;
     final degraded =
         experience is ConnectionConnectedUnverified && !awaitingVerification;
     final transitioning = const <ConnectionExperiencePhase>{
@@ -295,8 +296,9 @@ class ConnectionPresentation {
       ConnectionExperiencePhase.disconnecting,
       ConnectionExperiencePhase.reconnecting,
     }.contains(phase);
+    final retainedFailure = retainsProtection && !transitioning && !verified;
 
-    final title = switch (phase) {
+    final title = retainedFailure ? 'Трафик заблокирован' : switch (phase) {
       ConnectionExperiencePhase.idle => 'Не защищено',
       ConnectionExperiencePhase.permissionRequired => 'Нужен доступ к VPN',
       ConnectionExperiencePhase.preparing => 'Подготавливаем профиль',
@@ -309,7 +311,7 @@ class ConnectionPresentation {
       ConnectionExperiencePhase.blocked => 'Не получилось подключиться',
       ConnectionExperiencePhase.failed => 'Не удалось подключиться',
     };
-    final actionLabel = canCancelConnect ? 'Отменить' : switch (phase) {
+    final actionLabel = canCancelConnect ? 'Отменить' : retainedFailure ? 'Отключить' : switch (phase) {
       ConnectionExperiencePhase.idle =>
         primaryConnectEnabled ? 'Подключить' : 'Пока недоступно',
       ConnectionExperiencePhase.permissionRequired => 'Разрешить',
@@ -324,7 +326,7 @@ class ConnectionPresentation {
       ConnectionExperiencePhase.blocked => 'Пока недоступно',
       ConnectionExperiencePhase.failed => 'Повторить',
     };
-    final actionEnabled = canCancelConnect ? true : switch (phase) {
+    final actionEnabled = canCancelConnect || retainedFailure ? true : switch (phase) {
       ConnectionExperiencePhase.idle ||
       ConnectionExperiencePhase.permissionRequired ||
       ConnectionExperiencePhase.failed =>
@@ -358,7 +360,7 @@ class ConnectionPresentation {
       ConnectionExperiencePhase.failed =>
         ConnectionDiscPhase.error,
     };
-    final tone = switch (phase) {
+    final tone = retainedFailure ? ConnectionTone.warning : switch (phase) {
       ConnectionExperiencePhase.connectedVerified => ConnectionTone.success,
       ConnectionExperiencePhase.connectedUnverified => ConnectionTone.warning,
       ConnectionExperiencePhase.failed => ConnectionTone.danger,
@@ -371,7 +373,9 @@ class ConnectionPresentation {
       ConnectionExperiencePhase.reconnecting =>
         ConnectionTone.muted,
     };
-    final subtitle = switch (phase) {
+    final subtitle = retainedFailure
+        ? 'Защита от прямого выхода включена. Восстановите соединение или отключите POKROV.'
+        : switch (phase) {
       ConnectionExperiencePhase.connectedVerified =>
         'DNS и выход через VPN подтверждены',
       ConnectionExperiencePhase.connectedUnverified => awaitingVerification
@@ -397,7 +401,7 @@ class ConnectionPresentation {
       subtitle: subtitle,
       primaryActionLabel: actionLabel,
       primaryActionEnabled: actionEnabled,
-      discPhase: discPhase,
+      discPhase: retainedFailure ? ConnectionDiscPhase.error : discPhase,
       tone: tone,
       // The action owns only its action name. Connection state is announced
       // by the dedicated status live region, so assistive technology does not
@@ -406,7 +410,7 @@ class ConnectionPresentation {
       showsTunnelActive: tunnelActive,
       showsConnectedVisual: verified || degraded,
       isVerified: verified,
-      isDegraded: degraded,
+      isDegraded: degraded || retainedFailure,
       discMotionBusy: transitioning || awaitingVerification,
     );
   }

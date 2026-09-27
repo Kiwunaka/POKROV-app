@@ -184,6 +184,7 @@ abstract interface class CachedManagedProfileBootstrapper {
   Future<ManagedProfilePayload?> loadCachedManagedProfile(
     ManagedProfileCacheInputs inputs, {
     bool preferProven = false,
+    String selectedCandidateRef = '',
     Set<RuntimeTransportFeature>? runtimeFeatures,
     String? coreRelease,
   });
@@ -191,12 +192,15 @@ abstract interface class CachedManagedProfileBootstrapper {
     ManagedProfileCacheInputs inputs,
     ManagedProfilePayload payload, {
     Future<void>? cancelled,
+    bool candidateOnly = false,
   });
   Future<void> refreshCachedManagedProfile(
     ManagedProfileCacheInputs inputs, {
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
     Future<void>? cancelled,
+    String selectedCandidateRef = '',
+    bool alternativesOnly = false,
   });
   Future<ManagedProfileOfflineState> classifyManagedProfileFailure(
     ManagedProfileCacheInputs inputs, {
@@ -3061,6 +3065,7 @@ class AppFirstRuntimeBootstrapper
   Future<ManagedProfilePayload?> loadCachedManagedProfile(
     ManagedProfileCacheInputs inputs, {
     bool preferProven = false,
+    String selectedCandidateRef = '',
     Set<RuntimeTransportFeature>? runtimeFeatures,
     String? coreRelease,
   }) async {
@@ -3074,6 +3079,7 @@ class AppFirstRuntimeBootstrapper
         platform: inputs.hostPlatform.name,
         binding: inputs.binding(state.accountId, state.installId),
         preferProven: preferProven,
+        selectedCandidateRef: selectedCandidateRef,
       );
       if (value == null) return null;
       final current = await _loadState(inputs.hostPlatform);
@@ -3122,6 +3128,7 @@ class AppFirstRuntimeBootstrapper
     ManagedProfileCacheInputs inputs,
     ManagedProfilePayload payload, {
     Future<void>? cancelled,
+    bool candidateOnly = false,
   }) async {
     final record = _resolvedProfileCache[payload];
     if (record == null) throw const BootstrapFailure('Подготовка подключения отменена.',
@@ -3142,16 +3149,19 @@ class AppFirstRuntimeBootstrapper
           code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
       }
       final manifest = record.manifest;
-      await _persistStateToFile(hostPlatform: inputs.hostPlatform, file: file, state: current.copyWith(
-        profileRevision: manifest.profileRevision,
-        managedManifestPath: manifest.managedManifestPath,
-      ));
+      if (!candidateOnly) {
+        await _persistStateToFile(hostPlatform: inputs.hostPlatform, file: file, state: current.copyWith(
+          profileRevision: manifest.profileRevision,
+          managedManifestPath: manifest.managedManifestPath,
+        ));
+      }
       requests.requireActive();
       final response = manifest.response;
       await _managedProfileCache.saveDownloaded(
         platform: inputs.hostPlatform.name, binding: record.binding,
         revision: manifest.profileRevision, verifiedAt: manifest.verifiedAt,
         expectedGeneration: record.generation,
+        candidateOnly: candidateOnly,
         isCurrent: () => !requests.isCancelled,
         payload: <String, Object?>{
           'cache_entry_id': payload.cacheEntryId,
@@ -3182,16 +3192,64 @@ class AppFirstRuntimeBootstrapper
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
     Future<void>? cancelled,
+    String selectedCandidateRef = '',
+    bool alternativesOnly = false,
   }) async {
     final state = await _loadState(inputs.hostPlatform);
     if (state == null || !state.hasSession) return;
-    await resolveManagedProfile(
+    final generation = _managedProfileCache.generation(inputs.hostPlatform.name);
+    final requests = _ManagedProfileRequests(cancelled);
+    Future<ManagedProfilePayload> resolve(String candidateRef) => resolveManagedProfile(
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
       selectedApps: inputs.selectedApps, preferredNodeCode: inputs.preferredNodeCode,
       preferredVariantId: inputs.preferredVariantId,
       runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
-      selectCandidate: false, timeout: const Duration(seconds: 3), cancelled: cancelled,
+      selectCandidate: false, selectedCandidateRef: candidateRef, cacheResult: false,
+      timeout: const Duration(seconds: 3), cancelled: cancelled,
     );
+    Future<void> requireCurrent() async {
+      requests.requireActive();
+      final current = await _loadState(inputs.hostPlatform);
+      requests.requireActive();
+      if (current == null || current.accountId != state.accountId || current.installId != state.installId ||
+          current.sessionToken != state.sessionToken ||
+          _managedProfileCache.generation(inputs.hostPlatform.name) != generation) {
+        throw const BootstrapFailure('Подготовка подключения отменена.',
+          code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
+      }
+    }
+    final selected = alternativesOnly
+        ? await loadCachedManagedProfile(inputs, preferProven: true,
+            selectedCandidateRef: selectedCandidateRef, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease)
+        : await resolve(selectedCandidateRef);
+    await requireCurrent();
+    if (selected == null) return;
+    if (!alternativesOnly) await cacheResolvedManagedProfile(inputs, selected, cancelled: cancelled);
+    final catalog = selected.transportCatalog;
+    if (catalog == null) return;
+    final families = {catalog.selected.protocol};
+    final alternatives = catalog.candidates.where((candidate) => candidate.nodeCode == catalog.selected.nodeCode)
+        .toList()..sort((a, b) => a.priority.compareTo(b.priority));
+    var fetched = 0;
+    for (final candidate in alternatives) {
+      if (!families.add(candidate.protocol) || fetched == 2) continue;
+      final cached = await _managedProfileCache.read(platform: inputs.hostPlatform.name,
+          binding: inputs.binding(state.accountId, state.installId), selectedCandidateRef: candidate.candidateRef);
+      await requireCurrent();
+      final verifiedAt = DateTime.tryParse(_readText(cached?['cache_verified_at']));
+      if (verifiedAt != null && DateTime.now().toUtc().difference(verifiedAt) < ManagedProfileCache.refreshInterval) continue;
+      fetched++;
+      try {
+        final alternate = await resolve(candidate.candidateRef);
+        await requireCurrent();
+        await cacheResolvedManagedProfile(inputs, alternate, cancelled: cancelled, candidateOnly: true);
+      } on BootstrapFailure catch (error) {
+        if (error.statusCode == 401 || error.statusCode == 403 || error.code == 'managed_profile_superseded') rethrow;
+        // A missing alternative never changes the healthy selected profile.
+      } on TimeoutException {
+        // This finite refresh is best effort; the next existing refresh can retry.
+      }
+    }
   }
 
   @override

@@ -329,12 +329,14 @@ typedef PokrovWindowsShellPreferencesUpdater
 class PokrovShellController extends ChangeNotifier {
   Future<void> Function()? _toggle;
   bool Function()? _isConnected;
+  bool Function()? _retainsProtection;
   bool Function()? _isBusy;
   bool Function()? _canToggle;
   bool _externalActionBusy = false;
 
   bool get attached => _toggle != null;
   bool get isConnected => _isConnected?.call() ?? false;
+  bool get retainsProtection => _retainsProtection?.call() ?? false;
   bool get isBusy => _externalActionBusy || (_isBusy?.call() ?? false);
   bool get canToggle => attached && !isBusy && (_canToggle?.call() ?? false);
 
@@ -360,11 +362,13 @@ class PokrovShellController extends ChangeNotifier {
   void _attach({
     required Future<void> Function() toggle,
     required bool Function() isConnected,
+    required bool Function() retainsProtection,
     required bool Function() isBusy,
     required bool Function() canToggle,
   }) {
     _toggle = toggle;
     _isConnected = isConnected;
+    _retainsProtection = retainsProtection;
     _isBusy = isBusy;
     _canToggle = canToggle;
     notifyListeners();
@@ -373,6 +377,7 @@ class PokrovShellController extends ChangeNotifier {
   void _detach() {
     _toggle = null;
     _isConnected = null;
+    _retainsProtection = null;
     _isBusy = null;
     _canToggle = null;
     notifyListeners();

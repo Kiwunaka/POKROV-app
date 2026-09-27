@@ -43,6 +43,16 @@ Unexpected connection failures retain the operation, exception class and at most
 two application filename/line frames in the existing local protection event.
 Exception messages, raw stacks, URLs and profile material are not recorded.
 
+After a healthy ordinary connect, the existing finite cache refresh prepares at
+most two other protocol families on the selected node, in server priority order,
+without delaying connection or probing them. Already materialized profiles are
+reused in the same encrypted account-bound record; catalog changes, expiry and
+explicit denial still restrict reuse. If the API is unreachable, recovery probes
+these cached profiles with the existing native selector and activates its winner.
+Failed activation advances to another candidate, with at most three activations
+per recovery. A retained native guard is shown as blocked traffic, including
+after UI restart; Home, tray and protection details offer explicit Disconnect.
+
 After ordinary Android egress is verified, the existing native session repeats
 the active Core selected-outbound 204 check five seconds after each success.
 Checks do not overlap; cancelled/replaced sessions cannot publish late results.

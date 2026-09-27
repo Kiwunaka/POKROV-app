@@ -41,6 +41,7 @@ class SmartConnectCandidateSelector {
     required Future<void> cancelled,
     String preferredCountryCode = '',
     String recoveryCandidateRef = '',
+    Set<String> excludedCandidateRefs = const {},
     Duration probeTimeout = const Duration(seconds: 4),
     Duration selectionTimeout = const Duration(seconds: 12),
   }) async {
@@ -51,6 +52,7 @@ class SmartConnectCandidateSelector {
     final preferred = recoveryCandidateRef.isNotEmpty
         ? recoveryCandidateRef : _successful[network];
     final candidates = catalog.candidates.where((candidate) =>
+      !excludedCandidateRefs.contains(candidate.candidateRef) &&
       (preferredCountryCode.isEmpty || candidate.countryCode == preferredCountryCode) &&
       (candidate.candidateRef == recoveryCandidateRef ||
         !_failedUntil.containsKey((network, candidate.candidateRef)))).toList()

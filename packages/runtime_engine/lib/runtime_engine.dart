@@ -117,6 +117,7 @@ class RuntimeSnapshot {
     this.defaultNetworkIndex,
     this.dnsReady,
     this.coreEgressValidated,
+    this.protectionRetained = false,
     this.coreEgressValidationRequired,
     this.stagedProfileDigest,
     this.effectiveProfileDigest,
@@ -163,6 +164,8 @@ class RuntimeSnapshot {
   final int? defaultNetworkIndex;
   final bool? dnsReady;
   final bool? coreEgressValidated;
+  /// Native protection remains active even when the tunnel is no longer running.
+  final bool protectionRetained;
   final bool? coreEgressValidationRequired;
 
   /// Local service content identity; not a server assignment revision.
@@ -227,6 +230,7 @@ class RuntimeSnapshot {
         defaultNetworkIndex,
         dnsReady,
         coreEgressValidated,
+        protectionRetained,
         coreEgressValidationRequired,
         stagedProfileDigest,
         effectiveProfileDigest,
@@ -275,6 +279,7 @@ class RuntimeSnapshot {
 
   bool get isCleanlyHealthy =>
       phase == RuntimePhase.running &&
+      !protectionRetained &&
       transportProofPending != true &&
       hostHealth == RuntimeHostHealth.healthy &&
       dnsState == RuntimeDiagnosticState.healthy &&
@@ -4398,6 +4403,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       defaultNetworkIndex: null,
       dnsReady: dnsReady,
       coreEgressValidated: coreEgressValidated,
+      protectionRetained: response['protectionRetained'] == true,
       coreEgressValidationRequired: coreEgressValidationRequired,
       lastFailureKind: lastFailureKind,
       lastStopReason: lastStopReason,

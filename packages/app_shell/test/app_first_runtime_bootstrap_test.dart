@@ -395,6 +395,7 @@ void main() {
     releaseManaged.complete();
     await rejected;
     await expectLater(bootstrapper.cacheResolvedManagedProfile(inputs, discovery), superseded);
+    await expectLater(bootstrapper.cacheResolvedManagedProfile(inputs, discovery, candidateOnly: true), superseded);
     expect((jsonDecode(await sessionFile.readAsString()) as Map)['account_id'], 'new-account');
   });
 

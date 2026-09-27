@@ -82,6 +82,10 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool holdProbes = false;
   bool failProbeCancellation = false;
   bool failHandoff = false;
+  final failedProbeProtocols = <String>{};
+  final probedProtocols = <String>[];
+  final handoffProfiles = <String>[];
+  String? failedHandoffProfile;
   bool failFirstActivation = false;
   bool restoredHandoffGuard = false;
   final probeRelease = Completer<void>();
@@ -105,6 +109,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   Future<RuntimeCandidateProbeResult> probeCandidate({required String probeId,
       required ManagedProfilePayload payload, required Duration timeout, required String expectedNetworkContext}) async {
     expect(value(phase).transportCapabilities, isNotNull);
+    final protocol = payload.source?.protocol ?? 'vless';
+    probedProtocols.add(protocol);
     final cancelled = Completer<void>();
     activeProbes[probeId] = cancelled;
     if (!probeStarted.isCompleted) probeStarted.complete();
@@ -113,7 +119,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
       else { await cancelled.future; }
     }
     activeProbes.remove(probeId);
-    final success = !cancelled.isCompleted;
+    final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol);
     return RuntimeCandidateProbeResult(success: success, failureKind: success ? '' : 'cancelled', duration: Duration.zero);
   }
   @override
@@ -134,12 +140,13 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   }) async {
     calls.add('replace');
     stagedProfile = payload.profileName;
+    handoffProfiles.add(payload.profileName);
     handoffCalls++;
     _request = 'handoff-$handoffCalls';
     expect(activeProbes, isEmpty);
     if (!handoffStarted.isCompleted) handoffStarted.complete();
     await handoffRelease?.future;
-    warpEgressFailure = failHandoff || cancelled.contains(_request);
+    warpEgressFailure = failHandoff || failedHandoffProfile == payload.profileName || cancelled.contains(_request);
     phase = hostPlatform == HostPlatform.windows && warpEgressFailure
         ? RuntimePhase.configStaged : RuntimePhase.running;
     return value(phase);
@@ -194,7 +201,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
                 ? !warpEgressFailure
                 : null,
         coreEgressValidationRequired: true,
-        lastFailureKind: failFirstActivation && connectCalls == 1 && phase == RuntimePhase.configStaged
+        lastFailureKind: failedHandoffProfile != null && warpEgressFailure && phase == RuntimePhase.configStaged
+            ? 'core_egress_dns_failed' : failFirstActivation && connectCalls == 1 && phase == RuntimePhase.configStaged
             ? 'core_egress_timeout' : restoredHandoffGuard ? 'protected_handoff_failed' : phase == RuntimePhase.running &&
                 warpEgressFailure &&
                 !pendingFirstEgress
@@ -381,12 +389,14 @@ void main() {
           }));
         } else if (request.uri.path == '/api/client/profile/managed') {
           managedQueries.add(request.uri.queryParameters);
+          final hy2 = request.uri.queryParameters['selected_candidate_ref'] == 'de:hy2_lab';
           request.response.write(jsonEncode({
             'profile_revision': 'offline-test-profile', 'config_format': 'singbox-json',
-            'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
+            'transport_profile': hy2 ? 'hy2_lab' : 'legacy_reality_fallback',
+            'transport_kind': hy2 ? 'hysteria2' : 'reality',
             if (request.uri.queryParameters['catalog_version'] == '1') 'transport_catalog': {
               'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'offline-test-profile',
-              'selected_candidate_ref': 'de:legacy_reality_fallback',
+              'selected_candidate_ref': hy2 ? 'de:hy2_lab' : 'de:legacy_reality_fallback',
               'candidates': [{
                 'candidate_ref': 'de:legacy_reality_fallback', 'profile_ref': 'legacy_reality_fallback',
                 'node_code': 'de', 'country_code': 'DE', 'protocol': 'vless',
@@ -395,11 +405,31 @@ void main() {
                 'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
                   'platforms': ['android', 'windows'],
                   'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']},
+              }, {
+                'candidate_ref': 'de:hy2_lab', 'profile_ref': 'hy2_lab',
+                'node_code': 'de', 'country_code': 'DE', 'protocol': 'hysteria2',
+                'transport': 'udp', 'protection': 'tls', 'priority': 1,
+                'parameters': {'network': 'udp', 'flow': ''},
+                'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+                  'platforms': ['android', 'windows'], 'required_features': ['singbox_hysteria2_v1']},
               }],
             },
             'provisioning': {'status': 'ready', 'sync_ok': true},
             'access': {'access_state': 'paid_unlimited', 'expiry_at': expiry.toIso8601String()},
-            'config_payload': {
+            'config_payload': hy2 ? {
+              '_meta': {'transport_contract': {
+                'id': 'pokrov.hy2.outbound.v1',
+                'sha256': 'c96b38e58ea33f838f23b80a65f3a9a264e932b7248f206798df9a0b8fa0fb98',
+                'profile': 'hy2_lab', 'state': 'enabled', 'generation': 'ordinary-v1',
+              }},
+              'outbounds': [
+                {'type': 'hysteria2', 'tag': 'test-node', 'server': 'hy2.example.invalid',
+                  'server_port': 443, 'password': 'synthetic-password', 'up_mbps': 10, 'down_mbps': 50,
+                  'tls': {'enabled': true, 'server_name': 'hy2.example.invalid', 'insecure': false, 'alpn': ['h3']}},
+                {'type': 'direct', 'tag': 'direct'},
+              ],
+              'route': {'final': 'test-node'},
+            } : {
               'outbounds': [
                 {'type': 'selector', 'tag': 'proxy', 'outbounds': ['test-node'], 'default': 'test-node'},
                 {'type': 'vless', 'tag': 'test-node', 'server': 'vpn.example.test', 'server_port': 443,
@@ -424,6 +454,9 @@ void main() {
     final onlineRuntime = _Runtime(hostPlatform: HostPlatform.windows)
       ..supportsCandidates = true..phase = RuntimePhase.configStaged;
     final onlineBootstrapper = bootstrapper();
+    final previousProfile = await onlineBootstrapper.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
+        routeMode: inputs.routeMode, runtimeFeatures: RuntimeTransportFeature.values.toSet(), selectCandidate: false);
+    await onlineBootstrapper.markManagedProfileProven(inputs, previousProfile.cacheEntryId, networkSelectionKey: 'network-a');
     final onlineManager = _manager(onlineRuntime, onlineBootstrapper,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(onlineManager.dispose);
@@ -431,22 +464,44 @@ void main() {
     await onlineManager.connect();
     expect(onlineManager.status.phase, ConnectionPhase.connected);
     expect(onlineRuntime.calls, isNot(contains('initialize')));
-    expect(managedQueries.single['catalog_version'], '1');
-    expect(managedQueries.single['client_platform'], inputs.hostPlatform.name);
-    expect(managedQueries.single['runtime_features']!.split(','),
+    expect(managedQueries.first['catalog_version'], '1');
+    expect(managedQueries.first['client_platform'], inputs.hostPlatform.name);
+    expect(managedQueries.first['runtime_features']!.split(','),
         RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort());
-    expect(managedQueries.single.containsKey('core_release'), isFalse);
+    expect(managedQueries.first.containsKey('core_release'), isFalse);
     expect(onlineManager.transportCatalog?.selectedCandidateRef, 'de:legacy_reality_fallback');
     expect(onlineRuntime.probeStarted.isCompleted, isTrue);
-    final downloadedProfile = onlineRuntime.stagedProfile;
-    final proven = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
+    expect(onlineRuntime.probedProtocols, ['vless'], reason: 'last success is tried first; cache preparation does not probe alternatives');
+    var proven = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
         runtimeFeatures: onlineRuntime.value(onlineRuntime.phase).transportCapabilities!.features);
     expect(proven?.provenNetworkSelectionKey, 'network-a');
+    final readyDeadline = DateTime.now().add(const Duration(seconds: 3));
+    ManagedProfilePayload? alternate;
+    do {
+      alternate = await onlineBootstrapper.loadCachedManagedProfile(inputs,
+          selectedCandidateRef: 'de:hy2_lab', runtimeFeatures: RuntimeTransportFeature.values.toSet());
+      if (alternate == null) await Future<void>.delayed(const Duration(milliseconds: 10));
+    } while (alternate == null && DateTime.now().isBefore(readyDeadline));
+    expect(alternate, isNotNull);
+    expect((await onlineBootstrapper.loadCachedManagedProfile(inputs))?.transportCatalog?.selectedCandidateRef,
+        'de:legacy_reality_fallback', reason: 'alternate materialization cannot replace the selected record');
+    apiUnavailable = true;
+    onlineRuntime.failedProbeProtocols.add('vless');
+    final probesBefore = onlineRuntime.probedProtocols.length;
+    await onlineManager.reconnect();
+    expect(onlineManager.status.phase, ConnectionPhase.connected);
+    expect(onlineRuntime.probedProtocols.skip(probesBefore), ['vless', 'hysteria2']);
+    expect(onlineManager.transportCatalog?.selectedCandidateRef, 'de:hy2_lab');
+    expect(onlineRuntime.calls, isNot(contains('disconnect')));
+    proven = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
+        runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    expect(proven?.cacheEntryId, alternate?.cacheEntryId, reason: 'offline proof promotes the existing entry');
+    final downloadedProfile = onlineRuntime.stagedProfile;
     onlineRuntime.failHandoff = true;
     await onlineManager.reconnect();
     expect(onlineManager.status.phase, ConnectionPhase.actionRequired);
     expect(onlineRuntime.phase, RuntimePhase.configStaged);
-    expect(onlineRuntime.handoffCalls, 1);
+    expect(onlineRuntime.handoffCalls, 2);
     expect(protectedValues, isNotEmpty);
     apiUnavailable = true;
     cacheNow = expiry.add(const Duration(hours: 23));
@@ -454,7 +509,7 @@ void main() {
     await onlineManager.reconnect();
     expect(onlineManager.status.phase, ConnectionPhase.connected);
     expect(onlineManager.offlineState, ManagedProfileOfflineState.apiUnavailable);
-    expect(onlineRuntime.handoffCalls, 2);
+    expect(onlineRuntime.handoffCalls, 3);
     expect(onlineRuntime.calls, isNot(contains('disconnect')));
     expect(onlineRuntime.connectCalls, 1);
     final recovered = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
@@ -518,14 +573,33 @@ void main() {
     await manager.connect();
     await runtime.handoffStarted.future;
     while (manager.busy) { await Future<void>.delayed(Duration.zero); }
-    expect(runtime.handoffCalls, 1);
+    expect(runtime.handoffCalls, 3);
+    expect(runtime.handoffProfiles.toSet(), hasLength(3), reason: 'activation failures advance to different candidates');
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     await expectLater(manager.repair(), throwsA(isA<BootstrapFailure>()));
-    expect(runtime.handoffCalls, 2, reason: 'a retry also keeps the native guard');
+    expect(runtime.handoffCalls, inInclusiveRange(4, 6), reason: 'a retry also keeps the native guard');
     expect(runtime.calls, isNot(contains('disconnect')));
-    await manager.disconnect();
+    expect(manager.retainsProtection, isTrue);
+    expect(manager.presentation.primaryActionLabel, 'Отключить');
+    expect(manager.presentation.primaryActionEnabled, isTrue);
+    await manager.toggle();
     expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(1));
+    expect(manager.retainsProtection, isFalse);
+  });
+
+  test('successful probe followed by activation failure advances without disconnect', () async {
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)..supportsCandidates = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true),
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    runtime.failedHandoffProfile = 'de:profile_0';
+    await manager.reconnect();
+    expect(runtime.handoffProfiles, ['de:profile_0', 'de:profile_1']);
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(runtime.overlappingMutation, isFalse);
   });
 
   test('first activation egress failure retries stage and connect without protected replacement', () async {

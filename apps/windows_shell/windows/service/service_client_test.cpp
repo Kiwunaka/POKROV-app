@@ -22,7 +22,8 @@ int main() {
   };
   ServiceRuntimeSnapshot parsed;
   expect(ParseServiceRuntimeSnapshot(snapshot(digest), &parsed) &&
-             parsed.running && parsed.effective_profile_digest == digest,
+             parsed.running && parsed.effective_profile_digest == digest &&
+             !parsed.protection_retained,
          "matching service proof rejected");
   for (const auto& effective : {std::string("none"), std::string(64, '0'),
                                 std::string(64, 'g')}) {
@@ -67,5 +68,18 @@ int main() {
                !parsed_pending.running && !parsed_pending.can_connect,
            "pending service state was rejected or advertised a concurrent connection");
   }
+  const auto retained = std::string(
+      "phase=config_staged;core_ready=1;can_initialize=1;can_connect=1;"
+      "running=0;core_egress_validated=0;dns_ready=0;staged_profile_digest=") +
+      digest + ";effective_profile_digest=none;failure=core_egress_dns_failed;"
+      "routing_catalog_window_version=0;smart_access_lease_version=0;"
+      "routing_catalog_control_version=0;smart_access_runtime_control_version=0;"
+      "transport_capabilities=none;core_module_sha256=none;protection_retained=1;"
+      "transport_proof_pending=0;transport_lease_active=0";
+  ServiceRuntimeSnapshot attached;
+  expect(ParseServiceRuntimeSnapshot(retained, &attached) &&
+             attached.protection_retained && !attached.running &&
+             attached.failure == "core_egress_dns_failed",
+         "reattaching after failed handoff lost the retained native guard");
   return failures == 0 ? 0 : 1;
 }

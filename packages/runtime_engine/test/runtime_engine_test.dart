@@ -1708,6 +1708,7 @@ void main() {
     final snapshot = await engine.snapshot();
 
     expect(snapshot.lane, RuntimeLane.windowsService);
+    expect(snapshot.protectionRetained, isFalse);
     expect(snapshot.phase, RuntimePhase.artifactReady);
     expect(snapshot.helperBinaryPath, 'service://pokrov_service.exe');
     expect(snapshot.coreBinaryPath, isNull);
@@ -1721,9 +1722,11 @@ void main() {
           'coreEgressValidated': false,
           'dnsReady': false,
           'lastFailureKind': 'core_egress_response_timeout',
+          'protectionRetained': true,
         });
     final failed = await engine.snapshot();
     expect(failed.lastFailureKind, 'core_egress_response_timeout');
+    expect(failed.protectionRetained, isTrue);
     expect(failed.hasCoreEgressProbeFailure, isTrue);
     expect(failed.isCleanlyHealthy, isFalse);
     expect(failed.message,

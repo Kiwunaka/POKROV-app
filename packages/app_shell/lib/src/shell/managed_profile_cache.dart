@@ -69,24 +69,59 @@ class ManagedProfileCache {
     required Map<String, Object?> payload,
     int? expectedGeneration,
     bool Function()? isCurrent,
+    bool candidateOnly = false,
   }) =>
       _serialize(() async {
         bool current() => (expectedGeneration == null ||
             expectedGeneration == generation(platform)) && (isCurrent?.call() ?? true);
         if (!current()) return;
         final value = await _load(platform);
-        final previous = value['downloaded'];
+        final catalog = payload['transport_catalog'];
+        final candidateRef = catalog is Map ? catalog['selected_candidate_ref'] : null;
+        final candidates = Map<String, dynamic>.from(value['candidates'] is Map
+            ? value['candidates'] as Map : const {});
+        final previous = candidateOnly ? candidates[candidateRef] : value['downloaded'];
         final previousAt = previous is Map
             ? DateTime.tryParse(previous['verified_at']?.toString() ?? '')
             : null;
         if (previousAt != null && previousAt.isAfter(verifiedAt)) return;
         value['version'] = 1;
-        value['downloaded'] = <String, Object?>{
+        final entry = <String, Object?>{
           'binding': binding,
           'revision': revision,
           'verified_at': verifiedAt.toUtc().toIso8601String(),
           'payload': payload,
         };
+        if (candidateOnly) {
+          final selected = value['downloaded'];
+          final selectedPayload = selected is Map && selected['binding'] == binding
+              ? selected['payload'] : null;
+          final selectedCatalog = selectedPayload is Map ? selectedPayload['transport_catalog'] : null;
+          if (candidateRef is! String || selectedCatalog is! Map || catalog is! Map ||
+              selectedCatalog['revision'] != catalog['revision'] ||
+              !(selectedCatalog['candidates'] as List).any((item) =>
+                  item is Map && item['candidate_ref'] == candidateRef)) return;
+          final descriptors = (selectedCatalog['candidates'] as List).whereType<Map>();
+          final selectedNode = descriptors.firstWhere((item) =>
+              item['candidate_ref'] == selectedCatalog['selected_candidate_ref'])['node_code'];
+          if (!descriptors.any((item) => item['candidate_ref'] == candidateRef && item['node_code'] == selectedNode)) return;
+        } else {
+          value['downloaded'] = entry;
+          final allowed = catalog is Map && catalog['candidates'] is List
+              ? (catalog['candidates'] as List).whereType<Map>()
+                  .map((item) => item['candidate_ref']).toSet() : null;
+          candidates.removeWhere((ref, item) {
+            if (item is! Map || item['binding'] != binding) return true;
+            if (allowed == null) return false;
+            final oldPayload = item['payload'];
+            final oldCatalog = oldPayload is Map ? oldPayload['transport_catalog'] : null;
+            return !allowed.contains(ref) || oldCatalog is! Map ||
+                oldCatalog['revision'] != (catalog as Map)['revision'];
+          });
+        }
+        if (candidateRef is String && candidateRef.isNotEmpty) candidates[candidateRef] = entry;
+        if (candidates.isNotEmpty) value['candidates'] = candidates;
+        else value.remove('candidates');
         final proven = value['proven'];
         if (proven is Map && proven['binding'] != binding) {
           value.remove('proven');
@@ -98,13 +133,15 @@ class ManagedProfileCache {
     required String platform,
     required String binding,
     bool preferProven = false,
+    String selectedCandidateRef = '',
   }) async => (await readResult(platform: platform, binding: binding,
-      preferProven: preferProven)).payload;
+      preferProven: preferProven, selectedCandidateRef: selectedCandidateRef)).payload;
 
   Future<ManagedProfileCacheRead> readResult({
     required String platform,
     required String binding,
     bool preferProven = false,
+    String selectedCandidateRef = '',
   }) => _serialize(() async {
     try {
       final value = await _load(platform);
@@ -125,10 +162,17 @@ class ManagedProfileCache {
       final latest = value['downloaded'];
       final latestPayload = latest is Map && latest['binding'] == binding ? latest['payload'] : null;
       final latestAccess = latestPayload is Map ? latestPayload['access'] : null;
-      for (final slot in preferProven
+      final slots = preferProven
           ? const ['proven', 'downloaded']
-          : const ['downloaded', 'proven']) {
-        final entry = value[slot];
+          : const ['downloaded', 'proven'];
+      final entries = <MapEntry<String, dynamic>>[
+        for (final slot in slots) MapEntry(slot, value[slot]),
+        if (selectedCandidateRef.isNotEmpty && value['candidates'] is Map)
+          MapEntry('candidate', value['candidates'][selectedCandidateRef]),
+      ];
+      for (final row in entries) {
+        final slot = row.key;
+        final entry = row.value;
         if (entry is! Map || entry['binding'] != binding) continue;
         final verified = DateTime.tryParse(entry['verified_at']?.toString() ?? '');
         if (verified == null) continue;
@@ -136,6 +180,14 @@ class ManagedProfileCache {
         if (age.isNegative) continue;
         final payload = entry['payload'];
         if (payload is! Map<String, dynamic>) continue;
+        if (selectedCandidateRef.isNotEmpty) {
+          final catalog = payload['transport_catalog'];
+          if (catalog is! Map || catalog['selected_candidate_ref'] != selectedCandidateRef) continue;
+          final latestCatalog = latestPayload is Map ? latestPayload['transport_catalog'] : null;
+          if (latestCatalog is Map && (latestCatalog['revision'] != catalog['revision'] ||
+              !(latestCatalog['candidates'] as List).any((item) =>
+                  item is Map && item['candidate_ref'] == selectedCandidateRef))) continue;
+        }
         // The latest authorized access window also bounds an older proven profile.
         final access = latestAccess is Map && latestAccess.containsKey('expiry_at')
             ? latestAccess : payload['access'];
@@ -158,6 +210,7 @@ class ManagedProfileCache {
         }
         return ManagedProfileCacheRead(payload: {
           ...payload,
+          'cache_verified_at': entry['verified_at'],
           if (slot == 'proven' && entry['network_selection_key'] is String)
             'proven_network_selection_key': entry['network_selection_key'],
         });
@@ -177,7 +230,18 @@ class ManagedProfileCache {
   }) =>
       _serialize(() async {
         final value = await _load(platform);
-        final downloaded = value['downloaded'];
+        var downloaded = value['downloaded'];
+        if (downloaded is Map && downloaded['binding'] == binding &&
+            downloaded['payload'] is Map && downloaded['payload']['cache_entry_id'] != entryId &&
+            value['candidates'] is Map) {
+          for (final entry in (value['candidates'] as Map).values) {
+            if (entry is Map && entry['binding'] == binding && entry['payload'] is Map &&
+                entry['payload']['cache_entry_id'] == entryId) {
+              downloaded = entry;
+              break;
+            }
+          }
+        }
         if (downloaded is! Map ||
             downloaded['binding'] != binding ||
             downloaded['payload'] is! Map ||

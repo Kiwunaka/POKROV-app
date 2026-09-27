@@ -90,6 +90,8 @@ class _ProtectionCheck {
 class _ProtectionCenterSheet extends StatefulWidget {
   const _ProtectionCenterSheet({
     required this.runtimeSnapshot,
+    required this.retainsProtection,
+    required this.onDisconnect,
     required this.initialData,
     required this.onRefresh,
     required this.onRepair,
@@ -101,6 +103,8 @@ class _ProtectionCenterSheet extends StatefulWidget {
 
   final _ProtectionCenterData initialData;
   final ValueNotifier<RuntimeSnapshot?> runtimeSnapshot;
+  final bool Function() retainsProtection;
+  final Future<void> Function() onDisconnect;
   final Future<_ProtectionCenterData> Function() onRefresh;
   final Future<_ProtectionCenterData> Function(
     ValueChanged<_ProtectionRepairStep> onStep,
@@ -292,6 +296,7 @@ class _ProtectionCenterController extends ChangeNotifier {
 
 class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
   late final _ProtectionCenterController _controller;
+  bool _disconnecting = false;
 
   @override
   void initState() {
@@ -308,6 +313,16 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
   void _onControllerChanged() {
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  Future<void> _disconnect() async {
+    if (_disconnecting) return;
+    setState(() => _disconnecting = true);
+    try {
+      await widget.onDisconnect();
+    } finally {
+      if (mounted) setState(() => _disconnecting = false);
     }
   }
 
@@ -420,7 +435,9 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
     final p = PokrovPalette.of(context);
     final data = _controller.data;
     final checks = _protectionChecks(data);
-    final summary = _protectionSummary(data, checks);
+    final retainsProtection = widget.retainsProtection();
+    final summary = _protectionSummary(data, checks,
+        retainsProtection: retainsProtection);
     return SafeArea(
       top: false,
       child: FractionallySizedBox(
@@ -463,6 +480,15 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
               ),
               const SizedBox(height: 16),
               _ProtectionSummaryCard(summary: summary),
+              if (retainsProtection) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  key: const ValueKey('protection-disconnect-action'),
+                  onPressed: _disconnecting ? null : _disconnect,
+                  icon: const Icon(Icons.power_settings_new_rounded),
+                  label: Text(_disconnecting ? 'Отключаем…' : 'Отключить POKROV'),
+                ),
+              ],
               const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
@@ -603,14 +629,22 @@ class _ProtectionSummary {
 
 _ProtectionSummary _protectionSummary(
   _ProtectionCenterData data,
-  List<_ProtectionCheck> checks,
-) {
+  List<_ProtectionCheck> checks, {
+  required bool retainsProtection,
+}) {
   final snapshot = data.snapshot;
-  if (snapshot?.isCleanlyHealthy ?? false) {
+  if (!retainsProtection && (snapshot?.isCleanlyHealthy ?? false)) {
     return const _ProtectionSummary(
       title: 'Защита работает',
       detail: 'Туннель, DNS и выход через VPN подтверждены.',
       tone: _ProtectionSummaryTone.success,
+    );
+  }
+  if (retainsProtection) {
+    return const _ProtectionSummary(
+      title: 'Трафик заблокирован',
+      detail: 'Защита от прямого выхода включена. Восстановите соединение или отключите POKROV.',
+      tone: _ProtectionSummaryTone.warning,
     );
   }
   if (snapshot?.phase != RuntimePhase.running) {

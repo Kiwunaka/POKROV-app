@@ -187,9 +187,11 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
     final controller = _shellController;
     final attached = controller?.attached ?? false;
     final connected = controller?.isConnected ?? false;
+    final retainsProtection = controller?.retainsProtection ?? false;
     final busy = controller?.isBusy ?? false;
     await trayManager.setToolTip(
-      connected ? 'POKROV подключен' : 'POKROV отключен',
+      retainsProtection ? 'POKROV: трафик заблокирован' :
+          connected ? 'POKROV подключен' : 'POKROV отключен',
     );
     await trayManager.setContextMenu(
       Menu(
@@ -199,7 +201,7 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
             key: 'toggle_connection',
             label: pokrovWindowsTrayConnectionLabel(
               attached: attached,
-              connected: connected,
+              connected: connected || retainsProtection,
               busy: busy,
             ),
             disabled: controller?.canToggle != true,

@@ -158,21 +158,30 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> _refreshManagedProfileCache() async {
+  Future<void> _refreshManagedProfileCache({bool alternativesOnly = false}) async {
+    final generation = _connectionCoordinator.operationGeneration;
+    if (alternativesOnly && _cacheRefreshInFlight) await _cacheRefreshCompletion?.future;
+    if (!_connectionCoordinator.ownsOperation(generation)) return;
     if (_disposed || _runtimeBusy || _cacheRefreshInFlight) return;
     final service = _bootstrapper;
     if (service is! CachedManagedProfileBootstrapper) return;
     _cacheRefreshInFlight = true;
+    final completion = Completer<void>();
+    _cacheRefreshCompletion = completion;
     try {
       await (service as CachedManagedProfileBootstrapper).refreshCachedManagedProfile(
         _managedProfileCacheInputs,
         runtimeFeatures: _runtimeSnapshot?.transportCapabilities?.features ?? const {},
         cancelled: _connectionCoordinator.whenOperationChanges(_connectionCoordinator.operationGeneration),
+        selectedCandidateRef: _activeCandidateRef ?? '',
+        alternativesOnly: alternativesOnly,
       );
     } on Object {
       // A metadata refresh never interrupts a working connection.
     } finally {
       _cacheRefreshInFlight = false;
+      completion.complete();
+      if (identical(_cacheRefreshCompletion, completion)) _cacheRefreshCompletion = null;
     }
   }
 
@@ -300,6 +309,8 @@ class ConnectionManager extends ChangeNotifier {
   ConnectionPresentation get presentation => _connectionPresentation;
   int get attemptId => _commandNumber;
   bool get busy => _runtimeBusy;
+  bool get retainsProtection =>
+      _protectedHandoffActive || _runtimeSnapshot?.protectionRetained == true;
   TransportCandidateCatalog? get transportCatalog => _transportCatalog;
   TransportCandidateCatalog? _transportCatalog;
   final _candidateSelector = SmartConnectCandidateSelector();
@@ -312,6 +323,7 @@ class ConnectionManager extends ChangeNotifier {
   ManagedProfileOfflineState? get offlineState => _offlineState;
   Timer? _cacheRefreshTimer;
   bool _cacheRefreshInFlight = false;
+  Completer<void>? _cacheRefreshCompletion;
   String? get headline => _runtimeHeadline;
   bool get canCancel => _connectionCoordinator.canCancelPrimaryConnect;
   ConnectionStatus get status {
@@ -356,21 +368,23 @@ class ConnectionManager extends ChangeNotifier {
   Future<void> toggle({bool reconnectAfterDisconnect = false}) {
     if (_runtimeBusy && _connectionCoordinator.canCancelPrimaryConnect)
       return cancel();
+    if (!_runtimeBusy && retainsProtection && !reconnectAfterDisconnect)
+      return disconnect();
     return _replaceCommand(() =>
         _toggleRuntime(reconnectAfterDisconnect: reconnectAfterDisconnect));
   }
 
-  Future<void> connect() => _replaceCommand(() => _protectedHandoffActive
+  Future<void> connect() => _replaceCommand(() => retainsProtection
       ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
       : _toggleRuntime(reconnectAfterDisconnect: _runtimeSnapshot?.phase == RuntimePhase.running));
   Future<void> disconnect() => _replaceCommand(() async {
-        if (_protectedHandoffActive) { await _disconnectProtectedHandoff(); return; }
+        if (retainsProtection) { await _disconnectProtectedHandoff(); return; }
         if (_runtimeSnapshot?.phase == RuntimePhase.running ||
             _runtimeSnapshot?.connectionPending == true) {
           await _toggleRuntime();
         }
       });
-  Future<void> reconnect() => _replaceCommand(() => _protectedHandoffActive
+  Future<void> reconnect() => _replaceCommand(() => retainsProtection
       ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
       : _toggleRuntime(reconnectAfterDisconnect: true));
   Future<void> cancel() => _replaceCommand(() async {});
@@ -1758,6 +1772,7 @@ class ConnectionManager extends ChangeNotifier {
     bool suppressWarpRuntime = false,
     int? ownerGeneration,
     String recoveryCandidateRef = '',
+    Set<String> excludedCandidateRefs = const {},
   }) async {
     final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
     final profileRevision = _managedProfileRevision;
@@ -1827,11 +1842,13 @@ class ConnectionManager extends ChangeNotifier {
       }
       _setPhase(recoveryCandidateRef.isEmpty ? ConnectionPhase.probing : ConnectionPhase.recovering, generation);
       final initial = payload;
+      final materialized = <String, ManagedProfilePayload>{catalog.selectedCandidateRef: initial};
       try {
         payload = await _candidateSelector.select(
           catalog: catalog, network: key, platform: _appContext.hostPlatform,
           cancelled: cancelled, preferredCountryCode: country,
           recoveryCandidateRef: recoveryCandidateRef,
+          excludedCandidateRefs: excludedCandidateRefs,
           probe: (candidate, stop, timeout) async {
             requireCurrent();
             var stopped = false;
@@ -1840,27 +1857,9 @@ class ConnectionManager extends ChangeNotifier {
                 : await resolve(candidateRef: candidate.candidateRef, select: false, cache: false, stop: stop);
             requireCurrent();
             if (stopped) return null;
-            final probeId = 'candidate_${generation}_${math.Random.secure().nextInt(1 << 32)}';
-            final result = probing.probeCandidate(probeId: probeId, payload: exact,
-                timeout: timeout, expectedNetworkContext: context);
-            var settled = false;
-            Future<void>? cleanup;
-            unawaited(stop.then((_) {
-              if (!settled) {
-                cleanup = probing.cancelCandidateProbe(probeId);
-                // The cancel RPC can fail before the probe receipt settles.
-                // Observe that error now; the finally still awaits its outcome.
-                unawaited(cleanup!.then<void>((_) {}, onError: (Object _) {}));
-              }
-            }));
-            try {
-              final receipt = await result;
-              requireCurrent();
-              return !stopped && receipt.success ? exact : null;
-            } finally {
-              settled = true;
-              if (cleanup != null) await cleanup;
-            }
+            materialized[candidate.candidateRef] = exact;
+            return _probeManagedCandidate(probing, exact, context: context, cancelled: stop,
+                timeout: timeout, generation: generation, requireCurrent: requireCurrent);
           },
         );
       } on SmartConnectSelectionExhausted {
@@ -1875,6 +1874,16 @@ class ConnectionManager extends ChangeNotifier {
       if (cache is CachedManagedProfileBootstrapper) {
         try {
           await (cache as CachedManagedProfileBootstrapper).cacheResolvedManagedProfile(inputs, payload, cancelled: cancelled);
+          final selected = payload.transportCatalog!.selected;
+          final families = {selected.protocol};
+          final ordered = catalog.candidates.toList()..sort((a, b) => a.priority.compareTo(b.priority));
+          for (final candidate in ordered) {
+            final alternate = materialized[candidate.candidateRef];
+            if (alternate == null || candidate.nodeCode != selected.nodeCode ||
+                families.length >= 3 || !families.add(candidate.protocol)) continue;
+            await (cache as CachedManagedProfileBootstrapper).cacheResolvedManagedProfile(
+                inputs, alternate, cancelled: cancelled, candidateOnly: true);
+          }
         } on BootstrapFailure {
           rethrow;
         } on Object {
@@ -1895,6 +1904,95 @@ class ConnectionManager extends ChangeNotifier {
     _offlineState = null;
     return _prepareManagedProfile(payload,
         suppressWarpRuntime: suppressWarpRuntime, ownerGeneration: generation);
+  }
+
+  Future<ManagedProfilePayload?> _probeManagedCandidate(RuntimeCandidateProbing probing,
+      ManagedProfilePayload payload, {required String context, required Future<void> cancelled,
+      required Duration timeout, required int generation, required void Function() requireCurrent}) async {
+    final probeId = 'candidate_${generation}_${math.Random.secure().nextInt(1 << 32)}';
+    final result = probing.probeCandidate(probeId: probeId, payload: payload,
+        timeout: timeout, expectedNetworkContext: context);
+    var settled = false;
+    var stopped = false;
+    Future<void>? cleanup;
+    unawaited(cancelled.then((_) {
+      stopped = true;
+      if (!settled) {
+        cleanup = probing.cancelCandidateProbe(probeId);
+        unawaited(cleanup!.then<void>((_) {}, onError: (Object _) {}));
+      }
+    }));
+    try {
+      final receipt = await result;
+      requireCurrent();
+      return !stopped && receipt.success ? payload : null;
+    } finally {
+      settled = true;
+      if (cleanup != null) await cleanup;
+    }
+  }
+
+  Future<ManagedProfilePayload> _resolveCachedCandidateProfile(ManagedProfileCacheInputs inputs,
+      ManagedProfilePayload cached, {required int generation, String recoveryCandidateRef = '',
+      Set<String> excludedCandidateRefs = const {}}) async {
+    final engine = _runtimeEngine;
+    final cache = _bootstrapper;
+    final catalog = cached.transportCatalog;
+    final profileRevision = _managedProfileRevision;
+    void requireCurrent() {
+      if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
+          profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
+    }
+    var selected = cached;
+    _candidateNetworkKey = null;
+    if (catalog != null && engine is RuntimeCandidateProbing && cache is CachedManagedProfileBootstrapper) {
+      final probing = engine as RuntimeCandidateProbing;
+      final service = cache as CachedManagedProfileBootstrapper;
+      final features = _runtimeSnapshot?.transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
+      final available = <String, ManagedProfilePayload>{};
+      for (final candidate in catalog.candidates.where((candidate) => candidate.nodeCode == catalog.selected.nodeCode)) {
+        final profile = await service.loadCachedManagedProfile(inputs,
+            selectedCandidateRef: candidate.candidateRef, runtimeFeatures: features);
+        requireCurrent();
+        if (profile != null) available[candidate.candidateRef] = profile;
+      }
+      final network = await probing.readCandidateNetwork();
+      requireCurrent();
+      final key = network.selectionKey;
+      final context = network.contextRef;
+      if (key == null || key.isEmpty || context == null || context.isEmpty) {
+        throw const BootstrapFailure('Не удалось проверить сеть. Попробуйте подключиться ещё раз.', code: 'candidate_network_unavailable');
+      }
+      try {
+        selected = await _candidateSelector.select(
+          catalog: TransportCandidateCatalog(revision: catalog.revision,
+              selectedCandidateRef: catalog.selectedCandidateRef,
+              candidates: catalog.candidates.where((candidate) => available.containsKey(candidate.candidateRef)).toList()),
+          network: key, platform: inputs.hostPlatform,
+          cancelled: _connectionCoordinator.whenOperationEnds(generation),
+          recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
+          probe: (candidate, stop, timeout) => _probeManagedCandidate(probing, available[candidate.candidateRef]!,
+              context: context, cancelled: stop, timeout: timeout, generation: generation, requireCurrent: requireCurrent),
+        );
+      } on SmartConnectSelectionExhausted {
+        throw const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.', code: 'candidate_selection_exhausted');
+      }
+      requireCurrent();
+      final currentNetwork = await probing.readCandidateNetwork();
+      final currentProfile = await service.loadCachedManagedProfile(inputs,
+          selectedCandidateRef: selected.transportCatalog!.selectedCandidateRef, runtimeFeatures: features);
+      requireCurrent();
+      if (currentProfile == null || currentProfile.cacheEntryId != selected.cacheEntryId) {
+        throw const BootstrapFailure('Подготовка подключения отменена.', code: 'managed_profile_superseded', statusCode: 409);
+      }
+      if (currentNetwork.contextRef != context || currentNetwork.selectionKey != key) {
+        throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
+      }
+      _candidateNetworkKey = key;
+    }
+    _transportCatalog = selected.transportCatalog;
+    _candidateRef = selected.transportCatalog?.selectedCandidateRef;
+    return selected;
   }
 
   ManagedProfileCacheInputs get _managedProfileCacheInputs =>
@@ -2935,14 +3033,7 @@ class ConnectionManager extends ChangeNotifier {
         if (usedCachedProfile && cachedPayload != null) {
           // Restore from the protected original, including after process restart
           // or a host clear. Restaging must not renew the cache timestamp.
-          _transportCatalog = cachedPayload.transportCatalog;
-          _candidateRef = cachedPayload.transportCatalog?.selectedCandidateRef;
-          _candidateNetworkKey = null;
-          if (_runtimeEngine is RuntimeCandidateProbing && _candidateRef != null) {
-            final network = await (_runtimeEngine as RuntimeCandidateProbing).readCandidateNetwork();
-            if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
-            _candidateNetworkKey = network.selectionKey;
-          }
+          cachedPayload = await _resolveCachedCandidateProfile(cacheInputs, cachedPayload, generation: generation);
           managedProfile = await _prepareManagedProfile(cachedPayload,
               offline: true, ownerGeneration: generation);
         }
@@ -3398,7 +3489,12 @@ class ConnectionManager extends ChangeNotifier {
       _connectionCoordinator.experience;
 
   ConnectionPresentation get _connectionPresentation =>
-      _connectionCoordinator.presentation;
+      ConnectionPresentation.fromExperience(
+        _connectionExperience,
+        primaryConnectEnabled: _canPrimaryConnect(_runtimeSnapshot),
+        canCancelConnect: canCancel,
+        retainsProtection: retainsProtection,
+      );
 
   void _finalizeProvenConnection(RuntimeSnapshot snapshot) {
     final cacheService = _bootstrapper;
@@ -3414,6 +3510,13 @@ class ConnectionManager extends ChangeNotifier {
       _candidateSelector.recordSuccess(_candidateNetworkKey!, _candidateRef!);
       _activeCandidateRef = _candidateRef;
       _diagnosticsCoordinator.startRuntimePolling(_refreshDesktopRuntimeSnapshot);
+      final generation = _connectionCoordinator.operationGeneration;
+      final completion = _primaryConnectCompletion?.future ?? Future<void>.value();
+      unawaited(completion.then((_) async {
+        if (!_disposed && _connectionCoordinator.ownsOperation(generation) && _runtimeSnapshot?.isCleanlyHealthy == true) {
+          await _refreshManagedProfileCache(alternativesOnly: true);
+        }
+      }));
     }
     _automaticFailoverAttempts = 0;
     _automaticFailoverInFlight = false;
@@ -3768,7 +3871,7 @@ class ConnectionManager extends ChangeNotifier {
     });
     try {
       final retryInitialActivation = _activeCandidateRef == null &&
-          !_protectedHandoffActive && failed != null &&
+          !retainsProtection && failed != null &&
           failed.hasCoreEgressProbeFailure && _runtimeStopConfirmed(failed);
       if (!retryInitialActivation && engine is! RuntimeProtectedHandoff) {
         throw const BootstrapFailure('Для восстановления соединения обновите POKROV.', code: 'protected_handoff_unavailable');
@@ -3784,11 +3887,13 @@ class ConnectionManager extends ChangeNotifier {
       }
       final cacheInputs = _managedProfileCacheInputs;
       final profileRevision = _managedProfileRevision;
+      final failedActivations = <String>{};
+      for (var activation = 0; activation < 3; activation++) {
       var usedCachedProfile = false;
       ManagedProfilePayload payload;
       try {
         payload = await _resolveManagedProfile(ownerGeneration: generation,
-            recoveryCandidateRef: currentRef, deadline: _actionTimeout);
+            recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations, deadline: _actionTimeout);
       } on Object catch (error) {
         if (error is BootstrapFailure && (error.statusCode == 401 || error.statusCode == 403)) {
           _cachedProfileFallbackGate.markAuthorizationDenied();
@@ -3807,17 +3912,10 @@ class ConnectionManager extends ChangeNotifier {
         await _classifyOfflineFailure(generation);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
             profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
-        _transportCatalog = cached.transportCatalog;
-        _candidateRef = cached.transportCatalog?.selectedCandidateRef;
-        _candidateNetworkKey = null;
-        if (engine is RuntimeCandidateProbing && _candidateRef != null) {
-          final network = await (engine as RuntimeCandidateProbing).readCandidateNetwork();
-          if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
-              profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
-          _candidateNetworkKey = network.selectionKey;
-        }
+        final selected = await _resolveCachedCandidateProfile(cacheInputs, cached,
+            generation: generation, recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations);
         // This is the protected original: no winner commit or new cache entry.
-        payload = await _prepareManagedProfile(cached, offline: true, ownerGeneration: generation);
+        payload = await _prepareManagedProfile(selected, offline: true, ownerGeneration: generation);
         usedCachedProfile = true;
       }
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
@@ -3840,6 +3938,8 @@ class ConnectionManager extends ChangeNotifier {
           waitForEgressProof: true);
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       if (!usedCachedProfile) _cachedProfileFallbackGate.markFreshProfileStaged();
+      final tryNext = activation < 2 && current.hasCoreEgressProbeFailure &&
+          _transportCatalog != null && _candidateRef != null;
       _update(() {
         _runtimeSnapshot = current;
         _stagedCacheInputs = cacheInputs;
@@ -3849,14 +3949,19 @@ class ConnectionManager extends ChangeNotifier {
         _stagedProfileUsesWarp = payload.warpPolicy.canEnableRuntime;
         _activeConnectUsedWarp = _stagedProfileUsesWarp;
         _managedProfileDirty = !current.isCleanlyHealthy;
-        _activePhase = current.isCleanlyHealthy ? null : ConnectionPhase.actionRequired;
+        _activePhase = current.isCleanlyHealthy ? null : tryNext ? ConnectionPhase.recovering : ConnectionPhase.actionRequired;
         _runtimeHeadline = current.isCleanlyHealthy
             ? usedCachedProfile ? 'POKROV подключен по сохраненным настройкам. Сервис обновим позже.' : 'POKROV подключен.'
+            : tryNext ? 'Проверяем другое защищённое подключение…'
             : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.';
       });
       if (current.isCleanlyHealthy) {
         _protectedHandoffActive = false;
         _finalizeProvenConnection(current);
+      }
+      if (!tryNext) return;
+      failedActivations.add(_candidateRef!);
+      if (_candidateNetworkKey != null) _candidateSelector.recordFailure(_candidateNetworkKey!, _candidateRef!);
       }
     } on ConnectionOperationSuperseded {
       return;
@@ -4110,6 +4215,7 @@ class ConnectionManager extends ChangeNotifier {
   bool _runtimeStopConfirmed(RuntimeSnapshot snapshot) =>
       snapshot.phase != RuntimePhase.running &&
       snapshot.phase != RuntimePhase.artifactMissing &&
+      !snapshot.protectionRetained &&
       !snapshot.connectionPending &&
       snapshot.supportsLiveConnect;
 

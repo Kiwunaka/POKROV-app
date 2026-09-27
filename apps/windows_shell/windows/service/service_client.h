@@ -50,6 +50,7 @@ struct ServiceRuntimeSnapshot {
   bool can_connect = false;
   bool running = false;
   bool core_egress_validated = false;
+  bool protection_retained = false;
   bool dns_ready = false;
   bool transport_proof_state_available = false;
   bool transport_proof_pending = false;

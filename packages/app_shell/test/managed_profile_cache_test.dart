@@ -85,6 +85,41 @@ void main() {
     expect(await read(), isNull);
   });
 
+  test('candidate material shares binding and denial fences without replacing the winner', () async {
+    const binding = 'account-A/install-A/route-A';
+    Map<String, Object?> payload(String selected, {String revision = 'catalog-1', bool allowAlternate = true}) => {
+      'cache_entry_id': selected, 'access': {'expiry_at': null},
+      'transport_catalog': {'revision': revision, 'selected_candidate_ref': selected,
+        'candidates': [
+          {'candidate_ref': 'de:vless', 'node_code': 'de'},
+          if (allowAlternate) {'candidate_ref': 'de:hy2', 'node_code': 'de'},
+        ]},
+    };
+    Future<void> store(String selected, {bool candidateOnly = false, String revision = 'catalog-1',
+        bool allowAlternate = true, int? generation, String accountBinding = binding}) =>
+      cache.saveDownloaded(platform: 'android', binding: accountBinding, revision: selected,
+          verifiedAt: now, payload: payload(selected, revision: revision, allowAlternate: allowAlternate),
+          candidateOnly: candidateOnly, expectedGeneration: generation);
+    await store('de:vless');
+    await store('de:hy2', candidateOnly: true);
+    expect((await read())?['cache_entry_id'], 'de:vless');
+    expect((await cache.read(platform: 'android', binding: binding, selectedCandidateRef: 'de:hy2'))?['cache_entry_id'], 'de:hy2');
+    await cache.markProven(platform: 'android', binding: binding, entryId: 'de:hy2');
+    expect((await read(preferProven: true))?['cache_entry_id'], 'de:hy2');
+    await store('de:vless', revision: 'catalog-2', allowAlternate: false);
+    expect(await cache.read(platform: 'android', binding: binding, selectedCandidateRef: 'de:hy2'), isNull,
+        reason: 'current catalog disable/revision invalidates an older candidate and its proof');
+    await store('de:hy2', candidateOnly: true);
+    expect(await cache.read(platform: 'android', binding: binding, selectedCandidateRef: 'de:hy2'), isNull);
+    final oldGeneration = cache.generation('android');
+    await cache.clear('android');
+    await store('de:hy2', candidateOnly: true, generation: oldGeneration);
+    expect(await read(), isNull);
+    await store('de:vless', accountBinding: 'account-B/install-A/route-A');
+    await store('de:hy2', candidateOnly: true);
+    expect(await cache.read(platform: 'android', binding: 'account-B/install-A/route-A', selectedCandidateRef: 'de:hy2'), isNull);
+  });
+
   test('different account, inputs, platform and clock rollback cannot reuse cache', () async {
     await save('a');
     expect(await cache.read(platform: 'windows', binding: 'account-A/install-A/route-A'), isNull);

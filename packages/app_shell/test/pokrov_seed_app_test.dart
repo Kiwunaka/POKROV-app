@@ -1073,7 +1073,7 @@ class _CachedBootstrapper extends _FakeBootstrapper
 
   @override
   Future<ManagedProfilePayload?> loadCachedManagedProfile(
-    ManagedProfileCacheInputs inputs, {bool preferProven = false,
+    ManagedProfileCacheInputs inputs, {bool preferProven = false, String selectedCandidateRef = '',
       Set<RuntimeTransportFeature>? runtimeFeatures, String? coreRelease}) async {
     cacheReads.add(preferProven);
     return payload;
@@ -1081,12 +1081,12 @@ class _CachedBootstrapper extends _FakeBootstrapper
 
   @override
   Future<void> cacheResolvedManagedProfile(ManagedProfileCacheInputs inputs,
-      ManagedProfilePayload payload, {Future<void>? cancelled}) async {}
+      ManagedProfilePayload payload, {Future<void>? cancelled, bool candidateOnly = false}) async {}
 
   @override
   Future<void> refreshCachedManagedProfile(ManagedProfileCacheInputs inputs, {
     Set<RuntimeTransportFeature> runtimeFeatures = const {}, String? coreRelease,
-    Future<void>? cancelled,
+    Future<void>? cancelled, String selectedCandidateRef = '', bool alternativesOnly = false,
   }) async {}
 
   @override
@@ -3153,6 +3153,83 @@ void main() {
     expect(find.textContaining('resolver_timeout'), findsNothing);
     expect(find.textContaining('10.24.0.5'), findsNothing);
     expect(find.textContaining('vless'), findsNothing);
+  });
+
+  testWidgets('retained protection exposes explicit off while status refresh waits',
+      (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final runtimeCalls = <String>[];
+    final probe = Completer<PokrovHttpsProbeResult>();
+    var retained = true;
+    var disconnectCalls = 0;
+    Map<String, Object?> snapshot() => <String, Object?>{
+          'phase': retained ? 'configStaged' : 'initialized',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/libcore.aar',
+          'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': false,
+          'protectionRetained': retained,
+          'last_failure_kind': retained ? 'core_egress_dns_failed' : null,
+          'message': retained ? 'Protected recovery failed.' : 'Stopped.',
+        };
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      runtimeCalls.add(call.method);
+      if (call.method == 'runtimeEngine.disconnect') {
+        disconnectCalls += 1;
+        if (disconnectCalls == 2) retained = false;
+      }
+      if (call.method == 'runtimeEngine.snapshot' || call.method == 'runtimeEngine.disconnect') {
+        return snapshot();
+      }
+      return null;
+    });
+    addTearDown(() {
+      if (!probe.isCompleted) probe.complete(const PokrovHttpsProbeResult.unknown());
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+    final controller = PokrovShellController();
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      shellController: controller,
+      protectionProbe: (_) => probe.future,
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Трафик заблокирован'), findsOneWidget);
+    expect(find.text('Отключить'), findsOneWidget);
+    expect(controller.isConnected, isFalse);
+    expect(controller.retainsProtection, isTrue);
+    expect(controller.canToggle, isTrue);
+
+    await tester.tap(find.byKey(const ValueKey('home-connection-details-action')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Защита выключена'), findsNothing);
+    final off = find.byKey(const ValueKey('protection-disconnect-action'));
+    expect(tester.widget<OutlinedButton>(off).onPressed, isNotNull);
+    expect(tester.widget<FilledButton>(find.byKey(const ValueKey('protection-repair-action'))).onPressed, isNull);
+    await tester.tap(off);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(runtimeCalls.where((call) => call == 'runtimeEngine.disconnect'), hasLength(1));
+    expect(controller.retainsProtection, isTrue);
+    expect(find.text('Защита выключена'), findsNothing);
+    expect(find.textContaining('Отключение не подтверждено'), findsOneWidget);
+    expect(tester.widget<OutlinedButton>(off).onPressed, isNotNull);
+    await tester.tap(off);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(runtimeCalls.where((call) => call == 'runtimeEngine.disconnect'), hasLength(2));
+    expect(runtimeCalls, isNot(contains('runtimeEngine.connect')));
+    expect(runtimeCalls, isNot(contains('runtimeEngine.replaceManagedProfile')));
+    expect(controller.isConnected, isFalse);
+    expect(controller.retainsProtection, isFalse);
+    expect(find.text('Защита выключена'), findsOneWidget);
+    probe.complete(const PokrovHttpsProbeResult.unknown());
+    await tester.pumpAndSettle();
   });
 
   testWidgets(

@@ -1770,7 +1770,8 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
          (initialized_ && !core_->TransportCapabilities().empty()
              ? core_->TransportCapabilities() : "none") +
          ";core_module_sha256=" +
-         (initialized_ && !core_->CoreModuleSHA256().empty() ? core_->CoreModuleSHA256() : "none");
+         (initialized_ && !core_->CoreModuleSHA256().empty() ? core_->CoreModuleSHA256() : "none") +
+         ";protection_retained=" + (guarded ? "1" : "0");
 }
 
 bool RuntimeHost::PrepareDirectories() {

@@ -254,6 +254,8 @@ flutter::EncodableValue RuntimeSnapshotValue(
       flutter::EncodableValue("windows_service_stage_request_sha256");
   values[flutter::EncodableValue("coreEgressValidated")] =
       flutter::EncodableValue(current_proof);
+  values[flutter::EncodableValue("protectionRetained")] =
+      flutter::EncodableValue(snapshot.compatible && snapshot.protection_retained);
   values[flutter::EncodableValue("coreEgressValidationRequired")] =
       flutter::EncodableValue(true);
   values[flutter::EncodableValue("connectionPending")] =

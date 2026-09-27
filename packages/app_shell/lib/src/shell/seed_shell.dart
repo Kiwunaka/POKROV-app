@@ -583,6 +583,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   Future<void> _toggleRuntime({bool reconnectAfterDisconnect = false}) async {
     if (_runtimeBusy) return _connectionManager.toggle(reconnectAfterDisconnect: reconnectAfterDisconnect);
+    if (_connectionManager.retainsProtection && !reconnectAfterDisconnect) {
+      return _connectionManager.disconnect();
+    }
     final startingGeneration = _connectionManager.attemptId;
     final willConnect = _runtimeSnapshot?.phase != RuntimePhase.running || reconnectAfterDisconnect;
     if (willConnect && _selectedRouteMode == RouteMode.selectiveServices &&
@@ -698,8 +701,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     widget.shellController?._attach(
       toggle: _toggleRuntime,
       isConnected: () => _connectionPresentation.isVerified,
+      retainsProtection: () => _connectionManager.retainsProtection,
       isBusy: () => _runtimeBusy,
       canToggle: () =>
+          _connectionManager.retainsProtection ||
           _clientExperienceLoaded &&
           _firstLaunchStep == _FirstLaunchStep.ready &&
           (_runtimeSnapshot?.phase == RuntimePhase.running ||
@@ -2448,6 +2453,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
       builder: (context) => _ProtectionCenterSheet(
         runtimeSnapshot: _protectionRuntimeSnapshot,
+        retainsProtection: () => _connectionManager.retainsProtection,
+        onDisconnect: _connectionManager.disconnect,
         initialData: _ProtectionCenterData(
           snapshot: _runtimeSnapshot,
           liveStats: const RuntimeLiveStats.unavailable(),
