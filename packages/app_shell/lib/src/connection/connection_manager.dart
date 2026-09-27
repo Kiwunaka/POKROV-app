@@ -1417,25 +1417,27 @@ class ConnectionManager extends ChangeNotifier {
       }
       return;
     }
-    if (identical(observed, refreshed) ||
+    final unchanged = identical(observed, refreshed) ||
         (observed != null &&
             refreshed != null &&
-            observed.hasSameStateAs(refreshed))) {
-      return;
+            observed.hasSameStateAs(refreshed));
+    if (!unchanged) {
+      _update(() {
+        _runtimeSnapshot = refreshed;
+        if (observed?.phase != refreshed?.phase ||
+            observed?.isCleanlyHealthy != refreshed?.isCleanlyHealthy) {
+          _runtimeHeadline = null;
+        }
+      });
     }
-    _update(() {
-      _runtimeSnapshot = refreshed;
-      if (observed?.phase != refreshed?.phase ||
-          observed?.isCleanlyHealthy != refreshed?.isCleanlyHealthy) {
-        _runtimeHeadline = null;
-      }
-    });
+    // A UI/resume read may already have adopted this failure. Recovery belongs
+    // to the active candidate, not to which observer first saw the snapshot.
     if (_transportCatalog != null && _activeCandidateRef != null && refreshed != null &&
-        observed?.phase == RuntimePhase.running &&
-        (refreshed.hasCoreEgressProbeFailure || refreshed.phase != RuntimePhase.running)) {
+        (refreshed.hasCoreEgressProbeFailure ||
+            observed?.phase == RuntimePhase.running && refreshed.phase != RuntimePhase.running)) {
       _scheduleCandidateRecovery(refreshed);
     }
-    unawaited(_reportClientLifecycle("runtime_observed"));
+    if (!unchanged) unawaited(_reportClientLifecycle("runtime_observed"));
   }
 
   static const _nativeMutationOperations = {

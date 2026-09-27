@@ -64,4 +64,17 @@ void main() {
       platform: HostPlatform.windows, clientRelease: '1.2.0', runtimeFeatures: const {}),
       throwsA(isA<TransportManifestFailure>()));
   });
+
+  test('XHTTP REALITY requires both compiled features and an empty VLESS flow', () {
+    final row = candidate('de', 'xhttp_reality', transport: 'xhttp', features: [
+      'singbox_vless_v1', 'singbox_xhttp_v1', 'singbox_tls_v1',
+      'singbox_utls_v1', 'singbox_reality_v1',
+    ]);
+    expect(parse(catalog([row])).selected.protection, 'reality');
+    (row['requirements'] as Map)['required_features'] = ['singbox_vless_v1', 'singbox_xhttp_v1'];
+    expect(() => parse(catalog([row])), throwsA(isA<TransportManifestFailure>()));
+    (row['requirements'] as Map)['required_features'] = [for (final feature in RuntimeTransportFeature.values) feature.wireName];
+    (row['parameters'] as Map)['flow'] = 'xtls-rprx-vision';
+    expect(() => parse(catalog([row])), throwsA(isA<TransportManifestFailure>()));
+  });
 }

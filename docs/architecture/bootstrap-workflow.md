@@ -76,8 +76,12 @@ alternatives in parallel with the existing selector, before waiting for the API.
 Manual reconnect keeps its current-candidate-first order. Cache account binding,
 expiry, authorization denial and the protected handoff still apply; initial
 probe retries and signed transport lease rules are unchanged. The five-second
-native detection budget is not an end-to-end failover measurement; the phone's
-15-second acceptance target still requires a device test.
+native detection budget is not an end-to-end failover measurement. The runtime
+observer also evaluates a confirmed candidate failure when a UI or resume read
+has already stored the same snapshot. Existing pending-recovery and action-required
+guards still bound retries; reading diagnostics cannot consume the recovery event.
+The regression covers a second failure after VLESS-to-AWG recovery, followed by
+cached HY2 activation without Disconnect.
 
 Online candidate selection prepares exact profiles within its existing shared
 12-second deadline; each four-second native handshake/204 budget starts only
@@ -96,7 +100,10 @@ filters and four enabled permits; the IPC pending snapshot was stale. Test fault
 rules were removed and explicit Disconnect restored TUN/WFP zero and ordinary
 HTTPS. One earlier fresh full-device connect exhausted its candidates after a
 four-second native probe; the next ordinary connect passed, and that first
-failure remains unexplained. The Huawei timing check is pending device access.
+failure remains unexplained. On Huawei 4077, an account-scoped AWG fault was
+detected within 3.8–6.1 seconds, but no new native healthy proof appeared for at
+least 51.9 seconds. Traffic remained guarded and the fault was removed. The
+15-second phone target requires a device recheck with the observer fix.
 
 AWG 3.1 and Hysteria2 use the ordinary managed candidate path when the server
 offers a ready device-bound profile and the loaded Core supports it. The internal
@@ -1661,6 +1668,14 @@ The same encrypted record stores the managed candidate catalog and rechecks its
 compatibility before reuse. Only a proven profile carries its network selection
 key. Parallel candidate resolution does not write session profile metadata or
 cache entries; the current winner commits under the existing account-state lock.
+
+The ordinary catalog admits XHTTP with TLS or REALITY. REALITY candidates require
+the compiled VLESS, TLS, uTLS, XHTTP and REALITY features and an empty VLESS flow.
+Before staging an XHTTP profile, the client checks that its VLESS leaves use the
+catalog's protection, a native XHTTP mode, and HTTP/2 plus uTLS for REALITY.
+The selected profile still uses the ordinary bounded candidate and active-egress
+probes; catalog admission alone does not establish connectivity.
+
 An explicit denial invalidates downloads still in flight. Startup and roughly
 six-hour refresh download through the same managed endpoint without probes or
 changing the running tunnel. Connect still attempts a fresh managed profile.

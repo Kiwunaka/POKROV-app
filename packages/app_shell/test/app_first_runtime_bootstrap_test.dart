@@ -240,17 +240,20 @@ void main() {
     final probes = <String>[];
     var returnWrongSelection = false;
     var returnWrongKind = false;
+    var returnWrongXhttpProtection = false;
     var returnUnauthorized = false;
     Completer<void>? managedRequested;
     Completer<void>? releaseManaged;
     Map<String, Object?> descriptor(String node, String profile, String transport) => {
       'candidate_ref': '$node:$profile', 'profile_ref': profile, 'node_code': node,
       'country_code': node.split('-').first.toUpperCase(), 'protocol': 'vless', 'transport': transport,
-      'protection': transport == 'tcp' ? 'reality' : 'tls', 'priority': 0,
+      'protection': transport == 'grpc' ? 'tls' : 'reality', 'priority': 0,
       'parameters': {'network': 'tcp', 'flow': transport == 'tcp' ? 'xtls-rprx-vision' : ''},
       'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
         'platforms': ['windows'], 'required_features': [
-          'singbox_vless_v1', transport == 'tcp' ? 'singbox_reality_v1' : 'singbox_grpc_v1']},
+          'singbox_vless_v1',
+          if (transport == 'xhttp') ...['singbox_xhttp_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_reality_v1']
+          else transport == 'tcp' ? 'singbox_reality_v1' : 'singbox_grpc_v1']},
     };
     unawaited(() async {
       await for (final request in server) {
@@ -274,18 +277,20 @@ void main() {
           }
           final chosen = !returnWrongSelection && query['selected_candidate_ref'] == 'de:grpc_443_primary';
           final sibling = query['selected_candidate_ref'] == 'ru-spb:grpc_443_primary';
+          final xhttp = query['selected_candidate_ref'] == 'de:xhttp_reality';
           final grpc = chosen || sibling;
-          final node = sibling ? 'ru-spb' : chosen ? 'de' : 'pl';
-          final profile = grpc ? 'grpc_443_primary' : 'legacy_reality_fallback';
+          final node = sibling ? 'ru-spb' : chosen || xhttp ? 'de' : 'pl';
+          final profile = xhttp ? 'xhttp_reality' : grpc ? 'grpc_443_primary' : 'legacy_reality_fallback';
           request.response.write(jsonEncode({
             ..._readyManagedProfile('catalog-rev'),
             'transport_profile': profile,
-            'transport_kind': grpc ? (returnWrongKind ? 'xhttp' : 'grpc') : 'reality',
+            'transport_kind': xhttp ? 'xhttp' : grpc ? (returnWrongKind ? 'xhttp' : 'grpc') : 'reality',
             'transport_catalog': {
               'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'catalog-rev',
               'selected_candidate_ref': '$node:$profile', 'candidates': [
                 descriptor('pl', 'legacy_reality_fallback', 'tcp'),
                 descriptor('de', 'grpc_443_primary', 'grpc'),
+                descriptor('de', 'xhttp_reality', 'xhttp'),
                 if (sibling) descriptor('ru-spb', 'grpc_443_primary', 'grpc'),
               ],
             },
@@ -302,7 +307,14 @@ void main() {
               'outbounds': [
                 {'type': 'selector', 'tag': 'proxy', 'outbounds': [node], 'default': node},
                 {'type': 'vless', 'tag': node, 'server': '$node.example.test', 'server_port': 443,
-                  if (grpc) 'transport': {'type': 'grpc', 'service_name': 'test'}},
+                  if (grpc) 'transport': {'type': 'grpc', 'service_name': 'test'},
+                  if (xhttp) ...{
+                    'transport': {'type': 'xhttp', 'mode': 'stream-one', 'path': '/test'},
+                    'tls': {'enabled': true, 'alpn': ['h2'],
+                      'utls': {'enabled': true, 'fingerprint': 'chrome'},
+                      if (!returnWrongXhttpProtection) 'reality': {'enabled': true,
+                        'public_key': 'synthetic-public-key', 'short_id': ''}},
+                  }},
               ],
               'route': {'final': 'proxy'},
             },
@@ -337,6 +349,22 @@ void main() {
     final selected = (config['outbounds'] as List).where((item) => item['tag'] == 'de').single;
     expect(selected['transport']['type'], 'grpc', reason: 'winner comes from secure server profile');
     expect((config['outbounds'] as List).where((item) => item['tag'] == 'pl'), isEmpty);
+
+    final xhttp = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      selectedCandidateRef: 'de:xhttp_reality', selectCandidate: false, cacheResult: false);
+    expect(xhttp.transportCatalog?.selected.protection, 'reality');
+    final xhttpLeaf = ((jsonDecode(xhttp.configPayload) as Map)['outbounds'] as List)
+        .where((item) => item['tag'] == 'de').single;
+    expect(xhttpLeaf['transport'], {'type': 'xhttp', 'mode': 'stream-one', 'path': '/test'});
+    expect(xhttpLeaf['tls']['reality']['enabled'], isTrue);
+    returnWrongXhttpProtection = true;
+    await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      selectedCandidateRef: 'de:xhttp_reality', selectCandidate: false, cacheResult: false),
+      throwsA(isA<TransportManifestFailure>()
+        .having((failure) => failure.code, 'code', 'transport_catalog_profile_mismatch')));
+    returnWrongXhttpProtection = false;
 
     const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
     final restored = await bootstrapper.loadCachedManagedProfile(inputs,

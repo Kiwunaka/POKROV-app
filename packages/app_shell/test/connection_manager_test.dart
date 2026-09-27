@@ -703,6 +703,29 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 
+  test('repeated periodic failure recovers when the UI reads the failed snapshot first', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _CachedBootstrapper();
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    runtime.warpEgressFailure = true;
+    await runtime.handoffStarted.future.timeout(const Duration(seconds: 3));
+    while (manager.busy) { await Future<void>.delayed(Duration.zero); }
+    expect(runtime.handoffProfiles, ['de:cached_1']);
+    expect(manager.status.phase, ConnectionPhase.connected);
+
+    runtime.warpEgressFailure = true;
+    expect((await manager.readSnapshot()).hasCoreEgressProbeFailure, isTrue);
+    final deadline = DateTime.now().add(const Duration(seconds: 3));
+    while ((runtime.handoffCalls < 2 || manager.busy) && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(runtime.handoffProfiles, ['de:cached_1', 'de:cached_2']);
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.calls, isNot(contains('disconnect')));
+  });
+
   for (final interrupt in ['cancel', 'deny']) {
     test('$interrupt during cached recovery cannot activate a late winner', () async {
       final runtime = _Runtime()..supportsCandidates = true;

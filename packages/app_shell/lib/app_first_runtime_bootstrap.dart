@@ -6403,7 +6403,7 @@ class AppFirstRuntimeBootstrapper
            transportCatalog.selected.protection) != switch (_readText(response['transport_kind'])) {
            'reality' => ('vless', 'tcp', 'reality'),
            'grpc' => ('vless', 'grpc', 'tls'),
-           'xhttp' => ('vless', 'xhttp', 'tls'),
+           'xhttp' => ('vless', 'xhttp', transportCatalog.selected.protection),
            'awg31' => ('awg', 'udp', 'awg31'),
            'hysteria2' => ('hysteria2', 'udp', 'tls'),
            _ => ('', '', ''),
@@ -6432,6 +6432,30 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure(
         'POKROV не смог завершить настройку: данных подключения недостаточно.',
       );
+    }
+    if (transportCatalog?.selected.transport == 'xhttp') {
+      try {
+        final config = _readMap(configPayload is String ? jsonDecode(configPayload) : configPayload);
+        final outbounds = (config['outbounds'] as List).map(_readMap)
+            .where((outbound) => outbound['type'] == 'vless').toList();
+        if (outbounds.isEmpty) throw const FormatException();
+        for (final outbound in outbounds) {
+          final tls = _readMap(outbound['tls']);
+          final transport = _readMap(outbound['transport']);
+          final reality = _readMap(tls['reality'])['enabled'] == true;
+          if (tls['enabled'] != true ||
+              (reality ? 'reality' : 'tls') != transportCatalog!.selected.protection ||
+              transport['type'] != 'xhttp' ||
+              !const {'stream-one', 'stream-up', 'packet-up'}.contains(transport['mode']) ||
+              _readText(outbound['flow']).isNotEmpty ||
+              (reality && (_readMap(tls['utls'])['enabled'] != true ||
+                  tls['alpn'] is! List || (tls['alpn'] as List).firstOrNull != 'h2'))) {
+            throw const FormatException();
+          }
+        }
+      } on Object {
+        throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+      }
     }
     final provisioning = _readMap(response['provisioning']);
     final provisioningReady = _readBool(provisioning['sync_ok']) ||

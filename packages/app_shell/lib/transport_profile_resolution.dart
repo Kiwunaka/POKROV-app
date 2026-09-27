@@ -46,7 +46,8 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       final protection = text(item['protection'], refPattern, 32);
       final supported = switch (protocol) {
         'vless' => (transport == 'tcp' && protection == 'reality') ||
-            (const {'grpc', 'xhttp'}.contains(transport) && protection == 'tls'),
+            (const {'grpc', 'xhttp'}.contains(transport) && protection == 'tls') ||
+            (transport == 'xhttp' && protection == 'reality'),
         'awg' => transport == 'udp' && protection == 'awg31',
         'hysteria2' => transport == 'udp' && protection == 'tls',
         _ => false,
@@ -56,6 +57,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       _keys(parameters, const {'network', 'flow'});
       if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
           !const {'', 'xtls-rprx-vision'}.contains(parameters['flow'])) throw const FormatException();
+      if (transport == 'xhttp' && parameters['flow'] != '') throw const FormatException();
       final requirements = _transportMap(item['requirements']);
       _keys(requirements, const {'minimum_client_release', 'minimum_core_release', 'platforms', 'required_features'});
       final minimumClient = requirements['minimum_client_release'];
@@ -85,6 +87,10 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
           _ => RuntimeTransportFeature.reality,
         }},
       };
+      if (transport == 'xhttp' && protection == 'reality') {
+        candidateFeatures.addAll({RuntimeTransportFeature.tls,
+          RuntimeTransportFeature.utls, RuntimeTransportFeature.reality});
+      }
       if (!features.containsAll(candidateFeatures)) throw const FormatException();
       if (!platforms.contains(platform) || !runtimeFeatures.containsAll(features) ||
           _transportReleaseCompare(clientRelease, minimumClient) < 0 ||
