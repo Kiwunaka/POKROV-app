@@ -54,6 +54,8 @@ class _StubBootstrapper
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {

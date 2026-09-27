@@ -83,6 +83,8 @@ abstract interface class ManagedProfileBootstrapper {
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
     Duration? timeout,
     Future<void>? cancelled,
   });
@@ -3079,6 +3081,8 @@ class AppFirstRuntimeBootstrapper
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
@@ -3139,6 +3143,8 @@ class AppFirstRuntimeBootstrapper
           );
           requests.requireActive();
           var manifest = await _fetchManagedManifest(
+            runtimeFeatures: runtimeFeatures,
+            coreRelease: coreRelease,
             tcpFallbackFromRevision: tcpFallbackFromRevision,
             state: state,
             hostPlatform: hostPlatform,
@@ -3171,32 +3177,49 @@ class AppFirstRuntimeBootstrapper
               );
             }
             if (selectedNodeCode.isNotEmpty) {
-              try {
-                manifest = _promoteSelectedSmartConnectNode(
-                  manifest: manifest,
-                  selectedNodeCode: selectedNodeCode,
-                );
-              } on Object {
-                requests.requireActive();
-                try {
+              final catalog = manifest.payload.transportCatalog;
+              if (catalog != null) {
+                final candidate = catalog.selected.nodeCode == selectedNodeCode
+                    ? catalog.selected
+                    : catalog.candidates.firstWhere((item) => item.nodeCode == selectedNodeCode);
+                if (candidate.candidateRef != catalog.selectedCandidateRef) {
                   manifest = await _fetchManagedManifest(
+                    runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
+                    selectedCandidateRef: candidate.candidateRef,
                     tcpFallbackFromRevision: tcpFallbackFromRevision,
-                    state: state,
-                    hostPlatform: hostPlatform,
-                    routeMode: routeMode,
-                    selectedApps: normalizedSelectedApps,
-                    preferredNodeCode: selectedNodeCode,
-                    preferredVariantId: 'direct',
-                    client: client,
+                    state: state, hostPlatform: hostPlatform, routeMode: routeMode,
+                    selectedApps: normalizedSelectedApps, preferredNodeCode: selectedNodeCode,
+                    preferredVariantId: 'direct', client: client,
                   ).timeout(_smartConnectProfileRefreshTimeout);
+                }
+              } else {
+                try {
+                  manifest = _promoteSelectedSmartConnectNode(
+                    manifest: manifest,
+                    selectedNodeCode: selectedNodeCode,
+                  );
                 } on Object {
                   requests.requireActive();
-                  if (normalizedExcludedNodeCodes.isNotEmpty) {
-                    rethrow;
+                  try {
+                    manifest = await _fetchManagedManifest(
+                      tcpFallbackFromRevision: tcpFallbackFromRevision,
+                      state: state,
+                      hostPlatform: hostPlatform,
+                      routeMode: routeMode,
+                      selectedApps: normalizedSelectedApps,
+                      preferredNodeCode: selectedNodeCode,
+                      preferredVariantId: 'direct',
+                      client: client,
+                    ).timeout(_smartConnectProfileRefreshTimeout);
+                  } on Object {
+                    requests.requireActive();
+                    if (normalizedExcludedNodeCodes.isNotEmpty) {
+                      rethrow;
+                    }
+                    // The preliminary managed profile is already authorized and
+                    // usable. A bounded Smart Connect refresh must not turn a
+                    // transient selection/refetch failure into a dead-end.
                   }
-                  // The preliminary managed profile is already authorized and
-                  // usable. A bounded Smart Connect refresh must not turn a
-                  // transient selection/refetch failure into a dead-end.
                 }
               }
             }
@@ -6086,6 +6109,9 @@ class AppFirstRuntimeBootstrapper
     required String preferredVariantId,
     required HttpClient client,
     String tcpFallbackFromRevision = '',
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
+    String selectedCandidateRef = '',
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
     final normalizedPreferredNode = preferredNodeCode.trim().toLowerCase();
@@ -6096,6 +6122,16 @@ class AppFirstRuntimeBootstrapper
       requestPath +=
           '${requestPath.contains('?') ? '&' : '?'}fallback_from_revision=${Uri.encodeQueryComponent(tcpFallbackFromRevision)}';
     }
+    if (!transportManifestEnabled && runtimeFeatures.isNotEmpty && preferredVariantId == 'direct') {
+      final query = <String, String>{
+        'catalog_version': '1', 'client_platform': hostPlatform.name,
+        'client_release': pokrovClientVersion,
+        'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
+        if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,
+        if (selectedCandidateRef.isNotEmpty) 'selected_candidate_ref': selectedCandidateRef,
+      };
+      requestPath += '${requestPath.contains('?') ? '&' : '?'}${Uri(queryParameters: query).query}';
+    }
     final response = await _requestJson(
       method: 'GET',
       path: requestPath,
@@ -6104,6 +6140,29 @@ class AppFirstRuntimeBootstrapper
       hostPlatform: hostPlatform,
     );
     final verifiedAt = DateTime.now().toUtc();
+    final transportCatalog = response.containsKey('transport_catalog')
+        ? decodeManagedTransportCatalog(response['transport_catalog'], platform: hostPlatform,
+            clientRelease: pokrovClientVersion, runtimeFeatures: runtimeFeatures,
+            coreRelease: coreRelease, requestedNodeCode: normalizedPreferredNode,
+            requestedCandidateRef: selectedCandidateRef)
+        : null;
+    if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
+      throw const TransportManifestFailure('transport_catalog_selection_mismatch');
+    }
+    if (transportCatalog != null &&
+        (transportCatalog.revision != _readText(response['profile_revision']) ||
+         transportCatalog.selected.profileRef != _readText(response['transport_profile']) ||
+         (transportCatalog.selected.protocol, transportCatalog.selected.transport,
+           transportCatalog.selected.protection) != switch (_readText(response['transport_kind'])) {
+           'reality' => ('vless', 'tcp', 'reality'),
+           'grpc' => ('vless', 'grpc', 'tls'),
+           'xhttp' => ('vless', 'xhttp', 'tls'),
+           'awg31' => ('awg', 'udp', 'awg31'),
+           'hysteria2' => ('hysteria2', 'udp', 'tls'),
+           _ => ('', '', ''),
+         })) {
+      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+    }
 
     if (tcpFallbackFromRevision.isNotEmpty &&
         (_readText(response['transport_profile']) !=
@@ -6141,15 +6200,26 @@ class AppFirstRuntimeBootstrapper
       response['warp_policy'] ??
           _readMap(response['client_policy'])['warp_policy'],
     );
-    final smartConnect = SmartConnectProfile.tryParse(
+    var smartConnect = SmartConnectProfile.tryParse(
       response['smart_connect'],
     );
+    if (transportCatalog != null && smartConnect != null) {
+      final nodes = transportCatalog.candidates.map((candidate) => candidate.nodeCode).toSet();
+      final previous = smartConnect;
+      smartConnect = SmartConnectProfile(eligible: previous.eligible,
+        fallbackRequired: previous.fallbackRequired, shortlistReason: previous.shortlistReason,
+        shortlistLimit: previous.shortlistLimit, shortlistRevision: previous.shortlistRevision,
+        transportProfile: previous.transportProfile, profileRevision: previous.profileRevision,
+        fallbackOrder: previous.fallbackOrder, stickiness: previous.stickiness,
+        shortlist: previous.shortlist.where((node) => nodes.contains(node.code)).toList(growable: false));
+    }
     final isOwnedTransportLab = _ownedTransportLabProfiles.contains(
       _readText(response['transport_profile']).trim().toLowerCase(),
     );
-    final effectiveSmartConnect = isOwnedTransportLab ? null : smartConnect;
-    final effectivePreferredNode =
-        isOwnedTransportLab ? '' : normalizedPreferredNode;
+    final effectiveSmartConnect = isOwnedTransportLab && transportCatalog == null
+        ? null : smartConnect;
+    final effectivePreferredNode = isOwnedTransportLab || transportCatalog != null
+        ? '' : normalizedPreferredNode;
     final clientRuleSetCatalog = await _ensureAllExceptRuRuleSetCatalog(
       hostPlatform: hostPlatform,
       routeMode: routeMode,
@@ -6195,7 +6265,8 @@ class AppFirstRuntimeBootstrapper
       materializedForRuntime: true,
       routeMode: routeMode,
       smartConnect: effectiveSmartConnect,
-      resolvedNodeCode: effectivePreferredNode,
+      transportCatalog: transportCatalog,
+      resolvedNodeCode: transportCatalog?.selected.nodeCode ?? effectivePreferredNode,
       warpPolicy: warpPolicy,
       freeProfileAccess: FreeProfileAccess.tryParse(
         access: response['access'],

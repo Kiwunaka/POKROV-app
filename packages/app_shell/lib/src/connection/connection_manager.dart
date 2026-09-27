@@ -273,6 +273,8 @@ class ConnectionManager extends ChangeNotifier {
   ConnectionPresentation get presentation => _connectionPresentation;
   int get attemptId => _commandNumber;
   bool get busy => _runtimeBusy;
+  TransportCandidateCatalog? get transportCatalog => _transportCatalog;
+  TransportCandidateCatalog? _transportCatalog;
   String? get headline => _runtimeHeadline;
   bool get canCancel => _connectionCoordinator.canCancelPrimaryConnect;
   ConnectionStatus get status {
@@ -1668,6 +1670,9 @@ class ConnectionManager extends ChangeNotifier {
       hostPlatform: _appContext.hostPlatform,
       routeMode: _selectedRouteMode,
       tcpFallbackFromRevision: _tcpFallbackFromRevision,
+      runtimeFeatures: _bootstrapper is AppFirstTransportManifestService &&
+              (_bootstrapper as AppFirstTransportManifestService).transportManifestEnabled
+          ? const {} : _runtimeSnapshot?.transportCapabilities?.features ?? const {},
       selectedApps: _selectedRouteMode == RouteMode.selectedApps ||
               _selectedRouteMode == RouteMode.excludedApps
           ? _selectedAppIds
@@ -1687,6 +1692,7 @@ class ConnectionManager extends ChangeNotifier {
         profileRevision != _managedProfileRevision) {
       throw const ConnectionOperationSuperseded();
     }
+    _transportCatalog = payload.transportCatalog;
     return _prepareManagedProfile(payload,
         suppressWarpRuntime: suppressWarpRuntime, ownerGeneration: generation);
   }

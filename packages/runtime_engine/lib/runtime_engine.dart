@@ -1294,6 +1294,7 @@ class ManagedProfilePayload {
     this.coreEgressProbeRequired = true,
     this.routeMode = RouteMode.fullTunnel,
     this.smartConnect,
+    this.transportCatalog,
     this.resolvedNodeCode = '',
     this.warpPolicy = WarpRuntimePolicy.disabled,
     this.freeProfileAccess,
@@ -1326,6 +1327,7 @@ class ManagedProfilePayload {
   final bool coreEgressProbeRequired;
   final RouteMode routeMode;
   final SmartConnectProfile? smartConnect;
+  final TransportCandidateCatalog? transportCatalog;
 
   /// Exact Smart Connect node materialized into the selector default.
   final String resolvedNodeCode;
@@ -1375,6 +1377,7 @@ class ManagedProfilePayload {
           coreEgressProbeRequired ?? this.coreEgressProbeRequired,
       routeMode: routeMode ?? this.routeMode,
       smartConnect: smartConnect ?? this.smartConnect,
+      transportCatalog: transportCatalog,
       resolvedNodeCode: resolvedNodeCode ?? this.resolvedNodeCode,
       warpPolicy: warpPolicy ?? this.warpPolicy,
       freeProfileAccess: freeProfileAccess ?? this.freeProfileAccess,

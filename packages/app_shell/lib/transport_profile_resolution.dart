@@ -4,6 +4,116 @@ const transportProfileMaximumBytes = 1024 * 1024;
 const transportProfileResponseMaximumBytes = 2 * transportProfileMaximumBytes + 16384;
 const transportEndpointShortlistMaximumBytes = 65536;
 
+/// The managed endpoint supplies the ordinary candidate catalog. Its entries
+/// describe choices; only the separately returned managed profile has secrets.
+TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
+  required HostPlatform platform,
+  required String clientRelease,
+  required Set<RuntimeTransportFeature> runtimeFeatures,
+  String? coreRelease,
+  String requestedNodeCode = '',
+  String requestedCandidateRef = '',
+}) {
+  try {
+    final value = _transportMap(_freeze(input, 0));
+    _keys(value, const {'schema_version', 'revision', 'selected_candidate_ref', 'candidates'});
+    if (value['schema_version'] != 'pokrov-transport-catalog-v1') throw const FormatException();
+    String text(Object? raw, RegExp pattern, int max) {
+      if (raw is! String || raw.isEmpty || raw.length > max || !pattern.hasMatch(raw)) {
+        throw const FormatException();
+      }
+      return raw;
+    }
+    final refPattern = RegExp(r'^[a-z0-9][a-z0-9_.:-]*$');
+    final revision = text(value['revision'], RegExp(r'^[A-Za-z0-9_.:-]+$'), 256);
+    final selected = text(value['selected_candidate_ref'], refPattern, 128);
+    final rows = value['candidates'];
+    if (rows is! List || rows.isEmpty || rows.length > 1024) throw const FormatException();
+    final refs = <String>{};
+    final candidates = <TransportCandidate>[];
+    for (final raw in rows) {
+      final item = _transportMap(raw);
+      _keys(item, const {'candidate_ref', 'profile_ref', 'node_code', 'country_code',
+        'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements'});
+      final ref = text(item['candidate_ref'], refPattern, 128);
+      final profile = text(item['profile_ref'], refPattern, 64);
+      final node = text(item['node_code'], refPattern, 64);
+      final country = text(item['country_code'], RegExp(r'^[A-Z]{2}$'), 2);
+      if (!refs.add(ref) || ref != '$node:$profile' || item['priority'] is! int ||
+          (item['priority'] as int) < 0) throw const FormatException();
+      final protocol = text(item['protocol'], refPattern, 32);
+      final transport = text(item['transport'], refPattern, 32);
+      final protection = text(item['protection'], refPattern, 32);
+      final supported = switch (protocol) {
+        'vless' => (transport == 'tcp' && protection == 'reality') ||
+            (const {'grpc', 'xhttp'}.contains(transport) && protection == 'tls'),
+        'awg' => transport == 'udp' && protection == 'awg31',
+        'hysteria2' => transport == 'udp' && protection == 'tls',
+        _ => false,
+      };
+      if (!supported) throw const FormatException();
+      final parameters = _transportMap(item['parameters']);
+      _keys(parameters, const {'network', 'flow'});
+      if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
+          !const {'', 'xtls-rprx-vision'}.contains(parameters['flow'])) throw const FormatException();
+      final requirements = _transportMap(item['requirements']);
+      _keys(requirements, const {'minimum_client_release', 'minimum_core_release', 'platforms', 'required_features'});
+      final minimumClient = requirements['minimum_client_release'];
+      final minimumCore = requirements['minimum_core_release'];
+      final platformNames = requirements['platforms'];
+      final featureNames = requirements['required_features'];
+      if (minimumClient is! String || (minimumCore != null && minimumCore is! String) ||
+          platformNames is! List || platformNames.isEmpty || featureNames is! List || featureNames.isEmpty) {
+        throw const FormatException();
+      }
+      final platforms = <HostPlatform>{};
+      for (final name in platformNames) {
+        final known = HostPlatform.values.where((item) => item.name == name);
+        if (known.isEmpty || !platforms.add(known.single)) throw const FormatException();
+      }
+      final features = <RuntimeTransportFeature>{};
+      for (final name in featureNames) {
+        final known = RuntimeTransportFeature.values.where((item) => item.wireName == name);
+        if (known.isEmpty || !features.add(known.single)) throw const FormatException();
+      }
+      final candidateFeatures = switch (protocol) {
+        'awg' => {RuntimeTransportFeature.awg31},
+        'hysteria2' => {RuntimeTransportFeature.hysteria2},
+        _ => {RuntimeTransportFeature.vless, switch (transport) {
+          'grpc' => RuntimeTransportFeature.grpc,
+          'xhttp' => RuntimeTransportFeature.xhttp,
+          _ => RuntimeTransportFeature.reality,
+        }},
+      };
+      if (!features.containsAll(candidateFeatures)) throw const FormatException();
+      if (!platforms.contains(platform) || !runtimeFeatures.containsAll(features) ||
+          _transportReleaseCompare(clientRelease, minimumClient) < 0 ||
+          (minimumCore != null && (coreRelease == null ||
+            _transportReleaseCompare(coreRelease, minimumCore) < 0))) {
+        throw const TransportManifestFailure('transport_catalog_incompatible');
+      }
+      candidates.add(TransportCandidate(candidateRef: ref, profileRef: profile,
+        nodeCode: node, countryCode: country, protocol: protocol, transport: transport,
+        protection: protection, priority: item['priority'] as int,
+        network: parameters['network'] as String, flow: parameters['flow'] as String,
+        minimumClientRelease: minimumClient, minimumCoreRelease: minimumCore as String?,
+        platforms: platforms, requiredFeatures: features));
+    }
+    final catalog = TransportCandidateCatalog(revision: revision,
+      selectedCandidateRef: selected, candidates: candidates);
+    if (!refs.contains(selected) ||
+        (requestedCandidateRef.isNotEmpty && selected != requestedCandidateRef) ||
+        (requestedNodeCode.isNotEmpty && catalog.selected.nodeCode != requestedNodeCode)) {
+      throw const TransportManifestFailure('transport_catalog_selection_mismatch');
+    }
+    return catalog;
+  } on TransportManifestFailure {
+    rethrow;
+  } on Object {
+    throw const TransportManifestFailure('transport_catalog_invalid');
+  }
+}
+
 class TransportEndpointShortlistQuery {
   TransportEndpointShortlistQuery(Map<String, Object?> value)
       : fields = _transportMap(_freeze(value, 0)) {

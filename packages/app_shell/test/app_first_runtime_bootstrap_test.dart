@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
+import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
@@ -227,6 +228,115 @@ void main() {
     FlutterSecureStoragePlatform.instance = defaultSecureStoragePlatform;
   });
 
+  test('managed catalog preserves SmartConnect probes and resolves the exact winning candidate', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-candidate-catalog-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    final queries = <Map<String, String>>[];
+    final probes = <String>[];
+    var returnWrongSelection = false;
+    var returnWrongKind = false;
+    Map<String, Object?> descriptor(String node, String profile, String transport) => {
+      'candidate_ref': '$node:$profile', 'profile_ref': profile, 'node_code': node,
+      'country_code': node.toUpperCase(), 'protocol': 'vless', 'transport': transport,
+      'protection': transport == 'tcp' ? 'reality' : 'tls', 'priority': 0,
+      'parameters': {'network': 'tcp', 'flow': transport == 'tcp' ? 'xtls-rprx-vision' : ''},
+      'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+        'platforms': ['windows'], 'required_features': [
+          'singbox_vless_v1', transport == 'tcp' ? 'singbox_reality_v1' : 'singbox_grpc_v1']},
+    };
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'catalog-test-session', 'account_id': 'catalog-test'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          final query = request.uri.queryParameters;
+          queries.add(query);
+          final chosen = !returnWrongSelection && query['selected_candidate_ref'] == 'de:grpc_443_primary';
+          final node = chosen ? 'de' : 'pl';
+          final profile = chosen ? 'grpc_443_primary' : 'legacy_reality_fallback';
+          request.response.write(jsonEncode({
+            ..._readyManagedProfile('catalog-rev'),
+            'transport_profile': profile,
+            'transport_kind': chosen ? (returnWrongKind ? 'xhttp' : 'grpc') : 'reality',
+            'transport_catalog': {
+              'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'catalog-rev',
+              'selected_candidate_ref': '$node:$profile', 'candidates': [
+                descriptor('pl', 'legacy_reality_fallback', 'tcp'),
+                descriptor('de', 'grpc_443_primary', 'grpc'),
+              ],
+            },
+            'smart_connect': {
+              'eligible': true, 'fallback_required': false, 'shortlist_revision': 'catalog-shortlist',
+              'profile_revision': 'catalog-rev', 'transport_profile': profile, 'shortlist_limit': 3,
+              'shortlist': [for (final code in ['pl', 'de', 'it']) {
+                'code': code, 'country': code, 'rank': 1, 'rank_hint': {'health_score': 100},
+                'outbound_tag': code,
+              }],
+              'stickiness': {'preferred_node_code': 'pl', 'threshold_percent': 15},
+            },
+            'config_payload': {
+              'outbounds': [
+                {'type': 'selector', 'tag': 'proxy', 'outbounds': [node], 'default': node},
+                {'type': 'vless', 'tag': node, 'server': '$node.example.test', 'server_port': 443,
+                  if (chosen) 'transport': {'type': 'grpc', 'service_name': 'test'}},
+              ],
+              'route': {'final': 'proxy'},
+            },
+          }));
+        } else if (request.uri.path == '/api/client/nodes/select') {
+          request.response.write('{"selected_node_code":"de"}');
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/', supportDirectoryResolver: () async => directory,
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(), maxRequestAttempts: 1,
+      smartConnectLatencyProbe: (node) async {
+        probes.add(node.code);
+        return node.code == 'pl' ? 500 : 20;
+      },
+    );
+    final payload = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    expect(probes, ['pl', 'de'], reason: 'nodes outside the candidate catalog are not probed');
+    expect(queries, hasLength(2));
+    expect(queries.first['catalog_version'], '1');
+    expect(queries.first.containsKey('core_release'), isFalse);
+    expect(queries.last['selected_candidate_ref'], 'de:grpc_443_primary');
+    expect(queries.last['selected_node_code'], 'de');
+    expect(payload.transportCatalog?.selectedCandidateRef, 'de:grpc_443_primary');
+    expect(payload.resolvedNodeCode, 'de');
+    final config = jsonDecode(payload.configPayload) as Map;
+    final selected = (config['outbounds'] as List).where((item) => item['tag'] == 'de').single;
+    expect(selected['transport']['type'], 'grpc', reason: 'winner comes from secure server profile');
+    expect((config['outbounds'] as List).where((item) => item['tag'] == 'pl'), isEmpty);
+
+    returnWrongKind = true;
+    await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet()),
+      throwsA(isA<TransportManifestFailure>()
+        .having((failure) => failure.code, 'code', 'transport_catalog_profile_mismatch')));
+
+    returnWrongKind = false;
+    returnWrongSelection = true;
+    await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet()),
+      throwsA(isA<TransportManifestFailure>()
+        .having((failure) => failure.code, 'code', 'transport_catalog_selection_mismatch')));
+  });
+
   test('managed TUN MTU rejects missing malformed and unsafe values', () {
     expect(selectSafeTunMtu(null), 1280);
     expect(selectSafeTunMtu('1400'), 1280);
@@ -289,7 +399,9 @@ void main() {
       hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
     final online = create();
     final a = await online.resolveManagedProfile(
-      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+      runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    expect(a.transportCatalog, isNull, reason: 'older managed API can omit the optional catalog');
     await online.markManagedProfileProven(inputs, a.cacheEntryId);
     revision = 'b';
     final b = await online.resolveManagedProfile(

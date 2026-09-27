@@ -21,6 +21,8 @@ class _Bootstrapper implements ManagedProfileBootstrapper {
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const {},
     String tcpFallbackFromRevision = '',
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
@@ -37,6 +39,14 @@ class _Bootstrapper implements ManagedProfileBootstrapper {
           WarpRuntimePolicy.clientLocalDefault.withUserConsent(warpEnabled),
     );
   }
+}
+
+class _ManifestBootstrapper extends _Bootstrapper implements AppFirstTransportManifestService {
+  @override
+  bool get transportManifestEnabled => true;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation {
@@ -206,6 +216,19 @@ ConnectionManager _manager(
     );
 
 void main() {
+  test('enabled signed transport mode cannot fall through to ordinary catalog profiles', () async {
+    final runtime = _Runtime();
+    final bootstrapper = _ManifestBootstrapper();
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(bootstrapper.entered.isCompleted, isFalse,
+      reason: 'ordinary catalog cannot bypass the required bound ATS runtime');
+    expect(runtime.calls, isNot(contains('stage')));
+    expect(runtime.connectCalls, 0);
+    expect(manager.presentation.isVerified, isFalse);
+  });
+
   test('connect and disconnect publish existing native facts independently',
       () async {
     final runtime = _Runtime();

@@ -24,6 +24,38 @@ enum HostPlatform {
   windows,
 }
 
+/// Public server candidates. Connection material belongs to the managed profile.
+class TransportCandidateCatalog {
+  TransportCandidateCatalog({required this.revision,
+    required this.selectedCandidateRef, required List<TransportCandidate> candidates})
+      : candidates = List.unmodifiable(candidates);
+
+  final String revision;
+  final String selectedCandidateRef;
+  final List<TransportCandidate> candidates;
+
+  TransportCandidate get selected =>
+      candidates.singleWhere((candidate) => candidate.candidateRef == selectedCandidateRef);
+}
+
+class TransportCandidate {
+  TransportCandidate({required this.candidateRef, required this.profileRef,
+    required this.nodeCode, required this.countryCode, required this.protocol,
+    required this.transport, required this.protection, required this.priority,
+    required this.network, required this.flow, required this.minimumClientRelease,
+    required this.minimumCoreRelease, required Set<HostPlatform> platforms,
+    required Set<RuntimeTransportFeature> requiredFeatures})
+      : platforms = Set.unmodifiable(platforms), requiredFeatures = Set.unmodifiable(requiredFeatures);
+
+  final String candidateRef, profileRef, nodeCode, countryCode;
+  final String protocol, transport, protection, network, flow;
+  final int priority;
+  final String minimumClientRelease;
+  final String? minimumCoreRelease;
+  final Set<HostPlatform> platforms;
+  final Set<RuntimeTransportFeature> requiredFeatures;
+}
+
 enum ClientPlatform {
   android,
   ios,

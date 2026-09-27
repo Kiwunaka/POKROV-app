@@ -150,6 +150,18 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   accepted 4061 Core/service and preserved the migrated 1.1.6 session; it was
   not a private-installer acceptance test. After UI restart, both 4061 and 4062
   still displayed “Location is being checked” at the 42-second observation.
+- Ordinary managed profiles opt into `transport_catalog` using the loaded Core
+  feature inventory. The existing profile-resolution contract validates its
+  public candidate descriptions; credentials remain in the protected profile.
+  `ConnectionManager` exposes the catalog carried by `ManagedProfilePayload`.
+  Smart Connect keeps its probe limits, ranking and timeouts, restricts its
+  egress nodes to that catalog and requests the winning exact candidate from the
+  same managed endpoint. A country/node preference does not select a protocol.
+  An absent catalog keeps the legacy API path; invalid catalog data is rejected.
+  Unknown Core versions are omitted. The opt-in signed POST12 mode retains its
+  existing policy, kill and lease gates and does not request an ordinary catalog;
+  a connection attempt runs only its selected mode. Catalog persistence and new
+  probe algorithms are outside this change.
 - `FirstSessionCoordinator` owns the welcome/restore/ready step, restore busy
   state, handover animation decision, ephemeral acquisition dedupe/status,
   Android VPN-permission explanation/recovery state, and first-home/first-

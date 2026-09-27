@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cryptography/cryptography.dart';
-import 'package:pokrov_core_domain/core_domain.dart' show HostPlatform, RuntimeTransportFeature;
+import 'package:pokrov_core_domain/core_domain.dart'
+    show HostPlatform, RuntimeTransportFeature, TransportCandidate, TransportCandidateCatalog;
 
 part 'smart_access_contract.dart';
 part 'transport_manifest_contract.dart';

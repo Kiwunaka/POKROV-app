@@ -405,6 +405,8 @@ class _FakeBootstrapper
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
@@ -1094,6 +1096,8 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     String preferredVariantId = 'direct',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
+    Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease,
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
