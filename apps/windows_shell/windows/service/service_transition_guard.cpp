@@ -46,19 +46,25 @@ class FilterDefinitions {
     if (system_sd_) ::LocalFree(system_sd_);
   }
 
-  std::string Initialize() {
+  std::string Initialize(DWORD* error_code = nullptr) {
     // Core is a DLL in this SYSTEM service, not a separate allowed application.
     std::array<wchar_t, 32768> executable{};
     const DWORD length = ::GetModuleFileNameW(
         nullptr, executable.data(), static_cast<DWORD>(executable.size()));
-    if (length == 0 || length >= executable.size() ||
-        ::FwpmGetAppIdFromFileName0(executable.data(), &app_) != ERROR_SUCCESS) {
+    if (length == 0 || length >= executable.size()) {
+      if (error_code) *error_code = length == 0 ? ::GetLastError() : ERROR_INSUFFICIENT_BUFFER;
+      return "transition_guard_identity_failed";
+    }
+    const DWORD app_error = ::FwpmGetAppIdFromFileName0(executable.data(), &app_);
+    if (app_error != ERROR_SUCCESS) {
+      if (error_code) *error_code = app_error;
       return "transition_guard_identity_failed";
     }
     ULONG sd_size = 0;
     // CC is FWP_ACTRL_MATCH_FILTER (1): only the LocalSystem SID matches.
     if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(
             L"D:(A;;CC;;;SY)", SDDL_REVISION_1, &system_sd_, &sd_size)) {
+      if (error_code) *error_code = ::GetLastError();
       return "transition_guard_identity_failed";
     }
     system_blob_ = {sd_size, static_cast<UINT8*>(system_sd_)};
@@ -140,12 +146,16 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
   }
 
   std::string Read(TransitionGuardState* state) override {
+    last_failure_ = {TransitionGuardStage::kReadVerify, 0};
     *state = TransitionGuardState::kIncomplete;
     if (const auto error = Open(); !error.empty()) return error;
     FilterDefinitions definitions;
-    if (const auto error = definitions.Initialize(); !error.empty()) return error;
-    if (::FwpmTransactionBegin0(engine_, FWPM_TXN_READ_ONLY) != ERROR_SUCCESS)
-      return "transition_guard_read_failed";
+    DWORD code = 0;
+    if (const auto error = definitions.Initialize(&code); !error.empty())
+      return Fail(TransitionGuardStage::kIdentity, code, error);
+    code = ::FwpmTransactionBegin0(engine_, FWPM_TXN_READ_ONLY);
+    if (code != ERROR_SUCCESS)
+      return Fail(TransitionGuardStage::kReadBegin, code, "transition_guard_read_failed");
     bool any = false;
     bool complete = true;
     DWORD result = ERROR_SUCCESS;
@@ -173,7 +183,8 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
       }
     }
     ::FwpmTransactionAbort0(engine_);
-    if (result != ERROR_SUCCESS) return "transition_guard_read_failed";
+    if (result != ERROR_SUCCESS)
+      return Fail(TransitionGuardStage::kReadQuery, result, "transition_guard_read_failed");
     *state = complete ? TransitionGuardState::kArmed
                      : any ? TransitionGuardState::kIncomplete
                            : TransitionGuardState::kOff;
@@ -181,11 +192,15 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
   }
 
   std::string Install() override {
+    last_failure_ = {TransitionGuardStage::kInstallApply, 0};
     if (const auto error = Open(); !error.empty()) return error;
     FilterDefinitions definitions;
-    if (const auto error = definitions.Initialize(); !error.empty()) return error;
-    if (::FwpmTransactionBegin0(engine_, 0) != ERROR_SUCCESS)
-      return "transition_guard_install_failed";
+    DWORD code = 0;
+    if (const auto error = definitions.Initialize(&code); !error.empty())
+      return Fail(TransitionGuardStage::kIdentity, code, error);
+    code = ::FwpmTransactionBegin0(engine_, 0);
+    if (code != ERROR_SUCCESS)
+      return Fail(TransitionGuardStage::kInstallBegin, code, "transition_guard_install_failed");
     DWORD result = DeleteOwned();
     FWPM_SUBLAYER0 layer{};
     layer.subLayerKey = kSubLayer;
@@ -197,15 +212,23 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
       const auto filter = definitions.At(i);
       result = ::FwpmFilterAdd0(engine_, &filter, nullptr, nullptr);
     }
-    return Complete(result, "transition_guard_install_failed");
+    return Complete(result, "transition_guard_install_failed",
+                    TransitionGuardStage::kInstallApply,
+                    TransitionGuardStage::kInstallCommit);
   }
 
   std::string Remove() override {
+    last_failure_ = {TransitionGuardStage::kRemoveApply, 0};
     if (const auto error = Open(); !error.empty()) return error;
-    if (::FwpmTransactionBegin0(engine_, 0) != ERROR_SUCCESS)
-      return "transition_guard_remove_failed";
-    return Complete(DeleteOwned(), "transition_guard_remove_failed");
+    const DWORD code = ::FwpmTransactionBegin0(engine_, 0);
+    if (code != ERROR_SUCCESS)
+      return Fail(TransitionGuardStage::kRemoveBegin, code, "transition_guard_remove_failed");
+    return Complete(DeleteOwned(), "transition_guard_remove_failed",
+                    TransitionGuardStage::kRemoveApply,
+                    TransitionGuardStage::kRemoveCommit);
   }
+
+  TransitionGuardFailure LastFailure() const override { return last_failure_; }
 
  private:
   std::string Open() {
@@ -213,9 +236,10 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
     FWPM_SESSION0 session{};
     session.displayData.name = const_cast<wchar_t*>(L"POKROV transition guard");
     session.txnWaitTimeoutInMSec = 5000;
-    return ::FwpmEngineOpen0(nullptr, RPC_C_AUTHN_WINNT, nullptr, &session,
-                             &engine_) == ERROR_SUCCESS
-        ? "" : "transition_guard_engine_failed";
+    const DWORD code = ::FwpmEngineOpen0(nullptr, RPC_C_AUTHN_WINNT, nullptr,
+                                         &session, &engine_);
+    return code == ERROR_SUCCESS ? "" :
+        Fail(TransitionGuardStage::kEngineOpen, code, "transition_guard_engine_failed");
   }
 
   DWORD DeleteOwned() {
@@ -228,38 +252,56 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
     return result == FWP_E_SUBLAYER_NOT_FOUND ? ERROR_SUCCESS : result;
   }
 
-  std::string Complete(DWORD result, const char* error) {
-    if (result == ERROR_SUCCESS) result = ::FwpmTransactionCommit0(engine_);
+  std::string Complete(DWORD result, const char* error,
+                       TransitionGuardStage apply_stage,
+                       TransitionGuardStage commit_stage) {
+    TransitionGuardStage stage = apply_stage;
+    if (result == ERROR_SUCCESS) {
+      result = ::FwpmTransactionCommit0(engine_);
+      stage = commit_stage;
+    }
     if (result == ERROR_SUCCESS) return {};
     ::FwpmTransactionAbort0(engine_);
+    return Fail(stage, result, error);
+  }
+
+  std::string Fail(TransitionGuardStage stage, DWORD code,
+                   const std::string& error) {
+    last_failure_ = {stage, code};
     return error;
   }
 
   HANDLE engine_ = nullptr;
+  TransitionGuardFailure last_failure_;
 };
 
 class Guard final : public RuntimeTransitionGuard {
  public:
-  explicit Guard(std::unique_ptr<TransitionGuardBackend> backend)
-      : backend_(std::move(backend)) {
+  Guard(std::unique_ptr<TransitionGuardBackend> backend,
+        ServiceEventSink* events)
+      : backend_(std::move(backend)), events_(events) {
     Refresh();  // Adopt persisted state. Never remove it at startup.
   }
 
   std::string Start() override {
     const auto read_error = Refresh();
-    if (!read_error.empty()) return read_error;
+    if (!read_error.empty()) return Report(TransitionGuardOperation::kStart, read_error);
     if (state_ == TransitionGuardState::kArmed) return {};
     const auto error = backend_->Install();
     // An interrupted/readback-failed mutation is unknown, never reported off.
     state_ = TransitionGuardState::kIncomplete;
-    if (!error.empty()) return error;
-    if (const auto read = Refresh(); !read.empty()) return read;
+    if (!error.empty()) return Report(TransitionGuardOperation::kStart, error);
+    if (const auto read = Refresh(); !read.empty())
+      return Report(TransitionGuardOperation::kStart, read);
     if (state_ == TransitionGuardState::kArmed) return {};
     state_ = TransitionGuardState::kIncomplete;
-    return "transition_guard_not_verified";
+    return Report(TransitionGuardOperation::kStart, "transition_guard_not_verified");
   }
 
-  std::string Finish() override { return ExplicitOff(); }
+  std::string Finish() override {
+    const auto error = ExplicitOff();
+    return error.empty() ? error : Report(TransitionGuardOperation::kFinish, error);
+  }
 
   std::string ExplicitOff() override {
     state_ = TransitionGuardState::kIncomplete;
@@ -279,19 +321,36 @@ class Guard final : public RuntimeTransitionGuard {
     return error;
   }
 
+  std::string Report(TransitionGuardOperation operation,
+                     const std::string& error) {
+    if (events_ != nullptr) {
+      auto failure = backend_->LastFailure();
+      if (operation == TransitionGuardOperation::kFinish &&
+          error == "transition_guard_remove_not_verified") {
+        failure = {TransitionGuardStage::kRemoveVerify, 0};
+      }
+      events_->RecordTransitionGuardFailure(operation, failure.stage,
+                                            failure.wfp_error);
+    }
+    return error;
+  }
+
   std::unique_ptr<TransitionGuardBackend> backend_;
+  ServiceEventSink* events_ = nullptr;
   TransitionGuardState state_ = TransitionGuardState::kIncomplete;
 };
 
 }  // namespace
 
-std::unique_ptr<RuntimeTransitionGuard> CreateWindowsTransitionGuard() {
-  return std::make_unique<Guard>(std::make_unique<WindowsGuardBackend>());
+std::unique_ptr<RuntimeTransitionGuard> CreateWindowsTransitionGuard(
+    ServiceEventSink* events) {
+  return std::make_unique<Guard>(std::make_unique<WindowsGuardBackend>(), events);
 }
 
 std::unique_ptr<RuntimeTransitionGuard> CreateTransitionGuardForTesting(
-    std::unique_ptr<TransitionGuardBackend> backend) {
-  return std::make_unique<Guard>(std::move(backend));
+    std::unique_ptr<TransitionGuardBackend> backend,
+    ServiceEventSink* events) {
+  return std::make_unique<Guard>(std::move(backend), events);
 }
 
 #ifdef _DEBUG

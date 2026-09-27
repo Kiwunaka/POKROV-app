@@ -55,6 +55,22 @@ enum class ServiceEventOutcome {
   kRejected,
 };
 
+enum class TransitionGuardOperation { kStart, kFinish };
+enum class TransitionGuardStage {
+  kEngineOpen,
+  kIdentity,
+  kReadBegin,
+  kReadQuery,
+  kReadVerify,
+  kInstallBegin,
+  kInstallApply,
+  kInstallCommit,
+  kRemoveBegin,
+  kRemoveApply,
+  kRemoveCommit,
+  kRemoveVerify,
+};
+
 struct CoreOperationalEventRecord {
   int schema_version = 0;
   int event_abi = 0;
@@ -82,6 +98,11 @@ class ServiceEventSink {
                                 const Identifier& correlation_id) = 0;
   virtual bool RecordIpcResponse(Command command, Status status,
                                  const Identifier& correlation_id) = 0;
+  virtual bool RecordTransitionGuardFailure(
+      TransitionGuardOperation operation, TransitionGuardStage stage,
+      std::uint32_t wfp_error) {
+    return false;
+  }
   virtual bool RecordCoreOperationalEvent(
       const CoreOperationalEventRecord& event) {
     return false;

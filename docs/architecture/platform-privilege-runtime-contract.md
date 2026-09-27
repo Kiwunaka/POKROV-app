@@ -321,7 +321,10 @@ most 4096 closed records without doing file I/O on SCM or IPC threads. A single
 writer preserves order, flushes each record and rotates with write-through
 replacement. The `POKROV_SERVICE_EVENT_V1` wire contains only timestamp,
 sequence, closed event/outcome/command/status values and an opaque correlation
-or boot-epoch identifier. It has no free-form error, request body, profile,
+or boot-epoch identifier. A failed transition-guard Start/Finish appends one
+closed `transition_guard_failure` record with operation, fixed WFP stage and
+numeric DWORD in those same fields; the client still sees
+`transition_guard_failed`. It has no free-form error, request body, profile,
 session token, operation nonce, endpoint, URL, path or network destination.
 
 The closed source events cover SCM start/run/stop/shutdown/preshutdown,

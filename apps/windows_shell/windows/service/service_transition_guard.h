@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 
+#include "service_events.h"
+
 #ifdef _DEBUG
 #include <functional>
 struct FWPM_FILTER0_;
@@ -26,9 +28,15 @@ class RuntimeTransitionGuard {
   virtual bool IsArmed() const = 0;
 };
 
-std::unique_ptr<RuntimeTransitionGuard> CreateWindowsTransitionGuard();
+std::unique_ptr<RuntimeTransitionGuard> CreateWindowsTransitionGuard(
+    ServiceEventSink* events = nullptr);
 
 enum class TransitionGuardState { kOff, kArmed, kIncomplete };
+
+struct TransitionGuardFailure {
+  TransitionGuardStage stage = TransitionGuardStage::kReadVerify;
+  std::uint32_t wfp_error = 0;
+};
 
 // Same boundary as RuntimeRecovery's backend: tests never change host policy.
 class TransitionGuardBackend {
@@ -37,10 +45,12 @@ class TransitionGuardBackend {
   virtual std::string Read(TransitionGuardState* state) = 0;
   virtual std::string Install() = 0;
   virtual std::string Remove() = 0;
+  virtual TransitionGuardFailure LastFailure() const { return {}; }
 };
 
 std::unique_ptr<RuntimeTransitionGuard> CreateTransitionGuardForTesting(
-    std::unique_ptr<TransitionGuardBackend> backend);
+    std::unique_ptr<TransitionGuardBackend> backend,
+    ServiceEventSink* events = nullptr);
 
 #ifdef _DEBUG
 // Builds the actual filter definitions without opening the engine or adding or

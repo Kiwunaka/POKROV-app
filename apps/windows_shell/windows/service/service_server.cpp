@@ -538,7 +538,7 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
                       test_client_limit == 0
                           ? CreateRuntimeRecovery(runtime_root) : nullptr,
                       runtime_root, true,
-                      events, test_client_limit == 0 ? CreateWindowsTransitionGuard() : nullptr);
+                      events, test_client_limit == 0 ? CreateWindowsTransitionGuard(events) : nullptr);
   runtime.RecoverOnStartup();
   const DWORD result = ServeClients(pipe_name, owner_sid, stop_event,
                                     test_client_limit, events, &runtime);

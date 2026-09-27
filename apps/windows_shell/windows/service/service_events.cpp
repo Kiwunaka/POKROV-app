@@ -103,6 +103,28 @@ const char* OutcomeName(ServiceEventOutcome outcome) {
   return "invalid";
 }
 
+const char* GuardOperationName(TransitionGuardOperation operation) {
+  return operation == TransitionGuardOperation::kStart ? "start" : "finish";
+}
+
+const char* GuardStageName(TransitionGuardStage stage) {
+  switch (stage) {
+    case TransitionGuardStage::kEngineOpen: return "engine_open";
+    case TransitionGuardStage::kIdentity: return "identity";
+    case TransitionGuardStage::kReadBegin: return "read_begin";
+    case TransitionGuardStage::kReadQuery: return "read_query";
+    case TransitionGuardStage::kReadVerify: return "read_verify";
+    case TransitionGuardStage::kInstallBegin: return "install_begin";
+    case TransitionGuardStage::kInstallApply: return "install_apply";
+    case TransitionGuardStage::kInstallCommit: return "install_commit";
+    case TransitionGuardStage::kRemoveBegin: return "remove_begin";
+    case TransitionGuardStage::kRemoveApply: return "remove_apply";
+    case TransitionGuardStage::kRemoveCommit: return "remove_commit";
+    case TransitionGuardStage::kRemoveVerify: return "remove_verify";
+  }
+  return "read_verify";
+}
+
 const char* CommandName(Command command) {
   switch (command) {
     case Command::kHello:
@@ -257,6 +279,13 @@ class DurableServiceEventJournal final : public ServiceEventSink {
     return Append("ipc_response", status == Status::kOk ? "succeeded" : "failed",
                   CommandName(command), StatusName(status),
                   CorrelationHex(correlation_id));
+  }
+
+  bool RecordTransitionGuardFailure(
+      TransitionGuardOperation operation, TransitionGuardStage stage,
+      std::uint32_t wfp_error) override {
+    return Append("transition_guard_failure", "failed", GuardOperationName(operation),
+                  GuardStageName(stage), std::to_string(wfp_error));
   }
 
   bool RecordCoreOperationalEvent(

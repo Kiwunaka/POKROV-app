@@ -116,6 +116,10 @@ void TestClosedBoundedJournal() {
       Expect(journal->RecordIpcResponse(Command::kStageProfile,
                                         Status::kUnauthorized, correlation),
              "IPC response span was not durable");
+      Expect(journal->RecordTransitionGuardFailure(
+                 TransitionGuardOperation::kFinish,
+                 TransitionGuardStage::kRemoveCommit, 0x8032001a),
+             "transition guard failure was not durable");
       Expect(journal->RecordCoreOperationalEvent(CoreOperationalEventRecord{
                  1,
                  1,
@@ -160,6 +164,9 @@ void TestClosedBoundedJournal() {
                        "0102030405060708090a0b0c0d0e0f10") !=
              std::string::npos,
          "event journal did not retain the request correlation span");
+  Expect(combined.find("transition_guard_failure|failed|finish|"
+                       "remove_commit|2150760474") != std::string::npos,
+         "transition guard failure lost its fixed stage or numeric WFP error");
   Expect(combined.find(
              "POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:00Z|"
              "018f4f2a-6d58-4c11-8c27-4fb77bd28c15|"
