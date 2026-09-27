@@ -641,6 +641,16 @@ class ConnectionManager extends ChangeNotifier {
     _queueClientExperienceWrite();
   }
 
+  String _unexpectedConnectionDiagnostic(String operation, Object error, StackTrace stack) {
+    final type = error.runtimeType.toString();
+    final safeType = RegExp(r'^[_A-Za-z][_A-Za-z0-9]{0,63}$').hasMatch(type) ? type : 'Object';
+    final frames = RegExp(
+      r'package:(?:pokrov_app_shell|pokrov_runtime_engine|pokrov_core_domain)/[A-Za-z0-9_/.-]*?([A-Za-z0-9_]{1,64}\.dart):([0-9]{1,7})(?::[0-9]+)?',
+    ).allMatches(stack.toString()).map((frame) => '${frame[1]}:${frame[2]}').toSet().take(2);
+    final detail = '$operation: $safeType${frames.isEmpty ? '' : '; ${frames.join(', ')}'}';
+    return detail.length <= 180 ? detail : detail.substring(0, 180);
+  }
+
   Future<bool> _reconnectAfterManagedProfileChange({
     required String progressMessage,
     required String successMessage,
@@ -3177,7 +3187,7 @@ class ConnectionManager extends ChangeNotifier {
       });
       unawaited(_reportClientRuntimeError('connect_failed'));
       _notify(error.message, tone: PokrovSnackTone.danger);
-    } on Object catch (error) {
+    } on Object catch (error, stack) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;
       _observability?.recordConnectionFailure(
         stage: failureStage,
@@ -3197,7 +3207,7 @@ class ConnectionManager extends ChangeNotifier {
       _recordProtectionEvent(
         kind: 'connect_unexpected_$failureOperation',
         title: 'Подключение не началось',
-        detail: 'Сбой остановил безопасный этап подключения.',
+        detail: _unexpectedConnectionDiagnostic(failureOperation, error, stack),
         tone: PokrovProtectionEventTone.error,
       );
       unawaited(_reportClientRuntimeError('connect_unexpected'));

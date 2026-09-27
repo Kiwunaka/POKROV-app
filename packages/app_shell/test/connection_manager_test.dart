@@ -23,6 +23,8 @@ class _Bootstrapper implements ManagedProfileBootstrapper {
   final resolutions = <({String selected, bool select, bool cache})>[];
   final bool warpEnabled;
   Completer<void>? gate;
+  Object? failure;
+  StackTrace? failureStack;
   final entered = Completer<void>();
   bool cancelled = false;
 
@@ -47,6 +49,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper {
     if (!entered.isCompleted) entered.complete();
     unawaited(cancelled?.then((_) => this.cancelled = true));
     await gate?.future;
+    if (failure != null) Error.throwWithStackTrace(failure!, failureStack ?? StackTrace.current);
     final nodeCode = preferredNodeCode.isEmpty ? 'de' : preferredNodeCode;
     return ManagedProfilePayload(
       profileName: selectedCandidateRef.isEmpty ? '$nodeCode:profile_0' : selectedCandidateRef,
@@ -281,11 +284,12 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
 }
 
 class _ExperienceStore implements PokrovClientExperienceStore {
+  PokrovClientExperienceState saved = const PokrovClientExperienceState.empty();
   @override
   Future<PokrovClientExperienceState> read() async =>
       const PokrovClientExperienceState.empty();
   @override
-  Future<void> write(PokrovClientExperienceState state) async {}
+  Future<void> write(PokrovClientExperienceState state) async { saved = state; }
 }
 
 class _FirstLaunchStore implements PokrovFirstLaunchStore {
@@ -299,6 +303,7 @@ ConnectionManager _manager(
   _Runtime runtime,
   ManagedProfileBootstrapper bootstrapper, {
   Future<PokrovWindowsTunnelAuthorization> Function()? authorizeWindows,
+  _ExperienceStore? experienceStore,
 }) =>
     ConnectionManager(
       appContext: buildSeedAppContext(hostPlatform: runtime.hostPlatform),
@@ -308,7 +313,7 @@ ConnectionManager _manager(
           AccountSessionCoordinator(accountActions: null),
       firstSessionCoordinator:
           FirstSessionCoordinator(store: _FirstLaunchStore()),
-      clientExperienceStore: _ExperienceStore(),
+      clientExperienceStore: experienceStore ?? _ExperienceStore(),
       connectHintStore: const PokrovFileConnectHintStore(),
       authorizeAndroidConnect: () async => true,
       windowsTunnelAuthorizer: authorizeWindows,
@@ -317,6 +322,31 @@ ConnectionManager _manager(
     );
 
 void main() {
+  test('unexpected connection diagnostics retain only operation type and application frames', () async {
+    final store = _ExperienceStore();
+    final bootstrapper = _Bootstrapper()
+      ..failure = StateError('synthetic-private-token https://private.example/profile')
+      ..failureStack = StackTrace.fromString('''
+#0 private (https://private.example/profile?token=synthetic-private-token:1:2)
+#1 private (C:/private/customer-profile.dart:3:4)
+#2 first (package:pokrov_app_shell/app_first_runtime_bootstrap.dart:123:9)
+#3 second (package:pokrov_runtime_engine/runtime_engine.dart:456:2)
+#4 third (package:pokrov_app_shell/src/connection/connection_manager.dart:789:2)
+''');
+    final runtime = _Runtime();
+    final manager = _manager(runtime, bootstrapper, experienceStore: store);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    final event = store.saved.protectionEvents.single;
+    expect(event.kind, 'connect_unexpected_managed_profile_refresh');
+    expect(event.detail, 'managed_profile_refresh: StateError; app_first_runtime_bootstrap.dart:123, runtime_engine.dart:456');
+    expect(event.detail.length, lessThanOrEqualTo(180));
+    expect(jsonEncode(event.toJson()), isNot(contains('synthetic-private-token')));
+    expect(jsonEncode(event.toJson()), isNot(contains('private.example')));
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(runtime.connectCalls, 0);
+  });
+
   test('API outage connects the protected profile through expiry grace and exposes offline states', () async {
     final originalStorage = FlutterSecureStoragePlatform.instance;
     final protectedValues = <String, String>{};

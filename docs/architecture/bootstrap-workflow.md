@@ -39,6 +39,9 @@ The protection center's “Check and restore” action uses this same recovery p
 for an ordinary running tunnel or retained handoff guard. It keeps cancellation
 and the original action owner, and reports failure instead of success when
 replacement is unverified; only explicit Disconnect releases the guard.
+Unexpected connection failures retain the operation, exception class and at most
+two application filename/line frames in the existing local protection event.
+Exception messages, raw stacks, URLs and profile material are not recorded.
 
 AWG 3.1 and Hysteria2 use the ordinary managed candidate path when the server
 offers a ready device-bound profile and the loaded Core supports it. The internal
