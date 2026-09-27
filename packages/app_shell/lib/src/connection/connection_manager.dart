@@ -2630,9 +2630,12 @@ class ConnectionManager extends ChangeNotifier {
           (snapshot.lastFailureKind == 'connect_cancelled' && snapshot.phase == RuntimePhase.running)) {
         _runtimeSnapshot = snapshot;
       }
-      if (_protectedHandoffActive &&
-          (actionIntent == ConnectionTransitionIntent.connect || reconnectAfterDisconnect)) {
-        await _recoverCandidateConnection(snapshot, _activeCandidateRef ?? _candidateRef ?? '');
+      if ((_protectedHandoffActive &&
+              (actionIntent == ConnectionTransitionIntent.connect || reconnectAfterDisconnect)) ||
+          (reconnectAfterDisconnect && snapshot.phase == RuntimePhase.running &&
+              _transportCatalog != null && _runtimeEngine is RuntimeProtectedHandoff)) {
+        await _recoverCandidateConnection(snapshot, _activeCandidateRef ?? _candidateRef ?? '',
+            ownerGeneration: generation);
         return;
       }
 
@@ -3713,29 +3716,58 @@ class ConnectionManager extends ChangeNotifier {
     return true;
   }
 
-  Future<void> _recoverCandidateConnection(RuntimeSnapshot? failed, String currentRef) async {
+  Future<void> _recoverCandidateConnection(RuntimeSnapshot? failed, String currentRef,
+      {int? ownerGeneration}) async {
     final engine = _runtimeEngine;
     _cancelPostConnectHostHealthPolling();
-    _connectionCoordinator.beginAction(ConnectionTransitionIntent.recover,
-        allowConnectCancellation: engine is RuntimeConnectCancellation);
-    final generation = _connectionCoordinator.operationGeneration;
-    final completion = Completer<void>();
-    _primaryConnectCompletion = completion;
+    final ownsAction = ownerGeneration == null;
+    if (ownsAction) {
+      _connectionCoordinator.beginAction(ConnectionTransitionIntent.recover,
+          allowConnectCancellation: engine is RuntimeConnectCancellation);
+    }
+    final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
+    final completion = ownsAction ? Completer<void>() : null;
+    if (completion != null) _primaryConnectCompletion = completion;
     _update(() {
       _activePhase = ConnectionPhase.recovering;
       _runtimeSnapshot = failed;
       _runtimeHeadline = 'Восстанавливаем защищённое подключение…';
     });
     try {
-      if (engine is! RuntimeProtectedHandoff) {
+      final retryInitialActivation = _activeCandidateRef == null &&
+          !_protectedHandoffActive && failed != null &&
+          failed.hasCoreEgressProbeFailure && _runtimeStopConfirmed(failed);
+      if (!retryInitialActivation && engine is! RuntimeProtectedHandoff) {
         throw const BootstrapFailure('Для восстановления соединения обновите POKROV.', code: 'protected_handoff_unavailable');
+      }
+      // Profile preparation and probes must also retain the existing tunnel
+      // when a manual replacement is cancelled before native handoff starts.
+      if (failed?.phase == RuntimePhase.running) _protectedHandoffActive = true;
+      final invalidated = await _waitForQuickSettingsInvalidation(_managedProfileRevision);
+      if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+      if (!invalidated) {
+        throw const BootstrapFailure(
+            'Не удалось обновить настройки для быстрого подключения. Попробуйте ещё раз.');
       }
       final payload = await _resolveManagedProfile(ownerGeneration: generation,
           recoveryCandidateRef: currentRef, deadline: _actionTimeout);
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
-      _protectedHandoffActive = true;
-      final current = await _withRuntimeActionTimeout('replaceManagedProfile',
-          () => _stageManagedProfileWithLeaseBinding(payload, replaceProtected: true), ownerGeneration: generation);
+      RuntimeSnapshot current;
+      if (retryInitialActivation) {
+        // The first activation stopped before proof: there is no prior healthy
+        // owner to replace. Stage/connect retains any native transition guard.
+        current = await _withRuntimeActionTimeout('stageManagedProfile',
+            () => _stageManagedProfileWithLeaseBinding(payload), ownerGeneration: generation);
+        if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+        _update(() => _runtimeSnapshot = current);
+        current = await _withRuntimeActionTimeout('connect', _runtimeEngine.connect,
+            ownerGeneration: generation);
+        current = await _settleRuntimeTransition(current, ownerGeneration: generation);
+      } else {
+        _protectedHandoffActive = true;
+        current = await _withRuntimeActionTimeout('replaceManagedProfile',
+            () => _stageManagedProfileWithLeaseBinding(payload, replaceProtected: true), ownerGeneration: generation);
+      }
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       _update(() {
         _runtimeSnapshot = current;
@@ -3764,12 +3796,14 @@ class ConnectionManager extends ChangeNotifier {
             : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.';
       });
     } finally {
-      if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
+      if (ownsAction && !_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _connectionCoordinator.finishAction();
         _publish();
       }
-      if (!completion.isCompleted) completion.complete();
-      if (identical(_primaryConnectCompletion, completion)) _primaryConnectCompletion = null;
+      if (completion != null) {
+        if (!completion.isCompleted) completion.complete();
+        if (identical(_primaryConnectCompletion, completion)) _primaryConnectCompletion = null;
+      }
     }
   }
 

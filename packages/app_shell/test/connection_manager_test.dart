@@ -78,6 +78,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool holdProbes = false;
   bool failProbeCancellation = false;
   bool failHandoff = false;
+  bool failFirstActivation = false;
   bool restoredHandoffGuard = false;
   final probeRelease = Completer<void>();
   final probeStarted = Completer<void>();
@@ -185,7 +186,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
                 ? !warpEgressFailure
                 : null,
         coreEgressValidationRequired: true,
-        lastFailureKind: restoredHandoffGuard ? 'protected_handoff_failed' : phase == RuntimePhase.running &&
+        lastFailureKind: failFirstActivation && connectCalls == 1 && phase == RuntimePhase.configStaged
+            ? 'core_egress_timeout' : restoredHandoffGuard ? 'protected_handoff_failed' : phase == RuntimePhase.running &&
                 warpEgressFailure &&
                 !pendingFirstEgress
             ? 'core_egress_probe_failed'
@@ -233,7 +235,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   @override
   Future<RuntimeSnapshot> connect() {
     _request = 'request-${++connectCalls}';
-    return mutate('connect', RuntimePhase.running);
+    return mutate('connect', failFirstActivation && connectCalls == 1
+        ? RuntimePhase.configStaged : RuntimePhase.running);
   }
 
   @override
@@ -434,6 +437,24 @@ void main() {
     expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(1));
   });
 
+  test('first activation egress failure retries stage and connect without protected replacement', () async {
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..failFirstActivation = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true),
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    while (runtime.connectCalls < 2 || manager.busy) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(runtime.calls.where((call) => call == 'stage'), hasLength(2));
+    expect(runtime.connectCalls, 2);
+    expect(runtime.handoffCalls, 0);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.overlappingMutation, isFalse);
+  });
+
   test('retry after UI restart preserves a guard without in-memory candidate state', () async {
     final runtime = _Runtime()..supportsCandidates = true..phase = RuntimePhase.running
       ..restoredHandoffGuard = true..warpEgressFailure = true..failHandoff = true;
@@ -445,21 +466,53 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.actionRequired);
   });
 
-  test('cancelling a protected handoff joins it without implicit disconnect', () async {
-    final runtime = _Runtime()..supportsCandidates = true..warpEgressFailure = true
-      ..handoffRelease = Completer<void>();
-    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+  test('healthy catalog reconnect and cancellation retain protection until explicit off', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _Bootstrapper(catalog: true);
+    final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     await manager.connect();
-    await runtime.handoffStarted.future;
+    expect(manager.status.phase, ConnectionPhase.connected);
+    await manager.reconnect();
+    expect(runtime.handoffCalls, 1);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.busy, isFalse);
+
+    bootstrapper.gate = Completer<void>();
+    final previousResolutions = bootstrapper.resolutions.length;
+    final preparing = manager.reconnect();
+    while (bootstrapper.resolutions.length == previousResolutions) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    final cancelledPreparation = manager.cancel();
+    expect(runtime.calls, isNot(contains('disconnect')));
+    bootstrapper.gate!.complete();
+    await Future.wait([preparing, cancelledPreparation]);
+    expect(runtime.phase, RuntimePhase.running);
+    expect(runtime.handoffCalls, 1);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.busy, isFalse);
+
+    bootstrapper.gate = null;
+    runtime.handoffRelease = Completer<void>();
+    final replacement = manager.reconnect();
+    while (runtime.handoffCalls == 1) {
+      await Future<void>.delayed(Duration.zero);
+    }
     final cancellation = manager.cancel();
     await Future<void>.delayed(Duration.zero);
     expect(runtime.calls, isNot(contains('disconnect')));
     runtime.handoffRelease!.complete();
-    await cancellation;
+    await Future.wait([replacement, cancellation]);
+    expect(runtime.phase, RuntimePhase.running);
+    expect(runtime.connectCalls, 1);
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.busy, isFalse);
+    await manager.disconnect();
+    expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(1));
+    expect(runtime.phase, RuntimePhase.configStaged);
   });
 
   test('enabled signed transport mode cannot fall through to ordinary catalog profiles', () async {
