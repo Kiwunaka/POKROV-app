@@ -180,14 +180,20 @@ class ManagedProfileCache {
         if (age.isNegative) continue;
         final payload = entry['payload'];
         if (payload is! Map<String, dynamic>) continue;
-        if (selectedCandidateRef.isNotEmpty) {
-          final catalog = payload['transport_catalog'];
-          if (catalog is! Map || catalog['selected_candidate_ref'] != selectedCandidateRef) continue;
+        var catalog = payload['transport_catalog'];
+        if (catalog is Map) {
           final latestCatalog = latestPayload is Map ? latestPayload['transport_catalog'] : null;
-          if (latestCatalog is Map && (latestCatalog['revision'] != catalog['revision'] ||
+          final entryCandidateRef = catalog['selected_candidate_ref'];
+          if (latestCatalog is! Map || latestCatalog['revision'] != catalog['revision'] ||
               !(latestCatalog['candidates'] as List).any((item) =>
-                  item is Map && item['candidate_ref'] == selectedCandidateRef))) continue;
+                  item is Map && item['candidate_ref'] == entryCandidateRef)) continue;
+          // New device credentials may become ready after this profile was
+          // proven. Refresh selection metadata, retaining its original proof.
+          catalog = <String, dynamic>{...Map<String, dynamic>.from(latestCatalog),
+            'selected_candidate_ref': entryCandidateRef};
         }
+        if (selectedCandidateRef.isNotEmpty &&
+            (catalog is! Map || catalog['selected_candidate_ref'] != selectedCandidateRef)) continue;
         // The latest authorized access window also bounds an older proven profile.
         final access = latestAccess is Map && latestAccess.containsKey('expiry_at')
             ? latestAccess : payload['access'];
@@ -210,6 +216,7 @@ class ManagedProfileCache {
         }
         return ManagedProfileCacheRead(payload: {
           ...payload,
+          if (catalog is Map) 'transport_catalog': catalog,
           'cache_verified_at': entry['verified_at'],
           if (slot == 'proven' && entry['network_selection_key'] is String)
             'proven_network_selection_key': entry['network_selection_key'],

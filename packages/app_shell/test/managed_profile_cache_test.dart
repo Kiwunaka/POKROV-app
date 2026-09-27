@@ -87,8 +87,9 @@ void main() {
 
   test('candidate material shares binding and denial fences without replacing the winner', () async {
     const binding = 'account-A/install-A/route-A';
-    Map<String, Object?> payload(String selected, {String revision = 'catalog-1', bool allowAlternate = true}) => {
-      'cache_entry_id': selected, 'access': {'expiry_at': null},
+    Map<String, Object?> payload(String selected, {String revision = 'catalog-1', bool allowAlternate = true, String? id}) => {
+      'cache_entry_id': id ?? selected, 'config_payload': 'private fixture ${id ?? selected}',
+      'access': {'expiry_at': null},
       'transport_catalog': {'revision': revision, 'selected_candidate_ref': selected,
         'candidates': [
           {'candidate_ref': 'de:vless', 'node_code': 'de'},
@@ -96,16 +97,31 @@ void main() {
         ]},
     };
     Future<void> store(String selected, {bool candidateOnly = false, String revision = 'catalog-1',
-        bool allowAlternate = true, int? generation, String accountBinding = binding}) =>
+        bool allowAlternate = true, int? generation, String accountBinding = binding, String? id}) =>
       cache.saveDownloaded(platform: 'android', binding: accountBinding, revision: selected,
-          verifiedAt: now, payload: payload(selected, revision: revision, allowAlternate: allowAlternate),
+          verifiedAt: now, payload: payload(selected, revision: revision, allowAlternate: allowAlternate, id: id),
           candidateOnly: candidateOnly, expectedGeneration: generation);
+    await store('de:vless', allowAlternate: false, id: 'proven-vless');
+    await cache.markProven(platform: 'android', binding: binding, entryId: 'proven-vless',
+        networkSelectionKey: 'network-fixture');
+    final provenAt = now.toIso8601String();
+    now = now.add(const Duration(minutes: 1));
     await store('de:vless');
+    final freshCatalogProof = (await read(preferProven: true))!;
+    expect((freshCatalogProof['transport_catalog']['candidates'] as List).length, 2,
+        reason: 'a cold-device proof sees credentials acknowledged in the latest catalog');
+    expect(freshCatalogProof['cache_entry_id'], 'proven-vless');
+    expect(freshCatalogProof['config_payload'], 'private fixture proven-vless');
+    expect(freshCatalogProof['cache_verified_at'], provenAt);
+    expect(freshCatalogProof['proven_network_selection_key'], 'network-fixture');
     await store('de:hy2', candidateOnly: true);
     expect((await read())?['cache_entry_id'], 'de:vless');
     expect((await cache.read(platform: 'android', binding: binding, selectedCandidateRef: 'de:hy2'))?['cache_entry_id'], 'de:hy2');
     await cache.markProven(platform: 'android', binding: binding, entryId: 'de:hy2');
     expect((await read(preferProven: true))?['cache_entry_id'], 'de:hy2');
+    await store('de:vless', allowAlternate: false);
+    expect((await read(preferProven: true))?['cache_entry_id'], 'de:vless',
+        reason: 'a withdrawn proven candidate is rejected even without an explicit candidate ref');
     await store('de:vless', revision: 'catalog-2', allowAlternate: false);
     expect(await cache.read(platform: 'android', binding: binding, selectedCandidateRef: 'de:hy2'), isNull,
         reason: 'current catalog disable/revision invalidates an older candidate and its proof');

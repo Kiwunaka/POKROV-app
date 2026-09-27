@@ -3205,7 +3205,7 @@ class AppFirstRuntimeBootstrapper
       preferredVariantId: inputs.preferredVariantId,
       runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
       selectCandidate: false, selectedCandidateRef: candidateRef, cacheResult: false,
-      timeout: const Duration(seconds: 3), cancelled: cancelled,
+      timeout: requestTimeout, cancelled: cancelled,
     );
     Future<void> requireCurrent() async {
       requests.requireActive();
@@ -3218,13 +3218,19 @@ class AppFirstRuntimeBootstrapper
           code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
       }
     }
-    final selected = alternativesOnly
-        ? await loadCachedManagedProfile(inputs, preferProven: true,
-            selectedCandidateRef: selectedCandidateRef, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease)
-        : await resolve(selectedCandidateRef);
+    var currentCandidateRef = selectedCandidateRef;
+    if (alternativesOnly) {
+      final cached = await loadCachedManagedProfile(inputs, preferProven: true,
+          selectedCandidateRef: selectedCandidateRef, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
+      await requireCurrent();
+      currentCandidateRef = cached?.transportCatalog?.selectedCandidateRef ?? '';
+      if (currentCandidateRef.isEmpty) return;
+    }
+    // An exact refresh discovers credentials acknowledged after initial device
+    // provisioning, without choosing another profile or claiming a new proof.
+    final selected = await resolve(currentCandidateRef);
     await requireCurrent();
-    if (selected == null) return;
-    if (!alternativesOnly) await cacheResolvedManagedProfile(inputs, selected, cancelled: cancelled);
+    await cacheResolvedManagedProfile(inputs, selected, cancelled: cancelled);
     final catalog = selected.transportCatalog;
     if (catalog == null) return;
     final families = {catalog.selected.protocol};

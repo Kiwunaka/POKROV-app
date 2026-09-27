@@ -43,11 +43,17 @@ Unexpected connection failures retain the operation, exception class and at most
 two application filename/line frames in the existing local protection event.
 Exception messages, raw stacks, URLs and profile material are not recorded.
 
-After a healthy ordinary connect, the existing finite cache refresh prepares at
-most two other protocol families on the selected node, in server priority order,
+After a healthy ordinary connect, the existing finite cache refresh fetches the
+exact current profile's latest catalog, then prepares at most two other protocol
+families on the selected node, in server priority order,
 without delaying connection or probing them. Already materialized profiles are
 reused in the same encrypted account-bound record; catalog changes, expiry and
-explicit denial still restrict reuse. If the API is unreachable, recovery probes
+explicit denial still restrict reuse. A proven profile reads the latest catalog
+for the same account binding and revision, only while its candidate remains
+allowed; its config, cache identity and original verification time are preserved.
+Each refresh request uses the existing managed-profile budget (15 seconds by
+default), including route-policy synchronization; cancellation still ends it.
+If the API is unreachable, recovery probes
 these cached profiles with the existing native selector and activates its winner.
 Failed activation advances to another candidate, with at most three activations
 per recovery. A retained native guard is shown as blocked traffic, including

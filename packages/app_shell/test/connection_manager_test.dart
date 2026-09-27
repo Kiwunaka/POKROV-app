@@ -369,6 +369,8 @@ void main() {
     var apiUnavailable = false;
     var failedRequests = 0;
     var clientsCreated = 0;
+    var delayedAlternateCompleted = false;
+    late final _Runtime onlineRuntime;
     final managedQueries = <Map<String, String>>[];
     DateTime? cacheNow;
     final expiry = DateTime.now().toUtc().add(const Duration(days: 2));
@@ -390,6 +392,12 @@ void main() {
         } else if (request.uri.path == '/api/client/profile/managed') {
           managedQueries.add(request.uri.queryParameters);
           final hy2 = request.uri.queryParameters['selected_candidate_ref'] == 'de:hy2_lab';
+          if (hy2 && !delayedAlternateCompleted) {
+            // Production managed issuance can take longer than the former
+            // three-second background deadline, even while the API is healthy.
+            await Future<void>.delayed(const Duration(milliseconds: 3200));
+            delayedAlternateCompleted = true;
+          }
           request.response.write(jsonEncode({
             'profile_revision': 'offline-test-profile', 'config_format': 'singbox-json',
             'transport_profile': hy2 ? 'hy2_lab' : 'legacy_reality_fallback',
@@ -405,7 +413,7 @@ void main() {
                 'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
                   'platforms': ['android', 'windows'],
                   'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']},
-              }, {
+              }, if (onlineRuntime.connectCalls > 0) {
                 'candidate_ref': 'de:hy2_lab', 'profile_ref': 'hy2_lab',
                 'node_code': 'de', 'country_code': 'DE', 'protocol': 'hysteria2',
                 'transport': 'udp', 'protection': 'tls', 'priority': 1,
@@ -451,7 +459,7 @@ void main() {
       httpClientFactory: () { clientsCreated++; return HttpClient(); },
       allExceptRuRuleSetUrlsResolver: (_) => const [], maxRequestAttempts: 1,
     );
-    final onlineRuntime = _Runtime(hostPlatform: HostPlatform.windows)
+    onlineRuntime = _Runtime(hostPlatform: HostPlatform.windows)
       ..supportsCandidates = true..phase = RuntimePhase.configStaged;
     final onlineBootstrapper = bootstrapper();
     final previousProfile = await onlineBootstrapper.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
@@ -463,6 +471,7 @@ void main() {
     expect(onlineRuntime.value(RuntimePhase.artifactReady).transportCapabilities, isNull);
     await onlineManager.connect();
     expect(onlineManager.status.phase, ConnectionPhase.connected);
+    expect(delayedAlternateCompleted, isFalse, reason: 'first connect does not wait for alternative profiles');
     expect(onlineRuntime.calls, isNot(contains('initialize')));
     expect(managedQueries.first['catalog_version'], '1');
     expect(managedQueries.first['client_platform'], inputs.hostPlatform.name);
@@ -475,7 +484,8 @@ void main() {
     var proven = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
         runtimeFeatures: onlineRuntime.value(onlineRuntime.phase).transportCapabilities!.features);
     expect(proven?.provenNetworkSelectionKey, 'network-a');
-    final readyDeadline = DateTime.now().add(const Duration(seconds: 3));
+    final provenEntryId = proven?.cacheEntryId;
+    final readyDeadline = DateTime.now().add(const Duration(seconds: 6));
     ManagedProfilePayload? alternate;
     do {
       alternate = await onlineBootstrapper.loadCachedManagedProfile(inputs,
@@ -483,6 +493,11 @@ void main() {
       if (alternate == null) await Future<void>.delayed(const Duration(milliseconds: 10));
     } while (alternate == null && DateTime.now().isBefore(readyDeadline));
     expect(alternate, isNotNull);
+    proven = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
+        runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    expect(proven?.cacheEntryId, provenEntryId, reason: 'catalog refresh does not prove new profile bytes');
+    expect(proven?.transportCatalog?.candidates.length, 2,
+        reason: 'the proven cold-device profile sees the newly acknowledged alternative');
     expect((await onlineBootstrapper.loadCachedManagedProfile(inputs))?.transportCatalog?.selectedCandidateRef,
         'de:legacy_reality_fallback', reason: 'alternate materialization cannot replace the selected record');
     apiUnavailable = true;
