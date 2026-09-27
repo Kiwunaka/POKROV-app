@@ -79,6 +79,17 @@ probe retries and signed transport lease rules are unchanged. The five-second
 native detection budget is not an end-to-end failover measurement; the phone's
 15-second acceptance target still requires a device test.
 
+Private Android and Windows 1.3.0+4075 builds passed; ordinary US VLESS and HY2
+connections were verified on the Windows VM. One account-scoped VLESS fault
+triggered automatic recovery to AWG: the new Core 204 arrived in 9.36–12.31
+seconds and ordinary HTTPS in 10.93–13.89 seconds, including clock uncertainty.
+All eight kernel samples while TUN was absent retained four enabled WFP block
+filters and four enabled permits; the IPC pending snapshot was stale. Test fault
+rules were removed and explicit Disconnect restored TUN/WFP zero and ordinary
+HTTPS. One earlier fresh full-device connect exhausted its candidates after a
+four-second native probe; the next ordinary connect passed, and that first
+failure remains unexplained. The Huawei timing check is pending device access.
+
 AWG 3.1 and Hysteria2 use the ordinary managed candidate path when the server
 offers a ready device-bound profile and the loaded Core supports it. The internal
 `awg31_lab` and `hy2_lab` contract IDs do not require a laboratory UI or client
