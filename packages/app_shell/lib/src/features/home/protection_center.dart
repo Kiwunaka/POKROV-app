@@ -690,7 +690,7 @@ class _ProtectionRepairProgress extends StatelessWidget {
     final p = PokrovPalette.of(context);
     final currentIndex = current?.index ?? 0;
     const labels = <String>[
-      'Останавливаем старое соединение',
+      'Готовим подключение',
       'Обновляем профиль',
       'Проверяем защиту',
     ];

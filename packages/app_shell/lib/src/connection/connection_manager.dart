@@ -973,13 +973,35 @@ class ConnectionManager extends ChangeNotifier {
           }
         });
       }
-      onStep?.call(_ProtectionRepairStep.stopOldConnection);
       final knownSnapshot = _runtimeSnapshot;
       RuntimeSnapshot current = knownSnapshot ??
           await runOwnedRuntimeAction(
             'repairSnapshot',
             _runtimeEngine.snapshot,
           );
+      if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
+        throw const ConnectionOperationSuperseded();
+      }
+      _runtimeSnapshot = current;
+      if ((current.phase == RuntimePhase.running || _protectedHandoffActive) &&
+          _runtimeEngine is RuntimeProtectedHandoff &&
+          !(_bootstrapper is AppFirstTransportManifestService &&
+              (_bootstrapper as AppFirstTransportManifestService).transportManifestEnabled)) {
+        onStep?.call(_ProtectionRepairStep.refreshProfile);
+        await _recoverCandidateConnection(current, _activeCandidateRef ?? _candidateRef ?? '',
+            ownerGeneration: generation);
+        if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
+          throw const ConnectionOperationSuperseded();
+        }
+        onStep?.call(_ProtectionRepairStep.verifyProtection);
+        if (_runtimeSnapshot?.isCleanlyHealthy != true || _activePhase == ConnectionPhase.actionRequired) {
+          throw BootstrapFailure(_runtimeHeadline ?? 'Не удалось восстановить подключение.');
+        }
+        _recordProtectionEvent(kind: 'repair_success', title: 'Подключение восстановлено',
+            detail: 'Туннель и проверка выхода подтверждены.', tone: PokrovProtectionEventTone.success);
+        return;
+      }
+      onStep?.call(_ProtectionRepairStep.stopOldConnection);
       if (current.phase == RuntimePhase.running || current.connectionPending) {
         current = await runOwnedRuntimeAction(
           'repairDisconnect',
@@ -1154,7 +1176,7 @@ class ConnectionManager extends ChangeNotifier {
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _update(() {
-          _activePhase = null;
+          if (_activePhase != ConnectionPhase.actionRequired) _activePhase = null;
           _connectionCoordinator.finishAction();
         });
       }

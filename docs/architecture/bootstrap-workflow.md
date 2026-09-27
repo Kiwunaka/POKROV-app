@@ -35,6 +35,10 @@ expiry grace as ordinary connect. It retains the original cache entry; an
 authorization denial cannot take this path. Native replacement stays in recovery
 while egress proof is pending, using the existing bounded pending-connect poll
 before confirming the new location or saving a proven result.
+The protection center's “Check and restore” action uses this same recovery path
+for an ordinary running tunnel or retained handoff guard. It keeps cancellation
+and the original action owner, and reports failure instead of success when
+replacement is unverified; only explicit Disconnect releases the guard.
 
 After an explicit disconnect settles to a non-running snapshot without a
 failure, Home returns to its ordinary Connect action. The runtime's successful

@@ -491,7 +491,7 @@ void main() {
     expect(runtime.handoffCalls, 1);
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(manager.status.phase, ConnectionPhase.actionRequired);
-    await manager.connect();
+    await expectLater(manager.repair(), throwsA(isA<BootstrapFailure>()));
     expect(runtime.handoffCalls, 2, reason: 'a retry also keeps the native guard');
     expect(runtime.calls, isNot(contains('disconnect')));
     await manager.disconnect();
@@ -527,7 +527,7 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.actionRequired);
   });
 
-  test('healthy catalog reconnect and cancellation retain protection until explicit off', () async {
+  test('healthy catalog reconnect and repair cancellation retain protection until explicit off', () async {
     final runtime = _Runtime()..supportsCandidates = true;
     final bootstrapper = _Bootstrapper(catalog: true);
     final manager = _manager(runtime, bootstrapper);
@@ -535,7 +535,7 @@ void main() {
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
     runtime.pendingFirstEgress = true;
-    await manager.reconnect();
+    await manager.repair();
     expect(runtime.handoffCalls, 1);
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(manager.status.phase, ConnectionPhase.connected);
@@ -558,15 +558,19 @@ void main() {
 
     bootstrapper.gate = null;
     runtime.handoffRelease = Completer<void>();
-    final replacement = manager.reconnect();
+    Future<void> Function()? cancelRepair;
+    final replacement = manager.repair(onCancelAvailable: (value) => cancelRepair = value);
+    final interruptedRepair = expectLater(replacement, throwsA(isA<ConnectionOperationSuperseded>()));
     while (runtime.handoffCalls == 1) {
       await Future<void>.delayed(Duration.zero);
     }
-    final cancellation = manager.cancel();
+    expect(cancelRepair, isNotNull);
+    final cancellation = cancelRepair!();
     await Future<void>.delayed(Duration.zero);
     expect(runtime.calls, isNot(contains('disconnect')));
     runtime.handoffRelease!.complete();
-    await Future.wait([replacement, cancellation]);
+    await Future.wait([interruptedRepair, cancellation]);
+    expect(cancelRepair, isNull);
     expect(runtime.phase, RuntimePhase.running);
     expect(runtime.connectCalls, 1);
     expect(runtime.calls, isNot(contains('disconnect')));

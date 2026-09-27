@@ -3156,7 +3156,7 @@ void main() {
   });
 
   testWidgets(
-      'protection repair runs one bounded disconnect stage connect loop',
+      'protection repair uses one protected replacement without disconnect',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -3202,6 +3202,7 @@ void main() {
         case 'runtimeEngine.stageManagedProfile':
           phase = 'configStaged';
           return snapshot(message: 'Managed profile staged.');
+        case 'runtimeEngine.replaceManagedProfile':
         case 'runtimeEngine.connect':
           phase = 'running';
           coreEgressValidated = true;
@@ -3273,18 +3274,16 @@ void main() {
     expect(
       runtimeCalls,
       containsAllInOrder(const <String>[
-        'runtimeEngine.disconnect',
-        'runtimeEngine.stageManagedProfile',
-        'runtimeEngine.connect',
+        'runtimeEngine.replaceManagedProfile',
       ]),
     );
     expect(
       runtimeCalls.where((call) => call == 'runtimeEngine.disconnect'),
-      hasLength(1),
+      isEmpty,
     );
     expect(
       runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
-      hasLength(1),
+      isEmpty,
     );
     expect(bootstrapper.calls, greaterThanOrEqualTo(1));
     expect(find.text('Активен'), findsOneWidget);
@@ -3324,12 +3323,12 @@ void main() {
     expect(launched.single, Uri.parse('https://docs.example/start'));
   });
 
-  testWidgets('repair warns before disconnect and exposes three-step progress',
+  testWidgets('repair confirms replacement and exposes three-step progress',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    final disconnectResult = Completer<Object?>();
+    final replacementResult = Completer<Object?>();
     var phase = 'running';
     var healthy = false;
     Map<String, Object?> snapshot({bool healthy = false}) => <String, Object?>{
@@ -3352,8 +3351,8 @@ void main() {
       switch (call.method) {
         case 'runtimeEngine.snapshot':
           return snapshot(healthy: healthy);
-        case 'runtimeEngine.disconnect':
-          return disconnectResult.future;
+        case 'runtimeEngine.replaceManagedProfile':
+          return replacementResult.future;
         case 'runtimeEngine.stageManagedProfile':
           phase = 'configStaged';
           return snapshot();
@@ -3367,9 +3366,8 @@ void main() {
       return null;
     });
     addTearDown(() {
-      if (!disconnectResult.isCompleted) {
-        phase = 'initialized';
-        disconnectResult.complete(snapshot());
+      if (!replacementResult.isCompleted) {
+        replacementResult.complete(snapshot());
       }
       messenger.setMockMethodCallHandler(channel, null);
     });
@@ -3406,12 +3404,12 @@ void main() {
       find.byKey(const ValueKey('protection-repair-progress')),
       findsOneWidget,
     );
-    expect(find.text('1. Останавливаем старое соединение'), findsOneWidget);
+    expect(find.text('1. Готовим подключение'), findsOneWidget);
     expect(find.text('2. Обновляем профиль'), findsOneWidget);
     expect(find.text('3. Проверяем защиту'), findsOneWidget);
 
-    phase = 'initialized';
-    disconnectResult.complete(snapshot());
+    healthy = true;
+    replacementResult.complete(snapshot(healthy: healthy));
     await tester.pumpAndSettle();
 
     expect(
@@ -3426,7 +3424,7 @@ void main() {
   });
 
   testWidgets(
-      'repair profile failure keeps the sheet on the fresh stopped snapshot',
+      'repair profile failure retains the running tunnel and reports failure',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
@@ -3483,8 +3481,9 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('protection-repair-confirm')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Отключён'), findsOneWidget);
-    expect(find.text('Активен'), findsNothing);
+    expect(phase, 'running');
+    expect(find.text('Отключён'), findsNothing);
+    expect(find.text('Защита восстановлена'), findsNothing);
     expect(
       find.text(
         'Восстановление не завершилось. Показано последнее состояние туннеля.',
