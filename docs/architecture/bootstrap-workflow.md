@@ -29,6 +29,12 @@ The replacement uses the current connection operation and completion owner.
 If the first activation fails its egress check and is confirmed stopped before
 any healthy candidate existed, recovery stages and connects the selected profile
 without Disconnect; native transition guards remain owned by the runtime.
+Guarded retry can restore the existing encrypted proven profile after a transient
+API failure, with the same input/account binding, current Core capabilities and
+expiry grace as ordinary connect. It retains the original cache entry; an
+authorization denial cannot take this path. Native replacement stays in recovery
+while egress proof is pending, using the existing bounded pending-connect poll
+before confirming the new location or saving a proven result.
 
 After an explicit disconnect settles to a non-running snapshot without a
 failure, Home returns to its ordinary Connect action. The runtime's successful

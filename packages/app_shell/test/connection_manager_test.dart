@@ -101,7 +101,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   @override
   Future<RuntimeCandidateProbeResult> probeCandidate({required String probeId,
       required ManagedProfilePayload payload, required Duration timeout, required String expectedNetworkContext}) async {
-    expect(calls.contains('initialize') || restoredHandoffGuard || phase == RuntimePhase.configStaged, isTrue);
+    expect(value(phase).transportCapabilities, isNotNull);
     final cancelled = Completer<void>();
     activeProbes[probeId] = cancelled;
     if (!probeStarted.isCompleted) probeStarted.complete();
@@ -137,7 +137,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     if (!handoffStarted.isCompleted) handoffStarted.complete();
     await handoffRelease?.future;
     warpEgressFailure = failHandoff || cancelled.contains(_request);
-    phase = RuntimePhase.running;
+    phase = hostPlatform == HostPlatform.windows && warpEgressFailure
+        ? RuntimePhase.configStaged : RuntimePhase.running;
     return value(phase);
   }
 
@@ -333,8 +334,8 @@ void main() {
     final managedQueries = <Map<String, String>>[];
     DateTime? cacheNow;
     final expiry = DateTime.now().toUtc().add(const Duration(days: 2));
-    final inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android,
-      routeMode: buildSeedAppContext(hostPlatform: HostPlatform.android).runtimeProfile.defaultRouteMode);
+    final inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+      routeMode: buildSeedAppContext(hostPlatform: HostPlatform.windows).runtimeProfile.defaultRouteMode);
     unawaited(() async {
       await for (final request in server) {
         await utf8.decoder.bind(request).join();
@@ -390,8 +391,11 @@ void main() {
       httpClientFactory: () { clientsCreated++; return HttpClient(); },
       allExceptRuRuleSetUrlsResolver: (_) => const [], maxRequestAttempts: 1,
     );
-    final onlineRuntime = _Runtime()..supportsCandidates = true..phase = RuntimePhase.configStaged;
-    final onlineManager = _manager(onlineRuntime, bootstrapper());
+    final onlineRuntime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..phase = RuntimePhase.configStaged;
+    final onlineBootstrapper = bootstrapper();
+    final onlineManager = _manager(onlineRuntime, onlineBootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(onlineManager.dispose);
     expect(onlineRuntime.value(RuntimePhase.artifactReady).transportCapabilities, isNull);
     await onlineManager.connect();
@@ -405,13 +409,33 @@ void main() {
     expect(onlineManager.transportCatalog?.selectedCandidateRef, 'de:legacy_reality_fallback');
     expect(onlineRuntime.probeStarted.isCompleted, isTrue);
     final downloadedProfile = onlineRuntime.stagedProfile;
-    await onlineManager.disconnect();
+    final proven = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
+        runtimeFeatures: onlineRuntime.value(onlineRuntime.phase).transportCapabilities!.features);
+    expect(proven?.provenNetworkSelectionKey, 'network-a');
+    onlineRuntime.failHandoff = true;
+    await onlineManager.reconnect();
+    expect(onlineManager.status.phase, ConnectionPhase.actionRequired);
+    expect(onlineRuntime.phase, RuntimePhase.configStaged);
+    expect(onlineRuntime.handoffCalls, 1);
     expect(protectedValues, isNotEmpty);
     apiUnavailable = true;
     cacheNow = expiry.add(const Duration(hours: 23));
-    final runtime = _Runtime()..networkAvailable = null..supportsCandidates = true;
+    onlineRuntime.failHandoff = false;
+    await onlineManager.reconnect();
+    expect(onlineManager.status.phase, ConnectionPhase.connected);
+    expect(onlineManager.offlineState, ManagedProfileOfflineState.apiUnavailable);
+    expect(onlineRuntime.handoffCalls, 2);
+    expect(onlineRuntime.calls, isNot(contains('disconnect')));
+    expect(onlineRuntime.connectCalls, 1);
+    final recovered = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
+        runtimeFeatures: onlineRuntime.value(onlineRuntime.phase).transportCapabilities!.features);
+    expect(recovered?.cacheEntryId, proven?.cacheEntryId);
+    await onlineManager.disconnect();
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..networkAvailable = null..supportsCandidates = true;
     // A fresh bootstrap instance must restore the protected record after restart.
-    final manager = _manager(runtime, bootstrapper());
+    final manager = _manager(runtime, bootstrapper(),
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
     await manager.connect();
     expect(failedRequests, greaterThan(0));
@@ -510,6 +534,7 @@ void main() {
     addTearDown(manager.dispose);
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
+    runtime.pendingFirstEgress = true;
     await manager.reconnect();
     expect(runtime.handoffCalls, 1);
     expect(runtime.calls, isNot(contains('disconnect')));

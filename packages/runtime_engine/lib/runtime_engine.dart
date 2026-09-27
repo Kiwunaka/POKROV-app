@@ -1869,6 +1869,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine, RuntimeBootClock {
       var configPayload = _materializePokrovCoreConfig(
         payload.configPayload,
         payload.warpPolicy,
+        pinWindowsTun: hostPlatform == HostPlatform.windows,
       );
       configPayload = await _remapBusyDesktopLoopbackPorts(configPayload);
       await File(finalPath).writeAsString(configPayload, flush: true);
@@ -2383,6 +2384,7 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine, RuntimeBootClock {
       final config = _materializePokrovCoreConfig(
         staged.configPayload,
         nextPolicy,
+        pinWindowsTun: hostPlatform == HostPlatform.windows,
       );
       await File(configPath).writeAsString(config, flush: true);
       final secureError = _bindings!.secureFile(configPath);
@@ -2731,6 +2733,7 @@ String _materializePokrovCoreConfig(
   String configPayload,
   WarpRuntimePolicy policy, {
   bool preserveAndroidHostMetadata = false,
+  bool pinWindowsTun = false,
 }) {
   final decoded = jsonDecode(configPayload);
   if (decoded is! Map) {
@@ -2740,6 +2743,15 @@ String _materializePokrovCoreConfig(
     (key, value) => MapEntry(key.toString(), value),
   );
   _validateManagedTransportContract(config);
+  if (pinWindowsTun) {
+    // The service network observer excludes only this owned TUN alias.
+    // Materialize it before bundling and binding the effective profile digest.
+    for (final inbound in config['inbounds'] as List? ?? const []) {
+      if (inbound is Map && inbound['type'] == 'tun') {
+        inbound['interface_name'] = 'POKROV';
+      }
+    }
+  }
   final runtimeVariantProbe = preserveAndroidHostMetadata
       ? Map<String, Object?>.from(
           _runtimeObjectMap(
@@ -3682,6 +3694,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       payload.configPayload,
       payload.warpPolicy,
       preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
+      pinWindowsTun: hostPlatform == HostPlatform.windows,
     );
     final config = jsonDecode(configPayload) as Map;
     if (persistRestrictions == null && _profileRequiresRestrictions(config)) {
@@ -3970,6 +3983,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       staged.configPayload,
       nextPolicy,
       preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
+      pinWindowsTun: hostPlatform == HostPlatform.windows,
     );
     final config = jsonDecode(configPayload) as Map;
     if (_profileRequiresRestrictions(config)) {

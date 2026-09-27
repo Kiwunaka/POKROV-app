@@ -45,6 +45,9 @@ the guard. Explicit disconnect, or the elevated `pokrov_service.exe
 --clear-transition-guard` repair/uninstall command, removes only its owned rules.
 Network and captive-portal observations come from local adapter/NCSI metadata;
 unavailable observations remain unknown.
+Windows materialization pins the TUN name to `POKROV` before profile identity
+binding, so its own route/interface changes do not invalidate the physical
+network context during a protected replacement.
 
 - `flutter build windows --release` bundles `pokrov_windows.exe`,
   `pokrov_service.exe`, POKROV Core `pokrov-core.dll`, and pinned

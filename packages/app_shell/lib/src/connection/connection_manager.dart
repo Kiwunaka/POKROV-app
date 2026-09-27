@@ -3750,8 +3750,44 @@ class ConnectionManager extends ChangeNotifier {
         throw const BootstrapFailure(
             'Не удалось обновить настройки для быстрого подключения. Попробуйте ещё раз.');
       }
-      final payload = await _resolveManagedProfile(ownerGeneration: generation,
-          recoveryCandidateRef: currentRef, deadline: _actionTimeout);
+      final cacheInputs = _managedProfileCacheInputs;
+      final profileRevision = _managedProfileRevision;
+      var usedCachedProfile = false;
+      ManagedProfilePayload payload;
+      try {
+        payload = await _resolveManagedProfile(ownerGeneration: generation,
+            recoveryCandidateRef: currentRef, deadline: _actionTimeout);
+      } on Object catch (error) {
+        if (error is BootstrapFailure && (error.statusCode == 401 || error.statusCode == 403)) {
+          _cachedProfileFallbackGate.markAuthorizationDenied();
+        }
+        final cacheService = _bootstrapper;
+        if (!(error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error)) ||
+            cacheService is! CachedManagedProfileBootstrapper || _tcpFallbackFromRevision.isNotEmpty) rethrow;
+        final cached = await (cacheService as CachedManagedProfileBootstrapper).loadCachedManagedProfile(
+            cacheInputs, preferProven: true,
+            runtimeFeatures: _runtimeSnapshot?.transportCapabilities?.features ?? const {})
+            .timeout(const Duration(seconds: 2), onTimeout: () => null);
+        if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
+            profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
+        if (cached == null || !_cachedProfileFallbackGate.canFallback(
+            cachedProfileAvailable: true, inputsVerified: true)) rethrow;
+        await _classifyOfflineFailure(generation);
+        if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
+            profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
+        _transportCatalog = cached.transportCatalog;
+        _candidateRef = cached.transportCatalog?.selectedCandidateRef;
+        _candidateNetworkKey = null;
+        if (engine is RuntimeCandidateProbing && _candidateRef != null) {
+          final network = await (engine as RuntimeCandidateProbing).readCandidateNetwork();
+          if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
+              profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
+          _candidateNetworkKey = network.selectionKey;
+        }
+        // This is the protected original: no winner commit or new cache entry.
+        payload = await _prepareManagedProfile(cached, offline: true, ownerGeneration: generation);
+        usedCachedProfile = true;
+      }
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       RuntimeSnapshot current;
       if (retryInitialActivation) {
@@ -3763,16 +3799,18 @@ class ConnectionManager extends ChangeNotifier {
         _update(() => _runtimeSnapshot = current);
         current = await _withRuntimeActionTimeout('connect', _runtimeEngine.connect,
             ownerGeneration: generation);
-        current = await _settleRuntimeTransition(current, ownerGeneration: generation);
       } else {
         _protectedHandoffActive = true;
         current = await _withRuntimeActionTimeout('replaceManagedProfile',
             () => _stageManagedProfileWithLeaseBinding(payload, replaceProtected: true), ownerGeneration: generation);
       }
+      current = await _settleRuntimeTransition(current, ownerGeneration: generation,
+          waitForEgressProof: true);
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+      if (!usedCachedProfile) _cachedProfileFallbackGate.markFreshProfileStaged();
       _update(() {
         _runtimeSnapshot = current;
-        _stagedCacheInputs = _managedProfileCacheInputs;
+        _stagedCacheInputs = cacheInputs;
         _stagedProfileCacheEntryId = payload.cacheEntryId;
         _stagedNodeCode = _resolvedProfileNodeCode;
         _stagedVariantId = _resolvedProfileVariantId;
@@ -3780,7 +3818,8 @@ class ConnectionManager extends ChangeNotifier {
         _activeConnectUsedWarp = _stagedProfileUsesWarp;
         _managedProfileDirty = !current.isCleanlyHealthy;
         _activePhase = current.isCleanlyHealthy ? null : ConnectionPhase.actionRequired;
-        _runtimeHeadline = current.isCleanlyHealthy ? 'POKROV подключен.'
+        _runtimeHeadline = current.isCleanlyHealthy
+            ? usedCachedProfile ? 'POKROV подключен по сохраненным настройкам. Сервис обновим позже.' : 'POKROV подключен.'
             : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.';
       });
       if (current.isCleanlyHealthy) {
@@ -3791,10 +3830,13 @@ class ConnectionManager extends ChangeNotifier {
       return;
     } on Object catch (error) {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+      final offlineMessage = error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error)
+          ? await _classifyOfflineFailure(generation) : null;
+      if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       _update(() {
         _activePhase = ConnectionPhase.actionRequired;
-        _runtimeHeadline = error is BootstrapFailure ? error.message
-            : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.';
+        _runtimeHeadline = offlineMessage ?? (error is BootstrapFailure ? error.message
+            : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.');
       });
     } finally {
       if (ownsAction && !_disposed && _connectionCoordinator.ownsOperation(generation)) {
@@ -3942,6 +3984,7 @@ class ConnectionManager extends ChangeNotifier {
   Future<RuntimeSnapshot> _settleRuntimeTransition(
     RuntimeSnapshot snapshot, {
     int? ownerGeneration,
+    bool waitForEgressProof = false,
   }) async {
     final engine = _runtimeEngine;
     final RuntimeConnectCancellation? cancellation =
@@ -3952,10 +3995,11 @@ class ConnectionManager extends ChangeNotifier {
     try {
       return await _settleOwnedRuntimeTransition(snapshot,
           ownerGeneration: ownerGeneration,
+          waitForEgressProof: waitForEgressProof,
           deadline: requestId == null
               ? null
               : Duration(
-                  milliseconds: snapshot.connectionPending ? 81000 : 4500));
+                  milliseconds: snapshot.connectionPending || waitForEgressProof ? 81000 : 4500));
     } on Object catch (error) {
       if (error is TimeoutException || error is ConnectionOperationSuperseded) {
         await _cancelOwnedConnect(cancellation, requestId);
@@ -3968,13 +4012,16 @@ class ConnectionManager extends ChangeNotifier {
     RuntimeSnapshot snapshot, {
     int? ownerGeneration,
     Duration? deadline,
+    bool waitForEgressProof = false,
   }) async {
     final generation =
         ownerGeneration ?? _connectionCoordinator.operationGeneration;
     if (!_connectionCoordinator.ownsOperation(generation)) {
       throw const ConnectionOperationSuperseded();
     }
-    if (snapshot.phase == RuntimePhase.running ||
+    bool proofPending(RuntimeSnapshot value) => waitForEgressProof &&
+        value.phase == RuntimePhase.running && value.isCoreEgressValidationPending;
+    if (snapshot.phase == RuntimePhase.running && !proofPending(snapshot) ||
         !snapshot.supportsLiveConnect ||
         _isTerminalConnectMessage(snapshot.message)) {
       return snapshot;
@@ -3984,7 +4031,7 @@ class ConnectionManager extends ChangeNotifier {
     // Android returns from MethodChannel before its notification and VPN
     // consent sheets complete. Keep reading the host-owned pending state rather
     // than relying on a localized status message or a lifecycle resume.
-    final maxAttempts = current.connectionPending ? 180 : 10;
+    final maxAttempts = current.connectionPending || proofPending(current) ? 180 : 10;
     final elapsed = Stopwatch()..start();
     for (var attempt = 0; attempt < maxAttempts; attempt += 1) {
       final remaining = deadline == null ? null : deadline - elapsed.elapsed;
@@ -4014,15 +4061,15 @@ class ConnectionManager extends ChangeNotifier {
         _runtimeSnapshot = current;
         _runtimeHeadline = null;
       });
-      if (current.phase == RuntimePhase.running) {
+      if (current.phase == RuntimePhase.running && !proofPending(current)) {
         return current;
       }
       if (_isTerminalConnectMessage(current.message) ||
-          !current.connectionPending) {
+          !current.connectionPending && !proofPending(current)) {
         return current;
       }
     }
-    if (current.connectionPending) {
+    if (current.connectionPending || proofPending(current)) {
       throw TimeoutException('runtime connection did not settle');
     }
     return current;
