@@ -113,6 +113,8 @@ class RuntimeHost {
   RuntimeResult PromoteTransportLease(const TransportLeasePromotion& target);
   RuntimeResult RevokeTransportLease(const TransportLeaseRevocation& target);
   RuntimeResult Disconnect(bool explicit_disconnect = true);
+  bool CanRecheckEgress() const;
+  RuntimeResult RecheckEgress(const CheckInterruption& interrupted);
   RuntimeResult ReplaceManagedProfile(const std::string& body, const CheckInterruption& interrupted);
   RuntimeResult CancelProtectedHandoff();
   RuntimeResult RevokeSmartAccessLease(const std::string& body);

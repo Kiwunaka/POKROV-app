@@ -21,7 +21,8 @@ class RuntimeDispatcher {
  public:
   explicit RuntimeDispatcher(RuntimeHost* runtime,
       std::function<std::optional<CandidateNetworkContext>()> candidate_network = {},
-      std::function<bool(std::uint64_t)> candidate_current = {});
+      std::function<bool(std::uint64_t)> candidate_current = {},
+      ULONGLONG egress_interval_ms = 5000);
   ~RuntimeDispatcher();
   RuntimeResult Execute(const Frame& request, HANDLE stop_event,
                         ULONGLONG monotonic_deadline, HANDLE client_pipe);
@@ -54,6 +55,7 @@ class RuntimeDispatcher {
   RuntimeResult CancelCandidateProbe(const std::string& body);
   void RetireConnect();  // caller holds state_lock_; native cleanup has ended
   void WatchBoundConnect();
+  void CheckRunningEgress();
   void RefreshBoundNetwork(const std::shared_ptr<ActiveConnect>& operation);
   RuntimeResult ProjectBoundState(RuntimeResult result);  // state_lock_ held
   RuntimeHost* runtime_;
@@ -67,6 +69,9 @@ class RuntimeDispatcher {
   std::optional<CancellationTarget> stopped_connect_;
   std::condition_variable watch_changed_;
   bool closing_ = false;
+  const ULONGLONG egress_interval_ms_;
+  ULONGLONG next_egress_check_ = 0;  // execution_lock_ held
+  std::shared_ptr<std::atomic<bool>> egress_check_cancelled_;  // state_lock_ held
   std::thread watcher_;
   std::mutex probes_lock_;
   std::vector<std::shared_ptr<ActiveProbe>> probes_;

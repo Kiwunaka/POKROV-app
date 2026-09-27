@@ -1,4 +1,5 @@
 #include "service_dispatcher.h"
+#include "service_profile_identity.h"
 
 #include <atomic>
 #include <filesystem>
@@ -45,6 +46,89 @@ class Recovery final : public RuntimeRecovery {
   std::string CompleteRollback() override { ++mutations; return ""; }
   int mutations = 0;
 };
+
+class HealthProbe final : public RuntimeEgressProbe {
+ public:
+  std::string Verify(const CheckInterruption& interrupted) override {
+    ++active;
+    ++calls;
+    while (mode == 1 && interrupted() == OperationInterruption::kNone) ::Sleep(1);
+    const bool cancelled = interrupted && interrupted() == OperationInterruption::kCancelled;
+    if (cancelled) ::Sleep(15);  // Native request teardown must be joined.
+    --active;
+    return cancelled ? "late failure" : mode == 2 ? "core_egress_connect_failed" : "";
+  }
+  std::atomic<int> mode{0}, calls{0}, active{0};
+};
+
+void TestPeriodicEgressLifecycle(const std::filesystem::path& root, HANDLE stop) {
+  auto core = std::make_unique<ProbeCore>();
+  auto* observed = core.get();
+  auto probe = std::make_unique<HealthProbe>();
+  auto* health = probe.get();
+  RuntimeHost runtime(std::move(core), std::move(probe), std::make_unique<Recovery>(),
+      root.wstring(), false);
+  auto dispatcher = std::make_unique<RuntimeDispatcher>(&runtime,
+      std::function<std::optional<CandidateNetworkContext>()>{},
+      std::function<bool(std::uint64_t)>{}, 10);
+  const auto call = [&](Command command, const std::string& body = "") {
+    Frame request{};
+    request.command = command;
+    request.body = body;
+    return dispatcher->Execute(request, stop, ::GetTickCount64() + 5000, nullptr);
+  };
+  const auto wait_for = [&](const auto& ready) {
+    const auto deadline = ::GetTickCount64() + 2000;
+    while (!ready() && ::GetTickCount64() < deadline) ::Sleep(1);
+    Expect(ready(), "periodic egress lifecycle did not settle");
+  };
+  const std::string profile = "0\n{}";
+  Expect(call(Command::kStageProfile, profile).status == Status::kOk &&
+             call(Command::kConnect, ProfileDigest(profile)).status == Status::kOk,
+         "periodic egress fixture could not connect");
+  health->mode = 1;
+  wait_for([&] { return health->calls == 2; });
+  Expect(call(Command::kStatus).body.find("core_egress_validated=1") != std::string::npos &&
+             health->active == 1 && observed->stops == 0,
+         "periodic check blocked status, overlapped, or stopped the TUN");
+  const auto stop_started = ::GetTickCount64();
+  Expect(call(Command::kDisconnect).status == Status::kOk &&
+             ::GetTickCount64() - stop_started < 500 && health->active == 0 &&
+             observed->stops == 1,
+         "disconnect did not promptly cancel and join the periodic probe");
+  ::Sleep(250);
+  Expect(health->calls == 2 &&
+             call(Command::kStatus).body.find("phase=config_staged;") == 0,
+         "periodic check survived explicit disconnect");
+
+  health->mode = 0;
+  Expect(call(Command::kConnect, ProfileDigest(profile)).status == Status::kOk,
+         "new connection inherited cancelled health state");
+  health->mode = 2;
+  wait_for([&] {
+    return call(Command::kStatus).body.find("failure=core_egress_connect_failed") != std::string::npos;
+  });
+  const auto failed = call(Command::kStatus);
+  Expect(failed.body.find("phase=running;") == 0 &&
+             failed.body.find("core_egress_validated=0;dns_ready=0") != std::string::npos &&
+             observed->stops == 1,
+         "periodic failure lost TUN ownership or retained cached green health");
+  ::Sleep(250);
+  Expect(health->calls == 4, "failed periodic check kept retrying outside manager recovery");
+
+  Expect(call(Command::kDisconnect).status == Status::kOk, "failed health could not disconnect");
+  health->mode = 0;
+  Expect(call(Command::kConnect, ProfileDigest(profile)).status == Status::kOk,
+         "healthy successor did not replace failed health");
+  health->mode = 1;
+  wait_for([&] { return health->calls == 6; });
+  const auto close_started = ::GetTickCount64();
+  dispatcher.reset();
+  Expect(::GetTickCount64() - close_started < 500 && health->active == 0 &&
+             runtime.Snapshot().body.find("core_egress_validated=1") != std::string::npos,
+         "shutdown failed to join health check or published its stale failure");
+  runtime.Shutdown();
+}
 }
 
 int main() {
@@ -105,6 +189,7 @@ int main() {
                network_mutations->mutations == 0 && runtime.Snapshot().body == before,
            "isolated probe changed TUN state or failed to close");
   }
+  TestPeriodicEgressLifecycle(root / "periodic", stop);
   ::CloseHandle(stop);
   std::filesystem::remove_all(root);
   return failures == 0 ? 0 : 1;

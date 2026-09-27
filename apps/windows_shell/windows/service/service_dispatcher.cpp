@@ -43,17 +43,20 @@ RuntimeResult WithTransportState(RuntimeResult result, bool pending, bool active
 
 RuntimeDispatcher::RuntimeDispatcher(RuntimeHost* runtime,
     std::function<std::optional<CandidateNetworkContext>()> candidate_network,
-    std::function<bool(std::uint64_t)> candidate_current)
+    std::function<bool(std::uint64_t)> candidate_current,
+    ULONGLONG egress_interval_ms)
     : runtime_(runtime),
       candidate_network_(candidate_network ? std::move(candidate_network) : [this] { return network_.ReadCandidateContext(); }),
       candidate_current_(candidate_current ? std::move(candidate_current) : [this](std::uint64_t revision) { return network_.IsCurrent(revision); }),
       snapshot_(runtime->Snapshot()),
+      egress_interval_ms_(egress_interval_ms),
       watcher_([this] { WatchBoundConnect(); }) {}
 
 RuntimeDispatcher::~RuntimeDispatcher() {
   {
     std::lock_guard<std::mutex> state(state_lock_);
     closing_ = true;
+    if (egress_check_cancelled_) *egress_check_cancelled_ = true;
   }
   watch_changed_.notify_all();
   watcher_.join();
@@ -109,6 +112,7 @@ RuntimeResult RuntimeDispatcher::ProjectBoundState(RuntimeResult result) {
 void RuntimeDispatcher::WatchBoundConnect() {
   for (;;) {
     std::shared_ptr<ActiveConnect> operation;
+    bool watch_bound = false;
     {
       std::unique_lock<std::mutex> state(state_lock_);
       watch_changed_.wait_for(state, std::chrono::milliseconds(100), [this] {
@@ -117,7 +121,11 @@ void RuntimeDispatcher::WatchBoundConnect() {
       });
       if (closing_) return;
       operation = active_connect_;
-      if (!operation || !operation->bound || operation->cleanup_attempted) continue;
+      watch_bound = operation && operation->bound && !operation->cleanup_attempted;
+    }
+    if (!watch_bound) {
+      CheckRunningEgress();
+      continue;
     }
     RefreshBoundNetwork(operation);
     const auto promoted = operation->promoted_until_elapsed_ms.load();
@@ -144,6 +152,33 @@ void RuntimeDispatcher::WatchBoundConnect() {
     // Failed restoration retains the exact owner. An explicit cancel retries;
     // timer polling must not repeatedly mutate a failed recovery transaction.
   }
+}
+
+void RuntimeDispatcher::CheckRunningEgress() {
+  std::unique_lock<std::mutex> state(state_lock_);
+  if (closing_) return;
+  std::unique_lock<std::mutex> execution(execution_lock_, std::try_to_lock);
+  if (!execution.owns_lock()) return;
+  if (!runtime_->CanRecheckEgress()) {
+    next_egress_check_ = 0;
+    return;
+  }
+  const auto now = ::GetTickCount64();
+  if (next_egress_check_ == 0) next_egress_check_ = now + egress_interval_ms_;
+  if (now < next_egress_check_) return;
+  auto cancelled = std::make_shared<std::atomic<bool>>(false);
+  egress_check_cancelled_ = cancelled;
+  state.unlock();
+  const auto deadline = now + 5000;
+  runtime_->RecheckEgress([cancelled, deadline] {
+    if (cancelled->load()) return OperationInterruption::kCancelled;
+    return ::GetTickCount64() >= deadline ? OperationInterruption::kDeadlineExceeded
+                                        : OperationInterruption::kNone;
+  });
+  next_egress_check_ = ::GetTickCount64() + egress_interval_ms_;
+  state.lock();
+  if (!cancelled->load() && !closing_) snapshot_ = runtime_->Snapshot();
+  egress_check_cancelled_.reset();
 }
 
 RuntimeResult RuntimeDispatcher::Cancel(const std::string& body) {
@@ -244,11 +279,26 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     }
   }
   std::unique_lock<std::mutex> execution(execution_lock_, std::try_to_lock);
+  if (!execution.owns_lock() &&
+      request.command != Command::kReadSmartAccessRestrictions &&
+      request.command != Command::kReadSmartAccessLeases) {
+    bool checking_egress = false;
+    {
+      std::lock_guard<std::mutex> state(state_lock_);
+      checking_egress = egress_check_cancelled_ != nullptr;
+      if (checking_egress) *egress_check_cancelled_ = true;
+    }
+    // DNS/WinHTTP waits observe cancellation at most every 50ms. Join that
+    // check, without holding state_lock_, before Stop/Stage/Start can proceed.
+    if (checking_egress) execution.lock();
+  }
   if (!execution.owns_lock()) {
     std::lock_guard<std::mutex> state(state_lock_);
     if (bound) stopped_connect_ = CancellationTarget{request.session_token, request.operation_nonce};
     return ProjectBoundState(WithFailure(snapshot_, Status::kNotReady, "runtime_busy"));
   }
+  if (request.command != Command::kReadSmartAccessRestrictions &&
+      request.command != Command::kReadSmartAccessLeases) next_egress_check_ = 0;
   std::optional<std::uint64_t> network_revision;
   if (bound || request.command == Command::kReplaceManagedProfile) {
     const auto context = network_.ReadContext();

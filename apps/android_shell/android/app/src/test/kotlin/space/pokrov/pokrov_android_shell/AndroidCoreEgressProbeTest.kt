@@ -7,6 +7,72 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AndroidCoreEgressProbeTest {
+    class ReachableCore(var reachable: Boolean = true) {
+        fun probeSelectedOutbound(@Suppress("UNUSED_PARAMETER") tag: String): Boolean = reachable
+    }
+
+    @Test
+    fun healthyConnectionRechecksActualCoreAndRetainsTunOnBlackhole() {
+        val core = ReachableCore()
+        val target = AndroidCoreEgressProbeTarget("proxy", AndroidCoreEgressProbeTargetKind.GROUP)
+        val scheduled = mutableListOf<Pair<Runnable, Long>>()
+        val started = mutableListOf<Pair<Long, Boolean>>()
+        val published = mutableListOf<Pair<AndroidCoreEgressProbeResult, Boolean>>()
+        val monitor = AndroidCoreEgressMonitor(
+            isCurrent = { true }, canRepeat = { true },
+            schedule = { task, delay -> scheduled.add(task to delay) },
+            remove = { task -> scheduled.removeAll { it.first === task } },
+            startProbe = { token, periodic -> started.add(token to periodic) },
+            publish = { result, retainTun -> published.add(result to retainTun) },
+        )
+        monitor.start()
+        monitor.start()
+        assertEquals("An unfinished probe cannot overlap", 1, started.size)
+        monitor.complete(started.single().first, AndroidCoreEgressProbe.resultFromCore(core, target))
+        assertEquals(5_000L, scheduled.single().second)
+
+        core.reachable = false
+        scheduled.removeAt(0).first.run()
+        assertEquals(2, started.size)
+        assertTrue(started.last().second)
+        monitor.complete(started.last().first, AndroidCoreEgressProbe.resultFromCore(core, target))
+        assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY to false,
+            AndroidCoreEgressProbeResult.FAILED to true), published)
+        assertTrue("Failure is handed to recovery, not another health loop", scheduled.isEmpty())
+    }
+
+    @Test
+    fun cancelledOrReplacedMonitorCannotPublishOrScheduleLateCoreResult() {
+        var current = true
+        var next: Runnable? = null
+        var removed = false
+        var token = 0L
+        var probes = 0
+        var publications = 0
+        val monitor = AndroidCoreEgressMonitor(
+            isCurrent = { current }, canRepeat = { true },
+            schedule = { task, _ -> next = task },
+            remove = { removed = true },
+            startProbe = { id, _ -> token = id; probes++ },
+            publish = { _, _ -> publications++ },
+        )
+        monitor.start()
+        monitor.complete(token, AndroidCoreEgressProbeResult.HEALTHY)
+        val oldCallback = next!!
+        oldCallback.run()
+        assertEquals(2, probes)
+        current = false // A new profile owns the generation before old Core returns.
+        monitor.complete(token, AndroidCoreEgressProbeResult.FAILED)
+        assertEquals(1, publications)
+        monitor.cancel()
+        assertTrue(removed)
+        current = true
+        oldCallback.run()
+        monitor.complete(token, AndroidCoreEgressProbeResult.HEALTHY)
+        assertEquals(2, probes)
+        assertEquals(1, publications)
+    }
+
     class CallBoundCore {
         val startedA = java.util.concurrent.CountDownLatch(1)
         val startedB = java.util.concurrent.CountDownLatch(1)

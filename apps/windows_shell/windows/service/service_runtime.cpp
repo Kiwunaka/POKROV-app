@@ -1524,6 +1524,30 @@ RuntimeResult RuntimeHost::RevokeSmartAccessPolicy(const std::string& body) {
   return {Status::kOk, result == 1 ? "revoked=1" : "revoked=0"};
 }
 
+bool RuntimeHost::CanRecheckEgress() const {
+  return phase_ == Phase::kRunning && core_egress_validated_ &&
+      !requires_bound_connect_ && !TransitionGuardArmed();
+}
+
+RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
+  if (!CanRecheckEgress() ||
+      (interrupted && interrupted() == OperationInterruption::kCancelled)) return Snapshot();
+  RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kAttempted);
+  const auto failure = egress_probe_ ? egress_probe_->Verify(interrupted) : "core_egress_probe_failed";
+  const auto interruption = interrupted ? interrupted() : OperationInterruption::kNone;
+  // A lifecycle command cancels and joins this check before changing its owner.
+  // Failed health leaves the current TUN in place for protected replacement.
+  if (interruption == OperationInterruption::kCancelled) return Snapshot();
+  if (!failure.empty() || interruption == OperationInterruption::kDeadlineExceeded) {
+    core_egress_validated_ = false;
+    RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kFailed);
+    return Fail(Status::kNotReady, interruption == OperationInterruption::kDeadlineExceeded
+        ? "core_egress_timeout" : SafeEgressFailure(failure));
+  }
+  RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kSucceeded);
+  return Snapshot();
+}
+
 RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
                                                  const CheckInterruption& interrupted) {
   if (transition_guard_ == nullptr || requires_bound_connect_ ||

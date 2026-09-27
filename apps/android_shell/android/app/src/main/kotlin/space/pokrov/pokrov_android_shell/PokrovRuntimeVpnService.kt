@@ -61,6 +61,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private val runtimeExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val healthGeneration = AtomicLong(0L)
     @Volatile private var pendingCoreEgressProbeGeneration: Long? = null
+    private var coreEgressMonitor: AndroidCoreEgressMonitor? = null
     private val runtimeSessionGeneration = AtomicLong(0L)
     private val serviceCommandGeneration = AtomicLong(0L)
     private val serviceCommandLock = Any()
@@ -1582,6 +1583,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         generation: Long,
     ) {
         if (!ownsRuntimeSession(session)) return
+        coreEgressMonitor?.let { previous ->
+            previous.cancel()
+            mainHandler.removeCallbacksAndMessages(previous)
+        }
         val content = activeConfigContent ?: return
         val variantConfigContent = activeVariantConfigContent
         AndroidRuntimeState.updateCoreEgressValidation(null)
@@ -1589,11 +1594,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         if (!activeCoreEgressProbeRequired) {
             return
         }
-        AndroidOperationalJournal.record(
-            AndroidOperationalEvent.CORE_EGRESS_PROBE,
-            AndroidOperationalOutcome.REQUIRED,
-            generation,
-        )
         val target = AndroidCoreEgressProbe.finalTarget(content)
         if (target == null) {
             handleCoreEgressProbeResult(
@@ -1603,36 +1603,58 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             return
         }
         val probeServer = commandServer
+        lateinit var monitor: AndroidCoreEgressMonitor
+        monitor = AndroidCoreEgressMonitor(
+            isCurrent = { ownsRuntimeSession(session) && healthGeneration.get() == generation && activeTun != null },
+            canRepeat = { activeConnectDeadline == null && activePromotedUntilElapsed == null && !activeCatalogAppRequired },
+            schedule = { task, delay -> mainHandler.postDelayed(task, delay) },
+            remove = { task -> mainHandler.removeCallbacks(task) },
+            startProbe = { token, periodic ->
+                runCoreEgressProbe(session, generation, target, probeServer, variantConfigContent, monitor, token, periodic)
+            },
+            publish = { result, periodic ->
+                handleCoreEgressProbeResult(result, generation,
+                    keepRuntimeOnFailure = periodic || target.keepRuntimeOnFailure)
+            },
+        )
+        coreEgressMonitor = monitor
+        session.onCancel {
+            monitor.cancel()
+            mainHandler.removeCallbacksAndMessages(monitor)
+        }
+        monitor.start()
+    }
+
+    private fun runCoreEgressProbe(
+        session: AndroidLifecycleTaskScope, generation: Long,
+        target: AndroidCoreEgressProbeTarget, probeServer: CommandServer?,
+        variantConfigContent: String?, monitor: AndroidCoreEgressMonitor,
+        token: Long, periodic: Boolean,
+    ) {
+        AndroidOperationalJournal.record(AndroidOperationalEvent.CORE_EGRESS_PROBE,
+            AndroidOperationalOutcome.REQUIRED, generation)
         val watchdog = Runnable {
             AndroidRuntimeDispatchPolicy.dispatch(
                 executor = runtimeExecutor,
-                shouldRun = {
-                    ownsRuntimeSession(session) &&
-                        healthGeneration.get() == generation &&
-                        activeTun != null
-                },
+                shouldRun = { monitor.owns(token) },
             ) {
-                handleCoreEgressProbeResult(
-                    probeResult = AndroidCoreEgressProbeResult.TIMED_OUT,
-                    generation = generation,
-                    keepRuntimeOnFailure = target.keepRuntimeOnFailure,
-                )
+                monitor.complete(token, AndroidCoreEgressProbeResult.TIMED_OUT)
             }
         }
-        mainHandler.postDelayed(watchdog, CORE_EGRESS_HARD_TIMEOUT_MILLIS)
-        session.onCancel { mainHandler.removeCallbacks(watchdog) }
+        mainHandler.postAtTime(watchdog, monitor,
+            android.os.SystemClock.uptimeMillis() + CORE_EGRESS_HARD_TIMEOUT_MILLIS)
         if (!session.execute {
             try {
                 var result = AndroidCoreEgressProbe.probe(target, probeServer)
                 var completedAttempts = 1
                 while (
+                    !periodic &&
                     AndroidCoreEgressRetryPolicy.shouldRetry(
                         target,
                         result,
                         completedAttempts,
                     ) &&
-                    ownsRuntimeSession(session) &&
-                    healthGeneration.get() == generation
+                    monitor.owns(token)
                 ) {
                     Thread.sleep(
                         if (target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT) {
@@ -1641,15 +1663,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                             CORE_EGRESS_RETRY_DELAY_MILLIS
                         },
                     )
-                    if (ownsRuntimeSession(session) && healthGeneration.get() == generation) {
+                    if (monitor.owns(token)) {
                         result = AndroidCoreEgressProbe.probe(target, probeServer)
                         completedAttempts += 1
                     }
                 }
                 if (
-                    result.isCompletedFailure &&
-                    ownsRuntimeSession(session) &&
-                    healthGeneration.get() == generation
+                    !periodic && result.isCompletedFailure && monitor.owns(token)
                 ) {
                     AndroidVariantAvailabilityProbe
                         .captureBeforeFailClosed(variantConfigContent.orEmpty())
@@ -1657,31 +1677,18 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 mainHandler.removeCallbacks(watchdog)
                 AndroidRuntimeDispatchPolicy.dispatch(
                     executor = runtimeExecutor,
-                    shouldRun = {
-                        ownsRuntimeSession(session) && healthGeneration.get() == generation
-                    },
+                    shouldRun = { monitor.owns(token) },
                 ) {
-                    handleCoreEgressProbeResult(
-                        probeResult = result,
-                        generation = generation,
-                        keepRuntimeOnFailure = target.keepRuntimeOnFailure,
-                    )
+                    monitor.complete(token, result)
                 }
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
             } catch (_: Throwable) {
                 AndroidRuntimeDispatchPolicy.dispatch(
                     executor = runtimeExecutor,
-                    shouldRun = {
-                        ownsRuntimeSession(session) &&
-                            healthGeneration.get() == generation
-                    },
+                    shouldRun = { monitor.owns(token) },
                 ) {
-                    handleCoreEgressProbeResult(
-                        probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
-                        generation = generation,
-                        keepRuntimeOnFailure = target.keepRuntimeOnFailure,
-                    )
+                    monitor.complete(token, AndroidCoreEgressProbeResult.UNAVAILABLE)
                 }
             } finally {
                 mainHandler.removeCallbacks(watchdog)
@@ -1690,15 +1697,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             mainHandler.removeCallbacks(watchdog)
             AndroidRuntimeDispatchPolicy.dispatch(
                 executor = runtimeExecutor,
-                shouldRun = {
-                    ownsRuntimeSession(session) && healthGeneration.get() == generation
-                },
+                shouldRun = { monitor.owns(token) },
             ) {
-                handleCoreEgressProbeResult(
-                    probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
-                    generation = generation,
-                    keepRuntimeOnFailure = target.keepRuntimeOnFailure,
-                )
+                monitor.complete(token, AndroidCoreEgressProbeResult.UNAVAILABLE)
             }
         }
     }

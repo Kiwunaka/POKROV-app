@@ -51,6 +51,11 @@ network context during a protected replacement.
 The service resolves the egress probe through its owned TUN DNS socket and keeps
 the original HTTPS hostname for TLS verification, without a system DNS exception
 in the transition guard.
+While an ordinary connection is healthy, the existing service watcher repeats
+that authenticated check every five seconds, with a five-second check budget.
+A failed check clears cached egress readiness while retaining the TUN for the
+manager's protected recovery. Disconnect, replacement and service shutdown cancel
+and join any pending check; DNS and HTTP waits observe cancellation every 50 ms.
 This resolution override requires Windows 10 21H1 or newer, as documented in the
 [WinHTTP option compatibility table](https://learn.microsoft.com/en-us/windows/win32/winhttp/option-flags#winhttp_option_resolution_hostname).
 

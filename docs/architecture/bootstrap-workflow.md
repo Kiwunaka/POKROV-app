@@ -43,6 +43,16 @@ Unexpected connection failures retain the operation, exception class and at most
 two application filename/line frames in the existing local protection event.
 Exception messages, raw stacks, URLs and profile material are not recorded.
 
+After ordinary Android egress is verified, the existing native session repeats
+the active Core selected-outbound 204 check five seconds after each success.
+Checks do not overlap; cancelled/replaced sessions cannot publish late results.
+A failed periodic check retains the TUN and exposes degraded egress to the
+manager's existing protected recovery. With the unchanged 15-second Core probe
+timeout and two-second manager poll, normal failure detection is about 22 seconds
+at worst before candidate selection; the existing 55-second host watchdog can
+extend that to about 62 seconds. These are scheduling budgets, not a 15-second
+failover claim. Initial probe retries and signed transport lease rules are unchanged.
+
 AWG 3.1 and Hysteria2 use the ordinary managed candidate path when the server
 offers a ready device-bound profile and the loaded Core supports it. The internal
 `awg31_lab` and `hy2_lab` contract IDs do not require a laboratory UI or client

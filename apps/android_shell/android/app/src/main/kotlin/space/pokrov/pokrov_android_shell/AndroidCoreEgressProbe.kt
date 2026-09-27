@@ -32,6 +32,50 @@ internal enum class AndroidCoreEgressProbeResult {
     }
 }
 
+/** One current probe; only its healthy result can schedule the next check. */
+internal class AndroidCoreEgressMonitor(
+    private val isCurrent: () -> Boolean,
+    private val canRepeat: () -> Boolean,
+    private val schedule: (Runnable, Long) -> Unit,
+    private val remove: (Runnable) -> Unit,
+    private val startProbe: (Long, Boolean) -> Unit,
+    private val publish: (AndroidCoreEgressProbeResult, Boolean) -> Unit,
+) {
+    private var cancelled = false
+    private var sequence = 0L
+    private var inFlight: Long? = null
+    private var periodic = false
+    private val next = Runnable { start() }
+
+    @Synchronized fun start() {
+        if (cancelled || inFlight != null || !isCurrent() || (periodic && !canRepeat())) return
+        val token = ++sequence
+        inFlight = token
+        startProbe(token, periodic)
+    }
+
+    @Synchronized fun owns(token: Long): Boolean =
+        !cancelled && inFlight == token && isCurrent()
+
+    @Synchronized fun complete(token: Long, result: AndroidCoreEgressProbeResult) {
+        if (!owns(token)) return
+        inFlight = null
+        publish(result, periodic)
+        if (result == AndroidCoreEgressProbeResult.HEALTHY && !cancelled && isCurrent() && canRepeat()) {
+            periodic = true
+            schedule(next, INTERVAL_MILLIS)
+        }
+    }
+
+    @Synchronized fun cancel() {
+        cancelled = true
+        inFlight = null
+        remove(next)
+    }
+
+    companion object { const val INTERVAL_MILLIS = 5_000L }
+}
+
 internal object AndroidCoreEgressRetryPolicy {
     fun shouldRetry(
         target: AndroidCoreEgressProbeTarget,
