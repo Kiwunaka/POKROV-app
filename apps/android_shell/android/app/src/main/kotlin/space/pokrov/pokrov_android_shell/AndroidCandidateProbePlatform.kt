@@ -6,6 +6,7 @@ import android.net.Network
 import android.os.Build
 import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
+import android.system.OsConstants
 import space.pokrov.core.libbox.ConnectionOwner
 import space.pokrov.core.libbox.ExchangeContext
 import space.pokrov.core.libbox.InterfaceUpdateListener
@@ -77,6 +78,7 @@ internal class AndroidCandidateProbePlatform(
             setIndex(resolved.index)
             setName(name)
             setMTU(resolved.mtu)
+            setFlags(if (resolved.isUp) OsConstants.IFF_UP else 0)
             setAddresses(ProbeStringIterator(links.linkAddresses.map {
                 AndroidPlatformRuntimeBridge.toLibboxPrefix(it.address, it.prefixLength.toShort())
             }))
