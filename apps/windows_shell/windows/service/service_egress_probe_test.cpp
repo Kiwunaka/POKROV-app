@@ -7,9 +7,71 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <vector>
 
 #ifdef _DEBUG
+namespace pokrov::service {
+std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
+                                            const CheckInterruption& interrupted);
+}
 namespace {
+class LoopbackDnsServer {
+ public:
+  enum class Reply { kValid, kWrongId, kWrongName, kError, kWait };
+  explicit LoopbackDnsServer(Reply reply) {
+    socket_ = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    if (socket_ == INVALID_SOCKET ||
+        ::bind(socket_, reinterpret_cast<sockaddr*>(&address), sizeof(address))) return;
+    int length = sizeof(address);
+    if (::getsockname(socket_, reinterpret_cast<sockaddr*>(&address), &length)) return;
+    port = ntohs(address.sin_port);
+    worker_ = std::thread([this, reply] {
+      while (!stop_) {
+        fd_set readable;
+        FD_ZERO(&readable);
+        FD_SET(socket_, &readable);
+        timeval timeout{0, 50000};
+        if (::select(0, &readable, nullptr, nullptr, &timeout) <= 0) continue;
+        unsigned char request[512]{};
+        sockaddr_in peer{};
+        int peer_size = sizeof(peer);
+        const int received = ::recvfrom(socket_, reinterpret_cast<char*>(request),
+            sizeof(request), 0, reinterpret_cast<sockaddr*>(&peer), &peer_size);
+        ++requests;
+        if (received < 17 || reply == Reply::kWait) return;
+        std::vector<unsigned char> response(request, request + received);
+        response[2] |= 0x80;  // QR: response; the question and transaction are echoed.
+        response[3] |= 0x80;  // Recursion available.
+        response[6] = 0;
+        response[7] = 1;      // One A answer, compressed to the question name.
+        const unsigned char answer[]{0xc0, 0x0c, 0, 1, 0, 1, 0, 0, 0, 60,
+                                     0, 4, 127, 0, 0, 1};
+        response.insert(response.end(), std::begin(answer), std::end(answer));
+        if (reply == Reply::kWrongId) response[0] ^= 1;
+        if (reply == Reply::kWrongName) response[13] = 'z';
+        if (reply == Reply::kError) response[3] |= 3;
+        ::sendto(socket_, reinterpret_cast<const char*>(response.data()),
+            static_cast<int>(response.size()), 0, reinterpret_cast<sockaddr*>(&peer), peer_size);
+        return;
+      }
+    });
+  }
+  ~LoopbackDnsServer() {
+    stop_ = true;
+    if (worker_.joinable()) worker_.join();
+    if (socket_ != INVALID_SOCKET) ::closesocket(socket_);
+  }
+  unsigned short port = 0;
+  std::atomic<int> requests{0};
+ private:
+  SOCKET socket_ = INVALID_SOCKET;
+  std::atomic<bool> stop_{false};
+  std::thread worker_;
+};
+
 class LoopbackServer {
  public:
   explicit LoopbackServer(std::string reply, bool tls_stall = false)
@@ -92,6 +154,28 @@ int main() {
   const auto expect = [&](bool value, const char* message) {
     if (!value) { std::cerr << message << '\n'; ++failures; }
   };
+  // The probe's DNS transport is a socket owned by this process. Exercise its
+  // real SDK decoder and cancellation without a TUN, OS resolver or WFP writes.
+  for (const auto reply : {LoopbackDnsServer::Reply::kValid,
+                          LoopbackDnsServer::Reply::kWrongId,
+                          LoopbackDnsServer::Reply::kWrongName,
+                          LoopbackDnsServer::Reply::kError,
+                          LoopbackDnsServer::Reply::kWait}) {
+    LoopbackDnsServer server(reply);
+    expect(server.port != 0, "DNS loopback listener failed");
+    if (server.port == 0) return 1;
+    const auto started = ::GetTickCount64();
+    const auto address = QueryLoopbackProbeAddressForTest(server.port, [&] {
+      return reply == LoopbackDnsServer::Reply::kWait && server.requests > 0
+                 ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+    });
+    expect(reply == LoopbackDnsServer::Reply::kValid ? address == L"127.0.0.1" : address.empty(),
+           "DNS accepted a mismatched/error reply or rejected the owned valid answer");
+    expect(server.requests == 1, "DNS transport did not send exactly one query");
+    if (reply == LoopbackDnsServer::Reply::kWait) {
+      expect(::GetTickCount64() - started < 500, "DNS cancellation waited for its full deadline");
+    }
+  }
   {
     const SOCKET reservation = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     sockaddr_in address{};

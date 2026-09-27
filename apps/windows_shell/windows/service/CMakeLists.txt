@@ -32,6 +32,7 @@ target_link_libraries(pokrov_service_runtime PUBLIC
   "ole32.lib"
   "bcrypt.lib"
   "iphlpapi.lib"
+  "dnsapi.lib"
   "shell32.lib"
   "winhttp.lib"
   "wlanapi.lib"

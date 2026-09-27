@@ -48,6 +48,11 @@ unavailable observations remain unknown.
 Windows materialization pins the TUN name to `POKROV` before profile identity
 binding, so its own route/interface changes do not invalidate the physical
 network context during a protected replacement.
+The service resolves the egress probe through its owned TUN DNS socket and keeps
+the original HTTPS hostname for TLS verification, without a system DNS exception
+in the transition guard.
+This resolution override requires Windows 10 21H1 or newer, as documented in the
+[WinHTTP option compatibility table](https://learn.microsoft.com/en-us/windows/win32/winhttp/option-flags#winhttp_option_resolution_hostname).
 
 - `flutter build windows --release` bundles `pokrov_windows.exe`,
   `pokrov_service.exe`, POKROV Core `pokrov-core.dll`, and pinned
