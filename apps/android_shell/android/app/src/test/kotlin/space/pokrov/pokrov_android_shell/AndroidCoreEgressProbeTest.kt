@@ -365,6 +365,23 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
+    fun protocolReceiptUsesOnlyEndpointOrSingleChildSelectorChain() {
+        for (protocol in listOf("awg", "warp")) {
+            assertEquals(protocol, AndroidCoreEgressProbe.unambiguousProtocol(
+                "endpoint-private", emptyMap(), mapOf("endpoint-private" to protocol), emptyMap()))
+        }
+        val members = mapOf("root" to listOf("nested"), "nested" to listOf("leaf-private"))
+        for (protocol in listOf("vless", "hysteria2")) {
+            val types = mapOf("root" to "selector", "nested" to "selector", "leaf-private" to protocol)
+            assertEquals(protocol, AndroidCoreEgressProbe.unambiguousProtocol("root", types, emptyMap(), members))
+            assertEquals("unknown", AndroidCoreEgressProbe.unambiguousProtocol("root", types, emptyMap(),
+                members + ("nested" to listOf("leaf-private", "other-private"))))
+            assertEquals("unknown", AndroidCoreEgressProbe.unambiguousProtocol("root",
+                types + ("nested" to "urltest"), emptyMap(), members))
+        }
+    }
+
+    @Test
     fun observedStagesKeepFailureRetriesAndGenerationFences() {
         for ((result, code) in mapOf(
             AndroidCoreEgressProbeResult.CONNECT_FAILED to "core_egress_connect_failed",

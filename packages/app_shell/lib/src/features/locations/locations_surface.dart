@@ -6,6 +6,7 @@ class _LocationsSection extends StatefulWidget {
     required this.selectedRouteMode,
     required this.hasProvisionedAccess,
     required this.smartConnectProfile,
+    required this.hasOrdinaryTransportCatalog,
     required this.locationsCatalog,
     required this.locationsCatalogBusy,
     required this.locationsCatalogError,
@@ -26,6 +27,7 @@ class _LocationsSection extends StatefulWidget {
   final RouteMode selectedRouteMode;
   final bool hasProvisionedAccess;
   final SmartConnectProfile? smartConnectProfile;
+  final bool hasOrdinaryTransportCatalog;
   final ClientLocationsCatalog? locationsCatalog;
   final bool locationsCatalogBusy;
   final String? locationsCatalogError;
@@ -139,9 +141,11 @@ class _LocationsSectionState extends State<_LocationsSection> {
               ? widget.preferredVariantId
               : '',
           runtimeProbeEnabled:
-              widget.appContext.hostPlatform == HostPlatform.android &&
+              !widget.hasOrdinaryTransportCatalog &&
+                  widget.appContext.hostPlatform == HostPlatform.android &&
                   entry.city.code.trim().toLowerCase() ==
                       widget.preferredNodeCode.trim().toLowerCase(),
+          hasOrdinaryTransportCatalog: widget.hasOrdinaryTransportCatalog,
           scrollController: scrollController,
         ),
       ),
@@ -641,6 +645,7 @@ class _LocationVariantSheet extends StatefulWidget {
     required this.selectedVariantId,
     required this.scrollController,
     this.runtimeProbeEnabled = false,
+    this.hasOrdinaryTransportCatalog = false,
   });
 
   final String cityName;
@@ -648,6 +653,7 @@ class _LocationVariantSheet extends StatefulWidget {
   final String selectedVariantId;
   final ScrollController scrollController;
   final bool runtimeProbeEnabled;
+  final bool hasOrdinaryTransportCatalog;
 
   @override
   State<_LocationVariantSheet> createState() => _LocationVariantSheetState();
@@ -764,7 +770,8 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
         '${result?.latencyMs ?? '—'} мс',
       PokrovLocationVariantProbeStatus.unavailable => 'Недоступно',
       PokrovLocationVariantProbeStatus.stale => 'Нужна проверка',
-      _ => widget.runtimeProbeEnabled ? 'Не проверено' : 'После выбора',
+      _ => widget.runtimeProbeEnabled || widget.hasOrdinaryTransportCatalog
+          ? 'Не проверено' : 'После выбора',
     };
   }
 
@@ -860,7 +867,9 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
                   key: const ValueKey('location-variant-refresh'),
                   tooltip: widget.runtimeProbeEnabled
                       ? 'Проверить все варианты'
-                      : 'Сначала выберите эту локацию',
+                      : widget.hasOrdinaryTransportCatalog
+                          ? 'Проверка вариантов недоступна'
+                          : 'Сначала выберите эту локацию',
                   onPressed: widget.runtimeProbeEnabled && !_checking
                       ? () => unawaited(_refresh())
                       : null,
@@ -883,7 +892,9 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
             const SizedBox(height: 14),
             if (!widget.runtimeProbeEnabled) ...[
               Text(
-                'Точный статус появится после выбора этой локации.',
+                widget.hasOrdinaryTransportCatalog
+                    ? 'Для текущего подключения проверка вариантов недоступна.'
+                    : 'Точный статус появится после выбора этой локации.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: p.muted,
                     ),

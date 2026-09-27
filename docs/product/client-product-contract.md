@@ -415,6 +415,9 @@ After activation:
   over absent live-counter location metadata. A rejected location preference
   is shown with Russian user-facing copy. Missing variant probe metadata is
   described as an unavailable check, without claiming the VPN is disconnected.
+  For a known ordinary transport catalog, including one restored from the
+  offline profile cache, legacy variant checks are disabled before invocation;
+  selecting a location or its connection variant remains available.
 - for the selected city, Android probes the exact already-staged private
   URL-test group and projects only safe variant ID, availability, measured
   latency/freshness and active variant ID. Endpoint/tag/key/profile material

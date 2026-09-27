@@ -3409,6 +3409,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             selectedRouteMode: _selectedRouteMode,
             hasProvisionedAccess: hasProvisionedAccess,
             smartConnectProfile: _smartConnectProfile,
+            hasOrdinaryTransportCatalog:
+                _connectionManager.transportCatalog != null,
             locationsCatalog: _locationsCatalog,
             locationsCatalogBusy: _locationsCatalogBusy,
             locationsCatalogError: _locationsCatalogError,

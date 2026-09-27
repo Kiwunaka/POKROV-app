@@ -8,7 +8,7 @@ import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
 import 'package:pokrov_app_shell/src/design_system/design_system.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -11103,10 +11103,24 @@ void main() {
       }),
     );
     final bootstrapper = _FakeBootstrapper(
-      const ManagedProfilePayload(
+      ManagedProfilePayload(
         profileName: 'variant-status-profile',
         configPayload: _materializedRuntimeConfig,
         materializedForRuntime: true,
+        transportCatalog: TransportCandidateCatalog(
+          revision: 'variant-status-rev',
+          selectedCandidateRef: 'de-fra:reality',
+          candidates: [
+            TransportCandidate(
+              candidateRef: 'de-fra:reality', profileRef: 'reality',
+              nodeCode: 'de-fra', countryCode: 'DE', protocol: 'vless',
+              transport: 'tcp', protection: 'reality', priority: 0,
+              network: 'tcp', flow: 'xtls-rprx-vision',
+              minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+              platforms: {HostPlatform.android}, requiredFeatures: {},
+            ),
+          ],
+        ),
       ),
       locationsCatalog: catalog,
     );
@@ -11183,6 +11197,34 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Подключите POKROV'), findsNothing);
+
+    Navigator.of(tester.element(refresh)).pop();
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-protection');
+    await _tapPrimaryConnectAndConfirmRouteScope(tester);
+    await tester.pumpAndSettle();
+    expect(runtimeCalls, contains('runtimeEngine.connect'));
+    final probesBeforeCatalogSheet = runtimeCalls
+        .where((call) => call == 'runtimeEngine.measureLocationVariants').length;
+    await _tapNav(tester, 'nav-locations');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(cityRow);
+    final dynamic catalogCitySurface = tester.widget(cityPressSurface);
+    catalogCitySurface.onTap();
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<IconButton>(refresh).onPressed,
+      isNull,
+    );
+    expect(
+      find.text('Для текущего подключения проверка вариантов недоступна.'),
+      findsOneWidget,
+    );
+    expect(find.text('Точный статус появится после выбора этой локации.'), findsNothing);
+    expect(
+      runtimeCalls.where((call) => call == 'runtimeEngine.measureLocationVariants'),
+      hasLength(probesBeforeCatalogSheet),
+    );
   });
 
   testWidgets('location refresh spinner stays out of the Auto card',

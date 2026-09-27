@@ -1597,7 +1597,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
         val target = AndroidCoreEgressProbe.finalTarget(content)
         if (target == null) {
-            android.util.Log.w("POKROVRuntime", "core_egress_probe code=target_unavailable exception=none target_kind=none attempt=0 duration_ms=0 generation=$generation periodic=false")
+            android.util.Log.w("POKROVRuntime", "core_egress_probe code=target_unavailable exception=none target_kind=none protocol=unknown attempt=0 duration_ms=0 generation=$generation periodic=false")
             handleCoreEgressProbeResult(
                 probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
                 generation = generation,
@@ -1680,7 +1680,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     } finally {
                         if ((!periodic || result != AndroidCoreEgressProbeResult.HEALTHY) && monitor.owns(token)) {
                             val code = if (result == AndroidCoreEgressProbeResult.HEALTHY) "healthy" else failure.first
-                            android.util.Log.w("POKROVRuntime", "core_egress_probe code=$code exception=${failure.second} target_kind=${target.kind.name.lowercase()} attempt=$completedAttempts duration_ms=${android.os.SystemClock.elapsedRealtime() - started} generation=$generation periodic=$periodic")
+                            android.util.Log.w("POKROVRuntime", "core_egress_probe code=$code exception=${failure.second} target_kind=${target.kind.name.lowercase()} protocol=${target.protocol} attempt=$completedAttempts duration_ms=${android.os.SystemClock.elapsedRealtime() - started} generation=$generation periodic=$periodic")
                         }
                     }
                 }

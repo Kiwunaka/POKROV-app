@@ -108,6 +108,7 @@ internal data class AndroidCoreEgressProbeTarget(
     val kind: AndroidCoreEgressProbeTargetKind,
     val keepRuntimeOnFailure: Boolean = false,
     val captureSafeFailureCategory: Boolean = false,
+    val protocol: String = "unknown",
 )
 
 internal data class AndroidCoreEgressProbeSample(
@@ -134,11 +135,18 @@ internal object AndroidCoreEgressProbe {
             val tag = protectedTargetTag(config) ?: return@runCatching null
             val outbounds = config.optJSONArray("outbounds") ?: return@runCatching null
             val outboundTypes = mutableMapOf<String, String>()
+            val selectorMembers = mutableMapOf<String, List<String>>()
             for (index in 0 until outbounds.length()) {
                 val outbound = outbounds.optJSONObject(index) ?: continue
                 val outboundTag = outbound.optString("tag").trim()
                 if (outboundTag.isNotEmpty()) {
                     outboundTypes[outboundTag] = outbound.optString("type")
+                    if (outbound.optString("type") == "selector") {
+                        val members = outbound.optJSONArray("outbounds")
+                        selectorMembers[outboundTag] = List(members?.length() ?: 0) {
+                            members!!.optString(it)
+                        }
+                    }
                 }
             }
             val endpointTypes = mutableMapOf<String, String>()
@@ -154,7 +162,7 @@ internal object AndroidCoreEgressProbe {
                 finalTag = tag,
                 outboundTypes = outboundTypes,
                 endpointTypes = endpointTypes,
-            )
+            )?.copy(protocol = unambiguousProtocol(tag, outboundTypes, endpointTypes, selectorMembers))
         }.getOrNull()
     }
 
@@ -335,6 +343,22 @@ internal object AndroidCoreEgressProbe {
             safeFailureDiagnostic(error).let { onFailure?.invoke(it.first, it.second) }
             AndroidCoreEgressProbeResult.UNAVAILABLE
         }
+    }
+
+    /** A single-child selector cannot restore a different cached member. */
+    internal fun unambiguousProtocol(targetTag: String, outboundTypes: Map<String, String>,
+        endpointTypes: Map<String, String>, selectorMembers: Map<String, List<String>>,
+    ): String {
+        var tag = targetTag
+        val visited = mutableSetOf<String>()
+        while (visited.add(tag)) {
+            when (val type = outboundTypes[tag] ?: endpointTypes[tag]) {
+                "vless", "hysteria2", "awg", "warp" -> return type
+                "selector" -> tag = selectorMembers[tag]?.singleOrNull() ?: return "unknown"
+                else -> return "unknown"
+            }
+        }
+        return "unknown"
     }
 
     /** Exact Core strings and standard class categories only; never raw error text. */
