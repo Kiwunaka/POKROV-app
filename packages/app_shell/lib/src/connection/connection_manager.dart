@@ -2626,14 +2626,15 @@ class ConnectionManager extends ChangeNotifier {
         return;
       }
 
-      if (snapshot.lastFailureKind == 'protected_handoff_failed' ||
-          (snapshot.lastFailureKind == 'connect_cancelled' && snapshot.phase == RuntimePhase.running)) {
-        _runtimeSnapshot = snapshot;
-      }
+      // Restored staged profiles skip initialize; selection still needs the
+      // current host inventory rather than a missing pre-action snapshot.
+      _runtimeSnapshot = snapshot;
       if ((_protectedHandoffActive &&
               (actionIntent == ConnectionTransitionIntent.connect || reconnectAfterDisconnect)) ||
           (reconnectAfterDisconnect && snapshot.phase == RuntimePhase.running &&
-              _transportCatalog != null && _runtimeEngine is RuntimeProtectedHandoff)) {
+              _runtimeEngine is RuntimeProtectedHandoff &&
+              !(_bootstrapper is AppFirstTransportManifestService &&
+                  (_bootstrapper as AppFirstTransportManifestService).transportManifestEnabled))) {
         await _recoverCandidateConnection(snapshot, _activeCandidateRef ?? _candidateRef ?? '',
             ownerGeneration: generation);
         return;

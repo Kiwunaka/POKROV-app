@@ -164,6 +164,9 @@ internal object AndroidRuntimeState {
             configDirectory = configDirectory,
         )
         environment = resolved
+        // Restoring a persisted profile can expose CONFIG_STAGED before setup.
+        // The selector still needs this pure compiled inventory before its API call.
+        ensureCompiledTransportCapabilities()
         if (phase == AndroidRuntimePhase.ARTIFACT_MISSING) {
             phase = AndroidRuntimePhase.ARTIFACT_READY
             lastMessage = "POKROV found the packaged runtime and can get this device ready."
@@ -203,7 +206,7 @@ internal object AndroidRuntimeState {
             smartAccessLeaseVersion = readSmartAccessLeaseVersion()
             routingCatalogControlVersion = readRoutingCatalogControlVersion()
             smartAccessRuntimeControlVersion = readSmartAccessRuntimeControlVersion()
-            transportCapabilitiesJson = readTransportCapabilities()
+            ensureCompiledTransportCapabilities()
             coreModuleSha256 = readCoreModuleSha256()
             phase = if (phase == AndroidRuntimePhase.RUNNING) {
                 AndroidRuntimePhase.RUNNING
@@ -240,11 +243,23 @@ internal object AndroidRuntimeState {
         null
     }
 
+    @Synchronized
+    internal fun ensureCompiledTransportCapabilities(
+        read: () -> String? = ::readTransportCapabilities,
+    ) {
+        if (transportCapabilitiesJson != null) return
+        transportCapabilitiesJson = try {
+            val value = read()
+            // The shared Dart decoder admits the closed feature schema. Keep the
+            // bridge bounded and ASCII-only; never log the native return value.
+            value?.takeIf { it.length in 1..4096 && it.all { char -> char.code in 32..126 } }
+        } catch (_: LinkageError) {
+            null
+        }
+    }
+
     private fun readTransportCapabilities(): String? = try {
-        val value = Libbox::class.java.getMethod("transportCapabilities").invoke(null)
-        // The shared Dart decoder admits the closed feature schema. Keep the
-        // bridge bounded and ASCII-only; never log the native return value.
-        (value as? String)?.takeIf { it.length in 1..4096 && it.all { char -> char.code in 32..126 } }
+        Libbox::class.java.getMethod("transportCapabilities").invoke(null) as? String
     } catch (_: ReflectiveOperationException) {
         null
     } catch (_: LinkageError) {

@@ -1575,11 +1575,21 @@ class RuntimeHostBridge(
             val elapsed = (System.nanoTime() - started) / 1_000_000
             activity.runOnUiThread {
                 candidateProbes.publish(id) { publicationCancelled ->
-                    if (hostTaskScope.isActive()) result.success(when {
-                        publicationCancelled.get() -> failure("cancelled", elapsed)
-                        context.read() != expected -> failure("network_changed", elapsed)
-                        else -> response
-                    })
+                    if (hostTaskScope.isActive()) {
+                        val published = when {
+                            publicationCancelled.get() -> failure("cancelled", elapsed)
+                            context.read() != expected -> failure("network_changed", elapsed)
+                            else -> response
+                        }
+                        val safe = runCatching { if (published is String) org.json.JSONObject(published)
+                            else org.json.JSONObject(published as Map<*, *>) }.getOrNull()
+                        val kind = safe?.optString("failure_kind")?.takeIf { it in setOf("", "cancelled",
+                            "network_changed", "invalid_request", "duplicate_probe", "invalid_profile", "unavailable",
+                            "timeout", "start_failed", "connect_failed", "tls_failed", "probe_failed", "unexpected_status") }
+                            ?: "unavailable"
+                        android.util.Log.i("POKROVRuntime", "candidate_probe success=${safe?.optBoolean("success") == true && kind.isEmpty()} failure_kind=$kind duration_ms=$elapsed")
+                        result.success(published)
+                    }
                 }
             }
         }

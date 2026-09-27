@@ -69,6 +69,8 @@ const char* EventName(ServiceEvent event) {
       return "runtime_dns_apply";
     case ServiceEvent::kRuntimeEgressVerify:
       return "runtime_egress_verify";
+    case ServiceEvent::kRuntimeCandidateProbe:
+      return "runtime_candidate_probe";
     case ServiceEvent::kRuntimeCommit:
       return "runtime_commit";
     case ServiceEvent::kRuntimeRollbackBegin:

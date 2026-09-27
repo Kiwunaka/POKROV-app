@@ -15,10 +15,16 @@ that fallback and does not claim the new assignment was applied. The owner's
 last downloaded or last proven profile within its original offline window.
 An explicit authorization denial is separate from an unreachable API.
 
-With an ordinary managed catalog and a runtime supporting protected handoff,
+With ordinary managed profiles and a runtime supporting protected handoff,
 manual reconnect and location replacement retain the running tunnel while the
 replacement profile is resolved and probed. Cancellation retains that protection,
 including before native replacement starts; explicit Disconnect releases it.
+This also applies when the current Core did not advertise catalog capabilities
+or the UI attached to an existing tunnel before loading its catalog. The signed
+transport execution mode keeps its separate authorization path.
+Before resolving a profile, the manager adopts the current host snapshot even
+when a restored staged profile skips initialize, so its loaded capabilities reach
+the managed catalog request and candidate probes.
 The replacement uses the current connection operation and completion owner.
 If the first activation fails its egress check and is confirmed stopped before
 any healthy candidate existed, recovery stages and connects the selected profile

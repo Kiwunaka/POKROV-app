@@ -738,9 +738,18 @@ class InstalledCoreRuntime final : public CoreRuntime {
                              const std::string& bind_interface,
                              const CheckInterruption& interrupted) override {
     if (probe_candidate_ == nullptr || bind_interface.empty()) return "";
-    return StringResult(probe_candidate_(request.config.c_str(), request.probe_id.c_str(),
+    const auto result = StringResult(probe_candidate_(request.config.c_str(), request.probe_id.c_str(),
         static_cast<int>(request.timeout_ms), bind_interface.c_str(),
         CheckCoreInterruption, const_cast<CheckInterruption*>(&interrupted)));
+    if (events_ != nullptr) {
+      // The verified Core ABI emits this canonical result only after its fixed
+      // HTTPS endpoint returns 204. Keep profile/id/raw JSON out of the journal.
+      constexpr char success_prefix[] = "{\"success\":true,\"failure_kind\":\"\",\"duration_ms\":";
+      events_->Record(ServiceEvent::kRuntimeCandidateProbe,
+          result.rfind(success_prefix, 0) == 0 ? ServiceEventOutcome::kSucceeded
+                                             : ServiceEventOutcome::kFailed);
+    }
+    return result;
   }
 
   std::string StartInterruptible(const std::wstring& config_path,

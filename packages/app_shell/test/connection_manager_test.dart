@@ -47,12 +47,13 @@ class _Bootstrapper implements ManagedProfileBootstrapper {
     if (!entered.isCompleted) entered.complete();
     unawaited(cancelled?.then((_) => this.cancelled = true));
     await gate?.future;
+    final nodeCode = preferredNodeCode.isEmpty ? 'de' : preferredNodeCode;
     return ManagedProfilePayload(
-      profileName: selectedCandidateRef.isEmpty ? 'de:profile_0' : selectedCandidateRef,
+      profileName: selectedCandidateRef.isEmpty ? '$nodeCode:profile_0' : selectedCandidateRef,
       transportCatalog: catalog ? TransportCandidateCatalog(revision: 'test',
           selectedCandidateRef: selectedCandidateRef.isEmpty ? 'de:profile_0' : selectedCandidateRef,
           candidates: _candidates) : null,
-      resolvedNodeCode: 'de',
+      resolvedNodeCode: nodeCode,
       configPayload:
           '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
       materializedForRuntime: true,
@@ -100,7 +101,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   @override
   Future<RuntimeCandidateProbeResult> probeCandidate({required String probeId,
       required ManagedProfilePayload payload, required Duration timeout, required String expectedNetworkContext}) async {
-    expect(calls.contains('initialize') || restoredHandoffGuard, isTrue);
+    expect(calls.contains('initialize') || restoredHandoffGuard || phase == RuntimePhase.configStaged, isTrue);
     final cancelled = Completer<void>();
     activeProbes[probeId] = cancelled;
     if (!probeStarted.isCompleted) probeStarted.complete();
@@ -129,6 +130,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     Future<String> Function(String, RuntimeSnapshot)? persistRestrictions,
   }) async {
     calls.add('replace');
+    stagedProfile = payload.profileName;
     handoffCalls++;
     _request = 'handoff-$handoffCalls';
     expect(activeProbes, isEmpty);
@@ -170,7 +172,9 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         canInitialize: phase == RuntimePhase.artifactReady,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
         message: '',
-        transportCapabilities: supportsCandidates ? RuntimeTransportCapabilities.fromWire('{"schema":1,"features":["singbox_tls_v1"]}') : null,
+        transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady
+            ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
+                'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
         hostHealth: phase == RuntimePhase.running
             ? RuntimeHostHealth.healthy
             : RuntimeHostHealth.unknown,
@@ -231,7 +235,10 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     return mutate('stage', RuntimePhase.configStaged);
   }
   @override
-  Future<RuntimeSnapshot> invalidateManagedProfile() async => value(phase);
+  Future<RuntimeSnapshot> invalidateManagedProfile() async {
+    calls.add('invalidate');
+    return value(phase);
+  }
   @override
   Future<RuntimeSnapshot> connect() {
     _request = 'request-${++connectCalls}';
@@ -323,6 +330,7 @@ void main() {
     var apiUnavailable = false;
     var failedRequests = 0;
     var clientsCreated = 0;
+    final managedQueries = <Map<String, String>>[];
     DateTime? cacheNow;
     final expiry = DateTime.now().toUtc().add(const Duration(days: 2));
     final inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android,
@@ -341,8 +349,23 @@ void main() {
             'provisioning': {'status': 'ready', 'sync_ok': true},
           }));
         } else if (request.uri.path == '/api/client/profile/managed') {
+          managedQueries.add(request.uri.queryParameters);
           request.response.write(jsonEncode({
             'profile_revision': 'offline-test-profile', 'config_format': 'singbox-json',
+            'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
+            if (request.uri.queryParameters['catalog_version'] == '1') 'transport_catalog': {
+              'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'offline-test-profile',
+              'selected_candidate_ref': 'de:legacy_reality_fallback',
+              'candidates': [{
+                'candidate_ref': 'de:legacy_reality_fallback', 'profile_ref': 'legacy_reality_fallback',
+                'node_code': 'de', 'country_code': 'DE', 'protocol': 'vless',
+                'transport': 'tcp', 'protection': 'reality', 'priority': 0,
+                'parameters': {'network': 'tcp', 'flow': ''},
+                'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+                  'platforms': ['android', 'windows'],
+                  'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']},
+              }],
+            },
             'provisioning': {'status': 'ready', 'sync_ok': true},
             'access': {'access_state': 'paid_unlimited', 'expiry_at': expiry.toIso8601String()},
             'config_payload': {
@@ -367,19 +390,33 @@ void main() {
       httpClientFactory: () { clientsCreated++; return HttpClient(); },
       allExceptRuRuleSetUrlsResolver: (_) => const [], maxRequestAttempts: 1,
     );
-    final downloaded = await bootstrapper().resolveManagedProfile(
-      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
+    final onlineRuntime = _Runtime()..supportsCandidates = true..phase = RuntimePhase.configStaged;
+    final onlineManager = _manager(onlineRuntime, bootstrapper());
+    addTearDown(onlineManager.dispose);
+    expect(onlineRuntime.value(RuntimePhase.artifactReady).transportCapabilities, isNull);
+    await onlineManager.connect();
+    expect(onlineManager.status.phase, ConnectionPhase.connected);
+    expect(onlineRuntime.calls, isNot(contains('initialize')));
+    expect(managedQueries.single['catalog_version'], '1');
+    expect(managedQueries.single['client_platform'], inputs.hostPlatform.name);
+    expect(managedQueries.single['runtime_features']!.split(','),
+        RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort());
+    expect(managedQueries.single.containsKey('core_release'), isFalse);
+    expect(onlineManager.transportCatalog?.selectedCandidateRef, 'de:legacy_reality_fallback');
+    expect(onlineRuntime.probeStarted.isCompleted, isTrue);
+    final downloadedProfile = onlineRuntime.stagedProfile;
+    await onlineManager.disconnect();
     expect(protectedValues, isNotEmpty);
     apiUnavailable = true;
     cacheNow = expiry.add(const Duration(hours: 23));
-    final runtime = _Runtime()..networkAvailable = null;
+    final runtime = _Runtime()..networkAvailable = null..supportsCandidates = true;
     // A fresh bootstrap instance must restore the protected record after restart.
     final manager = _manager(runtime, bootstrapper());
     addTearDown(manager.dispose);
     await manager.connect();
     expect(failedRequests, greaterThan(0));
     expect(clientsCreated, greaterThan(1));
-    expect(runtime.stagedProfile, downloaded.profileName);
+    expect(runtime.stagedProfile, downloadedProfile);
     expect(runtime.connectCalls, 1);
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(manager.offlineState, ManagedProfileOfflineState.apiUnavailable,
@@ -513,6 +550,34 @@ void main() {
     await manager.disconnect();
     expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(1));
     expect(runtime.phase, RuntimePhase.configStaged);
+  });
+
+  test('location callback retains the running tunnel without catalog capabilities', () async {
+    final runtime = _Runtime();
+    final manager = _manager(runtime, _Bootstrapper());
+    addTearDown(manager.dispose);
+    manager.updateLocationsCatalog(ClientLocationsCatalog.fromJson({
+      'countries': [
+        {'code': 'CH', 'country': 'Switzerland', 'cities': [
+          {'code': 'ch', 'city': 'Zurich'},
+        ]},
+      ],
+    }));
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.transportCatalog, isNull);
+    expect(manager.snapshot?.transportCapabilities, isNull);
+
+    await manager.setPreferredLocation('ch', 'direct');
+
+    expect(runtime.calls, containsAllInOrder(['invalidate', 'replace']));
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(runtime.calls.where((call) => call == 'stage'), hasLength(1));
+    expect(runtime.connectCalls, 1);
+    expect(runtime.handoffCalls, 1);
+    expect(runtime.stagedProfile, 'ch:profile_0');
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.busy, isFalse);
   });
 
   test('enabled signed transport mode cannot fall through to ordinary catalog profiles', () async {

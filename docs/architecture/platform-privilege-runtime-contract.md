@@ -527,6 +527,10 @@ the existing Core reload with a retained Android TUN. Failed reload or late
 cancellation retains the current descriptor as protection until explicit stop;
 a new TUN established during cancellation is retained too. ATS and catalog app
 identity-bound profiles keep their separate admission paths.
+Restoring a staged profile reads the bounded compiled transport inventory before
+the first snapshot, without Core setup or TUN changes. Native candidate completion
+and protected handoff failure log only fixed result categories and elapsed time;
+they never include identifiers, profiles or exception text.
 
 The foreground notification and its public lockscreen version use
 `VISIBILITY_PRIVATE` and a generic protection state. Country, route, selected

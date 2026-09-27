@@ -101,6 +101,16 @@ int main() {
   }
 
 #ifdef _DEBUG
+  // Actual SYSTEM-created objects read back on the Windows VM: BFE returned
+  // sublayer weight 65534 and added INDEXED to the four permit filters.
+  FWPM_SUBLAYER0 persisted_layer{};
+  persisted_layer.flags = FWPM_SUBLAYER_FLAG_PERSISTENT;
+  persisted_layer.weight = 65534;
+  expect(TransitionGuardSubLayerMatchesForTesting(persisted_layer),
+         "accept observed BFE sublayer priority");
+  persisted_layer.weight = 65533;
+  expect(!TransitionGuardSubLayerMatchesForTesting(persisted_layer),
+         "reject a lower-priority sublayer");
   // Inspect actual policy definitions; this NEVER opens a WFP engine or calls
   // add/delete. Existing-flow enforcement itself is a separate opt-in VM gate.
   const std::array<const GUID*, 4> layers = {
@@ -117,6 +127,16 @@ int main() {
     expect(f.action.type == static_cast<FWP_ACTION_TYPE>(
                permit ? FWP_ACTION_PERMIT : FWP_ACTION_BLOCK),
            "service exception precedes default block");
+    auto readback = f;
+    if (permit) readback.flags |= FWPM_FILTER_FLAG_INDEXED;
+    expect(TransitionGuardFilterMatchesForTesting(readback, f),
+           "accept actual BFE indexed permit/unmodified block");
+    readback.flags |= FWPM_FILTER_FLAG_DISABLED;
+    expect(!TransitionGuardFilterMatchesForTesting(readback, f),
+           "indexed must not hide a disabled filter");
+    readback.flags = f.flags | FWPM_FILTER_FLAG_CLEAR_ACTION_RIGHT;
+    expect(!TransitionGuardFilterMatchesForTesting(readback, f),
+           "reject changed filter arbitration");
     if (permit) {
       expect(f.numFilterConditions == 2, "no broad DNS/system/loopback exception");
       const auto& app = f.filterCondition[0];

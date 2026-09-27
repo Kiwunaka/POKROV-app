@@ -24,6 +24,24 @@ class AndroidRuntimeStateTest {
     }
 
     @Test
+    fun restoredProfile_exposesCompiledInventory_beforeCoreSetupWithoutChangingPhase() {
+        AndroidRuntimeState.markProfileStaged("/tmp/persisted-runtime.json")
+        AndroidRuntimeState.ensureCompiledTransportCapabilities { throw UnsatisfiedLinkError() }
+        assertNull(AndroidRuntimeState.snapshot()["transportCapabilitiesJson"])
+
+        val inventory = """{"schema":1,"features":["singbox_tls_v1"]}"""
+        AndroidRuntimeState.ensureCompiledTransportCapabilities { inventory }
+        AndroidRuntimeState.ensureCompiledTransportCapabilities { error("Inventory already read") }
+
+        val snapshot = AndroidRuntimeState.snapshot()
+        assertEquals("configStaged", snapshot["phase"])
+        assertEquals("/tmp/persisted-runtime.json", snapshot["stagedConfigPath"])
+        assertEquals(inventory, snapshot["transportCapabilitiesJson"])
+        assertNull(snapshot["runningSince"])
+        assertNull(snapshot["last_failure_kind"])
+    }
+
+    @Test
     fun packagedRuntimeLocator_findsCoreInsideApk_whenNativeLibsAreNotExtracted() {
         val apk = File.createTempFile("pokrov-runtime", ".apk")
         try {
@@ -694,6 +712,7 @@ class AndroidRuntimeStateTest {
 
     private fun resetState() {
         setPrivateField("environment", null)
+        setPrivateField("transportCapabilitiesJson", null)
         setPrivateField("phase", AndroidRuntimePhase.ARTIFACT_MISSING)
         setPrivateField("stagedConfigPath", null)
         setPrivateField("stagedProfileDigest", null)

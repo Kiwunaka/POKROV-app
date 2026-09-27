@@ -38,6 +38,7 @@ enum class ServiceEvent {
   kRuntimeRouteApply,
   kRuntimeDnsApply,
   kRuntimeEgressVerify,
+  kRuntimeCandidateProbe,
   kRuntimeCommit,
   kRuntimeRollbackBegin,
   kRuntimeCoreStop,

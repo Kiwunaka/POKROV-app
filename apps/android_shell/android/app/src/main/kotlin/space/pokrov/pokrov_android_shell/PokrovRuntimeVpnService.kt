@@ -819,6 +819,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     private fun retainProtectedFailure(kind: String) {
+        android.util.Log.i("POKROVRuntime", "protected_handoff success=false failure_kind=${if (kind == "connect_cancelled") kind else "protected_handoff_failed"}")
         healthGeneration.incrementAndGet()
         pendingCoreEgressProbeGeneration = null
         releaseDnsFailureToken()

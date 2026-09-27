@@ -7,6 +7,7 @@
 #ifdef _DEBUG
 #include <functional>
 struct FWPM_FILTER0_;
+struct FWPM_SUBLAYER0_;
 #endif
 
 namespace pokrov::service {
@@ -46,6 +47,9 @@ std::unique_ptr<RuntimeTransitionGuard> CreateTransitionGuardForTesting(
 // deleting any WFP objects. The visitor's pointers are valid only in the call.
 std::string VisitTransitionGuardFiltersForTesting(
     const std::function<void(const FWPM_FILTER0_&)>& visitor);
+bool TransitionGuardFilterMatchesForTesting(
+    const FWPM_FILTER0_& actual, const FWPM_FILTER0_& expected);
+bool TransitionGuardSubLayerMatchesForTesting(const FWPM_SUBLAYER0_& actual);
 #endif
 
 }  // namespace pokrov::service
