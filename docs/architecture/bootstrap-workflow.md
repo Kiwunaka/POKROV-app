@@ -42,6 +42,12 @@ replacement is unverified; only explicit Disconnect releases the guard.
 Unexpected connection failures retain the operation, exception class and at most
 two application filename/line frames in the existing local protection event.
 Exception messages, raw stacks, URLs and profile material are not recorded.
+API discovery uses the requesting operation's HTTP client, so cancellation of
+startup refresh cannot break a newer connect. An elapsed profile deadline stays
+a timeout; cancellation and current authorization denial retain their existing
+meaning. A stale identity or cancelled response cannot clear the current cache.
+After a current 401 clears the cache, the one permitted session refresh uses the
+normal profile budget; a 403 remains fatal and never restores cached authority.
 
 After a healthy ordinary connect, the existing finite cache refresh fetches the
 exact current profile's latest catalog, then prepares at most two other protocol

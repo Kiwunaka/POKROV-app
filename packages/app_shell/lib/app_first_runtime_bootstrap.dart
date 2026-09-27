@@ -2939,7 +2939,6 @@ class AppFirstRuntimeBootstrapper
   final Map<String, Future<_StoredBootstrapState>> _refreshFlights =
       <String, Future<_StoredBootstrapState>>{};
   String? _activeApiBaseUrl;
-  Future<String>? _apiBaseUrlFlight;
   late final _SmartConnectResolver _smartConnectResolver =
       _SmartConnectResolver(this);
 
@@ -3345,7 +3344,7 @@ class AppFirstRuntimeBootstrapper
     requests.requireActive();
     final client = requests.attach(_createHttpClient(hostPlatform));
     var timedOut = false;
-    final timer = timeout == null ? null : Timer(timeout, () {
+    var timer = timeout == null ? null : Timer(timeout, () {
       timedOut = true;
       client.close(force: true);
     });
@@ -3503,16 +3502,34 @@ class AppFirstRuntimeBootstrapper
           requests.requireActive();
           return manifest.payload;
         } on BootstrapFailure catch (error) {
+          requests.requireActive();
           if (error.statusCode == 401 || error.statusCode == 403) {
+            final current = await _loadState(hostPlatform);
+            requests.requireActive();
+            if (current == null || current.accountId != state.accountId || current.installId != state.installId ||
+                current.sessionToken != state.sessionToken ||
+                _managedProfileCache.generation(hostPlatform.name) != cacheGeneration) {
+              throw const BootstrapFailure('Подготовка подключения отменена.',
+                code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
+            }
             try {
               await _managedProfileCache.clear(hostPlatform.name);
             } on Object {
               // The explicit denial still propagates; no offline fall-through.
             }
-            if (requests.isCancelled) rethrow;
           }
           requests.requireActive();
-          if (attempt == 0 && _isSessionFailure(error.statusCode)) {
+          if (attempt == 0 && error.statusCode == HttpStatus.unauthorized) {
+            if (timedOut) throw TimeoutException('Managed profile refresh');
+            if (state.refreshToken.isNotEmpty && timeout != null && timeout < requestTimeout) {
+              // The denied cache is gone. The single authorized session retry
+              // now needs the normal online profile budget, not its cache wait.
+              timer?.cancel();
+              timer = Timer(requestTimeout, () {
+                timedOut = true;
+                client.close(force: true);
+              });
+            }
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
@@ -3531,6 +3548,13 @@ class AppFirstRuntimeBootstrapper
       throw const BootstrapFailure(
         'POKROV не смог завершить подготовку устройства.',
       );
+    } on Object catch (error) {
+      requests.requireActive();
+      if (timedOut && !(error is BootstrapFailure &&
+          (error.statusCode == 401 || error.statusCode == 403 || error.code == 'managed_profile_superseded'))) {
+        throw TimeoutException('Managed profile refresh');
+      }
+      rethrow;
     } finally {
       timer?.cancel();
       requests.close(client);
@@ -9386,22 +9410,12 @@ class AppFirstRuntimeBootstrapper
     if (active != null) {
       return active;
     }
-    final existingFlight = _apiBaseUrlFlight;
-    if (existingFlight != null) {
-      return existingFlight;
-    }
-    final flight = _selectApiBaseUrl(
+    // The caller owns this client's cancellation and deadline. A new operation
+    // must not inherit discovery IO running on another owner's closed client.
+    return _selectApiBaseUrl(
       client: client,
       hostPlatform: hostPlatform,
     );
-    _apiBaseUrlFlight = flight;
-    try {
-      return await flight;
-    } finally {
-      if (identical(_apiBaseUrlFlight, flight)) {
-        _apiBaseUrlFlight = null;
-      }
-    }
   }
 
   Future<String> _selectApiBaseUrl({

@@ -240,6 +240,7 @@ void main() {
     final probes = <String>[];
     var returnWrongSelection = false;
     var returnWrongKind = false;
+    var returnUnauthorized = false;
     Completer<void>? managedRequested;
     Completer<void>? releaseManaged;
     Map<String, Object?> descriptor(String node, String profile, String transport) => {
@@ -265,6 +266,12 @@ void main() {
           queries.add(query);
           managedRequested?.complete();
           if (releaseManaged != null) await releaseManaged.future;
+          if (returnUnauthorized) {
+            request.response.statusCode = HttpStatus.unauthorized;
+            request.response.write('{"detail":"session ended"}');
+            await request.response.close();
+            continue;
+          }
           final chosen = !returnWrongSelection && query['selected_candidate_ref'] == 'de:grpc_443_primary';
           final sibling = query['selected_candidate_ref'] == 'ru-spb:grpc_443_primary';
           final grpc = chosen || sibling;
@@ -397,6 +404,25 @@ void main() {
     await expectLater(bootstrapper.cacheResolvedManagedProfile(inputs, discovery), superseded);
     await expectLater(bootstrapper.cacheResolvedManagedProfile(inputs, discovery, candidateOnly: true), superseded);
     expect((jsonDecode(await sessionFile.readAsString()) as Map)['account_id'], 'new-account');
+
+    managedRequested = Completer<void>();
+    releaseManaged = Completer<void>();
+    returnUnauthorized = true;
+    final lateDenial = bootstrapper.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
+        routeMode: inputs.routeMode, selectCandidate: false, cacheResult: false);
+    await managedRequested.future;
+    changedAccount['account_id'] = 'current-account';
+    await sessionFile.writeAsString(jsonEncode(changedAccount));
+    final currentCache = ManagedProfileCache();
+    final currentBinding = inputs.binding('current-account', changedAccount['install_id'] as String);
+    await currentCache.saveDownloaded(platform: 'windows', binding: currentBinding,
+        revision: 'current-revision', verifiedAt: DateTime.now().toUtc(),
+        payload: {'cache_entry_id': 'current-profile', 'access': {'expiry_at': null}});
+    final deniedOldOwner = expectLater(lateDenial, superseded);
+    releaseManaged.complete();
+    await deniedOldOwner;
+    expect((await currentCache.read(platform: 'windows', binding: currentBinding))?['cache_entry_id'], 'current-profile',
+        reason: 'an old account response cannot clear the current account cache');
   });
 
   test('managed TUN MTU rejects missing malformed and unsafe values', () {
@@ -423,6 +449,9 @@ void main() {
     var denied = false;
     var subscriptionDenied = false;
     var stall = false;
+    var accessTokenExpired = false;
+    var delayRenewedProfile = false;
+    var sessionRefreshes = 0;
     DateTime? now;
     final expiry = DateTime.now().toUtc().add(const Duration(days: 2));
     unawaited(() async {
@@ -431,20 +460,31 @@ void main() {
         request.response.headers.contentType = ContentType.json;
         if (request.uri.path == '/api/client/session/start-trial') {
           request.response.write(jsonEncode({
-            'session': {'session_token': 'cache-fixture-token', 'account_id': 'cache-account'},
+            'session': {'access_token': 'cache-fixture-token', 'refresh_token': 'cache-fixture-refresh', 'account_id': 'cache-account'},
             'provisioning': {'status': 'ready', 'sync_ok': true},
           }));
         } else if (denied) {
           request.response.statusCode = 403;
           request.response.write('{"detail":"access denied"}');
+        } else if (request.uri.path == '/api/client/session/refresh') {
+          sessionRefreshes++;
+          accessTokenExpired = false;
+          request.response.write(jsonEncode({'session': {
+            'access_token': 'renewed-fixture-token', 'refresh_token': 'renewed-fixture-refresh', 'account_id': 'cache-account',
+          }}));
         } else if (request.uri.path == '/api/client/subscription') {
           request.response.write(jsonEncode({
             'lane': subscriptionDenied ? 'expiredOrBlocked' : 'paidUnlimited',
           }));
         } else if (request.uri.path == '/api/client/route-policy') {
-          request.response.write('{"ok":true}');
+          request.response.statusCode = accessTokenExpired ? 401 : 200;
+          request.response.write(accessTokenExpired ? '{"detail":"session expired"}' : '{"ok":true}');
         } else if (request.uri.path == '/api/client/profile/managed') {
           if (stall) continue;
+          if (delayRenewedProfile) {
+            delayRenewedProfile = false;
+            await Future<void>.delayed(const Duration(milliseconds: 3200));
+          }
           request.response.write(jsonEncode({..._readyManagedProfile(revision),
             'access': {'expiry_at': expiry.toIso8601String(), 'access_state': 'paid_unlimited'},
           }));
@@ -458,7 +498,7 @@ void main() {
     AppFirstRuntimeBootstrapper create({bool offline = false}) => AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => directory,
-      maxRequestAttempts: 1, delayScheduler: (_) async {},
+      maxRequestAttempts: 2, delayScheduler: (_) async {},
       httpClientFactory: offline ? () => throw StateError('offline cache used HTTP') : null,
       managedProfileCache: ManagedProfileCache(now: () => now ?? DateTime.now().toUtc()),
     );
@@ -484,12 +524,21 @@ void main() {
     expect(proven?.source?.revision, 'a');
     expect(await restarted.loadCachedManagedProfile(const ManagedProfileCacheInputs(
       hostPlatform: HostPlatform.windows, routeMode: RouteMode.allExceptRu)), isNull);
+    accessTokenExpired = true;
+    delayRenewedProfile = true;
+    revision = 'renewed';
+    final renewed = await online.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
+        routeMode: inputs.routeMode, timeout: const Duration(seconds: 3));
+    expect(renewed.source?.revision, 'renewed');
+    expect(sessionRefreshes, 1);
+    expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId,
+        reason: 'authorized renewal stores fresh bytes, never resurrecting the denied cache');
     stall = true;
     await expectLater(online.resolveManagedProfile(
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
       timeout: const Duration(milliseconds: 100),
-    ).timeout(const Duration(seconds: 2)), throwsA(isA<BootstrapFailure>()));
-    expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, b.cacheEntryId);
+    ).timeout(const Duration(seconds: 2)), throwsA(isA<TimeoutException>()));
+    expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId);
     stall = false;
     await online.fetchClientSubscription(hostPlatform: inputs.hostPlatform);
     expect(await restarted.loadCachedManagedProfile(inputs), isNotNull);
@@ -501,7 +550,9 @@ void main() {
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode);
     denied = true;
     await expectLater(online.resolveManagedProfile(
-      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode), throwsA(isA<BootstrapFailure>()));
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode),
+      throwsA(isA<BootstrapFailure>().having((error) => error.statusCode, 'status', 403)));
+    expect(sessionRefreshes, 1, reason: 'revoked access cannot start another auth retry');
     expect(await restarted.loadCachedManagedProfile(inputs), isNull);
     denied = false;
     await online.refreshCachedManagedProfile(inputs);
@@ -672,6 +723,70 @@ void main() {
     expect(primaryPostCount, 0);
     expect(fallbackHealthCount, 1);
     expect(fallbackPostCount, 1);
+  });
+
+  test('new profile discovery does not borrow the cancelled startup client', () async {
+    final primary = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final fallback = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final directory = await Directory.systemTemp.createTemp('pokrov-owned-api-discovery-');
+    final firstHealth = Completer<void>();
+    final releaseHealth = Completer<void>();
+    final nextClient = Completer<void>();
+    final cancelled = Completer<void>();
+    var clients = 0;
+    addTearDown(() async {
+      if (!releaseHealth.isCompleted) releaseHealth.complete();
+      await primary.close(force: true);
+      await fallback.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    primary.listen((request) async {
+      if (!firstHealth.isCompleted) {
+        firstHealth.complete();
+        await releaseHealth.future;
+      }
+      request.response.headers.contentType = ContentType.html;
+      request.response.write('<html>not the API</html>');
+      await request.response.close();
+    });
+    fallback.listen((request) async {
+      await utf8.decoder.bind(request).join();
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode(request.uri.path == '/api/client/profile/managed'
+          ? _readyManagedProfile('owned-client') : {'ok': true}));
+      await request.response.close();
+    });
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.windows,
+        installId: 'ownership-fixture', sessionToken: 'ownership-session');
+    await File('${directory.path}/app-first-session-windows.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': 'ownership-fixture', 'account_id': 'ownership-account',
+      'managed_manifest_path': '/api/client/profile/managed', 'session_token_storage': 'secure',
+    }));
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${primary.port}/',
+      apiFallbackBaseUrls: ['http://127.0.0.1:${fallback.port}/'],
+      supportDirectoryResolver: () async => directory, sessionSecretStore: secrets,
+      httpClientFactory: () {
+        if (++clients == 2) nextClient.complete();
+        return HttpClient();
+      }, maxRequestAttempts: 1,
+    );
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
+    Object? startupFailure;
+    final startup = bootstrapper.refreshCachedManagedProfile(inputs, cancelled: cancelled.future)
+        .catchError((Object error) { startupFailure = error; });
+    await firstHealth.future;
+    final incoming = bootstrapper.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
+        routeMode: inputs.routeMode, timeout: const Duration(seconds: 2));
+    final incomingReady = expectLater(incoming, completion(isA<ManagedProfilePayload>()));
+    await nextClient.future;
+    cancelled.complete();
+    releaseHealth.complete();
+    await incomingReady;
+    await startup;
+    expect(startupFailure.toString(), 'managed_profile_cancelled');
+    expect((await bootstrapper.loadCachedManagedProfile(inputs))?.source?.revision, 'owned-client');
   });
 
   test('non-idempotent API request is not replayed after transport failure',
