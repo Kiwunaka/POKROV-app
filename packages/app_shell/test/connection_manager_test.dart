@@ -75,6 +75,50 @@ class _ManifestBootstrapper extends _Bootstrapper implements AppFirstTransportMa
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileBootstrapper {
+  _CachedBootstrapper() : super(catalog: true);
+  bool cacheAvailable = true;
+  static final alternatives = [
+    _candidates.first,
+    for (final (index, protocol, protection) in [(1, 'awg', 'awg31'), (2, 'hysteria2', 'tls')])
+      TransportCandidate(candidateRef: 'de:cached_$index', profileRef: 'cached_$index', nodeCode: 'de',
+        countryCode: 'DE', protocol: protocol, transport: 'udp', protection: protection,
+        priority: index, network: 'udp', flow: '', minimumClientRelease: '1.2.0',
+        minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {}),
+  ];
+
+  @override
+  Future<ManagedProfilePayload?> loadCachedManagedProfile(ManagedProfileCacheInputs inputs, {
+    bool preferProven = false, String selectedCandidateRef = '',
+    Set<RuntimeTransportFeature>? runtimeFeatures, String? coreRelease,
+  }) async {
+    if (!cacheAvailable) return null;
+    final selected = alternatives.firstWhere((candidate) =>
+        candidate.candidateRef == (selectedCandidateRef.isEmpty ? 'de:profile_0' : selectedCandidateRef));
+    return ManagedProfilePayload(profileName: selected.candidateRef, cacheEntryId: selected.candidateRef,
+      transportCatalog: TransportCandidateCatalog(revision: 'cached',
+          selectedCandidateRef: selected.candidateRef, candidates: alternatives),
+      source: RuntimeProfileSource(revision: 'cached', origin: RuntimeProfileSourceOrigin.managedManifest,
+          protocol: selected.protocol),
+      configPayload: '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+      materializedForRuntime: true, routeMode: inputs.routeMode, resolvedNodeCode: 'de');
+  }
+  @override
+  Future<void> cacheResolvedManagedProfile(ManagedProfileCacheInputs inputs, ManagedProfilePayload payload,
+      {Future<void>? cancelled, bool candidateOnly = false}) async {}
+  @override
+  Future<void> refreshCachedManagedProfile(ManagedProfileCacheInputs inputs, {
+    Set<RuntimeTransportFeature> runtimeFeatures = const {}, String? coreRelease, Future<void>? cancelled,
+    String selectedCandidateRef = '', bool alternativesOnly = false,
+  }) async {}
+  @override
+  Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId,
+      {String? networkSelectionKey}) async {}
+  @override
+  Future<ManagedProfileOfflineState> classifyManagedProfileFailure(ManagedProfileCacheInputs inputs,
+      {bool? networkAvailable, bool? captivePortal}) async => ManagedProfileOfflineState.apiUnavailable;
+}
+
 class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
@@ -83,6 +127,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool failProbeCancellation = false;
   bool failHandoff = false;
   final failedProbeProtocols = <String>{};
+  final heldProbeProtocols = <String>{};
+  Future<void>? alternateProbeGate;
   final probedProtocols = <String>[];
   final handoffProfiles = <String>[];
   String? failedHandoffProfile;
@@ -90,6 +136,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool restoredHandoffGuard = false;
   final probeRelease = Completer<void>();
   final probeStarted = Completer<void>();
+  final alternateProbeStarted = Completer<void>();
   final handoffStarted = Completer<void>();
   Completer<void>? handoffRelease;
   final activeProbes = <String, Completer<void>>{};
@@ -114,9 +161,14 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     final cancelled = Completer<void>();
     activeProbes[probeId] = cancelled;
     if (!probeStarted.isCompleted) probeStarted.complete();
+    if (protocol != 'vless' && !alternateProbeStarted.isCompleted) alternateProbeStarted.complete();
     if (holdProbes) {
       if (payload.profileName == 'de:profile_1') { await Future.any([probeRelease.future, cancelled.future]); }
       else { await cancelled.future; }
+    }
+    if (heldProbeProtocols.contains(protocol)) await cancelled.future;
+    if (alternateProbeGate != null && protocol != 'vless') {
+      await Future.any([alternateProbeGate!, cancelled.future]);
     }
     activeProbes.remove(probeId);
     final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol);
@@ -580,6 +632,61 @@ void main() {
     expect(bootstrapper.resolutions.every((call) => !call.select && !call.cache), isTrue);
     expect(manager.status.phase, ConnectionPhase.connected);
   });
+
+  test('confirmed failure races cached alternatives before a hanging API or AWG probe', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _CachedBootstrapper();
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    final resolutionsBefore = bootstrapper.resolutions.length;
+    final probesBefore = runtime.probedProtocols.length;
+    bootstrapper.gate = Completer<void>();
+    addTearDown(() => bootstrapper.gate!.complete());
+    runtime.heldProbeProtocols.add('awg');
+    runtime.warpEgressFailure = true;
+
+    await runtime.handoffStarted.future.timeout(const Duration(seconds: 3), onTimeout: () {
+      fail('${manager.status.phase}: ${manager.headline}; probes=${runtime.probedProtocols}; calls=${runtime.calls}');
+    });
+    while (manager.busy) { await Future<void>.delayed(Duration.zero); }
+    expect(bootstrapper.resolutions, hasLength(resolutionsBefore), reason: 'ready cache never waits for the API');
+    expect(runtime.probedProtocols.skip(probesBefore), ['awg', 'hysteria2'],
+        reason: 'the confirmed failed current is not probed again');
+    expect(runtime.handoffProfiles, ['de:cached_2']);
+    expect(runtime.activeProbes, isEmpty, reason: 'the losing AWG probe settles before handoff');
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
+  for (final interrupt in ['cancel', 'deny']) {
+    test('$interrupt during cached recovery cannot activate a late winner', () async {
+      final runtime = _Runtime()..supportsCandidates = true;
+      final bootstrapper = _CachedBootstrapper();
+      final manager = _manager(runtime, bootstrapper);
+      addTearDown(manager.dispose);
+      await manager.connect();
+      final resolutionsBefore = bootstrapper.resolutions.length;
+      bootstrapper.gate = Completer<void>();
+      addTearDown(() => bootstrapper.gate!.complete());
+      final gate = Completer<void>();
+      runtime.alternateProbeGate = gate.future;
+      runtime.warpEgressFailure = true;
+      await runtime.alternateProbeStarted.future.timeout(const Duration(seconds: 3));
+      if (interrupt == 'cancel') {
+        await manager.cancel();
+      } else {
+        await manager.denyAccess();
+        gate.complete();
+      }
+      while (manager.busy) { await Future<void>.delayed(Duration.zero); }
+      expect(runtime.handoffCalls, 0);
+      expect(runtime.activeProbes, isEmpty);
+      expect(bootstrapper.resolutions, hasLength(resolutionsBefore));
+      expect(runtime.calls, isNot(contains('disconnect')));
+      expect(manager.retainsProtection, isTrue);
+    });
+  }
 
   test('failed protected recovery never disconnects and explicit off releases it', () async {
     final runtime = _Runtime()..supportsCandidates = true..warpEgressFailure = true..failHandoff = true;

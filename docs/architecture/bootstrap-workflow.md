@@ -65,15 +65,19 @@ Failed activation advances to another candidate, with at most three activations
 per recovery. A retained native guard is shown as blocked traffic, including
 after UI restart; Home, tray and protection details offer explicit Disconnect.
 
-After ordinary Android egress is verified, the existing native session repeats
-the active Core selected-outbound 204 check five seconds after each success.
-Checks do not overlap; cancelled/replaced sessions cannot publish late results.
-A failed periodic check retains the TUN and exposes degraded egress to the
-manager's existing protected recovery. With the unchanged 15-second Core probe
-timeout and two-second manager poll, normal failure detection is about 22 seconds
-at worst before candidate selection; the existing 55-second host watchdog can
-extend that to about 62 seconds. These are scheduling budgets, not a 15-second
-failover claim. Initial probe retries and signed transport lease rules are unchanged.
+After ordinary Android or Windows egress is verified, the native session repeats
+the active Core 204 check two seconds after each success, with a three-second
+periodic deadline and a one-second manager status poll. Android uses Core's
+bounded runtime probe; startup readiness waits and diagnostic-log waits do not
+delay it. Checks do not overlap, and cancelled/replaced sessions cannot publish
+late results. A failed check retains the TUN. Confirmed automatic recovery
+excludes that failed candidate and immediately probes authorized cached
+alternatives in parallel with the existing selector, before waiting for the API.
+Manual reconnect keeps its current-candidate-first order. Cache account binding,
+expiry, authorization denial and the protected handoff still apply; initial
+probe retries and signed transport lease rules are unchanged. The five-second
+native detection budget is not an end-to-end failover measurement; the phone's
+15-second acceptance target still requires a device test.
 
 AWG 3.1 and Hysteria2 use the ordinary managed candidate path when the server
 offers a ready device-bound profile and the loaded Core supports it. The internal

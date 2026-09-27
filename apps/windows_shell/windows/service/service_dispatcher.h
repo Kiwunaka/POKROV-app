@@ -22,7 +22,7 @@ class RuntimeDispatcher {
   explicit RuntimeDispatcher(RuntimeHost* runtime,
       std::function<std::optional<CandidateNetworkContext>()> candidate_network = {},
       std::function<bool(std::uint64_t)> candidate_current = {},
-      ULONGLONG egress_interval_ms = 5000);
+      ULONGLONG egress_interval_ms = 2000);
   ~RuntimeDispatcher();
   RuntimeResult Execute(const Frame& request, HANDLE stop_event,
                         ULONGLONG monotonic_deadline, HANDLE client_pipe);

@@ -34,6 +34,7 @@ import space.pokrov.core.libbox.OverrideOptions
 import space.pokrov.core.libbox.PlatformInterface
 import space.pokrov.core.libbox.RoutePrefix
 import space.pokrov.core.libbox.RoutePrefixIterator
+import space.pokrov.core.libbox.RuntimeProbeCancellation
 import space.pokrov.core.libbox.StringIterator
 import space.pokrov.core.libbox.SystemProxyStatus
 import space.pokrov.core.libbox.TunOptions
@@ -1605,7 +1606,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         val probeServer = commandServer
         lateinit var monitor: AndroidCoreEgressMonitor
         monitor = AndroidCoreEgressMonitor(
-            isCurrent = { ownsRuntimeSession(session) && healthGeneration.get() == generation && activeTun != null },
+            isCurrent = { ownsRuntimeSession(session) && healthGeneration.get() == generation &&
+                commandServer === probeServer && activeTun != null },
             canRepeat = { activeConnectDeadline == null && activePromotedUntilElapsed == null && !activeCatalogAppRequired },
             schedule = { task, delay -> mainHandler.postDelayed(task, delay) },
             remove = { task -> mainHandler.removeCallbacks(task) },
@@ -1614,7 +1616,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             },
             publish = { result, periodic ->
                 handleCoreEgressProbeResult(result, generation,
-                    keepRuntimeOnFailure = periodic || target.keepRuntimeOnFailure)
+                    keepRuntimeOnFailure = periodic || target.keepRuntimeOnFailure,
+                    periodic = periodic)
             },
         )
         coreEgressMonitor = monitor
@@ -1633,7 +1636,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     ) {
         AndroidOperationalJournal.record(AndroidOperationalEvent.CORE_EGRESS_PROBE,
             AndroidOperationalOutcome.REQUIRED, generation)
+        val probeCancelled = AtomicBoolean(false)
+        val periodicCancellation = if (periodic) object : RuntimeProbeCancellation {
+            override fun isCancelled(): Boolean = probeCancelled.get() || !monitor.owns(token)
+        } else null
         val watchdog = Runnable {
+            probeCancelled.set(true)
             AndroidRuntimeDispatchPolicy.dispatch(
                 executor = runtimeExecutor,
                 shouldRun = { monitor.owns(token) },
@@ -1642,10 +1650,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
         }
         mainHandler.postAtTime(watchdog, monitor,
-            android.os.SystemClock.uptimeMillis() + CORE_EGRESS_HARD_TIMEOUT_MILLIS)
+            android.os.SystemClock.uptimeMillis() + if (periodic) {
+                AndroidCoreEgressProbe.PERIODIC_TIMEOUT_MILLIS + 500L
+            } else CORE_EGRESS_HARD_TIMEOUT_MILLIS)
         if (!session.execute {
             try {
-                var result = AndroidCoreEgressProbe.probe(target, probeServer)
+                var result = AndroidCoreEgressProbe.probe(target, probeServer, periodicCancellation)
                 var completedAttempts = 1
                 while (
                     !periodic &&
@@ -1825,6 +1835,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         probeResult: AndroidCoreEgressProbeResult,
         generation: Long,
         keepRuntimeOnFailure: Boolean = false,
+        periodic: Boolean = false,
     ) {
         if (!lifecycleActive.get()) {
             return
@@ -1848,7 +1859,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             generation,
         )
         if ((keepRuntimeOnFailure || protectedHandoff.retainsTun) && probeResult != AndroidCoreEgressProbeResult.HEALTHY) {
-            val failureKind = probeResult.failureKind()
+            val failureKind = probeResult.failureKind(periodic)
             AndroidRuntimeState.updateCoreEgressValidation(false)
             AndroidRuntimeState.markDegraded(
                 failureKind = failureKind,

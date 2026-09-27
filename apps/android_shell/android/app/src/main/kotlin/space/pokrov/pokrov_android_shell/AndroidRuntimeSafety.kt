@@ -170,6 +170,8 @@ internal object AndroidRuntimeSafety {
             "Не удалось соединиться с сервером проверки через подключение."
         "core_egress_tls_failed" ->
             "Не удалось согласовать TLS с сервером проверки."
+        "core_egress_timeout" ->
+            "Проверка подключения не завершилась вовремя. Причина не установлена."
         "core_egress_probe_unavailable" ->
             "POKROV не завершил проверку защищенного подключения. Попробуйте еще раз."
         "core_identity_mismatch" ->

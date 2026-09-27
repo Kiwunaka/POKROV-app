@@ -20,7 +20,7 @@ class DiagnosticsCoordinator {
   /// This reads local IPC only; it does not repeat network diagnostics.
   void startRuntimePolling(Future<void> Function() onPoll) {
     if (_runtimeTimer != null) return;
-    _runtimeTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+    _runtimeTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
       if (_runtimePollInFlight) return;
       _runtimePollInFlight = true;
       try {

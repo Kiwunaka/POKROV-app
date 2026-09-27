@@ -129,6 +129,41 @@ void TestPeriodicEgressLifecycle(const std::filesystem::path& root, HANDLE stop)
          "shutdown failed to join health check or published its stale failure");
   runtime.Shutdown();
 }
+
+void TestPeriodicEgressDeadlineRetainsTun(const std::filesystem::path& root, HANDLE stop) {
+  auto core = std::make_unique<ProbeCore>();
+  auto* observed = core.get();
+  auto probe = std::make_unique<HealthProbe>();
+  auto* health = probe.get();
+  RuntimeHost runtime(std::move(core), std::move(probe), std::make_unique<Recovery>(),
+      root.wstring(), false);
+  RuntimeDispatcher dispatcher(&runtime);
+  const auto call = [&](Command command, const std::string& body = "") {
+    Frame request{};
+    request.command = command;
+    request.body = body;
+    return dispatcher.Execute(request, stop, ::GetTickCount64() + 5000, nullptr);
+  };
+  const std::string profile = "0\n{}";
+  Expect(call(Command::kStageProfile, profile).status == Status::kOk &&
+             call(Command::kConnect, ProfileDigest(profile)).status == Status::kOk,
+         "deadline fixture could not connect");
+  const auto started = ::GetTickCount64();
+  health->mode = 1;
+  RuntimeResult result;
+  do {
+    ::Sleep(10);
+    result = call(Command::kStatus);
+  } while (result.body.find("failure=core_egress_timeout") == std::string::npos &&
+           ::GetTickCount64() - started < 5600);
+  Expect(result.body.find("phase=running;") == 0 &&
+             result.body.find("failure=core_egress_timeout") != std::string::npos &&
+             result.body.find("core_egress_validated=0;dns_ready=0") != std::string::npos &&
+             health->active == 0 && health->calls == 2 && observed->stops == 0,
+         "periodic deadline exceeded detection budget, overlapped, or released the TUN");
+  Expect(call(Command::kDisconnect).status == Status::kOk,
+         "timed-out periodic probe could not disconnect");
+}
 }
 
 int main() {
@@ -190,6 +225,7 @@ int main() {
            "isolated probe changed TUN state or failed to close");
   }
   TestPeriodicEgressLifecycle(root / "periodic", stop);
+  TestPeriodicEgressDeadlineRetainsTun(root / "periodic-deadline", stop);
   ::CloseHandle(stop);
   std::filesystem::remove_all(root);
   return failures == 0 ? 0 : 1;

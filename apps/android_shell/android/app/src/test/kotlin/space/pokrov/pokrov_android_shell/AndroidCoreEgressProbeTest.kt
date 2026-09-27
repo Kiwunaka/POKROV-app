@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import space.pokrov.core.libbox.RuntimeProbeCancellation
 
 class AndroidCoreEgressProbeTest {
     class ReachableCore(var reachable: Boolean = true) {
@@ -29,7 +30,7 @@ class AndroidCoreEgressProbeTest {
         monitor.start()
         assertEquals("An unfinished probe cannot overlap", 1, started.size)
         monitor.complete(started.single().first, AndroidCoreEgressProbe.resultFromCore(core, target))
-        assertEquals(5_000L, scheduled.single().second)
+        assertEquals(2_000L, scheduled.single().second)
 
         core.reachable = false
         scheduled.removeAt(0).first.run()
@@ -39,6 +40,46 @@ class AndroidCoreEgressProbeTest {
         assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY to false,
             AndroidCoreEgressProbeResult.FAILED to true), published)
         assertTrue("Failure is handed to recovery, not another health loop", scheduled.isEmpty())
+    }
+
+    class BoundedCore {
+        var calls = 0
+        var timeout = false
+        fun probeRuntimeEgress(tag: String, timeoutMs: Int, cancellation: RuntimeProbeCancellation): Boolean {
+            assertEquals("proxy", tag)
+            assertEquals(3_000, timeoutMs)
+            calls++
+            if (timeout) throw Exception("context deadline exceeded")
+            return !cancellation.isCancelled()
+        }
+    }
+
+    @Test
+    fun periodicGroupAndEndpointUseBoundedCoreWithoutStartupFallback() {
+        val cancelled = java.util.concurrent.atomic.AtomicBoolean(false)
+        val cancellation = object : RuntimeProbeCancellation {
+            override fun isCancelled(): Boolean = cancelled.get()
+        }
+        for (kind in AndroidCoreEgressProbeTargetKind.values()) {
+            val core = BoundedCore()
+            val target = AndroidCoreEgressProbeTarget("proxy", kind, captureSafeFailureCategory = true)
+            assertEquals(AndroidCoreEgressProbeResult.HEALTHY,
+                AndroidCoreEgressProbe.probe(target, core, cancellation))
+            cancelled.set(true)
+            assertEquals(AndroidCoreEgressProbeResult.FAILED,
+                AndroidCoreEgressProbe.probe(target, core, cancellation))
+            cancelled.set(false)
+            core.timeout = true
+            assertEquals(AndroidCoreEgressProbeResult.TIMED_OUT,
+                AndroidCoreEgressProbe.probe(target, core, cancellation))
+            assertEquals(3, core.calls)
+        }
+        assertEquals(AndroidCoreEgressProbeResult.UNAVAILABLE,
+            AndroidCoreEgressProbe.probe(
+                AndroidCoreEgressProbeTarget("proxy", AndroidCoreEgressProbeTargetKind.GROUP),
+                ReachableCore(), cancellation))
+        assertEquals("core_egress_timeout", AndroidCoreEgressProbeResult.TIMED_OUT.failureKind(periodic = true))
+        assertEquals("core_egress_probe_unavailable", AndroidCoreEgressProbeResult.TIMED_OUT.failureKind())
     }
 
     @Test

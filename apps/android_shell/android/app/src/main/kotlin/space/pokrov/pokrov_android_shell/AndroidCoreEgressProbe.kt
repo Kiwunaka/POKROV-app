@@ -7,6 +7,7 @@ import space.pokrov.core.libbox.ConnectionEvents
 import space.pokrov.core.libbox.Libbox
 import space.pokrov.core.libbox.LogIterator
 import space.pokrov.core.libbox.OutboundGroupIterator
+import space.pokrov.core.libbox.RuntimeProbeCancellation
 import space.pokrov.core.libbox.StatusMessage
 import space.pokrov.core.libbox.StringIterator
 import java.util.concurrent.CountDownLatch
@@ -24,10 +25,11 @@ internal enum class AndroidCoreEgressProbeResult {
     val isCompletedFailure: Boolean
         get() = this == FAILED || this == CONNECT_FAILED || this == TLS_FAILED
 
-    fun failureKind(): String = when (this) {
+    fun failureKind(periodic: Boolean = false): String = when (this) {
         FAILED -> "core_egress_probe_failed"
         CONNECT_FAILED -> "core_egress_connect_failed"
         TLS_FAILED -> "core_egress_tls_failed"
+        TIMED_OUT -> if (periodic) "core_egress_timeout" else "core_egress_probe_unavailable"
         else -> "core_egress_probe_unavailable"
     }
 }
@@ -73,7 +75,7 @@ internal class AndroidCoreEgressMonitor(
         remove(next)
     }
 
-    companion object { const val INTERVAL_MILLIS = 5_000L }
+    companion object { const val INTERVAL_MILLIS = 2_000L }
 }
 
 internal object AndroidCoreEgressRetryPolicy {
@@ -245,8 +247,15 @@ internal object AndroidCoreEgressProbe {
             ?.takeIf { it.kind == AndroidCoreEgressProbeTargetKind.GROUP }
             ?.tag
 
-    fun probe(target: AndroidCoreEgressProbeTarget, server: Any? = null): AndroidCoreEgressProbeResult {
+    fun probe(
+        target: AndroidCoreEgressProbeTarget,
+        server: Any? = null,
+        periodicCancellation: RuntimeProbeCancellation? = null,
+    ): AndroidCoreEgressProbeResult {
         if (!isSafeTag(target.tag)) return AndroidCoreEgressProbeResult.UNAVAILABLE
+        // Periodic checks use one Core deadline, without startup readiness,
+        // retry or diagnostic-log waits.
+        if (periodicCancellation != null) return resultFromCore(server, target, periodicCancellation)
         if (!target.captureSafeFailureCategory) return resultFromCore(server, target)
 
         // The command stream is diagnostic only. It cannot settle health.
@@ -269,18 +278,28 @@ internal object AndroidCoreEgressProbe {
         }
     }
 
-    internal fun resultFromCore(server: Any?, target: AndroidCoreEgressProbeTarget): AndroidCoreEgressProbeResult {
+    internal fun resultFromCore(
+        server: Any?,
+        target: AndroidCoreEgressProbeTarget,
+        periodicCancellation: RuntimeProbeCancellation? = null,
+    ): AndroidCoreEgressProbeResult {
         if (server == null || !isSafeTag(target.tag)) return AndroidCoreEgressProbeResult.UNAVAILABLE
         return try {
-            val methodName = if (target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT) {
-                "probeEndpoint"
+            val result = if (periodicCancellation != null) {
+                server.javaClass.getMethod("probeRuntimeEgress", String::class.java,
+                    Int::class.javaPrimitiveType, RuntimeProbeCancellation::class.java)
+                    .invoke(server, target.tag, PERIODIC_TIMEOUT_MILLIS, periodicCancellation)
             } else {
-                "probeSelectedOutbound"
+                val methodName = if (target.kind == AndroidCoreEgressProbeTargetKind.ENDPOINT) {
+                    "probeEndpoint"
+                } else {
+                    "probeSelectedOutbound"
+                }
+                server.javaClass.getMethod(methodName, String::class.java).invoke(server, target.tag)
             }
             // Each synchronous result belongs to this captured server and call.
             // Old artifacts cannot prove health through an unrelated cache/event.
-            val method = server.javaClass.getMethod(methodName, String::class.java)
-            when (method.invoke(server, target.tag)) {
+            when (result) {
                 true -> AndroidCoreEgressProbeResult.HEALTHY
                 false -> AndroidCoreEgressProbeResult.FAILED
                 else -> AndroidCoreEgressProbeResult.UNAVAILABLE
@@ -289,6 +308,11 @@ internal object AndroidCoreEgressProbe {
             // Core ProbeError.Error() exposes only these closed stage strings.
             // Never publish or infer a cause from arbitrary exception text.
             when (error.targetException?.message) {
+                "context deadline exceeded" -> if (periodicCancellation != null) {
+                    AndroidCoreEgressProbeResult.TIMED_OUT
+                } else {
+                    AndroidCoreEgressProbeResult.UNAVAILABLE
+                }
                 "URL probe connection failed" -> AndroidCoreEgressProbeResult.CONNECT_FAILED
                 "URL probe TLS negotiation failed" -> AndroidCoreEgressProbeResult.TLS_FAILED
                 "URL probe response failed", "URL probe failed" -> AndroidCoreEgressProbeResult.FAILED
@@ -377,6 +401,7 @@ internal object AndroidCoreEgressProbe {
     internal fun urlTestTimeMillis(unixSeconds: Long): Long =
         if (unixSeconds in 1..Long.MAX_VALUE / 1_000L) unixSeconds * 1_000L else 0L
 
+    internal const val PERIODIC_TIMEOUT_MILLIS = 3_000
     private const val MAX_TAG_LENGTH = 128
     private const val URL_TEST_TIMEOUT_DELAY = 65_535
     private const val INITIAL_LOG_BATCH_TIMEOUT_MILLIS = 2_500L

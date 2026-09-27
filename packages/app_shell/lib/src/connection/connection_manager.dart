@@ -3846,14 +3846,15 @@ class ConnectionManager extends ChangeNotifier {
       if (completing != null) await completing;
       try {
         if (_disposed || command != _commandNumber) return;
-        await _replaceCommand(() => _recoverCandidateConnection(failed, currentRef), automatic: true);
+        await _replaceCommand(() => _recoverCandidateConnection(failed, currentRef,
+            confirmedFailure: true), automatic: true);
       } finally { _candidateRecoveryPending = false; }
     }());
     return true;
   }
 
   Future<void> _recoverCandidateConnection(RuntimeSnapshot? failed, String currentRef,
-      {int? ownerGeneration}) async {
+      {int? ownerGeneration, bool confirmedFailure = false}) async {
     final engine = _runtimeEngine;
     _cancelPostConnectHostHealthPolling();
     final ownsAction = ownerGeneration == null;
@@ -3887,20 +3888,16 @@ class ConnectionManager extends ChangeNotifier {
       }
       final cacheInputs = _managedProfileCacheInputs;
       final profileRevision = _managedProfileRevision;
-      final failedActivations = <String>{};
-      for (var activation = 0; activation < 3; activation++) {
-      var usedCachedProfile = false;
-      ManagedProfilePayload payload;
-      try {
-        payload = await _resolveManagedProfile(ownerGeneration: generation,
-            recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations, deadline: _actionTimeout);
-      } on Object catch (error) {
-        if (error is BootstrapFailure && (error.statusCode == 401 || error.statusCode == 403)) {
-          _cachedProfileFallbackGate.markAuthorizationDenied();
-        }
+      final failedActivations = <String>{
+        if (confirmedFailure && currentRef.isNotEmpty) currentRef,
+      };
+      if (confirmedFailure && currentRef.isNotEmpty && _candidateNetworkKey != null) {
+        _candidateSelector.recordFailure(_candidateNetworkKey!, currentRef);
+      }
+      Future<ManagedProfilePayload?> recoverCached({bool offline = false}) async {
         final cacheService = _bootstrapper;
-        if (!(error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error)) ||
-            cacheService is! CachedManagedProfileBootstrapper || _tcpFallbackFromRevision.isNotEmpty) rethrow;
+        if (cacheService is! CachedManagedProfileBootstrapper || _tcpFallbackFromRevision.isNotEmpty ||
+            !_cachedProfileFallbackGate.canFallback(cachedProfileAvailable: true, inputsVerified: true)) return null;
         final cached = await (cacheService as CachedManagedProfileBootstrapper).loadCachedManagedProfile(
             cacheInputs, preferProven: true,
             runtimeFeatures: _runtimeSnapshot?.transportCapabilities?.features ?? const {})
@@ -3908,23 +3905,57 @@ class ConnectionManager extends ChangeNotifier {
         if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
             profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
         if (cached == null || !_cachedProfileFallbackGate.canFallback(
-            cachedProfileAvailable: true, inputsVerified: true)) rethrow;
-        await _classifyOfflineFailure(generation);
+            cachedProfileAvailable: true, inputsVerified: true)) return null;
+        // A cache without a catalog cannot skip a known failed candidate.
+        if (confirmedFailure && cached.transportCatalog == null) return null;
+        if (offline) await _classifyOfflineFailure(generation);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
             profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
         final selected = await _resolveCachedCandidateProfile(cacheInputs, cached,
             generation: generation, recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations);
-        // This is the protected original: no winner commit or new cache entry.
-        payload = await _prepareManagedProfile(selected, offline: true, ownerGeneration: generation);
+        // Preserve the authorized entry and its expiry; probing does not renew it.
+        return _prepareManagedProfile(selected, offline: true, ownerGeneration: generation);
+      }
+      for (var activation = 0; activation < 3; activation++) {
+      var usedCachedProfile = false;
+      ManagedProfilePayload? payload;
+      if (confirmedFailure) {
+        try {
+          // The monitor already disproved current. Race ready alternatives
+          // before waiting for the control API or probing current a second time.
+          payload = await recoverCached();
+          usedCachedProfile = payload != null;
+        } on BootstrapFailure catch (error) {
+          if (error.code != 'candidate_selection_exhausted') rethrow;
+        }
+      }
+      if (payload == null) {
+      try {
+        payload = await _resolveManagedProfile(ownerGeneration: generation,
+            recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations, deadline: _actionTimeout);
+      } on Object catch (error) {
+        if (error is BootstrapFailure && (error.statusCode == 401 || error.statusCode == 403)) {
+          _cachedProfileFallbackGate.markAuthorizationDenied();
+        }
+        if (!(error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error))) rethrow;
+        payload = await recoverCached(offline: true);
+        if (payload == null) rethrow;
         usedCachedProfile = true;
       }
+      }
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+      if (usedCachedProfile && !_cachedProfileFallbackGate.canFallback(
+          cachedProfileAvailable: true, inputsVerified: true)) {
+        throw const BootstrapFailure('Доступ не активен. Продлите доступ, чтобы подключиться.',
+            code: 'managed_profile_access_denied', statusCode: 403);
+      }
+      final prepared = payload;
       RuntimeSnapshot current;
       if (retryInitialActivation) {
         // The first activation stopped before proof: there is no prior healthy
         // owner to replace. Stage/connect retains any native transition guard.
         current = await _withRuntimeActionTimeout('stageManagedProfile',
-            () => _stageManagedProfileWithLeaseBinding(payload), ownerGeneration: generation);
+            () => _stageManagedProfileWithLeaseBinding(prepared), ownerGeneration: generation);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
         _update(() => _runtimeSnapshot = current);
         current = await _withRuntimeActionTimeout('connect', _runtimeEngine.connect,
@@ -3932,7 +3963,7 @@ class ConnectionManager extends ChangeNotifier {
       } else {
         _protectedHandoffActive = true;
         current = await _withRuntimeActionTimeout('replaceManagedProfile',
-            () => _stageManagedProfileWithLeaseBinding(payload, replaceProtected: true), ownerGeneration: generation);
+            () => _stageManagedProfileWithLeaseBinding(prepared, replaceProtected: true), ownerGeneration: generation);
       }
       current = await _settleRuntimeTransition(current, ownerGeneration: generation,
           waitForEgressProof: true);
@@ -3943,10 +3974,10 @@ class ConnectionManager extends ChangeNotifier {
       _update(() {
         _runtimeSnapshot = current;
         _stagedCacheInputs = cacheInputs;
-        _stagedProfileCacheEntryId = payload.cacheEntryId;
+        _stagedProfileCacheEntryId = prepared.cacheEntryId;
         _stagedNodeCode = _resolvedProfileNodeCode;
         _stagedVariantId = _resolvedProfileVariantId;
-        _stagedProfileUsesWarp = payload.warpPolicy.canEnableRuntime;
+        _stagedProfileUsesWarp = prepared.warpPolicy.canEnableRuntime;
         _activeConnectUsedWarp = _stagedProfileUsesWarp;
         _managedProfileDirty = !current.isCleanlyHealthy;
         _activePhase = current.isCleanlyHealthy ? null : tryNext ? ConnectionPhase.recovering : ConnectionPhase.actionRequired;
