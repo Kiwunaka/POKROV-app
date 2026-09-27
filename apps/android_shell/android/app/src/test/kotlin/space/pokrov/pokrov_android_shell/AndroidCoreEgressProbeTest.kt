@@ -325,6 +325,46 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
+    fun unavailableProbeDiagnosticsKeepClosedCauseWithoutPrivateErrorText() {
+        val target = AndroidCoreEgressProbeTarget("private-target", AndroidCoreEgressProbeTargetKind.GROUP)
+        val expected = mapOf(
+            "context deadline exceeded" to "deadline",
+            "selected route probe unavailable" to "runtime_unavailable",
+            "selected route probe target unavailable" to "target_unavailable",
+            "context deadline exceeded: private endpoint and credentials" to "other",
+        )
+        for ((message, code) in expected) {
+            val diagnostics = mutableListOf<Pair<String, String>>()
+            assertEquals(AndroidCoreEgressProbeResult.UNAVAILABLE,
+                AndroidCoreEgressProbe.resultFromCore(FailedResponseCore(message), target,
+                    onFailure = { cause, type -> diagnostics.add(cause to type) }))
+            assertEquals(listOf(code to "exception"), diagnostics)
+            assertFalse(diagnostics.toString().contains("private"))
+        }
+        val diagnostics = mutableListOf<Pair<String, String>>()
+        AndroidCoreEgressProbe.resultFromCore(Any(), target,
+            onFailure = { cause, type -> diagnostics.add(cause to type) })
+        assertEquals(listOf("reflection_unavailable" to "no_such_method"), diagnostics)
+        assertEquals("other" to "other", AndroidCoreEgressProbe.safeFailureDiagnostic(
+            object : RuntimeException("private endpoint and credentials") {}))
+    }
+
+    @Test
+    fun selectionReceiptFindsCachedNestedOverrideWithoutExposingTags() {
+        val defaults = mapOf("root-private" to "nested-private", "nested-private" to "new-private")
+        val selected = mapOf("root-private" to "nested-private", "nested-private" to "old-private")
+        assertEquals(false to "vless", AndroidCoreEgressProbe.selectionDiagnostic(
+            "root-private", defaults, selected, mapOf("old-private" to "vless")))
+        assertEquals(true to "unknown", AndroidCoreEgressProbe.selectionDiagnostic(
+            "root-private", defaults, defaults, mapOf("new-private" to "private-protocol")))
+        assertEquals(null to "unknown", AndroidCoreEgressProbe.selectionDiagnostic(
+            "root-private", defaults, mapOf("root-private" to "nested-private"),
+            mapOf("nested-private" to "selector")))
+        assertNull(AndroidCoreEgressProbe.selectionDiagnostic("root-private", defaults,
+            mapOf("root-private" to "root-private"), emptyMap()))
+    }
+
+    @Test
     fun observedStagesKeepFailureRetriesAndGenerationFences() {
         for ((result, code) in mapOf(
             AndroidCoreEgressProbeResult.CONNECT_FAILED to "core_egress_connect_failed",

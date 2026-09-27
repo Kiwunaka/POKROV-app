@@ -59,6 +59,7 @@ class _ProtectionCenterData {
     required this.history,
     required this.shortcuts,
     required this.checkedAt,
+    this.confirmedLocationLabel = '',
   });
 
   final RuntimeSnapshot? snapshot;
@@ -67,6 +68,7 @@ class _ProtectionCenterData {
   final List<PokrovProtectionEvent> history;
   final List<PokrovPostConnectShortcut> shortcuts;
   final DateTime? checkedAt;
+  final String confirmedLocationLabel;
 }
 
 enum _ProtectionCheckTone { success, warning, danger, unknown }
@@ -91,6 +93,7 @@ class _ProtectionCenterSheet extends StatefulWidget {
   const _ProtectionCenterSheet({
     required this.runtimeSnapshot,
     required this.retainsProtection,
+    required this.confirmedLocationLabel,
     required this.onDisconnect,
     required this.initialData,
     required this.onRefresh,
@@ -104,6 +107,7 @@ class _ProtectionCenterSheet extends StatefulWidget {
   final _ProtectionCenterData initialData;
   final ValueNotifier<RuntimeSnapshot?> runtimeSnapshot;
   final bool Function() retainsProtection;
+  final String Function() confirmedLocationLabel;
   final Future<void> Function() onDisconnect;
   final Future<_ProtectionCenterData> Function() onRefresh;
   final Future<_ProtectionCenterData> Function(
@@ -130,6 +134,7 @@ enum _ProtectionRepairOutcome { awaitingEgress, succeeded, interrupted, needsSup
 class _ProtectionCenterController extends ChangeNotifier {
   _ProtectionCenterController({
     required ValueNotifier<RuntimeSnapshot?> runtimeSnapshot,
+    required String Function() confirmedLocationLabel,
     required _ProtectionCenterData initialData,
     required Future<_ProtectionCenterData> Function() onRefresh,
     required Future<_ProtectionCenterData> Function(
@@ -137,6 +142,7 @@ class _ProtectionCenterController extends ChangeNotifier {
       ValueChanged<Future<void> Function()?> onCancelAvailable,
     ) onRepair,
   })  : _runtimeSnapshot = runtimeSnapshot,
+        _confirmedLocationLabel = confirmedLocationLabel,
         _data = initialData,
         _onRefresh = onRefresh,
         _onRepair = onRepair {
@@ -144,6 +150,7 @@ class _ProtectionCenterController extends ChangeNotifier {
   }
 
   final ValueNotifier<RuntimeSnapshot?> _runtimeSnapshot;
+  final String Function() _confirmedLocationLabel;
 
   final Future<_ProtectionCenterData> Function() _onRefresh;
   final Future<_ProtectionCenterData> Function(
@@ -171,6 +178,7 @@ class _ProtectionCenterController extends ChangeNotifier {
         history: _data.history,
         shortcuts: _data.shortcuts,
         checkedAt: _data.checkedAt,
+        confirmedLocationLabel: _confirmedLocationLabel(),
       );
   bool get refreshing => _refreshing;
   bool get repairing => _repairing || _cancellingRepair;
@@ -303,6 +311,7 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
     super.initState();
     _controller = _ProtectionCenterController(
       runtimeSnapshot: widget.runtimeSnapshot,
+      confirmedLocationLabel: widget.confirmedLocationLabel,
       initialData: widget.initialData,
       onRefresh: widget.onRefresh,
       onRepair: widget.onRepair,
@@ -832,10 +841,9 @@ class _ProtectionDetailsMeta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final location = <String>[
-      data.liveStats.serverCountry,
-      data.liveStats.serverCode,
-    ].where((value) => value.trim().isNotEmpty).join(' · ');
+    final location = data.confirmedLocationLabel.isNotEmpty
+        ? data.confirmedLocationLabel
+        : _protectionLiveLocationLabel(data.liveStats);
     final checkedAt = data.checkedAt?.toLocal();
     final checkedLabel = checkedAt == null
         ? 'Ещё не обновлялась'
@@ -1095,9 +1103,7 @@ class _ProtectionLiveStatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = PokrovPalette.of(context);
-    final location = <String>[stats.serverCountry, stats.serverCode]
-        .where((item) => item.trim().isNotEmpty)
-        .join(' · ');
+    final location = _protectionLiveLocationLabel(stats);
     return Container(
       key: const ValueKey('protection-live-stats'),
       padding: const EdgeInsets.all(14),

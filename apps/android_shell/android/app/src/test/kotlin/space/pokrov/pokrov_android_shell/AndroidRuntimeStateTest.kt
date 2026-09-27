@@ -148,6 +148,26 @@ class AndroidRuntimeStateTest {
     }
 
     @Test
+    fun explicitDisconnectClearsFailureOnlyAfterStopSettles() {
+        AndroidRuntimeState.markProfileStaged("/synthetic/profile.json")
+        AndroidRuntimeState.markRunning("running")
+        AndroidRuntimeState.markDegraded("protected_handoff_failed", "protected replacement failed")
+        AndroidRuntimeState.markStopRequested(stopReason = "user_requested")
+        assertEquals("protected_handoff_failed", AndroidRuntimeState.snapshot()["last_failure_kind"])
+
+        AndroidRuntimeState.markStopped(
+            message = "POKROV выключен на этом устройстве.",
+            stopReason = "user_requested",
+        )
+        val stopped = AndroidRuntimeState.snapshot()
+        assertEquals("configStaged", stopped["phase"])
+        assertEquals("user_requested", stopped["last_stop_reason"])
+        assertNull(stopped["last_failure_kind"])
+        assertNull((stopped["hostDiagnostics"] as Map<*, *>)["last_failure_kind"])
+        assertEquals("POKROV выключен на этом устройстве.", stopped["message"])
+    }
+
+    @Test
     fun snapshot_includesStructuredDiagnostics_afterRunning() {
         setPrivateField(
             "environment",

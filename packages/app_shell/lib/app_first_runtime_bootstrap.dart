@@ -9794,6 +9794,9 @@ class AppFirstRuntimeBootstrapper
           final detail = detailValue is Map
               ? _readText(detailValue['message'] ?? detailValue['detail'])
               : _readText(detailValue);
+          if (detail == 'selected node is not eligible') {
+            return 'Эта локация сейчас недоступна. Выберите другую.';
+          }
           final safeDetail = _safeUserCopy(detail);
           if (safeDetail.isNotEmpty) {
             return safeDetail;

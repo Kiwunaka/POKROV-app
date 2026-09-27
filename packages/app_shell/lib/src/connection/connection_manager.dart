@@ -1849,16 +1849,18 @@ class ConnectionManager extends ChangeNotifier {
           cancelled: cancelled, preferredCountryCode: country,
           recoveryCandidateRef: recoveryCandidateRef,
           excludedCandidateRefs: excludedCandidateRefs,
-          probe: (candidate, stop, timeout) async {
+          prepare: (candidate, stop) async {
             requireCurrent();
             var stopped = false;
             unawaited(stop.then((_) => stopped = true));
             final exact = candidate.candidateRef == catalog.selectedCandidateRef ? initial
                 : await resolve(candidateRef: candidate.candidateRef, select: false, cache: false, stop: stop);
             requireCurrent();
-            if (stopped) return null;
-            materialized[candidate.candidateRef] = exact;
-            return _probeManagedCandidate(probing, exact, context: context, cancelled: stop,
+            if (!stopped) materialized[candidate.candidateRef] = exact;
+          },
+          probe: (candidate, stop, timeout) {
+            requireCurrent();
+            return _probeManagedCandidate(probing, materialized[candidate.candidateRef]!, context: context, cancelled: stop,
                 timeout: timeout, generation: generation, requireCurrent: requireCurrent);
           },
         );
@@ -4463,9 +4465,22 @@ class ConnectionManager extends ChangeNotifier {
       var confirmed = normalized;
       final service = _nodePreferenceService;
       if (service != null && smartConnect != null) {
+        final locations = _locationsCatalog;
+        // Ordinary node eligibility follows the locations policy, not the
+        // transport of the last candidate (which can be a legacy lab alias).
+        final preference = _transportCatalog != null && knownCatalogCode && locations != null &&
+                locations.transportProfile.trim().isNotEmpty && locations.profileRevision.trim().isNotEmpty
+            ? SmartConnectProfile(
+                eligible: smartConnect.eligible, fallbackRequired: smartConnect.fallbackRequired,
+                shortlistReason: smartConnect.shortlistReason, shortlistLimit: smartConnect.shortlistLimit,
+                shortlistRevision: smartConnect.shortlistRevision,
+                transportProfile: locations.transportProfile, profileRevision: locations.profileRevision,
+                fallbackOrder: smartConnect.fallbackOrder, shortlist: smartConnect.shortlist,
+                stickiness: smartConnect.stickiness)
+            : smartConnect;
         final result = await service.setPreferredSmartConnectNode(
           hostPlatform: _appContext.hostPlatform,
-          smartConnect: smartConnect,
+          smartConnect: preference,
           nodeCode: normalized,
         );
         if (_disposed) {

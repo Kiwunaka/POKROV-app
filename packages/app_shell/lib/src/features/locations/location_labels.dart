@@ -2,6 +2,7 @@ part of pokrov_app_shell;
 
 String _locationCountryDisplayName(String code, String fallback) {
   const names = <String, String>{
+    'CH': 'Швейцария',
     'DE': 'Германия',
     'FI': 'Финляндия',
     'FR': 'Франция',
@@ -22,6 +23,10 @@ String _locationCityDisplayName(
   final raw = city.city.trim();
   if (RegExp('[А-Яа-яЁё]').hasMatch(raw)) {
     return raw;
+  }
+  if (raw.toUpperCase() == country.code.trim().toUpperCase() ||
+      raw.toLowerCase() == 'unknown') {
+    return _locationCountryDisplayName(country.code, country.country);
   }
   final parts = city.code
       .trim()
@@ -58,6 +63,7 @@ String _locationCityDisplayName(
     'saint petersburg': 'Санкт-Петербург',
     'st petersburg': 'Санкт-Петербург',
     'warsaw': 'Варшава',
+    'switzerland': 'Швейцария',
   };
   if (rawNames.containsKey(raw.toLowerCase())) {
     return rawNames[raw.toLowerCase()]!;
@@ -87,6 +93,7 @@ String _locationCountryCodeFromNode(String nodeCode, String country) {
     'netherlands': 'NL',
     'poland': 'PL',
     'russia': 'RU',
+    'switzerland': 'CH',
     'usa': 'US',
     'united kingdom': 'GB',
     'united states': 'US',
@@ -97,13 +104,26 @@ String _locationCountryCodeFromNode(String nodeCode, String country) {
 String _smartConnectNodeTitle(SmartConnectNode node) {
   final country = node.country.trim();
   if (country.isNotEmpty) {
-    return country;
+    return _locationCountryDisplayName(
+      _locationCountryCodeFromNode(node.code, country),
+      country,
+    );
   }
   return 'Локация POKROV';
 }
 
 String _smartConnectNodeCity(SmartConnectNode node) {
   return node.country.trim().isEmpty ? 'Доступная локация' : 'Доступная страна';
+}
+
+String _protectionLiveLocationLabel(RuntimeLiveStats stats) {
+  final country = stats.serverCountry.trim();
+  final node = stats.serverCode.trim();
+  return <String>[
+    if (country.isNotEmpty && country.toLowerCase() != 'unknown')
+      _locationCountryDisplayName(country, country),
+    if (node.isNotEmpty && node.toLowerCase() != 'unknown') node,
+  ].join(' · ');
 }
 
 String _smartConnectQualityLabel(SmartConnectNode node) {
@@ -129,7 +149,7 @@ double? _normalizeLocationHealthScore(double? rawScore) {
 
 String? _locationQualityLabel(double? rawScore, {int? latencyMs}) {
   final score = _normalizeLocationHealthScore(rawScore);
-  if (score == null) {
+  if (score == null || latencyMs == null || latencyMs <= 0) {
     return null;
   }
   final healthRank = _locationHealthQualityRank(score);
@@ -154,7 +174,7 @@ int _locationHealthQualityRank(double score) {
 }
 
 int? _locationLatencyQualityRank(int? latencyMs) {
-  if (latencyMs == null || latencyMs < 0) {
+  if (latencyMs == null || latencyMs <= 0) {
     return null;
   }
   if (latencyMs <= 150) {
@@ -170,7 +190,7 @@ int? _locationLatencyQualityRank(int? latencyMs) {
 }
 
 String _locationLatencyLabel(int? latencyMs) {
-  if (latencyMs == null || latencyMs < 0) {
+  if (latencyMs == null || latencyMs <= 0) {
     return 'ping —';
   }
   return '$latencyMs мс';
@@ -248,22 +268,30 @@ String _locationMetricsLabel(
   DateTime? now,
   bool compact = false,
 }) {
+  final hasMeasurement =
+      _locationMetricFreshness(city.measuredAt, now: now) !=
+          _LocationMetricFreshness.unknown;
   final freshnessLabel = compact
       ? _locationCompactFreshnessLabel(city.measuredAt, now: now)
       : _locationFreshnessLabel(city.measuredAt, now: now);
   if (compact) {
-    final latency = city.latencyMs == null || city.latencyMs! < 0
+    final latency = !hasMeasurement ||
+            city.latencyMs == null ||
+            city.latencyMs! <= 0
         ? '— мс'
         : '${city.latencyMs} мс';
     final rawLoad = city.load;
-    final load = rawLoad == null || !rawLoad.isFinite || rawLoad < 0
+    final load = !hasMeasurement ||
+            rawLoad == null ||
+            !rawLoad.isFinite ||
+            rawLoad < 0
         ? '—%'
         : '${(rawLoad <= 1 ? rawLoad * 100 : rawLoad).clamp(0, 100).round()}%';
     return <String>[latency, load, freshnessLabel].join(' · ');
   }
   return <String>[
-    _locationLatencyLabel(city.latencyMs),
-    _locationLoadLabel(city.load),
+    _locationLatencyLabel(hasMeasurement ? city.latencyMs : null),
+    _locationLoadLabel(hasMeasurement ? city.load : null),
     freshnessLabel,
   ].join(' · ');
 }

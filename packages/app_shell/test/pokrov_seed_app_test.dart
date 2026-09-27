@@ -10609,6 +10609,32 @@ void main() {
                 load: 0.14,
                 measuredAt: freshMeasurement,
               ),
+              ClientLocationCity(
+                code: 'nl-no-device-rtt',
+                city: 'No RTT',
+                healthScore: 0.99,
+                latencyMs: null,
+                premium: true,
+                load: 0,
+                measuredAt: freshMeasurement,
+              ),
+            ],
+          ),
+          const ClientLocationCountry(
+            code: 'CH',
+            country: 'Switzerland',
+            cities: <ClientLocationCity>[
+              ClientLocationCity(
+                code: 'ch',
+                city: 'CH',
+                healthScore: 0.99,
+                latencyMs: null,
+                premium: true,
+                load: 0,
+                variants: <ClientLocationVariant>[
+                  ClientLocationVariant(id: 'direct', label: 'Обычный', description: '', available: false),
+                ],
+              ),
             ],
           ),
         ],
@@ -10755,6 +10781,22 @@ void main() {
     }
     expect(find.text('Premium'), findsNothing);
     expect(find.text('Free'), findsNothing);
+    final noRttRow = find.byKey(const ValueKey('locations-catalog-city-nl-no-device-rtt'));
+    await tester.ensureVisible(noRttRow);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: noRttRow, matching: find.textContaining('Отлично')), findsNothing);
+    final swissRow = find.byKey(const ValueKey('locations-catalog-city-ch'));
+    await tester.ensureVisible(swissRow);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: swissRow, matching: find.text('Швейцария')), findsOneWidget);
+    expect(find.descendant(of: swissRow, matching: find.textContaining('Switzerland')), findsNothing);
+    expect(find.descendant(of: swissRow, matching: find.textContaining('0%')), findsNothing);
+    expect(find.descendant(of: swissRow, matching: find.textContaining('нет замера')), findsOneWidget);
+    expect(find.byKey(const ValueKey('locations-selection-locked-ch')), findsOneWidget);
+    final selectedNode = bootstrapper.lastPreferredNodeCode;
+    await tester.tap(swissRow, warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(bootstrapper.lastPreferredNodeCode, selectedNode);
     semantics.dispose();
   });
 
@@ -10988,27 +11030,28 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final observedAt = DateTime.now().millisecondsSinceEpoch;
     final runtimeCalls = <String>[];
+    final variantProbeSnapshot = <String, Object?>{
+      'observedAtMs': observedAt,
+      'activeVariantId': 'mini',
+      'results': <Object?>[
+        <String, Object?>{
+          'id': 'direct',
+          'status': 'unavailable',
+          'errorCategory': 'url_test_failed',
+        },
+        <String, Object?>{
+          'id': 'mini',
+          'status': 'available',
+          'latencyMs': 74,
+          'measuredAtMs': observedAt,
+          'errorCategory': '',
+        },
+      ],
+      'errorCategory': '',
+    };
     _installReadyRuntimeBridgeMock(
       calls: runtimeCalls,
-      variantProbeSnapshot: <String, Object?>{
-        'observedAtMs': observedAt,
-        'activeVariantId': 'mini',
-        'results': <Object?>[
-          <String, Object?>{
-            'id': 'direct',
-            'status': 'unavailable',
-            'errorCategory': 'url_test_failed',
-          },
-          <String, Object?>{
-            'id': 'mini',
-            'status': 'available',
-            'latencyMs': 74,
-            'measuredAtMs': observedAt,
-            'errorCategory': '',
-          },
-        ],
-        'errorCategory': '',
-      },
+      variantProbeSnapshot: variantProbeSnapshot,
     );
     const catalog = ClientLocationsCatalog(
       auto: ClientLocationAuto(enabled: true, currentCode: 'de-fra'),
@@ -11128,6 +11171,18 @@ void main() {
           .where((call) => call == 'runtimeEngine.measureLocationVariants'),
       hasLength(2),
     );
+
+    variantProbeSnapshot['errorCategory'] = 'profile_unavailable';
+    variantProbeSnapshot['results'] = <Object?>[];
+    final refresh = find.byKey(const ValueKey('location-variant-refresh'));
+    await tester.ensureVisible(refresh);
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Для текущего подключения проверка вариантов недоступна.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Подключите POKROV'), findsNothing);
   });
 
   testWidgets('location refresh spinner stays out of the Auto card',
@@ -11490,7 +11545,7 @@ void main() {
   });
 
   testWidgets(
-      'manual location restarts the active tunnel and promotes the fresh profile',
+      'manual location replaces the active tunnel and promotes the fresh profile',
       (tester) async {
     final semantics = tester.ensureSemantics();
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -11536,6 +11591,7 @@ void main() {
         case 'runtimeEngine.disconnect':
           phase = 'initialized';
           return snapshot(message: 'Runtime service stopped.');
+        case 'runtimeEngine.replaceManagedProfile':
         case 'runtimeEngine.connect':
           phase = 'running';
           return snapshot(message: 'Runtime service is running.');
@@ -11679,11 +11735,10 @@ void main() {
       runtimeCalls,
       containsAllInOrder(const <String>[
         'runtimeEngine.invalidateManagedProfile',
-        'runtimeEngine.disconnect',
-        'runtimeEngine.stageManagedProfile',
-        'runtimeEngine.connect',
+        'runtimeEngine.replaceManagedProfile',
       ]),
     );
+    expect(runtimeCalls, isNot(contains('runtimeEngine.disconnect')));
 
     await _tapNav(tester, 'nav-protection');
     expect(
@@ -11751,6 +11806,14 @@ void main() {
         of: find.byKey(const ValueKey('home-location-chip')),
         matching: find.text('Франкфурт'),
       ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('home-connection-details-action')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('protection-details-toggle')));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byKey(const ValueKey('protection-details-meta')), matching: find.text('Франкфурт')),
       findsOneWidget,
     );
     semantics.dispose();

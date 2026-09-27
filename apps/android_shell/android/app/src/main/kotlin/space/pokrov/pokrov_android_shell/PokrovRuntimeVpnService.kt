@@ -1597,6 +1597,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
         val target = AndroidCoreEgressProbe.finalTarget(content)
         if (target == null) {
+            android.util.Log.w("POKROVRuntime", "core_egress_probe code=target_unavailable exception=none target_kind=none attempt=0 duration_ms=0 generation=$generation periodic=false")
             handleCoreEgressProbeResult(
                 probeResult = AndroidCoreEgressProbeResult.UNAVAILABLE,
                 generation = generation,
@@ -1637,11 +1638,18 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         AndroidOperationalJournal.record(AndroidOperationalEvent.CORE_EGRESS_PROBE,
             AndroidOperationalOutcome.REQUIRED, generation)
         val probeCancelled = AtomicBoolean(false)
+        val closeSelection = if (!periodic) runCatching {
+            AndroidCoreEgressProbe.observeSelection(session, activeConfigContent.orEmpty(), target,
+                isCurrent = { monitor.owns(token) }) { matches, protocol ->
+                android.util.Log.w("POKROVRuntime", "core_egress_selection selected_matches_default=${matches ?: "unknown"} leaf_protocol=$protocol generation=$generation")
+            }
+        }.getOrDefault({}) else ({})
         val periodicCancellation = if (periodic) object : RuntimeProbeCancellation {
             override fun isCancelled(): Boolean = probeCancelled.get() || !monitor.owns(token)
         } else null
         val watchdog = Runnable {
             probeCancelled.set(true)
+            closeSelection()
             AndroidRuntimeDispatchPolicy.dispatch(
                 executor = runtimeExecutor,
                 shouldRun = { monitor.owns(token) },
@@ -1655,8 +1663,28 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             } else CORE_EGRESS_HARD_TIMEOUT_MILLIS)
         if (!session.execute {
             try {
-                var result = AndroidCoreEgressProbe.probe(target, probeServer, periodicCancellation)
-                var completedAttempts = 1
+                var completedAttempts = 0
+                fun probe(): AndroidCoreEgressProbeResult {
+                    completedAttempts += 1
+                    val started = android.os.SystemClock.elapsedRealtime()
+                    var failure = "result_false" to "none"
+                    var result = AndroidCoreEgressProbeResult.UNAVAILABLE
+                    try {
+                        result = AndroidCoreEgressProbe.probe(target, probeServer, periodicCancellation) { code, type ->
+                            failure = code to type
+                        }
+                        return result
+                    } catch (error: Throwable) {
+                        failure = AndroidCoreEgressProbe.safeFailureDiagnostic(error)
+                        throw error
+                    } finally {
+                        if ((!periodic || result != AndroidCoreEgressProbeResult.HEALTHY) && monitor.owns(token)) {
+                            val code = if (result == AndroidCoreEgressProbeResult.HEALTHY) "healthy" else failure.first
+                            android.util.Log.w("POKROVRuntime", "core_egress_probe code=$code exception=${failure.second} target_kind=${target.kind.name.lowercase()} attempt=$completedAttempts duration_ms=${android.os.SystemClock.elapsedRealtime() - started} generation=$generation periodic=$periodic")
+                        }
+                    }
+                }
+                var result = probe()
                 while (
                     !periodic &&
                     AndroidCoreEgressRetryPolicy.shouldRetry(
@@ -1674,8 +1702,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                         },
                     )
                     if (monitor.owns(token)) {
-                        result = AndroidCoreEgressProbe.probe(target, probeServer)
-                        completedAttempts += 1
+                        result = probe()
                     }
                 }
                 if (
@@ -1701,9 +1728,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     monitor.complete(token, AndroidCoreEgressProbeResult.UNAVAILABLE)
                 }
             } finally {
+                closeSelection()
                 mainHandler.removeCallbacks(watchdog)
             }
         }) {
+            closeSelection()
             mainHandler.removeCallbacks(watchdog)
             AndroidRuntimeDispatchPolicy.dispatch(
                 executor = runtimeExecutor,

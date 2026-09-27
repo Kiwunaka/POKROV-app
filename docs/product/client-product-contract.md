@@ -408,6 +408,13 @@ After activation:
   compact `Обычный` / `Белые списки` choice. The selected stable variant id is
   device-local and persists alongside the explicit preferred node; it is
   cleared when the person returns to `Автоматически`
+- Locations with no available catalog variant cannot be selected. Quality
+  labels require a positive latency measurement; absent measurement timestamps
+  do not turn missing load into zero. Country labels include Switzerland in
+  Russian, and protection details prefer the currently verified active node
+  over absent live-counter location metadata. A rejected location preference
+  is shown with Russian user-facing copy. Missing variant probe metadata is
+  described as an unavailable check, without claiming the VPN is disconnected.
 - for the selected city, Android probes the exact already-staged private
   URL-test group and projects only safe variant ID, availability, measured
   latency/freshness and active variant ID. Endpoint/tag/key/profile material

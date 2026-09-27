@@ -39,6 +39,7 @@ class SmartConnectCandidateSelector {
     required HostPlatform platform,
     required SmartConnectCandidateProbe probe,
     required Future<void> cancelled,
+    Future<void> Function(TransportCandidate candidate, Future<void> cancelled)? prepare,
     String preferredCountryCode = '',
     String recoveryCandidateRef = '',
     Set<String> excludedCandidateRefs = const {},
@@ -86,11 +87,16 @@ class SmartConnectCandidateSelector {
       final cancellation = Completer<void>();
       probes.add(cancellation);
       var timedOut = false;
-      final timeout = Timer(probeTimeout, () {
-        timedOut = true;
-        if (!cancellation.isCompleted) cancellation.complete();
-      });
+      Timer? timeout;
       try {
+        // Exact profile HTTP/materialization shares the selection deadline.
+        // The native handshake gets its own budget once that profile is ready.
+        await prepare?.call(candidate, cancellation.future);
+        if (ended.isCompleted) return;
+        timeout = Timer(probeTimeout, () {
+          timedOut = true;
+          if (!cancellation.isCompleted) cancellation.complete();
+        });
         // The adapter settles its profile/native IO before completing. Keep
         // this slot occupied until settlement, including timeout/cancellation.
         final result = await probe(candidate, cancellation.future, probeTimeout);
@@ -109,7 +115,7 @@ class SmartConnectCandidateSelector {
       } on Object {
         if (ended.isCompleted) return;
       } finally {
-        timeout.cancel();
+        timeout?.cancel();
         probes.remove(cancellation);
       }
       if (ended.isCompleted) return;

@@ -12,6 +12,7 @@ import space.pokrov.core.libbox.StatusMessage
 import space.pokrov.core.libbox.StringIterator
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.lang.reflect.InvocationTargetException
 
 internal enum class AndroidCoreEgressProbeResult {
@@ -251,12 +252,16 @@ internal object AndroidCoreEgressProbe {
         target: AndroidCoreEgressProbeTarget,
         server: Any? = null,
         periodicCancellation: RuntimeProbeCancellation? = null,
+        onFailure: ((String, String) -> Unit)? = null,
     ): AndroidCoreEgressProbeResult {
-        if (!isSafeTag(target.tag)) return AndroidCoreEgressProbeResult.UNAVAILABLE
+        if (!isSafeTag(target.tag)) {
+            onFailure?.invoke("target_unavailable", "none")
+            return AndroidCoreEgressProbeResult.UNAVAILABLE
+        }
         // Periodic checks use one Core deadline, without startup readiness,
         // retry or diagnostic-log waits.
-        if (periodicCancellation != null) return resultFromCore(server, target, periodicCancellation)
-        if (!target.captureSafeFailureCategory) return resultFromCore(server, target)
+        if (periodicCancellation != null) return resultFromCore(server, target, periodicCancellation, onFailure)
+        if (!target.captureSafeFailureCategory) return resultFromCore(server, target, onFailure = onFailure)
 
         // The command stream is diagnostic only. It cannot settle health.
         val handler = ProbeHandler()
@@ -268,7 +273,7 @@ internal object AndroidCoreEgressProbe {
         }.getOrDefault(false)
         return try {
             handler.arm()
-            val result = resultFromCore(server, target)
+            val result = resultFromCore(server, target, onFailure = onFailure)
             if (captureReady && result.isCompletedFailure) {
                 handler.awaitSafeFailureCategory()
             }
@@ -282,8 +287,12 @@ internal object AndroidCoreEgressProbe {
         server: Any?,
         target: AndroidCoreEgressProbeTarget,
         periodicCancellation: RuntimeProbeCancellation? = null,
+        onFailure: ((String, String) -> Unit)? = null,
     ): AndroidCoreEgressProbeResult {
-        if (server == null || !isSafeTag(target.tag)) return AndroidCoreEgressProbeResult.UNAVAILABLE
+        if (server == null || !isSafeTag(target.tag)) {
+            onFailure?.invoke(if (server == null) "runtime_unavailable" else "target_unavailable", "none")
+            return AndroidCoreEgressProbeResult.UNAVAILABLE
+        }
         return try {
             val result = if (periodicCancellation != null) {
                 server.javaClass.getMethod("probeRuntimeEgress", String::class.java,
@@ -302,9 +311,13 @@ internal object AndroidCoreEgressProbe {
             when (result) {
                 true -> AndroidCoreEgressProbeResult.HEALTHY
                 false -> AndroidCoreEgressProbeResult.FAILED
-                else -> AndroidCoreEgressProbeResult.UNAVAILABLE
+                else -> {
+                    onFailure?.invoke("other", "none")
+                    AndroidCoreEgressProbeResult.UNAVAILABLE
+                }
             }
         } catch (error: InvocationTargetException) {
+            safeFailureDiagnostic(error).let { onFailure?.invoke(it.first, it.second) }
             // Core ProbeError.Error() exposes only these closed stage strings.
             // Never publish or infer a cause from arbitrary exception text.
             when (error.targetException?.message) {
@@ -318,9 +331,108 @@ internal object AndroidCoreEgressProbe {
                 "URL probe response failed", "URL probe failed" -> AndroidCoreEgressProbeResult.FAILED
                 else -> AndroidCoreEgressProbeResult.UNAVAILABLE
             }
-        } catch (_: Throwable) {
+        } catch (error: Throwable) {
+            safeFailureDiagnostic(error).let { onFailure?.invoke(it.first, it.second) }
             AndroidCoreEgressProbeResult.UNAVAILABLE
         }
+    }
+
+    /** Exact Core strings and standard class categories only; never raw error text. */
+    internal fun safeFailureDiagnostic(error: Throwable): Pair<String, String> {
+        val cause = if (error is InvocationTargetException) error.targetException ?: error else error
+        val code = when (cause.message) {
+            "context deadline exceeded" -> "deadline"
+            "context canceled" -> "cancelled"
+            "selected route probe unavailable", "runtime egress probe unavailable",
+            "endpoint probe unavailable" -> "runtime_unavailable"
+            "selected route probe target unavailable", "endpoint probe target unavailable",
+            "endpoint probe target unsupported" -> "target_unavailable"
+            "URL probe connection failed" -> "connect_failed"
+            "URL probe TLS negotiation failed" -> "tls_failed"
+            "URL probe response failed", "URL probe failed" -> "response_failed"
+            else -> if (cause is ReflectiveOperationException || cause is LinkageError ||
+                cause is SecurityException) "reflection_unavailable" else "other"
+        }
+        val errorType = when (cause) {
+            is NoSuchMethodException -> "no_such_method"
+            is IllegalAccessException -> "illegal_access"
+            is SecurityException -> "security"
+            is LinkageError -> "linkage"
+            is IllegalStateException -> "illegal_state"
+            is InterruptedException -> "interrupted"
+            else -> if (cause.javaClass == Exception::class.java) "exception" else "other"
+        }
+        return code to errorType
+    }
+
+    /** Observe the existing group stream in parallel; health never waits for it. */
+    fun observeSelection(scope: AndroidLifecycleTaskScope, configContent: String,
+        target: AndroidCoreEgressProbeTarget, isCurrent: () -> Boolean,
+        publish: (Boolean?, String) -> Unit,
+    ): () -> Unit {
+        val defaults = mutableMapOf<String, String>()
+        val outbounds = JSONObject(configContent).optJSONArray("outbounds")
+        for (index in 0 until (outbounds?.length() ?: 0)) {
+            val outbound = outbounds?.optJSONObject(index) ?: continue
+            if (outbound.optString("type") == "selector") {
+                defaults[outbound.optString("tag")] = outbound.optString("default")
+                    .ifBlank { outbound.optJSONArray("outbounds")?.optString(0).orEmpty() }
+            }
+        }
+        if (target.tag !in defaults) return {}
+        val stopped = AtomicBoolean(false)
+        val connected = AtomicBoolean(false)
+        var close: () -> Unit = {}
+        val handler = ProbeHandler { iterator ->
+            if (!stopped.get() && isCurrent()) {
+                val selected = mutableMapOf<String, String>()
+                val types = mutableMapOf<String, String>()
+                while (iterator.hasNext()) {
+                    val group = iterator.next()
+                    selected[group.tag] = group.selected
+                    val items = group.items
+                    while (items.hasNext()) {
+                        val item = items.next()
+                        types[item.tag] = item.type
+                    }
+                }
+                val receipt = selectionDiagnostic(target.tag, defaults, selected, types)
+                if (receipt != null && stopped.compareAndSet(false, true)) {
+                    try { if (isCurrent()) publish(receipt.first, receipt.second) } finally { close() }
+                }
+            }
+        }
+        val client = Libbox.newCommandClient(handler,
+            CommandClientOptions().apply { addCommand(Libbox.CommandGroup) })
+        close = { stopped.set(true); if (connected.get()) runCatching { client.disconnect() }; Unit }
+        scope.onCancel(close)
+        if (!scope.execute {
+            try {
+                if (!stopped.get() && isCurrent()) { client.connect(); connected.set(true) }
+            }
+            catch (_: Throwable) { close() }
+            finally { if (stopped.get() || !isCurrent()) close() }
+        }) close()
+        return close
+    }
+
+    internal fun selectionDiagnostic(root: String, defaults: Map<String, String>,
+        selected: Map<String, String>, types: Map<String, String>,
+    ): Pair<Boolean?, String>? {
+        if (root !in selected || root !in defaults) return null
+        var tag = root
+        var matches = true
+        val visited = mutableSetOf<String>()
+        while (tag in selected) {
+            if (!visited.add(tag)) return null
+            val next = selected.getValue(tag)
+            defaults[tag]?.let { matches = matches && it == next }
+            tag = next
+        }
+        if (types[tag] in setOf("selector", "urltest")) return null to "unknown"
+        val protocol = types[tag]?.takeIf { it in setOf("vless", "hysteria2", "awg", "warp", "direct", "block", "dns") }
+            ?: "unknown"
+        return matches to protocol
     }
 
     internal fun isSafeTag(value: String): Boolean =
@@ -359,7 +471,7 @@ internal object AndroidCoreEgressProbe {
         return null
     }
 
-    private class ProbeHandler : CommandClientHandler {
+    private class ProbeHandler(private val onGroups: ((OutboundGroupIterator) -> Unit)? = null) : CommandClientHandler {
         private val initialLogBatchLatch = CountDownLatch(1)
         private val safeFailureCategoryLatch = CountDownLatch(1)
         @Volatile private var armed = false
@@ -373,7 +485,7 @@ internal object AndroidCoreEgressProbe {
             safeFailureCategoryLatch.await(SAFE_FAILURE_CATEGORY_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
         }
 
-        override fun writeGroups(groups: OutboundGroupIterator) = Unit
+        override fun writeGroups(groups: OutboundGroupIterator) { onGroups?.invoke(groups) }
         override fun clearLogs() = Unit
         override fun connected() = Unit
         override fun disconnected(message: String) = Unit

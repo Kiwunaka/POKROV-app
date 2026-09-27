@@ -2454,6 +2454,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       builder: (context) => _ProtectionCenterSheet(
         runtimeSnapshot: _protectionRuntimeSnapshot,
         retainsProtection: () => _connectionManager.retainsProtection,
+        confirmedLocationLabel: () =>
+            _runtimeSnapshot?.isCleanlyHealthy == true && _activeNodeCode.isNotEmpty
+                ? _locationLabelForNodeCode(
+                    _activeNodeCode,
+                    variantId: _activeVariantId,
+                  )
+                : '',
         onDisconnect: _connectionManager.disconnect,
         initialData: _ProtectionCenterData(
           snapshot: _runtimeSnapshot,

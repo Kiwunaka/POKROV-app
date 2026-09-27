@@ -79,6 +79,14 @@ probe retries and signed transport lease rules are unchanged. The five-second
 native detection budget is not an end-to-end failover measurement; the phone's
 15-second acceptance target still requires a device test.
 
+Online candidate selection prepares exact profiles within its existing shared
+12-second deadline; each four-second native handshake/204 budget starts only
+after that candidate's profile is ready. Cancellation still settles profile and
+native work before releasing a worker. Ordinary catalog location changes use the
+location catalog's policy metadata, so the previous AWG candidate cannot impose
+a legacy laboratory node allowlist. A completed explicit Android Disconnect
+clears the previous failure; internal failure stops preserve their cause.
+
 Private Android and Windows 1.3.0+4075 builds passed; ordinary US VLESS and HY2
 connections were verified on the Windows VM. One account-scoped VLESS fault
 triggered automatic recovery to AWG: the new Core 204 arrived in 9.36–12.31

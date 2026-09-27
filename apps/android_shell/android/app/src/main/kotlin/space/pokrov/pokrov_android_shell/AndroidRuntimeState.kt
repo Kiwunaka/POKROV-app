@@ -474,6 +474,13 @@ internal object AndroidRuntimeState {
         vpnValidated = null
         coreEgressValidated = null
         invalidateTunnelTrafficSession()
+        if (stopReason == "user_requested") {
+            // Clear a settled explicit disconnect, not the stop request or an
+            // internal failure stop whose cause still belongs in diagnostics.
+            lastFailureKind = null
+            lastMessage = message
+            return
+        }
         if (message == "POKROV отключен на этом устройстве." && shouldPreserveFailureMessage()) {
             return
         }

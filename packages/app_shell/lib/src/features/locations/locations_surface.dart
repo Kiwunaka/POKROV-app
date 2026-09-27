@@ -71,7 +71,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
       return true;
     }
     final haystack =
-        '${node.country} ${_smartConnectNodeCity(node)} ${node.code}'
+        '${node.country} ${_smartConnectNodeTitle(node)} ${_smartConnectNodeCity(node)} ${node.code}'
             .toLowerCase();
     return haystack.contains(_query);
   }
@@ -81,7 +81,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
       return true;
     }
     final haystack =
-        '${entry.country.country} ${entry.country.code} ${entry.city.city} ${entry.city.code}'
+        '${entry.country.country} ${entry.country.code} ${entry.city.city} ${entry.city.code} ${_locationCountryDisplayName(entry.country.code, entry.country.country)} ${_locationCityDisplayName(entry.city, entry.country)}'
             .toLowerCase();
     return haystack.contains(_query);
   }
@@ -186,8 +186,11 @@ class _LocationsSectionState extends State<_LocationsSection> {
                         entry.city.code.trim().toLowerCase(),
                       ),
                       disabled: widget.nodePreferenceBusy,
-                      selectionEnabled:
-                          _canSelectLocation && !widget.nodePreferenceBusy,
+                      selectionEnabled: _canSelectLocation &&
+                          !widget.nodePreferenceBusy &&
+                          (entry.city.variants.isEmpty ||
+                              entry.city.variants
+                                  .any((variant) => variant.available)),
                       onTap: () => unawaited(_selectCatalogEntry(entry)),
                       onFavoriteToggle: () =>
                           widget.onFavoriteNodeToggle(entry.city.code),
@@ -888,7 +891,12 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
               const SizedBox(height: 4),
             ] else if ((_snapshot?.errorCategory ?? '').isNotEmpty) ...[
               Text(
-                'Не удалось проверить через активный туннель. Подключите POKROV и повторите.',
+                switch (_snapshot?.errorCategory) {
+                  'profile_unavailable' || 'variant_unavailable' =>
+                    'Для текущего подключения проверка вариантов недоступна.',
+                  _ =>
+                    'Не удалось проверить через активный туннель. Подключите POKROV и повторите.',
+                },
                 key: const ValueKey('location-variant-probe-error'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: p.muted,
@@ -1105,7 +1113,10 @@ class _ClientLocationCityRow extends StatelessWidget {
     final country = entry.country;
     final now = DateTime.now().toUtc();
     final freshness = _locationMetricFreshness(city.measuredAt, now: now);
-    final quality = freshness == _LocationMetricFreshness.current
+    final hasAvailableVariant = city.variants.isEmpty ||
+        city.variants.any((variant) => variant.available);
+    final quality =
+        freshness == _LocationMetricFreshness.current && hasAvailableVariant
         ? _locationQualityLabel(
             city.healthScore,
             latencyMs: city.latencyMs,
@@ -1134,6 +1145,7 @@ class _ClientLocationCityRow extends StatelessWidget {
             : '${availableVariantLabels.take(2).join(' / ')} +${availableVariantLabels.length - 2}';
     final subtitle = <String>[
       countryTitle,
+      if (!hasAvailableVariant) 'Сейчас недоступна',
       if (quality != null) quality,
       if (!city.premium) 'Базовый',
       if (selected)
@@ -1233,7 +1245,9 @@ class _ClientLocationCityRow extends StatelessWidget {
                 )
               else
                 Tooltip(
-                  message: 'Список локаций ещё не готов',
+                  message: !hasAvailableVariant
+                      ? 'Для этой локации сейчас нет доступного варианта.'
+                      : 'Список локаций ещё не готов',
                   child: SizedBox(
                     key: ValueKey('locations-selection-locked-${city.code}'),
                     width: 30,
@@ -1325,9 +1339,7 @@ class _SmartConnectNodeRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      node.country.trim().isEmpty
-                          ? _smartConnectNodeTitle(node)
-                          : node.country,
+                      _smartConnectNodeTitle(node),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(

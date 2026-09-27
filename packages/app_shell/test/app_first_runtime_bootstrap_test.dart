@@ -2687,6 +2687,7 @@ void main() {
 
     final requests = <String>[];
     Map<String, dynamic>? selectBody;
+    var rejectSelection = false;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -2723,6 +2724,14 @@ void main() {
             'Bearer manual-smart-connect-session',
           );
           selectBody = jsonDecode(body) as Map<String, dynamic>;
+          if (rejectSelection) {
+            request.response
+              ..statusCode = HttpStatus.badRequest
+              ..headers.contentType = ContentType.json
+              ..write('{"detail":"selected node is not eligible"}');
+            await request.response.close();
+            continue;
+          }
           request.response
             ..headers.contentType = ContentType.json
             ..write(
@@ -2813,6 +2822,19 @@ void main() {
       'POST /api/client/session/start-trial',
       'POST /api/client/nodes/select',
     ]);
+    rejectSelection = true;
+    await expectLater(
+      bootstrapper.setPreferredSmartConnectNode(
+        hostPlatform: HostPlatform.windows,
+        smartConnect: smartConnect,
+        nodeCode: 'de',
+      ),
+      throwsA(isA<BootstrapFailure>().having(
+        (failure) => failure.message,
+        'message',
+        'Эта локация сейчас недоступна. Выберите другую.',
+      )),
+    );
   });
 
   test('uses shortlist probe endpoint for default smart-connect RTT', () async {

@@ -17,9 +17,14 @@ final _candidates = List.generate(4, (index) => TransportCandidate(
   minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {},
 ));
 
-class _Bootstrapper implements ManagedProfileBootstrapper {
+class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenceService {
   _Bootstrapper({this.warpEnabled = false, this.catalog = false});
   final bool catalog;
+  List<TransportCandidate> candidates = _candidates;
+  Duration exactProfileDelay = Duration.zero;
+  final cancelledExactProfiles = <String>[];
+  SmartConnectProfile? smartConnect;
+  final nodePreferences = <SmartConnectProfile>[];
   final resolutions = <({String selected, bool select, bool cache})>[];
   final bool warpEnabled;
   Completer<void>? gate;
@@ -27,6 +32,14 @@ class _Bootstrapper implements ManagedProfileBootstrapper {
   StackTrace? failureStack;
   final entered = Completer<void>();
   bool cancelled = false;
+
+  @override
+  Future<SmartConnectPreferenceResult> setPreferredSmartConnectNode({
+    required HostPlatform hostPlatform, required SmartConnectProfile smartConnect, required String nodeCode,
+  }) async {
+    nodePreferences.add(smartConnect);
+    return SmartConnectPreferenceResult(preferredNodeCode: nodeCode, acceptedSamples: 0);
+  }
 
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
@@ -49,13 +62,23 @@ class _Bootstrapper implements ManagedProfileBootstrapper {
     if (!entered.isCompleted) entered.complete();
     unawaited(cancelled?.then((_) => this.cancelled = true));
     await gate?.future;
+    if (selectedCandidateRef.isNotEmpty && exactProfileDelay > Duration.zero) {
+      var stopped = false;
+      unawaited(cancelled?.then((_) => stopped = true));
+      await Future<void>.delayed(exactProfileDelay);
+      if (stopped) cancelledExactProfiles.add(selectedCandidateRef);
+    }
     if (failure != null) Error.throwWithStackTrace(failure!, failureStack ?? StackTrace.current);
     final nodeCode = preferredNodeCode.isEmpty ? 'de' : preferredNodeCode;
+    final selected = candidates.firstWhere((candidate) => candidate.candidateRef ==
+        (selectedCandidateRef.isEmpty ? candidates.first.candidateRef : selectedCandidateRef));
     return ManagedProfilePayload(
-      profileName: selectedCandidateRef.isEmpty ? '$nodeCode:profile_0' : selectedCandidateRef,
+      profileName: selectedCandidateRef.isEmpty ? (catalog ? selected.candidateRef : '$nodeCode:profile_0') : selectedCandidateRef,
       transportCatalog: catalog ? TransportCandidateCatalog(revision: 'test',
-          selectedCandidateRef: selectedCandidateRef.isEmpty ? 'de:profile_0' : selectedCandidateRef,
-          candidates: _candidates) : null,
+          selectedCandidateRef: selected.candidateRef, candidates: candidates) : null,
+      smartConnect: smartConnect,
+      source: RuntimeProfileSource(revision: 'test', origin: RuntimeProfileSourceOrigin.managedManifest,
+          protocol: selected.protocol),
       resolvedNodeCode: nodeCode,
       configPayload:
           '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
@@ -633,6 +656,27 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 
+  test('cold candidate HTTP preparation does not consume the native probe budget', () async {
+    final alternatives = _CachedBootstrapper.alternatives;
+    final bootstrapper = _Bootstrapper(catalog: true)
+      ..candidates = [alternatives[1], alternatives[0], alternatives[2]]
+      ..exactProfileDelay = const Duration(milliseconds: 4300);
+    final runtime = _Runtime()..supportsCandidates = true;
+    runtime.heldProbeProtocols.addAll(['awg', 'vless']);
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+
+    await manager.connect();
+
+    expect(runtime.probedProtocols, containsAll(['awg', 'vless', 'hysteria2']),
+        reason: 'an initial AWG timeout must not discard pending exact TCP/HY2 profiles');
+    expect(bootstrapper.cancelledExactProfiles, isEmpty,
+        reason: 'the HTTP preparation is bounded by selection, not the native four-second probe');
+    expect(runtime.stagedProfile, alternatives[2].candidateRef);
+    expect(runtime.activeProbes, isEmpty);
+    expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
   test('confirmed failure races cached alternatives before a hanging API or AWG probe', () async {
     final runtime = _Runtime()..supportsCandidates = true;
     final bootstrapper = _CachedBootstrapper();
@@ -834,6 +878,32 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(manager.busy, isFalse);
   });
+
+  for (final ordinaryCatalog in [true, false]) {
+    test('location preference uses ${ordinaryCatalog ? 'catalog policy' : 'legacy lab'} transport metadata', () async {
+      final current = SmartConnectProfile.tryParse({
+        'transport_profile': 'awg31_lab', 'profile_revision': 'current-awg',
+        'shortlist': [{'code': 'de'}, {'code': 'us'}],
+      })!;
+      final bootstrapper = _Bootstrapper(catalog: ordinaryCatalog)..smartConnect = current;
+      final runtime = _Runtime()..supportsCandidates = ordinaryCatalog;
+      final manager = _manager(runtime, bootstrapper);
+      addTearDown(manager.dispose);
+      manager.updateLocationsCatalog(ClientLocationsCatalog.fromJson({
+        'transport_profile': 'legacy_reality_fallback', 'profile_revision': 'locations-policy',
+        'countries': [{'code': 'US', 'country': 'USA', 'cities': [{'code': 'us', 'city': 'New York'}]}],
+      }));
+      await manager.connect();
+      await manager.disconnect();
+
+      await manager.setPreferredLocation('us', 'direct');
+
+      final preference = bootstrapper.nodePreferences.single;
+      expect(preference.transportProfile, ordinaryCatalog ? 'legacy_reality_fallback' : 'awg31_lab');
+      expect(preference.profileRevision, ordinaryCatalog ? 'locations-policy' : 'current-awg');
+      expect(preference.shortlist, same(current.shortlist));
+    });
+  }
 
   test('enabled signed transport mode cannot fall through to ordinary catalog profiles', () async {
     final runtime = _Runtime();
