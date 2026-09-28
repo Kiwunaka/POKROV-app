@@ -70,7 +70,7 @@
   },
   "signing": {
     "status": "SKIPPED_BY_OWNER",
-    "blocker_code": "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0",
+    "blocker_code": "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_3_0",
     "required_for_candidate": false,
     "required_for_trusted_claim": true,
     "contract": "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1",
@@ -91,8 +91,8 @@
     },
     "owner_exception": {
       "status": "SKIPPED_BY_OWNER",
-      "authorized_on": "2026-08-24",
-      "version_scope": "1.2.0",
+      "authorized_on": "2026-09-28",
+      "version_scope": "1.3.0",
       "channel_scope": "outside_store_beta",
       "distribution_scope": "direct_download_only",
       "trusted_claim_allowed": false,
@@ -113,7 +113,7 @@
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
     "This exact setup bundles the pinned POKROV Core 1.1.0 bytes, libcronet.dll dependency, the required x64 Microsoft VC143 runtime DLLs, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
-    "The exact 1.2.0 owner exception permits an unsigned direct-download beta candidate only when its manifest records SKIPPED_BY_OWNER and the SmartScreen warning above; it does not permit a trusted, signed, Store or broad-stable claim.",
+    "The exact 1.3.0 owner exception permits an unsigned direct-download beta candidate only when its manifest records SKIPPED_BY_OWNER and the SmartScreen warning above; it does not permit a trusted, signed, Store or broad-stable claim.",
     "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest."
   ],
   "blocked_on": [

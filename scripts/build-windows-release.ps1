@@ -508,13 +508,13 @@ if ($signedFileContractDifference.Count -ne 0) {
 $ownerUnsignedException = $windowsReleaseConfig.signing.owner_exception
 $ownerUnsignedExceptionActive =
   $windowsReleaseConfig.signing.status -eq "SKIPPED_BY_OWNER" -and
-  $windowsReleaseConfig.signing.blocker_code -eq "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0" -and
+  $windowsReleaseConfig.signing.blocker_code -eq "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_3_0" -and
   $windowsReleaseConfig.signing.required_for_candidate -eq $false -and
   $windowsReleaseConfig.signing.required_for_trusted_claim -eq $true -and
   $windowsReleaseConfig.channel -eq "outside_store_beta" -and
   $ownerUnsignedException.status -eq "SKIPPED_BY_OWNER" -and
-  $ownerUnsignedException.authorized_on -eq "2026-08-24" -and
-  $ownerUnsignedException.version_scope -eq "1.2.0" -and
+  $ownerUnsignedException.authorized_on -eq "2026-09-28" -and
+  $ownerUnsignedException.version_scope -eq "1.3.0" -and
   $ownerUnsignedException.channel_scope -eq "outside_store_beta" -and
   $ownerUnsignedException.distribution_scope -eq "direct_download_only" -and
   $ownerUnsignedException.trusted_claim_allowed -eq $false -and
@@ -523,7 +523,7 @@ $ownerUnsignedExceptionActive =
   $ownerUnsignedException.expires_when_trusted_signing_is_available -eq $true
 if ($windowsReleaseConfig.signing.required_for_candidate -ne $true -and
     -not $ownerUnsignedExceptionActive) {
-  throw "Unsigned Windows candidate policy is incomplete or outside the exact owner-approved 1.2.0 beta scope."
+  throw "Unsigned Windows candidate policy is incomplete or outside the exact owner-approved 1.3.0 beta scope."
 }
 $trustedWindowsSigningContext = $null
 if ($trustedWindowsSigningRequested) {
