@@ -1,12 +1,20 @@
-# Client 1.2.0 release status
+# Client 1.3.0 release status
 
-Public version: **1.2.0+4061** with POKROV Core 1.1.0 in
+Public version: **1.3.0+4080** with POKROV Core 1.1.0 in
 `Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
-beta with a SmartScreen warning. Version 1.1.6 remains available for rollback.
+beta with a SmartScreen warning. Versions 1.2.0 and 1.1.6 remain available for rollback.
+
+Owner-approved publication on 2026-09-28 used client main `53d3dc2`. Android's
+four APKs passed production signer, version and ABI checks; the Windows setup
+passed packaging with its Core and runtime dependencies. E2 device acceptance
+used private 4078/4079 builds; the final 4080 was not installed on Huawei or
+the VM because the phone was absent from ADB during publication. The public API
+now marks 1.1.6 and 1.2.0 updates as required on both platforms; direct APK/EXE
+downloads answered publicly, and no LiveUpdate or broadcast was created.
 
 The client source and local Core artifact binding are in `main`. A local
-build proves compilation only; device and account checks below must run on the
-same final package before publication.
+build proves compilation only; device and account checks are recorded below
+with their exact package versions.
 
 ## Earlier 4055 snapshot
 

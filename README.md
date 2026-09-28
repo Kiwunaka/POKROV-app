@@ -1,7 +1,7 @@
 # POKROV client
 
 This repository builds the Android and Windows client. The public version is
-`1.2.0+4061`: Android direct APK and unsigned Windows beta, with a
+`1.3.0+4080`: Android direct APK and unsigned Windows beta, with a
 SmartScreen/unknown-publisher warning. Android and Windows use POKROV Core
 1.1.0 from `C:/Users/kiwun/Documents/ai/POKROV-core`.
 
@@ -23,7 +23,7 @@ Release packaging scripts are in `scripts/`.
 Core libraries and client packages stay outside git and LFS. Core libraries
 come from the local Core build or its GitHub Release. Public client files live
 in [GitHub Releases for pokrov](https://github.com/Kiwunaka/pokrov/releases).
-The 1.1.6 release remains the rollback target.
+The 1.2.0 and 1.1.6 releases remain available for rollback.
 
 Current release state and outstanding device checks are in
 `docs/operations/cutover-readiness.md`. Product behavior is in
