@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,50 @@ void main() {
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+  test(
+      'candidate probe uses the exact WARP chain and leaves ordinary payload alone',
+      () async {
+    const base =
+        '{"outbounds":[{"type":"vless","tag":"node"},{"type":"direct","tag":"direct"}],"route":{"final":"node"}}';
+    final sent = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      sent.add((call.arguments as Map)['configContent'] as String);
+      return {'success': true, 'failure_kind': '', 'duration_ms': 1};
+    });
+    final runtime =
+        MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.android);
+    for (final mode in ['proxy_over_warp', 'warp_over_proxy']) {
+      await runtime.probeCandidate(
+          probeId: 'candidate-$mode',
+          payload: ManagedProfilePayload(
+              profileName: 'candidate',
+              configPayload: base,
+              warpPolicy: WarpRuntimePolicy(
+                  enabled: true,
+                  runtimeReady: true,
+                  userConsented: true,
+                  state: 'consented',
+                  source: 'client_local',
+                  mode: mode)),
+          timeout: const Duration(seconds: 3),
+          expectedNetworkContext: 'network-context');
+    }
+    await runtime.probeCandidate(
+        probeId: 'candidate-ordinary',
+        payload: const ManagedProfilePayload(
+            profileName: 'candidate', configPayload: base),
+        timeout: const Duration(seconds: 3),
+        expectedNetworkContext: 'network-context');
+    final before = jsonDecode(sent[0]) as Map<String, dynamic>;
+    final after = jsonDecode(sent[1]) as Map<String, dynamic>;
+    expect((before['route'] as Map)['final'], 'node');
+    expect(
+        ((before['outbounds'] as List).first as Map)['detour'], 'pokrov-warp');
+    expect(((after['endpoints'] as List).single as Map)['detour'], 'node');
+    expect((after['route'] as Map)['final'], 'pokrov-warp');
+    expect(sent[2], base);
+  });
 
   test('candidate cancellation awaits native settlement without staging TUN',
       () async {

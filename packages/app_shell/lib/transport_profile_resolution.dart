@@ -33,13 +33,22 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
     final candidates = <TransportCandidate>[];
     for (final raw in rows) {
       final item = _transportMap(raw);
-      _keys(item, const {'candidate_ref', 'profile_ref', 'node_code', 'country_code',
-        'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements'});
+      final warpMode = item['warp_mode'];
+      _keys(item, warpMode == null
+          ? const {'candidate_ref', 'profile_ref', 'node_code', 'country_code',
+              'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements'}
+          : const {'candidate_ref', 'profile_ref', 'node_code', 'country_code',
+              'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements', 'warp_mode'});
       final ref = text(item['candidate_ref'], refPattern, 128);
       final profile = text(item['profile_ref'], refPattern, 64);
       final node = text(item['node_code'], refPattern, 64);
       final country = text(item['country_code'], RegExp(r'^[A-Z]{2}$'), 2);
-      if (!refs.add(ref) || ref != '$node:$profile' || item['priority'] is! int ||
+      if (warpMode != null && !const {'proxy_over_warp', 'warp_over_proxy'}.contains(warpMode)) {
+        throw const FormatException();
+      }
+      if (!refs.add(ref) || ref != '$node:$profile${warpMode == null ? '' : ':$warpMode'}' ||
+          (warpMode == 'warp_over_proxy' ? country != 'ZZ' : country == 'ZZ') ||
+          item['priority'] is! int ||
           (item['priority'] as int) < 0) throw const FormatException();
       final protocol = text(item['protocol'], refPattern, 32);
       final transport = text(item['transport'], refPattern, 32);
@@ -52,7 +61,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         'hysteria2' => transport == 'udp' && protection == 'tls',
         _ => false,
       };
-      if (!supported) throw const FormatException();
+      if (!supported || (warpMode != null && protocol != 'vless')) throw const FormatException();
       final parameters = _transportMap(item['parameters']);
       _keys(parameters, const {'network', 'flow'});
       if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
@@ -66,6 +75,9 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       final featureNames = requirements['required_features'];
       if (minimumClient is! String || (minimumCore != null && minimumCore is! String) ||
           platformNames is! List || platformNames.isEmpty || featureNames is! List || featureNames.isEmpty) {
+        throw const FormatException();
+      }
+      if (warpMode != null && _transportReleaseCompare(minimumClient, '1.4.0') < 0) {
         throw const FormatException();
       }
       final platforms = <HostPlatform>{};
@@ -103,7 +115,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         protection: protection, priority: item['priority'] as int,
         network: parameters['network'] as String, flow: parameters['flow'] as String,
         minimumClientRelease: minimumClient, minimumCoreRelease: minimumCore as String?,
-        platforms: platforms, requiredFeatures: features));
+        platforms: platforms, requiredFeatures: features, warpMode: warpMode as String?));
     }
     final catalog = TransportCandidateCatalog(revision: revision,
       selectedCandidateRef: selected, candidates: candidates);

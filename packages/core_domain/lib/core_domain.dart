@@ -44,11 +44,13 @@ class TransportCandidate {
     required this.transport, required this.protection, required this.priority,
     required this.network, required this.flow, required this.minimumClientRelease,
     required this.minimumCoreRelease, required Set<HostPlatform> platforms,
-    required Set<RuntimeTransportFeature> requiredFeatures})
+    required Set<RuntimeTransportFeature> requiredFeatures, this.warpMode})
       : platforms = Set.unmodifiable(platforms), requiredFeatures = Set.unmodifiable(requiredFeatures);
 
   final String candidateRef, profileRef, nodeCode, countryCode;
   final String protocol, transport, protection, network, flow;
+  /// Null for an ordinary route. WARP last has no known country of exit.
+  final String? warpMode;
   final int priority;
   final String minimumClientRelease;
   final String? minimumCoreRelease;

@@ -2796,8 +2796,7 @@ String _materializePokrovCoreConfig(
 
   final directTag = _firstOutboundTagByType(outbounds, const {'direct'});
   final proxyTag = _primaryProxyTag(outbounds, route);
-  final warpOverProxy =
-      policy.mode == 'warp_over_proxy' || policy.isClientLocal;
+  final warpOverProxy = policy.mode == 'warp_over_proxy';
   if (warpOverProxy && proxyTag == null) {
     throw const FormatException('WARP-over-proxy requires a proxy outbound');
   }

@@ -27,6 +27,32 @@ TransportCandidateCatalog parse(Map<String, Object?> value, {String node = ''}) 
       requestedNodeCode: node);
 
 void main() {
+  test('WARP chain candidates keep the node exit only when WARP is first', () {
+    final ordinary = candidate('de', 'legacy_reality_fallback');
+    Map<String, Object?> chain(String mode) {
+      final row = candidate('de', 'legacy_reality_fallback');
+      row['candidate_ref'] = 'de:legacy_reality_fallback:$mode';
+      row['warp_mode'] = mode;
+      row['country_code'] = mode == 'warp_over_proxy' ? 'ZZ' : 'DE';
+      (row['requirements'] as Map)['minimum_client_release'] = '1.4.0';
+      return row;
+    }
+    final value = catalog([ordinary, chain('proxy_over_warp'), chain('warp_over_proxy')]);
+    final parsed = decodeManagedTransportCatalog(value, platform: HostPlatform.windows,
+      clientRelease: '1.4.0', runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    expect(parsed.candidates.map((row) => row.warpMode),
+      [null, 'proxy_over_warp', 'warp_over_proxy']);
+    expect(parsed.candidates.map((row) => row.countryCode), ['DE', 'DE', 'ZZ']);
+    expect(() => decodeManagedTransportCatalog(value, platform: HostPlatform.windows,
+      clientRelease: '1.3.0', runtimeFeatures: RuntimeTransportFeature.values.toSet()),
+      throwsA(isA<TransportManifestFailure>()
+        .having((failure) => failure.code, 'code', 'transport_catalog_incompatible')));
+    value['candidates'] = [ordinary, chain('warp_over_proxy')..['country_code'] = 'DE'];
+    expect(() => decodeManagedTransportCatalog(value, platform: HostPlatform.windows,
+      clientRelease: '1.4.0', runtimeFeatures: RuntimeTransportFeature.values.toSet()),
+      throwsA(isA<TransportManifestFailure>()));
+  });
+
   test('one egress catalog retains every authorized protocol and payload identity', () {
     final value = parse(catalog([
       candidate('de', 'legacy_reality_fallback'),

@@ -697,6 +697,11 @@ Consumer privacy rules:
   the default runtime path is client-local Pokrov-core WARP. The UI must still
   avoid claiming production-proof anonymity or stronger privacy until
   Android/Windows release-build WARP evidence exists.
+- From 1.4.0, consented WARP routes are transport-catalog candidates. The
+  candidate probe checks the composed route before connection; an ordinary
+  fallback stays ordinary. WARP before the node keeps its known exit country.
+  When WARP is after the node, Home says the exit country is unknown and does
+  not show the node's country as the exit.
 - raw subscription copy, edit, regenerate, or share actions stay out of the first-layer consumer path
 - raw connection or subscription links must not be treated as account proof in
   first-launch restore or normal code redemption

@@ -158,6 +158,15 @@ class _WarpConsentSheet extends StatelessWidget {
                   line: lineColor,
                 ),
                 _WarpInfoRow(
+                  icon: Icons.public_rounded,
+                  title:
+                      'Если выход через WARP, страна выхода не подтверждена.',
+                  value: '',
+                  foreground: foreground,
+                  muted: secondary,
+                  line: lineColor,
+                ),
+                _WarpInfoRow(
                   icon: Icons.info_outline_rounded,
                   title:
                       'Если сайт не откроется, POKROV вернется к обычному VPN.',

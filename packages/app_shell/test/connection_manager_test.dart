@@ -150,6 +150,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool failProbeCancellation = false;
   bool failHandoff = false;
   final failedProbeProtocols = <String>{};
+  final failedProbeProfiles = <String>{};
+  final probedWarpModes = <String>[];
   final heldProbeProtocols = <String>{};
   Future<void>? alternateProbeGate;
   final probedProtocols = <String>[];
@@ -182,6 +184,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     expect(value(phase).transportCapabilities, isNotNull);
     final protocol = payload.source?.protocol ?? 'vless';
     probedProtocols.add(protocol);
+    probedWarpModes.add(payload.warpPolicy.canEnableRuntime ? payload.warpPolicy.mode : '');
     final cancelled = Completer<void>();
     activeProbes[probeId] = cancelled;
     if (!probeStarted.isCompleted) probeStarted.complete();
@@ -195,7 +198,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
       await Future.any([alternateProbeGate!, cancelled.future]);
     }
     activeProbes.remove(probeId);
-    final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol);
+    final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol) &&
+        !failedProbeProfiles.contains(payload.profileName);
     return RuntimeCandidateProbeResult(success: success, failureKind: success ? '' : 'cancelled', duration: Duration.zero);
   }
   @override
@@ -657,6 +661,59 @@ void main() {
     expect(runtime.stagedProfile, 'de:profile_1');
     expect(bootstrapper.resolutions.every((call) => !call.select && !call.cache), isTrue);
     expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
+  test('WARP candidate probes its chain and ordinary fallback stays ordinary', () async {
+    final base = _candidates.first;
+    final chain = TransportCandidate(candidateRef: '${base.candidateRef}:proxy_over_warp',
+      profileRef: base.profileRef, nodeCode: base.nodeCode, countryCode: 'DE',
+      protocol: base.protocol, transport: base.transport, protection: base.protection,
+      priority: 1, network: base.network, flow: base.flow,
+      minimumClientRelease: '1.4.0', minimumCoreRelease: null,
+      platforms: base.platforms, requiredFeatures: base.requiredFeatures,
+      warpMode: 'proxy_over_warp');
+    final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true)
+      ..candidates = [base, chain];
+    final runtime = _Runtime()..supportsCandidates = true;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.transportCatalog?.selectedCandidateRef, chain.candidateRef);
+    expect(runtime.probedWarpModes, ['proxy_over_warp']);
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+    runtime.failedProbeProfiles.add(chain.candidateRef);
+    await manager.reconnect();
+    expect(manager.transportCatalog?.selectedCandidateRef, base.candidateRef);
+    expect(runtime.probedWarpModes.last, '');
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
+  });
+
+  test('1.3 catalog still stages consented WARP without chain entries', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true, warpEnabled: true));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+  });
+
+  test('WARP last does not claim the node country as its exit', () async {
+    final base = _candidates.first;
+    final warpLast = TransportCandidate(candidateRef: '${base.candidateRef}:warp_over_proxy',
+      profileRef: base.profileRef, nodeCode: base.nodeCode, countryCode: 'ZZ',
+      protocol: base.protocol, transport: base.transport, protection: base.protection,
+      priority: 1, network: base.network, flow: base.flow,
+      minimumClientRelease: '1.4.0', minimumCoreRelease: null,
+      platforms: base.platforms, requiredFeatures: base.requiredFeatures,
+      warpMode: 'warp_over_proxy');
+    final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true)
+      ..candidates = [base, warpLast];
+    final runtime = _Runtime()..supportsCandidates = true;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.transportCatalog?.selected.countryCode, 'ZZ');
+    expect(runtime.stagedPayloads.last.warpPolicy.mode, 'warp_over_proxy');
+    expect(manager.headline, contains('Страна выхода неизвестна'));
   });
 
   test('cold candidate HTTP preparation does not consume the native probe budget', () async {

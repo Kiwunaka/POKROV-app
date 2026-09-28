@@ -109,7 +109,10 @@ mixin _CandidateProbeChannel
     try {
       value =
           await _channel.invokeMethod<Object?>('runtimeEngine.probeCandidate', {
-        'configContent': payload.configPayload,
+        'configContent': payload.warpPolicy.canEnableRuntime
+            ? _materializePokrovCoreConfig(
+                payload.configPayload, payload.warpPolicy)
+            : payload.configPayload,
         'probeId': probeId,
         'timeoutMs': timeout.inMilliseconds,
         'expectedNetworkContext': expectedNetworkContext,
