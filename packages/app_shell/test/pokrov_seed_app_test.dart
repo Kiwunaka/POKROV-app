@@ -1247,6 +1247,22 @@ void _installReadyRuntimeBridgeMock({
           'canConnect': true,
           'message': 'Managed profile staged on the host bridge.',
         };
+      case 'runtimeEngine.replaceManagedProfile':
+        connected = true;
+        return <String, Object?>{
+          'phase': 'running',
+          'artifactDirectory': '/host/runtime',
+          'coreBinaryPath': '/host/runtime/pokrov-core.aar',
+          'stagedConfigPath': '/host/runtime/pokrov-seed-runtime.json',
+          'supportsLiveConnect': true,
+          'canInitialize': true,
+          'canConnect': true,
+          'hostHealth': 'healthy',
+          'dnsState': 'healthy',
+          'uplinkState': 'healthy',
+          'core_egress_validated': true,
+          'message': 'Runtime service is running.',
+        };
       case 'runtimeEngine.connect':
         await connectGate;
         connectCalls += 1;
@@ -5907,10 +5923,11 @@ void main() {
     expect(bootstrapper.warpConsentCalls, 1);
     expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     expect(runtimeCalls, contains('runtimeEngine.invalidateManagedProfile'));
-    expect(runtimeCalls, contains('runtimeEngine.disconnect'));
+    expect(runtimeCalls, contains('runtimeEngine.replaceManagedProfile'));
+    expect(runtimeCalls, isNot(contains('runtimeEngine.disconnect')));
     expect(
       runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
-      hasLength(2),
+      hasLength(1),
     );
     expect(find.byKey(const ValueKey('home-warp-sheet')), findsNothing);
     await _tapNav(tester, 'nav-protection');
@@ -8325,12 +8342,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      runtimeCalls.where((call) => call == 'runtimeEngine.disconnect'),
+      runtimeCalls.where((call) => call == 'runtimeEngine.replaceManagedProfile'),
       hasLength(1),
     );
     expect(
-      runtimeCalls.where((call) => call == 'runtimeEngine.connect'),
-      hasLength(1),
+      runtimeCalls.where((call) => call == 'runtimeEngine.disconnect'),
+      isEmpty,
     );
     expect(
       find.text('Правила подключения применены.'),
@@ -9901,6 +9918,7 @@ void main() {
         var connectCalls = 0;
         var firstConnectSnapshots = 0;
         var disconnectCalls = 0;
+        var replaceCalls = 0;
 
         Map<String, Object?> runtimeState(
           String phase, {
@@ -10001,6 +10019,12 @@ void main() {
             case 'runtimeEngine.disconnect':
               disconnectCalls += 1;
               return runtimeState('configStaged');
+            case 'runtimeEngine.replaceManagedProfile':
+              replaceCalls += 1;
+              return runtimeState('running',
+                  egressValidated: !baselineFails,
+                  failureKind: baselineFails ? 'core_egress_probe_failed' : null,
+                  message: baselineFails ? 'Fixture path failed.' : 'Runtime service is running.');
           }
           return null;
         });
@@ -10091,20 +10115,17 @@ void main() {
         await _tapPrimaryConnectAndConfirmRouteScope(tester);
         if (labFallback && host == HostPlatform.android &&
             !proofUnavailable && !bootstrapRefused) {
-          for (var i = 0; i < 48; i += 1) {
+          for (var i = 0; i < 56; i += 1) {
             await tester.pump(const Duration(milliseconds: 750));
           }
         }
         await tester.pump(const Duration(seconds: 4));
         await tester.pumpAndSettle();
 
-        expect(connectCalls, proofUnavailable || bootstrapRefused ? 1 : 2);
-        expect(
-          disconnectCalls,
-          labFallback && host == HostPlatform.android && !proofUnavailable
-              ? 1
-              : 0,
-        );
+        final protectedFallback = labFallback && host == HostPlatform.android && !proofUnavailable;
+        expect(connectCalls, proofUnavailable || bootstrapRefused || protectedFallback ? 1 : 2);
+        expect(replaceCalls, protectedFallback && !bootstrapRefused ? 1 : 0);
+        expect(disconnectCalls, 0);
         expect(bootstrapper.calls, proofUnavailable ? 1 : 2);
         expect(bootstrapper.excludedNodeCodeRequests.first, isEmpty);
         expect(
@@ -10122,7 +10143,7 @@ void main() {
         expect(store.state.preferredNodeCode, isEmpty);
         expect(
           store.state.automaticNodeQuarantineUntil,
-          baselineFails
+          baselineFails && !protectedFallback
               ? contains('ru-spb')
               : labFallback
               ? isEmpty
@@ -10131,7 +10152,7 @@ void main() {
         expect(bootstrapper.lastRouteMode, store.state.firstRouteScopeMode);
         expect(
           find.text('Отключить'),
-          baselineFails || proofUnavailable || bootstrapRefused
+          (baselineFails || proofUnavailable || bootstrapRefused) && !protectedFallback
               ? findsNothing
               : findsOneWidget,
         );
@@ -12838,6 +12859,7 @@ void main() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     final calls = <String>[];
     final stagedProfiles = <String>[];
+    var runtimePhase = 'configStaged';
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
@@ -12857,7 +12879,7 @@ void main() {
       switch (call.method) {
         case 'runtimeEngine.snapshot':
           return <String, Object?>{
-            'phase': 'configStaged',
+            'phase': runtimePhase,
             'artifactDirectory': '/host/runtime',
             'coreBinaryPath': '/host/runtime/pokrov-core.aar',
             'stagedConfigPath': '/host/runtime/previous-runtime.json',
@@ -12885,6 +12907,7 @@ void main() {
             'message': 'Managed profile staged on the host bridge.',
           };
         case 'runtimeEngine.connect':
+          runtimePhase = 'running';
           return <String, Object?>{
             'phase': 'running',
             'artifactDirectory': '/host/runtime',
@@ -12896,6 +12919,7 @@ void main() {
             'message': 'Android runtime service is running.',
           };
         case 'runtimeEngine.disconnect':
+          runtimePhase = 'configStaged';
           return <String, Object?>{
             'phase': 'configStaged',
             'artifactDirectory': '/host/runtime',
