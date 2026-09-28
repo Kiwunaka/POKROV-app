@@ -800,7 +800,9 @@ RU-direct names. Names covered by the VPN use a resolver detoured through the
 active transport, including in `Россия напрямую` and selected-app modes. A
 managed profile whose default resolver points to direct DNS is corrected before
 staging; only an explicit `DNS напрямую · лаборатория` choice can send those
-questions over direct HTTPS DoH.
+questions over direct HTTPS DoH. When Android reports changed link properties
+on the same interface, the active Core resets its network transports and DNS
+cache without replacing the VPN tunnel.
 
 DNS, LAN, custom routing, trusted Wi-Fi, and the Windows compatibility controls
 stay collapsed under `Дополнительно`. On Windows the final materialization

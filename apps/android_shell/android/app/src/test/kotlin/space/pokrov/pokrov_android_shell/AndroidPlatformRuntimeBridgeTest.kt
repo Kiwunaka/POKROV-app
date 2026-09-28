@@ -173,6 +173,20 @@ class AndroidPlatformRuntimeBridgeTest {
                 dnsReady = true,
             ),
         )
+        assertTrue(
+            shouldResetCoreNetworkForLinkChange(
+                previousInterfaceName = "wlan0",
+                nextInterfaceName = "wlan0",
+                dnsReady = true,
+            ),
+        )
+        assertFalse(
+            shouldResetCoreNetworkForLinkChange(
+                previousInterfaceName = "wlan0",
+                nextInterfaceName = "rmnet_data1",
+                dnsReady = true,
+            ),
+        )
     }
 
     @Test

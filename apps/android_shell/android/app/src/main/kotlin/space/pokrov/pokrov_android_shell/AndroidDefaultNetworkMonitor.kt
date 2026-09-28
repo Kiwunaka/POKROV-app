@@ -43,6 +43,16 @@ internal fun shouldReloadRuntimeForInterfaceChange(
         nextInterfaceName != null &&
         previousInterfaceName != nextInterfaceName
 
+internal fun shouldResetCoreNetworkForLinkChange(
+    previousInterfaceName: String?,
+    nextInterfaceName: String?,
+    dnsReady: Boolean,
+): Boolean =
+    dnsReady &&
+        previousInterfaceName != null &&
+        nextInterfaceName != null &&
+        previousInterfaceName == nextInterfaceName
+
 internal object AndroidDefaultNetworkMonitor {
     private val request = NetworkRequest.Builder().apply {
         addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -59,6 +69,8 @@ internal object AndroidDefaultNetworkMonitor {
     private var listener: InterfaceUpdateListener? = null
     @Volatile
     private var resetRuntimeNetwork: (() -> Unit)? = null
+    @Volatile
+    private var resetCoreNetwork: (() -> Unit)? = null
     @Volatile
     private var currentNetwork: Network? = null
     private var appContext: Context? = null
@@ -140,9 +152,11 @@ internal object AndroidDefaultNetworkMonitor {
         context: Context,
         listener: InterfaceUpdateListener,
         resetRuntimeNetwork: () -> Unit,
+        resetCoreNetwork: () -> Unit,
     ) {
         this.listener = listener
         this.resetRuntimeNetwork = resetRuntimeNetwork
+        this.resetCoreNetwork = resetCoreNetwork
         ensureStarted(context)
         val network = currentNetwork ?: activeNetwork()
         if (network != null) {
@@ -175,6 +189,7 @@ internal object AndroidDefaultNetworkMonitor {
         if (listener == null || this.listener === listener) {
             this.listener = null
             resetRuntimeNetwork = null
+            resetCoreNetwork = null
         }
         if (this.listener == null) {
             unregister()
@@ -568,16 +583,25 @@ internal object AndroidDefaultNetworkMonitor {
     ) {
         val targetListener: InterfaceUpdateListener?
         val targetRuntimeReset: (() -> Unit)?
+        val targetCoreReset: (() -> Unit)?
         val isExpensive: Boolean
         val isConstrained: Boolean
         val shouldResetRuntimeNetwork: Boolean
+        val shouldResetCoreNetwork: Boolean
         synchronized(networkLock) {
             targetListener = listener
             targetRuntimeReset = resetRuntimeNetwork
+            targetCoreReset = resetCoreNetwork
             isExpensive = currentNetworkIsExpensive ?: false
             isConstrained = currentNetworkIsConstrained ?: false
             shouldResetRuntimeNetwork = resetRuntimeNetworkAfterUpdate &&
                 shouldReloadRuntimeForInterfaceChange(
+                    previousInterfaceName = lastPublishedInterfaceName,
+                    nextInterfaceName = interfaceName,
+                    dnsReady = dnsReady,
+                )
+            shouldResetCoreNetwork = resetRuntimeNetworkAfterUpdate &&
+                shouldResetCoreNetworkForLinkChange(
                     previousInterfaceName = lastPublishedInterfaceName,
                     nextInterfaceName = interfaceName,
                     dnsReady = dnsReady,
@@ -603,6 +627,8 @@ internal object AndroidDefaultNetworkMonitor {
                         )
                         if (shouldResetRuntimeNetwork && resetRuntimeNetwork === targetRuntimeReset) {
                             targetRuntimeReset?.invoke()
+                        } else if (shouldResetCoreNetwork && resetCoreNetwork === targetCoreReset) {
+                            targetCoreReset?.invoke()
                         }
                     }
                 }

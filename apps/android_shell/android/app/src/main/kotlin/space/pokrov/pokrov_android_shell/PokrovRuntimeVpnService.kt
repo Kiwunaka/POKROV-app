@@ -709,9 +709,16 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 override fun openTun(options: TunOptions): Int = openTunForSession(options, session)
                 override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
                     if (ownsRuntimeSession(session)) {
-                        AndroidDefaultNetworkMonitor.start(this@PokrovRuntimeVpnService, listener) {
-                            if (ownsRuntimeSession(session)) reloadActiveRuntimeAfterDefaultNetworkChange()
-                        }
+                        AndroidDefaultNetworkMonitor.start(
+                            this@PokrovRuntimeVpnService,
+                            listener,
+                            resetRuntimeNetwork = {
+                                if (ownsRuntimeSession(session)) reloadActiveRuntimeAfterDefaultNetworkChange()
+                            },
+                            resetCoreNetwork = {
+                                if (ownsRuntimeSession(session)) resetActiveCoreNetworkAfterLinkChange()
+                            },
+                        )
                     }
                 }
             }
@@ -1956,6 +1963,17 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
     }
 
+    private fun resetActiveCoreNetworkAfterLinkChange() {
+        val session = activeRuntimeSession ?: return
+        runCatching {
+            runtimeExecutor.execute {
+                if (ownsRuntimeSession(session) && activeTun != null) {
+                    runCatching { commandServer?.resetNetwork() }
+                }
+            }
+        }
+    }
+
     private fun reloadActiveRuntimeAfterDefaultNetworkChange() {
         val session = activeRuntimeSession ?: return
         runCatching {
@@ -1997,9 +2015,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     override fun readWIFIState(): WIFIState? = null
 
     override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
-        AndroidDefaultNetworkMonitor.start(this, listener) {
-            reloadActiveRuntimeAfterDefaultNetworkChange()
-        }
+        AndroidDefaultNetworkMonitor.start(
+            this,
+            listener,
+            resetRuntimeNetwork = { reloadActiveRuntimeAfterDefaultNetworkChange() },
+            resetCoreNetwork = { resetActiveCoreNetworkAfterLinkChange() },
+        )
     }
 
     override fun underNetworkExtension(): Boolean = false
