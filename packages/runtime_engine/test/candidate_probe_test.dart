@@ -57,6 +57,32 @@ void main() {
     expect(sent[2], base);
   });
 
+  test('Windows selected-apps probe targets the protected process outbound',
+      () async {
+    const config =
+        '{"outbounds":[{"type":"selector","tag":"🌍 Страны","outbounds":["de"]},'
+        '{"type":"direct","tag":"direct"}],"route":{"final":"direct",'
+        '"rules":[{"process_name":["discord.exe"],"outbound":"🌍 Страны"}]}}';
+    String? probedConfig;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      probedConfig = (call.arguments as Map)['configContent'] as String;
+      return {'success': true, 'failure_kind': '', 'duration_ms': 1};
+    });
+    final runtime =
+        MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.windows);
+    await runtime.probeCandidate(
+        probeId: 'candidate-selected-apps',
+        payload: const ManagedProfilePayload(
+            profileName: 'candidate',
+            configPayload: config,
+            routeMode: RouteMode.selectedApps),
+        timeout: const Duration(seconds: 3),
+        expectedNetworkContext: 'network-context');
+    final probed = jsonDecode(probedConfig!) as Map<String, dynamic>;
+    expect((probed['route'] as Map)['final'], '🌍 Страны');
+    expect((jsonDecode(config)['route'] as Map)['final'], 'direct');
+  });
+
   test('candidate cancellation awaits native settlement without staging TUN',
       () async {
     final cancellationStarted = Completer<void>();

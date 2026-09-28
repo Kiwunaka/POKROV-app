@@ -60,6 +60,7 @@ class RuntimeCandidateProbeResult {
 mixin _CandidateProbeChannel
     implements RuntimeCandidateProbing, RuntimeNetworkAvailability {
   static const _channel = MethodChannel('space.pokrov/runtime_engine');
+  HostPlatform get hostPlatform;
 
   @override
   Future<RuntimeCandidateNetwork> readCandidateNetwork() async {
@@ -105,14 +106,32 @@ mixin _CandidateProbeChannel
         expectedNetworkContext.isEmpty) {
       throw ArgumentError('invalid_candidate_probe_request');
     }
+    var configContent = payload.warpPolicy.canEnableRuntime
+        ? _materializePokrovCoreConfig(
+            payload.configPayload, payload.warpPolicy)
+        : payload.configPayload;
+    if (hostPlatform == HostPlatform.windows &&
+        payload.routeMode == RouteMode.selectedApps) {
+      final config = jsonDecode(configContent) as Map<String, dynamic>;
+      final route = config['route'] as Map<String, dynamic>;
+      for (final rule in (route['rules'] as List).whereType<Map>()) {
+        final processNames = rule['process_name'];
+        final outbound = rule['outbound'];
+        if (processNames is List &&
+            processNames.isNotEmpty &&
+            outbound is String &&
+            outbound.isNotEmpty) {
+          route['final'] = outbound;
+          break;
+        }
+      }
+      configContent = jsonEncode(config);
+    }
     Object? value;
     try {
       value =
           await _channel.invokeMethod<Object?>('runtimeEngine.probeCandidate', {
-        'configContent': payload.warpPolicy.canEnableRuntime
-            ? _materializePokrovCoreConfig(
-                payload.configPayload, payload.warpPolicy)
-            : payload.configPayload,
+        'configContent': configContent,
         'probeId': probeId,
         'timeoutMs': timeout.inMilliseconds,
         'expectedNetworkContext': expectedNetworkContext,

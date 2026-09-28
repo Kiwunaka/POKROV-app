@@ -1244,6 +1244,10 @@ checks remain open.
   process rule may target an AWG endpoint. Client routing preferences resolve
   that referenced endpoint for VPN/DNS additions without changing the direct
   final or selecting an unused endpoint.
+- Before an isolated Windows candidate probe, the client sets the probe copy's
+  final route to the protected outbound from the selected process rule. The
+  staged profile keeps its direct final route; Android candidate routing is
+  unchanged.
 - Windows Core matches executable names without regard to letter case, so a
   saved `discord.exe` rule also covers `Discord.exe`. If Auto's second catalog
   profile request times out, connection uses the first authorized profile;
