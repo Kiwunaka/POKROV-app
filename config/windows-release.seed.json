@@ -36,7 +36,7 @@
     "runtime_dependencies": [
       "libcronet.dll"
     ],
-    "release_tag": "v1.1.0",
+    "release_tag": "v1.1.1",
     "desktop_abi": 2,
     "crash_profile": {
       "format": "POKROV_WINDOWS_CRASH_V1",
