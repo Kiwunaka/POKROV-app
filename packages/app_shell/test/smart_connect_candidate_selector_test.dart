@@ -151,26 +151,19 @@ void main() {
     expect(settled, isTrue);
   });
 
-  test('selection deadline joins profile preparation without starting native probes', () async {
-    var prepared = 0;
-    var settled = 0;
-    var probed = 0;
-    await expectLater(SmartConnectCandidateSelector().select(
-      catalog: _catalog(List.generate(3, _candidate)), network: 'network-a',
-      platform: HostPlatform.android, cancelled: Completer<void>().future,
+  test('slow profile fetch does not consume the native probe budget', () async {
+    var probed = false;
+    final selected = await SmartConnectCandidateSelector().select(
+      catalog: _catalog([_candidate(0)]), network: 'network-a',
+      platform: HostPlatform.windows, cancelled: Completer<void>().future,
       selectionTimeout: const Duration(milliseconds: 20),
-      prepare: (candidate, cancelled) async {
-        prepared++;
-        await cancelled;
-        await Future<void>.delayed(Duration.zero);
-        settled++;
-      },
+      prepare: (candidate, cancelled) => Future<void>.delayed(const Duration(milliseconds: 40)),
       probe: (candidate, cancelled, timeout) async {
-        probed++;
+        probed = true;
+        expect(timeout, const Duration(milliseconds: 20));
         return _profile(candidate);
-      }), throwsA(isA<SmartConnectSelectionExhausted>()));
-    expect(prepared, 3);
-    expect(settled, prepared);
-    expect(probed, 0);
+      });
+    expect(selected.profileName, 'de:profile_0');
+    expect(probed, isTrue);
   });
 }

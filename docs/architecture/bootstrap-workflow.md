@@ -83,11 +83,12 @@ guards still bound retries; reading diagnostics cannot consume the recovery even
 The regression covers a second failure after VLESS-to-AWG recovery, followed by
 cached HY2 activation without Disconnect.
 
-Online candidate selection prepares exact profiles within its existing shared
-12-second deadline; each four-second native handshake/204 budget starts only
-after that candidate's profile is ready. Cancellation still settles profile and
-native work before releasing a worker. Ordinary catalog location changes use the
-location catalog's policy metadata, so the previous AWG candidate cannot impose
+Online candidate selection fetches exact profiles before charging the native
+probe budget. Each worker has up to 12 seconds of native probes, with at most
+four seconds per candidate; profile HTTP still obeys the connect action deadline.
+Cancellation settles profile and native work before releasing a worker.
+Ordinary catalog location changes use the location catalog's policy metadata,
+so the previous AWG candidate cannot impose
 a legacy laboratory node allowlist. A completed explicit Android Disconnect
 clears the previous failure; internal failure stops preserve their cause.
 

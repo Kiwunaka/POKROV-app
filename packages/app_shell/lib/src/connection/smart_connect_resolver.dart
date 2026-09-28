@@ -80,26 +80,28 @@ class SmartConnectCandidateSelector {
       }
     }
     unawaited(cancelled.then((_) { cancelledByOwner = true; stop(); }));
-    final timer = Timer(selectionTimeout, stop);
-    Future<void> run(TransportCandidate candidate) async {
+    Future<void> run(TransportCandidate candidate, Duration remainingProbeBudget,
+        void Function(Duration) countProbeTime) async {
       if (ended.isCompleted) return;
       startedCount++;
       final cancellation = Completer<void>();
       probes.add(cancellation);
       var timedOut = false;
       Timer? timeout;
+      final probeClock = Stopwatch();
       try {
-        // Exact profile HTTP/materialization shares the selection deadline.
-        // The native handshake gets its own budget once that profile is ready.
         await prepare?.call(candidate, cancellation.future);
         if (ended.isCompleted) return;
-        timeout = Timer(probeTimeout, () {
+        final nativeTimeout = remainingProbeBudget < probeTimeout
+            ? remainingProbeBudget : probeTimeout;
+        probeClock.start();
+        timeout = Timer(nativeTimeout, () {
           timedOut = true;
           if (!cancellation.isCompleted) cancellation.complete();
         });
         // The adapter settles its profile/native IO before completing. Keep
         // this slot occupied until settlement, including timeout/cancellation.
-        final result = await probe(candidate, cancellation.future, probeTimeout);
+        final result = await probe(candidate, cancellation.future, nativeTimeout);
         if (ended.isCompleted) return;
         if (!timedOut && result != null) {
           winner = result;
@@ -116,6 +118,10 @@ class SmartConnectCandidateSelector {
         if (ended.isCompleted) return;
       } finally {
         timeout?.cancel();
+        if (probeClock.isRunning) {
+          probeClock.stop();
+          countProbeTime(probeClock.elapsed);
+        }
         probes.remove(cancellation);
       }
       if (ended.isCompleted) return;
@@ -128,20 +134,25 @@ class SmartConnectCandidateSelector {
         candidates..clear()..addAll(tcp)..addAll(udp);
       }
     }
+    Duration preferredProbeTime = Duration.zero;
     Future<void> worker() async {
-      while (!ended.isCompleted && candidates.isNotEmpty && startedCount < maxAttempts) {
+      var probeTime = preferredProbeTime;
+      while (!ended.isCompleted && candidates.isNotEmpty && startedCount < maxAttempts &&
+          probeTime < selectionTimeout) {
         if (failures > 0) {
           await Future.any<void>([ended.future,
             Future<void>.delayed(Duration(milliseconds: (250 << (failures - 1).clamp(0, 2))))]);
         }
         if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
-        await run(candidates.removeAt(0));
+        await run(candidates.removeAt(0), selectionTimeout - probeTime,
+            (elapsed) => probeTime += elapsed);
       }
     }
     try {
       if (preferred != null && preferred.isNotEmpty && candidates.isNotEmpty &&
           candidates.first.candidateRef == preferred) {
-        await run(candidates.removeAt(0));
+        await run(candidates.removeAt(0), selectionTimeout,
+            (elapsed) => preferredProbeTime += elapsed);
       }
       final parallelism = const {HostPlatform.android, HostPlatform.ios}.contains(platform) ? 3 : 4;
       for (var index = 0; index < parallelism; index++) {
@@ -152,7 +163,6 @@ class SmartConnectCandidateSelector {
       if (winner == null) throw const SmartConnectSelectionExhausted();
       return winner!;
     } finally {
-      timer.cancel();
       stop();
       await Future.wait(settled);
     }
