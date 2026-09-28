@@ -3421,14 +3421,20 @@ class AppFirstRuntimeBootstrapper
                     ? catalog.selected
                     : catalog.candidates.firstWhere((item) => item.nodeCode == selectedNodeCode);
                 if (candidate.candidateRef != catalog.selectedCandidateRef) {
-                  manifest = await _fetchManagedManifest(
-                    runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
-                    selectedCandidateRef: candidate.candidateRef,
-                    tcpFallbackFromRevision: tcpFallbackFromRevision,
-                    state: state, hostPlatform: hostPlatform, routeMode: routeMode,
-                    selectedApps: normalizedSelectedApps, preferredNodeCode: selectedNodeCode,
-                    preferredVariantId: 'direct', client: client,
-                  ).timeout(_smartConnectProfileRefreshTimeout);
+                  try {
+                    manifest = await _fetchManagedManifest(
+                      runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
+                      selectedCandidateRef: candidate.candidateRef,
+                      tcpFallbackFromRevision: tcpFallbackFromRevision,
+                      state: state, hostPlatform: hostPlatform, routeMode: routeMode,
+                      selectedApps: normalizedSelectedApps, preferredNodeCode: selectedNodeCode,
+                      preferredVariantId: 'direct', client: client,
+                    ).timeout(_smartConnectProfileRefreshTimeout);
+                  } on TimeoutException {
+                    requests.requireActive();
+                    if (normalizedExcludedNodeCodes.isNotEmpty) rethrow;
+                    // The first catalog profile is already authorized and usable.
+                  }
                 }
               } else {
                 try {

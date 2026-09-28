@@ -242,6 +242,7 @@ void main() {
     var returnWrongKind = false;
     var returnWrongXhttpProtection = false;
     var returnUnauthorized = false;
+    var slowSelectedRefresh = false;
     Completer<void>? managedRequested;
     Completer<void>? releaseManaged;
     Map<String, Object?> descriptor(String node, String profile, String transport) => {
@@ -269,6 +270,9 @@ void main() {
           queries.add(query);
           managedRequested?.complete();
           if (releaseManaged != null) await releaseManaged.future;
+          if (slowSelectedRefresh && query['selected_candidate_ref'] == 'de:grpc_443_primary') {
+            await Future<void>.delayed(const Duration(seconds: 7));
+          }
           if (returnUnauthorized) {
             request.response.statusCode = HttpStatus.unauthorized;
             request.response.write('{"detail":"session ended"}');
@@ -400,6 +404,17 @@ void main() {
     expect(await bootstrapper.loadCachedManagedProfile(const ManagedProfileCacheInputs(
       hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel, preferredNodeCode: 'ru-spb')), isNull,
       reason: 'exact egress does not rewrite the user country preference binding');
+
+    slowSelectedRefresh = true;
+    final timedOutAuto = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.selectedApps,
+      selectedApps: const ['Discord.exe'],
+      runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    slowSelectedRefresh = false;
+    expect(queries.last['selected_candidate_ref'], 'de:grpc_443_primary');
+    expect(timedOutAuto.transportCatalog?.selectedCandidateRef,
+      'pl:legacy_reality_fallback',
+      reason: 'a slow advisory refetch must keep the first authorized profile usable');
 
     returnWrongKind = true;
     await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,

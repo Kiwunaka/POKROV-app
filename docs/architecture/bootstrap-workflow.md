@@ -1243,6 +1243,10 @@ checks remain open.
   process rule may target an AWG endpoint. Client routing preferences resolve
   that referenced endpoint for VPN/DNS additions without changing the direct
   final or selecting an unused endpoint.
+- Windows Core matches executable names without regard to letter case, so a
+  saved `discord.exe` rule also covers `Discord.exe`. If Auto's second catalog
+  profile request times out, connection uses the first authorized profile;
+  failover with excluded nodes still requires the selected profile.
 - Android `excludedApps` also requires a non-empty selection. Materialization
   keeps the app itself and every selected package outside `VpnService`, then
   routes all remaining packages through the managed profile; the server still
