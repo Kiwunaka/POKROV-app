@@ -74,7 +74,7 @@ if ($declaredVersionParts.Count -ne 2 -or $declaredVersionParts[1] -notmatch '^[
 }
 $declaredVersionName = $declaredVersionParts[0]
 $declaredVersionCode = $declaredVersionParts[1]
-$clientRevision = ([string](& git -C $repoRoot rev-parse HEAD 2>&1 | Select-Object -First 1)).Trim()
+$clientRevision = ([string](& git -C $repoRoot rev-parse HEAD 2>&1)).Trim()
 if ($LASTEXITCODE -ne 0 -or $clientRevision -notmatch '^[0-9a-fA-F]{40}$') {
   throw "Could not bind Android diagnostics to the client revision."
 }
