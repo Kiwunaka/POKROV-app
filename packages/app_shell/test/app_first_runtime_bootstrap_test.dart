@@ -7450,7 +7450,7 @@ void main() {
                           'detour': 'direct',
                         },
                       ],
-                      'final': 'google',
+                      'final': 'local',
                     },
                     'outbounds': <Object?>[
                       <String, Object?>{
@@ -7510,6 +7510,7 @@ void main() {
     final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
     final dns = config['dns'] as Map<String, dynamic>;
     final dnsRules = (dns['rules'] as List).cast<Map<String, dynamic>>();
+    final dnsServers = (dns['servers'] as List).cast<Map<String, dynamic>>();
     final route = config['route'] as Map<String, dynamic>;
     final routeRuleSets =
         (route['rule_set'] as List).cast<Map<String, dynamic>>();
@@ -7574,6 +7575,10 @@ void main() {
     expect(route['auto_detect_interface'], false);
     expect(route.containsKey('override_android_vpn'), isFalse);
     expect(route['final'], 'proxy');
+    expect(
+      dnsServers.singleWhere((server) => server['tag'] == dns['final'])['detour'],
+      'proxy',
+    );
     expect(routeRules.first, <String, dynamic>{
       'protocol': 'dns',
       'action': 'hijack-dns',
@@ -7990,6 +7995,16 @@ void main() {
                   'profile_revision': 'rev-android-selected-apps',
                   'config_format': 'singbox-json',
                   'config_payload': <String, Object?>{
+                    'dns': <String, Object?>{
+                      'servers': <Object?>[
+                        <String, Object?>{
+                          'tag': 'local',
+                          'address': 'local',
+                          'detour': 'direct',
+                        },
+                      ],
+                      'final': 'local',
+                    },
                     'outbounds': <Object?>[
                       <String, Object?>{
                         'type': 'selector',
@@ -8044,6 +8059,12 @@ void main() {
     ]);
     expect(tunInbound.containsKey('exclude_package'), isFalse);
     expect(config['route'], containsPair('final', 'proxy'));
+    final dns = config['dns'] as Map<String, dynamic>;
+    final dnsServers = (dns['servers'] as List).cast<Map<String, dynamic>>();
+    expect(
+      dnsServers.singleWhere((server) => server['tag'] == dns['final'])['detour'],
+      'proxy',
+    );
   });
 
   test(

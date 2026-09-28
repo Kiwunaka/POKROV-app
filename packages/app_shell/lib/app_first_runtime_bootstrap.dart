@@ -7474,43 +7474,30 @@ class AppFirstRuntimeBootstrapper
       dns['servers'] = baseServers;
       dns['rules'] = existingRules;
       final existingFinal = _readText(dns['final']);
-      if (routeMode == RouteMode.fullTunnel ||
-          routeMode == RouteMode.selectiveServices ||
-          routeMode == RouteMode.excludedApps) {
-        var resolvedFinal = existingFinal;
-        Map<String, dynamic>? existingFinalServer;
-        for (final server in baseServers) {
-          if (_readText(server['tag']) == existingFinal) {
-            existingFinalServer = server;
-            break;
-          }
-        }
-        if (existingFinalServer == null ||
-            _isAndroidBootstrapDnsServer(
-              existingFinalServer,
-              directTag: directTag,
-            )) {
-          resolvedFinal = _selectAndroidSafeDnsFinalServerTag(
+      final existingFinalServer = baseServers.where(
+        (server) => _readText(server['tag']) == existingFinal,
+      ).firstOrNull;
+      var resolvedFinal = existingFinalServer != null &&
+              _isAndroidProtectedDnsServer(
+                existingFinalServer,
+                finalOutboundTag: finalOutboundTag,
+              )
+          ? existingFinal
+          : _selectAndroidSafeDnsFinalServerTag(
                 baseServers,
-                directTag: directTag,
+                finalOutboundTag: finalOutboundTag,
               ) ??
               '';
-        }
-        if (resolvedFinal.isEmpty) {
-          baseServers.add(<String, dynamic>{
-            'tag': remoteServerTag,
-            'address': _preferredAndroidRemoteDnsAddress(baseServers),
-            'address_resolver': localBootstrapServerTag,
-            'detour': finalOutboundTag,
-          });
-          resolvedFinal = remoteServerTag;
-        }
-        dns['final'] = resolvedFinal;
-      } else if (existingFinal.isEmpty ||
-          !baseServers
-              .any((server) => _readText(server['tag']) == existingFinal)) {
-        dns['final'] = _readText(baseServers.first['tag']);
+      if (resolvedFinal.isEmpty) {
+        baseServers.add(<String, dynamic>{
+          'tag': remoteServerTag,
+          'address': _preferredAndroidRemoteDnsAddress(baseServers),
+          'address_resolver': localBootstrapServerTag,
+          'detour': finalOutboundTag,
+        });
+        resolvedFinal = remoteServerTag;
       }
+      dns['final'] = resolvedFinal;
       dns['independent_cache'] = true;
       return dns;
     }
@@ -7809,23 +7796,28 @@ class AppFirstRuntimeBootstrapper
     return true;
   }
 
-  bool _isAndroidBootstrapDnsServer(
+  bool _isAndroidProtectedDnsServer(
     Map<String, dynamic> server, {
-    required String directTag,
+    required String finalOutboundTag,
   }) {
-    return _readText(server['type']).toLowerCase() == 'local' ||
-        _readText(server['address']).toLowerCase() == 'local' ||
-        _readText(server['detour']) == directTag;
+    final address = _readText(server['address']).toLowerCase();
+    return _readText(server['detour']) == finalOutboundTag &&
+        _readText(server['type']).toLowerCase() != 'local' &&
+        address != 'local' &&
+        !address.startsWith('rcode://');
   }
 
   String? _selectAndroidSafeDnsFinalServerTag(
     List<Map<String, dynamic>> servers, {
-    required String directTag,
+    required String finalOutboundTag,
   }) {
     for (final server in servers) {
       final tag = _readText(server['tag']);
       if (tag.isEmpty ||
-          _isAndroidBootstrapDnsServer(server, directTag: directTag)) {
+          !_isAndroidProtectedDnsServer(
+            server,
+            finalOutboundTag: finalOutboundTag,
+          )) {
         continue;
       }
       return tag;

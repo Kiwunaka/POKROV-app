@@ -795,6 +795,13 @@ best-effort basis. Android Wi-Fi inspection requests the platform permission
 when required; Windows uses the current WLAN interface. Failure to identify a
 network never counts as a trusted match.
 
+On Android, direct system DNS resolves infrastructure hosts and explicit
+RU-direct names. Names covered by the VPN use a resolver detoured through the
+active transport, including in `Россия напрямую` and selected-app modes. A
+managed profile whose default resolver points to direct DNS is corrected before
+staging; only an explicit `DNS напрямую · лаборатория` choice can send those
+questions over direct HTTPS DoH.
+
 DNS, LAN, custom routing, trusted Wi-Fi, and the Windows compatibility controls
 stay collapsed under `Дополнительно`. On Windows the final materialization
 always places the port-53 DNS interception and sniff actions before every

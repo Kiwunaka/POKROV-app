@@ -154,6 +154,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   Future<void>? alternateProbeGate;
   final probedProtocols = <String>[];
   final handoffProfiles = <String>[];
+  final stagedPayloads = <ManagedProfilePayload>[];
   String? failedHandoffProfile;
   bool failFirstActivation = false;
   bool restoredHandoffGuard = false;
@@ -215,6 +216,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   }) async {
     calls.add('replace');
     stagedProfile = payload.profileName;
+    stagedPayloads.add(payload);
     handoffProfiles.add(payload.profileName);
     handoffCalls++;
     _request = 'handoff-$handoffCalls';
@@ -319,6 +321,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   Future<RuntimeSnapshot> stageManagedProfile(ManagedProfilePayload payload) {
     expect(activeProbes, isEmpty, reason: 'all candidate workers must settle before the single TUN owner starts');
     stagedProfile = payload.profileName;
+    stagedPayloads.add(payload);
     return mutate('stage', RuntimePhase.configStaged);
   }
   @override
@@ -701,6 +704,39 @@ void main() {
     expect(runtime.activeProbes, isEmpty, reason: 'the losing AWG probe settles before handoff');
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
+  test('candidate recovery keeps the selected route and DNS policy', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final manager = _manager(runtime, _CachedBootstrapper());
+    addTearDown(manager.dispose);
+    manager.selectRouteMode(RouteMode.allExceptRu);
+    manager.setRoutingPreferences(
+      const PokrovRoutingPreferences.defaults().copyWith(
+        purposeRoutes: {PokrovPurposeRoute.ruDirect},
+        dnsPreset: PokrovDnsPreset.adguard,
+      ),
+    );
+
+    await manager.connect();
+    final before = jsonDecode(runtime.stagedPayloads.last.configPayload) as Map;
+    runtime.warpEgressFailure = true;
+    await runtime.handoffStarted.future.timeout(const Duration(seconds: 3));
+    while (manager.busy) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    final recovered = runtime.stagedPayloads.last;
+    final after = jsonDecode(recovered.configPayload) as Map;
+
+    expect(recovered.routeMode, RouteMode.allExceptRu);
+    expect(after['route'], before['route']);
+    expect(after['dns'], before['dns']);
+    expect((after['route'] as Map)['final'], 'proxy');
+    expect(((after['dns'] as Map)['servers'] as List).single, {
+      'tag': 'pokrov-user-dns',
+      'address': 'https://dns.adguard-dns.com/dns-query',
+      'detour': 'proxy',
+    });
   });
 
   test('repeated periodic failure recovers when the UI reads the failed snapshot first', () async {
