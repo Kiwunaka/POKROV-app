@@ -1870,8 +1870,13 @@ class ConnectionManager extends ChangeNotifier {
           ? [warpCandidates, ordinaryCandidates]
           : [ordinaryCandidates];
       var selectedCandidate = false;
+      final selectionClock = Stopwatch()..start();
       for (final group in groups) {
         if (group.isEmpty) continue;
+        final remaining = const Duration(seconds: 12) - selectionClock.elapsed;
+        if (remaining <= Duration.zero) break;
+        final selectionTimeout = identical(group, warpCandidates) && remaining > const Duration(seconds: 5)
+            ? const Duration(seconds: 5) : remaining;
         try {
           payload = await _candidateSelector.select(
             catalog: warpCandidates.isEmpty ? catalog : TransportCandidateCatalog(
@@ -1881,6 +1886,7 @@ class ConnectionManager extends ChangeNotifier {
             cancelled: cancelled, preferredCountryCode: country,
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
+            selectionTimeout: selectionTimeout,
             prepare: (candidate, stop) async {
               requireCurrent();
               var stopped = false;

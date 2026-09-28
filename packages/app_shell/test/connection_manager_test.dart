@@ -153,6 +153,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final failedProbeProfiles = <String>{};
   final probedWarpModes = <String>[];
   final heldProbeProtocols = <String>{};
+  final heldProbeProfiles = <String>{};
   Future<void>? alternateProbeGate;
   final probedProtocols = <String>[];
   final handoffProfiles = <String>[];
@@ -194,6 +195,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
       else { await cancelled.future; }
     }
     if (heldProbeProtocols.contains(protocol)) await cancelled.future;
+    if (heldProbeProfiles.contains(payload.profileName)) await cancelled.future;
     if (alternateProbeGate != null && protocol != 'vless') {
       await Future.any([alternateProbeGate!, cancelled.future]);
     }
@@ -686,6 +688,34 @@ void main() {
     expect(manager.transportCatalog?.selectedCandidateRef, base.candidateRef);
     expect(runtime.probedWarpModes.last, '');
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
+  });
+
+  test('hanging WARP candidates leave time for ordinary fallback', () async {
+    final base = _candidates.first;
+    final chains = List.generate(7, (index) => TransportCandidate(
+      candidateRef: '${base.candidateRef}:proxy_over_warp:$index',
+      profileRef: base.profileRef, nodeCode: base.nodeCode, countryCode: base.countryCode,
+      protocol: base.protocol, transport: base.transport, protection: base.protection,
+      priority: index + 1, network: base.network, flow: base.flow,
+      minimumClientRelease: '1.4.0', minimumCoreRelease: null,
+      platforms: base.platforms, requiredFeatures: base.requiredFeatures,
+      warpMode: 'proxy_over_warp'));
+    final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true)
+      ..candidates = [base, ...chains];
+    final runtime = _Runtime()..supportsCandidates = true
+      ..heldProbeProfiles.addAll(chains.map((candidate) => candidate.candidateRef));
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    final clock = Stopwatch()..start();
+
+    await manager.connect();
+
+    expect(clock.elapsed, lessThan(const Duration(seconds: 9)));
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.transportCatalog?.selectedCandidateRef, base.candidateRef);
+    expect(runtime.probedWarpModes, contains('proxy_over_warp'));
+    expect(runtime.probedWarpModes.last, '');
+    expect(runtime.activeProbes, isEmpty);
   });
 
   test('1.3 catalog still stages consented WARP without chain entries', () async {
