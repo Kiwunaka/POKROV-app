@@ -232,8 +232,9 @@ Current implementation bridge:
 - selected-apps is beta-active with a picker-first UI: Android uses an
   installed-package picker and Windows uses process/exe candidates, with manual
   package/process identifiers retained behind an explicit manual fallback
-- the app sends `selected_apps` through backend route policy; Android
-  materialization writes selected package ids into sing-box `include_package`,
+- the app sends only `route_mode` through backend route policy and keeps app
+  identifiers on the device; Android materialization writes selected package
+  ids into sing-box `include_package`,
   while Windows selected-process routing is kept process/exe-first in the client
 - Windows `Rules` should render region/process language (`Маршруты Windows`,
   `Российский регион`, `Выбранные процессы`) instead of mobile-only presets

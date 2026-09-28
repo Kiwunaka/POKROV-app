@@ -3391,7 +3391,6 @@ class AppFirstRuntimeBootstrapper
             state: state,
             hostPlatform: hostPlatform,
             routeMode: routeMode,
-            selectedApps: normalizedSelectedApps,
             client: client,
           );
           requests.requireActive();
@@ -6358,11 +6357,8 @@ class AppFirstRuntimeBootstrapper
     required _StoredBootstrapState state,
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
-    required List<String> selectedApps,
     required HttpClient client,
   }) async {
-    final policySelectedApps =
-        routeMode == RouteMode.selectedApps ? selectedApps : const <String>[];
     await _requestJson(
       method: 'POST',
       path: '/api/client/route-policy',
@@ -6371,7 +6367,6 @@ class AppFirstRuntimeBootstrapper
       hostPlatform: hostPlatform,
       body: <String, Object?>{
         'route_mode': _routeModeWireValue(routeMode),
-        'selected_apps': policySelectedApps,
         'requires_elevated_privileges': hostPlatform.supportsSelectedAppsMode &&
             routeMode == RouteMode.selectedApps,
       },

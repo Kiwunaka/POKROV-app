@@ -8004,7 +8004,7 @@ void main() {
   });
 
   test(
-      'android selected-apps route mode syncs selected packages into policy and tun include list',
+      'android selected-apps route mode keeps selected packages local and writes tun include list',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-android-selected-apps-test-',
@@ -8047,10 +8047,7 @@ void main() {
         if (request.uri.path == '/api/client/route-policy') {
           final decoded = jsonDecode(body) as Map<String, dynamic>;
           expect(decoded['route_mode'], 'selected_apps');
-          expect(decoded['selected_apps'], <String>[
-            'org.telegram.messenger',
-            'com.example.special',
-          ]);
+          expect(decoded.containsKey('selected_apps'), isFalse);
           expect(decoded['requires_elevated_privileges'], isTrue);
           request.response
             ..headers.contentType = ContentType.json
@@ -8188,7 +8185,7 @@ void main() {
         if (request.uri.path == '/api/client/route-policy') {
           final decoded = jsonDecode(body) as Map<String, dynamic>;
           expect(decoded['route_mode'], 'all_traffic');
-          expect(decoded['selected_apps'], isEmpty);
+          expect(decoded.containsKey('selected_apps'), isFalse);
           request.response
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(<String, Object?>{'ok': true}));
@@ -8338,17 +8335,10 @@ void main() {
 
         if (request.uri.path == '/api/client/route-policy') {
           final decoded = jsonDecode(body) as Map<String, dynamic>;
-          if (decoded['route_mode'] == 'selected_apps') {
-            expect(decoded['selected_apps'], <String>[
-              'Telegram.exe',
-              'msedge',
-              'Discord.exe',
-              'YouTube.exe',
-            ]);
-          } else {
+          if (decoded['route_mode'] != 'selected_apps') {
             expect(decoded['route_mode'], 'all_traffic');
-            expect(decoded['selected_apps'], isEmpty);
           }
+          expect(decoded.containsKey('selected_apps'), isFalse);
           expect(
             decoded['requires_elevated_privileges'],
             decoded['route_mode'] == 'selected_apps',
