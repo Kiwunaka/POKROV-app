@@ -8335,6 +8335,8 @@ void main() {
             expect(decoded['selected_apps'], <String>[
               'Telegram.exe',
               'msedge',
+              'Discord.exe',
+              'YouTube.exe',
             ]);
           } else {
             expect(decoded['route_mode'], 'all_traffic');
@@ -8405,6 +8407,8 @@ void main() {
       selectedApps: const <String>[
         'Telegram.exe',
         'msedge',
+        'Discord.exe',
+        'YouTube.exe',
       ],
     );
     final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
@@ -8418,7 +8422,9 @@ void main() {
     expect(
       routeRules,
       contains(
-        containsPair('process_name', <String>['telegram.exe', 'msedge.exe']),
+        containsPair('process_name', <String>[
+          'telegram.exe', 'msedge.exe', 'discord.exe', 'youtube.exe',
+        ]),
       ),
     );
     expect(
@@ -8430,6 +8436,32 @@ void main() {
       isTrue,
     );
     expect(dns['final'], 'dns-direct');
+    expect(dns['reverse_mapping'], true);
+    final serviceRoute = routeRules.singleWhere(
+      (rule) => (rule['domain'] as List?)?.contains('discord.com') == true,
+    );
+    expect(serviceRoute['outbound'], 'proxy');
+    expect(serviceRoute['domain'], containsAll(<String>[
+      'discord.com', 'telegram.org', 'youtube.com', 'googlevideo.com',
+    ]));
+    expect(serviceRoute['domain_suffix'], contains('.discord.com'));
+    final updaterRoute = routeRules.singleWhere(
+      (rule) => rule.containsKey('process_path_regex'),
+    );
+    expect(updaterRoute['outbound'], 'proxy');
+    final updaterPattern =
+        (updaterRoute['process_path_regex'] as List).single as String;
+    final updaterMatcher = RegExp(updaterPattern.replaceFirst('(?i)', ''),
+      caseSensitive: false);
+    expect(updaterMatcher.hasMatch(
+      r'C:\Users\Tester\AppData\Local\Discord\app-1.0.0\Update.exe'), isTrue);
+    expect(updaterMatcher.hasMatch(
+      r'C:\Users\Tester\AppData\Local\Discord\app-2.0.0\Update.exe'), isTrue);
+    expect(updaterMatcher.hasMatch(
+      r'C:\Users\Tester\AppData\Local\Other\Update.exe'), isFalse);
+    expect(dnsRules.any((rule) =>
+      (rule['domain'] as List?)?.contains('youtube.com') == true &&
+      rule['server'] == 'dns-remote'), isTrue);
     expect(
       dnsRules.any(
         (rule) =>

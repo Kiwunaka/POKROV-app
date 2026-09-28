@@ -52,6 +52,20 @@ const _correlationIdHeader = 'X-Correlation-ID';
 const _androidCoreEgressProbeUrl =
     'https://api.pokrov.space/api/public/authenticated-egress-probe';
 const _smartConnectProfileRefreshTimeout = Duration(seconds: 6);
+const _windowsDiscordUpdaterPath =
+    r'(?i)[\\/]Discord[\\/](?:app-[^\\/]+[\\/])?Update\.exe$';
+const _windowsSelectedServiceDomains = <String, List<String>>{
+  'discord.exe': <String>[
+    'discord.com', 'discord.gg', 'discordapp.com', 'discordapp.net',
+  ],
+  'telegram.exe': <String>[
+    'telegram.org', 't.me', 'telegram.me', 'telegram.dog',
+  ],
+  'youtube.exe': <String>[
+    'youtube.com', 'youtu.be', 'youtube-nocookie.com',
+    'googlevideo.com', 'ytimg.com', 'youtubei.googleapis.com',
+  ],
+};
 const _ownedTransportLabProfiles = <String>{
   'awg2_lab',
   'awg31_lab',
@@ -8105,6 +8119,15 @@ class AppFirstRuntimeBootstrapper
         serverTag:
             routeMode == RouteMode.excludedApps ? 'dns-direct' : 'dns-remote',
       );
+      if (routeMode == RouteMode.selectedApps) {
+        _ensureWindowsSelectedServiceRules(
+          rules: rules,
+          processNames: processNames,
+          targetKey: 'server',
+          targetTag: 'dns-remote',
+          insertAt: 1,
+        );
+      }
     }
     if (routeMode == RouteMode.allExceptRu) {
       _ensureDnsDomainSuffixRule(rules, '.ru', 'dns-direct');
@@ -8123,6 +8146,9 @@ class AppFirstRuntimeBootstrapper
       'rules': <Map<String, dynamic>>[...preservedActions, ...rules],
       'final':
           routeMode == RouteMode.selectedApps ? 'dns-direct' : 'dns-remote',
+      if (routeMode == RouteMode.selectedApps &&
+          _selectedWindowsServiceDomains(processNames).isNotEmpty)
+        'reverse_mapping': true,
       'disable_expire': true,
       'independent_cache': true,
     };
@@ -8290,6 +8316,15 @@ class AppFirstRuntimeBootstrapper
         outboundTag:
             routeMode == RouteMode.excludedApps ? directTag : finalOutboundTag,
       );
+      if (routeMode == RouteMode.selectedApps) {
+        _ensureWindowsSelectedServiceRules(
+          rules: rules,
+          processNames: selectedProcessNames,
+          targetKey: 'outbound',
+          targetTag: finalOutboundTag,
+          insertAt: 3,
+        );
+      }
     }
     if (routeMode == RouteMode.allExceptRu) {
       _mergeRouteRuleSetDefinitions(
@@ -8826,6 +8861,51 @@ class AppFirstRuntimeBootstrapper
       rules.insert(min(2, rules.length), <String, dynamic>{
         'process_name': processNames,
         'outbound': outboundTag,
+      });
+    }
+  }
+
+  List<String> _selectedWindowsServiceDomains(List<String> processNames) {
+    final domains = <String>{};
+    for (final processName in processNames) {
+      domains.addAll(_windowsSelectedServiceDomains[processName] ?? const []);
+    }
+    return domains.toList(growable: false);
+  }
+
+  void _ensureWindowsSelectedServiceRules({
+    required List<Map<String, dynamic>> rules,
+    required List<String> processNames,
+    required String targetKey,
+    required String targetTag,
+    required int insertAt,
+  }) {
+    var index = insertAt;
+    if (processNames.contains('discord.exe')) {
+      final updater = <String>[_windowsDiscordUpdaterPath];
+      if (!rules.any((rule) =>
+          _readText(rule[targetKey]) == targetTag &&
+          _sameStringList(_readTagList(rule['process_path_regex']), updater))) {
+        rules.insert(min(index, rules.length), <String, dynamic>{
+          'process_path_regex': updater,
+          targetKey: targetTag,
+        });
+      }
+      index += 1;
+    }
+    final domains = _selectedWindowsServiceDomains(processNames);
+    if (domains.isEmpty) {
+      return;
+    }
+    final suffixes = domains.map((domain) => '.$domain').toList();
+    if (!rules.any((rule) =>
+        _readText(rule[targetKey]) == targetTag &&
+        _sameStringList(_readTagList(rule['domain']), domains) &&
+        _sameStringList(_readTagList(rule['domain_suffix']), suffixes))) {
+      rules.insert(min(index, rules.length), <String, dynamic>{
+        'domain': domains,
+        'domain_suffix': suffixes,
+        targetKey: targetTag,
       });
     }
   }

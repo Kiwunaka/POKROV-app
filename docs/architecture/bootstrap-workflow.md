@@ -1247,6 +1247,11 @@ checks remain open.
   saved `discord.exe` rule also covers `Discord.exe`. If Auto's second catalog
   profile request times out, connection uses the first authorized profile;
   failover with excluded nodes still requires the selected profile.
+- Windows selected-app presets for Discord, Telegram and YouTube route their
+  application traffic and service domains through the VPN, including browser
+  traffic resolved by Core DNS. Discord's updater is matched inside its own
+  installation tree across `app-*` directory changes. Other destinations keep
+  the direct route.
 - Android `excludedApps` also requires a non-empty selection. Materialization
   keeps the app itself and every selected package outside `VpnService`, then
   routes all remaining packages through the managed profile; the server still

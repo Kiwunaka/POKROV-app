@@ -1985,7 +1985,7 @@ List<_SelectedAppCandidate> _suggestedSelectedAppCandidates(
         _SelectedAppCandidate(
           label: 'Telegram',
           identifier: 'telegram.exe',
-          subtitle: 'Мессенджер',
+          subtitle: 'Приложение и сайты',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.send_rounded,
         ),
@@ -2006,9 +2006,16 @@ List<_SelectedAppCandidate> _suggestedSelectedAppCandidates(
         _SelectedAppCandidate(
           label: 'Discord',
           identifier: 'discord.exe',
-          subtitle: 'Голос и чат',
+          subtitle: 'Приложение, голос и сайты',
           source: _SelectedAppCandidateSource.suggested,
           icon: Icons.forum_rounded,
+        ),
+        _SelectedAppCandidate(
+          label: 'YouTube',
+          identifier: 'youtube.exe',
+          subtitle: 'Видео в браузере',
+          source: _SelectedAppCandidateSource.suggested,
+          icon: Icons.play_circle_fill_rounded,
         ),
         _SelectedAppCandidate(
           label: 'Steam',
