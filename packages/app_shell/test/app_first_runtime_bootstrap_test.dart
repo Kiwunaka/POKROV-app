@@ -8291,6 +8291,7 @@ void main() {
   test(
       'windows selected-apps route mode limits proxy routing to selected processes',
       () async {
+    const selectorTag = '🌍 Страны';
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-windows-selected-apps-test-',
     );
@@ -8369,7 +8370,7 @@ void main() {
                     'outbounds': <Object?>[
                       <String, Object?>{
                         'type': 'selector',
-                        'tag': 'proxy',
+                        'tag': selectorTag,
                         'outbounds': <Object?>['node-1'],
                       },
                       <String, Object?>{
@@ -8381,7 +8382,7 @@ void main() {
                       },
                     ],
                     'route': <String, Object?>{
-                      'final': 'proxy',
+                      'final': selectorTag,
                     },
                   },
                 },
@@ -8431,7 +8432,7 @@ void main() {
       routeRules.any(
         (rule) =>
             (rule['process_name'] as List?)?.contains('telegram.exe') == true &&
-            rule['outbound'] == 'proxy',
+            rule['outbound'] == selectorTag,
       ),
       isTrue,
     );
@@ -8440,7 +8441,7 @@ void main() {
     final serviceRoute = routeRules.singleWhere(
       (rule) => (rule['domain'] as List?)?.contains('discord.com') == true,
     );
-    expect(serviceRoute['outbound'], 'proxy');
+    expect(serviceRoute['outbound'], selectorTag);
     expect(serviceRoute['domain'], containsAll(<String>[
       'discord.com', 'telegram.org', 'youtube.com', 'googlevideo.com',
     ]));
@@ -8448,7 +8449,7 @@ void main() {
     final updaterRoute = routeRules.singleWhere(
       (rule) => rule.containsKey('process_path_regex'),
     );
-    expect(updaterRoute['outbound'], 'proxy');
+    expect(updaterRoute['outbound'], selectorTag);
     final updaterPattern =
         (updaterRoute['process_path_regex'] as List).single as String;
     final updaterMatcher = RegExp(updaterPattern.replaceFirst('(?i)', ''),
@@ -8484,7 +8485,7 @@ void main() {
     final excludedRouteRules =
         (excludedRoute['rules'] as List).cast<Map<String, dynamic>>();
 
-    expect(excludedRoute['final'], 'proxy');
+    expect(excludedRoute['final'], selectorTag);
     expect(
       excludedRouteRules.any((rule) =>
           (rule['process_name'] as List?)?.contains('yandexbrowser.exe') ==
