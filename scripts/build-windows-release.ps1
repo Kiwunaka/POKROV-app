@@ -722,7 +722,7 @@ if (-not $SkipBuild) {
     "windows",
     "--release",
     "--no-pub",
-    "--dart-define=POKROV_APP_VERSION=$version",
+    "--dart-define=POKROV_APP_VERSION=$productVersion",
     "--dart-define=POKROV_BUILD_NUMBER=$clientBuildNumber",
     "--dart-define=POKROV_GIT_REVISION=$clientRevision",
     "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
