@@ -77,6 +77,23 @@ class AndroidTunPackagePlannerTest {
     }
 
     @Test
+    fun `removed last selected app keeps allow-list restricted to VPN host`() {
+        val appPackage = "space.pokrov.pokrov_android_shell"
+        assertEquals(appPackage, AndroidTunPackagePlanner.fallbackForRemovedSelection(
+            selectedAppsMode = true,
+            requestedAllowedPackageCount = 1,
+            appliedAllowedPackageCount = 0,
+            appPackage = appPackage,
+        ))
+        assertEquals(null, AndroidTunPackagePlanner.fallbackForRemovedSelection(
+            selectedAppsMode = true,
+            requestedAllowedPackageCount = 2,
+            appliedAllowedPackageCount = 1,
+            appPackage = appPackage,
+        ))
+    }
+
+    @Test
     fun `full tunnel merges requested exclusions with the host process`() {
         val plan = AndroidTunPackagePlanner.plan(
             appPackage = "space.pokrov.pokrov_android_shell",

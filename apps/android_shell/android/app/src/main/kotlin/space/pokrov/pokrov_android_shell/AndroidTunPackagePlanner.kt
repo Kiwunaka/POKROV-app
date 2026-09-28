@@ -59,4 +59,12 @@ internal object AndroidTunPackagePlanner {
         selectedAppsMode: Boolean,
         appliedAllowedPackageCount: Int,
     ): Boolean = !selectedAppsMode || appliedAllowedPackageCount > 0
+
+    fun fallbackForRemovedSelection(
+        selectedAppsMode: Boolean,
+        requestedAllowedPackageCount: Int,
+        appliedAllowedPackageCount: Int,
+        appPackage: String,
+    ): String? = if (selectedAppsMode && requestedAllowedPackageCount > 0 &&
+        appliedAllowedPackageCount == 0) appPackage else null
 }

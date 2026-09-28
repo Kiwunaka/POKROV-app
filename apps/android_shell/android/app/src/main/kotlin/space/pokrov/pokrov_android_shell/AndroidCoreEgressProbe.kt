@@ -39,8 +39,7 @@ internal enum class AndroidCoreEgressProbeResult {
 internal class AndroidCoreEgressMonitor(
     private val isCurrent: () -> Boolean,
     private val canRepeat: () -> Boolean,
-    private val schedule: (Runnable, Long) -> Unit,
-    private val remove: (Runnable) -> Unit,
+    private val clockMillis: () -> Long = { System.nanoTime() / 1_000_000L },
     private val startProbe: (Long, Boolean) -> Unit,
     private val publish: (AndroidCoreEgressProbeResult, Boolean) -> Unit,
 ) {
@@ -48,13 +47,31 @@ internal class AndroidCoreEgressMonitor(
     private var sequence = 0L
     private var inFlight: Long? = null
     private var periodic = false
-    private val next = Runnable { start() }
+    private var lastProbeAt = Long.MIN_VALUE
+    private var lastResult = AndroidCoreEgressProbeResult.HEALTHY
+    private var lastTrafficTotal: Long? = null
 
     @Synchronized fun start() {
         if (cancelled || inFlight != null || !isCurrent() || (periodic && !canRepeat())) return
         val token = ++sequence
         inFlight = token
+        lastProbeAt = clockMillis()
         startProbe(token, periodic)
+    }
+
+    @Synchronized fun onTraffic(uplinkTotal: Long?, downlinkTotal: Long?) {
+        if (uplinkTotal == null || downlinkTotal == null) return
+        val total = uplinkTotal + downlinkTotal
+        val previous = lastTrafficTotal
+        lastTrafficTotal = total
+        if (previous != null && total > previous && periodic &&
+            clockMillis() - lastProbeAt >= if (lastResult == AndroidCoreEgressProbeResult.HEALTHY)
+                INTERVAL_MILLIS else SUSPECT_INTERVAL_MILLIS
+        ) start()
+    }
+
+    @Synchronized fun onSuspectedFailure() {
+        if (periodic && clockMillis() - lastProbeAt >= SUSPECT_INTERVAL_MILLIS) start()
     }
 
     @Synchronized fun owns(token: Long): Boolean =
@@ -63,20 +80,20 @@ internal class AndroidCoreEgressMonitor(
     @Synchronized fun complete(token: Long, result: AndroidCoreEgressProbeResult) {
         if (!owns(token)) return
         inFlight = null
+        lastResult = result
         publish(result, periodic)
-        if (result == AndroidCoreEgressProbeResult.HEALTHY && !cancelled && isCurrent() && canRepeat()) {
-            periodic = true
-            schedule(next, INTERVAL_MILLIS)
-        }
+        periodic = true
     }
 
     @Synchronized fun cancel() {
         cancelled = true
         inFlight = null
-        remove(next)
     }
 
-    companion object { const val INTERVAL_MILLIS = 2_000L }
+    companion object {
+        const val INTERVAL_MILLIS = 60_000L
+        const val SUSPECT_INTERVAL_MILLIS = 5_000L
+    }
 }
 
 internal object AndroidCoreEgressRetryPolicy {

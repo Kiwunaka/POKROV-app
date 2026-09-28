@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.VpnService
 import android.graphics.Color
@@ -62,7 +63,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     private val runtimeExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val healthGeneration = AtomicLong(0L)
     @Volatile private var pendingCoreEgressProbeGeneration: Long? = null
-    private var coreEgressMonitor: AndroidCoreEgressMonitor? = null
+    @Volatile private var coreEgressMonitor: AndroidCoreEgressMonitor? = null
+    @Volatile private var activeSelectedPackages: Set<String> = emptySet()
+    @Volatile private var selectedPackageRemoved = false
     private val runtimeSessionGeneration = AtomicLong(0L)
     private val serviceCommandGeneration = AtomicLong(0L)
     private val serviceCommandLock = Any()
@@ -90,6 +93,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             val name = intent?.data?.schemeSpecificPart ?: return
             activeCatalogAppBinding?.takeIf { it.affectsPackage(name) }?.let {
                 invalidateCatalogAppBinding(it, "catalog_app_identity_changed")
+            }
+            if (intent.action == Intent.ACTION_PACKAGE_REMOVED &&
+                !intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) &&
+                activeTun != null && name in activeSelectedPackages) {
+                selectedPackageRemoved = true
+                updateRuntimeNotification()
             }
         }
     }
@@ -491,6 +500,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             onSnapshot = { snapshot ->
                 if (ownsRuntimeSession(scope)) {
                     AndroidRuntimeState.updateTunnelTraffic(scope.generation, snapshot)
+                    coreEgressMonitor?.onTraffic(snapshot.uplinkTotalBytes, snapshot.downlinkTotalBytes)
                 }
             },
         )
@@ -1231,11 +1241,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 validated = runtimeSnapshot["core_egress_validated"] as? Boolean,
             ),
         )
+        val visibleContent = if (selectedPackageRemoved) content.copy(
+            text = "Выбранное приложение удалено. Проверьте список приложений.",
+        ) else content
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(
             NOTIFICATION_ID,
             buildNotification(
-                content,
+                visibleContent,
             ),
         )
     }
@@ -1373,10 +1386,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         val builder = Builder()
             .setSession("sing-box")
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            builder.setMetered(false)
-        }
-
         val mtu = AndroidTunMtuPolicy.select(
             requested = options.getMTU(),
             platformInterfaceMtu = activePlatformInterfaceMtu(),
@@ -1393,6 +1402,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         var ipv6RouteCount = 0
         var includePackageCount = 0
         var excludePackageCount = 0
+        var requestedSelectedPackages: Set<String> = emptySet()
+        var missingSelectedPackage = false
 
         consumePrefixes(options.getInet4Address()) { prefix ->
             builder.addAddress(prefix.address(), prefix.prefix())
@@ -1484,13 +1495,24 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             if (!packagePlan.isValid) {
                 throw IllegalStateException("Invalid or conflicting application routing scope.")
             }
+            if (activeSelectedAppsMode) requestedSelectedPackages = packagePlan.allowedPackages.toSet()
             packagePlan.allowedPackages.forEach { allowedPackage ->
                 try {
                     builder.addAllowedApplication(allowedPackage)
-                } catch (_: Exception) {
-                    throw IllegalStateException("Selected application scope changed.")
+                    includePackageCount += 1
+                } catch (_: PackageManager.NameNotFoundException) {
+                    missingSelectedPackage = true
                 }
-                includePackageCount += 1
+            }
+            AndroidTunPackagePlanner.fallbackForRemovedSelection(
+                selectedAppsMode = activeSelectedAppsMode,
+                requestedAllowedPackageCount = packagePlan.allowedPackages.size,
+                appliedAllowedPackageCount = includePackageCount,
+                appPackage = packageName,
+            )?.let { fallback ->
+                // Keep a non-empty allow-list without admitting other apps.
+                builder.addAllowedApplication(fallback)
+                includePackageCount = 1
             }
             if (!AndroidTunPackagePlanner.hasRequiredAppliedAllowList(
                     selectedAppsMode = activeSelectedAppsMode,
@@ -1504,10 +1526,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             packagePlan.disallowedPackages.forEach { disallowedPackage ->
                 try {
                     builder.addDisallowedApplication(disallowedPackage)
-                } catch (_: Exception) {
-                    throw IllegalStateException("Excluded application scope changed.")
+                    excludePackageCount += 1
+                } catch (_: PackageManager.NameNotFoundException) {
+                    // A removed app no longer needs exclusion from this TUN.
                 }
-                excludePackageCount += 1
             }
             if (activeCatalogAppRequired) {
                 val selected = if (activeSelectedAppsMode) packagePlan.allowedPackages.toSet()
@@ -1545,6 +1567,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     }
                     replacedTun = activeTun
                     activeTun = tun
+                    activeSelectedPackages = requestedSelectedPackages
+                    selectedPackageRemoved = missingSelectedPackage
                     activeStartupCommitted = true
                     AndroidRuntimeState.recordTunConfiguration(
                         ipv4RouteCount = ipv4RouteCount,
@@ -1617,8 +1641,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             isCurrent = { ownsRuntimeSession(session) && healthGeneration.get() == generation &&
                 commandServer === probeServer && activeTun != null },
             canRepeat = { activeConnectDeadline == null && activePromotedUntilElapsed == null && !activeCatalogAppRequired },
-            schedule = { task, delay -> mainHandler.postDelayed(task, delay) },
-            remove = { task -> mainHandler.removeCallbacks(task) },
             startProbe = { token, periodic ->
                 runCoreEgressProbe(session, generation, target, probeServer, variantConfigContent, monitor, token, periodic)
             },
@@ -1959,6 +1981,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 // uplink. Stopping VpnService here would expose all applications
                 // to the ordinary network precisely during the handover.
                 runCatching { commandServer?.resetNetwork() }
+                coreEgressMonitor?.onSuspectedFailure()
             }
         }
     }
@@ -1969,6 +1992,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             runtimeExecutor.execute {
                 if (ownsRuntimeSession(session) && activeTun != null) {
                     runCatching { commandServer?.resetNetwork() }
+                    coreEgressMonitor?.onSuspectedFailure()
                 }
             }
         }

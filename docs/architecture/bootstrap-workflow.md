@@ -1609,6 +1609,13 @@ Android schedules the selected-egress probe only after Core's
 `startOrReloadService` returns successfully. Core opens the TUN while it is
 still starting, so probing from the TUN callback can report unavailable before
 the selected route exists. Reloads apply the same ordering to the new TUN.
+After that startup check, the Android service watches existing tunnel byte
+counters. It repeats the Core egress probe only when traffic advances and at
+least 60 seconds have passed; a suspected DNS or network failure can trigger a
+new check after five seconds. Removed selected packages are skipped when Android
+builds the app allow-list, and the VPN notification asks the user to review the
+selection. If none remain, only the POKROV app enters the allow-list so other
+apps do not silently enter the VPN. Android keeps the platform's metered setting.
 These failures use the existing completed-failure policy: endpoint probes get
 at most three attempts, group failures are terminal, and session/generation/TUN
 fences still decide whether a result applies. The stop reason stays the generic

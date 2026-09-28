@@ -16,13 +16,12 @@ class AndroidCoreEgressProbeTest {
     fun healthyConnectionRechecksActualCoreAndRetainsTunOnBlackhole() {
         val core = ReachableCore()
         val target = AndroidCoreEgressProbeTarget("proxy", AndroidCoreEgressProbeTargetKind.GROUP)
-        val scheduled = mutableListOf<Pair<Runnable, Long>>()
+        var now = 0L
         val started = mutableListOf<Pair<Long, Boolean>>()
         val published = mutableListOf<Pair<AndroidCoreEgressProbeResult, Boolean>>()
         val monitor = AndroidCoreEgressMonitor(
             isCurrent = { true }, canRepeat = { true },
-            schedule = { task, delay -> scheduled.add(task to delay) },
-            remove = { task -> scheduled.removeAll { it.first === task } },
+            clockMillis = { now },
             startProbe = { token, periodic -> started.add(token to periodic) },
             publish = { result, retainTun -> published.add(result to retainTun) },
         )
@@ -30,16 +29,25 @@ class AndroidCoreEgressProbeTest {
         monitor.start()
         assertEquals("An unfinished probe cannot overlap", 1, started.size)
         monitor.complete(started.single().first, AndroidCoreEgressProbe.resultFromCore(core, target))
-        assertEquals(2_000L, scheduled.single().second)
+        monitor.onTraffic(0, 0)
+        now = 59_000L
+        monitor.onTraffic(1, 0)
+        assertEquals("Traffic before one minute must not trigger a probe", 1, started.size)
+        now = 60_000L
+        monitor.onTraffic(2, 0)
 
         core.reachable = false
-        scheduled.removeAt(0).first.run()
         assertEquals(2, started.size)
         assertTrue(started.last().second)
         monitor.complete(started.last().first, AndroidCoreEgressProbe.resultFromCore(core, target))
         assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY to false,
             AndroidCoreEgressProbeResult.FAILED to true), published)
-        assertTrue("Failure is handed to recovery, not another health loop", scheduled.isEmpty())
+        now = 64_000L
+        monitor.onTraffic(3, 0)
+        assertEquals(2, started.size)
+        now = 65_000L
+        monitor.onTraffic(4, 0)
+        assertEquals("A failed active check can retry when traffic continues", 3, started.size)
     }
 
     class BoundedCore {
@@ -85,33 +93,51 @@ class AndroidCoreEgressProbeTest {
     @Test
     fun cancelledOrReplacedMonitorCannotPublishOrScheduleLateCoreResult() {
         var current = true
-        var next: Runnable? = null
-        var removed = false
+        var now = 0L
         var token = 0L
         var probes = 0
         var publications = 0
         val monitor = AndroidCoreEgressMonitor(
             isCurrent = { current }, canRepeat = { true },
-            schedule = { task, _ -> next = task },
-            remove = { removed = true },
+            clockMillis = { now },
             startProbe = { id, _ -> token = id; probes++ },
             publish = { _, _ -> publications++ },
         )
         monitor.start()
         monitor.complete(token, AndroidCoreEgressProbeResult.HEALTHY)
-        val oldCallback = next!!
-        oldCallback.run()
+        monitor.onTraffic(0, 0)
+        now = 60_000L
+        monitor.onTraffic(1, 0)
         assertEquals(2, probes)
         current = false // A new profile owns the generation before old Core returns.
         monitor.complete(token, AndroidCoreEgressProbeResult.FAILED)
         assertEquals(1, publications)
         monitor.cancel()
-        assertTrue(removed)
         current = true
-        oldCallback.run()
+        now = 120_000L
+        monitor.onTraffic(2, 0)
         monitor.complete(token, AndroidCoreEgressProbeResult.HEALTHY)
         assertEquals(2, probes)
         assertEquals(1, publications)
+    }
+
+    @Test
+    fun networkSuspicionAllowsEarlyRecheckButNotEverySecond() {
+        var now = 0L
+        val started = mutableListOf<Long>()
+        val monitor = AndroidCoreEgressMonitor(
+            isCurrent = { true }, canRepeat = { true }, clockMillis = { now },
+            startProbe = { token, _ -> started += token }, publish = { _, _ -> },
+        )
+        monitor.start()
+        monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
+        now = 4_000L
+        monitor.onSuspectedFailure()
+        assertEquals(1, started.size)
+        now = 5_000L
+        monitor.onSuspectedFailure()
+        assertEquals(2, started.size)
+        monitor.cancel()
     }
 
     class CallBoundCore {
