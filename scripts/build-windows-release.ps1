@@ -1303,7 +1303,7 @@ $trustedSigningManifest = [ordered]@{
   blocker_code = if ($trustedWindowsSigningContext) {
     $null
   } elseif ($ownerUnsignedExceptionActive) {
-    "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0"
+    [string]$windowsReleaseConfig.signing.blocker_code
   } else {
     "MISSING_TRUSTED_WINDOWS_SIGNATURE"
   }
