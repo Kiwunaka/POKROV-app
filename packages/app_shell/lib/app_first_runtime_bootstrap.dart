@@ -3358,6 +3358,15 @@ class AppFirstRuntimeBootstrapper
             hostPlatform: hostPlatform,
             client: client,
           );
+          // Node confirms a new key after the trial request returns. Give the
+          // profile its normal deadline from that point, not from trial start.
+          if (timeout != null) {
+            timer?.cancel();
+            timer = Timer(timeout, () {
+              timedOut = true;
+              client.close(force: true);
+            });
+          }
         }
 
         try {
@@ -6379,13 +6388,27 @@ class AppFirstRuntimeBootstrapper
       };
       requestPath += '${requestPath.contains('?') ? '&' : '?'}${Uri(queryParameters: query).query}';
     }
-    final response = await _requestJson(
-      method: 'GET',
-      path: requestPath,
-      client: client,
-      bearerToken: state.sessionToken,
-      hostPlatform: hostPlatform,
-    );
+    Map<String, dynamic> response;
+    for (var attempt = 0; ; attempt += 1) {
+      response = await _requestJson(
+        method: 'GET',
+        path: requestPath,
+        client: client,
+        bearerToken: state.sessionToken,
+        hostPlatform: hostPlatform,
+        headers: const {'X-POKROV-Access-Preparing': '1'},
+      );
+      if (response['status'] != 'access_preparing') break;
+      if (attempt >= 5) {
+        throw const BootstrapFailure(
+          'Доступ ещё готовится. POKROV повторит подключение позже.',
+          code: 'access_preparing', operationalCode: 'API-011',
+        );
+      }
+      final retrySeconds = response['retry_after_seconds'];
+      final seconds = retrySeconds is int ? retrySeconds.clamp(1, 5) : 2;
+      await _delayScheduler(Duration(seconds: seconds));
+    }
     final verifiedAt = DateTime.now().toUtc();
     final transportCatalog = response.containsKey('transport_catalog')
         ? decodeManagedTransportCatalog(response['transport_catalog'], platform: hostPlatform,

@@ -4649,6 +4649,62 @@ void main() {
     expect(starts, 1);
   });
 
+  test('retries access preparation without starting another trial', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-access-preparing-test-',
+    );
+    addTearDown(() async {
+      if (await tempDirectory.exists()) await tempDirectory.delete(recursive: true);
+    });
+    var starts = 0;
+    var profiles = 0;
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response.write(jsonEncode(<String, Object?>{
+            'access_token': 'preparing-access',
+            'refresh_token': 'preparing-refresh',
+            'account_id': '85',
+          }));
+        } else if (request.uri.path == '/api/client/route-policy') {
+          request.response.write('{"ok":true}');
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          expect(request.headers.value('X-POKROV-Access-Preparing'), '1');
+          profiles += 1;
+          if (profiles < 3) {
+            request.response.statusCode = HttpStatus.accepted;
+            request.response.write(jsonEncode(<String, Object?>{
+              'status': 'access_preparing', 'retry_after_seconds': 2,
+            }));
+          } else {
+            request.response.write(jsonEncode(_readyManagedProfile('prepared')));
+          }
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      delayScheduler: (_) async {},
+    );
+    final payload = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+      timeout: const Duration(seconds: 18),
+    );
+    expect(payload.profileName, 'pokrov-windows-prepared');
+    expect(starts, 1);
+    expect(profiles, 3);
+  });
+
   test('refresh failure never starts a second trial for an existing install',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(

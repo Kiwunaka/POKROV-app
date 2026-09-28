@@ -1679,6 +1679,10 @@ probes; catalog admission alone does not establish connectivity.
 An explicit denial invalidates downloads still in flight. Startup and roughly
 six-hour refresh download through the same managed endpoint without probes or
 changing the running tunnel. Connect still attempts a fresh managed profile.
+When a new trial waits for its Node key, the managed-profile request retries
+HTTP 202 `access_preparing` after the server's bounded delay on the same device
+session. Its profile deadline begins after trial creation, so the Node ACK
+does not consume the time spent creating the trial.
 After a transient failure, real OS observations distinguish no network and a
 captive portal from an unavailable API; expiry beyond the local grace is shown
 as ended access. Unknown OS status is not treated as a disconnected network.
