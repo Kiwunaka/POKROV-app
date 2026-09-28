@@ -184,6 +184,8 @@ void main() {
         'org.telegram.messenger',
         'pokrov.exe',
       ],
+      firstRouteScopeConfirmed: true,
+      firstRouteScopeMode: RouteMode.allExceptRu,
       routingPreferences: PokrovRoutingPreferences.defaults().copyWith(
         purposeRoutes: const <PokrovPurposeRoute>{PokrovPurposeRoute.video},
         dnsPreset: PokrovDnsPreset.cloudflare,
@@ -215,6 +217,8 @@ void main() {
       restored.selectedAppIds,
       <String>['org.telegram.messenger', 'pokrov.exe'],
     );
+    expect(restored.firstRouteScopeConfirmed, isTrue);
+    expect(restored.firstRouteScopeMode, RouteMode.allExceptRu);
     expect(restored.protectionEvents.single.kind, 'connected');
     expect(restored.postConnectShortcuts.single.href.scheme, 'https');
     expect(
