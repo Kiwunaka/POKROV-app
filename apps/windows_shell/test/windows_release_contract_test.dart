@@ -65,7 +65,7 @@ void main() {
     expect(signing['status'], 'SKIPPED_BY_OWNER');
     expect(
       signing['blocker_code'],
-      'OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_2_0',
+      'OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_3_0',
     );
     expect(signing['required_for_candidate'], isFalse);
     expect(signing['required_for_trusted_claim'], isTrue);
@@ -73,8 +73,8 @@ void main() {
     final ownerException =
         signing['owner_exception'] as Map<String, dynamic>;
     expect(ownerException['status'], 'SKIPPED_BY_OWNER');
-    expect(ownerException['authorized_on'], '2026-08-24');
-    expect(ownerException['version_scope'], '1.2.0');
+    expect(ownerException['authorized_on'], '2026-09-28');
+    expect(ownerException['version_scope'], '1.3.0');
     expect(ownerException['channel_scope'], 'outside_store_beta');
     expect(ownerException['distribution_scope'], 'direct_download_only');
     expect(ownerException['trusted_claim_allowed'], isFalse);
