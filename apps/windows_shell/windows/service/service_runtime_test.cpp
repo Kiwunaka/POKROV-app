@@ -496,6 +496,22 @@ void TestRuntimeLifecycle() {
                transaction->recorded.size() == 4,
            "runtime transaction did not persist every connect stage");
 
+    egress->verify_error = "core_egress_probe_failed";
+    const auto failed_recheck = host.RecheckEgress({});
+    Expect(failed_recheck.status == Status::kNotReady &&
+               Contains(failed_recheck, "core_egress_validated=0") &&
+               Contains(failed_recheck, "failure=core_egress_probe_failed"),
+           "failed egress recheck did not revoke its proof");
+    Expect(host.CanRecheckEgress(),
+           "failed egress recheck stopped future checks");
+    egress->verify_error.clear();
+    const auto recovered_recheck = host.RecheckEgress({});
+    Expect(recovered_recheck.status == Status::kOk &&
+               Contains(recovered_recheck, "core_egress_validated=1") &&
+               Contains(recovered_recheck, "failure=none") &&
+               egress->verify_calls == 3,
+           "successful egress recheck did not restore proof");
+
     const auto disconnected = host.Disconnect();
     Expect(disconnected.status == Status::kOk,
            "runtime disconnect failed");

@@ -1525,8 +1525,8 @@ RuntimeResult RuntimeHost::RevokeSmartAccessPolicy(const std::string& body) {
 }
 
 bool RuntimeHost::CanRecheckEgress() const {
-  return phase_ == Phase::kRunning && core_egress_validated_ &&
-      !requires_bound_connect_ && !TransitionGuardArmed();
+  return phase_ == Phase::kRunning && !requires_bound_connect_ &&
+      !TransitionGuardArmed();
 }
 
 RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
@@ -1545,6 +1545,8 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
         ? "core_egress_timeout" : SafeEgressFailure(failure));
   }
   RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kSucceeded);
+  core_egress_validated_ = true;
+  failure_.clear();
   return Snapshot();
 }
 

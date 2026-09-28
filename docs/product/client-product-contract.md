@@ -726,6 +726,8 @@ observable checks instead of one decorative connected badge:
   excluded from its own VPN;
 - route ownership is described from the active runtime profile and routing mode;
 - unknown or stale evidence stays unknown and cannot render as healthy;
+- on Windows, a failed periodic egress check keeps the current tunnel unverified
+  and repeats the check; a fresh success restores the proof without reconnecting;
 - one repair action runs at most one staged cycle: disconnect, resolve a fresh
   managed profile, stage, connect, then refresh the checks. It has no retry loop
   and cannot overlap another repair.
