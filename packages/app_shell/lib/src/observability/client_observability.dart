@@ -435,6 +435,24 @@ final class PokrovClientObservability {
     );
   }
 
+  void recordCandidateProbe({
+    required String failureKind,
+    required Duration duration,
+  }) {
+    _emitCurrent(
+      name: 'app.connection.candidate_probe.finished',
+      subsystem: 'connection',
+      stage: 'probe',
+      outcome: failureKind.isEmpty
+          ? ObservabilityOutcome.succeeded
+          : ObservabilityOutcome.failed,
+      attributes: <String, Object?>{
+        'failure_kind': failureKind.isEmpty ? 'none' : failureKind,
+        'duration_ms': duration.inMilliseconds.clamp(0, 30000),
+      },
+    );
+  }
+
   void markUiReady() {
     if (_uiReadyRecorded || _generation != 0) {
       return;

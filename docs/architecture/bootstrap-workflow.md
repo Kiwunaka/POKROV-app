@@ -87,6 +87,14 @@ Online candidate selection fetches exact profiles before charging the native
 probe budget. Each worker has up to 12 seconds of native probes, with at most
 four seconds per candidate; profile HTTP still obeys the connect action deadline.
 Cancellation settles profile and native work before releasing a worker.
+The last successful candidate gets up to 350 ms before alternatives. Only typed
+network probe failures suppress a candidate for four minutes or move TCP ahead
+of UDP; an empty filtered catalog retries every eligible candidate. Candidate
+failure kinds enter the local journal and runtime stats without profile data.
+Windows managed profiles use only TUN (no loopback mixed listener) and start
+Core with `disableMemoryLimit=true`, including restored cached profiles. A
+confirmed candidate-network read clears a stale Windows probe-settlement latch
+when no candidate probes remain.
 Ordinary catalog location changes use the location catalog's policy metadata,
 so the previous AWG candidate cannot impose
 a legacy laboratory node allowlist. A completed explicit Android Disconnect

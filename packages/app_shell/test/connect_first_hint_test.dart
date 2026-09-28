@@ -75,6 +75,7 @@ class _StubBootstrapper
     required String runtimePhase,
     required bool connected,
     String errorCode = '',
+    String failureKind = '',
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,

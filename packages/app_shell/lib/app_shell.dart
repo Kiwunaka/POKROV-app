@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_core_domain/core_domain.dart' as domain show TransportCandidate;
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart';
 import 'package:pokrov_observability_runtime/observability_runtime.dart';

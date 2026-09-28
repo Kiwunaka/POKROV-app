@@ -374,6 +374,8 @@ void main() {
     final restored = await bootstrapper.loadCachedManagedProfile(inputs,
       runtimeFeatures: RuntimeTransportFeature.values.toSet());
     expect(restored?.transportCatalog?.selectedCandidateRef, 'de:grpc_443_primary');
+    expect(payload.disableMemoryLimit, isTrue);
+    expect(restored?.disableMemoryLimit, isTrue);
     expect(restored?.configPayload, payload.configPayload);
     expect(await bootstrapper.loadCachedManagedProfile(inputs, runtimeFeatures: const {}), isNull);
     probes.clear();
@@ -1946,6 +1948,7 @@ void main() {
       runtimePhase: 'FAILED',
       connected: false,
       errorCode: 'pairing_claim_failed',
+      failureKind: 'tls_failed',
     );
     await bootstrapper.reportTelegramLinkEvent(
       hostPlatform: HostPlatform.android,
@@ -2030,6 +2033,7 @@ void main() {
         'runtime_phase': 'failed',
         'connected': false,
         'error_code': 'pairing_claim_failed',
+        'failure_kind': 'tls_failed',
         'report_run_id': reportRunId,
         'report_sequence': 2,
         'connectivity': {'proof_stage': 'unknown'},
@@ -5636,7 +5640,9 @@ void main() {
     final tunInbound =
         inbounds.singleWhere((inbound) => inbound['type'] == 'tun');
 
-    expect(inbounds, hasLength(2));
+    expect(inbounds, hasLength(1));
+    expect(payload.disableMemoryLimit, isTrue);
+    expect(payload.configPayload, isNot(contains('12334')));
     expect(tunInbound['stack'], 'system');
     expect(tunInbound['address'], isNotEmpty);
     expect(tunInbound.containsKey('inet4_address'), isFalse);

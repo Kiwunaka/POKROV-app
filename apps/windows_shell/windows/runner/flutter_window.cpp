@@ -484,7 +484,10 @@ bool FlutterWindow::OnCreate() {
           return;
         }
         if (call.method_name() == "runtimeEngine.candidateNetwork") {
-          if (!QueueRuntime(Command::kReadCandidateNetwork, "", [reply](auto snapshot) {
+          if (!QueueRuntime(Command::kReadCandidateNetwork, "", [this, reply](auto snapshot) {
+                if (snapshot.command_accepted && pending_candidates_.empty()) {
+                  candidate_settlement_lost_ = false;
+                }
                 const auto available = HasDefaultUplink();
                 const auto captive = HasCaptivePortal();
                 reply->Success(flutter::EncodableValue(flutter::EncodableMap{

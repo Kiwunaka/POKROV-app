@@ -703,6 +703,7 @@ abstract interface class AppFirstExperienceService {
     required String runtimePhase,
     required bool connected,
     String errorCode = '',
+    String failureKind = '',
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,
@@ -3114,6 +3115,7 @@ class AppFirstRuntimeBootstrapper
           : null;
       return ManagedProfilePayload(
         cacheEntryId: _readText(value['cache_entry_id']),
+        disableMemoryLimit: inputs.hostPlatform == HostPlatform.windows,
         provenNetworkSelectionKey: value['proven_network_selection_key'] as String?,
         profileName: _profileName(
           hostPlatform: inputs.hostPlatform, profileRevision: revision),
@@ -3898,6 +3900,7 @@ class AppFirstRuntimeBootstrapper
     required String runtimePhase,
     required bool connected,
     String errorCode = '',
+    String failureKind = '',
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,
@@ -3908,6 +3911,7 @@ class AppFirstRuntimeBootstrapper
   }) async {
     final phase = runtimePhase.trim().toLowerCase();
     final safeErrorCode = errorCode.trim().toLowerCase();
+    final safeFailureKind = failureKind.trim().toLowerCase();
     final safeNodeCode = selectedNodeCode.trim().toLowerCase();
     final safeRouteMode = routeMode.trim().toLowerCase();
     final safeNetworkClass = networkClass.trim().toLowerCase();
@@ -3927,6 +3931,8 @@ class AppFirstRuntimeBootstrapper
         'connectivity': runtimeConnectivityReport(connectivitySnapshot),
         if (RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,
+        if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeFailureKind))
+          'failure_kind': safeFailureKind,
         if (RegExp(r'^[a-z0-9_.-]{1,32}$').hasMatch(safeNodeCode))
           'selected_node_code': safeNodeCode,
         if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeRouteMode))
@@ -6549,6 +6555,7 @@ class AppFirstRuntimeBootstrapper
         : '';
     final payload = ManagedProfilePayload(
       cacheEntryId: ManagedProfileCache.newEntryId(),
+      disableMemoryLimit: hostPlatform == HostPlatform.windows,
       tcpFallbackFromRevision: tcpFallbackRevision,
       source: RuntimeProfileSource(
         revision: _readText(response['profile_revision']),
@@ -8214,20 +8221,7 @@ class AppFirstRuntimeBootstrapper
       }
     }
 
-    if (hostPlatform == HostPlatform.android) {
-      return <Map<String, dynamic>>[tunInbound];
-    }
-
-    return <Map<String, dynamic>>[
-      tunInbound,
-      <String, dynamic>{
-        'type': 'mixed',
-        'tag': 'mixed-in',
-        'listen': '127.0.0.1',
-        'listen_port': 12334,
-        'domain_strategy': 'ipv4_only',
-      },
-    ];
+    return <Map<String, dynamic>>[tunInbound];
   }
 
   Map<String, dynamic> _buildRouteBlock({

@@ -1887,6 +1887,7 @@ class ConnectionManager extends ChangeNotifier {
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
             selectionTimeout: selectionTimeout,
+            onProbeResult: _recordCandidateProbe,
             prepare: (candidate, stop) async {
               requireCurrent();
               var stopped = false;
@@ -1905,7 +1906,9 @@ class ConnectionManager extends ChangeNotifier {
                       userConsented: true));
               final checked = await _probeManagedCandidate(probing, probePayload, context: context, cancelled: stop,
                   timeout: timeout, generation: generation, requireCurrent: requireCurrent);
-              return checked == null ? null : exact;
+              return checked.success
+                  ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration)
+                  : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration);
             },
           );
           selectedCandidate = true;
@@ -1958,7 +1961,28 @@ class ConnectionManager extends ChangeNotifier {
         suppressWarpRuntime: suppressWarpRuntime, ownerGeneration: generation);
   }
 
-  Future<ManagedProfilePayload?> _probeManagedCandidate(RuntimeCandidateProbing probing,
+  void _recordCandidateProbe(
+      domain.TransportCandidate candidate, SmartConnectCandidateProbeResult result) {
+    _observability?.recordCandidateProbe(
+        failureKind: result.failureKind, duration: result.duration);
+    if (result.failureKind.isEmpty) return;
+    final service = _experienceService;
+    if (service == null) return;
+    unawaited(service.reportRuntimeStats(
+      hostPlatform: _appContext.hostPlatform,
+      runtimePhase: 'candidate_probe',
+      connected: false,
+      selectedNodeCode: candidate.nodeCode,
+      routeMode: _selectedRouteMode.name,
+      failureKind: result.failureKind,
+      durationMs: result.duration.inMilliseconds,
+      attemptNumber: _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
+    ).catchError((Object _) {
+      // Probe telemetry cannot affect candidate selection.
+    }));
+  }
+
+  Future<RuntimeCandidateProbeResult> _probeManagedCandidate(RuntimeCandidateProbing probing,
       ManagedProfilePayload payload, {required String context, required Future<void> cancelled,
       required Duration timeout, required int generation, required void Function() requireCurrent}) async {
     final probeId = 'candidate_${generation}_${math.Random.secure().nextInt(1 << 32)}';
@@ -1977,7 +2001,10 @@ class ConnectionManager extends ChangeNotifier {
     try {
       final receipt = await result;
       requireCurrent();
-      return !stopped && receipt.success ? payload : null;
+      return stopped
+          ? RuntimeCandidateProbeResult(success: false,
+              failureKind: 'cancelled', duration: receipt.duration)
+          : receipt;
     } finally {
       settled = true;
       if (cleanup != null) await cleanup;
@@ -2026,6 +2053,7 @@ class ConnectionManager extends ChangeNotifier {
           network: key, platform: inputs.hostPlatform,
           cancelled: _connectionCoordinator.whenOperationEnds(generation),
           recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
+          onProbeResult: _recordCandidateProbe,
           probe: (candidate, stop, timeout) async {
             final exact = available[candidate.candidateRef]!;
             final probePayload = exact.copyWith(warpPolicy: candidate.warpMode == null
@@ -2035,7 +2063,9 @@ class ConnectionManager extends ChangeNotifier {
             final checked = await _probeManagedCandidate(probing, probePayload,
                 context: context, cancelled: stop, timeout: timeout,
                 generation: generation, requireCurrent: requireCurrent);
-            return checked == null ? null : exact;
+            return checked.success
+                ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration)
+                : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration);
           },
         );
       } on SmartConnectSelectionExhausted {
@@ -3966,7 +3996,8 @@ class ConnectionManager extends ChangeNotifier {
         if (confirmedFailure && currentRef.isNotEmpty) currentRef,
       };
       if (confirmedFailure && currentRef.isNotEmpty && _candidateNetworkKey != null) {
-        _candidateSelector.recordFailure(_candidateNetworkKey!, currentRef);
+        _candidateSelector.recordFailure(_candidateNetworkKey!, currentRef,
+            failed?.lastFailureKind ?? '');
       }
       Future<ManagedProfilePayload?> recoverCached({bool offline = false}) async {
         final cacheService = _bootstrapper;
@@ -4066,7 +4097,8 @@ class ConnectionManager extends ChangeNotifier {
       }
       if (!tryNext) return;
       failedActivations.add(_candidateRef!);
-      if (_candidateNetworkKey != null) _candidateSelector.recordFailure(_candidateNetworkKey!, _candidateRef!);
+      if (_candidateNetworkKey != null) _candidateSelector.recordFailure(
+          _candidateNetworkKey!, _candidateRef!, current.lastFailureKind ?? '');
       }
     } on ConnectionOperationSuperseded {
       return;

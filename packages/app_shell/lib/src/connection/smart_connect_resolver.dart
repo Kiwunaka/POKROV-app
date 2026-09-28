@@ -1,7 +1,18 @@
 part of '../../app_first_runtime_bootstrap.dart';
 
-typedef SmartConnectCandidateProbe = Future<ManagedProfilePayload?> Function(
+typedef SmartConnectCandidateProbe = Future<SmartConnectCandidateProbeResult> Function(
   TransportCandidate candidate, Future<void> cancelled, Duration timeout);
+
+class SmartConnectCandidateProbeResult {
+  const SmartConnectCandidateProbeResult.success(this.profile,
+      {this.duration = Duration.zero}) : failureKind = '';
+  const SmartConnectCandidateProbeResult.failure(this.failureKind,
+      {this.duration = Duration.zero}) : profile = null;
+
+  final ManagedProfilePayload? profile;
+  final String failureKind;
+  final Duration duration;
+}
 
 class SmartConnectSelectionExhausted implements Exception {
   const SmartConnectSelectionExhausted();
@@ -9,8 +20,8 @@ class SmartConnectSelectionExhausted implements Exception {
   String toString() => 'smart_connect_candidates_exhausted';
 }
 
-/// Ordinary catalog selection. A non-null probe result means an authenticated
-/// 204 was received through that exact candidate, never just an open TCP port.
+/// Ordinary catalog selection. A successful probe means an authenticated 204
+/// was received through that exact candidate, never just an open TCP port.
 class SmartConnectCandidateSelector {
   SmartConnectCandidateSelector({DateTime Function()? now}) : _now = now ?? DateTime.now;
 
@@ -18,7 +29,12 @@ class SmartConnectCandidateSelector {
   final _successful = <String, String>{};
   final _failedUntil = <(String, String), DateTime>{};
   final _udpFailedUntil = <String, DateTime>{};
-  static const failureMemory = Duration(minutes: 30);
+  static const failureMemory = Duration(minutes: 4);
+  static const _networkFailureKinds = <String>{
+    'connect_failed', 'tls_failed', 'timeout',
+    'core_egress_connect_failed', 'core_egress_tls_failed',
+    'core_egress_dns_failed',
+  };
 
   void recordSuccess(String network, String candidateRef) {
     _successful[network] = candidateRef;
@@ -29,7 +45,8 @@ class SmartConnectCandidateSelector {
     _successful.putIfAbsent(network, () => candidateRef);
   }
 
-  void recordFailure(String network, String candidateRef) {
+  void recordFailure(String network, String candidateRef, String failureKind) {
+    if (!_networkFailureKinds.contains(failureKind)) return;
     _failedUntil[(network, candidateRef)] = _now().add(failureMemory);
   }
 
@@ -39,6 +56,7 @@ class SmartConnectCandidateSelector {
     required HostPlatform platform,
     required SmartConnectCandidateProbe probe,
     required Future<void> cancelled,
+    void Function(TransportCandidate candidate, SmartConnectCandidateProbeResult result)? onProbeResult,
     Future<void> Function(TransportCandidate candidate, Future<void> cancelled)? prepare,
     String preferredCountryCode = '',
     String recoveryCandidateRef = '',
@@ -52,11 +70,13 @@ class SmartConnectCandidateSelector {
     _udpFailedUntil.removeWhere((_, expires) => !expires.isAfter(now));
     final preferred = recoveryCandidateRef.isNotEmpty
         ? recoveryCandidateRef : _successful[network];
-    final candidates = catalog.candidates.where((candidate) =>
+    final eligible = catalog.candidates.where((candidate) =>
       !excludedCandidateRefs.contains(candidate.candidateRef) &&
-      (preferredCountryCode.isEmpty || candidate.countryCode == preferredCountryCode) &&
-      (candidate.candidateRef == recoveryCandidateRef ||
-        !_failedUntil.containsKey((network, candidate.candidateRef)))).toList()
+      (preferredCountryCode.isEmpty || candidate.countryCode == preferredCountryCode)).toList();
+    final remembered = eligible.where((candidate) =>
+      candidate.candidateRef == recoveryCandidateRef ||
+      !_failedUntil.containsKey((network, candidate.candidateRef))).toList();
+    final candidates = (remembered.isEmpty ? eligible : remembered)
       ..sort((a, b) {
         if (a.candidateRef == preferred && b.candidateRef != preferred) return -1;
         if (b.candidateRef == preferred && a.candidateRef != preferred) return 1;
@@ -87,6 +107,7 @@ class SmartConnectCandidateSelector {
       final cancellation = Completer<void>();
       probes.add(cancellation);
       var timedOut = false;
+      SmartConnectCandidateProbeResult? outcome;
       Timer? timeout;
       final probeClock = Stopwatch();
       try {
@@ -101,10 +122,12 @@ class SmartConnectCandidateSelector {
         });
         // The adapter settles its profile/native IO before completing. Keep
         // this slot occupied until settlement, including timeout/cancellation.
-        final result = await probe(candidate, cancellation.future, nativeTimeout);
+        outcome = await probe(candidate, cancellation.future, nativeTimeout);
         if (ended.isCompleted) return;
-        if (!timedOut && result != null) {
-          winner = result;
+        if (!timedOut && outcome.profile != null) {
+          onProbeResult?.call(candidate, outcome);
+          winner = outcome.profile;
+          if (candidate.network == 'udp') _udpFailedUntil.remove(network);
           stop();
           return;
         }
@@ -126,8 +149,12 @@ class SmartConnectCandidateSelector {
       }
       if (ended.isCompleted) return;
       failures++;
-      recordFailure(network, candidate.candidateRef);
-      if (candidate.network == 'udp') {
+      final failureKind = timedOut ? 'timeout' : outcome?.failureKind ?? 'unavailable';
+      final failed = SmartConnectCandidateProbeResult.failure(failureKind,
+          duration: outcome?.duration ?? probeClock.elapsed);
+      onProbeResult?.call(candidate, failed);
+      recordFailure(network, candidate.candidateRef, failureKind);
+      if (candidate.network == 'udp' && _networkFailureKinds.contains(failureKind)) {
         _udpFailedUntil[network] = _now().add(failureMemory);
         final tcp = candidates.where((item) => item.network == 'tcp').toList();
         final udp = candidates.where((item) => item.network != 'tcp').toList();
@@ -149,13 +176,21 @@ class SmartConnectCandidateSelector {
       }
     }
     try {
+      Future<void>? preferredRun;
+      var preferredSettled = false;
       if (preferred != null && preferred.isNotEmpty && candidates.isNotEmpty &&
           candidates.first.candidateRef == preferred) {
-        await run(candidates.removeAt(0), selectionTimeout,
-            (elapsed) => preferredProbeTime += elapsed);
+        preferredRun = run(candidates.removeAt(0), selectionTimeout,
+            (elapsed) => preferredProbeTime += elapsed).whenComplete(
+            () => preferredSettled = true);
+        settled.add(preferredRun);
+        await Future.any<void>([ended.future, preferredRun,
+          Future<void>.delayed(const Duration(milliseconds: 350))]);
       }
       final parallelism = const {HostPlatform.android, HostPlatform.ios}.contains(platform) ? 3 : 4;
-      for (var index = 0; index < parallelism; index++) {
+      final workerCount = preferredRun == null || preferredSettled
+          ? parallelism : parallelism - 1;
+      for (var index = 0; index < workerCount; index++) {
         settled.add(worker());
       }
       await Future.wait(settled);

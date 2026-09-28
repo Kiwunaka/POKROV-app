@@ -20,6 +20,9 @@ TransportCandidateCatalog _catalog(List<TransportCandidate> candidates) =>
 ManagedProfilePayload _profile(TransportCandidate candidate) => ManagedProfilePayload(
   profileName: candidate.candidateRef, configPayload: '{}');
 
+SmartConnectCandidateProbeResult _success(TransportCandidate candidate) =>
+  SmartConnectCandidateProbeResult.success(_profile(candidate));
+
 void main() {
   for (final (platform, parallelism) in [(HostPlatform.android, 3), (HostPlatform.windows, 4)]) {
     test('$platform first successful probe cancels and joins the bounded workers', () async {
@@ -39,13 +42,13 @@ void main() {
           if (candidate.priority == 1) {
             await winner.future;
             active--;
-            return _profile(candidate);
+            return _success(candidate);
           }
           await cancelled;
           await Future<void>.delayed(Duration.zero);
           stopped.add(candidate.candidateRef);
           active--;
-          return null;
+          return const SmartConnectCandidateProbeResult.failure('cancelled');
         });
       await Future<void>.delayed(Duration.zero);
       expect(launched, hasLength(parallelism));
@@ -66,7 +69,7 @@ void main() {
       platform: HostPlatform.android, cancelled: Completer<void>().future,
       probe: (candidate, cancelled, timeout) async {
         starts.add(candidate.candidateRef);
-        return _profile(candidate);
+        return _success(candidate);
       });
     expect((await select('network-a')).profileName, 'de:profile_3');
     expect(starts.first, 'de:profile_3');
@@ -85,13 +88,14 @@ void main() {
       preferredCountryCode: 'RU', cancelled: Completer<void>().future,
       probe: (candidate, cancelled, timeout) async {
         started.add(candidate.nodeCode);
-        return candidate.nodeCode == 'ru-spb' ? _profile(candidate) : null;
+        return candidate.nodeCode == 'ru-spb' ? _success(candidate)
+            : const SmartConnectCandidateProbeResult.failure('connect_failed');
       });
     expect(result.profileName, 'ru-spb:profile_2');
     expect(started, ['ru', 'ru-spb']);
   });
 
-  test('UDP failures promote TCP and remain quarantined for thirty minutes', () async {
+  test('UDP network failures promote TCP for four minutes', () async {
     var now = DateTime.utc(2026, 9, 27);
     final selector = SmartConnectCandidateSelector(now: () => now);
     final catalog = _catalog([
@@ -104,16 +108,73 @@ void main() {
       cancelled: Completer<void>().future,
       probe: (candidate, cancelled, timeout) async {
         starts.add(candidate.candidateRef);
-        return failUdp && candidate.network == 'udp' ? null : _profile(candidate);
+        return failUdp && candidate.network == 'udp'
+            ? const SmartConnectCandidateProbeResult.failure('connect_failed')
+            : _success(candidate);
       });
     expect((await select(failUdp: true)).profileName, 'de:profile_4');
     expect(starts.toSet(), hasLength(starts.length));
     starts.clear();
     expect((await select()).profileName, 'de:profile_4');
     expect(starts, isNot(contains('de:profile_0')));
-    now = now.add(const Duration(minutes: 31));
+    now = now.add(const Duration(minutes: 5));
     starts.clear();
     expect((await select()).profileName, 'de:profile_0');
+  });
+
+  test('invalid profile is reported but does not quarantine its candidate', () async {
+    final selector = SmartConnectCandidateSelector();
+    final catalog = _catalog([_candidate(0, udp: true)]);
+    final reported = <String>[];
+    Future<ManagedProfilePayload> select(bool valid) => selector.select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.android,
+      cancelled: Completer<void>().future,
+      onProbeResult: (_, result) => reported.add(result.failureKind),
+      probe: (candidate, cancelled, timeout) async => valid
+          ? _success(candidate)
+          : const SmartConnectCandidateProbeResult.failure('invalid_profile'));
+    await expectLater(select(false), throwsA(isA<SmartConnectSelectionExhausted>()));
+    expect((await select(true)).profileName, 'de:profile_0');
+    expect(reported, ['invalid_profile', '']);
+  });
+
+  test('all candidates are retried when failure memory filters the whole catalog', () async {
+    final selector = SmartConnectCandidateSelector();
+    final catalog = _catalog([_candidate(0), _candidate(1)]);
+    for (final candidate in catalog.candidates) {
+      selector.recordFailure('network-a', candidate.candidateRef, 'timeout');
+    }
+    final started = <String>[];
+    final result = await selector.select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async {
+        started.add(candidate.candidateRef);
+        return _success(candidate);
+      });
+    expect(result.profileName, 'de:profile_0');
+    expect(started, contains('de:profile_0'));
+  });
+
+  test('last success gets a short head start before other candidates', () async {
+    final selector = SmartConnectCandidateSelector();
+    selector.recordSuccess('network-a', 'de:profile_2');
+    final started = <String>[];
+    final selected = selector.select(
+      catalog: _catalog(List.generate(4, _candidate)), network: 'network-a',
+      platform: HostPlatform.android, cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async {
+        started.add(candidate.candidateRef);
+        if (candidate.priority == 2) {
+          await cancelled;
+          return const SmartConnectCandidateProbeResult.failure('cancelled');
+        }
+        return _success(candidate);
+      });
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(started, ['de:profile_2']);
+    expect((await selected).profileName, 'de:profile_0');
+    expect(started, contains('de:profile_0'));
   });
 
   test('recovery tries the current candidate first and stops after three failures', () async {
@@ -126,7 +187,7 @@ void main() {
       probe: (candidate, cancelled, timeout) async {
         starts.add(candidate.candidateRef);
         if (candidate.priority == 5) await firstSettles.future;
-        return null;
+        return const SmartConnectCandidateProbeResult.failure('connect_failed');
       });
     final expectation = expectLater(selection, throwsA(isA<SmartConnectSelectionExhausted>()));
     await Future<void>.delayed(Duration.zero);
@@ -146,7 +207,7 @@ void main() {
         await cancelled;
         await Future<void>.delayed(Duration.zero);
         settled = true;
-        return _profile(candidate);
+        return _success(candidate);
       }), throwsA(isA<SmartConnectSelectionExhausted>()));
     expect(settled, isTrue);
   });
@@ -161,7 +222,7 @@ void main() {
       probe: (candidate, cancelled, timeout) async {
         probed = true;
         expect(timeout, const Duration(milliseconds: 20));
-        return _profile(candidate);
+        return _success(candidate);
       });
     expect(selected.profileName, 'de:profile_0');
     expect(probed, isTrue);
