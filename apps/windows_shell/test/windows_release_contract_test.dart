@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('windows release contract requires POKROV Core 1.1.1', () async {
+  test('windows release contract requires POKROV Core 1.1.2', () async {
     final releaseConfig = File('../../config/windows-release.seed.json');
     final runtimeConfig = File('../../config/runtime-artifacts.seed.json');
 
@@ -98,7 +98,7 @@ void main() {
     expect(runtime.containsKey('helper_binary'), isFalse);
     expect(runtime['service_binary'], 'pokrov_service.exe');
     expect(runtime['core_binary'], 'pokrov-core.dll');
-    expect(runtime['release_tag'], 'v1.1.1');
+    expect(runtime['release_tag'], 'v1.1.2');
     expect(runtime['desktop_abi'], 2);
     final crashProfile = runtime['crash_profile'] as Map<String, dynamic>;
     expect(crashProfile['format'], 'POKROV_WINDOWS_CRASH_V1');
@@ -116,7 +116,7 @@ void main() {
     final assets = core['assets'] as Map<String, dynamic>;
     final windows = assets['windows'] as Map<String, dynamic>;
     expect(windows.containsKey('helper'), isFalse);
-    expect(core['release_tag'], 'v1.1.1');
+    expect(core['release_tag'], 'v1.1.2');
     expect((core['desktop_abi'] as Map<String, dynamic>)['version'], 2);
     expect(windows['entry'], 'pokrov-core.dll');
     expect(
