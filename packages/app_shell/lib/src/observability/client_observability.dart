@@ -442,10 +442,11 @@ final class PokrovClientObservability {
     _emitCurrent(
       name: 'app.connection.candidate_probe.finished',
       subsystem: 'connection',
-      stage: 'probe',
+      stage: 'verify',
       outcome: failureKind.isEmpty
           ? ObservabilityOutcome.succeeded
-          : ObservabilityOutcome.failed,
+          : ObservabilityOutcome.degraded,
+      errorCode: failureKind.isEmpty ? null : 'CONN-008',
       attributes: <String, Object?>{
         'failure_kind': failureKind.isEmpty ? 'none' : failureKind,
         'duration_ms': duration.inMilliseconds.clamp(0, 30000),

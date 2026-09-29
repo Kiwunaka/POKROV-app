@@ -91,6 +91,8 @@ The last successful candidate gets up to 350 ms before alternatives. Only typed
 network probe failures suppress a candidate for four minutes or move TCP ahead
 of UDP; an empty filtered catalog retries every eligible candidate. Candidate
 failure kinds enter the local journal and runtime stats without profile data.
+Probe journal entries use the validated `verify` stage and typed failure kind;
+a failed candidate is a degraded child event and cannot abort selection.
 Windows managed profiles use only TUN (no loopback mixed listener) and start
 Core with `disableMemoryLimit=true`, including restored cached profiles. A
 confirmed candidate-network read clears a stale Windows probe-settlement latch

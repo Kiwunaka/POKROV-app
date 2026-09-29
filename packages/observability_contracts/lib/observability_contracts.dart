@@ -87,6 +87,7 @@ abstract final class ObservabilityAttributeKeys {
     'effective_mtu',
     'egress_ready',
     'error_count',
+    'failure_kind',
     'from_version',
     'interface_ready',
     'journal_kind',

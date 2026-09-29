@@ -270,6 +270,43 @@ void main() {
     expect(observability.dispatcher.snapshot().rejectedAsStale, 0);
   });
 
+  test(
+      'failed candidate probe records typed failure without interrupting connection',
+      () async {
+    final directory =
+        await Directory.systemTemp.createTemp('pokrov-obs-probe-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.windows,
+      directoryResolver: () async => directory,
+      buildIdentity: _build(),
+    );
+
+    await observability.runConnectionAction(() async {
+      observability.recordCandidateProbe(
+        failureKind: 'connect_failed',
+        duration: const Duration(milliseconds: 375),
+      );
+    }, beginsWithDisconnect: false);
+    await observability.flush();
+
+    final event = observability.dispatcher.breadcrumbs.snapshot().lastWhere(
+          (value) => value.name == 'app.connection.candidate_probe.finished',
+        );
+    expect(event.outcome.wireValue, 'degraded');
+    expect(event.errorCode, 'CONN-008');
+    final recorded = await File(
+      '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
+    ).readAsLines();
+    final probe = recorded
+        .map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .lastWhere((value) =>
+            value['name'] == 'app.connection.candidate_probe.finished');
+    expect(probe['stage'], 'verify');
+    expect((probe['attributes'] as Map<String, dynamic>)['failure_kind'],
+        'connect_failed');
+  });
+
   test('active app-first client emits correlation header and aggregate batch',
       () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-obs-api-');

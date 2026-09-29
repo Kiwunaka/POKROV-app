@@ -119,6 +119,21 @@ abstract final class OperationalAttributePolicy {
       'revoked',
     },
     'support_mode': <String>{'off', 'temporary'},
+    'failure_kind': <String>{
+      'none',
+      'invalid_request',
+      'invalid_profile',
+      'unavailable',
+      'start_failed',
+      'probe_failed',
+      'connect_failed',
+      'tls_failed',
+      'unexpected_status',
+      'timeout',
+      'cancelled',
+      'network_changed',
+      'duplicate_probe',
+    },
   };
 
   static final _versionPattern = RegExp(
