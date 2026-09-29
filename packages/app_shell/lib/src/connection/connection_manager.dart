@@ -317,6 +317,7 @@ class ConnectionManager extends ChangeNotifier {
   String? _candidateNetworkKey;
   String? _candidateNetworkClass;
   String? _candidateCarrierMccMnc;
+  String? _candidateCarrierName;
   String? _candidateAccessNetworkAsn;
   String? _candidateRef;
   String? _activeCandidateRef;
@@ -778,6 +779,7 @@ class ConnectionManager extends ChangeNotifier {
         retryable: retryable,
         networkClass: _candidateNetworkClass ?? '',
         carrierMccMnc: _candidateCarrierMccMnc ?? '',
+        carrierName: _candidateCarrierName ?? '',
         accessNetworkAsn: _candidateAccessNetworkAsn ?? '',
         candidateTransport: _candidateTransport(candidate),
         candidateRef: candidate?.candidateRef ?? '',
@@ -1833,6 +1835,7 @@ class ConnectionManager extends ChangeNotifier {
       _candidateRef = null;
       _candidateNetworkClass = null;
       _candidateCarrierMccMnc = null;
+      _candidateCarrierName = null;
       _candidateAccessNetworkAsn = null;
     }
     _setPhase(recoveryCandidateRef.isEmpty ? ConnectionPhase.preparing : ConnectionPhase.recovering, generation);
@@ -1895,6 +1898,7 @@ class ConnectionManager extends ChangeNotifier {
       final key = asn.isNotEmpty ? 'asn:$asn' : nativeKey;
       _candidateNetworkClass = network.networkClass;
       _candidateCarrierMccMnc = network.mccMnc;
+      _candidateCarrierName = network.carrierName;
       _candidateAccessNetworkAsn = asn.isEmpty ? null : asn;
       final cache = _bootstrapper;
       if (cache is CachedManagedProfileBootstrapper) {
@@ -2096,6 +2100,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       _candidateNetworkClass = network.networkClass;
       _candidateCarrierMccMnc = network.mccMnc;
+      _candidateCarrierName = network.carrierName;
       _candidateAccessNetworkAsn = null;
       if (recoveryCandidateRef.isEmpty) {
         final remembered = await service.successfulCandidateRef(inputs, key);
@@ -2898,6 +2903,7 @@ class ConnectionManager extends ChangeNotifier {
       _candidateRef = null;
       _candidateNetworkClass = null;
       _candidateCarrierMccMnc = null;
+      _candidateCarrierName = null;
       _candidateAccessNetworkAsn = null;
     }
     final generation = _connectionCoordinator.operationGeneration;
@@ -3637,6 +3643,7 @@ class ConnectionManager extends ChangeNotifier {
             _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
         networkClass: _candidateNetworkClass ?? '',
         carrierMccMnc: _candidateCarrierMccMnc ?? '',
+        carrierName: _candidateCarrierName ?? '',
         accessNetworkAsn: _candidateAccessNetworkAsn ?? '',
         candidateTransport: _candidateTransport(candidate),
         candidateRef: candidate?.candidateRef ?? '',

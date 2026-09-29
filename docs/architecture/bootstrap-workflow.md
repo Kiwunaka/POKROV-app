@@ -89,8 +89,9 @@ four seconds per candidate; profile HTTP still obeys the connect action deadline
 Cancellation settles profile and native work before releasing a worker.
 The last successful candidate gets up to 350 ms before alternatives. Only typed
 network probe failures suppress a candidate for four minutes or move TCP ahead
-of UDP; an empty filtered catalog retries every eligible candidate. Probe
-outcomes enter the local journal and one bounded batch in the final runtime
+of UDP; an empty filtered catalog retries every eligible candidate.
+`data_stalled` is one of those typed network failures. Probe outcomes enter
+the local journal and one bounded batch in the final runtime
 stats event, with catalog candidate refs and transport names but no profile data.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
@@ -107,6 +108,8 @@ local key for Wi-Fi and desktop selection; an active tunnel does not replace
 that key with its exit ASN. The request's report run ID lets the portal attach
 the pre-tunnel ASN to later stats, which report network class, candidate
 transport, and the validated ASN or cellular code when available.
+For cellular links, the observed operator name is included in stats only when
+present and at most 80 characters; it is never used as the network key.
 Ordinary catalog location changes use the location catalog's policy metadata,
 so the previous AWG candidate cannot impose
 a legacy laboratory node allowlist. A completed explicit Android Disconnect

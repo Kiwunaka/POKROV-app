@@ -83,6 +83,7 @@ class _StubBootstrapper
     bool? retryable,
     String networkClass = '',
     String carrierMccMnc = '',
+    String carrierName = '',
     String candidateTransport = '',
     String candidateRef = '',
     String candidateVariant = '',

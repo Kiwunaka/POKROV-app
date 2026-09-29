@@ -163,4 +163,32 @@ void main() {
         expectedNetworkContext: 'context-new');
     expect(result, RuntimeCandidateProbeResult.unavailable);
   });
+
+  test('candidate bridge preserves cellular carrier and Core data stall', () async {
+    var carrier = ' Test Carrier ';
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.candidateNetwork') {
+        return {
+          'selection_key': 'android:cellular:25099',
+          'context_ref': 'context-cellular',
+          'network_class': 'cellular',
+          'mcc_mnc': '25099',
+          'carrier': carrier,
+        };
+      }
+      return {'success': false, 'failure_kind': 'data_stalled', 'duration_ms': 2000};
+    });
+    final runtime = MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.android);
+    final network = await runtime.readCandidateNetwork();
+    expect(network.carrierName, 'Test Carrier');
+    carrier = List.filled(81, 'x').join();
+    expect((await runtime.readCandidateNetwork()).carrierName, isNull);
+    final result = await runtime.probeCandidate(
+      probeId: 'candidate-stalled',
+      payload: const ManagedProfilePayload(profileName: 'candidate', configPayload: '{}'),
+      timeout: const Duration(seconds: 3),
+      expectedNetworkContext: 'context-cellular',
+    );
+    expect(result.failureKind, 'data_stalled');
+  });
 }

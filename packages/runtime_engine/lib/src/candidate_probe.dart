@@ -31,6 +31,7 @@ class RuntimeCandidateNetwork extends RuntimeNetworkStatusObservation {
     this.contextRef,
     this.networkClass,
     this.mccMnc,
+    this.carrierName,
     super.networkAvailable,
     super.captivePortal,
   });
@@ -46,6 +47,9 @@ class RuntimeCandidateNetwork extends RuntimeNetworkStatusObservation {
 
   /// Cellular MCC-MNC reported by Android; absent on other uplinks.
   final String? mccMnc;
+
+  /// Cellular operator name reported by Android, when available.
+  final String? carrierName;
 }
 
 class RuntimeCandidateProbeResult {
@@ -76,6 +80,7 @@ mixin _CandidateProbeChannel
       final value = await _channel
           .invokeMethod<Object?>('runtimeEngine.candidateNetwork');
       if (value is! Map) return const RuntimeCandidateNetwork();
+      final carrier = value['carrier'];
       return RuntimeCandidateNetwork(
         selectionKey: value['selection_key'] is String
             ? value['selection_key'] as String
@@ -90,6 +95,11 @@ mixin _CandidateProbeChannel
         mccMnc: value['mcc_mnc'] is String &&
                 RegExp(r'^\d{5,6}$').hasMatch(value['mcc_mnc'] as String)
             ? value['mcc_mnc'] as String
+            : null,
+        carrierName: value['network_class'] == 'cellular' && carrier is String &&
+                carrier.trim().isNotEmpty && carrier.trim().length <= 80 &&
+                !RegExp(r'[\x00-\x1f\x7f]').hasMatch(carrier)
+            ? carrier.trim()
             : null,
         networkAvailable: value['network_available'] is bool
             ? value['network_available'] as bool
@@ -172,6 +182,7 @@ mixin _CandidateProbeChannel
       'start_failed',
       'probe_failed',
       'connect_failed',
+      'data_stalled',
       'tls_failed',
       'unexpected_status',
       'timeout',

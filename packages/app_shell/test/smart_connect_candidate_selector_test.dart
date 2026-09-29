@@ -95,7 +95,7 @@ void main() {
     expect(started, ['ru', 'ru-spb']);
   });
 
-  test('UDP network failures promote TCP for four minutes', () async {
+  test('UDP data stalls promote TCP for four minutes', () async {
     var now = DateTime.utc(2026, 9, 27);
     final selector = SmartConnectCandidateSelector(now: () => now);
     final catalog = _catalog([
@@ -109,7 +109,7 @@ void main() {
       probe: (candidate, cancelled, timeout) async {
         starts.add(candidate.candidateRef);
         return failUdp && candidate.network == 'udp'
-            ? const SmartConnectCandidateProbeResult.failure('connect_failed')
+            ? const SmartConnectCandidateProbeResult.failure('data_stalled')
             : _success(candidate);
       });
     expect((await select(failUdp: true)).profileName, 'de:profile_4');

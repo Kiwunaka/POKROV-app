@@ -161,7 +161,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     required bool connected, String errorCode = '', String failureKind = '',
     String selectedNodeCode = '', String routeMode = '', int? durationMs,
     int? attemptNumber, bool? retryable, String networkClass = '',
-    String carrierMccMnc = '', String candidateTransport = '',
+    String carrierMccMnc = '', String carrierName = '', String candidateTransport = '',
     String candidateRef = '', String candidateVariant = '',
     String accessNetworkAsn = '', List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,

@@ -31,7 +31,7 @@ class SmartConnectCandidateSelector {
   final _udpFailedUntil = <String, DateTime>{};
   static const failureMemory = Duration(minutes: 4);
   static const _networkFailureKinds = <String>{
-    'connect_failed', 'tls_failed', 'timeout',
+    'connect_failed', 'tls_failed', 'timeout', 'data_stalled',
     'core_egress_connect_failed', 'core_egress_tls_failed',
     'core_egress_dns_failed',
   };

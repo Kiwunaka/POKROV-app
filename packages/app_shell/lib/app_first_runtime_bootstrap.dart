@@ -713,6 +713,7 @@ abstract interface class AppFirstExperienceService {
     bool? retryable,
     String networkClass = '',
     String carrierMccMnc = '',
+    String carrierName = '',
     String candidateTransport = '',
     String candidateRef = '',
     String candidateVariant = '',
@@ -3927,6 +3928,7 @@ class AppFirstRuntimeBootstrapper
     bool? retryable,
     String networkClass = '',
     String carrierMccMnc = '',
+    String carrierName = '',
     String candidateTransport = '',
     String candidateRef = '',
     String candidateVariant = '',
@@ -3941,6 +3943,7 @@ class AppFirstRuntimeBootstrapper
     final safeRouteMode = routeMode.trim().toLowerCase();
     final safeNetworkClass = networkClass.trim().toLowerCase();
     final safeCarrierMccMnc = carrierMccMnc.trim();
+    final safeCarrierName = carrierName.trim();
     final safeCandidateTransport = candidateTransport.trim().toLowerCase();
     final safeCandidateRef = candidateRef.trim().toLowerCase();
     final safeCandidateVariant = candidateVariant.trim().toLowerCase();
@@ -3999,6 +4002,10 @@ class AppFirstRuntimeBootstrapper
           'network_class': safeNetworkClass,
         if (safeNetworkClass == 'cellular' && RegExp(r'^\d{5,6}$').hasMatch(safeCarrierMccMnc))
           'carrier_mcc_mnc': safeCarrierMccMnc,
+        if (safeNetworkClass == 'cellular' && safeCarrierName.isNotEmpty &&
+            safeCarrierName.length <= 80 &&
+            !RegExp(r'[\x00-\x1f\x7f]').hasMatch(safeCarrierName))
+          'carrier_name': safeCarrierName,
         if (const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
           'xhttp_tls', 'hysteria2', 'awg31'}.contains(safeCandidateTransport))
           'candidate_transport': safeCandidateTransport,
