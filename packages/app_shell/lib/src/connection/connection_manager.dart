@@ -2489,6 +2489,9 @@ class ConnectionManager extends ChangeNotifier {
         catalogPolicy: catalogPolicy,
         nativeCatalogWindowVersion: nativeCatalogWindowVersion,
         nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion,
+        defaultRuAppPackageIds: _appContext.hostPlatform == HostPlatform.android
+            ? pokrovRuAppCatalog.map((entry) => entry.packageId).toList()
+            : const <String>[],
       );
       final grants = catalogPolicy?.smartAccessProfile?.byService.values
           .expand((group) => group);

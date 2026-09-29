@@ -85,7 +85,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
           protocol: selected.protocol),
       resolvedNodeCode: nodeCode,
       configPayload:
-          '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+          '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
       materializedForRuntime: true,
       routeMode: routeMode,
       warpPolicy:
@@ -134,7 +134,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
           selectedCandidateRef: selected.candidateRef, candidates: alternatives),
       source: RuntimeProfileSource(revision: 'cached', origin: RuntimeProfileSourceOrigin.managedManifest,
           protocol: selected.protocol),
-      configPayload: '{"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+      configPayload: '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
       materializedForRuntime: true, routeMode: inputs.routeMode, resolvedNodeCode: 'de');
   }
   @override

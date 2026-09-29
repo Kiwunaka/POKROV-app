@@ -107,6 +107,12 @@ Windows managed profiles use only TUN (no loopback mixed listener) and start
 Core with `disableMemoryLimit=true`, including restored cached profiles. A
 confirmed candidate-network read clears a stale Windows probe-settlement latch
 when no candidate probes remain.
+
+The managed `allExceptRu` route rejects sniffed BitTorrent traffic before
+Direct rules. On Android, the same mode excludes package IDs from the reviewed
+Russian app catalog at the TUN boundary, so those apps use the device network;
+other routing modes keep their existing app scope.
+
 Android cellular selection uses the observed MCC-MNC and sends that code as the
 managed-profile carrier header. Windows keeps its network-key salt in the
 protected ServiceRuntime directory so a service restart preserves local network

@@ -476,6 +476,79 @@ void main() {
     );
   });
 
+  test('allExceptRu rejects BitTorrent after sniff and before Direct on Windows', () {
+    final direct = PokrovRouteOverride.tryCreate(
+      value: 'example.ru',
+      action: PokrovRouteAction.direct,
+    )!;
+    final transformed = applyPokrovRoutingPreferences(
+      _windowsProfile().copyWith(routeMode: RouteMode.allExceptRu),
+      PokrovRoutingPreferences.defaults().copyWith(
+        overrides: <PokrovRouteOverride>[direct],
+      ),
+      hostPlatform: HostPlatform.windows,
+    );
+    final config = _jsonMap(transformed.configPayload);
+    final rules = _maps(_map(config['route'])['rules']);
+    expect(rules[0]['action'], 'hijack-dns');
+    expect(rules[1]['action'], 'sniff');
+    expect(rules[2], <String, Object?>{
+      'protocol': 'bittorrent',
+      'action': 'reject',
+    });
+    expect(rules.indexWhere((rule) => rule['outbound'] == 'direct'), greaterThan(2));
+    expect(_maps(config['inbounds']).first.containsKey('exclude_package'), isFalse);
+  });
+
+  test('allExceptRu excludes reviewed Android packages from TUN once', () {
+    final config = _jsonMap(_profile().configPayload);
+    config['inbounds'] = <Object?>[
+      <String, Object?>{
+        'type': 'tun',
+        'tag': 'tun-in',
+        'sniff': true,
+        'exclude_package': <String>['space.pokrov.pokrov_android_shell'],
+      },
+    ];
+    final route = _map(config['route']);
+    route['rules'] = <Object?>[
+      <String, Object?>{'protocol': 'dns', 'action': 'hijack-dns'},
+      ..._maps(route['rules']),
+    ];
+    config['route'] = route;
+    final packageIds = pokrovRuAppCatalog.map((entry) => entry.packageId).toList();
+    final profile = _profile().copyWith(
+      routeMode: RouteMode.allExceptRu,
+      configPayload: jsonEncode(config),
+    );
+    final once = applyPokrovRoutingPreferences(
+      profile,
+      const PokrovRoutingPreferences.defaults(),
+      hostPlatform: HostPlatform.android,
+      defaultRuAppPackageIds: packageIds,
+    );
+    final twice = applyPokrovRoutingPreferences(
+      once,
+      const PokrovRoutingPreferences.defaults(),
+      hostPlatform: HostPlatform.android,
+      defaultRuAppPackageIds: packageIds,
+    );
+    final finalConfig = _jsonMap(twice.configPayload);
+    final tun = _maps(finalConfig['inbounds']).single;
+    final rules = _maps(_map(finalConfig['route'])['rules']);
+    expect(tun['exclude_package'], <String>[
+      'space.pokrov.pokrov_android_shell',
+      ...packageIds,
+    ]);
+    expect(tun.containsKey('include_package'), isFalse);
+    expect(rules[0]['action'], 'hijack-dns');
+    expect(rules[1], <String, Object?>{
+      'protocol': 'bittorrent',
+      'action': 'reject',
+    });
+    expect(rules.where((rule) => rule['protocol'] == 'bittorrent'), hasLength(1));
+  });
+
   test('legacy Windows system-proxy preference migrates to service TUN',
       () async {
     final fixture = jsonDecode(

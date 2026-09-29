@@ -485,13 +485,16 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   String? catalogAccessState,
   int nativeCatalogWindowVersion = 0,
   int nativeSmartAccessLeaseVersion = 0,
+  List<String> defaultRuAppPackageIds = const <String>[],
 }) {
   if (catalogPolicy != null) {
-    return _applyCatalogRoutingPreferences(payload, preferences,
+    final configured = _applyCatalogRoutingPreferences(payload, preferences,
       hostPlatform: hostPlatform, policy: catalogPolicy,
       catalogAccessState: catalogAccessState,
       nativeWindowVersion: nativeCatalogWindowVersion,
       nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion);
+    return _applyAllExceptRuDefaults(configured, hostPlatform,
+        defaultRuAppPackageIds);
   }
   if (payload.routeMode == RouteMode.selectiveServices) {
     throw const RoutingCatalogFailure('catalog_selective_policy_required');
@@ -658,7 +661,45 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     config['dns'] = dns;
   }
 
-  return payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1);
+  return _applyAllExceptRuDefaults(
+      payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1),
+      hostPlatform, defaultRuAppPackageIds);
+}
+
+ManagedProfilePayload _applyAllExceptRuDefaults(
+    ManagedProfilePayload payload, HostPlatform hostPlatform,
+    List<String> defaultRuAppPackageIds) {
+  if (payload.routeMode != RouteMode.allExceptRu) return payload;
+
+  final config = _routingMap(jsonDecode(payload.configPayload));
+  final route = _routingMap(config['route']);
+  final rules = _routingListOfMaps(route['rules'])
+    ..removeWhere((rule) =>
+        rule['protocol'] == 'bittorrent' && rule['action'] == 'reject');
+  var insertAt = 0;
+  while (insertAt < rules.length &&
+      (rules[insertAt]['action'] == 'hijack-dns' ||
+          rules[insertAt]['action'] == 'sniff')) {
+    insertAt++;
+  }
+  rules.insert(insertAt, <String, dynamic>{
+    'protocol': 'bittorrent',
+    'action': 'reject',
+  });
+  route['rules'] = rules;
+  config['route'] = route;
+
+  if (hostPlatform == HostPlatform.android &&
+      defaultRuAppPackageIds.isNotEmpty) {
+    final inbounds = _routingListOfMaps(config['inbounds']);
+    final tun = inbounds.firstWhere((inbound) => inbound['type'] == 'tun');
+    tun['exclude_package'] = <String>{
+      ..._routingList(tun['exclude_package']).whereType<String>(),
+      ...defaultRuAppPackageIds,
+    }.toList();
+    config['inbounds'] = inbounds;
+  }
+  return payload.copyWith(configPayload: jsonEncode(config));
 }
 
 ManagedProfilePayload _applyCatalogRoutingPreferences(
