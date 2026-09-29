@@ -32,6 +32,7 @@ class SmartConnectCandidateSelector {
   static const failureMemory = Duration(minutes: 4);
   static const _networkFailureKinds = <String>{
     'connect_failed', 'tls_failed', 'timeout', 'data_stalled',
+    'probe_failed', 'unexpected_status',
     'core_egress_connect_failed', 'core_egress_tls_failed',
     'core_egress_dns_failed',
   };
@@ -149,7 +150,7 @@ class SmartConnectCandidateSelector {
       }
       if (ended.isCompleted) return;
       failures++;
-      final failureKind = timedOut ? 'timeout' : outcome?.failureKind ?? 'unavailable';
+      final failureKind = timedOut ? 'probe_budget_expired' : outcome?.failureKind ?? 'unavailable';
       final failed = SmartConnectCandidateProbeResult.failure(failureKind,
           duration: outcome?.duration ?? probeClock.elapsed);
       onProbeResult?.call(candidate, failed);

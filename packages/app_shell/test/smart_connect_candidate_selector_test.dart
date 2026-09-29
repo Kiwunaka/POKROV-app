@@ -138,6 +138,50 @@ void main() {
     expect(reported, ['invalid_profile', '']);
   });
 
+  test('probe failure and unexpected status suppress only their candidate', () async {
+    final catalog = _catalog([_candidate(0), _candidate(1)]);
+    for (final kind in ['probe_failed', 'unexpected_status']) {
+      final selector = SmartConnectCandidateSelector();
+      selector.recordFailure('network-a', 'de:profile_0', kind);
+      final result = await selector.select(
+        catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
+        cancelled: Completer<void>().future,
+        probe: (candidate, cancelled, timeout) async => _success(candidate),
+      );
+      expect(result.profileName, 'de:profile_1');
+    }
+  });
+
+  test('local probe budget expiry does not suppress the candidate', () async {
+    final selector = SmartConnectCandidateSelector();
+    final catalog = _catalog([_candidate(0), _candidate(1)]);
+    final reported = <String>[];
+    await expectLater(selector.select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      probeTimeout: const Duration(milliseconds: 20),
+      onProbeResult: (_, result) => reported.add(result.failureKind),
+      probe: (candidate, cancelled, timeout) async {
+        if (candidate.priority == 0) await cancelled;
+        return const SmartConnectCandidateProbeResult.failure('invalid_profile');
+      },
+    ), throwsA(isA<SmartConnectSelectionExhausted>()));
+    expect(reported, contains('probe_budget_expired'));
+    final selected = await selector.select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      probeTimeout: const Duration(milliseconds: 20),
+      probe: (candidate, cancelled, timeout) async {
+        if (candidate.priority == 1) {
+          await cancelled;
+          return const SmartConnectCandidateProbeResult.failure('cancelled');
+        }
+        return _success(candidate);
+      },
+    );
+    expect(selected.profileName, 'de:profile_0');
+  });
+
   test('all candidates are retried when failure memory filters the whole catalog', () async {
     final selector = SmartConnectCandidateSelector();
     final catalog = _catalog([_candidate(0), _candidate(1)]);

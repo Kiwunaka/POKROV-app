@@ -93,6 +93,8 @@ of UDP; an empty filtered catalog retries every eligible candidate.
 `data_stalled` is one of those typed network failures. Probe outcomes enter
 the local journal and one bounded batch in the final runtime
 stats event, with catalog candidate refs and transport names but no profile data.
+Core `probe_failed` and `unexpected_status` are also remembered; a local timer
+reports `probe_budget_expired` and never suppresses a candidate.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
 Windows managed profiles use only TUN (no loopback mixed listener) and start
