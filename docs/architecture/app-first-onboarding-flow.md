@@ -20,6 +20,12 @@ to fixed owned HTTPS hosts, without proxy, redirects or default-network
 fallback. Carrier comes from the default data subscription; Wi-Fi is not
 labeled with the SIM operator. No GPS or additional permission is requested.
 The source IP remains server-side, never in Dart, logs or consumer UI.
+The native observation also returns the cellular MCC-MNC as five or six ASCII
+digits when Android provides it. The cellular candidate selection key uses this
+operator code and network type, so a changed Android network handle does not
+discard a recent result on the same operator. If the code is unavailable,
+the existing handle key remains. Wi-Fi keeps its existing local
+key until an AS-based key is available; neither key includes IP or coordinates.
 
 If the direct path fails, ordinary authenticated transport sends carrier/class
 with `direct_observation=false`; its IP cannot become the underlying address.

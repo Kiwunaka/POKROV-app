@@ -16,6 +16,24 @@ import javax.net.ssl.HttpsURLConnection
 internal object AndroidNetworkDiagnostics {
     private val ownedHosts = setOf("app.pokrov.space", "api.pokrov.space")
 
+    internal data class MobileOperator(val carrier: String?, val mccMnc: String?)
+
+    internal fun safeMccMnc(value: String?): String? = value?.takeIf {
+        it.length in 5..6 && it.all { digit -> digit in '0'..'9' }
+    }
+
+    internal fun mobileOperator(context: Context): MobileOperator? = runCatching {
+        var telephony = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val subscription = SubscriptionManager.getDefaultDataSubscriptionId()
+            if (SubscriptionManager.isValidSubscriptionId(subscription)) {
+                telephony = telephony.createForSubscriptionId(subscription)
+            }
+        }
+        MobileOperator(safeCarrier(telephony.networkOperatorName),
+            safeMccMnc(telephony.networkOperator))
+    }.getOrNull()
+
     internal fun observationUrl(baseUrl: String): URL? = runCatching {
         val uri = URI(baseUrl)
         if (uri.scheme != "https" || uri.host !in ownedHosts ||
@@ -37,7 +55,8 @@ internal object AndroidNetworkDiagnostics {
         context: Context, baseUrl: String, sessionToken: String,
         appVersion: String, profileRevision: String, runtimePhase: String,
     ): Map<String, Any?> {
-        val unavailable = mapOf("status" to "unavailable", "network_class" to "unknown", "carrier" to null)
+        val unavailable = mapOf("status" to "unavailable", "network_class" to "unknown",
+            "carrier" to null, "mcc_mnc" to null)
         val url = observationUrl(baseUrl) ?: return emptyMap()
         if (sessionToken.isBlank() || sessionToken.length > 8192 ||
             sessionToken.any { it.isISOControl() }) return emptyMap()
@@ -50,17 +69,10 @@ internal object AndroidNetworkDiagnostics {
             capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> "ethernet"
             else -> "other"
         }
-        val carrier = if (networkClass == "cellular") runCatching {
-            var telephony = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                val subscription = SubscriptionManager.getDefaultDataSubscriptionId()
-                if (SubscriptionManager.isValidSubscriptionId(subscription)) {
-                    telephony = telephony.createForSubscriptionId(subscription)
-                }
-            }
-            safeCarrier(telephony.networkOperatorName)
-        }.getOrNull() else null
-        val fields = mapOf("network_class" to networkClass, "carrier" to carrier)
+        val mobile = if (networkClass == "cellular") mobileOperator(context) else null
+        val carrier = mobile?.carrier
+        val fields = mapOf("network_class" to networkClass, "carrier" to carrier,
+            "mcc_mnc" to mobile?.mccMnc)
         var connection: HttpsURLConnection? = null
         return try {
             // Explicit network binding and no proxy/default-network fallback.

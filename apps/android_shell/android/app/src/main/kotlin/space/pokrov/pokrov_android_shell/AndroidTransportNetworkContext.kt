@@ -17,13 +17,23 @@ internal class AndroidTransportNetworkContext(context: Context) {
         val contextRef: String?,
         val networkAvailable: Boolean?,
         val captivePortal: Boolean?,
+        val networkClass: String? = null,
+        val mccMnc: String? = null,
     ) {
         fun channelValue(): Map<String, Any?> = mapOf(
-            "selection_key" to network?.let { "android:${it.networkHandle}" },
+            "selection_key" to selectionKey(network?.networkHandle, networkClass, mccMnc),
             "context_ref" to contextRef,
             "network_available" to networkAvailable,
             "captive_portal" to captivePortal,
+            "network_class" to networkClass,
+            "mcc_mnc" to mccMnc,
         )
+
+        companion object {
+            fun selectionKey(handle: Long?, networkClass: String?, mccMnc: String?): String? =
+                if (networkClass == "cellular" && mccMnc != null) "android:cellular:$mccMnc"
+                else handle?.let { "android:$it" }
+        }
     }
 
     private data class UplinkCapabilities(
@@ -34,7 +44,8 @@ internal class AndroidTransportNetworkContext(context: Context) {
         val captivePortal: Boolean,
     )
 
-    private val manager = context.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val appContext = context.applicationContext
+    private val manager = appContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val lock = Any()
     private var closed = false
     private var network: Network? = null
@@ -102,11 +113,18 @@ internal class AndroidTransportNetworkContext(context: Context) {
 
     fun candidateNetwork(): CandidateNetwork {
         refresh()
-        return synchronized(lock) {
+        val observed = synchronized(lock) {
             if (closed) return@synchronized CandidateNetwork(null, null, null, null, null)
             val observed = capabilities
             if (network != null && observed != null) {
-                CandidateNetwork(network, links, reference, true, observed.captivePortal)
+                val networkClass = when {
+                    observed.cellular -> "cellular"
+                    observed.wifi -> "wifi"
+                    observed.ethernet -> "ethernet"
+                    else -> "other"
+                }
+                CandidateNetwork(network, links, reference, true, observed.captivePortal,
+                    networkClass)
             } else {
                 // A failed/racing capability read is unknown, not proof of no network.
                 val available = runCatching {
@@ -118,6 +136,9 @@ internal class AndroidTransportNetworkContext(context: Context) {
                 CandidateNetwork(null, null, null, available, if (available == false) false else null)
             }
         }
+        return if (observed.networkClass == "cellular") observed.copy(
+            mccMnc = AndroidNetworkDiagnostics.mobileOperator(appContext)?.mccMnc,
+        ) else observed
     }
 
     fun isCurrent(expected: String): Boolean = reference == expected

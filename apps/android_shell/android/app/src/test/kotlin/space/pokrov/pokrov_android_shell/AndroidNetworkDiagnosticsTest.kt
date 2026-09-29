@@ -24,4 +24,13 @@ class AndroidNetworkDiagnosticsTest {
         assertNull(AndroidNetworkDiagnostics.safeCarrier("https://example.test"))
         assertNull(AndroidNetworkDiagnostics.safeCarrier("x".repeat(81)))
     }
+
+    @Test
+    fun mobileOperatorCodeIsOnlyAsciiMccAndMnc() {
+        assertEquals("25001", AndroidNetworkDiagnostics.safeMccMnc("25001"))
+        assertEquals("310260", AndroidNetworkDiagnostics.safeMccMnc("310260"))
+        assertNull(AndroidNetworkDiagnostics.safeMccMnc("25001\n"))
+        assertNull(AndroidNetworkDiagnostics.safeMccMnc("25A01"))
+        assertNull(AndroidNetworkDiagnostics.safeMccMnc(""))
+    }
 }
