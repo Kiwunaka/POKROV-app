@@ -26,6 +26,7 @@ operator code and network type, so a changed Android network handle does not
 discard a recent result on the same operator. If the code is unavailable,
 the existing handle key remains. Wi-Fi keeps its existing local
 key until an AS-based key is available; neither key includes IP or coordinates.
+The candidate-network response includes the carrier name only for cellular.
 
 If the direct path fails, ordinary authenticated transport sends carrier/class
 with `direct_observation=false`; its IP cannot become the underlying address.

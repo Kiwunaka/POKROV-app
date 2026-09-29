@@ -19,6 +19,7 @@ internal class AndroidTransportNetworkContext(context: Context) {
         val captivePortal: Boolean?,
         val networkClass: String? = null,
         val mccMnc: String? = null,
+        val carrier: String? = null,
     ) {
         fun channelValue(): Map<String, Any?> = mapOf(
             "selection_key" to selectionKey(network?.networkHandle, networkClass, mccMnc),
@@ -27,7 +28,7 @@ internal class AndroidTransportNetworkContext(context: Context) {
             "captive_portal" to captivePortal,
             "network_class" to networkClass,
             "mcc_mnc" to mccMnc,
-        )
+        ) + if (networkClass == "cellular") mapOf("carrier" to carrier) else emptyMap()
 
         companion object {
             fun selectionKey(handle: Long?, networkClass: String?, mccMnc: String?): String? =
@@ -136,9 +137,9 @@ internal class AndroidTransportNetworkContext(context: Context) {
                 CandidateNetwork(null, null, null, available, if (available == false) false else null)
             }
         }
-        return if (observed.networkClass == "cellular") observed.copy(
-            mccMnc = AndroidNetworkDiagnostics.mobileOperator(appContext)?.mccMnc,
-        ) else observed
+        if (observed.networkClass != "cellular") return observed
+        val mobile = AndroidNetworkDiagnostics.mobileOperator(appContext)
+        return observed.copy(mccMnc = mobile?.mccMnc, carrier = mobile?.carrier)
     }
 
     fun isCurrent(expected: String): Boolean = reference == expected
