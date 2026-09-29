@@ -1,8 +1,27 @@
-# Client 1.3.0 release status
+# Client release status
 
-Public version: **1.3.0+4080** with POKROV Core 1.1.0 in
+Public version: **1.4.0+4081** with POKROV Core 1.1.2 in
 `Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
-beta with a SmartScreen warning. Versions 1.2.0 and 1.1.6 remain available for rollback.
+beta with a SmartScreen warning. Version 1.3.0 remains available for rollback.
+
+## Client 1.4.0 publication, 2026-09-29
+
+Owner-approved quiet publication at 10:10 UTC from client main `f6e5947`,
+files built at 11:07–11:11 MSK and published without rebuilding; GitHub asset
+digests match the staged SHA256SUMS. Huawei ran the final APK over 1.3 without
+clearing data: Core 1.1.2 loaded, Auto connected, the 11 installed RU-catalog
+apps bypassed the TUN, and Д8 telemetry reached Brain; an independent Chrome
+DNS-leak capture stayed inconclusive because Chrome used its own secure DNS.
+The Windows VM ran the final setup (same hash as the published EXE): Auto in
+«Только выбранные» connected, `Discord.exe` and `Telegram.exe` exited via the
+VPN while other processes stayed direct; Windows DNS per process was not
+independently measured. Brain now serves 1.4.0 on both platforms with minimum
+1.3.0, so 1.3.0 gets a recommended update, 1.2.0 and older a required one; no
+news, LiveUpdate or broadcast was created. Rollback: restore
+`/root/portal_bot/.env.bak-release-1.4.0-20260929T101134Z` and restart
+`portal-api` and `portal-bot`.
+
+## Client 1.3.0 publication, 2026-09-28
 
 Owner-approved publication on 2026-09-28 used client main `53d3dc2`. Android's
 four APKs passed production signer, version and ABI checks; the Windows setup

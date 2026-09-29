@@ -1,9 +1,9 @@
 # POKROV client
 
 This repository builds the Android and Windows client. The public version is
-`1.3.0+4080`: Android direct APK and unsigned Windows beta, with a
+`1.4.0+4081`: Android direct APK and unsigned Windows beta, with a
 SmartScreen/unknown-publisher warning. Android and Windows use POKROV Core
-1.1.0 from `C:/Users/kiwun/Documents/ai/POKROV-core`.
+1.1.2 from `C:/Users/kiwun/Documents/ai/POKROV-core`.
 
 ## Local build
 
