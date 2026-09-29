@@ -104,7 +104,9 @@ void main() {
       expect(combined, contains('Стабильно'));
       expect(combined, contains('Медленно'));
       expect(combined, contains(r"return '$latencyMs мс';"));
-      expect(combined, contains(r'нагрузка ${percent.round()}%'));
+      expect(combined, contains('низкая'));
+      expect(combined, contains('средняя'));
+      expect(combined, contains('высокая'));
       expect(combined, contains('замер устарел'));
 
       for (final forbidden in const <String>[

@@ -201,7 +201,7 @@ class ConnectionManager extends ChangeNotifier {
       ..addAll(value.selectedAppIds);
     _preferredNodeCode = value.preferredNodeCode;
     _preferredVariantId = value.preferredVariantId;
-    if (_preferredNodeCode.isNotEmpty)
+    if (_preferredNodeCode.isNotEmpty || value.preferredCountryCode.isNotEmpty || value.preferredCandidateRef.isNotEmpty)
       _cachedProfileFallbackGate.markUserChange();
     _automaticNodeQuarantineUntil
       ..clear()
@@ -1884,10 +1884,13 @@ class ConnectionManager extends ChangeNotifier {
       selectedApps: inputs.selectedApps,
       preferredNodeCode: inputs.preferredNodeCode,
       preferredVariantId: inputs.preferredNodeCode.trim().isEmpty ? 'direct' : inputs.preferredVariantId,
+      preferredCountryCode: inputs.preferredCountryCode,
+      preferredCandidateRef: inputs.preferredCandidateRef,
       excludedNodeCodes: inputs.preferredNodeCode.trim().isEmpty ? _activeAutomaticNodeExclusions() : const <String>{},
       selectCandidate: select, selectedCandidateRef: candidateRef, cacheResult: cache,
     );
-    var payload = await resolve(select: !discoverCandidates, cache: !useCandidateProbes);
+    var payload = await resolve(candidateRef: inputs.preferredCandidateRef,
+        select: !discoverCandidates, cache: !useCandidateProbes);
     requireCurrent();
     final catalog = payload.transportCatalog;
     if (useCandidateProbes && catalog != null) {
@@ -1930,7 +1933,7 @@ class ConnectionManager extends ChangeNotifier {
         requireCurrent();
         if (remembered != null) _candidateSelector.restoreSuccess(key, remembered);
       }
-      var country = '';
+      var country = inputs.preferredCountryCode;
       if (inputs.preferredNodeCode.isNotEmpty) {
         for (final candidate in catalog.candidates) {
           if (candidate.nodeCode == inputs.preferredNodeCode) { country = candidate.countryCode; break; }
@@ -1942,9 +1945,12 @@ class ConnectionManager extends ChangeNotifier {
       _setPhase(recoveryCandidateRef.isEmpty ? ConnectionPhase.probing : ConnectionPhase.recovering, generation);
       final initial = payload;
       final materialized = <String, ManagedProfilePayload>{catalog.selectedCandidateRef: initial};
-      final warpCandidates = catalog.candidates.where((candidate) =>
+      final eligibleCandidates = catalog.candidates.where((candidate) =>
+          (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
+          (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)).toList();
+      final warpCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode != null).toList();
-      final ordinaryCandidates = catalog.candidates.where((candidate) =>
+      final ordinaryCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode == null).toList();
       final groups = useWarpCandidates && warpCandidates.isNotEmpty
           ? [warpCandidates, ordinaryCandidates]
@@ -1959,7 +1965,7 @@ class ConnectionManager extends ChangeNotifier {
                 : const Duration(seconds: 12);
         try {
           payload = await _candidateSelector.select(
-            catalog: warpCandidates.isEmpty ? catalog : TransportCandidateCatalog(
+            catalog: TransportCandidateCatalog(
                 revision: catalog.revision, selectedCandidateRef: catalog.selectedCandidateRef,
                 candidates: group),
             network: key, platform: _appContext.hostPlatform,
@@ -2010,12 +2016,12 @@ class ConnectionManager extends ChangeNotifier {
         try {
           await (cache as CachedManagedProfileBootstrapper).cacheResolvedManagedProfile(inputs, payload, cancelled: cancelled);
           final selected = payload.transportCatalog!.selected;
-          final families = {selected.protocol};
-          final ordered = catalog.candidates.toList()..sort((a, b) => a.priority.compareTo(b.priority));
-          for (final candidate in ordered) {
-            final alternate = materialized[candidate.candidateRef];
-            if (alternate == null || candidate.nodeCode != selected.nodeCode ||
-                families.length >= 3 || !families.add(candidate.protocol)) continue;
+          final alternatives = SmartConnectCandidateSelector.cacheAlternatives(selected,
+              eligibleCandidates.where((candidate) => materialized.containsKey(candidate.candidateRef)),
+              countryOnly: inputs.preferredCountryCode.isNotEmpty);
+          for (final candidate in alternatives) {
+            if (inputs.preferredCandidateRef.isNotEmpty) break;
+            final alternate = materialized[candidate.candidateRef]!;
             await (cache as CachedManagedProfileBootstrapper).cacheResolvedManagedProfile(
                 inputs, alternate, cancelled: cancelled, candidateOnly: true);
           }
@@ -2114,7 +2120,9 @@ class ConnectionManager extends ChangeNotifier {
       final features = _runtimeSnapshot?.transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
       final available = <String, ManagedProfilePayload>{};
       for (final candidate in catalog.candidates.where((candidate) =>
-          candidate.nodeCode == catalog.selected.nodeCode &&
+          (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
+          (inputs.preferredCountryCode.isEmpty || candidate.countryCode == inputs.preferredCountryCode) &&
+          (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode) &&
           (candidate.warpMode == null || cachedWarpAllowed))) {
         final profile = await service.loadCachedManagedProfile(inputs,
             selectedCandidateRef: candidate.candidateRef, runtimeFeatures: features);
@@ -2200,8 +2208,10 @@ class ConnectionManager extends ChangeNotifier {
                 _selectedRouteMode == RouteMode.excludedApps
             ? List<String>.of(_selectedAppIds)
             : const <String>[],
-        preferredNodeCode: _preferredNodeCode,
-        preferredVariantId: _preferredVariantId,
+        preferredNodeCode: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced ? _preferredNodeCode : '',
+        preferredVariantId: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced ? _preferredVariantId : 'direct',
+        preferredCountryCode: _clientExperience.preferredCountryCode,
+        preferredCandidateRef: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced ? _clientExperience.preferredCandidateRef : '',
       );
 
   Future<ManagedProfilePayload> _prepareManagedProfile(
@@ -4641,6 +4651,73 @@ class ConnectionManager extends ChangeNotifier {
     );
   }
 
+  Future<void> _saveConnectionPreference(PokrovClientExperienceState next) async {
+    final previousBinding = _managedProfileCacheInputs.binding('', '');
+    final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
+    var changed = false;
+    _update(() {
+      _clientExperience = next;
+      _preferredNodeCode = next.preferredNodeCode;
+      _preferredVariantId = next.preferredVariantId;
+      changed = previousBinding != _managedProfileCacheInputs.binding('', '');
+      if (changed) {
+        _cancelAutomaticFailover();
+        _stagedNodeCode = '';
+        _stagedVariantId = 'direct';
+        _managedProfileDirty = true;
+        _cachedProfileFallbackGate.markUserChange();
+      }
+    });
+    _queueClientExperienceWrite();
+    if (!changed) return;
+    _invalidateQuickSettingsProfile();
+    if (wasConnected) {
+      await _reconnectAfterManagedProfileChange(
+        progressMessage: 'Применяем выбор подключения…',
+        successMessage: 'Выбор подключения применён.',
+      );
+    }
+  }
+
+  Future<void> setInterfaceMode(PokrovInterfaceMode mode) async {
+    if (_nodePreferenceBusy || mode == _clientExperience.interfaceMode) return;
+    var country = _clientExperience.preferredCountryCode;
+    if (mode == PokrovInterfaceMode.simple) {
+      for (final candidate in _transportCatalog?.candidates ?? const <domain.TransportCandidate>[]) {
+        if (candidate.candidateRef == _clientExperience.preferredCandidateRef ||
+            _preferredNodeCode.isNotEmpty && candidate.nodeCode == _preferredNodeCode) {
+          country = candidate.countryCode;
+          break;
+        }
+      }
+    }
+    await _saveConnectionPreference(_clientExperience.copyWith(
+      interfaceMode: mode, preferredCountryCode: country,
+      preferredNodeCode: mode == PokrovInterfaceMode.simple ? '' : _preferredNodeCode,
+      preferredVariantId: mode == PokrovInterfaceMode.simple ? 'direct' : _preferredVariantId,
+      preferredCandidateRef: mode == PokrovInterfaceMode.simple ? '' : _clientExperience.preferredCandidateRef,
+    ));
+  }
+
+  Future<void> setPreferredCountry(String value) async {
+    final country = value.trim().toUpperCase();
+    if (_nodePreferenceBusy || !RegExp(r'^[A-Z]{2}$').hasMatch(country)) return;
+    await _saveConnectionPreference(_clientExperience.copyWith(
+      preferredCountryCode: country, preferredNodeCode: '',
+      preferredVariantId: 'direct', preferredCandidateRef: '',
+    ));
+  }
+
+  Future<void> setPreferredCandidate(String value) async {
+    final candidateRef = value.trim();
+    if (_nodePreferenceBusy || _clientExperience.interfaceMode != PokrovInterfaceMode.advanced) return;
+    if (!(_transportCatalog?.candidates.any((candidate) => candidate.candidateRef == candidateRef) ?? false)) return;
+    await _saveConnectionPreference(_clientExperience.copyWith(
+      preferredCountryCode: '', preferredNodeCode: '',
+      preferredVariantId: 'direct', preferredCandidateRef: candidateRef,
+    ));
+  }
+
   Future<void> setPreferredLocation(
     String nodeCode,
     String variantId,
@@ -4752,6 +4829,9 @@ class ConnectionManager extends ChangeNotifier {
             : 'Локация сохранена. Подключите POKROV, чтобы применить.';
         _clientExperience = _clientExperience.copyWith(
           recentNodeCodes: recentCodes,
+          interfaceMode: PokrovInterfaceMode.advanced,
+          preferredCountryCode: '',
+          preferredCandidateRef: '',
           preferredNodeCode: confirmed,
           preferredVariantId: confirmedVariant,
         );
@@ -4930,7 +5010,8 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<void> setAutomaticLocation() async {
-    if (_nodePreferenceBusy || _preferredNodeCode.trim().isEmpty) {
+    if (_nodePreferenceBusy || (_preferredNodeCode.trim().isEmpty &&
+        _clientExperience.preferredCountryCode.isEmpty && _clientExperience.preferredCandidateRef.isEmpty)) {
       return;
     }
 
@@ -4949,6 +5030,8 @@ class ConnectionManager extends ChangeNotifier {
       _clientExperience = _clientExperience.copyWith(
         preferredNodeCode: '',
         preferredVariantId: 'direct',
+        preferredCountryCode: '',
+        preferredCandidateRef: '',
       );
     });
     _invalidateQuickSettingsProfile();

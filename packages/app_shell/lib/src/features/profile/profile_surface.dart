@@ -32,6 +32,8 @@ class _ProfileSection extends StatelessWidget {
     required this.onOpenWarp,
     required this.themeMode,
     required this.onThemeModeChanged,
+    required this.interfaceMode,
+    required this.onInterfaceModeChanged,
     required this.subscriptionInfo,
     required this.systemSurfacePreferences,
     required this.onSystemSurfacePreferencesChanged,
@@ -85,6 +87,8 @@ class _ProfileSection extends StatelessWidget {
   final Future<void> Function() onOpenWarp;
   final ThemeMode themeMode;
   final ValueChanged<ThemeMode> onThemeModeChanged;
+  final PokrovInterfaceMode interfaceMode;
+  final ValueChanged<PokrovInterfaceMode> onInterfaceModeChanged;
   final ClientSubscriptionInfo? subscriptionInfo;
   final PokrovSystemSurfacePreferences systemSurfacePreferences;
   final Future<bool> Function(PokrovSystemSurfacePreferences preferences)
@@ -170,6 +174,40 @@ class _ProfileSection extends StatelessWidget {
     }
     return _effectiveAccessLane(appContext, subscriptionInfo) ==
         AccessLane.trialPremium;
+  }
+
+  void _showInterfaceModeSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final mode in PokrovInterfaceMode.values)
+                ListTile(
+                  key: ValueKey('interface-mode-${mode.name}'),
+                  title: Text(mode == PokrovInterfaceMode.simple
+                      ? 'Просто'
+                      : 'Продвинутый'),
+                  subtitle: Text(mode == PokrovInterfaceMode.simple
+                      ? 'Выберите страну — POKROV подберёт соединение.'
+                      : 'Локации, протоколы и последние замеры.'),
+                  trailing: mode == interfaceMode
+                      ? const Icon(Icons.check_rounded)
+                      : null,
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    onInterfaceModeChanged(mode);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -440,6 +478,16 @@ class _ProfileSection extends StatelessWidget {
                 ],
                 child: Column(
                   children: [
+                    _SettingsRow(
+                      key: const ValueKey('profile-interface-mode-action'),
+                      icon: Icons.tune_rounded,
+                      title: 'Интерфейс',
+                      value: interfaceMode == PokrovInterfaceMode.simple
+                          ? 'Просто'
+                          : 'Продвинутый',
+                      onTap: () => _showInterfaceModeSheet(context),
+                    ),
+                    const _SettingsRowDivider(),
                     _SettingsRow(
                       icon: Icons.alt_route_rounded,
                       title: 'Режим работы',
@@ -1275,8 +1323,8 @@ void _showSubscriptionSheet(
               order: 2,
               child: _KeyValueLine(
                 label: 'Текущий доступ',
-                value:
-                    _effectiveAccessLane(appContext, info)?.label ?? 'Нет данных',
+                value: _effectiveAccessLane(appContext, info)?.label ??
+                    'Нет данных',
               ),
             ),
             if (info != null && info.daysLeft > 0)

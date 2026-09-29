@@ -101,10 +101,6 @@ class ManagedProfileCache {
               selectedCatalog['revision'] != catalog['revision'] ||
               !(selectedCatalog['candidates'] as List).any((item) =>
                   item is Map && item['candidate_ref'] == candidateRef)) return;
-          final descriptors = (selectedCatalog['candidates'] as List).whereType<Map>();
-          final selectedNode = descriptors.firstWhere((item) =>
-              item['candidate_ref'] == selectedCatalog['selected_candidate_ref'])['node_code'];
-          if (!descriptors.any((item) => item['candidate_ref'] == candidateRef && item['node_code'] == selectedNode)) return;
         } else {
           value['downloaded'] = entry;
           final allowed = catalog is Map && catalog['candidates'] is List

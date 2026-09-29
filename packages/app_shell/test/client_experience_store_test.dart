@@ -42,6 +42,9 @@ void main() {
 
     final first = await store.read();
     expect(first.favoriteNodeCodes, <String>['nl-fixture-01']);
+    expect(first.interfaceMode, PokrovInterfaceMode.simple);
+    expect(first.preferredCountryCode, isEmpty);
+    expect(first.preferredCandidateRef, isEmpty);
     expect(first.firstRouteScopeConfirmed, isTrue);
     final migrated = await stateFile.readAsString();
     expect(
@@ -177,6 +180,9 @@ void main() {
       notificationsCachedAt: '2026-07-23T10:20:01Z',
       preferredNodeCode: 'nl-ams-01',
       preferredVariantId: 'mini',
+      interfaceMode: PokrovInterfaceMode.advanced,
+      preferredCountryCode: 'DE',
+      preferredCandidateRef: 'de:reality',
       automaticNodeQuarantineUntil: const <String, String>{
         'de-fra-01': '2026-07-23T10:35:00Z',
       },
@@ -209,6 +215,9 @@ void main() {
     expect(restored.recentNodeCodes, <String>['nl-ams-01']);
     expect(restored.preferredNodeCode, 'nl-ams-01');
     expect(restored.preferredVariantId, 'mini');
+    expect(restored.interfaceMode, PokrovInterfaceMode.advanced);
+    expect(restored.preferredCountryCode, 'DE');
+    expect(restored.preferredCandidateRef, 'de:reality');
     expect(
       restored.automaticNodeQuarantineUntil,
       <String, String>{'de-fra-01': '2026-07-23T10:35:00Z'},

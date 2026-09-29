@@ -52,6 +52,8 @@ class _StubBootstrapper
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
+    String preferredCountryCode = '',
+    String preferredCandidateRef = '',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},

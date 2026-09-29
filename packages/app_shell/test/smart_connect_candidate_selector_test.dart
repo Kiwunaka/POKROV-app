@@ -24,6 +24,19 @@ SmartConnectCandidateProbeResult _success(TransportCandidate candidate) =>
   SmartConnectCandidateProbeResult.success(_profile(candidate));
 
 void main() {
+  test('cache reserves another node before a protocol alternative and keeps manual country', () {
+    final candidates = [
+      _candidate(0), _candidate(1, udp: true),
+      _candidate(2, node: 'ch', country: 'CH'), _candidate(3, node: 'de2'),
+    ];
+    expect(SmartConnectCandidateSelector.cacheAlternatives(candidates.first,
+        candidates, countryOnly: false).map((candidate) => candidate.candidateRef),
+        ['ch:profile_2', 'de:profile_1']);
+    expect(SmartConnectCandidateSelector.cacheAlternatives(candidates.first,
+        candidates, countryOnly: true).map((candidate) => candidate.candidateRef),
+        ['de2:profile_3', 'de:profile_1']);
+  });
+
   for (final (platform, parallelism) in [(HostPlatform.android, 3), (HostPlatform.windows, 4)]) {
     test('$platform first successful probe cancels and joins the bounded workers', () async {
       final selector = SmartConnectCandidateSelector();

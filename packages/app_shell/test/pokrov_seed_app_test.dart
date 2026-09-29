@@ -403,6 +403,8 @@ class _FakeBootstrapper
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
+    String preferredCountryCode = '',
+    String preferredCandidateRef = '',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
@@ -1116,6 +1118,8 @@ class _ThrowingBootstrapper implements ManagedProfileBootstrapper {
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
+    String preferredCountryCode = '',
+    String preferredCandidateRef = '',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
@@ -1356,6 +1360,21 @@ Future<void> _tapNav(WidgetTester tester, String key) async {
   expect(target, findsOneWidget);
   await tester.tap(target);
   await tester.pumpAndSettle();
+}
+
+Future<void> _tapAdvancedLocations(WidgetTester tester) async {
+  await _tapNav(tester, 'nav-profile');
+  final action = find.byKey(const ValueKey('profile-interface-mode-action'));
+  await tester.ensureVisible(action);
+  await tester.pumpAndSettle();
+  await tester.tap(action);
+  await tester.pumpAndSettle();
+  final advanced = find.byKey(const ValueKey('interface-mode-advanced'));
+  await tester.ensureVisible(advanced);
+  await tester.pumpAndSettle();
+  await tester.tap(advanced);
+  await tester.pumpAndSettle();
+  await _tapNav(tester, 'nav-locations');
 }
 
 Future<void> _openAdvancedRules(WidgetTester tester) async {
@@ -6347,7 +6366,7 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
 
     expect(
       find.byKey(const ValueKey('locations-skeleton-list')),
@@ -10342,7 +10361,7 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
 
     expect(
         find.byKey(const ValueKey('locations-auto-section')), findsOneWidget);
@@ -10383,7 +10402,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
 
     final autoLocation = find.byKey(
       const ValueKey('locations-auto-section'),
@@ -10438,7 +10457,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
 
     final autoLocation = find.byKey(
       const ValueKey('locations-auto-section'),
@@ -10538,6 +10557,7 @@ void main() {
   testWidgets('locations screen renders backend catalog cities',
       (tester) async {
     final semantics = tester.ensureSemantics();
+    final experienceStore = _FakeClientExperienceStore();
     _expectFeatureLabelHelpersCovered(const [
       '_smartConnectNodeTitle',
       '_smartConnectNodeCity',
@@ -10650,7 +10670,8 @@ void main() {
             cities: <ClientLocationCity>[
               ClientLocationCity(
                 code: 'ch',
-                city: 'CH',
+                city: '2001:db8::1',
+                probeHost: '198.51.100.42',
                 healthScore: 0.99,
                 latencyMs: null,
                 premium: true,
@@ -10673,6 +10694,7 @@ void main() {
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
+        clientExperienceStore: experienceStore,
         nodeLatencyProbe: (_, __) async => const <String, int>{
           'nl-ams-01': 38,
           'nl-ams-slow': 1700,
@@ -10685,6 +10707,13 @@ void main() {
     await _tapPrimaryConnectAndConfirmRouteScope(tester);
     await tester.pumpAndSettle();
     await _tapNav(tester, 'nav-locations');
+    expect(experienceStore.state.interfaceMode, PokrovInterfaceMode.simple);
+    expect(find.byKey(const ValueKey('locations-country-NL')), findsOneWidget);
+    expect(find.byKey(const ValueKey('locations-catalog-city-nl-ams-01')), findsNothing);
+    expect(find.textContaining('198.51.100.42'), findsNothing);
+    expect(find.textContaining('2001:db8::1'), findsNothing);
+    await _tapAdvancedLocations(tester);
+    expect(experienceStore.state.interfaceMode, PokrovInterfaceMode.advanced);
     await tester.pumpAndSettle();
 
     expect(bootstrapper.locationsCatalogCalls, greaterThanOrEqualTo(1));
@@ -10712,7 +10741,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('locations-catalog-city-nl-ams-01')),
-        matching: find.textContaining('31%'),
+        matching: find.textContaining('нагрузка низкая'),
       ),
       findsOneWidget,
     );
@@ -10748,7 +10777,7 @@ void main() {
     expect(
       find.descendant(
         of: staleRow,
-        matching: find.textContaining('10%'),
+        matching: find.textContaining('нагрузка низкая'),
       ),
       findsOneWidget,
     );
@@ -10778,7 +10807,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(of: row, matching: find.textContaining('%')),
+        find.descendant(of: row, matching: find.textContaining('нагрузка —')),
         findsOneWidget,
       );
     }
@@ -10901,7 +10930,7 @@ void main() {
     await tester.pumpAndSettle();
     await _tapPrimaryConnectAndConfirmRouteScope(tester);
     await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
     await tester.pumpAndSettle();
 
     final cityRow = find.byKey(const ValueKey('locations-catalog-city-de-fra'));
@@ -11029,7 +11058,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
     await tester.pumpAndSettle();
 
     expect(store.state.preferredNodeCode, 'de-fra');
@@ -11158,7 +11187,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
     await tester.pumpAndSettle();
     final cityRow = find.byKey(
       const ValueKey('locations-catalog-city-de-fra'),
@@ -11230,25 +11259,25 @@ void main() {
     expect(runtimeCalls, contains('runtimeEngine.connect'));
     final probesBeforeCatalogSheet = runtimeCalls
         .where((call) => call == 'runtimeEngine.measureLocationVariants').length;
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
     await tester.pumpAndSettle();
     await tester.ensureVisible(cityRow);
     final dynamic catalogCitySurface = tester.widget(cityPressSurface);
     catalogCitySurface.onTap();
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<IconButton>(refresh).onPressed,
-      isNull,
-    );
-    expect(
-      find.text('Для текущего подключения проверка вариантов недоступна.'),
-      findsOneWidget,
-    );
+    final candidate = find.byKey(const ValueKey('location-candidate-de-fra:reality'));
+    expect(candidate, findsOneWidget);
+    expect(find.text('VLESS REALITY'), findsOneWidget);
+    expect(refresh, findsNothing);
     expect(find.text('Точный статус появится после выбора этой локации.'), findsNothing);
     expect(
       runtimeCalls.where((call) => call == 'runtimeEngine.measureLocationVariants'),
       hasLength(probesBeforeCatalogSheet),
     );
+    await tester.tap(candidate);
+    await tester.pumpAndSettle();
+    expect(store.state.preferredCandidateRef, 'de-fra:reality');
+    expect(store.state.interfaceMode, PokrovInterfaceMode.advanced);
   });
 
   testWidgets('location refresh spinner stays out of the Auto card',
@@ -11442,7 +11471,7 @@ void main() {
     expect(tester.takeException(), isNull, reason: 'route scope sheet layout');
     await _confirmFirstRouteScopeIfPresent(tester);
     expect(tester.takeException(), isNull, reason: 'connected home layout');
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: 'locations layout');
 
@@ -11566,7 +11595,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
 
     final city = find.byKey(const ValueKey('locations-catalog-city-nl-ams-01'));
     expect(city, findsOneWidget);
@@ -11773,7 +11802,7 @@ void main() {
 
     await _tapPrimaryConnectAndConfirmRouteScope(tester);
     await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
     await tester.pumpAndSettle();
     final initialLocationSemantics = tester.widget<Semantics>(
       find.byKey(const ValueKey('locations-semantics-ru-spb')),
@@ -11789,7 +11818,7 @@ void main() {
       findsOneWidget,
     );
     runtimeCalls.clear();
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
     final frankfurt =
         find.byKey(const ValueKey('locations-catalog-city-de-fra'));
     await tester.ensureVisible(frankfurt);
@@ -11820,7 +11849,7 @@ void main() {
       findsOneWidget,
     );
 
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
     final preferredLocationSemantics = tester.widget<Semantics>(
       find.byKey(const ValueKey('locations-semantics-de-fra')),
     );
@@ -11966,7 +11995,7 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
     await _tapPrimaryConnectAndConfirmRouteScope(tester);
     await tester.pumpAndSettle();
-    await _tapNav(tester, 'nav-locations');
+    await _tapAdvancedLocations(tester);
 
     expect(find.text('Амстердам'), findsOneWidget);
     expect(find.text('Избранное'), findsOneWidget);

@@ -13,14 +13,15 @@ String _locationCountryDisplayName(String code, String fallback) {
     'RU': 'Россия',
     'US': 'США',
   };
-  return names[code.trim().toUpperCase()] ?? fallback.trim();
+  return names[code.trim().toUpperCase()] ??
+      _safeLocationLabel(fallback, fallback: 'Страна');
 }
 
 String _locationCityDisplayName(
   ClientLocationCity city,
   ClientLocationCountry country,
 ) {
-  final raw = city.city.trim();
+  final raw = _safeLocationLabel(city.city, fallback: '');
   if (RegExp('[А-Яа-яЁё]').hasMatch(raw)) {
     return raw;
   }
@@ -118,12 +119,48 @@ String _smartConnectNodeCity(SmartConnectNode node) {
 
 String _protectionLiveLocationLabel(RuntimeLiveStats stats) {
   final country = stats.serverCountry.trim();
-  final node = stats.serverCode.trim();
   return <String>[
     if (country.isNotEmpty && country.toLowerCase() != 'unknown')
       _locationCountryDisplayName(country, country),
-    if (node.isNotEmpty && node.toLowerCase() != 'unknown') node,
   ].join(' · ');
+}
+
+String _safeLocationLabel(String value, {required String fallback}) {
+  final text = value.trim();
+  if (text.isEmpty ||
+      RegExp(r'\b(?:\d{1,3}\.){3}\d{1,3}\b').hasMatch(text) ||
+      RegExp(r'\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b').hasMatch(text) ||
+      RegExp(r'(?:[0-9a-fA-F]{0,4}:){2,}[0-9a-fA-F:]{0,4}').hasMatch(text) ||
+      text.contains('://')) {
+    return fallback;
+  }
+  return text;
+}
+
+String _locationCandidateLabel(domain.TransportCandidate candidate) {
+  final protocol = switch (candidate.protocol) {
+    'vless' => switch (candidate.transport) {
+        'xhttp' => 'VLESS XHTTP',
+        'grpc' => 'VLESS gRPC',
+        _ => candidate.protection == 'reality' ? 'VLESS REALITY' : 'VLESS TLS',
+      },
+    'hysteria2' => 'Hysteria 2',
+    'awg' => 'AWG 3.1',
+    _ => 'Соединение',
+  };
+  final path = candidate.transport == 'bridge' ? ' · Белые списки' : '';
+  final warp = candidate.warpMode == null ? '' : ' · WARP';
+  return '$protocol$path$warp';
+}
+
+String _locationNodeStatusLabel(ClientLocationCity city) {
+  final health = _normalizeLocationHealthScore(city.healthScore);
+  if (_locationMetricFreshness(city.measuredAt) !=
+          _LocationMetricFreshness.current ||
+      health == null) {
+    return 'Нода: нет свежих данных';
+  }
+  return health > 0 ? 'Нода: онлайн' : 'Нода: недоступна';
 }
 
 String _smartConnectQualityLabel(SmartConnectNode node) {
@@ -201,7 +238,12 @@ String _locationLoadLabel(double? rawLoad) {
     return 'нагрузка —';
   }
   final percent = (rawLoad <= 1 ? rawLoad * 100 : rawLoad).clamp(0, 100);
-  return 'нагрузка ${percent.round()}%';
+  final label = percent < 40
+      ? 'низкая'
+      : percent < 75
+          ? 'средняя'
+          : 'высокая';
+  return 'нагрузка $label';
 }
 
 enum _LocationMetricFreshness { current, stale, unknown }
@@ -268,26 +310,22 @@ String _locationMetricsLabel(
   DateTime? now,
   bool compact = false,
 }) {
-  final hasMeasurement =
-      _locationMetricFreshness(city.measuredAt, now: now) !=
-          _LocationMetricFreshness.unknown;
+  final hasMeasurement = _locationMetricFreshness(city.measuredAt, now: now) !=
+      _LocationMetricFreshness.unknown;
   final freshnessLabel = compact
       ? _locationCompactFreshnessLabel(city.measuredAt, now: now)
       : _locationFreshnessLabel(city.measuredAt, now: now);
   if (compact) {
-    final latency = !hasMeasurement ||
-            city.latencyMs == null ||
-            city.latencyMs! <= 0
-        ? '— мс'
-        : '${city.latencyMs} мс';
-    final rawLoad = city.load;
-    final load = !hasMeasurement ||
-            rawLoad == null ||
-            !rawLoad.isFinite ||
-            rawLoad < 0
-        ? '—%'
-        : '${(rawLoad <= 1 ? rawLoad * 100 : rawLoad).clamp(0, 100).round()}%';
-    return <String>[latency, load, freshnessLabel].join(' · ');
+    final latency =
+        !hasMeasurement || city.latencyMs == null || city.latencyMs! <= 0
+            ? '— мс'
+            : '${city.latencyMs} мс';
+    return <String>[
+      _locationNodeStatusLabel(city),
+      latency,
+      _locationLoadLabel(hasMeasurement ? city.load : null),
+      freshnessLabel,
+    ].join(' · ');
   }
   return <String>[
     _locationLatencyLabel(hasMeasurement ? city.latencyMs : null),

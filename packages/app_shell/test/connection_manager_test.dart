@@ -27,6 +27,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   SmartConnectProfile? smartConnect;
   final nodePreferences = <SmartConnectProfile>[];
   final resolutions = <({String selected, bool select, bool cache})>[];
+  final requestedCountries = <String>[];
   final bool warpEnabled;
   Completer<void>? gate;
   Object? failure;
@@ -50,6 +51,8 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     List<String> selectedApps = const [],
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
+    String preferredCountryCode = '',
+    String preferredCandidateRef = '',
     Set<String> excludedNodeCodes = const {},
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
@@ -61,6 +64,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     Future<void>? cancelled,
   }) async {
     lastCoreRelease = coreRelease;
+    requestedCountries.add(preferredCountryCode);
     resolutions.add((selected: selectedCandidateRef, select: selectCandidate, cache: cacheResult));
     if (!entered.isCompleted) entered.complete();
     unawaited(cancelled?.then((_) => this.cancelled = true));
@@ -462,6 +466,44 @@ ConnectionManager _manager(
     );
 
 void main() {
+  test('country selection keeps Auto in that country and advanced pin probes only its exact candidate', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _Bootstrapper(catalog: true);
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.setPreferredCountry('de');
+    await manager.connect();
+    expect(bootstrapper.requestedCountries, everyElement('DE'));
+    expect(manager.transportCatalog?.selected.countryCode, 'DE');
+    await manager.disconnect();
+    await manager.setInterfaceMode(PokrovInterfaceMode.advanced);
+    await manager.setPreferredCandidate(_candidates[2].candidateRef);
+    final before = bootstrapper.resolutions.length;
+    await manager.connect();
+    expect(runtime.stagedProfile, _candidates[2].candidateRef);
+    expect(bootstrapper.resolutions.skip(before).map((request) => request.selected),
+        everyElement(_candidates[2].candidateRef));
+    expect(bootstrapper.requestedCountries.last, '');
+    runtime.failedProbeProfiles.add(_candidates[2].candidateRef);
+    final retryBefore = bootstrapper.resolutions.length;
+    await manager.reconnect();
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(bootstrapper.resolutions.skip(retryBefore).map((request) => request.selected),
+        everyElement(_candidates[2].candidateRef));
+    await manager.disconnect();
+    await manager.setAutomaticLocation();
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.stagedProfile, _candidates.first.candidateRef);
+    expect(bootstrapper.requestedCountries.last, '');
+    const base = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel);
+    const country = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+        preferredCountryCode: 'DE');
+    const pinned = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+        preferredCandidateRef: 'de:profile_2');
+    expect({base.binding('a', 'i'), country.binding('a', 'i'), pinned.binding('a', 'i')}, hasLength(3));
+  });
+
   test('unexpected connection diagnostics retain only operation type and application frames', () async {
     final store = _ExperienceStore();
     final bootstrapper = _Bootstrapper()
@@ -487,7 +529,7 @@ void main() {
     expect(runtime.connectCalls, 0);
   });
 
-  test('API outage connects the protected profile through expiry grace and exposes offline states', () async {
+  test('API outage and failed node use an authorized cached other node through expiry grace', () async {
     final originalStorage = FlutterSecureStoragePlatform.instance;
     final protectedValues = <String, String>{};
     FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(protectedValues);
@@ -523,7 +565,7 @@ void main() {
           }));
         } else if (request.uri.path == '/api/client/profile/managed') {
           managedQueries.add(request.uri.queryParameters);
-          final hy2 = request.uri.queryParameters['selected_candidate_ref'] == 'de:hy2_lab';
+          final hy2 = request.uri.queryParameters['selected_candidate_ref'] == 'ch:hy2_lab';
           if (hy2 && !delayedAlternateCompleted) {
             // Production managed issuance can take longer than the former
             // three-second background deadline, even while the API is healthy.
@@ -536,7 +578,7 @@ void main() {
             'transport_kind': hy2 ? 'hysteria2' : 'reality',
             if (request.uri.queryParameters['catalog_version'] == '1') 'transport_catalog': {
               'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'offline-test-profile',
-              'selected_candidate_ref': hy2 ? 'de:hy2_lab' : 'de:legacy_reality_fallback',
+              'selected_candidate_ref': hy2 ? 'ch:hy2_lab' : 'de:legacy_reality_fallback',
               'candidates': [{
                 'candidate_ref': 'de:legacy_reality_fallback', 'profile_ref': 'legacy_reality_fallback',
                 'node_code': 'de', 'country_code': 'DE', 'protocol': 'vless',
@@ -546,8 +588,8 @@ void main() {
                   'platforms': ['android', 'windows'],
                   'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']},
               }, if (onlineRuntime.connectCalls > 0) {
-                'candidate_ref': 'de:hy2_lab', 'profile_ref': 'hy2_lab',
-                'node_code': 'de', 'country_code': 'DE', 'protocol': 'hysteria2',
+                'candidate_ref': 'ch:hy2_lab', 'profile_ref': 'hy2_lab',
+                'node_code': 'ch', 'country_code': 'CH', 'protocol': 'hysteria2',
                 'transport': 'udp', 'protection': 'tls', 'priority': 1,
                 'parameters': {'network': 'udp', 'flow': ''},
                 'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
@@ -621,7 +663,7 @@ void main() {
     ManagedProfilePayload? alternate;
     do {
       alternate = await onlineBootstrapper.loadCachedManagedProfile(inputs,
-          selectedCandidateRef: 'de:hy2_lab', runtimeFeatures: RuntimeTransportFeature.values.toSet());
+          selectedCandidateRef: 'ch:hy2_lab', runtimeFeatures: RuntimeTransportFeature.values.toSet());
       if (alternate == null) await Future<void>.delayed(const Duration(milliseconds: 10));
     } while (alternate == null && DateTime.now().isBefore(readyDeadline));
     expect(alternate, isNotNull);
@@ -638,7 +680,7 @@ void main() {
     await onlineManager.reconnect();
     expect(onlineManager.status.phase, ConnectionPhase.connected);
     expect(onlineRuntime.probedProtocols.skip(probesBefore), ['vless', 'hysteria2']);
-    expect(onlineManager.transportCatalog?.selectedCandidateRef, 'de:hy2_lab');
+    expect(onlineManager.transportCatalog?.selectedCandidateRef, 'ch:hy2_lab');
     expect(onlineRuntime.calls, isNot(contains('disconnect')));
     proven = await onlineBootstrapper.loadCachedManagedProfile(inputs, preferProven: true,
         runtimeFeatures: RuntimeTransportFeature.values.toSet());

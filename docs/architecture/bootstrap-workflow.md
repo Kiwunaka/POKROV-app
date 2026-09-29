@@ -50,8 +50,9 @@ After a current 401 clears the cache, the one permitted session refresh uses the
 normal profile budget; a 403 remains fatal and never restores cached authority.
 
 After a healthy ordinary connect, the existing finite cache refresh fetches the
-exact current profile's latest catalog, then prepares at most two other protocol
-families on the selected node, in server priority order,
+exact current profile's latest catalog, then prepares at most two alternatives:
+first an authorized path on another node, then another protocol family in server
+priority order. A manually selected country keeps both reserves in that country,
 without delaying connection or probing them. Already materialized profiles are
 reused in the same encrypted account-bound record; catalog changes, expiry and
 explicit denial still restrict reuse. A proven profile reads the latest catalog
@@ -64,6 +65,13 @@ these cached profiles with the existing native selector and activates its winner
 Failed activation advances to another candidate, with at most three activations
 per recovery. A retained native guard is shown as blocked traffic, including
 after UI restart; Home, tray and protection details offer explicit Disconnect.
+
+Simple mode selects a country through `selected_country_code` and keeps Auto
+within its authorized catalog candidates. Advanced mode can pin an exact catalog
+candidate or node; failure never silently activates a different pinned path.
+Country and candidate preferences are part of the encrypted cache binding.
+Switching a known manual pin to Simple keeps its country and restores automatic
+protocol choice; Auto clears country, node and candidate preferences together.
 
 After ordinary Android or Windows egress is verified, the native session repeats
 the active Core 204 check two seconds after each success, with a three-second

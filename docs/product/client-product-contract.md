@@ -676,6 +676,14 @@ Quick-connect rules:
 
 Consumer privacy rules:
 
+The interface defaults to «Просто»: Home keeps the connect button and Locations
+offers automatic selection or a country, with the transport selected by the
+existing connection manager. Profile → Interface enables «Продвинутый», which
+shows locations, available catalog protocols, the latest latency and node status,
+and low/medium/high load from node metrics. Manual protocol selection pins the
+existing opaque candidate reference. Missing or stale measurements stay labelled
+as such. Both modes hide endpoint addresses; neither exports connection profiles.
+
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable
 - diagnostics may request the authenticated same-build release-health baseline

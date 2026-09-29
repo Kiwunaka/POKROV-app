@@ -23,6 +23,28 @@ class SmartConnectSelectionExhausted implements Exception {
 /// Ordinary catalog selection. A successful probe means an authenticated 204
 /// was received through that exact candidate, never just an open TCP port.
 class SmartConnectCandidateSelector {
+  static List<TransportCandidate> cacheAlternatives(
+      TransportCandidate selected, Iterable<TransportCandidate> candidates,
+      {required bool countryOnly}) {
+    final ordered = candidates.where((candidate) =>
+        candidate.candidateRef != selected.candidateRef &&
+        (!countryOnly || candidate.countryCode == selected.countryCode)).toList()
+      ..sort((a, b) => a.priority.compareTo(b.priority));
+    final alternatives = <TransportCandidate>[];
+    final families = {selected.protocol};
+    for (final candidate in ordered) {
+      if (candidate.nodeCode == selected.nodeCode) continue;
+      alternatives.add(candidate);
+      families.add(candidate.protocol);
+      break;
+    }
+    for (final candidate in ordered) {
+      if (alternatives.length == 2) break;
+      if (families.add(candidate.protocol)) alternatives.add(candidate);
+    }
+    return alternatives;
+  }
+
   SmartConnectCandidateSelector({DateTime Function()? now}) : _now = now ?? DateTime.now;
 
   final DateTime Function() _now;
@@ -34,7 +56,7 @@ class SmartConnectCandidateSelector {
     'connect_failed', 'tls_failed', 'timeout', 'data_stalled',
     'probe_failed', 'unexpected_status',
     'core_egress_connect_failed', 'core_egress_tls_failed',
-    'core_egress_dns_failed',
+    'core_egress_dns_failed', 'core_egress_probe_failed',
   };
 
   void recordSuccess(String network, String candidateRef) {

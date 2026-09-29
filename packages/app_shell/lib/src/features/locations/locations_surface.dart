@@ -3,6 +3,12 @@ part of pokrov_app_shell;
 class _LocationsSection extends StatefulWidget {
   const _LocationsSection({
     required this.appContext,
+    required this.interfaceMode,
+    required this.preferredCountryCode,
+    required this.preferredCandidateRef,
+    required this.transportCatalog,
+    required this.onPreferredCountrySelected,
+    required this.onPreferredCandidateSelected,
     required this.selectedRouteMode,
     required this.hasProvisionedAccess,
     required this.smartConnectProfile,
@@ -24,6 +30,12 @@ class _LocationsSection extends StatefulWidget {
   });
 
   final SeedAppContext appContext;
+  final PokrovInterfaceMode interfaceMode;
+  final String preferredCountryCode;
+  final String preferredCandidateRef;
+  final TransportCandidateCatalog? transportCatalog;
+  final ValueChanged<String> onPreferredCountrySelected;
+  final ValueChanged<String> onPreferredCandidateSelected;
   final RouteMode selectedRouteMode;
   final bool hasProvisionedAccess;
   final SmartConnectProfile? smartConnectProfile;
@@ -105,6 +117,65 @@ class _LocationsSectionState extends State<_LocationsSection> {
   }
 
   Future<void> _selectCatalogEntry(_ClientLocationEntry entry) async {
+    final candidates = widget.transportCatalog?.candidates
+            .where((candidate) => candidate.nodeCode == entry.city.code)
+            .toList(growable: false) ??
+        const <domain.TransportCandidate>[];
+    if (candidates.isNotEmpty) {
+      final selected = await showModalBottomSheet<(String, String)>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (context) => SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(_locationCityDisplayName(entry.city, entry.country),
+                      style: Theme.of(context).textTheme.titleLarge),
+                  Text(_locationMetricsLabel(entry.city)),
+                  for (final candidate in candidates)
+                    ListTile(
+                      key: ValueKey(
+                          'location-candidate-${candidate.candidateRef}'),
+                      title: Text(_locationCandidateLabel(candidate)),
+                      subtitle: Text(_locationNodeStatusLabel(entry.city)),
+                      trailing:
+                          candidate.candidateRef == widget.preferredCandidateRef
+                              ? const Icon(Icons.push_pin_rounded)
+                              : const Icon(Icons.chevron_right_rounded),
+                      onTap: () => Navigator.of(context)
+                          .pop((candidate.candidateRef, '')),
+                    ),
+                  for (final variant in entry.city.variants.where(
+                    (variant) => variant.id != 'direct' && variant.available,
+                  ))
+                    ListTile(
+                      key: ValueKey('location-variant-${variant.id}'),
+                      title: Text(_safeLocationLabel(variant.label,
+                          fallback: 'Белые списки')),
+                      subtitle: Text(_safeLocationLabel(variant.description,
+                          fallback: '')),
+                      onTap: () => Navigator.of(context).pop(('', variant.id)),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      if (selected != null && mounted) {
+        if (selected.$1.isNotEmpty) {
+          widget.onPreferredCandidateSelected(selected.$1);
+        } else {
+          widget.onPreferredNodeSelected(entry.city.code, selected.$2);
+        }
+      }
+      return;
+    }
     final variants = entry.city.variants;
     final available =
         variants.where((variant) => variant.available).toList(growable: false);
@@ -140,11 +211,10 @@ class _LocationsSectionState extends State<_LocationsSection> {
                   widget.preferredNodeCode.trim().toLowerCase()
               ? widget.preferredVariantId
               : '',
-          runtimeProbeEnabled:
-              !widget.hasOrdinaryTransportCatalog &&
-                  widget.appContext.hostPlatform == HostPlatform.android &&
-                  entry.city.code.trim().toLowerCase() ==
-                      widget.preferredNodeCode.trim().toLowerCase(),
+          runtimeProbeEnabled: !widget.hasOrdinaryTransportCatalog &&
+              widget.appContext.hostPlatform == HostPlatform.android &&
+              entry.city.code.trim().toLowerCase() ==
+                  widget.preferredNodeCode.trim().toLowerCase(),
           hasOrdinaryTransportCatalog: widget.hasOrdinaryTransportCatalog,
           scrollController: scrollController,
         ),
@@ -186,6 +256,13 @@ class _LocationsSectionState extends State<_LocationsSection> {
                       selected: entry.city.code.trim().toLowerCase() ==
                           widget.preferredNodeCode.trim().toLowerCase(),
                       selectedVariantId: widget.preferredVariantId,
+                      protocolLabels: widget.transportCatalog?.candidates
+                              .where((candidate) =>
+                                  candidate.nodeCode == entry.city.code)
+                              .map(_locationCandidateLabel)
+                              .toSet()
+                              .toList(growable: false) ??
+                          const <String>[],
                       favorite: widget.favoriteNodeCodes.contains(
                         entry.city.code.trim().toLowerCase(),
                       ),
@@ -207,6 +284,9 @@ class _LocationsSectionState extends State<_LocationsSection> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.interfaceMode == PokrovInterfaceMode.simple) {
+      return _buildSimple(context);
+    }
     final theme = Theme.of(context);
     final tokens = PokrovPalette.of(context);
     final smartConnect = widget.smartConnectProfile;
@@ -242,7 +322,9 @@ class _LocationsSectionState extends State<_LocationsSection> {
         ? shortlist.where(_matches).toList(growable: false)
         : const <SmartConnectNode>[];
     final locationCount = hasCatalog ? catalogEntries.length : shortlist.length;
-    final hasManualPreference = widget.preferredNodeCode.trim().isNotEmpty;
+    final hasManualPreference = widget.preferredNodeCode.trim().isNotEmpty ||
+        widget.preferredCountryCode.isNotEmpty ||
+        widget.preferredCandidateRef.isNotEmpty;
     final autoStatus = hasManualPreference
         ? _AutoLocationStatus.manual
         : !widget.hasProvisionedAccess
@@ -267,8 +349,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
             title: 'Ping и нагрузка',
             lines: const [
               'Ping измеряется с этого устройства до каждой локации. Это не ping выбранного сервера.',
-              'Процент рядом — текущая нагрузка сервера. «Обновить» проверяет список заново.',
-              'Эмулятор может показывать нереально низкий ping. Для решения о локации ориентируйтесь на замер телефона.',
+              'Нагрузка — низкая, средняя или высокая по последним данным ноды. При отсутствии свежего замера это видно в строке.',
             ],
           ),
           icon: const Icon(Icons.info_outline_rounded, size: 20),
@@ -472,6 +553,89 @@ class _LocationsSectionState extends State<_LocationsSection> {
             lines: ['Нажмите «Подключить» на главном экране.'],
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildSimple(BuildContext context) {
+    final countries = <String, (String, bool)>{};
+    for (final country in widget.locationsCatalog?.countries ??
+        const <ClientLocationCountry>[]) {
+      countries[country.code.toUpperCase()] = (
+        _locationCountryDisplayName(country.code, country.country),
+        country.cities.any((city) =>
+            city.variants.isEmpty ||
+            city.variants.any((variant) => variant.available)),
+      );
+    }
+    if (countries.isEmpty) {
+      for (final node in widget.smartConnectProfile?.shortlist ??
+          const <SmartConnectNode>[]) {
+        final code = _locationCountryCodeFromNode(node.code, node.country);
+        if (code.isNotEmpty) {
+          countries[code] =
+              (_locationCountryDisplayName(code, node.country), true);
+        }
+      }
+    }
+    final automatic = widget.preferredCountryCode.isEmpty;
+    return _SeedContentList(
+      children: [
+        Text('Страна', style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 14),
+        _AutoLocationCard(
+          key: const ValueKey('locations-auto-section'),
+          title: 'Автоматически',
+          subtitle: 'POKROV подберёт рабочее соединение.',
+          value: automatic ? 'Авто' : 'Выбрать',
+          status: !widget.hasProvisionedAccess
+              ? _AutoLocationStatus.unavailable
+              : automatic
+                  ? _AutoLocationStatus.active
+                  : _AutoLocationStatus.manual,
+          onTap: widget.nodePreferenceBusy
+              ? () {}
+              : widget.onAutomaticLocationSelected,
+        ),
+        const SizedBox(height: 14),
+        _SectionCard(
+          title: 'Выбор страны',
+          lines: const ['Протокол и сервер выбираются автоматически.'],
+          child: Column(
+            children: [
+              for (final country in countries.entries)
+                ListTile(
+                  key: ValueKey('locations-country-${country.key}'),
+                  leading: _LocationFlagBadge(
+                      code: country.key, country: country.value.$1),
+                  title: Text(country.value.$1),
+                  trailing: country.key == widget.preferredCountryCode
+                      ? const Icon(Icons.check_rounded)
+                      : null,
+                  enabled: !widget.nodePreferenceBusy && country.value.$2,
+                  onTap: () => widget.onPreferredCountrySelected(country.key),
+                ),
+              if (countries.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(widget.locationsCatalogBusy
+                      ? 'Загружаем страны…'
+                      : 'Пока доступен автоматический выбор.'),
+                ),
+              if ((widget.locationsCatalogError ?? '').isNotEmpty)
+                const Text(
+                    'Список стран не обновился. Показываем сохранённые данные.'),
+              TextButton.icon(
+                key: const ValueKey('locations-refresh-measurements'),
+                onPressed: widget.locationsCatalogBusy
+                    ? null
+                    : widget.onRefreshLocationsCatalog,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Обновить страны'),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -771,7 +935,8 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
       PokrovLocationVariantProbeStatus.unavailable => 'Недоступно',
       PokrovLocationVariantProbeStatus.stale => 'Нужна проверка',
       _ => widget.runtimeProbeEnabled || widget.hasOrdinaryTransportCatalog
-          ? 'Не проверено' : 'После выбора',
+          ? 'Не проверено'
+          : 'После выбора',
     };
   }
 
@@ -903,7 +1068,8 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
             ] else if ((_snapshot?.errorCategory ?? '').isNotEmpty) ...[
               Text(
                 switch (_snapshot?.errorCategory) {
-                  'profile_unavailable' || 'variant_unavailable' =>
+                  'profile_unavailable' ||
+                  'variant_unavailable' =>
                     'Для текущего подключения проверка вариантов недоступна.',
                   _ =>
                     'Не удалось проверить через активный туннель. Подключите POKROV и повторите.',
@@ -931,7 +1097,8 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            variant.label,
+                            _safeLocationLabel(variant.label,
+                                fallback: 'Соединение'),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
@@ -943,7 +1110,8 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
                           if (variant.description.isNotEmpty) ...[
                             const SizedBox(height: 3),
                             Text(
-                              variant.description,
+                              _safeLocationLabel(variant.description,
+                                  fallback: ''),
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -1027,7 +1195,7 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
                             key: ValueKey(
                               'location-variant-refresh-${variant.id}',
                             ),
-                            tooltip: 'Повторить замер: ${variant.label}',
+                            tooltip: 'Повторить замер соединения',
                             constraints: const BoxConstraints.tightFor(
                               width: 44,
                               height: 44,
@@ -1064,7 +1232,8 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
                 button: true,
                 enabled: selectable,
                 selected: selected,
-                label: variant.label,
+                label:
+                    _safeLocationLabel(variant.label, fallback: 'Соединение'),
                 value: [
                   statusText,
                   if (freshnessText.isNotEmpty) freshnessText,
@@ -1101,6 +1270,7 @@ class _ClientLocationCityRow extends StatelessWidget {
     required this.entry,
     required this.selected,
     required this.selectedVariantId,
+    this.protocolLabels = const <String>[],
     required this.favorite,
     required this.disabled,
     required this.selectionEnabled,
@@ -1111,6 +1281,7 @@ class _ClientLocationCityRow extends StatelessWidget {
   final _ClientLocationEntry entry;
   final bool selected;
   final String selectedVariantId;
+  final List<String> protocolLabels;
   final bool favorite;
   final bool disabled;
   final bool selectionEnabled;
@@ -1128,11 +1299,11 @@ class _ClientLocationCityRow extends StatelessWidget {
         city.variants.any((variant) => variant.available);
     final quality =
         freshness == _LocationMetricFreshness.current && hasAvailableVariant
-        ? _locationQualityLabel(
-            city.healthScore,
-            latencyMs: city.latencyMs,
-          )
-        : null;
+            ? _locationQualityLabel(
+                city.healthScore,
+                latencyMs: city.latencyMs,
+              )
+            : null;
     final metrics = _locationMetricsLabel(
       city,
       now: now,
@@ -1143,11 +1314,14 @@ class _ClientLocationCityRow extends StatelessWidget {
       country.country,
     );
     final cityTitle = _locationCityDisplayName(city, country);
-    final availableVariantLabels = city.variants
-        .where(
-            (variant) => variant.available && variant.label.trim().isNotEmpty)
-        .map((variant) => variant.label.trim())
-        .toList(growable: false);
+    final availableVariantLabels = protocolLabels.isNotEmpty
+        ? protocolLabels
+        : city.variants
+            .where((variant) =>
+                variant.available && variant.label.trim().isNotEmpty)
+            .map((variant) =>
+                _safeLocationLabel(variant.label, fallback: 'Соединение'))
+            .toList(growable: false);
     final hasVariantChoice = availableVariantLabels.length > 1;
     final variantSummary = !hasVariantChoice
         ? ''
@@ -1162,7 +1336,8 @@ class _ClientLocationCityRow extends StatelessWidget {
       if (selected)
         ...city.variants
             .where((variant) => variant.id == selectedVariantId)
-            .map((variant) => variant.label)
+            .map((variant) =>
+                _safeLocationLabel(variant.label, fallback: 'Соединение'))
             .take(1)
       else if (hasVariantChoice)
         variantSummary,

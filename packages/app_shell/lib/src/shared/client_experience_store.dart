@@ -2,6 +2,8 @@ part of pokrov_app_shell;
 
 const _clientExperienceStateVersion = 1;
 
+enum PokrovInterfaceMode { simple, advanced }
+
 enum PokrovProtectionEventTone { success, warning, error, neutral }
 
 class PokrovProtectionEvent {
@@ -113,6 +115,9 @@ class PokrovClientExperienceState {
     required this.notificationsCachedAt,
     this.preferredNodeCode = '',
     this.preferredVariantId = 'direct',
+    this.interfaceMode = PokrovInterfaceMode.simple,
+    this.preferredCountryCode = '',
+    this.preferredCandidateRef = '',
     this.automaticNodeQuarantineUntil = const <String, String>{},
     this.selectedAppIds = const <String>[],
     this.catalogVerifiedRuPreset = false,
@@ -132,6 +137,9 @@ class PokrovClientExperienceState {
         notificationsCachedAt = '',
         preferredNodeCode = '',
         preferredVariantId = 'direct',
+        interfaceMode = PokrovInterfaceMode.simple,
+        preferredCountryCode = '',
+        preferredCandidateRef = '',
         automaticNodeQuarantineUntil = const <String, String>{},
         selectedAppIds = const <String>[],
         catalogVerifiedRuPreset = false,
@@ -149,6 +157,9 @@ class PokrovClientExperienceState {
   final String notificationsCachedAt;
   final String preferredNodeCode;
   final String preferredVariantId;
+  final PokrovInterfaceMode interfaceMode;
+  final String preferredCountryCode;
+  final String preferredCandidateRef;
 
   /// Short-lived device-local exclusions after a confirmed outbound failure.
   final Map<String, String> automaticNodeQuarantineUntil;
@@ -171,6 +182,9 @@ class PokrovClientExperienceState {
     String? notificationsCachedAt,
     String? preferredNodeCode,
     String? preferredVariantId,
+    PokrovInterfaceMode? interfaceMode,
+    String? preferredCountryCode,
+    String? preferredCandidateRef,
     Map<String, String>? automaticNodeQuarantineUntil,
     List<String>? selectedAppIds,
     bool? catalogVerifiedRuPreset,
@@ -190,10 +204,15 @@ class PokrovClientExperienceState {
           notificationsCachedAt ?? this.notificationsCachedAt,
       preferredNodeCode: preferredNodeCode ?? this.preferredNodeCode,
       preferredVariantId: preferredVariantId ?? this.preferredVariantId,
+      interfaceMode: interfaceMode ?? this.interfaceMode,
+      preferredCountryCode: preferredCountryCode ?? this.preferredCountryCode,
+      preferredCandidateRef:
+          preferredCandidateRef ?? this.preferredCandidateRef,
       automaticNodeQuarantineUntil:
           automaticNodeQuarantineUntil ?? this.automaticNodeQuarantineUntil,
       selectedAppIds: selectedAppIds ?? this.selectedAppIds,
-      catalogVerifiedRuPreset: catalogVerifiedRuPreset ?? this.catalogVerifiedRuPreset,
+      catalogVerifiedRuPreset:
+          catalogVerifiedRuPreset ?? this.catalogVerifiedRuPreset,
       routingPreferences: routingPreferences ?? this.routingPreferences,
       firstRouteScopeConfirmed:
           firstRouteScopeConfirmed ?? this.firstRouteScopeConfirmed,
@@ -246,6 +265,14 @@ class PokrovClientExperienceState {
       preferredNodeCode: preferredCodes.isEmpty ? '' : preferredCodes.first,
       preferredVariantId:
           preferredCodes.isEmpty ? 'direct' : preferredVariantId,
+      interfaceMode: PokrovInterfaceMode.values.firstWhere(
+        (mode) => mode.name == json['interfaceMode'],
+        orElse: () => PokrovInterfaceMode.simple,
+      ),
+      preferredCountryCode:
+          _experienceCountryCode(json['preferredCountryCode']),
+      preferredCandidateRef:
+          _experienceCandidateRef(json['preferredCandidateRef']),
       automaticNodeQuarantineUntil: automaticNodeQuarantineUntil,
       selectedAppIds: selectedAppIds,
       catalogVerifiedRuPreset: json['catalogVerifiedRuPreset'] == true,
@@ -275,6 +302,11 @@ class PokrovClientExperienceState {
         if (cachedNotifications != null)
           'cachedNotifications': cachedNotifications!.toJson(),
         'notificationsCachedAt': notificationsCachedAt,
+        'interfaceMode': interfaceMode.name,
+        if (preferredCountryCode.isNotEmpty)
+          'preferredCountryCode': preferredCountryCode,
+        if (preferredCandidateRef.isNotEmpty)
+          'preferredCandidateRef': preferredCandidateRef,
         if (preferredNodeCode.isNotEmpty)
           'preferredNodeCode': preferredNodeCode,
         if (preferredNodeCode.isNotEmpty)
@@ -290,6 +322,16 @@ class PokrovClientExperienceState {
         if (firstRouteScopeMode != null)
           'firstRouteScopeMode': firstRouteScopeMode!.name,
       };
+}
+
+String _experienceCountryCode(Object? value) {
+  final code = _experienceText(value).toUpperCase();
+  return RegExp(r'^[A-Z]{2}$').hasMatch(code) ? code : '';
+}
+
+String _experienceCandidateRef(Object? value) {
+  final ref = _experienceText(value);
+  return RegExp(r'^[a-z0-9_.:-]{1,128}$').hasMatch(ref) ? ref : '';
 }
 
 /// Normalizes the bounded identifiers accepted by Rules and retained locally.

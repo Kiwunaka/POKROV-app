@@ -96,6 +96,8 @@ abstract interface class ManagedProfileBootstrapper {
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
+    String preferredCountryCode = '',
+    String preferredCandidateRef = '',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
@@ -177,6 +179,8 @@ class ManagedProfileCacheInputs {
     this.selectedApps = const <String>[],
     this.preferredNodeCode = '',
     this.preferredVariantId = 'direct',
+    this.preferredCountryCode = '',
+    this.preferredCandidateRef = '',
   });
 
   final HostPlatform hostPlatform;
@@ -184,6 +188,8 @@ class ManagedProfileCacheInputs {
   final List<String> selectedApps;
   final String preferredNodeCode;
   final String preferredVariantId;
+  final String preferredCountryCode;
+  final String preferredCandidateRef;
 
   String binding(String accountId, String installId) {
     final apps = selectedApps.map((app) => app.trim()).toSet().toList()..sort();
@@ -191,6 +197,8 @@ class ManagedProfileCacheInputs {
     return jsonEncode([
       accountId, installId, hostPlatform.name, routeMode.name, apps, node,
       node.isEmpty ? 'direct' : preferredVariantId.trim().toLowerCase(),
+      if (preferredCountryCode.isNotEmpty || preferredCandidateRef.isNotEmpty)
+        [preferredCountryCode.trim().toUpperCase(), preferredCandidateRef],
     ]);
   }
 }
@@ -3243,6 +3251,8 @@ class AppFirstRuntimeBootstrapper
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
       selectedApps: inputs.selectedApps, preferredNodeCode: inputs.preferredNodeCode,
       preferredVariantId: inputs.preferredVariantId,
+      preferredCountryCode: inputs.preferredCountryCode,
+      preferredCandidateRef: inputs.preferredCandidateRef,
       runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
       selectCandidate: false, selectedCandidateRef: candidateRef, cacheResult: false,
       timeout: requestTimeout, cancelled: cancelled,
@@ -3273,18 +3283,16 @@ class AppFirstRuntimeBootstrapper
     await cacheResolvedManagedProfile(inputs, selected, cancelled: cancelled);
     final catalog = selected.transportCatalog;
     if (catalog == null) return;
-    final families = {catalog.selected.protocol};
-    final alternatives = catalog.candidates.where((candidate) => candidate.nodeCode == catalog.selected.nodeCode)
-        .toList()..sort((a, b) => a.priority.compareTo(b.priority));
-    var fetched = 0;
+    if (inputs.preferredCandidateRef.isNotEmpty) return;
+    final alternatives = SmartConnectCandidateSelector.cacheAlternatives(catalog.selected,
+        catalog.candidates.where((candidate) => inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode),
+        countryOnly: inputs.preferredCountryCode.isNotEmpty);
     for (final candidate in alternatives) {
-      if (!families.add(candidate.protocol) || fetched == 2) continue;
       final cached = await _managedProfileCache.read(platform: inputs.hostPlatform.name,
           binding: inputs.binding(state.accountId, state.installId), selectedCandidateRef: candidate.candidateRef);
       await requireCurrent();
       final verifiedAt = DateTime.tryParse(_readText(cached?['cache_verified_at']));
       if (verifiedAt != null && DateTime.now().toUtc().difference(verifiedAt) < ManagedProfileCache.refreshInterval) continue;
-      fetched++;
       try {
         final alternate = await resolve(candidate.candidateRef);
         await requireCurrent();
@@ -3346,6 +3354,8 @@ class AppFirstRuntimeBootstrapper
     List<String> selectedApps = const <String>[],
     String preferredNodeCode = '',
     String preferredVariantId = 'direct',
+    String preferredCountryCode = '',
+    String preferredCandidateRef = '',
     Set<String> excludedNodeCodes = const <String>{},
     String tcpFallbackFromRevision = '',
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
@@ -3432,10 +3442,11 @@ class AppFirstRuntimeBootstrapper
             selectedApps: normalizedSelectedApps,
             preferredNodeCode: preferredNodeCode,
             preferredVariantId: preferredVariantId,
+            preferredCountryCode: preferredCountryCode,
             client: client,
           );
           requests.requireActive();
-          if (selectCandidate && selectedCandidateRef.isEmpty && preferredNodeCode.trim().isEmpty &&
+          if (selectCandidate && selectedCandidateRef.isEmpty && preferredNodeCode.trim().isEmpty && preferredCountryCode.isEmpty &&
               manifest.payload.smartConnect != null) {
             final deadline = DateTime.now().add(smartConnectTelemetryDeadline);
             final smartConnect = manifest.payload.smartConnect;
@@ -3540,6 +3551,8 @@ class AppFirstRuntimeBootstrapper
             selectedApps: normalizedSelectedApps,
             preferredNodeCode: preferredNodeCode,
             preferredVariantId: preferredVariantId,
+            preferredCountryCode: preferredCountryCode,
+            preferredCandidateRef: preferredCandidateRef,
           );
           _resolvedProfileCache[manifest.payload] = (
             state: state, manifest: manifest,
@@ -6497,6 +6510,7 @@ class AppFirstRuntimeBootstrapper
     Set<RuntimeTransportFeature> runtimeFeatures = const {},
     String? coreRelease,
     String selectedCandidateRef = '',
+    String preferredCountryCode = '',
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
     // The user preference remains in cache inputs; an exact candidate can use
@@ -6507,6 +6521,9 @@ class AppFirstRuntimeBootstrapper
     var requestPath = normalizedPreferredNode.isEmpty
         ? path
         : '$path${path.contains('?') ? '&' : '?'}selected_node_code=${Uri.encodeQueryComponent(normalizedPreferredNode)}';
+    if (preferredCountryCode.isNotEmpty) {
+      requestPath += '${requestPath.contains('?') ? '&' : '?'}selected_country_code=${Uri.encodeQueryComponent(preferredCountryCode)}';
+    }
     if (tcpFallbackFromRevision.isNotEmpty) {
       requestPath +=
           '${requestPath.contains('?') ? '&' : '?'}fallback_from_revision=${Uri.encodeQueryComponent(tcpFallbackFromRevision)}';
@@ -6567,6 +6584,9 @@ class AppFirstRuntimeBootstrapper
             requestedCandidateRef: selectedCandidateRef)
         : null;
     if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
+      throw const TransportManifestFailure('transport_catalog_selection_mismatch');
+    }
+    if (preferredCountryCode.isNotEmpty && transportCatalog?.selected.countryCode != preferredCountryCode) {
       throw const TransportManifestFailure('transport_catalog_selection_mismatch');
     }
     if (transportCatalog != null &&

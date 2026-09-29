@@ -395,18 +395,25 @@ void main() {
     expect((await bootstrapper.loadCachedManagedProfile(inputs))?.cacheEntryId, discovery.cacheEntryId);
 
     const countryInputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
-      routeMode: RouteMode.fullTunnel, preferredNodeCode: 'ru');
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'RU');
     final sibling = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
-      routeMode: RouteMode.fullTunnel, preferredNodeCode: 'ru',
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'RU',
       runtimeFeatures: RuntimeTransportFeature.values.toSet(),
       selectedCandidateRef: 'ru-spb:grpc_443_primary', selectCandidate: false, cacheResult: false);
     expect(queries.last['selected_node_code'], 'ru-spb');
+    expect(queries.last['selected_country_code'], 'RU');
     expect(sibling.transportCatalog?.selected.nodeCode, 'ru-spb');
     await bootstrapper.cacheResolvedManagedProfile(countryInputs, sibling);
     expect((await bootstrapper.loadCachedManagedProfile(countryInputs))?.cacheEntryId, sibling.cacheEntryId);
     expect(await bootstrapper.loadCachedManagedProfile(const ManagedProfileCacheInputs(
       hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel, preferredNodeCode: 'ru-spb')), isNull,
       reason: 'exact egress does not rewrite the user country preference binding');
+    await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'RU',
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      selectedCandidateRef: 'de:grpc_443_primary', selectCandidate: false, cacheResult: false),
+      throwsA(isA<TransportManifestFailure>()
+        .having((failure) => failure.code, 'code', 'transport_catalog_selection_mismatch')));
 
     slowSelectedRefresh = true;
     final timedOutAuto = await bootstrapper.resolveManagedProfile(
