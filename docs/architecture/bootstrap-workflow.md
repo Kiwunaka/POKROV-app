@@ -699,18 +699,26 @@ stage route-mode allowlist also accepts `selectiveServices` as device intercepti
 with locally compiled selected-service routing. No tests or runtime acceptance
 have been executed for this change (`NOT_VERIFIED`).
 
-Manual domain/purpose choices and catalog choices receive matching Direct/VPN
-DNS lanes. A custom HTTPS resolver gets a copy on each detour; its chosen
-transport controls the default, while service-specific DNS follows the service
-route. Exact tunnel-server DNS bootstrap remains ahead of manual/catalog rules.
+Outside Windows app modes, manual domain/purpose choices and catalog choices
+receive matching Direct/VPN DNS lanes. A custom HTTPS resolver gets a copy on
+each detour; its chosen transport controls the default, while service-specific
+DNS follows the service route. Exact tunnel-server DNS bootstrap remains ahead
+of manual/catalog rules.
 Legacy DNS server selections are replaced, while explicit reject/rcode actions
 remain. Catalog route/DNS pairs retain their expiry fallback.
 
 Android include/exclude modes require the corresponding nonempty TUN package
-list and reject simultaneous lists. Windows currently admits catalog policy only
-for full and Smart Safe: shared OS DNS processes do not prove per-app requester
-scope, so that combination is explicitly rejected before stage. This is an open
-Windows implementation requirement, not parity or a completed WP-12 claim.
+list and reject simultaneous lists. Windows catalog app modes preserve the
+selected/excluded EXE and helper data rules before manual/catalog domain rules.
+When the final route is Direct, its VPN target comes from the existing selected
+process rule before unused selectors; excluded Direct rules are not VPN targets.
+Selected mode allows Direct only for known owners outside that scope and rejects
+unknown owners. Shared system DNS uses the VPN resolver even for Direct data;
+only exact transport-bootstrap names may use Direct DNS. Explicit Direct DNS is
+rejected in these modes. The existing whole-device recovery guard remains.
+Native TCP/UDP owner matching, helpers, EXE changes, restart and guard behavior
+still need Windows acceptance; excluded UI stays unavailable until then. This
+source contract is not strict per-app DNS isolation or a completed F04 claim.
 Native app-identity changes and the bound catalog expiry now stop the affected
 Android session; runtime handoff and rollback acceptance remain open. Existing external
 Smart DNS preferences cannot be combined with the catalog without a lease.
@@ -1169,7 +1177,7 @@ Current blocking dependency:
   gVisor UDP) and `gvisor`. Legacy persisted `systemProxy` state migrates to
   this lane
 - before securing the desktop config, the Windows runtime verifies every loopback-only helper port for both TCP and UDP. A collision with Hiddify or another local proxy is remapped to an OS-selected free loopback port; external listeners and profile routing are not changed
-- generated Windows VPN profiles follow the proven POKROV Core/Hiddify system-TUN shape: `address`, `stack: system` by default, `strict_route`, a first-match `port: 53 -> hijack-dns` rule before LAN/direct or user routing, route-level `sniff`, typed TCP/UDP DNS servers, and no legacy `dns-out` or TUN-level sniff/NAT fields. The final preference pass reasserts that protected rule prefix after every other transform. The explicit port match is required by the shipped Core generation because Windows sends resolver packets to a private LAN DNS address before protocol sniffing has classified them. `Full tunnel` removes inherited Internet bypass rules while retaining local/private LAN access; selected and excluded process modes use opposite route and DNS decisions as their labels promise
+- generated Windows VPN profiles follow the proven POKROV Core/Hiddify system-TUN shape: `address`, `stack: system` by default, `strict_route`, a first-match `port: 53 -> hijack-dns` rule before LAN/direct or user routing, route-level `sniff`, typed TCP/UDP DNS servers, and no legacy `dns-out` or TUN-level sniff/NAT fields. The final preference pass reasserts that protected rule prefix after every other transform. The explicit port match is required by the shipped Core generation because Windows sends resolver packets to a private LAN DNS address before protocol sniffing has classified them. `Full tunnel` removes inherited Internet bypass rules while retaining local/private LAN access; selected and excluded process modes use opposite data routes while shared system DNS uses the VPN resolver
 - server-materialized Windows profiles also apply the current routing mode and
   process selection: stale process routes and DNS server choices are replaced,
   Full tunnel removes inherited Internet bypasses, and All except RU applies
@@ -1184,7 +1192,7 @@ Current blocking dependency:
 - Windows manual location selection follows the VPN selector referenced by
   the selected-process rule when the default route is direct. The selected
   location changes that selector only; unselected processes keep direct routing
-  and selected-process DNS keeps its VPN resolver. This applies to generated
+  and shared system DNS keeps its VPN resolver. This applies to generated
   and server-materialized profiles.
 - Windows VPN verification is service-owned. After Core starts, WinHTTP uses
   proxy bypass to request the owned HTTPS marker at

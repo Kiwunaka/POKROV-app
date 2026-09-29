@@ -1783,7 +1783,12 @@ class ConnectionManager extends ChangeNotifier {
           'Модуль подключения пока не подтвердил поддержку каталога; применение недоступно.',
         if (_appContext.hostPlatform == HostPlatform.windows &&
             (mode == RouteMode.selectedApps || mode == RouteMode.excludedApps))
-          'Каталог пока несовместим с выбором приложений в Windows.',
+          'В Windows общий системный DNS идёт через VPN. При восстановлении защита временно блокирует трафик всего устройства.',
+        if (_appContext.hostPlatform == HostPlatform.windows &&
+            (mode == RouteMode.selectedApps || mode == RouteMode.excludedApps) &&
+            _clientExperience.routingPreferences.dnsTransport ==
+                PokrovDnsTransport.direct)
+          'Для выбора приложений в Windows включите DNS через VPN.',
         if ((mode == RouteMode.selectedApps ||
                 mode == RouteMode.excludedApps) &&
             _selectedAppIds.isEmpty)
@@ -2533,8 +2538,10 @@ class ConnectionManager extends ChangeNotifier {
               'Для этих правил нужно обновить модуль подключения.',
             'smart_access_budget_exhausted' =>
               'Подготовка маршрута сервиса заняла слишком долго. Повторите подключение.',
-            'catalog_process_dns_scope_unsupported' =>
-              'Правила сервисов пока несовместимы с выбором приложений в Windows.',
+            'catalog_process_scope_invalid' =>
+              'Не удалось применить выбор EXE. Повторно выберите приложения.',
+            'catalog_process_dns_transport_unsupported' =>
+              'Для выбора приложений в Windows включите DNS через VPN.',
             'catalog_gateway_lease_missing' =>
               'Для этого режима ещё не подготовлен маршрут сервиса.',
             _ =>

@@ -171,6 +171,12 @@ Its summary counts compiled domain rules, including gateway rules, and shows
 mixed gateway/VPN/block decisions per service instead of assigning the first
 domain's route to the whole service.
 
+Windows catalog app modes split EXE/helper data traffic while common system DNS
+stays protected through the VPN, including for Direct data. This does not prove
+per-app DNS attribution. The existing recovery guard may temporarily block the
+whole device. Native owner/guard acceptance remains open, and Windows excluded
+UI stays unavailable until that acceptance.
+
 The view shows validity, retained-cache use and secondary revision/signature
 check time. It removes expired decisions, refreshes on foreground resume and
 explicit request, and discards responses for an obsolete view or mode/access

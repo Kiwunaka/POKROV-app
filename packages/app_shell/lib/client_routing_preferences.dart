@@ -1219,6 +1219,22 @@ String _resolveProxyTag(
   if (finalEndpoint != null && _routingText(finalEndpoint['type']).isNotEmpty) {
     return finalTag;
   }
+  // Selected Windows processes can target a later selector or an endpoint
+  // while other traffic has a direct final. Follow that existing target.
+  final proxyTags = <String>{
+    for (final outbound in outbounds)
+      if (!_nonProxyTypes.contains(_routingText(outbound['type']).toLowerCase()))
+        _routingText(outbound['tag']),
+    for (final endpoint in endpoints)
+      if (_routingText(endpoint['type']).isNotEmpty)
+        _routingText(endpoint['tag']),
+  }..remove('');
+  for (final rule in _routingListOfMaps(route['rules'])) {
+    final tag = _routingText(rule['outbound']);
+    if (_windowsProcessKeys.any(rule.containsKey) && proxyTags.contains(tag)) {
+      return tag;
+    }
+  }
   for (final preferredType in const <String>['selector', 'urltest']) {
     final tag = _findOutboundByType(outbounds, preferredType);
     if (tag.isNotEmpty) return tag;

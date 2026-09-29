@@ -893,8 +893,14 @@ class _WindowsAppCatalogDomain implements CatalogDomain {
 ManagedProfilePayload _windowsAppProfile(RouteMode mode) {
   final config = _jsonMap(_windowsProfile().configPayload);
   final outbounds = _maps(config['outbounds']);
-  outbounds.singleWhere((outbound) => outbound['tag'] == 'proxy')['server'] = 'node.example';
-  config['outbounds'] = outbounds;
+  final leaf = outbounds.singleWhere((outbound) => outbound['tag'] == 'proxy');
+  leaf['tag'] = 'proxy-leaf';
+  leaf['server'] = 'node.example';
+  config['outbounds'] = [
+    {'type': 'selector', 'tag': 'unused-proxy', 'outbounds': ['proxy-leaf']},
+    {'type': 'selector', 'tag': 'proxy', 'outbounds': ['proxy-leaf']},
+    ...outbounds,
+  ];
   final route = _map(config['route']);
   route['final'] = mode == RouteMode.selectedApps ? 'direct' : 'proxy';
   route['rules'] = [
