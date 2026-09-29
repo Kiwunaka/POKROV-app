@@ -661,6 +661,14 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     config['dns'] = dns;
   }
 
+  if (hostPlatform == HostPlatform.windows &&
+      (payload.routeMode == RouteMode.selectedApps ||
+          payload.routeMode == RouteMode.excludedApps)) {
+    _protectWindowsAppDns(config, preferences,
+        vpn: proxyTag, vpnDns: dnsAddress == null ? 'dns-remote' : 'pokrov-user-dns',
+        directDns: 'dns-direct');
+  }
+
   return _applyAllExceptRuDefaults(
       payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1),
       hostPlatform, defaultRuAppPackageIds);
@@ -740,12 +748,8 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   if (hostPlatform != HostPlatform.android && hostPlatform != HostPlatform.windows) {
     throw const RoutingCatalogFailure('catalog_host_unsupported');
   }
-  if (hostPlatform == HostPlatform.windows &&
-      (payload.routeMode == RouteMode.selectedApps || payload.routeMode == RouteMode.excludedApps)) {
-    // Shared Windows DNS processes do not prove the requesting application's
-    // scope. Do not silently broaden a per-app choice to device-wide policy.
-    throw const RoutingCatalogFailure('catalog_process_dns_scope_unsupported');
-  }
+  final windowsAppScope = hostPlatform == HostPlatform.windows &&
+      (payload.routeMode == RouteMode.selectedApps || payload.routeMode == RouteMode.excludedApps);
   if (preferences.externalSmartDnsEnabled) {
     throw const RoutingCatalogFailure('catalog_gateway_lease_missing');
   }
@@ -768,6 +772,9 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   final inbounds = _routingListOfMaps(config['inbounds']);
   final tun = inbounds.where((value) => value['type'] == 'tun').firstOrNull;
   if (tun == null) throw const RoutingCatalogFailure('catalog_tun_scope_missing');
+  final appScopeRules = windowsAppScope
+      ? _windowsCatalogAppScopeRules(route, tun, payload.routeMode, vpn, direct)
+      : const <Map<String, dynamic>>[];
   if (hostPlatform == HostPlatform.android) {
     final include = tun['include_package'];
     final exclude = tun['exclude_package'];
@@ -826,6 +833,13 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   final remaining = <Map<String, dynamic>>[];
   for (final rule in _routingListOfMaps(route['rules'])) {
     final action = _routingText(rule['action']);
+    if (windowsAppScope &&
+        (action == 'sniff' || action == 'hijack-dns' || rule['port'] == 53 ||
+            _routingText(rule['protocol']).toLowerCase() == 'dns' ||
+            (_windowsProcessKeys.any(rule.containsKey) &&
+                (rule['outbound'] == direct || rule['outbound'] == vpn)))) {
+      continue;
+    }
     if (action == 'reject' || blockTags.contains(rule['outbound']) ||
         action == 'sniff' || action == 'hijack-dns') {
       safety.add(rule);
@@ -857,15 +871,23 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   // catalog classifications, without changing the rest of the device scope.
   final probeRoute = <String, dynamic>{
     'domain': ['api.pokrov.space'], 'network': 'tcp', 'port': [443],
+    if (windowsAppScope) 'process_name': ['pokrov_service.exe'],
     'action': 'route', 'outbound': vpn,
   };
   route['rules'] = [
+    if (windowsAppScope) ...[
+      {'port': 53, 'action': 'hijack-dns'},
+      {'action': 'sniff'},
+      probeRoute,
+      ...appScopeRules,
+    ],
     ...safety, if (selective) probeRoute,
     if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'outbound': direct},
     {'ip_is_private': true, 'action': 'reject'},
     ...manual, ...layer.routeRules, ...remaining,
   ];
   route['final'] = selective ? direct : vpn;
+  if (windowsAppScope) route['find_process'] = true;
   config['route'] = route;
 
   final blockedDns = servers.where((server) =>
@@ -879,7 +901,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
           InternetAddress.tryParse(_routingText(outbound['server'])) == null)
         _routingText(outbound['server']),
   }.toList()..sort();
-  if (selective && bootstrapDomains.any((domain) =>
+  if ((selective || windowsAppScope) && bootstrapDomains.any((domain) =>
       domain.toLowerCase().replaceFirst(RegExp(r'\.$'), '') == 'api.pokrov.space')) {
     // A tunnel cannot depend on its own protected proof hostname to bootstrap.
     throw const RoutingCatalogFailure('catalog_probe_bootstrap_conflict');
@@ -901,6 +923,10 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   dns['independent_cache'] = true;
   dns['disable_expire'] = false;
   config['dns'] = dns;
+  if (windowsAppScope) {
+    _protectWindowsAppDns(config, preferences,
+        vpn: vpn, vpnDns: vpnDns, directDns: directDns);
+  }
   // Removed automatic classifications must not leave unused remote rule sets
   // that Core would still load. Keep every set referenced by retained rules.
   final referencedSets = <String>{};
@@ -919,6 +945,97 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
         .where((definition) => referencedSets.contains(definition['tag'])).toList();
   }
   return payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1);
+}
+
+const _windowsProcessKeys = ['process_name', 'process_path', 'process_path_regex'];
+
+List<Map<String, dynamic>> _windowsCatalogAppScopeRules(
+    Map<String, dynamic> route, Map<String, dynamic> tun,
+    RouteMode mode, String vpn, String direct) {
+  if (tun['auto_route'] != true || tun['strict_route'] != true) {
+    throw const RoutingCatalogFailure('catalog_tun_scope_missing');
+  }
+  final selected = mode == RouteMode.selectedApps;
+  final matches = <Map<String, dynamic>>[];
+  for (final rule in _routingListOfMaps(route['rules'])) {
+    if (_routingText(rule['outbound']) != (selected ? vpn : direct) ||
+        !_windowsProcessKeys.any(rule.containsKey)) continue;
+    final keys = rule.keys.where(_windowsProcessKeys.contains).toList();
+    final values = keys.length == 1 ? rule[keys.single] : null;
+    if (keys.length != 1 || values is! List || values.isEmpty ||
+        values.any((value) => value is! String || value.isEmpty) ||
+        rule.keys.any((key) => !_windowsProcessKeys.contains(key) &&
+            key != 'outbound' && key != 'action') ||
+        (_routingText(rule['action']).isNotEmpty && rule['action'] != 'route')) {
+      throw const RoutingCatalogFailure('catalog_process_scope_invalid');
+    }
+    matches.add({keys.single: values});
+  }
+  if (matches.isEmpty) {
+    throw const RoutingCatalogFailure('catalog_process_scope_invalid');
+  }
+  if (!selected) {
+    return [for (final match in matches) {...match, 'action': 'route', 'outbound': direct}];
+  }
+  // A failed owner lookup must never look like an unselected application.
+  // Only a known owner outside the selected EXE/helper rules bypasses VPN.
+  return [
+    {
+      'type': 'logical', 'mode': 'and',
+      'rules': [
+        {'process_path_regex': ['.+']},
+        {'type': 'logical', 'mode': 'or', 'rules': matches, 'invert': true},
+      ],
+      'action': 'route', 'outbound': direct,
+    },
+    {'process_path_regex': ['.+'], 'invert': true, 'action': 'reject'},
+  ];
+}
+
+void _protectWindowsAppDns(Map<String, dynamic> config,
+    PokrovRoutingPreferences preferences, {required String vpn,
+      required String vpnDns, required String directDns}) {
+  if (preferences.dnsTransport == PokrovDnsTransport.direct) {
+    throw const RoutingCatalogFailure('catalog_process_dns_transport_unsupported');
+  }
+  final dns = _routingMap(config['dns']);
+  final servers = _routingListOfMaps(dns['servers']);
+  final resolver = servers.where((server) => server['tag'] == vpnDns).firstOrNull;
+  if (resolver == null || resolver['detour'] != vpn ||
+      resolver['type'] == 'local' || resolver['address'] == 'local') {
+    throw const RoutingCatalogFailure('catalog_dns_lane_invalid');
+  }
+  final bootstrapDomains = <String>{
+    for (final outbound in [..._routingListOfMaps(config['outbounds']),
+        ..._routingListOfMaps(config['endpoints'])])
+      if (_routingText(outbound['server']).isNotEmpty &&
+          InternetAddress.tryParse(_routingText(outbound['server'])) == null)
+        _routingText(outbound['server']),
+  }.toList()..sort();
+  final blocked = servers.where((server) =>
+      _routingText(server['address']).startsWith('rcode://'))
+      .map((server) => server['tag']).toSet();
+  // Windows DNS Client owns shared queries. Protect them independently of
+  // process/domain Direct data rules; only tunnel bootstrap uses direct DNS.
+  bool isBootstrapRule(Map<String, dynamic> rule) {
+    final domains = rule['domain'];
+    return rule['server'] == directDns && domains is List && domains.isNotEmpty &&
+        domains.every(bootstrapDomains.contains) &&
+        rule.keys.every(const ['domain', 'server', 'action'].contains);
+  }
+  dns['rules'] = [
+    for (final rule in _routingListOfMaps(dns['rules']))
+      if (!_windowsProcessKeys.any(rule.containsKey))
+        if (_routingText(rule['server']).isEmpty || blocked.contains(rule['server']) ||
+            isBootstrapRule(rule))
+          rule
+        else
+          {...rule, 'server': vpnDns},
+  ];
+  dns['final'] = vpnDns;
+  dns['independent_cache'] = true;
+  dns['disable_expire'] = false;
+  config['dns'] = dns;
 }
 
 const Map<PokrovPurposeRoute, List<String>> _purposeDomains = {

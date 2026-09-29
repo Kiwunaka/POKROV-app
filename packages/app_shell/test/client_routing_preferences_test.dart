@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_app_shell/routing_catalog_contract.dart';
+import 'package:pokrov_app_shell/routing_catalog_policy.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
@@ -242,6 +244,135 @@ void main() {
     expect(processRule['outbound'], 'awg31-lab');
     expect(dnsServers.first['detour'], 'awg31-lab');
     expect(config['endpoints'], _jsonMap(awgProfile.configPayload)['endpoints']);
+  });
+
+  test('Windows catalog selected EXEs bound data rules with protected shared DNS', () {
+    final profile = _windowsAppProfile(RouteMode.selectedApps);
+    final config = _jsonMap(applyPokrovRoutingPreferences(
+      profile,
+      const PokrovRoutingPreferences.defaults().copyWith(
+        dnsPreset: PokrovDnsPreset.cloudflare,
+        overrides: [PokrovRouteOverride.tryCreate(
+          value: 'bank.example', action: PokrovRouteAction.direct)!],
+      ),
+      hostPlatform: HostPlatform.windows,
+      catalogPolicy: _WindowsAppCatalogPolicy(CatalogRoutingMode.includeApps),
+      catalogAccessState: 'paid_unlimited',
+      nativeCatalogWindowVersion: 1,
+    ).configPayload);
+    final route = _map(config['route']);
+    final rules = _maps(route['rules']);
+    final bypass = rules.indexWhere((rule) => rule['type'] == 'logical');
+    final unknownOwner = rules.indexWhere((rule) =>
+        rule['invert'] == true && rule['action'] == 'reject');
+    final manual = rules.indexWhere((rule) =>
+        (rule['domain_suffix'] as List?)?.contains('bank.example') == true);
+    final gate = _maps(rules[bypass]['rules']);
+    final selected = _maps(gate[1]['rules']);
+    expect(rules.first, {'port': 53, 'action': 'hijack-dns'});
+    expect(route['find_process'], isTrue);
+    expect(route['final'], 'proxy');
+    expect(rules[bypass]['outbound'], 'direct');
+    expect(gate.first, {'process_path_regex': ['.+']});
+    expect(gate[1]['invert'], isTrue);
+    expect(selected, contains(equals({'process_name': ['discord.exe']})));
+    expect(selected, contains(equals({'process_path_regex': [r'(?i).*\\Discord\\Update\.exe$']})));
+    expect(bypass, lessThan(manual));
+    expect(unknownOwner, greaterThan(bypass));
+    expect(unknownOwner, lessThan(manual));
+    expect(rules.where((rule) => rule.containsKey('process_name')), [
+      containsPair('process_name', ['pokrov_service.exe']),
+    ]);
+    final catalogRules = rules.where((rule) =>
+        (rule['domain_suffix'] as List?)?.contains('catalog-bank.example') == true).toList();
+    expect(catalogRules.first['outbound'], 'direct');
+    expect(catalogRules.first['pokrov_catalog_window'], isNotNull);
+    expect(catalogRules.last['action'], 'reject');
+
+    final dns = _map(config['dns']);
+    final dnsRules = _maps(dns['rules']);
+    expect(dns['final'], 'pokrov-catalog-user-dns-vpn');
+    expect(dnsRules.where((rule) => rule.containsKey('process_name')), isEmpty);
+    expect(dnsRules.where((rule) => rule['server'] == 'pokrov-catalog-user-dns-direct'),
+        [containsPair('domain', ['node.example'])]);
+    expect(dnsRules.firstWhere((rule) =>
+        (rule['domain_suffix'] as List?)?.contains('bank.example') == true)['server'],
+        'pokrov-catalog-user-dns-vpn');
+    final catalogDnsRules = dnsRules.where((rule) =>
+        (rule['domain_suffix'] as List?)?.contains('catalog-bank.example') == true).toList();
+    expect(catalogDnsRules.first['server'], 'pokrov-catalog-user-dns-vpn');
+    expect(catalogDnsRules.first['pokrov_catalog_window'], catalogRules.first['pokrov_catalog_window']);
+    expect(catalogDnsRules.last['action'], 'reject');
+  });
+
+  test('Windows catalog excluded EXEs bypass manual and catalog data policy', () {
+    final config = _jsonMap(applyPokrovRoutingPreferences(
+      _windowsAppProfile(RouteMode.excludedApps),
+      const PokrovRoutingPreferences.defaults().copyWith(
+        overrides: [PokrovRouteOverride.tryCreate(
+          value: 'bank.example', action: PokrovRouteAction.vpn)!],
+      ),
+      hostPlatform: HostPlatform.windows,
+      catalogPolicy: _WindowsAppCatalogPolicy(CatalogRoutingMode.excludeApps),
+      catalogAccessState: 'paid_unlimited',
+      nativeCatalogWindowVersion: 1,
+    ).configPayload);
+    final route = _map(config['route']);
+    final rules = _maps(route['rules']);
+    final excluded = rules.indexWhere((rule) =>
+        rule.containsKey('process_name') && rule['outbound'] == 'direct');
+    final manual = rules.indexWhere((rule) => rule.containsKey('domain_suffix'));
+    expect(rules[excluded], {
+      'process_name': ['discord.exe'], 'action': 'route', 'outbound': 'direct',
+    });
+    expect(excluded, lessThan(manual));
+    expect(route['final'], 'proxy');
+    expect(_map(config['dns'])['final'], 'dns-remote');
+    expect(_maps(_map(config['dns'])['rules']).where((rule) =>
+        rule['server'] == 'dns-direct'), [containsPair('domain', ['node.example'])]);
+  });
+
+  test('Windows catalog rejects missing native app scope and direct shared DNS', () {
+    final profile = _windowsAppProfile(RouteMode.selectedApps);
+    final config = _jsonMap(profile.configPayload);
+    (config['route'] as Map)['rules'] = [];
+    expect(() => applyPokrovRoutingPreferences(
+      profile.copyWith(configPayload: jsonEncode(config)),
+      const PokrovRoutingPreferences.defaults(),
+      hostPlatform: HostPlatform.windows,
+      catalogPolicy: _WindowsAppCatalogPolicy(CatalogRoutingMode.includeApps),
+      catalogAccessState: 'paid_unlimited',
+      nativeCatalogWindowVersion: 1,
+    ), throwsA(isA<RoutingCatalogFailure>().having(
+        (error) => error.code, 'code', 'catalog_process_scope_invalid')));
+    expect(() => applyPokrovRoutingPreferences(
+      profile,
+      const PokrovRoutingPreferences.defaults().copyWith(
+        dnsPreset: PokrovDnsPreset.cloudflare, dnsTransport: PokrovDnsTransport.direct),
+      hostPlatform: HostPlatform.windows,
+      catalogPolicy: _WindowsAppCatalogPolicy(CatalogRoutingMode.includeApps),
+      catalogAccessState: 'paid_unlimited',
+      nativeCatalogWindowVersion: 1,
+    ), throwsA(isA<RoutingCatalogFailure>().having(
+        (error) => error.code, 'code', 'catalog_process_dns_transport_unsupported')));
+  });
+
+  test('Windows legacy app modes protect shared DNS without changing data scope', () {
+    final profile = _windowsAppProfile(RouteMode.selectedApps);
+    final config = _jsonMap(applyPokrovRoutingPreferences(
+      profile, const PokrovRoutingPreferences.defaults(),
+      hostPlatform: HostPlatform.windows,
+    ).configPayload);
+    final route = _map(config['route']);
+    final processRule = _maps(route['rules'])
+        .singleWhere((rule) => rule.containsKey('process_name'));
+    expect(route['final'], 'direct');
+    expect(processRule['outbound'], 'proxy');
+    final dns = _map(config['dns']);
+    expect(dns['final'], 'dns-remote');
+    expect(_maps(dns['rules']).where((rule) => rule.containsKey('process_name')), isEmpty);
+    expect(_maps(dns['rules']).where((rule) => rule['server'] == 'dns-direct'),
+        [containsPair('domain', ['node.example'])]);
   });
 
   test('AdGuard toggle stages the filtering DoH resolver through VPN', () {
@@ -712,6 +843,79 @@ Future<String> _readRepositoryFile(String relativePath) async {
     }
   }
   throw FileSystemException('Repository file not found', relativePath);
+}
+
+class _WindowsAppCatalogPolicy implements CatalogDomainPolicy {
+  _WindowsAppCatalogPolicy(this.mode);
+
+  @override
+  final CatalogRoutingMode mode;
+  @override
+  String get platform => 'windows';
+  @override
+  String get accessState => 'paid_unlimited';
+  @override
+  CatalogRouteAction get defaultAction => CatalogRouteAction.vpn;
+  @override
+  DateTime get issuedAt => DateTime.now().toUtc().subtract(const Duration(hours: 1));
+  @override
+  DateTime get expiresAt => DateTime.now().toUtc().add(const Duration(hours: 1));
+  @override
+  List<CatalogDomainDecision> get rules => [_WindowsAppCatalogDecision()];
+  @override
+  Set<String> get selectedServiceIds => const {};
+  @override
+  Null get smartAccessProfile => null;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _WindowsAppCatalogDecision implements CatalogDomainDecision {
+  @override
+  String get serviceId => 'catalog-bank';
+  @override
+  CatalogDomain get domain => _WindowsAppCatalogDomain();
+  @override
+  CatalogRouteAction get action => CatalogRouteAction.direct;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _WindowsAppCatalogDomain implements CatalogDomain {
+  @override
+  String get name => 'catalog-bank.example';
+  @override
+  bool get suffix => true;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+ManagedProfilePayload _windowsAppProfile(RouteMode mode) {
+  final config = _jsonMap(_windowsProfile().configPayload);
+  final outbounds = _maps(config['outbounds']);
+  outbounds.singleWhere((outbound) => outbound['tag'] == 'proxy')['server'] = 'node.example';
+  config['outbounds'] = outbounds;
+  final route = _map(config['route']);
+  route['final'] = mode == RouteMode.selectedApps ? 'direct' : 'proxy';
+  route['rules'] = [
+    ..._maps(route['rules']),
+    {'process_name': ['discord.exe'],
+      'outbound': mode == RouteMode.selectedApps ? 'proxy' : 'direct'},
+    if (mode == RouteMode.selectedApps)
+      {'process_path_regex': [r'(?i).*\\Discord\\Update\.exe$'], 'outbound': 'proxy'},
+  ];
+  config['route'] = route;
+  final dns = _map(config['dns']);
+  dns['servers'] = [..._maps(dns['servers']),
+    {'tag': 'dns-direct', 'type': 'udp', 'server': '1.1.1.1', 'detour': 'direct'}];
+  dns['rules'] = [
+    {'domain': ['node.example'], 'server': 'dns-direct'},
+    {'process_name': ['discord.exe'], 'server': 'dns-remote'},
+    {'domain_suffix': ['bank.example'], 'server': 'dns-direct'},
+  ];
+  dns['final'] = 'dns-direct';
+  config['dns'] = dns;
+  return _windowsProfile().copyWith(routeMode: mode, configPayload: jsonEncode(config));
 }
 
 ManagedProfilePayload _profile() => ManagedProfilePayload(

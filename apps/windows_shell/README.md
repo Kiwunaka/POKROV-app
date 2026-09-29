@@ -36,6 +36,13 @@ Current responsibility:
 
 Current local truth:
 
+Catalog routing preserves selected/excluded EXE data scope before domain rules.
+Selected mode rejects unknown process ownership; excluded mode routes matching
+EXEs directly. Shared Windows DNS goes through VPN, while an app's own DoH follows
+its data route. EXE names do not establish publisher/path identity, and recovery
+temporarily applies the existing whole-device guard. Native owner/DNS/recovery
+acceptance is required before enabling excluded-app controls or releasing this change.
+
 Candidate selection uses up to four isolated Core probes through authenticated
 service IPC, bound to the physical uplink and fenced by its network context.
 Cancellation waits for the probe instance to close. Ordinary profile replacement
