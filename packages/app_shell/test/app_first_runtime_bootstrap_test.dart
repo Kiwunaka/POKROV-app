@@ -8589,7 +8589,13 @@ void main() {
       ),
       isTrue,
     );
-    expect(dns['final'], 'dns-direct');
+    expect(dns['final'], 'dns-remote');
+    expect(
+      (dns['servers'] as List).cast<Map>().singleWhere(
+        (server) => server['tag'] == dns['final'],
+      )['detour'],
+      selectorTag,
+    );
     expect(dns['reverse_mapping'], true);
     final serviceRoute = routeRules.singleWhere(
       (rule) => (rule['domain'] as List?)?.contains('discord.com') == true,
@@ -9082,8 +9088,7 @@ void main() {
             expect(routedDns['path'], '/private-dns-query');
             expect(routedDns['tls'],
                 <String, Object?>{'server_name': 'dns.example'});
-            expect(routedDns['detour'],
-                mode == RouteMode.selectedApps ? 'direct' : 'select');
+            expect(routedDns['detour'], 'select');
             final tun = (config['inbounds'] as List).cast<Map>().single;
             expect(tun['address'], <String>['172.19.0.1/28']);
           }

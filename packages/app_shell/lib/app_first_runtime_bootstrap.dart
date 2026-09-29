@@ -8299,8 +8299,9 @@ class AppFirstRuntimeBootstrapper
       ...base,
       'servers': servers,
       'rules': <Map<String, dynamic>>[...preservedActions, ...rules],
-      'final':
-          routeMode == RouteMode.selectedApps ? 'dns-direct' : 'dns-remote',
+      // Windows resolves app DNS through shared system processes. Keep that
+      // traffic protected even when non-selected app connections go directly.
+      'final': 'dns-remote',
       if (routeMode == RouteMode.selectedApps &&
           _selectedWindowsServiceDomains(processNames).isNotEmpty)
         'reverse_mapping': true,

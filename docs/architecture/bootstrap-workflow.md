@@ -73,6 +73,13 @@ Country and candidate preferences are part of the encrypted cache binding.
 Switching a known manual pin to Simple keeps its country and restores automatic
 protocol choice; Auto clears country, node and candidate preferences together.
 
+Windows selected-app routing keeps non-selected application connections direct,
+but sends shared system DNS through the VPN. Windows delegates application DNS
+to common system processes, so the process-specific DNS rule cannot establish
+which application requested a name. The existing DNS hijack therefore uses the
+remote VPN resolver as its default; this is shared DNS protection, not a
+per-application DNS attribution guarantee.
+
 After ordinary Android or Windows egress is verified, the native session repeats
 the active Core 204 check two seconds after each success, with a three-second
 periodic deadline and a one-second manager status poll. Android uses Core's

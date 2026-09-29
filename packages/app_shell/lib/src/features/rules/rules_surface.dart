@@ -195,6 +195,10 @@ class _RulesSection extends StatelessWidget {
                   : selectedRouteMode == RouteMode.excludedApps
                       ? 'Напрямую: ${selectedAppIds.length} · остальное через VPN'
                       : 'Через VPN: ${selectedAppIds.length}',
+              if (appContext.hostPlatform == HostPlatform.windows &&
+                  (selectedRouteMode == RouteMode.selectedApps ||
+                      selectedRouteMode == RouteMode.excludedApps))
+                'Системный DNS общий для всех приложений. По умолчанию он защищён VPN.',
             ],
             child: _SelectedAppsEditor(
               hostPlatform: appContext.hostPlatform,
