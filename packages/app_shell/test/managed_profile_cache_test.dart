@@ -164,7 +164,7 @@ void main() {
     expect(await remembered('selection_wifi', account: 'other/install/route'), isNull);
   });
 
-  test('offline network restores its ASN candidate without crossing networks', () async {
+  test('offline Android context restores its ASN candidate without crossing networks', () async {
     const binding = 'account-A/install-A/route-A';
     await cache.saveDownloaded(platform: 'android', binding: binding,
       revision: 'catalog-1', verifiedAt: now, payload: {
@@ -179,7 +179,6 @@ void main() {
     await cache.markProven(platform: 'android', binding: binding,
       entryId: 'de:hy2', networkSelectionKey: 'asn:64500',
       offlineNetworkSelectionKey: 'android:123:network_a');
-    cache = ManagedProfileCache(now: () => now);
     Future<String?> remembered(String key) => cache.successfulCandidateRef(
       platform: 'android', binding: binding, networkSelectionKey: key);
     expect(await remembered('android:123:network_a'), 'de:hy2');
