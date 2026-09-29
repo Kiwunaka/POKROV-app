@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
+import 'package:pokrov_app_shell/src/features/rules/ru_app_catalog.dart';
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -7728,6 +7729,12 @@ void main() {
       routeMode: RouteMode.allExceptRu,
     );
     final config = jsonDecode(payload.configPayload) as Map<String, dynamic>;
+    final tun = (config['inbounds'] as List).cast<Map<String, dynamic>>()
+        .singleWhere((inbound) => inbound['type'] == 'tun');
+    expect(tun['exclude_package'], <String>[
+      'space.pokrov.pokrov_android_shell',
+      ...pokrovRuAppCatalog.map((entry) => entry.packageId),
+    ]);
     final dns = config['dns'] as Map<String, dynamic>;
     final dnsRules = (dns['rules'] as List).cast<Map<String, dynamic>>();
     final dnsServers = (dns['servers'] as List).cast<Map<String, dynamic>>();

@@ -18,6 +18,7 @@ import 'routing_catalog_contract.dart';
 import 'client_routing_preferences.dart';
 import 'routing_catalog_policy.dart';
 import 'src/features/rules/routing_catalog_store.dart';
+import 'src/features/rules/ru_app_catalog.dart';
 import 'src/features/rules/smart_access_policy_store.dart';
 import 'src/features/rules/transport_manifest_store.dart';
 import 'src/features/rules/transport_manifest_time.dart';
@@ -8343,6 +8344,8 @@ class AppFirstRuntimeBootstrapper
       } else {
         tunInbound['exclude_package'] = <String>[
           _androidShellPackageName,
+          if (routeMode == RouteMode.allExceptRu)
+            ...pokrovRuAppCatalog.map((entry) => entry.packageId),
           if (routeMode == RouteMode.excludedApps) ...selectedApps,
         ];
       }

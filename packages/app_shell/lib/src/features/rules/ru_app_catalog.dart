@@ -1,5 +1,3 @@
-part of pokrov_app_shell;
-
 enum PokrovRuAppCategory {
   yandex,
   social,
