@@ -22,7 +22,7 @@ class PokrovRuAppCatalogEntry {
 
 const pokrovRuAppCatalogVersion = '2026-08-14.1';
 
-/// Reviewed launcher package ids used only for local classification.
+/// Reviewed launcher package IDs for local classification and Android TUN bypass.
 ///
 /// The installed application list and matches never leave the device. Unknown
 /// packages stay visible in the picker and can always be selected manually.
