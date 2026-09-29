@@ -1613,7 +1613,7 @@ void main() {
   });
 
   test(
-    'real Windows POKROV Core 1.1.0 survives 100 start-stop cycles',
+    'real Windows POKROV Core survives 100 start-stop cycles',
     () async {
       final artifactRoot =
           Platform.environment['POKROV_REAL_CORE_ROOT']!.trim();
@@ -1647,6 +1647,12 @@ void main() {
                 'tag': 'mixed-in',
                 'listen': '127.0.0.1',
                 'listen_port': listenPort,
+                'users': <Object?>[
+                  <String, Object?>{
+                    'username': 'core-smoke',
+                    'password': 'loopback-smoke-password',
+                  },
+                ],
               },
             ],
             'outbounds': <Object?>[
