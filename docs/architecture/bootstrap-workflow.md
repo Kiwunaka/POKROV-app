@@ -1238,6 +1238,8 @@ Current blocking dependency:
   creates/updates/starts the fixed SCM service and removes it on uninstall.
   Portable ZIP output is unsupported for this architecture. Per-user startup
   and `pokrov://` registration are owned by the ordinary UI
+- the owner's unsigned beta exception is scoped to 1.4.0 direct downloads;
+  it does not assert trusted signing or Store readiness
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
 
