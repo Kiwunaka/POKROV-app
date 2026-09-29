@@ -48,13 +48,15 @@ class AndroidHostSecurityContractTest {
         val activitySource = source("MainActivity.kt")
         val bridgeSource = source("RuntimeHostBridge.kt")
         val tileSource = source("PokrovQuickSettingsTileService.kt")
+        val actionSource = source("PokrovVpnSystemAction.kt")
 
         assertFalse(activitySource.contains("handleSystemIntent"))
         assertFalse(bridgeSource.contains("handleSystemIntent"))
         assertFalse(bridgeSource.contains("EXTRA_TILE_CONNECT"))
         assertFalse(tileSource.contains("EXTRA_TILE_CONNECT"))
-        assertTrue(tileSource.contains("PokrovRuntimeVpnService.start("))
-        assertTrue(tileSource.contains("PokrovRuntimeVpnService.stop("))
+        assertFalse(actionSource.contains("EXTRA_TILE_CONNECT"))
+        assertTrue(actionSource.contains("PokrovRuntimeVpnService.start("))
+        assertTrue(actionSource.contains("PokrovRuntimeVpnService.stop("))
     }
 
     @Test
@@ -143,12 +145,14 @@ class AndroidHostSecurityContractTest {
     @Test
     fun quickSettingsUsesAuthoritativeRuntimeStateForStopBeforeStart() {
         val tileSource = source("PokrovQuickSettingsTileService.kt")
+        val actionSource = source("PokrovVpnSystemAction.kt")
 
-        assertTrue(tileSource.contains("AndroidRuntimeState.snapshot()"))
-        assertTrue(tileSource.contains("isRunning = snapshot.isRunning"))
-        assertTrue(tileSource.contains("QuickTileAction.STOP -> beginTransition(QuickTileAction.STOP)"))
-        assertTrue(tileSource.contains("PokrovRuntimeVpnService.stop(this, generation)"))
-        assertTrue(tileSource.contains("QuickTileAction.START -> beginTransition(QuickTileAction.START)"))
+        assertTrue(tileSource.contains("PokrovVpnSystemAction.toggle(this, \"quick_settings\")"))
+        assertTrue(actionSource.contains("AndroidRuntimeState.snapshot()"))
+        assertTrue(actionSource.contains("isRunning = tunEstablished || serviceRunning"))
+        assertTrue(actionSource.contains("QuickTileTransitionGate.begin(control.action)"))
+        assertTrue(actionSource.contains("PokrovRuntimeVpnService.stop(context, generation)"))
+        assertTrue(actionSource.contains("PokrovRuntimeVpnService.start("))
         assertTrue(tileSource.contains("EXTRA_TILE_TRANSITION_GENERATION"))
     }
 
@@ -204,12 +208,13 @@ class AndroidHostSecurityContractTest {
     @Test
     fun quickSettingsTilePublishesTheObservedRuntimeState() {
         val tileSource = source("PokrovQuickSettingsTileService.kt")
+        val actionSource = source("PokrovVpnSystemAction.kt")
 
-        assertTrue(tileSource.contains("Tile.STATE_ACTIVE else Tile.STATE_INACTIVE"))
-        assertTrue(tileSource.contains("if (running) \"Включен\" else \"Выключен\""))
-        assertTrue(tileSource.contains("snapshot.isRunning || runtimeServiceRunning"))
-        assertTrue(tileSource.contains("authoritativeRuntimeSnapshot().isRunning || isRuntimeServiceRunning()"))
-        assertTrue(tileSource.contains("getRunningServices(Int.MAX_VALUE)"))
+        assertTrue(tileSource.contains("control.state == SystemVpnState.OFF"))
+        assertTrue(tileSource.contains("Tile.STATE_INACTIVE else Tile.STATE_ACTIVE"))
+        assertTrue(tileSource.contains("SystemVpnState.PROTECTED"))
+        assertTrue(actionSource.contains("PokrovRuntimeVpnService.isTunEstablished()"))
+        assertTrue(actionSource.contains("getRunningServices(Int.MAX_VALUE)"))
         assertFalse(tileSource.contains("Tile.STATE_UNAVAILABLE"))
     }
 
@@ -271,9 +276,12 @@ class AndroidHostSecurityContractTest {
     fun permissionCallbackCannotResurrectConnectionCancelledByTheTile() {
         val bridgeSource = source("RuntimeHostBridge.kt")
         val tileSource = source("PokrovQuickSettingsTileService.kt")
+        val actionSource = source("PokrovVpnSystemAction.kt")
 
         assertTrue(bridgeSource.contains("AndroidRuntimeState.isConnectionPending()"))
-        assertTrue(tileSource.contains("AndroidRuntimeState.markStopRequested(stopReason = \"quick_settings\")"))
+        assertTrue(tileSource.contains("PokrovVpnSystemAction.toggle(this, \"quick_settings\")"))
+        assertTrue(actionSource.contains("AndroidConnectRequestOwner.invalidate()"))
+        assertTrue(actionSource.contains("AndroidRuntimeState.markStopRequested(stopReason = stopReason)"))
     }
 
     @Test

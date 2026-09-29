@@ -156,4 +156,29 @@ class PokrovQuickSettingsTileServiceTest {
             ),
         )
     }
+
+    @Test
+    fun boundAndCatalogProfilesOpenAppInsteadOfBypassingRequestGuard() {
+        val ordinary = PersistedRuntimeProfile(
+            configPath = "/private/profile.json",
+            routeMode = "device",
+            quickSettingsEligible = true,
+            lanScopeVersion = 1,
+            configDigest = "a".repeat(64),
+        )
+        for (profile in listOf(
+            ordinary.copy(requiresBoundConnect = true),
+            ordinary.copy(catalogAppIdentityRequired = true),
+        )) {
+            assertEquals(
+                QuickTileAction.OPEN_APP,
+                resolveQuickTileAction(
+                    isRunning = false,
+                    hasStagedProfile = true,
+                    quickSettingsEligible = profile.canStartFromQuickSettings(),
+                    vpnPermissionRequired = false,
+                ),
+            )
+        }
+    }
 }

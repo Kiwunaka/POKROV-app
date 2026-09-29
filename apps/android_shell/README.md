@@ -29,6 +29,8 @@ Current responsibility:
 
 Validation lane:
 
+The Quick Settings tile and home-screen widget share native start/stop actions and the existing `PokrovRuntimeVpnService`. They display pending, verified connection and retained protection separately; runtime notification changes refresh both surfaces. Native start reuses only a confirmed private ordinary profile with the required permissions. Missing permissions, bound transport profiles and catalog app identity open POKROV for the normal connection flow; this does not promise background catalog selection. The widget receiver is private and uses immutable pending intents. Physical-device checks of launcher refresh, permission denial, rapid toggles and retained protection are still required before release.
+
 - `flutter test` in `apps/android_shell/` covers shell boot plus the visible route-mode and runtime-diagnostics affordances
 - `android\\gradlew.bat :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest` covers both distribution identities, manifest guards, platform monitoring, the private journal/rotation/watchdog contract, runtime-state preservation, DNS planning, TUN route planning, and package allow/exclude planning
 - `..\\..\\scripts\\run-tests.ps1` is the canonical wrapper that runs both the Android-shell Flutter lane and the Android Gradle unit lane alongside the shared workspace tests

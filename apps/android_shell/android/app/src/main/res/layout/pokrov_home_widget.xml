@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:padding="16dp"
+    android:background="@drawable/pokrov_widget_background">
+    <TextView
+        android:id="@+id/pokrov_widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="POKROV"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#F3F1E9" />
+    <TextView
+        android:id="@+id/pokrov_widget_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/pokrov_vpn_off"
+        android:textSize="14sp"
+        android:textColor="#D2D0C7" />
+    <Button
+        android:id="@+id/pokrov_widget_toggle"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/pokrov_vpn_open_app"
+        android:textAllCaps="false"
+        android:textSize="14sp" />
+</LinearLayout>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pokrov_widget_description">Статус и управление VPN POKROV</string>
+    <string name="pokrov_vpn_off">Выключен</string>
+    <string name="pokrov_vpn_connecting">Подключение…</string>
+    <string name="pokrov_vpn_disconnecting">Отключение…</string>
+    <string name="pokrov_vpn_connected">Подключено</string>
+    <string name="pokrov_vpn_protected">Защита активна. Нужна проверка подключения.</string>
+    <string name="pokrov_vpn_connect">Подключить</string>
+    <string name="pokrov_vpn_disconnect">Отключить</string>
+    <string name="pokrov_vpn_open_app">Открыть POKROV</string>
+</resources>

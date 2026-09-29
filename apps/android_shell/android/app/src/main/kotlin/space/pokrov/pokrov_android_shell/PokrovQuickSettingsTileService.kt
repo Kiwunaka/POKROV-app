@@ -1,19 +1,15 @@
 package space.pokrov.pokrov_android_shell
 
-import android.app.ActivityManager
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.VpnService
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.graphics.drawable.Icon
-import java.io.File
 
 internal enum class QuickTileAction {
     START,
@@ -70,6 +66,9 @@ internal object QuickTileTransitionGate {
     }
 
     @Synchronized
+    fun isStopping(): Boolean = activeAction == QuickTileAction.STOP
+
+    @Synchronized
     fun resetForTest() {
         nextGeneration = 0L
         activeGeneration = null
@@ -93,54 +92,22 @@ class PokrovQuickSettingsTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        val profile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(this)
-        val snapshot = authoritativeRuntimeSnapshot()
-        val runtimeServiceRunning = isRuntimeServiceRunning()
-        val validProfile = profile?.takeIf {
-            it.configPath == snapshot.stagedConfigPath &&
-                File(it.configPath).isFile &&
-                File(it.configPath).length() > 0L
+        if (isLocked) {
+            unlockAndRun(::toggleVpn)
+        } else {
+            toggleVpn()
         }
-        val permissionRequired = !snapshot.isRunning && VpnService.prepare(this) != null
-        val notificationPermissionRequestRequired =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
-                android.content.pm.PackageManager.PERMISSION_GRANTED &&
-                !AndroidNotificationPermissionStore.wasAsked(this)
-        when (
-            resolveQuickTileAction(
-                isRunning = snapshot.isRunning || runtimeServiceRunning,
-                connectionPending = snapshot.connectionPending,
-                hasStagedProfile = validProfile != null,
-                quickSettingsEligible = validProfile?.canStartFromQuickSettings() == true,
-                vpnPermissionRequired = permissionRequired,
-                notificationPermissionRequestRequired = notificationPermissionRequestRequired,
-            )
-        ) {
-            QuickTileAction.STOP -> beginTransition(QuickTileAction.STOP)?.let { generation ->
-                AndroidRuntimeState.markStopRequested(stopReason = "quick_settings")
-                PokrovRuntimeVpnService.stop(this, generation)
-            }
-            QuickTileAction.START -> beginTransition(QuickTileAction.START)?.let { generation ->
-                AndroidRuntimeState.markConnectionPending()
-                PokrovRuntimeVpnService.start(
-                    this,
-                    requireNotNull(validProfile).configPath,
-                    requireNotNull(validProfile).routeMode,
-                    requireNotNull(validProfile).configDigest,
-                    generation,
-                )
-            }
-            QuickTileAction.OPEN_APP -> openAppForConnection()
+    }
+
+    private fun toggleVpn() {
+        if (PokrovVpnSystemAction.toggle(this, "quick_settings") == QuickTileAction.OPEN_APP) {
+            openAppForConnection()
         }
         refreshTile()
     }
 
     private fun openAppForConnection() {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            action = Intent.ACTION_VIEW
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        }
+        val intent = PokrovVpnSystemAction.appIntent(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val pendingIntent = PendingIntent.getActivity(
                 this,
@@ -157,25 +124,25 @@ class PokrovQuickSettingsTileService : TileService() {
 
     private fun refreshTile() {
         val tile = qsTile ?: return
-        val running = authoritativeRuntimeSnapshot().isRunning || isRuntimeServiceRunning()
+        val control = PokrovVpnSystemAction.read(this)
+        val status = when (control.state) {
+            SystemVpnState.OFF -> getString(R.string.pokrov_vpn_off)
+            SystemVpnState.CONNECTING -> getString(R.string.pokrov_vpn_connecting)
+            SystemVpnState.DISCONNECTING -> getString(R.string.pokrov_vpn_disconnecting)
+            SystemVpnState.CONNECTED -> getString(R.string.pokrov_vpn_connected)
+            SystemVpnState.PROTECTED -> "Защита активна"
+        }
+        val action = when (control.action) {
+            QuickTileAction.START -> getString(R.string.pokrov_vpn_connect)
+            QuickTileAction.STOP -> getString(R.string.pokrov_vpn_disconnect)
+            QuickTileAction.OPEN_APP -> getString(R.string.pokrov_vpn_open_app)
+        }
         tile.icon = Icon.createWithResource(this, R.drawable.ic_pokrov_system)
         tile.label = "POKROV"
-        tile.state = if (running) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-        tile.contentDescription = if (running) {
-            "POKROV включен. Нажмите, чтобы отключить VPN."
-        } else {
-            "POKROV выключен. Нажмите, чтобы включить VPN."
-        }
-        setTileSubtitle(tile, if (running) "Включен" else "Выключен")
+        tile.state = if (control.state == SystemVpnState.OFF) Tile.STATE_INACTIVE else Tile.STATE_ACTIVE
+        tile.contentDescription = "POKROV: $status. $action."
+        setTileSubtitle(tile, status)
         tile.updateTile()
-    }
-
-    @Suppress("DEPRECATION")
-    private fun isRuntimeServiceRunning(): Boolean {
-        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        return activityManager.getRunningServices(Int.MAX_VALUE).any {
-            it.service.className == PokrovRuntimeVpnService::class.java.name
-        }
     }
 
     private fun setTileSubtitle(tile: Tile, value: String) {
@@ -184,38 +151,7 @@ class PokrovQuickSettingsTileService : TileService() {
         }
     }
 
-    private fun authoritativeRuntimeSnapshot(): QuickTileRuntimeSnapshot {
-        AndroidRuntimeState.reconcileActiveRuntime(
-            tunEstablished = PokrovRuntimeVpnService.isTunEstablished(),
-            runningMessage = PokrovRuntimeVpnService.latestRuntimeMessage(),
-        )
-        val state = AndroidRuntimeState.snapshot()
-        return QuickTileRuntimeSnapshot(
-            phase = state["phase"] as? String,
-            stagedConfigPath = state["stagedConfigPath"] as? String,
-            connectionPending = state["connection_pending"] as? Boolean ?: false,
-        )
-    }
-
-    private fun beginTransition(action: QuickTileAction): Long? {
-        val generation = QuickTileTransitionGate.begin(action) ?: return null
-        transitionHandler.postDelayed(
-            { QuickTileTransitionGate.expire(generation) },
-            TRANSITION_TIMEOUT_MILLIS,
-        )
-        return generation
-    }
-
-    private data class QuickTileRuntimeSnapshot(
-        val phase: String?,
-        val stagedConfigPath: String?,
-        val connectionPending: Boolean,
-    ) {
-        val isRunning: Boolean get() = phase == AndroidRuntimePhase.RUNNING.wireValue
-    }
-
     companion object {
-        private const val TRANSITION_TIMEOUT_MILLIS = 3_000L
         private const val REGISTRATION_PREFERENCES = "pokrov_quick_tile_registration"
         private const val ACTIVE_MODE_REGISTRATION_VERSION = 1
         private const val ACTIVE_MODE_REGISTRATION_KEY = "active_mode_version"
@@ -227,6 +163,7 @@ class PokrovQuickSettingsTileService : TileService() {
         }
 
         fun requestRefresh(context: Context) {
+            PokrovHomeWidgetProvider.refreshAll(context)
             TileService.requestListeningState(
                 context,
                 ComponentName(context, PokrovQuickSettingsTileService::class.java),

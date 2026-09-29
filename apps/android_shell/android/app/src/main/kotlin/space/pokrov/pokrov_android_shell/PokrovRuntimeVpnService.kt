@@ -1251,6 +1251,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 visibleContent,
             ),
         )
+        PokrovQuickSettingsTileService.requestRefresh(this)
     }
 
     private fun beginForegroundRuntime() {
