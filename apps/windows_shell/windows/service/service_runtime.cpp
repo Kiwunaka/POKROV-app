@@ -434,6 +434,10 @@ class InstalledCoreRuntime final : public CoreRuntime {
     return initialized_ ? core_module_sha256_ : "";
   }
 
+  std::string CoreVersion() const override {
+    return initialized_ ? core_version_ : "";
+  }
+
   int SmartAccessLeaseVersion() const override {
     return initialized_ ? smart_access_lease_version_ : 0;
   }
@@ -511,6 +515,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
     }
     routing_catalog_window_version_ = 0;
     transport_capabilities_json_.clear();
+    core_version_.clear();
     configure_smart_access_control_ = nullptr;
     configure_smart_access_renewal_ = nullptr;
     read_smart_access_restrictions_ = nullptr;
@@ -558,6 +563,15 @@ class InstalledCoreRuntime final : public CoreRuntime {
         start_ == nullptr || stop_ == nullptr || free_string_ == nullptr ||
         abi_() != 2) {
       return "core_abi_incompatible";
+    }
+    const auto read_core_version = reinterpret_cast<CapabilitiesFunction>(
+        ::GetProcAddress(module_, "pokrovCoreVersion"));
+    if (read_core_version != nullptr) {
+      const auto version = StringResult(read_core_version());
+      if (version.size() <= 32 && std::all_of(version.begin(), version.end(),
+          [](unsigned char character) { return (character >= '0' && character <= '9') || character == '.'; })) {
+        core_version_ = version;
+      }
     }
     if (capabilities_ != nullptr) {
       const auto descriptor = StringResult(capabilities_());
@@ -889,6 +903,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
   CapabilitiesFunction capabilities_ = nullptr;
   std::string transport_capabilities_json_;
   std::string core_module_sha256_;
+  std::string core_version_;
   RevokeSmartAccessFunction revoke_smart_access_ = nullptr;
   RenewSmartAccessFunction renew_smart_access_ = nullptr;
   ConfigureSmartAccessControlFunction configure_smart_access_control_ = nullptr;
@@ -1773,6 +1788,8 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
              ? core_->TransportCapabilities() : "none") +
          ";core_module_sha256=" +
          (initialized_ && !core_->CoreModuleSHA256().empty() ? core_->CoreModuleSHA256() : "none") +
+         ";core_version=" +
+         (initialized_ && !core_->CoreVersion().empty() ? core_->CoreVersion() : "none") +
          ";protection_retained=" + (guarded ? "1" : "0");
 }
 

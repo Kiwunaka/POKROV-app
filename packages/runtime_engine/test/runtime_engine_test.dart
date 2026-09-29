@@ -479,6 +479,7 @@ void main() {
         return <String, Object?>{
           'phase': 'configStaged',
           'coreModuleSha256': coreDigest,
+          'coreVersion': '1.1.1',
           'stagedProfileDigest': profileDigest,
           'stagedConfigPath': '/host/runtime/ats.json',
           'routingCatalogControlVersion': 0,
@@ -512,6 +513,7 @@ void main() {
         bindIdentity: (input, native) async => profileDigest,
       );
       expect(staged.phase, RuntimePhase.configStaged);
+      expect(staged.coreVersion, '1.1.1');
       expect(staged.routingCatalogControlVersion, 0);
     }
     expect(stagedModes, ['selectedApps', 'excludedApps']);

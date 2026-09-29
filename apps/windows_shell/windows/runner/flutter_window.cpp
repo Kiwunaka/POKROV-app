@@ -203,6 +203,9 @@ flutter::EncodableValue RuntimeSnapshotValue(
   values[flutter::EncodableValue("coreModuleSha256")] =
       snapshot.compatible && !snapshot.core_module_sha256.empty()
           ? flutter::EncodableValue(snapshot.core_module_sha256) : flutter::EncodableValue();
+  values[flutter::EncodableValue("coreVersion")] =
+      snapshot.compatible && !snapshot.core_version.empty()
+          ? flutter::EncodableValue(snapshot.core_version) : flutter::EncodableValue();
   values[flutter::EncodableValue("smartAccessLeaseVersion")] =
       flutter::EncodableValue(snapshot.compatible
           ? snapshot.smart_access_lease_version : 0);

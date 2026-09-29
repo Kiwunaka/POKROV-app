@@ -100,6 +100,7 @@ internal object AndroidRuntimeState {
     private var routingCatalogControlVersion: Int = 0
     private var transportCapabilitiesJson: String? = null
     private var coreModuleSha256: String? = null
+    private var coreVersion: String? = null
     private var lastFailureKind: String? = null
     private var lastStopReason: String? = null
     private var awgSafeDiagnosticCode: String? = null
@@ -182,6 +183,7 @@ internal object AndroidRuntimeState {
         routingCatalogControlVersion = 0
         transportCapabilitiesJson = null
         coreModuleSha256 = null
+        coreVersion = null
         val resolved = resolveEnvironment(context) ?: return false
         return try {
             Seq.setContext(context.applicationContext)
@@ -208,6 +210,7 @@ internal object AndroidRuntimeState {
             smartAccessRuntimeControlVersion = readSmartAccessRuntimeControlVersion()
             ensureCompiledTransportCapabilities()
             coreModuleSha256 = readCoreModuleSha256()
+            coreVersion = readCoreVersion()
             phase = if (phase == AndroidRuntimePhase.RUNNING) {
                 AndroidRuntimePhase.RUNNING
             } else {
@@ -237,6 +240,16 @@ internal object AndroidRuntimeState {
         (value as? String)?.takeIf { digest ->
             digest.length == 64 && digest.all { it in '0'..'9' || it in 'a'..'f' }
         }
+    } catch (_: ReflectiveOperationException) {
+        null
+    } catch (_: LinkageError) {
+        null
+    }
+
+    private fun readCoreVersion(): String? = try {
+        val value = Class.forName("space.pokrov.core.mobile.Mobile")
+            .getMethod("coreVersion").invoke(null)
+        (value as? String)?.takeIf { it.matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+")) }
     } catch (_: ReflectiveOperationException) {
         null
     } catch (_: LinkageError) {
@@ -804,6 +817,7 @@ internal object AndroidRuntimeState {
             "routingCatalogControlVersion" to routingCatalogControlVersion,
             "transportCapabilitiesJson" to transportCapabilitiesJson,
             "coreModuleSha256" to coreModuleSha256,
+            "coreVersion" to coreVersion,
             "artifactDirectory" to resolved?.artifactDirectory,
             "coreBinaryPath" to resolved?.coreBinaryPath,
             "helperBinaryPath" to null,

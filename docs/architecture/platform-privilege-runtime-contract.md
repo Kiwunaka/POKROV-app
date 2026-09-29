@@ -1,11 +1,18 @@
 # Platform Privilege And Runtime Contract
 
-Last updated: 2026-09-01
+Last updated: 2026-09-29
 
 This document owns the client-side trust, privilege and lifecycle boundaries
 for Windows, Android and the conditional Linux beta lane. It defines intended
 architecture. Release readiness still depends on current code, tests and exact
 candidate evidence in the platform-specific operation documents.
+
+The diagnostics screen shows the version returned by the Core loaded by the
+native host after initialization. Android reads `Mobile.coreVersion()` from the
+loaded AAR; Windows reads `pokrovCoreVersion()` inside the service and carries
+it in the runtime snapshot. Before initialization or with an older Core lacking
+the getter, the screen says the version is unavailable instead of using the
+release seed as a substitute.
 
 ## Smart Access capability negotiation (local source, NOT_VERIFIED)
 

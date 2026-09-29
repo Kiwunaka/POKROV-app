@@ -143,6 +143,7 @@ class RuntimeSnapshot {
     this.routingCatalogControlVersion = 0,
     this.transportCapabilities,
     this.coreModuleSha256,
+    this.coreVersion,
   });
 
   final HostPlatform hostPlatform;
@@ -202,6 +203,8 @@ class RuntimeSnapshot {
   final RuntimeTransportCapabilities? transportCapabilities;
   /// Native-observed executable/module digest. Never a profile/package hash.
   final String? coreModuleSha256;
+  /// Version reported by the Core loaded by the native host.
+  final String? coreVersion;
 
   bool get hasCoreEgressProbeFailure =>
       _coreEgressProbeFailureKinds.contains(lastFailureKind?.trim());
@@ -256,6 +259,7 @@ class RuntimeSnapshot {
         routingCatalogControlVersion,
         transportCapabilities?.canonicalJson,
         coreModuleSha256,
+        coreVersion,
       );
 
   /// The host may advertise whether a selected-outbound Core probe is an
@@ -4421,6 +4425,10 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
           ? RuntimeTransportCapabilities.fromWire(response['transportCapabilitiesJson']) : null,
       coreModuleSha256: const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase)
           ? _coreModuleDigestFromWire(response['coreModuleSha256']) : null,
+      coreVersion: const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase) &&
+              response['coreVersion'] is String &&
+              RegExp(r'^\d+\.\d+\.\d+$').hasMatch(response['coreVersion'] as String)
+          ? response['coreVersion'] as String : null,
       routingCatalogWindowVersion:
           response['routingCatalogWindowVersion'] is int &&
                   response['routingCatalogWindowVersion'] == 1 ? 1 : 0,

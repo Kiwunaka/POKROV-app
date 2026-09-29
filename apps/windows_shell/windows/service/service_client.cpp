@@ -481,6 +481,15 @@ bool ParseBool(const std::string& value, bool* output) {
   return true;
 }
 
+bool IsCoreVersion(const std::string& value) {
+  return !value.empty() && value.size() <= 32 && value.front() != '.' &&
+         value.back() != '.' && value.find("..") == std::string::npos &&
+         std::count(value.begin(), value.end(), '.') == 2 &&
+         std::all_of(value.begin(), value.end(), [](unsigned char character) {
+           return (character >= '0' && character <= '9') || character == '.';
+         });
+}
+
 bool IsKnownPhase(const std::string& value) {
   return value == "artifact_missing" || value == "artifact_ready" ||
          value == "connecting" || value == "busy" ||
@@ -576,6 +585,8 @@ bool ParseSnapshotBodyInternal(const std::string& body,
   std::string transport_capabilities = "none";
   const bool has_module_digest = body.find(";core_module_sha256=") != std::string::npos;
   std::string module_digest = "none";
+  const bool has_core_version = body.find(";core_version=") != std::string::npos;
+  std::string core_version = "none";
   const bool has_retained_protection = body.find(";protection_retained=") != std::string::npos;
   std::string protection_retained = "0";
   const bool has_proof_state = body.find(";transport_proof_pending=") != std::string::npos;
@@ -585,6 +596,7 @@ bool ParseSnapshotBodyInternal(const std::string& body,
   if (has_lease_state && !has_proof_state) return false;
   if (has_proof_state && !has_module_digest) return false;
   if (has_retained_protection && !has_module_digest) return false;
+  if (has_core_version && !has_module_digest) return false;
   if (has_module_digest && !has_transport_capabilities) return false;
   if (has_transport_capabilities && !has_runtime_control) return false;
   if (has_smart_access && !has_catalog_window) return false;
@@ -611,11 +623,13 @@ bool ParseSnapshotBodyInternal(const std::string& body,
           "smart_access_runtime_control_version", &runtime_control, !has_transport_capabilities)) ||
       (has_transport_capabilities && !ReadField(body, &offset,
           "transport_capabilities", &transport_capabilities, !has_module_digest)) ||
-      (has_module_digest && !ReadField(body, &offset, "core_module_sha256", &module_digest, !has_retained_protection && !has_proof_state)) ||
+      (has_module_digest && !ReadField(body, &offset, "core_module_sha256", &module_digest, !has_core_version && !has_retained_protection && !has_proof_state)) ||
+      (has_core_version && !ReadField(body, &offset, "core_version", &core_version, !has_retained_protection && !has_proof_state)) ||
       (has_retained_protection && !ReadField(body, &offset, "protection_retained", &protection_retained, !has_proof_state)) ||
       (has_proof_state && !ReadField(body, &offset, "transport_proof_pending", &proof_pending, !has_lease_state)) ||
       (has_lease_state && !ReadField(body, &offset, "transport_lease_active", &lease_active, true)) ||
       (module_digest != "none" && !IsProfileDigest(module_digest)) ||
+      (core_version != "none" && !IsCoreVersion(core_version)) ||
       transport_capabilities.size() > 4096 ||
       !std::all_of(transport_capabilities.begin(), transport_capabilities.end(), [](unsigned char character) {
         return character >= 32 && character <= 126 && character != ';';
@@ -675,6 +689,7 @@ bool ParseSnapshotBodyInternal(const std::string& body,
   output->transport_capabilities_json = output->core_ready && transport_capabilities != "none"
       ? transport_capabilities : "";
   output->core_module_sha256 = output->core_ready && module_digest != "none" ? module_digest : "";
+  output->core_version = output->core_ready && core_version != "none" ? core_version : "";
   output->transport_proof_state_available = has_proof_state;
   output->transport_lease_state_available = has_lease_state;
   return true;

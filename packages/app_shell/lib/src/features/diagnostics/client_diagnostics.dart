@@ -175,6 +175,7 @@ final class PokrovDiagnosticsReport {
     required List<PokrovDiagnosticEvidence> evidence,
     required this.preparedBundle,
     required this.supportCode,
+    this.coreVersion,
     required this.encryptedDeliveryAvailable,
     this.crashDiagnosticsReady = true,
     required List<String> safeActionKeys,
@@ -196,6 +197,7 @@ final class PokrovDiagnosticsReport {
   final List<PokrovDiagnosticEvidence> evidence;
   final PreparedSupportBundle preparedBundle;
   final String supportCode;
+  final String? coreVersion;
   final bool encryptedDeliveryAvailable;
   final bool crashDiagnosticsReady;
   final List<String> safeActionKeys;
@@ -216,6 +218,7 @@ final class PokrovDiagnosticsReport {
         evidence: evidence,
         preparedBundle: preparedBundle,
         supportCode: supportCode,
+        coreVersion: coreVersion,
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
         crashDiagnosticsReady: crashDiagnosticsReady,
         safeActionKeys: safeActionKeys,
@@ -350,6 +353,7 @@ abstract final class PokrovDiagnosticsPresenter {
       evidence: evidence,
       preparedBundle: prepared,
       supportCode: supportCode,
+      coreVersion: snapshot?.coreVersion,
       encryptedDeliveryAvailable: encryptedDeliveryAvailable,
       crashDiagnosticsReady: crashDiagnosticsReady,
       safeActionKeys: problemBook?.safeActions ?? const <String>[],
@@ -1053,6 +1057,11 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                             Text(
                               _report.statusLabel,
                               style: theme.textTheme.bodyMedium,
+                            ),
+                            Text(
+                              'Ядро: ${_report.coreVersion ?? 'версия недоступна'}',
+                              key: const ValueKey('diagnostics-core-version'),
+                              style: theme.textTheme.bodySmall,
                             ),
                             const SizedBox(height: 4),
                             Text(

@@ -48,6 +48,7 @@ class CoreRuntime {
   virtual int RoutingCatalogWindowVersion() const { return 0; }
   virtual std::string TransportCapabilities() const { return ""; }
   virtual std::string CoreModuleSHA256() const { return ""; }
+  virtual std::string CoreVersion() const { return ""; }
   virtual int SmartAccessLeaseVersion() const { return 0; }
   virtual int RoutingCatalogControlVersion() const { return 0; }
   virtual int SmartAccessRuntimeControlVersion() const { return 0; }

@@ -81,5 +81,19 @@ int main() {
              attached.protection_retained && !attached.running &&
              attached.failure == "core_egress_dns_failed",
          "reattaching after failed handoff lost the retained native guard");
+  ServiceRuntimeSnapshot versioned;
+  const auto versioned_body = std::string("phase=initialized;core_ready=1;can_initialize=1;can_connect=0;") +
+      "running=0;core_egress_validated=0;dns_ready=0;staged_profile_digest=none;" +
+      "effective_profile_digest=none;failure=none;routing_catalog_window_version=0;" +
+      "smart_access_lease_version=0;routing_catalog_control_version=0;" +
+      "smart_access_runtime_control_version=0;transport_capabilities=none;" +
+      "core_module_sha256=" + digest + ";core_version=1.1.1;protection_retained=0";
+  expect(ParseServiceRuntimeSnapshot(versioned_body, &versioned) &&
+             versioned.core_version == "1.1.1", "loaded Core version was lost");
+  auto invalid_version = versioned_body;
+  invalid_version.replace(invalid_version.find("core_version=1.1.1"),
+                          std::string("core_version=1.1.1").size(), "core_version=1..1");
+  expect(!ParseServiceRuntimeSnapshot(invalid_version, &versioned),
+         "malformed Core version was accepted");
   return failures == 0 ? 0 : 1;
 }

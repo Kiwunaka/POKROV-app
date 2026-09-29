@@ -62,6 +62,7 @@ struct ServiceRuntimeSnapshot {
   int smart_access_runtime_control_version = 0;
   std::string transport_capabilities_json;
   std::string core_module_sha256;
+  std::string core_version;
   std::string staged_profile_digest;
   std::string effective_profile_digest;
   std::string phase = "artifact_missing";

@@ -339,6 +339,7 @@ void main() {
       hostPlatform: HostPlatform.android,
       routeMode: RouteMode.allExceptRu,
       snapshot: _snapshot(
+        coreVersion: '1.1.1',
         hostHealth: RuntimeHostHealth.degraded,
         dnsState: RuntimeDiagnosticState.degraded,
         dnsReady: false,
@@ -378,6 +379,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.text('Ядро: 1.1.1'), findsOneWidget);
     expect(
       tester.widget<Scaffold>(
         find.byKey(const ValueKey('diagnostics-screen')),
@@ -725,6 +727,7 @@ OperationalBreadcrumb _breadcrumb({
     );
 
 RuntimeSnapshot _snapshot({
+  String? coreVersion,
   RuntimeHostHealth hostHealth = RuntimeHostHealth.healthy,
   RuntimeDiagnosticState dnsState = RuntimeDiagnosticState.healthy,
   RuntimeDiagnosticState uplinkState = RuntimeDiagnosticState.healthy,
@@ -755,6 +758,7 @@ RuntimeSnapshot _snapshot({
       dnsReady: dnsReady,
       coreEgressValidated: coreEgressValidated,
       coreEgressValidationRequired: true,
+      coreVersion: coreVersion,
       safeProtocolDiagnosticCode: safeProtocolDiagnosticCode,
       safeProtocolDiagnosticOccurrence: safeProtocolDiagnosticOccurrence,
     );
