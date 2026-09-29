@@ -2168,6 +2168,62 @@ void main() {
     });
   });
 
+  test('keeps a probe batch sequence across failed stats delivery', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-stats-retry-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    final reports = <Map<String, dynamic>>[];
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'stats-retry-session', 'account_id': 'stats-retry-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/runtime/stats') {
+          reports.add(jsonDecode(body) as Map<String, dynamic>);
+          if (reports.length < 3) request.response.statusCode = HttpStatus.serviceUnavailable;
+          request.response.write(jsonEncode({'ok': reports.length > 2}));
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      supportDirectoryResolver: () async => directory,
+      delayScheduler: (_) async {},
+    );
+
+    Future<void> report() => bootstrapper.reportRuntimeStats(
+      hostPlatform: HostPlatform.windows,
+      runtimePhase: 'runtime_observed',
+      connected: true,
+      networkClass: 'ethernet',
+      candidateProbes: const [{
+        'candidate_ref': 'ch:legacy_reality_fallback',
+        'candidate_transport': 'vless_reality',
+        'stage': 'probe',
+        'connected': true,
+        'duration_ms': 300,
+      }],
+    );
+    await expectLater(report(), throwsA(isA<BootstrapFailure>()));
+    await report();
+
+    expect(reports, hasLength(3));
+    expect(reports[1], reports[0]);
+    expect(reports[2], reports[0]);
+    expect(reports[0]['report_sequence'], 1);
+    expect(reports[0]['candidate_probes'], hasLength(1));
+  });
+
   test('acquisition continuation parser is host-bound and rejects extras', () {
     const handle = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
     final android = PokrovAcquisitionHandoff.tryParse(

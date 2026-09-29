@@ -322,6 +322,7 @@ class ConnectionManager extends ChangeNotifier {
   String? _candidateRef;
   String? _activeCandidateRef;
   final List<Map<String, Object?>> _candidateProbeReports = [];
+  bool _candidateProbeReportInFlight = false;
   bool _candidateRecoveryPending = false;
   bool _protectedHandoffActive = false;
   ManagedProfileOfflineState? _offlineState;
@@ -741,10 +742,21 @@ class ConnectionManager extends ChangeNotifier {
     return '';
   }
 
-  List<Map<String, Object?>> _takeCandidateProbeReports() {
-    final reports = List<Map<String, Object?>>.from(_candidateProbeReports);
-    _candidateProbeReports.clear();
-    return reports;
+  List<Map<String, Object?>> _pendingCandidateProbeReports() =>
+      _candidateProbeReportInFlight
+          ? const []
+          : List<Map<String, Object?>>.from(_candidateProbeReports);
+
+  void _ackCandidateProbeReports(List<Map<String, Object?>> reports) {
+    if (reports.isNotEmpty) {
+      _candidateProbeReports.removeRange(0, reports.length);
+    }
+  }
+
+  void _recordRuntimeStatsDeliveryFailure(Object error) {
+    _observability?.recordRuntimeStatsDeliveryFailure(
+      errorCode: error is BootstrapFailure ? error.operationalErrorCode : 'API-008',
+    );
   }
 
   Future<void> _reportClientLifecycle(
@@ -757,14 +769,19 @@ class ConnectionManager extends ChangeNotifier {
     if (service == null) {
       return;
     }
+    final proven = connected ||
+        (phase == 'runtime_observed' && _runtimeSnapshot?.isCleanlyHealthy == true);
+    final reports = phase == 'failed' || proven
+        ? _pendingCandidateProbeReports() : const <Map<String, Object?>>[];
+    if (reports.isNotEmpty) _candidateProbeReportInFlight = true;
     try {
-      final candidate = phase == 'failed' || connected
-          ? _reportedCandidate(connected ? (_activeCandidateRef ?? _candidateRef) : _candidateRef)
+      final candidate = phase == 'failed' || proven
+          ? _reportedCandidate(proven ? (_activeCandidateRef ?? _candidateRef) : _candidateRef)
           : null;
       await service.reportRuntimeStats(
         hostPlatform: _appContext.hostPlatform,
         runtimePhase: phase,
-        connected: connected,
+        connected: proven,
         connectivitySnapshot: _runtimeSnapshot,
         errorCode: errorCode,
         selectedNodeCode: _transportCatalog?.selected.warpMode == 'warp_over_proxy'
@@ -783,12 +800,15 @@ class ConnectionManager extends ChangeNotifier {
         accessNetworkAsn: _candidateAccessNetworkAsn ?? '',
         candidateTransport: _candidateTransport(candidate),
         candidateRef: candidate?.candidateRef ?? '',
-        candidateVariant: candidate == null || !connected ? '' : _activeVariantId,
-        candidateProbes: phase == 'failed' || connected
-            ? _takeCandidateProbeReports() : const [],
+        candidateVariant: candidate == null || !proven ? '' : _activeVariantId,
+        candidateProbes: reports,
       );
-    } on Object {
+      _ackCandidateProbeReports(reports);
+    } on Object catch (error) {
+      if (reports.isNotEmpty) _recordRuntimeStatsDeliveryFailure(error);
       // Diagnostics must never replace the original user-facing failure.
+    } finally {
+      if (reports.isNotEmpty) _candidateProbeReportInFlight = false;
     }
   }
 
@@ -1859,6 +1879,7 @@ class ConnectionManager extends ChangeNotifier {
       routeMode: inputs.routeMode,
       tcpFallbackFromRevision: _tcpFallbackFromRevision,
       runtimeFeatures: features,
+      coreRelease: _runtimeSnapshot?.coreVersion,
       selectedApps: inputs.selectedApps,
       preferredNodeCode: inputs.preferredNodeCode,
       preferredVariantId: inputs.preferredNodeCode.trim().isEmpty ? 'direct' : inputs.preferredVariantId,
@@ -2899,7 +2920,6 @@ class ConnectionManager extends ChangeNotifier {
       );
     });
     if (actionIntent != ConnectionTransitionIntent.disconnect) {
-      _candidateProbeReports.clear();
       _candidateRef = null;
       _candidateNetworkClass = null;
       _candidateCarrierMccMnc = null;
@@ -3625,6 +3645,8 @@ class ConnectionManager extends ChangeNotifier {
     if (service == null) {
       return;
     }
+    final reports = _pendingCandidateProbeReports();
+    if (reports.isNotEmpty) _candidateProbeReportInFlight = true;
     try {
       final candidate = _reportedCandidate(_activeCandidateRef ?? _candidateRef);
       await service.reportRuntimeStats(
@@ -3648,10 +3670,14 @@ class ConnectionManager extends ChangeNotifier {
         candidateTransport: _candidateTransport(candidate),
         candidateRef: candidate?.candidateRef ?? '',
         candidateVariant: candidate == null ? '' : _activeVariantId,
-        candidateProbes: _takeCandidateProbeReports(),
+        candidateProbes: reports,
       );
-    } catch (_) {
+      _ackCandidateProbeReports(reports);
+    } catch (error) {
+      if (reports.isNotEmpty) _recordRuntimeStatsDeliveryFailure(error);
       // UX telemetry must never turn a working tunnel into a failed connect.
+    } finally {
+      if (reports.isNotEmpty) _candidateProbeReportInFlight = false;
     }
     try {
       await service.completeAccountOnboarding(
@@ -4044,7 +4070,6 @@ class ConnectionManager extends ChangeNotifier {
     if (ownsAction) {
       _connectionCoordinator.beginAction(ConnectionTransitionIntent.recover,
           allowConnectCancellation: engine is RuntimeConnectCancellation);
-      _candidateProbeReports.clear();
     }
     final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
     final completion = ownsAction ? Completer<void>() : null;

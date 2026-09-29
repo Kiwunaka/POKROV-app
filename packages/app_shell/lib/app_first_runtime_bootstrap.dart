@@ -2953,6 +2953,8 @@ class AppFirstRuntimeBootstrapper
   final Map<HostPlatform, _RoutingCatalogFlight> _routingCatalogFlights = {};
   final String _runtimeReportRunId = OperationalIdFactory().uuidV4();
   int _runtimeReportSequence = 0;
+  int? _pendingProbeReportSequence;
+  String? _pendingProbeReportSignature;
   bool _networkContextInFlight = false;
   DateTime? _lastNetworkContextAt;
   String _lastNetworkContextAccount = '';
@@ -3976,15 +3978,23 @@ class AppFirstRuntimeBootstrapper
         const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
       unawaited(_reportAutomaticNetworkContext(phase));
     }
-    await _requestClientJsonWithSession(
-      hostPlatform: hostPlatform,
-      method: 'POST',
-      path: '/api/client/runtime/stats',
-      body: <String, Object?>{
+    final reportProbes = safeCandidateProbes.isNotEmpty &&
+        (phase == 'running' || phase == 'failed' ||
+            (phase == 'runtime_observed' && connected));
+    final probeSignature = reportProbes ? jsonEncode(safeCandidateProbes) : null;
+    final reportSequence = reportProbes &&
+            probeSignature == _pendingProbeReportSignature
+        ? _pendingProbeReportSequence!
+        : ++_runtimeReportSequence;
+    if (reportProbes) {
+      _pendingProbeReportSequence = reportSequence;
+      _pendingProbeReportSignature = probeSignature;
+    }
+    final body = <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,
         'report_run_id': _runtimeReportRunId,
-        'report_sequence': ++_runtimeReportSequence,
+        'report_sequence': reportSequence,
         'connectivity': runtimeConnectivityReport(connectivitySnapshot),
         if (RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,
@@ -4016,10 +4026,32 @@ class AppFirstRuntimeBootstrapper
           'candidate_variant': safeCandidateVariant,
         if (RegExp(r'^AS[0-9]{1,10}$').hasMatch(safeAccessNetworkAsn))
           'access_network_asn': safeAccessNetworkAsn,
-        if (safeCandidateProbes.isNotEmpty && (phase == 'running' || phase == 'failed'))
+        if (reportProbes)
           'candidate_probes': safeCandidateProbes,
-      },
-    );
+      };
+    for (var attempt = 0; ; attempt += 1) {
+      try {
+        await _requestClientJsonWithSession(
+          hostPlatform: hostPlatform,
+          method: 'POST',
+          path: '/api/client/runtime/stats',
+          body: body,
+        );
+        if (reportProbes && _pendingProbeReportSequence == reportSequence) {
+          _pendingProbeReportSequence = null;
+          _pendingProbeReportSignature = null;
+        }
+        return;
+      } on BootstrapFailure catch (error) {
+        if (!reportProbes || attempt > 0 ||
+            (error.operationalCode != 'API-002' &&
+             error.operationalCode != 'API-003' &&
+             (error.statusCode == null || !_shouldRetryStatus(error.statusCode!)))) {
+          rethrow;
+        }
+        await _delayScheduler(_retryDelayForAttempt(attempt));
+      }
+    }
   }
 
   Future<void> _reportAutomaticNetworkContext(String phase) async {

@@ -93,6 +93,10 @@ of UDP; an empty filtered catalog retries every eligible candidate.
 `data_stalled` is one of those typed network failures. Probe outcomes enter
 the local journal and one bounded batch in the final runtime
 stats event, with catalog candidate refs and transport names but no profile data.
+After a proven connection, the client reports a connected runtime observation
+with the candidate batch. A failed stats POST keeps that batch for retry with
+the same run and sequence; the batch is removed only after a successful POST.
+Managed profile requests include the version reported by the loaded Core.
 Core `probe_failed` and `unexpected_status` are also remembered; a local timer
 reports `probe_budget_expired` and never suppresses a candidate.
 Probe journal entries use the validated `verify` stage and typed failure kind;

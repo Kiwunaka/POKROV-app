@@ -31,6 +31,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   Completer<void>? gate;
   Object? failure;
   StackTrace? failureStack;
+  String? lastCoreRelease;
   final entered = Completer<void>();
   bool cancelled = false;
 
@@ -59,6 +60,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     Duration? timeout,
     Future<void>? cancelled,
   }) async {
+    lastCoreRelease = coreRelease;
     resolutions.add((selected: selectedCandidateRef, select: selectCandidate, cache: cacheResult));
     if (!entered.isCompleted) entered.complete();
     unawaited(cancelled?.then((_) => this.cancelled = true));
@@ -154,6 +156,8 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
 class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceService {
   _StatsBootstrapper() : super(catalog: true);
   final reports = <Map<String, Object?>>[];
+  bool failFirstRunningReport = false;
+  int failedRunningReports = 0;
 
   @override
   Future<void> reportRuntimeStats({
@@ -166,7 +170,14 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     String accessNetworkAsn = '', List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
   }) async {
-    if (runtimePhase == 'running') reports.add({
+    if (runtimePhase == 'running' && failFirstRunningReport) {
+      failFirstRunningReport = false;
+      failedRunningReports += 1;
+      throw const BootstrapFailure('temporary stats failure', operationalCode: 'API-002');
+    }
+    if (candidateProbes.isNotEmpty) reports.add({
+      'runtime_phase': runtimePhase,
+      'connected': connected,
       'candidate_ref': candidateRef,
       'candidate_transport': candidateTransport,
       'candidate_probes': candidateProbes,
@@ -181,6 +192,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
   bool supportsCandidates = false;
+  String? coreVersion;
   bool holdProbes = false;
   bool failProbeCancellation = false;
   bool failHandoff = false;
@@ -304,6 +316,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady
             ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
                 'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
+        coreVersion: coreVersion,
         hostHealth: phase == RuntimePhase.running
             ? RuntimeHostHealth.healthy
             : RuntimeHostHealth.unknown,
@@ -738,6 +751,48 @@ void main() {
     expect(probes.map((item) => item['candidate_ref']),
         containsAll(['de:profile_0', 'de:xhttp']));
     expect(probes.where((item) => item['connected'] == true).single['candidate_ref'], 'de:xhttp');
+  });
+
+  test('proven Windows connection retries a probe batch after stats delivery fails', () async {
+    final bootstrapper = _StatsBootstrapper()..failFirstRunningReport = true;
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true;
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    final failureDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (bootstrapper.failedRunningReports == 0 && DateTime.now().isBefore(failureDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(bootstrapper.failedRunningReports, 1);
+    await manager.refresh();
+    final reportDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (bootstrapper.reports.isEmpty && DateTime.now().isBefore(reportDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(bootstrapper.reports, hasLength(1));
+    expect(bootstrapper.reports.single['connected'], true);
+    final probes = (bootstrapper.reports.single['candidate_probes'] as List).cast<Map<String, Object?>>();
+    expect(probes.where((item) => item['connected'] == true), hasLength(1));
+    await manager.refresh();
+    expect(bootstrapper.reports, hasLength(1));
+  });
+
+  test('managed catalog receives the observed Core release', () async {
+    final bootstrapper = _Bootstrapper(catalog: true);
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true
+      ..coreVersion = '1.1.2';
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(bootstrapper.lastCoreRelease, '1.1.2');
   });
 
   test('WARP candidate probes its chain and ordinary fallback stays ordinary', () async {

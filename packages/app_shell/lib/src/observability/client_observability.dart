@@ -454,6 +454,16 @@ final class PokrovClientObservability {
     );
   }
 
+  void recordRuntimeStatsDeliveryFailure({required String errorCode}) {
+    _emitCurrent(
+      name: 'app.runtime.stats_delivery.finished',
+      subsystem: 'runtime',
+      stage: 'report',
+      outcome: ObservabilityOutcome.failed,
+      errorCode: errorCode,
+    );
+  }
+
   void markUiReady() {
     if (_uiReadyRecorded || _generation != 0) {
       return;
