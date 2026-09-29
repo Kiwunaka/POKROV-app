@@ -182,8 +182,13 @@ int main() {
     const std::string reference = "network_" + std::string(32, 'a');
     RuntimeDispatcher dispatcher(&runtime,
         [&]() -> std::optional<CandidateNetworkContext> {
-          return CandidateNetworkContext{{1, reference}, "selection_fixture", "physical-fixture"};
+          return CandidateNetworkContext{{1, reference}, "selection_fixture", "physical-fixture", "ethernet"};
         }, [&](std::uint64_t revision) { return revision == 1 && current.load(); });
+    Frame network_frame{};
+    network_frame.command = Command::kReadCandidateNetwork;
+    Expect(dispatcher.Execute(network_frame, stop, ::GetTickCount64() + 1000, nullptr).body ==
+               "selection_fixture;" + reference + ";ethernet",
+           "candidate network class was not serialized");
     std::array<Frame, 4> frames{};
     std::array<RuntimeResult, 4> results{};
     std::array<std::thread, 4> workers;

@@ -29,6 +29,8 @@ class RuntimeCandidateNetwork extends RuntimeNetworkStatusObservation {
   const RuntimeCandidateNetwork({
     this.selectionKey,
     this.contextRef,
+    this.networkClass,
+    this.mccMnc,
     super.networkAvailable,
     super.captivePortal,
   });
@@ -38,6 +40,12 @@ class RuntimeCandidateNetwork extends RuntimeNetworkStatusObservation {
 
   /// Changes when network state relevant to an in-flight probe changes.
   final String? contextRef;
+
+  /// Physical uplink class reported by the host, if known.
+  final String? networkClass;
+
+  /// Cellular MCC-MNC reported by Android; absent on other uplinks.
+  final String? mccMnc;
 }
 
 class RuntimeCandidateProbeResult {
@@ -74,6 +82,14 @@ mixin _CandidateProbeChannel
             : null,
         contextRef: value['context_ref'] is String
             ? value['context_ref'] as String
+            : null,
+        networkClass: const {'cellular', 'wifi', 'ethernet', 'other'}
+                .contains(value['network_class'])
+            ? value['network_class'] as String
+            : null,
+        mccMnc: value['mcc_mnc'] is String &&
+                RegExp(r'^\d{5,6}$').hasMatch(value['mcc_mnc'] as String)
+            ? value['mcc_mnc'] as String
             : null,
         networkAvailable: value['network_available'] is bool
             ? value['network_available'] as bool

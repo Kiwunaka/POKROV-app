@@ -498,6 +498,8 @@ bool FlutterWindow::OnCreate() {
                         ? flutter::EncodableValue() : flutter::EncodableValue(snapshot.candidate_selection_key)},
                     {flutter::EncodableValue("context_ref"), snapshot.transport_network_context_ref.empty()
                         ? flutter::EncodableValue() : flutter::EncodableValue(snapshot.transport_network_context_ref)},
+                    {flutter::EncodableValue("network_class"), snapshot.candidate_network_class.empty()
+                        ? flutter::EncodableValue() : flutter::EncodableValue(snapshot.candidate_network_class)},
                     {flutter::EncodableValue("network_available"), available.has_value()
                         ? flutter::EncodableValue(*available) : flutter::EncodableValue()},
                     {flutter::EncodableValue("captive_portal"), captive.has_value()

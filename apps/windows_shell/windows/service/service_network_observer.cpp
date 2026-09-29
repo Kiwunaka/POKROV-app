@@ -11,6 +11,7 @@
 
 #include "service_network_observer.h"
 #include "service_profile_identity.h"
+#include "service_runtime.h"
 
 #include <algorithm>
 #include <atomic>
@@ -59,6 +60,47 @@ void AppendRows(std::string& output, std::vector<std::string> rows) {
   }
 }
 
+std::string ReadSelectionSalt(const std::wstring& path) {
+  HANDLE file = ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (file == INVALID_HANDLE_VALUE) return {};
+  std::array<char, 32> bytes{};
+  LARGE_INTEGER size{};
+  DWORD read = 0;
+  const bool valid = ::GetFileSizeEx(file, &size) &&
+                     size.QuadPart == static_cast<LONGLONG>(bytes.size()) &&
+                     ::ReadFile(file, bytes.data(), static_cast<DWORD>(bytes.size()),
+                                &read, nullptr) && read == static_cast<DWORD>(bytes.size());
+  ::CloseHandle(file);
+  return valid ? std::string(bytes.data(), bytes.size()) : std::string();
+}
+
+std::string LoadSelectionSalt() {
+  const auto root = ResolveServiceRuntimeRoot();
+  if (root.empty()) return {};
+  const auto path = root + L"\\network-selection-salt-v1";
+  const auto existing = ReadSelectionSalt(path);
+  if (!existing.empty()) return existing;
+  if (::GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES) return {};
+  std::array<BYTE, 32> bytes{};
+  if (::BCryptGenRandom(nullptr, bytes.data(), static_cast<ULONG>(bytes.size()),
+                        BCRYPT_USE_SYSTEM_PREFERRED_RNG) < 0) return {};
+  const auto pending = path + L".pending";
+  HANDLE file = ::CreateFileW(pending.c_str(), GENERIC_WRITE, 0, nullptr,
+                              CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (file == INVALID_HANDLE_VALUE) return {};
+  DWORD written = 0;
+  const bool saved = ::WriteFile(file, bytes.data(), static_cast<DWORD>(bytes.size()),
+                                &written, nullptr) && written == static_cast<DWORD>(bytes.size()) &&
+                     ::FlushFileBuffers(file);
+  ::CloseHandle(file);
+  if (!saved || !::MoveFileExW(pending.c_str(), path.c_str(), MOVEFILE_WRITE_THROUGH)) {
+    ::DeleteFileW(pending.c_str());
+    return ReadSelectionSalt(path);
+  }
+  return std::string(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+}
+
 }  // namespace
 
 struct ServiceNetworkObserver::State {
@@ -77,11 +119,7 @@ struct ServiceNetworkObserver::State {
   std::string selection_salt;
 
   State() {
-    std::array<BYTE, 32> salt{};
-    if (::BCryptGenRandom(nullptr, salt.data(), static_cast<ULONG>(salt.size()),
-                         BCRYPT_USE_SYSTEM_PREFERRED_RNG) >= 0) {
-      selection_salt.assign(reinterpret_cast<const char*>(salt.data()), salt.size());
-    }
+    selection_salt = LoadSelectionSalt();
     if (::NotifyIpInterfaceChange(AF_UNSPEC, InterfaceChanged, this, FALSE, &interfaces) == NO_ERROR &&
         ::NotifyUnicastIpAddressChange(AF_UNSPEC, AddressChanged, this, FALSE, &addresses) == NO_ERROR &&
         ::NotifyRouteChange2(AF_UNSPEC, RouteChanged, this, FALSE, &routes) == NO_ERROR) {
@@ -382,7 +420,10 @@ std::optional<CandidateNetworkContext> ServiceNetworkObserver::ReadCandidateCont
   alias.pop_back();
   const auto digest = ProfileDigest(identity);
   if (digest.empty()) return std::nullopt;
-  return CandidateNetworkContext{*context, "selection_" + digest, std::move(alias)};
+  const auto network_class = chosen_adapter.Type == IF_TYPE_IEEE80211 ? "wifi"
+      : chosen_adapter.Type == IF_TYPE_ETHERNET_CSMACD ? "ethernet" : "other";
+  return CandidateNetworkContext{*context, "selection_" + digest,
+                                 std::move(alias), network_class};
 }
 
 }  // namespace pokrov::service

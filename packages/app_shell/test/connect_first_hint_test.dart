@@ -82,6 +82,12 @@ class _StubBootstrapper
     int? attemptNumber,
     bool? retryable,
     String networkClass = '',
+    String carrierMccMnc = '',
+    String candidateTransport = '',
+    String candidateRef = '',
+    String candidateVariant = '',
+    String accessNetworkAsn = '',
+    List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
   }) async {
     onRuntimeStats?.call(runtimePhase, connected);

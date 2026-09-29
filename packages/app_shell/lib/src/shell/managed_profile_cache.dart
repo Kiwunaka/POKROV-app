@@ -125,6 +125,7 @@ class ManagedProfileCache {
         final proven = value['proven'];
         if (proven is Map && proven['binding'] != binding) {
           value.remove('proven');
+          value.remove('successful_candidates');
         }
         if (current()) await _write(platform, value);
       });
@@ -259,8 +260,46 @@ class ManagedProfileCache {
           if (networkSelectionKey != null && networkSelectionKey.isNotEmpty)
             'network_selection_key': networkSelectionKey,
         };
+        final catalog = downloaded['payload']['transport_catalog'];
+        final candidateRef = catalog is Map ? catalog['selected_candidate_ref'] : null;
+        if (networkSelectionKey != null &&
+            RegExp(r'^[A-Za-z0-9_.:-]{1,128}$').hasMatch(networkSelectionKey) &&
+            candidateRef is String &&
+            RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(candidateRef)) {
+          final recent = Map<String, String>.from(value['successful_candidates'] is Map
+              ? value['successful_candidates'] as Map : const {});
+          recent.remove(networkSelectionKey);
+          recent[networkSelectionKey] = candidateRef;
+          while (recent.length > 6) recent.remove(recent.keys.first);
+          value['successful_candidates'] = recent;
+        }
         await _write(platform, value);
       });
+
+  Future<String?> successfulCandidateRef({
+    required String platform,
+    required String binding,
+    required String networkSelectionKey,
+  }) => _serialize(() async {
+    try {
+      final value = await _load(platform);
+      final downloaded = value['downloaded'];
+      if (downloaded is! Map || downloaded['binding'] != binding) return null;
+      final recent = value['successful_candidates'];
+      final ref = recent is Map ? recent[networkSelectionKey] : null;
+      if (ref is String && RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(ref)) return ref;
+      final proven = value['proven'];
+      if (proven is Map && proven['binding'] == binding &&
+          proven['network_selection_key'] == networkSelectionKey) {
+        final catalog = proven['payload'] is Map ? proven['payload']['transport_catalog'] : null;
+        final oldRef = catalog is Map ? catalog['selected_candidate_ref'] : null;
+        if (oldRef is String && RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(oldRef)) return oldRef;
+      }
+    } on Object {
+      // An unreadable cache cannot supply a network preference.
+    }
+    return null;
+  });
 
   Future<void> clear(String platform) {
     _invalidations[platform] = generation(platform) + 1;

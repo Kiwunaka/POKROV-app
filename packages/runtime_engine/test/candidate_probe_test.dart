@@ -135,6 +135,8 @@ void main() {
         return {
           'selection_key': 'uplink-stable',
           'context_ref': 'context-new',
+          'network_class': 'ethernet',
+          'mcc_mnc': 'not-a-code',
           'network_available': true,
           'captive_portal': null
         };
@@ -149,6 +151,8 @@ void main() {
         MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.windows);
     final network = await runtime.readCandidateNetwork();
     expect(network.selectionKey, 'uplink-stable');
+    expect(network.networkClass, 'ethernet');
+    expect(network.mccMnc, isNull);
     expect(network.networkAvailable, true);
     expect(network.captivePortal, null);
     final result = await runtime.probeCandidate(

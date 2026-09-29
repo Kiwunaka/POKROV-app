@@ -89,14 +89,24 @@ four seconds per candidate; profile HTTP still obeys the connect action deadline
 Cancellation settles profile and native work before releasing a worker.
 The last successful candidate gets up to 350 ms before alternatives. Only typed
 network probe failures suppress a candidate for four minutes or move TCP ahead
-of UDP; an empty filtered catalog retries every eligible candidate. Candidate
-failure kinds enter the local journal and runtime stats without profile data.
+of UDP; an empty filtered catalog retries every eligible candidate. Probe
+outcomes enter the local journal and one bounded batch in the final runtime
+stats event, with catalog candidate refs and transport names but no profile data.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
 Windows managed profiles use only TUN (no loopback mixed listener) and start
 Core with `disableMemoryLimit=true`, including restored cached profiles. A
 confirmed candidate-network read clears a stale Windows probe-settlement latch
 when no candidate probes remain.
+Android cellular selection uses the observed MCC-MNC and sends that code as the
+managed-profile carrier header. Windows keeps its network-key salt in the
+protected ServiceRuntime directory so a service restart preserves local network
+memory. The encrypted cache remembers six recent network/candidate pairs. An
+ASN returned for a direct managed-profile request takes precedence over the
+local key for Wi-Fi and desktop selection; an active tunnel does not replace
+that key with its exit ASN. The request's report run ID lets the portal attach
+the pre-tunnel ASN to later stats, which report network class, candidate
+transport, and the validated ASN or cellular code when available.
 Ordinary catalog location changes use the location catalog's policy metadata,
 so the previous AWG candidate cannot impose
 a legacy laboratory node allowlist. A completed explicit Android Disconnect

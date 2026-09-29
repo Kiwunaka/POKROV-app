@@ -1066,6 +1066,9 @@ SupportTicketMessage _supportMessage({
 
 class _CachedBootstrapper extends _FakeBootstrapper
     implements CachedManagedProfileBootstrapper {
+  @override
+  Future<String?> successfulCandidateRef(ManagedProfileCacheInputs inputs,
+      String networkSelectionKey) async => null;
   _CachedBootstrapper(ManagedProfilePayload payload, {int status = 503})
       : super(payload, managedProfileFailure: BootstrapFailure('API unavailable', statusCode: status));
   final cacheReads = <bool>[];

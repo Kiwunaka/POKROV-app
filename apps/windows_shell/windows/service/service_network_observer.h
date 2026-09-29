@@ -17,6 +17,7 @@ struct CandidateNetworkContext {
   ServiceNetworkContext network;
   std::string selection_key;
   std::string bind_interface;  // Private: never returned over IPC.
+  std::string network_class;
 };
 
 // Local OS metadata only. Revisions and adapter material never leave the service.

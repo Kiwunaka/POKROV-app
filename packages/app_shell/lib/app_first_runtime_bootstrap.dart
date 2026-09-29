@@ -195,6 +195,8 @@ class ManagedProfileCacheInputs {
 }
 
 abstract interface class CachedManagedProfileBootstrapper {
+  Future<String?> successfulCandidateRef(
+    ManagedProfileCacheInputs inputs, String networkSelectionKey);
   Future<ManagedProfilePayload?> loadCachedManagedProfile(
     ManagedProfileCacheInputs inputs, {
     bool preferProven = false,
@@ -710,6 +712,12 @@ abstract interface class AppFirstExperienceService {
     int? attemptNumber,
     bool? retryable,
     String networkClass = '',
+    String carrierMccMnc = '',
+    String candidateTransport = '',
+    String candidateRef = '',
+    String candidateVariant = '',
+    String accessNetworkAsn = '',
+    List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
   });
 
@@ -3076,6 +3084,18 @@ class AppFirstRuntimeBootstrapper
   };
 
   @override
+  Future<String?> successfulCandidateRef(
+      ManagedProfileCacheInputs inputs, String networkSelectionKey) async {
+    final state = await _loadState(inputs.hostPlatform);
+    if (state == null || !state.hasSession || state.accountId.isEmpty) return null;
+    return _managedProfileCache.successfulCandidateRef(
+      platform: inputs.hostPlatform.name,
+      binding: inputs.binding(state.accountId, state.installId),
+      networkSelectionKey: networkSelectionKey,
+    );
+  }
+
+  @override
   Future<ManagedProfilePayload?> loadCachedManagedProfile(
     ManagedProfileCacheInputs inputs, {
     bool preferProven = false,
@@ -3906,6 +3926,12 @@ class AppFirstRuntimeBootstrapper
     int? attemptNumber,
     bool? retryable,
     String networkClass = '',
+    String carrierMccMnc = '',
+    String candidateTransport = '',
+    String candidateRef = '',
+    String candidateVariant = '',
+    String accessNetworkAsn = '',
+    List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
   }) async {
     final phase = runtimePhase.trim().toLowerCase();
@@ -3914,6 +3940,35 @@ class AppFirstRuntimeBootstrapper
     final safeNodeCode = selectedNodeCode.trim().toLowerCase();
     final safeRouteMode = routeMode.trim().toLowerCase();
     final safeNetworkClass = networkClass.trim().toLowerCase();
+    final safeCarrierMccMnc = carrierMccMnc.trim();
+    final safeCandidateTransport = candidateTransport.trim().toLowerCase();
+    final safeCandidateRef = candidateRef.trim().toLowerCase();
+    final safeCandidateVariant = candidateVariant.trim().toLowerCase();
+    final safeAccessNetworkAsn = accessNetworkAsn.trim().toUpperCase();
+    final safeCandidateProbes = <Map<String, Object?>>[];
+    for (final probe in candidateProbes.take(16)) {
+      final ref = probe['candidate_ref'];
+      final transport = probe['candidate_transport'];
+      final stage = probe['stage'];
+      final outcome = probe['connected'];
+      final failure = probe['failure_kind'];
+      final duration = probe['duration_ms'];
+      if (ref is! String || transport is! String || stage != 'probe' || outcome is! bool ||
+          duration is! int || !RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(ref) ||
+          !const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
+            'xhttp_tls', 'hysteria2', 'awg31'}.contains(transport)) continue;
+      if (!outcome && (failure is! String ||
+          !RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(failure))) continue;
+      safeCandidateProbes.add({
+        'candidate_ref': ref,
+        'candidate_transport': transport,
+        'stage': stage,
+        'connected': outcome,
+        'duration_ms': duration.clamp(0, 30000),
+        if (!outcome)
+          'failure_kind': failure,
+      });
+    }
     if (hostPlatform == HostPlatform.android &&
         const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
       unawaited(_reportAutomaticNetworkContext(phase));
@@ -3940,8 +3995,22 @@ class AppFirstRuntimeBootstrapper
         if (attemptNumber != null)
           'attempt_number': attemptNumber.clamp(1, 100),
         if (retryable != null) 'retryable': retryable,
-        if (RegExp(r'^[a-z][a-z0-9_.-]{0,23}$').hasMatch(safeNetworkClass))
+        if (const {'cellular', 'wifi', 'ethernet', 'other'}.contains(safeNetworkClass))
           'network_class': safeNetworkClass,
+        if (safeNetworkClass == 'cellular' && RegExp(r'^\d{5,6}$').hasMatch(safeCarrierMccMnc))
+          'carrier_mcc_mnc': safeCarrierMccMnc,
+        if (const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
+          'xhttp_tls', 'hysteria2', 'awg31'}.contains(safeCandidateTransport))
+          'candidate_transport': safeCandidateTransport,
+        if (RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(safeCandidateRef))
+          'candidate_ref': safeCandidateRef,
+        if (safeCandidateVariant != 'direct' &&
+            RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$').hasMatch(safeCandidateVariant))
+          'candidate_variant': safeCandidateVariant,
+        if (RegExp(r'^AS[0-9]{1,10}$').hasMatch(safeAccessNetworkAsn))
+          'access_network_asn': safeAccessNetworkAsn,
+        if (safeCandidateProbes.isNotEmpty && (phase == 'running' || phase == 'failed'))
+          'candidate_probes': safeCandidateProbes,
       },
     );
   }
@@ -6409,6 +6478,22 @@ class AppFirstRuntimeBootstrapper
       };
       requestPath += '${requestPath.contains('?') ? '&' : '?'}${Uri(queryParameters: query).query}';
     }
+    requestPath += '${requestPath.contains('?') ? '&' : '?'}report_run_id=$_runtimeReportRunId';
+    String? carrierHeader;
+    if (hostPlatform == HostPlatform.android) {
+      try {
+        final network = await _appFirstRuntimeEngineChannel
+            .invokeMapMethod<String, dynamic>('runtimeEngine.candidateNetwork')
+            .timeout(const Duration(seconds: 2));
+        final mccMnc = network?['mcc_mnc'];
+        if (network?['network_class'] == 'cellular' && mccMnc is String &&
+            RegExp(r'^\d{5,6}$').hasMatch(mccMnc)) {
+          carrierHeader = 'mcc_mnc:$mccMnc';
+        }
+      } on Object {
+        // A missing cellular observation must not block profile delivery.
+      }
+    }
     Map<String, dynamic> response;
     for (var attempt = 0; ; attempt += 1) {
       response = await _requestJson(
@@ -6417,7 +6502,8 @@ class AppFirstRuntimeBootstrapper
         client: client,
         bearerToken: state.sessionToken,
         hostPlatform: hostPlatform,
-        headers: const {'X-POKROV-Access-Preparing': '1'},
+        headers: {'X-POKROV-Access-Preparing': '1',
+          if (carrierHeader != null) 'X-Portal-Carrier': carrierHeader},
       );
       if (response['status'] != 'access_preparing') break;
       if (attempt >= 5) {
@@ -6542,6 +6628,9 @@ class AppFirstRuntimeBootstrapper
     );
 
     final fallbackOrder = response['fallback_order'];
+    final reportedAsn = _readText(_readMap(response['access_network'])['asn']);
+    final accessNetworkAsn = RegExp(r'^AS[0-9]{1,10}$').hasMatch(reportedAsn)
+        ? reportedAsn : '';
     final tcpFallbackRevision =
         isOwnedTransportLab &&
             fallbackOrder is List &&
@@ -6550,6 +6639,7 @@ class AppFirstRuntimeBootstrapper
         : '';
     final payload = ManagedProfilePayload(
       cacheEntryId: ManagedProfileCache.newEntryId(),
+      accessNetworkAsn: accessNetworkAsn,
       disableMemoryLimit: hostPlatform == HostPlatform.windows,
       tcpFallbackFromRevision: tcpFallbackRevision,
       source: RuntimeProfileSource(

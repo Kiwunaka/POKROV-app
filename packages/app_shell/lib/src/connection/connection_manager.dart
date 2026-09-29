@@ -315,8 +315,12 @@ class ConnectionManager extends ChangeNotifier {
   TransportCandidateCatalog? _transportCatalog;
   final _candidateSelector = SmartConnectCandidateSelector();
   String? _candidateNetworkKey;
+  String? _candidateNetworkClass;
+  String? _candidateCarrierMccMnc;
+  String? _candidateAccessNetworkAsn;
   String? _candidateRef;
   String? _activeCandidateRef;
+  final List<Map<String, Object?>> _candidateProbeReports = [];
   bool _candidateRecoveryPending = false;
   bool _protectedHandoffActive = false;
   ManagedProfileOfflineState? _offlineState;
@@ -715,6 +719,33 @@ class ConnectionManager extends ChangeNotifier {
   int? _connectionAttemptDurationMs() =>
       _connectionCoordinator.attemptDurationMs;
 
+  domain.TransportCandidate? _reportedCandidate(String? ref) {
+    if (ref == null) return null;
+    for (final candidate in _transportCatalog?.candidates ?? const <domain.TransportCandidate>[]) {
+      if (candidate.candidateRef == ref) return candidate;
+    }
+    return null;
+  }
+
+  String _candidateTransport(domain.TransportCandidate? candidate) {
+    if (candidate == null) return '';
+    if (candidate.protocol == 'vless') {
+      if (candidate.transport == 'tcp' && candidate.protection == 'reality') return 'vless_reality';
+      if (candidate.transport == 'grpc' && candidate.protection == 'tls') return 'vless_grpc_tls';
+      if (candidate.transport == 'xhttp' && candidate.protection == 'reality') return 'xhttp_reality';
+      if (candidate.transport == 'xhttp' && candidate.protection == 'tls') return 'xhttp_tls';
+    }
+    if (candidate.protocol == 'hysteria2' && candidate.transport == 'udp') return 'hysteria2';
+    if (candidate.protocol == 'awg' && candidate.protection == 'awg31') return 'awg31';
+    return '';
+  }
+
+  List<Map<String, Object?>> _takeCandidateProbeReports() {
+    final reports = List<Map<String, Object?>>.from(_candidateProbeReports);
+    _candidateProbeReports.clear();
+    return reports;
+  }
+
   Future<void> _reportClientLifecycle(
     String phase, {
     bool connected = false,
@@ -726,6 +757,9 @@ class ConnectionManager extends ChangeNotifier {
       return;
     }
     try {
+      final candidate = phase == 'failed' || connected
+          ? _reportedCandidate(connected ? (_activeCandidateRef ?? _candidateRef) : _candidateRef)
+          : null;
       await service.reportRuntimeStats(
         hostPlatform: _appContext.hostPlatform,
         runtimePhase: phase,
@@ -742,6 +776,14 @@ class ConnectionManager extends ChangeNotifier {
         attemptNumber:
             _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
         retryable: retryable,
+        networkClass: _candidateNetworkClass ?? '',
+        carrierMccMnc: _candidateCarrierMccMnc ?? '',
+        accessNetworkAsn: _candidateAccessNetworkAsn ?? '',
+        candidateTransport: _candidateTransport(candidate),
+        candidateRef: candidate?.candidateRef ?? '',
+        candidateVariant: candidate == null || !connected ? '' : _activeVariantId,
+        candidateProbes: phase == 'failed' || connected
+            ? _takeCandidateProbeReports() : const [],
       );
     } on Object {
       // Diagnostics must never replace the original user-facing failure.
@@ -1787,6 +1829,12 @@ class ConnectionManager extends ChangeNotifier {
       }
     }
     requireCurrent();
+    if (recoveryCandidateRef.isEmpty) {
+      _candidateRef = null;
+      _candidateNetworkClass = null;
+      _candidateCarrierMccMnc = null;
+      _candidateAccessNetworkAsn = null;
+    }
     _setPhase(recoveryCandidateRef.isEmpty ? ConnectionPhase.preparing : ConnectionPhase.recovering, generation);
     _observability?.enterProfilePhase();
     final cancelled = _connectionCoordinator.actionInFlight
@@ -1836,19 +1884,24 @@ class ConnectionManager extends ChangeNotifier {
           (_warpRuntimeRetryPending || _warpRuntimeAttemptAllowed(candidateWarpPolicy));
       final network = await probing.readCandidateNetwork();
       requireCurrent();
-      final key = network.selectionKey;
+      final nativeKey = network.selectionKey;
       final context = network.contextRef;
-      if (key == null || key.isEmpty || context == null || context.isEmpty) {
+      if (nativeKey == null || nativeKey.isEmpty || context == null || context.isEmpty) {
         throw const BootstrapFailure('Не удалось проверить сеть. Попробуйте подключиться ещё раз.', code: 'candidate_network_unavailable');
       }
+      final asn = !retainsProtection && _runtimeSnapshot?.phase != RuntimePhase.running &&
+              network.networkClass != 'cellular'
+          ? payload.accessNetworkAsn : '';
+      final key = asn.isNotEmpty ? 'asn:$asn' : nativeKey;
+      _candidateNetworkClass = network.networkClass;
+      _candidateCarrierMccMnc = network.mccMnc;
+      _candidateAccessNetworkAsn = asn.isEmpty ? null : asn;
       final cache = _bootstrapper;
       if (cache is CachedManagedProfileBootstrapper) {
-        final proven = await (cache as CachedManagedProfileBootstrapper).loadCachedManagedProfile(
-          inputs, preferProven: true, runtimeFeatures: features);
+        final remembered = await (cache as CachedManagedProfileBootstrapper)
+            .successfulCandidateRef(inputs, key);
         requireCurrent();
-        if (proven?.provenNetworkSelectionKey == key && proven?.transportCatalog != null) {
-          _candidateSelector.restoreSuccess(key, proven!.transportCatalog!.selectedCandidateRef);
-        }
+        if (remembered != null) _candidateSelector.restoreSuccess(key, remembered);
       }
       var country = '';
       if (inputs.preferredNodeCode.isNotEmpty) {
@@ -1923,7 +1976,7 @@ class ConnectionManager extends ChangeNotifier {
       requireCurrent();
       final currentNetwork = await probing.readCandidateNetwork();
       requireCurrent();
-      if (currentNetwork.contextRef != context || currentNetwork.selectionKey != key) {
+      if (currentNetwork.contextRef != context || currentNetwork.selectionKey != nativeKey) {
         throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
       }
       if (cache is CachedManagedProfileBootstrapper) {
@@ -1965,21 +2018,17 @@ class ConnectionManager extends ChangeNotifier {
       domain.TransportCandidate candidate, SmartConnectCandidateProbeResult result) {
     _observability?.recordCandidateProbe(
         failureKind: result.failureKind, duration: result.duration);
-    if (result.failureKind.isEmpty) return;
-    final service = _experienceService;
-    if (service == null) return;
-    unawaited(service.reportRuntimeStats(
-      hostPlatform: _appContext.hostPlatform,
-      runtimePhase: 'candidate_probe',
-      connected: false,
-      selectedNodeCode: candidate.nodeCode,
-      routeMode: _selectedRouteMode.name,
-      failureKind: result.failureKind,
-      durationMs: result.duration.inMilliseconds,
-      attemptNumber: _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
-    ).catchError((Object _) {
-      // Probe telemetry cannot affect candidate selection.
-    }));
+    final transport = _candidateTransport(candidate);
+    if (transport.isEmpty) return;
+    if (_candidateProbeReports.length >= 16) return;
+    _candidateProbeReports.add({
+      'candidate_ref': candidate.candidateRef,
+      'candidate_transport': transport,
+      'stage': 'probe',
+      'connected': result.profile != null,
+      'failure_kind': result.failureKind,
+      'duration_ms': result.duration.inMilliseconds,
+    });
   }
 
   Future<RuntimeCandidateProbeResult> _probeManagedCandidate(RuntimeCandidateProbing probing,
@@ -2044,6 +2093,14 @@ class ConnectionManager extends ChangeNotifier {
       final context = network.contextRef;
       if (key == null || key.isEmpty || context == null || context.isEmpty) {
         throw const BootstrapFailure('Не удалось проверить сеть. Попробуйте подключиться ещё раз.', code: 'candidate_network_unavailable');
+      }
+      _candidateNetworkClass = network.networkClass;
+      _candidateCarrierMccMnc = network.mccMnc;
+      _candidateAccessNetworkAsn = null;
+      if (recoveryCandidateRef.isEmpty) {
+        final remembered = await service.successfulCandidateRef(inputs, key);
+        requireCurrent();
+        if (remembered != null) _candidateSelector.restoreSuccess(key, remembered);
       }
       try {
         selected = await _candidateSelector.select(
@@ -2836,6 +2893,13 @@ class ConnectionManager extends ChangeNotifier {
         onSlowStage: _handleSlowConnectionStage,
       );
     });
+    if (actionIntent != ConnectionTransitionIntent.disconnect) {
+      _candidateProbeReports.clear();
+      _candidateRef = null;
+      _candidateNetworkClass = null;
+      _candidateCarrierMccMnc = null;
+      _candidateAccessNetworkAsn = null;
+    }
     final generation = _connectionCoordinator.operationGeneration;
     Future<T> runOwnedRuntimeAction<T>(
       String operation,
@@ -3556,6 +3620,7 @@ class ConnectionManager extends ChangeNotifier {
       return;
     }
     try {
+      final candidate = _reportedCandidate(_activeCandidateRef ?? _candidateRef);
       await service.reportRuntimeStats(
         hostPlatform: _appContext.hostPlatform,
         runtimePhase: snapshot.phase.name,
@@ -3570,6 +3635,13 @@ class ConnectionManager extends ChangeNotifier {
         durationMs: _connectionAttemptDurationMs(),
         attemptNumber:
             _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
+        networkClass: _candidateNetworkClass ?? '',
+        carrierMccMnc: _candidateCarrierMccMnc ?? '',
+        accessNetworkAsn: _candidateAccessNetworkAsn ?? '',
+        candidateTransport: _candidateTransport(candidate),
+        candidateRef: candidate?.candidateRef ?? '',
+        candidateVariant: candidate == null ? '' : _activeVariantId,
+        candidateProbes: _takeCandidateProbeReports(),
       );
     } catch (_) {
       // UX telemetry must never turn a working tunnel into a failed connect.
@@ -3965,6 +4037,7 @@ class ConnectionManager extends ChangeNotifier {
     if (ownsAction) {
       _connectionCoordinator.beginAction(ConnectionTransitionIntent.recover,
           allowConnectCancellation: engine is RuntimeConnectCancellation);
+      _candidateProbeReports.clear();
     }
     final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
     final completion = ownsAction ? Completer<void>() : null;

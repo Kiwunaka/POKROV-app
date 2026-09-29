@@ -674,6 +674,56 @@ void main() {
     expect(paths, isNot(contains('/api/client/session/start-trial')));
   });
 
+  test('managed profile sends only observed cellular MCC-MNC carrier key', () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    TestWidgetsFlutterBinding.ensureInitialized();
+    HttpOverrides.global = originalHttpOverrides;
+    final directory = await Directory.systemTemp.createTemp('pokrov-carrier-profile-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() async {
+      messenger.setMockMethodCallHandler(channel, null);
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.android,
+        installId: 'carrier-install', sessionToken: 'carrier-session');
+    await File('${directory.path}/app-first-session-android.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': 'carrier-install', 'account_id': 'carrier-account',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    messenger.setMockMethodCallHandler(channel, (call) async =>
+        call.method == 'runtimeEngine.candidateNetwork'
+            ? {'network_class': 'cellular', 'mcc_mnc': '25099'} : null);
+    String? carrierHeader;
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/profile/managed') {
+          carrierHeader = request.headers.value('X-Portal-Carrier');
+          request.response.write(jsonEncode(_readyManagedProfile('carrier')));
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets,
+    );
+    await expectLater(
+      bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.android,
+          routeMode: RouteMode.fullTunnel),
+      throwsA(isA<BootstrapFailure>()),
+    );
+    expect(carrierHeader, 'mcc_mnc:25099');
+  });
+
   test('default API origin is owned and arbitrary fallbacks are rejected', () {
     expect(
       AppFirstRuntimeBootstrapper().apiBaseUrl,
@@ -1942,6 +1992,17 @@ void main() {
       hostPlatform: HostPlatform.android,
       runtimePhase: 'RUNNING',
       connected: true,
+      networkClass: 'cellular',
+      carrierMccMnc: '25099',
+      candidateTransport: 'xhttp_reality',
+      candidateRef: 'de:xhttp',
+      candidateVariant: 'ru_bridge',
+      candidateProbes: [
+        {'candidate_ref': 'de:vless', 'candidate_transport': 'vless_reality',
+          'stage': 'probe', 'connected': false, 'failure_kind': 'timeout', 'duration_ms': 4000},
+        {'candidate_ref': 'de:xhttp', 'candidate_transport': 'xhttp_reality',
+          'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 300},
+      ],
     );
     await bootstrapper.reportRuntimeStats(
       hostPlatform: HostPlatform.android,
@@ -1949,6 +2010,8 @@ void main() {
       connected: false,
       errorCode: 'pairing_claim_failed',
       failureKind: 'tls_failed',
+      networkClass: 'wifi',
+      accessNetworkAsn: 'AS12345',
     );
     await bootstrapper.reportTelegramLinkEvent(
       hostPlatform: HostPlatform.android,
@@ -2028,12 +2091,25 @@ void main() {
         'report_run_id': reportRunId,
         'report_sequence': 1,
         'connectivity': {'proof_stage': 'unknown'},
+        'network_class': 'cellular',
+        'carrier_mcc_mnc': '25099',
+        'candidate_transport': 'xhttp_reality',
+        'candidate_ref': 'de:xhttp',
+        'candidate_variant': 'ru_bridge',
+        'candidate_probes': [
+          {'candidate_ref': 'de:vless', 'candidate_transport': 'vless_reality',
+            'stage': 'probe', 'connected': false, 'failure_kind': 'timeout', 'duration_ms': 4000},
+          {'candidate_ref': 'de:xhttp', 'candidate_transport': 'xhttp_reality',
+            'stage': 'probe', 'connected': true, 'duration_ms': 300},
+        ],
       },
       <String, Object?>{
         'runtime_phase': 'failed',
         'connected': false,
         'error_code': 'pairing_claim_failed',
         'failure_kind': 'tls_failed',
+        'network_class': 'wifi',
+        'access_network_asn': 'AS12345',
         'report_run_id': reportRunId,
         'report_sequence': 2,
         'connectivity': {'proof_stage': 'unknown'},
@@ -4677,6 +4753,7 @@ void main() {
     });
     var starts = 0;
     var profiles = 0;
+    String? profileRunId;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
@@ -4694,6 +4771,10 @@ void main() {
           request.response.write('{"ok":true}');
         } else if (request.uri.path == '/api/client/profile/managed') {
           expect(request.headers.value('X-POKROV-Access-Preparing'), '1');
+          final runId = request.uri.queryParameters['report_run_id'];
+          expect(runId, matches(RegExp(r'^[0-9a-f-]{36}$')));
+          profileRunId ??= runId;
+          expect(runId, profileRunId);
           profiles += 1;
           if (profiles < 3) {
             request.response.statusCode = HttpStatus.accepted;
@@ -4701,7 +4782,10 @@ void main() {
               'status': 'access_preparing', 'retry_after_seconds': 2,
             }));
           } else {
-            request.response.write(jsonEncode(_readyManagedProfile('prepared')));
+            request.response.write(jsonEncode({
+              ..._readyManagedProfile('prepared'),
+              'access_network': {'asn': 'AS12345'},
+            }));
           }
         } else {
           request.response.statusCode = HttpStatus.notFound;
@@ -4720,6 +4804,7 @@ void main() {
       timeout: const Duration(seconds: 18),
     );
     expect(payload.profileName, 'pokrov-windows-prepared');
+    expect(payload.accessNetworkAsn, 'AS12345');
     expect(starts, 1);
     expect(profiles, 3);
   });
@@ -5482,7 +5567,7 @@ void main() {
             .having(
               (error) => error.operation,
               'operation',
-              'GET /api/client/profile/managed',
+              startsWith('GET /api/client/profile/managed?report_run_id='),
             )
             .having(
               (error) => error.message,

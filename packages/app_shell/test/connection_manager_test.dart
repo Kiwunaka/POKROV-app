@@ -22,6 +22,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   final bool catalog;
   List<TransportCandidate> candidates = _candidates;
   Duration exactProfileDelay = Duration.zero;
+  String accessNetworkAsn = '';
   final cancelledExactProfiles = <String>[];
   SmartConnectProfile? smartConnect;
   final nodePreferences = <SmartConnectProfile>[];
@@ -73,6 +74,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     final selected = candidates.firstWhere((candidate) => candidate.candidateRef ==
         (selectedCandidateRef.isEmpty ? candidates.first.candidateRef : selectedCandidateRef));
     return ManagedProfilePayload(
+      accessNetworkAsn: accessNetworkAsn,
       profileName: selectedCandidateRef.isEmpty ? (catalog ? selected.candidateRef : '$nodeCode:profile_0') : selectedCandidateRef,
       transportCatalog: catalog ? TransportCandidateCatalog(revision: 'test',
           selectedCandidateRef: selected.candidateRef, candidates: candidates) : null,
@@ -99,6 +101,13 @@ class _ManifestBootstrapper extends _Bootstrapper implements AppFirstTransportMa
 }
 
 class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileBootstrapper {
+  String? lastSuccessfulNetworkKey;
+  @override
+  Future<String?> successfulCandidateRef(ManagedProfileCacheInputs inputs,
+      String networkSelectionKey) async {
+    lastSuccessfulNetworkKey = networkSelectionKey;
+    return null;
+  }
   _CachedBootstrapper() : super(catalog: true);
   bool cacheAvailable = true;
   static final alternatives = [
@@ -140,6 +149,32 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   @override
   Future<ManagedProfileOfflineState> classifyManagedProfileFailure(ManagedProfileCacheInputs inputs,
       {bool? networkAvailable, bool? captivePortal}) async => ManagedProfileOfflineState.apiUnavailable;
+}
+
+class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceService {
+  _StatsBootstrapper() : super(catalog: true);
+  final reports = <Map<String, Object?>>[];
+
+  @override
+  Future<void> reportRuntimeStats({
+    required HostPlatform hostPlatform, required String runtimePhase,
+    required bool connected, String errorCode = '', String failureKind = '',
+    String selectedNodeCode = '', String routeMode = '', int? durationMs,
+    int? attemptNumber, bool? retryable, String networkClass = '',
+    String carrierMccMnc = '', String candidateTransport = '',
+    String candidateRef = '', String candidateVariant = '',
+    String accessNetworkAsn = '', List<Map<String, Object?>> candidateProbes = const [],
+    RuntimeSnapshot? connectivitySnapshot,
+  }) async {
+    if (runtimePhase == 'running') reports.add({
+      'candidate_ref': candidateRef,
+      'candidate_transport': candidateTransport,
+      'candidate_probes': candidateProbes,
+    });
+  }
+
+  @override
+  Future<void> completeAccountOnboarding({required HostPlatform hostPlatform}) async {}
 }
 
 class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
@@ -663,6 +698,46 @@ void main() {
     expect(runtime.stagedProfile, 'de:profile_1');
     expect(bootstrapper.resolutions.every((call) => !call.select && !call.cache), isTrue);
     expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
+  test('first connection remembers the observed AS for a desktop uplink', () async {
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)..supportsCandidates = true;
+    final bootstrapper = _CachedBootstrapper()..accessNetworkAsn = 'AS12345';
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(bootstrapper.lastSuccessfulNetworkKey, 'asn:AS12345');
+  });
+
+  test('final stats identify the winning XHTTP candidate and every completed probe', () async {
+    final xhttp = TransportCandidate(candidateRef: 'de:xhttp', profileRef: 'xhttp',
+      nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'xhttp',
+      protection: 'reality', priority: 1, network: 'tcp', flow: '',
+      minimumClientRelease: '1.4.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: const {});
+    final bootstrapper = _StatsBootstrapper()
+      ..candidates = [_candidates.first, xhttp]
+      ..exactProfileDelay = const Duration(milliseconds: 30);
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true
+      ..failedProbeProfiles.add(_candidates.first.candidateRef);
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    final deadline = DateTime.now().add(const Duration(seconds: 2));
+    while (bootstrapper.reports.isEmpty && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(bootstrapper.reports, hasLength(1));
+    expect(bootstrapper.reports.single['candidate_ref'], 'de:xhttp');
+    expect(bootstrapper.reports.single['candidate_transport'], 'xhttp_reality');
+    final probes = (bootstrapper.reports.single['candidate_probes'] as List).cast<Map<String, Object?>>();
+    expect(probes.map((item) => item['candidate_ref']),
+        containsAll(['de:profile_0', 'de:xhttp']));
+    expect(probes.where((item) => item['connected'] == true).single['candidate_ref'], 'de:xhttp');
   });
 
   test('WARP candidate probes its chain and ordinary fallback stays ordinary', () async {

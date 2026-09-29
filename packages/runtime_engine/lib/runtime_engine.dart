@@ -1312,6 +1312,7 @@ class ManagedProfilePayload {
     this.smartConnect,
     this.transportCatalog,
     this.provenNetworkSelectionKey,
+    this.accessNetworkAsn = '',
     this.resolvedNodeCode = '',
     this.warpPolicy = WarpRuntimePolicy.disabled,
     this.freeProfileAccess,
@@ -1346,6 +1347,8 @@ class ManagedProfilePayload {
   final SmartConnectProfile? smartConnect;
   final TransportCandidateCatalog? transportCatalog;
   final String? provenNetworkSelectionKey;
+  /// Safe AS label observed while fetching this profile before the tunnel.
+  final String accessNetworkAsn;
 
   /// Exact Smart Connect node materialized into the selector default.
   final String resolvedNodeCode;
@@ -1397,6 +1400,7 @@ class ManagedProfilePayload {
       smartConnect: smartConnect ?? this.smartConnect,
       transportCatalog: transportCatalog,
       provenNetworkSelectionKey: provenNetworkSelectionKey,
+      accessNetworkAsn: accessNetworkAsn,
       resolvedNodeCode: resolvedNodeCode ?? this.resolvedNodeCode,
       warpPolicy: warpPolicy ?? this.warpPolicy,
       freeProfileAccess: freeProfileAccess ?? this.freeProfileAccess,

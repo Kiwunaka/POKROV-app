@@ -764,11 +764,17 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
   if (command == Command::kReadCandidateNetwork) {
     const auto& value = exchange.response->body;
     const auto delimiter = value.find(';');
+    const auto class_delimiter = value.find(';', delimiter == std::string::npos ? 0 : delimiter + 1);
     if (result.command_accepted && value == "unavailable") return result;
     if (result.command_accepted && delimiter == 74 && value.compare(0, 10, "selection_") == 0 &&
-        IsProfileDigest(value.substr(10, 64)) && IsTransportNetworkContextRef(value.substr(delimiter + 1))) {
+        IsProfileDigest(value.substr(10, 64)) && class_delimiter != std::string::npos &&
+        IsTransportNetworkContextRef(value.substr(delimiter + 1, class_delimiter - delimiter - 1)) &&
+        (value.substr(class_delimiter + 1) == "wifi" ||
+         value.substr(class_delimiter + 1) == "ethernet" ||
+         value.substr(class_delimiter + 1) == "other")) {
       result.candidate_selection_key = value.substr(0, delimiter);
-      result.transport_network_context_ref = value.substr(delimiter + 1);
+      result.transport_network_context_ref = value.substr(delimiter + 1, class_delimiter - delimiter - 1);
+      result.candidate_network_class = value.substr(class_delimiter + 1);
     } else { result.command_accepted = false; }
     return result;
   }

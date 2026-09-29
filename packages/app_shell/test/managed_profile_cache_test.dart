@@ -136,6 +136,34 @@ void main() {
     expect(await cache.read(platform: 'android', binding: 'account-B/install-A/route-A', selectedCandidateRef: 'de:hy2'), isNull);
   });
 
+  test('last successful candidate survives restart for several networks', () async {
+    const binding = 'account-A/install-A/route-A';
+    Future<void> prove(String network, String candidate) async {
+      await cache.saveDownloaded(platform: 'windows', binding: binding,
+        revision: 'catalog-1', verifiedAt: now, payload: {
+          'cache_entry_id': candidate,
+          'transport_catalog': {
+            'revision': 'catalog-1', 'selected_candidate_ref': candidate,
+            'candidates': [
+              {'candidate_ref': 'de:reality', 'node_code': 'de'},
+              {'candidate_ref': 'de:hy2', 'node_code': 'de'},
+            ],
+          },
+        });
+      await cache.markProven(platform: 'windows', binding: binding,
+        entryId: candidate, networkSelectionKey: network);
+    }
+    await prove('selection_wifi', 'de:reality');
+    await prove('selection_ethernet', 'de:hy2');
+    cache = ManagedProfileCache(now: () => now);
+    Future<String?> remembered(String network, {String account = binding}) =>
+      cache.successfulCandidateRef(platform: 'windows', binding: account,
+        networkSelectionKey: network);
+    expect(await remembered('selection_wifi'), 'de:reality');
+    expect(await remembered('selection_ethernet'), 'de:hy2');
+    expect(await remembered('selection_wifi', account: 'other/install/route'), isNull);
+  });
+
   test('different account, inputs, platform and clock rollback cannot reuse cache', () async {
     await save('a');
     expect(await cache.read(platform: 'windows', binding: 'account-A/install-A/route-A'), isNull);
