@@ -101,6 +101,8 @@ Core `probe_failed` and `unexpected_status` are also remembered; a local timer
 reports `probe_budget_expired` and never suppresses a candidate.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
+The local probe budget and Core data-stall kinds are valid journal values;
+diagnostic recording cannot fail the candidate selector.
 Windows managed profiles use only TUN (no loopback mixed listener) and start
 Core with `disableMemoryLimit=true`, including restored cached profiles. A
 confirmed candidate-network read clears a stale Windows probe-settlement latch

@@ -2041,8 +2041,12 @@ class ConnectionManager extends ChangeNotifier {
 
   void _recordCandidateProbe(
       domain.TransportCandidate candidate, SmartConnectCandidateProbeResult result) {
-    _observability?.recordCandidateProbe(
-        failureKind: result.failureKind, duration: result.duration);
+    try {
+      _observability?.recordCandidateProbe(
+          failureKind: result.failureKind, duration: result.duration);
+    } on Object {
+      // Diagnostic validation must not turn a working candidate into a failed connect.
+    }
     final transport = _candidateTransport(candidate);
     if (transport.isEmpty) return;
     if (_candidateProbeReports.length >= 16) return;

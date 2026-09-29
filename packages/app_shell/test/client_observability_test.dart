@@ -271,7 +271,7 @@ void main() {
   });
 
   test(
-      'failed candidate probe records typed failure without interrupting connection',
+      'probe budget expiry and later success do not interrupt connection',
       () async {
     final directory =
         await Directory.systemTemp.createTemp('pokrov-obs-probe-');
@@ -284,27 +284,40 @@ void main() {
 
     await observability.runConnectionAction(() async {
       observability.recordCandidateProbe(
-        failureKind: 'connect_failed',
+        failureKind: 'probe_budget_expired',
         duration: const Duration(milliseconds: 375),
       );
+      observability.recordCandidateProbe(
+        failureKind: 'data_stalled',
+        duration: const Duration(milliseconds: 2000),
+      );
+      observability.recordCandidateProbe(
+        failureKind: '',
+        duration: const Duration(milliseconds: 737),
+      );
     }, beginsWithDisconnect: false);
+    observability.recordRuntimeStatsDeliveryFailure(errorCode: 'API-002');
     await observability.flush();
 
-    final event = observability.dispatcher.breadcrumbs.snapshot().lastWhere(
-          (value) => value.name == 'app.connection.candidate_probe.finished',
-        );
-    expect(event.outcome.wireValue, 'degraded');
-    expect(event.errorCode, 'CONN-008');
+    final events = observability.dispatcher.breadcrumbs.snapshot()
+        .where((value) => value.name == 'app.connection.candidate_probe.finished')
+        .toList();
+    expect(events, hasLength(3));
+    expect(events.last.outcome.wireValue, 'succeeded');
+    expect(events.last.errorCode, isNull);
     final recorded = await File(
       '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
     ).readAsLines();
-    final probe = recorded
+    final probes = recorded
         .map((line) => jsonDecode(line) as Map<String, dynamic>)
-        .lastWhere((value) =>
-            value['name'] == 'app.connection.candidate_probe.finished');
-    expect(probe['stage'], 'verify');
-    expect((probe['attributes'] as Map<String, dynamic>)['failure_kind'],
-        'connect_failed');
+        .where((value) => value['name'] == 'app.connection.candidate_probe.finished')
+        .toList();
+    expect(probes.map((probe) =>
+        (probe['attributes'] as Map<String, dynamic>)['failure_kind']),
+        ['probe_budget_expired', 'data_stalled', 'none']);
+    expect(recorded.map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .where((value) => value['name'] == 'app.runtime.stats_delivery.finished')
+        .single['stage'], 'complete');
   });
 
   test('active app-first client emits correlation header and aggregate batch',

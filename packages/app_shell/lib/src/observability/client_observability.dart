@@ -457,8 +457,8 @@ final class PokrovClientObservability {
   void recordRuntimeStatsDeliveryFailure({required String errorCode}) {
     _emitCurrent(
       name: 'app.runtime.stats_delivery.finished',
-      subsystem: 'runtime',
-      stage: 'report',
+      subsystem: 'api',
+      stage: 'complete',
       outcome: ObservabilityOutcome.failed,
       errorCode: errorCode,
     );
