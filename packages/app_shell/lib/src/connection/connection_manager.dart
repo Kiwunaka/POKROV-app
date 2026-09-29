@@ -315,6 +315,7 @@ class ConnectionManager extends ChangeNotifier {
   TransportCandidateCatalog? _transportCatalog;
   final _candidateSelector = SmartConnectCandidateSelector();
   String? _candidateNetworkKey;
+  String? _candidateOfflineNetworkKey;
   String? _candidateNetworkClass;
   String? _candidateCarrierMccMnc;
   String? _candidateCarrierName;
@@ -1917,6 +1918,7 @@ class ConnectionManager extends ChangeNotifier {
               network.networkClass != 'cellular'
           ? payload.accessNetworkAsn : '';
       final key = asn.isNotEmpty ? 'asn:$asn' : nativeKey;
+      final offlineKey = _offlineCandidateNetworkKey(nativeKey, context, network.networkClass);
       _candidateNetworkClass = network.networkClass;
       _candidateCarrierMccMnc = network.mccMnc;
       _candidateCarrierName = network.carrierName;
@@ -2025,6 +2027,7 @@ class ConnectionManager extends ChangeNotifier {
         requireCurrent();
       }
       _candidateNetworkKey = key;
+      _candidateOfflineNetworkKey = offlineKey;
       _candidateRef = payload.transportCatalog!.selectedCandidateRef;
     } else if (discoverCandidates && catalog == null) {
       // Older servers still own the legacy Smart Connect path.
@@ -2032,6 +2035,7 @@ class ConnectionManager extends ChangeNotifier {
       requireCurrent();
       _candidateRef = null;
       _candidateNetworkKey = null;
+      _candidateOfflineNetworkKey = null;
     }
     _transportCatalog = payload.transportCatalog;
     _offlineState = null;
@@ -2102,6 +2106,7 @@ class ConnectionManager extends ChangeNotifier {
     }
     var selected = cached;
     _candidateNetworkKey = null;
+    _candidateOfflineNetworkKey = null;
     if (catalog != null && engine is RuntimeCandidateProbing && cache is CachedManagedProfileBootstrapper) {
       final probing = engine as RuntimeCandidateProbing;
       final service = cache as CachedManagedProfileBootstrapper;
@@ -2128,7 +2133,8 @@ class ConnectionManager extends ChangeNotifier {
       _candidateCarrierName = network.carrierName;
       _candidateAccessNetworkAsn = null;
       if (recoveryCandidateRef.isEmpty) {
-        final remembered = await service.successfulCandidateRef(inputs, key);
+        final remembered = await service.successfulCandidateRef(
+            inputs, _offlineCandidateNetworkKey(key, context, network.networkClass));
         requireCurrent();
         if (remembered != null) _candidateSelector.restoreSuccess(key, remembered);
       }
@@ -2170,10 +2176,20 @@ class ConnectionManager extends ChangeNotifier {
         throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
       }
       _candidateNetworkKey = key;
+      _candidateOfflineNetworkKey = _offlineCandidateNetworkKey(key, context, network.networkClass);
     }
     _transportCatalog = selected.transportCatalog;
     _candidateRef = selected.transportCatalog?.selectedCandidateRef;
     return selected;
+  }
+
+  String _offlineCandidateNetworkKey(String nativeKey, String contextRef, String? networkClass) {
+    // Android Wi-Fi keys use a network handle, which can be reused after a reboot.
+    // Bind its ASN preference to this network context; cellular has a stable MCC-MNC key.
+    if (_appContext.hostPlatform == HostPlatform.android && networkClass != 'cellular') {
+      return '$nativeKey:$contextRef';
+    }
+    return nativeKey;
   }
 
   ManagedProfileCacheInputs get _managedProfileCacheInputs =>
@@ -3717,7 +3733,8 @@ class ConnectionManager extends ChangeNotifier {
         cacheInputs != null) {
       unawaited((cacheService as CachedManagedProfileBootstrapper)
           .markManagedProfileProven(cacheInputs, _stagedProfileCacheEntryId,
-              networkSelectionKey: _candidateNetworkKey));
+              networkSelectionKey: _candidateNetworkKey,
+              offlineNetworkSelectionKey: _candidateOfflineNetworkKey));
     }
     if (_candidateNetworkKey != null && _candidateRef != null) {
       _candidateSelector.recordSuccess(_candidateNetworkKey!, _candidateRef!);

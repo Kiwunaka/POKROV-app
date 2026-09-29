@@ -113,9 +113,13 @@ protected ServiceRuntime directory so a service restart preserves local network
 memory. The encrypted cache remembers six recent network/candidate pairs. An
 ASN returned for a direct managed-profile request takes precedence over the
 local key for Wi-Fi and desktop selection; an active tunnel does not replace
-that key with its exit ASN. The request's report run ID lets the portal attach
-the pre-tunnel ASN to later stats, which report network class, candidate
-transport, and the validated ASN or cellular code when available.
+that key with its exit ASN. On offline managed-profile reuse, the cache resolves
+the last successful ASN candidate through the same native network key. Android
+Wi-Fi also binds this lookup to its current network context so a reused network
+handle cannot inherit another network's ASN preference. The request's report
+run ID lets the portal attach the pre-tunnel ASN to later stats, which report
+network class, candidate transport, and the validated ASN or cellular code when
+available.
 For cellular links, the observed operator name is included in stats only when
 present and at most 80 characters; it is never used as the network key.
 Ordinary catalog location changes use the location catalog's policy metadata,

@@ -1098,7 +1098,7 @@ class _CachedBootstrapper extends _FakeBootstrapper
   }) async => ManagedProfileOfflineState.apiUnavailable;
 
   @override
-  Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId, {String? networkSelectionKey}) async {
+  Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId, {String? networkSelectionKey, String? offlineNetworkSelectionKey}) async {
     provenEntries.add(entryId);
   }
 }

@@ -164,6 +164,30 @@ void main() {
     expect(await remembered('selection_wifi', account: 'other/install/route'), isNull);
   });
 
+  test('offline network restores its ASN candidate without crossing networks', () async {
+    const binding = 'account-A/install-A/route-A';
+    await cache.saveDownloaded(platform: 'android', binding: binding,
+      revision: 'catalog-1', verifiedAt: now, payload: {
+        'cache_entry_id': 'de:hy2',
+        'transport_catalog': {
+          'revision': 'catalog-1', 'selected_candidate_ref': 'de:hy2',
+          'candidates': [
+            {'candidate_ref': 'de:hy2', 'node_code': 'de'},
+          ],
+        },
+      });
+    await cache.markProven(platform: 'android', binding: binding,
+      entryId: 'de:hy2', networkSelectionKey: 'asn:64500',
+      offlineNetworkSelectionKey: 'android:123:network_a');
+    cache = ManagedProfileCache(now: () => now);
+    Future<String?> remembered(String key) => cache.successfulCandidateRef(
+      platform: 'android', binding: binding, networkSelectionKey: key);
+    expect(await remembered('android:123:network_a'), 'de:hy2');
+    expect(await remembered('android:123:network_b'), isNull,
+      reason: 'a reused Android handle must not inherit another network ASN');
+    expect(await remembered('android:124:network_a'), isNull);
+  });
+
   test('different account, inputs, platform and clock rollback cannot reuse cache', () async {
     await save('a');
     expect(await cache.read(platform: 'windows', binding: 'account-A/install-A/route-A'), isNull);

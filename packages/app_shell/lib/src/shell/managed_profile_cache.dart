@@ -126,6 +126,7 @@ class ManagedProfileCache {
         if (proven is Map && proven['binding'] != binding) {
           value.remove('proven');
           value.remove('successful_candidates');
+          value.remove('offline_network_keys');
         }
         if (current()) await _write(platform, value);
       });
@@ -235,6 +236,7 @@ class ManagedProfileCache {
     required String binding,
     required String entryId,
     String? networkSelectionKey,
+    String? offlineNetworkSelectionKey,
   }) =>
       _serialize(() async {
         final value = await _load(platform);
@@ -272,6 +274,17 @@ class ManagedProfileCache {
           recent[networkSelectionKey] = candidateRef;
           while (recent.length > 6) recent.remove(recent.keys.first);
           value['successful_candidates'] = recent;
+          if (offlineNetworkSelectionKey != null &&
+              offlineNetworkSelectionKey != networkSelectionKey &&
+              RegExp(r'^[A-Za-z0-9_.:-]{1,128}$').hasMatch(offlineNetworkSelectionKey)) {
+            final aliases = Map<String, String>.from(value['offline_network_keys'] is Map
+                ? value['offline_network_keys'] as Map : const {});
+            aliases.remove(offlineNetworkSelectionKey);
+            aliases[offlineNetworkSelectionKey] = networkSelectionKey;
+            aliases.removeWhere((_, effectiveKey) => !recent.containsKey(effectiveKey));
+            while (aliases.length > 6) aliases.remove(aliases.keys.first);
+            value['offline_network_keys'] = aliases;
+          }
         }
         await _write(platform, value);
       });
@@ -286,7 +299,10 @@ class ManagedProfileCache {
       final downloaded = value['downloaded'];
       if (downloaded is! Map || downloaded['binding'] != binding) return null;
       final recent = value['successful_candidates'];
-      final ref = recent is Map ? recent[networkSelectionKey] : null;
+      final aliases = value['offline_network_keys'];
+      final effectiveKey = aliases is Map && aliases[networkSelectionKey] is String
+          ? aliases[networkSelectionKey] as String : networkSelectionKey;
+      final ref = recent is Map ? recent[effectiveKey] : null;
       if (ref is String && RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(ref)) return ref;
       final proven = value['proven'];
       if (proven is Map && proven['binding'] == binding &&

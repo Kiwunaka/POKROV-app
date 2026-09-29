@@ -147,7 +147,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   }) async {}
   @override
   Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId,
-      {String? networkSelectionKey}) async {}
+      {String? networkSelectionKey, String? offlineNetworkSelectionKey}) async {}
   @override
   Future<ManagedProfileOfflineState> classifyManagedProfileFailure(ManagedProfileCacheInputs inputs,
       {bool? networkAvailable, bool? captivePortal}) async => ManagedProfileOfflineState.apiUnavailable;

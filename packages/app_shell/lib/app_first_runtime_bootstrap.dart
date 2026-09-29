@@ -227,6 +227,7 @@ abstract interface class CachedManagedProfileBootstrapper {
     ManagedProfileCacheInputs inputs,
     String entryId, {
     String? networkSelectionKey,
+    String? offlineNetworkSelectionKey,
   });
 }
 
@@ -3320,6 +3321,7 @@ class AppFirstRuntimeBootstrapper
     ManagedProfileCacheInputs inputs,
     String entryId, {
     String? networkSelectionKey,
+    String? offlineNetworkSelectionKey,
   }) async {
     try {
       final state = await _loadState(inputs.hostPlatform);
@@ -3329,6 +3331,7 @@ class AppFirstRuntimeBootstrapper
         binding: inputs.binding(state.accountId, state.installId),
         entryId: entryId,
         networkSelectionKey: networkSelectionKey,
+        offlineNetworkSelectionKey: offlineNetworkSelectionKey,
       );
     } on Object {
       // A cache write cannot change the state of an already proven tunnel.
