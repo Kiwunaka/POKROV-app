@@ -691,7 +691,9 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
 ManagedProfilePayload _applyAllExceptRuDefaults(
     ManagedProfilePayload payload, HostPlatform hostPlatform,
     List<String> defaultRuAppPackageIds) {
-  if (payload.routeMode != RouteMode.allExceptRu) return payload;
+  if (payload.routeMode != RouteMode.allExceptRu) {
+    return _normalizeRuntimeDns(payload);
+  }
 
   final config = _routingMap(jsonDecode(payload.configPayload));
   final route = _routingMap(config['route']);
@@ -721,6 +723,98 @@ ManagedProfilePayload _applyAllExceptRuDefaults(
     }.toList();
     config['inbounds'] = inbounds;
   }
+  return _normalizeRuntimeDns(payload.copyWith(configPayload: jsonEncode(config)));
+}
+
+ManagedProfilePayload _normalizeRuntimeDns(ManagedProfilePayload payload) {
+  final config = _routingMap(jsonDecode(payload.configPayload));
+  final dns = _routingMap(config['dns']);
+  if (dns.isEmpty) return payload;
+  final defaultOutbound = _routingText(_routingMap(config['route'])['final']);
+  final plainDirectTags = _routingListOfMaps(config['outbounds'])
+      .where((outbound) => outbound['type'] == 'direct' &&
+          outbound.keys.every(const {'type', 'tag'}.contains))
+      .map((outbound) => _routingText(outbound['tag'])).toSet();
+  final rcodes = <String, String>{};
+  final servers = <Map<String, dynamic>>[];
+  for (final server in _routingListOfMaps(dns['servers'])) {
+    final type = _routingText(server['type']);
+    if (type.isEmpty || type == 'legacy') {
+      final address = _routingText(server.remove('address'));
+      if (address.startsWith('rcode://')) {
+        const names = {'success': 'NOERROR', 'format_error': 'FORMERR',
+          'server_failure': 'SERVFAIL', 'name_error': 'NXDOMAIN',
+          'not_implemented': 'NOTIMP', 'refused': 'REFUSED'};
+        final rcode = names[address.substring('rcode://'.length)];
+        if (rcode == null) throw const FormatException('Unsupported DNS response code');
+        rcodes[_routingText(server['tag'])] = rcode;
+        continue;
+      }
+      if (server.containsKey('strategy') || server.containsKey('client_subnet')) {
+        throw const FormatException('Unsupported per-server DNS query options');
+      }
+      if (address == 'local') {
+        server['type'] = 'local';
+      } else {
+        final ip = InternetAddress.tryParse(address);
+        final uri = ip == null
+            ? Uri.tryParse(address.contains('://') ? address : 'udp://$address')
+            : null;
+        final transport = uri?.scheme ?? 'udp';
+        if (ip == null && (uri == null || uri.host.isEmpty) ||
+            !const {'udp', 'tcp', 'tls', 'quic', 'https', 'h3'}.contains(transport)) {
+          throw const FormatException('Unsupported DNS server address');
+        }
+        server['type'] = transport;
+        server['server'] = ip?.address ?? uri!.host;
+        if (uri?.hasPort == true) server['server_port'] = uri!.port;
+        if (const {'https', 'h3'}.contains(transport) &&
+            uri!.path.isNotEmpty && uri.path != '/dns-query') {
+          server['path'] = uri.path;
+        }
+      }
+      final resolver = _routingText(server.remove('address_resolver'));
+      final strategy = _routingText(server.remove('address_strategy'));
+      if (resolver.isNotEmpty) {
+        server['domain_resolver'] = strategy.isEmpty ? resolver
+            : <String, dynamic>{'server': resolver, 'strategy': strategy};
+      } else if (strategy.isNotEmpty) {
+        throw const FormatException('DNS address strategy requires resolver');
+      }
+      final fallbackDelay = server.remove('address_fallback_delay');
+      if (fallbackDelay != null) server['fallback_delay'] = fallbackDelay;
+      if (_routingText(server['detour']).isEmpty && defaultOutbound.isNotEmpty) {
+        server['detour'] = defaultOutbound;
+      }
+    }
+    // Typed DNS uses its native dialer for an unconfigured direct outbound.
+    // A detour to that outbound is rejected by sing-box 1.14.
+    if (plainDirectTags.contains(server['detour'])) server.remove('detour');
+    servers.add(server);
+  }
+  Map<String, dynamic> migrateRule(Map<String, dynamic> rule) {
+    if (rule['rules'] is List) {
+      rule['rules'] = _routingListOfMaps(rule['rules']).map(migrateRule).toList();
+    }
+    final rcode = rcodes[_routingText(rule['server'])];
+    if (rcode != null) {
+      for (final key in ['server', 'strategy', 'client_subnet', 'disable_cache', 'rewrite_ttl']) {
+        rule.remove(key);
+      }
+      rule['action'] = 'predefined';
+      rule['rcode'] = rcode;
+    }
+    return rule;
+  }
+  final rules = _routingListOfMaps(dns['rules']).map(migrateRule).toList();
+  final finalRcode = rcodes[_routingText(dns['final'])];
+  if (finalRcode != null) {
+    dns.remove('final');
+    rules.add({'action': 'predefined', 'rcode': finalRcode});
+  }
+  dns['servers'] = servers;
+  if (dns.containsKey('rules') || rules.isNotEmpty) dns['rules'] = rules;
+  config['dns'] = dns;
   return payload.copyWith(configPayload: jsonEncode(config));
 }
 

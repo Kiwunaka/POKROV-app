@@ -15,6 +15,13 @@ that fallback and does not claim the new assignment was applied. The owner's
 last downloaded or last proven profile within its original offline window.
 An explicit authorization denial is separate from an unreachable API.
 
+The final routing assembler converts legacy DNS servers to typed transports
+after applying user and catalog preferences, including restored offline profiles.
+It preserves resolver tags, VPN paths and DNS response-code rules, while removing
+detours to an unconfigured Direct outbound. Stored profile bytes and release pins
+are unchanged. The typed format works with the existing Core 1.1.2 (sing-box 1.13)
+and Core 1.2.1 (1.14), which removed the legacy DNS server format.
+
 With ordinary managed profiles and a runtime supporting protected handoff,
 manual reconnect and location replacement retain the running tunnel while the
 replacement profile is resolved and probed. Cancellation retains that protection,

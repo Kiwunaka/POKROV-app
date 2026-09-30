@@ -141,8 +141,48 @@ void main() {
       isFalse,
     );
     expect(dns['final'], 'pokrov-user-dns');
-    expect(dnsServers.first['address'], 'https://1.1.1.1/dns-query');
+    expect(dnsServers.first['type'], 'https');
+    expect(dnsServers.first['server'], '1.1.1.1');
+    expect(dnsServers.every((server) => !server.containsKey('address')), isTrue);
     expect(dnsServers.first['detour'], 'proxy');
+  });
+
+  test('cached legacy DNS is migrated after routing without changing its policy', () {
+    final config = _jsonMap(_profile().configPayload);
+    config['dns'] = <String, dynamic>{
+      'servers': [
+        {'tag': 'local', 'address': 'local', 'detour': 'direct'},
+        {'tag': 'bootstrap', 'address': '1.1.1.1', 'detour': 'direct'},
+        {'tag': 'remote', 'address': 'https://dns.example:8443/private-query',
+          'address_resolver': 'bootstrap', 'detour': 'proxy'},
+        {'tag': 'block', 'address': 'rcode://success'},
+        {'tag': 'typed', 'type': 'tcp', 'server': '8.8.8.8', 'detour': 'proxy'},
+      ],
+      'rules': [{'domain_suffix': ['ads.example'], 'server': 'block'}],
+      'final': 'remote',
+      'strategy': 'prefer_ipv4',
+    };
+    final cached = _profile().copyWith(configPayload: jsonEncode(config));
+    final transformed = applyPokrovRoutingPreferences(cached,
+        const PokrovRoutingPreferences.defaults(), hostPlatform: HostPlatform.android);
+    final dns = _map(_jsonMap(transformed.configPayload)['dns']);
+    final servers = _maps(dns['servers']);
+    expect(servers.map((server) => server['tag']), ['local', 'bootstrap', 'remote', 'typed']);
+    expect(servers[0], {'tag': 'local', 'type': 'local'});
+    expect(servers[1], {'tag': 'bootstrap', 'type': 'udp', 'server': '1.1.1.1'});
+    expect(servers[2], {'tag': 'remote', 'type': 'https', 'server': 'dns.example',
+      'server_port': 8443, 'path': '/private-query', 'domain_resolver': 'bootstrap',
+      'detour': 'proxy'});
+    expect(servers[3], config['dns']['servers'].last);
+    expect(dns['rules'], [{'domain_suffix': ['ads.example'], 'action': 'predefined',
+      'rcode': 'NOERROR'}]);
+    expect(dns['final'], 'remote');
+    expect(dns['strategy'], 'prefer_ipv4');
+    expect(cached.configPayload, jsonEncode(config),
+        reason: 'offline profile identity and protected cache bytes remain unchanged');
+    final repeated = applyPokrovRoutingPreferences(transformed,
+        const PokrovRoutingPreferences.defaults(), hostPlatform: HostPlatform.android);
+    expect(_map(_jsonMap(repeated.configPayload)['dns']), dns);
   });
 
   test('direct-only Windows profile fails closed before native staging', () {
@@ -399,7 +439,8 @@ void main() {
     expect(dns['independent_cache'], isTrue);
     expect(dnsServers.first, <String, Object?>{
       'tag': 'pokrov-user-dns',
-      'address': 'https://dns.adguard-dns.com/dns-query',
+      'type': 'https',
+      'server': 'dns.adguard-dns.com',
       'detour': 'proxy',
     });
   });
@@ -429,8 +470,8 @@ void main() {
     );
     expect(dnsServers.first, <String, Object?>{
       'tag': 'pokrov-user-dns',
-      'address': 'https://dns.google/dns-query',
-      'detour': 'direct',
+      'type': 'https',
+      'server': 'dns.google',
     });
   });
 
@@ -470,8 +511,8 @@ void main() {
     expect(outboundFor('youtube.com'), 'proxy');
     expect(dnsServers.first, <String, Object?>{
       'tag': 'pokrov-user-dns',
-      'address': 'https://smart.example/dns-query',
-      'detour': 'direct',
+      'type': 'https',
+      'server': 'smart.example',
     });
     expect(dns['final'], 'profile-dns');
     expect(dnsRules.first['action'], 'route');
