@@ -40,6 +40,8 @@ import space.pokrov.core.libbox.StringIterator
 import space.pokrov.core.libbox.SystemProxyStatus
 import space.pokrov.core.libbox.TunOptions
 import space.pokrov.core.libbox.WIFIState
+import space.pokrov.core.mobile.Mobile
+import java.lang.reflect.InvocationTargetException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface as JavaNetworkInterface
@@ -877,7 +879,13 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     }
 
     private fun prepareRuntimeConfig(rawContent: String, routeMode: String): JSONObject {
-        val runtimeConfig = JSONObject(rawContent).apply { remove("_meta") }
+        val normalizer = try {
+            Mobile::class.java.getMethod("normalizeRuntimeConfig", String::class.java)
+        } catch (_: NoSuchMethodException) { null }
+        val runtimeContent = if (normalizer == null) rawContent else try {
+            normalizer.invoke(null, rawContent) as String
+        } catch (error: InvocationTargetException) { throw error.targetException }
+        val runtimeConfig = JSONObject(runtimeContent).apply { remove("_meta") }
         // This app package is excluded from its own VpnService TUN below.
         // Keep Core interface auto-detection off: AWG requests platform
         // socket protection directly, while ordinary transports must not
@@ -923,14 +931,24 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     )
                     .put("auto_route", true)
                     .put("strict_route", true)
-                    .put("endpoint_independent_nat", true)
                     .put("stack", "mixed")
-                    .put("sniff", true)
-                    .put("inet4_address", "172.19.0.1/28")
-                    .put("inet6_address", "fdfe:dcba:9876::1/126")
-                    .put("domain_strategy", "prefer_ipv4")
+                    .put("address", JSONArray()
+                        .put("172.19.0.1/28")
+                        .put("fdfe:dcba:9876::1/126"))
                     .put("exclude_package", JSONArray().put(packageName)),
             )
+            val rules = route.optJSONArray("rules") ?: JSONArray()
+            if ((0 until rules.length()).none { rules.optJSONObject(it)?.optString("action") == "sniff" }) {
+                val sniffIndex = (0 until rules.length()).firstOrNull {
+                    rules.optJSONObject(it)?.optString("action") != "hijack-dns"
+                } ?: rules.length()
+                val runtimeRules = JSONArray()
+                for (index in 0..rules.length()) {
+                    if (index == sniffIndex) runtimeRules.put(JSONObject().put("action", "sniff"))
+                    if (index < rules.length()) runtimeRules.put(rules.get(index))
+                }
+                route.put("rules", runtimeRules)
+            }
         }
         val endpoints = runtimeConfig.optJSONArray("endpoints")
         val hasWarpEndpoint = endpoints != null && (0 until endpoints.length()).any { index ->

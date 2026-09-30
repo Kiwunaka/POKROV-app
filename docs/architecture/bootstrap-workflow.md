@@ -27,6 +27,12 @@ retaining the selected IP family, MTU, stack and package routing. Android applie
 sniffing through the route action after DNS hijacking, as Windows and Linux do;
 TUN-level legacy address, sniff, domain strategy and NAT fields are not emitted.
 The existing DNS resolver policy is retained.
+Android's native fallback uses the same TUN fields and route sniffing when a
+device-wide profile has no TUN. After validating the staged profile identity,
+native preparation normalizes only its runtime copy through Core's existing DNS
+normalizer, when that SDK method is present. A normalizer error fails startup;
+older Core without the method keeps its accepted input path. Stored bytes and
+their digest are unchanged, including OS and Quick Settings reuse.
 
 With ordinary managed profiles and a runtime supporting protected handoff,
 manual reconnect and location replacement retain the running tunnel while the
