@@ -738,6 +738,16 @@ rejected in these modes. The existing whole-device recovery guard remains.
 Native TCP/UDP owner matching, helpers, EXE changes, restart and guard behavior
 still need Windows acceptance; excluded UI stays unavailable until then. This
 source contract is not strict per-app DNS isolation or a completed F04 claim.
+
+Legacy Windows EXE routing and shared DNS were checked in a VM using the frozen
+1.4.0+4081 QA overlay with the F04 changes and installed Core 1.1.2. Selected and
+excluded PowerShell rules produced opposite CH/Direct routes; the unlisted Dart
+process followed the opposite scope, confirmed by owned HTTPS nonces and new
+physical Core socket tuples. Both modes resolved an uncached OS apex lookup,
+with supporting node DNS observations and no exact apex DNS on the physical VM
+NIC during the lookup. The excluded run used a private seed restoration fixture;
+production excluded UI remains gated. Published signed-catalog behavior, WFP
+handoff and protection during recovery remain unproved; this is not a 1.5 release.
 Native app-identity changes and the bound catalog expiry now stop the affected
 Android session; runtime handoff and rollback acceptance remain open. Existing external
 Smart DNS preferences cannot be combined with the catalog without a lease.
