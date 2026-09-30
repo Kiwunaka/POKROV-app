@@ -30,3 +30,5 @@ Current seed contents:
 - route-mode chips for `Full tunnel`, `Selected apps`, and `All except RU` when the host allows them
 - profile and support cards for activation-key redeem, external checkout, free-tier fallback, and community bonus handoff
 - locations cards that keep the fixed `VLESS+REALITY`, `VMess`, `Trojan`, `XHTTP` ordering
+
+Android foreground network handling uses the native context reference and the existing protected candidate handoff. The optional untrusted Wi-Fi policy defaults off; it starts only while the app is foreground, with a known untrusted SSID, a non-captive physical uplink and VPN/notification/SSID permissions already granted. Explicit stop suppresses automatic starts on that physical uplink and fences older requests by a native stop epoch. This uses the current request owner and proof flow; it does not start a cold process or a second VPN service.

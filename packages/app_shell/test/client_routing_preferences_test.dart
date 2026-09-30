@@ -22,6 +22,15 @@ Future<String> _readRoutingFixture(String name) async {
 }
 
 void main() {
+  test('untrusted Wi-Fi auto-connect defaults off and round trips explicit opt-in', () {
+    const defaults = PokrovRoutingPreferences.defaults();
+    expect(defaults.autoConnectOnUntrustedWifi, isFalse);
+    expect(PokrovRoutingPreferences.fromJson({}).autoConnectOnUntrustedWifi, isFalse);
+    final enabled = defaults.copyWith(autoConnectOnUntrustedWifi: true);
+    expect(PokrovRoutingPreferences.fromJson(enabled.toJson()).autoConnectOnUntrustedWifi, isTrue);
+    expect(enabled.copyWith(autoConnectOnUntrustedWifi: false).autoConnectOnUntrustedWifi, isFalse);
+  });
+
   test('validates and normalizes domain, IP and CIDR overrides', () {
     final domain = PokrovRouteOverride.tryCreate(
       value: '*.Example.COM.',

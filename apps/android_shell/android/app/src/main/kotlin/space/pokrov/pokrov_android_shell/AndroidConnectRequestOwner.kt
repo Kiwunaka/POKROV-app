@@ -13,6 +13,7 @@ internal object AndroidConnectRequestOwner {
     private var networkGeneration: Long? = null
     private var preparedNetwork: AndroidTransportNetworkContext? = null
     private var preparedNetworkRef: String? = null
+    private var foregroundStopEpoch: Long? = null
     private var networkDetachedFromBridge = false
     private var service: PokrovRuntimeVpnService? = null
     private var stopped = false
@@ -45,6 +46,7 @@ internal object AndroidConnectRequestOwner {
         networkGeneration = null
         preparedNetwork = null
         preparedNetworkRef = null
+        foregroundStopEpoch = null
         networkDetachedFromBridge = false
         service = null
         stopped = false
@@ -75,11 +77,24 @@ internal object AndroidConnectRequestOwner {
         networkGeneration = null
         preparedNetwork = network
         preparedNetworkRef = networkRef
+        foregroundStopEpoch = null
         networkDetachedFromBridge = false
         service = null
         stopped = false
         proofPending = true
         leaseActive = false
+        return true
+    }
+
+    @Synchronized
+    fun bindForegroundNetwork(request: String, network: AndroidTransportNetworkContext,
+        networkRef: String, stopEpoch: Long): Boolean {
+        if (current != request || cancelled || stopped ||
+            stopEpoch != AndroidForegroundNetworkEligibility.stopEpoch || !network.matches(networkRef)) return false
+        if (preparedNetworkRef != null && (preparedNetwork !== network || preparedNetworkRef != networkRef)) return false
+        preparedNetwork = network
+        preparedNetworkRef = networkRef
+        foregroundStopEpoch = stopEpoch
         return true
     }
 
@@ -239,6 +254,7 @@ internal object AndroidConnectRequestOwner {
     // Called under this owner's monitor. Network callbacks release their own
     // lock before entering here; service cancellation happens outside both.
     private fun networkIsCurrent(): Boolean =
+        (foregroundStopEpoch == null || foregroundStopEpoch == AndroidForegroundNetworkEligibility.stopEpoch) &&
         (preparedNetworkRef == null || preparedNetwork?.matches(preparedNetworkRef!!) == true) &&
         (networkGeneration == null || networkGeneration == AndroidDefaultNetworkMonitor.contextGeneration())
 

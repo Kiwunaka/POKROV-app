@@ -6,18 +6,36 @@ class PokrovWifiNetworkStatus {
     required this.name,
     required this.permissionRequired,
     required this.reason,
+    this.foreground = false,
+    this.autoConnectEligible = false,
+    this.networkContextRef,
+    this.networkSelectionKey,
+    this.manualStopEpoch,
+    this.manualStopSuppressed = false,
   });
 
   const PokrovWifiNetworkStatus.unavailable({String? reason})
       : connected = false,
         name = null,
         permissionRequired = false,
-        reason = reason ?? 'unavailable';
+        reason = reason ?? 'unavailable',
+        foreground = false,
+        autoConnectEligible = false,
+        networkContextRef = null,
+        networkSelectionKey = null,
+        manualStopEpoch = null,
+        manualStopSuppressed = false;
 
   final bool connected;
   final String? name;
   final bool permissionRequired;
   final String? reason;
+  final bool foreground;
+  final bool autoConnectEligible;
+  final String? networkContextRef;
+  final String? networkSelectionKey;
+  final int? manualStopEpoch;
+  final bool manualStopSuppressed;
 
   bool matches(Iterable<String> trustedNames) {
     final normalized = name?.trim().toLowerCase();
@@ -31,6 +49,20 @@ class PokrovWifiNetworkStatus {
 }
 
 typedef PokrovWifiProbe = Future<PokrovWifiNetworkStatus> Function();
+typedef PokrovForegroundConnectPolicy = Future<bool> Function(String networkContextRef, int manualStopEpoch, bool active);
+
+Future<bool> setPokrovForegroundConnectPolicy(String reference, int epoch, bool active) async {
+  try {
+    return await _pokrovRuntimeSystemChannel.invokeMethod<bool>(
+      'runtimeEngine.foregroundConnectContext',
+      {'networkContextRef': reference, 'manualStopEpoch': epoch, 'active': active},
+    ) == true;
+  } on PlatformException {
+    return false;
+  } on MissingPluginException {
+    return false;
+  }
+}
 typedef PokrovWifiPermissionRequester = Future<bool> Function();
 typedef PokrovVpnSettingsLauncher = Future<bool> Function();
 typedef PokrovNodeLatencyProbe = Future<Map<String, int>> Function(
@@ -731,6 +763,12 @@ Future<PokrovWifiNetworkStatus> probePokrovCurrentWifi(
         name: (value?['name'] as String?)?.trim(),
         permissionRequired: value?['permissionRequired'] == true,
         reason: value?['reason'] as String?,
+        foreground: value?['foreground'] == true,
+        autoConnectEligible: value?['autoConnectEligible'] == true,
+        networkContextRef: value?['networkContextRef'] as String?,
+        networkSelectionKey: value?['networkSelectionKey'] as String?,
+        manualStopEpoch: value?['manualStopEpoch'] as int?,
+        manualStopSuppressed: value?['manualStopSuppressed'] == true,
       );
     } on PlatformException catch (error) {
       return PokrovWifiNetworkStatus.unavailable(reason: error.code);

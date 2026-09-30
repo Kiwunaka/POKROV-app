@@ -526,6 +526,18 @@ class _TrustedWifiCardState extends State<_TrustedWifiCard> {
                       preferences.copyWith(pauseOnTrustedWifi: value),
                     ),
           ),
+          if (widget.hostPlatform == HostPlatform.android) ...[
+            const _SettingsRowDivider(),
+            _RoutingToggleRow(
+              key: const ValueKey('rules-untrusted-wifi-auto-connect'),
+              title: 'Подключаться в незнакомом Wi-Fi',
+              subtitle: 'Пока приложение открыто и разрешения уже выданы. Имя сети должно быть известно.',
+              value: preferences.autoConnectOnUntrustedWifi,
+              onChanged: (value) => widget.onChanged(
+                preferences.copyWith(autoConnectOnUntrustedWifi: value),
+              ),
+            ),
+          ],
           if (preferences.trustedWifiNames.isNotEmpty) ...[
             const _SettingsRowDivider(),
             for (final name in preferences.trustedWifiNames)

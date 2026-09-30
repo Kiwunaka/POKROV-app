@@ -42,6 +42,7 @@ class ConnectionManager extends ChangeNotifier {
     PokrovClientObservability? observability,
     Duration actionTimeout = const Duration(seconds: 18),
     PokrovWifiProbe? currentWifiProbe,
+    PokrovForegroundConnectPolicy? foregroundConnectPolicy,
     PokrovWindowsTunnelAuthorizer? windowsTunnelAuthorizer,
     required Future<bool> Function() authorizeAndroidConnect,
     required Future<bool> Function() refreshSubscription,
@@ -56,6 +57,7 @@ class ConnectionManager extends ChangeNotifier {
         _observability = observability,
         _actionTimeout = actionTimeout,
         _currentWifiProbe = currentWifiProbe,
+        _foregroundConnectPolicy = foregroundConnectPolicy ?? setPokrovForegroundConnectPolicy,
         _windowsTunnelAuthorizer = windowsTunnelAuthorizer,
         _authorizeAndroidVpnConnect = authorizeAndroidConnect,
         _refreshSubscriptionInfo = refreshSubscription,
@@ -148,10 +150,12 @@ class ConnectionManager extends ChangeNotifier {
 
   void updateExperience(PokrovClientExperienceState value) {
     _clientExperience = value;
+    _startAndroidNetworkPolicyObservation();
   }
 
   void markExperienceLoaded() {
     _clientExperienceLoaded = true;
+    _startAndroidNetworkPolicyObservation();
     if (_cacheRefreshTimer == null && _bootstrapper is CachedManagedProfileBootstrapper) {
       unawaited(_refreshManagedProfileCache());
       _cacheRefreshTimer = Timer.periodic(const Duration(hours: 6), (_) => unawaited(_refreshManagedProfileCache()));
@@ -196,6 +200,7 @@ class ConnectionManager extends ChangeNotifier {
   void restoreConnectionPreferences(
       PokrovClientExperienceState value, Map<String, DateTime> quarantine) {
     _clientExperience = value;
+    _startAndroidNetworkPolicyObservation();
     _selectedAppIds
       ..clear()
       ..addAll(value.selectedAppIds);
@@ -223,6 +228,15 @@ class ConnectionManager extends ChangeNotifier {
   final PokrovClientObservability? _observability;
   final Duration _actionTimeout;
   final PokrovWifiProbe? _currentWifiProbe;
+  final PokrovForegroundConnectPolicy _foregroundConnectPolicy;
+  RuntimeCandidateNetwork? _candidatePhysicalNetwork;
+  RuntimeCandidateNetwork? _activePhysicalNetwork;
+  RuntimeCandidateNetwork? _lastAndroidNetwork;
+  String? _blockedAutomaticNetworkKey;
+  bool _automaticStopNeedsNetworkKey = false;
+  String? _lastAutomaticWifiContext;
+  bool _androidNetworkObservationInFlight = false;
+  bool _foregroundAutoConnect = false;
   final PokrovWindowsTunnelAuthorizer? _windowsTunnelAuthorizer;
   final Future<bool> Function() _authorizeAndroidVpnConnect;
   final Future<bool> Function() _refreshSubscriptionInfo;
@@ -384,24 +398,41 @@ class ConnectionManager extends ChangeNotifier {
       return cancel();
     if (!_runtimeBusy && retainsProtection && !reconnectAfterDisconnect)
       return disconnect();
+    if (_runtimeSnapshot?.phase == RuntimePhase.running && !reconnectAfterDisconnect) {
+      _suppressAutomaticAndroidNetwork();
+    } else {
+      _clearAutomaticAndroidStop();
+    }
     return _replaceCommand(() =>
         _toggleRuntime(reconnectAfterDisconnect: reconnectAfterDisconnect));
   }
 
-  Future<void> connect() => _replaceCommand(() => retainsProtection
-      ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
-      : _toggleRuntime(reconnectAfterDisconnect: _runtimeSnapshot?.phase == RuntimePhase.running));
-  Future<void> disconnect() => _replaceCommand(() async {
+  Future<void> connect() {
+    _clearAutomaticAndroidStop();
+    return _replaceCommand(() => retainsProtection
+        ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
+        : _toggleRuntime(reconnectAfterDisconnect: _runtimeSnapshot?.phase == RuntimePhase.running));
+  }
+  Future<void> disconnect() {
+    _suppressAutomaticAndroidNetwork();
+    return _replaceCommand(() async {
         if (retainsProtection) { await _disconnectProtectedHandoff(); return; }
         if (_runtimeSnapshot?.phase == RuntimePhase.running ||
             _runtimeSnapshot?.connectionPending == true) {
           await _toggleRuntime();
         }
       });
-  Future<void> reconnect() => _replaceCommand(() => retainsProtection
-      ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
-      : _toggleRuntime(reconnectAfterDisconnect: true));
-  Future<void> cancel() => _replaceCommand(() async {});
+  }
+  Future<void> reconnect() {
+    _clearAutomaticAndroidStop();
+    return _replaceCommand(() => retainsProtection
+        ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
+        : _toggleRuntime(reconnectAfterDisconnect: true));
+  }
+  Future<void> cancel() {
+    _suppressAutomaticAndroidNetwork();
+    return _replaceCommand(() async {});
+  }
   Future<void> repair(
           {ValueChanged<_ProtectionRepairStep>? onStep,
           ValueChanged<Future<void> Function()?>? onCancelAvailable}) =>
@@ -870,6 +901,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       _finishAndroidVpnPermission(snapshot);
       await _pauseRunningTunnelOnTrustedWifi();
+      await _observeAndroidNetwork(_runtimeSnapshot ?? snapshot);
       await _refreshSmartAccessLeases();
     } on ConnectionOperationSuperseded {
       return;
@@ -884,6 +916,111 @@ class ConnectionManager extends ChangeNotifier {
       return probe();
     }
     return probePokrovCurrentWifi(_appContext.hostPlatform);
+  }
+
+  void _startAndroidNetworkPolicyObservation() {
+    if (_appContext.hostPlatform == HostPlatform.android &&
+        _clientExperience.routingPreferences.autoConnectOnUntrustedWifi) {
+      _diagnosticsCoordinator.startRuntimePolling(_refreshDesktopRuntimeSnapshot);
+    }
+  }
+
+  void _suppressAutomaticAndroidNetwork() {
+    if (_appContext.hostPlatform != HostPlatform.android) return;
+    _blockedAutomaticNetworkKey = _lastAndroidNetwork?.selectionKey ?? _activePhysicalNetwork?.selectionKey;
+    _automaticStopNeedsNetworkKey = _blockedAutomaticNetworkKey == null;
+  }
+
+  void _clearAutomaticAndroidStop() {
+    _blockedAutomaticNetworkKey = null;
+    _automaticStopNeedsNetworkKey = false;
+    _lastAutomaticWifiContext = null;
+  }
+
+  Future<bool> _observeAndroidNetwork(RuntimeSnapshot observed) async {
+    final engine = _runtimeEngine;
+    final preferences = _clientExperience.routingPreferences;
+    final active = _activePhysicalNetwork;
+    if (_appContext.hostPlatform != HostPlatform.android || engine is! RuntimeCandidateProbing ||
+        _disposed || _runtimeBusy || _commandTail != null || _androidNetworkObservationInFlight ||
+        _accessDenialPending || (!preferences.autoConnectOnUntrustedWifi && active == null)) return false;
+    _androidNetworkObservationInFlight = true;
+    final generation = _connectionCoordinator.operationGeneration;
+    final command = _commandNumber;
+    bool current() => !_disposed && !_runtimeBusy && command == _commandNumber &&
+        _connectionCoordinator.ownsOperation(generation);
+    try {
+      final network = await _withRuntimeActionTimeout('androidCandidateNetwork',
+          (engine as RuntimeCandidateProbing).readCandidateNetwork, ownerGeneration: generation);
+      if (!current()) return false;
+      final context = network.contextRef;
+      final key = network.selectionKey;
+      if (context == null || context.isEmpty || key == null || key.isEmpty) return false;
+      _lastAndroidNetwork = network;
+      if (_automaticStopNeedsNetworkKey) {
+        _blockedAutomaticNetworkKey = key;
+        _automaticStopNeedsNetworkKey = false;
+      }
+      final changed = active != null && active.contextRef != context && _activeCandidateRef != null;
+      if (!changed && !preferences.autoConnectOnUntrustedWifi) return false;
+      if (network.networkAvailable != true || network.captivePortal != false) return changed;
+      final wifi = await _readCurrentWifi();
+      if (!current() || !wifi.foreground || wifi.networkContextRef != context ||
+          wifi.networkSelectionKey != key) return false;
+      final latest = await _withRuntimeActionTimeout('androidNetworkSnapshot',
+          _runtimeEngine.snapshot, ownerGeneration: generation);
+      if (!current()) return false;
+      _update(() => _runtimeSnapshot = latest);
+      if (latest.lastStopReason == 'user_requested' && latest.phase != RuntimePhase.running && !latest.protectionRetained && wifi.manualStopSuppressed) {
+        _blockedAutomaticNetworkKey = key;
+        return changed;
+      }
+      if (preferences.pauseOnTrustedWifi && wifi.matches(preferences.trustedWifiNames)) {
+        await _pauseRunningTunnelOnTrustedWifi();
+        return true;
+      }
+      if (changed && (latest.phase == RuntimePhase.running || latest.protectionRetained) &&
+          key != _blockedAutomaticNetworkKey) {
+        // One attempt per native context, including failed handoff. Network
+        // movement does not disprove or quarantine the old candidate.
+        _activePhysicalNetwork = network;
+        final reference = _activeCandidateRef!;
+        await _replaceCommand(() => _recoverCandidateConnection(latest, reference,
+            confirmedFailure: false), automatic: true);
+        return true;
+      }
+      if (!preferences.autoConnectOnUntrustedWifi || !_clientExperienceLoaded ||
+          key == _blockedAutomaticNetworkKey || _lastAutomaticWifiContext == context ||
+          latest.phase == RuntimePhase.running || latest.connectionPending || retainsProtection ||
+          !_canPrimaryConnect(latest) || _subscriptionInfo?.lane == 'expiredOrBlocked' ||
+          !wifi.autoConnectEligible || wifi.manualStopSuppressed || wifi.manualStopEpoch == null ||
+          !wifi.connected || wifi.permissionRequired || (wifi.name?.trim().isEmpty ?? true) ||
+          wifi.matches(preferences.trustedWifiNames)) return false;
+      _lastAutomaticWifiContext = context;
+      final epoch = wifi.manualStopEpoch!;
+      await _replaceCommand(() async {
+        final accepted = await _foregroundConnectPolicy(context, epoch, true);
+        if (!accepted) return;
+        try {
+          if (_disposed || _commandNumber != command + 1 ||
+              !_connectionCoordinator.ownsOperation(generation) || key == _blockedAutomaticNetworkKey) return;
+          _foregroundAutoConnect = true;
+          // Existing profile/auth preparation, bound admission and proof flow.
+          await _toggleRuntime();
+        } finally {
+          _foregroundAutoConnect = false;
+          await _foregroundConnectPolicy(context, epoch, false);
+        }
+      }, automatic: true);
+      return true;
+    } on ConnectionOperationSuperseded {
+      return false;
+    } on Object {
+      // An unavailable native observation never authorizes an automatic start.
+      return false;
+    } finally {
+      _androidNetworkObservationInFlight = false;
+    }
   }
 
   Future<bool> _authorizeWindowsTunnelConnect() async {
@@ -1447,6 +1584,7 @@ class ConnectionManager extends ChangeNotifier {
           _requiresTransportReconciliation(_runtimeSnapshot!)) return;
       rethrow;
     }
+    if (await _observeAndroidNetwork(snapshot)) return;
     if (snapshot.phase == RuntimePhase.running) {
       if (_isConnectionProven(snapshot)) {
         _finalizeProvenConnection(snapshot);
@@ -1504,6 +1642,7 @@ class ConnectionManager extends ChangeNotifier {
         }
       });
     }
+    if (refreshed != null && await _observeAndroidNetwork(refreshed)) return;
     // A UI/resume read may already have adopted this failure. Recovery belongs
     // to the active candidate, not to which observer first saw the snapshot.
     if (_transportCatalog != null && _activeCandidateRef != null && refreshed != null &&
@@ -2050,6 +2189,7 @@ class ConnectionManager extends ChangeNotifier {
         }
         requireCurrent();
       }
+      _candidatePhysicalNetwork = network;
       _candidateNetworkKey = key;
       _candidateOfflineNetworkKey = offlineKey;
       _candidateRef = payload.materialCandidate!.candidateRef;
@@ -2202,6 +2342,7 @@ class ConnectionManager extends ChangeNotifier {
       if (currentNetwork.contextRef != context || currentNetwork.selectionKey != key) {
         throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
       }
+      _candidatePhysicalNetwork = network;
       _candidateNetworkKey = key;
       _candidateOfflineNetworkKey = _offlineCandidateNetworkKey(key, context, network.networkClass);
     }
@@ -3157,7 +3298,7 @@ class ConnectionManager extends ChangeNotifier {
         if (_runtimeEngine is! RuntimeBoundConnectivityProbe) {
           _transportSelectionFail('transport_runtime_unavailable');
         }
-        if (!await _authorizeAndroidVpnConnect()) return;
+        if (!_foregroundAutoConnect && !await _authorizeAndroidVpnConnect()) return;
         if (_disposed || !_connectionCoordinator.ownsOperation(generation))
           return;
         final proven = await _connectWithTransportManifest(current, generation);
@@ -3324,7 +3465,7 @@ class ConnectionManager extends ChangeNotifier {
       if ((current.stagedConfigPath ?? '').isNotEmpty || current.canConnect) {
         failureOperation = 'vpn_permission';
         failureStage = ConnectionStage.permission;
-        if (!await _authorizeAndroidVpnConnect()) {
+        if (!_foregroundAutoConnect && !await _authorizeAndroidVpnConnect()) {
           return;
         }
         if (actionIntent == ConnectionTransitionIntent.connect) {
@@ -3773,6 +3914,7 @@ class ConnectionManager extends ChangeNotifier {
     if (_candidateNetworkKey != null && _candidateRef != null) {
       _candidateSelector.recordSuccess(_candidateNetworkKey!, _candidateRef!);
       _activeCandidateRef = _candidateRef;
+      _activePhysicalNetwork = _candidatePhysicalNetwork;
       _diagnosticsCoordinator.startRuntimePolling(_refreshDesktopRuntimeSnapshot);
       final generation = _connectionCoordinator.operationGeneration;
       final completion = _primaryConnectCompletion?.future ?? Future<void>.value();
@@ -4632,6 +4774,7 @@ class ConnectionManager extends ChangeNotifier {
       _clientExperience = _clientExperience.copyWith(
         routingPreferences: preferences,
       );
+      _startAndroidNetworkPolicyObservation();
       _managedProfileDirty = true;
       _cachedProfileFallbackGate.markUserChange();
       _runtimeHeadline =

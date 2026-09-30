@@ -147,6 +147,7 @@ class PokrovRoutingPreferences {
     this.lanSubnets = const <String>[],
     required this.trustedWifiNames,
     required this.pauseOnTrustedWifi,
+    this.autoConnectOnUntrustedWifi = false,
     required this.windowsConnectionMode,
     required this.tunStack,
   });
@@ -163,6 +164,7 @@ class PokrovRoutingPreferences {
         lanSubnets = const <String>[],
         trustedWifiNames = const <String>[],
         pauseOnTrustedWifi = false,
+        autoConnectOnUntrustedWifi = false,
         windowsConnectionMode = PokrovWindowsConnectionMode.vpn,
         tunStack = PokrovTunStack.system;
 
@@ -177,6 +179,7 @@ class PokrovRoutingPreferences {
   final List<String> lanSubnets;
   final List<String> trustedWifiNames;
   final bool pauseOnTrustedWifi;
+  final bool autoConnectOnUntrustedWifi;
   final PokrovWindowsConnectionMode windowsConnectionMode;
   final PokrovTunStack tunStack;
 
@@ -192,6 +195,7 @@ class PokrovRoutingPreferences {
     List<String>? lanSubnets,
     List<String>? trustedWifiNames,
     bool? pauseOnTrustedWifi,
+    bool? autoConnectOnUntrustedWifi,
     PokrovWindowsConnectionMode? windowsConnectionMode,
     PokrovTunStack? tunStack,
   }) {
@@ -209,6 +213,7 @@ class PokrovRoutingPreferences {
       lanSubnets: List.unmodifiable(lanSubnets ?? this.lanSubnets),
       trustedWifiNames: trustedWifiNames ?? this.trustedWifiNames,
       pauseOnTrustedWifi: pauseOnTrustedWifi ?? this.pauseOnTrustedWifi,
+      autoConnectOnUntrustedWifi: autoConnectOnUntrustedWifi ?? this.autoConnectOnUntrustedWifi,
       windowsConnectionMode:
           windowsConnectionMode ?? this.windowsConnectionMode,
       tunStack: tunStack ?? this.tunStack,
@@ -277,6 +282,7 @@ class PokrovRoutingPreferences {
       trustedWifiNames: List<String>.unmodifiable(trustedWifi),
       pauseOnTrustedWifi:
           json['pauseOnTrustedWifi'] == true && trustedWifi.isNotEmpty,
+      autoConnectOnUntrustedWifi: json['autoConnectOnUntrustedWifi'] == true,
       windowsConnectionMode: windowsConnectionMode,
       tunStack: tunStack,
     );
@@ -297,6 +303,7 @@ class PokrovRoutingPreferences {
         'lanSubnets': lanSubnets,
         'trustedWifiNames': trustedWifiNames.take(20).toList(),
         'pauseOnTrustedWifi': pauseOnTrustedWifi,
+        'autoConnectOnUntrustedWifi': autoConnectOnUntrustedWifi,
         'windowsConnectionMode': windowsConnectionMode.name,
         'tunStack': tunStack.name,
       };

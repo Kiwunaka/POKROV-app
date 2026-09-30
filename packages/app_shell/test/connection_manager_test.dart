@@ -228,17 +228,32 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   int handoffCalls = 0;
   bool? networkAvailable = true;
   bool? captivePortal;
+  String candidateKey = 'network-a';
+  String candidateContext = 'context-a';
+  String? lastStopReason;
+  Completer<RuntimeCandidateNetwork>? nextNetworkRead;
+  final networkReadEntered = Completer<void>();
+  final probeContexts = <String>[];
 
   @override
   Future<RuntimeNetworkStatusObservation> readNetworkAvailability() async => RuntimeNetworkStatusObservation(
       networkAvailable: networkAvailable, captivePortal: captivePortal);
 
   @override
-  Future<RuntimeCandidateNetwork> readCandidateNetwork() async => const RuntimeCandidateNetwork(
-      selectionKey: 'network-a', contextRef: 'context-a', networkAvailable: true);
+  Future<RuntimeCandidateNetwork> readCandidateNetwork() async {
+    final gate = nextNetworkRead;
+    if (gate != null) {
+      nextNetworkRead = null;
+      if (!networkReadEntered.isCompleted) networkReadEntered.complete();
+      return gate.future;
+    }
+    return RuntimeCandidateNetwork(selectionKey: candidateKey, contextRef: candidateContext,
+        networkAvailable: networkAvailable, captivePortal: captivePortal, networkClass: 'wifi');
+  }
   @override
   Future<RuntimeCandidateProbeResult> probeCandidate({required String probeId,
       required ManagedProfilePayload payload, required Duration timeout, required String expectedNetworkContext}) async {
+    probeContexts.add(expectedNetworkContext);
     expect(value(phase).transportCapabilities, isNotNull);
     final protocol = payload.source?.protocol ?? 'vless';
     probedProtocols.add(protocol);
@@ -323,6 +338,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         canInitialize: phase == RuntimePhase.artifactReady,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
         message: '',
+        lastStopReason: lastStopReason,
         transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady
             ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
                 'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
@@ -454,6 +470,9 @@ ConnectionManager _manager(
   ManagedProfileBootstrapper bootstrapper, {
   Future<PokrovWindowsTunnelAuthorization> Function()? authorizeWindows,
   _ExperienceStore? experienceStore,
+  PokrovWifiProbe? currentWifiProbe,
+  PokrovForegroundConnectPolicy? foregroundConnectPolicy,
+  Future<bool> Function()? authorizeAndroid,
 }) =>
     ConnectionManager(
       appContext: buildSeedAppContext(hostPlatform: runtime.hostPlatform),
@@ -465,13 +484,152 @@ ConnectionManager _manager(
           FirstSessionCoordinator(store: _FirstLaunchStore()),
       clientExperienceStore: experienceStore ?? _ExperienceStore(),
       connectHintStore: const PokrovFileConnectHintStore(),
-      authorizeAndroidConnect: () async => true,
+      currentWifiProbe: currentWifiProbe,
+      foregroundConnectPolicy: foregroundConnectPolicy,
+      authorizeAndroidConnect: authorizeAndroid ?? (() async => true),
       windowsTunnelAuthorizer: authorizeWindows,
       refreshSubscription: () async => true,
       onNotice: (_, __) {},
     );
 
+PokrovWifiNetworkStatus _foregroundWifi(_Runtime runtime, {String? name = 'Cafe',
+    bool eligible = true, bool foreground = true, bool suppressed = false}) =>
+  PokrovWifiNetworkStatus(connected: true, name: name, permissionRequired: name == null, reason: null,
+    foreground: foreground, autoConnectEligible: eligible, manualStopSuppressed: suppressed,
+    networkContextRef: runtime.candidateContext, networkSelectionKey: runtime.candidateKey, manualStopEpoch: 0);
+
 void main() {
+  test('Android foreground network context changes reuse protected handoff without rejecting current', () async {
+    final runtime = _Runtime()..supportsCandidates = true..captivePortal = false;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true),
+        currentWifiProbe: () async => _foregroundWifi(runtime));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    runtime.candidateContext = 'context-b'; // Same selection/cache key, new native epoch.
+    await manager.refresh();
+    expect(runtime.handoffCalls, 1);
+    expect(runtime.handoffProfiles.single, _candidates.first.candidateRef);
+    expect(runtime.connectCalls, 1);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(runtime.probeContexts.last, 'context-b');
+    await manager.refresh();
+    expect(runtime.handoffCalls, 1, reason: 'one replacement per native context');
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(
+        pauseOnTrustedWifi: true, trustedWifiNames: ['cafe']));
+    runtime.candidateContext = 'context-trusted';
+    await manager.refresh();
+    expect(runtime.handoffCalls, 1, reason: 'trusted Wi-Fi pauses before any network handoff');
+    expect(runtime.calls, contains('disconnect'));
+    expect(runtime.phase, RuntimePhase.configStaged);
+  });
+
+  test('Android foreground network stop supersedes an in-flight context observation', () async {
+    final runtime = _Runtime()..supportsCandidates = true..captivePortal = false;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true),
+        currentWifiProbe: () async => _foregroundWifi(runtime));
+    addTearDown(manager.dispose);
+    await manager.connect();
+    final gate = Completer<RuntimeCandidateNetwork>();
+    runtime.nextNetworkRead = gate;
+    final observation = manager.refresh();
+    await runtime.networkReadEntered.future;
+    await manager.disconnect();
+    gate.complete(const RuntimeCandidateNetwork(selectionKey: 'network-a', contextRef: 'context-b',
+        networkAvailable: true, captivePortal: false));
+    await observation;
+    expect(runtime.handoffCalls, 0);
+    expect(runtime.phase, RuntimePhase.configStaged);
+  });
+
+  test('Android foreground network untrusted Wi-Fi starts once through authorized owner flow', () async {
+    final runtime = _Runtime()..captivePortal = false;
+    final policies = <bool>[];
+    var permissionExplanations = 0;
+    final manager = _manager(runtime, _Bootstrapper(),
+        currentWifiProbe: () async => _foregroundWifi(runtime),
+        authorizeAndroid: () async { permissionExplanations++; return false; },
+        foregroundConnectPolicy: (_, __, active) async { policies.add(active); return true; });
+    addTearDown(manager.dispose);
+    manager.markExperienceLoaded();
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(autoConnectOnUntrustedWifi: true));
+    await manager.refresh();
+    expect(runtime.connectCalls, 1);
+    expect(policies, [true, false]);
+    expect(permissionExplanations, 0);
+    await manager.disconnect();
+    runtime.candidateContext = 'context-b';
+    await manager.refresh();
+    expect(runtime.connectCalls, 1, reason: 'stop suppresses even a new context on the same physical key');
+    runtime.candidateKey = 'network-b';
+    runtime.candidateContext = 'context-c';
+    await manager.refresh();
+    expect(runtime.connectCalls, 2);
+  });
+
+  test('Android foreground network policy skips disabled trusted unknown captive and unauthorized Wi-Fi', () async {
+    final runtime = _Runtime()..captivePortal = false;
+    var wifi = _foregroundWifi(runtime);
+    var admissions = 0;
+    final manager = _manager(runtime, _Bootstrapper(), currentWifiProbe: () async => wifi,
+        foregroundConnectPolicy: (_, __, ___) async { admissions++; return true; });
+    addTearDown(manager.dispose);
+    manager.markExperienceLoaded();
+    await manager.refresh(); // Default false.
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(
+        autoConnectOnUntrustedWifi: true, trustedWifiNames: ['cafe']));
+    await manager.refresh();
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(autoConnectOnUntrustedWifi: true));
+    wifi = _foregroundWifi(runtime, name: null);
+    await manager.refresh();
+    wifi = _foregroundWifi(runtime, eligible: false);
+    await manager.refresh();
+    wifi = _foregroundWifi(runtime, foreground: false);
+    await manager.refresh();
+    wifi = _foregroundWifi(runtime);
+    runtime.captivePortal = true;
+    await manager.refresh();
+    expect(runtime.connectCalls, 0);
+    expect(admissions, 0);
+  });
+
+  test('Android foreground network stale policy admission cannot start after explicit stop', () async {
+    final runtime = _Runtime()..captivePortal = false;
+    final admitted = Completer<void>();
+    final release = Completer<bool>();
+    final policies = <bool>[];
+    final manager = _manager(runtime, _Bootstrapper(), currentWifiProbe: () async => _foregroundWifi(runtime),
+        foregroundConnectPolicy: (_, __, active) async {
+          policies.add(active);
+          if (!active) return true;
+          admitted.complete();
+          return release.future;
+        });
+    addTearDown(manager.dispose);
+    manager.markExperienceLoaded();
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(autoConnectOnUntrustedWifi: true));
+    final observation = manager.refresh();
+    await admitted.future;
+    final stopped = manager.disconnect();
+    release.complete(true);
+    await Future.wait([observation, stopped]);
+    expect(runtime.connectCalls, 0);
+    expect(policies, [true, false], reason: 'superseded accepted policy is always cleared');
+  });
+
+  test('Android foreground network auth denial never admits a native connect', () async {
+    final runtime = _Runtime()..captivePortal = false;
+    final bootstrapper = _Bootstrapper()..failure = const BootstrapFailure('access denied', statusCode: 403);
+    final policies = <bool>[];
+    final manager = _manager(runtime, bootstrapper, currentWifiProbe: () async => _foregroundWifi(runtime),
+        foregroundConnectPolicy: (_, __, active) async { policies.add(active); return true; });
+    addTearDown(manager.dispose);
+    manager.markExperienceLoaded();
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(autoConnectOnUntrustedWifi: true));
+    await manager.refresh();
+    expect(runtime.connectCalls, 0);
+    expect(policies, [true, false]);
+  });
+
   test('country selection keeps Auto in that country and advanced pin probes only its exact candidate', () async {
     final runtime = _Runtime()..supportsCandidates = true;
     final bootstrapper = _Bootstrapper(catalog: true);

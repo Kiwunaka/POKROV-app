@@ -455,6 +455,7 @@ internal object AndroidRuntimeState {
         message: String = "Отключаем POKROV на этом устройстве...",
         stopReason: String = "user_requested",
     ) {
+        if (stopReason == "user_requested") AndroidForegroundNetworkEligibility.explicitStop()
         activeProfileDigest = null
         connectionPending = false
         phase = when {

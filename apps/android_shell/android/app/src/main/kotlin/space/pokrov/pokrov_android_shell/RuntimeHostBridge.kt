@@ -102,6 +102,7 @@ class RuntimeHostBridge(
     private var updateDownloadProgress = AndroidClientUpdateProgress.idle()
     private val catalogIdentityResolver = lazy { AndroidCatalogIdentityResolver(activity) }
     private val transportNetworkContext = lazy { AndroidTransportNetworkContext(activity) }
+    @Volatile private var foregroundConnectContext: AndroidForegroundConnectContext? = null
     private val candidateProbes = AndroidCandidateProbeJobs()
 
     init {
@@ -109,6 +110,7 @@ class RuntimeHostBridge(
     }
 
     fun close() {
+        foregroundConnectContext = null
         candidateProbes.close()
         connectDeadlineHandler.removeCallbacksAndMessages(null)
         invalidatePendingConnect()
@@ -187,7 +189,8 @@ class RuntimeHostBridge(
             METHOD_SUPPORTED_ABIS -> result.success(supportedAbis())
             METHOD_LIST_INSTALLED_APPS -> listInstalledApps(result)
             "runtimeEngine.catalogAppIdentities" -> catalogAppIdentities(call, result)
-            METHOD_CURRENT_WIFI -> result.success(currentWifi())
+            METHOD_CURRENT_WIFI -> result.success(currentWifiWithEligibility())
+            "runtimeEngine.foregroundConnectContext" -> result.success(setForegroundConnectContext(call))
             METHOD_MEASURE_NODE_LATENCIES -> measureNodeLatencies(call, result)
             "runtimeEngine.observeNetworkContext" -> executeHostTask(result, emptyMap<String, Any?>()) {
                 AndroidNetworkDiagnostics.observe(
@@ -604,6 +607,14 @@ class RuntimeHostBridge(
         if (clientRequestId != null && !AndroidConnectRequestOwner.owns(clientRequestId)) {
             return AndroidRuntimeState.snapshot()
         }
+        val foreground = foregroundConnectContext
+        fun rejectForeground(): Map<String, Any?> {
+            clientRequestId?.let { AndroidConnectRequestOwner.cancel(it) }
+            invalidatePendingConnect()
+            AndroidRuntimeState.markFailure("connect_cancelled", "Автоподключение отменено. Проверьте сеть и разрешения.")
+            return AndroidRuntimeState.snapshot()
+        }
+        if (foreground != null && !foregroundContextCurrent(foreground)) return rejectForeground()
         val persistedProfile = AndroidRuntimeProfileStore.restoreIntoRuntimeState(activity)
         if (AndroidRuntimeState.resolveEnvironment(activity) == null) {
             return snapshot()
@@ -663,7 +674,7 @@ class RuntimeHostBridge(
             return AndroidRuntimeState.snapshot()
         }
 
-        if (checkNotificationPermission) {
+        if (checkNotificationPermission && foreground == null) {
             when (notificationPermissionAction()) {
                 AndroidNotificationPermissionAction.REQUEST -> {
                     if (!setNotificationPermissionRequest(pending)) {
@@ -704,6 +715,7 @@ class RuntimeHostBridge(
 
         val prepareIntent = VpnService.prepare(activity)
         if (prepareIntent != null) {
+            if (foreground != null) return rejectForeground()
             AndroidOperationalJournal.record(
                 AndroidOperationalEvent.VPN_PERMISSION,
                 AndroidOperationalOutcome.REQUIRED,
@@ -722,6 +734,9 @@ class RuntimeHostBridge(
             AndroidOperationalOutcome.ALREADY_GRANTED,
         )
 
+        if (foreground != null && (!foregroundContextCurrent(foreground) || clientRequestId == null ||
+                !AndroidConnectRequestOwner.bindForegroundNetwork(clientRequestId, transportNetworkContext.value,
+                    foreground.networkRef, foreground.stopEpoch))) return rejectForeground()
         runCatching {
             PokrovRuntimeVpnService.start(
                 activity, stagedConfigPath, routeMode, pending.profileDigest,
@@ -1210,6 +1225,32 @@ class RuntimeHostBridge(
             "token" to "",
             "provider" to "poll",
         )
+    }
+
+    private fun currentWifiWithEligibility(): Map<String, Any?> {
+        val wifi = currentWifi()
+        val network = transportNetworkContext.value.candidateNetwork()
+        return wifi + AndroidForegroundNetworkEligibility.read(activity, network, wifi)
+    }
+
+    private fun foregroundContextCurrent(expected: AndroidForegroundConnectContext): Boolean {
+        val status = currentWifiWithEligibility()
+        return status["autoConnectEligible"] == true && status["networkContextRef"] == expected.networkRef &&
+            status["manualStopEpoch"] == expected.stopEpoch
+    }
+
+    private fun setForegroundConnectContext(call: MethodCall): Boolean {
+        val reference = call.argument<String>("networkContextRef") ?: return false
+        val epochValue = call.argument<Any>("manualStopEpoch")
+        val epoch = when (epochValue) { is Int -> epochValue.toLong(); is Long -> epochValue; else -> return false }
+        val context = AndroidForegroundConnectContext(reference, epoch)
+        if (call.argument<Boolean>("active") == false) {
+            if (foregroundConnectContext == context) foregroundConnectContext = null
+            return true
+        }
+        if (call.argument<Boolean>("active") != true || !foregroundContextCurrent(context)) return false
+        foregroundConnectContext = context
+        return true
     }
 
     private fun currentWifi(): Map<String, Any?> {
