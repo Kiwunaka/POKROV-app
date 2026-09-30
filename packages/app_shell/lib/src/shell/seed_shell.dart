@@ -3274,7 +3274,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!_connectionPresentation.isVerified) {
         return 'Локация проверяется';
       }
-      if (_connectionManager.transportCatalog?.selected.warpMode ==
+      if (_connectionManager.materialCandidate?.warpMode ==
           'warp_over_proxy') {
         return 'WARP · страна выхода неизвестна';
       }

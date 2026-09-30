@@ -18,8 +18,9 @@ final _candidates = List.generate(4, (index) => TransportCandidate(
 ));
 
 class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenceService {
-  _Bootstrapper({this.warpEnabled = false, this.catalog = false});
+  _Bootstrapper({this.warpEnabled = false, this.catalog = false, this.bundle = false});
   final bool catalog;
+  final bool bundle;
   List<TransportCandidate> candidates = _candidates;
   Duration exactProfileDelay = Duration.zero;
   String accessNetworkAsn = '';
@@ -79,14 +80,15 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     final nodeCode = preferredNodeCode.isEmpty ? 'de' : preferredNodeCode;
     final selected = candidates.firstWhere((candidate) => candidate.candidateRef ==
         (selectedCandidateRef.isEmpty ? candidates.first.candidateRef : selectedCandidateRef));
-    return ManagedProfilePayload(
+    ManagedProfilePayload material(TransportCandidate candidate) => ManagedProfilePayload(
       accessNetworkAsn: accessNetworkAsn,
-      profileName: selectedCandidateRef.isEmpty ? (catalog ? selected.candidateRef : '$nodeCode:profile_0') : selectedCandidateRef,
+      profileName: catalog ? candidate.candidateRef : '$nodeCode:profile_0',
       transportCatalog: catalog ? TransportCandidateCatalog(revision: 'test',
           selectedCandidateRef: selected.candidateRef, candidates: candidates) : null,
+      materialCandidateRef: bundle ? candidate.candidateRef : '',
       smartConnect: smartConnect,
       source: RuntimeProfileSource(revision: 'test', origin: RuntimeProfileSourceOrigin.managedManifest,
-          protocol: selected.protocol),
+          protocol: candidate.protocol),
       resolvedNodeCode: nodeCode,
       configPayload:
           '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
@@ -95,6 +97,10 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
       warpPolicy:
           WarpRuntimePolicy.clientLocalDefault.withUserConsent(warpEnabled),
     );
+    final payload = material(selected);
+    return bundle ? payload.copyWith(candidateMaterials: {
+      for (final candidate in candidates) candidate.candidateRef: material(candidate),
+    }) : payload;
   }
 }
 
@@ -737,9 +743,9 @@ void main() {
     expect(runtime.calls.where((call) => call == 'stage'), hasLength(1));
   });
 
-  test('catalog winner settles every probe before staging its exact profile', () async {
+  test('one bundled response settles every probe and stages its exact winner without refetch', () async {
     final runtime = _Runtime()..supportsCandidates = true..holdProbes = true..failProbeCancellation = true;
-    final bootstrapper = _Bootstrapper(catalog: true);
+    final bootstrapper = _Bootstrapper(catalog: true, bundle: true);
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     final connection = manager.connect();
@@ -751,7 +757,11 @@ void main() {
     await connection;
     expect(runtime.activeProbes, isEmpty);
     expect(runtime.stagedProfile, 'de:profile_1');
+    expect(bootstrapper.resolutions, hasLength(1));
     expect(bootstrapper.resolutions.every((call) => !call.select && !call.cache), isTrue);
+    expect(manager.materialCandidate?.candidateRef, 'de:profile_1');
+    expect(manager.transportCatalog?.selectedCandidateRef, 'de:profile_0',
+        reason: 'the winning material does not rewrite authenticated catalog selection');
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 

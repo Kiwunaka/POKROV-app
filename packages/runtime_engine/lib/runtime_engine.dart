@@ -1321,7 +1321,9 @@ class ManagedProfilePayload {
     this.catalogAppExpiresAt = '',
     this.catalogAppSigners = const {},
     this.catalogAppLineages = const {},
-  });
+    this.materialCandidateRef = '',
+    Map<String, ManagedProfilePayload> candidateMaterials = const {},
+  }) : _candidateMaterials = candidateMaterials;
 
   final String profileName;
   final RuntimeProfileSource? source;
@@ -1346,6 +1348,18 @@ class ManagedProfilePayload {
   final RouteMode routeMode;
   final SmartConnectProfile? smartConnect;
   final TransportCandidateCatalog? transportCatalog;
+  /// Exact material ref from this authenticated response; catalog selection
+  /// remains the server's original choice even when another material wins.
+  final String materialCandidateRef;
+  final Map<String, ManagedProfilePayload> _candidateMaterials;
+  Map<String, ManagedProfilePayload> get candidateMaterials =>
+      Map.unmodifiable(_candidateMaterials);
+  TransportCandidate? get materialCandidate {
+    final catalog = transportCatalog;
+    if (catalog == null) return null;
+    final ref = materialCandidateRef.isEmpty ? catalog.selectedCandidateRef : materialCandidateRef;
+    return catalog.candidates.firstWhere((candidate) => candidate.candidateRef == ref);
+  }
   final String? provenNetworkSelectionKey;
   /// Safe AS label observed while fetching this profile before the tunnel.
   final String accessNetworkAsn;
@@ -1382,6 +1396,7 @@ class ManagedProfilePayload {
     String? catalogAppExpiresAt,
     Map<String, List<String>>? catalogAppSigners,
     Map<String, List<String>>? catalogAppLineages,
+    Map<String, ManagedProfilePayload>? candidateMaterials,
   }) {
     return ManagedProfilePayload(
       profileName: profileName ?? this.profileName,
@@ -1409,6 +1424,9 @@ class ManagedProfilePayload {
       catalogAppExpiresAt: catalogAppExpiresAt ?? this.catalogAppExpiresAt,
       catalogAppSigners: catalogAppSigners ?? this.catalogAppSigners,
       catalogAppLineages: catalogAppLineages ?? this.catalogAppLineages,
+      materialCandidateRef: materialCandidateRef,
+      candidateMaterials: candidateMaterials == null
+          ? _candidateMaterials : Map.unmodifiable(candidateMaterials),
     );
   }
 }

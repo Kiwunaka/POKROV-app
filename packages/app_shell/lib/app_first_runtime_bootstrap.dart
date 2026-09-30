@@ -3146,6 +3146,9 @@ class AppFirstRuntimeBootstrapper
               runtimeFeatures: runtimeFeatures ?? storedFeatures,
               coreRelease: coreRelease ?? (runtimeFeatures == null ? _readText(value['core_release']) : null))
           : null;
+      final materialRef = _readText(value['material_candidate_ref']);
+      if (materialRef.isNotEmpty &&
+          catalog?.candidates.any((candidate) => candidate.candidateRef == materialRef) != true) return null;
       return ManagedProfilePayload(
         cacheEntryId: _readText(value['cache_entry_id']),
         disableMemoryLimit: inputs.hostPlatform == HostPlatform.windows,
@@ -3162,6 +3165,7 @@ class AppFirstRuntimeBootstrapper
         resolvedNodeCode: _readText(value['resolved_node_code']),
         smartConnect: SmartConnectProfile.tryParse(value['smart_connect']),
         transportCatalog: catalog,
+        materialCandidateRef: materialRef,
         warpPolicy: WarpRuntimePolicy.tryParse(value['warp_policy']),
         freeProfileAccess: FreeProfileAccess.tryParse(
           access: value['access'], freeCaps: value['free_caps']),
@@ -3220,6 +3224,7 @@ class AppFirstRuntimeBootstrapper
           'tcp_fallback_from_revision': payload.tcpFallbackFromRevision,
           'smart_connect': payload.smartConnect == null ? null : response['smart_connect'],
           if (response.containsKey('transport_catalog')) 'transport_catalog': response['transport_catalog'],
+          if (payload.materialCandidateRef.isNotEmpty) 'material_candidate_ref': payload.materialCandidateRef,
           'runtime_features': record.runtimeFeatures.map((feature) => feature.wireName).toList(),
           'core_release': record.coreRelease,
           'warp_policy': response['warp_policy'] ?? _readMap(response['client_policy'])['warp_policy'],
@@ -3232,6 +3237,18 @@ class AppFirstRuntimeBootstrapper
           code: 'managed_profile_superseded', statusCode: 409, operation: 'managed_profile');
       }
     });
+    final bundled = payload.candidateMaterials;
+    if (!candidateOnly && bundled.isNotEmpty && inputs.preferredCandidateRef.isEmpty) {
+      final alternatives = SmartConnectCandidateSelector.cacheAlternatives(payload.materialCandidate!,
+          payload.transportCatalog!.candidates.where((candidate) =>
+              bundled.containsKey(candidate.candidateRef) &&
+              (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)),
+          countryOnly: inputs.preferredCountryCode.isNotEmpty);
+      for (final candidate in alternatives) {
+        await cacheResolvedManagedProfile(inputs, bundled[candidate.candidateRef]!,
+            cancelled: cancelled, candidateOnly: true);
+      }
+    }
   }
 
   @override
@@ -3273,7 +3290,7 @@ class AppFirstRuntimeBootstrapper
       final cached = await loadCachedManagedProfile(inputs, preferProven: true,
           selectedCandidateRef: selectedCandidateRef, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
       await requireCurrent();
-      currentCandidateRef = cached?.transportCatalog?.selectedCandidateRef ?? '';
+      currentCandidateRef = cached?.materialCandidate?.candidateRef ?? '';
       if (currentCandidateRef.isEmpty) return;
     }
     // An exact refresh discovers credentials acknowledged after initial device
@@ -3284,8 +3301,11 @@ class AppFirstRuntimeBootstrapper
     final catalog = selected.transportCatalog;
     if (catalog == null) return;
     if (inputs.preferredCandidateRef.isNotEmpty) return;
-    final alternatives = SmartConnectCandidateSelector.cacheAlternatives(catalog.selected,
-        catalog.candidates.where((candidate) => inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode),
+    final bundled = selected.candidateMaterials;
+    final alternatives = SmartConnectCandidateSelector.cacheAlternatives(selected.materialCandidate!,
+        catalog.candidates.where((candidate) =>
+            (bundled.isEmpty || bundled.containsKey(candidate.candidateRef)) &&
+            (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)),
         countryOnly: inputs.preferredCountryCode.isNotEmpty);
     for (final candidate in alternatives) {
       final cached = await _managedProfileCache.read(platform: inputs.hostPlatform.name,
@@ -3294,7 +3314,7 @@ class AppFirstRuntimeBootstrapper
       final verifiedAt = DateTime.tryParse(_readText(cached?['cache_verified_at']));
       if (verifiedAt != null && DateTime.now().toUtc().difference(verifiedAt) < ManagedProfileCache.refreshInterval) continue;
       try {
-        final alternate = await resolve(candidate.candidateRef);
+        final alternate = bundled[candidate.candidateRef] ?? await resolve(candidate.candidateRef);
         await requireCurrent();
         await cacheResolvedManagedProfile(inputs, alternate, cancelled: cancelled, candidateOnly: true);
       } on BootstrapFailure catch (error) {
@@ -3446,7 +3466,8 @@ class AppFirstRuntimeBootstrapper
             client: client,
           );
           requests.requireActive();
-          if (selectCandidate && selectedCandidateRef.isEmpty && preferredNodeCode.trim().isEmpty && preferredCountryCode.isEmpty &&
+          if (selectCandidate && manifest.payload.candidateMaterials.isEmpty &&
+              selectedCandidateRef.isEmpty && preferredNodeCode.trim().isEmpty && preferredCountryCode.isEmpty &&
               manifest.payload.smartConnect != null) {
             final deadline = DateTime.now().add(smartConnectTelemetryDeadline);
             final smartConnect = manifest.payload.smartConnect;
@@ -3554,12 +3575,16 @@ class AppFirstRuntimeBootstrapper
             preferredCountryCode: preferredCountryCode,
             preferredCandidateRef: preferredCandidateRef,
           );
-          _resolvedProfileCache[manifest.payload] = (
-            state: state, manifest: manifest,
-            binding: inputs.binding(state.accountId, state.installId),
-            generation: cacheGeneration,
-            runtimeFeatures: Set.unmodifiable(runtimeFeatures), coreRelease: coreRelease,
-          );
+          for (final material in {manifest.payload, ...manifest.payload.candidateMaterials.values}) {
+            _resolvedProfileCache[material] = (
+              state: state, manifest: _ManagedManifestEnvelope(payload: material,
+                  response: manifest.response, profileRevision: manifest.profileRevision,
+                  managedManifestPath: manifest.managedManifestPath, verifiedAt: manifest.verifiedAt),
+              binding: inputs.binding(state.accountId, state.installId),
+              generation: cacheGeneration,
+              runtimeFeatures: Set.unmodifiable(runtimeFeatures), coreRelease: coreRelease,
+            );
+          }
           if (cacheResult) {
             try {
               await cacheResolvedManagedProfile(inputs, manifest.payload, cancelled: cancelled);
@@ -6531,6 +6556,7 @@ class AppFirstRuntimeBootstrapper
     if (!transportManifestEnabled && runtimeFeatures.isNotEmpty && preferredVariantId == 'direct') {
       final query = <String, String>{
         'catalog_version': '1', 'client_platform': hostPlatform.name,
+        'candidate_material_limit': '6',
         'client_release': pokrovClientVersion,
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
         if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,
@@ -6591,16 +6617,7 @@ class AppFirstRuntimeBootstrapper
     }
     if (transportCatalog != null &&
         (transportCatalog.revision != _readText(response['profile_revision']) ||
-         transportCatalog.selected.profileRef != _readText(response['transport_profile']) ||
-         (transportCatalog.selected.protocol, transportCatalog.selected.transport,
-           transportCatalog.selected.protection) != switch (_readText(response['transport_kind'])) {
-           'reality' => ('vless', 'tcp', 'reality'),
-           'grpc' => ('vless', 'grpc', 'tls'),
-           'xhttp' => ('vless', 'xhttp', transportCatalog.selected.protection),
-           'awg31' => ('awg', 'udp', 'awg31'),
-           'hysteria2' => ('hysteria2', 'udp', 'tls'),
-           _ => ('', '', ''),
-         })) {
+         transportCatalog.selected.profileRef != _readText(response['transport_profile']))) {
       throw const TransportManifestFailure('transport_catalog_profile_mismatch');
     }
 
@@ -6626,30 +6643,46 @@ class AppFirstRuntimeBootstrapper
         'POKROV не смог завершить настройку: данных подключения недостаточно.',
       );
     }
-    if (transportCatalog?.selected.transport == 'xhttp') {
-      try {
-        final config = _readMap(configPayload is String ? jsonDecode(configPayload) : configPayload);
-        final outbounds = (config['outbounds'] as List).map(_readMap)
-            .where((outbound) => outbound['type'] == 'vless').toList();
-        if (outbounds.isEmpty) throw const FormatException();
-        for (final outbound in outbounds) {
-          final tls = _readMap(outbound['tls']);
-          final transport = _readMap(outbound['transport']);
-          final reality = _readMap(tls['reality'])['enabled'] == true;
-          if (tls['enabled'] != true ||
-              (reality ? 'reality' : 'tls') != transportCatalog!.selected.protection ||
-              transport['type'] != 'xhttp' ||
-              !const {'stream-one', 'stream-up', 'packet-up'}.contains(transport['mode']) ||
-              _readText(outbound['flow']).isNotEmpty ||
-              (reality && (_readMap(tls['utls'])['enabled'] != true ||
-                  tls['alpn'] is! List || (tls['alpn'] as List).firstOrNull != 'h2'))) {
-            throw const FormatException();
-          }
-        }
-      } on Object {
+    void validateMaterial(TransportCandidate? candidate, String kind, String format, Object? raw) {
+      if (format != 'singbox-json' || raw == null) {
         throw const TransportManifestFailure('transport_catalog_profile_mismatch');
       }
+      if (candidate != null && (candidate.protocol, candidate.transport, candidate.protection) != switch (kind) {
+        'reality' => ('vless', 'tcp', 'reality'),
+        'grpc' => ('vless', 'grpc', 'tls'),
+        'xhttp' => ('vless', 'xhttp', candidate.protection),
+        'awg31' => ('awg', 'udp', 'awg31'),
+        'hysteria2' => ('hysteria2', 'udp', 'tls'),
+        _ => ('', '', ''),
+      }) {
+        throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+      }
+      if (candidate?.transport == 'xhttp') {
+        try {
+          final config = _readMap(raw is String ? jsonDecode(raw) : raw);
+          final outbounds = (config['outbounds'] as List).map(_readMap)
+              .where((outbound) => outbound['type'] == 'vless').toList();
+          if (outbounds.isEmpty) throw const FormatException();
+          for (final outbound in outbounds) {
+            final tls = _readMap(outbound['tls']);
+            final transport = _readMap(outbound['transport']);
+            final reality = _readMap(tls['reality'])['enabled'] == true;
+            if (tls['enabled'] != true ||
+                (reality ? 'reality' : 'tls') != candidate!.protection ||
+                transport['type'] != 'xhttp' ||
+                !const {'stream-one', 'stream-up', 'packet-up'}.contains(transport['mode']) ||
+                _readText(outbound['flow']).isNotEmpty ||
+                (reality && (_readMap(tls['utls'])['enabled'] != true ||
+                    tls['alpn'] is! List || (tls['alpn'] as List).firstOrNull != 'h2'))) {
+              throw const FormatException();
+            }
+          }
+        } on Object {
+          throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+        }
+      }
     }
+    validateMaterial(transportCatalog?.selected, _readText(response['transport_kind']), configFormat, configPayload);
     final provisioning = _readMap(response['provisioning']);
     final provisioningReady = _readBool(provisioning['sync_ok']) ||
         _readText(provisioning['status']) == 'ready';
@@ -6700,15 +6733,17 @@ class AppFirstRuntimeBootstrapper
             fallbackOrder.contains('legacy_reality_fallback')
         ? _readText(response['profile_revision'])
         : '';
-    final payload = ManagedProfilePayload(
+    Future<ManagedProfilePayload> materialize(Object raw, String kind, TransportCandidate? candidate,
+        {String materialRef = ''}) async => ManagedProfilePayload(
       cacheEntryId: ManagedProfileCache.newEntryId(),
       accessNetworkAsn: accessNetworkAsn,
       disableMemoryLimit: hostPlatform == HostPlatform.windows,
-      tcpFallbackFromRevision: tcpFallbackRevision,
+      tcpFallbackFromRevision: candidate == null || candidate.candidateRef == transportCatalog?.selectedCandidateRef
+          ? tcpFallbackRevision : '',
       source: RuntimeProfileSource(
         revision: _readText(response['profile_revision']),
         origin: RuntimeProfileSourceOrigin.managedManifest,
-        protocol: switch (_readText(response['transport_kind'])) {
+        protocol: switch (kind) {
           'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
           'reality' || 'grpc' || 'xhttp' || 'ru_bridge' => 'vless',
           _ => 'unknown',
@@ -6720,7 +6755,7 @@ class AppFirstRuntimeBootstrapper
       ),
       configPayload: await _materializeRuntimeConfig(
         rawConfigPayload:
-            configPayload is String ? configPayload : jsonEncode(configPayload),
+            raw is String ? raw : jsonEncode(raw),
         hostPlatform: hostPlatform,
         routeMode: routeMode,
         selectedApps: selectedApps,
@@ -6735,13 +6770,40 @@ class AppFirstRuntimeBootstrapper
       routeMode: routeMode,
       smartConnect: effectiveSmartConnect,
       transportCatalog: transportCatalog,
-      resolvedNodeCode: transportCatalog?.selected.nodeCode ?? effectivePreferredNode,
+      resolvedNodeCode: candidate?.nodeCode ?? effectivePreferredNode,
+      materialCandidateRef: materialRef,
       warpPolicy: warpPolicy,
       freeProfileAccess: FreeProfileAccess.tryParse(
         access: response['access'],
         freeCaps: response['free_caps'],
       ),
     );
+
+    final supplied = response['candidate_materials'];
+    final bundled = <String, ManagedProfilePayload>{};
+    final ManagedProfilePayload payload;
+    if (response.containsKey('candidate_materials')) {
+      if (transportCatalog == null || supplied is! List || supplied.isEmpty || supplied.length > 6) {
+        throw const TransportManifestFailure('transport_catalog_materials_mismatch');
+      }
+      for (final value in supplied) {
+        final row = _readMap(value);
+        final ref = _readText(row['candidate_ref']);
+        final admitted = transportCatalog.candidates.where((candidate) => candidate.candidateRef == ref).firstOrNull;
+        if (admitted == null || bundled.containsKey(ref) ||
+            (bundled.isEmpty && ref != transportCatalog.selectedCandidateRef) ||
+            (preferredCountryCode.isNotEmpty && admitted.countryCode != preferredCountryCode)) {
+          throw const TransportManifestFailure('transport_catalog_materials_mismatch');
+        }
+        final kind = _readText(row['transport_kind']);
+        final raw = row['config_payload'];
+        validateMaterial(admitted, kind, _readText(row['config_format']), raw);
+        bundled[ref] = await materialize(raw!, kind, admitted, materialRef: ref);
+      }
+      payload = bundled[transportCatalog.selectedCandidateRef]!.copyWith(candidateMaterials: bundled);
+    } else {
+      payload = await materialize(configPayload, _readText(response['transport_kind']), transportCatalog?.selected);
+    }
 
     return _ManagedManifestEnvelope(
       payload: payload,

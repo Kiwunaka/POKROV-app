@@ -36,6 +36,13 @@ class ManagedProfileCache {
 
   String _key(String platform) => 'pokrov-managed-profile-$platform-v1';
 
+  String? _candidateRef(Map payload) {
+    final ref = payload['material_candidate_ref'];
+    if (ref is String && ref.isNotEmpty) return ref;
+    final catalog = payload['transport_catalog'];
+    return catalog is Map ? catalog['selected_candidate_ref'] as String? : null;
+  }
+
   Future<Map<String, dynamic>> _load(String platform) async {
     final raw = await _storage.read(key: _key(platform));
     if (raw == null) return <String, dynamic>{};
@@ -77,7 +84,7 @@ class ManagedProfileCache {
         if (!current()) return;
         final value = await _load(platform);
         final catalog = payload['transport_catalog'];
-        final candidateRef = catalog is Map ? catalog['selected_candidate_ref'] : null;
+        final candidateRef = _candidateRef(payload);
         final candidates = Map<String, dynamic>.from(value['candidates'] is Map
             ? value['candidates'] as Map : const {});
         final previous = candidateOnly ? candidates[candidateRef] : value['downloaded'];
@@ -181,17 +188,18 @@ class ManagedProfileCache {
         var catalog = payload['transport_catalog'];
         if (catalog is Map) {
           final latestCatalog = latestPayload is Map ? latestPayload['transport_catalog'] : null;
-          final entryCandidateRef = catalog['selected_candidate_ref'];
+          final entryCandidateRef = _candidateRef(payload);
           if (latestCatalog is! Map || latestCatalog['revision'] != catalog['revision'] ||
               !(latestCatalog['candidates'] as List).any((item) =>
                   item is Map && item['candidate_ref'] == entryCandidateRef)) continue;
           // New device credentials may become ready after this profile was
           // proven. Refresh selection metadata, retaining its original proof.
           catalog = <String, dynamic>{...Map<String, dynamic>.from(latestCatalog),
-            'selected_candidate_ref': entryCandidateRef};
+            if (payload['material_candidate_ref'] == null || payload['material_candidate_ref'] == '')
+              'selected_candidate_ref': entryCandidateRef};
         }
         if (selectedCandidateRef.isNotEmpty &&
-            (catalog is! Map || catalog['selected_candidate_ref'] != selectedCandidateRef)) continue;
+            (catalog is! Map || _candidateRef(payload) != selectedCandidateRef)) continue;
         // The latest authorized access window also bounds an older proven profile.
         final access = latestAccess is Map && latestAccess.containsKey('expiry_at')
             ? latestAccess : payload['access'];
@@ -258,8 +266,7 @@ class ManagedProfileCache {
           if (networkSelectionKey != null && networkSelectionKey.isNotEmpty)
             'network_selection_key': networkSelectionKey,
         };
-        final catalog = downloaded['payload']['transport_catalog'];
-        final candidateRef = catalog is Map ? catalog['selected_candidate_ref'] : null;
+        final candidateRef = _candidateRef(downloaded['payload']);
         if (networkSelectionKey != null &&
             RegExp(r'^[A-Za-z0-9_.:-]{1,128}$').hasMatch(networkSelectionKey) &&
             candidateRef is String &&
@@ -303,8 +310,7 @@ class ManagedProfileCache {
       final proven = value['proven'];
       if (proven is Map && proven['binding'] == binding &&
           proven['network_selection_key'] == networkSelectionKey) {
-        final catalog = proven['payload'] is Map ? proven['payload']['transport_catalog'] : null;
-        final oldRef = catalog is Map ? catalog['selected_candidate_ref'] : null;
+        final oldRef = proven['payload'] is Map ? _candidateRef(proven['payload']) : null;
         if (oldRef is String && RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(oldRef)) return oldRef;
       }
     } on Object {

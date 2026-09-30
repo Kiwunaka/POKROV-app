@@ -312,6 +312,13 @@ class ConnectionManager extends ChangeNotifier {
   bool get retainsProtection =>
       _protectedHandoffActive || _runtimeSnapshot?.protectionRetained == true;
   TransportCandidateCatalog? get transportCatalog => _transportCatalog;
+  domain.TransportCandidate? get materialCandidate {
+    final catalog = _transportCatalog;
+    if (catalog == null) return null;
+    final ref = _activeCandidateRef ?? _candidateRef ?? catalog.selectedCandidateRef;
+    return catalog.candidates
+        .where((candidate) => candidate.candidateRef == ref).firstOrNull;
+  }
   TransportCandidateCatalog? _transportCatalog;
   final _candidateSelector = SmartConnectCandidateSelector();
   String? _candidateNetworkKey;
@@ -785,7 +792,7 @@ class ConnectionManager extends ChangeNotifier {
         connected: proven,
         connectivitySnapshot: _runtimeSnapshot,
         errorCode: errorCode,
-        selectedNodeCode: _transportCatalog?.selected.warpMode == 'warp_over_proxy'
+        selectedNodeCode: materialCandidate?.warpMode == 'warp_over_proxy'
             ? ''
             : _activeNodeCode.isNotEmpty
                 ? _activeNodeCode
@@ -1949,8 +1956,13 @@ class ConnectionManager extends ChangeNotifier {
       }
       _setPhase(recoveryCandidateRef.isEmpty ? ConnectionPhase.probing : ConnectionPhase.recovering, generation);
       final initial = payload;
-      final materialized = <String, ManagedProfilePayload>{catalog.selectedCandidateRef: initial};
+      final bundled = initial.candidateMaterials;
+      final materialized = <String, ManagedProfilePayload>{
+        if (bundled.isEmpty) catalog.selectedCandidateRef: initial,
+        ...bundled,
+      };
       final eligibleCandidates = catalog.candidates.where((candidate) =>
+          (bundled.isEmpty || bundled.containsKey(candidate.candidateRef)) &&
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
           (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)).toList();
       final warpCandidates = eligibleCandidates.where((candidate) =>
@@ -1984,8 +1996,8 @@ class ConnectionManager extends ChangeNotifier {
               requireCurrent();
               var stopped = false;
               unawaited(stop.then((_) => stopped = true));
-              final exact = candidate.candidateRef == catalog.selectedCandidateRef ? initial
-                  : await resolve(candidateRef: candidate.candidateRef, select: false, cache: false, stop: stop);
+              final exact = materialized[candidate.candidateRef] ??
+                  await resolve(candidateRef: candidate.candidateRef, select: false, cache: false, stop: stop);
               requireCurrent();
               if (!stopped) materialized[candidate.candidateRef] = exact;
             },
@@ -2021,7 +2033,7 @@ class ConnectionManager extends ChangeNotifier {
       if (cache is CachedManagedProfileBootstrapper) {
         try {
           await (cache as CachedManagedProfileBootstrapper).cacheResolvedManagedProfile(inputs, payload, cancelled: cancelled);
-          final selected = payload.transportCatalog!.selected;
+          final selected = payload.materialCandidate!;
           final alternatives = SmartConnectCandidateSelector.cacheAlternatives(selected,
               eligibleCandidates.where((candidate) => materialized.containsKey(candidate.candidateRef)),
               countryOnly: inputs.preferredCountryCode.isNotEmpty);
@@ -2040,7 +2052,7 @@ class ConnectionManager extends ChangeNotifier {
       }
       _candidateNetworkKey = key;
       _candidateOfflineNetworkKey = offlineKey;
-      _candidateRef = payload.transportCatalog!.selectedCandidateRef;
+      _candidateRef = payload.materialCandidate!.candidateRef;
     } else if (discoverCandidates && catalog == null) {
       // Older servers still own the legacy Smart Connect path.
       payload = await resolve();
@@ -2182,7 +2194,7 @@ class ConnectionManager extends ChangeNotifier {
       requireCurrent();
       final currentNetwork = await probing.readCandidateNetwork();
       final currentProfile = await service.loadCachedManagedProfile(inputs,
-          selectedCandidateRef: selected.transportCatalog!.selectedCandidateRef, runtimeFeatures: features);
+          selectedCandidateRef: selected.materialCandidate!.candidateRef, runtimeFeatures: features);
       requireCurrent();
       if (currentProfile == null || currentProfile.cacheEntryId != selected.cacheEntryId) {
         throw const BootstrapFailure('Подготовка подключения отменена.', code: 'managed_profile_superseded', statusCode: 409);
@@ -2194,7 +2206,7 @@ class ConnectionManager extends ChangeNotifier {
       _candidateOfflineNetworkKey = _offlineCandidateNetworkKey(key, context, network.networkClass);
     }
     _transportCatalog = selected.transportCatalog;
-    _candidateRef = selected.transportCatalog?.selectedCandidateRef;
+    _candidateRef = selected.materialCandidate?.candidateRef;
     return selected;
   }
 
@@ -2268,7 +2280,7 @@ class ConnectionManager extends ChangeNotifier {
     final warpConsentStillValid =
         (_explicitWarpRuntimeConsent ?? reportedConsent) &&
             displayWarpPolicy.canOfferRuntime;
-    final selectedWarpMode = payload.transportCatalog?.selected.warpMode;
+    final selectedWarpMode = payload.materialCandidate?.warpMode;
     final catalogHasWarpCandidates = payload.transportCatalog?.candidates.any(
         (candidate) => candidate.warpMode != null) ?? false;
     final warpRuntimeAttemptEnabled = !suppressWarpRuntime &&
@@ -3426,7 +3438,7 @@ class ConnectionManager extends ChangeNotifier {
                       ? current.isCoreEgressValidationPending
                           ? 'Проверяем выход через VPN…'
                           : current.isCleanlyHealthy
-                              ? _transportCatalog?.selected.warpMode == 'warp_over_proxy'
+                              ? materialCandidate?.warpMode == 'warp_over_proxy'
                                   ? 'POKROV подключен через WARP. Страна выхода неизвестна.'
                                   : 'POKROV подключен.'
                               : current.hasCoreEgressValidationFailure
@@ -3696,7 +3708,7 @@ class ConnectionManager extends ChangeNotifier {
         runtimePhase: snapshot.phase.name,
         connected: snapshot.phase == RuntimePhase.running,
         connectivitySnapshot: snapshot,
-        selectedNodeCode: _transportCatalog?.selected.warpMode == 'warp_over_proxy'
+        selectedNodeCode: materialCandidate?.warpMode == 'warp_over_proxy'
             ? ''
             : _activeNodeCode.isNotEmpty
                 ? _activeNodeCode
@@ -4568,7 +4580,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   void _promoteStagedLocationAfterFreshConnect() {
-    if (_transportCatalog?.selected.warpMode == 'warp_over_proxy') {
+    if (materialCandidate?.warpMode == 'warp_over_proxy') {
       _update(() {
         _activeNodeCode = '';
         _activeVariantId = 'direct';

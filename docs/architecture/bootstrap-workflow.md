@@ -60,6 +60,14 @@ for the same account binding and revision, only while its candidate remains
 allowed; its config, cache identity and original verification time are preserved.
 Each refresh request uses the existing managed-profile budget (15 seconds by
 default), including route-policy synchronization; cancellation still ends it.
+Catalog requests accept up to six admitted candidate materials in one authorized
+response. Native selection and reserve caching reuse those materials without a
+profile request per candidate. Each material keeps an explicit candidate ref and
+the response's account/device/revision binding; a different winner does not
+rewrite the catalog's server-selected ref. The encrypted cache retains that
+material ref for proof and recovery, including the first reserve on another node
+in the selected country. Older responses without materials keep their existing
+resolution path.
 If the API is unreachable, recovery probes
 these cached profiles with the existing native selector and activates its winner.
 Failed activation advances to another candidate, with at most three activations

@@ -243,6 +243,8 @@ void main() {
     var returnWrongKind = false;
     var returnWrongXhttpProtection = false;
     var returnUnauthorized = false;
+    var returnBundle = false;
+    var alternateMaterialRef = 'ru:grpc_443_primary';
     var slowSelectedRefresh = false;
     Completer<void>? managedRequested;
     Completer<void>? releaseManaged;
@@ -256,6 +258,14 @@ void main() {
           'singbox_vless_v1',
           if (transport == 'xhttp') ...['singbox_xhttp_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_reality_v1']
           else transport == 'tcp' ? 'singbox_reality_v1' : 'singbox_grpc_v1']},
+    };
+    Map<String, Object?> grpcMaterial(String node) => {
+      'outbounds': [
+        {'type': 'selector', 'tag': 'proxy', 'outbounds': [node], 'default': node},
+        {'type': 'vless', 'tag': node, 'server': '$node.example.test', 'server_port': 443,
+          'transport': {'type': 'grpc', 'service_name': 'test'}},
+      ],
+      'route': {'final': 'proxy'},
     };
     unawaited(() async {
       await for (final request in server) {
@@ -297,6 +307,7 @@ void main() {
                 descriptor('de', 'grpc_443_primary', 'grpc'),
                 descriptor('de', 'xhttp_reality', 'xhttp'),
                 if (sibling) descriptor('ru-spb', 'grpc_443_primary', 'grpc'),
+                if (returnBundle) descriptor('ru', 'grpc_443_primary', 'grpc'),
               ],
             },
             'smart_connect': {
@@ -323,6 +334,12 @@ void main() {
               ],
               'route': {'final': 'proxy'},
             },
+            if (returnBundle) 'candidate_materials': [
+              {'candidate_ref': '$node:$profile', 'transport_kind': 'grpc',
+                'config_format': 'singbox-json', 'config_payload': grpcMaterial(node)},
+              {'candidate_ref': alternateMaterialRef, 'transport_kind': 'grpc',
+                'config_format': 'singbox-json', 'config_payload': grpcMaterial('ru')},
+            ],
           }));
         } else if (request.uri.path == '/api/client/nodes/select') {
           request.response.write('{"selected_node_code":"de"}');
@@ -408,6 +425,38 @@ void main() {
     expect(await bootstrapper.loadCachedManagedProfile(const ManagedProfileCacheInputs(
       hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel, preferredNodeCode: 'ru-spb')), isNull,
       reason: 'exact egress does not rewrite the user country preference binding');
+
+    returnBundle = true;
+    final beforeBundle = queries.length;
+    final bundle = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'RU',
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      selectedCandidateRef: 'ru-spb:grpc_443_primary', selectCandidate: false);
+    expect(queries.length, beforeBundle + 1, reason: 'discovery and reserve caching share one HTTP response');
+    expect(queries.last['candidate_material_limit'], '6');
+    expect(bundle.candidateMaterials.keys, ['ru-spb:grpc_443_primary', 'ru:grpc_443_primary']);
+    expect(() => bundle.candidateMaterials.clear(), throwsUnsupportedError);
+    final alternate = bundle.candidateMaterials['ru:grpc_443_primary']!;
+    expect(alternate.source?.revision, bundle.source?.revision);
+    expect(alternate.materialCandidate?.nodeCode, 'ru');
+    final cachedAlternate = await bootstrapper.loadCachedManagedProfile(countryInputs,
+        selectedCandidateRef: 'ru:grpc_443_primary');
+    expect(cachedAlternate?.materialCandidateRef, 'ru:grpc_443_primary');
+    expect(cachedAlternate?.transportCatalog?.selectedCandidateRef, 'ru-spb:grpc_443_primary');
+    expect(cachedAlternate?.configPayload, alternate.configPayload);
+    await bootstrapper.markManagedProfileProven(countryInputs, cachedAlternate!.cacheEntryId,
+        networkSelectionKey: 'network-bundle');
+    expect(await bootstrapper.successfulCandidateRef(countryInputs, 'network-bundle'), 'ru:grpc_443_primary');
+    for (final rejectedRef in ['pl:legacy_reality_fallback', 'ru:unadmitted']) {
+      alternateMaterialRef = rejectedRef;
+      await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel, preferredCountryCode: 'RU',
+        runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+        selectedCandidateRef: 'ru-spb:grpc_443_primary', selectCandidate: false, cacheResult: false),
+        throwsA(isA<TransportManifestFailure>()
+          .having((failure) => failure.code, 'code', 'transport_catalog_materials_mismatch')));
+    }
+    returnBundle = false;
     await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel, preferredCountryCode: 'RU',
       runtimeFeatures: RuntimeTransportFeature.values.toSet(),
@@ -456,6 +505,7 @@ void main() {
     await rejected;
     await expectLater(bootstrapper.cacheResolvedManagedProfile(inputs, discovery), superseded);
     await expectLater(bootstrapper.cacheResolvedManagedProfile(inputs, discovery, candidateOnly: true), superseded);
+    await expectLater(bootstrapper.cacheResolvedManagedProfile(countryInputs, alternate, candidateOnly: true), superseded);
     expect((jsonDecode(await sessionFile.readAsString()) as Map)['account_id'], 'new-account');
 
     managedRequested = Completer<void>();
