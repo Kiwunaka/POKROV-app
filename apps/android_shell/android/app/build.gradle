@@ -63,6 +63,18 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        externalNativeBuild {
+            cmake {
+                targets "pokrov_byedpi"
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
     }
 
     splits {
@@ -127,6 +139,14 @@ android {
         }
     }
 }
+
+tasks.register("copyByeDpiLicense", Copy) {
+    from("src/main/cpp/byedpi/LICENSE")
+    into(layout.buildDirectory.dir("generated/byedpi-resources/META-INF/licenses"))
+    rename { "byedpi-LICENSE.txt" }
+}
+android.sourceSets.main.resources.srcDir(layout.buildDirectory.dir("generated/byedpi-resources"))
+tasks.named("preBuild").configure { dependsOn("copyByeDpiLicense") }
 
 gradle.taskGraph.whenReady { graph ->
     def releaseArtifactTaskRequested = graph.allTasks.any { task ->
