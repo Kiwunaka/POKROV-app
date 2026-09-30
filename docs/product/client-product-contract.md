@@ -723,6 +723,15 @@ as such. Both modes hide endpoint addresses; neither exports connection profiles
   first-launch restore or normal code redemption
 - manual import and recovery tools may remain behind explicit compatibility or recovery surfaces
 
+Opera and Firefox must not appear as available last-resort Auto transports until
+a public provider contract for POKROV and a working native route are verified.
+[Opera's free VPN](https://www.opera.com/features/free-vpn) protects browser traffic
+without an account or traffic cap. [Firefox's free browser VPN](https://support.mozilla.org/en-US/kb/built-in-vpn)
+has a 50 GB monthly quota and requires a Mozilla account for eligible users;
+its [experimental GeckoView implementation](https://firefox-source-docs.mozilla.org/toolkit/ipprotection/Components.html)
+also has an Android Play Integrity authentication path. These offers and APIs do
+not by themselves establish provider access for POKROV Core or protection of other applications.
+
 ## Protection, Routing And Recovery Contract
 
 The Android and Windows client now treats protection as several independent,
