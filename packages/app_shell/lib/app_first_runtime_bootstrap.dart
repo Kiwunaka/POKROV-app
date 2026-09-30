@@ -7098,6 +7098,7 @@ class AppFirstRuntimeBootstrapper
       outbounds: outbounds,
       baseSelectedTag: baseSelectedTag,
       baseLocationTag: baseLocationTag,
+      selectedVariantId: normalizedVariant,
       ruBridgeEndpoints: ruBridgeEndpoints,
       targetSelectorTargets: targetSelectorTargets,
     );
@@ -7109,6 +7110,7 @@ class AppFirstRuntimeBootstrapper
     required List<Map<String, dynamic>> outbounds,
     required String baseSelectedTag,
     required String baseLocationTag,
+    required String selectedVariantId,
     required List<_SafeRuBridgeEndpoint> ruBridgeEndpoints,
     required List<String> targetSelectorTargets,
   }) {
@@ -7134,11 +7136,16 @@ class AppFirstRuntimeBootstrapper
         });
       }
     }
-    final uniqueTags = mappings
+    final scopedMappings = selectedVariantId == 'direct'
+        ? mappings
+        : mappings
+            .where((mapping) => mapping['id'] == selectedVariantId)
+            .toList(growable: false);
+    final uniqueTags = scopedMappings
         .map((mapping) => mapping['outbound_tag'] ?? '')
         .where((tag) => tag.isNotEmpty)
         .toSet();
-    if (uniqueTags.length != mappings.length || uniqueTags.isEmpty) {
+    if (uniqueTags.length != scopedMappings.length || uniqueTags.isEmpty) {
       return;
     }
     final existingTags = outbounds
@@ -7163,7 +7170,7 @@ class AppFirstRuntimeBootstrapper
     final meta = Map<String, dynamic>.from(_readMap(config['_meta']));
     meta['runtime_variant_probe'] = <String, dynamic>{
       'group_tag': groupTag,
-      'mappings': mappings,
+      'mappings': scopedMappings,
     };
     config['_meta'] = meta;
   }

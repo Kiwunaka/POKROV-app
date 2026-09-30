@@ -124,10 +124,7 @@ internal object AndroidVariantAvailabilityProbe {
         val catalog = parseCatalog(configContent)
             ?: return unavailableSnapshot("profile_unavailable")
         val requestedId = requestedVariantId.trim().lowercase()
-        if (
-            requestedId.isNotEmpty() &&
-            (!SAFE_ID.matches(requestedId) || catalog.targets.none { it.id == requestedId })
-        ) {
+        if (!allowsRequestedVariant(catalog, requestedId)) {
             return unavailableSnapshot("variant_unavailable")
         }
         val liveSnapshot = probeLive(catalog)
@@ -139,6 +136,21 @@ internal object AndroidVariantAvailabilityProbe {
             cachedSnapshot(catalog, System.currentTimeMillis()) ?: liveSnapshot
         }
         return filterSnapshot(resolvedSnapshot, requestedId)
+    }
+
+    internal fun allowsRequestedVariant(
+        catalog: AndroidVariantProbeCatalog,
+        requestedId: String,
+    ): Boolean {
+        if (requestedId.isEmpty()) {
+            return true
+        }
+        if (!SAFE_ID.matches(requestedId) || catalog.targets.none { it.id == requestedId }) {
+            return false
+        }
+        // URLTest runs the whole group. A whitelist refresh must not probe direct
+        // or another relay from an older, broadly staged profile.
+        return requestedId == "direct" || catalog.targets.size == 1
     }
 
     /**

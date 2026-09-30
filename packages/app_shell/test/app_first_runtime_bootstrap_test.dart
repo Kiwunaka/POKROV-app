@@ -6634,6 +6634,13 @@ void main() {
       (preferredSelector['outbounds'] as List).first,
       '🇷🇺 Россия Spb',
     );
+    final preferredProbeGroup = preferredOutbounds.cast<Map>().singleWhere(
+          (outbound) => outbound['tag'] == 'pokrov-variant-probe',
+        );
+    expect(preferredProbeGroup['outbounds'], <String>[
+      '🇷🇺 Россия Spb',
+      '🇷🇺 Россия Spb · Белые списки',
+    ]);
 
     for (final ready in <bool>[false, true]) {
       runtimeReady = ready;
@@ -6687,10 +6694,6 @@ void main() {
       runtimeVariantProbe['mappings'],
       <Map<String, String>>[
         <String, String>{
-          'id': 'direct',
-          'outbound_tag': '🇷🇺 Россия Spb',
-        },
-        <String, String>{
           'id': 'mini',
           'outbound_tag': '🇷🇺 Россия Spb · Белые списки',
         },
@@ -6707,7 +6710,6 @@ void main() {
     expect(
       variantProbeGroup['outbounds'],
       <String>[
-        '🇷🇺 Россия Spb',
         '🇷🇺 Россия Spb · Белые списки',
       ],
     );

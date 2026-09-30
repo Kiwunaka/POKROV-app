@@ -35,6 +35,14 @@ class AndroidVariantAvailabilityProbeTest {
             AndroidVariantAvailabilityProbe.validateCatalog(
                 groupTag = "pokrov-variant-probe",
                 finalGroupTag = "select",
+                probeMembers = setOf("normal-de", "bridge-mini", "unmapped-relay"),
+                targets = validTargets(),
+            ),
+        )
+        assertNull(
+            AndroidVariantAvailabilityProbe.validateCatalog(
+                groupTag = "pokrov-variant-probe",
+                finalGroupTag = "select",
                 probeMembers = setOf("normal-de", "bridge-mini"),
                 targets = listOf(
                     AndroidVariantProbeTarget("direct", "normal-de"),
@@ -53,6 +61,21 @@ class AndroidVariantAvailabilityProbeTest {
                 ),
             ),
         )
+    }
+
+    @Test
+    fun rejectsWhitelistRefreshFromAnOlderBroadGroupBeforeUrlTest() {
+        val broadCatalog = AndroidVariantProbeCatalog(
+            groupTag = "pokrov-variant-probe",
+            finalGroupTag = "select",
+            targets = validTargets(),
+        )
+        assertFalse(AndroidVariantAvailabilityProbe.allowsRequestedVariant(broadCatalog, "mini"))
+        assertTrue(AndroidVariantAvailabilityProbe.allowsRequestedVariant(broadCatalog, "direct"))
+        assertTrue(AndroidVariantAvailabilityProbe.allowsRequestedVariant(broadCatalog, ""))
+        val singleton = broadCatalog.copy(targets = listOf(validTargets().last()))
+        assertTrue(AndroidVariantAvailabilityProbe.allowsRequestedVariant(singleton, "mini"))
+        assertFalse(AndroidVariantAvailabilityProbe.allowsRequestedVariant(singleton, "direct"))
     }
 
     @Test
