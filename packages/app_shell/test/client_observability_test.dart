@@ -53,8 +53,23 @@ void main() {
     expect(platformForwarding, isEmpty);
     expect(platformHandled, isTrue);
     expect(observability.crashDiagnostics.single.errorCode, 'CRASH-001');
+    expect(observability.crashDiagnostics.single.signature, 'c101000000000000');
     expect(await observability.markerStore.file.readAsString(),
         isNot(contains(canary)));
+  });
+
+  test('crash signature retains only closed error and owned source location',
+      () {
+    const canary = 'R12_DART_CRASH_SECRET_20260912';
+    final stack = StackTrace.fromString(
+      '#0 private (file:///$canary.dart:123:45)\n'
+      '#1 connect (package:pokrov_app_shell/app_first_runtime_bootstrap.dart:1263:7)\n'
+      '#2 unknown (package:pokrov_app_shell/$canary.dart:4:2)',
+    );
+    expect(pokrovSafeCrashSignature(StateError('password=$canary'), stack),
+        'c10101000004ef00');
+    expect(pokrovSafeCrashSignature(ArgumentError(canary), null),
+        'c103000000000000');
   });
 
   test('validated crash marker reaches diagnostics after restart', () async {

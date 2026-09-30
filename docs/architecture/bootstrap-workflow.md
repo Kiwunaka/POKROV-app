@@ -1275,7 +1275,11 @@ Current blocking dependency:
   session. Correlation, attributes, destinations and identity are removed from
   the batch body. Portal failure cannot block local persistence or runtime.
 - `previous-exit.v1.json` contains only closed run state, catalog crash code,
-  fixed safe crash signature and the bounded breadcrumb ring. Crash handlers
+  fixed safe crash signature and the bounded breadcrumb ring. For an uncaught
+  Dart error, the signature encodes only a closed exception type, the first
+  frame in the fixed client source list and its line number; unknown types or
+  frames use zero. Exception messages, arguments, arbitrary paths and stack
+  text are never persisted or forwarded to the console. Crash handlers
   flush that marker synchronously because the process may terminate next.
   Clean exit overwrites it; an active marker on the next launch is reported as
   unclean. The marker is diagnostic evidence and can never restore or declare

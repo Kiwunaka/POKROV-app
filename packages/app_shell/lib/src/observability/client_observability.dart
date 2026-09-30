@@ -149,15 +149,61 @@ typedef PokrovObservabilityDirectoryResolver = Future<Directory> Function();
 enum PokrovOperationalUpdateChannel { direct, store, windows }
 
 void installPokrovCrashHandlers(PokrovClientObservability observability) {
-  FlutterError.onError = (_) {
-    observability.markCrashSynchronously(errorCode: 'CRASH-001');
+  FlutterError.onError = (details) {
+    observability.markCrashSynchronously(
+      errorCode: 'CRASH-001',
+      error: details.exception,
+      stack: details.stack,
+    );
   };
   final dispatcher = WidgetsBinding.instance.platformDispatcher;
-  dispatcher.onError = (_, __) {
-    observability.markCrashSynchronously(errorCode: 'CRASH-001');
+  dispatcher.onError = (error, stack) {
+    observability.markCrashSynchronously(
+      errorCode: 'CRASH-001',
+      error: error,
+      stack: stack,
+    );
     // The default handlers print the original error and stack, including in release.
     return true;
   };
+}
+
+// Fixed numeric codes retain a useful crash location without serializing an
+// exception message, arbitrary stack frames, paths or runtime arguments.
+String pokrovSafeCrashSignature(Object error, StackTrace? stack) {
+  final kind = switch (error) {
+    StateError() => 1,
+    TypeError() => 2,
+    ArgumentError() => 3,
+    FormatException() => 4,
+    PlatformException() => 5,
+    _ => 0,
+  };
+  const sources = [
+    'app_first_runtime_bootstrap.dart',
+    'connection_manager.dart',
+    'smart_connect_resolver.dart',
+    'seed_shell.dart',
+    'runtime_engine.dart',
+    'candidate_probe.dart',
+    'client_routing_preferences.dart',
+    'client_observability.dart',
+  ];
+  var source = 0;
+  var line = 0;
+  final location = RegExp(
+    r'\(package:pokrov_(?:app_shell|runtime_engine)/(?:[a-zA-Z0-9_]+/)*([a-z_]+\.dart):(\d{1,7}):\d+\)',
+  );
+  for (final frame in location.allMatches(stack?.toString() ?? '')) {
+    final index = sources.indexOf(frame[1]!);
+    if (index < 0) continue;
+    source = index + 1;
+    line = int.parse(frame[2]!);
+    break;
+  }
+  return 'c1${kind.toRadixString(16).padLeft(2, '0')}'
+      '${source.toRadixString(16).padLeft(2, '0')}'
+      '${line.toRadixString(16).padLeft(8, '0')}00';
 }
 
 final class PokrovClientObservability {
@@ -699,12 +745,15 @@ final class PokrovClientObservability {
         .then((_) => _rememberCurrentCrash(errorCode, signature));
   }
 
-  void markCrashSynchronously({String errorCode = 'CRASH-001'}) {
-    final signature = switch (errorCode) {
-      'CRASH-002' => 'c2c2c2c2c2c2c2c2',
-      'CRASH-003' => 'c3c3c3c3c3c3c3c3',
-      _ => 'c1c1c1c1c1c1c1c1',
-    };
+  void markCrashSynchronously(
+      {String errorCode = 'CRASH-001', Object? error, StackTrace? stack}) {
+    final signature = error == null
+        ? switch (errorCode) {
+            'CRASH-002' => 'c2c2c2c2c2c2c2c2',
+            'CRASH-003' => 'c3c3c3c3c3c3c3c3',
+            _ => 'c1c1c1c1c1c1c1c1',
+          }
+        : pokrovSafeCrashSignature(error, stack);
     final attempt = _attempt;
     if (attempt != null && !attempt.isTerminal) {
       attempt.finish(OperationalTerminalKind.crash);
