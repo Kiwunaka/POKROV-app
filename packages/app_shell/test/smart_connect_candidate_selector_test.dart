@@ -23,12 +23,12 @@ ManagedProfilePayload _profile(TransportCandidate candidate) => ManagedProfilePa
 SmartConnectCandidateProbeResult _success(TransportCandidate candidate) =>
   SmartConnectCandidateProbeResult.success(_profile(candidate));
 
-TransportCandidate _familyCandidate(String family) => TransportCandidate(
-  candidateRef: 'de:profile_0:endpoint_test:$family:g1', profileRef: 'profile_0',
+TransportCandidate _familyCandidate(String family, {int? priority, String endpoint = 'test'}) => TransportCandidate(
+  candidateRef: 'de:profile_0:endpoint_$endpoint:$family:g1', profileRef: 'profile_0',
   nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'tcp',
-  protection: 'reality', priority: family == 'ipv4' ? 0 : 1, network: 'tcp',
+  protection: 'reality', priority: priority ?? (family == 'ipv4' ? 0 : 1), network: 'tcp',
   flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
-  family: family, deliveryEndpointId: 'test', endpointGeneration: 1,
+  family: family, deliveryEndpointId: endpoint, endpointGeneration: 1,
   platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {},
 );
 
@@ -44,6 +44,20 @@ void main() {
     expect(SmartConnectCandidateSelector.cacheAlternatives(candidates.first,
         candidates, countryOnly: true).map((candidate) => candidate.candidateRef),
         ['de2:profile_3', 'de:profile_1']);
+  });
+
+  test('cache keeps the exact opposite typed family behind another node', () {
+    final legacy = _candidate(0);
+    final v4 = _familyCandidate('ipv4', priority: 3, endpoint: 'v4');
+    final v6 = _familyCandidate('ipv6', priority: 4, endpoint: 'v6');
+    expect(SmartConnectCandidateSelector.cacheAlternatives(v6,
+        [legacy, v4, v6], countryOnly: true).map((item) => item.candidateRef),
+        [v4.candidateRef]);
+    final otherNode = _candidate(2, node: 'ch', country: 'CH');
+    expect(SmartConnectCandidateSelector.cacheAlternatives(v6,
+        [legacy, _candidate(1, udp: true), otherNode, v4, v6],
+        countryOnly: false).map((item) => item.candidateRef),
+        [otherNode.candidateRef, v4.candidateRef]);
   });
 
   for (final (platform, parallelism) in [(HostPlatform.android, 3), (HostPlatform.windows, 4)]) {
@@ -145,6 +159,28 @@ void main() {
     expect(maxActive, 4);
     expect(stopped, 3);
     expect(active, 0);
+  });
+
+  test('legacy base cannot win while its typed IPv6 sibling is preparing', () async {
+    final legacy = _candidate(0);
+    final v4 = _familyCandidate('ipv4', priority: 3, endpoint: 'v4');
+    final v6 = _familyCandidate('ipv6', priority: 4, endpoint: 'v6');
+    final starts = <String>[];
+    final selected = await SmartConnectCandidateSelector().select(
+      catalog: _catalog([legacy, v4, v6]), network: 'network-a',
+      platform: HostPlatform.android, ipv6Available: true,
+      cancelled: Completer<void>().future,
+      prepare: (candidate, cancelled) async {
+        if (candidate == v6) await Future.any<void>([
+          cancelled, Future<void>.delayed(const Duration(milliseconds: 100)),
+        ]);
+      },
+      probe: (candidate, _, timeout) async {
+        starts.add(candidate.candidateRef);
+        return _success(candidate);
+      });
+    expect(starts, [v6.candidateRef]);
+    expect(selected.profileName, v6.candidateRef);
   });
 
   test('direct family failure releases reserve and an early winner skips it', () async {

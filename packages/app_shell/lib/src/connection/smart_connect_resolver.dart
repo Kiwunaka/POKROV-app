@@ -23,6 +23,12 @@ class SmartConnectSelectionExhausted implements Exception {
 /// Ordinary catalog selection. A successful probe means an authenticated 204
 /// was received through that exact candidate, never just an open TCP port.
 class SmartConnectCandidateSelector {
+  static bool _familySiblings(TransportCandidate a, TransportCandidate b) =>
+      a.warpMode == null && b.warpMode == null &&
+      (a.deliveryEndpointId != null || b.deliveryEndpointId != null) &&
+      a.nodeCode == b.nodeCode && a.profileRef == b.profileRef &&
+      a.family != b.family;
+
   static List<TransportCandidate> cacheAlternatives(
       TransportCandidate selected, Iterable<TransportCandidate> candidates,
       {required bool countryOnly}) {
@@ -37,6 +43,14 @@ class SmartConnectCandidateSelector {
       alternatives.add(candidate);
       families.add(candidate.protocol);
       break;
+    }
+    for (final candidate in ordered) {
+      if (alternatives.length == 2) break;
+      if (candidate.deliveryEndpointId != null && _familySiblings(selected, candidate)) {
+        alternatives.add(candidate);
+        families.add(candidate.protocol);
+        break;
+      }
     }
     for (final candidate in ordered) {
       if (alternatives.length == 2) break;
@@ -110,15 +124,10 @@ class SmartConnectCandidateSelector {
         }
         return a.priority.compareTo(b.priority);
       });
-    bool familySiblings(TransportCandidate a, TransportCandidate b) =>
-        a.warpMode == null && b.warpMode == null &&
-        a.deliveryEndpointId != null && b.deliveryEndpointId != null &&
-        a.nodeCode == b.nodeCode && a.profileRef == b.profileRef &&
-        a.family != b.family;
     final ipv6Siblings = <String, TransportCandidate>{};
     for (final candidate in candidates.where((item) => item.family == 'ipv4')) {
       for (final sibling in candidates.where((item) => item.family == 'ipv6')) {
-        if (familySiblings(candidate, sibling)) {
+        if (_familySiblings(candidate, sibling)) {
           ipv6Siblings[candidate.candidateRef] = sibling;
           break;
         }

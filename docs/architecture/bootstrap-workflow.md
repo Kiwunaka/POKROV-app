@@ -51,8 +51,11 @@ normal profile budget; a 403 remains fatal and never restores cached authority.
 
 After a healthy ordinary connect, the existing finite cache refresh fetches the
 exact current profile's latest catalog, then prepares at most two alternatives:
-first an authorized path on another node, then another protocol family in server
-priority order. A manually selected country keeps both reserves in that country,
+first an authorized path on another node, then the opposite typed ingress family
+on the selected node/profile; another protocol fills any remaining slot in server
+priority order. In a mixed catalog, the legacy IPv4 base shares its typed IPv6
+sibling's native-start fence and cannot probe while that sibling is preparing.
+A manually selected country keeps both reserves in that country,
 without delaying connection or probing them. Already materialized profiles are
 reused in the same encrypted account-bound record; catalog changes, expiry and
 explicit denial still restrict reuse. A proven profile reads the latest catalog
