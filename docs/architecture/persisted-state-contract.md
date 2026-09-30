@@ -14,6 +14,12 @@ Absent or malformed values restore automatic selection in the simple interface.
 These preferences carry no endpoint address or connection material; catalog
 eligibility is checked again before a manual candidate is used.
 
+The cached locations list retains display metadata and the last latency result,
+but never serializes `probe.host` or `probe.port`. These addresses stay in the live
+API response for device latency measurements. Reading an older convenience file
+strips its probe addresses and rewrites it once, preserving location preferences.
+Offline connections still use the separate protected managed-profile cache.
+
 Android Flutter connect/cancel request IDs are process-local only
 (source work, NOT_VERIFIED). The runtime engine uses a weak in-memory snapshot
 association, and the host retains one current request plus its cancellation

@@ -121,6 +121,8 @@ void main() {
               premium: true,
               load: 0.31,
               measuredAt: '2026-07-23T10:15:00Z',
+              probeHost: 'node.private.example.test',
+              probePort: 443,
               variants: <ClientLocationVariant>[
                 ClientLocationVariant(
                   id: 'direct',
@@ -212,6 +214,8 @@ void main() {
     final restored = await store.read();
 
     expect(restored.favoriteNodeCodes, <String>['nl-ams-01']);
+    expect(pokrovLocationLatencyTargets(catalog), hasLength(1));
+    expect(pokrovLocationLatencyTargets(restored.cachedLocations!), isEmpty);
     expect(restored.recentNodeCodes, <String>['nl-ams-01']);
     expect(restored.preferredNodeCode, 'nl-ams-01');
     expect(restored.preferredVariantId, 'mini');
@@ -264,6 +268,28 @@ void main() {
     expect(raw, isNot(contains('configPayload')));
     expect(raw, isNot(contains('accessToken')));
     expect(raw, isNot(contains('privateKey')));
+    expect(raw, isNot(contains('node.private.example.test')));
+
+    final legacy = jsonDecode(raw) as Map<String, dynamic>;
+    final cachedCity = ((legacy['cachedLocations']['countries'] as List)
+        .single['cities'] as List).single as Map<String, dynamic>;
+    cachedCity['probe'] = <String, Object?>{
+      'host': 'node.private.example.test',
+      'port': 443,
+    };
+    await file.writeAsString(jsonEncode(legacy), flush: true);
+
+    final sanitized = await store.read();
+    expect(pokrovLocationLatencyTargets(sanitized.cachedLocations!), isEmpty);
+    expect(sanitized.preferredNodeCode, state.preferredNodeCode);
+    expect(sanitized.interfaceMode, state.interfaceMode);
+    expect(sanitized.cachedLocations!.countries.single.cities.single.latencyMs,
+        catalog.countries.single.cities.single.latencyMs);
+    final sanitizedRaw = await file.readAsString();
+    expect(sanitizedRaw, isNot(contains('node.private.example.test')));
+    expect(sanitizedRaw, isNot(contains('"probe"')));
+    await store.read();
+    expect(await file.readAsString(), sanitizedRaw);
 
     await file.writeAsString('{broken json', flush: true);
     final recovered = await store.read();

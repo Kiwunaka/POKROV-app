@@ -412,11 +412,20 @@ class PokrovFileClientExperienceStore implements PokrovClientExperienceStore {
         (key, value) => MapEntry(key.toString(), value),
       );
       final sourceVersion = _clientExperienceVersion(json);
-      final state = PokrovClientExperienceState.fromJson(json);
-      if (sourceVersion == 0) {
-        // Legacy state was unversioned. The rewrite is best-effort and
-        // idempotent; a failure must not discard otherwise valid convenience
-        // state or block VPN control.
+      var state = PokrovClientExperienceState.fromJson(json);
+      final hasCachedProbeAddresses = state.cachedLocations?.countries.any(
+            (country) => country.cities.any(
+              (city) => city.probeHost.isNotEmpty || city.probePort != 0,
+            ),
+          ) ??
+          false;
+      if (hasCachedProbeAddresses) {
+        // Probe addresses belong to the live API response, not UI state.
+        state = PokrovClientExperienceState.fromJson(state.toJson());
+      }
+      if (sourceVersion == 0 || hasCachedProbeAddresses) {
+        // Rewrite legacy state and remove previously persisted probe addresses.
+        // Storage remains best-effort and cannot block VPN control.
         await write(state);
       }
       return state;

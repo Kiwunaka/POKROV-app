@@ -1262,11 +1262,6 @@ class ClientLocationCity {
         if (measuredAt.isNotEmpty) 'measuredAt': measuredAt,
         if (latencySource.isNotEmpty) 'latencySource': latencySource,
         if (latencyMeasuredAt.isNotEmpty) 'latencyMeasuredAt': latencyMeasuredAt,
-        if (probeHost.isNotEmpty && probePort > 0)
-          'probe': <String, Object?>{
-            'host': probeHost,
-            'port': probePort,
-          },
         if (variants.isNotEmpty)
           'variants': variants.map((item) => item.toJson()).toList(
                 growable: false,
