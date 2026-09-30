@@ -59,7 +59,7 @@ void main() {
         city.variants.map((variant) => variant.id), <String>['direct', 'mini']);
   });
 
-  test('device RTT replaces the brain measurement with a local timestamp', () {
+  test('device RTT keeps Portal health time and stores its own timestamp', () {
     final catalog = applyPokrovDeviceLatencies(
       serverCatalog,
       const {'DE-FRA-01': 47},
@@ -69,8 +69,15 @@ void main() {
 
     expect(city.latencyMs, 47);
     expect(city.latencySource, 'device');
-    expect(city.measuredAt, '2026-08-13T12:30:00.000Z');
+    expect(city.measuredAt, '2026-08-13T08:00:00Z');
+    expect(city.latencyMeasuredAt, '2026-08-13T12:30:00.000Z');
+    expect(city.healthScore, 0.95);
     expect(city.load, 0.07);
+    final restored = ClientLocationCity.fromJson(
+      Map<String, dynamic>.from(city.toJson()),
+    );
+    expect(restored.measuredAt, city.measuredAt);
+    expect(restored.latencyMeasuredAt, city.latencyMeasuredAt);
   });
 
   test('probe targets are bounded to valid endpoint metadata', () {

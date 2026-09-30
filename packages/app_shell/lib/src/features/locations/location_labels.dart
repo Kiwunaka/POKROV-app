@@ -153,9 +153,15 @@ String _locationCandidateLabel(domain.TransportCandidate candidate) {
   return '$protocol$path$warp';
 }
 
-String _locationNodeStatusLabel(ClientLocationCity city) {
+String _locationHealthMeasuredAt(ClientLocationCity city) =>
+    // Older device RTT cache entries overwrote the Portal measurement time.
+    city.latencySource == 'device' && city.latencyMeasuredAt.isEmpty
+        ? ''
+        : city.measuredAt;
+
+String _locationNodeStatusLabel(ClientLocationCity city, {DateTime? now}) {
   final health = _normalizeLocationHealthScore(city.healthScore);
-  if (_locationMetricFreshness(city.measuredAt) !=
+  if (_locationMetricFreshness(_locationHealthMeasuredAt(city), now: now) !=
           _LocationMetricFreshness.current ||
       health == null) {
     return 'Нода: нет свежих данных';
@@ -310,26 +316,43 @@ String _locationMetricsLabel(
   DateTime? now,
   bool compact = false,
 }) {
-  final hasMeasurement = _locationMetricFreshness(city.measuredAt, now: now) !=
-      _LocationMetricFreshness.unknown;
-  final freshnessLabel = compact
-      ? _locationCompactFreshnessLabel(city.measuredAt, now: now)
-      : _locationFreshnessLabel(city.measuredAt, now: now);
+  final healthFreshness =
+      _locationMetricFreshness(_locationHealthMeasuredAt(city), now: now);
+  final hasHealthMeasurement =
+      healthFreshness != _LocationMetricFreshness.unknown;
+  final latencyMeasuredAt = city.latencySource == 'device' &&
+          city.latencyMeasuredAt.isNotEmpty
+      ? city.latencyMeasuredAt
+      : city.measuredAt;
+  final hasLatencyMeasurement =
+      _locationMetricFreshness(latencyMeasuredAt, now: now) !=
+          _LocationMetricFreshness.unknown;
+  final freshness = compact
+      ? _locationCompactFreshnessLabel(latencyMeasuredAt, now: now)
+      : _locationFreshnessLabel(latencyMeasuredAt, now: now);
+  final freshnessLabel =
+      city.latencySource == 'device' ? 'ping $freshness' : freshness;
+  final load = _locationLoadLabel(hasHealthMeasurement ? city.load : null);
+  final loadLabel = city.latencySource == 'device' &&
+          healthFreshness == _LocationMetricFreshness.stale &&
+          load != 'нагрузка —'
+      ? '$load (устарела)'
+      : load;
   if (compact) {
     final latency =
-        !hasMeasurement || city.latencyMs == null || city.latencyMs! <= 0
+        !hasLatencyMeasurement || city.latencyMs == null || city.latencyMs! <= 0
             ? '— мс'
             : '${city.latencyMs} мс';
     return <String>[
-      _locationNodeStatusLabel(city),
+      _locationNodeStatusLabel(city, now: now),
       latency,
-      _locationLoadLabel(hasMeasurement ? city.load : null),
+      loadLabel,
       freshnessLabel,
     ].join(' · ');
   }
   return <String>[
-    _locationLatencyLabel(hasMeasurement ? city.latencyMs : null),
-    _locationLoadLabel(hasMeasurement ? city.load : null),
+    _locationLatencyLabel(hasLatencyMeasurement ? city.latencyMs : null),
+    loadLabel,
     freshnessLabel,
   ].join(' · ');
 }

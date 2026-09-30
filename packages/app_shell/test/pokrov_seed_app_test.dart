@@ -10554,6 +10554,82 @@ void main() {
     expect(store.state.preferredNodeCode, isEmpty);
   });
 
+  testWidgets('fresh device ping does not refresh Portal health and load',
+      (tester) async {
+    _installReadyRuntimeBridgeMock();
+    final oldPortalTime = DateTime.now()
+        .toUtc()
+        .subtract(const Duration(hours: 1))
+        .toIso8601String();
+    final bootstrapper = _FakeBootstrapper(
+      const ManagedProfilePayload(
+        profileName: 'separate-location-clocks',
+        configPayload: _materializedRuntimeConfig,
+        materializedForRuntime: true,
+      ),
+      locationsCatalog: ClientLocationsCatalog(
+        auto: const ClientLocationAuto(enabled: true, currentCode: 'de-fra'),
+        countries: [
+          ClientLocationCountry(
+            code: 'DE',
+            country: 'Germany',
+            cities: [
+              ClientLocationCity(
+                code: 'de-fra',
+                city: 'Frankfurt',
+                healthScore: 0.95,
+                latencyMs: 1,
+                premium: true,
+                load: 0.07,
+                measuredAt: oldPortalTime,
+                latencySource: 'brain',
+                probeHost: 'de.example.test',
+                probePort: 443,
+              ),
+            ],
+          ),
+        ],
+        freePoolCode: '',
+        profileRevision: 'separate-location-clocks',
+        transportProfile: 'reality',
+        query: '',
+      ),
+    );
+    final store = _FakeClientExperienceStore(
+      PokrovClientExperienceState.fromJson({'interfaceMode': 'advanced'}),
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      clientExperienceStore: store,
+      nodeLatencyProbe: (_, __) async => const {'de-fra': 47},
+    ));
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
+    final refresh = find.byKey(const ValueKey('locations-refresh-measurements'));
+    await tester.ensureVisible(refresh);
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    final row = find.byKey(const ValueKey('locations-catalog-city-de-fra'));
+    await tester.ensureVisible(row);
+    await tester.pumpAndSettle();
+    final metrics = tester.widget<Text>(
+      find.byKey(const ValueKey('locations-catalog-metrics-de-fra')),
+    ).data!;
+    expect(metrics, contains('47 мс'));
+    expect(metrics, contains('ping сейчас'));
+    expect(metrics, contains('Нода: нет свежих данных'));
+    expect(metrics, contains('нагрузка низкая (устарела)'));
+    expect(
+      find.descendant(of: row, matching: find.textContaining('Отлично')),
+      findsNothing,
+    );
+    final saved = store.state.cachedLocations!.countries.single.cities.single;
+    expect(saved.measuredAt, oldPortalTime);
+    expect(saved.latencyMeasuredAt, isNotEmpty);
+  });
+
   testWidgets('locations screen renders backend catalog cities',
       (tester) async {
     final semantics = tester.ensureSemantics();
@@ -11932,8 +12008,8 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     _installReadyRuntimeBridgeMock();
 
-    const cachedCatalog = ClientLocationsCatalog(
-      auto: ClientLocationAuto(enabled: true, currentCode: 'nl-ams-01'),
+    final cachedCatalog = ClientLocationsCatalog(
+      auto: const ClientLocationAuto(enabled: true, currentCode: 'nl-ams-01'),
       countries: <ClientLocationCountry>[
         ClientLocationCountry(
           code: 'nl',
@@ -11946,7 +12022,8 @@ void main() {
               latencyMs: 38,
               premium: true,
               load: 0.31,
-              measuredAt: '2026-07-23T10:15:00Z',
+              measuredAt: DateTime.now().toUtc().toIso8601String(),
+              latencySource: 'device',
             ),
           ],
         ),
@@ -11957,7 +12034,7 @@ void main() {
       query: '',
     );
     final store = _FakeClientExperienceStore(
-      const PokrovClientExperienceState(
+      PokrovClientExperienceState(
         favoriteNodeCodes: <String>['nl-ams-01'],
         recentNodeCodes: <String>[],
         protectionEvents: <PokrovProtectionEvent>[],
@@ -12014,6 +12091,13 @@ void main() {
     expect(find.text('Нет свежих данных'), findsOneWidget);
     expect(
         find.textContaining('Показываем сохранённый список'), findsOneWidget);
+    final legacyMetrics = tester.widget<Text>(
+      find.byKey(const ValueKey('locations-catalog-metrics-nl-ams-01')),
+    ).data!;
+    expect(legacyMetrics, contains('38 мс'));
+    expect(legacyMetrics, contains('ping сейчас'));
+    expect(legacyMetrics, contains('Нода: нет свежих данных'));
+    expect(legacyMetrics, contains('нагрузка —'));
 
     final favoriteAction =
         find.byKey(const ValueKey('locations-favorite-nl-ams-01'));

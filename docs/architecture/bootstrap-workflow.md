@@ -1139,6 +1139,11 @@ Current blocking dependency:
   projection; the selected variant id persists beside the manual node code.
   Automatic Smart Connect remains direct-selection-compatible and does not
   inherit that manual preference
+  Location health and load retain the Portal `measuredAt` timestamp. Device TCP
+  probes store a separate `latencyMeasuredAt` and refresh only ping; a fresh RTT
+  cannot refresh node health, load or their combined quality label. Legacy cached
+  device entries without `latencyMeasuredAt` have lost the Portal clock: their
+  ping remains visible, while health and load stay unknown until catalog refresh.
 - WARP with a manual bridge/`Белые списки` variant is gated before staging
   until focused composition proof exists. There is no implicit fallback to
   direct or to WARP-off for this user-selected combination

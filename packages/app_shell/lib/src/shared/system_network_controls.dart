@@ -178,10 +178,11 @@ ClientLocationsCatalog applyPokrovDeviceLatencies(
                 latencyMs: normalized[city.code.trim().toLowerCase()],
                 premium: city.premium,
                 load: city.load,
-                measuredAt:
+                measuredAt: city.measuredAt,
+                latencyMeasuredAt:
                     normalized.containsKey(city.code.trim().toLowerCase())
                         ? timestamp
-                        : city.measuredAt,
+                        : '',
                 latencySource: normalized.containsKey(
                   city.code.trim().toLowerCase(),
                 )

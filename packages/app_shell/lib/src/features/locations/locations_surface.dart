@@ -1294,11 +1294,20 @@ class _ClientLocationCityRow extends StatelessWidget {
     final city = entry.city;
     final country = entry.country;
     final now = DateTime.now().toUtc();
-    final freshness = _locationMetricFreshness(city.measuredAt, now: now);
+    final freshness =
+        _locationMetricFreshness(_locationHealthMeasuredAt(city), now: now);
+    final latencyFreshness = _locationMetricFreshness(
+      city.latencySource == 'device' && city.latencyMeasuredAt.isNotEmpty
+          ? city.latencyMeasuredAt
+          : city.measuredAt,
+      now: now,
+    );
     final hasAvailableVariant = city.variants.isEmpty ||
         city.variants.any((variant) => variant.available);
     final quality =
-        freshness == _LocationMetricFreshness.current && hasAvailableVariant
+        freshness == _LocationMetricFreshness.current &&
+                latencyFreshness == _LocationMetricFreshness.current &&
+                hasAvailableVariant
             ? _locationQualityLabel(
                 city.healthScore,
                 latencyMs: city.latencyMs,

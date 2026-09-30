@@ -1209,6 +1209,7 @@ class ClientLocationCity {
     required this.load,
     this.measuredAt = '',
     this.latencySource = '',
+    this.latencyMeasuredAt = '',
     this.probeHost = '',
     this.probePort = 0,
     this.variants = const <ClientLocationVariant>[],
@@ -1222,6 +1223,7 @@ class ClientLocationCity {
   final double? load;
   final String measuredAt;
   final String latencySource;
+  final String latencyMeasuredAt;
   final String probeHost;
   final int probePort;
   final List<ClientLocationVariant> variants;
@@ -1241,6 +1243,9 @@ class ClientLocationCity {
       latencySource: _clientText(
         json['latencySource'] ?? json['latency_source'],
       ),
+      latencyMeasuredAt: _clientText(
+        json['latencyMeasuredAt'] ?? json['latency_measured_at'],
+      ),
       probeHost: _clientText(probe['host']),
       probePort: _clientInt(probe['port']),
       variants: ClientLocationVariant.parseList(json['variants']),
@@ -1256,6 +1261,7 @@ class ClientLocationCity {
         if (load != null) 'load': load,
         if (measuredAt.isNotEmpty) 'measuredAt': measuredAt,
         if (latencySource.isNotEmpty) 'latencySource': latencySource,
+        if (latencyMeasuredAt.isNotEmpty) 'latencyMeasuredAt': latencyMeasuredAt,
         if (probeHost.isNotEmpty && probePort > 0)
           'probe': <String, Object?>{
             'host': probeHost,
