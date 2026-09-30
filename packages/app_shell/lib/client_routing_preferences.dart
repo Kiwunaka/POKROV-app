@@ -792,6 +792,19 @@ ManagedProfilePayload _normalizeRuntimeDns(ManagedProfilePayload payload) {
     if (plainDirectTags.contains(server['detour'])) server.remove('detour');
     servers.add(server);
   }
+  final localResolver = servers.where((server) => server['type'] == 'local')
+      .map((server) => _routingText(server['tag']))
+      .where((tag) => tag.isNotEmpty).firstOrNull;
+  for (final server in servers) {
+    if (_routingText(server['server']).isNotEmpty &&
+        InternetAddress.tryParse(_routingText(server['server'])) == null &&
+        _routingText(server['detour']).isEmpty && server['domain_resolver'] == null) {
+      if (localResolver == null) {
+        throw const FormatException('Direct DNS bootstrap resolver unavailable');
+      }
+      server['domain_resolver'] = localResolver;
+    }
+  }
   Map<String, dynamic> migrateRule(Map<String, dynamic> rule) {
     if (rule['rules'] is List) {
       rule['rules'] = _routingListOfMaps(rule['rules']).map(migrateRule).toList();

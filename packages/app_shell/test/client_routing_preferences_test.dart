@@ -472,6 +472,7 @@ void main() {
       'tag': 'pokrov-user-dns',
       'type': 'https',
       'server': 'dns.google',
+      'domain_resolver': 'profile-dns',
     });
   });
 
@@ -513,6 +514,7 @@ void main() {
       'tag': 'pokrov-user-dns',
       'type': 'https',
       'server': 'smart.example',
+      'domain_resolver': 'profile-dns',
     });
     expect(dns['final'], 'profile-dns');
     expect(dnsRules.first['action'], 'route');
