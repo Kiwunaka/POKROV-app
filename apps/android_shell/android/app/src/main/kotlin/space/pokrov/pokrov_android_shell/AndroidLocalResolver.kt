@@ -39,6 +39,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun exchange(ctx: ExchangeContext, message: ByteArray) {
         val runtimeToken = activeRuntimeToken
+        val isIpv6Query = AndroidResolverPolicy.isSingleIpv6Question(message)
         val defaultNetwork = requireDefaultNetwork(queryFamily = "raw", runtimeToken = runtimeToken)
         val signal = CancellationSignal()
         val latch = CountDownLatch(1)
@@ -74,7 +75,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
                     is ErrnoException -> ctx.errnoCode(cause.errno)
                     else -> ctx.errorCode(AndroidResolverPolicy.SERVFAIL_RCODE)
                 }
-                reportTransportFailure(classifyResolverFailure(error), runtimeToken)
+                reportTransportFailure(classifyResolverFailure(error), runtimeToken, isIpv6Query)
                 latch.countDown()
             }
         }
@@ -86,7 +87,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
             signal,
             callback,
         )
-        completeTimeoutIfNeeded(latch, signal, completed, ctx, runtimeToken)
+        completeTimeoutIfNeeded(latch, signal, completed, ctx, runtimeToken, isIpv6Query)
     }
 
     override fun lookup(ctx: ExchangeContext, network: String, domain: String) {
@@ -131,7 +132,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
                         is ErrnoException -> ctx.errnoCode(cause.errno)
                         else -> ctx.errorCode(AndroidResolverPolicy.SERVFAIL_RCODE)
                     }
-                    reportTransportFailure(classifyResolverFailure(error), runtimeToken)
+                    reportTransportFailure(classifyResolverFailure(error), runtimeToken, queryFamily == "ipv6")
                     latch.countDown()
                 }
             }
@@ -160,7 +161,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
                     callback,
                 )
             }
-            completeTimeoutIfNeeded(latch, signal, completed, ctx, runtimeToken)
+            completeTimeoutIfNeeded(latch, signal, completed, ctx, runtimeToken, queryFamily == "ipv6")
             return
         }
 
@@ -180,12 +181,13 @@ internal object AndroidLocalResolver : LocalDNSTransport {
         completed: AtomicBoolean,
         ctx: ExchangeContext,
         runtimeToken: Any?,
+        isIpv6Query: Boolean,
     ) {
         if (await(latch, signal) || signal.isCanceled || !completed.compareAndSet(false, true)) {
             return
         }
         signal.cancel()
-        reportTransportFailure(AndroidResolverPolicy.TIMEOUT, runtimeToken)
+        reportTransportFailure(AndroidResolverPolicy.TIMEOUT, runtimeToken, isIpv6Query)
         ctx.errorCode(AndroidResolverPolicy.SERVFAIL_RCODE)
         latch.countDown()
     }
@@ -238,7 +240,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
         }
     }
 
-    private fun reportTransportFailure(kind: String, runtimeToken: Any?) {
+    private fun reportTransportFailure(kind: String, runtimeToken: Any?, isIpv6Query: Boolean = false) {
         val outcome = when (kind) {
             AndroidResolverPolicy.CALLBACK_ERROR -> AndroidResolverPolicy.RuntimeOutcome.CALLBACK_ERROR
             AndroidResolverPolicy.TIMEOUT,
@@ -249,7 +251,7 @@ internal object AndroidLocalResolver : LocalDNSTransport {
             runtimeToken != null &&
                 AndroidResolverPolicy.shouldFailCloseRuntime(outcome)
         ) {
-            PokrovRuntimeVpnService.reportDnsTransportFailure(runtimeToken, kind)
+            PokrovRuntimeVpnService.reportDnsTransportFailure(runtimeToken, kind, isIpv6Query)
         }
     }
 

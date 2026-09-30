@@ -1980,10 +1980,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         mainHandler.post { stopSelf() }
     }
 
-    private fun scheduleDnsTransportFailure(token: Any, failureKind: String) {
+    private fun scheduleDnsTransportFailure(token: Any, failureKind: String, isIpv6Query: Boolean) {
         runCatching {
             runtimeExecutor.execute {
                 if (!lifecycleActive.get() || !dnsFailureTokenGate.owns(token) || activeTun == null) {
+                    return@execute
+                }
+                if (isIpv6Query) {
+                    coreEgressMonitor?.onSuspectedFailure()
                     return@execute
                 }
                 val failureMessage = AndroidRuntimeSafety.publicFailureMessage(failureKind)
@@ -2430,10 +2434,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
         fun latestRuntimeMessage(): String? = currentRuntimeMessage
 
-        internal fun reportDnsTransportFailure(token: Any, failureKind: String) {
+        internal fun reportDnsTransportFailure(token: Any, failureKind: String, isIpv6Query: Boolean = false) {
             val target = activeDnsFailureTarget
             if (target?.token === token) {
-                target.service.scheduleDnsTransportFailure(token, failureKind)
+                target.service.scheduleDnsTransportFailure(token, failureKind, isIpv6Query)
             }
         }
 

@@ -125,9 +125,10 @@ class AndroidCoreEgressProbeTest {
     fun networkSuspicionAllowsEarlyRecheckButNotEverySecond() {
         var now = 0L
         val started = mutableListOf<Long>()
+        val published = mutableListOf<AndroidCoreEgressProbeResult>()
         val monitor = AndroidCoreEgressMonitor(
             isCurrent = { true }, canRepeat = { true }, clockMillis = { now },
-            startProbe = { token, _ -> started += token }, publish = { _, _ -> },
+            startProbe = { token, _ -> started += token }, publish = { result, _ -> published += result },
         )
         monitor.start()
         monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
@@ -137,6 +138,10 @@ class AndroidCoreEgressProbeTest {
         now = 5_000L
         monitor.onSuspectedFailure()
         assertEquals(2, started.size)
+        // An isolated AAAA failure requests this recheck; it is not a failed IPv4 probe.
+        assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY), published)
+        monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
+        assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbeResult.HEALTHY), published)
         monitor.cancel()
     }
 
