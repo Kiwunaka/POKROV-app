@@ -2290,6 +2290,7 @@ void main() {
           runtimeReady: true,
           userConsented: true,
           state: 'consented',
+          mode: 'warp_over_proxy',
           source: 'client_local',
           id: 'p1',
         ),
@@ -2386,6 +2387,102 @@ void main() {
           as Map<String, dynamic>)['store_warp_config'],
       isTrue,
     );
+  });
+
+  test('direct WARP registers per installation and preserves direct rules',
+      () async {
+    final root = await Directory.systemTemp.createTemp('pokrov-warp-direct-');
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+    final platformDirectory = Directory(p.join(root.path, 'windows'))
+      ..createSync(recursive: true);
+    File(p.join(platformDirectory.path, 'pokrov-core.dll'))
+        .writeAsStringSync('stub');
+    final bindings = _FakeDesktopBindings();
+    final engine = DesktopRuntimeEngine(
+      hostPlatform: HostPlatform.windows,
+      assetRootOverride: root.path,
+      systemTunnelProbe: () async => null,
+      bindingsLoader: (_) => bindings,
+    );
+    final policy = WarpRuntimePolicy.tryParse(const {
+      'enabled': true,
+      'runtime_ready': true,
+      'user_consented': true,
+      'state': 'consented',
+      'source': 'client_local',
+      'mode': 'warp_direct',
+      'id': 'warp-direct:install-a',
+      'clean_ip': '162.159.192.1',
+      'clean_port': 2408,
+    });
+    final payload = ManagedProfilePayload(
+      profileName: 'warp-free-reserve',
+      configPayload:
+          '{"outbounds":[{"type":"vless","tag":"node"},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"dns":{"servers":[{"tag":"remote","address":"1.1.1.1","detour":"proxy"},{"tag":"direct-dns","address":"local","detour":"direct"}]},"route":{"rules":[{"process_name":["browser.exe"],"outbound":"proxy"},{"domain_suffix":["example.test"],"outbound":"direct"}],"final":"direct"}}',
+      materializedForRuntime: true,
+      routeMode: RouteMode.selectedApps,
+      warpPolicy: policy,
+    );
+    final withoutConsent = await engine.stageManagedProfile(payload.copyWith(
+      warpPolicy: policy.withUserConsent(false),
+    ));
+    expect(withoutConsent.canConnect, isTrue);
+    final baseConfig = jsonDecode(
+        await File(withoutConsent.stagedConfigPath!).readAsString()) as Map;
+    expect(baseConfig['endpoints'], isNull);
+    expect(((baseConfig['route'] as Map)['rules'] as List).first['outbound'],
+        'proxy');
+    final staged = await engine.stageManagedProfile(payload);
+    expect(staged.canConnect, isTrue);
+    final config = jsonDecode(await File(staged.stagedConfigPath!).readAsString())
+        as Map<String, dynamic>;
+    final endpoint = (config['endpoints'] as List).single as Map;
+    expect(endpoint['type'], 'warp');
+    expect(endpoint['unique_identifier'], 'warp-direct:install-a');
+    expect(endpoint['detour'], isNull);
+    expect(endpoint['profile'], {'detour': 'direct'});
+    expect(endpoint['server'], '162.159.192.1');
+    expect(endpoint['server_port'], 2408);
+    expect((endpoint['noise'] as Map)['fake_packet'], {
+      'enabled': true, 'count': '1-3', 'size': '10-30',
+      'delay': '10-30', 'mode': 'm4',
+    });
+    final route = config['route'] as Map;
+    expect(route['final'], 'direct');
+    expect((route['rules'] as List).map((rule) => (rule as Map)['outbound']),
+        ['pokrov-warp', 'direct']);
+    final dnsServers = (config['dns'] as Map)['servers'] as List;
+    expect(dnsServers.map((server) => (server as Map)['detour']),
+        ['pokrov-warp', 'direct']);
+    expect((config['outbounds'] as List).first['detour'], isNull);
+    expect(((config['experimental'] as Map)['cache_file'] as Map)
+        ['store_warp_config'], isTrue);
+    final configuredBase = jsonDecode(payload.configPayload) as Map;
+    final configuredDirect = (configuredBase['outbounds'] as List).last as Map;
+    configuredDirect['bind_interface'] = 'Ethernet';
+    configuredDirect['routing_mark'] = 1005;
+    final configured = await engine.stageManagedProfile(payload.copyWith(
+      configPayload: jsonEncode(configuredBase),
+    ));
+    expect(configured.canConnect, isTrue);
+    final configuredConfig = jsonDecode(
+        await File(configured.stagedConfigPath!).readAsString()) as Map;
+    final configuredEndpoint =
+        (configuredConfig['endpoints'] as List).single as Map;
+    expect(configuredEndpoint['detour'], 'direct');
+    expect(configuredEndpoint['profile'], {'detour': 'direct'});
+    expect((configuredConfig['outbounds'] as List).last, configuredDirect);
+    final rejected = await engine.stageManagedProfile(payload.copyWith(
+      warpPolicy: policy.copyWith(accountId: 'another-device-account'),
+    ));
+    expect(rejected.canConnect, isFalse);
+    expect(rejected.lastFailureKind, 'profile_staging_failed');
+    expect(bindings.startCalls, 0);
+    expect(bindings.secureFileCalls, 3);
   });
 
   test('POKROV Core disabling WARP restores the staged base config', () async {

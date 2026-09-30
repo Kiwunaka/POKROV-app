@@ -37,3 +37,11 @@ ignored native runtime slots used by Gradle/CMake. Build the client directly;
 the release-pinned sync/packaging script and `runtime-artifacts.seed.json` still
 describe the published runtime and are not updated for this private build.
 Missing native probe APIs return unavailable, never a socket-only success.
+
+The `warp_direct` policy requires local device registration, explicit consent
+and `id=warp-direct:<install_id>`; account, license and backend WireGuard
+material are rejected. It applies masking to WARP and replaces protected route
+and DNS references while preserving explicit Direct rules. Registration keeps
+its direct detour; the data endpoint omits it only for a bare Direct outbound,
+which sing-box 1.14 cannot use as a detour. Configured Direct options are retained.
+This materializer does not add WARP to automatic selection.

@@ -1117,7 +1117,10 @@ class WarpRuntimePolicy {
 
   static String _readMode(Object? value) {
     final text = _readText(value, fallback: 'proxy_over_warp');
-    return text == 'warp_over_proxy' ? text : 'proxy_over_warp';
+    return const {'proxy_over_warp', 'warp_over_proxy', 'warp_direct'}
+            .contains(text)
+        ? text
+        : 'proxy_over_warp';
   }
 
   static String _readState(
@@ -2823,8 +2826,30 @@ String _materializePokrovCoreConfig(
   final directTag = _firstOutboundTagByType(outbounds, const {'direct'});
   final proxyTag = _primaryProxyTag(outbounds, route);
   final warpOverProxy = policy.mode == 'warp_over_proxy';
+  final warpDirect = policy.mode == 'warp_direct';
+  final endpointDirectTag = warpDirect &&
+          directTag != null &&
+          outbounds
+              .firstWhere((outbound) => _runtimeText(outbound['tag']) == directTag)
+              .keys
+              .every((key) => key == 'type' || key == 'tag')
+      ? null
+      : directTag;
+  if (warpDirect &&
+      (!policy.isClientLocal ||
+          !policy.id.startsWith('warp-direct:') ||
+          policy.id.substring('warp-direct:'.length).trim().isEmpty ||
+          policy.hasServerManagedMaterial ||
+          policy.licenseKey.trim().isNotEmpty)) {
+    throw const FormatException(
+      'Direct WARP requires an installation identity and local registration',
+    );
+  }
   if (warpOverProxy && proxyTag == null) {
     throw const FormatException('WARP-over-proxy requires a proxy outbound');
+  }
+  if (warpDirect && proxyTag == null) {
+    throw const FormatException('Direct WARP requires a protected route');
   }
 
   final profile = <String, Object?>{
@@ -2856,8 +2881,8 @@ String _materializePokrovCoreConfig(
     'mtu': 1280,
     if (warpOverProxy && proxyTag != null)
       'detour': proxyTag
-    else if (directTag != null)
-      'detour': directTag,
+    else if (endpointDirectTag != null)
+      'detour': endpointDirectTag,
   };
   _mergeNativeWarpConfig(endpoint, wireguardConfig);
 
@@ -2870,7 +2895,9 @@ String _materializePokrovCoreConfig(
       endpoint['server_port'] = policy.cleanPort;
     }
   }
-  final noiseCount = policy.noise.trim();
+  final noiseCount = policy.noise.trim().isEmpty && warpDirect
+      ? '1-3'
+      : policy.noise.trim();
   if (noiseCount.isNotEmpty) {
     endpoint['noise'] = <String, Object?>{
       'fake_packet': <String, Object?>{
@@ -2894,7 +2921,7 @@ String _materializePokrovCoreConfig(
     ..add(endpoint);
   config['endpoints'] = endpoints;
 
-  if (warpOverProxy) {
+  if (warpOverProxy || warpDirect) {
     _replaceOutboundReference(route, proxyTag!, _pokrovWarpEndpointTag);
     final dns = Map<String, Object?>.from(_runtimeObjectMap(config['dns']));
     _replaceDetourReference(dns, proxyTag, _pokrovWarpEndpointTag);
