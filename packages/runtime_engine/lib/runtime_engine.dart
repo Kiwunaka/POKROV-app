@@ -2793,13 +2793,17 @@ String _materializePokrovCoreConfig(
           ),
         )
       : const <String, Object?>{};
+  final localDpi = preserveAndroidHostMetadata
+      ? Map<String, Object?>.from(_runtimeObjectMap(_runtimeObjectMap(config['_meta'])['local_dpi']))
+      : const <String, Object?>{};
   // POKROV Core deliberately rejects unknown sing-box fields. Desktop passes
   // this JSON straight to Core, while Android stages one private host-only
   // mapping that VpnService removes before startOrReloadService().
   config.remove('_meta');
-  if (runtimeVariantProbe.isNotEmpty) {
+  if (runtimeVariantProbe.isNotEmpty || localDpi.isNotEmpty) {
     config['_meta'] = <String, Object?>{
-      'runtime_variant_probe': runtimeVariantProbe,
+      if (runtimeVariantProbe.isNotEmpty) 'runtime_variant_probe': runtimeVariantProbe,
+      if (localDpi.isNotEmpty) 'local_dpi': localDpi,
     };
   }
   _pinDnsHijackBeforeBypasses(config);

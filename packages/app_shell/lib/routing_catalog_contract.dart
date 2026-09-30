@@ -42,6 +42,9 @@ class VerifiedRoutingCatalog {
   final DateTime expiresAt;
   final Map<String, Object?> envelope;
   final Map<String, Object?> payload;
+
+  /// The complete frozen envelope, with the publisher's signed payload bytes.
+  String get canonicalEnvelopeJson => _canonical(envelope);
 }
 
 class RoutingCatalogFetchResult {

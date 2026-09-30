@@ -570,7 +570,7 @@ void main() {
       const ManagedProfilePayload(
         profileName: 'materialized',
         configPayload:
-            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"ip_is_private":true,"outbound":"direct"},{"protocol":"dns","action":"hijack-dns"}],"final":"direct"},"experimental":{"cache_file":{"enabled":true}},"_meta":{"title":"display only","runtime_variant_probe":{"group_tag":"probe","mappings":[{"id":"direct","outbound_tag":"direct"}]}}}',
+            '{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"}],"route":{"rules":[{"ip_is_private":true,"outbound":"direct"},{"protocol":"dns","action":"hijack-dns"}],"final":"direct"},"experimental":{"cache_file":{"enabled":true}},"_meta":{"title":"display only","local_dpi":{"catalog_envelope":"original signed bytes"},"runtime_variant_probe":{"group_tag":"probe","mappings":[{"id":"direct","outbound_tag":"direct"}]}}}',
         materializedForRuntime: true,
         coreEgressProbeRequired: false,
       ),
@@ -585,6 +585,7 @@ void main() {
         jsonDecode(stagedArguments?['configPayload']! as String)
             as Map<String, dynamic>;
     expect(stagedConfig['_meta'], <String, dynamic>{
+      'local_dpi': <String, dynamic>{'catalog_envelope': 'original signed bytes'},
       'runtime_variant_probe': <String, dynamic>{
         'group_tag': 'probe',
         'mappings': <Map<String, String>>[
@@ -3818,7 +3819,7 @@ void main() {
     final snapshot = await engine.stageManagedProfile(
       const ManagedProfilePayload(
         profileName: 'pokrov-test',
-        configPayload: '{"_meta":{"revision":"test-only"},'
+        configPayload: '{"_meta":{"revision":"test-only","local_dpi":{"catalog_envelope":"original signed bytes"}},'
             '"dns":{},"inbounds":[],"outbounds":[],"route":{},'
             '"experimental":{"cache_file":{"enabled":true}}}',
         materializedForRuntime: true,

@@ -58,6 +58,24 @@ internal class AndroidByeDpiRuntime private constructor(
             rawPort()
         }
 
+    /** Only the native publisher uses this while Core holders are dormant. */
+    val unprovenSocksPort: Int
+        get() = synchronized(protectLock) { check(isCurrent()); rawPort() }
+
+    fun proveService(host: String, address: InetAddress, remainingMillis: () -> Int): Boolean {
+        val attempt = AndroidByeDpiServiceProof(::isCurrent, remainingMillis)
+        synchronized(protectLock) {
+            if (!isCurrent()) return false
+            proof = attempt
+        }
+        return try { attempt.run(rawPort(), SNIHostName(host).asciiName, address) }
+        finally { attempt.close() }
+    }
+
+    fun markAdmitted(): Boolean = synchronized(protectLock) {
+        isCurrent().also { if (it) admitted = true }
+    }
+
     private fun rawPort(): Int = nativePort(nativeHandle).also {
         check(it != 0) { "byedpi: native runtime stopped" }
     }
@@ -136,10 +154,10 @@ internal class AndroidByeDpiRuntime private constructor(
         try {
             // The callback carries the captured identity. Its owner compares it
             // with the published route before withdrawing new-flow admission.
-            val withdrawn = synchronized(protectLock) { admitted.also { admitted = false } }
-            val withdrawal = if (withdrawn) runCatching {
+            synchronized(protectLock) { admitted = false }
+            val withdrawal = runCatching {
                 withdrawAdmission(nativePort(nativeHandle) == 0)
-            } else null
+            }
             proof?.close()
             synchronized(protectLock) { runCatching { accepted?.close() } }
             if (nativeHandle != 0L) nativeStop(nativeHandle)
@@ -148,100 +166,36 @@ internal class AndroidByeDpiRuntime private constructor(
             bound.close()
             // This path belongs to this instance and is only its ephemeral Unix socket.
             path.delete()
-            withdrawal?.getOrThrow()
+            withdrawal.getOrThrow()
         } finally {
             closeSettled.countDown()
         }
     }
 
-    private external fun nativeStart(protectPath: String, strategy: Int): Long
+    private external fun nativeStart(protectPath: String, strategy: Int, requestedPort: Int): Long
     private external fun nativePort(handle: Long): Int
     private external fun nativeStop(handle: Long)
 
     companion object {
-        private data class ProvenStrategy(val generation: Long, val network: String, val service: String,
-            val host: String, val strategy: AndroidByeDpiStrategy)
-        private var lastStrategy: ProvenStrategy? = null
+        private var lastStrategy: Pair<String, AndroidByeDpiStrategy>? = null
 
-        /**
-         * Caller denies bridge/detour/unknown paths before invoking this method.
-         * Host/address come from the current verified service policy and DNS.
-         * The DPI child scope is cancelled by both the VPN parent and the
-         * existing network observer, including while this call is pending.
-         */
-        fun startProven(
-            context: Context,
-            session: AndroidLifecycleTaskScope,
-            ownsSession: () -> Boolean,
-            protectSocket: (Int) -> Boolean,
-            serviceId: String,
-            controlHost: String,
-            controlAddress: InetAddress,
-            networkContextRef: String,
-            currentNetworkRef: () -> String?,
-            remainingMillis: () -> Int,
-            withdrawServiceAdmission: (Long, String, String) -> Unit,
-        ): AndroidByeDpiRuntime? {
-            // SNI validation also excludes HTTP header injection before any socket.
-            val host = SNIHostName(controlHost).asciiName
-            fun current() = session.isActive() && ownsSession() &&
-                currentNetworkRef() == networkContextRef
-            if (!current() || remainingMillis() <= 0) return null
-            val cached = synchronized(this) {
-                if (!current()) return null
-                if (lastStrategy?.network != networkContextRef) lastStrategy = null
-                lastStrategy?.takeIf { it.service == serviceId && it.host == host }
-            }
-            val preferred = cached?.strategy
-            val order = AndroidByeDpiStrategy.entries.sortedBy { if (it == preferred) 0 else 1 }
-            for ((index, strategy) in order.withIndex()) {
-                if (!current() || remainingMillis() <= 0) break
-                val runtime = runCatching {
-                    start(context, session, ::current, protectSocket, strategy) { failed ->
-                        if (failed || currentNetworkRef() != networkContextRef) synchronized(this) {
-                            if (lastStrategy?.let { it.generation == session.generation &&
-                                    it.network == networkContextRef && it.service == serviceId &&
-                                    it.host == host } == true) lastStrategy = null
-                        }
-                        withdrawServiceAdmission(session.generation, networkContextRef, serviceId)
-                    }
-                }.getOrNull() ?: break
-                val attemptBudget = remainingMillis() / (order.size - index)
-                val deadline = System.nanoTime() + attemptBudget.toLong() * 1_000_000L
-                val attempt = AndroidByeDpiServiceProof(runtime::isCurrent) {
-                    minOf(remainingMillis(), ((deadline - System.nanoTime()) / 1_000_000L).toInt())
-                }
-                runtime.proof = attempt
-                val passed = runCatching {
-                    attempt.run(runtime.rawPort(), host, controlAddress)
-                }.getOrDefault(false)
-                val published = synchronized(runtime.protectLock) {
-                    if (passed && runtime.isCurrent()) {
-                        synchronized(this) {
-                            if (current()) {
-                                lastStrategy = ProvenStrategy(session.generation, networkContextRef,
-                                    serviceId, host, strategy)
-                                runtime.admitted = true
-                            }
-                        }
-                    }
-                    runtime.admitted && runtime.isCurrent()
-                }
-                if (published) return runtime
-                runtime.close()
-                synchronized(this) {
-                    if (lastStrategy === cached) lastStrategy = null
-                }
-            }
-            return null
+        @Synchronized fun strategyOrder(network: String): List<AndroidByeDpiStrategy> {
+            if (lastStrategy?.first != network) lastStrategy = null
+            return AndroidByeDpiStrategy.entries.sortedBy { if (it == lastStrategy?.second) 0 else 1 }
         }
 
-        private fun start(
+        @Synchronized fun rememberStrategy(network: String, strategy: AndroidByeDpiStrategy) {
+            lastStrategy = network to strategy
+        }
+
+        /** Binds a loopback endpoint; it grants no Core route admission. */
+        fun startUnproven(
             context: Context,
             session: AndroidLifecycleTaskScope,
             ownsSession: () -> Boolean,
             protectSocket: (Int) -> Boolean,
             strategy: AndroidByeDpiStrategy,
+            requestedPort: Int = 0,
             withdrawAdmission: (Boolean) -> Unit,
         ): AndroidByeDpiRuntime {
             check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -259,7 +213,7 @@ internal class AndroidByeDpiRuntime private constructor(
                 Os.setsockoptTimeval(runtime.bound.fileDescriptor, OsConstants.SOL_SOCKET,
                     OsConstants.SO_RCVTIMEO, StructTimeval.fromMillis(1000))
                 runtime.server = LocalServerSocket(runtime.bound.fileDescriptor)
-                runtime.nativeHandle = runtime.nativeStart(runtime.path.absolutePath, strategy.ordinal)
+                runtime.nativeHandle = runtime.nativeStart(runtime.path.absolutePath, strategy.ordinal, requestedPort)
                 runtime.listener = Thread(runtime::listenForProtection, "pokrov-byedpi-protect").apply {
                     isDaemon = true
                     start()

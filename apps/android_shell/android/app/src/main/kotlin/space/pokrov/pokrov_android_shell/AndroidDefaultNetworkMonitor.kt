@@ -86,6 +86,18 @@ internal object AndroidDefaultNetworkMonitor {
     private var resolvedInterfaceIndex: Int? = null
     private var interfaceResolutionGeneration: Long? = null
     private var lastPublishedInterfaceName: String? = null
+    private var contextInvalidated: (() -> Unit)? = null
+
+    fun onContextInvalidated(action: () -> Unit): AutoCloseable {
+        synchronized(networkLock) { contextInvalidated = action }
+        return AutoCloseable { synchronized(networkLock) {
+            if (contextInvalidated === action) contextInvalidated = null
+        } }
+    }
+
+    private fun notifyContextInvalidated() {
+        synchronized(networkLock) { contextInvalidated }?.invoke()
+    }
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
@@ -116,6 +128,7 @@ internal object AndroidDefaultNetworkMonitor {
         override fun onLost(network: Network) {
             val missingGeneration = clearCurrentNetworkIfMatches(network)
             if (missingGeneration != null) {
+                notifyContextInvalidated()
                 AndroidOperationalJournal.recordRateLimited(
                     AndroidOperationalEvent.NETWORK_CALLBACK,
                     AndroidOperationalOutcome.LOST,
@@ -289,6 +302,7 @@ internal object AndroidDefaultNetworkMonitor {
         if (!isUsableNetwork(resolvedCapabilities)) {
             val missingGeneration = clearCurrentNetworkIfMatches(network)
             if (missingGeneration != null) {
+                notifyContextInvalidated()
                 scheduleMissingNetworkSettlement(missingGeneration)
                 signalNetworkUpdate()
             }
@@ -325,7 +339,10 @@ internal object AndroidDefaultNetworkMonitor {
                 resolutionPending = interfaceResolutionGeneration == currentNetworkGeneration,
             )
         }
-        if (update.networkChanged) AndroidConnectRequestOwner.cancelIfNetworkChanged()
+        if (update.networkChanged) {
+            notifyContextInvalidated()
+            AndroidConnectRequestOwner.cancelIfNetworkChanged()
+        }
         when (
             resolveDefaultNetworkRefreshAction(
                 networkChanged = update.networkChanged,
@@ -456,6 +473,7 @@ internal object AndroidDefaultNetworkMonitor {
             resolvedInterfaceIndex = null
             interfaceResolutionGeneration = null
         }
+        notifyContextInvalidated()
     }
 
     private fun publishInterfaceStateIfCurrent(

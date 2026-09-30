@@ -53,6 +53,7 @@ import java.util.concurrent.Executors
 
 class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHandler {
     private var commandServer: CommandServer? = null
+    @Volatile private var activeLocalDpi: AndroidLocalDpiAdmission? = null
     private var activeConfigContent: String? = null
     private var activeVariantConfigContent: String? = null
     @Volatile private var activeCatalogAppBinding: AndroidCatalogAppBinding? = null
@@ -472,6 +473,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
         }
         scope?.close()
+        activeLocalDpi = null
         if (scope != null) {
             AndroidRuntimeState.endTunnelTrafficSession(scope.generation)
         }
@@ -690,7 +692,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 )
                 if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
             }
-            val content = runtimeConfig.toString()
             runCatching { commandServer?.closeService() }
             runCatching { commandServer?.close() }
             commandServer = null
@@ -708,6 +709,16 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     throw SupersededRuntimeStart()
                 }
             }
+            val dpi = AndroidLocalDpiAdmission.prepare(this, runtimeConfig,
+                JSONObject(rawContent).optJSONObject("_meta")?.optJSONObject("local_dpi"), session,
+                ownsProfile = { ownsRuntimeSession(session) && activeStartupProfileDigest == expectedDigest &&
+                    serviceCommandGeneration.get() == commandGeneration },
+                protect = ::protect, handler = mainHandler,
+                proofBudgetMillis = { minOf(ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS,
+                    activeConnectDeadline?.let { (it.expiresElapsedMs - android.os.SystemClock.elapsedRealtime()).toInt() }
+                        ?: ENDPOINT_PREFLIGHT_TIMEOUT_MILLIS) })
+            activeLocalDpi = dpi
+            val dpiContent = runtimeConfig.toString()
             val handler = object : CommandServerHandler by this@PokrovRuntimeVpnService {
                 override fun serviceReload() = reloadRuntime(session)
                 override fun serviceStop() = stopRuntimeFromCore(session)
@@ -741,7 +752,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             )
             nextServer.start()
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
-            activeConfigContent = content
+            activeConfigContent = dpiContent
             activeVariantConfigContent = rawContent
             activeTileStartGeneration = tileGeneration
             if (expectedCoreModuleSha256 != null &&
@@ -749,9 +760,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 throw CoreIdentityMismatch()
             }
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
-            nextServer.startOrReloadService(content, OverrideOptions())
+            nextServer.startOrReloadService(dpiContent, OverrideOptions())
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
             activeCoreStartCompleted = true
+            dpi?.publish(nextServer) { commandServer === nextServer && ownsRuntimeSession(session) &&
+                activeStartupProfileDigest == expectedDigest && serviceCommandGeneration.get() == commandGeneration }
             schedulePendingCoreEgressProbe(session)
             startTunnelTrafficMonitor(session)
             // Staging belongs to the bridge/store. A delayed Core start must
@@ -2309,6 +2322,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
         fun revokeRoutingCatalog(profileDigest: String, reply: (Boolean?) -> Unit) {
             restrictRuntimeProfile(profileDigest, reply) { server ->
+                runtimeOwner?.activeLocalDpi?.close()
                 CommandServer::class.java.getMethod("revokeRoutingCatalog").invoke(server) as? Boolean
             }
         }
@@ -2319,6 +2333,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 return
             }
             restrictRuntimeProfile(profileDigest, reply) { server ->
+                runtimeOwner?.activeLocalDpi?.withdrawService(serviceId)
                 CommandServer::class.java.getMethod("revokeRoutingCatalogService", String::class.java)
                     .invoke(server, serviceId) as? Boolean
             }

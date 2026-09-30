@@ -356,6 +356,9 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                         preferences: _draftPreferences,
                         onChanged: _stage,
                       ),
+                    if (widget.hostPlatform == HostPlatform.android &&
+                        widget.fallbackMode == RouteMode.selectiveServices)
+                      _LocalDpiCard(preferences: _draftPreferences, onChanged: _stage),
                     _DnsAndLanCard(
                       preferences: _draftPreferences,
                       onChanged: _stage,
@@ -432,6 +435,7 @@ bool _sameRoutingPreferences(
     left.dnsTransport == right.dnsTransport &&
     left.customDnsUrl == right.customDnsUrl &&
     left.externalSmartDnsEnabled == right.externalSmartDnsEnabled &&
+    left.localDpiEnabled == right.localDpiEnabled &&
     left.allowLan == right.allowLan &&
     listEquals(left.lanSubnets, right.lanSubnets) &&
     setEquals(left.selectedCatalogServiceIds, right.selectedCatalogServiceIds) &&
@@ -445,6 +449,7 @@ List<String> _routingPreferenceChangeLabels(
   PokrovRoutingPreferences draft,
 ) =>
     <String>[
+      if (applied.localDpiEnabled != draft.localDpiEnabled) 'обход блокировок',
       if (applied.dnsPreset != draft.dnsPreset ||
           applied.dnsTransport != draft.dnsTransport ||
           applied.customDnsUrl != draft.customDnsUrl ||

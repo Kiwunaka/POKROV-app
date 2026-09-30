@@ -1,5 +1,24 @@
 part of pokrov_app_shell;
 
+class _LocalDpiCard extends StatelessWidget {
+  const _LocalDpiCard({required this.preferences, required this.onChanged});
+  final PokrovRoutingPreferences preferences;
+  final ValueChanged<PokrovRoutingPreferences> onChanged;
+
+  @override
+  Widget build(BuildContext context) => _SectionCard(
+    title: 'Обход блокировок',
+    lines: const ['Для разрешённых каталогом сервисов пробует прямой доступ. При сбое использует VPN. Прямое соединение открывает сервису ваш IP.'],
+    child: _RoutingToggleRow(
+      key: const ValueKey('rules-local-dpi'),
+      title: 'Пробовать прямой доступ',
+      subtitle: 'Только выбранные сервисы, Android 10 и новее.',
+      value: preferences.localDpiEnabled,
+      onChanged: (value) => onChanged(preferences.copyWith(localDpiEnabled: value)),
+    ),
+  );
+}
+
 class _WindowsConnectionCard extends StatelessWidget {
   const _WindowsConnectionCard({
     required this.preferences,

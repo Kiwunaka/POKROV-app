@@ -458,7 +458,8 @@ extension _TransportShellOperations on ConnectionManager {
     if (_connectionCoordinator.isCatalogRevoked(catalog.payloadSha256, now.latest)) {
       throw const RoutingCatalogFailure('catalog_stage_revoked');
     }
-    final identity = await stage.wait(catalogRuntimeIdentity(catalog));
+    final identity = await stage.wait(catalogRuntimeIdentity(catalog,
+      localDpiServiceIds: localDpiServiceIdsForPayload(stage.prepared.payload)));
     stage._restrictionsCurrent = () =>
       !_connectionCoordinator.isCatalogRevoked(catalog.payloadSha256, stage.latestObservedTime) &&
       !_connectionCoordinator.isCatalogServiceRevoked(catalog.payloadSha256, identity.services.keys, stage.latestObservedTime);

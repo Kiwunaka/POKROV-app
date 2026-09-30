@@ -67,6 +67,18 @@ and read require this projection; invalid nested policy cannot replace the last
 accepted envelope or advance its revision floors. Network metadata does not
 produce CIDR/ASN routes; Windows identities are not yet matched to installed apps.
 
+Android Selective has a default-off local DPI opt-in. Only an explicit signed
+`local_dpi_control_host` on a Selective VPN intent can authorize it; the control
+host must be an exact nonshared domain of the service. The Android host retains
+the complete original signed envelope, repeats signature/pin/hash/revision/TTL
+verification in Core, starts one UID-restricted ByeDPI SOCKS child, captures each
+fresh Core holder ID, and then runs SOCKS/TLS/HEAD proof before admission. Failed
+proof or runtime failure retains the VPN fallback. Cancellation, network/profile
+replacement and received signed restrictions withdraw only captured holder IDs;
+tighter catalog authority retains the existing fail-closed service gate until a
+new profile is staged. Full mode creates no DPI child. Device acceptance and a
+Core AAR containing these native APIs are required before enabling the feature.
+
 On a transient transport failure or retryable HTTP outage, only a currently
 verifiable cached envelope can return, with `usingCache=true`. TLS failures,
 malformed replies and invalid signatures do not become cached success.

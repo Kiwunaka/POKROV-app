@@ -7,6 +7,14 @@ plugins {
 
 def pokrovCoreAar = file("libs/pokrov-core.aar")
 
+// Mirror the existing Dart compile-time catalog trust at the native boundary.
+def pokrovDartDefines = [:]
+providers.gradleProperty("dart-defines").orElse("").get().split(",").findAll { !it.isEmpty() }.each { encoded ->
+    def entry = new String(Base64.decoder.decode(encoded), "UTF-8")
+    def separator = entry.indexOf('=')
+    if (separator > 0) pokrovDartDefines[entry.substring(0, separator)] = entry.substring(separator + 1)
+}
+
 def productionSigningInputs = [
     storeFile: System.getenv("ANDROID_SIGNING_KEY"),
     storePassword: System.getenv("ANDROID_SIGNING_STORE_PASSWORD"),
@@ -58,6 +66,10 @@ android {
     }
 
     defaultConfig {
+        buildConfigField "boolean", "POKROV_ROUTING_CATALOG_ENABLED", pokrovDartDefines['POKROV_ROUTING_CATALOG_ENABLED'] == 'true' ? "true" : "false"
+        ['POKROV_ROUTING_CATALOG_KEY_ID', 'POKROV_ROUTING_CATALOG_PUBLIC_KEY_B64', 'POKROV_ROUTING_CATALOG_AUDIENCE'].each { name ->
+            buildConfigField "String", name, groovy.json.JsonOutput.toJson(pokrovDartDefines[name] ?: (name.endsWith('AUDIENCE') ? 'production' : ''))
+        }
         applicationId = "space.pokrov.pokrov_android_shell"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

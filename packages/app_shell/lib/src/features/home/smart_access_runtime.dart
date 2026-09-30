@@ -79,7 +79,8 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     if (catalog != null && _connectionCoordinator.isCatalogRevoked(catalog.payloadSha256, DateTime.now().toUtc())) {
       throw const RoutingCatalogFailure('catalog_stage_revoked');
     }
-    final identity = catalog == null ? null : await catalogRuntimeIdentity(catalog);
+    final identity = catalog == null ? null : await catalogRuntimeIdentity(catalog,
+      localDpiServiceIds: localDpiServiceIdsForPayload(payload));
     if (!current()) throw const ConnectionOperationSuperseded();
     if (catalog != null && identity != null && _connectionCoordinator.isCatalogServiceRevoked(
         catalog.payloadSha256, identity.services.keys, DateTime.now().toUtc())) {

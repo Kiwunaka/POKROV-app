@@ -109,10 +109,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *value, void *reserved)
 
 JNIEXPORT jlong JNICALL
 Java_space_pokrov_pokrov_1android_1shell_AndroidByeDpiRuntime_nativeStart(
-        JNIEnv *env, jobject owner, jstring path, jint strategy)
+        JNIEnv *env, jobject owner, jstring path, jint strategy, jint requested_port)
 {
     if ((*env)->GetStringUTFLength(env, path) >= sizeof(((struct sockaddr_un *)0)->sun_path) ||
-            strategy < 0 || strategy > 1) {
+            strategy < 0 || strategy > 1 || requested_port < 0 || requested_port > 65535) {
         fail(env, "byedpi: invalid native startup options");
         return 0;
     }
@@ -155,7 +155,7 @@ Java_space_pokrov_pokrov_1android_1shell_AndroidByeDpiRuntime_nativeStart(
     opterr = 0;
     if (parse_args(11, argv) || init()) goto failed;
     params.mode = MODE_SOCKS5;
-    params.laddr.in.sin_port = 0;
+    params.laddr.in.sin_port = htons(requested_port);
     runtime->listener = listen_socket(&params.laddr);
     if (runtime->listener < 0) goto failed;
     union sockaddr_u local;

@@ -148,6 +148,7 @@ class PokrovRoutingPreferences {
     required this.trustedWifiNames,
     required this.pauseOnTrustedWifi,
     this.autoConnectOnUntrustedWifi = false,
+    this.localDpiEnabled = false,
     required this.windowsConnectionMode,
     required this.tunStack,
   });
@@ -165,6 +166,7 @@ class PokrovRoutingPreferences {
         trustedWifiNames = const <String>[],
         pauseOnTrustedWifi = false,
         autoConnectOnUntrustedWifi = false,
+        localDpiEnabled = false,
         windowsConnectionMode = PokrovWindowsConnectionMode.vpn,
         tunStack = PokrovTunStack.system;
 
@@ -180,6 +182,7 @@ class PokrovRoutingPreferences {
   final List<String> trustedWifiNames;
   final bool pauseOnTrustedWifi;
   final bool autoConnectOnUntrustedWifi;
+  final bool localDpiEnabled;
   final PokrovWindowsConnectionMode windowsConnectionMode;
   final PokrovTunStack tunStack;
 
@@ -196,6 +199,7 @@ class PokrovRoutingPreferences {
     List<String>? trustedWifiNames,
     bool? pauseOnTrustedWifi,
     bool? autoConnectOnUntrustedWifi,
+    bool? localDpiEnabled,
     PokrovWindowsConnectionMode? windowsConnectionMode,
     PokrovTunStack? tunStack,
   }) {
@@ -214,6 +218,7 @@ class PokrovRoutingPreferences {
       trustedWifiNames: trustedWifiNames ?? this.trustedWifiNames,
       pauseOnTrustedWifi: pauseOnTrustedWifi ?? this.pauseOnTrustedWifi,
       autoConnectOnUntrustedWifi: autoConnectOnUntrustedWifi ?? this.autoConnectOnUntrustedWifi,
+      localDpiEnabled: localDpiEnabled ?? this.localDpiEnabled,
       windowsConnectionMode:
           windowsConnectionMode ?? this.windowsConnectionMode,
       tunStack: tunStack ?? this.tunStack,
@@ -283,6 +288,7 @@ class PokrovRoutingPreferences {
       pauseOnTrustedWifi:
           json['pauseOnTrustedWifi'] == true && trustedWifi.isNotEmpty,
       autoConnectOnUntrustedWifi: json['autoConnectOnUntrustedWifi'] == true,
+      localDpiEnabled: json['localDpiEnabled'] == true,
       windowsConnectionMode: windowsConnectionMode,
       tunStack: tunStack,
     );
@@ -304,6 +310,7 @@ class PokrovRoutingPreferences {
         'trustedWifiNames': trustedWifiNames.take(20).toList(),
         'pauseOnTrustedWifi': pauseOnTrustedWifi,
         'autoConnectOnUntrustedWifi': autoConnectOnUntrustedWifi,
+        'localDpiEnabled': localDpiEnabled,
         'windowsConnectionMode': windowsConnectionMode.name,
         'tunStack': tunStack.name,
       };
@@ -951,7 +958,30 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     route['rule_set'] = _routingListOfMaps(route['rule_set'])
         .where((definition) => referencedSets.contains(definition['tag'])).toList();
   }
+  final meta = _routingMap(config['_meta']);
+  meta.remove('local_dpi');
+  if (preferences.localDpiEnabled && hostPlatform == HostPlatform.android && selective &&
+      policy.localDpiControlHosts.isNotEmpty) {
+    meta['local_dpi'] = {
+      'mode': 'selective', 'platform': 'android',
+      'catalog_envelope': policy.catalog.canonicalEnvelopeJson,
+      'catalog_sha256': policy.payloadSha256,
+      'revision': policy.revision, 'security_revision': policy.securityRevision,
+      'access_state': policy.accessState,
+      'services': policy.localDpiControlHosts,
+    };
+  }
+  if (meta.isNotEmpty) {
+    config['_meta'] = meta;
+  } else {
+    config.remove('_meta');
+  }
   return payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1);
+}
+
+Set<String> localDpiServiceIdsForPayload(ManagedProfilePayload payload) {
+  final config = _routingMap(jsonDecode(payload.configPayload));
+  return _routingMap(_routingMap(_routingMap(config['_meta'])['local_dpi'])['services']).keys.toSet();
 }
 
 const _windowsProcessKeys = ['process_name', 'process_path', 'process_path_regex'];

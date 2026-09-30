@@ -55,6 +55,7 @@ class CatalogServicePolicy {
     required this.accessStates, required this.categories, required this.intents,
     required this.domains, required this.android,
     required this.providerCapabilityRefs,
+    required this.localDpiControlHost,
   });
   final String id;
   final String displayName;
@@ -68,6 +69,7 @@ class CatalogServicePolicy {
   final List<CatalogDomain> domains;
   final List<CatalogAndroidIdentity> android;
   final Set<String> providerCapabilityRefs;
+  final String? localDpiControlHost;
 }
 
 /// Validated consumer projection of the platform-owned routing_catalog.py v1.
@@ -128,6 +130,7 @@ class RoutingCatalogPolicy {
       final external = _choice(value['external_gateway_policy'], const {'forbidden', 'approved'});
       final providers = _ids(value['provider_capability_refs'], 0, 16);
       final intents = <CatalogRoutingMode, CatalogRouteAction>{};
+      String? localDpiControlHost;
       for (final intent in _objects(value['route_intents'], 0, 5)) {
         final mode = _modeNames[intent['mode']];
         final action = _actionNames[intent['action']];
@@ -141,6 +144,12 @@ class RoutingCatalogPolicy {
         }
         if (action == CatalogRouteAction.direct && classification == 'blocked_inside_ru') {
           _fail('blocked_service_direct');
+        }
+        final dpiHost = intent['local_dpi_control_host'];
+        if (dpiHost != null) {
+          if (mode != CatalogRoutingMode.selective || action != CatalogRouteAction.vpn ||
+              !platforms.contains('android')) _fail('local_dpi_authority');
+          localDpiControlHost = _domain(dpiHost);
         }
         intents[mode] = action;
       }
@@ -156,6 +165,10 @@ class RoutingCatalogPolicy {
         if (intents.containsValue(CatalogRouteAction.approvedGateway) &&
             (name == 'pokrov.space' || name.endsWith('.pokrov.space'))) _fail('gateway_pokrov');
         domains.add(CatalogDomain._(name, suffix, role, shared));
+      }
+      if (localDpiControlHost != null && !domains.any((domain) =>
+          domain.name == localDpiControlHost && !domain.suffix && !domain.shared)) {
+        _fail('local_dpi_control_scope');
       }
       final android = <CatalogAndroidIdentity>[];
       final packages = <String>{};
@@ -205,6 +218,7 @@ class RoutingCatalogPolicy {
         accessStates: Set.unmodifiable(access), categories: Set.unmodifiable(categories),
         intents: Map.unmodifiable(intents), domains: List.unmodifiable(domains),
         android: List.unmodifiable(android),
+        localDpiControlHost: localDpiControlHost,
       ));
     }
     if (evidenceOwners.values.any((id) => !serviceIds.contains(id))) _fail('unknown_evidence_service');
@@ -227,6 +241,7 @@ class CatalogDomainDecision {
 /// precede this layer; bounded network rules and the mode default follow it.
 class CatalogDomainPolicy {
   const CatalogDomainPolicy._({
+    required this.catalog, required this.localDpiControlHosts,
     required this.revision, required this.securityRevision, required this.payloadSha256,
     required this.audience,
     required this.issuedAt, required this.expiresAt, required this.mode,
@@ -236,6 +251,8 @@ class CatalogDomainPolicy {
     required this.vpnAvailable,
   });
   final int revision;
+  final VerifiedRoutingCatalog catalog;
+  final Map<String, String> localDpiControlHosts;
   final String audience;
   final int securityRevision;
   final String payloadSha256;
@@ -357,6 +374,13 @@ CatalogDomainPolicy compileCatalogDomainPolicy({
     return name != 0 ? name : left.serviceId.compareTo(right.serviceId);
   });
   return CatalogDomainPolicy._(
+    catalog: catalog,
+    localDpiControlHosts: Map.unmodifiable({
+      if (mode == CatalogRoutingMode.selective && platform == 'android' && vpnAvailable)
+        for (final service in policy.services)
+          if (selected.contains(service.id) && service.localDpiControlHost != null)
+            service.id: service.localDpiControlHost!,
+    }),
     audience: catalog.payload['audience']! as String,
     revision: catalog.revision, securityRevision: catalog.securityRevision,
     payloadSha256: catalog.payloadSha256, issuedAt: catalog.issuedAt,
@@ -372,15 +396,20 @@ CatalogDomainPolicy compileCatalogDomainPolicy({
 
 Never _fail(String code) => throw RoutingCatalogFailure('catalog_$code');
 
-Future<String> _runtimeRuleDigest(String serviceId, CatalogDomain domain, CatalogRouteAction action) =>
-    smartAccessProfileSha256(jsonEncode([serviceId, domain.name, domain.suffix, action.name]));
+Future<String> _runtimeRuleDigest(String serviceId, CatalogDomain domain, CatalogRouteAction action,
+    [String? localDpiControlHost]) => smartAccessProfileSha256(jsonEncode([
+      serviceId, domain.name, domain.suffix, action.name,
+      if (localDpiControlHost != null) localDpiControlHost,
+    ]));
 
-Future<CatalogRuntimeIdentity> catalogRuntimeIdentity(CatalogDomainPolicy policy) async {
+Future<CatalogRuntimeIdentity> catalogRuntimeIdentity(CatalogDomainPolicy policy,
+    {Set<String> localDpiServiceIds = const {}}) async {
   final rules = <String, Set<String>>{};
   final capabilities = <String, Set<String>>{};
   for (final rule in policy.rules) {
     if (rule.action == CatalogRouteAction.block) continue;
-    (rules[rule.serviceId] ??= {}).add(await _runtimeRuleDigest(rule.serviceId, rule.domain, rule.authorityAction));
+    (rules[rule.serviceId] ??= {}).add(await _runtimeRuleDigest(rule.serviceId, rule.domain, rule.authorityAction,
+      localDpiServiceIds.contains(rule.serviceId) ? policy.localDpiControlHosts[rule.serviceId] : null));
     for (final grant in rule.gatewayLeases) {
       final capability = grant.lease['capability_id'];
       if (capability is String) (capabilities[rule.serviceId] ??= {}).add(capability);
@@ -421,7 +450,13 @@ Future<Set<String>> catalogRuntimeRevocations(CatalogRuntimeIdentity previous,
     final allowed = <String>{};
     if (action != null) {
       for (final domain in service.domains) {
-        if (!domain.shared) allowed.add(await _runtimeRuleDigest(service.id, domain, action));
+        if (!domain.shared) {
+          allowed.add(await _runtimeRuleDigest(service.id, domain, action));
+          if (mode == CatalogRoutingMode.selective && previous.platform == 'android' &&
+              action == CatalogRouteAction.vpn && service.localDpiControlHost != null) {
+            allowed.add(await _runtimeRuleDigest(service.id, domain, action, service.localDpiControlHost));
+          }
+        }
       }
     }
     if (!allowed.containsAll(entry.value.rules)) revoked.add(entry.key);
