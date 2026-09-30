@@ -1284,6 +1284,12 @@ Current blocking dependency:
   Clean exit overwrites it; an active marker on the next launch is reported as
   unclean. The marker is diagnostic evidence and can never restore or declare
   runtime state; host/service snapshot and recovery journal remain authority.
+  Android service startup failures carry the same closed type/source/line
+  diagnostic as `safe_failure_signature` in the host snapshot. A new profile,
+  successful start or settled user disconnect clears it. The same failure
+  carrier includes the closed startup phase and existing safe Core term hints
+  to distinguish native errors whose Java type and release frame are generic;
+  messages and stack text are never included.
   Marker filesystem write failures are counted in `writeErrors` without escaping
   into bootstrap, normal exit or the crash handler; privacy validation still
   rejects unsafe values before an IO attempt.

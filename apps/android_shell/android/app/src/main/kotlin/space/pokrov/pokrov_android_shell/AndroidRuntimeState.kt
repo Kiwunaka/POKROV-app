@@ -102,6 +102,9 @@ internal object AndroidRuntimeState {
     private var coreModuleSha256: String? = null
     private var coreVersion: String? = null
     private var lastFailureKind: String? = null
+    private var lastFailureSignature: String? = null
+    private var lastFailureHints: String? = null
+    private var lastFailureStartupPhase: AndroidRuntimeStartupPhase? = null
     private var lastStopReason: String? = null
     private var awgSafeDiagnosticCode: String? = null
     private var awgSafeDiagnosticOccurrence: Int? = null
@@ -342,6 +345,7 @@ internal object AndroidRuntimeState {
         profileDigest: String? = null,
         requiresBoundConnect: Boolean = false,
     ) {
+        lastFailureSignature = null
         stagedConfigPath = path
         stagedProfileDigest = profileDigest?.takeIf(::isRuntimeProfileDigest)
         stagedRequiresBoundConnect = requiresBoundConnect
@@ -432,6 +436,7 @@ internal object AndroidRuntimeState {
 
     @Synchronized
     fun markRunning(message: String) {
+        lastFailureSignature = null
         phase = AndroidRuntimePhase.RUNNING
         connectionPending = false
         lastStopReason = null
@@ -492,6 +497,7 @@ internal object AndroidRuntimeState {
             // Clear a settled explicit disconnect, not the stop request or an
             // internal failure stop whose cause still belongs in diagnostics.
             lastFailureKind = null
+            lastFailureSignature = null
             lastMessage = message
             return
         }
@@ -533,7 +539,11 @@ internal object AndroidRuntimeState {
     }
 
     @Synchronized
-    fun markFailure(kind: String, message: String) {
+    fun markFailure(kind: String, message: String, error: Throwable? = null,
+        startupPhase: AndroidRuntimeStartupPhase? = null) {
+        lastFailureSignature = error?.let(AndroidRuntimeSafety::safeFailureSignature)
+        lastFailureHints = error?.let(AndroidRuntimeSafety::safeCoreFailureHints)
+        lastFailureStartupPhase = startupPhase
         coreEgressValidated = null
         activeProfileDigest = null
         connectionPending = false
@@ -798,6 +808,9 @@ internal object AndroidRuntimeState {
             "core_egress_validated" to coreEgressValidated,
             "core_egress_validation_required" to coreEgressValidationRequired,
             "last_failure_kind" to lastFailureKind,
+            "safe_failure_signature" to lastFailureSignature?.takeIf { lastFailureKind != null },
+            "safe_failure_hints" to lastFailureHints?.takeIf { lastFailureSignature != null && lastFailureKind != null },
+            "safe_failure_phase" to lastFailureStartupPhase?.name?.lowercase()?.takeIf { lastFailureSignature != null && lastFailureKind != null },
             "last_stop_reason" to lastStopReason,
             "safe_protocol_diagnostic_code" to awgSafeDiagnosticCode,
             "safe_protocol_diagnostic_occurrence" to awgSafeDiagnosticOccurrence,
@@ -841,6 +854,9 @@ internal object AndroidRuntimeState {
             "vpn_validated" to vpnValidated,
             "core_egress_validated" to coreEgressValidated,
             "last_failure_kind" to lastFailureKind,
+            "safe_failure_signature" to lastFailureSignature?.takeIf { lastFailureKind != null },
+            "safe_failure_hints" to lastFailureHints?.takeIf { lastFailureSignature != null && lastFailureKind != null },
+            "safe_failure_phase" to lastFailureStartupPhase?.name?.lowercase()?.takeIf { lastFailureSignature != null && lastFailureKind != null },
             "last_stop_reason" to lastStopReason,
             "safe_protocol_diagnostic_code" to awgSafeDiagnosticCode,
             "safe_protocol_diagnostic_occurrence" to awgSafeDiagnosticOccurrence,

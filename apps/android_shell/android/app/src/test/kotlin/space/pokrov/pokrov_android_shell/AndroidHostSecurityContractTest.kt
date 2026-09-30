@@ -30,6 +30,15 @@ class AndroidHostSecurityContractTest {
             ),
         )
         assertFalse(AndroidRuntimeSafety.safeCoreFailureHints(hostile).contains("secret"))
+
+        hostile.stackTrace = arrayOf(StackTraceElement(
+            "space.pokrov.pokrov_android_shell.PokrovRuntimeVpnService",
+            "startRuntime", "PokrovRuntimeVpnService.kt", 763,
+        ))
+        assertEquals("n10101000002fb", AndroidRuntimeSafety.safeFailureSignature(hostile))
+        val unknown = object : Error("token=secret") {}
+        unknown.stackTrace = arrayOf(StackTraceElement("token.secret", "secret", "private.kt", 763))
+        assertEquals("n1000000000000", AndroidRuntimeSafety.safeFailureSignature(unknown))
     }
 
     @Test

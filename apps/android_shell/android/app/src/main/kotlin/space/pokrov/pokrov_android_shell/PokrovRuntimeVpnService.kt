@@ -610,6 +610,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             return
         }
 
+        var startupPhase = AndroidRuntimeStartupPhase.CONFIG
         try {
             if (expectedCoreModuleSha256 != null &&
                 !AndroidRuntimeState.matchesCoreModuleSha256(expectedCoreModuleSha256)) {
@@ -700,6 +701,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
             // Closing the previous Core can unregister its monitor. Capture
             // this attempt's uplink only after that old lifecycle has ended.
+            startupPhase = AndroidRuntimeStartupPhase.UPLINK
             AndroidDefaultNetworkMonitor.ensureStarted(this)
             if (expectedCoreModuleSha256 != null) {
                 val networkGeneration = AndroidDefaultNetworkMonitor.contextGeneration()
@@ -709,6 +711,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     throw SupersededRuntimeStart()
                 }
             }
+            startupPhase = AndroidRuntimeStartupPhase.LOCAL_DPI
             val dpi = AndroidLocalDpiAdmission.prepare(this, runtimeConfig,
                 JSONObject(rawContent).optJSONObject("_meta")?.optJSONObject("local_dpi"), session,
                 ownsProfile = { ownsRuntimeSession(session) && activeStartupProfileDigest == expectedDigest &&
@@ -743,6 +746,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     }
                 }
             }
+            startupPhase = AndroidRuntimeStartupPhase.COMMAND_SERVER
             val nextServer = Libbox.newCommandServer(handler, platform)
             commandServer = nextServer
             boundCoreServiceClosed = false
@@ -750,6 +754,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 nextServer,
                 session.generation,
             )
+            startupPhase = AndroidRuntimeStartupPhase.COMMAND_SERVER_START
             nextServer.start()
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
             activeConfigContent = dpiContent
@@ -760,11 +765,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 throw CoreIdentityMismatch()
             }
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
+            startupPhase = AndroidRuntimeStartupPhase.CORE_START
             nextServer.startOrReloadService(dpiContent, OverrideOptions())
             if (!ownsRuntimeSession(session)) throw SupersededRuntimeStart()
             activeCoreStartCompleted = true
+            startupPhase = AndroidRuntimeStartupPhase.LOCAL_DPI_PUBLISH
             dpi?.publish(nextServer) { commandServer === nextServer && ownsRuntimeSession(session) &&
                 activeStartupProfileDigest == expectedDigest && serviceCommandGeneration.get() == commandGeneration }
+            startupPhase = AndroidRuntimeStartupPhase.EGRESS_PROBE
             schedulePendingCoreEgressProbe(session)
             startTunnelTrafficMonitor(session)
             // Staging belongs to the bridge/store. A delayed Core start must
@@ -785,6 +793,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             val failureKind = if (error is CoreIdentityMismatch) "core_identity_mismatch" else "runtime_service_start_failed"
             AndroidRuntimeState.markFailure(
                 kind = failureKind,
+                error = error,
+                startupPhase = startupPhase,
                 message = AndroidRuntimeSafety.publicFailureMessage(
                     failureKind,
                 ),

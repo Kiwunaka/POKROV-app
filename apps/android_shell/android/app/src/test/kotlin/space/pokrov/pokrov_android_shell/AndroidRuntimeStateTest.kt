@@ -131,6 +131,8 @@ class AndroidRuntimeStateTest {
         AndroidRuntimeState.markFailure(
             kind = "runtime_service_start_failed",
             message = "POKROV не смог подключить устройство: invalid inbound mix.",
+            error = IllegalStateException("unknown field config token=private").apply { stackTrace = emptyArray() },
+            startupPhase = AndroidRuntimeStartupPhase.CORE_START,
         )
         AndroidRuntimeState.markStopped(
             message = "POKROV отключен на этом устройстве.",
@@ -144,6 +146,14 @@ class AndroidRuntimeStateTest {
             snapshot["message"],
         )
         assertEquals("runtime_service_start_failed", snapshot["last_failure_kind"])
+        assertEquals("n1010000000000", snapshot["safe_failure_signature"])
+        assertEquals("n1010000000000", (snapshot["hostDiagnostics"] as Map<*, *>)["safe_failure_signature"])
+        assertEquals("core_start", snapshot["safe_failure_phase"])
+        assertEquals("unknown,field,config", snapshot["safe_failure_hints"])
+        AndroidRuntimeState.markStopped(message = "stopped", stopReason = "user_requested")
+        assertNull(AndroidRuntimeState.snapshot()["safe_failure_signature"])
+        assertNull(AndroidRuntimeState.snapshot()["safe_failure_hints"])
+        assertNull(AndroidRuntimeState.snapshot()["safe_failure_phase"])
         assertEquals("service_destroyed", snapshot["last_stop_reason"])
     }
 
@@ -164,6 +174,7 @@ class AndroidRuntimeStateTest {
         assertEquals("user_requested", stopped["last_stop_reason"])
         assertNull(stopped["last_failure_kind"])
         assertNull((stopped["hostDiagnostics"] as Map<*, *>)["last_failure_kind"])
+        assertNull(stopped["safe_failure_signature"])
         assertEquals("POKROV выключен на этом устройстве.", stopped["message"])
     }
 
@@ -749,6 +760,9 @@ class AndroidRuntimeStateTest {
         setPrivateField("vpnValidated", null)
         setPrivateField("coreEgressValidated", null)
         setPrivateField("lastFailureKind", null)
+        setPrivateField("lastFailureSignature", null)
+        setPrivateField("lastFailureHints", null)
+        setPrivateField("lastFailureStartupPhase", null)
         setPrivateField("lastStopReason", null)
         setPrivateField("awgSafeDiagnosticCode", null)
         setPrivateField("awgSafeDiagnosticOccurrence", null)

@@ -1,10 +1,36 @@
 package space.pokrov.pokrov_android_shell
 
+internal enum class AndroidRuntimeStartupPhase {
+    CONFIG, UPLINK, LOCAL_DPI, COMMAND_SERVER, COMMAND_SERVER_START, CORE_START, LOCAL_DPI_PUBLISH, EGRESS_PROBE,
+}
+
 /**
  * Keeps host-visible runtime failures useful without forwarding native runtime
  * details such as profile values, topology, or credentials.
  */
 internal object AndroidRuntimeSafety {
+    fun safeFailureSignature(error: Throwable): String {
+        val kind = when (error) {
+            is IllegalStateException -> 1
+            is IllegalArgumentException -> 2
+            is SecurityException -> 3
+            is java.io.IOException -> 4
+            is LinkageError -> 5
+            is Exception -> 6
+            else -> 0
+        }
+        val sources = listOf("PokrovRuntimeVpnService.kt", "AndroidRuntimeState.kt",
+            "AndroidLocalDpiAdmission.kt", "AndroidLocalDpiHolders.kt", "RuntimeHostBridge.kt")
+        val frame = error.stackTrace.firstOrNull {
+            it.className.startsWith("space.pokrov.pokrov_android_shell.") &&
+                it.fileName in sources && it.lineNumber > 0
+        }
+        val source = frame?.let { sources.indexOf(it.fileName) + 1 } ?: 0
+        val line = frame?.lineNumber ?: 0
+        return "n1" + kind.toString(16).padStart(2, '0') +
+            source.toString(16).padStart(2, '0') + line.toString(16).padStart(8, '0')
+    }
+
     private val safeCoreFailureTerms = listOf(
         "decode",
         "parse",
