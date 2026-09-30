@@ -2,9 +2,21 @@ package space.pokrov.pokrov_android_shell
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.net.InetAddress
 
 class AndroidTransportNetworkContextTest {
+    @Test
+    fun ipv6RequiresUsableSourceAndDefaultRouteOnCapturedUplink() {
+        val available = AndroidTransportNetworkContext.CandidateNetwork.Companion::ipv6Available
+        val global = listOf(InetAddress.getByName("2001:db8::2"))
+        assertTrue(available(global, true))
+        assertFalse(available(global, false))
+        assertFalse(available(listOf(InetAddress.getByName("fe80::2")), true))
+        assertFalse(available(listOf(InetAddress.getByName("192.0.2.2")), true))
+    }
+
     @Test
     fun cellularSelectionKeySurvivesNetworkHandleChange() {
         val key = AndroidTransportNetworkContext.CandidateNetwork.Companion::selectionKey

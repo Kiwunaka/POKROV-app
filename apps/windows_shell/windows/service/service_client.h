@@ -4,6 +4,7 @@
 #include <string>
 #include <atomic>
 #include <mutex>
+#include <optional>
 
 #include "service_protocol.h"
 #include "windows_crash_profile.h"
@@ -44,6 +45,7 @@ struct ServiceRuntimeSnapshot {
   std::string transport_network_context_ref;
   std::string candidate_selection_key;
   std::string candidate_network_class;
+  std::optional<bool> candidate_ipv6_available;
   std::string candidate_probe_json;
   bool routing_catalog_found = false;
   bool core_ready = false;

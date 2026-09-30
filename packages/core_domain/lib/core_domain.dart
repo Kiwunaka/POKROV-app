@@ -44,11 +44,16 @@ class TransportCandidate {
     required this.transport, required this.protection, required this.priority,
     required this.network, required this.flow, required this.minimumClientRelease,
     required this.minimumCoreRelease, required Set<HostPlatform> platforms,
-    required Set<RuntimeTransportFeature> requiredFeatures, this.warpMode})
+    required Set<RuntimeTransportFeature> requiredFeatures, this.warpMode,
+    this.family = 'ipv4', this.deliveryEndpointId, this.endpointGeneration})
       : platforms = Set.unmodifiable(platforms), requiredFeatures = Set.unmodifiable(requiredFeatures);
 
   final String candidateRef, profileRef, nodeCode, countryCode;
   final String protocol, transport, protection, network, flow;
+  /// Address family of the first transport hop, independent of the TUN lane.
+  final String family;
+  final String? deliveryEndpointId;
+  final int? endpointGeneration;
   /// Null for an ordinary route. WARP last has no known country of exit.
   final String? warpMode;
   final int priority;

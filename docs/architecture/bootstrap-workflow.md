@@ -105,6 +105,14 @@ Cancellation settles profile and native work before releasing a worker.
 The last successful candidate gets up to 350 ms before alternatives. Only typed
 network probe failures suppress a candidate for four minutes or move TCP ahead
 of UDP; an empty filtered catalog retries every eligible candidate.
+For a direct typed IPv6/IPv4 pair on the same node and profile, IPv6 probes first;
+IPv4 starts after 250 ms of the IPv6 native probe, or sooner after its failure.
+The same three/four worker limit, cancellation and settlement apply. A physical
+uplink reporting no IPv6 skips those candidates before profile fetch and telemetry,
+without adding failure memory; unknown availability keeps them eligible. Android
+bootstrap replaces the resolver server while preserving a supplied resolver map's
+family strategy and other options. These paths have source checks; physical IPv6
+acceptance remains open.
 `data_stalled` is one of those typed network failures. Probe outcomes enter
 the local journal and one bounded batch in the final runtime
 stats event, with catalog candidate refs and transport names but no profile data.

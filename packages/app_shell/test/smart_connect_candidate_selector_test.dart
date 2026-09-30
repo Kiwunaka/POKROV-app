@@ -23,6 +23,15 @@ ManagedProfilePayload _profile(TransportCandidate candidate) => ManagedProfilePa
 SmartConnectCandidateProbeResult _success(TransportCandidate candidate) =>
   SmartConnectCandidateProbeResult.success(_profile(candidate));
 
+TransportCandidate _familyCandidate(String family) => TransportCandidate(
+  candidateRef: 'de:profile_0:endpoint_test:$family:g1', profileRef: 'profile_0',
+  nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'tcp',
+  protection: 'reality', priority: family == 'ipv4' ? 0 : 1, network: 'tcp',
+  flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+  family: family, deliveryEndpointId: 'test', endpointGeneration: 1,
+  platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {},
+);
+
 void main() {
   test('cache reserves another node before a protocol alternative and keeps manual country', () {
     final candidates = [
@@ -89,6 +98,108 @@ void main() {
     starts.clear();
     expect((await select('network-b')).profileName, 'de:profile_0');
     expect(starts.first, 'de:profile_0');
+  });
+
+  test('direct IPv4 reserve waits from IPv6 native start and joins bounded losers', () async {
+    final v4 = _familyCandidate('ipv4');
+    final v6 = _familyCandidate('ipv6');
+    final selector = SmartConnectCandidateSelector();
+    selector.recordSuccess('network-a', v4.candidateRef);
+    final prepared = Completer<void>();
+    final clock = Stopwatch();
+    final starts = <String>[];
+    var active = 0;
+    var maxActive = 0;
+    var stopped = 0;
+    final selected = selector.select(
+      catalog: _catalog([v4, v6, _candidate(2), _candidate(3), _candidate(4)]),
+      network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      prepare: (candidate, _) async {
+        if (candidate.family == 'ipv6') await prepared.future;
+      },
+      probe: (candidate, cancelled, _) async {
+        starts.add(candidate.candidateRef);
+        active++;
+        if (active > maxActive) maxActive = active;
+        if (candidate == v6) clock.start();
+        if (candidate == v4) {
+          expect(clock.elapsed, greaterThanOrEqualTo(const Duration(milliseconds: 240)));
+          active--;
+          return _success(candidate);
+        }
+        await cancelled;
+        await Future<void>.delayed(Duration.zero);
+        stopped++;
+        active--;
+        return const SmartConnectCandidateProbeResult.failure('cancelled');
+      });
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(starts, isNot(contains(v4.candidateRef)));
+    prepared.complete();
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    expect(starts, contains(v6.candidateRef));
+    expect(starts, isNot(contains(v4.candidateRef)));
+    expect((await selected).profileName, v4.candidateRef);
+    expect(starts, hasLength(4));
+    expect(maxActive, 4);
+    expect(stopped, 3);
+    expect(active, 0);
+  });
+
+  test('direct family failure releases reserve and an early winner skips it', () async {
+    final v4 = _familyCandidate('ipv4');
+    final v6 = _familyCandidate('ipv6');
+    final catalog = _catalog([v4, v6]);
+    final starts = <String>[];
+    final clock = Stopwatch();
+    final failed = await SmartConnectCandidateSelector().select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.android,
+      cancelled: Completer<void>().future,
+      probe: (candidate, _, timeout) async {
+        starts.add(candidate.candidateRef);
+        if (candidate == v6) {
+          clock.start();
+          return const SmartConnectCandidateProbeResult.failure('connect_failed');
+        }
+        expect(clock.elapsed, lessThan(const Duration(milliseconds: 250)));
+        return _success(candidate);
+      });
+    expect(failed.profileName, v4.candidateRef);
+    expect(starts, [v6.candidateRef, v4.candidateRef]);
+    starts.clear();
+    final won = await SmartConnectCandidateSelector().select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.android,
+      cancelled: Completer<void>().future,
+      probe: (candidate, _, timeout) async {
+        starts.add(candidate.candidateRef);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        return _success(candidate);
+      });
+    expect(won.profileName, v6.candidateRef);
+    expect(starts, [v6.candidateRef]);
+  });
+
+  test('unavailable IPv6 skips preparation and telemetry without poisoning later unknown availability', () async {
+    final v4 = _familyCandidate('ipv4');
+    final v6 = _familyCandidate('ipv6');
+    final selector = SmartConnectCandidateSelector();
+    selector.recordSuccess('network-a', v6.candidateRef);
+    final prepared = <String>[];
+    final reported = <String>[];
+    Future<ManagedProfilePayload> select(bool? available) => selector.select(
+      catalog: _catalog([v4, v6]), network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future, ipv6Available: available,
+      prepare: (candidate, _) async => prepared.add(candidate.candidateRef),
+      onProbeResult: (candidate, _) => reported.add(candidate.candidateRef),
+      probe: (candidate, _, timeout) async => _success(candidate));
+    expect((await select(false)).profileName, v4.candidateRef);
+    expect(prepared, [v4.candidateRef]);
+    expect(reported, [v4.candidateRef]);
+    prepared.clear();
+    reported.clear();
+    expect((await select(null)).profileName, v6.candidateRef);
+    expect(reported, [v6.candidateRef]);
   });
 
   test('manual country includes its other nodes without changing country', () async {

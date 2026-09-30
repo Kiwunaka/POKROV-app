@@ -360,6 +360,7 @@ std::optional<CandidateNetworkContext> ServiceNetworkObserver::ReadCandidateCont
   std::optional<MIB_IPFORWARD_ROW2> chosen;
   MIB_IF_ROW2 chosen_adapter{};
   std::uint64_t best_metric = UINT64_MAX;
+  std::vector<std::uint64_t> ipv6_interfaces;
   for (ULONG index = 0; index < routes->NumEntries; ++index) {
     const auto& route = routes->Table[index];
     if (route.DestinationPrefix.PrefixLength != 0 || route.Loopback || route.ValidLifetime == 0) continue;
@@ -372,12 +373,33 @@ std::optional<CandidateNetworkContext> ServiceNetworkObserver::ReadCandidateCont
     MIB_IPINTERFACE_ROW family{};
     family.Family = route.DestinationPrefix.Prefix.si_family;
     family.InterfaceLuid = route.InterfaceLuid;
+    if (family.Family == AF_INET6) ipv6_interfaces.push_back(route.InterfaceLuid.Value);
     if (::GetIpInterfaceEntry(&family) != NO_ERROR) continue;
     const auto metric = static_cast<std::uint64_t>(route.Metric) + family.Metric;
     if (metric < best_metric) { chosen = route; chosen_adapter = adapter; best_metric = metric; }
   }
   ::FreeMibTable(routes);
   if (!chosen) return std::nullopt;
+  std::optional<bool> ipv6_available = false;
+  if (std::find(ipv6_interfaces.begin(), ipv6_interfaces.end(), chosen->InterfaceLuid.Value) != ipv6_interfaces.end()) {
+    MIB_UNICASTIPADDRESS_TABLE* addresses = nullptr;
+    if (::GetUnicastIpAddressTable(AF_INET6, &addresses) != NO_ERROR) {
+      ipv6_available = std::nullopt;
+    } else {
+      for (ULONG index = 0; index < addresses->NumEntries; ++index) {
+        const auto& address = addresses->Table[index];
+        const auto& ip = address.Address.Ipv6.sin6_addr;
+        if (address.InterfaceLuid.Value == chosen->InterfaceLuid.Value && address.ValidLifetime > 0 &&
+            (address.DadState == IpDadStatePreferred || address.DadState == IpDadStateDeprecated) &&
+            !IN6_IS_ADDR_UNSPECIFIED(&ip) && !IN6_IS_ADDR_LOOPBACK(&ip) && !IN6_IS_ADDR_LINKLOCAL(&ip) &&
+            !IN6_IS_ADDR_MULTICAST(&ip) && !IN6_IS_ADDR_V4MAPPED(&ip)) {
+          ipv6_available = true;
+          break;
+        }
+      }
+      ::FreeMibTable(addresses);
+    }
+  }
   std::string identity = state_->selection_salt;
   Append(identity, chosen->InterfaceLuid.Value);
   // Metrics/DNS/address renewals fence an in-flight probe, but do not erase
@@ -423,7 +445,7 @@ std::optional<CandidateNetworkContext> ServiceNetworkObserver::ReadCandidateCont
   const auto network_class = chosen_adapter.Type == IF_TYPE_IEEE80211 ? "wifi"
       : chosen_adapter.Type == IF_TYPE_ETHERNET_CSMACD ? "ethernet" : "other";
   return CandidateNetworkContext{*context, "selection_" + digest,
-                                 std::move(alias), network_class};
+                                 std::move(alias), network_class, ipv6_available};
 }
 
 }  // namespace pokrov::service

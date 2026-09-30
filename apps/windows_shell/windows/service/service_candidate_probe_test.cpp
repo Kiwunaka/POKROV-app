@@ -50,7 +50,7 @@ class Recovery final : public RuntimeRecovery {
 class HealthProbe final : public RuntimeEgressProbe {
  public:
   std::string Verify(const CheckInterruption& interrupted) override {
-    ++active;
+    if (++active > 1) overlapped = true;
     ++calls;
     while (mode == 1 && interrupted() == OperationInterruption::kNone) ::Sleep(1);
     const bool cancelled = interrupted && interrupted() == OperationInterruption::kCancelled;
@@ -59,6 +59,7 @@ class HealthProbe final : public RuntimeEgressProbe {
     return cancelled ? "late failure" : mode == 2 ? "core_egress_connect_failed" : "";
   }
   std::atomic<int> mode{0}, calls{0}, active{0};
+  std::atomic<bool> overlapped{false};
 };
 
 void TestPeriodicEgressLifecycle(const std::filesystem::path& root, HANDLE stop) {
@@ -113,15 +114,31 @@ void TestPeriodicEgressLifecycle(const std::filesystem::path& root, HANDLE stop)
              failed.body.find("core_egress_validated=0;dns_ready=0") != std::string::npos &&
              observed->stops == 1,
          "periodic failure lost TUN ownership or retained cached green health");
-  ::Sleep(250);
-  Expect(health->calls == 4, "failed periodic check kept retrying outside manager recovery");
+  const auto failed_calls = health->calls.load();
+  wait_for([&] { return health->calls >= failed_calls + 2; });
+  const auto retrying = call(Command::kStatus);
+  Expect(retrying.body.find("phase=running;") == 0 &&
+             retrying.body.find("core_egress_validated=0;dns_ready=0") != std::string::npos &&
+             health->active <= 1 && !health->overlapped &&
+             observed->starts == 2 && observed->stops == 1,
+         "failed health did not retry sequentially while retaining the TUN");
+
+  health->mode = 0;
+  wait_for([&] {
+    const auto recovered = call(Command::kStatus);
+    return recovered.body.find("core_egress_validated=1;dns_ready=1") != std::string::npos &&
+        recovered.body.find("failure=none;") != std::string::npos;
+  });
+  Expect(observed->starts == 2 && observed->stops == 1 && !health->overlapped,
+         "successful health retry reconnected instead of recovering the current TUN");
 
   Expect(call(Command::kDisconnect).status == Status::kOk, "failed health could not disconnect");
   health->mode = 0;
   Expect(call(Command::kConnect, ProfileDigest(profile)).status == Status::kOk,
          "healthy successor did not replace failed health");
+  const auto successor_calls = health->calls.load();
   health->mode = 1;
-  wait_for([&] { return health->calls == 6; });
+  wait_for([&] { return health->calls > successor_calls && health->active == 1; });
   const auto close_started = ::GetTickCount64();
   dispatcher.reset();
   Expect(::GetTickCount64() - close_started < 500 && health->active == 0 &&
@@ -182,13 +199,13 @@ int main() {
     const std::string reference = "network_" + std::string(32, 'a');
     RuntimeDispatcher dispatcher(&runtime,
         [&]() -> std::optional<CandidateNetworkContext> {
-          return CandidateNetworkContext{{1, reference}, "selection_fixture", "physical-fixture", "ethernet"};
+          return CandidateNetworkContext{{1, reference}, "selection_fixture", "physical-fixture", "ethernet", false};
         }, [&](std::uint64_t revision) { return revision == 1 && current.load(); });
     Frame network_frame{};
     network_frame.command = Command::kReadCandidateNetwork;
     Expect(dispatcher.Execute(network_frame, stop, ::GetTickCount64() + 1000, nullptr).body ==
-               "selection_fixture;" + reference + ";ethernet",
-           "candidate network class was not serialized");
+               "selection_fixture;" + reference + ";ethernet;0",
+           "candidate network class and IPv6 capability were not serialized");
     std::array<Frame, 4> frames{};
     std::array<RuntimeResult, 4> results{};
     std::array<std::thread, 4> workers;

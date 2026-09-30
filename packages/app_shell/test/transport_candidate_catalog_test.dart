@@ -21,12 +21,37 @@ Map<String, Object?> catalog(List<Map<String, Object?>> candidates) => {
   'selected_candidate_ref': candidates.first['candidate_ref'], 'candidates': candidates,
 };
 
-TransportCandidateCatalog parse(Map<String, Object?> value, {String node = ''}) =>
+TransportCandidateCatalog parse(Map<String, Object?> value, {String node = '', String clientRelease = '1.2.0'}) =>
     decodeManagedTransportCatalog(value, platform: HostPlatform.windows,
-      clientRelease: '1.2.0', runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      clientRelease: clientRelease, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
       requestedNodeCode: node);
 
 void main() {
+  test('typed delivery candidates separate ingress family and address generation', () {
+    Map<String, Object?> delivery(String family, int generation) {
+      final row = candidate('de', 'legacy_reality_fallback');
+      row['candidate_ref'] = 'de:legacy_reality_fallback:endpoint_$family:$family:g$generation';
+      row['parameters'] = <String, Object?>{...row['parameters'] as Map<String, Object?>,
+        'family': family, 'delivery_endpoint_id': family, 'endpoint_generation': generation,
+      };
+      (row['requirements'] as Map)['minimum_client_release'] = '1.5.0';
+      return row;
+    }
+    final rows = [candidate('de', 'legacy_reality_fallback'),
+      delivery('ipv4', 1), delivery('ipv6', 1), delivery('ipv6', 2)];
+    final decoded = parse(catalog(rows), clientRelease: '1.5.0');
+    expect(decoded.candidates.map((row) => row.family), ['ipv4', 'ipv4', 'ipv6', 'ipv6']);
+    expect(decoded.candidates.map((row) => row.endpointGeneration), [null, 1, 1, 2]);
+    expect(decoded.candidates.map((row) => row.deliveryEndpointId), [null, 'ipv4', 'ipv6', 'ipv6']);
+    expect(decoded.candidates.map((row) => row.candidateRef).toSet(), hasLength(4));
+    expect(() => parse(catalog(rows), clientRelease: '1.4.0'),
+      throwsA(isA<TransportManifestFailure>().having((failure) => failure.code,
+        'code', 'transport_catalog_incompatible')));
+    rows[2]['candidate_ref'] = rows[1]['candidate_ref'];
+    expect(() => parse(catalog(rows), clientRelease: '1.5.0'),
+      throwsA(isA<TransportManifestFailure>()));
+  });
+
   test('WARP chain candidates keep the node exit only when WARP is first', () {
     final ordinary = candidate('de', 'legacy_reality_fallback');
     Map<String, Object?> chain(String mode) {

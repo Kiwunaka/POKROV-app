@@ -32,6 +32,7 @@ class RuntimeCandidateNetwork extends RuntimeNetworkStatusObservation {
     this.networkClass,
     this.mccMnc,
     this.carrierName,
+    this.ipv6Available,
     super.networkAvailable,
     super.captivePortal,
   });
@@ -50,6 +51,10 @@ class RuntimeCandidateNetwork extends RuntimeNetworkStatusObservation {
 
   /// Cellular operator name reported by Android, when available.
   final String? carrierName;
+
+  /// Usable IPv6 source and default route on the captured physical uplink.
+  /// Null means the host could not determine that capability.
+  final bool? ipv6Available;
 }
 
 class RuntimeCandidateProbeResult {
@@ -106,6 +111,9 @@ mixin _CandidateProbeChannel
             : null,
         captivePortal: value['captive_portal'] is bool
             ? value['captive_portal'] as bool
+            : null,
+        ipv6Available: value['ipv6_available'] is bool
+            ? value['ipv6_available'] as bool
             : null,
       );
     } on MissingPluginException {

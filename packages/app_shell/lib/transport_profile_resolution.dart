@@ -43,10 +43,26 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       final profile = text(item['profile_ref'], refPattern, 64);
       final node = text(item['node_code'], refPattern, 64);
       final country = text(item['country_code'], RegExp(r'^[A-Z]{2}$'), 2);
+      final parameters = _transportMap(item['parameters']);
+      final deliveryId = parameters['delivery_endpoint_id'];
+      final generation = parameters['endpoint_generation'];
+      final family = parameters['family'] ?? 'ipv4';
+      if (deliveryId == null) {
+        _keys(parameters, const {'network', 'flow'});
+      } else {
+        _keys(parameters, const {'network', 'flow', 'family',
+          'delivery_endpoint_id', 'endpoint_generation'});
+        text(deliveryId, RegExp(r'^[a-z0-9][a-z0-9._-]*$'), 64);
+        if (!const {'ipv4', 'ipv6'}.contains(family) || generation is! int ||
+            generation < 1 || generation > 9007199254740991) {
+          throw const FormatException();
+        }
+      }
       if (warpMode != null && !const {'proxy_over_warp', 'warp_over_proxy'}.contains(warpMode)) {
         throw const FormatException();
       }
-      if (!refs.add(ref) || ref != '$node:$profile${warpMode == null ? '' : ':$warpMode'}' ||
+      final endpointSuffix = deliveryId == null ? '' : ':endpoint_$deliveryId:$family:g$generation';
+      if (!refs.add(ref) || ref != '$node:$profile$endpointSuffix${warpMode == null ? '' : ':$warpMode'}' ||
           (warpMode == 'warp_over_proxy' ? country != 'ZZ' : country == 'ZZ') ||
           item['priority'] is! int ||
           (item['priority'] as int) < 0) throw const FormatException();
@@ -62,8 +78,6 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         _ => false,
       };
       if (!supported || (warpMode != null && protocol != 'vless')) throw const FormatException();
-      final parameters = _transportMap(item['parameters']);
-      _keys(parameters, const {'network', 'flow'});
       if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
           !const {'', 'xtls-rprx-vision'}.contains(parameters['flow'])) throw const FormatException();
       if (transport == 'xhttp' && parameters['flow'] != '') throw const FormatException();
@@ -78,6 +92,9 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         throw const FormatException();
       }
       if (warpMode != null && _transportReleaseCompare(minimumClient, '1.4.0') < 0) {
+        throw const FormatException();
+      }
+      if (deliveryId != null && _transportReleaseCompare(minimumClient, '1.5.0') < 0) {
         throw const FormatException();
       }
       final platforms = <HostPlatform>{};
@@ -115,7 +132,9 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         protection: protection, priority: item['priority'] as int,
         network: parameters['network'] as String, flow: parameters['flow'] as String,
         minimumClientRelease: minimumClient, minimumCoreRelease: minimumCore as String?,
-        platforms: platforms, requiredFeatures: features, warpMode: warpMode as String?));
+        platforms: platforms, requiredFeatures: features, warpMode: warpMode as String?,
+        family: family as String, deliveryEndpointId: deliveryId as String?,
+        endpointGeneration: generation as int?));
     }
     final catalog = TransportCandidateCatalog(revision: revision,
       selectedCandidateRef: selected, candidates: candidates);

@@ -7254,6 +7254,11 @@ void main() {
                         'server': 'nl.kiwunaka.space',
                         'server_port': 443,
                         'uuid': 'test-uuid',
+                        'domain_resolver': <String, Object?>{
+                          'server': 'old-bootstrap',
+                          'strategy': 'ipv6_only',
+                          'disable_cache': true,
+                        },
                       },
                     ],
                     'route': <String, Object?>{
@@ -7359,7 +7364,9 @@ void main() {
         (config['outbounds'] as List).cast<Map<String, dynamic>>().singleWhere(
               (outbound) => outbound['type'] == 'vless',
             );
-    expect(vlessOutbound['domain_resolver'], localServer['tag']);
+    expect(vlessOutbound['domain_resolver'], <String, Object?>{
+      'server': localServer['tag'], 'strategy': 'ipv6_only', 'disable_cache': true,
+    });
     expect(route['final'], 'proxy');
     expect(rules.first, <String, dynamic>{
       'protocol': 'dns',

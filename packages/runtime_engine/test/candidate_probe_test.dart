@@ -138,6 +138,7 @@ void main() {
           'network_class': 'ethernet',
           'mcc_mnc': 'not-a-code',
           'network_available': true,
+          'ipv6_available': false,
           'captive_portal': null
         };
       }
@@ -154,6 +155,7 @@ void main() {
     expect(network.networkClass, 'ethernet');
     expect(network.mccMnc, isNull);
     expect(network.networkAvailable, true);
+    expect(network.ipv6Available, false);
     expect(network.captivePortal, null);
     final result = await runtime.probeCandidate(
         probeId: 'candidate-2',
@@ -181,6 +183,7 @@ void main() {
     final runtime = MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.android);
     final network = await runtime.readCandidateNetwork();
     expect(network.carrierName, 'Test Carrier');
+    expect(network.ipv6Available, isNull);
     carrier = List.filled(81, 'x').join();
     expect((await runtime.readCandidateNetwork()).carrierName, isNull);
     final result = await runtime.probeCandidate(

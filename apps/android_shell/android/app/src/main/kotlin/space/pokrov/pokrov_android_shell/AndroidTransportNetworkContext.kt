@@ -7,6 +7,8 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
+import java.net.Inet6Address
+import java.net.InetAddress
 import java.util.UUID
 
 /** Bridge-owned observation only: no requestNetwork, sockets or runtime monitor ownership. */
@@ -28,9 +30,19 @@ internal class AndroidTransportNetworkContext(context: Context) {
             "captive_portal" to captivePortal,
             "network_class" to networkClass,
             "mcc_mnc" to mccMnc,
+            "ipv6_available" to links?.let { properties ->
+                ipv6Available(properties.linkAddresses.map { it.address },
+                    properties.routes.any { it.isDefaultRoute && it.destination.address is Inet6Address })
+            },
         ) + if (networkClass == "cellular") mapOf("carrier" to carrier) else emptyMap()
 
         companion object {
+            fun ipv6Available(addresses: Iterable<InetAddress>, defaultRoute: Boolean): Boolean =
+                defaultRoute && addresses.any { address ->
+                    address is Inet6Address && !address.isAnyLocalAddress &&
+                        !address.isLoopbackAddress && !address.isLinkLocalAddress && !address.isMulticastAddress
+                }
+
             fun selectionKey(handle: Long?, networkClass: String?, mccMnc: String?): String? =
                 if (networkClass == "cellular" && mccMnc != null) "android:cellular:$mccMnc"
                 else handle?.let { "android:$it" }

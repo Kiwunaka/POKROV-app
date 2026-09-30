@@ -239,7 +239,8 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     if (!request.body.empty()) return {Status::kInvalid, "invalid_network_context_request"};
     const auto context = candidate_network_();
     return {Status::kOk, context ? context->selection_key + ";" +
-        context->network.reference + ";" + context->network_class : "unavailable"};
+        context->network.reference + ";" + context->network_class + ";" +
+        (context->ipv6_available.has_value() ? (*context->ipv6_available ? "1" : "0") : "unknown") : "unavailable"};
   }
   if (request.command == Command::kCancel) return Cancel(request.body);
   if (request.command == Command::kCancelConnectAndConfirm) return CancelAndConfirm(request.body);

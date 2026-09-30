@@ -9135,7 +9135,10 @@ class AppFirstRuntimeBootstrapper
       if (server.isEmpty || InternetAddress.tryParse(server) != null) {
         continue;
       }
-      outbound['domain_resolver'] = serverTag;
+      final resolver = outbound['domain_resolver'];
+      outbound['domain_resolver'] = resolver is Map
+          ? <String, dynamic>{..._readMap(resolver), 'server': serverTag}
+          : serverTag;
     }
   }
 

@@ -500,6 +500,8 @@ bool FlutterWindow::OnCreate() {
                         ? flutter::EncodableValue() : flutter::EncodableValue(snapshot.transport_network_context_ref)},
                     {flutter::EncodableValue("network_class"), snapshot.candidate_network_class.empty()
                         ? flutter::EncodableValue() : flutter::EncodableValue(snapshot.candidate_network_class)},
+                    {flutter::EncodableValue("ipv6_available"), snapshot.candidate_ipv6_available.has_value()
+                        ? flutter::EncodableValue(*snapshot.candidate_ipv6_available) : flutter::EncodableValue()},
                     {flutter::EncodableValue("network_available"), available.has_value()
                         ? flutter::EncodableValue(*available) : flutter::EncodableValue()},
                     {flutter::EncodableValue("captive_portal"), captive.has_value()

@@ -765,16 +765,20 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
     const auto& value = exchange.response->body;
     const auto delimiter = value.find(';');
     const auto class_delimiter = value.find(';', delimiter == std::string::npos ? 0 : delimiter + 1);
+    const auto family_delimiter = value.find(';', class_delimiter == std::string::npos ? 0 : class_delimiter + 1);
+    const auto network_class = class_delimiter == std::string::npos || family_delimiter == std::string::npos
+        ? std::string{} : value.substr(class_delimiter + 1, family_delimiter - class_delimiter - 1);
+    const auto ipv6 = family_delimiter == std::string::npos ? std::string{} : value.substr(family_delimiter + 1);
     if (result.command_accepted && value == "unavailable") return result;
     if (result.command_accepted && delimiter == 74 && value.compare(0, 10, "selection_") == 0 &&
         IsProfileDigest(value.substr(10, 64)) && class_delimiter != std::string::npos &&
         IsTransportNetworkContextRef(value.substr(delimiter + 1, class_delimiter - delimiter - 1)) &&
-        (value.substr(class_delimiter + 1) == "wifi" ||
-         value.substr(class_delimiter + 1) == "ethernet" ||
-         value.substr(class_delimiter + 1) == "other")) {
+        (network_class == "wifi" || network_class == "ethernet" || network_class == "other") &&
+        (ipv6 == "0" || ipv6 == "1" || ipv6 == "unknown")) {
       result.candidate_selection_key = value.substr(0, delimiter);
       result.transport_network_context_ref = value.substr(delimiter + 1, class_delimiter - delimiter - 1);
-      result.candidate_network_class = value.substr(class_delimiter + 1);
+      result.candidate_network_class = network_class;
+      if (ipv6 != "unknown") result.candidate_ipv6_available = ipv6 == "1";
     } else { result.command_accepted = false; }
     return result;
   }

@@ -83,6 +83,7 @@ class SmartConnectCandidateSelector {
     Future<void> Function(TransportCandidate candidate, Future<void> cancelled)? prepare,
     String preferredCountryCode = '',
     String recoveryCandidateRef = '',
+    bool? ipv6Available,
     Set<String> excludedCandidateRefs = const {},
     Duration probeTimeout = const Duration(seconds: 4),
     Duration selectionTimeout = const Duration(seconds: 12),
@@ -94,6 +95,7 @@ class SmartConnectCandidateSelector {
     final preferred = recoveryCandidateRef.isNotEmpty
         ? recoveryCandidateRef : _successful[network];
     final eligible = catalog.candidates.where((candidate) =>
+      (ipv6Available != false || candidate.family != 'ipv6') &&
       !excludedCandidateRefs.contains(candidate.candidateRef) &&
       (preferredCountryCode.isEmpty || candidate.countryCode == preferredCountryCode)).toList();
     final remembered = eligible.where((candidate) =>
@@ -108,6 +110,39 @@ class SmartConnectCandidateSelector {
         }
         return a.priority.compareTo(b.priority);
       });
+    bool familySiblings(TransportCandidate a, TransportCandidate b) =>
+        a.warpMode == null && b.warpMode == null &&
+        a.deliveryEndpointId != null && b.deliveryEndpointId != null &&
+        a.nodeCode == b.nodeCode && a.profileRef == b.profileRef &&
+        a.family != b.family;
+    final ipv6Siblings = <String, TransportCandidate>{};
+    for (final candidate in candidates.where((item) => item.family == 'ipv4')) {
+      for (final sibling in candidates.where((item) => item.family == 'ipv6')) {
+        if (familySiblings(candidate, sibling)) {
+          ipv6Siblings[candidate.candidateRef] = sibling;
+          break;
+        }
+      }
+    }
+    // Keep each family's priority order, but give the direct IPv6 sibling the
+    // first native attempt even when IPv4 was this network's last success.
+    for (var index = 0; index < candidates.length; index++) {
+      final sibling = ipv6Siblings[candidates[index].candidateRef];
+      if (sibling == null) continue;
+      final siblingIndex = candidates.indexOf(sibling);
+      if (siblingIndex > index) {
+        candidates.insert(index, candidates.removeAt(siblingIndex));
+      }
+    }
+    final familyStarted = <String, Completer<void>>{
+      for (final sibling in ipv6Siblings.values)
+        sibling.candidateRef: Completer<void>(),
+    };
+    final familySettled = <String, Completer<void>>{
+      for (final sibling in ipv6Siblings.values)
+        sibling.candidateRef: Completer<void>(),
+    };
+    final familyClocks = <String, Stopwatch>{};
     final ended = Completer<void>();
     final probes = <Completer<void>>{};
     final settled = <Future<void>>[];
@@ -136,9 +171,27 @@ class SmartConnectCandidateSelector {
       try {
         await prepare?.call(candidate, cancellation.future);
         if (ended.isCompleted) return;
+        final sibling = ipv6Siblings[candidate.candidateRef];
+        if (sibling != null) {
+          final started = familyStarted[sibling.candidateRef]!;
+          final finished = familySettled[sibling.candidateRef]!;
+          await Future.any<void>([ended.future, started.future, finished.future]);
+          final elapsed = familyClocks[sibling.candidateRef]?.elapsed ?? Duration.zero;
+          final reserveDelay = const Duration(milliseconds: 250) - elapsed;
+          if (!ended.isCompleted && !finished.isCompleted && reserveDelay > Duration.zero) {
+            await Future.any<void>([ended.future, finished.future,
+              Future<void>.delayed(reserveDelay)]);
+          }
+          if (ended.isCompleted) return;
+        }
         final nativeTimeout = remainingProbeBudget < probeTimeout
             ? remainingProbeBudget : probeTimeout;
         probeClock.start();
+        final familyStart = familyStarted[candidate.candidateRef];
+        if (familyStart != null) {
+          familyClocks[candidate.candidateRef] = probeClock;
+          familyStart.complete();
+        }
         timeout = Timer(nativeTimeout, () {
           timedOut = true;
           if (!cancellation.isCompleted) cancellation.complete();
@@ -169,6 +222,8 @@ class SmartConnectCandidateSelector {
           countProbeTime(probeClock.elapsed);
         }
         probes.remove(cancellation);
+        final familyFinish = familySettled[candidate.candidateRef];
+        if (familyFinish != null && !familyFinish.isCompleted) familyFinish.complete();
       }
       if (ended.isCompleted) return;
       failures++;
@@ -202,7 +257,8 @@ class SmartConnectCandidateSelector {
       Future<void>? preferredRun;
       var preferredSettled = false;
       if (preferred != null && preferred.isNotEmpty && candidates.isNotEmpty &&
-          candidates.first.candidateRef == preferred) {
+          candidates.first.candidateRef == preferred &&
+          !familyStarted.containsKey(preferred)) {
         preferredRun = run(candidates.removeAt(0), selectionTimeout,
             (elapsed) => preferredProbeTime += elapsed).whenComplete(
             () => preferredSettled = true);
