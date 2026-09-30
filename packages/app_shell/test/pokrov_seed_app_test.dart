@@ -10666,7 +10666,7 @@ void main() {
           ),
           const ClientLocationCountry(
             code: 'CH',
-            country: 'Switzerland',
+            country: '2001:db8::2',
             cities: <ClientLocationCity>[
               ClientLocationCity(
                 code: 'ch',
@@ -10842,6 +10842,8 @@ void main() {
     await tester.ensureVisible(swissRow);
     await tester.pumpAndSettle();
     expect(find.descendant(of: swissRow, matching: find.text('Швейцария')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('Флаг: Швейцария')), findsWidgets);
+    expect(find.bySemanticsLabel(RegExp('2001:db8::2')), findsNothing);
     expect(find.descendant(of: swissRow, matching: find.textContaining('Switzerland')), findsNothing);
     expect(find.descendant(of: swissRow, matching: find.textContaining('0%')), findsNothing);
     expect(find.descendant(of: swissRow, matching: find.textContaining('нет замера')), findsOneWidget);
@@ -11129,7 +11131,7 @@ void main() {
                 ),
                 ClientLocationVariant(
                   id: 'mini',
-                  label: 'Белые списки',
+                  label: 'Белые списки 198.51.100.42',
                   description: 'Для ограниченных сетей',
                   available: true,
                 ),
@@ -11189,6 +11191,16 @@ void main() {
     await tester.pumpAndSettle();
     await _tapAdvancedLocations(tester);
     await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-protection');
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('home-location-chip')),
+        matching: find.text('Франкфурт · Белые списки'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('198.51.100.42'), findsNothing);
+    await _tapNav(tester, 'nav-locations');
     final cityRow = find.byKey(
       const ValueKey('locations-catalog-city-de-fra'),
     );

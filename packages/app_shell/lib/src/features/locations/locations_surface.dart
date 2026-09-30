@@ -1351,7 +1351,7 @@ class _ClientLocationCityRow extends StatelessWidget {
           final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.2;
           return Row(
             children: [
-              _LocationFlagBadge(code: country.code, country: country.country),
+              _LocationFlagBadge(code: country.code, country: countryTitle),
               SizedBox(width: compact ? 10 : 14),
               Expanded(
                 child: Column(
@@ -1517,7 +1517,10 @@ class _SmartConnectNodeRow extends StatelessWidget {
             children: [
               _LocationFlagBadge(
                 code: _locationCountryCodeFromNode(node.code, node.country),
-                country: node.country,
+                country: _locationCountryDisplayName(
+                  _locationCountryCodeFromNode(node.code, node.country),
+                  node.country,
+                ),
               ),
               SizedBox(width: compact ? 10 : 14),
               Expanded(
