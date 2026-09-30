@@ -5849,6 +5849,7 @@ void main() {
     expect(tunInbound.containsKey('inet4_address'), isFalse);
     expect(tunInbound.containsKey('endpoint_independent_nat'), isFalse);
     expect(tunInbound.containsKey('sniff'), isFalse);
+    expect(tunInbound.containsKey('domain_strategy'), isFalse);
     expect(inbounds.where((inbound) => inbound['tag'] == 'dns-in'), isEmpty);
     expect(config.containsKey('_meta'), isFalse);
     expect(route['final'], 'select');
@@ -7001,16 +7002,17 @@ void main() {
           (inbound) => inbound['type'] == 'tun')['exclude_package'],
       <String>['space.pokrov.pokrov_android_shell'],
     );
-    expect(
-      inbounds
-          .singleWhere((inbound) => inbound['type'] == 'tun')['inet6_address'],
-      isNotNull,
-    );
-    expect(
-      inbounds.singleWhere(
-          (inbound) => inbound['type'] == 'tun')['domain_strategy'],
-      'prefer_ipv4',
-    );
+    final tunInbound =
+        inbounds.singleWhere((inbound) => inbound['type'] == 'tun');
+    expect(tunInbound['address'], <String>[
+      '172.19.0.1/28',
+      'fdfe:dcba:9876::1/126',
+    ]);
+    expect(tunInbound.containsKey('inet4_address'), isFalse);
+    expect(tunInbound.containsKey('inet6_address'), isFalse);
+    expect(tunInbound.containsKey('domain_strategy'), isFalse);
+    expect(tunInbound.containsKey('endpoint_independent_nat'), isFalse);
+    expect(tunInbound.containsKey('sniff'), isFalse);
     expect(payload.configPayload, isNot(contains('"mixed-in"')));
     expect(payload.configPayload, isNot(contains('"dns-in"')));
     expect(
@@ -7044,6 +7046,7 @@ void main() {
       'protocol': 'dns',
       'action': 'hijack-dns',
     });
+    expect(rules[1], <String, dynamic>{'action': 'sniff'});
     expect(
       (config['outbounds'] as List).cast<Map<String, dynamic>>().where(
             (outbound) => outbound['type'] == 'dns',
@@ -7373,14 +7376,8 @@ void main() {
       <String>['space.pokrov.pokrov_android_shell'],
     );
     expect(
-      inbounds
-          .singleWhere((inbound) => inbound['type'] == 'tun')['inet6_address'],
-      isNotNull,
-    );
-    expect(
-      inbounds.singleWhere(
-          (inbound) => inbound['type'] == 'tun')['domain_strategy'],
-      'prefer_ipv4',
+      inbounds.singleWhere((inbound) => inbound['type'] == 'tun')['address'],
+      <String>['172.19.0.1/28', 'fdfe:dcba:9876::1/126'],
     );
     expect(servers.map((server) => server['type']), contains('local'));
     expect(
@@ -7424,8 +7421,9 @@ void main() {
       'protocol': 'dns',
       'action': 'hijack-dns',
     });
+    expect(rules[1], <String, dynamic>{'action': 'sniff'});
     expect(
-      rules[1],
+      rules[2],
       containsPair(
           'package_name', <String>['space.pokrov.pokrov_android_shell']),
     );
@@ -9274,9 +9272,10 @@ void main() {
         .cast<Map<String, dynamic>>()
         .singleWhere((inbound) => inbound['type'] == 'tun');
 
-    expect(tunInbound['inet4_address'], '172.19.0.1/28');
+    expect(tunInbound['address'], <String>['172.19.0.1/28']);
+    expect(tunInbound.containsKey('inet4_address'), isFalse);
     expect(tunInbound.containsKey('inet6_address'), isFalse);
-    expect(tunInbound['domain_strategy'], 'ipv4_only');
+    expect(tunInbound.containsKey('domain_strategy'), isFalse);
     expect(tunInbound['stack'], 'mixed');
     expect(tunInbound['mtu'], 1400);
   });

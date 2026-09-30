@@ -7878,6 +7878,10 @@ class AppFirstRuntimeBootstrapper
       rules: existingRules,
       legacyDnsOutboundTags: legacyDnsOutboundTags,
     );
+    existingRules.removeWhere(
+      (rule) => _readText(rule['action']).toLowerCase() == 'sniff',
+    );
+    existingRules.insert(1, <String, dynamic>{'action': 'sniff'});
 
     // The Android VpnService excludes its own package from the TUN. Letting
     // sing-box auto-detect the Android VPN interface loops or rejects outbound
@@ -8397,37 +8401,15 @@ class AppFirstRuntimeBootstrapper
       'strict_route': true,
       'stack': hostPlatform == HostPlatform.android ? 'mixed' : 'system',
     };
-    if (hostPlatform == HostPlatform.android) {
-      tunInbound
-        ..['endpoint_independent_nat'] = true
-        ..['sniff'] = true;
-    }
-    if (hostPlatform == HostPlatform.android) {
-      if (ipVersionPreference == 'ipv6_only') {
-        tunInbound.remove('inet4_address');
-        tunInbound['inet6_address'] = 'fdfe:dcba:9876::1/126';
-        tunInbound['domain_strategy'] = 'ipv6_only';
-      } else if (ipVersionPreference == 'ipv4_only') {
-        tunInbound['inet4_address'] = '172.19.0.1/28';
-        tunInbound.remove('inet6_address');
-        tunInbound['domain_strategy'] = 'ipv4_only';
-      } else {
-        tunInbound['inet4_address'] = '172.19.0.1/28';
-        tunInbound['inet6_address'] = 'fdfe:dcba:9876::1/126';
-        tunInbound['domain_strategy'] = 'prefer_ipv4';
-      }
-    } else if (ipVersionPreference == 'ipv6_only') {
+    if (ipVersionPreference == 'ipv6_only') {
       tunInbound['address'] = <String>['fdfe:dcba:9876::1/126'];
-      tunInbound['domain_strategy'] = 'ipv6_only';
     } else if (ipVersionPreference == 'ipv4_only') {
       tunInbound['address'] = <String>['172.19.0.1/28'];
-      tunInbound['domain_strategy'] = 'ipv4_only';
     } else {
       tunInbound['address'] = <String>[
         '172.19.0.1/28',
         'fdfe:dcba:9876::1/126',
       ];
-      tunInbound['domain_strategy'] = 'prefer_ipv4';
     }
     if (hostPlatform == HostPlatform.android) {
       if (routeMode == RouteMode.selectedApps) {

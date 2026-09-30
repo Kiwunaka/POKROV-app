@@ -22,6 +22,12 @@ detours to an unconfigured Direct outbound. Stored profile bytes and release pin
 are unchanged. The typed format works with the existing Core 1.1.2 (sing-box 1.13)
 and Core 1.2.1 (1.14), which removed the legacy DNS server format.
 
+Generated Android and desktop TUN inbounds use the unified `address` list,
+retaining the selected IP family, MTU, stack and package routing. Android applies
+sniffing through the route action after DNS hijacking, as Windows and Linux do;
+TUN-level legacy address, sniff, domain strategy and NAT fields are not emitted.
+The existing DNS resolver policy is retained.
+
 With ordinary managed profiles and a runtime supporting protected handoff,
 manual reconnect and location replacement retain the running tunnel while the
 replacement profile is resolved and probed. Cancellation retains that protection,
