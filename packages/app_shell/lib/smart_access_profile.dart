@@ -294,7 +294,7 @@ String smartAccessDnsTag(VerifiedSmartAccessLease grant) =>
     'pokrov-smart-access-dns-${grant.lease['lease_id']}';
 
 /// The integrated subset is web requests from current-origin. Eligibility is
-/// checked before equal-weight rendezvous; affinity is not a health claim.
+/// checked before provider selection; affinity is not a health claim.
 Future<List<Map<String, Object?>>> selectSmartAccessWebCapabilities({
   required VerifiedRoutingCatalog catalog,
   required VerifiedSmartAccessProviderPolicy providers,
@@ -349,10 +349,13 @@ Future<List<Map<String, Object?>>> selectSmartAccessWebCapabilities({
     final compatible = eligible.where((row) => row['family'] == family).toList();
     final scope = [platform, serviceId, 'current-origin', 'web_request', family];
     final remaining = compatible.map((row) => row['provider_id']! as String).toSet();
+    final owned = providerRows.where((row) => row['kind'] == 'owned')
+        .map((row) => row['provider_id']! as String).toSet().intersection(remaining);
     Map<String, Object?>? first;
     while (remaining.isNotEmpty) {
       final providerId = first == null && preferred.isNotEmpty ? preferred.single['provider_id']! as String :
-        await _smartAccessRendezvous(remaining, [selectionSeed, ...scope, 'provider'], isCurrent);
+        await _smartAccessRendezvous(first == null && owned.isNotEmpty ? owned : remaining,
+          [selectionSeed, ...scope, 'provider'], isCurrent);
       remaining.remove(providerId);
       final members = compatible.where((row) => row['provider_id'] == providerId &&
         (first == null || _sameGatewayDomains(row['domains'], first['domains']))).toList();

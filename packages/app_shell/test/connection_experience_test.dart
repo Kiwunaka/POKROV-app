@@ -2,8 +2,27 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_app_shell/routing_catalog_contract.dart';
+import 'package:pokrov_app_shell/smart_access_profile.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
+
+// Selection consumes already verified snapshots; signature parsing has its own boundary.
+class _SelectionCatalog implements VerifiedRoutingCatalog {
+  _SelectionCatalog(this.payload);
+  @override
+  final Map<String, Object?> payload;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _SelectionProviders implements VerifiedSmartAccessProviderPolicy {
+  _SelectionProviders(this.payload);
+  @override
+  final Map<String, Object?> payload;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 RuntimeSnapshot _runningSnapshot({
   HostPlatform hostPlatform = HostPlatform.windows,
@@ -47,6 +66,44 @@ ConnectionExperienceState _reduce(
 }
 
 void main() {
+  test('Smart Access defaults to eligible owned DNS and retains external affinity', () async {
+    final now = DateTime.utc(2026, 10, 1);
+    final window = {'issued_at': now.subtract(const Duration(minutes: 1)).toIso8601String(),
+      'expires_at': now.add(const Duration(hours: 1)).toIso8601String()};
+    final catalog = _SelectionCatalog({...window, 'services': [
+      {'service_id': 'test-service', 'provider_capability_refs': ['owned-cap', 'external-cap']},
+    ]});
+    final ownedCapability = <String, Object?>{
+      'capability_id': 'owned-cap', 'service_id': 'test-service', 'provider_id': 'owned-provider',
+      'provider_revision': 1, 'enabled': true, 'verification': 'verified', 'platform': 'windows',
+      'origin': 'current-origin', 'feature': 'web_request', 'transport': 'tls_tcp_443_visible_sni',
+      'family': 'ipv4', 'observed_at': window['issued_at'], 'expires_at': window['expires_at'],
+      'domains': [{'name': 'service.example', 'match': 'suffix'}],
+    };
+    final providers = _SelectionProviders({...window,
+      'providers': [for (final kind in ['owned', 'external'])
+        {'provider_id': '$kind-provider', 'kind': kind, 'enabled': true, 'revision': 1,
+          'permission_id': '$kind-permission'}],
+      'permissions': [for (final kind in ['owned', 'external'])
+        {...window, 'permission_id': '$kind-permission', 'provider_id': '$kind-provider',
+          'status': 'approved', 'embedded_use_allowed': true}],
+      'capabilities': [ownedCapability,
+        {...ownedCapability, 'capability_id': 'external-cap', 'provider_id': 'external-provider'}],
+    });
+    Future<List<String>> selected({String? affinity}) async =>
+      (await selectSmartAccessWebCapabilities(catalog: catalog, providers: providers,
+        serviceIds: {'test-service'}, platform: 'windows', now: now,
+        // This seed ranked the external provider first before owned preference.
+        selectionSeed: '0000000000000000000000000000000000000000000000000000000000000003',
+        isCurrent: () => true,
+        preferredCapabilityIds: affinity == null ? const {} : {'test-service': affinity}))
+        .map((row) => row['capability_id']! as String).toList();
+    expect(await selected(), ['owned-cap', 'external-cap']);
+    expect(await selected(affinity: 'external-cap'), ['external-cap', 'owned-cap']);
+    ownedCapability['expires_at'] = now.toIso8601String();
+    expect(await selected(), ['external-cap']);
+  });
+
   test('verified state requires every DNS, host, uplink and egress proof', () {
     expect(_reduce(_runningSnapshot()), isA<ConnectionConnectedVerified>());
 

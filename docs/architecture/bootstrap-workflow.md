@@ -281,15 +281,19 @@ ConnectionCoordinator generation. It requires a fresh catalog, known eligible
 access and loaded Core Smart Access version 1. The integrated selection subset
 is a verified `web_request` capability for `current-origin`; RU-origin,
 brain-origin, login, streaming and game proofs are not treated as interchangeable.
-Eligibility checks run before equal-weight rendezvous selection owned by the
+Eligibility checks run before provider selection owned by the
 existing ConnectionCoordinator. Its random 256-bit seed is lazy, memory-only,
 never transmitted/logged/persisted, and discarded with the coordinator. The
 selection scope is service/platform/origin/feature/family; no account/install ID,
 IP, SSID or interface fingerprint is used. An unambiguous still-eligible capability
 from the matching running inventory supplies affinity unless restricted. An
 inventory containing several candidates is not treated as native selection evidence.
-Otherwise the existing IPv4-first subset is selected, then
-providers and one capability per provider are ranked separately with SHA-256. More
+Otherwise the existing IPv4-first subset is selected. The initial default chooses
+an eligible signed `kind=owned` provider when available; a captured or explicit
+still-eligible affinity retains its provider. Remaining providers stay in the
+standby pool. Providers within the default pool and one capability per provider
+are ranked separately with SHA-256. Smart Access feature flags remain off by
+default; this preference does not enable a provider or prove service access. More
 capability rows do not give a provider more weight. A deterministic ID tie-break
 handles equal scores, so input ordering and unrelated revision metadata do not
 change the result. This affinity is not a health measurement or new entitlement.
