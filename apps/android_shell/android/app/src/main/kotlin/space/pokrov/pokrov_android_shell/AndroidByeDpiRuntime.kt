@@ -64,7 +64,13 @@ internal class AndroidByeDpiRuntime private constructor(
         get() = synchronized(protectLock) { check(isCurrent()); rawPort() }
 
     fun proveService(host: String, address: InetAddress, remainingMillis: () -> Int): Boolean {
-        val attempt = AndroidByeDpiServiceProof(::isCurrent, remainingMillis)
+        val attempt = AndroidByeDpiServiceProof(::isCurrent, { socket ->
+            synchronized(protectLock) {
+                isCurrent() && ParcelFileDescriptor.fromSocket(socket).use {
+                    protectSocket(it.fd)
+                } && isCurrent()
+            }
+        }, remainingMillis)
         synchronized(protectLock) {
             if (!isCurrent()) return false
             proof = attempt
@@ -234,6 +240,7 @@ internal class AndroidByeDpiRuntime private constructor(
 /** One cancellable, bounded SOCKS/TLS/HEAD exchange; no Android or JNI calls. */
 internal class AndroidByeDpiServiceProof(
     private val isCurrent: () -> Boolean,
+    private val protectSocket: (Socket) -> Boolean,
     private val remainingMillis: () -> Int,
 ) : AutoCloseable {
     private val lock = Any()
@@ -289,6 +296,10 @@ internal class AndroidByeDpiServiceProof(
             if (!current()) { socket.close(); throw IOException("byedpi: proof superseded") }
             raw = socket
         }
+        // Create the FD before protecting the same loopback transport used by
+        // Core. An included host UID must not send this proof back into its TUN.
+        socket.bind(InetSocketAddress("127.0.0.1", 0))
+        if (!protectSocket(socket)) throw IOException("byedpi: proof protection refused")
         socket.connect(InetSocketAddress("127.0.0.1", port), budget())
         socket.soTimeout = budget()
         val output = socket.getOutputStream()

@@ -87,6 +87,11 @@ and HEAD 2xx, foreign UID denial, and finite child/socket/TUN cleanup. This used
 an address-only fixture TUN without default routes or Core route admission.
 The full overlay has not passed local DPI acceptance; its host UID scope and
 ordinary transport protection must be verified together before enabling it.
+The Java admission proof now protects its loopback socket through the existing
+VPN callback before SOCKS connect, matching Core's protected local-DPI transport.
+Recapture of the previously unprotected proof by default routes remains a
+hypothesis until the same default-route device fixture passes; this change does
+not alter package/UID policy, catalog authority or admission requirements.
 Production catalog trust and the default-off feature remain unchanged.
 
 On a transient transport failure or retryable HTTP outage, only a currently

@@ -6,6 +6,7 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -13,6 +14,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 class AndroidByeDpiRuntimeTest {
@@ -63,7 +65,13 @@ class AndroidByeDpiRuntimeTest {
     @Test(timeout = 10_000)
     fun cancellationClosesPendingTlsThroughSocksAndJoinsItsWorker() {
         val scope = AndroidLifecycleTaskScope(71L, "byedpi-cancel-test", 1)
-        val proof = AndroidByeDpiServiceProof(scope::isActive) { 30_000 }
+        var protects = 0
+        val proof = AndroidByeDpiServiceProof(scope::isActive, { socket ->
+            assertTrue(socket.isBound)
+            assertFalse(socket.isConnected)
+            protects++
+            true
+        }) { 30_000 }
         scope.onCancel(proof::close)
         val tlsStarted = CountDownLatch(1)
         val resultReady = CountDownLatch(1)
@@ -93,6 +101,7 @@ class AndroidByeDpiRuntimeTest {
                     resultReady.countDown()
                 })
                 assertTrue(tlsStarted.await(2, TimeUnit.SECONDS))
+                assertEquals(1, protects)
                 scope.close()
                 assertTrue(scope.awaitClosed(2000))
                 assertTrue(resultReady.await(2, TimeUnit.SECONDS))
@@ -111,7 +120,7 @@ class AndroidByeDpiRuntimeTest {
     fun changedNetworkAfterSocksConnectRejectsReplyBeforeTlsOrAdmission() {
         val network = AtomicReference("network-a")
         val scope = AndroidLifecycleTaskScope(72L, "byedpi-network-test", 1)
-        val proof = AndroidByeDpiServiceProof({ scope.isActive() && network.get() == "network-a" }) { 30_000 }
+        val proof = AndroidByeDpiServiceProof({ scope.isActive() && network.get() == "network-a" }, { true }) { 30_000 }
         scope.onCancel(proof::close)
         val connected = CountDownLatch(1)
         val releaseReply = CountDownLatch(1)
@@ -155,6 +164,28 @@ class AndroidByeDpiRuntimeTest {
                 proof.close()
                 assertTrue(scope.awaitClosed(2000))
             }
+        }
+    }
+
+    @Test(timeout = 2000)
+    fun refusedProofProtectionNeverOpensSocksConnection() {
+        ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")).use { server ->
+            server.soTimeout = 250
+            var protects = 0
+            val proof = AndroidByeDpiServiceProof({ true }, { socket ->
+                assertTrue(socket.isBound)
+                assertFalse(socket.isConnected)
+                protects++
+                false
+            }) { 1000 }
+            try {
+                assertFalse(proof.run(server.localPort, "service.example", CONTROL_ADDRESS))
+                assertEquals(1, protects)
+                try {
+                    server.accept().close()
+                    fail("Refused protection must not reach the SOCKS listener")
+                } catch (_: SocketTimeoutException) { /* No connection was opened. */ }
+            } finally { proof.close() }
         }
     }
 
