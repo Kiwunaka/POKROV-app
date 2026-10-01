@@ -3462,6 +3462,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onRoutingPreferencesChanged: _setRoutingPreferences,
             onRoutingPreferencesApply: _applyRoutingPreferences,
             connectionActive: _runtimeSnapshot?.phase == RuntimePhase.running,
+            windowsLocalDpiReady: _runtimeSnapshot?.windowsLocalDpiAdmissionVersion == 1,
             onReadCurrentWifi: _readCurrentWifi,
             onRequestWifiPermission: _requestCurrentWifiPermission,
             onOpenVpnSettings: _openSystemVpnSettings,

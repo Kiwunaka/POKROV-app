@@ -498,7 +498,7 @@ bool IsKnownPhase(const std::string& value) {
 }
 
 bool IsKnownFailure(const std::string& value) {
-  static constexpr std::array<const char*, 49> failures = {
+  static constexpr std::array<const char*, 52> failures = {
       "none",
       "core_not_initialized",
       "core_missing",
@@ -506,6 +506,9 @@ bool IsKnownFailure(const std::string& value) {
       "core_load_failed",
       "core_abi_incompatible",
       "core_capabilities_incompatible",
+      "local_dpi_withdraw_failed",
+      "local_dpi_catalog_expired",
+      "local_dpi_owner_changed",
       "runtime_path_invalid",
       "core_setup_failed",
       "profile_request_invalid",
@@ -589,6 +592,8 @@ bool ParseSnapshotBodyInternal(const std::string& body,
   std::string core_version = "none";
   const bool has_retained_protection = body.find(";protection_retained=") != std::string::npos;
   std::string protection_retained = "0";
+  const bool has_windows_dpi = body.find(";windows_local_dpi_admission_version=") != std::string::npos;
+  std::string windows_dpi = "0";
   const bool has_proof_state = body.find(";transport_proof_pending=") != std::string::npos;
   std::string proof_pending = "0";
   const bool has_lease_state = body.find(";transport_lease_active=") != std::string::npos;
@@ -625,7 +630,9 @@ bool ParseSnapshotBodyInternal(const std::string& body,
           "transport_capabilities", &transport_capabilities, !has_module_digest)) ||
       (has_module_digest && !ReadField(body, &offset, "core_module_sha256", &module_digest, !has_core_version && !has_retained_protection && !has_proof_state)) ||
       (has_core_version && !ReadField(body, &offset, "core_version", &core_version, !has_retained_protection && !has_proof_state)) ||
-      (has_retained_protection && !ReadField(body, &offset, "protection_retained", &protection_retained, !has_proof_state)) ||
+      (has_retained_protection && !ReadField(body, &offset, "protection_retained", &protection_retained, !has_proof_state && !has_windows_dpi)) ||
+      (has_windows_dpi && (!has_retained_protection || !ReadField(body, &offset,
+          "windows_local_dpi_admission_version", &windows_dpi, !has_proof_state))) ||
       (has_proof_state && !ReadField(body, &offset, "transport_proof_pending", &proof_pending, !has_lease_state)) ||
       (has_lease_state && !ReadField(body, &offset, "transport_lease_active", &lease_active, true)) ||
       (module_digest != "none" && !IsProfileDigest(module_digest)) ||
@@ -635,6 +642,7 @@ bool ParseSnapshotBodyInternal(const std::string& body,
         return character >= 32 && character <= 126 && character != ';';
       }) ||
       (runtime_control != "0" && runtime_control != "1") ||
+      (windows_dpi != "0" && windows_dpi != "1") ||
       (runtime_control == "1" && catalog_control != "4") ||
       (catalog_window != "0" && catalog_window != "1") ||
       (smart_access != "0" && smart_access != "1") ||
@@ -686,6 +694,7 @@ bool ParseSnapshotBodyInternal(const std::string& body,
   output->routing_catalog_control_version =
       output->core_ready ? (catalog_control == "4" ? 4 : catalog_control == "3" ? 3 : catalog_control == "2" ? 2 : catalog_control == "1" ? 1 : 0) : 0;
   output->smart_access_runtime_control_version = output->core_ready && runtime_control == "1" ? 1 : 0;
+  output->windows_local_dpi_admission_version = output->core_ready && windows_dpi == "1" ? 1 : 0;
   output->transport_capabilities_json = output->core_ready && transport_capabilities != "none"
       ? transport_capabilities : "";
   output->core_module_sha256 = output->core_ready && module_digest != "none" ? module_digest : "";

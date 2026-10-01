@@ -270,18 +270,25 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   Unknown capabilities and admission versions still fail closed before setup.
 - The exact next Windows Core descriptor is recognized only with the native
   Windows admission version 1 and all five preparation/holder symbols. This
-  source preparation keeps Windows DPI capability zero: no public start or
-  admission path exists yet. The service-owned executor accepts only a private
-  Core-prepared domain plan, fixed TCP/443 multisplit 568/681 argv and the captured
-  physical interface. Its immutable administrator-owned `local-dpi` assets
-  contain winws, Cygwin, WinDivert and the two pattern files; they are not bundled
-  or downloaded by this change. A `NO_INSTALL` reflection handle requires an
-  already installed WinDivert 2.2 driver before the suspended child joins a
-  single-process kill-on-close Job. Cleanup withdraws captured holder IDs before
-  closing that Job; no shared driver stop/remove is issued. Compiled catalog pins,
-  private preparation parsing, exact control-host TLS/HEAD proof and the existing
-  dispatcher's profile/Core/operation/network/TTL fence remain required before
-  any activation, admission or capability can be enabled.
+  Windows selective opt-in hands its original signed metadata to the native
+  owner. Public catalog pins/audience are compiled from the existing release
+  trust defines, never supplied through IPC. Capability remains zero unless
+  those pins, the actual five Core symbols, immutable administrator-owned
+  `local-dpi` assets and an already installed WinDivert 2.2 driver are present.
+  Optional packaging copies only the six approved assets and `NOTICES.txt`;
+  it downloads nothing and installs no driver. The private Core-prepared plan
+  starts one suspended, Job-owned TCP/443 multisplit child on the captured
+  physical interface. Physical IPv4 DNS/TCP and Schannel certificate/hostname
+  validation plus HEAD 2xx prove each exact signed control host before fresh-ID
+  admission; IPv6-only proof is unavailable and leaves the VPN fallback.
+  The existing dispatcher fences profile/Core/operation/network/TTL and child
+  liveness. Cancellation/child failure withdraws captured IDs before closing
+  the child; expiry or catalog revocation uses protected runtime rollback,
+  because inactive catalog rules would otherwise reach `route.final`.
+  Failed withdrawal retains the child until confirmed Core Stop. Existing
+  connections are never replayed, no shared driver stop/remove is issued, and
+  the feature defaults off. This is source readiness; product build, approved
+  assets, real device proof and release publication remain separate gates.
 - Malformed descriptors, unknown schema/event ABI versions, missing required
   capabilities and unknown lifecycle event identifiers fail closed before any
   Core setup or profile material is passed across FFI.

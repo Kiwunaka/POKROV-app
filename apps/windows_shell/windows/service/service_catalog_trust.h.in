@@ -1,0 +1,9 @@
+#ifndef POKROV_SERVICE_CATALOG_TRUST_H_
+#define POKROV_SERVICE_CATALOG_TRUST_H_
+namespace pokrov::service {
+// Built from the same owned public defines as Dart. Never supplied by IPC.
+constexpr bool kWindowsCatalogTrustEnabled = @POKROV_NATIVE_CATALOG_ENABLED@;
+constexpr char kWindowsCatalogPublicKeys[] = R"pokrov(@POKROV_NATIVE_CATALOG_PUBLIC_KEYS_JSON@)pokrov";
+constexpr char kWindowsCatalogAudience[] = "@POKROV_NATIVE_CATALOG_AUDIENCE@";
+}
+#endif

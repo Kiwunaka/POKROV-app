@@ -1067,10 +1067,11 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   }
   final meta = _routingMap(config['_meta']);
   meta.remove('local_dpi');
-  if (preferences.localDpiEnabled && hostPlatform == HostPlatform.android && selective &&
+  if (preferences.localDpiEnabled &&
+      const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) && selective &&
       policy.localDpiControlHosts.isNotEmpty) {
     meta['local_dpi'] = {
-      'mode': 'selective', 'platform': 'android',
+      'mode': 'selective', 'platform': hostPlatform.name,
       'catalog_envelope': policy.catalog.canonicalEnvelopeJson,
       'catalog_sha256': policy.payloadSha256,
       'revision': policy.revision, 'security_revision': policy.securityRevision,

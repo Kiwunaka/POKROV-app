@@ -4,6 +4,9 @@
 #include "service_profile_identity.h"
 #include "service_core_identity.h"
 #include "service_local_dpi.h"
+#include "service_local_dpi_json.h"
+#include "service_local_dpi_probe.h"
+#include "service_catalog_trust.h"
 
 #include <windows.h>
 
@@ -1140,6 +1143,8 @@ RuntimeResult RuntimeHost::Initialize() {
   failure_.clear();
   RecordEvent(ServiceEvent::kRuntimeInitialize,
               ServiceEventOutcome::kSucceeded);
+  local_dpi_ready_ = kWindowsCatalogTrustEnabled && transition_guard_ != nullptr &&
+      core_->WindowsLocalDpiAdmissionVersion() == 1 && local_dpi_executor_->AssetsReady();
   return Snapshot();
 }
 
@@ -1200,7 +1205,13 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
       return Fail(Status::kNotReady, "profile_security_failed");
     }
   }
-  const auto profile_error = WriteProfileAtomically(profile);
+  std::string runtime_copy;
+  bool requests_local_dpi = false;
+  if (!StripWindowsLocalDpiMetadata(profile, &runtime_copy, &requests_local_dpi)) {
+    CleanupBundledRuleSets(staged_rule_set_slot);
+    return Fail(Status::kInvalid, "profile_payload_invalid");
+  }
+  const auto profile_error = WriteProfileAtomically(runtime_copy);
   if (!profile_error.empty()) {
     CleanupBundledRuleSets(staged_rule_set_slot);
     RecordEvent(ServiceEvent::kRuntimeProfileStage,
@@ -1215,6 +1226,9 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
     CleanupBundledRuleSets(previous_rule_set_slot);
   }
   staged_profile_digest_ = profile_digest;
+  original_staged_config_ = std::move(profile);
+  staged_runtime_config_ = std::move(runtime_copy);
+  local_dpi_requested_ = requests_local_dpi;
   requires_bound_connect_ = requires_bound_connect;
   effective_profile_digest_.clear();
   profile_staged_ = true;
@@ -1232,7 +1246,13 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
   if (phase_ == Phase::kRecoveryRequired) {
     return Fail(Status::kNotReady, "recovery_required");
   }
-  if (local_dpi_executor_) local_dpi_executor_->Stop();
+  if (local_dpi_executor_ && !local_dpi_executor_->Stop()) {
+    return Fail(Status::kNotReady, "local_dpi_withdraw_failed");
+  }
+  local_dpi_preparation_.reset();
+  original_staged_config_.clear();
+  staged_runtime_config_.clear();
+  local_dpi_requested_ = false;
   if (!profile_path_.empty()) {
     ::DeleteFileW(profile_path_.c_str());
   }
@@ -1249,13 +1269,15 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
 }
 
 RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
-                                  const CheckInterruption& interrupted) {
+                                  const CheckInterruption& interrupted,
+                                  const std::optional<CandidateNetworkContext>& local_dpi_network) {
   if (requires_bound_connect_) return Fail(Status::kNotReady, "profile_identity_mismatch");
-  return ConnectImpl(expected_profile_digest, interrupted, "");
+  return ConnectImpl(expected_profile_digest, interrupted, "", true, local_dpi_network);
 }
 
 RuntimeResult RuntimeHost::ConnectWithIdentity(const BoundConnectTarget& target,
-                                              const CheckInterruption& interrupted) {
+                                              const CheckInterruption& interrupted,
+                                              const std::optional<CandidateNetworkContext>& local_dpi_network) {
   if (EncodeBoundConnect(target).empty()) return {Status::kInvalid, "invalid_connect_identity"};
   if (phase_ == Phase::kRunning || phase_ == Phase::kRecoveryRequired) {
     return {Status::kNotReady, "runtime_busy"};
@@ -1265,7 +1287,7 @@ RuntimeResult RuntimeHost::ConnectWithIdentity(const BoundConnectTarget& target,
     if (pending != OperationInterruption::kNone) return pending;
     return IsConnectDeadlineCurrent(target) ? OperationInterruption::kNone
                                            : OperationInterruption::kDeadlineExceeded;
-  }, target.core_module_sha256);
+  }, target.core_module_sha256, true, local_dpi_network);
 }
 
 RuntimeResult RuntimeHost::PromoteTransportLease(const TransportLeasePromotion& target) {
@@ -1295,7 +1317,8 @@ RuntimeResult RuntimeHost::RevokeTransportLease(const TransportLeaseRevocation& 
 RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_digest,
                                       const CheckInterruption& interrupted,
                                       const std::string& expected_core_digest,
-                                      bool finish_transition_guard) {
+                                      bool finish_transition_guard,
+                                      const std::optional<CandidateNetworkContext>& local_dpi_network) {
   // Core and network state stay on this serial owner. An interruption never
   // races Stop against Start, and rollback must finish even after the deadline.
   const auto interruption = [&](bool rollback) -> std::optional<RuntimeResult> {
@@ -1339,6 +1362,28 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   }
   if (recovery_ == nullptr) {
     return Fail(Status::kNotReady, "recovery_unavailable");
+  }
+  local_dpi_preparation_.reset();
+  const auto staged_write_error = WriteProfileAtomically(staged_runtime_config_);
+  if (!staged_write_error.empty()) return Fail(Status::kNotReady, staged_write_error.c_str());
+  // Native compiled trust and the captured physical interface are the only
+  // inputs to preparation. Stored/staged identity remains the original bytes.
+  if (local_dpi_requested_ && local_dpi_ready_ && local_dpi_network &&
+      !local_dpi_network->bind_interface.empty()) {
+    auto prepared = ReadWindowsLocalDpiPreparation(core_->PrepareWindowsLocalDpiProfile(
+        original_staged_config_, kWindowsCatalogPublicKeys, kWindowsCatalogAudience,
+        local_dpi_network->bind_interface));
+    if (prepared && !core_->CoreModuleSHA256().empty()) {
+      if (!TransitionGuardArmed() && !transition_guard_->Start().empty()) {
+        return Fail(Status::kNotReady, "transition_guard_failed");
+      }
+      const auto write_error = WriteProfileAtomically(prepared->profile);
+      if (!write_error.empty()) return Fail(Status::kNotReady, write_error.c_str());
+      local_dpi_preparation_ = std::make_unique<WindowsLocalDpiPreparation>(std::move(*prepared));
+      local_dpi_disabled_ = false;
+      local_dpi_profile_digest_ = staged_profile_digest_;
+      local_dpi_core_digest_ = core_->CoreModuleSHA256();
+    }
   }
   RecordEvent(ServiceEvent::kRuntimeNetworkSnapshot,
               ServiceEventOutcome::kAttempted);
@@ -1401,6 +1446,39 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     return Fail(Status::kNotReady, "core_start_failed");
   }
   if (const auto result = interruption(true)) return *result;
+  if (local_dpi_preparation_) {
+    const auto current = [&] {
+      return (!interrupted || interrupted() == OperationInterruption::kNone) &&
+          staged_profile_digest_ == local_dpi_profile_digest_ &&
+          core_->CoreModuleSHA256() == local_dpi_core_digest_ &&
+          WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_) &&
+          local_dpi_executor_->Alive();
+    };
+    bool proved = local_dpi_executor_->StartPrepared(local_dpi_preparation_->services,
+        local_dpi_network->bind_interface, WindowsLocalDpiStrategy::kMultisplit568).empty();
+    for (const auto& service : local_dpi_preparation_->services) {
+      if (!proved || !current() ||
+          !VerifyWindowsLocalDpiControlHost(service.control_host,
+              local_dpi_network->bind_interface, interrupted).empty() || !current() ||
+          !local_dpi_executor_->AdmitCaptured(service.outbound_tag, current)) {
+        proved = false;
+        break;
+      }
+    }
+    if (!proved && !local_dpi_executor_->Stop()) {
+      const auto rollback_error = RollbackRuntime();
+      phase_ = rollback_error.empty() ? Phase::kConfigStaged : Phase::kRecoveryRequired;
+      return Fail(Status::kNotReady, rollback_error.empty() ? "local_dpi_withdraw_failed" : rollback_error.c_str());
+    }
+    if (!proved) local_dpi_disabled_ = true;
+    // Keep the signed expiry owner even after failed proof: the prepared
+    // catalog rows must never outlive their window into route.final direct.
+    if (!WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_)) {
+      const auto rollback_error = RollbackRuntime();
+      phase_ = rollback_error.empty() ? Phase::kConfigStaged : Phase::kRecoveryRequired;
+      return Fail(Status::kNotReady, rollback_error.empty() ? "local_dpi_catalog_expired" : rollback_error.c_str());
+    }
+  }
   recovery_error = recovery_->Record(RecoveryStage::kNetworkApplied);
   if (!recovery_error.empty()) {
     RecordEvent(ServiceEvent::kRuntimeCoreStart,
@@ -1582,7 +1660,14 @@ RuntimeResult RuntimeHost::RevokeRoutingCatalog(const std::string& profile_diges
   if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
     return {Status::kNotReady, "catalog_profile_changed"};
   }
-  if (local_dpi_executor_) local_dpi_executor_->Stop();
+  if (local_dpi_preparation_) {
+    const auto stopped = CancelProtectedHandoff();
+    if (stopped.status != Status::kOk) return stopped;
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+    return {Status::kOk, "catalog_revoked=1"};
+  }
+  if (local_dpi_executor_ && !local_dpi_executor_->Stop()) return Fail(Status::kNotReady, "local_dpi_withdraw_failed");
   const auto result = core_->RevokeRoutingCatalog();
   if (result != 0 && result != 1) return {Status::kNotReady, "catalog_revoke_unavailable"};
   if (result == 1 && staged_profile_digest_ == profile_digest) {
@@ -1598,7 +1683,14 @@ RuntimeResult RuntimeHost::RevokeRoutingCatalogService(const std::string& body) 
   if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
     return {Status::kNotReady, "catalog_profile_changed"};
   }
-  if (local_dpi_executor_) local_dpi_executor_->Stop();
+  if (local_dpi_preparation_) {
+    const auto stopped = CancelProtectedHandoff();
+    if (stopped.status != Status::kOk) return stopped;
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+    return {Status::kOk, "catalog_revoked=1"};
+  }
+  if (local_dpi_executor_ && !local_dpi_executor_->Stop()) return Fail(Status::kNotReady, "local_dpi_withdraw_failed");
   const auto result = core_->RevokeRoutingCatalogService(body.substr(65));
   if (result != 0 && result != 1) return {Status::kNotReady, "catalog_revoke_unavailable"};
   if (result == 1 && staged_profile_digest_ == profile_digest) {
@@ -1650,7 +1742,8 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
 }
 
 RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
-                                                 const CheckInterruption& interrupted) {
+                                                 const CheckInterruption& interrupted,
+                                                 const std::optional<CandidateNetworkContext>& local_dpi_network) {
   if (transition_guard_ == nullptr || requires_bound_connect_ ||
       (phase_ != Phase::kRunning && !transition_guard_->IsArmed())) {
     return Fail(Status::kNotReady, "protected_handoff_unavailable");
@@ -1664,7 +1757,7 @@ RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
   }
   const auto staged = StageProfile(body);
   if (staged.status != Status::kOk) return staged;
-  const auto connected = ConnectImpl(ProfileDigest(body), interrupted, "", false);
+  const auto connected = ConnectImpl(ProfileDigest(body), interrupted, "", false, local_dpi_network);
   if (connected.status != Status::kOk) return connected;
   if (phase_ != Phase::kRunning || !core_egress_validated_ ||
       effective_profile_digest_ != ProfileDigest(body)) {
@@ -1679,6 +1772,16 @@ RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
     return Fail(Status::kNotReady, "transition_guard_failed");
   }
   return Snapshot();
+}
+
+bool RuntimeHost::ReplacementRequestsWindowsLocalDpi(const std::string& body) const {
+  if (!local_dpi_ready_ || body.size() < 4 ||
+      (body[0] != '0' && body[0] != '1') || body[1] != '\n') return false;
+  ParsedProfileBundle bundle;
+  if (!ParseProfilePayload(body.substr(2), &bundle)) return false;
+  std::string runtime_copy;
+  bool requested = false;
+  return StripWindowsLocalDpiMetadata(bundle.profile, &runtime_copy, &requested) && requested;
 }
 
 RuntimeResult RuntimeHost::CancelProtectedHandoff() {
@@ -1731,6 +1834,47 @@ void RuntimeHost::Shutdown() {
   }
 }
 
+RuntimeResult RuntimeHost::MaintainWindowsLocalDpi(const CheckInterruption& interrupted) {
+  if (!local_dpi_preparation_ || phase_ != Phase::kRunning) return Snapshot();
+  const bool expired = !WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_);
+  const bool changed = effective_profile_digest_ != local_dpi_profile_digest_ ||
+      core_->CoreModuleSHA256() != local_dpi_core_digest_;
+  // Expired/revoked catalog windows skip their rules. Retain the existing
+  // protected transition rather than exposing route.final after withdrawal.
+  if (expired || changed) {
+    const auto stopped = CancelProtectedHandoff();
+    if (stopped.status != Status::kOk) return stopped;
+    profile_staged_ = false;
+    staged_profile_digest_.clear();
+    return Fail(Status::kNotReady, expired ? "local_dpi_catalog_expired" : "local_dpi_owner_changed");
+  }
+  if (!local_dpi_disabled_ && ((interrupted && interrupted() != OperationInterruption::kNone) ||
+      !local_dpi_executor_->Alive())) {
+    // Before expiry unpublished/withdrawn holders use their protected VPN
+    // outbound. Keep the expiry owner even if the child has already exited.
+    if (!local_dpi_executor_->Stop()) {
+      const auto stopped = CancelProtectedHandoff();
+      return stopped.status == Status::kOk
+          ? Fail(Status::kNotReady, "local_dpi_withdraw_failed") : stopped;
+    }
+    local_dpi_disabled_ = true;
+  }
+  return Snapshot();
+}
+
+void RuntimeHost::ClearWindowsLocalDpiAfterCoreStopped() {
+  if (local_dpi_executor_) local_dpi_executor_->StopAfterCoreStopped();
+  local_dpi_preparation_.reset();
+  local_dpi_profile_digest_.clear();
+  local_dpi_core_digest_.clear();
+  local_dpi_disabled_ = false;
+  if (profile_staged_ && !staged_runtime_config_.empty()) {
+    // A later Connect must prepare fresh holders; never restart transformed
+    // bytes from an old proof or a cancelled operation.
+    if (!WriteProfileAtomically(staged_runtime_config_).empty()) profile_staged_ = false;
+  }
+}
+
 std::string RuntimeHost::RecoverPendingRuntime() {
   if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (recovery_ == nullptr) {
@@ -1745,6 +1889,7 @@ std::string RuntimeHost::RecoverPendingRuntime() {
   RecordEvent(ServiceEvent::kRuntimeCoreStop,
               ServiceEventOutcome::kAttempted);
   const auto stop_error = core_->Stop();
+  if (stop_error.empty()) ClearWindowsLocalDpiAfterCoreStopped();
   if (!begin_error.empty()) {
     RecordEvent(ServiceEvent::kRuntimeRollbackBegin,
                 ServiceEventOutcome::kFailed);
@@ -1783,7 +1928,7 @@ std::string RuntimeHost::RollbackRuntime() {
   if (recovery_ == nullptr) {
     RecordEvent(ServiceEvent::kRuntimeCoreStop,
                 ServiceEventOutcome::kAttempted);
-    core_->Stop();
+    if (core_->Stop().empty()) ClearWindowsLocalDpiAfterCoreStopped();
     RecordEvent(ServiceEvent::kRuntimeCoreStop,
                 ServiceEventOutcome::kFailed);
     return "recovery_unavailable";
@@ -1794,6 +1939,7 @@ std::string RuntimeHost::RollbackRuntime() {
   RecordEvent(ServiceEvent::kRuntimeCoreStop,
               ServiceEventOutcome::kAttempted);
   const auto stop_error = core_->Stop();
+  if (stop_error.empty()) ClearWindowsLocalDpiAfterCoreStopped();
   if (!begin_error.empty()) {
     RecordEvent(ServiceEvent::kRuntimeRollbackBegin,
                 ServiceEventOutcome::kFailed);
@@ -1877,7 +2023,8 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
          (initialized_ && !core_->CoreModuleSHA256().empty() ? core_->CoreModuleSHA256() : "none") +
          ";core_version=" +
          (initialized_ && !core_->CoreVersion().empty() ? core_->CoreVersion() : "none") +
-         ";protection_retained=" + (guarded ? "1" : "0");
+         ";protection_retained=" + (guarded ? "1" : "0") +
+         ";windows_local_dpi_admission_version=" + (local_dpi_ready_ ? "1" : "0");
 }
 
 bool RuntimeHost::PrepareDirectories() {

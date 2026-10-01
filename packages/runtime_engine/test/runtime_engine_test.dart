@@ -1725,6 +1725,7 @@ void main() {
     expect(snapshot.coreEgressValidated, isFalse);
     expect(snapshot.isCleanlyHealthy, isFalse);
     expect(calls, ['runtimeEngine.snapshot']);
+    expect(snapshot.windowsLocalDpiAdmissionVersion, 0);
     messenger.setMockMethodCallHandler(channel, (call) async => <String, Object?>{
           'phase': 'configStaged',
           'canConnect': true,
@@ -1732,8 +1733,10 @@ void main() {
           'dnsReady': false,
           'lastFailureKind': 'core_egress_response_timeout',
           'protectionRetained': true,
+          'windowsLocalDpiAdmissionVersion': 1,
         });
     final failed = await engine.snapshot();
+    expect(failed.windowsLocalDpiAdmissionVersion, 1);
     expect(failed.lastFailureKind, 'core_egress_response_timeout');
     expect(failed.protectionRetained, isTrue);
     expect(failed.hasCoreEgressProbeFailure, isTrue);
@@ -1921,6 +1924,14 @@ void main() {
             ],
             'final': 'direct',
           },
+          '_meta': <String, Object?>{
+            'title': 'display only',
+            'local_dpi': <String, Object?>{
+              'platform': 'windows', 'mode': 'selective',
+              'catalog_envelope': 'original signed bytes',
+            },
+            'runtime_variant_probe': <String, Object?>{'group_tag': 'not-windows-authority'},
+          },
         }),
         materializedForRuntime: true,
       ),
@@ -1949,6 +1960,12 @@ void main() {
       'data/rule-set/__POKROV_RULE_SET_SLOT__/ruleset-0.srs',
     );
     expect(bundle, isNot(contains(ruleSet.path)));
+    expect(stagedConfig['_meta'], <String, Object?>{
+      'local_dpi': <String, Object?>{
+        'platform': 'windows', 'mode': 'selective',
+        'catalog_envelope': 'original signed bytes',
+      },
+    });
   });
 
   test('windows service rejects an oversized local rule set', () async {

@@ -728,7 +728,44 @@ if (-not $SkipBuild) {
     "--dart-define=POKROV_SUPPORT_SIGNING_KEY_ID=$SupportSigningKeyId",
     "--dart-define=POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64=$SupportSigningPublicKey"
   ) + $transportTrustArguments
-  Invoke-External -FilePath "flutter" -Arguments $windowsBuildArguments -WorkingDirectory $appDirectory
+  # Native catalog pins use the same owned public build input as Dart. The
+  # service never accepts verification keys or audience over its IPC channel.
+  $nativeCatalogEnabled = $false
+  $nativeCatalogKeys = '{}'
+  $nativeCatalogAudience = 'production'
+  if ($TransportTrustDefinesFile) {
+    $nativeTrustDefines = [IO.File]::ReadAllText($transportTrustPath) | ConvertFrom-Json
+    $nativeEnableValue = $nativeTrustDefines.POKROV_ROUTING_CATALOG_ENABLED
+    $nativeCatalogEnabled = ($nativeEnableValue -is [bool] -and $nativeEnableValue) -or
+      ($nativeEnableValue -is [string] -and $nativeEnableValue -ceq 'true')
+    if ($nativeCatalogEnabled) {
+      $nativeKeyId = [string]$nativeTrustDefines.POKROV_ROUTING_CATALOG_KEY_ID
+      $nativePublicKey = [string]$nativeTrustDefines.POKROV_ROUTING_CATALOG_PUBLIC_KEY_B64
+      if ($nativeTrustDefines.POKROV_ROUTING_CATALOG_AUDIENCE) {
+        $nativeCatalogAudience = [string]$nativeTrustDefines.POKROV_ROUTING_CATALOG_AUDIENCE
+      }
+      if ($nativeKeyId -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$' -or
+          $nativePublicKey -notmatch '^[A-Za-z0-9+/=_-]{43,44}$' -or
+          $nativeCatalogAudience -cnotin @('lab', 'production')) {
+        throw 'Invalid public Windows routing catalog trust defines.'
+      }
+      $nativeKeyBytes = [Convert]::FromBase64String(($nativePublicKey.Replace('-', '+').Replace('_', '/')).PadRight(44, '='))
+      if ($nativeKeyBytes.Length -ne 32) { throw 'Routing catalog public key must contain 32 bytes.' }
+      $nativeCatalogKeys = @{ $nativeKeyId = $nativePublicKey } | ConvertTo-Json -Compress
+    }
+  }
+  $nativeTrustEnvironment = @('POKROV_NATIVE_CATALOG_ENABLED',
+    'POKROV_NATIVE_CATALOG_PUBLIC_KEYS_JSON', 'POKROV_NATIVE_CATALOG_AUDIENCE')
+  $previousNativeTrust = @{}
+  foreach ($name in $nativeTrustEnvironment) { $previousNativeTrust[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
+  try {
+    [Environment]::SetEnvironmentVariable('POKROV_NATIVE_CATALOG_ENABLED', $nativeCatalogEnabled.ToString().ToLowerInvariant(), 'Process')
+    [Environment]::SetEnvironmentVariable('POKROV_NATIVE_CATALOG_PUBLIC_KEYS_JSON', $nativeCatalogKeys, 'Process')
+    [Environment]::SetEnvironmentVariable('POKROV_NATIVE_CATALOG_AUDIENCE', $nativeCatalogAudience, 'Process')
+    Invoke-External -FilePath "flutter" -Arguments $windowsBuildArguments -WorkingDirectory $appDirectory
+  } finally {
+    foreach ($name in $nativeTrustEnvironment) { [Environment]::SetEnvironmentVariable($name, $previousNativeTrust[$name], 'Process') }
+  }
 }
 
 function Write-Utf8BomFile {

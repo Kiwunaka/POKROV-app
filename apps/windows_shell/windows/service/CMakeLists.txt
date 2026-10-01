@@ -1,3 +1,14 @@
+set(POKROV_NATIVE_CATALOG_ENABLED false)
+set(POKROV_NATIVE_CATALOG_PUBLIC_KEYS_JSON "{}")
+set(POKROV_NATIVE_CATALOG_AUDIENCE "production")
+if("$ENV{POKROV_NATIVE_CATALOG_ENABLED}" STREQUAL "true")
+  set(POKROV_NATIVE_CATALOG_ENABLED true)
+  set(POKROV_NATIVE_CATALOG_PUBLIC_KEYS_JSON "$ENV{POKROV_NATIVE_CATALOG_PUBLIC_KEYS_JSON}")
+  set(POKROV_NATIVE_CATALOG_AUDIENCE "$ENV{POKROV_NATIVE_CATALOG_AUDIENCE}")
+endif()
+configure_file("service_catalog_trust.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/service_catalog_trust.h" @ONLY)
+
 add_library(pokrov_service_common STATIC
   "service_protocol.cpp"
   "service_profile_identity.cpp"
@@ -23,11 +34,14 @@ add_library(pokrov_service_runtime STATIC
   "service_recovery.cpp"
   "service_runtime.cpp"
   "service_local_dpi.cpp"
+  "service_local_dpi_json.cpp"
+  "service_local_dpi_probe.cpp"
   "service_transition_guard.cpp"
 )
 apply_standard_settings(pokrov_service_runtime)
 target_include_directories(pokrov_service_runtime PUBLIC
-  "${CMAKE_CURRENT_SOURCE_DIR}")
+  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(pokrov_service_runtime PUBLIC
   pokrov_service_common
   "ole32.lib"
@@ -39,6 +53,8 @@ target_link_libraries(pokrov_service_runtime PUBLIC
   "wlanapi.lib"
   "ws2_32.lib"
   "fwpuclnt.lib"
+  "runtimeobject.lib"
+  "secur32.lib"
 )
 
 add_executable(pokrov_service

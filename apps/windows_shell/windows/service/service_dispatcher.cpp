@@ -63,7 +63,11 @@ RuntimeDispatcher::~RuntimeDispatcher() {
 }
 
 void RuntimeDispatcher::RefreshBoundNetwork(const std::shared_ptr<ActiveConnect>& operation) {
-  if (!operation || !operation->bound || operation->cancelled) return;
+  if (!operation || (!operation->bound && !operation->local_dpi_owner) || operation->cancelled) return;
+  if (operation->local_dpi_owner && (operation->client_process == nullptr ||
+      ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) {
+    operation->local_dpi_cancelled = true;
+  }
   if ((operation->promoted_until_elapsed_ms.load() == 0 || operation->transport_terminated.load()) &&
       (operation->client_process == nullptr ||
        ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) {
@@ -71,8 +75,9 @@ void RuntimeDispatcher::RefreshBoundNetwork(const std::shared_ptr<ActiveConnect>
     watch_changed_.notify_all();
     return;
   }
-  const auto current = network_.Sample();
-  if (!current || current != operation->network_revision || !network_.IsCurrent(*current)) {
+  const auto current = operation->local_dpi_owner ? operation->network_revision : network_.Sample();
+  if (!current || current != operation->network_revision ||
+      !(operation->local_dpi_owner ? candidate_current_(*current) : network_.IsCurrent(*current))) {
     operation->cancelled = true;
     watch_changed_.notify_all();
   }
@@ -113,6 +118,7 @@ void RuntimeDispatcher::WatchBoundConnect() {
   for (;;) {
     std::shared_ptr<ActiveConnect> operation;
     bool watch_bound = false;
+    bool watch_dpi = false;
     {
       std::unique_lock<std::mutex> state(state_lock_);
       watch_changed_.wait_for(state, std::chrono::milliseconds(100), [this] {
@@ -122,6 +128,35 @@ void RuntimeDispatcher::WatchBoundConnect() {
       if (closing_) return;
       operation = active_connect_;
       watch_bound = operation && operation->bound && !operation->cleanup_attempted;
+      watch_dpi = operation && operation->local_dpi_owner && !operation->cleanup_attempted;
+    }
+    if (watch_dpi) {
+        RefreshBoundNetwork(operation);
+        std::unique_lock<std::mutex> execution(execution_lock_, std::try_to_lock);
+        if (!execution.owns_lock()) continue;
+        {
+          std::lock_guard<std::mutex> state(state_lock_);
+          if (active_connect_ != operation || closing_) continue;
+        }
+        const bool had_dpi = runtime_->HasWindowsLocalDpi();
+        runtime_->MaintainWindowsLocalDpi([operation] {
+          return operation->cancelled || operation->local_dpi_cancelled
+              ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+        });
+        std::lock_guard<std::mutex> state(state_lock_);
+        snapshot_ = runtime_->Snapshot();
+        if (active_connect_ == operation && snapshot_.body.rfind("phase=recovery_required;", 0) == 0) {
+          operation->cleanup_attempted = true;
+          watch_bound = false;
+        } else if (active_connect_ == operation && !runtime_->HasWindowsLocalDpi() &&
+            snapshot_.body.rfind("phase=recovery_required;", 0) != 0 &&
+            (!operation->bound || (had_dpi && snapshot_.body.rfind("phase=running;", 0) != 0))) {
+          // Protected DPI expiry stopped Core and retained the transition
+          // guard. Retire the ATS owner before its old deadline can issue a
+          // second explicit Disconnect and remove that protection.
+          RetireConnect();
+          watch_bound = false;
+        }
     }
     if (!watch_bound) {
       CheckRunningEgress();
@@ -302,6 +337,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
   if (request.command != Command::kReadSmartAccessRestrictions &&
       request.command != Command::kReadSmartAccessLeases) next_egress_check_ = 0;
   std::optional<std::uint64_t> network_revision;
+  std::optional<CandidateNetworkContext> local_dpi_network;
   if (bound || request.command == Command::kReplaceManagedProfile) {
     const auto context = network_.ReadContext();
     if (!context || (bound && context->reference != bound->network_context_ref) || !network_.IsCurrent(context->revision)) {
@@ -310,6 +346,17 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       return ProjectBoundState(WithFailure(snapshot_, Status::kNotReady, "operation_cancelled"));
     }
     network_revision = context->revision;
+  }
+  if (IsConnectCommand(request.command) &&
+      (request.command == Command::kReplaceManagedProfile
+          ? runtime_->ReplacementRequestsWindowsLocalDpi(request.body)
+          : runtime_->RequestsWindowsLocalDpi())) {
+    const auto context = candidate_network_();
+    if (context && candidate_current_(context->network.revision) &&
+        (!bound || context->network.reference == bound->network_context_ref)) {
+      local_dpi_network = context;
+      network_revision = context->network.revision;
+    }
   }
   if (request.command == Command::kPromoteTransportLease) {
     const auto promotion = DecodeTransportLeasePromotion(request.body);
@@ -434,19 +481,22 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
   }
   const auto operation = IsConnectCommand(request.command)
                              ? std::make_shared<ActiveConnect>() : nullptr;
-  if (bound) {
+  if (bound || local_dpi_network) {
     DWORD client_pid = 0;
     if (::GetNamedPipeClientProcessId(client_pipe, &client_pid) == FALSE || client_pid == 0) {
       std::lock_guard<std::mutex> state(state_lock_);
       stopped_connect_ = CancellationTarget{request.session_token, request.operation_nonce};
-      return {Status::kNotReady, "connect_owner_unavailable"};
+      if (bound) return {Status::kNotReady, "connect_owner_unavailable"};
+      local_dpi_network.reset();
+    } else {
+      operation->client_process = ::OpenProcess(SYNCHRONIZE, FALSE, client_pid);
     }
-    operation->client_process = ::OpenProcess(SYNCHRONIZE, FALSE, client_pid);
     if (operation->client_process == nullptr ||
         ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT) {
       std::lock_guard<std::mutex> state(state_lock_);
       stopped_connect_ = CancellationTarget{request.session_token, request.operation_nonce};
-      return {Status::kNotReady, "connect_owner_unavailable"};
+      if (bound) return {Status::kNotReady, "connect_owner_unavailable"};
+      local_dpi_network.reset();
     }
   }
   {
@@ -462,6 +512,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       operation->target = {request.session_token, request.operation_nonce};
       operation->bound = bound;
       operation->network_revision = network_revision;
+      operation->local_dpi_owner = local_dpi_network.has_value();
       operation->protected_handoff = request.command == Command::kReplaceManagedProfile || runtime_->TransitionGuardArmed();
       if (bound) operation->stopping_snapshot = runtime_->PendingSnapshot(Command::kDisconnect);
       active_connect_ = operation;
@@ -473,6 +524,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
         request.command == Command::kReadSmartAccessLeases || request.command == Command::kConfigureSmartAccessRenewal)
         ? runtime_->Snapshot() : runtime_->PendingSnapshot(request.command);
   }
+  const bool had_local_dpi = runtime_->HasWindowsLocalDpi();
   RuntimeResult result;
   switch (request.command) {
     case Command::kInitialize: result = runtime_->Initialize(); break;
@@ -483,9 +535,15 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     case Command::kConnectWithIdentity:
     case Command::kReplaceManagedProfile: {
       const CheckInterruption interrupted = [this, operation, stop_event, deadline] {
-        if (operation->bound && (operation->client_process == nullptr ||
+        if ((operation->bound || operation->local_dpi_owner) && (operation->client_process == nullptr ||
             ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) operation->cancelled = true;
-        if (operation->network_revision && !network_.IsCurrent(*operation->network_revision)) operation->cancelled = true;
+        if (operation->network_revision &&
+            !(operation->local_dpi_owner ? candidate_current_(*operation->network_revision)
+                                        : network_.IsCurrent(*operation->network_revision))) operation->cancelled = true;
+        if (operation->local_dpi_owner) {
+          std::lock_guard<std::mutex> state(state_lock_);
+          if (active_connect_ != operation) operation->cancelled = true;
+        }
         if (operation->cancelled ||
             ::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0) {
           return OperationInterruption::kCancelled;
@@ -498,9 +556,9 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
                    ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
       };
       result = request.command == Command::kReplaceManagedProfile
-          ? runtime_->ReplaceManagedProfile(request.body, interrupted)
-          : bound ? runtime_->ConnectWithIdentity(*bound, interrupted)
-                  : runtime_->Connect(request.body, interrupted);
+          ? runtime_->ReplaceManagedProfile(request.body, interrupted, local_dpi_network)
+          : bound ? runtime_->ConnectWithIdentity(*bound, interrupted, local_dpi_network)
+                  : runtime_->Connect(request.body, interrupted, local_dpi_network);
       break;
     }
     case Command::kDisconnect: result = runtime_->Disconnect(); break;
@@ -518,7 +576,9 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
   }
   bool cancel_after_commit = false;
   RefreshBoundNetwork(operation);
-  if (operation && operation->network_revision && !network_.IsCurrent(*operation->network_revision)) operation->cancelled = true;
+  if (operation && operation->network_revision &&
+      !(operation->local_dpi_owner ? candidate_current_(*operation->network_revision)
+                                  : network_.IsCurrent(*operation->network_revision))) operation->cancelled = true;
   {
     std::lock_guard<std::mutex> state(state_lock_);
     // Bound owners survive successful start. Retire other owners under the
@@ -529,9 +589,17 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       snapshot_ = runtime_->Snapshot();
       if (operation) {
         const bool recovery = snapshot_.body.rfind("phase=recovery_required;", 0) == 0;
-        if (!bound || (result.status != Status::kOk && !recovery)) RetireConnect();
+        if ((!bound && !runtime_->HasWindowsLocalDpi()) || (result.status != Status::kOk && !recovery)) RetireConnect();
         else if (result.status != Status::kOk) operation->cleanup_attempted = true;
       } else if (request.command == Command::kDisconnect && result.status == Status::kOk) {
+        RetireConnect();
+      } else if (had_local_dpi && active_connect_ && active_connect_->local_dpi_owner &&
+                 snapshot_.body.rfind("phase=recovery_required;", 0) == 0) {
+        active_connect_->cleanup_attempted = true;
+      } else if (active_connect_ && active_connect_->local_dpi_owner &&
+                 !runtime_->HasWindowsLocalDpi() &&
+                 snapshot_.body.rfind("phase=recovery_required;", 0) != 0 &&
+                 (!active_connect_->bound || (had_local_dpi && snapshot_.body.rfind("phase=running;", 0) != 0))) {
         RetireConnect();
       }
     }

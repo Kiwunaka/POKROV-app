@@ -141,6 +141,7 @@ class RuntimeSnapshot {
     this.smartAccessLeaseVersion = 0,
     this.smartAccessRuntimeControlVersion = 0,
     this.routingCatalogControlVersion = 0,
+    this.windowsLocalDpiAdmissionVersion = 0,
     this.transportCapabilities,
     this.coreModuleSha256,
     this.coreVersion,
@@ -200,6 +201,9 @@ class RuntimeSnapshot {
   final int smartAccessLeaseVersion;
   final int smartAccessRuntimeControlVersion;
   final int routingCatalogControlVersion;
+  /// Native Windows Core, compiled trust, approved assets and existing driver.
+  /// This is readiness for opt-in preparation, never current TLS proof.
+  final int windowsLocalDpiAdmissionVersion;
   final RuntimeTransportCapabilities? transportCapabilities;
   /// Native-observed executable/module digest. Never a profile/package hash.
   final String? coreModuleSha256;
@@ -257,6 +261,7 @@ class RuntimeSnapshot {
         smartAccessLeaseVersion,
         smartAccessRuntimeControlVersion,
         routingCatalogControlVersion,
+        windowsLocalDpiAdmissionVersion,
         transportCapabilities?.canonicalJson,
         coreModuleSha256,
         coreVersion,
@@ -2767,6 +2772,7 @@ String _materializePokrovCoreConfig(
   String configPayload,
   WarpRuntimePolicy policy, {
   bool preserveAndroidHostMetadata = false,
+  bool preserveWindowsLocalDpiMetadata = false,
   bool pinWindowsTun = false,
 }) {
   final decoded = jsonDecode(configPayload);
@@ -2793,12 +2799,11 @@ String _materializePokrovCoreConfig(
           ),
         )
       : const <String, Object?>{};
-  final localDpi = preserveAndroidHostMetadata
+  final localDpi = preserveAndroidHostMetadata || preserveWindowsLocalDpiMetadata
       ? Map<String, Object?>.from(_runtimeObjectMap(_runtimeObjectMap(config['_meta'])['local_dpi']))
       : const <String, Object?>{};
-  // POKROV Core deliberately rejects unknown sing-box fields. Desktop passes
-  // this JSON straight to Core, while Android stages one private host-only
-  // mapping that VpnService removes before startOrReloadService().
+  // Host-only metadata is consumed by Android VpnService or the Windows
+  // native owner; both remove it from the runtime copy before Core starts.
   config.remove('_meta');
   if (runtimeVariantProbe.isNotEmpty || localDpi.isNotEmpty) {
     config['_meta'] = <String, Object?>{
@@ -3765,6 +3770,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       payload.configPayload,
       payload.warpPolicy,
       preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
+      preserveWindowsLocalDpiMetadata: hostPlatform == HostPlatform.windows,
       pinWindowsTun: hostPlatform == HostPlatform.windows,
     );
     final config = jsonDecode(configPayload) as Map;
@@ -4054,6 +4060,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       staged.configPayload,
       nextPolicy,
       preserveAndroidHostMetadata: hostPlatform == HostPlatform.android,
+      preserveWindowsLocalDpiMetadata: hostPlatform == HostPlatform.windows,
       pinWindowsTun: hostPlatform == HostPlatform.windows,
     );
     final config = jsonDecode(configPayload) as Map;
@@ -4490,6 +4497,8 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
                   response['smartAccessLeaseVersion'] == 1 ? 1 : 0,
       smartAccessRuntimeControlVersion: response['smartAccessRuntimeControlVersion'] == 1 &&
               const {2, 3, 4}.contains(response['routingCatalogControlVersion']) ? 1 : 0,
+      windowsLocalDpiAdmissionVersion: hostPlatform == HostPlatform.windows &&
+          response['windowsLocalDpiAdmissionVersion'] == 1 ? 1 : 0,
       routingCatalogControlVersion:
           response['routingCatalogControlVersion'] is int &&
                   const {1, 2, 3, 4}.contains(response['routingCatalogControlVersion']) &&

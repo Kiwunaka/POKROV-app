@@ -214,6 +214,8 @@ flutter::EncodableValue RuntimeSnapshotValue(
           ? snapshot.routing_catalog_control_version : 0);
   values[flutter::EncodableValue("smartAccessRuntimeControlVersion")] =
       flutter::EncodableValue(snapshot.compatible ? snapshot.smart_access_runtime_control_version : 0);
+  values[flutter::EncodableValue("windowsLocalDpiAdmissionVersion")] =
+      flutter::EncodableValue(snapshot.compatible ? snapshot.windows_local_dpi_admission_version : 0);
   values[flutter::EncodableValue("phase")] =
       flutter::EncodableValue(DartRuntimePhase(snapshot.phase));
   values[flutter::EncodableValue("supportsLiveConnect")] =

@@ -148,7 +148,7 @@ class RoutingCatalogPolicy {
         final dpiHost = intent['local_dpi_control_host'];
         if (dpiHost != null) {
           if (mode != CatalogRoutingMode.selective || action != CatalogRouteAction.vpn ||
-              !platforms.contains('android')) _fail('local_dpi_authority');
+              (!platforms.contains('android') && !platforms.contains('windows'))) _fail('local_dpi_authority');
           localDpiControlHost = _domain(dpiHost);
         }
         intents[mode] = action;
@@ -376,7 +376,7 @@ CatalogDomainPolicy compileCatalogDomainPolicy({
   return CatalogDomainPolicy._(
     catalog: catalog,
     localDpiControlHosts: Map.unmodifiable({
-      if (mode == CatalogRoutingMode.selective && platform == 'android' && vpnAvailable)
+      if (mode == CatalogRoutingMode.selective && const {'android', 'windows'}.contains(platform) && vpnAvailable)
         for (final service in policy.services)
           if (selected.contains(service.id) && service.localDpiControlHost != null)
             service.id: service.localDpiControlHost!,
@@ -452,7 +452,7 @@ Future<Set<String>> catalogRuntimeRevocations(CatalogRuntimeIdentity previous,
       for (final domain in service.domains) {
         if (!domain.shared) {
           allowed.add(await _runtimeRuleDigest(service.id, domain, action));
-          if (mode == CatalogRoutingMode.selective && previous.platform == 'android' &&
+          if (mode == CatalogRoutingMode.selective && const {'android', 'windows'}.contains(previous.platform) &&
               action == CatalogRouteAction.vpn && service.localDpiControlHost != null) {
             allowed.add(await _runtimeRuleDigest(service.id, domain, action, service.localDpiControlHost));
           }

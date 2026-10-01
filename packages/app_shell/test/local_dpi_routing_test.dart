@@ -44,6 +44,32 @@ void main() {
     expect(policy.rules.single.action, CatalogRouteAction.vpn);
   });
 
+  test('Windows selective opt-in hands signed scope to its native owner; full stays VPN', () async {
+    final catalog = await _catalog(platform: 'windows');
+    final policy = compileCatalogDomainPolicy(policy: catalog, mode: CatalogRoutingMode.selective,
+      platform: 'windows', accessState: 'trial_premium', vpnAvailable: true, now: DateTime.now(), selectedServiceIds: {'video'});
+    final defaults = const PokrovRoutingPreferences.defaults().copyWith(selectedCatalogServiceIds: {'video'});
+    ManagedProfilePayload assemble(PokrovRoutingPreferences preferences) => applyPokrovRoutingPreferences(
+      _profile(RouteMode.selectiveServices), preferences, hostPlatform: HostPlatform.windows, catalogPolicy: policy,
+      catalogAccessState: 'trial_premium', nativeCatalogWindowVersion: 1);
+    expect(localDpiServiceIdsForPayload(assemble(defaults)), isEmpty);
+    final optedIn = defaults.copyWith(localDpiEnabled: true, selectedCatalogServiceIds: {'video'});
+    final prepared = assemble(optedIn);
+    final meta = ((jsonDecode(prepared.configPayload) as Map)['_meta'] as Map)['local_dpi'] as Map;
+    expect(meta['platform'], 'windows');
+    expect(meta['catalog_envelope'], catalog.catalog.canonicalEnvelopeJson);
+    expect(localDpiServiceIdsForPayload(prepared), {'video'});
+    final full = compileCatalogDomainPolicy(policy: catalog, mode: CatalogRoutingMode.full,
+      platform: 'windows', accessState: 'trial_premium', vpnAvailable: true, now: DateTime.now());
+    expect(localDpiServiceIdsForPayload(applyPokrovRoutingPreferences(
+      _profile(RouteMode.fullTunnel, localDpiMetadata: meta), optedIn,
+      hostPlatform: HostPlatform.windows, catalogPolicy: full,
+      catalogAccessState: 'trial_premium', nativeCatalogWindowVersion: 1)), isEmpty);
+    final identity = await catalogRuntimeIdentity(policy, localDpiServiceIds: {'video'});
+    expect(await catalogRuntimeRevocations(identity, policy.payloadSha256,
+      await _catalog(platform: 'windows', host: null, revision: 2), DateTime.now()), {'video'});
+  });
+
   test('received DPI authority removal revokes only a profile which opted in', () async {
     final original = await _catalog();
     final compiled = compileCatalogDomainPolicy(policy: original, mode: CatalogRoutingMode.selective,
@@ -56,7 +82,8 @@ void main() {
   });
 }
 
-Future<RoutingCatalogPolicy> _catalog({String? host = 'media.service.example', int revision = 1}) async {
+Future<RoutingCatalogPolicy> _catalog({String? host = 'media.service.example', int revision = 1,
+  String platform = 'android'}) async {
   final now = DateTime.now().toUtc();
   String time(DateTime value) => '${value.toIso8601String().substring(0, 19)}Z';
   final before = time(now.subtract(const Duration(minutes: 1)));
@@ -71,7 +98,7 @@ Future<RoutingCatalogPolicy> _catalog({String? host = 'media.service.example', i
       'origin': 'synthetic', 'observed_at': before, 'expires_at': after}],
     'services': [{'service_id': 'video', 'display_name': 'Video', 'categories': ['video'], 'enabled': true,
       'classification': 'blocked_inside_ru', 'reason': 'Public fixture', 'evidence_status': 'verified',
-      'source_ids': ['source'], 'evidence_ids': ['evidence'], 'platforms': ['android'], 'access_states': ['trial_premium'],
+      'source_ids': ['source'], 'evidence_ids': ['evidence'], 'platforms': [platform], 'access_states': ['trial_premium'],
       'route_intents': [{'mode': 'full', 'action': 'vpn'}, {'mode': 'selective', 'action': 'vpn', if (host != null) 'local_dpi_control_host': host}],
       'android': [], 'windows': [], 'domains': [{'name': 'media.service.example', 'match': 'exact', 'role': 'media',
         'shared': false, 'source_ids': ['source']}], 'networks': [], 'provider_capability_refs': [], 'external_gateway_policy': 'forbidden'}],

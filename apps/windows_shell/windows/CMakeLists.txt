@@ -117,6 +117,19 @@ foreach(POKROV_RUNTIME_FILE pokrov-core.dll libcronet.dll)
   endif()
 endforeach()
 
+# Optional approved local-DPI assets. No fetching or driver installation; an
+# absent bundle leaves native readiness zero. Never package upstream .bat files.
+if(EXISTS "${POKROV_RUNTIME_DIR}/local-dpi")
+  foreach(POKROV_DPI_FILE winws.exe cygwin1.dll WinDivert.dll WinDivert64.sys
+      tls_clienthello_4pda_to.bin tls_clienthello_www_google_com.bin NOTICES.txt)
+    if(NOT EXISTS "${POKROV_RUNTIME_DIR}/local-dpi/${POKROV_DPI_FILE}")
+      message(FATAL_ERROR "Incomplete approved local-dpi bundle: ${POKROV_DPI_FILE}")
+    endif()
+    install(FILES "${POKROV_RUNTIME_DIR}/local-dpi/${POKROV_DPI_FILE}"
+      DESTINATION "${INSTALL_BUNDLE_LIB_DIR}/local-dpi" COMPONENT Runtime)
+  endforeach()
+endif()
+
 install(FILES "${POKROV_RUNTIME_DIR}/libcronet.NOTICES.txt"
   DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)

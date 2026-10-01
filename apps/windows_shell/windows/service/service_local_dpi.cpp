@@ -123,7 +123,7 @@ struct WindowsLocalDpiExecutor::State {
   HMODULE driver_module = nullptr;
   Close close_driver = nullptr;
   std::vector<HANDLE> files;
-  std::vector<std::string> holder_ids;
+  std::vector<std::pair<std::string, std::string>> holders;
 };
 
 WindowsLocalDpiExecutor::WindowsLocalDpiExecutor(CoreRuntime& core)
@@ -149,6 +149,42 @@ std::string WindowsLocalDpiHostList(const std::vector<WindowsLocalDpiService>& s
   return hostlist.size() <= 16000 ? hostlist : "";
 }
 
+bool WindowsLocalDpiExecutor::AssetsReady() {
+  if (core_.WindowsLocalDpiAdmissionVersion() != 1) return false;
+  if (state_->driver_guard != INVALID_HANDLE_VALUE) return true;
+  const auto directory = AssetDirectory();
+  if (directory.empty()) return false;
+  const auto directory_handle = LockAsset(directory.substr(0, directory.size() - 1), true);
+  if (directory_handle == INVALID_HANDLE_VALUE) return false;
+  state_->files.push_back(directory_handle);
+  for (const auto* name : {L"winws.exe", L"cygwin1.dll", L"WinDivert.dll", L"WinDivert64.sys",
+                         L"tls_clienthello_4pda_to.bin", L"tls_clienthello_www_google_com.bin"}) {
+    const auto file = LockAsset(directory + name);
+    if (file == INVALID_HANDLE_VALUE) { Stop(); return false; }
+    state_->files.push_back(file);
+  }
+  state_->driver_module = ::LoadLibraryExW((directory + L"WinDivert.dll").c_str(), nullptr,
+      LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
+  auto open = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::Open>(
+      ::GetProcAddress(state_->driver_module, "WinDivertOpen"));
+  state_->close_driver = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::Close>(
+      ::GetProcAddress(state_->driver_module, "WinDivertClose"));
+  auto get_param = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::GetParam>(
+      ::GetProcAddress(state_->driver_module, "WinDivertGetParam"));
+  if (open == nullptr || state_->close_driver == nullptr || get_param == nullptr) {
+    Stop(); return false;
+  }
+  // Official WinDivert REFLECT(4), SNIFF|RECV_ONLY|NO_INSTALL. This guard
+  // cannot install a missing driver and retains the existing driver while the
+  // ordinary upstream child opens its NETWORK handle. Never read packet data.
+  state_->driver_guard = open("true", 4, 0, 0x0001 | 0x0004 | 0x0010);
+  std::uint64_t major = 0, minor = 0;
+  if (state_->driver_guard == INVALID_HANDLE_VALUE ||
+      !get_param(state_->driver_guard, 3, &major) || !get_param(state_->driver_guard, 4, &minor) ||
+      major != 2 || minor != 2) { Stop(); return false; }
+  return true;
+}
+
 std::string WindowsLocalDpiExecutor::StartPrepared(
     const std::vector<WindowsLocalDpiService>& services,
     const std::string& physical_bind_interface, WindowsLocalDpiStrategy strategy) {
@@ -169,39 +205,11 @@ std::string WindowsLocalDpiExecutor::StartPrepared(
       ::ConvertInterfaceLuidToIndex(&luid, &index) != NO_ERROR || index == 0) return "local_dpi_interface_unavailable";
 
   const auto directory = AssetDirectory();
-  if (directory.empty()) return "local_dpi_assets_unavailable";
-  const auto directory_handle = LockAsset(directory.substr(0, directory.size() - 1), true);
-  if (directory_handle == INVALID_HANDLE_VALUE) return "local_dpi_assets_unavailable";
-  state_->files.push_back(directory_handle);
-  for (const auto* name : {L"winws.exe", L"cygwin1.dll", L"WinDivert.dll", L"WinDivert64.sys",
-                         L"tls_clienthello_4pda_to.bin", L"tls_clienthello_www_google_com.bin"}) {
-    const auto file = LockAsset(directory + name);
-    if (file == INVALID_HANDLE_VALUE) { Stop(); return "local_dpi_assets_unavailable"; }
-    state_->files.push_back(file);
-  }
-  state_->driver_module = ::LoadLibraryExW((directory + L"WinDivert.dll").c_str(), nullptr,
-      LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
-  auto open = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::Open>(
-      ::GetProcAddress(state_->driver_module, "WinDivertOpen"));
-  state_->close_driver = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::Close>(
-      ::GetProcAddress(state_->driver_module, "WinDivertClose"));
-  auto get_param = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::GetParam>(
-      ::GetProcAddress(state_->driver_module, "WinDivertGetParam"));
-  if (open == nullptr || state_->close_driver == nullptr || get_param == nullptr) {
-    Stop(); return "local_dpi_driver_unavailable";
-  }
-  // Official WinDivert REFLECT(4), SNIFF|RECV_ONLY|NO_INSTALL. This guard
-  // cannot install a missing driver and retains the existing driver while the
-  // ordinary upstream child opens its NETWORK handle. Never read packet data.
-  state_->driver_guard = open("true", 4, 0, 0x0001 | 0x0004 | 0x0010);
-  std::uint64_t major = 0, minor = 0;
-  if (state_->driver_guard == INVALID_HANDLE_VALUE ||
-      !get_param(state_->driver_guard, 3, &major) || !get_param(state_->driver_guard, 4, &minor) ||
-      major != 2 || minor != 2) { Stop(); return "local_dpi_driver_unavailable"; }
+  if (!AssetsReady()) return "local_dpi_assets_unavailable";
   for (const auto& service : services) {
     const auto id = core_.ReadLocalDpiAdmissionID(service.outbound_tag);
     if (!IsHolderID(id)) { Stop(); return "local_dpi_holder_unavailable"; }
-    state_->holder_ids.push_back(id);
+    state_->holders.emplace_back(service.outbound_tag, id);
   }
   state_->job = ::CreateJobObjectW(nullptr, nullptr);
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
@@ -240,9 +248,31 @@ bool WindowsLocalDpiExecutor::Alive() const {
   return state_->process != nullptr && ::WaitForSingleObject(state_->process, 0) == WAIT_TIMEOUT;
 }
 
-void WindowsLocalDpiExecutor::Stop() {
-  for (const auto& id : state_->holder_ids) core_.WithdrawLocalDpiAdmission(id);
-  state_->holder_ids.clear();
+bool WindowsLocalDpiExecutor::AdmitCaptured(const std::string& tag,
+                                          const std::function<bool()>& current_after_proof) {
+  for (const auto& holder : state_->holders) {
+    if (holder.first != tag) continue;
+    if (!current_after_proof || !current_after_proof() || !Alive() ||
+        core_.ReadLocalDpiAdmissionID(tag) != holder.second || !current_after_proof()) return false;
+    return core_.AdmitLocalDpiAdmission(holder.second) == 1 &&
+        current_after_proof() && Alive() && core_.ReadLocalDpiAdmissionID(tag) == holder.second;
+  }
+  return false;
+}
+
+bool WindowsLocalDpiExecutor::Stop() {
+  for (const auto& holder : state_->holders) {
+    // A replaced/stopped Core has no authority for this captured old holder.
+    // Never substitute or withdraw the new ID returned for the same tag.
+    if (core_.ReadLocalDpiAdmissionID(holder.first) == holder.second &&
+        core_.WithdrawLocalDpiAdmission(holder.second) < 0) return false;
+  }
+  StopAfterCoreStopped();
+  return true;
+}
+
+void WindowsLocalDpiExecutor::StopAfterCoreStopped() {
+  state_->holders.clear();
   if (state_->job != nullptr) { ::CloseHandle(state_->job); state_->job = nullptr; }
   if (state_->process != nullptr) {
     ::WaitForSingleObject(state_->process, 2000);

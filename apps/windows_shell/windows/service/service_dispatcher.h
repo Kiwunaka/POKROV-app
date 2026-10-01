@@ -42,6 +42,8 @@ class RuntimeDispatcher {
     RuntimeResult stopping_snapshot;
     bool cleanup_attempted = false;  // protected by state_lock_
     bool protected_handoff = false;
+    bool local_dpi_owner = false;  // Private captured physical-network owner.
+    std::atomic<bool> local_dpi_cancelled{false};
   };
   RuntimeResult Cancel(const std::string& body);
   RuntimeResult CancelAndConfirm(const std::string& body);

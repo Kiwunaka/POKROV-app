@@ -1,9 +1,10 @@
 part of pokrov_app_shell;
 
 class _LocalDpiCard extends StatelessWidget {
-  const _LocalDpiCard({required this.preferences, required this.onChanged});
+  const _LocalDpiCard({required this.preferences, required this.onChanged, required this.hostPlatform});
   final PokrovRoutingPreferences preferences;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
+  final HostPlatform hostPlatform;
 
   @override
   Widget build(BuildContext context) => _SectionCard(
@@ -12,7 +13,9 @@ class _LocalDpiCard extends StatelessWidget {
     child: _RoutingToggleRow(
       key: const ValueKey('rules-local-dpi'),
       title: 'Пробовать прямой доступ',
-      subtitle: 'Только выбранные сервисы, Android 10 и новее.',
+      subtitle: hostPlatform == HostPlatform.windows
+          ? 'Только выбранные сервисы, подготовленный Windows runtime.'
+          : 'Только выбранные сервисы, Android 10 и новее.',
       value: preferences.localDpiEnabled,
       onChanged: (value) => onChanged(preferences.copyWith(localDpiEnabled: value)),
     ),

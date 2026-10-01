@@ -8,12 +8,14 @@
 #include <vector>
 
 #include "service_protocol.h"
+#include "service_network_observer.h"
 #include "service_recovery.h"
 #include "service_events.h"
 #include "service_transition_guard.h"
 
 namespace pokrov::service {
 class WindowsLocalDpiExecutor;
+struct WindowsLocalDpiPreparation;
 
 struct RuntimeDirectories {
   std::wstring base;
@@ -120,15 +122,22 @@ class RuntimeHost {
   RuntimeResult StageProfile(const std::string& body, bool requires_bound_connect = false);
   RuntimeResult InvalidateProfile();
   RuntimeResult Connect(const std::string& expected_profile_digest,
-                        const CheckInterruption& interrupted = {});
+                        const CheckInterruption& interrupted = {},
+                        const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt);
   RuntimeResult ConnectWithIdentity(const BoundConnectTarget& target,
-                                    const CheckInterruption& interrupted = {});
+                                    const CheckInterruption& interrupted = {},
+                                    const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt);
+  bool RequestsWindowsLocalDpi() const { return local_dpi_requested_ && local_dpi_ready_; }
+  bool ReplacementRequestsWindowsLocalDpi(const std::string& body) const;
+  bool HasWindowsLocalDpi() const { return local_dpi_preparation_ != nullptr; }
+  RuntimeResult MaintainWindowsLocalDpi(const CheckInterruption& interrupted = {});
   RuntimeResult PromoteTransportLease(const TransportLeasePromotion& target);
   RuntimeResult RevokeTransportLease(const TransportLeaseRevocation& target);
   RuntimeResult Disconnect(bool explicit_disconnect = true);
   bool CanRecheckEgress() const;
   RuntimeResult RecheckEgress(const CheckInterruption& interrupted);
-  RuntimeResult ReplaceManagedProfile(const std::string& body, const CheckInterruption& interrupted);
+  RuntimeResult ReplaceManagedProfile(const std::string& body, const CheckInterruption& interrupted,
+      const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt);
   RuntimeResult CancelProtectedHandoff();
   RuntimeResult RevokeSmartAccessLease(const std::string& body);
   RuntimeResult RevokeRoutingCatalog(const std::string& profile_digest);
@@ -158,7 +167,9 @@ class RuntimeHost {
   RuntimeResult ConnectImpl(const std::string& expected_profile_digest,
                             const CheckInterruption& interrupted,
                             const std::string& expected_core_digest,
-                            bool finish_transition_guard = true);
+                            bool finish_transition_guard = true,
+                            const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt);
+  void ClearWindowsLocalDpiAfterCoreStopped();
   std::string SnapshotBody(const char* pending_phase = nullptr) const;
   bool PrepareDirectories();
   std::string WriteProfileAtomically(const std::string& profile);
@@ -172,6 +183,14 @@ class RuntimeHost {
 
   std::unique_ptr<CoreRuntime> core_;
   std::unique_ptr<WindowsLocalDpiExecutor> local_dpi_executor_;
+  std::unique_ptr<WindowsLocalDpiPreparation> local_dpi_preparation_;
+  std::string local_dpi_profile_digest_;
+  std::string local_dpi_core_digest_;
+  std::string original_staged_config_;
+  std::string staged_runtime_config_;
+  bool local_dpi_requested_ = false;
+  bool local_dpi_ready_ = false;
+  bool local_dpi_disabled_ = false;
   std::unique_ptr<RuntimeEgressProbe> egress_probe_;
   std::unique_ptr<RuntimeRecovery> recovery_;
   std::unique_ptr<RuntimeTransitionGuard> transition_guard_;

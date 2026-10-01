@@ -63,6 +63,7 @@ struct ServiceRuntimeSnapshot {
   int smart_access_lease_version = 0;
   int routing_catalog_control_version = 0;
   int smart_access_runtime_control_version = 0;
+  int windows_local_dpi_admission_version = 0;
   std::string transport_capabilities_json;
   std::string core_module_sha256;
   std::string core_version;

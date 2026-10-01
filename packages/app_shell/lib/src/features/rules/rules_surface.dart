@@ -18,6 +18,7 @@ class _RulesSection extends StatelessWidget {
     required this.onRoutingPreferencesChanged,
     required this.onRoutingPreferencesApply,
     required this.connectionActive,
+    this.windowsLocalDpiReady = false,
     required this.onReadCurrentWifi,
     required this.onRequestWifiPermission,
     required this.onOpenVpnSettings,
@@ -40,6 +41,7 @@ class _RulesSection extends StatelessWidget {
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesChanged;
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesApply;
   final bool connectionActive;
+  final bool windowsLocalDpiReady;
   final PokrovWifiProbe onReadCurrentWifi;
   final PokrovWifiPermissionRequester onRequestWifiPermission;
   final PokrovVpnSettingsLauncher onOpenVpnSettings;
@@ -215,6 +217,7 @@ class _RulesSection extends StatelessWidget {
           onChanged: onRoutingPreferencesChanged,
           onApply: onRoutingPreferencesApply,
           connectionActive: connectionActive,
+          windowsLocalDpiReady: windowsLocalDpiReady,
           onReadCurrentWifi: onReadCurrentWifi,
           onRequestWifiPermission: onRequestWifiPermission,
           onOpenVpnSettings: onOpenVpnSettings,
@@ -233,6 +236,7 @@ class _RulesAdvancedSection extends StatefulWidget {
     required this.onChanged,
     required this.onApply,
     required this.connectionActive,
+    this.windowsLocalDpiReady = false,
     required this.onReadCurrentWifi,
     required this.onRequestWifiPermission,
     required this.onOpenVpnSettings,
@@ -245,6 +249,7 @@ class _RulesAdvancedSection extends StatefulWidget {
   final ValueChanged<PokrovRoutingPreferences> onChanged;
   final ValueChanged<PokrovRoutingPreferences> onApply;
   final bool connectionActive;
+  final bool windowsLocalDpiReady;
   final PokrovWifiProbe onReadCurrentWifi;
   final PokrovWifiPermissionRequester onRequestWifiPermission;
   final PokrovVpnSettingsLauncher onOpenVpnSettings;
@@ -356,9 +361,11 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                         preferences: _draftPreferences,
                         onChanged: _stage,
                       ),
-                    if (widget.hostPlatform == HostPlatform.android &&
+                    if ((widget.hostPlatform == HostPlatform.android ||
+                         (widget.hostPlatform == HostPlatform.windows && widget.windowsLocalDpiReady)) &&
                         widget.fallbackMode == RouteMode.selectiveServices)
-                      _LocalDpiCard(preferences: _draftPreferences, onChanged: _stage),
+                      _LocalDpiCard(preferences: _draftPreferences, onChanged: _stage,
+                          hostPlatform: widget.hostPlatform),
                     _DnsAndLanCard(
                       preferences: _draftPreferences,
                       onChanged: _stage,
