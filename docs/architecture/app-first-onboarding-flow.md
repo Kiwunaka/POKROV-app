@@ -334,6 +334,13 @@ WARP policy rule:
 - Production WARP claims still require Android and Windows release-build
   connect/disconnect/fallback proof.
 
+The private Android 1.4.0/Core 1.2.2 consent-and-reconnect check retained
+the next-connection status; active WARP registration was not proved.
+Read-only CH eligibility found two release-compatible WARP-before-node profiles,
+but the phone's actual catalog, bundled materials and runtime features were not
+observed. Consent and profile potential do not establish registration or selected
+candidate eligibility. The device was left disconnected with WARP off.
+
 Smart-connect fields:
 
 - `smart_connect.shortlist_revision`
