@@ -1,6 +1,7 @@
 package space.pokrov.pokrov_android_shell
 
 import android.content.Context
+import androidx.annotation.Keep
 import android.net.ConnectivityManager
 import android.net.LocalServerSocket
 import android.net.LocalSocket
@@ -84,6 +85,7 @@ internal class AndroidByeDpiRuntime private constructor(
 
     // Called by JNI before a SOCKS client can create a protected uplink. A
     // loopback listener alone would otherwise be a Direct proxy for other apps.
+    @Keep
     @Suppress("unused")
     private fun allowClient(clientPort: Int, serverPort: Int): Boolean = synchronized(protectLock) {
         isCurrent() && network.getConnectionOwnerUid(
