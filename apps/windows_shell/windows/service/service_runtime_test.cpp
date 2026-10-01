@@ -8,6 +8,10 @@
 #include <string>
 #include <vector>
 
+namespace pokrov::service {
+bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
+}
+
 namespace {
 
 int failures = 0;
@@ -17,6 +21,29 @@ void Expect(bool condition, const char* message) {
     std::cerr << message << '\n';
     ++failures;
   }
+}
+
+void TestReleasedCoreDescriptorCompatibility() {
+  // Native query of the retained released 1.2.2 DLL; no setup/start calls.
+  const std::string core122 =
+      R"({"schema_version":1,"desktop_abi":2,"event_abi":1,"routing_catalog_window_version":1,"smart_access_lease_version":1,"smart_access_runtime_control_version":1,"routing_catalog_control_version":4,"local_dpi_admission_version":1,"capabilities":["bounded_stop_reason","core_start_stop","materialized_profile","secure_profile_file","structured_operational_events","typed_lifecycle_events"],"lifecycle_events":["initialization","profile","core_start","tun","routes","dns","egress","recovery","stop"],"operational_events":{"contract":"config/core-event-abi.json","schema_version":1,"event_abi":1,"callback_symbol":"pokrovCoreSetEventCallback","context_symbol":"pokrovCoreSetEventContext","maximum_pending_events":128}})";
+  Expect(pokrov::service::CoreDescriptorHasRuntimeControl(core122),
+         "released Core 1.2.2 ordinary runtime descriptor was rejected");
+  std::string core112(core122);
+  const std::string admission = "\"local_dpi_admission_version\":1,";
+  core112.erase(core112.find(admission), admission.size());
+  Expect(pokrov::service::CoreDescriptorHasRuntimeControl(core112),
+         "released Core 1.1.2 runtime descriptor was rejected");
+  std::string unknown(core122);
+  unknown.replace(unknown.find("bounded_stop_reason"),
+      std::string("bounded_stop_reason").size(), "unknown_capability");
+  Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(unknown),
+         "unknown Core capability bypassed the closed runtime descriptor");
+  unknown = core122;
+  unknown.replace(unknown.find(admission), admission.size(),
+      "\"local_dpi_admission_version\":2,");
+  Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(unknown),
+         "unknown admission version bypassed the closed runtime descriptor");
 }
 
 bool Contains(const pokrov::service::RuntimeResult& result,
@@ -1214,6 +1241,7 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main() {
+  TestReleasedCoreDescriptorCompatibility();
   TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff();
   TestInterruptedConnectNeverPublishesProtection();
   TestProfileIdentityFollowsCommittedRuntime();

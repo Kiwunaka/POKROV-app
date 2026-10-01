@@ -263,6 +263,11 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   `structured_operational_events`, the closed lifecycle vocabulary and the
   callback/context descriptor. The returned string is released with
   `freeString`.
+- Windows also recognizes the exact released Core 1.2.2 descriptor with
+  `local_dpi_admission_version: 1` for ordinary runtime and Smart Access control;
+  the released 1.1.2 descriptor remains supported. This additive admission
+  metadata does not enable Windows DPI execution: its capability stays zero.
+  Unknown capabilities and admission versions still fail closed before setup.
 - Malformed descriptors, unknown schema/event ABI versions, missing required
   capabilities and unknown lifecycle event identifiers fail closed before any
   Core setup or profile material is passed across FFI.

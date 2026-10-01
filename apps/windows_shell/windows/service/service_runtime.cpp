@@ -25,6 +25,8 @@
 
 namespace pokrov::service {
 
+bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
+
 RuntimeResult RuntimeHost::CrashDiagnostics() const {
   std::vector<windows_crash::WindowsCrashDiagnostic> records;
   if (!windows_crash::ReadWindowsCrashDiagnostics(
@@ -595,10 +597,8 @@ class InstalledCoreRuntime final : public CoreRuntime {
       std::string renewal_descriptor(smart_access_descriptor);
       renewal_descriptor.insert(renewal_descriptor.find("\"capabilities\""),
           "\"routing_catalog_control_version\":4,");
-      std::string runtime_control_descriptor(renewal_descriptor);
-      runtime_control_descriptor.insert(runtime_control_descriptor.find("\"routing_catalog_control_version\""),
-          "\"smart_access_runtime_control_version\":1,");
-      const bool has_renewal = descriptor == renewal_descriptor || descriptor == runtime_control_descriptor;
+      const bool has_runtime_control = CoreDescriptorHasRuntimeControl(descriptor);
+      const bool has_renewal = descriptor == renewal_descriptor || has_runtime_control;
       if (descriptor == smart_access_descriptor || descriptor == catalog_control_descriptor ||
           descriptor == policy_control_descriptor || descriptor == service_control_descriptor || has_renewal) {
         revoke_smart_access_ = reinterpret_cast<RevokeSmartAccessFunction>(
@@ -630,7 +630,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
                     ::GetProcAddress(module_, "pokrovCoreRenewSmartAccessLease"));
                 if (renew_smart_access_ == nullptr) return "core_abi_incompatible";
                 routing_catalog_control_version_ = 4;
-                if (descriptor == runtime_control_descriptor) {
+                if (has_runtime_control) {
                   configure_smart_access_control_ = reinterpret_cast<ConfigureSmartAccessControlFunction>(
                       ::GetProcAddress(module_, "pokrovCoreConfigureSmartAccessRuntimeControl"));
                   configure_smart_access_renewal_ = reinterpret_cast<ConfigureSmartAccessControlFunction>(
@@ -944,6 +944,19 @@ std::mutex InstalledCoreRuntime::callback_lock_;
 InstalledCoreRuntime* InstalledCoreRuntime::callback_runtime_ = nullptr;
 
 }  // namespace
+
+bool CoreDescriptorHasRuntimeControl(const std::string& descriptor) {
+  std::string runtime_control(kCoreCapabilities);
+  runtime_control.insert(runtime_control.find("\"capabilities\""),
+      "\"routing_catalog_window_version\":1,\"smart_access_lease_version\":1,"
+      "\"smart_access_runtime_control_version\":1,\"routing_catalog_control_version\":4,");
+  if (descriptor == runtime_control) return true;
+  // Core 1.2.2 adds platform admission metadata; ordinary Windows runtime
+  // compatibility does not grant Windows DPI execution capability.
+  runtime_control.insert(runtime_control.find("\"capabilities\""),
+      "\"local_dpi_admission_version\":1,");
+  return descriptor == runtime_control;
+}
 
 bool CoreOperationalEventFence::Activate(const std::string& run_id,
                                          const std::string& attempt_id,
