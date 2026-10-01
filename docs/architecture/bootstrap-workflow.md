@@ -34,6 +34,15 @@ normalizer, when that SDK method is present. A normalizer error fails startup;
 older Core without the method keeps its accepted input path. Stored bytes and
 their digest are unchanged, including OS and Quick Settings reuse.
 
+Device checks confirmed removal of location probes from ordinary caches on
+Android and Windows, ordinary CH connections with Android Core 1.2.1 and Windows
+Core 1.1.2, and Windows protected-cache reconnect with API access blocked for
+the app alone. Android Quick Settings reused its saved stage after upgrading
+from public 1.4 without opening Flutter. With Wi-Fi and mobile data off, Android
+stops at candidate-network admission; this does not exercise protected-cache
+reuse. The saved-stage check did not inspect historical TUN fields and does not
+establish migration of a legacy TUN shape. Android API-only failure was not tested.
+
 With ordinary managed profiles and a runtime supporting protected handoff,
 manual reconnect and location replacement retain the running tunnel while the
 replacement profile is resolved and probed. Cancellation retains that protection,
