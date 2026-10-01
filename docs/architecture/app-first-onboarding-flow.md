@@ -81,6 +81,14 @@ tighter catalog authority retains the existing fail-closed service gate until a
 new profile is staged. Full mode creates no DPI child. Device acceptance and a
 Core AAR containing these native APIs are required before enabling the feature.
 
+The Core 1.2.2 private Android check passed the signed LAB fixture, release JNI
+callback, own UID and peer credentials, actual socket protection, verified TLS
+and HEAD 2xx, foreign UID denial, and finite child/socket/TUN cleanup. This used
+an address-only fixture TUN without default routes or Core route admission.
+The full overlay has not passed local DPI acceptance; its host UID scope and
+ordinary transport protection must be verified together before enabling it.
+Production catalog trust and the default-off feature remain unchanged.
+
 On a transient transport failure or retryable HTTP outage, only a currently
 verifiable cached envelope can return, with `usingCache=true`. TLS failures,
 malformed replies and invalid signatures do not become cached success.
