@@ -498,7 +498,7 @@ bool IsKnownPhase(const std::string& value) {
 }
 
 bool IsKnownFailure(const std::string& value) {
-  static constexpr std::array<const char*, 52> failures = {
+  static constexpr std::array<const char*, 53> failures = {
       "none",
       "core_not_initialized",
       "core_missing",
@@ -509,6 +509,7 @@ bool IsKnownFailure(const std::string& value) {
       "local_dpi_withdraw_failed",
       "local_dpi_catalog_expired",
       "local_dpi_owner_changed",
+      "telegram_ws_withdraw_failed",
       "runtime_path_invalid",
       "core_setup_failed",
       "profile_request_invalid",

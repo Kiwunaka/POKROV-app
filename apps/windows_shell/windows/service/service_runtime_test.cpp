@@ -1,6 +1,7 @@
 #include "service_runtime.h"
 #include "service_profile_identity.h"
 #include "service_local_dpi.h"
+#include "service_local_dpi_json.h"
 
 #include <windows.h>
 
@@ -12,6 +13,7 @@
 namespace pokrov::service {
 bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
 bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor);
+bool CoreDescriptorHasTelegramWS(const std::string& descriptor);
 }
 
 namespace {
@@ -45,6 +47,19 @@ void TestReleasedCoreDescriptorCompatibility() {
   Expect(pokrov::service::CoreDescriptorHasRuntimeControl(windows_next) &&
          pokrov::service::CoreDescriptorHasWindowsLocalDpi(windows_next),
          "exact additive Windows Core descriptor was rejected");
+  Expect(!pokrov::service::CoreDescriptorHasTelegramWS(windows_next) &&
+         !pokrov::service::CoreDescriptorHasTelegramWS(core122),
+         "old Core descriptor acquired Telegram WS admission");
+  std::string telegram_next(windows_next);
+  const std::string telegram_admission = "\"telegram_ws_admission_version\":1,";
+  telegram_next.insert(telegram_next.find("\"capabilities\""), telegram_admission);
+  Expect(pokrov::service::CoreDescriptorHasRuntimeControl(telegram_next) &&
+         pokrov::service::CoreDescriptorHasTelegramWS(telegram_next),
+         "exact Telegram WS descriptor was rejected");
+  telegram_next.replace(telegram_next.find(telegram_admission), telegram_admission.size(),
+      "\"telegram_ws_admission_version\":2,");
+  Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(telegram_next),
+         "unknown Telegram WS admission version bypassed the closed descriptor");
   windows_next.replace(windows_next.find(windows_admission), windows_admission.size(),
       "\"windows_local_dpi_admission_version\":2,");
   Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(windows_next),
@@ -59,6 +74,28 @@ void TestReleasedCoreDescriptorCompatibility() {
       "\"local_dpi_admission_version\":2,");
   Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(unknown),
          "unknown admission version bypassed the closed runtime descriptor");
+}
+
+void TestWindowsTelegramMetadataComposition() {
+  using namespace pokrov::service;
+  const std::string prepared = R"({"outbounds":[{"type":"pokrov_telegram_ws","tag":"tg"}],"_meta":{"telegram_ws":{"platform":"windows","mode":"selective"},"local_dpi":{"platform":"windows","mode":"selective"}}})";
+  std::string runtime_copy;
+  bool dpi = false, telegram = false;
+  Expect(StripWindowsLocalDpiMetadata(prepared, &runtime_copy, &dpi, &telegram) && dpi && telegram,
+         "composed Telegram/DPI intent did not reach the native owner");
+  Expect(runtime_copy.find("_meta") == std::string::npos &&
+         runtime_copy.find("pokrov_telegram_ws") != std::string::npos,
+         "final metadata strip lost the prepared Telegram outbound");
+  const auto receipt = ReadWindowsTelegramWSPreparation(
+      "{\"schema_version\":1,\"profile\":" + prepared +
+      R"(,"issued_at":"2020-01-01T00:00:00Z","expires_at":"2099-01-01T00:00:00Z","services":[{"service_id":"telegram","outbound_tag":"tg"}]})");
+  Expect(receipt && receipt->services.size() == 1 && receipt->services.front().second == "tg" &&
+         WindowsTelegramWSPreparationCurrent(*receipt), "private Telegram receipt was not consumed");
+  if (receipt) {
+    auto expired = *receipt;
+    expired.expires_elapsed_ms = ::GetTickCount64();
+    Expect(!WindowsTelegramWSPreparationCurrent(expired), "Telegram monotonic expiry did not retire admission");
+  }
 }
 
 void TestWindowsLocalDpiScopePreparation() {
@@ -1276,6 +1313,7 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 
 int main() {
   TestReleasedCoreDescriptorCompatibility();
+  TestWindowsTelegramMetadataComposition();
   TestWindowsLocalDpiScopePreparation();
   TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff();
   TestInterruptedConnectNeverPublishesProtection();

@@ -31,6 +31,7 @@ namespace pokrov::service {
 
 bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
 bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor);
+bool CoreDescriptorHasTelegramWS(const std::string& descriptor);
 
 RuntimeResult RuntimeHost::CrashDiagnostics() const {
   std::vector<windows_crash::WindowsCrashDiagnostic> records;
@@ -470,6 +471,24 @@ class InstalledCoreRuntime final : public CoreRuntime {
     return WindowsLocalDpiAdmissionVersion() == 1 ? withdraw_local_dpi_admission_(id.c_str()) : -1;
   }
 
+  int TelegramWSAdmissionVersion() const override {
+    return initialized_ && telegram_ws_version_ != nullptr ? 1 : 0;
+  }
+  std::string PrepareTelegramWSProfile(const std::string& config, const std::string& keys,
+      const std::string& audience, const std::string& bind_interface) override {
+    return TelegramWSAdmissionVersion() == 1 ? StringResult(prepare_telegram_ws_(
+        config.c_str(), keys.c_str(), audience.c_str(), bind_interface.c_str())) : "";
+  }
+  std::string ReadTelegramWSAdmissionID(const std::string& tag) override {
+    return TelegramWSAdmissionVersion() == 1 ? StringResult(read_telegram_ws_(tag.c_str())) : "";
+  }
+  int AdmitTelegramWSAdmission(const std::string& id) override {
+    return TelegramWSAdmissionVersion() == 1 ? admit_telegram_ws_(id.c_str()) : -1;
+  }
+  int WithdrawTelegramWSAdmission(const std::string& id) override {
+    return TelegramWSAdmissionVersion() == 1 ? withdraw_telegram_ws_(id.c_str()) : -1;
+  }
+
   int SmartAccessLeaseVersion() const override {
     return initialized_ ? smart_access_lease_version_ : 0;
   }
@@ -558,6 +577,11 @@ class InstalledCoreRuntime final : public CoreRuntime {
     read_local_dpi_admission_ = nullptr;
     admit_local_dpi_admission_ = nullptr;
     withdraw_local_dpi_admission_ = nullptr;
+    telegram_ws_version_ = nullptr;
+    prepare_telegram_ws_ = nullptr;
+    read_telegram_ws_ = nullptr;
+    admit_telegram_ws_ = nullptr;
+    withdraw_telegram_ws_ = nullptr;
     smart_access_lease_version_ = 0;
     routing_catalog_control_version_ = 0;
     const auto directory = CurrentExecutableDirectory();
@@ -651,6 +675,21 @@ class InstalledCoreRuntime final : public CoreRuntime {
         }
       }
       const bool has_renewal = descriptor == renewal_descriptor || has_runtime_control;
+      if (CoreDescriptorHasTelegramWS(descriptor)) {
+        telegram_ws_version_ = reinterpret_cast<AbiFunction>(
+            ::GetProcAddress(module_, "pokrovCoreTelegramWSAdmissionVersion"));
+        prepare_telegram_ws_ = reinterpret_cast<PrepareWindowsLocalDpiFunction>(
+            ::GetProcAddress(module_, "pokrovCorePrepareTelegramWSProfile"));
+        read_telegram_ws_ = reinterpret_cast<ReadLocalDpiAdmissionFunction>(
+            ::GetProcAddress(module_, "pokrovCoreReadTelegramWSAdmissionID"));
+        admit_telegram_ws_ = reinterpret_cast<LocalDpiAdmissionFunction>(
+            ::GetProcAddress(module_, "pokrovCoreAdmitTelegramWSAdmission"));
+        withdraw_telegram_ws_ = reinterpret_cast<LocalDpiAdmissionFunction>(
+            ::GetProcAddress(module_, "pokrovCoreWithdrawTelegramWSAdmission"));
+        if (telegram_ws_version_ == nullptr || telegram_ws_version_() != 1 ||
+            prepare_telegram_ws_ == nullptr || read_telegram_ws_ == nullptr ||
+            admit_telegram_ws_ == nullptr || withdraw_telegram_ws_ == nullptr) return "core_abi_incompatible";
+      }
       if (descriptor == smart_access_descriptor || descriptor == catalog_control_descriptor ||
           descriptor == policy_control_descriptor || descriptor == service_control_descriptor || has_renewal) {
         revoke_smart_access_ = reinterpret_cast<RevokeSmartAccessFunction>(
@@ -961,6 +1000,11 @@ class InstalledCoreRuntime final : public CoreRuntime {
   ReadLocalDpiAdmissionFunction read_local_dpi_admission_ = nullptr;
   LocalDpiAdmissionFunction admit_local_dpi_admission_ = nullptr;
   LocalDpiAdmissionFunction withdraw_local_dpi_admission_ = nullptr;
+  AbiFunction telegram_ws_version_ = nullptr;
+  PrepareWindowsLocalDpiFunction prepare_telegram_ws_ = nullptr;
+  ReadLocalDpiAdmissionFunction read_telegram_ws_ = nullptr;
+  LocalDpiAdmissionFunction admit_telegram_ws_ = nullptr;
+  LocalDpiAdmissionFunction withdraw_telegram_ws_ = nullptr;
   std::string transport_capabilities_json_;
   std::string core_module_sha256_;
   std::string core_version_;
@@ -1018,12 +1062,20 @@ bool CoreDescriptorHasRuntimeControl(const std::string& descriptor) {
   if (descriptor == runtime_control) return true;
   runtime_control.insert(runtime_control.find("\"capabilities\""),
       "\"windows_local_dpi_admission_version\":1,");
+  if (descriptor == runtime_control) return true;
+  runtime_control.insert(runtime_control.find("\"capabilities\""),
+      "\"telegram_ws_admission_version\":1,");
   return descriptor == runtime_control;
 }
 
 bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor) {
   const auto field = descriptor.find("\"windows_local_dpi_admission_version\":1,");
   return field != std::string::npos && CoreDescriptorHasRuntimeControl(descriptor);
+}
+
+bool CoreDescriptorHasTelegramWS(const std::string& descriptor) {
+  return descriptor.find("\"telegram_ws_admission_version\":1,") != std::string::npos &&
+      CoreDescriptorHasRuntimeControl(descriptor);
 }
 
 bool CoreOperationalEventFence::Activate(const std::string& run_id,
@@ -1145,6 +1197,7 @@ RuntimeResult RuntimeHost::Initialize() {
               ServiceEventOutcome::kSucceeded);
   local_dpi_ready_ = kWindowsCatalogTrustEnabled && transition_guard_ != nullptr &&
       core_->WindowsLocalDpiAdmissionVersion() == 1 && local_dpi_executor_->AssetsReady();
+  telegram_ws_ready_ = kWindowsCatalogTrustEnabled && core_->TelegramWSAdmissionVersion() == 1;
   return Snapshot();
 }
 
@@ -1207,7 +1260,8 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
   }
   std::string runtime_copy;
   bool requests_local_dpi = false;
-  if (!StripWindowsLocalDpiMetadata(profile, &runtime_copy, &requests_local_dpi)) {
+  bool requests_telegram_ws = false;
+  if (!StripWindowsLocalDpiMetadata(profile, &runtime_copy, &requests_local_dpi, &requests_telegram_ws)) {
     CleanupBundledRuleSets(staged_rule_set_slot);
     return Fail(Status::kInvalid, "profile_payload_invalid");
   }
@@ -1229,6 +1283,7 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
   original_staged_config_ = std::move(profile);
   staged_runtime_config_ = std::move(runtime_copy);
   local_dpi_requested_ = requests_local_dpi;
+  telegram_ws_requested_ = requests_telegram_ws;
   requires_bound_connect_ = requires_bound_connect;
   effective_profile_digest_.clear();
   profile_staged_ = true;
@@ -1250,9 +1305,12 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
     return Fail(Status::kNotReady, "local_dpi_withdraw_failed");
   }
   local_dpi_preparation_.reset();
+  telegram_ws_preparation_.reset();
+  telegram_ws_holders_.clear();
   original_staged_config_.clear();
   staged_runtime_config_.clear();
   local_dpi_requested_ = false;
+  telegram_ws_requested_ = false;
   if (!profile_path_.empty()) {
     ::DeleteFileW(profile_path_.c_str());
   }
@@ -1270,14 +1328,16 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
 
 RuntimeResult RuntimeHost::Connect(const std::string& expected_profile_digest,
                                   const CheckInterruption& interrupted,
-                                  const std::optional<CandidateNetworkContext>& local_dpi_network) {
+                                  const std::optional<CandidateNetworkContext>& local_dpi_network,
+                                  const CheckInterruption& telegram_interrupted) {
   if (requires_bound_connect_) return Fail(Status::kNotReady, "profile_identity_mismatch");
-  return ConnectImpl(expected_profile_digest, interrupted, "", true, local_dpi_network);
+  return ConnectImpl(expected_profile_digest, interrupted, "", true, local_dpi_network, telegram_interrupted);
 }
 
 RuntimeResult RuntimeHost::ConnectWithIdentity(const BoundConnectTarget& target,
                                               const CheckInterruption& interrupted,
-                                              const std::optional<CandidateNetworkContext>& local_dpi_network) {
+                                              const std::optional<CandidateNetworkContext>& local_dpi_network,
+                                              const CheckInterruption& telegram_interrupted) {
   if (EncodeBoundConnect(target).empty()) return {Status::kInvalid, "invalid_connect_identity"};
   if (phase_ == Phase::kRunning || phase_ == Phase::kRecoveryRequired) {
     return {Status::kNotReady, "runtime_busy"};
@@ -1287,7 +1347,7 @@ RuntimeResult RuntimeHost::ConnectWithIdentity(const BoundConnectTarget& target,
     if (pending != OperationInterruption::kNone) return pending;
     return IsConnectDeadlineCurrent(target) ? OperationInterruption::kNone
                                            : OperationInterruption::kDeadlineExceeded;
-  }, target.core_module_sha256, true, local_dpi_network);
+  }, target.core_module_sha256, true, local_dpi_network, telegram_interrupted);
 }
 
 RuntimeResult RuntimeHost::PromoteTransportLease(const TransportLeasePromotion& target) {
@@ -1318,7 +1378,8 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
                                       const CheckInterruption& interrupted,
                                       const std::string& expected_core_digest,
                                       bool finish_transition_guard,
-                                      const std::optional<CandidateNetworkContext>& local_dpi_network) {
+                                      const std::optional<CandidateNetworkContext>& local_dpi_network,
+                                      const CheckInterruption& telegram_interrupted) {
   // Core and network state stay on this serial owner. An interruption never
   // races Stop against Start, and rollback must finish even after the deadline.
   const auto interruption = [&](bool rollback) -> std::optional<RuntimeResult> {
@@ -1368,21 +1429,48 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   if (!staged_write_error.empty()) return Fail(Status::kNotReady, staged_write_error.c_str());
   // Native compiled trust and the captured physical interface are the only
   // inputs to preparation. Stored/staged identity remains the original bytes.
+  std::string prepared_config = original_staged_config_;
+  telegram_ws_preparation_.reset();
+  telegram_ws_holders_.clear();
+  if (telegram_ws_requested_ && telegram_ws_ready_ && local_dpi_network &&
+      !local_dpi_network->bind_interface.empty()) {
+    auto prepared = ReadWindowsTelegramWSPreparation(core_->PrepareTelegramWSProfile(
+        prepared_config, kWindowsCatalogPublicKeys, kWindowsCatalogAudience,
+        local_dpi_network->bind_interface));
+    if (prepared && !core_->CoreModuleSHA256().empty()) {
+      prepared_config = prepared->profile;  // Signed metadata remains private for DPI composition.
+      telegram_ws_preparation_ = std::make_unique<WindowsTelegramWSPreparation>(std::move(*prepared));
+      telegram_ws_original_digest_ = staged_profile_digest_;
+      telegram_ws_core_digest_ = core_->CoreModuleSHA256();
+    }
+  }
   if (local_dpi_requested_ && local_dpi_ready_ && local_dpi_network &&
       !local_dpi_network->bind_interface.empty()) {
     auto prepared = ReadWindowsLocalDpiPreparation(core_->PrepareWindowsLocalDpiProfile(
-        original_staged_config_, kWindowsCatalogPublicKeys, kWindowsCatalogAudience,
+        prepared_config, kWindowsCatalogPublicKeys, kWindowsCatalogAudience,
         local_dpi_network->bind_interface));
     if (prepared && !core_->CoreModuleSHA256().empty()) {
       if (!TransitionGuardArmed() && !transition_guard_->Start().empty()) {
         return Fail(Status::kNotReady, "transition_guard_failed");
       }
-      const auto write_error = WriteProfileAtomically(prepared->profile);
-      if (!write_error.empty()) return Fail(Status::kNotReady, write_error.c_str());
+      prepared_config = prepared->profile;
       local_dpi_preparation_ = std::make_unique<WindowsLocalDpiPreparation>(std::move(*prepared));
       local_dpi_disabled_ = false;
       local_dpi_profile_digest_ = staged_profile_digest_;
       local_dpi_core_digest_ = core_->CoreModuleSHA256();
+    }
+  }
+  if (telegram_ws_preparation_ || local_dpi_preparation_) {
+    std::string final_profile;
+    bool ignored = false;
+    if (!StripWindowsLocalDpiMetadata(prepared_config, &final_profile, &ignored))
+      return Fail(Status::kInvalid, "profile_payload_invalid");
+    const auto write_error = WriteProfileAtomically(final_profile);
+    if (!write_error.empty()) return Fail(Status::kNotReady, write_error.c_str());
+    if (telegram_ws_preparation_) {
+      telegram_ws_preparation_->profile = final_profile;
+      telegram_ws_prepared_digest_ = ProfileDigest(final_profile);
+      if (telegram_ws_prepared_digest_.empty()) return Fail(Status::kNotReady, "profile_identity_failed");
     }
   }
   RecordEvent(ServiceEvent::kRuntimeNetworkSnapshot,
@@ -1559,6 +1647,33 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     return Fail(Status::kNotReady, recovery_error.c_str());
   }
   if (const auto result = interruption(true)) return *result;
+  // The ordinary egress gate completes over the encrypted fallback. TG owner
+  // loss during that gate only prevents TG admission, never rolls back VPN/DPI.
+  if (telegram_ws_preparation_) {
+    const auto current = [&] {
+      return (!interrupted || interrupted() == OperationInterruption::kNone) &&
+          (!telegram_interrupted || telegram_interrupted() == OperationInterruption::kNone) &&
+          staged_profile_digest_ == telegram_ws_original_digest_ &&
+          core_->CoreModuleSHA256() == telegram_ws_core_digest_ &&
+          WindowsTelegramWSPreparationCurrent(*telegram_ws_preparation_) &&
+          ProfileDigest(telegram_ws_preparation_->profile) == telegram_ws_prepared_digest_;
+    };
+    bool admitted = current();
+    for (const auto& service : telegram_ws_preparation_->services) {
+      const auto id = core_->ReadTelegramWSAdmissionID(service.second);
+      if (id.empty()) { admitted = false; break; }
+      telegram_ws_holders_.emplace_back(service.second, id);
+    }
+    for (const auto& holder : telegram_ws_holders_) {
+      if (!admitted || !current() || core_->ReadTelegramWSAdmissionID(holder.first) != holder.second ||
+          core_->AdmitTelegramWSAdmission(holder.second) != 1 || !current() ||
+          core_->ReadTelegramWSAdmissionID(holder.first) != holder.second) {
+        admitted = false;
+        break;
+      }
+    }
+    if (!admitted) WithdrawTelegramWS();  // Only TG latches; ordinary VPN and DPI continue.
+  }
   effective_profile_digest_ = staged_profile_digest_;
   core_egress_validated_ = !requires_bound_connect_;
   phase_ = Phase::kRunning;
@@ -1660,6 +1775,7 @@ RuntimeResult RuntimeHost::RevokeRoutingCatalog(const std::string& profile_diges
   if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
     return {Status::kNotReady, "catalog_profile_changed"};
   }
+  if (!WithdrawTelegramWS()) return Fail(Status::kNotReady, "telegram_ws_withdraw_failed");
   if (local_dpi_preparation_) {
     const auto stopped = CancelProtectedHandoff();
     if (stopped.status != Status::kOk) return stopped;
@@ -1683,15 +1799,22 @@ RuntimeResult RuntimeHost::RevokeRoutingCatalogService(const std::string& body) 
   if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
     return {Status::kNotReady, "catalog_profile_changed"};
   }
-  if (local_dpi_preparation_) {
+  const auto service_id = body.substr(65);
+  if (telegram_ws_preparation_ && std::any_of(telegram_ws_preparation_->services.begin(),
+      telegram_ws_preparation_->services.end(), [&](const auto& service) { return service.first == service_id; })) {
+    if (!WithdrawTelegramWS(service_id)) return Fail(Status::kNotReady, "telegram_ws_withdraw_failed");
+  }
+  if (local_dpi_preparation_ && std::any_of(local_dpi_preparation_->services.begin(),
+      local_dpi_preparation_->services.end(), [&](const auto& service) { return service.service_id == service_id; })) {
     const auto stopped = CancelProtectedHandoff();
     if (stopped.status != Status::kOk) return stopped;
     profile_staged_ = false;
     staged_profile_digest_.clear();
     return {Status::kOk, "catalog_revoked=1"};
   }
-  if (local_dpi_executor_ && !local_dpi_executor_->Stop()) return Fail(Status::kNotReady, "local_dpi_withdraw_failed");
-  const auto result = core_->RevokeRoutingCatalogService(body.substr(65));
+  if (!local_dpi_preparation_ && local_dpi_executor_ && !local_dpi_executor_->Stop())
+    return Fail(Status::kNotReady, "local_dpi_withdraw_failed");
+  const auto result = core_->RevokeRoutingCatalogService(service_id);
   if (result != 0 && result != 1) return {Status::kNotReady, "catalog_revoke_unavailable"};
   if (result == 1 && staged_profile_digest_ == profile_digest) {
     profile_staged_ = false;
@@ -1743,7 +1866,8 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
 
 RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
                                                  const CheckInterruption& interrupted,
-                                                 const std::optional<CandidateNetworkContext>& local_dpi_network) {
+                                                 const std::optional<CandidateNetworkContext>& local_dpi_network,
+                                                 const CheckInterruption& telegram_interrupted) {
   if (transition_guard_ == nullptr || requires_bound_connect_ ||
       (phase_ != Phase::kRunning && !transition_guard_->IsArmed())) {
     return Fail(Status::kNotReady, "protected_handoff_unavailable");
@@ -1757,7 +1881,7 @@ RuntimeResult RuntimeHost::ReplaceManagedProfile(const std::string& body,
   }
   const auto staged = StageProfile(body);
   if (staged.status != Status::kOk) return staged;
-  const auto connected = ConnectImpl(ProfileDigest(body), interrupted, "", false, local_dpi_network);
+  const auto connected = ConnectImpl(ProfileDigest(body), interrupted, "", false, local_dpi_network, telegram_interrupted);
   if (connected.status != Status::kOk) return connected;
   if (phase_ != Phase::kRunning || !core_egress_validated_ ||
       effective_profile_digest_ != ProfileDigest(body)) {
@@ -1782,6 +1906,16 @@ bool RuntimeHost::ReplacementRequestsWindowsLocalDpi(const std::string& body) co
   std::string runtime_copy;
   bool requested = false;
   return StripWindowsLocalDpiMetadata(bundle.profile, &runtime_copy, &requested) && requested;
+}
+
+bool RuntimeHost::ReplacementRequestsTelegramWS(const std::string& body) const {
+  if (!telegram_ws_ready_ || body.size() < 4 ||
+      (body[0] != '0' && body[0] != '1') || body[1] != '\n') return false;
+  ParsedProfileBundle bundle;
+  if (!ParseProfilePayload(body.substr(2), &bundle)) return false;
+  std::string copy;
+  bool dpi = false, telegram = false;
+  return StripWindowsLocalDpiMetadata(bundle.profile, &copy, &dpi, &telegram) && telegram;
 }
 
 RuntimeResult RuntimeHost::CancelProtectedHandoff() {
@@ -1820,6 +1954,7 @@ RuntimeResult RuntimeHost::Disconnect(bool explicit_disconnect) {
 }
 
 void RuntimeHost::Shutdown() {
+  WithdrawTelegramWS();
   if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (core_ != nullptr && initialized_ &&
       (phase_ == Phase::kRunning ||
@@ -1862,9 +1997,45 @@ RuntimeResult RuntimeHost::MaintainWindowsLocalDpi(const CheckInterruption& inte
   return Snapshot();
 }
 
+bool RuntimeHost::WithdrawTelegramWS(const std::string& service_id) {
+  if (!telegram_ws_preparation_) return true;
+  for (auto holder = telegram_ws_holders_.begin(); holder != telegram_ws_holders_.end();) {
+    const auto selected = service_id.empty() || std::any_of(telegram_ws_preparation_->services.begin(),
+        telegram_ws_preparation_->services.end(), [&](const auto& service) {
+          return service.first == service_id && service.second == holder->first;
+        });
+    if (!selected) { ++holder; continue; }
+    // A successor's fresh ID is never substituted for this captured runtime.
+    if (core_->ReadTelegramWSAdmissionID(holder->first) == holder->second &&
+        core_->WithdrawTelegramWSAdmission(holder->second) < 0) return false;
+    holder = telegram_ws_holders_.erase(holder);
+  }
+  return true;
+}
+
+RuntimeResult RuntimeHost::MaintainTelegramWS(const CheckInterruption& interrupted) {
+  if (!telegram_ws_preparation_ || phase_ != Phase::kRunning) return Snapshot();
+  const bool changed = effective_profile_digest_ != telegram_ws_original_digest_ ||
+      core_->CoreModuleSHA256() != telegram_ws_core_digest_ ||
+      ProfileDigest(telegram_ws_preparation_->profile) != telegram_ws_prepared_digest_ ||
+      std::any_of(telegram_ws_holders_.begin(), telegram_ws_holders_.end(), [&](const auto& holder) {
+        return core_->ReadTelegramWSAdmissionID(holder.first) != holder.second;
+      });
+  if (changed || !WindowsTelegramWSPreparationCurrent(*telegram_ws_preparation_) ||
+      (interrupted && interrupted() != OperationInterruption::kNone)) {
+    if (!WithdrawTelegramWS()) return Fail(Status::kNotReady, "telegram_ws_withdraw_failed");
+  }
+  return Snapshot();  // Untimed exact-IP TG rules now use the encrypted VPN fallback.
+}
+
 void RuntimeHost::ClearWindowsLocalDpiAfterCoreStopped() {
   if (local_dpi_executor_) local_dpi_executor_->StopAfterCoreStopped();
   local_dpi_preparation_.reset();
+  telegram_ws_preparation_.reset();
+  telegram_ws_holders_.clear();
+  telegram_ws_original_digest_.clear();
+  telegram_ws_prepared_digest_.clear();
+  telegram_ws_core_digest_.clear();
   local_dpi_profile_digest_.clear();
   local_dpi_core_digest_.clear();
   local_dpi_disabled_ = false;
@@ -1876,6 +2047,7 @@ void RuntimeHost::ClearWindowsLocalDpiAfterCoreStopped() {
 }
 
 std::string RuntimeHost::RecoverPendingRuntime() {
+  WithdrawTelegramWS();
   if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (recovery_ == nullptr) {
     return "recovery_unavailable";
@@ -1924,6 +2096,7 @@ std::string RuntimeHost::RecoverPendingRuntime() {
 }
 
 std::string RuntimeHost::RollbackRuntime() {
+  WithdrawTelegramWS();
   if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (recovery_ == nullptr) {
     RecordEvent(ServiceEvent::kRuntimeCoreStop,

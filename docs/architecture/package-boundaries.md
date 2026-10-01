@@ -289,6 +289,18 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   connections are never replayed, no shared driver stop/remove is issued, and
   the feature defaults off. This is source readiness; product build, approved
   assets, real device proof and release publication remain separate gates.
+- Windows Telegram WS uses its separate native admission version 1 and five
+  symbols, compiled catalog pins, a captured physical interface and a private
+  signed preparation receipt; it does not require winws assets or a Job child.
+  TG preparation precedes DPI preparation, preserves the original metadata
+  privately, and strips it after composition before one Core start. Admission
+  binds the final prepared profile, actual Core identity, current operation,
+  network, TTL and fresh holder IDs. TG expiry or owner/network loss withdraws
+  only captured TG IDs before Core closes their WSS flows; untimed exact-IP
+  rules retain the encrypted VPN fallback. Generic service revocation still
+  revokes all authority of that service, including protected DPI rollback when
+  the same service owns DPI scope. The feature defaults off; this consumer does
+  not add a catalog emitter or establish artifact/device readiness.
 - Malformed descriptors, unknown schema/event ABI versions, missing required
   capabilities and unknown lifecycle event identifiers fail closed before any
   Core setup or profile material is passed across FFI.

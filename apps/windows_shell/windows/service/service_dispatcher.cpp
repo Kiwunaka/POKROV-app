@@ -63,7 +63,14 @@ RuntimeDispatcher::~RuntimeDispatcher() {
 }
 
 void RuntimeDispatcher::RefreshBoundNetwork(const std::shared_ptr<ActiveConnect>& operation) {
-  if (!operation || (!operation->bound && !operation->local_dpi_owner) || operation->cancelled) return;
+  if (!operation) return;
+  if (operation->telegram_ws_owner &&
+      (operation->client_process == nullptr || ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT ||
+       !operation->telegram_ws_network_revision || !candidate_current_(*operation->telegram_ws_network_revision))) {
+    operation->telegram_ws_cancelled = true;
+  }
+  // TG owner loss withdraws its latch only; it cannot cancel the VPN owner.
+  if ((!operation->bound && !operation->local_dpi_owner) || operation->cancelled) return;
   if (operation->local_dpi_owner && (operation->client_process == nullptr ||
       ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) {
     operation->local_dpi_cancelled = true;
@@ -119,6 +126,7 @@ void RuntimeDispatcher::WatchBoundConnect() {
     std::shared_ptr<ActiveConnect> operation;
     bool watch_bound = false;
     bool watch_dpi = false;
+    bool watch_telegram = false;
     {
       std::unique_lock<std::mutex> state(state_lock_);
       watch_changed_.wait_for(state, std::chrono::milliseconds(100), [this] {
@@ -129,8 +137,9 @@ void RuntimeDispatcher::WatchBoundConnect() {
       operation = active_connect_;
       watch_bound = operation && operation->bound && !operation->cleanup_attempted;
       watch_dpi = operation && operation->local_dpi_owner && !operation->cleanup_attempted;
+      watch_telegram = operation && operation->telegram_ws_owner && !operation->cleanup_attempted;
     }
-    if (watch_dpi) {
+    if (watch_dpi || watch_telegram) {
         RefreshBoundNetwork(operation);
         std::unique_lock<std::mutex> execution(execution_lock_, std::try_to_lock);
         if (!execution.owns_lock()) continue;
@@ -139,6 +148,10 @@ void RuntimeDispatcher::WatchBoundConnect() {
           if (active_connect_ != operation || closing_) continue;
         }
         const bool had_dpi = runtime_->HasWindowsLocalDpi();
+        if (watch_telegram) runtime_->MaintainTelegramWS([operation] {
+          return operation->cancelled || operation->telegram_ws_cancelled
+              ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+        });
         runtime_->MaintainWindowsLocalDpi([operation] {
           return operation->cancelled || operation->local_dpi_cancelled
               ? OperationInterruption::kCancelled : OperationInterruption::kNone;
@@ -149,6 +162,7 @@ void RuntimeDispatcher::WatchBoundConnect() {
           operation->cleanup_attempted = true;
           watch_bound = false;
         } else if (active_connect_ == operation && !runtime_->HasWindowsLocalDpi() &&
+            !runtime_->HasTelegramWS() &&
             snapshot_.body.rfind("phase=recovery_required;", 0) != 0 &&
             (!operation->bound || (had_dpi && snapshot_.body.rfind("phase=running;", 0) != 0))) {
           // Protected DPI expiry stopped Core and retained the transition
@@ -338,6 +352,12 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       request.command != Command::kReadSmartAccessLeases) next_egress_check_ = 0;
   std::optional<std::uint64_t> network_revision;
   std::optional<CandidateNetworkContext> local_dpi_network;
+  const bool requests_dpi = IsConnectCommand(request.command) &&
+      (request.command == Command::kReplaceManagedProfile
+          ? runtime_->ReplacementRequestsWindowsLocalDpi(request.body) : runtime_->RequestsWindowsLocalDpi());
+  const bool requests_telegram = IsConnectCommand(request.command) &&
+      (request.command == Command::kReplaceManagedProfile
+          ? runtime_->ReplacementRequestsTelegramWS(request.body) : runtime_->RequestsTelegramWS());
   if (bound || request.command == Command::kReplaceManagedProfile) {
     const auto context = network_.ReadContext();
     if (!context || (bound && context->reference != bound->network_context_ref) || !network_.IsCurrent(context->revision)) {
@@ -347,15 +367,12 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     }
     network_revision = context->revision;
   }
-  if (IsConnectCommand(request.command) &&
-      (request.command == Command::kReplaceManagedProfile
-          ? runtime_->ReplacementRequestsWindowsLocalDpi(request.body)
-          : runtime_->RequestsWindowsLocalDpi())) {
+  if (requests_dpi || requests_telegram) {
     const auto context = candidate_network_();
     if (context && candidate_current_(context->network.revision) &&
         (!bound || context->network.reference == bound->network_context_ref)) {
       local_dpi_network = context;
-      network_revision = context->network.revision;
+      if (requests_dpi) network_revision = context->network.revision;
     }
   }
   if (request.command == Command::kPromoteTransportLease) {
@@ -512,7 +529,9 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       operation->target = {request.session_token, request.operation_nonce};
       operation->bound = bound;
       operation->network_revision = network_revision;
-      operation->local_dpi_owner = local_dpi_network.has_value();
+      operation->local_dpi_owner = requests_dpi && local_dpi_network.has_value();
+      operation->telegram_ws_owner = requests_telegram && local_dpi_network.has_value();
+      if (operation->telegram_ws_owner) operation->telegram_ws_network_revision = local_dpi_network->network.revision;
       operation->protected_handoff = request.command == Command::kReplaceManagedProfile || runtime_->TransitionGuardArmed();
       if (bound) operation->stopping_snapshot = runtime_->PendingSnapshot(Command::kDisconnect);
       active_connect_ = operation;
@@ -555,10 +574,20 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
         return ::GetTickCount64() >= deadline
                    ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
       };
+      const CheckInterruption telegram_interrupted = [this, operation, &interrupted] {
+        const auto global = interrupted();
+        if (global != OperationInterruption::kNone) return global;
+        RefreshBoundNetwork(operation);
+        {
+          std::lock_guard<std::mutex> state(state_lock_);
+          if (active_connect_ != operation) operation->telegram_ws_cancelled = true;
+        }
+        return operation->telegram_ws_cancelled ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+      };
       result = request.command == Command::kReplaceManagedProfile
-          ? runtime_->ReplaceManagedProfile(request.body, interrupted, local_dpi_network)
-          : bound ? runtime_->ConnectWithIdentity(*bound, interrupted, local_dpi_network)
-                  : runtime_->Connect(request.body, interrupted, local_dpi_network);
+          ? runtime_->ReplaceManagedProfile(request.body, interrupted, local_dpi_network, telegram_interrupted)
+          : bound ? runtime_->ConnectWithIdentity(*bound, interrupted, local_dpi_network, telegram_interrupted)
+                  : runtime_->Connect(request.body, interrupted, local_dpi_network, telegram_interrupted);
       break;
     }
     case Command::kDisconnect: result = runtime_->Disconnect(); break;
@@ -589,7 +618,8 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       snapshot_ = runtime_->Snapshot();
       if (operation) {
         const bool recovery = snapshot_.body.rfind("phase=recovery_required;", 0) == 0;
-        if ((!bound && !runtime_->HasWindowsLocalDpi()) || (result.status != Status::kOk && !recovery)) RetireConnect();
+        if ((!bound && !runtime_->HasWindowsLocalDpi() && !runtime_->HasTelegramWS()) ||
+            (result.status != Status::kOk && !recovery)) RetireConnect();
         else if (result.status != Status::kOk) operation->cleanup_attempted = true;
       } else if (request.command == Command::kDisconnect && result.status == Status::kOk) {
         RetireConnect();
@@ -597,7 +627,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
                  snapshot_.body.rfind("phase=recovery_required;", 0) == 0) {
         active_connect_->cleanup_attempted = true;
       } else if (active_connect_ && active_connect_->local_dpi_owner &&
-                 !runtime_->HasWindowsLocalDpi() &&
+                 !runtime_->HasWindowsLocalDpi() && !runtime_->HasTelegramWS() &&
                  snapshot_.body.rfind("phase=recovery_required;", 0) != 0 &&
                  (!active_connect_->bound || (had_local_dpi && snapshot_.body.rfind("phase=running;", 0) != 0))) {
         RetireConnect();

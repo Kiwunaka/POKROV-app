@@ -1930,6 +1930,10 @@ void main() {
               'platform': 'windows', 'mode': 'selective',
               'catalog_envelope': 'original signed bytes',
             },
+            'telegram_ws': <String, Object?>{
+              'platform': 'windows', 'mode': 'selective',
+              'catalog_envelope': 'original signed bytes',
+            },
             'runtime_variant_probe': <String, Object?>{'group_tag': 'not-windows-authority'},
           },
         }),
@@ -1962,6 +1966,10 @@ void main() {
     expect(bundle, isNot(contains(ruleSet.path)));
     expect(stagedConfig['_meta'], <String, Object?>{
       'local_dpi': <String, Object?>{
+        'platform': 'windows', 'mode': 'selective',
+        'catalog_envelope': 'original signed bytes',
+      },
+      'telegram_ws': <String, Object?>{
         'platform': 'windows', 'mode': 'selective',
         'catalog_envelope': 'original signed bytes',
       },

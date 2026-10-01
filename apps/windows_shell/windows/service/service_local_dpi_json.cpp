@@ -121,8 +121,10 @@ bool Size(IJsonArray* array, UINT32* size) {
 }  // namespace
 
 bool StripWindowsLocalDpiMetadata(const std::string& original,
-                                 std::string* runtime_copy, bool* requested) {
+                                 std::string* runtime_copy, bool* requested,
+                                 bool* telegram_requested) {
   *requested = false;
+  if (telegram_requested) *telegram_requested = false;
   JsonApartment apartment;
   if (!apartment.Ready()) return false;
   const auto profile = ParseObject(original);
@@ -136,6 +138,11 @@ bool StripWindowsLocalDpiMetadata(const std::string& original,
   const auto meta = Object(profile.Get(), L"_meta");
   const auto dpi = meta ? Object(meta.Get(), L"local_dpi") : ComPtr<IJsonObject>{};
   if (dpi) *requested = String(dpi.Get(), L"platform") == "windows" && String(dpi.Get(), L"mode") == "selective";
+  if (telegram_requested) {
+    const auto telegram = meta ? Object(meta.Get(), L"telegram_ws") : ComPtr<IJsonObject>{};
+    if (telegram) *telegram_requested = String(telegram.Get(), L"platform") == "windows" &&
+        String(telegram.Get(), L"mode") == "selective";
+  }
   if (FAILED(fields->Remove(meta_name.value))) return false;
   *runtime_copy = Encode(profile.Get());
   return !runtime_copy->empty();
@@ -184,6 +191,42 @@ std::optional<WindowsLocalDpiPreparation> ReadWindowsLocalDpiPreparation(const s
 }
 
 bool WindowsLocalDpiPreparationCurrent(const WindowsLocalDpiPreparation& value) {
+  return ::GetTickCount64() < value.expires_elapsed_ms && UtcTicks() < value.expires_utc_ticks;
+}
+
+std::optional<WindowsTelegramWSPreparation> ReadWindowsTelegramWSPreparation(const std::string& encoded) {
+  JsonApartment apartment;
+  if (!apartment.Ready()) return std::nullopt;
+  const auto receipt = ParseObject(encoded);
+  double schema = 0;
+  HString schema_name;
+  if (!receipt || !schema_name.Set(L"schema_version") ||
+      FAILED(receipt->GetNamedNumber(schema_name.value, &schema)) || schema != 1) return std::nullopt;
+  const auto profile = Object(receipt.Get(), L"profile");
+  const auto services = Array(receipt.Get(), L"services");
+  UINT32 count = 0;
+  WindowsTelegramWSPreparation result;
+  const auto issued = Expiry(String(receipt.Get(), L"issued_at"));
+  result.expires_utc_ticks = Expiry(String(receipt.Get(), L"expires_at"));
+  const auto now = UtcTicks();
+  if (!profile || !services || !Size(services.Get(), &count) || count == 0 || count > 256 ||
+      issued == 0 || issued > now || issued >= result.expires_utc_ticks ||
+      result.expires_utc_ticks <= now) return std::nullopt;
+  result.profile = Encode(profile.Get());
+  if (result.profile.empty()) return std::nullopt;
+  result.expires_elapsed_ms = ::GetTickCount64() + (result.expires_utc_ticks - now) / 10000;
+  std::set<std::string> ids, tags;
+  for (UINT32 i = 0; i < count; ++i) {
+    ComPtr<IJsonObject> row;
+    if (FAILED(services->GetObjectAt(i, row.GetAddressOf()))) return std::nullopt;
+    const auto id = String(row.Get(), L"service_id"), tag = String(row.Get(), L"outbound_tag");
+    if (id.empty() || tag.empty() || !ids.insert(id).second || !tags.insert(tag).second) return std::nullopt;
+    result.services.emplace_back(id, tag);
+  }
+  return result;
+}
+
+bool WindowsTelegramWSPreparationCurrent(const WindowsTelegramWSPreparation& value) {
   return ::GetTickCount64() < value.expires_elapsed_ms && UtcTicks() < value.expires_utc_ticks;
 }
 }  // namespace pokrov::service

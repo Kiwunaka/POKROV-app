@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "service_protocol.h"
 #include "service_network_observer.h"
@@ -16,6 +17,7 @@
 namespace pokrov::service {
 class WindowsLocalDpiExecutor;
 struct WindowsLocalDpiPreparation;
+struct WindowsTelegramWSPreparation;
 
 struct RuntimeDirectories {
   std::wstring base;
@@ -66,6 +68,13 @@ class CoreRuntime {
   virtual std::string ReadLocalDpiAdmissionID(const std::string& tag) { return ""; }
   virtual int AdmitLocalDpiAdmission(const std::string& id) { return -1; }
   virtual int WithdrawLocalDpiAdmission(const std::string& id) { return -1; }
+  virtual int TelegramWSAdmissionVersion() const { return 0; }
+  virtual std::string PrepareTelegramWSProfile(
+      const std::string& config, const std::string& compiled_public_keys,
+      const std::string& compiled_audience, const std::string& bind_interface) { return ""; }
+  virtual std::string ReadTelegramWSAdmissionID(const std::string& tag) { return ""; }
+  virtual int AdmitTelegramWSAdmission(const std::string& id) { return -1; }
+  virtual int WithdrawTelegramWSAdmission(const std::string& id) { return -1; }
   virtual int ConfigureSmartAccessRuntimeControl(const std::string& profile_digest, const std::string& config) { return -1; }
   virtual int ConfigureSmartAccessRenewal(const std::string& profile_digest, const std::string& config) { return -1; }
   virtual std::string ReadSmartAccessRestrictions() { return ""; }
@@ -123,21 +132,28 @@ class RuntimeHost {
   RuntimeResult InvalidateProfile();
   RuntimeResult Connect(const std::string& expected_profile_digest,
                         const CheckInterruption& interrupted = {},
-                        const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt);
+                        const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
+                        const CheckInterruption& telegram_interrupted = {});
   RuntimeResult ConnectWithIdentity(const BoundConnectTarget& target,
                                     const CheckInterruption& interrupted = {},
-                                    const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt);
+                                    const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
+                                    const CheckInterruption& telegram_interrupted = {});
   bool RequestsWindowsLocalDpi() const { return local_dpi_requested_ && local_dpi_ready_; }
   bool ReplacementRequestsWindowsLocalDpi(const std::string& body) const;
   bool HasWindowsLocalDpi() const { return local_dpi_preparation_ != nullptr; }
   RuntimeResult MaintainWindowsLocalDpi(const CheckInterruption& interrupted = {});
+  bool RequestsTelegramWS() const { return telegram_ws_requested_ && telegram_ws_ready_; }
+  bool ReplacementRequestsTelegramWS(const std::string& body) const;
+  bool HasTelegramWS() const { return telegram_ws_preparation_ != nullptr; }
+  RuntimeResult MaintainTelegramWS(const CheckInterruption& interrupted = {});
   RuntimeResult PromoteTransportLease(const TransportLeasePromotion& target);
   RuntimeResult RevokeTransportLease(const TransportLeaseRevocation& target);
   RuntimeResult Disconnect(bool explicit_disconnect = true);
   bool CanRecheckEgress() const;
   RuntimeResult RecheckEgress(const CheckInterruption& interrupted);
   RuntimeResult ReplaceManagedProfile(const std::string& body, const CheckInterruption& interrupted,
-      const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt);
+      const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
+      const CheckInterruption& telegram_interrupted = {});
   RuntimeResult CancelProtectedHandoff();
   RuntimeResult RevokeSmartAccessLease(const std::string& body);
   RuntimeResult RevokeRoutingCatalog(const std::string& profile_digest);
@@ -168,8 +184,10 @@ class RuntimeHost {
                             const CheckInterruption& interrupted,
                             const std::string& expected_core_digest,
                             bool finish_transition_guard = true,
-                            const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt);
+                            const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
+                            const CheckInterruption& telegram_interrupted = {});
   void ClearWindowsLocalDpiAfterCoreStopped();
+  bool WithdrawTelegramWS(const std::string& service_id = "");
   std::string SnapshotBody(const char* pending_phase = nullptr) const;
   bool PrepareDirectories();
   std::string WriteProfileAtomically(const std::string& profile);
@@ -191,6 +209,13 @@ class RuntimeHost {
   bool local_dpi_requested_ = false;
   bool local_dpi_ready_ = false;
   bool local_dpi_disabled_ = false;
+  std::unique_ptr<WindowsTelegramWSPreparation> telegram_ws_preparation_;
+  std::vector<std::pair<std::string, std::string>> telegram_ws_holders_;
+  std::string telegram_ws_original_digest_;
+  std::string telegram_ws_prepared_digest_;
+  std::string telegram_ws_core_digest_;
+  bool telegram_ws_requested_ = false;
+  bool telegram_ws_ready_ = false;
   std::unique_ptr<RuntimeEgressProbe> egress_probe_;
   std::unique_ptr<RuntimeRecovery> recovery_;
   std::unique_ptr<RuntimeTransitionGuard> transition_guard_;

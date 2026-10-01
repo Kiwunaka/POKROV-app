@@ -44,6 +44,9 @@ class RuntimeDispatcher {
     bool protected_handoff = false;
     bool local_dpi_owner = false;  // Private captured physical-network owner.
     std::atomic<bool> local_dpi_cancelled{false};
+    bool telegram_ws_owner = false;
+    std::optional<std::uint64_t> telegram_ws_network_revision;
+    std::atomic<bool> telegram_ws_cancelled{false};
   };
   RuntimeResult Cancel(const std::string& body);
   RuntimeResult CancelAndConfirm(const std::string& body);

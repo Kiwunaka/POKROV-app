@@ -2802,13 +2802,17 @@ String _materializePokrovCoreConfig(
   final localDpi = preserveAndroidHostMetadata || preserveWindowsLocalDpiMetadata
       ? Map<String, Object?>.from(_runtimeObjectMap(_runtimeObjectMap(config['_meta'])['local_dpi']))
       : const <String, Object?>{};
+  final telegramWs = preserveWindowsLocalDpiMetadata
+      ? Map<String, Object?>.from(_runtimeObjectMap(_runtimeObjectMap(config['_meta'])['telegram_ws']))
+      : const <String, Object?>{};
   // Host-only metadata is consumed by Android VpnService or the Windows
   // native owner; both remove it from the runtime copy before Core starts.
   config.remove('_meta');
-  if (runtimeVariantProbe.isNotEmpty || localDpi.isNotEmpty) {
+  if (runtimeVariantProbe.isNotEmpty || localDpi.isNotEmpty || telegramWs.isNotEmpty) {
     config['_meta'] = <String, Object?>{
       if (runtimeVariantProbe.isNotEmpty) 'runtime_variant_probe': runtimeVariantProbe,
       if (localDpi.isNotEmpty) 'local_dpi': localDpi,
+      if (telegramWs.isNotEmpty) 'telegram_ws': telegramWs,
     };
   }
   _pinDnsHijackBeforeBypasses(config);
