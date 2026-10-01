@@ -268,6 +268,20 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   the released 1.1.2 descriptor remains supported. This additive admission
   metadata does not enable Windows DPI execution: its capability stays zero.
   Unknown capabilities and admission versions still fail closed before setup.
+- The exact next Windows Core descriptor is recognized only with the native
+  Windows admission version 1 and all five preparation/holder symbols. This
+  source preparation keeps Windows DPI capability zero: no public start or
+  admission path exists yet. The service-owned executor accepts only a private
+  Core-prepared domain plan, fixed TCP/443 multisplit 568/681 argv and the captured
+  physical interface. Its immutable administrator-owned `local-dpi` assets
+  contain winws, Cygwin, WinDivert and the two pattern files; they are not bundled
+  or downloaded by this change. A `NO_INSTALL` reflection handle requires an
+  already installed WinDivert 2.2 driver before the suspended child joins a
+  single-process kill-on-close Job. Cleanup withdraws captured holder IDs before
+  closing that Job; no shared driver stop/remove is issued. Compiled catalog pins,
+  private preparation parsing, exact control-host TLS/HEAD proof and the existing
+  dispatcher's profile/Core/operation/network/TTL fence remain required before
+  any activation, admission or capability can be enabled.
 - Malformed descriptors, unknown schema/event ABI versions, missing required
   capabilities and unknown lifecycle event identifiers fail closed before any
   Core setup or profile material is passed across FFI.

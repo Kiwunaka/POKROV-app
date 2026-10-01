@@ -13,6 +13,7 @@
 #include "service_transition_guard.h"
 
 namespace pokrov::service {
+class WindowsLocalDpiExecutor;
 
 struct RuntimeDirectories {
   std::wstring base;
@@ -52,6 +53,17 @@ class CoreRuntime {
   virtual int SmartAccessLeaseVersion() const { return 0; }
   virtual int RoutingCatalogControlVersion() const { return 0; }
   virtual int SmartAccessRuntimeControlVersion() const { return 0; }
+  // Native-only preparation/admission seam. API support is not an executor
+  // capability or permission to admit; the host owns proof and currentness.
+  virtual int WindowsLocalDpiAdmissionVersion() const { return 0; }
+  virtual std::string PrepareWindowsLocalDpiProfile(
+      const std::string& config, const std::string& compiled_public_keys,
+      const std::string& compiled_audience, const std::string& bind_interface) {
+    return "";
+  }
+  virtual std::string ReadLocalDpiAdmissionID(const std::string& tag) { return ""; }
+  virtual int AdmitLocalDpiAdmission(const std::string& id) { return -1; }
+  virtual int WithdrawLocalDpiAdmission(const std::string& id) { return -1; }
   virtual int ConfigureSmartAccessRuntimeControl(const std::string& profile_digest, const std::string& config) { return -1; }
   virtual int ConfigureSmartAccessRenewal(const std::string& profile_digest, const std::string& config) { return -1; }
   virtual std::string ReadSmartAccessRestrictions() { return ""; }
@@ -159,6 +171,7 @@ class RuntimeHost {
   void RecordEvent(ServiceEvent event, ServiceEventOutcome outcome);
 
   std::unique_ptr<CoreRuntime> core_;
+  std::unique_ptr<WindowsLocalDpiExecutor> local_dpi_executor_;
   std::unique_ptr<RuntimeEgressProbe> egress_probe_;
   std::unique_ptr<RuntimeRecovery> recovery_;
   std::unique_ptr<RuntimeTransitionGuard> transition_guard_;

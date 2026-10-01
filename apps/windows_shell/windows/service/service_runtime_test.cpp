@@ -1,5 +1,6 @@
 #include "service_runtime.h"
 #include "service_profile_identity.h"
+#include "service_local_dpi.h"
 
 #include <windows.h>
 
@@ -10,6 +11,7 @@
 
 namespace pokrov::service {
 bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
+bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor);
 }
 
 namespace {
@@ -34,6 +36,19 @@ void TestReleasedCoreDescriptorCompatibility() {
   core112.erase(core112.find(admission), admission.size());
   Expect(pokrov::service::CoreDescriptorHasRuntimeControl(core112),
          "released Core 1.1.2 runtime descriptor was rejected");
+  Expect(!pokrov::service::CoreDescriptorHasWindowsLocalDpi(core122) &&
+         !pokrov::service::CoreDescriptorHasWindowsLocalDpi(core112),
+         "released Core descriptor acquired a Windows local-DPI API");
+  std::string windows_next(core122);
+  const std::string windows_admission = "\"windows_local_dpi_admission_version\":1,";
+  windows_next.insert(windows_next.find("\"capabilities\""), windows_admission);
+  Expect(pokrov::service::CoreDescriptorHasRuntimeControl(windows_next) &&
+         pokrov::service::CoreDescriptorHasWindowsLocalDpi(windows_next),
+         "exact additive Windows Core descriptor was rejected");
+  windows_next.replace(windows_next.find(windows_admission), windows_admission.size(),
+      "\"windows_local_dpi_admission_version\":2,");
+  Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(windows_next),
+         "unknown Windows local-DPI ABI bypassed the closed descriptor");
   std::string unknown(core122);
   unknown.replace(unknown.find("bounded_stop_reason"),
       std::string("bounded_stop_reason").size(), "unknown_capability");
@@ -44,6 +59,25 @@ void TestReleasedCoreDescriptorCompatibility() {
       "\"local_dpi_admission_version\":2,");
   Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(unknown),
          "unknown admission version bypassed the closed runtime descriptor");
+}
+
+void TestWindowsLocalDpiScopePreparation() {
+  using pokrov::service::WindowsLocalDpiService;
+  using pokrov::service::WindowsLocalDpiHostList;
+  const WindowsLocalDpiService service{"media", "pokrov-local-dpi-media", "control.example.com",
+      {{"control.example.com", true}, {"media.example.com", false}}};
+  Expect(WindowsLocalDpiHostList({service}) == "^control.example.com,media.example.com",
+         "signed exact/suffix domain semantics changed in winws hostlist");
+  Expect(WindowsLocalDpiHostList({}).empty(), "empty plan became unrestricted winws scope");
+  auto invalid = service;
+  invalid.domains[0].shared = true;
+  Expect(WindowsLocalDpiHostList({invalid}).empty(), "shared provider scope reached winws");
+  invalid = service;
+  invalid.control_host = "foreign.example.com";
+  Expect(WindowsLocalDpiHostList({invalid}).empty(), "proof host escaped exact signed scope");
+  invalid = service;
+  invalid.domains[1].name = "media.example.com,foreign.example.com";
+  Expect(WindowsLocalDpiHostList({invalid}).empty(), "hostlist delimiter expanded winws scope");
 }
 
 bool Contains(const pokrov::service::RuntimeResult& result,
@@ -1242,6 +1276,7 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 
 int main() {
   TestReleasedCoreDescriptorCompatibility();
+  TestWindowsLocalDpiScopePreparation();
   TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff();
   TestInterruptedConnectNeverPublishesProtection();
   TestProfileIdentityFollowsCommittedRuntime();

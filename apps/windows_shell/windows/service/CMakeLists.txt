@@ -22,6 +22,7 @@ add_library(pokrov_service_runtime STATIC
   "service_network_observer.cpp"
   "service_recovery.cpp"
   "service_runtime.cpp"
+  "service_local_dpi.cpp"
   "service_transition_guard.cpp"
 )
 apply_standard_settings(pokrov_service_runtime)

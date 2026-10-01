@@ -3,6 +3,7 @@
 #include "windows_crash_profile.h"
 #include "service_profile_identity.h"
 #include "service_core_identity.h"
+#include "service_local_dpi.h"
 
 #include <windows.h>
 
@@ -26,6 +27,7 @@
 namespace pokrov::service {
 
 bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
+bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor);
 
 RuntimeResult RuntimeHost::CrashDiagnostics() const {
   std::vector<windows_crash::WindowsCrashDiagnostic> records;
@@ -440,6 +442,31 @@ class InstalledCoreRuntime final : public CoreRuntime {
     return initialized_ ? core_version_ : "";
   }
 
+  int WindowsLocalDpiAdmissionVersion() const override {
+    return initialized_ && windows_local_dpi_version_ != nullptr ? 1 : 0;
+  }
+
+  std::string PrepareWindowsLocalDpiProfile(
+      const std::string& config, const std::string& compiled_public_keys,
+      const std::string& compiled_audience, const std::string& bind_interface) override {
+    if (WindowsLocalDpiAdmissionVersion() != 1) return "";
+    return StringResult(prepare_windows_local_dpi_(config.c_str(),
+        compiled_public_keys.c_str(), compiled_audience.c_str(), bind_interface.c_str()));
+  }
+
+  std::string ReadLocalDpiAdmissionID(const std::string& tag) override {
+    return WindowsLocalDpiAdmissionVersion() == 1
+        ? StringResult(read_local_dpi_admission_(tag.c_str())) : "";
+  }
+
+  int AdmitLocalDpiAdmission(const std::string& id) override {
+    return WindowsLocalDpiAdmissionVersion() == 1 ? admit_local_dpi_admission_(id.c_str()) : -1;
+  }
+
+  int WithdrawLocalDpiAdmission(const std::string& id) override {
+    return WindowsLocalDpiAdmissionVersion() == 1 ? withdraw_local_dpi_admission_(id.c_str()) : -1;
+  }
+
   int SmartAccessLeaseVersion() const override {
     return initialized_ ? smart_access_lease_version_ : 0;
   }
@@ -523,6 +550,11 @@ class InstalledCoreRuntime final : public CoreRuntime {
     read_smart_access_restrictions_ = nullptr;
     read_smart_access_leases_ = nullptr;
     acknowledge_smart_access_restrictions_ = nullptr;
+    windows_local_dpi_version_ = nullptr;
+    prepare_windows_local_dpi_ = nullptr;
+    read_local_dpi_admission_ = nullptr;
+    admit_local_dpi_admission_ = nullptr;
+    withdraw_local_dpi_admission_ = nullptr;
     smart_access_lease_version_ = 0;
     routing_catalog_control_version_ = 0;
     const auto directory = CurrentExecutableDirectory();
@@ -598,6 +630,23 @@ class InstalledCoreRuntime final : public CoreRuntime {
       renewal_descriptor.insert(renewal_descriptor.find("\"capabilities\""),
           "\"routing_catalog_control_version\":4,");
       const bool has_runtime_control = CoreDescriptorHasRuntimeControl(descriptor);
+      if (CoreDescriptorHasWindowsLocalDpi(descriptor)) {
+        windows_local_dpi_version_ = reinterpret_cast<AbiFunction>(
+            ::GetProcAddress(module_, "pokrovCoreWindowsLocalDpiAdmissionVersion"));
+        prepare_windows_local_dpi_ = reinterpret_cast<PrepareWindowsLocalDpiFunction>(
+            ::GetProcAddress(module_, "pokrovCorePrepareWindowsLocalDpiProfile"));
+        read_local_dpi_admission_ = reinterpret_cast<ReadLocalDpiAdmissionFunction>(
+            ::GetProcAddress(module_, "pokrovCoreReadLocalDpiAdmissionID"));
+        admit_local_dpi_admission_ = reinterpret_cast<LocalDpiAdmissionFunction>(
+            ::GetProcAddress(module_, "pokrovCoreAdmitLocalDpiAdmission"));
+        withdraw_local_dpi_admission_ = reinterpret_cast<LocalDpiAdmissionFunction>(
+            ::GetProcAddress(module_, "pokrovCoreWithdrawLocalDpiAdmission"));
+        if (windows_local_dpi_version_ == nullptr || windows_local_dpi_version_() != 1 ||
+            prepare_windows_local_dpi_ == nullptr || read_local_dpi_admission_ == nullptr ||
+            admit_local_dpi_admission_ == nullptr || withdraw_local_dpi_admission_ == nullptr) {
+          return "core_abi_incompatible";
+        }
+      }
       const bool has_renewal = descriptor == renewal_descriptor || has_runtime_control;
       if (descriptor == smart_access_descriptor || descriptor == catalog_control_descriptor ||
           descriptor == policy_control_descriptor || descriptor == service_control_descriptor || has_renewal) {
@@ -798,6 +847,9 @@ class InstalledCoreRuntime final : public CoreRuntime {
       const char*, const char*, const char*, const char*, const char*,
       const char*, const char*);
   using AbiFunction = int(__cdecl*)();
+  using PrepareWindowsLocalDpiFunction = char*(__cdecl*)(const char*, const char*, const char*, const char*);
+  using ReadLocalDpiAdmissionFunction = char*(__cdecl*)(const char*);
+  using LocalDpiAdmissionFunction = int(__cdecl*)(const char*);
   using CapabilitiesFunction = char*(__cdecl*)();
   using RevokeSmartAccessFunction = int(__cdecl*)(const char*, int);
   using RenewSmartAccessFunction = int(__cdecl*)(const char*, const char*, const char*, const char*, const char*);
@@ -901,6 +953,11 @@ class InstalledCoreRuntime final : public CoreRuntime {
   HMODULE module_ = nullptr;
   AbiFunction abi_ = nullptr;
   CapabilitiesFunction capabilities_ = nullptr;
+  AbiFunction windows_local_dpi_version_ = nullptr;
+  PrepareWindowsLocalDpiFunction prepare_windows_local_dpi_ = nullptr;
+  ReadLocalDpiAdmissionFunction read_local_dpi_admission_ = nullptr;
+  LocalDpiAdmissionFunction admit_local_dpi_admission_ = nullptr;
+  LocalDpiAdmissionFunction withdraw_local_dpi_admission_ = nullptr;
   std::string transport_capabilities_json_;
   std::string core_module_sha256_;
   std::string core_version_;
@@ -955,7 +1012,15 @@ bool CoreDescriptorHasRuntimeControl(const std::string& descriptor) {
   // compatibility does not grant Windows DPI execution capability.
   runtime_control.insert(runtime_control.find("\"capabilities\""),
       "\"local_dpi_admission_version\":1,");
+  if (descriptor == runtime_control) return true;
+  runtime_control.insert(runtime_control.find("\"capabilities\""),
+      "\"windows_local_dpi_admission_version\":1,");
   return descriptor == runtime_control;
+}
+
+bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor) {
+  const auto field = descriptor.find("\"windows_local_dpi_admission_version\":1,");
+  return field != std::string::npos && CoreDescriptorHasRuntimeControl(descriptor);
 }
 
 bool CoreOperationalEventFence::Activate(const std::string& run_id,
@@ -1011,6 +1076,9 @@ RuntimeHost::RuntimeHost(std::unique_ptr<CoreRuntime> core,
       secure_storage_(secure_storage) {
   if (core_ != nullptr) {
     core_->SetOperationalEventSink(events_);
+    // Inert until a native proof/currentness integration supplies a prepared
+    // plan. Asset existence alone never exposes a user activation path.
+    local_dpi_executor_ = std::make_unique<WindowsLocalDpiExecutor>(*core_);
   }
   if (core_ != nullptr && !runtime_root_.empty()) {
     phase_ = Phase::kArtifactReady;
@@ -1164,6 +1232,7 @@ RuntimeResult RuntimeHost::InvalidateProfile() {
   if (phase_ == Phase::kRecoveryRequired) {
     return Fail(Status::kNotReady, "recovery_required");
   }
+  if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (!profile_path_.empty()) {
     ::DeleteFileW(profile_path_.c_str());
   }
@@ -1513,6 +1582,7 @@ RuntimeResult RuntimeHost::RevokeRoutingCatalog(const std::string& profile_diges
   if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
     return {Status::kNotReady, "catalog_profile_changed"};
   }
+  if (local_dpi_executor_) local_dpi_executor_->Stop();
   const auto result = core_->RevokeRoutingCatalog();
   if (result != 0 && result != 1) return {Status::kNotReady, "catalog_revoke_unavailable"};
   if (result == 1 && staged_profile_digest_ == profile_digest) {
@@ -1528,6 +1598,7 @@ RuntimeResult RuntimeHost::RevokeRoutingCatalogService(const std::string& body) 
   if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
     return {Status::kNotReady, "catalog_profile_changed"};
   }
+  if (local_dpi_executor_) local_dpi_executor_->Stop();
   const auto result = core_->RevokeRoutingCatalogService(body.substr(65));
   if (result != 0 && result != 1) return {Status::kNotReady, "catalog_revoke_unavailable"};
   if (result == 1 && staged_profile_digest_ == profile_digest) {
@@ -1646,6 +1717,7 @@ RuntimeResult RuntimeHost::Disconnect(bool explicit_disconnect) {
 }
 
 void RuntimeHost::Shutdown() {
+  if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (core_ != nullptr && initialized_ &&
       (phase_ == Phase::kRunning ||
        phase_ == Phase::kRecoveryRequired)) {
@@ -1660,6 +1732,7 @@ void RuntimeHost::Shutdown() {
 }
 
 std::string RuntimeHost::RecoverPendingRuntime() {
+  if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (recovery_ == nullptr) {
     return "recovery_unavailable";
   }
@@ -1706,6 +1779,7 @@ std::string RuntimeHost::RecoverPendingRuntime() {
 }
 
 std::string RuntimeHost::RollbackRuntime() {
+  if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (recovery_ == nullptr) {
     RecordEvent(ServiceEvent::kRuntimeCoreStop,
                 ServiceEventOutcome::kAttempted);
