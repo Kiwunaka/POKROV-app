@@ -4,6 +4,7 @@ library pokrov_core_domain;
 enum RuntimeTransportFeature {
   atsLease('pokrov_ats_lease_v1'),
   awg31('pokrov_awg31_endpoint_v1'),
+  telegramWs('pokrov_telegram_ws_v1'),
   grpc('singbox_grpc_v1'),
   hysteria2('singbox_hysteria2_v1'),
   reality('singbox_reality_v1'),
