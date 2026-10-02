@@ -366,21 +366,23 @@ class _HomeStageState extends State<_HomeStage>
             onOpenRules: widget.protectionIntents.openRules,
           ),
         ),
-        const SizedBox(height: 12),
-        _HomeRevealSlice(
-          controller: _revealController,
-          begin: 0.50,
-          end: 1,
-          child: _HomeWarpTile(
-            policy: widget.warpPolicy,
-            runtimeConsent: widget.warpRuntimeConsent,
-            runtimeActive: widget.warpRuntimeActive,
-            busy: widget.warpBusy,
-            compact: true,
-            onOpen: widget.onOpenWarp,
-            onChanged: widget.onWarpConsentChanged,
+        if (widget.advanced) ...[
+          const SizedBox(height: 12),
+          _HomeRevealSlice(
+            controller: _revealController,
+            begin: 0.50,
+            end: 1,
+            child: _HomeWarpTile(
+              policy: widget.warpPolicy,
+              runtimeConsent: widget.warpRuntimeConsent,
+              runtimeActive: widget.warpRuntimeActive,
+              busy: widget.warpBusy,
+              compact: true,
+              onOpen: widget.onOpenWarp,
+              onChanged: widget.onWarpConsentChanged,
+            ),
           ),
-        ),
+        ],
         if (widget.infoNotice != null) ...[
           const SizedBox(height: 8),
           _HomeRevealSlice(
@@ -518,20 +520,21 @@ class _HomeStageState extends State<_HomeStage>
                     ),
                     const SizedBox(height: 10),
                   ],
-                  _HomeRevealSlice(
-                    controller: _revealController,
-                    begin: 0.22,
-                    end: 0.76,
-                    child: _HomeWarpTile(
-                      policy: widget.warpPolicy,
-                      runtimeConsent: widget.warpRuntimeConsent,
-                      runtimeActive: widget.warpRuntimeActive,
-                      busy: widget.warpBusy,
-                      compact: false,
-                      onOpen: widget.onOpenWarp,
-                      onChanged: widget.onWarpConsentChanged,
+                  if (widget.advanced)
+                    _HomeRevealSlice(
+                      controller: _revealController,
+                      begin: 0.22,
+                      end: 0.76,
+                      child: _HomeWarpTile(
+                        policy: widget.warpPolicy,
+                        runtimeConsent: widget.warpRuntimeConsent,
+                        runtimeActive: widget.warpRuntimeActive,
+                        busy: widget.warpBusy,
+                        compact: false,
+                        onOpen: widget.onOpenWarp,
+                        onChanged: widget.onWarpConsentChanged,
+                      ),
                     ),
-                  ),
                   if (widget.infoNotice != null) ...[
                     const SizedBox(height: 10),
                     _HomeRevealSlice(

@@ -2434,11 +2434,11 @@ void main() {
       ),
     );
     final homeWarpTile = find.byKey(const ValueKey('home-warp-tile'));
-    expect(homeWarpTile, findsOneWidget);
+    expect(homeWarpTile, findsNothing);
     expect(find.textContaining('Дополнительная защита'), findsNothing);
-    expect(find.byKey(const ValueKey('home-warp-info-action')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-info-action')), findsNothing);
     expect(find.descendant(of: homeWarpTile, matching: find.text('WARP')),
-        findsOneWidget);
+        findsNothing);
     expect(find.byKey(const ValueKey('home-access-strip')), findsOneWidget);
     expect(
         find.byKey(const ValueKey('home-telegram-bonus-pill')), findsNothing);
@@ -5789,7 +5789,7 @@ void main() {
       expect(find.text('Активен'), findsNothing);
       expect(
           find.byKey(const ValueKey('primary-connect-action')), findsOneWidget);
-      expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
       if (item.platform == HostPlatform.android) {
         expect(find.byType(NavigationBar), findsOneWidget);
         if (item.width == 360) {
@@ -5800,7 +5800,7 @@ void main() {
           expect(find.text('Подписка'), findsOneWidget);
           expect(find.text('Затем — продлите доступ'), findsNothing);
           expect(find.byKey(const ValueKey('home-warp-info-action')),
-              findsOneWidget);
+              findsNothing);
           expect(find.text('Дополнительная защита'), findsNothing);
         }
       } else {
@@ -5880,11 +5880,13 @@ void main() {
     expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
     expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
     expect(find.text('РЈСЃРёР»РµРЅРЅС‹Р№ СЂРµР¶РёРј'), findsNothing);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
-    expect(find.textContaining('Дополнительная защита'), findsOneWidget);
-    expect(find.textContaining('WARP'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.textContaining('Дополнительная защита'), findsNothing);
+    expect(find.textContaining('WARP'), findsNothing);
 
     await _tapAdvancedLocations(tester);
+    await _tapNav(tester, 'nav-protection');
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
     await _tapNav(tester, 'nav-profile');
     expect(
       find.byKey(const ValueKey('profile-enhanced-protection-action')),
@@ -5982,7 +5984,7 @@ void main() {
     await _tapPrimaryConnectAndConfirmRouteScope(tester);
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
 
     await _openEnhancedProtectionFromProfile(tester);
 
@@ -6040,6 +6042,13 @@ void main() {
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
 
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.byKey(const ValueKey('home-warp-inline-switch')), findsNothing);
+    await _tapNav(tester, 'nav-profile');
+    expect(find.byKey(const ValueKey('profile-enhanced-protection-action')),
+        findsNothing);
+    await _tapAdvancedLocations(tester);
+    await _tapNav(tester, 'nav-protection');
     expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
     expect(
         find.byKey(const ValueKey('home-warp-inline-switch')), findsOneWidget);
@@ -6057,6 +6066,25 @@ void main() {
       tester.getSemantics(find.byKey(const ValueKey('home-warp-tile'))).value,
       'Включится при следующем подключении',
     );
+
+    await _tapNav(tester, 'nav-profile');
+    final interfaceAction =
+        find.byKey(const ValueKey('profile-interface-mode-action'));
+    await tester.ensureVisible(interfaceAction);
+    await tester.pumpAndSettle();
+    await tester.tap(interfaceAction);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('interface-mode-simple')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('profile-enhanced-protection-action')),
+        findsNothing);
+    await _tapNav(tester, 'nav-protection');
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    await _tapAdvancedLocations(tester);
+    await _tapNav(tester, 'nav-protection');
+    expect(find.byKey(const ValueKey('home-warp-state-enabled')), findsOneWidget);
+    expect(bootstrapper.warpConsentCalls, 1);
+    expect(bootstrapper.lastWarpConsentEnabled, isTrue);
     semantics.dispose();
   });
 
@@ -6088,6 +6116,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
+    await _tapAdvancedLocations(tester);
+    await _tapNav(tester, 'nav-protection');
 
     // Tap the tile body, not the inline switch.
     await tester.tap(find.byKey(const ValueKey('home-warp-tile')));
@@ -6138,6 +6168,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
+    await _tapAdvancedLocations(tester);
+    await _tapNav(tester, 'nav-protection');
     await _tapPrimaryConnectAndConfirmRouteScope(tester);
     await tester.pumpAndSettle();
 
@@ -6193,6 +6225,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
+    await _tapAdvancedLocations(tester);
+    await _tapNav(tester, 'nav-protection');
 
     await tester.tap(find.byKey(const ValueKey('home-warp-inline-switch')));
     await tester.pumpAndSettle();
@@ -6237,6 +6271,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _completeFirstLaunchIfPresent(tester);
+    await _tapAdvancedLocations(tester);
+    await _tapNav(tester, 'nav-protection');
 
     final warpTile = find.byKey(const ValueKey('home-warp-tile'));
     expect(warpTile, findsOneWidget);
@@ -13010,7 +13046,7 @@ void main() {
     expect(
       tester.getRect(recoveryBanner).bottom,
       lessThan(
-          tester.getRect(find.byKey(const ValueKey('home-warp-tile'))).top),
+          tester.getRect(find.byKey(const ValueKey('home-location-chip'))).top),
     );
     expect(tester.getRect(recoveryBanner).bottom, lessThanOrEqualTo(844));
     expect(find.textContaining('POKROV'), findsWidgets);

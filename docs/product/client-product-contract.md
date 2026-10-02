@@ -289,7 +289,7 @@ telemetry or other non-idempotent write after its send begins.
 Home uses the owner-selected `2026-08-13` composition: a compact brand/access
 top row, one centered circular connect action with a thin non-glowing border,
 in-control status and a finite hourglass busy state, then two quick controls,
-WARP and an optional remote campaign above navigation. The premium-day pill
+WARP in «Продвинутый» and an optional remote campaign above navigation. The premium-day pill
 opens Profile, where subscription details and renewal remain explicit. A visible
 notification bell opens the cached/refreshed in-app inbox from Home. Telegram
 reward does not occupy Home's first layer. The inbox exposes a user-controlled
@@ -706,6 +706,9 @@ shows locations, available catalog protocols, the latest latency and node status
 and low/medium/high load from node metrics. Manual protocol selection pins the
 existing opaque candidate reference. Missing or stale measurements stay labelled
 as such. Both modes hide endpoint addresses; neither exports connection profiles.
+WARP opt-in controls on Home and Profile are available only in «Продвинутый».
+Switching to «Просто» hides these controls and preserves saved consent and the
+current runtime connection.
 
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable
