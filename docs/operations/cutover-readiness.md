@@ -13,6 +13,9 @@ and sizes match the local package. Simple mode keeps country Auto and moves
 settings to Advanced. The exact 1.4.1 APK and installer have not been tested
 on the phone or installed VM; old saved-TUN migration is not claimed.
 The prepared files were published without rebuilding or announcements.
+The published 4082 binaries were built from client source `8edd3b2`.
+The later D6 correction `c9bcb6b`, which suppresses direct Node latency probes
+for bridge locations, is in `main` but is not included in those binaries.
 Brain recommends 1.4.1 on Android and Windows with minimum 1.3.0 unchanged;
 the public API's versions, URLs, sizes and digests passed readback. Both services
 are active and no broadcast or LiveUpdate was created. Rollback restores
