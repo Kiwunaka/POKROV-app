@@ -148,6 +148,17 @@ implies login, streaming or gaming support. Disabled use, missing/expired provid
 permission, source-only assertions and another platform are explained. Provider
 and proof identifiers/digests remain in secondary technical details.
 
+The same signed Smart Access pipeline supports owned Smart DNS in “Россия
+напрямую” (`smart_safe`) and the selected-services DNS-only path (`selective`).
+Rules calls the admitted, running selective Smart Access profile “Только DNS”;
+plain selected-service VPN routing and unapplied changes keep their existing label.
+Only a service explicitly assigned an approved gateway uses its encrypted DoH
+and TLS relay; missing admission or gateway failure keeps the existing VPN
+fallback. Smart Safe retains its RU Direct classifiers after signed service
+rules; DNS-only leaves the unselected remainder direct. Grants and background
+renewals bind the original routing mode and cannot switch it. Public use still
+requires matching catalog/provider publication, client pins and live acceptance.
+
 These are publisher assertions, not a check performed by opening the sheet or
 evidence that the current gateway serves the function. The current automatic
 selection implementation remains `web_request/current-origin`; other scopes are
@@ -296,7 +307,13 @@ Public consumer surfaces must not expose raw hostnames, ports, public IP, raw co
 
 ### Route-mode choice after activation
 
-Before the first live route activation, the app must ask one calm consumer question:
+Simple mode starts the first live connection with the existing device-wide
+`All except RU` default, without asking for route scope. It waits for saved
+preferences and preserves an explicit routing mode; the existing RU domain/IP
+rules and reviewed Android app exclusions apply automatically. Advanced mode
+keeps the first-connect scope choice and manual settings.
+
+Before the first live route activation in Advanced mode, the app asks one calm consumer question:
 
 - `How should this device work?`
 - `Optimize everything on this device`
@@ -860,7 +877,8 @@ invalidates Android's reusable Quick Settings profile without stopping a live
 tunnel: the tile can still stop that tunnel, but after stop it opens the app
 until a fresh managed-profile stage saves the new reusable profile.
 Quick Settings may start only a freshly staged Android profile whose persisted
-metadata proves Flutter completed the first-connect route-scope choice; legacy
+metadata proves Flutter confirmed the Simple default or completed the Advanced
+first-connect route-scope choice; legacy
 path-only and unconfirmed records, as well as any profile rejected by the
 selected-outbound egress probe, open the app until a fresh stage completes.
 

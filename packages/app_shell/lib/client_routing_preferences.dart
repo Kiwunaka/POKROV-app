@@ -964,13 +964,15 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     if (action == 'reject' || blockTags.contains(rule['outbound']) ||
         action == 'sniff' || action == 'hijack-dns') {
       safety.add(rule);
+    } else if (policy.mode == CatalogRoutingMode.smartSafe && _routingText(rule['outbound']) == direct) {
+      remaining.add(rule);
     } else if (_routingText(rule['outbound']) != direct &&
         (!selective || _routingText(rule['outbound']).isEmpty)) {
       remaining.add(rule);
     }
   }
-  // All implicit Direct classifications (including legacy RU lists) are
-  // replaced by this catalog. Explicit local choices are rebuilt below.
+  // Smart Safe retains the current RU Direct classifiers after signed service
+  // rules. Other catalog modes rebuild Direct scope from their selected policy.
   final manual = <Map<String, dynamic>>[];
   final manualDns = <Map<String, dynamic>>[];
   for (final override in preferences.overrides) {
@@ -1016,6 +1018,10 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   final dnsSafety = _routingListOfMaps(dns['rules']).where((rule) =>
       (_routingText(rule['server']).isEmpty && _routingText(rule['action']) != 'route') ||
       blockedDns.contains(rule['server'])).toList();
+  final directDnsClassifications = policy.mode == CatalogRoutingMode.smartSafe
+      ? _routingListOfMaps(dns['rules']).where((rule) => rule['server'] == 'dns-direct')
+          .map((rule) => <String, dynamic>{...rule, 'server': directDns}).toList()
+      : const <Map<String, dynamic>>[];
   final bootstrapDomains = <String>{
     for (final outbound in [...outbounds, ...endpoints])
       if (_routingText(outbound['server']).isNotEmpty &&
@@ -1038,6 +1044,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'server': directDns},
     ...manualDns,
     ...layer.dnsRules,
+    ...directDnsClassifications,
   ];
   dns['final'] = selective || (dnsAddress != null && preferences.dnsTransport == PokrovDnsTransport.direct)
       ? directDns : vpnDns;

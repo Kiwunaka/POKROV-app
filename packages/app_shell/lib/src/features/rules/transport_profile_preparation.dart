@@ -236,7 +236,7 @@ class _TransportProfilePreparation {
         supportContext: const {}, clientRuleSetCatalog: ruleSets));
        await wait(sample());
        final resolveGrants = routingIntent.smartAccessGrantResolver;
-       if (mode == RouteMode.selectiveServices && resolveGrants != null) {
+       if (const {RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(mode) && resolveGrants != null) {
          Future<Duration> remainingBudget() async {
            final now = await sample();
            return Duration(milliseconds: deadline.expiresElapsedMs - now.sample.elapsedMilliseconds);

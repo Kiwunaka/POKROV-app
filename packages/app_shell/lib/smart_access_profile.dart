@@ -24,15 +24,17 @@ class SmartAccessProfileLeases {
   static Future<SmartAccessProfileLeases> bind({
     required String baseProfile,
     required Iterable<VerifiedSmartAccessLease> leases,
+    String routeMode = 'selective',
   }) async {
     final accepted = List<VerifiedSmartAccessLease>.of(leases);
-    if (accepted.isEmpty || accepted.length > 256) _invalid();
+    if (accepted.isEmpty || accepted.length > 256 ||
+        !const {'selective', 'smart_safe'}.contains(routeMode)) _invalid();
     final digest = await smartAccessProfileSha256(baseProfile);
     final services = <String, List<VerifiedSmartAccessLease>>{};
     final ids = <String>{};
     for (final grant in accepted) {
       final service = grant.lease['service_id'];
-      if (grant.grant['profile_sha256'] != digest || grant.grant['route_mode'] != 'selective' ||
+      if (grant.grant['profile_sha256'] != digest || grant.grant['route_mode'] != routeMode ||
           service is! String ||
           !ids.add(grant.lease['lease_id']! as String)) _invalid();
       _validateNativeEndpoints(grant);
@@ -152,7 +154,7 @@ class SmartAccessLeaseIdentity {
     if (input is! Map<String, Object?> || (input.length != _fields.length && input.length != _fields.length + _renewalFields.length) ||
         !_fields.every(input.containsKey)) _invalid();
     if (input.length != _fields.length) {
-      if (!_renewalFields.every(input.containsKey) || input['route_mode'] != 'selective' ||
+      if (!_renewalFields.every(input.containsKey) || !const {'selective', 'smart_safe'}.contains(input['route_mode']) ||
           !const {'ipv4', 'ipv6'}.contains(input['family']) ||
           !const {'current-origin', 'brain-origin', 'RU-origin', 'synthetic'}.contains(input['origin']) ||
           !const {'web_request', 'login', 'streaming', 'websocket', 'store', 'gameplay', 'cloud_gaming'}.contains(input['feature'])) _invalid();

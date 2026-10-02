@@ -145,24 +145,25 @@ extension _TransportShellOperations on ConnectionManager {
           final selectedServices = _selectedRouteMode == RouteMode.selectiveServices
             ? Set<String>.unmodifiable(_clientExperience.routingPreferences.selectedCatalogServiceIds)
             : const <String>{};
-          final baseline = compileCatalogDomainPolicy(policy: verified,
-            mode: switch (_selectedRouteMode) {
+          final catalogMode = switch (_selectedRouteMode) {
               RouteMode.allExceptRu => CatalogRoutingMode.smartSafe,
               RouteMode.selectedApps => CatalogRoutingMode.includeApps,
               RouteMode.excludedApps => CatalogRoutingMode.excludeApps,
               RouteMode.fullTunnel => CatalogRoutingMode.full,
               RouteMode.selectiveServices => CatalogRoutingMode.selective,
-            },
+            };
+          final baseline = compileCatalogDomainPolicy(policy: verified,
+            mode: catalogMode,
             platform: _appContext.hostPlatform.name,
             accessState: accessState, vpnAvailable: true, now: observed.latest,
             selectedServiceIds: selectedServices);
           catalogPolicy = baseline;
-            if (_selectedRouteMode == RouteMode.selectiveServices && !catalog.usingCache &&
+            if (const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(catalogMode) && !catalog.usingCache &&
                runtime.smartAccessLeaseVersion == 1 && service is AppFirstSmartAccessService &&
                (service as AppFirstSmartAccessService).smartAccessEnabled) {
             final wanted = verified.services.where((item) =>
-              selectedServices.contains(item.id) &&
-              item.intents[CatalogRoutingMode.selective] == CatalogRouteAction.approvedGateway)
+              (catalogMode != CatalogRoutingMode.selective || selectedServices.contains(item.id)) &&
+              item.intents[catalogMode] == CatalogRouteAction.approvedGateway)
               .map((item) => item.id).toSet();
             if (wanted.isNotEmpty) {
               final smartService = service as AppFirstSmartAccessService;
@@ -203,6 +204,7 @@ extension _TransportShellOperations on ConnectionManager {
                       providerPolicy: providers, capabilityId: candidate['capability_id']! as String,
                       profileSha256: digest, origin: candidate['origin']! as String,
                       family: candidate['family']! as String, feature: candidate['feature']! as String,
+                      routeMode: catalogMode == CatalogRoutingMode.smartSafe ? 'smart_safe' : 'selective',
                       operationIsCurrent: grantCurrent, remainingBudget: await remainingBudget(),
                       cancelled: grantCancelled));
                   } on BootstrapFailure catch (error) {
@@ -215,10 +217,11 @@ extension _TransportShellOperations on ConnectionManager {
                 }
                 await remainingBudget();
                 if (grants.isEmpty) return baseline;
-                final bound = await SmartAccessProfileLeases.bind(baseProfile: baseProfile, leases: grants);
+                final bound = await SmartAccessProfileLeases.bind(baseProfile: baseProfile, leases: grants,
+                  routeMode: catalogMode == CatalogRoutingMode.smartSafe ? 'smart_safe' : 'selective');
                 final grantedAt = await grantSource.sample();
                 if (!grantCurrent()) throw const ConnectionOperationSuperseded();
-                return compileCatalogDomainPolicy(policy: verified, mode: CatalogRoutingMode.selective,
+                return compileCatalogDomainPolicy(policy: verified, mode: catalogMode,
                   platform: _appContext.hostPlatform.name, accessState: accessState,
                   vpnAvailable: true, now: grantedAt.latest,
                   selectedServiceIds: selectedServices, smartAccessProfile: bound);

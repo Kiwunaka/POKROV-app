@@ -3486,6 +3486,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             ),
             onEditCatalogServices: _selectiveServicesAvailable ? _editCatalogServices : null,
             catalogServicesBusy: _runtimeBusy,
+            smartDnsActive: _selectedRouteMode == RouteMode.selectiveServices &&
+                !_managedProfileDirty && _runtimeSnapshot?.phase == RuntimePhase.running &&
+                (_connectionManager._connectionCoordinator.activeSmartAccessLeases?.leases.isNotEmpty ?? false),
             onRoutingPreferencesChanged: _setRoutingPreferences,
             onRoutingPreferencesApply: _applyRoutingPreferences,
             connectionActive: _runtimeSnapshot?.phase == RuntimePhase.running,

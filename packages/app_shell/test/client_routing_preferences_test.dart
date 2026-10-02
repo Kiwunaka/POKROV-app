@@ -22,6 +22,29 @@ Future<String> _readRoutingFixture(String name) async {
 }
 
 void main() {
+  test('Smart Safe keeps RU Direct classifiers behind signed service rules', () {
+    final base = _windowsAppProfile(RouteMode.allExceptRu);
+    final originalConfig = _jsonMap(base.configPayload);
+    final originalRoute = _map(originalConfig['route']);
+    originalRoute['rules'] = [..._maps(originalRoute['rules']),
+      {'domain_suffix': ['bank.example'], 'outbound': 'direct'}];
+    originalConfig['route'] = originalRoute;
+    final transformed = applyPokrovRoutingPreferences(
+      base.copyWith(configPayload: jsonEncode(originalConfig)),
+      const PokrovRoutingPreferences.defaults(), hostPlatform: HostPlatform.windows,
+      catalogPolicy: _WindowsAppCatalogPolicy(CatalogRoutingMode.smartSafe),
+      catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1,
+    );
+    final config = _jsonMap(transformed.configPayload);
+    final routes = _maps(_map(config['route'])['rules']);
+    final dns = _maps(_map(config['dns'])['rules']);
+    final curated = routes.indexWhere((rule) => (rule['domain_suffix'] as List?)?.contains('catalog-bank.example') == true);
+    final original = routes.indexWhere((rule) => (rule['domain_suffix'] as List?)?.contains('bank.example') == true);
+    expect(original, greaterThan(curated));
+    expect(routes[original]['outbound'], 'direct');
+    expect(dns.any((rule) => (rule['domain_suffix'] as List?)?.contains('bank.example') == true && rule['server'] == 'dns-direct'), isTrue);
+  });
+
   test('untrusted Wi-Fi auto-connect defaults off and round trips explicit opt-in', () {
     const defaults = PokrovRoutingPreferences.defaults();
     expect(defaults.autoConnectOnUntrustedWifi, isFalse);

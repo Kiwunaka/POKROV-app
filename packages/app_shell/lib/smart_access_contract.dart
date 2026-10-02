@@ -434,7 +434,8 @@ class SmartAccessVerifier {
         .map((b) => b.toRadixString(16).padLeft(2, '0')).join();
       if (grant['schema_version'] != 'pokrov-smart-access-grant-v1' || grant['request_nonce'] != nonce ||
           grant['device_binding'] != binding || grant['profile_sha256'] != expected['profile_sha256'] ||
-          grant['route_mode'] != 'selective' || expected['route_mode'] != 'selective') {
+          !const {'selective', 'smart_safe'}.contains(expected['route_mode']) ||
+          grant['route_mode'] != expected['route_mode']) {
         throw const RoutingCatalogFailure('smart_access_grant_binding_mismatch');
       }
       final lease = grant['lease'];
@@ -521,7 +522,7 @@ class SmartAccessVerifier {
           service['external_gateway_policy'] != 'approved' || platforms is! List ||
           !platforms.contains(lease['platform']) || capabilityRefs is! List ||
           !capabilityRefs.contains(lease['capability_id']) || intents is! List ||
-          !intents.any((item) => item is Map && item['mode'] == 'selective' && item['action'] == 'approved_gateway') ||
+          !intents.any((item) => item is Map && item['mode'] == grant['route_mode'] && item['action'] == 'approved_gateway') ||
           serviceDomains is! List || domains.any((domain) => domain is! Map ||
             domain.length != 2 || domain['name'] is! String || !const {'exact', 'suffix'}.contains(domain['match']) ||
             !serviceDomains.any((candidate) => candidate is Map && candidate['shared'] == false &&

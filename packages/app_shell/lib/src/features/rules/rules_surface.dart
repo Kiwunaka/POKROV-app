@@ -15,6 +15,7 @@ class _RulesSection extends StatelessWidget {
     this.catalogPreviewIdentity,
     this.onEditCatalogServices,
     this.catalogServicesBusy = false,
+    this.smartDnsActive = false,
     required this.onRoutingPreferencesChanged,
     required this.onRoutingPreferencesApply,
     required this.connectionActive,
@@ -38,6 +39,7 @@ class _RulesSection extends StatelessWidget {
   final Object? catalogPreviewIdentity;
   final VoidCallback? onEditCatalogServices;
   final bool catalogServicesBusy;
+  final bool smartDnsActive;
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesChanged;
   final ValueChanged<PokrovRoutingPreferences> onRoutingPreferencesApply;
   final bool connectionActive;
@@ -84,19 +86,20 @@ class _RulesSection extends StatelessWidget {
         _SectionCard(
           title: 'Режим работы',
           tone: _SectionTone.accent,
-          lines: ['Сейчас: ${_routeModeShortLabel(selectedRouteMode)}'],
+          lines: ['Сейчас: ${_routeModeShortLabel(selectedRouteMode, smartDnsActive: smartDnsActive)}'],
           child: Column(
             children: <Widget>[
               _RouteModeSegmentedControl(
                 choices: routeChoices,
                 selectedRouteMode: selectedRouteMode,
+                smartDnsActive: smartDnsActive,
                 onRouteModeSelected: onRouteModeSelected,
               ),
               const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  _routeModeRowSummary(selectedRouteMode),
+                  _routeModeRowSummary(selectedRouteMode, smartDnsActive: smartDnsActive),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: p.muted,
                     height: 1.32,
@@ -131,7 +134,7 @@ class _RulesSection extends StatelessWidget {
         if (onEditCatalogServices != null || selectedRouteMode == RouteMode.selectiveServices)
           _SectionCard(
             key: const ValueKey('rules-selective-services'),
-            title: 'Выбранные сервисы',
+            title: smartDnsActive ? 'Только DNS' : 'Выбранные сервисы',
             lines: [
               if (selectedRouteMode == RouteMode.selectiveServices)
                 'Выбран режим доступа к отдельным сервисам. Сохранено: ${routingPreferences.selectedCatalogServiceIds.length}.',
@@ -484,11 +487,13 @@ class _RouteModeSegmentedControl extends StatelessWidget {
     required this.choices,
     required this.selectedRouteMode,
     required this.onRouteModeSelected,
+    this.smartDnsActive = false,
   });
 
   final List<RouteMode> choices;
   final RouteMode selectedRouteMode;
   final ValueChanged<RouteMode> onRouteModeSelected;
+  final bool smartDnsActive;
 
   @override
   Widget build(BuildContext context) {
@@ -501,6 +506,7 @@ class _RouteModeSegmentedControl extends StatelessWidget {
           _RouteModeSegment(
             mode: choices[i],
             selected: selectedRouteMode == choices[i],
+            smartDnsActive: smartDnsActive,
             onTap: () => onRouteModeSelected(choices[i]),
           ),
         ],
@@ -514,11 +520,13 @@ class _RouteModeSegment extends StatelessWidget {
     required this.mode,
     required this.selected,
     required this.onTap,
+    this.smartDnsActive = false,
   });
 
   final RouteMode mode;
   final bool selected;
   final VoidCallback onTap;
+  final bool smartDnsActive;
 
   @override
   Widget build(BuildContext context) {
@@ -531,12 +539,12 @@ class _RouteModeSegment extends StatelessWidget {
       RouteMode.selectedApps => Icons.apps_rounded,
       RouteMode.excludedApps => Icons.mobile_off_rounded,
     };
-    final label = _routeModeShortLabel(mode);
+    final label = _routeModeShortLabel(mode, smartDnsActive: smartDnsActive);
     return Semantics(
       key: ValueKey('rules-mode-row-${mode.name}'),
       button: true,
       selected: selected,
-      label: _routeModeRowTitle(mode),
+      label: _routeModeRowTitle(mode, smartDnsActive: smartDnsActive),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(

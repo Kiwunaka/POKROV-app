@@ -993,6 +993,7 @@ abstract interface class AppFirstSmartAccessService {
     required HostPlatform hostPlatform, required VerifiedRoutingCatalog catalog,
     required VerifiedSmartAccessProviderPolicy providerPolicy, required String capabilityId,
     required String profileSha256, required String origin, required String family, required String feature,
+    String routeMode = 'selective',
     required bool Function() operationIsCurrent,
     required Duration remainingBudget, required Future<void> cancelled,
   });
@@ -4756,6 +4757,7 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform, required VerifiedRoutingCatalog catalog,
     required VerifiedSmartAccessProviderPolicy providerPolicy, required String capabilityId,
     required String profileSha256, required String origin, required String family, required String feature,
+    String routeMode = 'selective',
     required bool Function() operationIsCurrent,
     required Duration remainingBudget, required Future<void> cancelled,
   }) async {
@@ -4787,7 +4789,7 @@ class AppFirstRuntimeBootstrapper
       'schema_version': 'pokrov-smart-access-lease-request-v1', 'request_nonce': nonce,
       'capability_id': capabilityId, 'catalog_sha256': catalog.payloadSha256,
       'provider_policy_sha256': providerPolicy.payloadSha256, 'profile_sha256': profileSha256,
-      'platform': hostPlatform.name, 'origin': origin, 'family': family, 'feature': feature, 'route_mode': 'selective',
+      'platform': hostPlatform.name, 'origin': origin, 'family': family, 'feature': feature, 'route_mode': routeMode,
     };
     final client = _createHttpClient(hostPlatform);
     final expiry = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));

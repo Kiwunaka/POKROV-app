@@ -2544,15 +2544,16 @@ class ConnectionManager extends ChangeNotifier {
           catalogPolicy = compile(null);
           if (!offline &&
               !result.usingCache &&
-              catalogMode == CatalogRoutingMode.selective &&
+              const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(catalogMode) &&
               nativeSmartAccessLeaseVersion == 1 &&
               catalogService is AppFirstSmartAccessService &&
               (catalogService as AppFirstSmartAccessService)
                   .smartAccessEnabled) {
             final wanted = catalogProjection.services
                 .where((service) =>
-                    catalogPolicy!.selectedServiceIds.contains(service.id) &&
-                    service.intents[CatalogRoutingMode.selective] ==
+                    (catalogMode != CatalogRoutingMode.selective ||
+                     catalogPolicy!.selectedServiceIds.contains(service.id)) &&
+                    service.intents[catalogMode] ==
                         CatalogRouteAction.approvedGateway)
                 .map((service) => service.id)
                 .toSet();
@@ -2622,6 +2623,7 @@ class ConnectionManager extends ChangeNotifier {
                             origin: candidate['origin']! as String,
                             family: candidate['family']! as String,
                             feature: candidate['feature']! as String,
+                            routeMode: catalogMode == CatalogRoutingMode.smartSafe ? 'smart_safe' : 'selective',
                             operationIsCurrent: current,
                             remainingBudget: remaining(),
                             cancelled: cancelled));
@@ -2638,7 +2640,8 @@ class ConnectionManager extends ChangeNotifier {
               remaining();
               if (grants.isNotEmpty) {
                 final bound = await SmartAccessProfileLeases.bind(
-                    baseProfile: runtimePayload.configPayload, leases: grants);
+                    baseProfile: runtimePayload.configPayload, leases: grants,
+                    routeMode: catalogMode == CatalogRoutingMode.smartSafe ? 'smart_safe' : 'selective');
                 if (!current()) throw const ConnectionOperationSuperseded();
                 catalogPolicy = compile(bound);
               }

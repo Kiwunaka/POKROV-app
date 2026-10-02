@@ -139,7 +139,8 @@ class RoutingCatalogPolicy {
         if (mode == CatalogRoutingMode.full &&
             action != CatalogRouteAction.vpn && action != CatalogRouteAction.block) _fail('full_coverage');
         if (action == CatalogRouteAction.approvedGateway &&
-            (mode != CatalogRoutingMode.selective || external != 'approved' || providers.isEmpty)) {
+            (!const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(mode) ||
+             external != 'approved' || providers.isEmpty)) {
           _fail('gateway_authority');
         }
         if (action == CatalogRouteAction.direct && classification == 'blocked_inside_ru') {
@@ -295,12 +296,14 @@ CatalogDomainPolicy compileCatalogDomainPolicy({
   if (mode != CatalogRoutingMode.selective && selectedServiceIds.isNotEmpty) _fail('service_selection_scope');
   if (mode == CatalogRoutingMode.selective && selectedServiceIds.isEmpty) _fail('service_selection_empty');
   if (smartAccessProfile != null) {
-    if (mode != CatalogRoutingMode.selective ||
-        smartAccessProfile.byService.keys.any((id) => !selectedServiceIds.contains(id))) _fail('gateway_scope');
+    if (!const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(mode) ||
+        (mode == CatalogRoutingMode.selective &&
+         smartAccessProfile.byService.keys.any((id) => !selectedServiceIds.contains(id)))) _fail('gateway_scope');
     for (final entry in smartAccessProfile.byService.entries) {
       for (final grant in entry.value) {
         final lease = grant.lease;
-        if (!grant.admitsNewFlows(now) || lease['catalog_sha256'] != catalog.payloadSha256 ||
+        if (grant.grant['route_mode'] != (mode == CatalogRoutingMode.smartSafe ? 'smart_safe' : 'selective') ||
+            !grant.admitsNewFlows(now) || lease['catalog_sha256'] != catalog.payloadSha256 ||
             lease['catalog_revision'] != catalog.revision || lease['catalog_security_revision'] != catalog.securityRevision ||
             lease['platform'] != platform || lease['service_id'] != entry.key) _fail('gateway_binding');
       }
