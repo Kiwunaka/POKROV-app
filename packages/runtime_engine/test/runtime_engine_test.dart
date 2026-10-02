@@ -436,6 +436,7 @@ void main() {
           runtimeReady: true,
           userConsented: true,
           state: 'consented',
+          mode: 'warp_over_proxy',
           source: 'client_local',
           id: 'android-warp',
         ),
