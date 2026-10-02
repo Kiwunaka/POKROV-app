@@ -1356,6 +1356,9 @@ Future<void> _tapPrimaryConnectAndConfirmRouteScope(WidgetTester tester) async {
 }
 
 Future<void> _tapNav(WidgetTester tester, String key) async {
+  if (key == 'nav-rules' && find.byKey(ValueKey(key)).evaluate().isEmpty) {
+    await _tapAdvancedLocations(tester);
+  }
   final target = find.byKey(ValueKey(key));
   expect(target, findsOneWidget);
   await tester.tap(target);
@@ -1392,6 +1395,7 @@ Future<void> _openAdvancedRules(WidgetTester tester) async {
 }
 
 Future<void> _openEnhancedProtectionFromProfile(WidgetTester tester) async {
+  await _tapAdvancedLocations(tester);
   if (find.byKey(const ValueKey('nav-profile')).evaluate().isEmpty) {
     final hamburger = find.byKey(const ValueKey('desktop-sidebar-hamburger'));
     if (hamburger.evaluate().isNotEmpty) {
@@ -2466,6 +2470,12 @@ void main() {
     expect(find.text('Email Рё РєР°Р±РёРЅРµС‚'), findsNothing);
     expect(find.byKey(const ValueKey('profile-section-sync')), findsOneWidget);
     expect(find.byKey(const ValueKey('profile-section-app')), findsOneWidget);
+    expect(find.byKey(const ValueKey('nav-rules')), findsNothing);
+    expect(find.byKey(const ValueKey('profile-enhanced-protection-action')), findsNothing);
+    await _tapAdvancedLocations(tester);
+    expect(find.byKey(const ValueKey('nav-rules')), findsOneWidget);
+    await _tapNav(tester, 'nav-profile');
+    expect(find.byKey(const ValueKey('profile-enhanced-protection-action')), findsOneWidget);
     expect(find.text('Р‘РѕРЅСѓСЃС‹'), findsNothing);
     final support = find.byKey(const ValueKey('profile-section-support'));
     await tester.dragUntilVisible(
@@ -5821,10 +5831,7 @@ void main() {
       find.byKey(const ValueKey('home-desktop-notifications-action')),
     );
     expect(detailsAction.tooltip, 'Уведомления');
-    final rulesAction = tester.widget<IconButton>(
-      find.byKey(const ValueKey('home-desktop-settings-action')),
-    );
-    expect(rulesAction.tooltip, 'Правила');
+    expect(find.byKey(const ValueKey('home-desktop-settings-action')), findsNothing);
 
     expect(find.text('Р’Р°С€ РѕСЃРЅРѕРІРЅРѕР№ СЂРµРіРёРѕРЅ'), findsNothing);
     expect(find.text('РќРѕРІРѕСЃС‚Рё Рё СѓРІРµРґРѕРјР»РµРЅРёСЏ'), findsNothing);
@@ -5833,6 +5840,7 @@ void main() {
     expect(find.textContaining('Дополнительная защита'), findsOneWidget);
     expect(find.textContaining('WARP'), findsOneWidget);
 
+    await _tapAdvancedLocations(tester);
     await _tapNav(tester, 'nav-profile');
     expect(
       find.byKey(const ValueKey('profile-enhanced-protection-action')),
@@ -5861,6 +5869,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await _tapAdvancedLocations(tester);
     await _tapNav(tester, 'nav-profile');
 
     final action = find.byKey(

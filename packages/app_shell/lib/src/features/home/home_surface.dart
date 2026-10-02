@@ -2,6 +2,7 @@ part of pokrov_app_shell;
 
 class _QuickConnectSection extends StatelessWidget {
   const _QuickConnectSection({
+    required this.advanced,
     required this.appContext,
     required this.freeProfileAccess,
     required this.protectionState,
@@ -25,6 +26,7 @@ class _QuickConnectSection extends StatelessWidget {
   });
 
   final SeedAppContext appContext;
+  final bool advanced;
   final FreeProfileAccess? freeProfileAccess;
   final ProtectionViewState protectionState;
   final ProtectionIntents protectionIntents;
@@ -88,6 +90,7 @@ class _QuickConnectSection extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: isDesktop ? 1220 : 500),
             child: _HomeStage(
+              advanced: advanced,
               preferDesktopLayout: isDesktop,
               revealHold: revealHold,
               protectionState: protection,
@@ -135,6 +138,7 @@ class _QuickConnectSection extends StatelessWidget {
 
 class _HomeStage extends StatefulWidget {
   const _HomeStage({
+    required this.advanced,
     required this.preferDesktopLayout,
     required this.revealHold,
     required this.protectionState,
@@ -163,6 +167,7 @@ class _HomeStage extends StatefulWidget {
   });
 
   final bool preferDesktopLayout;
+  final bool advanced;
 
   /// Welcome Handover: while true the staged reveal stays parked at zero;
   /// the flip to false starts it a beat into the gate's exit.
@@ -456,7 +461,7 @@ class _HomeStageState extends State<_HomeStage>
                 onTap: widget.onOpenNotifications,
                 compact: false,
               ),
-              IconButton(
+              if (widget.advanced) IconButton(
                 key: const ValueKey('home-desktop-settings-action'),
                 tooltip: 'Правила',
                 onPressed: widget.protectionIntents.openRules,

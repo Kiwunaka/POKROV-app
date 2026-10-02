@@ -6661,8 +6661,11 @@ class AppFirstRuntimeBootstrapper
       if (candidate?.transport == 'xhttp') {
         try {
           final config = _readMap(raw is String ? jsonDecode(raw) : raw);
-          final outbounds = (config['outbounds'] as List).map(_readMap)
-              .where((outbound) => outbound['type'] == 'vless').toList();
+          final graph = (config['outbounds'] as List).map(_readMap).toList();
+          final ingressTags = graph.map((outbound) => _readText(outbound['detour']))
+              .where((tag) => tag.isNotEmpty).toSet();
+          final outbounds = graph.where((outbound) => outbound['type'] == 'vless' &&
+              !ingressTags.contains(_readText(outbound['tag']))).toList();
           if (outbounds.isEmpty) throw const FormatException();
           for (final outbound in outbounds) {
             final tls = _readMap(outbound['tls']);

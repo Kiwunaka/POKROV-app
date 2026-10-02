@@ -229,12 +229,14 @@ class _PokrovRefreshArcPainter extends CustomPainter {
 
 class _DesktopShell extends StatelessWidget {
   const _DesktopShell({
+    required this.advanced,
     required this.selectedIndex,
     required this.sectionBuilders,
     required this.onSelected,
   }) : super(key: const ValueKey('desktop-shell'));
 
   final int selectedIndex;
+  final bool advanced;
   final List<WidgetBuilder> sectionBuilders;
   final ValueChanged<int> onSelected;
 
@@ -244,6 +246,7 @@ class _DesktopShell extends StatelessWidget {
       builder: (context, constraints) {
         if (constraints.maxWidth < 900) {
           return _DesktopDrawerShell(
+            advanced: advanced,
             selectedIndex: selectedIndex,
             sectionBuilders: sectionBuilders,
             onSelected: onSelected,
@@ -255,6 +258,7 @@ class _DesktopShell extends StatelessWidget {
           children: [
             RepaintBoundary(
               child: _DesktopSidebar(
+                advanced: advanced,
                 selectedIndex: selectedIndex,
                 onSelected: onSelected,
                 collapsed: collapsed,
@@ -286,12 +290,14 @@ class _DesktopShell extends StatelessWidget {
 
 class _DesktopDrawerShell extends StatelessWidget {
   const _DesktopDrawerShell({
+    required this.advanced,
     required this.selectedIndex,
     required this.sectionBuilders,
     required this.onSelected,
   }) : super(key: const ValueKey('desktop-drawer-shell'));
 
   final int selectedIndex;
+  final bool advanced;
   final List<WidgetBuilder> sectionBuilders;
   final ValueChanged<int> onSelected;
 
@@ -307,6 +313,7 @@ class _DesktopDrawerShell extends StatelessWidget {
         child: SafeArea(
           child: RepaintBoundary(
             child: _DesktopSidebar(
+              advanced: advanced,
               selectedIndex: selectedIndex,
               onSelected: (index) {
                 Navigator.of(context).maybePop();
@@ -357,12 +364,14 @@ class _DesktopDrawerShell extends StatelessWidget {
 
 class _MobileShell extends StatelessWidget {
   const _MobileShell({
+    required this.advanced,
     required this.selectedIndex,
     required this.sectionBuilders,
     required this.onSelected,
   }) : super(key: const ValueKey('mobile-shell'));
 
   final int selectedIndex;
+  final bool advanced;
   final List<WidgetBuilder> sectionBuilders;
   final ValueChanged<int> onSelected;
 
@@ -409,36 +418,37 @@ class _MobileShell extends StatelessWidget {
                 ),
                 child: NavigationBar(
                   height: 64,
-                  selectedIndex: selectedIndex,
+                  selectedIndex: !advanced && selectedIndex == 3 ? 2 : selectedIndex,
                   onDestinationSelected: (index) {
                     // Selection tick for the thumb — pointer navigation on
                     // desktop and same-tab taps stay silent.
-                    if (index == selectedIndex) {
+                    final targetIndex = !advanced && index == 2 ? 3 : index;
+                    if (targetIndex == selectedIndex) {
                       return;
                     }
                     PokrovHaptics.tap();
-                    onSelected(index);
+                    onSelected(targetIndex);
                   },
-                  destinations: const [
-                    NavigationDestination(
+                  destinations: [
+                    const NavigationDestination(
                       key: ValueKey('nav-protection'),
                       icon: Icon(Icons.shield_outlined),
                       selectedIcon: Icon(Icons.shield_rounded),
                       label: 'Защита',
                     ),
-                    NavigationDestination(
+                    const NavigationDestination(
                       key: ValueKey('nav-locations'),
                       icon: Icon(Icons.public_outlined),
                       selectedIcon: Icon(Icons.public),
                       label: 'Локации',
                     ),
-                    NavigationDestination(
+                    if (advanced) const NavigationDestination(
                       key: ValueKey('nav-rules'),
                       icon: Icon(Icons.rule_folder_outlined),
                       selectedIcon: Icon(Icons.rule_folder),
                       label: 'Правила',
                     ),
-                    NavigationDestination(
+                    const NavigationDestination(
                       key: ValueKey('nav-profile'),
                       icon: Icon(Icons.person_outline),
                       selectedIcon: Icon(Icons.person),
@@ -457,38 +467,39 @@ class _MobileShell extends StatelessWidget {
 
 class _DesktopSidebar extends PokrovDesktopSidebar {
   _DesktopSidebar({
+    required bool advanced,
     required int selectedIndex,
     required ValueChanged<int> onSelected,
     required bool collapsed,
     bool drawer = false,
   }) : super(
-          selectedIndex: selectedIndex,
-          onSelected: onSelected,
+          selectedIndex: !advanced && selectedIndex == 3 ? 2 : selectedIndex,
+          onSelected: (index) => onSelected(!advanced && index == 2 ? 3 : index),
           collapsed: collapsed,
           drawer: drawer,
           brandMarkAssetName: _pokrovBrandMarkAsset,
           versionLabel: '',
           betaLabel: '',
-          destinations: const [
-            PokrovSidebarDestination(
+          destinations: [
+            const PokrovSidebarDestination(
               itemKey: ValueKey('nav-protection'),
               icon: Icons.shield_outlined,
               selectedIcon: Icons.shield_rounded,
               label: 'Защита',
             ),
-            PokrovSidebarDestination(
+            const PokrovSidebarDestination(
               itemKey: ValueKey('nav-locations'),
               icon: Icons.public_outlined,
               selectedIcon: Icons.public,
               label: 'Локации',
             ),
-            PokrovSidebarDestination(
+            if (advanced) const PokrovSidebarDestination(
               itemKey: ValueKey('nav-rules'),
               icon: Icons.rule_folder_outlined,
               selectedIcon: Icons.rule_folder,
               label: 'Правила',
             ),
-            PokrovSidebarDestination(
+            const PokrovSidebarDestination(
               itemKey: ValueKey('nav-profile'),
               icon: Icons.person_outline,
               selectedIcon: Icons.person,

@@ -111,6 +111,12 @@ candidate or node; failure never silently activates a different pinned path.
 Country and candidate preferences are part of the encrypted cache binding.
 Switching a known manual pin to Simple keeps its country and restores automatic
 protocol choice; Auto clears country, node and candidate preferences together.
+Simple keeps the authorized country Auto graph, including direct destinations
+and ready bridge detours; transport selection and fallback stay in that graph.
+Rules and connection settings are available in Advanced, reached from Profile.
+The existing Russia-direct default and Android Russian-app bypass stay active.
+XHTTP catalog validation checks destination leaves without treating a TCP bridge
+ingress as an XHTTP destination.
 
 Windows selected-app routing keeps non-selected application connections direct,
 but sends shared system DNS through the VPN. Windows delegates application DNS

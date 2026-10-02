@@ -590,6 +590,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final willConnect = _runtimeSnapshot?.phase != RuntimePhase.running || reconnectAfterDisconnect;
     if (willConnect && _selectedRouteMode == RouteMode.selectiveServices &&
         (!_selectiveServicesAvailable || _clientExperience.routingPreferences.selectedCatalogServiceIds.isEmpty)) {
+      await _connectionManager.setInterfaceMode(PokrovInterfaceMode.advanced);
+      if (!mounted) return;
       setState(() {
         _selectedIndex = SeedTab.rules.index;
         _runtimeHeadline = _selectiveServicesAvailable
@@ -1040,6 +1042,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _openRulesForSelectedApps() {
+    unawaited(_connectionManager.setInterfaceMode(PokrovInterfaceMode.advanced));
     setState(() {
       _selectedIndex = SeedTab.rules.index;
       _runtimeHeadline =
@@ -1053,6 +1056,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   void _selectTab(SeedTab tab) {
+    if (tab == SeedTab.rules &&
+        _clientExperience.interfaceMode == PokrovInterfaceMode.simple) {
+      tab = SeedTab.profile;
+    }
     setState(() {
       _selectedIndex = tab.index;
     });
@@ -3379,6 +3386,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
     final sectionBuilders = <WidgetBuilder>[
       (context) => _QuickConnectSection(
+            advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
             appContext: widget.appContext,
             freeProfileAccess: _freeProfileAccess,
             protectionState: protectionState,
@@ -3537,6 +3545,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             .disableAnimations;
     final shell = isDesktopShell
         ? _DesktopShell(
+            advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
             selectedIndex: _selectedIndex,
             sectionBuilders: sectionBuilders,
             onSelected: (index) {
@@ -3544,6 +3553,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             },
           )
         : _MobileShell(
+            advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
             selectedIndex: _selectedIndex,
             sectionBuilders: sectionBuilders,
             onSelected: (index) {

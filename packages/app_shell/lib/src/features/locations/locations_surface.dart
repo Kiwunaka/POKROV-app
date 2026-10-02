@@ -600,7 +600,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
         const SizedBox(height: 14),
         _SectionCard(
           title: 'Выбор страны',
-          lines: const ['Протокол и сервер выбираются автоматически.'],
+          lines: const ['Прямое соединение или готовый мост выбираются автоматически.'],
           child: Column(
             children: [
               for (final country in countries.entries)

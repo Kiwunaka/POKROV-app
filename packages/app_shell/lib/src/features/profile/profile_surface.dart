@@ -472,7 +472,8 @@ class _ProfileSection extends StatelessWidget {
               ),
               _SectionCard(
                 key: const ValueKey('profile-section-app'),
-                title: 'Настройки',
+                title: interfaceMode == PokrovInterfaceMode.advanced
+                    ? 'Настройки' : 'Интерфейс',
                 lines: [
                   '${appContext.hostPlatform.label} · ${_routeModeShortLabel(selectedRouteMode)}',
                 ],
@@ -487,6 +488,7 @@ class _ProfileSection extends StatelessWidget {
                           : 'Продвинутый',
                       onTap: () => _showInterfaceModeSheet(context),
                     ),
+                    if (interfaceMode == PokrovInterfaceMode.advanced) ...[
                     const _SettingsRowDivider(),
                     _SettingsRow(
                       icon: Icons.alt_route_rounded,
@@ -633,6 +635,7 @@ class _ProfileSection extends StatelessWidget {
                         ],
                       ),
                     ),
+                    ],
                   ],
                 ),
               ),

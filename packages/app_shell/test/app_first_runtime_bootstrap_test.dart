@@ -242,6 +242,7 @@ void main() {
     var returnWrongSelection = false;
     var returnWrongKind = false;
     var returnWrongXhttpProtection = false;
+    var returnXhttpBridge = false;
     var returnUnauthorized = false;
     var returnBundle = false;
     var alternateMaterialRef = 'ru:grpc_443_primary';
@@ -321,7 +322,21 @@ void main() {
             },
             'config_payload': {
               'outbounds': [
-                {'type': 'selector', 'tag': 'proxy', 'outbounds': [node], 'default': node},
+                {'type': 'selector', 'tag': 'proxy', 'outbounds': [
+                  if (xhttp && returnXhttpBridge) 'country-auto' else node,
+                ], 'default': xhttp && returnXhttpBridge ? 'country-auto' : node},
+                if (xhttp && returnXhttpBridge) ...[
+                  {'type': 'urltest', 'tag': 'country-auto', 'outbounds': [node, 'bridge'],
+                    'url': 'https://probe.example.test'},
+                  {'type': 'vless', 'tag': 'bridge', 'server': '$node.example.test',
+                    'server_port': 443, 'detour': 'ingress',
+                    'transport': {'type': 'xhttp', 'mode': 'stream-one', 'path': '/test'},
+                    'tls': {'enabled': true, 'alpn': ['h2'], 'utls': {'enabled': true},
+                      'reality': {'enabled': true, 'public_key': 'synthetic-public-key'}}},
+                  {'type': 'vless', 'tag': 'ingress', 'server': 'ingress.example.test',
+                    'server_port': 443, 'tls': {'enabled': true, 'utls': {'enabled': true},
+                      'reality': {'enabled': true, 'public_key': 'synthetic-ingress-key'}}},
+                ],
                 {'type': 'vless', 'tag': node, 'server': '$node.example.test', 'server_port': 443,
                   if (grpc) 'transport': {'type': 'grpc', 'service_name': 'test'},
                   if (xhttp) ...{
@@ -380,6 +395,16 @@ void main() {
         .where((item) => item['tag'] == 'de').single;
     expect(xhttpLeaf['transport'], {'type': 'xhttp', 'mode': 'stream-one', 'path': '/test'});
     expect(xhttpLeaf['tls']['reality']['enabled'], isTrue);
+    returnXhttpBridge = true;
+    final countryAuto = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      selectedCandidateRef: 'de:xhttp_reality', selectCandidate: false, cacheResult: false);
+    final autoOutbounds = (jsonDecode(countryAuto.configPayload) as Map)['outbounds'] as List;
+    expect(autoOutbounds.where((item) => item['tag'] == 'country-auto').single['outbounds'],
+      ['de', 'bridge']);
+    expect(autoOutbounds.where((item) => item['tag'] == 'bridge').single['detour'], 'ingress');
+    expect(autoOutbounds.where((item) => item['tag'] == 'proxy').single['default'], 'country-auto');
+    returnXhttpBridge = false;
     returnWrongXhttpProtection = true;
     await expectLater(bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
