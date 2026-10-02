@@ -709,6 +709,9 @@ as such. Both modes hide endpoint addresses; neither exports connection profiles
 WARP opt-in controls on Home and Profile are available only in «Продвинутый».
 Switching to «Просто» hides these controls and preserves saved consent and the
 current runtime connection.
+In «Просто», managed requests and runtime preparation ignore saved manual node,
+variant and protocol pins and retain only the selected country. A stale manual
+variant cannot block country Auto or label the server-selected route as manual.
 
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable

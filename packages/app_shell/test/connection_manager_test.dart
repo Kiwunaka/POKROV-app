@@ -630,13 +630,21 @@ void main() {
     expect(policies, [true, false]);
   });
 
-  test('country selection keeps Auto in that country and advanced pin probes only its exact candidate', () async {
+  test('Simple ignores saved manual pins for country Auto and Advanced probes only its exact candidate', () async {
     final runtime = _Runtime()..supportsCandidates = true;
-    final bootstrapper = _Bootstrapper(catalog: true);
+    final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true);
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
-    await manager.setPreferredCountry('de');
+    manager.restoreConnectionPreferences(
+      const PokrovClientExperienceState.empty().copyWith(
+        preferredCountryCode: 'DE', preferredNodeCode: 'ch',
+        preferredVariantId: 'ru-spb', preferredCandidateRef: 'ch:legacy'),
+      const {},
+    );
     await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.stagedProfile, _candidates.first.candidateRef);
+    expect(runtime.stagedPayloads.last.resolvedNodeCode, 'de');
     expect(bootstrapper.requestedCountries, everyElement('DE'));
     expect(manager.transportCatalog?.selected.countryCode, 'DE');
     await manager.disconnect();

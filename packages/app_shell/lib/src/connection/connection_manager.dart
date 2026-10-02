@@ -2429,10 +2429,11 @@ class ConnectionManager extends ChangeNotifier {
         warpConsentStillValid &&
         (explicitRetryRequested ||
             _warpRuntimeAttemptAllowed(displayWarpPolicy));
-    final requestedPreferred = _preferredNodeCode.trim().toLowerCase();
+    final connectionPreference = _managedProfileCacheInputs;
+    final requestedPreferred = connectionPreference.preferredNodeCode.trim().toLowerCase();
     final requestedVariant = requestedPreferred.isEmpty
         ? 'direct'
-        : normalizeClientLocationVariantId(_preferredVariantId) ?? 'direct';
+        : normalizeClientLocationVariantId(connectionPreference.preferredVariantId) ?? 'direct';
     if (requestedPreferred.isNotEmpty &&
         requestedVariant != 'direct' &&
         warpRuntimeAttemptEnabled) {
