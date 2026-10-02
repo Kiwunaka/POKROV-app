@@ -1,22 +1,23 @@
 # Client release status
 
-Public version: **1.4.0+4081** with POKROV Core 1.1.2 in
+Public version: **1.4.1+4082** with POKROV Core 1.2.2 in
 `Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
-beta with a SmartScreen warning. Version 1.3.0 remains available for rollback.
+beta with a SmartScreen warning. Version 1.4.0 remains available for rollback.
 
-## Client 1.4.1 draft, 2026-10-02
+## Client 1.4.1 quiet publication, 2026-10-02
 
-GitHub draft `v1.4.1` contains the existing production-signed four Android
+Owner-approved public release `v1.4.1` contains the existing production-signed four Android
 APKs and unsigned Windows beta setup for `1.4.1+4082`, with Core 1.2.2,
 `release-index.json` and `SHA256SUMS.txt`; all seven uploaded asset digests
 and sizes match the local package. Simple mode keeps country Auto and moves
 settings to Advanced. The exact 1.4.1 APK and installer have not been tested
 on the phone or installed VM; old saved-TUN migration is not claimed.
-CURRENT Happ and INCY Auto passed owned 204 and 64 KiB traffic. Hiddify
-parse/build retained the graph, but its runtime exited before opening SOCKS,
-so Hiddify traffic remains unproved. Public GitHub latest remains 1.4.0;
-this preparation changed no API pointer. Publication is a separate owner
-action, without announcements.
+The prepared files were published without rebuilding or announcements.
+Brain recommends 1.4.1 on Android and Windows with minimum 1.3.0 unchanged;
+the public API's versions, URLs, sizes and digests passed readback. Both services
+are active and no broadcast or LiveUpdate was created. Rollback restores
+`/root/portal_bot/.env.release-backup-20261002T123151Z` and restarts
+`portal-api` and `portal-bot`. Physical-device checks remain unclaimed.
 
 ## Client 1.4.0 publication, 2026-09-29
 
@@ -66,8 +67,8 @@ acceptance result.
 After those checks, publish Android APK and unsigned Windows beta through the
 existing `Kiwunaka/pokrov` release-index flow. Public announcement text needs
 owner approval. Rollback points the release index back to the retained 1.1.6
-release assets. Do not claim release completion before the package reaches
-users and 48 hours pass without critical reports.
+release assets. Completion requires the published package and public download
+metadata; background observation does not block publication.
 
 ## Э1 acceptance, 2026-09-26
 
