@@ -4,6 +4,19 @@ Public version: **1.4.0+4081** with POKROV Core 1.1.2 in
 `Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
 beta with a SmartScreen warning. Version 1.3.0 remains available for rollback.
 
+## Client 1.4.1 draft, 2026-10-02
+
+GitHub draft `v1.4.1` contains the existing production-signed four Android
+APKs and unsigned Windows beta setup for `1.4.1+4082`, with Core 1.2.2,
+`release-index.json` and `SHA256SUMS.txt`; all seven uploaded asset digests
+and sizes match the local package. Simple mode keeps country Auto and moves
+settings to Advanced. The exact 1.4.1 APK and installer have not been tested
+on the phone or installed VM; old saved-TUN migration is not claimed.
+CURRENT Happ and INCY Auto passed owned 204 and 64 KiB traffic. Hiddify
+parse/build retained the graph, but its runtime exited before opening SOCKS,
+so Hiddify traffic remains unproved. Public latest and API pointers remain
+on 1.4.0; publication is a separate owner action, without announcements.
+
 ## Client 1.4.0 publication, 2026-09-29
 
 Owner-approved quiet publication at 10:10 UTC from client main `f6e5947`,
