@@ -14,8 +14,9 @@ settings to Advanced. The exact 1.4.1 APK and installer have not been tested
 on the phone or installed VM; old saved-TUN migration is not claimed.
 CURRENT Happ and INCY Auto passed owned 204 and 64 KiB traffic. Hiddify
 parse/build retained the graph, but its runtime exited before opening SOCKS,
-so Hiddify traffic remains unproved. Public latest and API pointers remain
-on 1.4.0; publication is a separate owner action, without announcements.
+so Hiddify traffic remains unproved. Public GitHub latest remains 1.4.0;
+this preparation changed no API pointer. Publication is a separate owner
+action, without announcements.
 
 ## Client 1.4.0 publication, 2026-09-29
 
