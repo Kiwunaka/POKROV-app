@@ -18,8 +18,9 @@ foreach ($requiredMarker in @(
   'candidate_created = $false',
   'production_runtime_mutated = $false',
   'private_key_value_exposed = $false',
-  'OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_3_0',
-  'SKIPPED_BY_OWNER',
+  'RELEASE_APPROVAL_PENDING_1_4_2',
+  'CANDIDATE_ONLY',
+  'public_approved = [bool]$windowsReleaseConfig.public_approved',
   'smartscreen_warning_required',
   'required_for_trusted_claim'
 )) {
@@ -30,21 +31,22 @@ foreach ($requiredMarker in @(
 
 $ownerException = $windowsRelease.signing.owner_exception
 if ($windowsRelease.channel -ne 'outside_store_beta' -or
-    $windowsRelease.artifact_status -ne 'unsigned_beta_direct' -or
-    $windowsRelease.signing.status -ne 'SKIPPED_BY_OWNER' -or
-    $windowsRelease.signing.blocker_code -ne 'OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_3_0' -or
+    $windowsRelease.public_approved -ne $false -or
+    $windowsRelease.artifact_status -ne 'unsigned_beta_candidate' -or
+    $windowsRelease.signing.status -ne 'CANDIDATE_ONLY' -or
+    $windowsRelease.signing.blocker_code -ne 'RELEASE_APPROVAL_PENDING_1_4_2' -or
     $windowsRelease.signing.required_for_candidate -ne $false -or
     $windowsRelease.signing.required_for_trusted_claim -ne $true -or
-    $ownerException.status -ne 'SKIPPED_BY_OWNER' -or
-    $ownerException.authorized_on -ne '2026-09-28' -or
-    $ownerException.version_scope -ne '1.3.0' -or
+    $ownerException.status -ne 'CANDIDATE_ONLY' -or
+    $ownerException.authorized_on -ne '2026-10-02' -or
+    $ownerException.version_scope -ne '1.4.2' -or
     $ownerException.channel_scope -ne 'outside_store_beta' -or
     $ownerException.distribution_scope -ne 'direct_download_only' -or
     $ownerException.trusted_claim_allowed -ne $false -or
     $ownerException.store_claim_allowed -ne $false -or
     $ownerException.smartscreen_warning_required -ne $true -or
     $ownerException.expires_when_trusted_signing_is_available -ne $true) {
-  throw 'Windows unsigned owner exception is not constrained to the exact 1.3.0 direct-download beta scope.'
+  throw 'Windows unsigned preparation is not constrained to the exact 1.4.2 candidate-only beta scope.'
 }
 
 if ($windowsRelease.signing.readiness_probe.receipt_schema -ne

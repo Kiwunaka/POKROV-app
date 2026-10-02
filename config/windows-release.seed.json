@@ -1,8 +1,8 @@
 {
   "display_name": "POKROV",
   "channel": "outside_store_beta",
-  "artifact_status": "unsigned_beta_direct",
-  "public_approved": true,
+  "artifact_status": "unsigned_beta_candidate",
+  "public_approved": false,
   "binary_name": "pokrov_windows.exe",
   "bundle_root": "apps/windows_shell/build/windows/x64/runner/Release",
   "artifact_root": "apps/windows_shell/build/release_bundle",
@@ -36,7 +36,7 @@
     "runtime_dependencies": [
       "libcronet.dll"
     ],
-    "release_tag": "v1.2.2",
+    "release_tag": "v1.2.3",
     "desktop_abi": 2,
     "crash_profile": {
       "format": "POKROV_WINDOWS_CRASH_V1",
@@ -69,8 +69,8 @@
     "reason": "The Windows runtime requires an authenticated SCM service installed by the machine-wide setup program."
   },
   "signing": {
-    "status": "SKIPPED_BY_OWNER",
-    "blocker_code": "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_4_1",
+    "status": "CANDIDATE_ONLY",
+    "blocker_code": "RELEASE_APPROVAL_PENDING_1_4_2",
     "required_for_candidate": false,
     "required_for_trusted_claim": true,
     "contract": "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1",
@@ -90,9 +90,9 @@
       "candidate_created": false
     },
     "owner_exception": {
-      "status": "SKIPPED_BY_OWNER",
+      "status": "CANDIDATE_ONLY",
       "authorized_on": "2026-10-02",
-      "version_scope": "1.4.1",
+      "version_scope": "1.4.2",
       "channel_scope": "outside_store_beta",
       "distribution_scope": "direct_download_only",
       "trusted_claim_allowed": false,
@@ -111,9 +111,9 @@
   },
   "safe_claims": [
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
-    "This exact setup bundles the pinned POKROV Core 1.2.2 bytes, libcronet.dll dependency, the required x64 Microsoft VC143 runtime DLLs, and pokrov_service.exe in one machine-wide installation directory.",
+    "This exact setup bundles the pinned POKROV Core 1.2.3 bytes, libcronet.dll dependency, the required x64 Microsoft VC143 runtime DLLs, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
-    "The exact 1.4.1 owner exception permits an unsigned direct-download beta candidate only when its manifest records SKIPPED_BY_OWNER and the SmartScreen warning above; it does not permit a trusted, signed, Store or broad-stable claim.",
+    "The exact 1.4.2 authorization permits local unsigned candidate preparation with CANDIDATE_ONLY status and the SmartScreen warning above. Public release still requires the owner's decision; trusted, signed, Store and broad-stable claims remain unavailable.",
     "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest."
   ],
   "blocked_on": [

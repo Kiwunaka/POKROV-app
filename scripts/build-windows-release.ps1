@@ -507,14 +507,16 @@ if ($signedFileContractDifference.Count -ne 0) {
 }
 $ownerUnsignedException = $windowsReleaseConfig.signing.owner_exception
 $ownerUnsignedExceptionActive =
-  $windowsReleaseConfig.signing.status -eq "SKIPPED_BY_OWNER" -and
-  $windowsReleaseConfig.signing.blocker_code -eq "OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_4_1" -and
+  $windowsReleaseConfig.public_approved -eq $false -and
+  $windowsReleaseConfig.artifact_status -eq "unsigned_beta_candidate" -and
+  $windowsReleaseConfig.signing.status -eq "CANDIDATE_ONLY" -and
+  $windowsReleaseConfig.signing.blocker_code -eq "RELEASE_APPROVAL_PENDING_1_4_2" -and
   $windowsReleaseConfig.signing.required_for_candidate -eq $false -and
   $windowsReleaseConfig.signing.required_for_trusted_claim -eq $true -and
   $windowsReleaseConfig.channel -eq "outside_store_beta" -and
-  $ownerUnsignedException.status -eq "SKIPPED_BY_OWNER" -and
+  $ownerUnsignedException.status -eq "CANDIDATE_ONLY" -and
   $ownerUnsignedException.authorized_on -eq "2026-10-02" -and
-  $ownerUnsignedException.version_scope -eq "1.4.1" -and
+  $ownerUnsignedException.version_scope -eq "1.4.2" -and
   $ownerUnsignedException.channel_scope -eq "outside_store_beta" -and
   $ownerUnsignedException.distribution_scope -eq "direct_download_only" -and
   $ownerUnsignedException.trusted_claim_allowed -eq $false -and
@@ -523,7 +525,7 @@ $ownerUnsignedExceptionActive =
   $ownerUnsignedException.expires_when_trusted_signing_is_available -eq $true
 if ($windowsReleaseConfig.signing.required_for_candidate -ne $true -and
     -not $ownerUnsignedExceptionActive) {
-  throw "Unsigned Windows candidate policy is incomplete or outside the exact owner-approved 1.4.1 beta scope."
+  throw "Unsigned Windows candidate policy is incomplete or outside the exact 1.4.2 preparation scope. Public release requires the owner's decision."
 }
 $trustedWindowsSigningContext = $null
 if ($trustedWindowsSigningRequested) {
@@ -1330,7 +1332,7 @@ end;
 $trustedSigningStatus = if ($trustedWindowsSigningContext) {
   "PASS"
 } elseif ($ownerUnsignedExceptionActive) {
-  "SKIPPED_BY_OWNER"
+  "CANDIDATE_ONLY"
 } else {
   "MISSING"
 }
@@ -1379,6 +1381,7 @@ $manifest = [ordered]@{
   generated_at_utc = (Get-Date).ToUniversalTime().ToString("o")
   display_name = $windowsReleaseConfig.display_name
   version = $version
+  public_approved = [bool]$windowsReleaseConfig.public_approved
   runtime_release_tag = $runtimeArtifactsConfig.core.release_tag
   release_output_directory = $releaseOutputDirectory
   staged_bundle_directory = $stagedBundleDirectory

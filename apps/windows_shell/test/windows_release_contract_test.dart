@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('windows release contract requires POKROV Core 1.1.2', () async {
+  test('windows candidate preserves unsigned preparation and pinned runtime', () async {
     final releaseConfig = File('../../config/windows-release.seed.json');
     final runtimeConfig = File('../../config/runtime-artifacts.seed.json');
 
@@ -20,8 +20,8 @@ void main() {
         (releaseJson['required_files'] as List<dynamic>).cast<String>();
     expect(releaseJson['channel'], 'outside_store_beta');
     expect(releaseJson['binary_name'], 'pokrov_windows.exe');
-    expect(releaseJson['public_approved'], isTrue);
-    expect(releaseJson['artifact_status'], 'unsigned_beta_direct');
+    expect(releaseJson['public_approved'], isFalse);
+    expect(releaseJson['artifact_status'], 'unsigned_beta_candidate');
     expect(requiredFiles, contains('pokrov-core.dll'));
     expect(requiredFiles, contains('libcronet.dll'));
     expect(requiredFiles, contains('pokrov_tray.ico'));
@@ -62,19 +62,19 @@ void main() {
     expect(legacyMigration['failure_mode'], 'fail_closed');
 
     final signing = releaseJson['signing'] as Map<String, dynamic>;
-    expect(signing['status'], 'SKIPPED_BY_OWNER');
+    expect(signing['status'], 'CANDIDATE_ONLY');
     expect(
       signing['blocker_code'],
-      'OWNER_ACCEPTED_UNSIGNED_WINDOWS_BETA_1_4_0',
+      'RELEASE_APPROVAL_PENDING_1_4_2',
     );
     expect(signing['required_for_candidate'], isFalse);
     expect(signing['required_for_trusted_claim'], isTrue);
     expect(signing['contract'], 'AUTHENTICODE_SHA256_RFC3161_HTTPS_V1');
     final ownerException =
         signing['owner_exception'] as Map<String, dynamic>;
-    expect(ownerException['status'], 'SKIPPED_BY_OWNER');
-    expect(ownerException['authorized_on'], '2026-09-29');
-    expect(ownerException['version_scope'], '1.4.0');
+    expect(ownerException['status'], 'CANDIDATE_ONLY');
+    expect(ownerException['authorized_on'], '2026-10-02');
+    expect(ownerException['version_scope'], '1.4.2');
     expect(ownerException['channel_scope'], 'outside_store_beta');
     expect(ownerException['distribution_scope'], 'direct_download_only');
     expect(ownerException['trusted_claim_allowed'], isFalse);
@@ -98,7 +98,8 @@ void main() {
     expect(runtime.containsKey('helper_binary'), isFalse);
     expect(runtime['service_binary'], 'pokrov_service.exe');
     expect(runtime['core_binary'], 'pokrov-core.dll');
-    expect(runtime['release_tag'], 'v1.1.2');
+    final core = runtimeJson['core'] as Map<String, dynamic>;
+    expect(runtime['release_tag'], core['release_tag']);
     expect(runtime['desktop_abi'], 2);
     final crashProfile = runtime['crash_profile'] as Map<String, dynamic>;
     expect(crashProfile['format'], 'POKROV_WINDOWS_CRASH_V1');
@@ -112,11 +113,10 @@ void main() {
       contains('libcronet.dll'),
     );
 
-    final core = runtimeJson['core'] as Map<String, dynamic>;
     final assets = core['assets'] as Map<String, dynamic>;
     final windows = assets['windows'] as Map<String, dynamic>;
     expect(windows.containsKey('helper'), isFalse);
-    expect(core['release_tag'], 'v1.1.2');
+    expect(core['release_tag'], 'v${core['version']}');
     expect((core['desktop_abi'] as Map<String, dynamic>)['version'], 2);
     expect(windows['entry'], 'pokrov-core.dll');
     expect(

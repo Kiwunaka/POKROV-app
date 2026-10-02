@@ -4,6 +4,12 @@ Public version: **1.4.1+4082** with POKROV Core 1.2.2 in
 `Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
 beta with a SmartScreen warning. Version 1.4.0 remains available for rollback.
 
+Development target is `1.4.2+4083`, bound to the built Core 1.2.3 Android and
+Windows artifacts with desktop ABI 2. Windows unsigned preparation is limited to
+this candidate, records `CANDIDATE_ONLY`, and keeps `public_approved=false`.
+The public release remains 1.4.1; publishing 1.4.2 requires the owner's decision.
+Candidate metadata does not establish a build or physical-device acceptance.
+
 ## Client 1.4.1 quiet publication, 2026-10-02
 
 Owner-approved public release `v1.4.1` contains the existing production-signed four Android
