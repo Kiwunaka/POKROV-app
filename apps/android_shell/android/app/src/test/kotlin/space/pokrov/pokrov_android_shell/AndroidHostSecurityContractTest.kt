@@ -316,9 +316,9 @@ class AndroidHostSecurityContractTest {
         val serviceSource = source("PokrovRuntimeVpnService.kt")
 
         assertTrue(resolverSource.contains("if (signal.isCanceled)"))
-        assertTrue(resolverSource.contains("reportTransportFailure(AndroidResolverPolicy.TIMEOUT, runtimeToken)"))
+        assertTrue(resolverSource.contains("reportTransportFailure(AndroidResolverPolicy.TIMEOUT, runtimeToken, isIpv6Query)"))
         assertTrue(resolverSource.contains("AndroidResolverPolicy.shouldFailCloseRuntime(outcome)"))
-        assertTrue(serviceSource.contains("reportDnsTransportFailure(token: Any, failureKind: String)"))
+        assertTrue(serviceSource.contains("reportDnsTransportFailure(token: Any, failureKind: String, isIpv6Query: Boolean = false)"))
         assertTrue(serviceSource.contains("AndroidRuntimeState.markDnsTransportFailure(failureKind, failureMessage)"))
         assertTrue(serviceSource.contains("runCatching { commandServer?.resetNetwork() }"))
         assertTrue(serviceSource.contains("Keep the TUN up (which remains fail-closed)"))
@@ -372,7 +372,7 @@ class AndroidHostSecurityContractTest {
 
         val probeStart = serviceSource.indexOf("private fun scheduleCoreEgressProbe(")
         val requiredEvent = serviceSource.indexOf(
-            "AndroidOperationalOutcome.REQUIRED,\n            generation,",
+            "AndroidOperationalOutcome.REQUIRED, generation)",
             probeStart,
         )
         val probeResult = serviceSource.indexOf("private fun handleCoreEgressProbeResult(")

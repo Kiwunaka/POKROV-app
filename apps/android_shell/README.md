@@ -17,7 +17,8 @@ Current responsibility:
   or stale callbacks and arbitrary Core debug lines are discarded from release
   evidence
 - writing release-safe Android operational breadcrumbs only to the app-private,
-  no-backup `observability/android-operational-v1.jsonl` journal; the closed
+  no-backup `observability/android-operational-v1.jsonl` journal, with no logcat
+  output from the Android runtime service or candidate probe bridge; the closed
   schema covers VPN lifecycle and permissions, default-network callbacks,
   Doze/app-standby state, a stack-free main-thread watchdog and direct-updater
   identity results, with one bounded previous file and no free-form payload

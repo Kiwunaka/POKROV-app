@@ -1589,25 +1589,15 @@ class RuntimeHostBridge(
         val expected = call.argument<Any>("expectedNetworkContext") as? String
         fun failure(kind: String, duration: Long = 0L): Map<String, Any> =
             mapOf("success" to false, "failure_kind" to kind, "duration_ms" to duration)
-        fun finish(value: Any, duration: Long = 0L) {
-            val safe = runCatching { if (value is String) org.json.JSONObject(value)
-                else org.json.JSONObject(value as Map<*, *>) }.getOrNull()
-            val kind = safe?.optString("failure_kind")?.takeIf { it in setOf("", "cancelled",
-                "network_changed", "invalid_request", "duplicate_probe", "invalid_profile", "unavailable",
-                "timeout", "start_failed", "connect_failed", "tls_failed", "probe_failed", "unexpected_status") }
-                ?: "unavailable"
-            android.util.Log.i("POKROVRuntime", "candidate_probe success=${safe?.optBoolean("success") == true && kind.isEmpty()} failure_kind=$kind duration_ms=$duration")
-            result.success(value)
-        }
         if (id == null || !id.matches(Regex("[A-Za-z0-9_-]{1,128}")) ||
             content.isNullOrBlank() || timeout == null || timeout !in 1..30_000 || expected.isNullOrBlank()) {
-            finish(failure("invalid_request"))
+            result.success(failure("invalid_request"))
             return
         }
         val context = runCatching { transportNetworkContext.value }.getOrNull()
         val captured = runCatching { context?.candidateNetwork() }.getOrNull()
         if (context == null || captured?.network == null || captured.links == null || captured.contextRef != expected) {
-            finish(failure("network_changed"))
+            result.success(failure("network_changed"))
             return
         }
         val accepted = candidateProbes.start(id) { cancelled ->
@@ -1632,12 +1622,12 @@ class RuntimeHostBridge(
                             context.read() != expected -> failure("network_changed", elapsed)
                             else -> response
                         }
-                        finish(published, elapsed)
+                        result.success(published)
                     }
                 }
             }
         }
-        if (!accepted) finish(failure("duplicate_probe"))
+        if (!accepted) result.success(failure("duplicate_probe"))
     }
 
     private fun cancelCandidateProbe(call: MethodCall, result: MethodChannel.Result) {
