@@ -1086,7 +1086,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       final serverCatalog = await service.fetchLocationsCatalog(
         hostPlatform: widget.appContext.hostPlatform,
       );
-      final measurements = measureDevice
+      // City probe targets are direct Node addresses. A selected or running
+      // bridge must keep those targets unopened, including an explicit refresh.
+      final bridgeSelected =
+          (normalizeClientLocationVariantId(_preferredVariantId) ?? 'direct') !=
+              'direct' ||
+          (_runtimeSnapshot?.phase == RuntimePhase.running &&
+              (normalizeClientLocationVariantId(_activeVariantId) ?? 'direct') !=
+                  'direct') ||
+          serverCatalog.transportProfile == 'ru_bridge_relay';
+      final measurements = measureDevice && !bridgeSelected
           ? await (widget.nodeLatencyProbe ?? measurePokrovNodeLatencies)(
               widget.appContext.hostPlatform,
               pokrovLocationLatencyTargets(serverCatalog),

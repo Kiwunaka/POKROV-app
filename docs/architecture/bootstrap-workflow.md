@@ -43,6 +43,12 @@ stops at candidate-network admission; this does not exercise protected-cache
 reuse. The saved-stage check did not inspect historical TUN fields and does not
 establish migration of a legacy TUN shape. Android API-only failure was not tested.
 
+Locations refresh keeps direct Node latency probes disabled while a bridge is
+selected or running, and for a bridge transport catalog. The current API catalog
+and Portal health still refresh; an ordinary direct selection retains the
+device latency check. This prevents an explicit ping refresh in «Белые списки»
+from opening direct connections to the assigned destination Nodes.
+
 With ordinary managed profiles and a runtime supporting protected handoff,
 manual reconnect and location replacement retain the running tunnel while the
 replacement profile is resolved and probed. Cancellation retains that protection,

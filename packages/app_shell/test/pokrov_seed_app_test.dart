@@ -10563,7 +10563,7 @@ void main() {
     expect(store.state.preferredNodeCode, isEmpty);
   });
 
-  testWidgets('fresh device ping does not refresh Portal health and load',
+  testWidgets('device ping preserves Portal clocks and skips selected bridges',
       (tester) async {
     _installReadyRuntimeBridgeMock();
     final oldPortalTime = DateTime.now()
@@ -10594,6 +10594,20 @@ void main() {
                 latencySource: 'brain',
                 probeHost: 'de.example.test',
                 probePort: 443,
+                variants: const <ClientLocationVariant>[
+                  ClientLocationVariant(
+                    id: 'direct',
+                    label: 'Обычный',
+                    description: 'Прямое подключение',
+                    available: true,
+                  ),
+                  ClientLocationVariant(
+                    id: 'mini',
+                    label: 'Белые списки',
+                    description: 'Для ограниченных сетей',
+                    available: true,
+                  ),
+                ],
               ),
             ],
           ),
@@ -10607,12 +10621,19 @@ void main() {
     final store = _FakeClientExperienceStore(
       PokrovClientExperienceState.fromJson({'interfaceMode': 'advanced'}),
     );
+    var deviceProbeCalls = 0;
+    Future<Map<String, int>> measureLatency(
+        HostPlatform _, List<PokrovNodeLatencyTarget> targets) async {
+      deviceProbeCalls += 1;
+      expect(targets.single.host, 'de.example.test');
+      return const {'de-fra': 47};
+    }
     await tester.pumpWidget(PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
       bootstrapper: bootstrapper,
       firstLaunchStore: _FakeFirstLaunchStore(completed: true),
       clientExperienceStore: store,
-      nodeLatencyProbe: (_, __) async => const {'de-fra': 47},
+      nodeLatencyProbe: measureLatency,
     ));
     await tester.pumpAndSettle();
     await _tapNav(tester, 'nav-locations');
@@ -10637,6 +10658,32 @@ void main() {
     final saved = store.state.cachedLocations!.countries.single.cities.single;
     expect(saved.measuredAt, oldPortalTime);
     expect(saved.latencyMeasuredAt, isNotEmpty);
+    expect(deviceProbeCalls, 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    store.state = store.state.copyWith(
+      preferredNodeCode: 'de-fra',
+      preferredVariantId: 'mini',
+    );
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: bootstrapper,
+      firstLaunchStore: _FakeFirstLaunchStore(completed: true),
+      clientExperienceStore: store,
+      nodeLatencyProbe: measureLatency,
+    ));
+    await tester.pumpAndSettle();
+    await _tapNav(tester, 'nav-locations');
+    await tester.ensureVisible(refresh);
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    expect(store.state.preferredVariantId, 'mini');
+    expect(deviceProbeCalls, 1);
+    expect(store.state.cachedLocations!.countries.single.cities.single.latencyMs,
+        isNull);
+    expect(store.state.cachedLocations!.countries.single.cities.single.measuredAt,
+        oldPortalTime);
   });
 
   testWidgets('locations screen renders backend catalog cities',
