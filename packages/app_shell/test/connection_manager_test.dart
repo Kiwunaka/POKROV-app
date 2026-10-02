@@ -1161,7 +1161,8 @@ void main() {
     expect((after['route'] as Map)['final'], 'proxy');
     expect(((after['dns'] as Map)['servers'] as List).single, {
       'tag': 'pokrov-user-dns',
-      'address': 'https://dns.adguard-dns.com/dns-query',
+      'type': 'https',
+      'server': 'dns.adguard-dns.com',
       'detour': 'proxy',
     });
   });

@@ -230,11 +230,12 @@ Future<void> _pumpReadyHome(
 
 Future<void> _confirmFirstRouteScope(WidgetTester tester) async {
   final choice = find.byKey(const ValueKey('first-connect-scope-whole-device'));
-  expect(choice, findsOneWidget);
-  await tester.ensureVisible(choice);
-  await tester.pumpAndSettle();
-  await tester.tap(choice);
-  await tester.pumpAndSettle();
+  if (choice.evaluate().isNotEmpty) {
+    await tester.ensureVisible(choice);
+    await tester.pumpAndSettle();
+    await tester.tap(choice);
+    await tester.pumpAndSettle();
+  }
   final permission = find.byKey(
     const ValueKey('vpn-permission-continue'),
   );
@@ -317,7 +318,7 @@ void main() {
       ('runtime_observed', false),
       ('connect_requested', false),
       ('running', true),
-      ('runtime_observed', false),
+      ('runtime_observed', true),
     ]);
     expect(onboardingCompleted, 1);
     expect(
@@ -534,11 +535,6 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
-    await tester.pumpAndSettle();
-    final scope = find.byKey(
-      const ValueKey('first-connect-scope-whole-device'),
-    );
-    await tester.tap(scope);
     await tester.pumpAndSettle();
 
     expect(

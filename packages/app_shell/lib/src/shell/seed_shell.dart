@@ -588,6 +588,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     final startingGeneration = _connectionManager.attemptId;
     final willConnect = _runtimeSnapshot?.phase != RuntimePhase.running || reconnectAfterDisconnect;
+    if (willConnect && !_clientExperienceLoaded) {
+      await _clientExperienceRestore;
+      if (!mounted || startingGeneration != _connectionManager.attemptId) return;
+    }
     if (willConnect && _selectedRouteMode == RouteMode.selectiveServices &&
         (!_selectiveServicesAvailable || _clientExperience.routingPreferences.selectedCatalogServiceIds.isEmpty)) {
       await _connectionManager.setInterfaceMode(PokrovInterfaceMode.advanced);
@@ -607,11 +611,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             confirmedRouteMode == null ||
             !(confirmedRouteMode == RouteMode.selectiveServices && _selectiveServicesAvailable) &&
               !widget.appContext.runtimeProfile.supportedRouteModes.contains(confirmedRouteMode))) {
-      final routeMode = await _showFirstConnectRouteScopeSheet(
-        context,
-        canSelectApps: widget.appContext.runtimeProfile.supportedRouteModes
-            .contains(RouteMode.selectedApps),
-      );
+      final routeMode = _clientExperience.interfaceMode == PokrovInterfaceMode.simple
+          ? _selectedRouteMode
+          : await _showFirstConnectRouteScopeSheet(
+              context,
+              canSelectApps: widget.appContext.runtimeProfile.supportedRouteModes
+                  .contains(RouteMode.selectedApps),
+            );
       if (!mounted || routeMode == null) {
         return;
       }
@@ -631,6 +637,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   int _selectedIndex = 0;
   late final ManagedProfileBootstrapper _bootstrapper;
   late final AccountSessionCoordinator _accountSessionCoordinator;
+  late final Future<void> _clientExperienceRestore;
   late final AppFirstBonusActionService? _bonusActionService;
   late final AppFirstReleaseActionService? _releaseActionService;
   late final AppFirstAcquisitionService? _acquisitionService;
@@ -808,7 +815,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
     _firstSessionLoadFuture = _loadFirstLaunchState();
     unawaited(_loadConnectHintState());
-    unawaited(_restoreClientExperience());
+    _clientExperienceRestore = _restoreClientExperience();
+    unawaited(_clientExperienceRestore);
     _refreshRuntimeSnapshot();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.observability?.markUiReady();
@@ -889,6 +897,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _refreshAccountSummary() async {
+    await _clientExperienceRestore;
+    if (!mounted) return;
     await _accountSessionCoordinator.refreshSummary(
         refreshSubscription: _refreshSubscriptionInfo,
         refreshBonus: _loadBonusSummary,
@@ -3684,7 +3694,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 }
 
-/// The first live connection needs one consumer decision about device scope.
+/// Advanced mode asks about device scope before the first live connection.
 /// The selected [RouteMode] continues through the existing managed-profile
 /// resolution path, which persists the device policy server-side.
 Future<RouteMode?> _showFirstConnectRouteScopeSheet(

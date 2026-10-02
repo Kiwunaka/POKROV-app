@@ -1658,10 +1658,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey('first-connect-scope-whole-device')),
-    );
-    await tester.pump();
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -1942,6 +1938,7 @@ void main() {
     );
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         firstLaunchStore: store,
@@ -2132,6 +2129,11 @@ void main() {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: _FakeClientExperienceStore(
+          const PokrovClientExperienceState.empty().copyWith(
+            interfaceMode: PokrovInterfaceMode.advanced,
+          ),
+        ),
         firstLaunchStore: _FakeFirstLaunchStore(completed: true),
       ),
     );
@@ -2319,6 +2321,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -2561,6 +2564,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -2661,6 +2665,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         handoffLauncher: (uri) async {
@@ -2743,6 +2748,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         handoffLauncher: (uri) async {
@@ -2869,6 +2875,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -3783,6 +3790,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -3822,6 +3830,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -3868,6 +3877,11 @@ void main() {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: _FakeClientExperienceStore(
+          const PokrovClientExperienceState.empty().copyWith(
+            interfaceMode: PokrovInterfaceMode.advanced,
+          ),
+        ),
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
             profileName: 'system-surfaces',
@@ -3993,6 +4007,7 @@ void main() {
       );
       await tester.pumpWidget(
         PokrovSeedApp(
+          clientExperienceStore: _FakeClientExperienceStore(),
           appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
           bootstrapper: bootstrapper,
           firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -4027,6 +4042,11 @@ void main() {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: _FakeClientExperienceStore(
+          const PokrovClientExperienceState.empty().copyWith(
+            interfaceMode: PokrovInterfaceMode.advanced,
+          ),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -4110,6 +4130,11 @@ void main() {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: _FakeClientExperienceStore(
+          const PokrovClientExperienceState.empty().copyWith(
+            interfaceMode: PokrovInterfaceMode.advanced,
+          ),
+        ),
         firstLaunchStore: _FakeFirstLaunchStore(completed: true),
         handoffLauncher: (uri) async {
           opened.add(uri);
@@ -4368,6 +4393,7 @@ void main() {
       );
       final launched = <Uri>[];
       await tester.pumpWidget(PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: host),
         bootstrapper: bootstrapper,
         firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -4423,6 +4449,7 @@ void main() {
       ),
     );
     await tester.pumpWidget(PokrovSeedApp(
+      clientExperienceStore: _FakeClientExperienceStore(),
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
       bootstrapper: bootstrapper,
       firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -4491,6 +4518,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -4526,6 +4554,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         handoffLauncher: (uri) async {
@@ -4748,6 +4777,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -4835,6 +4865,7 @@ void main() {
       ),
     );
     await tester.pumpWidget(PokrovSeedApp(
+      clientExperienceStore: _FakeClientExperienceStore(),
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
       bootstrapper: bootstrapper,
       firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -4869,6 +4900,7 @@ void main() {
         subscriptionGate: subscriptionGate.future,
       );
       await tester.pumpWidget(PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         observability: observability,
@@ -4928,6 +4960,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -4961,6 +4994,7 @@ void main() {
     );
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -5058,6 +5092,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -5150,6 +5185,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -5257,6 +5293,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -5303,6 +5340,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         handoffLauncher: (uri) async {
@@ -5357,6 +5395,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -5558,6 +5597,11 @@ void main() {
     await tester.pumpWidget(
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+        clientExperienceStore: _FakeClientExperienceStore(
+          const PokrovClientExperienceState.empty().copyWith(
+            interfaceMode: PokrovInterfaceMode.advanced,
+          ),
+        ),
         bootstrapper: bootstrapper,
         handoffLauncher: (uri) async {
           launched.add(uri);
@@ -5927,6 +5971,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -6086,6 +6131,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -6140,6 +6186,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -6233,6 +6280,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -6405,6 +6453,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -9514,6 +9563,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -9629,6 +9679,7 @@ void main() {
       autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
     );
     await tester.pumpWidget(PokrovSeedApp(
+      clientExperienceStore: _FakeClientExperienceStore(),
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
       bootstrapper: bootstrapper,
     ));
@@ -9657,6 +9708,7 @@ void main() {
       autoRenew: false, renewUrl: null, plans: [], trafficPolicy: {},
     );
     await tester.pumpWidget(PokrovSeedApp(
+      clientExperienceStore: _FakeClientExperienceStore(),
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
       bootstrapper: bootstrapper,
     ));
@@ -9683,6 +9735,7 @@ void main() {
       materializedForRuntime: true, cacheEntryId: 'cached-entry',
     ));
     await tester.pumpWidget(PokrovSeedApp(
+      clientExperienceStore: _FakeClientExperienceStore(),
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
       bootstrapper: bootstrapper,
     ));
@@ -9715,6 +9768,7 @@ void main() {
       materializedForRuntime: true, cacheEntryId: 'cached-entry',
     ));
     await tester.pumpWidget(PokrovSeedApp(
+      clientExperienceStore: _FakeClientExperienceStore(),
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
       bootstrapper: bootstrapper,
     ));
@@ -9747,6 +9801,7 @@ void main() {
         materializedForRuntime: true, cacheEntryId: 'cached-entry',
       ), status: status);
       await tester.pumpWidget(PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ));
@@ -9769,6 +9824,7 @@ void main() {
       materializedForRuntime: true, cacheEntryId: 'cached-entry',
     ));
     await tester.pumpWidget(PokrovSeedApp(
+      clientExperienceStore: _FakeClientExperienceStore(),
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
       bootstrapper: bootstrapper,
     ));
@@ -10270,6 +10326,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
@@ -11459,6 +11516,7 @@ void main() {
     );
     final store = _FakeClientExperienceStore(
       PokrovClientExperienceState.fromJson(<String, dynamic>{
+        'interfaceMode': 'advanced',
         'cachedLocations': catalog.toJson(),
         'locationsCachedAt': DateTime.now().toUtc().toIso8601String(),
       }),
@@ -11603,6 +11661,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -11937,6 +11996,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
         firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -12237,7 +12297,7 @@ void main() {
     expect(bootstrapper.markedNotificationIds, <String>['incident.cached']);
   });
 
-  testWidgets('primary connect action auto-prepares and starts host runtime',
+  testWidgets('Simple first connect uses the default route without a scope sheet',
       (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
@@ -12245,6 +12305,7 @@ void main() {
     final calls = <String>[];
     final stagedPayloads = <String>[];
     var connected = false;
+    final experienceStore = _FakeClientExperienceStore();
     final bootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-from-api',
@@ -12339,6 +12400,7 @@ void main() {
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
+        clientExperienceStore: experienceStore,
       ),
     );
     await tester.pumpAndSettle();
@@ -12357,11 +12419,10 @@ void main() {
 
     expect(
       find.byKey(const ValueKey('first-connect-route-scope-sheet')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(calls, isNot(contains('runtimeEngine.connect')));
-    expect(bootstrapper.calls, 0);
-    await _confirmFirstRouteScopeIfPresent(tester);
+    expect(experienceStore.state.firstRouteScopeConfirmed, isTrue);
+    expect(experienceStore.state.firstRouteScopeMode, RouteMode.allExceptRu);
 
     expect(find.byKey(const ValueKey('connect-disc-connected-settle')),
         findsOneWidget);
@@ -12432,6 +12493,7 @@ void main() {
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
     await tester.pumpWidget(PokrovSeedApp(
+      clientExperienceStore: _FakeClientExperienceStore(),
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
       bootstrapper: bootstrapper,
       firstLaunchStore: _FakeFirstLaunchStore(completed: true),
@@ -12487,6 +12549,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
@@ -12501,10 +12564,6 @@ void main() {
     await _completeFirstLaunchIfPresent(tester);
 
     await tester.tap(find.byKey(const ValueKey('primary-connect-action')));
-    await tester.pumpAndSettle();
-    final scope =
-        find.byKey(const ValueKey('first-connect-scope-whole-device'));
-    await tester.tap(scope);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(connectCalls, 1);
@@ -12541,7 +12600,7 @@ void main() {
     );
   });
 
-  testWidgets('first route scope blocks an empty selected-apps list',
+  testWidgets('Advanced first route scope blocks an empty selected-apps list',
       (tester) async {
     final calls = <String>[];
     _installReadyRuntimeBridgeMock(calls: calls);
@@ -12557,6 +12616,11 @@ void main() {
       PokrovSeedApp(
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
+        clientExperienceStore: _FakeClientExperienceStore(
+          const PokrovClientExperienceState.empty().copyWith(
+            interfaceMode: PokrovInterfaceMode.advanced,
+          ),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -12617,7 +12681,7 @@ void main() {
   });
 
   testWidgets(
-      'late client-experience restore cannot replace first-connect route choice',
+      'first connect waits for saved routing preferences before Simple defaults',
       (tester) async {
     final calls = <String>[];
     _installReadyRuntimeBridgeMock(calls: calls);
@@ -12631,7 +12695,7 @@ void main() {
     final store = _DelayedClientExperienceStore(
       const PokrovClientExperienceState.empty().copyWith(
         firstRouteScopeConfirmed: true,
-        firstRouteScopeMode: RouteMode.allExceptRu,
+        firstRouteScopeMode: RouteMode.fullTunnel,
       ),
     );
 
@@ -12649,26 +12713,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('first-connect-route-scope-sheet')),
-      findsOneWidget,
+      findsNothing,
     );
-
-    await tester.tap(
-      find.byKey(const ValueKey('first-connect-scope-selected-apps')),
-    );
-    await tester.pump();
+    expect(bootstrapper.calls, 0);
+    expect(calls, isNot(contains('runtimeEngine.connect')));
     store.releaseStaleRead();
     await tester.pumpAndSettle();
 
     expect(store.state.firstRouteScopeConfirmed, isTrue);
-    expect(store.state.firstRouteScopeMode, RouteMode.selectedApps);
-    expect(bootstrapper.lastRouteMode, isNull);
-    expect(calls, isNot(contains('runtimeEngine.connect')));
+    expect(store.state.firstRouteScopeMode, RouteMode.fullTunnel);
+    expect(bootstrapper.lastRouteMode, RouteMode.fullTunnel);
+    expect(calls, contains('runtimeEngine.connect'));
   });
 
   testWidgets('first route scope confirmation survives a shell restart',
       (tester) async {
     _installReadyRuntimeBridgeMock();
-    final store = _FakeClientExperienceStore();
+    final store = _FakeClientExperienceStore(
+      const PokrovClientExperienceState.empty().copyWith(
+        interfaceMode: PokrovInterfaceMode.advanced,
+      ),
+    );
     final firstBootstrapper = _FakeBootstrapper(
       const ManagedProfilePayload(
         profileName: 'managed-first-shell',
@@ -12811,6 +12876,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
@@ -12909,6 +12975,7 @@ void main() {
     );
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: bootstrapper,
       ),
@@ -13008,6 +13075,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
@@ -13123,6 +13191,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: host),
         bootstrapper: bootstrapper,
         runtimeActionTimeout: const Duration(milliseconds: 500),
@@ -13307,6 +13376,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
@@ -13419,6 +13489,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
@@ -13619,6 +13690,7 @@ void main() {
 
     await tester.pumpWidget(
       PokrovSeedApp(
+        clientExperienceStore: _FakeClientExperienceStore(),
         appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
         bootstrapper: _FakeBootstrapper(
           const ManagedProfilePayload(
@@ -13696,7 +13768,11 @@ void main() {
           firstLaunchStore: _FakeFirstLaunchStore(completed: true),
           themeModeStore: _FixedThemeModeStore(variant.theme),
           connectHintStore: const _CompletedConnectHintStore(),
-          clientExperienceStore: _FakeClientExperienceStore(),
+          clientExperienceStore: _FakeClientExperienceStore(
+            const PokrovClientExperienceState.empty().copyWith(
+              interfaceMode: PokrovInterfaceMode.advanced,
+            ),
+          ),
         ),
       );
       await tester.pumpAndSettle();
