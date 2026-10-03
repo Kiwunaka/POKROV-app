@@ -1,14 +1,16 @@
 # Client release status
 
-Public version: **1.4.1+4082** with POKROV Core 1.2.2 in
-`Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
-beta with a SmartScreen warning. Version 1.4.0 remains available for rollback.
+Public version: **1.4.2+4083**, built from client `c956e9b` with the published
+POKROV Core 1.2.6 artifacts and desktop ABI 2. The owner-approved quiet release
+`v1.4.2` on 2026-10-03 contains four production-signed Android direct APKs,
+unsigned Windows beta setup, `release-index.json` and `SHA256SUMS.txt`.
+GitHub readback matched all seven asset names and sizes; no announcement job was
+created. Windows retains the SmartScreen warning and makes no trusted-signing or
+Store claim. Public 1.4.1 remains available for rollback.
 
-Development target is `1.4.2+4083`, bound to the published Core 1.2.6 prerelease Android and
-Windows artifacts with desktop ABI 2. Windows unsigned preparation is limited to
-this candidate, records `CANDIDATE_ONLY`, and keeps `public_approved=false`.
-The public release remains 1.4.1; publishing 1.4.2 requires the owner's decision.
-Candidate metadata does not establish a build or physical-device acceptance.
+Brain's public feed recommends 1.4.2 on Android and Windows with 100% rollout.
+The minimum supported version remains 1.3.0; post-apply readback passed.
+No new broadcast or LiveUpdate was created.
 
 ## Client 1.4.1 quiet publication, 2026-10-02
 
@@ -50,7 +52,7 @@ present through 298 seconds and ordinary owned 204/64 KiB HTTPS passed at
 295 seconds with certificate verification enabled. Android's exact 20/30/181-second
 samples and Main runtime-version UI were not captured; Core 1.2.6 is verified by
 the build binding. Both test guests are powered off. The five final binaries and
-existing release metadata are prepared; app publication still needs the owner.
+existing release metadata were published quietly as `v1.4.2`.
 Older released clients lack first-attempt start coverage, so the production
 failure fraction for new installs remains unknown. The new client and deployed
 Brain correlate the first observed start and terminal event by trace and sequence.
