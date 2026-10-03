@@ -11609,6 +11609,7 @@ void main() {
     _installReadyRuntimeBridgeMock(calls: runtimeCalls);
     final store = _FakeClientExperienceStore(
       PokrovClientExperienceState.fromJson(<String, dynamic>{
+        'interfaceMode': 'advanced',
         'preferredNodeCode': 'de-fra',
         'preferredVariantId': 'mini',
         'firstRouteScopeConfirmed': true,

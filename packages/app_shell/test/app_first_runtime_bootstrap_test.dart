@@ -1951,7 +1951,7 @@ void main() {
     expect(state['managed_manifest_path'], '/api/client/profile/managed');
   });
 
-  test('reports a successful runtime connection through the app session',
+  test('reports runtime stats with native failure through the app session',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-runtime-stats-test-',
@@ -2071,6 +2071,22 @@ void main() {
       maxRequestAttempts: 1,
     );
 
+    const failedSnapshot = RuntimeSnapshot(
+      hostPlatform: HostPlatform.android,
+      lane: RuntimeLane.mobileArtifact,
+      phase: RuntimePhase.running,
+      artifactDirectory: null,
+      coreBinaryPath: null,
+      helperBinaryPath: null,
+      stagedConfigPath: null,
+      supportsLiveConnect: true,
+      canInitialize: false,
+      canConnect: false,
+      message: 'Egress verification failed.',
+      coreEgressValidated: false,
+      lastFailureKind: 'core_egress_timeout',
+    );
+
     await bootstrapper.reportRuntimeStats(
       hostPlatform: HostPlatform.android,
       runtimePhase: 'RUNNING',
@@ -2092,10 +2108,17 @@ void main() {
       hostPlatform: HostPlatform.android,
       runtimePhase: 'FAILED',
       connected: false,
-      errorCode: 'pairing_claim_failed',
-      failureKind: 'tls_failed',
+      errorCode: 'connect_failed',
+      connectivitySnapshot: failedSnapshot,
       networkClass: 'wifi',
       accessNetworkAsn: 'AS12345',
+    );
+    await bootstrapper.reportRuntimeStats(
+      hostPlatform: HostPlatform.android,
+      runtimePhase: 'FAILED',
+      connected: false,
+      failureKind: 'tls_failed',
+      connectivitySnapshot: failedSnapshot,
     );
     await bootstrapper.reportTelegramLinkEvent(
       hostPlatform: HostPlatform.android,
@@ -2159,6 +2182,7 @@ void main() {
       'POST /api/client/session/start-trial',
       'POST /api/client/runtime/stats',
       'POST /api/client/runtime/stats',
+      'POST /api/client/runtime/stats',
       'POST /api/client/telegram/link/events',
       'POST /api/account/experience/onboarding',
       'POST /api/events',
@@ -2191,13 +2215,21 @@ void main() {
       <String, Object?>{
         'runtime_phase': 'failed',
         'connected': false,
-        'error_code': 'pairing_claim_failed',
-        'failure_kind': 'tls_failed',
+        'error_code': 'connect_failed',
+        'failure_kind': 'core_egress_timeout',
         'network_class': 'wifi',
         'access_network_asn': 'AS12345',
         'report_run_id': reportRunId,
         'report_sequence': 2,
-        'connectivity': {'proof_stage': 'unknown'},
+        'connectivity': {'proof_stage': 'degraded'},
+      },
+      <String, Object?>{
+        'runtime_phase': 'failed',
+        'connected': false,
+        'failure_kind': 'tls_failed',
+        'report_run_id': reportRunId,
+        'report_sequence': 3,
+        'connectivity': {'proof_stage': 'degraded'},
       },
     ]);
     expect(telegramLinkEventBodies, <Map<String, dynamic>>[

@@ -55,6 +55,28 @@ enum class ServiceEventOutcome {
   kRejected,
 };
 
+enum class EgressProbeStage {
+  kTunDns,
+  kDnsSetup,
+  kDnsSend,
+  kDnsWait,
+  kDnsReply,
+  kHttpSetup,
+  kConnect,
+  kTls,
+  kSending,
+  kResponse,
+  kProof,
+  kRetryWait,
+};
+
+enum class EgressProbeOutcome {
+  kSucceeded, kFailed, kCancelled, kDeadline, kTimeout,
+};
+enum class EgressErrorDomain {
+  kNone, kWin32, kWinsock, kWinHttp, kDns, kNtStatus, kHttpStatus,
+};
+
 enum class TransitionGuardOperation { kStart, kFinish };
 enum class TransitionGuardStage {
   kEngineOpen,
@@ -105,6 +127,11 @@ class ServiceEventSink {
   }
   virtual bool RecordCoreOperationalEvent(
       const CoreOperationalEventRecord& event) {
+    return false;
+  }
+  virtual bool RecordEgressProbeObservation(
+      EgressProbeStage stage, EgressProbeOutcome outcome, EgressErrorDomain domain,
+      std::uint32_t error, std::uint64_t elapsed_ms) {
     return false;
   }
 };

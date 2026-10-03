@@ -86,6 +86,12 @@ void ValidateClosedLines(const std::string& content) {
                line.find("operation_nonce") == std::string::npos &&
                line.find("api.pokrov") == std::string::npos,
            "event journal retained forbidden runtime material");
+    if (line.find("|runtime_egress_observation|") != std::string::npos) {
+      const auto numeric = line.substr(line.rfind('|') + 1);
+      Expect(numeric.find_first_not_of("0123456789,") == std::string::npos &&
+                 std::count(numeric.begin(), numeric.end(), ',') == 1,
+             "egress observation accepted non-numeric diagnostic data");
+    }
   }
 }
 
@@ -120,6 +126,9 @@ void TestClosedBoundedJournal() {
                  TransitionGuardOperation::kFinish,
                  TransitionGuardStage::kRemoveCommit, 0x8032001a),
              "transition guard failure was not durable");
+      Expect(journal->RecordEgressProbeObservation(EgressProbeStage::kResponse,
+                 EgressProbeOutcome::kDeadline, EgressErrorDomain::kWinHttp, 12002, 3030),
+             "egress observation was not durable");
       Expect(journal->RecordCoreOperationalEvent(CoreOperationalEventRecord{
                  1,
                  1,
@@ -167,6 +176,9 @@ void TestClosedBoundedJournal() {
   Expect(combined.find("transition_guard_failure|failed|finish|"
                        "remove_commit|2150760474") != std::string::npos,
          "transition guard failure lost its fixed stage or numeric WFP error");
+  Expect(combined.find("runtime_egress_observation|deadline|response|winhttp|12002,3030") !=
+             std::string::npos,
+         "egress observation lost the native cause, phase or elapsed time");
   Expect(combined.find(
              "POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:00Z|"
              "018f4f2a-6d58-4c11-8c27-4fb77bd28c15|"

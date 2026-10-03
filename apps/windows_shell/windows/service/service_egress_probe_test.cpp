@@ -15,6 +15,29 @@ std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
                                             const CheckInterruption& interrupted);
 }
 namespace {
+class EgressEvents final : public pokrov::service::ServiceEventSink {
+ public:
+  struct Observation {
+    pokrov::service::EgressProbeStage stage;
+    pokrov::service::EgressProbeOutcome outcome;
+    pokrov::service::EgressErrorDomain domain;
+    std::uint32_t error;
+    std::uint64_t elapsed_ms;
+  };
+  bool Record(pokrov::service::ServiceEvent, pokrov::service::ServiceEventOutcome) override { return true; }
+  bool RecordSystemBoot(std::uint64_t) override { return true; }
+  bool RecordIpcRequest(pokrov::service::Command, const pokrov::service::Identifier&) override { return true; }
+  bool RecordIpcResponse(pokrov::service::Command, pokrov::service::Status,
+                         const pokrov::service::Identifier&) override { return true; }
+  bool RecordEgressProbeObservation(pokrov::service::EgressProbeStage stage,
+      pokrov::service::EgressProbeOutcome outcome, pokrov::service::EgressErrorDomain domain,
+      std::uint32_t error, std::uint64_t elapsed_ms) override {
+    observations.push_back({stage, outcome, domain, error, elapsed_ms});
+    return true;
+  }
+  std::vector<Observation> observations;
+};
+
 class LoopbackDnsServer {
  public:
   enum class Reply { kValid, kWrongId, kWrongName, kError, kWait };
@@ -197,19 +220,31 @@ int main() {
     LoopbackServer server("");
     expect(server.port != 0, "loopback listener failed");
     if (server.port == 0) return 1;
-    auto probe = CreateLoopbackEgressProbeForTest(server.port);
+    EgressEvents events;
+    auto probe = CreateLoopbackEgressProbeForTest(server.port, false, &events);
     const auto start = ::GetTickCount64();
     const auto failure = probe->Verify([&] {
-      return server.requests.load() > 0 || ::GetTickCount64() - start > 2000
-                 ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+      return ::GetTickCount64() - start >= 300
+                 ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
     });
     const auto elapsed = ::GetTickCount64() - start;
     expect(!failure.empty() && elapsed < 1500 && server.requests == 1,
-           "cancellation did not stop pending headers before timeout or retried");
+           "deadline did not stop pending headers before timeout or retried");
+    expect(events.observations.size() == 2 &&
+               (events.observations[0].stage == EgressProbeStage::kSending ||
+                events.observations[0].stage == EgressProbeStage::kResponse) &&
+               events.observations[0].outcome == EgressProbeOutcome::kDeadline &&
+               events.observations[0].domain == EgressErrorDomain::kNone &&
+               events.observations[0].error == 0 &&
+               events.observations[0].elapsed_ms >= 250 &&
+               events.observations[0].elapsed_ms < 1500 &&
+               events.observations[1].stage == EgressProbeStage::kRetryWait &&
+               server.expected_request_received,
+           "deadline erased the observed HTTP stage or invented a native timeout error");
     const auto close_deadline = ::GetTickCount64() + 1000;
     while (!server.peer_cancelled && ::GetTickCount64() < close_deadline) ::Sleep(10);
     expect(server.peer_cancelled, "cancelled WinHTTP request left its socket open");
-    std::cout << "pending_headers_cancel_ms=" << elapsed << '\n';
+    std::cout << "pending_headers_deadline_ms=" << elapsed << '\n';
   }
   for (bool authenticated : {true, false}) {
     LoopbackServer server(std::string("HTTP/1.1 204 No Content\r\nConnection: close\r\n") +

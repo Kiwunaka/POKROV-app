@@ -534,7 +534,7 @@ DWORD RunPipeServer(const std::wstring& pipe_name,
   auto core = CreateInstalledCoreRuntime();
   pokrov::windows_crash::RefreshWindowsCrashProfileModules();
   RuntimeHost runtime(std::move(core),
-                      CreateAuthenticatedEgressProbe(),
+                      CreateAuthenticatedEgressProbe(events),
                       test_client_limit == 0
                           ? CreateRuntimeRecovery(runtime_root) : nullptr,
                       runtime_root, true,

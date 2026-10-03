@@ -3984,7 +3984,11 @@ class AppFirstRuntimeBootstrapper
   }) async {
     final phase = runtimePhase.trim().toLowerCase();
     final safeErrorCode = errorCode.trim().toLowerCase();
-    final safeFailureKind = failureKind.trim().toLowerCase();
+    final safeFailureKind = (failureKind.trim().isEmpty
+            ? connectivitySnapshot?.lastFailureKind ?? ''
+            : failureKind)
+        .trim()
+        .toLowerCase();
     final safeNodeCode = selectedNodeCode.trim().toLowerCase();
     final safeRouteMode = routeMode.trim().toLowerCase();
     final safeNetworkClass = networkClass.trim().toLowerCase();

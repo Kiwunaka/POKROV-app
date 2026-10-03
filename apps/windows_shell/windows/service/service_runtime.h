@@ -237,11 +237,12 @@ class RuntimeHost {
 };
 
 std::unique_ptr<CoreRuntime> CreateInstalledCoreRuntime();
-std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe();
+std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe(
+    ServiceEventSink* events = nullptr);
 #ifdef _DEBUG
 // Loopback-only fixture; the production factory has no caller-owned URL.
 std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
-    std::uint16_t port, bool secure = false);
+    std::uint16_t port, bool secure = false, ServiceEventSink* events = nullptr);
 #endif
 std::wstring ResolveServiceRuntimeRoot();
 

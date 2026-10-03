@@ -16,12 +16,21 @@ Owner-approved public release `v1.4.1` contains the existing production-signed f
 APKs and unsigned Windows beta setup for `1.4.1+4082`, with Core 1.2.2,
 `release-index.json` and `SHA256SUMS.txt`; all seven uploaded asset digests
 and sizes match the local package. Simple mode keeps country Auto and moves
-settings to Advanced. The exact 1.4.1 APK and installer have not been tested
-on the phone or installed VM; old saved-TUN migration is not claimed.
+settings to Advanced. Subsequent fresh-install checks on the owned Windows VM
+created a trial and secure pair, but country Auto lost protected egress about
+23 seconds after starting. Fresh 1.4.0 with PL ordinary mode stayed healthy and
+passed the owned 204/64 KiB traffic check; its selection differs from 1.4.1 Auto.
+On the Android QA emulator both versions returned Profile/API-008 before VPN
+permission; trial provisioning and runtime startup remain unproved there.
+Physical-device acceptance and old saved-TUN migration are not claimed.
 The prepared files were published without rebuilding or announcements.
 The published 4082 binaries were built from client source `8edd3b2`.
 The later D6 correction `c9bcb6b`, which suppresses direct Node latency probes
 for bridge locations, is in `main` but is not included in those binaries.
+Later source changes preserve the native failure kind in runtime telemetry when
+the caller supplies only a snapshot. The Windows service journal also records
+the egress probe's closed stage/outcome and numeric error/elapsed time before
+retry or deadline handling; it excludes addresses, request data and error text.
 Brain recommends 1.4.1 on Android and Windows with minimum 1.3.0 unchanged;
 the public API's versions, URLs, sizes and digests passed readback. Both services
 are active and no broadcast or LiveUpdate was created. Rollback restores

@@ -231,6 +231,48 @@ std::uint64_t FileTimeTicks() {
   return ticks.QuadPart;
 }
 
+const char* EgressStageName(EgressProbeStage stage) {
+  switch (stage) {
+    case EgressProbeStage::kTunDns: return "tun_dns";
+    case EgressProbeStage::kDnsSetup: return "dns_setup";
+    case EgressProbeStage::kDnsSend: return "dns_send";
+    case EgressProbeStage::kDnsWait: return "dns_wait";
+    case EgressProbeStage::kDnsReply: return "dns_reply";
+    case EgressProbeStage::kHttpSetup: return "http_setup";
+    case EgressProbeStage::kConnect: return "connect";
+    case EgressProbeStage::kTls: return "tls";
+    case EgressProbeStage::kSending: return "sending";
+    case EgressProbeStage::kResponse: return "response";
+    case EgressProbeStage::kProof: return "proof";
+    case EgressProbeStage::kRetryWait: return "retry_wait";
+  }
+  return "invalid";
+}
+
+const char* EgressOutcomeName(EgressProbeOutcome outcome) {
+  switch (outcome) {
+    case EgressProbeOutcome::kSucceeded: return "succeeded";
+    case EgressProbeOutcome::kFailed: return "failed";
+    case EgressProbeOutcome::kCancelled: return "cancelled";
+    case EgressProbeOutcome::kDeadline: return "deadline";
+    case EgressProbeOutcome::kTimeout: return "timeout";
+  }
+  return "invalid";
+}
+
+const char* EgressErrorDomainName(EgressErrorDomain domain) {
+  switch (domain) {
+    case EgressErrorDomain::kNone: return "none";
+    case EgressErrorDomain::kWin32: return "win32";
+    case EgressErrorDomain::kWinsock: return "winsock";
+    case EgressErrorDomain::kWinHttp: return "winhttp";
+    case EgressErrorDomain::kDns: return "dns";
+    case EgressErrorDomain::kNtStatus: return "ntstatus";
+    case EgressErrorDomain::kHttpStatus: return "http_status";
+  }
+  return "invalid";
+}
+
 class DurableServiceEventJournal final : public ServiceEventSink {
  public:
   explicit DurableServiceEventJournal(const std::wstring& runtime_root)
@@ -302,6 +344,16 @@ class DurableServiceEventJournal final : public ServiceEventSink {
                       (event.error_code.empty() ? "none" : event.error_code) +
                       "|" + event.phase + "\n";
     return AppendLine(line);
+  }
+
+  bool RecordEgressProbeObservation(
+      EgressProbeStage stage, EgressProbeOutcome outcome, EgressErrorDomain domain,
+      std::uint32_t error, std::uint64_t elapsed_ms) override {
+    // Keep the existing eight fields. The last field contains two numbers,
+    // never a request, address, profile identifier or upstream error text.
+    return Append("runtime_egress_observation", EgressOutcomeName(outcome),
+                  EgressStageName(stage), EgressErrorDomainName(domain),
+                  std::to_string(error) + "," + std::to_string(elapsed_ms));
   }
 
  private:
