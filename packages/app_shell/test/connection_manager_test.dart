@@ -166,6 +166,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
 class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceService {
   _StatsBootstrapper() : super(catalog: true);
   final reports = <Map<String, Object?>>[];
+  final runtimeCalls = <Map<String, Object?>>[];
   bool failFirstRunningReport = false;
   int failedRunningReports = 0;
 
@@ -180,6 +181,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     String accessNetworkAsn = '', List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
   }) async {
+    runtimeCalls.add({'runtime_phase': runtimePhase, 'error_code': errorCode});
     if (runtimePhase == 'running' && failFirstRunningReport) {
       failFirstRunningReport = false;
       failedRunningReports += 1;
@@ -473,11 +475,13 @@ ConnectionManager _manager(
   PokrovWifiProbe? currentWifiProbe,
   PokrovForegroundConnectPolicy? foregroundConnectPolicy,
   Future<bool> Function()? authorizeAndroid,
+  PokrovClientObservability? observability,
 }) =>
     ConnectionManager(
       appContext: buildSeedAppContext(hostPlatform: runtime.hostPlatform),
       runtimeEngine: runtime,
       bootstrapper: bootstrapper,
+      observability: observability,
       accountSessionCoordinator:
           AccountSessionCoordinator(accountActions: null),
       firstSessionCoordinator:
@@ -969,6 +973,46 @@ void main() {
     expect(probes.map((item) => item['candidate_ref']),
         containsAll(['de:profile_0', 'de:xhttp']));
     expect(probes.where((item) => item['connected'] == true).single['candidate_ref'], 'de:xhttp');
+  });
+
+  test('exhausted native candidates retain the early start and terminal Core error', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-candidate-failure-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android, directoryResolver: () async => directory,
+    );
+    final profileGate = Completer<void>();
+    final bootstrapper = _StatsBootstrapper()
+      ..candidates = _candidates.take(2).toList()
+      ..gate = profileGate;
+    final runtime = _Runtime()
+      ..supportsCandidates = true
+      ..failedProbeProfiles.addAll(bootstrapper.candidates.map((item) => item.candidateRef));
+    var permissionRequests = 0;
+    final manager = _manager(runtime, bootstrapper, observability: observability,
+        authorizeAndroid: () async { permissionRequests++; return true; });
+    addTearDown(manager.dispose);
+
+    final connecting = manager.connect();
+    await bootstrapper.entered.future;
+    expect(bootstrapper.runtimeCalls.single['runtime_phase'], 'connect_requested',
+        reason: 'the attempt starts before managed profile preparation completes');
+    profileGate.complete();
+    await connecting;
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(permissionRequests, 0);
+    expect(runtime.connectCalls, 0);
+    expect(bootstrapper.runtimeCalls.singleWhere((call) => call['runtime_phase'] == 'failed'),
+        {'runtime_phase': 'failed', 'error_code': 'CONN-008'});
+    expect(bootstrapper.reports.single['candidate_probes'], hasLength(2));
+    await observability.flush();
+    final events = await File(
+      '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
+    ).readAsLines();
+    final terminal = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .singleWhere((event) => event['name'] == 'app.connection.attempt.finished');
+    expect(terminal['error'], {'code': 'CONN-008', 'origin': 'core'});
+    expect(terminal['outcome'], 'failed');
   });
 
   test('proven Windows connection retries a probe batch after stats delivery fails', () async {

@@ -2161,7 +2161,8 @@ class ConnectionManager extends ChangeNotifier {
         }
       }
       if (!selectedCandidate) {
-        throw const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.', code: 'candidate_selection_exhausted');
+        throw const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.',
+            code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
       requireCurrent();
       final currentNetwork = await probing.readCandidateNetwork();
@@ -2329,7 +2330,8 @@ class ConnectionManager extends ChangeNotifier {
           },
         );
       } on SmartConnectSelectionExhausted {
-        throw const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.', code: 'candidate_selection_exhausted');
+        throw const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.',
+            code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
       requireCurrent();
       final currentNetwork = await probing.readCandidateNetwork();
@@ -3125,6 +3127,9 @@ class ConnectionManager extends ChangeNotifier {
       _candidateCarrierName = null;
       _candidateAccessNetworkAsn = null;
     }
+    if (actionIntent == ConnectionTransitionIntent.connect) {
+      unawaited(_reportClientLifecycle('connect_requested'));
+    }
     final generation = _connectionCoordinator.operationGeneration;
     Future<T> runOwnedRuntimeAction<T>(
       String operation,
@@ -3473,7 +3478,6 @@ class ConnectionManager extends ChangeNotifier {
           return;
         }
         if (actionIntent == ConnectionTransitionIntent.connect) {
-          unawaited(_reportClientLifecycle('connect_requested'));
           unawaited(
             _reportFirstSessionEvent(
               'connect_requested',
@@ -3655,7 +3659,8 @@ class ConnectionManager extends ChangeNotifier {
       _observability?.recordConnectionFailure(
         stage: failureStage,
         errorCode: error.operationalErrorCode,
-        errorOrigin: ObservabilityErrorOrigin.portal,
+        errorOrigin: error.code == 'candidate_selection_exhausted'
+            ? ObservabilityErrorOrigin.core : ObservabilityErrorOrigin.portal,
       );
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
         return;
@@ -3667,7 +3672,7 @@ class ConnectionManager extends ChangeNotifier {
         _activePhase = ConnectionPhase.actionRequired;
         _runtimeHeadline = offlineMessage ?? error.message;
       });
-      unawaited(_reportClientRuntimeError('connect_failed'));
+      unawaited(_reportClientRuntimeError(error.operationalErrorCode));
       _notify(error.message, tone: PokrovSnackTone.danger);
     } on Object catch (error, stack) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;

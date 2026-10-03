@@ -1743,6 +1743,16 @@ from this local intent fence.
 
 ### Runtime failure observations
 
+Runtime `connect_requested` is recorded when the local attempt begins, before
+managed profile preparation; the onboarding permission stages keep their existing
+ordering. Runtime stats use only an existing secure session and cannot start a
+trial or renew a denied session. A fresh install without a session therefore has
+no remote start receipt. Report sequence is reserved before the asynchronous
+session read, and failed probe batches retain their existing retry sequence.
+Exhausted native candidates retain `CONN-008` with Core origin in local diagnostics
+and the catalog code in runtime stats; other portal failures keep their own code.
+The individual closed probe failures remain the evidence for the underlying cause.
+
 Native failure categories pass through an exact allowlist before reaching public
 messages. Offline state, unresolved network interface, DNS failure, refused
 endpoint, transport timeout and handshake failure retain distinct observations.

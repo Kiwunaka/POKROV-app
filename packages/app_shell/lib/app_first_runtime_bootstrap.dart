@@ -11,6 +11,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_observability_contracts/observability_contracts.dart'
+    show KnownOperationalErrorCodes;
 import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
@@ -4031,7 +4033,9 @@ class AppFirstRuntimeBootstrapper
     RuntimeSnapshot? connectivitySnapshot,
   }) async {
     final phase = runtimePhase.trim().toLowerCase();
-    final safeErrorCode = errorCode.trim().toLowerCase();
+    final catalogErrorCode = errorCode.trim().toUpperCase();
+    final safeErrorCode = KnownOperationalErrorCodes.contains(catalogErrorCode)
+        ? catalogErrorCode : errorCode.trim().toLowerCase();
     final safeFailureKind = (failureKind.trim().isEmpty
             ? connectivitySnapshot?.lastFailureKind ?? ''
             : failureKind)
@@ -4070,10 +4074,6 @@ class AppFirstRuntimeBootstrapper
           'failure_kind': failure,
       });
     }
-    if (hostPlatform == HostPlatform.android &&
-        const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
-      unawaited(_reportAutomaticNetworkContext(phase));
-    }
     final reportProbes = safeCandidateProbes.isNotEmpty &&
         (phase == 'running' || phase == 'failed' ||
             (phase == 'runtime_observed' && connected));
@@ -4092,7 +4092,8 @@ class AppFirstRuntimeBootstrapper
         'report_run_id': _runtimeReportRunId,
         'report_sequence': reportSequence,
         'connectivity': runtimeConnectivityReport(connectivitySnapshot),
-        if (RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
+        if (KnownOperationalErrorCodes.contains(safeErrorCode) ||
+            RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,
         if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeFailureKind))
           'failure_kind': safeFailureKind,
@@ -4125,28 +4126,43 @@ class AppFirstRuntimeBootstrapper
         if (reportProbes)
           'candidate_probes': safeCandidateProbes,
       };
-    for (var attempt = 0; ; attempt += 1) {
-      try {
-        await _requestClientJsonWithSession(
-          hostPlatform: hostPlatform,
-          method: 'POST',
-          path: '/api/client/runtime/stats',
-          body: body,
-        );
-        if (reportProbes && _pendingProbeReportSequence == reportSequence) {
-          _pendingProbeReportSequence = null;
-          _pendingProbeReportSignature = null;
+    // Reserve the sequence before this await, including an early connect start.
+    // Diagnostics use the current session and never provision or renew it.
+    final state = await _loadState(hostPlatform);
+    if (state == null || !state.hasSession) return;
+    if (hostPlatform == HostPlatform.android &&
+        const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
+      unawaited(_reportAutomaticNetworkContext(phase));
+    }
+    final client = _createHttpClient(hostPlatform);
+    try {
+      for (var attempt = 0; ; attempt += 1) {
+        try {
+          await _requestJson(
+            client: client,
+            bearerToken: state.sessionToken,
+            hostPlatform: hostPlatform,
+            method: 'POST',
+            path: '/api/client/runtime/stats',
+            body: body,
+          );
+          if (reportProbes && _pendingProbeReportSequence == reportSequence) {
+            _pendingProbeReportSequence = null;
+            _pendingProbeReportSignature = null;
+          }
+          return;
+        } on BootstrapFailure catch (error) {
+          if (!reportProbes || attempt > 0 ||
+              (error.operationalCode != 'API-002' &&
+               error.operationalCode != 'API-003' &&
+               (error.statusCode == null || !_shouldRetryStatus(error.statusCode!)))) {
+            rethrow;
+          }
+          await _delayScheduler(_retryDelayForAttempt(attempt));
         }
-        return;
-      } on BootstrapFailure catch (error) {
-        if (!reportProbes || attempt > 0 ||
-            (error.operationalCode != 'API-002' &&
-             error.operationalCode != 'API-003' &&
-             (error.statusCode == null || !_shouldRetryStatus(error.statusCode!)))) {
-          rethrow;
-        }
-        await _delayScheduler(_retryDelayForAttempt(attempt));
       }
+    } finally {
+      client.close(force: true);
     }
   }
 

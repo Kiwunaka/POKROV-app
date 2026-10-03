@@ -1965,6 +1965,7 @@ void main() {
 
     final requests = <String>[];
     final statsBodies = <Map<String, dynamic>>[];
+    var denyStats = false;
     final telegramLinkEventBodies = <Map<String, dynamic>>[];
     Map<String, dynamic>? onboardingBody;
     final eventBodies = <Map<String, dynamic>>[];
@@ -2005,6 +2006,7 @@ void main() {
           );
           statsBodies.add(jsonDecode(body) as Map<String, dynamic>);
           request.response
+            ..statusCode = denyStats ? HttpStatus.unauthorized : HttpStatus.ok
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(<String, Object?>{'ok': true}));
           await request.response.close();
@@ -2065,12 +2067,34 @@ void main() {
       }
     }());
 
+    final secrets = MemoryAppFirstSessionSecretStore();
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://${server.address.address}:${server.port}',
       supportDirectoryResolver: () async => tempDirectory,
-      sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+      sessionSecretStore: secrets,
       maxRequestAttempts: 1,
     );
+
+    await bootstrapper.reportRuntimeStats(
+      hostPlatform: HostPlatform.android,
+      runtimePhase: 'connect_requested',
+      connected: false,
+    );
+    expect(requests, isEmpty, reason: 'diagnostics must not start a trial');
+    final stateFile = File('${tempDirectory.path}/app-first-session-android.json');
+    expect(await stateFile.exists(), isFalse);
+    await secrets.writeSessionPair(
+      hostPlatform: HostPlatform.android,
+      installId: 'runtime-stats-install',
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'runtime-stats-session', refreshToken: 'runtime-stats-refresh',
+      ),
+    );
+    await stateFile.writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': 'runtime-stats-install',
+      'account_id': 'account-runtime-stats',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
 
     const failedSnapshot = RuntimeSnapshot(
       hostPlatform: HostPlatform.android,
@@ -2118,6 +2142,7 @@ void main() {
       hostPlatform: HostPlatform.android,
       runtimePhase: 'FAILED',
       connected: false,
+      errorCode: ' conn-008 ',
       failureKind: 'tls_failed',
       connectivitySnapshot: failedSnapshot,
     );
@@ -2180,7 +2205,6 @@ void main() {
     );
 
     expect(requests, <String>[
-      'POST /api/client/session/start-trial',
       'POST /api/client/runtime/stats',
       'POST /api/client/runtime/stats',
       'POST /api/client/runtime/stats',
@@ -2198,7 +2222,7 @@ void main() {
         'runtime_phase': 'running',
         'connected': true,
         'report_run_id': reportRunId,
-        'report_sequence': 1,
+        'report_sequence': 2,
         'connectivity': {'proof_stage': 'unknown'},
         'network_class': 'cellular',
         'carrier_mcc_mnc': '25099',
@@ -2221,15 +2245,16 @@ void main() {
         'network_class': 'wifi',
         'access_network_asn': 'AS12345',
         'report_run_id': reportRunId,
-        'report_sequence': 2,
+        'report_sequence': 3,
         'connectivity': {'proof_stage': 'degraded'},
       },
       <String, Object?>{
         'runtime_phase': 'failed',
         'connected': false,
+        'error_code': 'CONN-008',
         'failure_kind': 'tls_failed',
         'report_run_id': reportRunId,
-        'report_sequence': 3,
+        'report_sequence': 4,
         'connectivity': {'proof_stage': 'degraded'},
       },
     ]);
@@ -2282,6 +2307,25 @@ void main() {
       'handle': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
       'purpose': 'android_install',
     });
+    denyStats = true;
+    final requestCount = requests.length;
+    await expectLater(
+      bootstrapper.reportRuntimeStats(
+        hostPlatform: HostPlatform.android,
+        runtimePhase: 'failed', connected: false, errorCode: 'API-999',
+        candidateProbes: const [{
+          'candidate_ref': 'de:vless', 'candidate_transport': 'vless_reality',
+          'stage': 'probe', 'connected': false, 'failure_kind': 'connect_failed',
+        }],
+      ),
+      throwsA(isA<BootstrapFailure>().having((error) => error.statusCode,
+          'statusCode', HttpStatus.unauthorized)),
+    );
+    expect(requests.skip(requestCount), ['POST /api/client/runtime/stats'],
+        reason: '401 must not refresh or reprovision a diagnostics session');
+    expect(statsBodies.last, isNot(contains('error_code')));
+    expect((await secrets.readSessionPair(hostPlatform: HostPlatform.android,
+        installId: 'runtime-stats-install'))!.refreshToken, 'runtime-stats-refresh');
   });
 
   test('keeps a probe batch sequence across failed stats delivery', () async {
@@ -2311,9 +2355,18 @@ void main() {
         await request.response.close();
       }
     }());
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.windows,
+        installId: 'stats-retry-install', sessionToken: 'stats-retry-session');
+    await File('${directory.path}/app-first-session-windows.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': 'stats-retry-install',
+      'account_id': 'stats-retry-account',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}',
       supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets,
       delayScheduler: (_) async {},
     );
 
