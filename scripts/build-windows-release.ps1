@@ -505,18 +505,29 @@ $signedFileContractDifference = @(Compare-Object -ReferenceObject $expectedSigne
 if ($signedFileContractDifference.Count -ne 0) {
   throw "Windows signing seed must require the exact UI, service and installer targets."
 }
+$appDirectory = Join-Path $root "apps\\windows_shell"
+$pubspecPath = Join-Path $appDirectory "pubspec.yaml"
+$version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
+$productVersion = ($version -split '\+', 2)[0]
 $ownerUnsignedException = $windowsReleaseConfig.signing.owner_exception
+$ownerAuthorizationDate = [DateTime]::MinValue
 $ownerUnsignedExceptionActive =
   $windowsReleaseConfig.public_approved -eq $false -and
   $windowsReleaseConfig.artifact_status -eq "unsigned_beta_candidate" -and
   $windowsReleaseConfig.signing.status -eq "CANDIDATE_ONLY" -and
-  $windowsReleaseConfig.signing.blocker_code -eq "RELEASE_APPROVAL_PENDING_1_4_3" -and
+  $windowsReleaseConfig.signing.blocker_code -eq ("RELEASE_APPROVAL_PENDING_" + $productVersion.Replace('.', '_')) -and
   $windowsReleaseConfig.signing.required_for_candidate -eq $false -and
   $windowsReleaseConfig.signing.required_for_trusted_claim -eq $true -and
   $windowsReleaseConfig.channel -eq "outside_store_beta" -and
   $ownerUnsignedException.status -eq "CANDIDATE_ONLY" -and
-  $ownerUnsignedException.authorized_on -eq "2026-10-03" -and
-  $ownerUnsignedException.version_scope -eq "1.4.3" -and
+  [DateTime]::TryParseExact(
+    [string]$ownerUnsignedException.authorized_on,
+    "yyyy-MM-dd",
+    [Globalization.CultureInfo]::InvariantCulture,
+    [Globalization.DateTimeStyles]::None,
+    [ref]$ownerAuthorizationDate
+  ) -and
+  $ownerUnsignedException.version_scope -eq $productVersion -and
   $ownerUnsignedException.channel_scope -eq "outside_store_beta" -and
   $ownerUnsignedException.distribution_scope -eq "direct_download_only" -and
   $ownerUnsignedException.trusted_claim_allowed -eq $false -and
@@ -525,7 +536,7 @@ $ownerUnsignedExceptionActive =
   $ownerUnsignedException.expires_when_trusted_signing_is_available -eq $true
 if ($windowsReleaseConfig.signing.required_for_candidate -ne $true -and
     -not $ownerUnsignedExceptionActive) {
-  throw "Unsigned Windows candidate policy is incomplete or outside the exact 1.4.3 preparation scope. Public release requires the owner's decision."
+  throw "Unsigned Windows candidate policy is incomplete or outside the exact $productVersion preparation scope. Public release requires the owner's decision."
 }
 $trustedWindowsSigningContext = $null
 if ($trustedWindowsSigningRequested) {
@@ -570,9 +581,6 @@ if (($windowsReleaseConfig.PSObject.Properties.Name -contains "portable_zip") -a
     -not [bool]$windowsReleaseConfig.portable_zip.supported) {
   $SkipZip = $true
 }
-$appDirectory = Join-Path $root "apps\\windows_shell"
-$pubspecPath = Join-Path $appDirectory "pubspec.yaml"
-$version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
 if (-not $SkipBuild) {
   $revisionOutput = & git -C $root rev-parse --verify HEAD
   $revisionExit = $LASTEXITCODE
@@ -588,7 +596,6 @@ if (-not $SkipBuild) {
   $clientBuildNumber = ($version -split '\+', 2)[1]
 }
 if ($ownerUnsignedExceptionActive) {
-  $productVersion = ($version -split '\+', 2)[0]
   $unsignedWarning = [string]$windowsReleaseConfig.signing.user_warning
   if ($productVersion -ne [string]$ownerUnsignedException.version_scope) {
     throw "The unsigned Windows owner exception does not cover product version $productVersion."

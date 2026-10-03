@@ -46,6 +46,7 @@ import 'src/features/diagnostics/support_mode.dart';
 import 'src/features/profile/account_session_coordinator.dart';
 import 'src/features/support/support_conversation_controller.dart';
 import 'src/features/update/client_update.dart';
+import 'src/features/update/app_file_sharing.dart';
 import 'src/observability/release_health_baseline.dart';
 import 'src/seed/platform_product_facts.g.dart';
 import 'src/shell/cached_profile_fallback_gate.dart';

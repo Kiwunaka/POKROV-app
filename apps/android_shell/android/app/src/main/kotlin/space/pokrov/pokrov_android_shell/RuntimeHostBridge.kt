@@ -2,6 +2,7 @@ package space.pokrov.pokrov_android_shell
 
 import android.app.Activity
 import android.Manifest
+import android.content.ClipData
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -16,6 +17,7 @@ import android.provider.Settings
 import android.util.Base64
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toBitmap
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -213,6 +215,7 @@ class RuntimeHostBridge(
             METHOD_OPEN_IN_APP_WEB_SURFACE -> result.success(openInAppWebSurface(call))
             METHOD_CLIENT_UPDATE_PROGRESS -> result.success(updateDownloadProgress.toMap())
             METHOD_INSTALL_CLIENT_UPDATE -> installClientUpdate(call, result)
+            METHOD_SHARE_INSTALLED_APP -> shareInstalledApp(result)
             else -> result.notImplemented()
         }
     }
@@ -230,6 +233,63 @@ class RuntimeHostBridge(
         ) {
             pendingVerifiedUpdate = null
         }
+    }
+
+    private fun shareInstalledApp(result: MethodChannel.Result) {
+        val installedApp = activity.applicationInfo
+        if (!BuildConfig.POKROV_DIRECT_UPDATE_ENABLED || !installedApp.splitSourceDirs.isNullOrEmpty()) {
+            result.success(mapOf("status" to "unsupported"))
+            return
+        }
+        val source = File(installedApp.sourceDir)
+        val accepted = hostTaskScope.execute {
+            val apk = runCatching {
+                val directory = File(activity.cacheDir, "updates")
+                check(directory.isDirectory || directory.mkdirs()) { "app_share_cache_unavailable" }
+                val destination = File(directory, "pokrov-installed.apk")
+                val partial = File.createTempFile("pokrov-installed-", ".part", directory)
+                try {
+                    source.inputStream().use { input ->
+                        partial.outputStream().use { output ->
+                            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                            while (true) {
+                                check(hostTaskScope.isActive() && !Thread.currentThread().isInterrupted) {
+                                    "app_share_cancelled"
+                                }
+                                val count = input.read(buffer)
+                                if (count < 0) break
+                                output.write(buffer, 0, count)
+                            }
+                        }
+                    }
+                    check(hostTaskScope.isActive()) { "app_share_cancelled" }
+                    check(partial.renameTo(destination)) { "app_share_cache_commit_failed" }
+                    destination
+                } finally {
+                    partial.delete()
+                }
+            }.getOrNull()
+            activity.runOnUiThread {
+                if (!hostTaskScope.isActive()) return@runOnUiThread
+                val status = if (apk == null) {
+                    "failed"
+                } else {
+                    runCatching {
+                        val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.updates", apk)
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/vnd.android.package-archive"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            clipData = ClipData.newRawUri("POKROV", uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        activity.startActivity(Intent.createChooser(intent, null))
+                        "chooser_opened"
+                    }.getOrDefault("failed")
+                }
+                result.success(mapOf("status" to status))
+            }
+        }
+        if (!accepted) result.success(mapOf("status" to "failed"))
     }
 
     private fun installClientUpdate(call: MethodCall, result: MethodChannel.Result) {
@@ -1781,6 +1841,7 @@ class RuntimeHostBridge(
             "runtimeEngine.clientUpdateProgress"
         private const val METHOD_INSTALL_CLIENT_UPDATE =
             "runtimeEngine.installClientUpdate"
+        private const val METHOD_SHARE_INSTALLED_APP = "runtimeEngine.shareInstalledApp"
         private const val REQUEST_WIFI_PERMISSION = 14073
         private const val REQUEST_NOTIFICATION_PERMISSION = 14074
     }

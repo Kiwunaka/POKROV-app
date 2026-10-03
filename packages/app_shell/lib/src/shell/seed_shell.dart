@@ -685,6 +685,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   int _notificationsUnread = 0;
   final ClientUpdateCoordinator _clientUpdateCoordinator =
       ClientUpdateCoordinator();
+  ClientAppUpdateInfo? _appShareUpdate;
+  bool _appShareBusy = false;
   bool _clientLifecycleOpenReported = false;
   StreamSubscription<Uri>? _acquisitionUriSubscription;
 
@@ -1612,11 +1614,17 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       return;
     }
     await _clientUpdateCoordinator.checkAndPresent(
-      loadMetadata: () => releaseActions.fetchClientApps(
-        hostPlatform: widget.appContext.hostPlatform,
-        currentVersion: pokrovClientVersion,
-        channel: 'stable',
-      ),
+      loadMetadata: () async {
+        final metadata = await releaseActions.fetchClientApps(
+          hostPlatform: widget.appContext.hostPlatform,
+          currentVersion: pokrovClientVersion,
+          channel: 'stable',
+        );
+        if (mounted) {
+          _appShareUpdate = metadata.updateFor(widget.appContext.hostPlatform);
+        }
+        return metadata;
+      },
       hostPlatform: widget.appContext.hostPlatform,
       isActive: () => mounted,
       onUpdateAvailable: () {
@@ -1644,6 +1652,43 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         );
         // Update checks are advisory; never block the app on startup.
       },
+    );
+  }
+
+  Future<void> _shareApp() async {
+    if (_appShareBusy) return;
+    setState(() => _appShareBusy = true);
+    var status = 'failed';
+    try {
+      status = switch (widget.appContext.hostPlatform) {
+        HostPlatform.android => await shareInstalledPokrovApp(),
+        HostPlatform.windows =>
+          await saveVerifiedPokrovWindowsInstaller(_appShareUpdate),
+        _ => 'unsupported',
+      };
+    } on Object {
+      status = 'failed';
+    } finally {
+      if (mounted) setState(() => _appShareBusy = false);
+    }
+    if (!mounted || status == 'cancelled') return;
+    final message = switch (status) {
+      'chooser_opened' => 'Выберите способ передачи APK.',
+      'saved' => 'Установщик сохранён. Передайте этот файл другу.',
+      'unavailable' =>
+        'Нет данных релиза для проверки EXE. Откройте POKROV при доступном интернете.',
+      'invalid' => 'Файл не совпадает с официальным установщиком POKROV.',
+      'unsupported' => 'Передача файла приложения в этой сборке недоступна.',
+      _ => 'Не удалось подготовить файл приложения.',
+    };
+    showPokrovSnack(
+      context,
+      message,
+      tone: status == 'saved'
+          ? PokrovSnackTone.success
+          : status == 'failed' || status == 'invalid'
+              ? PokrovSnackTone.danger
+              : PokrovSnackTone.info,
     );
   }
 
@@ -3509,6 +3554,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             onPromoEvent: _reportPromoEvent,
             onOpenSupportHub: _showSupportHub,
             onOpenDiagnostics: _openDiagnostics,
+            onShareApp: _shareApp,
+            appShareBusy: _appShareBusy,
             onCreateTelegramLink: _createTelegramLinkInApp,
             onCheckTelegramBonus: _checkTelegramBonusInApp,
             onClaimTelegramBonus: _claimTelegramBonusInApp,

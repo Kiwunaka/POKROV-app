@@ -422,6 +422,22 @@ const MethodChannel _pokrovRuntimeSystemChannel =
 const MethodChannel _pokrovWindowsShellChannel =
     MethodChannel('space.pokrov/windows-shell');
 
+Future<String> shareInstalledPokrovApp() async {
+  try {
+    final value = await _pokrovRuntimeSystemChannel
+        .invokeMapMethod<String, Object?>('runtimeEngine.shareInstalledApp');
+    return switch (value?['status']) {
+      'chooser_opened' => 'chooser_opened',
+      'unsupported' => 'unsupported',
+      _ => 'failed',
+    };
+  } on PlatformException {
+    return 'failed';
+  } on MissingPluginException {
+    return 'unsupported';
+  }
+}
+
 Future<PokrovWindowsServiceStatus> readPokrovWindowsServiceStatus(
   HostPlatform hostPlatform,
 ) async {

@@ -411,6 +411,16 @@ The client reads `GET /api/bonuses/referral/summary` for the Rewards Hub
 referral card: code, safe Telegram link, bonus days, and tier state. It may
 expose copy/share/open actions for that link, but referral anti-abuse, bonus
 granting, and campaign tuning remain backend-owned.
+
+The D13.1 candidate adds `Поделиться приложением` to Profile in Simple and
+Advanced, without account or API requirements for opening the action. Android
+direct builds share their installed monolithic APK with its existing ABI through the system chooser;
+opening it does not confirm delivery. Windows copies an already downloaded
+installer only after checking its size and full SHA-256 against release metadata
+retained by the normal update check; absent metadata is unavailable and cancelling
+is not success. This action transfers only the installer file, with no access
+grant, referral claim, or offline invitation QR/code.
+
 `GET /api/client/promo-slots?surface=app` may feed the same Rewards Hub with
 enabled first-party slots only; third-party ads, unsafe links, and tracking
 campaigns stay out of the app.

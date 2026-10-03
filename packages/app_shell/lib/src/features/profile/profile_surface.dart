@@ -10,6 +10,8 @@ class _ProfileSection extends StatelessWidget {
     required this.onPromoEvent,
     required this.onOpenSupportHub,
     required this.onOpenDiagnostics,
+    required this.onShareApp,
+    required this.appShareBusy,
     required this.onCreateTelegramLink,
     required this.onCheckTelegramBonus,
     required this.onClaimTelegramBonus,
@@ -62,6 +64,8 @@ class _ProfileSection extends StatelessWidget {
   final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
   final VoidCallback onOpenSupportHub;
   final VoidCallback onOpenDiagnostics;
+  final Future<void> Function() onShareApp;
+  final bool appShareBusy;
   final VoidCallback onCreateTelegramLink;
   final VoidCallback onCheckTelegramBonus;
   final VoidCallback onClaimTelegramBonus;
@@ -635,6 +639,21 @@ class _ProfileSection extends StatelessWidget {
                         ],
                       ),
                     ),
+                    ],
+                    if (appContext.hostPlatform == HostPlatform.android ||
+                        appContext.hostPlatform == HostPlatform.windows) ...[
+                      const _SettingsRowDivider(),
+                      _SettingsRow(
+                        key: const ValueKey('profile-share-app-action'),
+                        icon: Icons.share_outlined,
+                        title: 'Поделиться приложением',
+                        value: appShareBusy
+                            ? 'Готовим файл'
+                            : appContext.hostPlatform == HostPlatform.android
+                                ? 'Файл APK'
+                                : 'Файл EXE',
+                        onTap: () => unawaited(onShareApp()),
+                      ),
                     ],
                   ],
                 ),

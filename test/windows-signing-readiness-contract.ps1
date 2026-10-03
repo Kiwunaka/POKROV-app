@@ -6,6 +6,23 @@ $builderPath = Join-Path $root 'scripts\build-windows-release.ps1'
 $builderSource = [IO.File]::ReadAllText($builderPath)
 $windowsRelease = [IO.File]::ReadAllText((Join-Path $root 'config\windows-release.seed.json')) |
   ConvertFrom-Json
+$builderTokens = $null
+$builderParseErrors = $null
+$builderAst = [Management.Automation.Language.Parser]::ParseInput(
+  $builderSource, [ref]$builderTokens, [ref]$builderParseErrors
+)
+if ($builderParseErrors.Count -gt 0) {
+  throw 'Windows signing builder has PowerShell parse errors.'
+}
+$versionResolver = $builderAst.Find({ param($node)
+  $node -is [Management.Automation.Language.FunctionDefinitionAst] -and
+    $node.Name -eq 'Resolve-VersionFromPubspec'
+}, $true)
+. ([scriptblock]::Create($versionResolver.Extent.Text))
+$productVersion = ((Resolve-VersionFromPubspec -PubspecPath (
+  Join-Path $root 'apps\windows_shell\pubspec.yaml'
+)) -split '\+', 2)[0]
+$expectedBlocker = 'RELEASE_APPROVAL_PENDING_' + $productVersion.Replace('.', '_')
 
 foreach ($requiredMarker in @(
   'CheckTrustedWindowsSigningReadinessOnly',
@@ -18,7 +35,7 @@ foreach ($requiredMarker in @(
   'candidate_created = $false',
   'production_runtime_mutated = $false',
   'private_key_value_exposed = $false',
-  'RELEASE_APPROVAL_PENDING_1_4_3',
+  'RELEASE_APPROVAL_PENDING_',
   'CANDIDATE_ONLY',
   'public_approved = [bool]$windowsReleaseConfig.public_approved',
   'smartscreen_warning_required',
@@ -30,23 +47,53 @@ foreach ($requiredMarker in @(
 }
 
 $ownerException = $windowsRelease.signing.owner_exception
+$ownerAuthorizationDate = [DateTime]::MinValue
 if ($windowsRelease.channel -ne 'outside_store_beta' -or
     $windowsRelease.public_approved -ne $false -or
     $windowsRelease.artifact_status -ne 'unsigned_beta_candidate' -or
     $windowsRelease.signing.status -ne 'CANDIDATE_ONLY' -or
-    $windowsRelease.signing.blocker_code -ne 'RELEASE_APPROVAL_PENDING_1_4_3' -or
+    $windowsRelease.signing.blocker_code -ne $expectedBlocker -or
     $windowsRelease.signing.required_for_candidate -ne $false -or
     $windowsRelease.signing.required_for_trusted_claim -ne $true -or
     $ownerException.status -ne 'CANDIDATE_ONLY' -or
-    $ownerException.authorized_on -ne '2026-10-03' -or
-    $ownerException.version_scope -ne '1.4.3' -or
+    -not [DateTime]::TryParseExact(
+      [string]$ownerException.authorized_on,
+      'yyyy-MM-dd',
+      [Globalization.CultureInfo]::InvariantCulture,
+      [Globalization.DateTimeStyles]::None,
+      [ref]$ownerAuthorizationDate
+    ) -or
+    $ownerException.version_scope -ne $productVersion -or
     $ownerException.channel_scope -ne 'outside_store_beta' -or
     $ownerException.distribution_scope -ne 'direct_download_only' -or
     $ownerException.trusted_claim_allowed -ne $false -or
     $ownerException.store_claim_allowed -ne $false -or
     $ownerException.smartscreen_warning_required -ne $true -or
     $ownerException.expires_when_trusted_signing_is_available -ne $true) {
-  throw 'Windows unsigned preparation is not constrained to the exact 1.4.3 candidate-only beta scope.'
+  throw "Windows unsigned preparation is not constrained to the exact $productVersion candidate-only beta scope."
+}
+
+$policyAssignment = $builderAst.Find({ param($node)
+  $node -is [Management.Automation.Language.AssignmentStatementAst] -and
+    $node.Left -is [Management.Automation.Language.VariableExpressionAst] -and
+    $node.Left.VariablePath.UserPath -eq 'ownerUnsignedExceptionActive'
+}, $true)
+$policy = [scriptblock]::Create($policyAssignment.Extent.Text)
+$windowsReleaseConfig = $windowsRelease
+$ownerUnsignedException = $ownerException
+. $policy
+if (-not $ownerUnsignedExceptionActive) {
+  throw 'Actual builder policy rejected the authorized current candidate.'
+}
+$originalVersionScope = $ownerException.version_scope
+try {
+  $ownerException.version_scope = '0.0.0'
+  . $policy
+  if ($ownerUnsignedExceptionActive) {
+    throw 'Actual builder policy admitted an owner exception for another product version.'
+  }
+} finally {
+  $ownerException.version_scope = $originalVersionScope
 }
 
 if ($windowsRelease.signing.readiness_probe.receipt_schema -ne
