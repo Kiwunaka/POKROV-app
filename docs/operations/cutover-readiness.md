@@ -1,25 +1,31 @@
 # Client release status
 
-Public version: **1.4.2+4083**, built from client `c956e9b` with the published
-POKROV Core 1.2.6 artifacts and desktop ABI 2. The owner-approved quiet release
-`v1.4.2` on 2026-10-03 contains four production-signed Android direct APKs,
+Public version: **1.4.3+4084**, using the published POKROV Core 1.2.7 artifacts
+and desktop ABI 2. Windows was built from client `e51ee988`; Android was built
+from `57c497d9`, which is also the client source tag `v1.4.3`. The owner-approved
+quiet GitHub release `v1.4.3` contains four production-signed Android direct APKs,
 unsigned Windows beta setup, `release-index.json` and `SHA256SUMS.txt`.
 GitHub readback matched all seven asset names and sizes; no announcement job was
 created. Windows retains the SmartScreen warning and makes no trusted-signing or
-Store claim. Public 1.4.1 remains available for rollback.
+Store claim. Public 1.4.2 remains available for rollback.
 
-Brain's public feed recommends 1.4.2 on Android and Windows with 100% rollout.
-The minimum supported version remains 1.3.0; post-apply readback passed.
+Brain's public feed recommends 1.4.3 on Android and Windows with 100% rollout.
+The minimum supported version remains 1.3.0; both platforms' versions, URLs,
+sizes and digests passed readback, including all four Android APK variants.
 No new broadcast or LiveUpdate was created.
 
-Local candidate preparation targets **1.4.3+4084**; public 1.4.2 remains unchanged.
 First online country Auto without cached or staged material now waits up to 40
 seconds for access ACK; pending API-011 asks for an explicit Connect retry with
 the same session. Core 1.2.7 treats a successful HTTPS check whose selected route
-changed as unavailable under the existing bounded retry. Its built Windows DLL
-and Android AAR are pinned from Core source `7846df3`; Cronet remains unchanged.
-Windows preparation is unsigned `CANDIDATE_ONLY`, with `public_approved=false`;
-the APP 1.4.3 build, acceptance and publication are still pending.
+changed as unavailable under the existing bounded retry; real network failures
+and cancellation retain their outcomes. Its Windows DLL and Android AAR are
+pinned from Core source `7846df3`; Cronet remains unchanged.
+
+The ready 1.4.3 packages passed ordinary first launch and one Auto connection on
+the owned Windows VM and Android 9 x86_64 emulator, including DNS and routes,
+owned HTTPS 204 and exact 64 KiB transfer. Physical phones and mobile networks
+were not part of this acceptance. These are client package results, separate
+from the earlier isolated Core selection comparison below.
 
 ## Client 1.4.1 quiet publication, 2026-10-02
 
