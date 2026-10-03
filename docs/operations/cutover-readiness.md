@@ -34,11 +34,28 @@ descriptor lifetime passed DNS and native candidate admission. The signed
 1.4.2/Core 1.2.5 package reached TUN establishment, then stopped on the Core
 egress guard; private diagnostics classified the group target as unavailable.
 Core 1.2.6 fixes cold URLTest current-tag reporting to use the same TCP fallback
-as DialContext without changing selection state, history or timers. Attribution
-to that Android attempt and complete 1.4.2/Core 1.2.6 Android and Windows package
-acceptance remain pending.
+as DialContext without changing selection state, history or timers. Private Android
+QA confirmed that this correction passes the startup guard. Ordinary HTTPS still
+stalled on Android's mixed TUN TCP path despite successful native egress probes;
+changing only its TCP stack to gvisor passed the same owned HTTPS checks. The
+client now defaults Android TUN TCP and UDP to gvisor; existing imported TUN
+stacks are preserved. The exact kernel return-policy cause is not established.
+Final normal 1.4.2+4083 packages built from client `c956e9b` use the published
+Core 1.2.6 artifacts. A fresh Windows VM installation created a trial and passed
+one default Auto/Simple connection, native health through 185 seconds, and owned
+204/64 KiB HTTPS checks through 222 seconds with unchanged profile and routing.
+A fresh signed x86_64 Android 9 emulator installation followed Start free access,
+default Auto and one Connect with ordinary VPN consent. Its OS TUN remained
+present through 298 seconds and ordinary owned 204/64 KiB HTTPS passed at
+295 seconds with certificate verification enabled. Android's exact 20/30/181-second
+samples and Main runtime-version UI were not captured; Core 1.2.6 is verified by
+the build binding. Both test guests are powered off. The five final binaries and
+existing release metadata are prepared; app publication still needs the owner.
+Older released clients lack first-attempt start coverage, so the production
+failure fraction for new installs remains unknown. The new client and deployed
+Brain correlate the first observed start and terminal event by trace and sequence.
 Physical-device acceptance and old saved-TUN migration are not claimed.
-The prepared files were published without rebuilding or announcements.
+The public 1.4.1 files were published without rebuilding or announcements.
 The published 4082 binaries were built from client source `8edd3b2`.
 The later D6 correction `c9bcb6b`, which suppresses direct Node latency probes
 for bridge locations, is in `main` but is not included in those binaries.
