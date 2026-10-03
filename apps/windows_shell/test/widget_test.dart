@@ -422,7 +422,7 @@ void main() {
       find.byKey(const ValueKey('primary-connect-focusable')),
     );
     expect(focusable.enabled, isFalse);
-    expect(find.byKey(const ValueKey('home-warp-tile')), findsOneWidget);
-    expect(find.text('Дополнительная защита'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-warp-tile')), findsNothing);
+    expect(find.text('Дополнительная защита'), findsNothing);
   });
 }
