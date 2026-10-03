@@ -144,13 +144,13 @@ private class CapturedNetworkResolver(
                 network.bindSocket(socket)
                 ParcelFileDescriptor.fromDatagramSocket(socket).use {
                     PokrovRuntimeVpnService.protectCandidateSocket(it.fd)
+                    socket.connect(server, 53)
+                    socket.soTimeout = AndroidResolverPolicy.RESPONSE_WAIT_MILLIS.toInt()
+                    socket.send(DatagramPacket(message, message.size))
+                    val response = DatagramPacket(ByteArray(65_535), 65_535)
+                    socket.receive(response)
+                    response.data.copyOf(response.length)
                 }
-                socket.connect(server, 53)
-                socket.soTimeout = AndroidResolverPolicy.RESPONSE_WAIT_MILLIS.toInt()
-                socket.send(DatagramPacket(message, message.size))
-                val response = DatagramPacket(ByteArray(65_535), 65_535)
-                socket.receive(response)
-                response.data.copyOf(response.length)
             }
             // DNS truncation requires TCP on the same captured resolver/uplink.
             val complete = if (answer.size >= 4 && (answer[2].toInt() and 2) != 0) {
@@ -159,16 +159,16 @@ private class CapturedNetworkResolver(
                     network.bindSocket(socket)
                     ParcelFileDescriptor.fromSocket(socket).use {
                         PokrovRuntimeVpnService.protectCandidateSocket(it.fd)
+                        socket.soTimeout = AndroidResolverPolicy.RESPONSE_WAIT_MILLIS.toInt()
+                        socket.connect(InetSocketAddress(server, 53), socket.soTimeout)
+                        DataOutputStream(socket.getOutputStream()).apply {
+                            writeShort(message.size)
+                            write(message)
+                            flush()
+                        }
+                        val input = DataInputStream(socket.getInputStream())
+                        ByteArray(input.readUnsignedShort()).also(input::readFully)
                     }
-                    socket.soTimeout = AndroidResolverPolicy.RESPONSE_WAIT_MILLIS.toInt()
-                    socket.connect(InetSocketAddress(server, 53), socket.soTimeout)
-                    DataOutputStream(socket.getOutputStream()).apply {
-                        writeShort(message.size)
-                        write(message)
-                        flush()
-                    }
-                    val input = DataInputStream(socket.getInputStream())
-                    ByteArray(input.readUnsignedShort()).also(input::readFully)
                 }
             } else answer
             check(complete.size >= 12 && message.size >= 2 && complete[0] == message[0] &&

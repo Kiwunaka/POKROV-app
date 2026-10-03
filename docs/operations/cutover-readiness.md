@@ -24,8 +24,12 @@ An instrumented 1.4.1 comparison kept identical profile bytes and four rule sets
 stock Core 1.2.2 lost egress at 19.5 seconds, while 1.2.2 with only the URLTest
 failed-history fix stayed healthy beyond 200 seconds and passed 204/64 KiB.
 This validates the selection fix; complete Core 1.2.5 package acceptance remains pending.
-On the Android QA emulator both versions returned Profile/API-008 before VPN
-permission; trial provisioning and runtime startup remain unproved there.
+On the owned Android 9 emulator both versions returned Profile/API-008 before
+VPN permission. Debug tracing confirmed a trial, secure pair and HTTP 200 profile
+fetch; the captured-network DNS fallback failed with EBADF because its socket
+descriptor wrapper closed before I/O. A controlled 1.4.1 debug run with corrected
+descriptor lifetime passed DNS and native candidate admission. Complete 1.4.2
+TUN acceptance remains pending.
 Physical-device acceptance and old saved-TUN migration are not claimed.
 The prepared files were published without rebuilding or announcements.
 The published 4082 binaries were built from client source `8edd3b2`.

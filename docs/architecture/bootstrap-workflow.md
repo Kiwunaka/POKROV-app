@@ -164,6 +164,11 @@ without adding failure memory; unknown availability keeps them eligible. Android
 bootstrap replaces the resolver server while preserving a supplied resolver map's
 family strategy and other options. These paths have source checks; physical IPv6
 acceptance remains open.
+Candidate DNS keeps the socket descriptor wrapper open until its UDP exchange or
+truncated-response TCP exchange completes. Before Android API 29 the factory
+borrows the socket's descriptor, so closing that wrapper before connect/send/read
+invalidates the live socket. Captured-network binding, cancellation and deadlines
+keep their existing ownership; the socket and wrapper close after the exchange.
 `data_stalled` is one of those typed network failures. Probe outcomes enter
 the local journal and one bounded batch in the final runtime
 stats event, with catalog candidate refs and transport names but no profile data.
