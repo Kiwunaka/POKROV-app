@@ -12,6 +12,15 @@ Brain's public feed recommends 1.4.2 on Android and Windows with 100% rollout.
 The minimum supported version remains 1.3.0; post-apply readback passed.
 No new broadcast or LiveUpdate was created.
 
+Local candidate preparation targets **1.4.3+4084**; public 1.4.2 remains unchanged.
+First online country Auto without cached or staged material now waits up to 40
+seconds for access ACK; pending API-011 asks for an explicit Connect retry with
+the same session. Core 1.2.7 treats a successful HTTPS check whose selected route
+changed as unavailable under the existing bounded retry. Its built Windows DLL
+and Android AAR are pinned from Core source `7846df3`; Cronet remains unchanged.
+Windows preparation is unsigned `CANDIDATE_ONLY`, with `public_approved=false`;
+the APP 1.4.3 build, acceptance and publication are still pending.
+
 ## Client 1.4.1 quiet publication, 2026-10-02
 
 Owner-approved public release `v1.4.1` contains the existing production-signed four Android

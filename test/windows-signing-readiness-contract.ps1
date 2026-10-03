@@ -18,7 +18,7 @@ foreach ($requiredMarker in @(
   'candidate_created = $false',
   'production_runtime_mutated = $false',
   'private_key_value_exposed = $false',
-  'RELEASE_APPROVAL_PENDING_1_4_2',
+  'RELEASE_APPROVAL_PENDING_1_4_3',
   'CANDIDATE_ONLY',
   'public_approved = [bool]$windowsReleaseConfig.public_approved',
   'smartscreen_warning_required',
@@ -34,19 +34,19 @@ if ($windowsRelease.channel -ne 'outside_store_beta' -or
     $windowsRelease.public_approved -ne $false -or
     $windowsRelease.artifact_status -ne 'unsigned_beta_candidate' -or
     $windowsRelease.signing.status -ne 'CANDIDATE_ONLY' -or
-    $windowsRelease.signing.blocker_code -ne 'RELEASE_APPROVAL_PENDING_1_4_2' -or
+    $windowsRelease.signing.blocker_code -ne 'RELEASE_APPROVAL_PENDING_1_4_3' -or
     $windowsRelease.signing.required_for_candidate -ne $false -or
     $windowsRelease.signing.required_for_trusted_claim -ne $true -or
     $ownerException.status -ne 'CANDIDATE_ONLY' -or
-    $ownerException.authorized_on -ne '2026-10-02' -or
-    $ownerException.version_scope -ne '1.4.2' -or
+    $ownerException.authorized_on -ne '2026-10-03' -or
+    $ownerException.version_scope -ne '1.4.3' -or
     $ownerException.channel_scope -ne 'outside_store_beta' -or
     $ownerException.distribution_scope -ne 'direct_download_only' -or
     $ownerException.trusted_claim_allowed -ne $false -or
     $ownerException.store_claim_allowed -ne $false -or
     $ownerException.smartscreen_warning_required -ne $true -or
     $ownerException.expires_when_trusted_signing_is_available -ne $true) {
-  throw 'Windows unsigned preparation is not constrained to the exact 1.4.2 candidate-only beta scope.'
+  throw 'Windows unsigned preparation is not constrained to the exact 1.4.3 candidate-only beta scope.'
 }
 
 if ($windowsRelease.signing.readiness_probe.receipt_schema -ne

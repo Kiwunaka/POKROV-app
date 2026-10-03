@@ -510,13 +510,13 @@ $ownerUnsignedExceptionActive =
   $windowsReleaseConfig.public_approved -eq $false -and
   $windowsReleaseConfig.artifact_status -eq "unsigned_beta_candidate" -and
   $windowsReleaseConfig.signing.status -eq "CANDIDATE_ONLY" -and
-  $windowsReleaseConfig.signing.blocker_code -eq "RELEASE_APPROVAL_PENDING_1_4_2" -and
+  $windowsReleaseConfig.signing.blocker_code -eq "RELEASE_APPROVAL_PENDING_1_4_3" -and
   $windowsReleaseConfig.signing.required_for_candidate -eq $false -and
   $windowsReleaseConfig.signing.required_for_trusted_claim -eq $true -and
   $windowsReleaseConfig.channel -eq "outside_store_beta" -and
   $ownerUnsignedException.status -eq "CANDIDATE_ONLY" -and
-  $ownerUnsignedException.authorized_on -eq "2026-10-02" -and
-  $ownerUnsignedException.version_scope -eq "1.4.2" -and
+  $ownerUnsignedException.authorized_on -eq "2026-10-03" -and
+  $ownerUnsignedException.version_scope -eq "1.4.3" -and
   $ownerUnsignedException.channel_scope -eq "outside_store_beta" -and
   $ownerUnsignedException.distribution_scope -eq "direct_download_only" -and
   $ownerUnsignedException.trusted_claim_allowed -eq $false -and
@@ -525,7 +525,7 @@ $ownerUnsignedExceptionActive =
   $ownerUnsignedException.expires_when_trusted_signing_is_available -eq $true
 if ($windowsReleaseConfig.signing.required_for_candidate -ne $true -and
     -not $ownerUnsignedExceptionActive) {
-  throw "Unsigned Windows candidate policy is incomplete or outside the exact 1.4.2 preparation scope. Public release requires the owner's decision."
+  throw "Unsigned Windows candidate policy is incomplete or outside the exact 1.4.3 preparation scope. Public release requires the owner's decision."
 }
 $trustedWindowsSigningContext = $null
 if ($trustedWindowsSigningRequested) {

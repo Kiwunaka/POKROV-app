@@ -1,9 +1,9 @@
 {
   "core": {
     "repository": "Kiwunaka/pokrov-core",
-    "version": "1.2.6",
-    "release_tag": "v1.2.6",
-    "source_commit": "1ef5364c18d03d28ed1e537439274d52c692b0c3",
+    "version": "1.2.7",
+    "release_tag": "v1.2.7",
+    "source_commit": "7846df362471366a28ed14aa58ef389baed3484a",
     "android_package": "space.pokrov.core",
     "desktop_abi": {
       "version": 2
@@ -11,14 +11,14 @@
     "assets": {
       "android": {
         "entry": "pokrov-core.aar",
-        "size": 91679340,
-        "sha256": "307f4a94298eb769ec5c61182b077fd690b139284a1ad99717cf385a18dd3e47",
+        "size": 91686486,
+        "sha256": "f1d729f93620b290e3e5ff221792b0771eb84d2f694b58744bb7a20b4d9b982d",
         "sync_destination": "apps/android_shell/android/app/libs"
       },
       "windows": {
         "entry": "pokrov-core.dll",
-        "size": 46569984,
-        "sha256": "25973d9938e7db8a7cd0a44650d2df8d7d873ff3a602320735232aa8f275df88",
+        "size": 46573056,
+        "sha256": "4eaf57d861aa9cf308ca47fbfc677e0e013c711b861be81478e03c0a1fea823d",
         "sync_destination": "apps/windows_shell/windows/runner/resources/runtime",
         "runtime_dependencies": ["libcronet.dll"],
         "runtime_dependency_size": {
