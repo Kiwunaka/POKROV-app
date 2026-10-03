@@ -3469,6 +3469,7 @@ class AppFirstRuntimeBootstrapper
     requests.requireActive();
     final client = requests.attach(_createHttpClient(hostPlatform));
     var timedOut = false;
+    var accessPreparing = false;
     var timer = timeout == null ? null : Timer(timeout, () {
       timedOut = true;
       client.close(force: true);
@@ -3477,6 +3478,7 @@ class AppFirstRuntimeBootstrapper
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
         requests.requireActive();
+        accessPreparing = false;
         if (!state.hasSession) {
           state = await _startTrial(
             state: state,
@@ -3516,7 +3518,10 @@ class AppFirstRuntimeBootstrapper
             preferredVariantId: preferredVariantId,
             preferredCountryCode: preferredCountryCode,
             client: client,
+            profileTimeout: timeout,
+            onAccessPreparing: () => accessPreparing = true,
           );
+          accessPreparing = false;
           requests.requireActive();
           if (selectCandidate && manifest.payload.candidateMaterials.isEmpty &&
               selectedCandidateRef.isEmpty && preferredNodeCode.trim().isEmpty && preferredCountryCode.isEmpty &&
@@ -3547,6 +3552,8 @@ class AppFirstRuntimeBootstrapper
                     ? catalog.selected
                     : catalog.candidates.firstWhere((item) => item.nodeCode == selectedNodeCode);
                 if (candidate.candidateRef != catalog.selectedCandidateRef) {
+                  var waitingForManifest = true;
+                  accessPreparing = false;
                   try {
                     manifest = await _fetchManagedManifest(
                       runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
@@ -3555,11 +3562,18 @@ class AppFirstRuntimeBootstrapper
                       state: state, hostPlatform: hostPlatform, routeMode: routeMode,
                       selectedApps: normalizedSelectedApps, preferredNodeCode: selectedNodeCode,
                       preferredVariantId: 'direct', client: client,
+                      onAccessPreparing: () {
+                        if (waitingForManifest) accessPreparing = true;
+                      },
                     ).timeout(_smartConnectProfileRefreshTimeout);
+                    accessPreparing = false;
                   } on TimeoutException {
                     requests.requireActive();
                     if (normalizedExcludedNodeCodes.isNotEmpty) rethrow;
                     // The first catalog profile is already authorized and usable.
+                  } finally {
+                    waitingForManifest = false;
+                    if (!timedOut) accessPreparing = false;
                   }
                 }
               } else {
@@ -3570,6 +3584,8 @@ class AppFirstRuntimeBootstrapper
                   );
                 } on Object {
                   requests.requireActive();
+                  var waitingForManifest = true;
+                  accessPreparing = false;
                   try {
                     manifest = await _fetchManagedManifest(
                       tcpFallbackFromRevision: tcpFallbackFromRevision,
@@ -3580,7 +3596,11 @@ class AppFirstRuntimeBootstrapper
                       preferredNodeCode: selectedNodeCode,
                       preferredVariantId: 'direct',
                       client: client,
+                      onAccessPreparing: () {
+                        if (waitingForManifest) accessPreparing = true;
+                      },
                     ).timeout(_smartConnectProfileRefreshTimeout);
+                    accessPreparing = false;
                   } on Object {
                     requests.requireActive();
                     if (normalizedExcludedNodeCodes.isNotEmpty) {
@@ -3589,6 +3609,9 @@ class AppFirstRuntimeBootstrapper
                     // The preliminary managed profile is already authorized and
                     // usable. A bounded Smart Connect refresh must not turn a
                     // transient selection/refetch failure into a dead-end.
+                  } finally {
+                    waitingForManifest = false;
+                    if (!timedOut) accessPreparing = false;
                   }
                 }
               }
@@ -3699,6 +3722,13 @@ class AppFirstRuntimeBootstrapper
       requests.requireActive();
       if (timedOut && !(error is BootstrapFailure &&
           (error.statusCode == 401 || error.statusCode == 403 || error.code == 'managed_profile_superseded'))) {
+        if (accessPreparing) {
+          throw const BootstrapFailure(
+            'Доступ ещё готовится. Нажмите «Подключить», чтобы повторить попытку.',
+            code: 'access_preparing', operationalCode: 'API-011',
+            operation: 'managed_profile',
+          );
+        }
         throw TimeoutException('Managed profile refresh');
       }
       rethrow;
@@ -6654,6 +6684,8 @@ class AppFirstRuntimeBootstrapper
     String? coreRelease,
     String selectedCandidateRef = '',
     String preferredCountryCode = '',
+    Duration? profileTimeout,
+    void Function()? onAccessPreparing,
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
     // The user preference remains in cache inputs; an exact candidate can use
@@ -6698,6 +6730,8 @@ class AppFirstRuntimeBootstrapper
         // A missing cellular observation must not block profile delivery.
       }
     }
+    final preparingPullLimit =
+        profileTimeout == const Duration(seconds: 40) ? 16 : 6;
     Map<String, dynamic> response;
     for (var attempt = 0; ; attempt += 1) {
       response = await _requestJson(
@@ -6710,9 +6744,10 @@ class AppFirstRuntimeBootstrapper
           if (carrierHeader != null) 'X-Portal-Carrier': carrierHeader},
       );
       if (response['status'] != 'access_preparing') break;
-      if (attempt >= 5) {
+      onAccessPreparing?.call();
+      if (attempt >= preparingPullLimit - 1) {
         throw const BootstrapFailure(
-          'Доступ ещё готовится. POKROV повторит подключение позже.',
+          'Доступ ещё готовится. Нажмите «Подключить», чтобы повторить попытку.',
           code: 'access_preparing', operationalCode: 'API-011',
         );
       }

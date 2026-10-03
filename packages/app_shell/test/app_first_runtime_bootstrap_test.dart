@@ -4983,6 +4983,11 @@ void main() {
     });
     var starts = 0;
     var profiles = 0;
+    var profileResolved = false;
+    var stallAfterPreparing = false;
+    var pendingBeforeStall = true;
+    HttpResponse? heldProfile;
+    final delays = <Duration>[];
     String? profileRunId;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
@@ -5006,11 +5011,16 @@ void main() {
           profileRunId ??= runId;
           expect(runId, profileRunId);
           profiles += 1;
-          if (profiles < 3) {
+          if (profiles < 12 || (stallAfterPreparing && pendingBeforeStall)) {
+            if (stallAfterPreparing) pendingBeforeStall = false;
+            if (profiles < 12) expect(profileResolved, isFalse);
             request.response.statusCode = HttpStatus.accepted;
             request.response.write(jsonEncode(<String, Object?>{
               'status': 'access_preparing', 'retry_after_seconds': 2,
             }));
+          } else if (stallAfterPreparing) {
+            heldProfile = request.response;
+            continue;
           } else {
             request.response.write(jsonEncode({
               ..._readyManagedProfile('prepared'),
@@ -5026,17 +5036,47 @@ void main() {
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
-      delayScheduler: (_) async {},
+      maxRequestAttempts: 1,
+      delayScheduler: (delay) async => delays.add(delay),
     );
     final payload = await bootstrapper.resolveManagedProfile(
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel,
-      timeout: const Duration(seconds: 18),
-    );
+      timeout: const Duration(seconds: 40),
+    ).then((payload) {
+      profileResolved = true;
+      return payload;
+    });
     expect(payload.profileName, 'pokrov-windows-prepared');
     expect(payload.accessNetworkAsn, 'AS12345');
     expect(starts, 1);
-    expect(profiles, 3);
+    expect(profiles, 12);
+    expect(delays, List.filled(11, const Duration(seconds: 2)));
+    expect(delays.fold(Duration.zero, (total, delay) => total + delay),
+        const Duration(seconds: 22));
+    stallAfterPreparing = true;
+    await expectLater(bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+      timeout: const Duration(milliseconds: 250),
+    ), throwsA(isA<BootstrapFailure>()
+        .having((failure) => failure.code, 'code', 'access_preparing')
+        .having((failure) => failure.operationalErrorCode, 'operational code', 'API-011')
+        .having((failure) => failure.message, 'explicit retry', contains('Нажмите «Подключить»'))));
+    expect(heldProfile, isNotNull);
+    stallAfterPreparing = false;
+    try {
+      heldProfile!.write(jsonEncode(_readyManagedProfile('late-ack')));
+      await heldProfile!.close();
+    } on Object {
+      // The expired client has already closed this response.
+    }
+    final retried = await bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      timeout: const Duration(seconds: 40),
+    );
+    expect(retried.profileName, 'pokrov-windows-prepared');
+    expect(starts, 1, reason: 'explicit retry keeps the original trial session');
   });
 
   test('refresh failure never starts a second trial for an existing install',

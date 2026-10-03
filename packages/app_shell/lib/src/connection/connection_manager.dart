@@ -3413,6 +3413,15 @@ class ConnectionManager extends ChangeNotifier {
                   inputsVerified: cachedPayload != null) &&
               !_automaticFailoverInFlight &&
               _tcpFallbackFromRevision.isEmpty;
+      final initialProfilePreparation = !cachedProfileAvailable &&
+          (current.stagedConfigPath?.trim().isEmpty ?? true) &&
+          cacheInputs.preferredNodeCode.trim().isEmpty &&
+          cacheInputs.preferredCandidateRef.trim().isEmpty &&
+          cacheInputs.preferredVariantId == 'direct' &&
+          actionIntent == ConnectionTransitionIntent.connect &&
+          !_automaticFailoverInFlight && _tcpFallbackFromRevision.isEmpty &&
+          const {HostPlatform.android, HostPlatform.windows}
+              .contains(_appContext.hostPlatform);
       if (cacheService == null &&
           cachedProfileAvailable &&
           _appContext.hostPlatform == HostPlatform.android) {
@@ -3442,7 +3451,8 @@ class ConnectionManager extends ChangeNotifier {
             ownerGeneration: generation,
             deadline: cachedProfileFallbackAllowed
                 ? _cachedProfileRefreshDeadline
-                : _actionTimeout,
+                : initialProfilePreparation
+                    ? const Duration(seconds: 40) : _actionTimeout,
           );
         } on TimeoutException {
           if (!cachedProfileFallbackAllowed ||
@@ -3715,7 +3725,8 @@ class ConnectionManager extends ChangeNotifier {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
         return;
       }
-      final offlineMessage = failureOperation == 'managed_profile_refresh' && _isTransientProfileFailure(error)
+      final offlineMessage = failureOperation == 'managed_profile_refresh' &&
+          error.code != 'access_preparing' && _isTransientProfileFailure(error)
           ? await _classifyOfflineFailure(generation) : null;
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       _update(() {

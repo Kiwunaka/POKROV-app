@@ -1881,6 +1881,15 @@ When a new trial waits for its Node key, the managed-profile request retries
 HTTP 202 `access_preparing` after the server's bounded delay on the same device
 session. Its profile deadline begins after trial creation, so the Node ACK
 does not consume the time spent creating the trial.
+
+Initial Android/Windows Auto, including a selected country, allows 40 seconds
+for the profile when no matching cached or staged profile exists, with up to
+16 preparing GETs inside that deadline. Exact Node ACK remains required;
+operation cancellation prevents late activation. A pending ACK at the deadline
+retains `API-011` and asks the user to press Connect again with the same session.
+Cached refresh stays at three seconds; manual node, candidate and bridge choices
+keep the 18-second profile budget, and native deadlines stay unchanged.
+
 After a transient failure, real OS observations distinguish no network and a
 captive portal from an unavailable API; expiry beyond the local grace is shown
 as ended access. Unknown OS status is not treated as a disconnected network.

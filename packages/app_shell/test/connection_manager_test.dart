@@ -35,6 +35,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   Object? failure;
   StackTrace? failureStack;
   String? lastCoreRelease;
+  Duration? lastProfileTimeout;
   final entered = Completer<void>();
   bool cancelled = false;
 
@@ -66,6 +67,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     Future<void>? cancelled,
   }) async {
     lastCoreRelease = coreRelease;
+    lastProfileTimeout = timeout;
     requestedCountries.add(preferredCountryCode);
     resolutions.add((selected: selectedCandidateRef, select: selectCandidate, cache: cacheResult));
     if (!entered.isCompleted) entered.complete();
@@ -1532,12 +1534,15 @@ void main() {
 
   test('new command cancels profile work and ignores its late result',
       () async {
-    final runtime = _Runtime();
-    final bootstrapper = _Bootstrapper()..gate = Completer<void>();
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _CachedBootstrapper()
+      ..cacheAvailable = false
+      ..gate = Completer<void>();
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     final first = manager.connect();
     await bootstrapper.entered.future;
+    expect(bootstrapper.lastProfileTimeout, const Duration(seconds: 40));
     final disconnect = manager.disconnect();
     await Future<void>.delayed(Duration.zero);
     expect(bootstrapper.cancelled, isTrue);
@@ -1547,6 +1552,18 @@ void main() {
     expect(runtime.connectCalls, 0);
     expect(manager.attemptId, 2);
     expect(manager.busy, isFalse);
+    const pendingMessage = 'Доступ ещё готовится. Нажмите «Подключить», чтобы повторить попытку.';
+    bootstrapper.failure = const BootstrapFailure(pendingMessage,
+        code: 'access_preparing', operationalCode: 'API-011');
+    await manager.connect();
+    expect(manager.headline, pendingMessage);
+    expect(runtime.calls, isNot(contains('stage')));
+    expect(runtime.connectCalls, 0);
+    bootstrapper.cacheAvailable = true;
+    await manager.connect();
+    expect(bootstrapper.lastProfileTimeout, const Duration(seconds: 3));
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.connectCalls, 1);
   });
 
   for (final operation in ['initialize', 'stage', 'connect']) {
