@@ -36,7 +36,7 @@
     "runtime_dependencies": [
       "libcronet.dll"
     ],
-    "release_tag": "v1.2.4",
+    "release_tag": "v1.2.5",
     "desktop_abi": 2,
     "crash_profile": {
       "format": "POKROV_WINDOWS_CRASH_V1",
@@ -111,7 +111,7 @@
   },
   "safe_claims": [
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
-    "This exact setup bundles the pinned POKROV Core 1.2.4 bytes, libcronet.dll dependency, the required x64 Microsoft VC143 runtime DLLs, and pokrov_service.exe in one machine-wide installation directory.",
+    "This exact setup bundles the pinned POKROV Core 1.2.5 bytes, libcronet.dll dependency, the required x64 Microsoft VC143 runtime DLLs, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
     "The exact 1.4.2 authorization permits local unsigned candidate preparation with CANDIDATE_ONLY status and the SmartScreen warning above. Public release still requires the owner's decision; trusted, signed, Store and broad-stable claims remain unavailable.",
     "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest."

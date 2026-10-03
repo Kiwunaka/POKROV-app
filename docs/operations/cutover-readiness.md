@@ -4,7 +4,7 @@ Public version: **1.4.1+4082** with POKROV Core 1.2.2 in
 `Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
 beta with a SmartScreen warning. Version 1.4.0 remains available for rollback.
 
-Development target is `1.4.2+4083`, bound to the local Core 1.2.4 candidate Android and
+Development target is `1.4.2+4083`, bound to the published Core 1.2.5 prerelease Android and
 Windows artifacts with desktop ABI 2. Windows unsigned preparation is limited to
 this candidate, records `CANDIDATE_ONLY`, and keeps `public_approved=false`.
 The public release remains 1.4.1; publishing 1.4.2 requires the owner's decision.
@@ -20,6 +20,10 @@ settings to Advanced. Subsequent fresh-install checks on the owned Windows VM
 created a trial and secure pair, but country Auto lost protected egress about
 23 seconds after starting. Fresh 1.4.0 with PL ordinary mode stayed healthy and
 passed the owned 204/64 KiB traffic check; its selection differs from 1.4.1 Auto.
+An instrumented 1.4.1 comparison kept identical profile bytes and four rule sets:
+stock Core 1.2.2 lost egress at 19.5 seconds, while 1.2.2 with only the URLTest
+failed-history fix stayed healthy beyond 200 seconds and passed 204/64 KiB.
+This validates the selection fix; complete Core 1.2.5 package acceptance remains pending.
 On the Android QA emulator both versions returned Profile/API-008 before VPN
 permission; trial provisioning and runtime startup remain unproved there.
 Physical-device acceptance and old saved-TUN migration are not claimed.
