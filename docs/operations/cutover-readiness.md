@@ -4,7 +4,7 @@ Public version: **1.4.1+4082** with POKROV Core 1.2.2 in
 `Kiwunaka/pokrov` GitHub Releases: Android direct APK and unsigned Windows
 beta with a SmartScreen warning. Version 1.4.0 remains available for rollback.
 
-Development target is `1.4.2+4083`, bound to the published Core 1.2.5 prerelease Android and
+Development target is `1.4.2+4083`, bound to the published Core 1.2.6 prerelease Android and
 Windows artifacts with desktop ABI 2. Windows unsigned preparation is limited to
 this candidate, records `CANDIDATE_ONLY`, and keeps `public_approved=false`.
 The public release remains 1.4.1; publishing 1.4.2 requires the owner's decision.
@@ -23,13 +23,20 @@ passed the owned 204/64 KiB traffic check; its selection differs from 1.4.1 Auto
 An instrumented 1.4.1 comparison kept identical profile bytes and four rule sets:
 stock Core 1.2.2 lost egress at 19.5 seconds, while 1.2.2 with only the URLTest
 failed-history fix stayed healthy beyond 200 seconds and passed 204/64 KiB.
-This validates the selection fix; complete Core 1.2.5 package acceptance remains pending.
+This validates the selection fix. A fresh 1.4.2/Core 1.2.5 Windows installation
+created an ordinary trial, stayed healthy on PL Auto/Simple/allExceptRu beyond
+five minutes, and passed the owned 204/64 KiB traffic check with its profile unchanged.
 On the owned Android 9 emulator both versions returned Profile/API-008 before
 VPN permission. Debug tracing confirmed a trial, secure pair and HTTP 200 profile
 fetch; the captured-network DNS fallback failed with EBADF because its socket
 descriptor wrapper closed before I/O. A controlled 1.4.1 debug run with corrected
-descriptor lifetime passed DNS and native candidate admission. Complete 1.4.2
-TUN acceptance remains pending.
+descriptor lifetime passed DNS and native candidate admission. The signed
+1.4.2/Core 1.2.5 package reached TUN establishment, then stopped on the Core
+egress guard; private diagnostics classified the group target as unavailable.
+Core 1.2.6 fixes cold URLTest current-tag reporting to use the same TCP fallback
+as DialContext without changing selection state, history or timers. Attribution
+to that Android attempt and complete 1.4.2/Core 1.2.6 Android and Windows package
+acceptance remain pending.
 Physical-device acceptance and old saved-TUN migration are not claimed.
 The prepared files were published without rebuilding or announcements.
 The published 4082 binaries were built from client source `8edd3b2`.
