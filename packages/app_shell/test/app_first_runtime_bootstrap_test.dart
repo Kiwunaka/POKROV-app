@@ -7137,7 +7137,7 @@ void main() {
     );
     expect(
       inbounds.singleWhere((inbound) => inbound['type'] == 'tun')['stack'],
-      'mixed',
+      'gvisor',
     );
     expect(
       inbounds.singleWhere(
@@ -7510,7 +7510,7 @@ void main() {
     );
     expect(
       inbounds.singleWhere((inbound) => inbound['type'] == 'tun')['stack'],
-      'mixed',
+      'gvisor',
     );
     expect(
       inbounds.singleWhere(
@@ -9418,7 +9418,7 @@ void main() {
     expect(tunInbound.containsKey('inet4_address'), isFalse);
     expect(tunInbound.containsKey('inet6_address'), isFalse);
     expect(tunInbound.containsKey('domain_strategy'), isFalse);
-    expect(tunInbound['stack'], 'mixed');
+    expect(tunInbound['stack'], 'gvisor');
     expect(tunInbound['mtu'], 1400);
   });
 

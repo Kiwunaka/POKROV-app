@@ -1110,7 +1110,7 @@ Current blocking dependency:
 
 - `Android` host now reaches a real service-backed connect lane: it can initialize POKROV Core, stage a managed profile, request VPN permission, start a foreground `VpnService`, and hand tun ownership to the native runtime through the host `PlatformInterface`
 - Android runtime discovery accepts either an extracted `nativeLibraryDir/libpokrov-core.so` or the ABI-matched `lib/<abi>/libpokrov-core.so` entry in the base/split APK. This is required on physical devices that install the release APK with native-library extraction disabled; Java still loads the packaged Core through the generated bindings
-- Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path
+- Android runtime materialization is intentionally `tun`-only in this lane; desktop loopback listener inbounds such as `mixed-in` and `dns-in` stay disabled for the mobile `VpnService` path. Materialized TUN profiles and the native no-TUN fallback default to `gvisor` for userspace TCP and UDP. This avoids the `mixed` kernel TCP path that stalled ordinary HTTPS in Android QA despite healthy selected-outbound probes; the exact kernel return-policy cause is not established. Native preparation preserves the stack of an existing imported TUN profile.
 - Android runtime materialization now keeps backend-managed `dns` servers, selector choice, and route-rule semantics whenever they are already mobile-safe, instead of swapping the whole profile into a custom universal DNS lane
 - the Android bootstrap client uses the owned `app.pokrov.space/api/*` ingress
   as its primary control-plane origin and retains `api.pokrov.space` as the

@@ -930,7 +930,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     )
                     .put("auto_route", true)
                     .put("strict_route", true)
-                    .put("stack", "mixed")
+                    .put("stack", "gvisor")
                     .put("address", JSONArray()
                         .put("172.19.0.1/28")
                         .put("fdfe:dcba:9876::1/126"))

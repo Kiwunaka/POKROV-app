@@ -8527,7 +8527,7 @@ class AppFirstRuntimeBootstrapper
       'mtu': tunMtu,
       'auto_route': true,
       'strict_route': true,
-      'stack': hostPlatform == HostPlatform.android ? 'mixed' : 'system',
+      'stack': hostPlatform == HostPlatform.android ? 'gvisor' : 'system',
     };
     if (ipVersionPreference == 'ipv6_only') {
       tunInbound['address'] = <String>['fdfe:dcba:9876::1/126'];
