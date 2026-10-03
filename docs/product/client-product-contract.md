@@ -354,11 +354,12 @@ Product rules for that choice:
 - manual process/package identifiers remain available only behind an explicit
   manual fallback row
 - the chosen route mode must persist per device and remain editable later from a dedicated route-mode screen
-- the live state must round-trip through backend-owned `route_mode`, `selected_apps`, `requires_elevated_privileges`, and mirrored `route_policy.*` fields
+- app-first route-policy requests send `route_mode` and
+  `requires_elevated_privileges`; they do not send selected-app identifiers
 - current implementation exposes `All except RU`, `Full tunnel`, and
   `Only selected apps` on both clients, plus Android-only `Except selected
   apps`; adding a custom app identifier auto-selects the selected-apps route
-  and sends `selected_apps` through app-first route policy
+  and applies the selected-app list locally to the runtime configuration
 - selected-app identifiers are device-local, survive app restart, normalized,
   and capped at 128; an empty selected-apps list still blocks connection
   when that routing mode is active. Operational release health may report only
