@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:cryptography/cryptography.dart' show Sha256;
 
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
@@ -1023,6 +1024,53 @@ class BootstrapFailure implements Exception {
 
   @override
   String toString() => message;
+}
+
+// Debug QA only: never include exception text, operations, or request material.
+void _traceBootstrap(String stage, String outcome, {
+  String reason = 'none',
+  int? status,
+  Object? error,
+  String? operationalCode,
+  bool? pairPresent,
+}) {
+  if (!kDebugMode) return;
+  final code = operationalCode ?? switch (error) {
+    BootstrapFailure() => error.operationalErrorCode,
+    SocketException() || HttpException() || TimeoutException() => 'API-002',
+    HandshakeException() => 'API-003',
+    _ => null,
+  };
+  debugPrint('POKROV_BOOTSTRAP ${jsonEncode(<String, Object?>{
+    'stage': stage,
+    'outcome': outcome,
+    'reason': reason,
+    'status': status ?? (error is BootstrapFailure ? error.statusCode : null),
+    'operationalCode': switch (code) {
+      'API-001' || 'API-002' || 'API-003' || 'API-004' || 'API-005' ||
+      'API-006' || 'API-007' || 'API-008' || 'API-009' || 'API-010' ||
+      'API-011' || 'AUTH-002' || 'AUTH-004' || 'AUTH-005' || 'AUTH-006' ||
+      'CONN-006' => code,
+      null => null,
+      _ => 'other_code',
+    },
+    'exceptionClass': switch (error) {
+      null => null,
+      BootstrapFailure() => 'BootstrapFailure',
+      MissingPluginException() => 'MissingPluginException',
+      PlatformException() => 'PlatformException',
+      FileSystemException() => 'FileSystemException',
+      FormatException() => 'FormatException',
+      SocketException() => 'SocketException',
+      HttpException() => 'HttpException',
+      HandshakeException() => 'HandshakeException',
+      TimeoutException() => 'TimeoutException',
+      StateError() => 'StateError',
+      ArgumentError() => 'ArgumentError',
+      _ => 'other_exception',
+    },
+    if (pairPresent != null) 'pairPresent': pairPresent,
+  })}');
 }
 
 Map<String, dynamic> _clientMap(Object? value) {
@@ -6094,8 +6142,17 @@ class AppFirstRuntimeBootstrapper
       return null;
     }
 
-    final decoded = jsonDecode(await file.readAsString());
+    _traceBootstrap('state_load', 'begin', reason: 'state_read');
+    Object? decoded;
+    try {
+      decoded = jsonDecode(await file.readAsString());
+    } on Object catch (error) {
+      _traceBootstrap('state_load', 'fail', reason: 'state_read', error: error);
+      rethrow;
+    }
     if (decoded is! Map) {
+      _traceBootstrap('state_load', 'fail', reason: 'state_not_object',
+        operationalCode: 'API-008');
       throw const BootstrapFailure(
         'This device needs to be set up again before it can connect.',
       );
@@ -6108,10 +6165,19 @@ class AppFirstRuntimeBootstrapper
     // A persisted path is untrusted input. Validate it before reading secrets
     // or allowing any authenticated route-policy/profile request.
     _validatedManagedManifestPath(parsed.managedManifestPath);
-    final securePair = await _sessionSecretStore.readSessionPair(
-      hostPlatform: hostPlatform,
-      installId: parsed.installId,
-    );
+    AppFirstSessionCredentials? securePair;
+    try {
+      securePair = await _sessionSecretStore.readSessionPair(
+        hostPlatform: hostPlatform,
+        installId: parsed.installId,
+      );
+    } on Object catch (error) {
+      _traceBootstrap('pair_persist', 'fail', reason: 'secure_read', error: error);
+      rethrow;
+    }
+    _traceBootstrap('pair_persist', 'readback', reason: 'secure_read',
+      pairPresent: securePair != null && securePair.hasAccessToken &&
+        securePair.refreshToken.trim().isNotEmpty);
     if (securePair != null && securePair.hasAccessToken) {
       if (parsed.sessionToken.isNotEmpty || parsed.requiresSchemaMigration) {
         await _persistStateToFile(
@@ -6150,6 +6216,8 @@ class AppFirstRuntimeBootstrapper
       return migrated;
     }
     if (parsed.expectsSecureSessionToken) {
+      _traceBootstrap('state_load', 'fail', reason: 'expected_pair_absent',
+        operationalCode: 'API-008');
       throw const BootstrapFailure(
         'Сохраненная сессия устройства недоступна. Используйте почту или код, '
         'чтобы восстановить доступ.',
@@ -6196,27 +6264,47 @@ class AppFirstRuntimeBootstrapper
     required _StoredBootstrapState state,
   }) async {
     _notifyTransportSelectionSessionWrite(file, state);
-    await file.parent.create(recursive: true);
-    if (state.sessionToken.trim().isNotEmpty) {
-      await _sessionSecretStore.writeSessionPair(
-        hostPlatform: hostPlatform,
-        installId: state.installId,
-        pair: AppFirstSessionCredentials(
-          accessToken: state.sessionToken,
-          refreshToken: state.refreshToken,
-        ),
-      );
-    } else {
-      await _sessionSecretStore.deleteSessionToken(
-        hostPlatform: hostPlatform,
-        installId: state.installId,
-      );
+    var reason = 'state_write';
+    try {
+      await file.parent.create(recursive: true);
+      reason = state.sessionToken.trim().isNotEmpty ? 'secure_write' : 'secure_delete';
+      _traceBootstrap('pair_persist', 'begin', reason: reason);
+      if (state.sessionToken.trim().isNotEmpty) {
+        await _sessionSecretStore.writeSessionPair(
+          hostPlatform: hostPlatform,
+          installId: state.installId,
+          pair: AppFirstSessionCredentials(
+            accessToken: state.sessionToken,
+            refreshToken: state.refreshToken,
+          ),
+        );
+        _traceBootstrap('pair_persist', 'ok', reason: reason,
+          pairPresent: state.refreshToken.trim().isNotEmpty);
+      } else {
+        await _sessionSecretStore.deleteSessionToken(
+          hostPlatform: hostPlatform,
+          installId: state.installId,
+        );
+        _traceBootstrap('pair_persist', 'ok', reason: reason, pairPresent: false);
+      }
+      reason = 'state_write';
+      await _stateFileWriter(file, jsonEncode(state.toJson()));
+      _traceBootstrap('pair_persist', 'ok', reason: reason);
+    } on Object catch (error) {
+      _traceBootstrap('pair_persist', 'fail', reason: reason, error: error);
+      rethrow;
     }
-    await _stateFileWriter(file, jsonEncode(state.toJson()));
   }
 
   Future<File> _stateFile(HostPlatform hostPlatform) async {
-    final supportDirectory = await _supportDirectoryResolver();
+    Directory supportDirectory;
+    _traceBootstrap('state_load', 'begin', reason: 'support_directory');
+    try {
+      supportDirectory = await _supportDirectoryResolver();
+    } on Object catch (error) {
+      _traceBootstrap('state_load', 'fail', reason: 'support_directory', error: error);
+      rethrow;
+    }
     return File(
       '${supportDirectory.path}${Platform.pathSeparator}'
       'app-first-session-${hostPlatform.name}.json',
@@ -6332,6 +6420,8 @@ class AppFirstRuntimeBootstrapper
     final managedManifest = _readMap(provisioning['managed_manifest']);
     final pair = _sessionPairFromResponse(response);
     if (pair == null) {
+      _traceBootstrap('trial_response', 'fail', reason: 'trial_pair_absent',
+        operationalCode: 'API-008');
       throw const BootstrapFailure(
         'POKROV не смог завершить подготовку устройства.',
       );
@@ -6343,6 +6433,7 @@ class AppFirstRuntimeBootstrapper
           response['canonical_account_id'],
     );
     final managedManifestPath = _readText(managedManifest['url']);
+    _traceBootstrap('trial_response', 'ok');
 
     final nextState = effectiveState.copyWith(
       sessionToken: pair.accessToken,
@@ -6639,6 +6730,8 @@ class AppFirstRuntimeBootstrapper
     }
     final configFormat = _readText(response['config_format']);
     if (configFormat != 'singbox-json') {
+      _traceBootstrap('managed_response', 'fail', reason: 'config_format',
+        operationalCode: 'API-008');
       throw BootstrapFailure(
         'This device received connection details it cannot use yet.',
       );
@@ -6646,6 +6739,8 @@ class AppFirstRuntimeBootstrapper
 
     final configPayload = response['config_payload'];
     if (configPayload == null) {
+      _traceBootstrap('managed_response', 'fail', reason: 'config_payload_missing',
+        operationalCode: 'API-008');
       throw const BootstrapFailure(
         'POKROV не смог завершить настройку: данных подключения недостаточно.',
       );
@@ -6847,6 +6942,8 @@ class AppFirstRuntimeBootstrapper
         uri.fragment.isNotEmpty ||
         uri.path != _defaultManagedManifestPath ||
         !hasSafeQuery) {
+      _traceBootstrap('managed_response', 'fail', reason: 'managed_path_invalid',
+        operationalCode: 'API-008');
       throw const BootstrapFailure(
         'POKROV получил недопустимый путь профиля. Обновите настройки и попробуйте ещё раз.',
       );
@@ -6874,6 +6971,8 @@ class AppFirstRuntimeBootstrapper
     }
     final decoded = jsonDecode(rawConfigPayload);
     if (decoded is! Map) {
+      _traceBootstrap('managed_response', 'fail', reason: 'config_not_object',
+        operationalCode: 'API-008');
       throw const BootstrapFailure(
         'The connection details for this device were incomplete.',
       );
@@ -7436,6 +7535,8 @@ class AppFirstRuntimeBootstrapper
         .where((tag) => tag.isNotEmpty)
         .toList(growable: false);
     if (outbounds.isEmpty && awgEndpointTags.isEmpty) {
+      _traceBootstrap('managed_response', 'fail', reason: 'vpn_outbounds_missing',
+        operationalCode: 'API-008');
       throw const BootstrapFailure(
         'The connection details for this device were incomplete.',
       );
@@ -7463,6 +7564,8 @@ class AppFirstRuntimeBootstrapper
         awgEndpointTags.isEmpty &&
         selectorTag == null &&
         urlTestTag == null) {
+      _traceBootstrap('managed_response', 'fail', reason: 'vpn_path_missing',
+        operationalCode: 'API-008');
       throw const BootstrapFailure(
         'The connection details for this device did not include a working connection path.',
       );
@@ -9583,8 +9686,17 @@ class AppFirstRuntimeBootstrapper
     final operation = '$method $path';
     final retryable = allowRetries && method.trim().toUpperCase() == 'GET';
     final attemptLimit = retryable ? maxRequestAttempts : 1;
+    final traceStage = switch ((method, path.split('?').first)) {
+      ('POST', '/api/client/session/start-trial') => 'trial_http',
+      ('POST', '/api/client/route-policy') => 'route_policy',
+      ('GET', '/api/client/profile/managed') => 'managed_http',
+      _ => null,
+    };
     for (var attempt = 0; attempt < attemptLimit; attempt += 1) {
       Uri? requestUri;
+      int? traceStatus;
+      var traceReason = 'request';
+      if (traceStage != null) _traceBootstrap(traceStage, 'begin');
       try {
         final selectedBaseUrl = await _resolveApiBaseUrl(
           client: client,
@@ -9632,6 +9744,15 @@ class AppFirstRuntimeBootstrapper
         final effectiveRequestTimeout =
             requestTimeoutOverride ?? requestTimeout;
         final response = await request.close().timeout(effectiveRequestTimeout);
+        traceStatus = response.statusCode;
+        if (traceStage != null) {
+          _traceBootstrap(traceStage, 'response', status: traceStatus,
+            reason: response.statusCode >= 200 && response.statusCode < 300
+              ? 'none' : _bootstrapHttpReason(response),
+            operationalCode: response.statusCode >= 200 && response.statusCode < 300
+              ? null : OperationalFailureMapper.portal(statusCode: traceStatus,
+                  platformCode: _platformErrorCode(response)));
+        }
         final bytes = await _readBoundedResponseBytes(
           response,
           maxBytes: maximumResponseBytes,
@@ -9640,6 +9761,7 @@ class AppFirstRuntimeBootstrapper
         final text = utf8.decode(bytes, allowMalformed: responseDecoder == null ||
             response.statusCode < 200 || response.statusCode >= 300);
         if (response.statusCode < 200 || response.statusCode >= 300) {
+          traceReason = _bootstrapHttpReason(response);
           final failure = BootstrapFailure(
             _errorMessageForResponse(text, response.statusCode),
             statusCode: response.statusCode,
@@ -9652,31 +9774,41 @@ class AppFirstRuntimeBootstrapper
             throw failure;
           }
           lastFailure = failure;
+          if (traceStage != null) _traceBootstrap(traceStage, 'fail',
+            reason: traceReason, status: traceStatus, error: failure);
           await _delayScheduler(_retryDelayForAttempt(attempt));
           continue;
         }
 
+        traceReason = 'json_decode';
         if (responseDecoder != null) return responseDecoder(text);
 
         if (text.trim().isEmpty) {
+          if (traceStage != null) _traceBootstrap(traceStage, 'ok',
+            reason: 'empty_body', status: traceStatus);
           return const <String, dynamic>{};
         }
 
         final decoded = jsonDecode(text);
         if (decoded is Map<String, dynamic>) {
+          if (traceStage != null) _traceBootstrap(traceStage, 'ok', status: traceStatus);
           return decoded;
         }
         if (decoded is Map) {
+          if (traceStage != null) _traceBootstrap(traceStage, 'ok', status: traceStatus);
           return decoded.map(
             (key, value) => MapEntry(key.toString(), value),
           );
         }
+        traceReason = 'json_not_object';
         throw BootstrapFailure(
           'POKROV получил неожиданный ответ во время подготовки устройства.',
           operation: operation,
           operationalCode: 'API-008',
         );
-      } on SocketException {
+      } on SocketException catch (error) {
+        if (traceStage != null) _traceBootstrap(traceStage, 'fail',
+          reason: traceReason, status: traceStatus, error: error);
         _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
           'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
@@ -9687,7 +9819,9 @@ class AppFirstRuntimeBootstrapper
           throw failure;
         }
         lastFailure = failure;
-      } on HttpException {
+      } on HttpException catch (error) {
+        if (traceStage != null) _traceBootstrap(traceStage, 'fail',
+          reason: traceReason, status: traceStatus, error: error);
         _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
           'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
@@ -9698,7 +9832,9 @@ class AppFirstRuntimeBootstrapper
           throw failure;
         }
         lastFailure = failure;
-      } on HandshakeException {
+      } on HandshakeException catch (error) {
+        if (traceStage != null) _traceBootstrap(traceStage, 'fail',
+          reason: traceReason, status: traceStatus, error: error);
         _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
           'Не удалось безопасно подключиться к сервису. Проверьте дату, время и интернет.',
@@ -9709,7 +9845,9 @@ class AppFirstRuntimeBootstrapper
           throw failure;
         }
         lastFailure = failure;
-      } on TimeoutException {
+      } on TimeoutException catch (error) {
+        if (traceStage != null) _traceBootstrap(traceStage, 'fail',
+          reason: traceReason, status: traceStatus, error: error);
         _invalidateApiBaseUrl(requestUri);
         final failure = BootstrapFailure(
           'Сервис не ответил вовремя. Попробуйте ещё раз.',
@@ -9721,6 +9859,10 @@ class AppFirstRuntimeBootstrapper
           throw failure;
         }
         lastFailure = failure;
+      } on Object catch (error) {
+        if (traceStage != null) _traceBootstrap(traceStage, 'fail',
+          reason: traceReason, status: traceStatus, error: error);
+        rethrow;
       }
 
       await _delayScheduler(_retryDelayForAttempt(attempt));
@@ -9757,6 +9899,7 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
   }) async {
     for (final candidate in _apiBaseUrls) {
+      _traceBootstrap('origin_probe', 'begin');
       try {
         final request = await client.getUrl(
           Uri.parse(candidate).resolve('/api/health'),
@@ -9771,6 +9914,7 @@ class AppFirstRuntimeBootstrapper
           PortalCorrelationScope.currentOrCreate(),
         );
         final response = await request.close().timeout(requestTimeout);
+        _traceBootstrap('origin_probe', 'response', status: response.statusCode);
         final contentType = response.headers.contentType;
         final bytes = await _readBoundedResponseBytes(
           response,
@@ -9780,15 +9924,22 @@ class AppFirstRuntimeBootstrapper
         if (response.statusCode < 200 ||
             response.statusCode >= 300 ||
             contentType?.mimeType.toLowerCase() != 'application/json') {
+          _traceBootstrap('origin_probe', 'fail', status: response.statusCode,
+            reason: contentType?.mimeType.toLowerCase() != 'application/json'
+              ? 'content_type' : 'http_status');
           continue;
         }
         final decoded = jsonDecode(utf8.decode(bytes, allowMalformed: true));
         if (decoded is! Map) {
+          _traceBootstrap('origin_probe', 'fail', reason: 'json_not_object',
+            status: response.statusCode);
           continue;
         }
         _activeApiBaseUrl = candidate;
+        _traceBootstrap('origin_probe', 'ok', status: response.statusCode);
         return candidate;
       } on Object catch (error) {
+        _traceBootstrap('origin_probe', 'fail', error: error);
         if (error is! SocketException &&
             error is! HttpException &&
             error is! HandshakeException &&
@@ -9953,6 +10104,21 @@ class AppFirstRuntimeBootstrapper
         .trim()
         .toLowerCase();
     return _platformErrorCodePattern.hasMatch(normalized) ? normalized : '';
+  }
+
+  String _bootstrapHttpReason(HttpClientResponse response) {
+    return switch (_platformErrorCode(response)) {
+      'auth_session_expired' => 'auth_session_expired',
+      'fresh_auth_required' => 'fresh_auth_required',
+      'device_recovery_required' => 'device_recovery_required',
+      'device_limit_exceeded' => 'device_limit_exceeded',
+      'account_restricted' => 'account_restricted',
+      'acquisition_expired' => 'acquisition_expired',
+      'acquisition_replayed' => 'acquisition_replayed',
+      'node_capacity_exhausted' => 'node_capacity_exhausted',
+      '' => 'http_status',
+      _ => 'other_platform_code',
+    };
   }
 
   Duration _retryDelayForAttempt(int attempt) {
@@ -11512,6 +11678,8 @@ int _appFirstBootstrapSchemaVersion(Map<String, dynamic> json) {
   if (version is int && version == _appFirstBootstrapStateVersion) {
     return version;
   }
+  _traceBootstrap('state_load', 'fail', reason: 'state_schema',
+    operationalCode: 'API-008');
   throw const BootstrapFailure(
     'Эта версия POKROV не может безопасно прочитать сохраненное состояние. '
     'Обновите приложение или восстановите совместимую версию.',

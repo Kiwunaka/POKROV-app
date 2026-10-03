@@ -31,6 +31,10 @@ Later source changes preserve the native failure kind in runtime telemetry when
 the caller supplies only a snapshot. The Windows service journal also records
 the egress probe's closed stage/outcome and numeric error/elapsed time before
 retry or deadline handling; it excludes addresses, request data and error text.
+Debug QA builds emit closed bootstrap stage, guard reason, HTTP status and
+exception class markers, plus a secure-pair presence boolean at persistence and
+readback. Request data, paths, secrets and exception text are excluded; this
+trace keeps the existing provisioning, retry and storage behavior.
 Brain recommends 1.4.1 on Android and Windows with minimum 1.3.0 unchanged;
 the public API's versions, URLs, sizes and digests passed readback. Both services
 are active and no broadcast or LiveUpdate was created. Rollback restores

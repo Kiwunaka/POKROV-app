@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
@@ -5610,6 +5611,14 @@ void main() {
   });
 
   test('rejects unsafe backend detail and non-JSON error bodies', () async {
+    final traces = <String>[];
+    final previousDebugPrint = debugPrint;
+    debugPrint = (String? message, {int? wrapWidth}) {
+      if (message != null && message.startsWith('POKROV_BOOTSTRAP ')) {
+        traces.add(message);
+      }
+    };
+    addTearDown(() => debugPrint = previousDebugPrint);
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-unsafe-error-detail-test-',
     );
@@ -5630,6 +5639,7 @@ void main() {
               ..write(jsonEncode(<String, Object?>{
                 'session': <String, Object?>{
                   'session_token': 'unsafe-detail-access',
+                  'refresh_token': 'unsafe-detail-refresh',
                   'account_id': '65',
                 },
                 'provisioning': <String, Object?>{
@@ -5645,6 +5655,7 @@ void main() {
             request.response
               ..statusCode = HttpStatus.badRequest
               ..headers.contentType = ContentType.json
+              ..headers.set('X-POKROV-Error', 'private_session_material')
               ..write(
                 '{"detail":"SocketException: https://10.24.0.5:443/vless?token=secret"}',
               );
@@ -5674,6 +5685,27 @@ void main() {
         ),
       ),
     );
+    final events = traces.map((line) =>
+      jsonDecode(line.substring('POKROV_BOOTSTRAP '.length)) as Map<String, dynamic>)
+      .toList();
+    expect(events.singleWhere((event) => event['stage'] == 'managed_http' &&
+      event['outcome'] == 'fail'), <String, Object?>{
+      'stage': 'managed_http', 'outcome': 'fail',
+      'reason': 'other_platform_code', 'status': 400,
+      'operationalCode': 'API-008', 'exceptionClass': 'BootstrapFailure',
+    });
+    expect(events.any((event) => event['stage'] == 'pair_persist' &&
+      event['outcome'] == 'readback' && event['pairPresent'] == true), isTrue);
+    for (final event in events) {
+      expect(event.keys.toSet().difference(<String>{'stage', 'outcome', 'reason',
+        'status', 'operationalCode', 'exceptionClass', 'pairPresent'}), isEmpty);
+    }
+    final traceText = traces.join();
+    for (final privateValue in <String>['unsafe-detail-access',
+      'unsafe-detail-refresh', 'private_session_material',
+      '10.24.0.5', '127.0.0.1', 'token=secret', '/api/client/']) {
+      expect(traceText, isNot(contains(privateValue)));
+    }
   });
 
   test('managed-profile generic 500 exposes a safe retryable error', () async {
