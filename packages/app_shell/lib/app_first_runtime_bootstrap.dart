@@ -4054,6 +4054,7 @@ class AppFirstRuntimeBootstrapper
     for (final probe in candidateProbes.take(16)) {
       final ref = probe['candidate_ref'];
       final transport = probe['candidate_transport'];
+      final variant = probe['candidate_variant'];
       final stage = probe['stage'];
       final outcome = probe['connected'];
       final failure = probe['failure_kind'];
@@ -4067,6 +4068,9 @@ class AppFirstRuntimeBootstrapper
       safeCandidateProbes.add({
         'candidate_ref': ref,
         'candidate_transport': transport,
+        if (variant is String && variant != 'direct' &&
+            normalizeClientLocationVariantId(variant) == variant)
+          'candidate_variant': variant,
         'stage': stage,
         'connected': outcome,
         'duration_ms': duration.clamp(0, 30000),

@@ -208,6 +208,10 @@ to later stats, which report network class, candidate transport, and the
 validated ASN or cellular code when available.
 For cellular links, the observed operator name is included in stats only when
 present and at most 80 characters; it is never used as the network key.
+Runtime stats retain a staged bridge variant only for the current operation
+and exact material candidate. Preflight reports preserve each validated bridge
+variant. Terminal success consumes the attempt duration before awaiting delivery,
+so a healthy refresh cannot count the same attempt twice or clear the next one.
 Ordinary catalog location changes use the location catalog's policy metadata,
 so the previous AWG candidate cannot impose
 a legacy laboratory node allowlist. A completed explicit Android Disconnect

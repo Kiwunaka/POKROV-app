@@ -649,6 +649,7 @@ class ConnectionManager extends ChangeNotifier {
   String _resolvedProfileVariantId = 'direct';
   String _stagedNodeCode = '';
   String _stagedVariantId = 'direct';
+  ({int generation, String candidateRef, String variant})? _stagedCandidateVariant;
   String _stagedTcpFallbackFromRevision = '';
   String _tcpFallbackFromRevision = '';
   String _activeNodeCode = '';
@@ -781,6 +782,32 @@ class ConnectionManager extends ChangeNotifier {
     return '';
   }
 
+  String _materialBridgeVariant(ManagedProfilePayload payload) {
+    try {
+      final config = _runtimeConfigMap(jsonDecode(payload.configPayload));
+      final probe = _runtimeConfigMap(
+          _runtimeConfigMap(config['_meta'])['runtime_variant_probe']);
+      final mappings = probe['mappings'];
+      // The managed formatter scopes an explicitly selected bridge to one mapping.
+      if (mappings is! List || mappings.length != 1) return '';
+      final id = _runtimeConfigMap(mappings.single)['id'];
+      return id is String && id != 'direct' &&
+          normalizeClientLocationVariantId(id) == id ? id : '';
+    } on FormatException {
+      return '';
+    }
+  }
+
+  void _rememberStagedCandidateVariant(
+      ManagedProfilePayload payload, int generation) {
+    final candidate = payload.materialCandidate;
+    _stagedCandidateVariant = candidate == null ? null : (
+      generation: generation,
+      candidateRef: candidate.candidateRef,
+      variant: _materialBridgeVariant(payload),
+    );
+  }
+
   List<Map<String, Object?>> _pendingCandidateProbeReports() =>
       _candidateProbeReportInFlight
           ? const []
@@ -817,6 +844,7 @@ class ConnectionManager extends ChangeNotifier {
       final candidate = phase == 'failed' || proven
           ? _reportedCandidate(proven ? (_activeCandidateRef ?? _candidateRef) : _candidateRef)
           : null;
+      final stagedVariant = _stagedCandidateVariant;
       await service.reportRuntimeStats(
         hostPlatform: _appContext.hostPlatform,
         runtimePhase: phase,
@@ -839,7 +867,11 @@ class ConnectionManager extends ChangeNotifier {
         accessNetworkAsn: _candidateAccessNetworkAsn ?? '',
         candidateTransport: _candidateTransport(candidate),
         candidateRef: candidate?.candidateRef ?? '',
-        candidateVariant: candidate == null || !proven ? '' : _activeVariantId,
+        candidateVariant: candidate == null ? '' : proven ? _activeVariantId :
+            phase == 'failed' &&
+                stagedVariant?.generation == _connectionCoordinator.operationGeneration &&
+                stagedVariant?.candidateRef == candidate.candidateRef
+                    ? stagedVariant!.variant : '',
         candidateProbes: reports,
       );
       _ackCandidateProbeReports(reports);
@@ -1315,6 +1347,7 @@ class ConnectionManager extends ChangeNotifier {
       _stagedTcpFallbackFromRevision = managedProfile.tcpFallbackFromRevision;
       _stagedNodeCode = _resolvedProfileNodeCode;
       _stagedVariantId = _resolvedProfileVariantId;
+      _rememberStagedCandidateVariant(managedProfile, generation);
       _stagedCacheInputs = _managedProfileCacheInputs;
       _stagedProfileCacheEntryId = managedProfile.cacheEntryId;
       _cachedProfileFallbackGate.markFreshProfileStaged();
@@ -2130,7 +2163,14 @@ class ConnectionManager extends ChangeNotifier {
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
             selectionTimeout: selectionTimeout,
-            onProbeResult: _recordCandidateProbe,
+            onProbeResult: (candidate, result) {
+              if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
+                  profileRevision != _managedProfileRevision) return;
+              final exact = materialized[candidate.candidateRef];
+              _recordCandidateProbe(candidate, result, candidateVariant:
+                  exact?.materialCandidate?.candidateRef == candidate.candidateRef
+                      ? _materialBridgeVariant(exact!) : '');
+            },
             prepare: (candidate, stop) async {
               requireCurrent();
               var stopped = false;
@@ -2209,7 +2249,8 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   void _recordCandidateProbe(
-      domain.TransportCandidate candidate, SmartConnectCandidateProbeResult result) {
+      domain.TransportCandidate candidate, SmartConnectCandidateProbeResult result,
+      {String candidateVariant = ''}) {
     try {
       _observability?.recordCandidateProbe(
           failureKind: result.failureKind, duration: result.duration);
@@ -2222,6 +2263,7 @@ class ConnectionManager extends ChangeNotifier {
     _candidateProbeReports.add({
       'candidate_ref': candidate.candidateRef,
       'candidate_transport': transport,
+      if (candidateVariant.isNotEmpty) 'candidate_variant': candidateVariant,
       'stage': 'probe',
       'connected': result.profile != null,
       'failure_kind': result.failureKind,
@@ -2314,7 +2356,13 @@ class ConnectionManager extends ChangeNotifier {
           ipv6Available: network.ipv6Available,
           cancelled: _connectionCoordinator.whenOperationEnds(generation),
           recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
-          onProbeResult: _recordCandidateProbe,
+          onProbeResult: (candidate, result) {
+            if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+            final exact = available[candidate.candidateRef];
+            _recordCandidateProbe(candidate, result, candidateVariant:
+                exact?.materialCandidate?.candidateRef == candidate.candidateRef
+                    ? _materialBridgeVariant(exact!) : '');
+          },
           probe: (candidate, stop, timeout) async {
             final exact = available[candidate.candidateRef]!;
             final probePayload = exact.copyWith(warpPolicy: candidate.warpMode == null
@@ -3462,6 +3510,7 @@ class ConnectionManager extends ChangeNotifier {
                 resolvedProfile.tcpFallbackFromRevision;
             _stagedNodeCode = _resolvedProfileNodeCode;
             _stagedVariantId = _resolvedProfileVariantId;
+            _rememberStagedCandidateVariant(resolvedProfile, generation);
             _stagedCacheInputs = cacheInputs;
             _stagedProfileCacheEntryId = resolvedProfile.cacheEntryId;
             if (!usedCachedProfile) {
@@ -3535,6 +3584,7 @@ class ConnectionManager extends ChangeNotifier {
                   baselineProfile.tcpFallbackFromRevision;
               _stagedNodeCode = _resolvedProfileNodeCode;
               _stagedVariantId = _resolvedProfileVariantId;
+              _rememberStagedCandidateVariant(baselineProfile, generation);
               _stagedCacheInputs = _managedProfileCacheInputs;
               _stagedProfileCacheEntryId = baselineProfile.cacheEntryId;
               _managedProfileDirty = false;
@@ -3849,6 +3899,8 @@ class ConnectionManager extends ChangeNotifier {
     if (service == null) {
       return;
     }
+    final attemptDurationMs = _connectionAttemptDurationMs();
+    _connectionAttemptStartedAt = null;
     final reports = _pendingCandidateProbeReports();
     if (reports.isNotEmpty) _candidateProbeReportInFlight = true;
     try {
@@ -3864,7 +3916,7 @@ class ConnectionManager extends ChangeNotifier {
                 ? _activeNodeCode
                 : _resolvedProfileNodeCode,
         routeMode: _selectedRouteMode.name,
-        durationMs: _connectionAttemptDurationMs(),
+        durationMs: attemptDurationMs,
         attemptNumber:
             _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
         networkClass: _candidateNetworkClass ?? '',
@@ -3890,7 +3942,6 @@ class ConnectionManager extends ChangeNotifier {
     } catch (_) {
       // Account-scoped onboarding sync is best-effort and retried on connect.
     }
-    _connectionAttemptStartedAt = null;
   }
 
   bool _isConnectionProven(RuntimeSnapshot snapshot) =>
@@ -4118,6 +4169,11 @@ class ConnectionManager extends ChangeNotifier {
           _stagedNodeCode = baselineReady ? _resolvedProfileNodeCode : '';
           _stagedVariantId =
               baselineReady ? _resolvedProfileVariantId : 'direct';
+          if (baselineReady) {
+            _rememberStagedCandidateVariant(baselineProfile, generation);
+          } else {
+            _stagedCandidateVariant = null;
+          }
           _stagedCacheInputs = _managedProfileCacheInputs;
           _stagedProfileCacheEntryId =
               baselineReady ? baselineProfile.cacheEntryId : '';
@@ -4393,6 +4449,7 @@ class ConnectionManager extends ChangeNotifier {
         _stagedProfileCacheEntryId = prepared.cacheEntryId;
         _stagedNodeCode = _resolvedProfileNodeCode;
         _stagedVariantId = _resolvedProfileVariantId;
+        _rememberStagedCandidateVariant(prepared, generation);
         _stagedProfileUsesWarp = prepared.warpPolicy.canEnableRuntime;
         _activeConnectUsedWarp = _stagedProfileUsesWarp;
         _managedProfileDirty = !current.isCleanlyHealthy;

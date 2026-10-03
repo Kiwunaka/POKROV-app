@@ -24,6 +24,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   List<TransportCandidate> candidates = _candidates;
   Duration exactProfileDelay = Duration.zero;
   String accessNetworkAsn = '';
+  String? materialConfigPayload;
   final cancelledExactProfiles = <String>[];
   SmartConnectProfile? smartConnect;
   final nodePreferences = <SmartConnectProfile>[];
@@ -90,7 +91,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
       source: RuntimeProfileSource(revision: 'test', origin: RuntimeProfileSourceOrigin.managedManifest,
           protocol: candidate.protocol),
       resolvedNodeCode: nodeCode,
-      configPayload:
+      configPayload: materialConfigPayload ??
           '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
       materializedForRuntime: true,
       routeMode: routeMode,
@@ -169,6 +170,8 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   final runtimeCalls = <Map<String, Object?>>[];
   bool failFirstRunningReport = false;
   int failedRunningReports = 0;
+  Completer<void>? runningReportGate;
+  final actualReports = <Map<String, Object?>>[];
 
   @override
   Future<void> reportRuntimeStats({
@@ -182,6 +185,9 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     RuntimeSnapshot? connectivitySnapshot,
   }) async {
     runtimeCalls.add({'runtime_phase': runtimePhase, 'error_code': errorCode});
+    actualReports.add({'runtime_phase': runtimePhase, 'duration_ms': durationMs,
+      'candidate_ref': candidateRef, 'candidate_variant': candidateVariant});
+    if (runtimePhase == 'running') await runningReportGate?.future;
     if (runtimePhase == 'running' && failFirstRunningReport) {
       failFirstRunningReport = false;
       failedRunningReports += 1;
@@ -219,6 +225,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final stagedPayloads = <ManagedProfilePayload>[];
   String? failedHandoffProfile;
   bool failFirstActivation = false;
+  Object? connectFailure;
   bool restoredHandoffGuard = false;
   final probeRelease = Completer<void>();
   final probeStarted = Completer<void>();
@@ -414,6 +421,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   @override
   Future<RuntimeSnapshot> connect() {
     _request = 'request-${++connectCalls}';
+    if (connectFailure != null) return Future.error(connectFailure!);
     return mutate('connect', failFirstActivation && connectCalls == 1
         ? RuntimePhase.configStaged : RuntimePhase.running);
   }
@@ -946,7 +954,7 @@ void main() {
     expect(bootstrapper.lastSuccessfulNetworkKey, 'asn:AS12345');
   });
 
-  test('final stats identify the winning XHTTP candidate and every completed probe', () async {
+  test('final stats preserve bridge identity and consume the verified attempt once', () async {
     final xhttp = TransportCandidate(candidateRef: 'de:xhttp', profileRef: 'xhttp',
       nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'xhttp',
       protection: 'reality', priority: 1, network: 'tcp', flow: '',
@@ -954,6 +962,8 @@ void main() {
       platforms: {HostPlatform.windows}, requiredFeatures: const {});
     final bootstrapper = _StatsBootstrapper()
       ..candidates = [_candidates.first, xhttp]
+      ..materialConfigPayload =
+          '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080,"detour":"bridge"},{"type":"socks","tag":"bridge","server":"127.0.0.1","server_port":1081},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"},"_meta":{"runtime_variant_probe":{"mappings":[{"id":"ru-spb","outbound_tag":"node"}]}}}'
       ..exactProfileDelay = const Duration(milliseconds: 30);
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
       ..supportsCandidates = true
@@ -961,7 +971,35 @@ void main() {
     final manager = _manager(runtime, bootstrapper,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
+    manager.updateLocationsCatalog(ClientLocationsCatalog.fromJson({
+      'countries': [{'code': 'DE', 'country': 'Germany', 'cities': [
+        {'code': 'de', 'city': 'Berlin', 'variants': [
+          {'id': 'direct', 'label': 'Direct'}, {'id': 'ru-spb', 'label': 'Bridge'},
+        ]},
+      ]}],
+    }));
+    await manager.setPreferredLocation('de', 'ru-spb');
+    runtime.connectFailure = StateError('native activation failed');
     await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(bootstrapper.actualReports.singleWhere((report) => report['runtime_phase'] == 'failed')['candidate_variant'],
+        'ru-spb');
+    await manager.disconnect();
+    await manager.setPreferredLocation('de', 'ru-spb');
+    bootstrapper.actualReports.clear();
+    bootstrapper.reports.clear();
+    runtime.connectFailure = null;
+    final reportGate = Completer<void>();
+    bootstrapper.runningReportGate = reportGate;
+    addTearDown(() { if (!reportGate.isCompleted) reportGate.complete(); });
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    await manager.refresh();
+    final running = bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'running').toList();
+    expect(running.length, greaterThan(1), reason: 'a healthy refresh overlaps the delayed success report');
+    expect(running.where((report) => report['duration_ms'] != null), hasLength(1));
+    reportGate.complete();
+    bootstrapper.runningReportGate = null;
     final deadline = DateTime.now().add(const Duration(seconds: 2));
     while (bootstrapper.reports.isEmpty && DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -973,6 +1011,16 @@ void main() {
     expect(probes.map((item) => item['candidate_ref']),
         containsAll(['de:profile_0', 'de:xhttp']));
     expect(probes.where((item) => item['connected'] == true).single['candidate_ref'], 'de:xhttp');
+    expect(probes.map((item) => item['candidate_variant']), everyElement('ru-spb'));
+    await manager.disconnect();
+    bootstrapper.materialConfigPayload = null;
+    await manager.setPreferredLocation('de', 'direct');
+    bootstrapper.actualReports.clear();
+    runtime.connectFailure = StateError('new direct activation failed');
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(bootstrapper.actualReports.singleWhere((report) => report['runtime_phase'] == 'failed')['candidate_variant'],
+        isEmpty, reason: 'the new direct material must not inherit the previous active bridge');
   });
 
   test('exhausted native candidates retain the early start and terminal Core error', () async {
