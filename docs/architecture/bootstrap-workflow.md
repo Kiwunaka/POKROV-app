@@ -1327,6 +1327,12 @@ Current blocking dependency:
   after an app session already exists; observability never creates a trial or
   session. Correlation, attributes, destinations and identity are removed from
   the batch body. Portal failure cannot block local persistence or runtime.
+  Unacknowledged aggregate events remain in the existing bounded in-memory
+  queue; the next batch retries delivery after a session becomes available.
+  Delivery is serialized, retains the same event IDs and batch body until ACK,
+  and never rewrites the local journal or replays an acknowledged batch.
+  This queue does not survive process exit; an installation that never gets a
+  session remains visible only in its local diagnostics.
 - `previous-exit.v1.json` contains only closed run state, catalog crash code,
   fixed safe crash signature and the bounded breadcrumb ring. For an uncaught
   Dart error, the signature encodes only a closed exception type, the first

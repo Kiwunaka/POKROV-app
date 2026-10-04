@@ -34,6 +34,10 @@ final class ReleaseHealthMirrorWriter implements OperationalEventWriter {
   final OperationalEventWriter localWriter;
   final ReleaseHealthBatchTransport transport;
   final int maximumBatchEvents;
+  final BoundedOperationalEventQueue _pending = BoundedOperationalEventQueue();
+  // A dequeued batch stays here until ACK; replay never writes it locally again.
+  ({Map<String, Object?> body, String correlationId})? _unacknowledgedBatch;
+  Future<void> _delivery = Future<void>.value();
   int _projected = 0;
   int _acceptedBatches = 0;
   int _rejectedBatches = 0;
@@ -41,41 +45,55 @@ final class ReleaseHealthMirrorWriter implements OperationalEventWriter {
   @override
   Future<void> appendBatch(List<SerializedOperationalEvent> records) async {
     await localWriter.appendBatch(records);
-    final eligible = records
-        .map((record) => record.event)
-        .where(_isAggregateEligible)
-        .toList(growable: false);
-    for (var offset = 0;
-        offset < eligible.length;
-        offset += maximumBatchEvents) {
-      final end =
-          (offset + maximumBatchEvents).clamp(0, eligible.length).toInt();
-      final events =
-          eligible.sublist(offset, end).map(_project).toList(growable: false);
-      if (events.isEmpty) {
-        continue;
+    for (final record in records) {
+      if (_isAggregateEligible(record.event)) {
+        _pending.tryAdd(record);
       }
-      _projected += events.length;
-      final correlationId = eligible[offset].correlation.attemptId ??
-          eligible[offset].correlation.runId;
-      if (correlationId == null) {
-        _rejectedBatches += 1;
-        continue;
-      }
-      try {
-        final accepted = await transport(
-          <String, Object?>{'schema_version': 1, 'events': events},
-          correlationId,
+    }
+    final delivery = _delivery.then((_) => _drainPending());
+    _delivery = delivery;
+    await delivery;
+  }
+
+  Future<void> _drainPending() async {
+    while (true) {
+      if (_unacknowledgedBatch == null) {
+        final records = _pending.takeBatch(maximum: maximumBatchEvents);
+        if (records.isEmpty) {
+          return;
+        }
+        final events =
+            records.map((record) => record.event).toList(growable: false);
+        _projected += events.length;
+        final correlationId = events.first.correlation.attemptId ??
+            events.first.correlation.runId;
+        if (correlationId == null) {
+          _rejectedBatches += 1;
+          continue;
+        }
+        _unacknowledgedBatch = (
+          body: <String, Object?>{
+            'schema_version': 1,
+            'events': events.map(_project).toList(growable: false),
+          },
+          correlationId: correlationId,
         );
+      }
+      final batch = _unacknowledgedBatch!;
+      try {
+        final accepted = await transport(batch.body, batch.correlationId);
         if (accepted) {
           _acceptedBatches += 1;
+          _unacknowledgedBatch = null;
         } else {
           _rejectedBatches += 1;
+          return;
         }
       } on Object {
         // Aggregate release health is best-effort and cannot fail the durable
         // local evidence path or a user operation.
         _rejectedBatches += 1;
+        return;
       }
     }
   }

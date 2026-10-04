@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -155,28 +156,63 @@ void main() {
   test('release-health mirror strips correlation and arbitrary attributes',
       () async {
     final local = _MemoryWriter();
-    Map<String, Object?>? sent;
-    String? sentCorrelation;
+    final sent = <Map<String, Object?>>[];
+    final sentCorrelations = <String>[];
+    final firstSend = Completer<void>();
+    final firstResponse = Completer<bool>();
+    var activeSends = 0;
+    var maximumActiveSends = 0;
     final mirror = ReleaseHealthMirrorWriter(
       localWriter: local,
       transport: (batch, correlationId) async {
-        sent = batch;
-        sentCorrelation = correlationId;
-        return true;
+        sent.add(batch);
+        sentCorrelations.add(correlationId);
+        activeSends += 1;
+        maximumActiveSends = max(maximumActiveSends, activeSends);
+        try {
+          if (sent.length == 1) {
+            firstSend.complete();
+            return await firstResponse.future;
+          }
+          return true;
+        } finally {
+          activeSends -= 1;
+        }
       },
     );
     final ids = OperationalIdFactory(random: Random(5));
     final event = _event(ids);
     final record = const OperationalEventSerializer().serialize(event);
-    await mirror.appendBatch(<SerializedOperationalEvent>[record]);
+    final firstAppend =
+        mirror.appendBatch(<SerializedOperationalEvent>[record]);
+    await firstSend.future;
+    final nextEvent = _event(ids);
+    final nextAppend = mirror.appendBatch(<SerializedOperationalEvent>[
+      const OperationalEventSerializer().serialize(nextEvent),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+    firstResponse.complete(false);
+    await Future.wait(<Future<void>>[firstAppend, nextAppend]);
+    await mirror.appendBatch(const <SerializedOperationalEvent>[]);
 
-    expect(local.events, <OperationalEvent>[event]);
-    expect(sentCorrelation, event.correlation.attemptId);
+    expect(local.events, <OperationalEvent>[event, nextEvent]);
+    expect(sent, hasLength(3));
+    expect((sent.first['events'] as List).single['event_id'], event.eventId);
+    expect(sent[1], same(sent[0]));
+    expect(sentCorrelations, [
+      event.correlation.attemptId,
+      event.correlation.attemptId,
+      nextEvent.correlation.attemptId
+    ]);
+    expect((sent.last['events'] as List).single['event_id'], nextEvent.eventId);
+    expect(maximumActiveSends, 1);
     final serialized = jsonEncode(sent);
     expect(serialized, isNot(contains('correlation')));
     expect(serialized, isNot(contains('attributes')));
     expect(serialized, contains('"privacy_class":"release_health"'));
-    expect(mirror.snapshot().acceptedBatches, 1);
+    expect(mirror.snapshot().projected, 2);
+    expect(mirror.snapshot().acceptedBatches, 2);
+    expect(mirror.snapshot().rejectedBatches, 1);
   });
 
   test('release-health mirrors count only for exact Android routing terminal',
