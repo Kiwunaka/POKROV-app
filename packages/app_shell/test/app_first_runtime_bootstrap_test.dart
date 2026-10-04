@@ -2223,6 +2223,7 @@ void main() {
       <String, Object?>{
         'runtime_phase': 'running',
         'connected': true,
+        'build_number': const String.fromEnvironment('POKROV_BUILD_NUMBER', defaultValue: '0'),
         'report_run_id': reportRunId,
         'report_sequence': 2,
         'connectivity': {'proof_stage': 'unknown'},
@@ -2243,6 +2244,7 @@ void main() {
       <String, Object?>{
         'runtime_phase': 'failed',
         'connected': false,
+        'build_number': const String.fromEnvironment('POKROV_BUILD_NUMBER', defaultValue: '0'),
         'error_code': 'connect_failed',
         'failure_kind': 'core_egress_timeout',
         'network_class': 'wifi',
@@ -2254,6 +2256,7 @@ void main() {
       <String, Object?>{
         'runtime_phase': 'failed',
         'connected': false,
+        'build_number': const String.fromEnvironment('POKROV_BUILD_NUMBER', defaultValue: '0'),
         'error_code': 'CONN-008',
         'failure_kind': 'tls_failed',
         'report_run_id': reportRunId,

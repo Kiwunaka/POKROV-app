@@ -108,10 +108,6 @@ class DiagnosticsCoordinator {
   }
 }
 
-const pokrovClientBuildNumber = String.fromEnvironment(
-  'POKROV_BUILD_NUMBER',
-  defaultValue: '0',
-);
 const pokrovClientReleaseChannel = String.fromEnvironment(
   'POKROV_RELEASE_CHANNEL',
   defaultValue: 'local',

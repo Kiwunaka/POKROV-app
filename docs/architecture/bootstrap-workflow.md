@@ -1298,6 +1298,11 @@ Current blocking dependency:
   They reject tracked source changes before compiling so a packaged journal
   cannot silently report zero values or attribute dirty source to `HEAD`.
   Local/candidate/channel labels keep their separate release authority.
+- Runtime stats send the same compiled `POKROV_BUILD_NUMBER` as the operational
+  build identity. The portal stores this optional client field in the existing
+  `Event.build_number` column for exact-build connection cohorts. Reports from
+  older clients omit it and remain build-unknown; neither the current recommended
+  release nor the device version is used to infer or backfill their build.
 - Android and Windows now start the shared operational-observability pipeline
   before `runApp`. Bootstrap start/finish/UI-ready, the exact
   `ConnectionExperienceReducer` phase, profile/Core/TUN/routes/DNS/egress

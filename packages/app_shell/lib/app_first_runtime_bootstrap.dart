@@ -44,6 +44,10 @@ const pokrovClientVersion = String.fromEnvironment(
   'POKROV_APP_VERSION',
   defaultValue: '1.2.0',
 );
+const pokrovClientBuildNumber = String.fromEnvironment(
+  'POKROV_BUILD_NUMBER',
+  defaultValue: '0',
+);
 const pokrovSupportSigningKeyId = String.fromEnvironment(
   'POKROV_SUPPORT_SIGNING_KEY_ID',
 );
@@ -4123,6 +4127,7 @@ class AppFirstRuntimeBootstrapper
     final body = <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,
+        'build_number': pokrovClientBuildNumber,
         'report_run_id': _runtimeReportRunId,
         'report_sequence': reportSequence,
         'connectivity': runtimeConnectivityReport(connectivitySnapshot),
