@@ -484,6 +484,8 @@ Support rules:
 - recovery order in support copy stays `app -> web cabinet -> Telegram`
 - public browser email continuation stays marked `soon` until sender readiness and the launch path are genuinely live
 
+The AI assistant, ticket creation, and ticket message POSTs use a 120-second request window to accommodate up to 90 seconds of AI processing and the preceding ticket notification. Generic API requests, session bootstrap, and ticket reads keep their existing 15-second request window; these support overrides do not change authentication or retry rules.
+
 ### Checkout continuation
 
 - renewal and upgrade begin from the client UI

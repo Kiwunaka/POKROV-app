@@ -9931,7 +9931,7 @@ void main() {
     );
   });
 
-  test('client support assistant gets one longer request window', () async {
+  test('support POSTs get one longer request window', () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-client-assistant-timeout-test-',
     );
@@ -9942,11 +9942,15 @@ void main() {
     });
 
     var assistantRequestCount = 0;
+    var trialRequestCount = 0;
+    var ticketRequestCount = 0;
+    var messageRequestCount = 0;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
       await for (final request in server) {
         if (request.uri.path == '/api/client/session/start-trial') {
+          trialRequestCount += 1;
           request.response
             ..headers.contentType = ContentType.json
             ..write(
@@ -9986,6 +9990,35 @@ void main() {
           await request.response.close();
           continue;
         }
+        if (request.uri.path == '/api/tickets' ||
+            request.uri.path == '/api/tickets/321/messages') {
+          final isCreate = request.uri.path == '/api/tickets';
+          if (isCreate) {
+            ticketRequestCount += 1;
+          } else {
+            messageRequestCount += 1;
+          }
+          final body = jsonDecode(await utf8.decoder.bind(request).join())
+              as Map<String, dynamic>;
+          await Future<void>.delayed(const Duration(milliseconds: 80));
+          request.response
+            ..headers.contentType = ContentType.json
+            ..write(jsonEncode(<String, Object?>{
+              'ticket': _supportTicketJson(
+                id: 321,
+                messages: <Object?>[
+                  _supportMessageJson(
+                    id: isCreate ? 1 : 2,
+                    ticketId: 321,
+                    senderRole: 'user',
+                    body: body['body'] as String,
+                  ),
+                ],
+              ),
+            }));
+          await request.response.close();
+          continue;
+        }
         request.response.statusCode = HttpStatus.notFound;
         await request.response.close();
       }
@@ -9995,7 +10028,6 @@ void main() {
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
       requestTimeout: const Duration(milliseconds: 30),
-      supportAssistantRequestTimeout: const Duration(milliseconds: 250),
       maxRequestAttempts: 3,
     );
 
@@ -10005,7 +10037,29 @@ void main() {
     );
 
     expect(reply.reply, 'Проверка закончена.');
+    final service = AppFirstSupportTicketService(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      requestTimeout: const Duration(milliseconds: 30),
+      maxRequestAttempts: 3,
+    );
+    final receipt = await service.createTicket(
+      hostPlatform: HostPlatform.android,
+      routeMode: RouteMode.allExceptRu,
+      statusLabel: 'Ready',
+      body: 'Connection help',
+    );
+    expect(receipt.ticketId, 321);
+    final updated = await service.sendMessage(
+      hostPlatform: HostPlatform.android,
+      ticketId: 321,
+      body: 'Follow up',
+    );
+    expect(updated.messages.last.body, 'Follow up');
     expect(assistantRequestCount, 1);
+    expect(ticketRequestCount, 1);
+    expect(messageRequestCount, 1);
+    expect(trialRequestCount, 1);
   });
 
   test(

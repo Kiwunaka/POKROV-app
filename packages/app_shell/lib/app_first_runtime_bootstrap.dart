@@ -2944,7 +2944,7 @@ class AppFirstRuntimeBootstrapper
     Future<void> Function(Duration delay)? delayScheduler,
     this.connectionTimeout = const Duration(seconds: 8),
     this.requestTimeout = const Duration(seconds: 15),
-    this.supportAssistantRequestTimeout = const Duration(seconds: 65),
+    this.supportAssistantRequestTimeout = const Duration(seconds: 120),
     this.smartConnectProbeTimeout = const Duration(milliseconds: 900),
     this.smartConnectTelemetryDeadline = const Duration(seconds: 3),
     this.smartConnectProbeConcurrency = 3,
@@ -11227,6 +11227,7 @@ class AppFirstSupportTicketService
             client: client,
             bearerToken: state.sessionToken,
             hostPlatform: hostPlatform,
+            requestTimeoutOverride: _bootstrapper.supportAssistantRequestTimeout,
             body: <String, Object?>{
               'subject': _trimForTicket(subject, 200).isEmpty
                   ? _defaultSubject
@@ -11302,6 +11303,7 @@ class AppFirstSupportTicketService
       method: 'POST',
       path: '/api/tickets/$ticketId/messages',
       hostPlatform: hostPlatform,
+      requestTimeoutOverride: _bootstrapper.supportAssistantRequestTimeout,
       body: payload,
     );
     return _ticketThreadFromResponse(response);
@@ -11315,6 +11317,7 @@ class AppFirstSupportTicketService
     Map<String, String> headers = const <String, String>{},
     List<int>? rawBody,
     String rawContentType = 'application/octet-stream',
+    Duration? requestTimeoutOverride,
   }) async {
     var state = await _bootstrapper._loadOrCreateState(hostPlatform);
     final client = _bootstrapper._createHttpClient(hostPlatform);
@@ -11339,6 +11342,7 @@ class AppFirstSupportTicketService
             headers: headers,
             rawBody: rawBody,
             rawContentType: rawContentType,
+            requestTimeoutOverride: requestTimeoutOverride,
           );
         } on BootstrapFailure catch (error) {
           if (attempt == 0 &&
