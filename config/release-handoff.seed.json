@@ -1,8 +1,8 @@
 {
   "release_repo": "Kiwunaka/pokrov",
   "public_release": {
-    "version": "1.4.3",
-    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.4.3"
+    "version": "1.4.4",
+    "github_release": "https://github.com/Kiwunaka/pokrov/releases/tag/v1.4.4"
   },
   "release_truth": {
     "development_target": {

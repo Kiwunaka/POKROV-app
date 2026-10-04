@@ -1,15 +1,14 @@
 # Client release status
 
-Public version: **1.4.3+4084**, using the published POKROV Core 1.2.7 artifacts
-and desktop ABI 2. Windows was built from client `e51ee988`; Android was built
-from `57c497d9`, which is also the client source tag `v1.4.3`. The owner-approved
-quiet GitHub release `v1.4.3` contains four production-signed Android direct APKs,
+Public version: **1.4.4+4085**, using the published POKROV Core 1.2.7 artifacts
+and desktop ABI 2. Windows and Android were built from client `0c9b5311`.
+The owner-approved quiet GitHub release `v1.4.4` contains four production-signed Android direct APKs,
 unsigned Windows beta setup, `release-index.json` and `SHA256SUMS.txt`.
-GitHub readback matched all seven asset names and sizes; no announcement job was
+GitHub readback matched all seven asset names, sizes and digests; no announcement job was
 created. Windows retains the SmartScreen warning and makes no trusted-signing or
-Store claim. Public 1.4.2 remains available for rollback.
+Store claim. Public 1.4.3 remains available for rollback.
 
-Brain's public feed recommends 1.4.3 on Android and Windows with 100% rollout.
+Brain's public feed recommends 1.4.4 on Android and Windows with 100% rollout.
 The minimum supported version remains 1.3.0; both platforms' versions, URLs,
 sizes and digests passed readback, including all four Android APK variants.
 No new broadcast or LiveUpdate was created.
@@ -20,6 +19,12 @@ the same session. Core 1.2.7 treats a successful HTTPS check whose selected rout
 changed as unavailable under the existing bounded retry; real network failures
 and cancellation retain their outcomes. Its Windows DLL and Android AAR are
 pinned from Core source `7846df3`; Cronet remains unchanged.
+
+Version 1.4.4 passed the owned Windows VM upgrade from 1.4.3 and offline saving
+of the official 1.4.3 setup with equal bytes. Cancel left the destination unchanged;
+the saved installer was not executed. Android 1.4.4 UI QA remains **BLOCK** because
+the emulator's ADB stayed offline: installation and sharing were not checked.
+No fresh 1.4.4 connection acceptance was run on either platform.
 
 The ready 1.4.3 packages passed ordinary first launch and one Auto connection on
 the owned Windows VM and Android 9 x86_64 emulator, including DNS and routes,
