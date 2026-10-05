@@ -11,7 +11,9 @@ Auto passed on the owned Windows VM and Android 9 emulator. The physical Android
 phone received the identical APK over USB, and Share opened the system chooser
 and Files. Cloud saving was canceled; Nearby/Bluetooth peer transfer was not checked.
 
-Local **1.4.6+4087** prepares the WARP selection correction: country Auto matches
+Local **1.4.7+4088** is a private D2 QA candidate with routing catalog enabled
+and Smart Access disabled. Public release and Brain recommendation are not approved;
+the retained 1.4.6+4087 packages remain unchanged. The candidate retains the WARP selection correction: country Auto matches
 WARP chains to their underlying node country. It also includes the exact compiled
 runtime build number in telemetry. Core 1.2.7, its `7846df3` source pins and Cronet
 remain unchanged. These new client packages require their own build and ordinary
