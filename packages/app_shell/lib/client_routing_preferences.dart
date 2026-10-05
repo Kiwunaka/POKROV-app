@@ -1204,6 +1204,7 @@ const Map<PokrovPurposeRoute, List<String>> _purposeDomains = {
     'oaistatic.com',
     'oaiusercontent.com',
     'gemini.google.com',
+    'notebooklm.google.com',
     'aistudio.google.com',
     'ai.google.dev',
     'generativelanguage.googleapis.com',
