@@ -1313,6 +1313,12 @@ Current blocking dependency:
   marker are closed typed events. A successful attempt cannot be emitted until
   the reducer has current interface, routes/uplink, DNS and selected-outbound
   egress proof.
+- A failed profile preparation retains only a known
+  source-defined `prepare_reason` and the bounded `BootstrapFailure.statusCode`
+  (100–599) as `http_status`; unknown reasons, messages, operation URLs and bodies
+  are omitted. These attributes stay in the local failed-profile event and are
+  excluded from both release-health and uploaded diagnostic projections.
+  Native IPC/Core event frames are unchanged.
 - Bootstrap and connection timeline events take their next sequence from the
   shared app dispatcher, including after restored Android routing counts or
   interleaved auth and entitlement refresh events. An early routing restoration
@@ -1375,6 +1381,11 @@ Current blocking dependency:
   creates/updates/starts the fixed SCM service and removes it on uninstall.
   Portable ZIP output is unsupported for this architecture. Per-user startup
   and `pokrov://` registration are owned by the ordinary UI
+- Before service start, the setup gives the bundled `local-dpi` directory a
+  protected ACL: SYSTEM and Administrators have full access, ordinary Users
+  have read/execute access. A writable inherited directory ACL previously
+  caused the existing native asset gate to reject an otherwise intact bundle.
+  ACL failure aborts setup; the native security gate remains unchanged.
 - the owner's unsigned beta exception is scoped to 1.4.0 direct downloads;
   it does not assert trusted signing or Store readiness
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane

@@ -139,6 +139,13 @@ Selective choice survives feature disable and directs the user to Rules instead
 of silently connecting in another mode. This is source implementation only;
 public seeds, rollout and provider support claims remain unchanged.
 
+Ordinary Full tunnel and “Россия напрямую” continue with the managed VPN profile
+when the optional catalog returns `503 routing_catalog_disabled` or
+`503 routing_catalog_unavailable`. “Россия напрямую” retains its existing RU
+domain/IP rulesets. Selected services and the signed transport-manifest path
+still require signed policy; authentication, trust and signature failures remain
+connection failures.
+
 With Smart Access enabled, services referencing provider capabilities also expose
 “Подтверждения Smart Access”. The sheet reads the signed provider policy through
 the existing authenticated adapter. The policy retrieval time is separate from

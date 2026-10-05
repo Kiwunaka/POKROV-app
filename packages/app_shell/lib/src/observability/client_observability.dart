@@ -464,12 +464,23 @@ final class PokrovClientObservability {
     required ConnectionStage stage,
     required String errorCode,
     ObservabilityErrorOrigin errorOrigin = ObservabilityErrorOrigin.client,
+    BootstrapFailure? preparationFailure,
   }) {
     final attempt = _attempt;
     if (attempt == null || attempt.isTerminal) {
       return;
     }
     attempt.enter(_timelinePhase(stage));
+    if (stage == ConnectionStage.profile && preparationFailure != null) {
+      attempt.complete(
+        OperationalTimelinePhase.profile,
+        outcome: ObservabilityOutcome.failed,
+        errorCode: errorCode,
+        errorOrigin: errorOrigin,
+        prepareReason: preparationFailure.code,
+        httpStatus: preparationFailure.statusCode,
+      );
+    }
     attempt.finish(
       OperationalTerminalKind.failed,
       errorCode: errorCode,

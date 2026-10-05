@@ -2516,13 +2516,24 @@ class ConnectionManager extends ChangeNotifier {
       final catalogService = _bootstrapper;
       if (_routingCatalogEnabled &&
           catalogService is AppFirstRoutingCatalogService) {
-        final result = await (catalogService as AppFirstRoutingCatalogService)
-            .fetchRoutingCatalog(
-              hostPlatform: _appContext.hostPlatform,
-              cacheOnly: offline,
-              cancelled: cancelled,
-            )
-            .timeout(_actionTimeout);
+        RoutingCatalogFetchResult? result;
+        try {
+          result = await (catalogService as AppFirstRoutingCatalogService)
+              .fetchRoutingCatalog(
+                hostPlatform: _appContext.hostPlatform,
+                cacheOnly: offline,
+                cancelled: cancelled,
+              )
+              .timeout(_actionTimeout);
+        } on BootstrapFailure catch (error) {
+          if ((payload.routeMode != RouteMode.fullTunnel &&
+                  payload.routeMode != RouteMode.allExceptRu) ||
+              error.statusCode != HttpStatus.serviceUnavailable ||
+              (error.code != 'routing_catalog_disabled' &&
+                  error.code != 'routing_catalog_unavailable')) {
+            rethrow;
+          }
+        }
         if (_disposed ||
             !_connectionCoordinator.ownsOperation(generation) ||
             profileRevision != _managedProfileRevision) {
@@ -3724,6 +3735,7 @@ class ConnectionManager extends ChangeNotifier {
         errorCode: error.operationalErrorCode,
         errorOrigin: error.code == 'candidate_selection_exhausted'
             ? ObservabilityErrorOrigin.core : ObservabilityErrorOrigin.portal,
+        preparationFailure: failureStage == ConnectionStage.profile ? error : null,
       );
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
         return;

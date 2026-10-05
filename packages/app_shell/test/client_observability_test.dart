@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
+import 'package:pokrov_observability_contracts/observability_contracts.dart';
 import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
@@ -255,11 +256,20 @@ void main() {
       () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-obs-fail-');
     addTearDown(() => directory.delete(recursive: true));
+    final releaseHealth = _ReleaseHealthCapture();
     final observability = await PokrovClientObservability.start(
       hostPlatform: HostPlatform.android,
       directoryResolver: () async => directory,
       buildIdentity: _build(),
       idFactory: OperationalIdFactory(random: Random(103)),
+      releaseHealthService: releaseHealth,
+    );
+
+    const failure = BootstrapFailure(
+      'vless://private-preparation-fixture',
+      statusCode: 503,
+      code: 'routing_catalog_unavailable',
+      operation: 'GET https://private-operation.invalid/profile',
     );
 
     await observability.runConnectionAction(
@@ -270,7 +280,9 @@ void main() {
         observability.recordEntitlementRefreshFinished();
         observability.recordConnectionFailure(
           stage: ConnectionStage.profile,
-          errorCode: 'CONN-005',
+          errorCode: failure.operationalErrorCode,
+          errorOrigin: ObservabilityErrorOrigin.portal,
+          preparationFailure: failure,
         );
       },
       beginsWithDisconnect: false,
@@ -281,7 +293,47 @@ void main() {
           (event) => event.name == 'app.connection.attempt.finished',
         );
     expect(terminal.outcome.wireValue, 'failed');
-    expect(terminal.errorCode, 'CONN-005');
+    expect(terminal.errorCode, 'API-007');
+
+    const unknown = BootstrapFailure(
+      'Bearer private-preparation-message',
+      code: 'catalog_signature_invalid/private-reason-fixture',
+      statusCode: 700,
+      operation: 'GET https://private-operation.invalid/profile',
+    );
+    await observability.runConnectionAction(() async {
+      observability.recordConnectionFailure(
+        stage: ConnectionStage.profile,
+        errorCode: unknown.operationalErrorCode,
+        preparationFailure: unknown,
+      );
+    }, beginsWithDisconnect: false);
+    await observability.flush();
+
+    final mirror = observability.dispatcher.writer as ReleaseHealthMirrorWriter;
+    final local = await (mirror.localWriter as RotatingOperationalJsonlStore)
+        .readCurrent();
+    final failures = local.records
+        .where((event) => event['name'] == 'app.connection.profile.finished')
+        .toList();
+    expect(failures, hasLength(2));
+    expect(failures.first['attributes'], containsPair('http_status', 503));
+    expect(failures.first['attributes'],
+        containsPair('prepare_reason', 'routing_catalog_unavailable'));
+    expect(failures.last['attributes'], isNot(contains('prepare_reason')));
+    expect(failures.last['attributes'], isNot(contains('http_status')));
+    expect(local.records.where(
+        (event) => event['name'] == 'app.connection.attempt.finished'),
+        hasLength(2));
+    final serialized = jsonEncode(local.records);
+    expect(serialized, isNot(contains(failure.message)));
+    expect(serialized, isNot(contains(unknown.message)));
+    expect(serialized, isNot(contains(unknown.code)));
+    expect(serialized, isNot(contains(failure.operation!)));
+    final remote = jsonEncode(releaseHealth.batches);
+    expect(remote, isNot(contains('http_status')));
+    expect(remote, isNot(contains('prepare_reason')));
+    expect(observability.dispatcher.snapshot().rejectedByPrivacy, 0);
     expect(observability.dispatcher.snapshot().rejectedAsStale, 0);
   });
 

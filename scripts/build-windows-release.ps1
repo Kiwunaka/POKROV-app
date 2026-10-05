@@ -908,6 +908,8 @@ SignedUninstallerDir=$signedUninstallerDirectory
       ' /td SHA256 $f'
     $innoArguments += "/SPOKROV=$innoSignToolCommand"
   }
+  $localDpiDirectoryPresent = Test-Path -LiteralPath (Join-Path $stagedBundleDirectory 'local-dpi') -PathType Container
+  $localDpiDirectorySddl = 'D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FRFX;;;BU)'
   $iss = @"
 #pragma code_page 65001
 [Setup]
@@ -1261,6 +1263,7 @@ var
   CreatedBySetup: Boolean;
   ResultCode: Integer;
   ServiceBinary: String;
+  LocalDpiDirectory: String;
 begin
   CreatedBySetup := not ServiceExists();
   InstallOwnerRegistryKeyExisted := RegKeyExists(HKLM64,
@@ -1273,6 +1276,23 @@ begin
       InstallOwnerSid) then
     AbortServiceSetup('POKROV_SERVICE_OWNER_BINDING_FAILED', CreatedBySetup,
       -1);
+  if $localDpiDirectoryPresent then
+  begin
+    LocalDpiDirectory := ExpandConstant('{app}\local-dpi');
+    StringChangeEx(LocalDpiDirectory, '''', '''''', True);
+    ResultCode := -1;
+    if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+        '-NoProfile -NonInteractive -Command "' +
+        '`$ErrorActionPreference=''Stop''; ' +
+        '`$acl=New-Object System.Security.AccessControl.DirectorySecurity; ' +
+        '`$acl.SetSecurityDescriptorSddlForm(''$localDpiDirectorySddl'', ' +
+        '[System.Security.AccessControl.AccessControlSections]::Access); ' +
+        'Set-Acl -LiteralPath ''' + LocalDpiDirectory + ''' -AclObject `$acl"',
+        '', SW_HIDE, ewWaitUntilTerminated, ResultCode) or
+        (ResultCode <> 0) then
+      AbortServiceSetup('POKROV_LOCAL_DPI_DIRECTORY_ACL_FAILED', CreatedBySetup,
+        ResultCode);
+  end;
   ServiceBinary := ExpandConstant('{app}\pokrov_service.exe');
   if CreatedBySetup then
   begin

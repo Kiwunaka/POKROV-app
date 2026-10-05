@@ -8761,7 +8761,7 @@ class AppFirstRuntimeBootstrapper
     required RouteMode routeMode,
     required HttpClient client,
   }) async {
-    if (_routingCatalogStore.enabled || routeMode != RouteMode.allExceptRu ||
+    if (routeMode != RouteMode.allExceptRu ||
         (hostPlatform != HostPlatform.android &&
             hostPlatform != HostPlatform.windows)) {
       return _ClientRuleSetCatalog.empty;

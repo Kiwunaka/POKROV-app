@@ -4,6 +4,7 @@ import 'correlation_scope.dart';
 import 'dispatcher.dart';
 import 'ids.dart';
 import 'model.dart';
+import 'privacy.dart';
 
 enum OperationalTimelinePhase {
   bootstrap,
@@ -138,6 +139,8 @@ final class OperationalAttemptTimeline {
     String? errorCode,
     ObservabilityErrorOrigin errorOrigin = ObservabilityErrorOrigin.client,
     OperationalProofSnapshot? proofs,
+    String? prepareReason,
+    int? httpStatus,
   }) {
     _requireActive();
     final open = _open;
@@ -149,6 +152,12 @@ final class OperationalAttemptTimeline {
       'phase': _phaseAttribute(phase),
       'duration_ms': _boundedDuration(open.startedAtUtc, now),
       ...?proofs?.toAttributes(),
+      if (phase == OperationalTimelinePhase.profile &&
+          outcome == ObservabilityOutcome.failed)
+        ...OperationalAttributePolicy.prepareFailureAttributes(
+          reason: prepareReason,
+          httpStatus: httpStatus,
+        ),
     };
     _emit(
       phase: phase,

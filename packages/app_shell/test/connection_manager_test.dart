@@ -6,6 +6,8 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
+import 'package:pokrov_app_shell/routing_catalog_contract.dart';
+import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -1538,11 +1540,85 @@ void main() {
     expect(manager.presentation.isVerified, isFalse);
   });
 
-  test('connect and disconnect publish existing native facts independently',
+  test('ordinary VPN tolerates an absent optional catalog and retains RU rules',
       () async {
-    final runtime = _Runtime();
-    final manager = _manager(runtime, _Bootstrapper());
+    final originalStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({});
+    final directory = await Directory.systemTemp.createTemp('pokrov-optional-catalog-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+      FlutterSecureStoragePlatform.instance = originalStorage;
+    });
+    var catalogRequests = 0;
+    final downloadedRuleSets = <String>{};
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path.startsWith('/rule-sets/')) {
+          downloadedRuleSets.add(request.uri.pathSegments.last);
+          request.response.add([1, 2, 3]);
+        } else if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'synthetic-session', 'account_id': 'synthetic-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          request.response.write(jsonEncode({
+            'profile_revision': 'synthetic-profile', 'config_format': 'singbox-json',
+            'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
+            'transport_catalog': {
+              'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'synthetic-profile',
+              'selected_candidate_ref': 'de:legacy_reality_fallback',
+              'candidates': [{
+                'candidate_ref': 'de:legacy_reality_fallback', 'profile_ref': 'legacy_reality_fallback',
+                'node_code': 'de', 'country_code': 'DE', 'protocol': 'vless',
+                'transport': 'tcp', 'protection': 'reality', 'priority': 0,
+                'parameters': {'network': 'tcp', 'flow': ''},
+                'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+                  'platforms': ['windows'],
+                  'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']},
+              }],
+            },
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+            'access': {'access_state': 'paid_unlimited',
+              'expiry_at': DateTime.now().toUtc().add(const Duration(days: 2)).toIso8601String()},
+            'config_payload': {
+              'outbounds': [
+                {'type': 'selector', 'tag': 'proxy', 'outbounds': ['test-node'], 'default': 'test-node'},
+                {'type': 'vless', 'tag': 'test-node', 'server': 'vpn.example.invalid', 'server_port': 443,
+                  'uuid': '11111111-1111-4111-8111-111111111111'},
+              ],
+              'route': {'final': 'proxy'},
+            },
+          }));
+        } else if (request.uri.path == '/api/client/routing-catalog') {
+          catalogRequests++;
+          request.response.statusCode = HttpStatus.serviceUnavailable;
+          request.response.headers.set('X-POKROV-Error', 'routing_catalog_disabled');
+          request.response.write('{"detail":"routing_catalog_disabled"}');
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      supportDirectoryResolver: () async => directory,
+      routingCatalogStore: RoutingCatalogStore(enabled: true,
+        verifier: RoutingCatalogVerifier(publicKeysById: {'synthetic': base64Encode(List.filled(32, 1))},
+          audience: 'production')),
+      allExceptRuRuleSetUrlsResolver: (tag) => ['http://127.0.0.1:${server.port}/rule-sets/$tag.srs'],
+      maxRequestAttempts: 1,
+    );
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)..supportsCandidates = true;
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
+    manager.selectRouteMode(RouteMode.allExceptRu);
     final phases = <ConnectionPhase>[];
     manager.addListener(() => phases.add(manager.status.phase));
     await manager.connect();
@@ -1558,6 +1634,21 @@ void main() {
     expect(manager.status.routes.ipv6, isNull);
     expect(manager.status.dns.ready, isTrue);
     expect(manager.status.egress.validated, isTrue);
+    expect(catalogRequests, greaterThan(0));
+    expect(runtime.probedProtocols, ['vless']);
+    final config = jsonDecode(runtime.stagedPayloads.single.configPayload) as Map;
+    final route = config['route'] as Map;
+    final ruleSets = (route['rule_set'] as List).cast<Map>();
+    final rules = (route['rules'] as List).cast<Map>();
+    const ruTags = {'pokrov-ru-domain-whitelist', 'pokrov-ru-domain-category',
+      'pokrov-ru-ip-country', 'pokrov-ru-ip-whitelist'};
+    expect(ruleSets.map((rule) => rule['tag']).toSet(), containsAll(ruTags));
+    expect(downloadedRuleSets, containsAll(ruTags.map((tag) => '$tag.srs')));
+    for (final tag in ruTags) {
+      expect(rules.any((rule) => rule['outbound'] == 'direct' &&
+          ((rule['rule_set'] as List?)?.contains(tag) ?? false)), isTrue);
+    }
+    expect(route['final'], isNot('direct'));
     await manager.disconnect();
     expect(manager.status.phase, ConnectionPhase.disconnected);
     expect(manager.busy, isFalse);
