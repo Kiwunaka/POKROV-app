@@ -62,6 +62,16 @@ class TransportCandidate {
   final String? minimumCoreRelease;
   final Set<HostPlatform> platforms;
   final Set<RuntimeTransportFeature> requiredFeatures;
+
+  /// Location selection follows the Node; WARP's final exit stays unknown.
+  String nodeCountryCode(Iterable<TransportCandidate> catalogCandidates) {
+    if (warpMode != 'warp_over_proxy') return countryCode;
+    for (final candidate in catalogCandidates) {
+      if (candidate.nodeCode == nodeCode && candidate.profileRef == profileRef &&
+          candidate.warpMode == null) return candidate.countryCode;
+    }
+    return countryCode;
+  }
 }
 
 enum ClientPlatform {

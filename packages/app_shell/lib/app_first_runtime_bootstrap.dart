@@ -3299,7 +3299,7 @@ class AppFirstRuntimeBootstrapper
           payload.transportCatalog!.candidates.where((candidate) =>
               bundled.containsKey(candidate.candidateRef) &&
               (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)),
-          countryOnly: inputs.preferredCountryCode.isNotEmpty);
+          countryOnly: inputs.preferredCountryCode.isNotEmpty, catalog: payload.transportCatalog!);
       for (final candidate in alternatives) {
         await cacheResolvedManagedProfile(inputs, bundled[candidate.candidateRef]!,
             cancelled: cancelled, candidateOnly: true);
@@ -3362,7 +3362,7 @@ class AppFirstRuntimeBootstrapper
         catalog.candidates.where((candidate) =>
             (bundled.isEmpty || bundled.containsKey(candidate.candidateRef)) &&
             (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)),
-        countryOnly: inputs.preferredCountryCode.isNotEmpty);
+        countryOnly: inputs.preferredCountryCode.isNotEmpty, catalog: catalog);
     for (final candidate in alternatives) {
       final cached = await _managedProfileCache.read(platform: inputs.hostPlatform.name,
           binding: inputs.binding(state.accountId, state.installId), selectedCandidateRef: candidate.candidateRef);
@@ -6770,7 +6770,9 @@ class AppFirstRuntimeBootstrapper
     if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
       throw const TransportManifestFailure('transport_catalog_selection_mismatch');
     }
-    if (preferredCountryCode.isNotEmpty && transportCatalog?.selected.countryCode != preferredCountryCode) {
+    if (preferredCountryCode.isNotEmpty &&
+        (transportCatalog == null || transportCatalog.selected.nodeCountryCode(
+            transportCatalog.candidates) != preferredCountryCode)) {
       throw const TransportManifestFailure('transport_catalog_selection_mismatch');
     }
     if (transportCatalog != null &&
@@ -6957,7 +6959,8 @@ class AppFirstRuntimeBootstrapper
         final admitted = transportCatalog.candidates.where((candidate) => candidate.candidateRef == ref).firstOrNull;
         if (admitted == null || bundled.containsKey(ref) ||
             (bundled.isEmpty && ref != transportCatalog.selectedCandidateRef) ||
-            (preferredCountryCode.isNotEmpty && admitted.countryCode != preferredCountryCode)) {
+            (preferredCountryCode.isNotEmpty && admitted.nodeCountryCode(
+                transportCatalog.candidates) != preferredCountryCode)) {
           throw const TransportManifestFailure('transport_catalog_materials_mismatch');
         }
         final kind = _readText(row['transport_kind']);

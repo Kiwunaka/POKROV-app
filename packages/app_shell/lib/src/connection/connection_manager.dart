@@ -2120,7 +2120,7 @@ class ConnectionManager extends ChangeNotifier {
       var country = inputs.preferredCountryCode;
       if (inputs.preferredNodeCode.isNotEmpty) {
         for (final candidate in catalog.candidates) {
-          if (candidate.nodeCode == inputs.preferredNodeCode) { country = candidate.countryCode; break; }
+          if (candidate.nodeCode == inputs.preferredNodeCode) { country = candidate.nodeCountryCode(catalog.candidates); break; }
         }
       }
       if (inputs.preferredNodeCode.isNotEmpty && country.isEmpty) {
@@ -2135,6 +2135,7 @@ class ConnectionManager extends ChangeNotifier {
       };
       final eligibleCandidates = catalog.candidates.where((candidate) =>
           (bundled.isEmpty || bundled.containsKey(candidate.candidateRef)) &&
+          (country.isEmpty || candidate.nodeCountryCode(catalog.candidates) == country) &&
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
           (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)).toList();
       final warpCandidates = eligibleCandidates.where((candidate) =>
@@ -2159,7 +2160,8 @@ class ConnectionManager extends ChangeNotifier {
                 candidates: group),
             network: key, platform: _appContext.hostPlatform,
             ipv6Available: network.ipv6Available,
-            cancelled: cancelled, preferredCountryCode: country,
+            // Country was checked against the full catalog before grouping.
+            cancelled: cancelled,
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
             selectionTimeout: selectionTimeout,
@@ -2216,7 +2218,7 @@ class ConnectionManager extends ChangeNotifier {
           final selected = payload.materialCandidate!;
           final alternatives = SmartConnectCandidateSelector.cacheAlternatives(selected,
               eligibleCandidates.where((candidate) => materialized.containsKey(candidate.candidateRef)),
-              countryOnly: inputs.preferredCountryCode.isNotEmpty);
+              countryOnly: inputs.preferredCountryCode.isNotEmpty, catalog: catalog);
           for (final candidate in alternatives) {
             if (inputs.preferredCandidateRef.isNotEmpty) break;
             final alternate = materialized[candidate.candidateRef]!;
@@ -2322,7 +2324,8 @@ class ConnectionManager extends ChangeNotifier {
       final available = <String, ManagedProfilePayload>{};
       for (final candidate in catalog.candidates.where((candidate) =>
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
-          (inputs.preferredCountryCode.isEmpty || candidate.countryCode == inputs.preferredCountryCode) &&
+          (inputs.preferredCountryCode.isEmpty ||
+              candidate.nodeCountryCode(catalog.candidates) == inputs.preferredCountryCode) &&
           (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode) &&
           (candidate.warpMode == null || cachedWarpAllowed))) {
         final profile = await service.loadCachedManagedProfile(inputs,
@@ -4927,7 +4930,7 @@ class ConnectionManager extends ChangeNotifier {
       for (final candidate in _transportCatalog?.candidates ?? const <domain.TransportCandidate>[]) {
         if (candidate.candidateRef == _clientExperience.preferredCandidateRef ||
             _preferredNodeCode.isNotEmpty && candidate.nodeCode == _preferredNodeCode) {
-          country = candidate.countryCode;
+          country = candidate.nodeCountryCode(_transportCatalog!.candidates);
           break;
         }
       }

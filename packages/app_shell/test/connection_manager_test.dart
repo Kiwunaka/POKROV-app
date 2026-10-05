@@ -1170,6 +1170,19 @@ void main() {
 
   test('WARP last does not claim the node country as its exit', () async {
     final base = _candidates.first;
+    final otherCountry = TransportCandidate(candidateRef: 'pl:${base.profileRef}',
+      profileRef: base.profileRef, nodeCode: 'pl', countryCode: 'PL',
+      protocol: base.protocol, transport: base.transport, protection: base.protection,
+      priority: 0, network: base.network, flow: base.flow,
+      minimumClientRelease: base.minimumClientRelease, minimumCoreRelease: null,
+      platforms: base.platforms, requiredFeatures: base.requiredFeatures);
+    final otherWarp = TransportCandidate(candidateRef: '${otherCountry.candidateRef}:warp_over_proxy',
+      profileRef: base.profileRef, nodeCode: 'pl', countryCode: 'ZZ',
+      protocol: base.protocol, transport: base.transport, protection: base.protection,
+      priority: 0, network: base.network, flow: base.flow,
+      minimumClientRelease: '1.4.0', minimumCoreRelease: null,
+      platforms: base.platforms, requiredFeatures: base.requiredFeatures,
+      warpMode: 'warp_over_proxy');
     final warpLast = TransportCandidate(candidateRef: '${base.candidateRef}:warp_over_proxy',
       profileRef: base.profileRef, nodeCode: base.nodeCode, countryCode: 'ZZ',
       protocol: base.protocol, transport: base.transport, protection: base.protection,
@@ -1178,14 +1191,32 @@ void main() {
       platforms: base.platforms, requiredFeatures: base.requiredFeatures,
       warpMode: 'warp_over_proxy');
     final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true)
-      ..candidates = [base, warpLast];
+      ..candidates = [base, otherCountry, otherWarp, warpLast];
     final runtime = _Runtime()..supportsCandidates = true;
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
+    manager.restoreConnectionPreferences(
+      const PokrovClientExperienceState.empty().copyWith(preferredCountryCode: 'DE'), const {});
     await manager.connect();
+    expect(manager.transportCatalog?.selected.nodeCode, 'de');
     expect(manager.transportCatalog?.selected.countryCode, 'ZZ');
     expect(runtime.stagedPayloads.last.warpPolicy.mode, 'warp_over_proxy');
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
     expect(manager.headline, contains('Страна выхода неизвестна'));
+    expect(bootstrapper.resolutions.where((request) => request.selected.isNotEmpty)
+        .map((request) => request.selected), everyElement(warpLast.candidateRef));
+    expect(SmartConnectCandidateSelector.cacheAlternatives(warpLast, bootstrapper.candidates,
+        countryOnly: true, catalog: manager.transportCatalog!), isEmpty);
+
+    await manager.disconnect();
+    runtime.failedProbeProfiles.add(warpLast.candidateRef);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.transportCatalog?.selected.candidateRef, base.candidateRef);
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
+    expect(runtime.probedWarpModes.last, '');
+    expect(bootstrapper.resolutions.where((request) => request.selected.isNotEmpty)
+        .map((request) => request.selected), isNot(contains(otherWarp.candidateRef)));
   });
 
   test('cold candidate HTTP preparation does not consume the native probe budget', () async {

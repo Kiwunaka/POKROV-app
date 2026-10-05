@@ -39,10 +39,10 @@ void main() {
       _candidate(2, node: 'ch', country: 'CH'), _candidate(3, node: 'de2'),
     ];
     expect(SmartConnectCandidateSelector.cacheAlternatives(candidates.first,
-        candidates, countryOnly: false).map((candidate) => candidate.candidateRef),
+        candidates, countryOnly: false, catalog: _catalog(candidates)).map((candidate) => candidate.candidateRef),
         ['ch:profile_2', 'de:profile_1']);
     expect(SmartConnectCandidateSelector.cacheAlternatives(candidates.first,
-        candidates, countryOnly: true).map((candidate) => candidate.candidateRef),
+        candidates, countryOnly: true, catalog: _catalog(candidates)).map((candidate) => candidate.candidateRef),
         ['de2:profile_3', 'de:profile_1']);
   });
 
@@ -50,13 +50,14 @@ void main() {
     final legacy = _candidate(0);
     final v4 = _familyCandidate('ipv4', priority: 3, endpoint: 'v4');
     final v6 = _familyCandidate('ipv6', priority: 4, endpoint: 'v6');
+    final candidates = [legacy, v4, v6];
     expect(SmartConnectCandidateSelector.cacheAlternatives(v6,
-        [legacy, v4, v6], countryOnly: true).map((item) => item.candidateRef),
+        candidates, countryOnly: true, catalog: _catalog(candidates)).map((item) => item.candidateRef),
         [v4.candidateRef]);
     final otherNode = _candidate(2, node: 'ch', country: 'CH');
+    final withOtherNode = [legacy, _candidate(1, udp: true), otherNode, v4, v6];
     expect(SmartConnectCandidateSelector.cacheAlternatives(v6,
-        [legacy, _candidate(1, udp: true), otherNode, v4, v6],
-        countryOnly: false).map((item) => item.candidateRef),
+        withOtherNode, countryOnly: false, catalog: _catalog(withOtherNode)).map((item) => item.candidateRef),
         [otherNode.candidateRef, v4.candidateRef]);
   });
 

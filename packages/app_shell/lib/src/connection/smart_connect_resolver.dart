@@ -31,10 +31,11 @@ class SmartConnectCandidateSelector {
 
   static List<TransportCandidate> cacheAlternatives(
       TransportCandidate selected, Iterable<TransportCandidate> candidates,
-      {required bool countryOnly}) {
+      {required bool countryOnly, required TransportCandidateCatalog catalog}) {
     final ordered = candidates.where((candidate) =>
         candidate.candidateRef != selected.candidateRef &&
-        (!countryOnly || candidate.countryCode == selected.countryCode)).toList()
+        (!countryOnly || candidate.nodeCountryCode(catalog.candidates) ==
+            selected.nodeCountryCode(catalog.candidates))).toList()
       ..sort((a, b) => a.priority.compareTo(b.priority));
     final alternatives = <TransportCandidate>[];
     final families = {selected.protocol};
@@ -111,7 +112,8 @@ class SmartConnectCandidateSelector {
     final eligible = catalog.candidates.where((candidate) =>
       (ipv6Available != false || candidate.family != 'ipv6') &&
       !excludedCandidateRefs.contains(candidate.candidateRef) &&
-      (preferredCountryCode.isEmpty || candidate.countryCode == preferredCountryCode)).toList();
+      (preferredCountryCode.isEmpty ||
+          candidate.nodeCountryCode(catalog.candidates) == preferredCountryCode)).toList();
     final remembered = eligible.where((candidate) =>
       candidate.candidateRef == recoveryCandidateRef ||
       !_failedUntil.containsKey((network, candidate.candidateRef))).toList();

@@ -742,6 +742,10 @@ variant cannot block country Auto or label the server-selected route as manual.
   WARP before the node keeps its known exit country.
   When WARP is after the node, Home says the exit country is unknown and does
   not show the node's country as the exit.
+  A selected country chooses the underlying POKROV node for either chain;
+  WARP after that node remains eligible. Selection, cached alternatives and
+  managed-profile validation use the ordinary candidate of the same node and
+  profile to resolve its location, while the final exit stays `ZZ`.
 - raw subscription copy, edit, regenerate, or share actions stay out of the first-layer consumer path
 - raw connection or subscription links must not be treated as account proof in
   first-launch restore or normal code redemption
