@@ -491,7 +491,7 @@ final class PokrovClientObservability {
       errorCode: failureKind.isEmpty ? null : 'CONN-008',
       attributes: <String, Object?>{
         'failure_kind': failureKind.isEmpty ? 'none' : failureKind,
-        'duration_ms': duration.inMilliseconds.clamp(0, 30000),
+        'duration_ms': duration.inMilliseconds.clamp(0, 3600000),
       },
     );
   }

@@ -4107,7 +4107,7 @@ class AppFirstRuntimeBootstrapper
           'candidate_variant': variant,
         'stage': stage,
         'connected': outcome,
-        'duration_ms': duration.clamp(0, 30000),
+        'duration_ms': duration.clamp(0, 3600000),
         if (!outcome)
           'failure_kind': failure,
       });

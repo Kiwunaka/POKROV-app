@@ -2125,7 +2125,7 @@ void main() {
       candidateProbes: [
         {'candidate_ref': 'de:vless', 'candidate_transport': 'vless_reality',
           'candidate_variant': 'ru_bridge',
-          'stage': 'probe', 'connected': false, 'failure_kind': 'data_stalled', 'duration_ms': 4000},
+          'stage': 'probe', 'connected': false, 'failure_kind': 'data_stalled', 'duration_ms': 134512},
         {'candidate_ref': 'de:xhttp', 'candidate_transport': 'xhttp_reality',
           'candidate_variant': 'direct',
           'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 300},
@@ -2236,7 +2236,7 @@ void main() {
         'candidate_probes': [
           {'candidate_ref': 'de:vless', 'candidate_transport': 'vless_reality',
             'candidate_variant': 'ru_bridge',
-            'stage': 'probe', 'connected': false, 'failure_kind': 'data_stalled', 'duration_ms': 4000},
+            'stage': 'probe', 'connected': false, 'failure_kind': 'data_stalled', 'duration_ms': 134512},
           {'candidate_ref': 'de:xhttp', 'candidate_transport': 'xhttp_reality',
             'stage': 'probe', 'connected': true, 'duration_ms': 300},
         ],

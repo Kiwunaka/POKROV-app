@@ -300,7 +300,7 @@ void main() {
     await observability.runConnectionAction(() async {
       observability.recordCandidateProbe(
         failureKind: 'probe_budget_expired',
-        duration: const Duration(milliseconds: 375),
+        duration: const Duration(milliseconds: 134512),
       );
       observability.recordCandidateProbe(
         failureKind: 'data_stalled',
@@ -330,6 +330,8 @@ void main() {
     expect(probes.map((probe) =>
         (probe['attributes'] as Map<String, dynamic>)['failure_kind']),
         ['probe_budget_expired', 'data_stalled', 'none']);
+    expect((probes.first['attributes'] as Map<String, dynamic>)['duration_ms'],
+        134512);
     expect(recorded.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .where((value) => value['name'] == 'app.runtime.stats_delivery.finished')
         .single['stage'], 'complete');
