@@ -1409,20 +1409,22 @@ class ConnectionCoordinator {
     Future<T> Function() action, {
     int? ownerGeneration,
     bool hostOwnsTimeout = false,
+    Duration? timeout,
   }) async {
     final generation = ownerGeneration ?? _operationGeneration;
     if (!ownsOperation(generation)) {
       throw const ConnectionOperationSuperseded();
     }
+    final deadline = timeout ?? actionTimeout;
     try {
       final pending = action();
       final result = await (hostOwnsTimeout
           ? pending
           : pending.timeout(
-              actionTimeout,
+              deadline,
               onTimeout: () => throw TimeoutException(
                 'runtime action timed out: $operation',
-                actionTimeout,
+                deadline,
               ),
             ));
       if (!ownsOperation(generation)) {

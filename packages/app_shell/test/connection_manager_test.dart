@@ -413,7 +413,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
       mutate('initialize', RuntimePhase.initialized);
   @override
   Future<RuntimeSnapshot> stageManagedProfile(ManagedProfilePayload payload) {
-    expect(activeProbes, isEmpty, reason: 'all candidate workers must settle before the single TUN owner starts');
+    expectSync(activeProbes, isEmpty, reason: 'all candidate workers must settle before the single TUN owner starts');
     stagedProfile = payload.profileName;
     stagedPayloads.add(payload);
     return mutate('stage', RuntimePhase.configStaged);
@@ -1734,7 +1734,54 @@ void main() {
     expect(runtime.connectCalls, 1);
   });
 
-  for (final operation in ['initialize', 'stage', 'connect']) {
+  testWidgets('replacement joins initialize and keeps one native owner', (tester) async {
+    final coldRuntime = _Runtime(heldOperation: 'initialize');
+    final coldExperience = _ExperienceStore();
+    final coldManager = _manager(coldRuntime, _Bootstrapper(), experienceStore: coldExperience);
+    final coldConnect = coldManager.connect();
+    await tester.pump();
+    expect(coldRuntime.operationEntered.isCompleted, isTrue);
+    await tester.pump(const Duration(seconds: 20));
+    expect(coldManager.busy, isTrue);
+    expect(coldManager.status.phase, isNot(ConnectionPhase.actionRequired));
+    expect(coldRuntime.calls, isNot(contains('stage')));
+    coldRuntime.releaseOperation.complete();
+    await tester.pump();
+    await coldConnect;
+    expect(coldManager.status.phase, ConnectionPhase.connected,
+        reason: coldExperience.saved.protectionEvents
+            .where((event) => event.kind.startsWith('connect_unexpected_'))
+            .map((event) => event.detail).join('; '));
+    expect(coldManager.presentation.isVerified, isTrue);
+    expect(coldRuntime.connectCalls, 1);
+    coldManager.dispose();
+
+    final runtime = _Runtime(heldOperation: 'initialize');
+    final manager = _manager(runtime, _Bootstrapper());
+    final first = manager.connect();
+    await tester.pump();
+    expect(runtime.operationEntered.isCompleted, isTrue);
+    await tester.pump(const Duration(seconds: 20));
+    final cancellation = manager.cancel();
+    final replacement = manager.connect();
+    final replacementId = manager.attemptId;
+    await tester.pump();
+    expect(runtime.overlappingMutation, isFalse);
+    expect(runtime.calls, isNot(contains('stage')));
+    expect(runtime.connectCalls, 0);
+    runtime.releaseOperation.complete();
+    await tester.pump();
+    await Future.wait([first, cancellation, replacement]);
+    expect(runtime.overlappingMutation, isFalse);
+    expect(manager.attemptId, replacementId);
+    expect(manager.presentation.isVerified, isTrue);
+    expect(manager.busy, isFalse);
+    expect(runtime.calls.where((call) => call == 'stage'), hasLength(1));
+    expect(runtime.connectCalls, 1);
+    manager.dispose();
+  });
+
+  for (final operation in ['stage', 'connect']) {
     test('replacement joins $operation and keeps one native owner', () async {
       final runtime = _Runtime(heldOperation: operation);
       if (operation == 'connect') runtime.releaseStopRead = Completer<void>();

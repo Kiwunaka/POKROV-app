@@ -1749,6 +1749,10 @@ class ConnectionManager extends ChangeNotifier {
           return pending;
         },
         ownerGeneration: generation,
+        timeout: _appContext.hostPlatform == HostPlatform.android &&
+                const {'initialize', 'repairInitialize'}.contains(operation)
+            ? const Duration(seconds: 90)
+            : null,
         hostOwnsTimeout: _appContext.hostPlatform == HostPlatform.linux ||
             _appContext.hostPlatform == HostPlatform.windows,
       );

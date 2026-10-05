@@ -11,7 +11,11 @@ Android Core initialization runs in the existing host lifecycle worker rather
 than on the platform UI thread. The callback publishes only while that lifecycle
 is active. Returned initialization-failure snapshots retain their state;
 unexpected outer failures return a closed error rather than a success fallback.
-The existing 18-second Dart action deadline remains unchanged.
+Android initialization and repair initialization have a bounded 90-second Dart
+wait for cold native setup. Other Dart actions keep their 18-second deadline;
+Windows and Linux retain their native deadlines. Cancellation and replacement
+still drain the real initialization future and reject its stale result before
+staging a profile.
 
 The diagnostics screen shows the version returned by the Core loaded by the
 native host after initialization. Android reads `Mobile.coreVersion()` from the
