@@ -137,6 +137,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   void markUserProfileChange() {
+    _smartAccessRouteProfile = null;
     _managedProfileDirty = true;
     _cachedProfileFallbackGate.markUserChange();
   }
@@ -262,6 +263,7 @@ class ConnectionManager extends ChangeNotifier {
   final _protectionRuntimeSnapshot = ValueNotifier<RuntimeSnapshot?>(null);
   final _preparedSmartAccessGrants = Expando<List<VerifiedSmartAccessLease>>();
   final _preparedCatalogPolicies = Expando<CatalogDomainPolicy>();
+  ({CatalogDomainPolicy policy, String digest})? _smartAccessRouteProfile;
   bool _smartAccessRefreshInFlight = false;
   int? _smartAccessRenewalEnrollmentGeneration;
   String? _smartAccessRenewalEnrollmentProfile;
@@ -403,19 +405,25 @@ class ConnectionManager extends ChangeNotifier {
     } else {
       _clearAutomaticAndroidStop();
     }
-    return _replaceCommand(() =>
-        _toggleRuntime(reconnectAfterDisconnect: reconnectAfterDisconnect));
+    return _replaceCommand(() {
+      _smartAccessRouteProfile = null;
+      return _toggleRuntime(reconnectAfterDisconnect: reconnectAfterDisconnect);
+    });
   }
 
   Future<void> connect() {
     _clearAutomaticAndroidStop();
-    return _replaceCommand(() => retainsProtection
-        ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
-        : _toggleRuntime(reconnectAfterDisconnect: _runtimeSnapshot?.phase == RuntimePhase.running));
+    return _replaceCommand(() {
+      _smartAccessRouteProfile = null;
+      return retainsProtection
+          ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
+          : _toggleRuntime(reconnectAfterDisconnect: _runtimeSnapshot?.phase == RuntimePhase.running);
+    });
   }
   Future<void> disconnect() {
     _suppressAutomaticAndroidNetwork();
     return _replaceCommand(() async {
+        _smartAccessRouteProfile = null;
         if (retainsProtection) { await _disconnectProtectedHandoff(); return; }
         if (_runtimeSnapshot?.phase == RuntimePhase.running ||
             _runtimeSnapshot?.connectionPending == true) {
@@ -425,9 +433,12 @@ class ConnectionManager extends ChangeNotifier {
   }
   Future<void> reconnect() {
     _clearAutomaticAndroidStop();
-    return _replaceCommand(() => retainsProtection
-        ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
-        : _toggleRuntime(reconnectAfterDisconnect: true));
+    return _replaceCommand(() {
+      _smartAccessRouteProfile = null;
+      return retainsProtection
+          ? _recoverCandidateConnection(_runtimeSnapshot, _activeCandidateRef ?? _candidateRef ?? '')
+          : _toggleRuntime(reconnectAfterDisconnect: true);
+    });
   }
   Future<void> cancel() {
     _suppressAutomaticAndroidNetwork();
@@ -440,6 +451,7 @@ class ConnectionManager extends ChangeNotifier {
           _repairRuntime(onStep: onStep, onCancelAvailable: onCancelAvailable));
 
   Future<void> _disconnectProtectedHandoff() async {
+    _smartAccessRouteProfile = null;
     _connectionCoordinator.beginAction(ConnectionTransitionIntent.disconnect);
     final generation = _connectionCoordinator.operationGeneration;
     _update(() => _activePhase = ConnectionPhase.disconnecting);
@@ -1678,10 +1690,14 @@ class ConnectionManager extends ChangeNotifier {
     if (refreshed != null && await _observeAndroidNetwork(refreshed)) return;
     // A UI/resume read may already have adopted this failure. Recovery belongs
     // to the active candidate, not to which observer first saw the snapshot.
-    if (_transportCatalog != null && _activeCandidateRef != null && refreshed != null &&
+    if (refreshed != null && (_isLocalSmartAccessFailure(refreshed) ||
+        _transportCatalog != null && _activeCandidateRef != null &&
         (refreshed.hasCoreEgressProbeFailure ||
-            observed?.phase == RuntimePhase.running && refreshed.phase != RuntimePhase.running)) {
+            observed?.phase == RuntimePhase.running && refreshed.phase != RuntimePhase.running))) {
       _scheduleCandidateRecovery(refreshed);
+    } else if (_isCurrentSmartAccessVpnFallback(refreshed) &&
+        refreshed!.hasCoreEgressProbeFailure) {
+      _handleFailedManagedProfile(refreshed);
     }
     if (!unchanged) unawaited(_reportClientLifecycle("runtime_observed"));
   }
@@ -1791,25 +1807,54 @@ class ConnectionManager extends ChangeNotifier {
       (_appContext.hostPlatform == HostPlatform.android ||
           _appContext.hostPlatform == HostPlatform.windows);
 
+  bool get _localSmartAccessSelected =>
+      _selectedRouteMode == RouteMode.selectiveServices &&
+      _selectiveServicesAvailable &&
+      _bootstrapper is AppFirstRuntimeBootstrapper &&
+      (_bootstrapper as AppFirstRuntimeBootstrapper).smartAccessEnabled;
+
+  String? get _catalogSelectionAccessState {
+    final access = _freeProfileAccess;
+    if (access != null && access.hasKnownAccessState && access.isConsistent) {
+      return access.accessState;
+    }
+    final service = _bootstrapper;
+    return service is AppFirstSmartAccessService &&
+        (service as AppFirstSmartAccessService).smartAccessEnabled &&
+        _subscriptionInfo?.lane != 'expiredOrBlocked'
+        ? _subscriptionInfo?.accessState : null;
+  }
+
   Future<_CatalogServiceSelectionData> _loadCatalogServiceSelection(
       {required bool Function() isCurrent,
       required Future<void> cancelled}) async {
     final service = _bootstrapper;
-    final access = _freeProfileAccess;
     final revision = _managedProfileRevision;
     final generation = _connectionCoordinator.operationGeneration;
+    if (_catalogSelectionAccessState == null &&
+        service is AppFirstClientDataService &&
+        service is AppFirstSmartAccessService &&
+        (service as AppFirstSmartAccessService).smartAccessEnabled) {
+      final subscription = await (service as AppFirstClientDataService)
+          .fetchClientSubscription(hostPlatform: _appContext.hostPlatform,
+              requestTimeout: _actionTimeout, cancelled: cancelled);
+      if (_disposed || !isCurrent() || revision != _managedProfileRevision ||
+          !_connectionCoordinator.ownsOperation(generation)) {
+        throw const RoutingCatalogFailure('catalog_preview_superseded');
+      }
+      _subscriptionInfo = subscription;
+    }
+    final accessState = _catalogSelectionAccessState;
     bool metadataCurrent() =>
         !_disposed &&
         isCurrent() &&
         _selectiveServicesAvailable &&
         revision == _managedProfileRevision &&
-        _freeProfileAccess?.accessState == access?.accessState &&
+        _catalogSelectionAccessState == accessState &&
         _connectionCoordinator.ownsOperation(generation);
     if (!_selectiveServicesAvailable ||
         service is! AppFirstRoutingCatalogService ||
-        access == null ||
-        !access.hasKnownAccessState ||
-        !access.isConsistent) {
+        accessState == null || accessState.isEmpty) {
       throw const RoutingCatalogFailure('catalog_selective_unavailable');
     }
     final result = await (service as AppFirstRoutingCatalogService)
@@ -1822,7 +1867,7 @@ class ConnectionManager extends ChangeNotifier {
     if (_disposed ||
         !_selectiveServicesAvailable ||
         revision != _managedProfileRevision ||
-        _freeProfileAccess?.accessState != access.accessState) {
+        _catalogSelectionAccessState != accessState) {
       throw const RoutingCatalogFailure('catalog_preview_superseded');
     }
     RuntimeSmartAccessLeaseState? runtime;
@@ -1891,13 +1936,13 @@ class ConnectionManager extends ChangeNotifier {
     }
     if (_disposed ||
         revision != _managedProfileRevision ||
-        _freeProfileAccess?.accessState != access.accessState) {
+        _catalogSelectionAccessState != accessState) {
       throw const RoutingCatalogFailure('catalog_preview_superseded');
     }
     return _CatalogServiceSelectionData(
         catalog: catalog,
         platform: _appContext.hostPlatform.name,
-        accessState: access.accessState,
+        accessState: accessState,
         profileRevision: revision,
         nativeWindowVersion: native.routingCatalogWindowVersion,
         runtime: runtime,
@@ -2030,6 +2075,7 @@ class ConnectionManager extends ChangeNotifier {
     int? ownerGeneration,
     String recoveryCandidateRef = '',
     Set<String> excludedCandidateRefs = const {},
+    bool smartAccessVpnFallback = false,
   }) async {
     final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
     final profileRevision = _managedProfileRevision;
@@ -2053,6 +2099,28 @@ class ConnectionManager extends ChangeNotifier {
         ? _connectionCoordinator.whenOperationEnds(generation)
         : _connectionCoordinator.whenOperationChanges(generation);
     final inputs = _managedProfileCacheInputs;
+    smartAccessVpnFallback = smartAccessVpnFallback ||
+        _isCurrentSmartAccessVpnFallback(_runtimeSnapshot);
+    if (_localSmartAccessSelected && !smartAccessVpnFallback) {
+      _smartAccessRouteProfile = null;
+      _transportCatalog = null;
+      _candidateNetworkKey = null;
+      _activeCandidateRef = null;
+      final service = _bootstrapper as AppFirstRuntimeBootstrapper;
+      final subscription = await service.fetchClientSubscription(
+          hostPlatform: _appContext.hostPlatform,
+          requestTimeout: _actionTimeout, cancelled: cancelled);
+      requireCurrent();
+      if (subscription.lane == 'expiredOrBlocked') {
+        throw const BootstrapFailure('Доступ не активен. Продлите доступ, чтобы подключиться.',
+            code: 'managed_profile_access_denied', statusCode: 403);
+      }
+      _subscriptionInfo = subscription;
+      return _prepareManagedProfile(
+          service.buildLocalSmartAccessBase(hostPlatform: _appContext.hostPlatform),
+          ownerGeneration: generation,
+          localSmartAccessState: subscription.accessState);
+    }
     final signedTransport = _bootstrapper is AppFirstTransportManifestService &&
         (_bootstrapper as AppFirstTransportManifestService).transportManifestEnabled;
     final features = signedTransport ? const <RuntimeTransportFeature>{}
@@ -2251,6 +2319,7 @@ class ConnectionManager extends ChangeNotifier {
     _transportCatalog = payload.transportCatalog;
     _offlineState = null;
     return _prepareManagedProfile(payload,
+        smartAccessVpnFallback: smartAccessVpnFallback,
         suppressWarpRuntime: suppressWarpRuntime, ownerGeneration: generation);
   }
 
@@ -2436,6 +2505,8 @@ class ConnectionManager extends ChangeNotifier {
     bool suppressWarpRuntime = false,
     bool offline = false,
     int? ownerGeneration,
+    String? localSmartAccessState,
+    bool smartAccessVpnFallback = false,
   }) async {
     final generation =
         ownerGeneration ?? _connectionCoordinator.operationGeneration;
@@ -2453,7 +2524,7 @@ class ConnectionManager extends ChangeNotifier {
         ? _connectionCoordinator.whenOperationEnds(generation)
         : _connectionCoordinator.whenOperationChanges(generation);
     final baseWarpPolicy = payload.warpPolicy.withClientLocalDefaults();
-    final warpStatus = offline
+    final warpStatus = offline || localSmartAccessState != null
         ? null
         : await _fetchWarpStatusOrNull(
             ownerGeneration: generation, cancelled: cancelled);
@@ -2506,6 +2577,7 @@ class ConnectionManager extends ChangeNotifier {
           mode: selectedWarpMode ?? displayWarpPolicy.mode,
           userConsented: warpRuntimeAttemptEnabled),
       quickSettingsEligible: _appContext.hostPlatform == HostPlatform.android &&
+          localSmartAccessState == null &&
           _clientExperience.firstRouteScopeConfirmed &&
           _clientExperience.firstRouteScopeMode == _selectedRouteMode &&
           !catalogAppScopeRequired,
@@ -2560,18 +2632,18 @@ class ConnectionManager extends ChangeNotifier {
           nativeCatalogControlVersion = native.routingCatalogControlVersion;
           nativeSmartAccessLeaseVersion = native.smartAccessLeaseVersion;
           final access = payload.freeProfileAccess;
-          if (access == null ||
-              !access.hasKnownAccessState ||
-              !access.isConsistent) {
+          if (localSmartAccessState == null && (access == null ||
+              !access.hasKnownAccessState || !access.isConsistent)) {
             throw const RoutingCatalogFailure('catalog_profile_access_invalid');
           }
+          final accessState = localSmartAccessState ?? access!.accessState;
           final catalogProjection =
               RoutingCatalogPolicy.fromVerified(result.catalog);
           if (catalogAppScopeRequired) {
             final selected = _selectedAppIds.toSet();
             final binding = await const CatalogAndroidDiscovery()
                 .inspectDirectCandidates(catalogProjection,
-                    accessState: access.accessState, fresh: true);
+                    accessState: accessState, fresh: true);
             if (_disposed ||
                 !_connectionCoordinator.ownsOperation(generation) ||
                 profileRevision != _managedProfileRevision ||
@@ -2606,8 +2678,8 @@ class ConnectionManager extends ChangeNotifier {
                 policy: catalogProjection,
                 mode: catalogMode,
                 platform: _appContext.hostPlatform.name,
-                accessState: access.accessState,
-                vpnAvailable: true,
+                accessState: accessState,
+                vpnAvailable: localSmartAccessState == null,
                 now: DateTime.now(),
                 selectedServiceIds:
                     payload.routeMode == RouteMode.selectiveServices
@@ -2617,7 +2689,7 @@ class ConnectionManager extends ChangeNotifier {
                 smartAccessProfile: leases,
               );
           catalogPolicy = compile(null);
-          if (!offline &&
+          if (!offline && !smartAccessVpnFallback &&
               !result.usingCache &&
               const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(catalogMode) &&
               nativeSmartAccessLeaseVersion == 1 &&
@@ -2735,6 +2807,7 @@ class ConnectionManager extends ChangeNotifier {
         _clientExperience.routingPreferences,
         hostPlatform: _appContext.hostPlatform,
         catalogPolicy: catalogPolicy,
+        catalogAccessState: localSmartAccessState,
         nativeCatalogWindowVersion: nativeCatalogWindowVersion,
         nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion,
         defaultRuAppPackageIds: _appContext.hostPlatform == HostPlatform.android
@@ -2743,6 +2816,9 @@ class ConnectionManager extends ChangeNotifier {
       );
       final grants = catalogPolicy?.smartAccessProfile?.byService.values
           .expand((group) => group);
+      if (localSmartAccessState != null && (grants == null || grants.isEmpty)) {
+        throw const RoutingCatalogFailure('catalog_gateway_lease_missing');
+      }
       if (catalogPolicy != null &&
           catalogPolicy.rules
               .any((rule) => rule.action != CatalogRouteAction.block)) {
@@ -2793,7 +2869,7 @@ class ConnectionManager extends ChangeNotifier {
           warpConsentStillValid,
         );
         _warpRuntimeRetryPending = false;
-        _freeProfileAccess = payload.freeProfileAccess;
+        if (localSmartAccessState == null) _freeProfileAccess = payload.freeProfileAccess;
         _warpRuntimeConsent = warpConsentStillValid;
         _smartConnectProfile = payload.smartConnect;
         _preferredNodeCode = requestedPreferred;
@@ -3226,6 +3302,7 @@ class ConnectionManager extends ChangeNotifier {
       // Restored staged profiles skip initialize; selection still needs the
       // current host inventory rather than a missing pre-action snapshot.
       _runtimeSnapshot = snapshot;
+      final smartAccessVpnFallback = _isCurrentSmartAccessVpnFallback(snapshot);
       if ((_protectedHandoffActive &&
               (actionIntent == ConnectionTransitionIntent.connect || reconnectAfterDisconnect)) ||
           (reconnectAfterDisconnect && snapshot.phase == RuntimePhase.running &&
@@ -3238,6 +3315,7 @@ class ConnectionManager extends ChangeNotifier {
       }
 
       if (snapshot.phase == RuntimePhase.running) {
+        if (!reconnectAfterDisconnect) _smartAccessRouteProfile = null;
         if (_runtimeIntent == ConnectionTransitionIntent.connect) {
           // The pre-busy guess was made without a snapshot; fix the copy
           // before the disconnect actually starts.
@@ -3368,6 +3446,7 @@ class ConnectionManager extends ChangeNotifier {
                   const {HostPlatform.android, HostPlatform.windows}
                       .contains(_appContext.hostPlatform)) ||
               (_selectedRouteMode == RouteMode.selectiveServices &&
+                  (!_localSmartAccessSelected || smartAccessVpnFallback) &&
                   const {HostPlatform.android, HostPlatform.windows}
                       .contains(_appContext.hostPlatform)) ||
               (const {RouteMode.selectedApps, RouteMode.excludedApps}
@@ -3383,7 +3462,8 @@ class ConnectionManager extends ChangeNotifier {
         if (!_foregroundAutoConnect && !await _authorizeAndroidVpnConnect()) return;
         if (_disposed || !_connectionCoordinator.ownsOperation(generation))
           return;
-        final proven = await _connectWithTransportManifest(current, generation);
+        final proven = await _connectWithTransportManifest(current, generation,
+            smartAccessVpnFallback: smartAccessVpnFallback);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation))
           return;
         _finishAndroidVpnPermission(proven);
@@ -3404,6 +3484,7 @@ class ConnectionManager extends ChangeNotifier {
           ? _bootstrapper as CachedManagedProfileBootstrapper
           : null;
       Future<ManagedProfilePayload?> readCache() async {
+        if (_localSmartAccessSelected) return null;
         if (_disposed ||
             !_connectionCoordinator.ownsOperation(generation) ||
             profileRevision != _managedProfileRevision) {
@@ -3433,7 +3514,7 @@ class ConnectionManager extends ChangeNotifier {
           ? _hasFreshCachedManagedProfile(current.stagedConfigPath)
           : cachedPayload != null;
       final cachedProfileFallbackAllowed =
-          _cachedProfileFallbackGate.canFallback(
+          !_localSmartAccessSelected && _cachedProfileFallbackGate.canFallback(
                   cachedProfileAvailable: cachedProfileAvailable,
                   inputsVerified: cachedPayload != null) &&
               !_automaticFailoverInFlight &&
@@ -3474,6 +3555,7 @@ class ConnectionManager extends ChangeNotifier {
           failureStage = ConnectionStage.profile;
           managedProfile = await _resolveManagedProfile(
             ownerGeneration: generation,
+            smartAccessVpnFallback: smartAccessVpnFallback,
             deadline: cachedProfileFallbackAllowed
                 ? _cachedProfileRefreshDeadline
                 : initialProfilePreparation
@@ -3512,7 +3594,8 @@ class ConnectionManager extends ChangeNotifier {
           // or a host clear. Restaging must not renew the cache timestamp.
           cachedPayload = await _resolveCachedCandidateProfile(cacheInputs, cachedPayload, generation: generation);
           managedProfile = await _prepareManagedProfile(cachedPayload,
-              offline: true, ownerGeneration: generation);
+              offline: true, ownerGeneration: generation,
+              smartAccessVpnFallback: smartAccessVpnFallback);
         }
         final resolvedProfile = managedProfile;
         if (resolvedProfile != null) {
@@ -3535,6 +3618,11 @@ class ConnectionManager extends ChangeNotifier {
             });
             return;
           }
+          final stagedPolicy = _preparedCatalogPolicies[resolvedProfile];
+          final stagedBinding = _connectionCoordinator.stagedSmartAccessLeases;
+          _smartAccessRouteProfile = stagedPolicy != null && stagedBinding != null &&
+              (!stagedPolicy.vpnAvailable || smartAccessVpnFallback)
+              ? (policy: stagedPolicy, digest: stagedBinding.profileDigest) : null;
           _update(() {
             _runtimeSnapshot = current;
             _runtimeHeadline = null;
@@ -4020,6 +4108,8 @@ class ConnectionManager extends ChangeNotifier {
           await _refreshManagedProfileCache(alternativesOnly: true);
         }
       }));
+    } else if (_isCurrentSmartAccessProfile(snapshot)) {
+      _diagnosticsCoordinator.startRuntimePolling(_refreshDesktopRuntimeSnapshot);
     }
     _automaticFailoverAttempts = 0;
     _automaticFailoverInFlight = false;
@@ -4343,9 +4433,35 @@ class ConnectionManager extends ChangeNotifier {
     _tcpFallbackFromRevision = '';
   }
 
+  bool _isCurrentSmartAccessProfile(RuntimeSnapshot? snapshot) {
+    final captured = _smartAccessRouteProfile;
+    final now = DateTime.now().toUtc();
+    return captured != null &&
+        _localSmartAccessSelected && snapshot != null &&
+        (snapshot.effectiveProfileDigest ?? snapshot.stagedProfileDigest) == captured.digest &&
+        now.isBefore(captured.policy.expiresAt) &&
+        !_connectionCoordinator.isCatalogRevoked(captured.policy.payloadSha256, now) &&
+        !_connectionCoordinator.isCatalogServiceRevoked(captured.policy.payloadSha256,
+            captured.policy.selectedServiceIds, now) &&
+        setEquals(captured.policy.selectedServiceIds,
+            _clientExperience.routingPreferences.selectedCatalogServiceIds);
+  }
+
+  bool _isCurrentSmartAccessVpnFallback(RuntimeSnapshot? snapshot) =>
+      _smartAccessRouteProfile?.policy.vpnAvailable == true &&
+      _isCurrentSmartAccessProfile(snapshot);
+
+  bool _isLocalSmartAccessFailure(RuntimeSnapshot failed) {
+    return _smartAccessRouteProfile?.policy.vpnAvailable == false &&
+        _isCurrentSmartAccessProfile(failed) &&
+        const {'core_egress_dns_failed', 'core_egress_connect_failed', 'core_egress_tls_failed'}
+            .contains(failed.lastFailureKind);
+  }
+
   bool _scheduleCandidateRecovery(RuntimeSnapshot failed) {
     if (_candidateRecoveryPending || _activePhase == ConnectionPhase.actionRequired) return false;
-    final currentRef = _activeCandidateRef ?? _candidateRef;
+    final localFailure = _isLocalSmartAccessFailure(failed) ? _smartAccessRouteProfile : null;
+    final currentRef = localFailure != null ? '' : _activeCandidateRef ?? _candidateRef;
     if (currentRef == null) return false;
     _candidateRecoveryPending = true;
     final command = _commandNumber;
@@ -4355,14 +4471,15 @@ class ConnectionManager extends ChangeNotifier {
       try {
         if (_disposed || command != _commandNumber) return;
         await _replaceCommand(() => _recoverCandidateConnection(failed, currentRef,
-            confirmedFailure: true), automatic: true);
+            confirmedFailure: true, smartAccessFallback: localFailure), automatic: true);
       } finally { _candidateRecoveryPending = false; }
     }());
     return true;
   }
 
   Future<void> _recoverCandidateConnection(RuntimeSnapshot? failed, String currentRef,
-      {int? ownerGeneration, bool confirmedFailure = false}) async {
+      {int? ownerGeneration, bool confirmedFailure = false,
+      ({CatalogDomainPolicy policy, String digest})? smartAccessFallback}) async {
     final engine = _runtimeEngine;
     _cancelPostConnectHostHealthPolling();
     final ownsAction = ownerGeneration == null;
@@ -4396,6 +4513,36 @@ class ConnectionManager extends ChangeNotifier {
       }
       final cacheInputs = _managedProfileCacheInputs;
       final profileRevision = _managedProfileRevision;
+      final retainedSmartProfile = _smartAccessRouteProfile;
+      final smartAccessVpnFallback = smartAccessFallback != null ||
+          _isCurrentSmartAccessVpnFallback(failed);
+      if (smartAccessFallback != null) {
+        if (!identical(_smartAccessRouteProfile?.policy, smartAccessFallback.policy) ||
+            _smartAccessRouteProfile?.digest != smartAccessFallback.digest || failed == null ||
+            !_isLocalSmartAccessFailure(failed)) throw const ConnectionOperationSuperseded();
+      }
+      if (smartAccessVpnFallback) {
+        final service = _bootstrapper;
+        if (service is AppFirstTransportManifestService &&
+            (service as AppFirstTransportManifestService).transportManifestEnabled) {
+          final current = await _connectWithTransportManifest(failed!, generation,
+              smartAccessVpnFallback: true);
+          if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+          _update(() {
+            _runtimeSnapshot = current;
+            _activePhase = current.isCleanlyHealthy ? null : ConnectionPhase.actionRequired;
+          });
+          if (current.isCleanlyHealthy) {
+            _protectedHandoffActive = false;
+            _finalizeProvenConnection(current);
+          }
+          return;
+        }
+        if (engine is! RuntimeCandidateProbing) {
+          throw const BootstrapFailure('Для восстановления соединения обновите POKROV.',
+              code: 'candidate_probe_unavailable');
+        }
+      }
       final failedActivations = <String>{
         if (confirmedFailure && currentRef.isNotEmpty) currentRef,
       };
@@ -4423,7 +4570,8 @@ class ConnectionManager extends ChangeNotifier {
         final selected = await _resolveCachedCandidateProfile(cacheInputs, cached,
             generation: generation, recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations);
         // Preserve the authorized entry and its expiry; probing does not renew it.
-        return _prepareManagedProfile(selected, offline: true, ownerGeneration: generation);
+        return _prepareManagedProfile(selected, offline: true, ownerGeneration: generation,
+            smartAccessVpnFallback: smartAccessVpnFallback);
       }
       for (var activation = 0; activation < 3; activation++) {
       var usedCachedProfile = false;
@@ -4441,12 +4589,14 @@ class ConnectionManager extends ChangeNotifier {
       if (payload == null) {
       try {
         payload = await _resolveManagedProfile(ownerGeneration: generation,
+            smartAccessVpnFallback: smartAccessVpnFallback,
             recoveryCandidateRef: currentRef, excludedCandidateRefs: failedActivations, deadline: _actionTimeout);
       } on Object catch (error) {
         if (error is BootstrapFailure && (error.statusCode == 401 || error.statusCode == 403)) {
           _cachedProfileFallbackGate.markAuthorizationDenied();
         }
-        if (!(error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error))) rethrow;
+        if (smartAccessFallback != null ||
+            !(error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error))) rethrow;
         payload = await recoverCached(offline: true);
         if (payload == null) rethrow;
         usedCachedProfile = true;
@@ -4459,6 +4609,11 @@ class ConnectionManager extends ChangeNotifier {
             code: 'managed_profile_access_denied', statusCode: 403);
       }
       final prepared = payload;
+      if (smartAccessVpnFallback && (profileRevision != _managedProfileRevision ||
+          !setEquals((smartAccessFallback ?? retainedSmartProfile)!.policy.selectedServiceIds,
+              _clientExperience.routingPreferences.selectedCatalogServiceIds))) {
+        throw const ConnectionOperationSuperseded();
+      }
       RuntimeSnapshot current;
       if (retryInitialActivation) {
         // The first activation stopped before proof: there is no prior healthy
@@ -4477,6 +4632,11 @@ class ConnectionManager extends ChangeNotifier {
       current = await _settleRuntimeTransition(current, ownerGeneration: generation,
           waitForEgressProof: true);
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+      final fallbackPolicy = _preparedCatalogPolicies[prepared];
+      final fallbackDigest = current.effectiveProfileDigest ?? current.stagedProfileDigest;
+      _smartAccessRouteProfile = smartAccessVpnFallback && current.isCleanlyHealthy &&
+          fallbackPolicy != null && fallbackDigest != null
+          ? (policy: fallbackPolicy, digest: fallbackDigest) : null;
       if (!usedCachedProfile) _cachedProfileFallbackGate.markFreshProfileStaged();
       final tryNext = activation < 2 && current.hasCoreEgressProbeFailure &&
           _transportCatalog != null && _candidateRef != null;
@@ -4530,6 +4690,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   bool _handleFailedManagedProfile(RuntimeSnapshot failed) {
+    if (_isLocalSmartAccessFailure(failed)) return _scheduleCandidateRecovery(failed);
     if (_transportCatalog != null && _candidateRef != null) return _scheduleCandidateRecovery(failed);
     final mustRefreshProfile = _mustRefreshProfileAfterRuntimeFailure(failed);
     final confirmedFailure = failed.hasCoreEgressProbeFailure;

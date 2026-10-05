@@ -32,6 +32,7 @@ namespace pokrov::service {
 bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
 bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor);
 bool CoreDescriptorHasTelegramWS(const std::string& descriptor);
+bool CoreDescriptorHasSmartAccessProbe(const std::string& descriptor);
 
 RuntimeResult RuntimeHost::CrashDiagnostics() const {
   std::vector<windows_crash::WindowsCrashDiagnostic> records;
@@ -47,7 +48,8 @@ const char* SafeEgressFailure(const std::string& failure) {
   for (const auto* known : {
            "core_egress_dns_failed", "core_egress_connect_failed",
            "core_egress_tls_failed", "core_egress_tls_timeout",
-           "core_egress_response_timeout", "core_egress_timeout"}) {
+           "core_egress_response_timeout", "core_egress_timeout",
+           "core_egress_probe_unavailable"}) {
     if (failure == known) return known;
   }
   return "core_egress_probe_failed";
@@ -502,6 +504,28 @@ class InstalledCoreRuntime final : public CoreRuntime {
         configure_smart_access_renewal_ != nullptr && read_smart_access_leases_ != nullptr && acknowledge_smart_access_restrictions_ != nullptr ? 1 : 0;
   }
 
+  int SmartAccessProbeVersion() const override {
+    return initialized_ && smart_access_probe_version_ == 1 &&
+        probe_selected_outbound_ != nullptr && probe_runtime_egress_ != nullptr ? 1 : 0;
+  }
+
+  std::string ProbeSmartAccess(const std::string& tag, bool periodic,
+                             const CheckInterruption& interrupted) override {
+    if (SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
+    const CheckInterruption current = interrupted ? interrupted : [] { return OperationInterruption::kNone; };
+    char* value = periodic ? probe_runtime_egress_(tag.c_str(), 3000, &CheckCoreInterruption,
+        const_cast<CheckInterruption*>(&current)) : probe_selected_outbound_(tag.c_str());
+    if (value == nullptr) return "core_egress_probe_unavailable";
+    const auto result = StringResult(value);
+    if (result.empty()) return "";
+    if (result == "URL probe DNS resolution failed") return "core_egress_dns_failed";
+    if (result == "URL probe connection failed") return "core_egress_connect_failed";
+    if (result == "URL probe TLS negotiation failed") return "core_egress_tls_failed";
+    if (result == "context deadline exceeded") return "core_egress_timeout";
+    if (result == "URL probe response failed" || result == "URL probe failed") return "core_egress_probe_failed";
+    return "core_egress_probe_unavailable";
+  }
+
   std::string ReadSmartAccessRestrictions() override {
     return SmartAccessRuntimeControlVersion() == 1 ? StringResult(read_smart_access_restrictions_()) : "";
   }
@@ -583,6 +607,9 @@ class InstalledCoreRuntime final : public CoreRuntime {
     admit_telegram_ws_ = nullptr;
     withdraw_telegram_ws_ = nullptr;
     smart_access_lease_version_ = 0;
+    smart_access_probe_version_ = 0;
+    probe_selected_outbound_ = nullptr;
+    probe_runtime_egress_ = nullptr;
     routing_catalog_control_version_ = 0;
     const auto directory = CurrentExecutableDirectory();
     const auto library_path = AppendPath(directory, L"pokrov-core.dll");
@@ -657,6 +684,13 @@ class InstalledCoreRuntime final : public CoreRuntime {
       renewal_descriptor.insert(renewal_descriptor.find("\"capabilities\""),
           "\"routing_catalog_control_version\":4,");
       const bool has_runtime_control = CoreDescriptorHasRuntimeControl(descriptor);
+      if (CoreDescriptorHasSmartAccessProbe(descriptor)) {
+        smart_access_probe_version_ = 1;
+        probe_selected_outbound_ = reinterpret_cast<ProbeSelectedOutboundFunction>(
+            ::GetProcAddress(module_, "pokrovCoreProbeSelectedOutbound"));
+        probe_runtime_egress_ = reinterpret_cast<ProbeRuntimeEgressFunction>(
+            ::GetProcAddress(module_, "pokrovCoreProbeRuntimeEgressV1"));
+      }
       if (CoreDescriptorHasWindowsLocalDpi(descriptor)) {
         windows_local_dpi_version_ = reinterpret_cast<AbiFunction>(
             ::GetProcAddress(module_, "pokrovCoreWindowsLocalDpiAdmissionVersion"));
@@ -915,6 +949,8 @@ class InstalledCoreRuntime final : public CoreRuntime {
                                                    InterruptionCallback, void*);
   using ProbeCandidateFunction = char*(__cdecl*)(const char*, const char*, int,
                                                  const char*, InterruptionCallback, void*);
+  using ProbeSelectedOutboundFunction = char*(__cdecl*)(const char*);
+  using ProbeRuntimeEgressFunction = char*(__cdecl*)(const char*, int, InterruptionCallback, void*);
   using StopFunction = char*(__cdecl*)();
   using FreeStringFunction = void(__cdecl*)(char*);
 
@@ -1023,6 +1059,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
   int routing_catalog_control_version_ = 0;
   int routing_catalog_window_version_ = 0;
   int smart_access_lease_version_ = 0;
+  int smart_access_probe_version_ = 0;
   SetEventCallbackFunction set_event_callback_ = nullptr;
   SetEventContextFunction set_event_context_ = nullptr;
   SetupFunction setup_ = nullptr;
@@ -1030,6 +1067,8 @@ class InstalledCoreRuntime final : public CoreRuntime {
   StartFunction start_ = nullptr;
   StartInterruptibleFunction start_interruptible_ = nullptr;
   ProbeCandidateFunction probe_candidate_ = nullptr;
+  ProbeSelectedOutboundFunction probe_selected_outbound_ = nullptr;
+  ProbeRuntimeEgressFunction probe_runtime_egress_ = nullptr;
   StopFunction stop_ = nullptr;
   FreeStringFunction free_string_ = nullptr;
   ServiceEventSink* events_ = nullptr;
@@ -1050,22 +1089,31 @@ InstalledCoreRuntime* InstalledCoreRuntime::callback_runtime_ = nullptr;
 }  // namespace
 
 bool CoreDescriptorHasRuntimeControl(const std::string& descriptor) {
+  std::string compatible(descriptor);
+  const std::string probe_field = "\"smart_access_probe_version\":1,";
+  const auto probe_position = compatible.find(probe_field);
+  if (probe_position != std::string::npos) compatible.erase(probe_position, probe_field.size());
   std::string runtime_control(kCoreCapabilities);
   runtime_control.insert(runtime_control.find("\"capabilities\""),
       "\"routing_catalog_window_version\":1,\"smart_access_lease_version\":1,"
       "\"smart_access_runtime_control_version\":1,\"routing_catalog_control_version\":4,");
-  if (descriptor == runtime_control) return true;
+  if (compatible == runtime_control) return true;
   // Core 1.2.2 adds platform admission metadata; ordinary Windows runtime
   // compatibility does not grant Windows DPI execution capability.
   runtime_control.insert(runtime_control.find("\"capabilities\""),
       "\"local_dpi_admission_version\":1,");
-  if (descriptor == runtime_control) return true;
+  if (compatible == runtime_control) return true;
   runtime_control.insert(runtime_control.find("\"capabilities\""),
       "\"windows_local_dpi_admission_version\":1,");
-  if (descriptor == runtime_control) return true;
+  if (compatible == runtime_control) return true;
   runtime_control.insert(runtime_control.find("\"capabilities\""),
       "\"telegram_ws_admission_version\":1,");
-  return descriptor == runtime_control;
+  return compatible == runtime_control;
+}
+
+bool CoreDescriptorHasSmartAccessProbe(const std::string& descriptor) {
+  return descriptor.find("\"smart_access_probe_version\":1,") != std::string::npos &&
+      CoreDescriptorHasRuntimeControl(descriptor);
 }
 
 bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor) {
@@ -1636,8 +1684,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   if (!requires_bound_connect_) {
     RecordEvent(ServiceEvent::kRuntimeEgressVerify,
                 ServiceEventOutcome::kAttempted);
-    const auto egress_failure = egress_probe_ != nullptr
-        ? egress_probe_->Verify(interrupted) : "core_egress_probe_failed";
+    const auto egress_failure = VerifyEgress(false, interrupted);
     if (const auto result = interruption(true)) return *result;
     if (!egress_failure.empty()) {
       RecordEvent(ServiceEvent::kRuntimeEgressVerify,
@@ -1879,11 +1926,20 @@ bool RuntimeHost::CanRecheckEgress() const {
       !TransitionGuardArmed();
 }
 
+std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& interrupted) {
+  const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_);
+  if (target) {
+    if (target->empty() || core_->SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
+    return core_->ProbeSmartAccess(*target, periodic, interrupted);
+  }
+  return egress_probe_ ? egress_probe_->Verify(interrupted) : "core_egress_probe_failed";
+}
+
 RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
   if (!CanRecheckEgress() ||
       (interrupted && interrupted() == OperationInterruption::kCancelled)) return Snapshot();
   RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kAttempted);
-  const auto failure = egress_probe_ ? egress_probe_->Verify(interrupted) : "core_egress_probe_failed";
+  const auto failure = VerifyEgress(true, interrupted);
   const auto interruption = interrupted ? interrupted() : OperationInterruption::kNone;
   // A lifecycle command cancels and joins this check before changing its owner.
   // Failed health leaves the current TUN in place for protected replacement.

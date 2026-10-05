@@ -886,8 +886,10 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   final dns = _routingMap(config['dns']);
   final direct = _findOutboundByType(outbounds, 'direct');
   final vpn = _resolveProxyTag(outbounds, endpoints, route);
-  if (direct.isEmpty || vpn.isEmpty || direct == vpn ||
-      (selective && vpn != _routingText(route['final']))) {
+  if (direct.isEmpty ||
+      (policy.vpnAvailable && (vpn.isEmpty || direct == vpn ||
+          (selective && vpn != _routingText(route['final'])))) ||
+      (!policy.vpnAvailable && (!selective || _routingText(route['final']) != direct))) {
     throw const RoutingCatalogFailure('catalog_native_targets_invalid');
   }
   final inbounds = _routingListOfMaps(config['inbounds']);
@@ -925,11 +927,12 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     directDns = 'pokrov-catalog-user-dns-direct';
     servers.removeWhere((server) => server['tag'] == vpnDns || server['tag'] == directDns);
     servers.addAll([
-      {'tag': vpnDns, 'address': dnsAddress, 'address_resolver': 'dns-local', 'detour': vpn},
+      if (policy.vpnAvailable)
+        {'tag': vpnDns, 'address': dnsAddress, 'address_resolver': 'dns-local', 'detour': vpn},
       {'tag': directDns, 'address': dnsAddress, 'address_resolver': 'dns-local', 'detour': direct},
     ]);
   }
-  for (final (tag, target) in [(vpnDns, vpn), (directDns, direct)]) {
+  for (final (tag, target) in [if (policy.vpnAvailable) (vpnDns, vpn), (directDns, direct)]) {
     final resolver = servers.where((server) => server['tag'] == tag).firstOrNull;
     if (resolver == null || resolver['detour'] != target) {
       throw const RoutingCatalogFailure('catalog_dns_lane_invalid');
@@ -978,16 +981,20 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   for (final override in preferences.overrides) {
     final isDirect = override.action == PokrovRouteAction.direct;
     final match = override.matchType == PokrovRouteMatchType.domain ? 'domain_suffix' : 'ip_cidr';
-    manual.add({match: [override.value], 'outbound': isDirect ? direct : vpn});
+    manual.add({match: [override.value],
+      if (isDirect || policy.vpnAvailable) 'outbound': isDirect ? direct : vpn else 'action': 'reject'});
     if (override.matchType == PokrovRouteMatchType.domain) {
-      manualDns.add({match: [override.value], 'server': isDirect ? directDns : vpnDns});
+      manualDns.add({match: [override.value],
+        if (isDirect || policy.vpnAvailable) 'server': isDirect ? directDns : vpnDns else 'action': 'reject'});
     }
   }
   for (final purpose in PokrovPurposeRoute.values) {
     if (!preferences.purposeRoutes.contains(purpose)) continue;
     final isDirect = purpose == PokrovPurposeRoute.ruDirect;
-    manual.add({'domain_suffix': _purposeDomains[purpose], 'outbound': isDirect ? direct : vpn});
-    manualDns.add({'domain_suffix': _purposeDomains[purpose], 'server': isDirect ? directDns : vpnDns});
+    manual.add({'domain_suffix': _purposeDomains[purpose],
+      if (isDirect || policy.vpnAvailable) 'outbound': isDirect ? direct : vpn else 'action': 'reject'});
+    manualDns.add({'domain_suffix': _purposeDomains[purpose],
+      if (isDirect || policy.vpnAvailable) 'server': isDirect ? directDns : vpnDns else 'action': 'reject'});
   }
   // Native health must exercise this exact protected target even when the
   // remainder defaults to Direct. Keep the owned HTTPS probe before user and
@@ -1004,7 +1011,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
       probeRoute,
       ...appScopeRules,
     ],
-    ...safety, if (selective) probeRoute,
+    ...safety, if (selective && policy.vpnAvailable) probeRoute,
     if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'outbound': direct},
     {'ip_is_private': true, 'action': 'reject'},
     ...manual, ...layer.routeRules, ...remaining,
@@ -1037,7 +1044,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   dns['rules'] = [
     ...dnsSafety,
     if (bootstrapDomains.isNotEmpty) {'domain': bootstrapDomains, 'server': directDns},
-    if (selective) {
+    if (selective && policy.vpnAvailable) {
       'domain': ['api.pokrov.space'], 'action': 'route', 'server': vpnDns,
       'disable_cache': true, 'rewrite_ttl': 0,
     },

@@ -45,7 +45,7 @@ extension _TransportShellOperations on ConnectionManager {
   }
 
   Future<RuntimeSnapshot> _connectWithTransportManifest(RuntimeSnapshot runtime,
-      int generation) async {
+      int generation, {bool smartAccessVpnFallback = false}) async {
     final service = _bootstrapper;
     final engine = _runtimeEngine;
     _setPhase(ConnectionPhase.probing, generation);
@@ -158,7 +158,8 @@ extension _TransportShellOperations on ConnectionManager {
             accessState: accessState, vpnAvailable: true, now: observed.latest,
             selectedServiceIds: selectedServices);
           catalogPolicy = baseline;
-            if (const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(catalogMode) && !catalog.usingCache &&
+            if (!smartAccessVpnFallback &&
+                const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(catalogMode) && !catalog.usingCache &&
                runtime.smartAccessLeaseVersion == 1 && service is AppFirstSmartAccessService &&
                (service as AppFirstSmartAccessService).smartAccessEnabled) {
             final wanted = verified.services.where((item) =>
@@ -358,6 +359,10 @@ extension _TransportShellOperations on ConnectionManager {
                     native.coreEgressValidated == true) {
                   _lastHealthyTransportPath = pathKey(binding.capabilityRef,
                     profileRef, hint.endpointRef, family);
+                  final digest = native.effectiveProfileDigest ?? native.stagedProfileDigest;
+                  if (smartAccessVpnFallback && catalogPolicy != null && digest != null) {
+                    _smartAccessRouteProfile = (policy: catalogPolicy, digest: digest);
+                  }
                   return native;
                 }
                 _transportSelectionFail('transport_protection_unconfirmed');

@@ -1922,6 +1922,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             when (probeResult) {
                 AndroidCoreEgressProbeResult.HEALTHY -> AndroidOperationalOutcome.VERIFIED
                 AndroidCoreEgressProbeResult.FAILED,
+                AndroidCoreEgressProbeResult.DNS_FAILED,
                 AndroidCoreEgressProbeResult.CONNECT_FAILED,
                 AndroidCoreEgressProbeResult.TLS_FAILED,
                 -> AndroidOperationalOutcome.FAILED

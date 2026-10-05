@@ -1,6 +1,7 @@
 package space.pokrov.pokrov_android_shell
 
 import org.json.JSONObject
+import org.json.JSONArray
 import space.pokrov.core.libbox.CommandClientHandler
 import space.pokrov.core.libbox.CommandClientOptions
 import space.pokrov.core.libbox.ConnectionEvents
@@ -14,20 +15,23 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.lang.reflect.InvocationTargetException
+import java.net.URI
 
 internal enum class AndroidCoreEgressProbeResult {
     HEALTHY,
     FAILED,
+    DNS_FAILED,
     CONNECT_FAILED,
     TLS_FAILED,
     UNAVAILABLE,
     TIMED_OUT;
 
     val isCompletedFailure: Boolean
-        get() = this == FAILED || this == CONNECT_FAILED || this == TLS_FAILED
+        get() = this == FAILED || this == DNS_FAILED || this == CONNECT_FAILED || this == TLS_FAILED
 
     fun failureKind(periodic: Boolean = false): String = when (this) {
         FAILED -> "core_egress_probe_failed"
+        DNS_FAILED -> "core_egress_dns_failed"
         CONNECT_FAILED -> "core_egress_connect_failed"
         TLS_FAILED -> "core_egress_tls_failed"
         TIMED_OUT -> if (periodic) "core_egress_timeout" else "core_egress_probe_unavailable"
@@ -118,6 +122,7 @@ internal object AndroidCoreEgressRetryPolicy {
 internal enum class AndroidCoreEgressProbeTargetKind {
     GROUP,
     ENDPOINT,
+    SMART_ACCESS,
 }
 
 internal data class AndroidCoreEgressProbeTarget(
@@ -149,6 +154,7 @@ internal object AndroidCoreEgressProbe {
     fun finalTarget(configContent: String): AndroidCoreEgressProbeTarget? {
         return runCatching {
             val config = JSONObject(configContent)
+            smartAccessTarget(config)?.let { return@runCatching it }
             val tag = protectedTargetTag(config) ?: return@runCatching null
             val outbounds = config.optJSONArray("outbounds") ?: return@runCatching null
             val outboundTypes = mutableMapOf<String, String>()
@@ -194,6 +200,8 @@ internal object AndroidCoreEgressProbe {
         }
         if (!finalIsDirect) return finalTag
 
+        smartAccessTarget(config)?.let { return it.tag }
+
         // Selective has a Direct default. Bind both startup and Core proof to
         // the exact owned HTTPS rule emitted by the catalog assembler, never
         // to an arbitrary unused VPN group. This survives _meta stripping.
@@ -223,6 +231,100 @@ internal object AndroidCoreEgressProbe {
         val resolver = (0 until servers.length()).mapNotNull { servers.optJSONObject(it) }
             .filter { it.optString("tag") == dnsTag }.singleOrNull() ?: return null
         return target.takeIf { resolver.optString("detour") == target }
+    }
+
+    private fun smartAccessTarget(config: JSONObject): AndroidCoreEgressProbeTarget? {
+        fun rows(array: JSONArray?): List<Map<String, Any?>> =
+            (0 until (array?.length() ?: 0)).mapNotNull { array?.optJSONObject(it) }
+                .map(::smartAccessFields)
+        val route = config.optJSONObject("route") ?: return null
+        val dns = config.optJSONObject("dns") ?: return null
+        return resolveSmartAccessTarget(route.optString("final"),
+            rows(config.optJSONArray("outbounds")), rows(route.optJSONArray("rules")),
+            rows(dns.optJSONArray("rules")), rows(dns.optJSONArray("servers")))
+    }
+
+    // Project only the existing native rule/lease shapes. Matching stays pure
+    // so the same graph binding is exercised without Android's JSON stubs.
+    private fun smartAccessFields(row: JSONObject): Map<String, Any?> =
+        row.keys().asSequence().associateWith { key ->
+            when (val value = row.opt(key)) {
+                is JSONArray -> (0 until value.length()).map { index ->
+                    val item = value.opt(index)
+                    if (key == "domains" && item is JSONObject) smartAccessFields(item) else item
+                }
+                is JSONObject -> if (key == "pokrov_catalog_window" || key == "tls") smartAccessFields(value) else value
+                else -> value
+            }
+        }
+
+    internal fun resolveSmartAccessTarget(
+        finalTag: String, outbounds: List<Map<String, Any?>>, routeRules: List<Map<String, Any?>>,
+        dnsRules: List<Map<String, Any?>>, dnsServers: List<Map<String, Any?>>,
+    ): AndroidCoreEgressProbeTarget? {
+        // The established owned VPN proof keeps precedence, including a
+        // malformed partial boundary: it must not become a Smart proof.
+        if ((routeRules + dnsRules).any { rule ->
+                listOf("domain", "domain_suffix").any { key ->
+                    (rule[key] as? List<*>)?.contains("api.pokrov.space") == true
+                }
+            }) return null
+        val direct = outbounds.singleOrNull { it["tag"] == finalTag } ?: return null
+        if (!isSafeTag(finalTag) || direct["type"] != "direct" ||
+            (direct["detour"] as? String).orEmpty().isNotEmpty()) return null
+        for (rule in routeRules) {
+            val domainKey = if (rule.containsKey("domain")) "domain" else "domain_suffix"
+            if (rule.keys != setOf(domainKey, "network", "port", "ip_version", "pokrov_catalog_window", "action", "outbound") ||
+                rule["network"] != "tcp" || rule["port"] != listOf(443) || rule["ip_version"] != 4 ||
+                rule["action"] != "route") continue
+            val names = rule[domainKey] as? List<*> ?: continue
+            val domain = names.singleOrNull() as? String ?: continue
+            val window = rule["pokrov_catalog_window"] as? Map<*, *> ?: continue
+            if (window.keys != setOf("issued_at", "expires_at", "lease_id", "lease_group", "service_id")) continue
+            val lease = window["lease_id"] as? String ?: continue
+            val group = window["lease_group"] as? List<*> ?: continue
+            if (!lease.matches(Regex("[a-f0-9]{32}")) || group.firstOrNull() != lease ||
+                group.size !in 1..16 || group.toSet().size != group.size ||
+                group.any { it !is String || !it.matches(Regex("[a-f0-9]{32}")) } ||
+                (window["service_id"] as? String).isNullOrBlank() ||
+                (window["issued_at"] as? String).isNullOrBlank() ||
+                (window["expires_at"] as? String).isNullOrBlank()) continue
+            val tag = "pokrov-smart-access-$lease"
+            if (rule["outbound"] != tag) continue
+            val outbound = outbounds.singleOrNull { it["tag"] == tag } ?: continue
+            val domains = outbound["domains"] as? List<*> ?: continue
+            if (outbound["type"] != "pokrov-smart-access" || outbound["lease_id"] != lease ||
+                (outbound["relay_addresses"] as? List<*>).isNullOrEmpty() ||
+                !domains.contains(mapOf("name" to domain,
+                    "match" to if (domainKey == "domain") "exact" else "suffix"))) continue
+            val dnsTag = "pokrov-smart-access-dns-$lease"
+            val matchingDns = dnsRules.any { dnsRule ->
+                dnsRule.keys == setOf(domainKey, "query_type", "pokrov_catalog_window", "action", "server", "disable_cache", "rewrite_ttl") &&
+                    dnsRule[domainKey] == names && dnsRule["query_type"] == listOf("A") &&
+                    dnsRule["pokrov_catalog_window"] == window && dnsRule["action"] == "route" &&
+                    dnsRule["server"] == dnsTag && dnsRule["disable_cache"] == true && dnsRule["rewrite_ttl"] == 0
+            }
+            val resolver = dnsServers.singleOrNull { it["tag"] == dnsTag } ?: continue
+            if (!matchingDns || !isDirectSmartAccessDoh(resolver, finalTag)) continue
+            return AndroidCoreEgressProbeTarget(tag, AndroidCoreEgressProbeTargetKind.SMART_ACCESS)
+        }
+        return null
+    }
+
+    private fun isDirectSmartAccessDoh(server: Map<String, Any?>, directTag: String): Boolean {
+        val detour = (server["detour"] as? String).orEmpty()
+        if (detour.isNotEmpty() && detour != directTag) return false
+        if ((server["tls"] as? Map<*, *>)?.get("insecure") == true) return false
+        if (server["type"] == "https") {
+            return !(server["server"] as? String).isNullOrBlank() &&
+                (server["server_port"] == null || server["server_port"] == 443) &&
+                (server["path"] == null || server["path"] == "" || server["path"] == "/dns-query")
+        }
+        if (server["type"] != null && server["type"] != "legacy") return false
+        val uri = try { URI(server["address"] as? String ?: return false) } catch (_: Exception) { return false }
+        return detour == directTag && uri.scheme == "https" && !uri.host.isNullOrBlank() &&
+            uri.port in listOf(-1, 443) && uri.path == "/dns-query" &&
+            uri.rawUserInfo == null && uri.rawQuery == null && uri.rawFragment == null
     }
 
     private fun isOwnedProbeDomain(rule: JSONObject): Boolean =
@@ -352,6 +454,7 @@ internal object AndroidCoreEgressProbe {
                     AndroidCoreEgressProbeResult.UNAVAILABLE
                 }
                 "URL probe connection failed" -> AndroidCoreEgressProbeResult.CONNECT_FAILED
+                "URL probe DNS resolution failed" -> AndroidCoreEgressProbeResult.DNS_FAILED
                 "URL probe TLS negotiation failed" -> AndroidCoreEgressProbeResult.TLS_FAILED
                 "URL probe response failed", "URL probe failed" -> AndroidCoreEgressProbeResult.FAILED
                 else -> AndroidCoreEgressProbeResult.UNAVAILABLE
@@ -389,6 +492,7 @@ internal object AndroidCoreEgressProbe {
             "selected route probe target unavailable", "endpoint probe target unavailable",
             "endpoint probe target unsupported" -> "target_unavailable"
             "URL probe connection failed" -> "connect_failed"
+            "URL probe DNS resolution failed" -> "dns_failed"
             "URL probe TLS negotiation failed" -> "tls_failed"
             "URL probe response failed", "URL probe failed" -> "response_failed"
             else -> if (cause is ReflectiveOperationException || cause is LinkageError ||

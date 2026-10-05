@@ -3187,7 +3187,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         onSave: (data, selection) {
           if (!mounted || _runtimeBusy || !_selectiveServicesAvailable ||
               data.profileRevision != _managedProfileRevision ||
-              data.accessState != _freeProfileAccess?.accessState) return false;
+              data.accessState != _connectionManager._catalogSelectionAccessState) return false;
           PokrovHaptics.tap();
           _connectionManager.selectCatalogServices(selection);
           return true;

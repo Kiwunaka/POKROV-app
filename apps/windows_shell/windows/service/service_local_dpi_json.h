@@ -31,5 +31,8 @@ bool WindowsLocalDpiPreparationCurrent(const WindowsLocalDpiPreparation& value);
 std::optional<WindowsTelegramWSPreparation> ReadWindowsTelegramWSPreparation(
     const std::string& encoded);
 bool WindowsTelegramWSPreparationCurrent(const WindowsTelegramWSPreparation& value);
+// No value means the ordinary VPN verifier. An empty target is a local
+// SmartAccess intent without a valid bound anchor and must fail closed.
+std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& profile);
 }  // namespace pokrov::service
 #endif

@@ -168,6 +168,25 @@ rules; DNS-only leaves the unselected remainder direct. Grants and background
 renewals bind the original routing mode and cannot switch it. Public use still
 requires matching catalog/provider publication, client pins and live acceptance.
 
+With Smart Access enabled, selected services are prepared from a local TUN and
+Direct base before VPN candidate probes or Node profile admission. Fresh account
+access and verified catalog/provider grants bind the exact base profile; selected
+domains without a valid grant are blocked, while unselected traffic stays direct.
+Native egress proof remains required and must check the selected service's own
+DNS answer and verified TLS relay, rather than a direct API health request. This
+Android and Windows readiness proves only the captured current bound IPv4
+service group's transport, not all selected services or an AI application's features. This
+source path does not enable public admission or establish live service success.
+Only a completed service DNS/connect/TLS failure for that current bound profile
+can start ordinary VPN recovery for the same selected services. Recovery proves
+the VPN before protected replacement, keeps the remainder Direct and does not
+request new grants from the failed Smart provider; automatic recovery keeps the
+current VPN fallback policy and native digest until an explicit new connection
+or profile change. Enabled ATS stays signed and
+strict. Denial, invalid signatures, unavailable proof and timeout do not trigger
+this route change. Existing lifecycle cancellation and Core close/reload settle
+the old profile's workers before a new profile is admitted.
+
 These are publisher assertions, not a check performed by opening the sheet or
 evidence that the current gateway serves the function. The current automatic
 selection implementation remains `web_request/current-origin`; other scopes are

@@ -432,7 +432,6 @@ Map<String, Object?> smartAccessNativeDns(VerifiedSmartAccessLease grant, {
   return Map.unmodifiable({
     'tag': smartAccessDnsTag(grant), 'address': grant.lease['resolver_url'],
     'address_resolver': bootstrapDnsServer, 'detour': directOutbound,
-    'strategy': grant.lease['family'] == 'ipv4' ? 'ipv4_only' : 'ipv6_only',
   });
 }
 

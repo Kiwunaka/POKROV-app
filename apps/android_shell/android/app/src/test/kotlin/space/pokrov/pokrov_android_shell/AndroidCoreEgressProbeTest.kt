@@ -9,7 +9,11 @@ import space.pokrov.core.libbox.RuntimeProbeCancellation
 
 class AndroidCoreEgressProbeTest {
     class ReachableCore(var reachable: Boolean = true) {
-        fun probeSelectedOutbound(@Suppress("UNUSED_PARAMETER") tag: String): Boolean = reachable
+        var lastTag: String? = null
+        fun probeSelectedOutbound(tag: String): Boolean {
+            lastTag = tag
+            return reachable
+        }
     }
 
     @Test
@@ -257,9 +261,63 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
-    fun missingFinalGroupHasNoProbeTarget() {
+    fun directFinalRequiresBoundSmartServiceForProbe() {
         assertNull(AndroidCoreEgressProbe.finalGroupTag("{\"route\":{}}"))
         assertNull(AndroidCoreEgressProbe.finalGroupTag("{}"))
+        val lease = "0".repeat(32)
+        val tag = "pokrov-smart-access-$lease"
+        val dnsTag = "pokrov-smart-access-dns-$lease"
+        val window = mapOf("issued_at" to "2026-10-05T10:00:00Z",
+            "expires_at" to "2026-10-05T11:00:00Z", "service_id" to "owned-service",
+            "lease_id" to lease, "lease_group" to listOf(lease))
+        val outbounds = listOf(
+            mapOf("type" to "direct", "tag" to "direct"),
+            mapOf("type" to "pokrov-smart-access", "tag" to tag, "lease_id" to lease,
+                "domains" to listOf(mapOf("name" to "service.example", "match" to "exact")),
+                "relay_addresses" to listOf("203.0.113.1")),
+        )
+        val routeRule = mapOf("domain" to listOf("service.example"), "network" to "tcp",
+            "port" to listOf(443), "ip_version" to 4, "action" to "route",
+            "outbound" to tag, "pokrov_catalog_window" to window)
+        val dnsRule = mapOf("domain" to listOf("service.example"), "query_type" to listOf("A"),
+            "action" to "route", "server" to dnsTag, "disable_cache" to true,
+            "rewrite_ttl" to 0, "pokrov_catalog_window" to window)
+        // This is the typed HTTPS shape passed to Core after normalization.
+        val dnsServers = listOf(mapOf("tag" to dnsTag, "type" to "https", "server" to "resolver.example"))
+        val target = AndroidCoreEgressProbe.resolveSmartAccessTarget(
+            "direct", outbounds, listOf(routeRule), listOf(dnsRule), dnsServers)
+        assertEquals(AndroidCoreEgressProbeTarget(tag, AndroidCoreEgressProbeTargetKind.SMART_ACCESS), target)
+        val core = ReachableCore()
+        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.resultFromCore(core, target!!))
+        assertEquals("Probe the bound service, never Direct", tag, core.lastTag)
+        val vpnProbeRule = mapOf("domain" to listOf("api.pokrov.space"), "network" to "tcp",
+            "port" to listOf(443), "action" to "route", "outbound" to "vpn")
+        val vpnDnsRule = mapOf("domain" to listOf("api.pokrov.space"), "action" to "route",
+            "server" to "dns-vpn", "disable_cache" to true, "rewrite_ttl" to 0)
+        val mixedDns = dnsServers + mapOf("tag" to "dns-vpn", "detour" to "vpn")
+        assertNull("Existing owned VPN proof must keep precedence over Smart anchors",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds + mapOf("type" to "selector", "tag" to "vpn"),
+                listOf(routeRule, vpnProbeRule), listOf(dnsRule, vpnDnsRule), mixedDns))
+        assertEquals(AndroidCoreEgressProbeTarget("vpn", AndroidCoreEgressProbeTargetKind.GROUP),
+            AndroidCoreEgressProbe.resolveFinalTarget("vpn", mapOf("vpn" to "selector"), emptyMap()))
+        assertNull("A partial owned VPN boundary must not silently become Smart proof",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds,
+                listOf(routeRule, vpnProbeRule - "port"), listOf(dnsRule), dnsServers))
+        assertNull("An unused anchor cannot prove the selected service",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds, emptyList(), listOf(dnsRule), dnsServers))
+        assertNull("Plain Direct internet is not SmartAccess proof",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds.take(1), listOf(routeRule), listOf(dnsRule), dnsServers))
+        assertNull("Another DNS group must not authorize this route",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds, listOf(routeRule),
+                listOf(dnsRule + ("pokrov_catalog_window" to (window + ("service_id" to "other-service")))), dnsServers))
+        assertNull("An indirect resolver is not the compiled Direct DoH lane",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds, listOf(routeRule), listOf(dnsRule),
+                listOf(dnsServers.single() + ("detour" to "vpn"))))
+        assertEquals(AndroidCoreEgressProbeResult.DNS_FAILED,
+            AndroidCoreEgressProbe.resultFromCore(FailedResponseCore("URL probe DNS resolution failed"), target))
+        assertEquals("core_egress_dns_failed", AndroidCoreEgressProbeResult.DNS_FAILED.failureKind())
+        assertEquals("dns_failed" to "exception",
+            AndroidCoreEgressProbe.safeFailureDiagnostic(Exception("URL probe DNS resolution failed")))
     }
 
     @Test

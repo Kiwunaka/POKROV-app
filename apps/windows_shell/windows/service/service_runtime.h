@@ -59,6 +59,11 @@ class CoreRuntime {
   virtual int SmartAccessLeaseVersion() const { return 0; }
   virtual int RoutingCatalogControlVersion() const { return 0; }
   virtual int SmartAccessRuntimeControlVersion() const { return 0; }
+  virtual int SmartAccessProbeVersion() const { return 0; }
+  virtual std::string ProbeSmartAccess(const std::string& tag, bool periodic,
+                                      const CheckInterruption& interrupted) {
+    return "core_egress_probe_unavailable";
+  }
   // Native-only preparation/admission seam. API support is not an executor
   // capability or permission to admit; the host owns proof and currentness.
   virtual int WindowsLocalDpiAdmissionVersion() const { return 0; }
@@ -200,6 +205,7 @@ class RuntimeHost {
   std::string RecoverPendingRuntime();
   std::string RollbackRuntime();
   void RecordEvent(ServiceEvent event, ServiceEventOutcome outcome);
+  std::string VerifyEgress(bool periodic, const CheckInterruption& interrupted);
 
   std::unique_ptr<CoreRuntime> core_;
   std::unique_ptr<WindowsLocalDpiExecutor> local_dpi_executor_;

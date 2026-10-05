@@ -3423,6 +3423,38 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
+  ManagedProfilePayload buildLocalSmartAccessBase({required HostPlatform hostPlatform}) {
+    if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
+      throw const RoutingCatalogFailure('catalog_host_unsupported');
+    }
+    const mode = RouteMode.selectiveServices;
+    final outbounds = <Map<String, dynamic>>[{'type': 'direct', 'tag': 'direct'}];
+    final dns = hostPlatform == HostPlatform.android
+        ? _buildAndroidDnsBlock(baseDns: const {}, outbounds: outbounds,
+            directTag: 'direct', finalOutboundTag: 'direct', routeMode: mode,
+            clientRuleSetCatalog: _ClientRuleSetCatalog.empty)
+        : _buildDnsBlock(baseDns: const {}, outbounds: outbounds,
+            directTag: 'direct', finalOutboundTag: 'direct', hostPlatform: hostPlatform,
+            routeMode: mode, selectedApps: const [], clientRuleSetCatalog: _ClientRuleSetCatalog.empty);
+    dns['servers'] = _readListOfMaps(dns['servers'])
+        .where((server) => _readText(server['tag']) != 'dns-remote').toList();
+    dns['final'] = 'dns-direct';
+    final route = hostPlatform == HostPlatform.android
+        ? _buildAndroidRouteBlock(baseRoute: const {}, directTag: 'direct',
+            legacyDnsOutboundTags: const {}, finalOutboundTag: 'direct', routeMode: mode,
+            clientRuleSetCatalog: _ClientRuleSetCatalog.empty)
+        : _buildRouteBlock(baseRoute: const {}, directTag: 'direct', dnsOutboundTag: null,
+            finalOutboundTag: 'direct', hostPlatform: hostPlatform, routeMode: mode,
+            selectedApps: const [], clientRuleSetCatalog: _ClientRuleSetCatalog.empty);
+    return ManagedProfilePayload(profileName: 'pokrov-smart-dns',
+      configPayload: jsonEncode({
+        'log': _buildLogBlock(null), 'dns': dns,
+        'inbounds': _buildInbounds(hostPlatform: hostPlatform, routeMode: mode,
+            selectedApps: const [], supportContext: const {}),
+        'outbounds': outbounds, 'route': route,
+      }), materializedForRuntime: true, routeMode: mode, quickSettingsEligible: false);
+  }
+
   @override
   Future<ManagedProfilePayload> resolveManagedProfile({
     required HostPlatform hostPlatform,

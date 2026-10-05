@@ -14,6 +14,7 @@ namespace pokrov::service {
 bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
 bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor);
 bool CoreDescriptorHasTelegramWS(const std::string& descriptor);
+bool CoreDescriptorHasSmartAccessProbe(const std::string& descriptor);
 }
 
 namespace {
@@ -74,6 +75,13 @@ void TestReleasedCoreDescriptorCompatibility() {
       "\"local_dpi_admission_version\":2,");
   Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(unknown),
          "unknown admission version bypassed the closed runtime descriptor");
+  const std::string probe_field = "\"smart_access_probe_version\":1,";
+  auto smart_next(core122);
+  smart_next.insert(smart_next.find("\"local_dpi_admission_version\""), probe_field);
+  Expect(pokrov::service::CoreDescriptorHasRuntimeControl(smart_next) &&
+         pokrov::service::CoreDescriptorHasSmartAccessProbe(smart_next) &&
+         !pokrov::service::CoreDescriptorHasSmartAccessProbe(core122),
+         "optional Smart probe metadata changed ordinary Core compatibility");
 }
 
 void TestWindowsTelegramMetadataComposition() {
@@ -151,6 +159,16 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
     return stop_error;
   }
 
+  int SmartAccessProbeVersion() const override { return smart_probe_version; }
+  std::string ProbeSmartAccess(const std::string& tag, bool periodic,
+      const pokrov::service::CheckInterruption& interrupted) override {
+    ++smart_probe_calls;
+    smart_probe_tag = tag;
+    smart_probe_periodic = periodic;
+    if (interrupted && interrupted() != pokrov::service::OperationInterruption::kNone) return "core_egress_probe_unavailable";
+    return smart_probe_error;
+  }
+
   int initialize_calls = 0;
   int secure_calls = 0;
   int start_calls = 0;
@@ -163,6 +181,11 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
   std::string start_error;
   std::string stop_error;
   std::function<void()> on_start;
+  int smart_probe_version = 0;
+  int smart_probe_calls = 0;
+  std::string smart_probe_tag;
+  bool smart_probe_periodic = false;
+  std::string smart_probe_error;
 };
 
 class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
@@ -714,6 +737,66 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   Expect(Contains(observed, "failure=core_egress_response_timeout") &&
              Contains(observed, "core_egress_validated=0;dns_ready=0"),
          "service discarded the observed egress failure after rollback");
+  const std::string smart_profile = R"({"inbounds":[{"type":"tun"}],"outbounds":[
+    {"type":"direct","tag":"direct"},
+    {"type":"pokrov-smart-access","tag":"pokrov-smart-access-00000000000000000000000000000000","lease_id":"00000000000000000000000000000000",
+     "domains":[{"name":"service.example","match":"exact"}],"relay_addresses":["203.0.113.1"]}],
+    "route":{"final":"direct","rules":[{"domain":["service.example"],"network":"tcp","port":[443],"ip_version":4,"action":"route",
+     "outbound":"pokrov-smart-access-00000000000000000000000000000000","pokrov_catalog_window":{
+       "issued_at":"2026-10-05T10:00:00Z","expires_at":"2099-01-01T00:00:00Z","service_id":"owned-service",
+       "lease_id":"00000000000000000000000000000000","lease_group":["00000000000000000000000000000000"]}}]},
+    "dns":{"servers":[{"tag":"pokrov-smart-access-dns-00000000000000000000000000000000","address":"https://resolver.example/dns-query","detour":"direct"}],
+     "rules":[{"domain":["service.example"],"query_type":["A"],"action":"route","server":"pokrov-smart-access-dns-00000000000000000000000000000000",
+      "disable_cache":true,"rewrite_ttl":0,"pokrov_catalog_window":{
+       "issued_at":"2026-10-05T10:00:00Z","expires_at":"2099-01-01T00:00:00Z","service_id":"owned-service",
+       "lease_id":"00000000000000000000000000000000","lease_group":["00000000000000000000000000000000"]}}]}})";
+  const auto smart_target = ReadWindowsSmartAccessProbeTarget(smart_profile);
+  Expect(smart_target && *smart_target == "pokrov-smart-access-00000000000000000000000000000000",
+         "bound service graph did not select its Smart anchor");
+  auto smart_core = std::make_unique<FakeCoreRuntime>();
+  auto* selected_core = smart_core.get();
+  selected_core->smart_probe_version = 1;
+  auto smart_api = std::make_unique<FakeEgressProbe>();
+  auto* unrelated_api = smart_api.get();
+  RuntimeHost smart(std::move(smart_core), std::move(smart_api), std::make_unique<FakeRecovery>(), root, false);
+  smart.Initialize(); smart.StageProfile("0\n" + smart_profile);
+  const auto smart_connected = smart.Connect(StagedDigest(smart));
+  Expect(smart_connected.status == Status::kOk && Contains(smart_connected, "core_egress_validated=1") &&
+         selected_core->smart_probe_calls == 1 && !selected_core->smart_probe_periodic &&
+         selected_core->smart_probe_tag == "pokrov-smart-access-00000000000000000000000000000000" && unrelated_api->verify_calls == 0,
+         "local Smart readiness used Direct API health instead of its captured service");
+  selected_core->smart_probe_error = "core_egress_tls_failed";
+  const auto smart_failed = smart.RecheckEgress({});
+  Expect(Contains(smart_failed, "core_egress_validated=0") && Contains(smart_failed, "failure=core_egress_tls_failed") &&
+         selected_core->smart_probe_calls == 2 && selected_core->smart_probe_periodic && unrelated_api->verify_calls == 0,
+         "periodic Smart failure fell back to healthy Direct API egress");
+  smart.Disconnect();
+  auto old_core = std::make_unique<FakeCoreRuntime>();
+  auto old_api = std::make_unique<FakeEgressProbe>();
+  auto* old_api_calls = old_api.get();
+  RuntimeHost old(std::move(old_core), std::move(old_api), std::make_unique<FakeRecovery>(), root, false);
+  old.Initialize(); old.StageProfile("0\n" + smart_profile);
+  const auto unsupported = old.Connect(StagedDigest(old));
+  Expect(Contains(unsupported, "failure=core_egress_probe_unavailable") &&
+         Contains(unsupported, "core_egress_validated=0") && old_api_calls->verify_calls == 0,
+         "old Core proved local Smart readiness through Direct API health");
+  auto unused = smart_profile;
+  const auto route_domain = unused.find("\"domain\":[\"service.example\"]");
+  unused.replace(route_domain, std::string("\"domain\":[\"service.example\"]").size(), "\"domain\":[\"other.example\"]");
+  const auto unused_target = ReadWindowsSmartAccessProbeTarget(unused);
+  Expect(unused_target && unused_target->empty(), "an unused anchor became Smart proof");
+  auto mixed = smart_profile;
+  mixed.insert(mixed.find("\"outbounds\":[") + std::string("\"outbounds\":[").size(), "{\"type\":\"vless\",\"tag\":\"vpn\"},");
+  mixed.insert(mixed.find("\"rules\":[") + std::string("\"rules\":[").size(),
+      "{\"domain\":[\"api.pokrov.space\"],\"network\":\"tcp\",\"port\":[443],\"action\":\"route\",\"outbound\":\"vpn\"},");
+  const auto dns_start = mixed.find("\"dns\":");
+  mixed.insert(mixed.find("\"servers\":[", dns_start) + std::string("\"servers\":[").size(), "{\"tag\":\"dns-vpn\",\"detour\":\"vpn\"},");
+  mixed.insert(mixed.find("\"rules\":[", dns_start) + std::string("\"rules\":[").size(),
+      "{\"domain\":[\"api.pokrov.space\"],\"action\":\"route\",\"server\":\"dns-vpn\",\"disable_cache\":true,\"rewrite_ttl\":0},");
+  Expect(!ReadWindowsSmartAccessProbeTarget(mixed), "normal selective VPN proof lost precedence to Smart");
+  mixed.replace(mixed.find("\"port\":[443]"), std::string("\"port\":[443]").size(), "\"port\":[80]");
+  const auto invalid_boundary = ReadWindowsSmartAccessProbeTarget(mixed);
+  Expect(invalid_boundary && invalid_boundary->empty(), "partial owned VPN boundary silently became Smart proof");
   RemoveTestRoot(root);
 }
 
