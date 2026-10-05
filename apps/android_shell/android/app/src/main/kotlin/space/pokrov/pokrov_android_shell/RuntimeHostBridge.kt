@@ -149,7 +149,28 @@ class RuntimeHostBridge(
                 else result.success(mapOf("schema" to 1, "network_context_ref" to reference))
             }
             "runtimeEngine.snapshotForConnectRequest" -> snapshotForConnectRequest(call, result)
-            METHOD_INITIALIZE -> result.success(initialize())
+            METHOD_INITIALIZE -> {
+                val accepted = AndroidRuntimeDispatchPolicy.initialize(
+                    scope = hostTaskScope,
+                    postToOwner = { callback -> activity.runOnUiThread(callback) },
+                    task = ::initialize,
+                    complete = { outcome ->
+                        outcome.fold(
+                            onSuccess = { result.success(it) },
+                            onFailure = {
+                                result.error(
+                                    "runtime_initialization_failed",
+                                    AndroidRuntimeSafety.publicFailureMessage("runtime_initialization_failed"),
+                                    null,
+                                )
+                            },
+                        )
+                    },
+                )
+                if (!accepted) {
+                    result.error("unavailable", "Runtime owner is closed.", null)
+                }
+            }
             METHOD_STAGE_MANAGED_PROFILE -> result.success(stageManagedProfile(call))
             "runtimeEngine.replaceManagedProfile" -> replaceManagedProfile(call, result)
             METHOD_INVALIDATE_MANAGED_PROFILE -> result.success(invalidateManagedProfile())

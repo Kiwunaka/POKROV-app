@@ -7,6 +7,12 @@ for Windows, Android and the conditional Linux beta lane. It defines intended
 architecture. Release readiness still depends on current code, tests and exact
 candidate evidence in the platform-specific operation documents.
 
+Android Core initialization runs in the existing host lifecycle worker rather
+than on the platform UI thread. The callback publishes only while that lifecycle
+is active. Returned initialization-failure snapshots retain their state;
+unexpected outer failures return a closed error rather than a success fallback.
+The existing 18-second Dart action deadline remains unchanged.
+
 The diagnostics screen shows the version returned by the Core loaded by the
 native host after initialization. Android reads `Mobile.coreVersion()` from the
 loaded AAR; Windows reads `pokrovCoreVersion()` inside the service and carries
