@@ -1534,25 +1534,58 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     return Fail(Status::kNotReady, "core_start_failed");
   }
   if (const auto result = interruption(true)) return *result;
+  std::optional<WindowsLocalDpiStrategy> proved_local_dpi_strategy;
+  const auto local_dpi_owner_current = [&] {
+    return local_dpi_preparation_ &&
+        (!interrupted || interrupted() == OperationInterruption::kNone) &&
+        staged_profile_digest_ == local_dpi_profile_digest_ &&
+        core_->CoreModuleSHA256() == local_dpi_core_digest_ &&
+        WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_);
+  };
+  const auto local_dpi_current = [&] {
+    return local_dpi_owner_current() && local_dpi_executor_->Alive();
+  };
   if (local_dpi_preparation_) {
-    const auto current = [&] {
-      return (!interrupted || interrupted() == OperationInterruption::kNone) &&
-          staged_profile_digest_ == local_dpi_profile_digest_ &&
-          core_->CoreModuleSHA256() == local_dpi_core_digest_ &&
-          WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_) &&
-          local_dpi_executor_->Alive();
-    };
-    bool proved = local_dpi_executor_->StartPrepared(local_dpi_preparation_->services,
-        local_dpi_network->bind_interface, WindowsLocalDpiStrategy::kMultisplit568).empty();
-    for (const auto& service : local_dpi_preparation_->services) {
-      if (!proved || !current() ||
-          !VerifyWindowsLocalDpiControlHost(service.control_host,
-              local_dpi_network->bind_interface, interrupted).empty() || !current() ||
-          !local_dpi_executor_->AdmitCaptured(service.outbound_tag, current)) {
-        proved = false;
-        break;
+    std::array<WindowsLocalDpiStrategy, 2> strategies{
+        WindowsLocalDpiStrategy::kMultisplit568, WindowsLocalDpiStrategy::kMultisplit681};
+    if (local_dpi_success_strategy_ &&
+        local_dpi_success_strategy_->first == local_dpi_network->selection_key &&
+        local_dpi_success_strategy_->second == strategies[1]) {
+      std::swap(strategies[0], strategies[1]);
+    }
+    bool proved = false;
+    WindowsLocalDpiStrategy successful_strategy = strategies[0];
+    for (std::size_t attempt = 0; attempt < strategies.size(); ++attempt) {
+      if (!local_dpi_owner_current()) break;
+      const auto dpi_start_error = attempt == 0
+          ? local_dpi_executor_->StartPrepared(local_dpi_preparation_->services,
+                local_dpi_network->bind_interface, strategies[attempt])
+          : local_dpi_executor_->RetryPrepared(local_dpi_preparation_->services,
+                local_dpi_network->bind_interface, strategies[attempt]);
+      if (!dpi_start_error.empty()) break;
+      proved = true;
+      for (const auto& service : local_dpi_preparation_->services) {
+        if (!local_dpi_current() ||
+            !VerifyWindowsLocalDpiControlHost(service.control_host,
+                local_dpi_network->bind_interface, interrupted).empty() || !local_dpi_current()) {
+          proved = false;
+          break;
+        }
+      }
+      if (proved) { successful_strategy = strategies[attempt]; break; }
+    }
+    // Both trials retain unpublished holders. Publish only after every proof
+    // succeeds; admission failure must never reopen a terminal holder.
+    if (proved) {
+      for (const auto& service : local_dpi_preparation_->services) {
+        if (!local_dpi_current() ||
+            !local_dpi_executor_->AdmitCaptured(service.outbound_tag, local_dpi_current)) {
+          proved = false;
+          break;
+        }
       }
     }
+    if (proved) proved_local_dpi_strategy = successful_strategy;
     if (!proved && !local_dpi_executor_->Stop()) {
       const auto rollback_error = RollbackRuntime();
       phase_ = rollback_error.empty() ? Phase::kConfigStaged : Phase::kRecoveryRequired;
@@ -1684,6 +1717,9 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
       !transition_guard_->Finish().empty()) {
     core_egress_validated_ = false;
     return Fail(Status::kNotReady, "transition_guard_failed");
+  }
+  if (proved_local_dpi_strategy && local_dpi_network && local_dpi_current()) {
+    local_dpi_success_strategy_ = std::make_pair(local_dpi_network->selection_key, *proved_local_dpi_strategy);
   }
   return Snapshot();
 }

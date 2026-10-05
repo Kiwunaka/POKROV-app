@@ -274,11 +274,19 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   owner. Public catalog pins/audience are compiled from the existing release
   trust defines, never supplied through IPC. Capability remains zero unless
   those pins, the actual five Core symbols, immutable administrator-owned
-  `local-dpi` assets and an already installed WinDivert 2.2 driver are present.
-  Optional packaging copies only the six approved assets and `NOTICES.txt`;
-  it downloads nothing and installs no driver. The private Core-prepared plan
+  `local-dpi` assets and the WinDivert API exports are present. Capability
+  discovery opens no driver. Packaging requires the six approved assets and
+  `NOTICES.txt` and downloads nothing. After explicit opt-in and Core-prepared
+  scope/holder validation, the service opens the packaged WinDivert driver,
+  allowing its ordinary first-use installation, and verifies version 2.2.
+  Failure leaves VPN fallback. The private Core-prepared plan
   starts one suspended, Job-owned TCP/443 multisplit child on the captured
-  physical interface. Physical IPv4 DNS/TCP and Schannel certificate/hostname
+  physical interface. Before any admission, one retry with the other fixed
+  strategy may replace only this child, retaining unchanged scope, interface,
+  holder IDs and driver assets; cleanup failure forbids retry. A successful
+  strategy is remembered for the same network only after current admission
+  and the runtime commit. Physical IPv4
+  DNS/TCP and Schannel certificate/hostname
   validation plus HEAD 2xx prove each exact signed control host before fresh-ID
   admission; IPv6-only proof is unavailable and leaves the VPN fallback.
   The existing dispatcher fences profile/Core/operation/network/TTL and child

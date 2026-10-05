@@ -29,7 +29,7 @@ enum class WindowsLocalDpiStrategy { kMultisplit568, kMultisplit681 };
 std::string WindowsLocalDpiHostList(const std::vector<WindowsLocalDpiService>& services);
 
 // Service-owned child and captured native holders. The RuntimeHost supplies
-// exact TLS proof/currentness; no IPC pins, driver installation or removal.
+// exact TLS proof/currentness; driver bootstrap is limited to StartPrepared.
 class WindowsLocalDpiExecutor final {
  public:
   explicit WindowsLocalDpiExecutor(CoreRuntime& core);
@@ -40,13 +40,19 @@ class WindowsLocalDpiExecutor final {
   std::string StartPrepared(const std::vector<WindowsLocalDpiService>& services,
                             const std::string& physical_bind_interface,
                             WindowsLocalDpiStrategy strategy);
+  // One other strategy before any admission; retain exact captures/assets.
+  std::string RetryPrepared(const std::vector<WindowsLocalDpiService>& services,
+                            const std::string& physical_bind_interface,
+                            WindowsLocalDpiStrategy strategy);
   bool Alive() const;
-  bool AssetsReady();  // Fixed trusted assets plus existing driver; no child.
+  bool AssetsReady();  // Fixed trusted assets and API exports; no driver or child.
   bool AdmitCaptured(const std::string& tag, const std::function<bool()>& current_after_proof);
   bool Stop();  // Confirm withdrawal before closing our Job/filter.
   void StopAfterCoreStopped();  // Only after the native owner confirmed Core Stop.
 
  private:
+  std::string StartChild(const std::string& hostlist, DWORD interface_index,
+                         WindowsLocalDpiStrategy strategy);
   struct State;
   CoreRuntime& core_;
   std::unique_ptr<State> state_;

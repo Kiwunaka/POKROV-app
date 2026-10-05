@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <utility>
@@ -16,6 +17,7 @@
 
 namespace pokrov::service {
 class WindowsLocalDpiExecutor;
+enum class WindowsLocalDpiStrategy;
 struct WindowsLocalDpiPreparation;
 struct WindowsTelegramWSPreparation;
 
@@ -204,6 +206,8 @@ class RuntimeHost {
   std::unique_ptr<WindowsLocalDpiPreparation> local_dpi_preparation_;
   std::string local_dpi_profile_digest_;
   std::string local_dpi_core_digest_;
+  // Ordering hint only; every new Core runtime still needs fresh holders/proof.
+  std::optional<std::pair<std::string, WindowsLocalDpiStrategy>> local_dpi_success_strategy_;
   std::string original_staged_config_;
   std::string staged_runtime_config_;
   bool local_dpi_requested_ = false;

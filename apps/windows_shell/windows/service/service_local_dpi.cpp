@@ -121,9 +121,17 @@ struct WindowsLocalDpiExecutor::State {
   HANDLE process = nullptr;
   HANDLE driver_guard = INVALID_HANDLE_VALUE;
   HMODULE driver_module = nullptr;
+  Open open_driver = nullptr;
   Close close_driver = nullptr;
+  GetParam get_driver_param = nullptr;
   std::vector<HANDLE> files;
   std::vector<std::pair<std::string, std::string>> holders;
+  std::vector<WindowsLocalDpiService> prepared_services;
+  std::string physical_bind_interface;
+  NET_IFINDEX interface_index = 0;
+  WindowsLocalDpiStrategy first_strategy = WindowsLocalDpiStrategy::kMultisplit568;
+  bool retry_attempted = false;
+  bool admission_attempted = false;
 };
 
 WindowsLocalDpiExecutor::WindowsLocalDpiExecutor(CoreRuntime& core)
@@ -151,7 +159,10 @@ std::string WindowsLocalDpiHostList(const std::vector<WindowsLocalDpiService>& s
 
 bool WindowsLocalDpiExecutor::AssetsReady() {
   if (core_.WindowsLocalDpiAdmissionVersion() != 1) return false;
-  if (state_->driver_guard != INVALID_HANDLE_VALUE) return true;
+  if (state_->driver_module != nullptr) {
+    return state_->open_driver != nullptr && state_->close_driver != nullptr &&
+        state_->get_driver_param != nullptr;
+  }
   const auto directory = AssetDirectory();
   if (directory.empty()) return false;
   const auto directory_handle = LockAsset(directory.substr(0, directory.size() - 1), true);
@@ -165,23 +176,15 @@ bool WindowsLocalDpiExecutor::AssetsReady() {
   }
   state_->driver_module = ::LoadLibraryExW((directory + L"WinDivert.dll").c_str(), nullptr,
       LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_SYSTEM32);
-  auto open = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::Open>(
+  state_->open_driver = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::Open>(
       ::GetProcAddress(state_->driver_module, "WinDivertOpen"));
   state_->close_driver = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::Close>(
       ::GetProcAddress(state_->driver_module, "WinDivertClose"));
-  auto get_param = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::GetParam>(
+  state_->get_driver_param = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::GetParam>(
       ::GetProcAddress(state_->driver_module, "WinDivertGetParam"));
-  if (open == nullptr || state_->close_driver == nullptr || get_param == nullptr) {
+  if (state_->open_driver == nullptr || state_->close_driver == nullptr || state_->get_driver_param == nullptr) {
     Stop(); return false;
   }
-  // Official WinDivert REFLECT(4), SNIFF|RECV_ONLY|NO_INSTALL. This guard
-  // cannot install a missing driver and retains the existing driver while the
-  // ordinary upstream child opens its NETWORK handle. Never read packet data.
-  state_->driver_guard = open("true", 4, 0, 0x0001 | 0x0004 | 0x0010);
-  std::uint64_t major = 0, minor = 0;
-  if (state_->driver_guard == INVALID_HANDLE_VALUE ||
-      !get_param(state_->driver_guard, 3, &major) || !get_param(state_->driver_guard, 4, &minor) ||
-      major != 2 || minor != 2) { Stop(); return false; }
   return true;
 }
 
@@ -204,13 +207,81 @@ std::string WindowsLocalDpiExecutor::StartPrepared(
       ::ConvertInterfaceAliasToLuid(wide_interface.c_str(), &luid) != NO_ERROR ||
       ::ConvertInterfaceLuidToIndex(&luid, &index) != NO_ERROR || index == 0) return "local_dpi_interface_unavailable";
 
-  const auto directory = AssetDirectory();
   if (!AssetsReady()) return "local_dpi_assets_unavailable";
   for (const auto& service : services) {
     const auto id = core_.ReadLocalDpiAdmissionID(service.outbound_tag);
     if (!IsHolderID(id)) { Stop(); return "local_dpi_holder_unavailable"; }
     state_->holders.emplace_back(service.outbound_tag, id);
   }
+  // Only this consented, Core-prepared path may install the packaged driver.
+  // Official REFLECT(4), SNIFF|RECV_ONLY retains it while our child opens its
+  // NETWORK handle. Capability discovery never opens a driver handle.
+  state_->driver_guard = state_->open_driver("true", 4, 0, 0x0001 | 0x0004);
+  std::uint64_t major = 0, minor = 0;
+  if (state_->driver_guard == INVALID_HANDLE_VALUE ||
+      !state_->get_driver_param(state_->driver_guard, 3, &major) ||
+      !state_->get_driver_param(state_->driver_guard, 4, &minor) ||
+      major != 2 || minor != 2) { Stop(); return "local_dpi_assets_unavailable"; }
+  state_->prepared_services = services;
+  state_->physical_bind_interface = physical_bind_interface;
+  state_->interface_index = index;
+  state_->first_strategy = strategy;
+  return StartChild(hostlist, index, strategy);
+}
+
+std::string WindowsLocalDpiExecutor::RetryPrepared(
+    const std::vector<WindowsLocalDpiService>& services,
+    const std::string& physical_bind_interface, WindowsLocalDpiStrategy strategy) {
+  if (state_->admission_attempted || state_->retry_attempted || state_->holders.empty() ||
+      state_->process == nullptr || state_->job == nullptr || state_->driver_guard == INVALID_HANDLE_VALUE ||
+      services.size() != state_->prepared_services.size() || services.size() != state_->holders.size() ||
+      physical_bind_interface != state_->physical_bind_interface || strategy == state_->first_strategy ||
+      (strategy != WindowsLocalDpiStrategy::kMultisplit568 && strategy != WindowsLocalDpiStrategy::kMultisplit681)) {
+    return "local_dpi_retry_unavailable";
+  }
+  for (std::size_t i = 0; i < services.size(); ++i) {
+    const auto& original = state_->prepared_services[i];
+    const auto& service = services[i];
+    if (service.service_id != original.service_id || service.outbound_tag != original.outbound_tag ||
+        service.control_host != original.control_host || service.domains.size() != original.domains.size() ||
+        core_.ReadLocalDpiAdmissionID(state_->holders[i].first) != state_->holders[i].second) {
+      return "local_dpi_retry_unavailable";
+    }
+    for (std::size_t j = 0; j < service.domains.size(); ++j) {
+      if (service.domains[j].name != original.domains[j].name ||
+          service.domains[j].exact != original.domains[j].exact ||
+          service.domains[j].shared != original.domains[j].shared) return "local_dpi_retry_unavailable";
+    }
+  }
+  state_->retry_attempted = true;
+  // Close only our Job and wait for its child; keep unpublished holders and
+  // the driver/assets. A cleanup failure forbids a replacement child.
+  if (state_->job != nullptr) {
+    if (!::CloseHandle(state_->job)) return "local_dpi_child_failed";
+    state_->job = nullptr;
+  }
+  if (state_->process != nullptr) {
+    if (::WaitForSingleObject(state_->process, 2000) != WAIT_OBJECT_0 ||
+        !::CloseHandle(state_->process)) return "local_dpi_child_failed";
+    state_->process = nullptr;
+  }
+  const auto wide_interface = WideUtf8(physical_bind_interface);
+  NET_LUID luid{};
+  NET_IFINDEX index = 0;
+  if (wide_interface.empty() ||
+      ::ConvertInterfaceAliasToLuid(wide_interface.c_str(), &luid) != NO_ERROR ||
+      ::ConvertInterfaceLuidToIndex(&luid, &index) != NO_ERROR || index != state_->interface_index) {
+    return "local_dpi_interface_unavailable";
+  }
+  for (const auto& holder : state_->holders) {
+    if (core_.ReadLocalDpiAdmissionID(holder.first) != holder.second) return "local_dpi_retry_unavailable";
+  }
+  return StartChild(WindowsLocalDpiHostList(services), index, strategy);
+}
+
+std::string WindowsLocalDpiExecutor::StartChild(
+    const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy) {
+  const auto directory = AssetDirectory();
   state_->job = ::CreateJobObjectW(nullptr, nullptr);
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
   limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | JOB_OBJECT_LIMIT_ACTIVE_PROCESS;
@@ -219,7 +290,7 @@ std::string WindowsLocalDpiExecutor::StartPrepared(
       &limits, sizeof(limits))) { Stop(); return "local_dpi_child_failed"; }
   const bool variant681 = strategy == WindowsLocalDpiStrategy::kMultisplit681;
   const auto pattern = directory + (variant681 ? L"tls_clienthello_www_google_com.bin" : L"tls_clienthello_4pda_to.bin");
-  std::wstring command = Quote(directory + L"winws.exe") + L" --wf-iface=" + std::to_wstring(index) +
+  std::wstring command = Quote(directory + L"winws.exe") + L" --wf-iface=" + std::to_wstring(interface_index) +
       L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=" +
       std::wstring(hostlist.begin(), hostlist.end()) +
       (variant681 ? L" --ip-id=zero" : L"") +
@@ -254,6 +325,7 @@ bool WindowsLocalDpiExecutor::AdmitCaptured(const std::string& tag,
     if (holder.first != tag) continue;
     if (!current_after_proof || !current_after_proof() || !Alive() ||
         core_.ReadLocalDpiAdmissionID(tag) != holder.second || !current_after_proof()) return false;
+    state_->admission_attempted = true;
     return core_.AdmitLocalDpiAdmission(holder.second) == 1 &&
         current_after_proof() && Alive() && core_.ReadLocalDpiAdmissionID(tag) == holder.second;
   }
@@ -273,6 +345,11 @@ bool WindowsLocalDpiExecutor::Stop() {
 
 void WindowsLocalDpiExecutor::StopAfterCoreStopped() {
   state_->holders.clear();
+  state_->prepared_services.clear();
+  state_->physical_bind_interface.clear();
+  state_->interface_index = 0;
+  state_->retry_attempted = false;
+  state_->admission_attempted = false;
   if (state_->job != nullptr) { ::CloseHandle(state_->job); state_->job = nullptr; }
   if (state_->process != nullptr) {
     ::WaitForSingleObject(state_->process, 2000);
@@ -284,7 +361,9 @@ void WindowsLocalDpiExecutor::StopAfterCoreStopped() {
     state_->driver_guard = INVALID_HANDLE_VALUE;
   }
   if (state_->driver_module != nullptr) { ::FreeLibrary(state_->driver_module); state_->driver_module = nullptr; }
+  state_->open_driver = nullptr;
   state_->close_driver = nullptr;
+  state_->get_driver_param = nullptr;
   for (const auto file : state_->files) ::CloseHandle(file);
   state_->files.clear();
 }
