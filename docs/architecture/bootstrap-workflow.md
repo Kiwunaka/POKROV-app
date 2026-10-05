@@ -1313,6 +1313,12 @@ Current blocking dependency:
   marker are closed typed events. A successful attempt cannot be emitted until
   the reducer has current interface, routes/uplink, DNS and selected-outbound
   egress proof.
+- An initial `Idle` observation during the owning connection action, including
+  Windows permission authorization, does not finish that attempt as cancelled.
+  Its generation retains only the latest deferred `Idle`; a later preparing or
+  connected observation replaces it. Action completion settles a remaining
+  `Idle`, while rollback keeps its existing cancellation behavior. A superseded
+  action cannot clear or settle the newer attempt; historical rows are unchanged.
 - A failed profile preparation retains only a known
   source-defined `prepare_reason` and the bounded `BootstrapFailure.statusCode`
   (100–599) as `http_status`; unknown reasons, messages, operation URLs and bodies

@@ -220,6 +220,8 @@ final class PokrovClientObservability {
   final OperationalIdFactory ids;
   int _generation = 0;
   OperationalAttemptTimeline? _attempt;
+  int? _pendingConnectionActionGeneration;
+  ConnectionIdle? _deferredIdle;
   String _lastExperienceFingerprint = '';
   bool _uiReadyRecorded = false;
   int _lastAndroidSelectedAppCount = -1;
@@ -348,6 +350,8 @@ final class PokrovClientObservability {
       ids: ids,
     )..start();
     _attempt = attempt;
+    _pendingConnectionActionGeneration = attempt.generation;
+    _deferredIdle = null;
     _lastExperienceFingerprint = '';
     if (beginsWithDisconnect) {
       attempt.enter(OperationalTimelinePhase.rollback);
@@ -378,6 +382,16 @@ final class PokrovClientObservability {
           );
         }
         rethrow;
+      } finally {
+        if (identical(_attempt, attempt) &&
+            _pendingConnectionActionGeneration == attempt.generation) {
+          _pendingConnectionActionGeneration = null;
+          final deferredIdle = _deferredIdle;
+          _deferredIdle = null;
+          if (deferredIdle != null) {
+            observeConnection(deferredIdle);
+          }
+        }
       }
     });
   }
@@ -385,6 +399,15 @@ final class PokrovClientObservability {
   void observeConnection(ConnectionExperienceState experience) {
     final attempt = _attempt;
     if (attempt == null || attempt.isTerminal) {
+      return;
+    }
+    _deferredIdle = null;
+    if (experience is ConnectionIdle &&
+        _pendingConnectionActionGeneration == attempt.generation &&
+        attempt.activePhase != OperationalTimelinePhase.rollback) {
+      // Permission awaits can leave the reducer Idle before preparing starts.
+      // A later observation replaces this state; only its owner may settle it.
+      _deferredIdle = experience;
       return;
     }
     final snapshot = experience.snapshot;

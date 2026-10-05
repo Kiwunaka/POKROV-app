@@ -187,8 +187,10 @@ void main() {
     observability.recordAndroidRoutingAppCount(3);
     observability.recordAndroidRoutingAppCount(3);
 
-    await observability.runConnectionAction(
+    final authorization = Completer<void>();
+    final connection = observability.runConnectionAction(
       () async {
+        await authorization.future;
         observability.observeConnection(
           const ConnectionPreparing(stage: ConnectionStage.profile),
         );
@@ -202,6 +204,16 @@ void main() {
       },
       beginsWithDisconnect: false,
     );
+    observability.observeConnection(const ConnectionIdle());
+    await observability.flush();
+    expect(
+      observability.connectionTimelineBreadcrumbs
+          .where((event) => event.name == 'app.connection.attempt.finished'),
+      isEmpty,
+      reason: 'initial Idle while permission is pending is not cancellation',
+    );
+    authorization.complete();
+    await connection;
     await observability.flush();
 
     final breadcrumbs = observability.dispatcher.breadcrumbs.snapshot();
@@ -249,6 +261,54 @@ void main() {
     final remote = jsonEncode(releaseHealth.batches);
     expect(remote, isNot(contains('org.telegram.messenger')));
     expect(remote, isNot(contains('package_name')));
+    final mirror = observability.dispatcher.writer as ReleaseHealthMirrorWriter;
+    final store = mirror.localWriter as RotatingOperationalJsonlStore;
+    final local = await store.readCurrent();
+    expect(
+      local.records
+          .where((event) => event['name'] == 'app.connection.attempt.finished')
+          .map((event) => event['outcome']),
+      ['succeeded'],
+    );
+    expect(
+      remoteEvents
+          .where((event) => event['name'] == 'app.connection.attempt.finished')
+          .map((event) => event['outcome']),
+      ['succeeded'],
+    );
+
+    final staleRelease = Completer<void>();
+    final staleAction = observability.runConnectionAction(
+      () => staleRelease.future,
+      beginsWithDisconnect: false,
+    );
+    observability.observeConnection(const ConnectionIdle());
+    final currentRelease = Completer<void>();
+    final currentAction = observability.runConnectionAction(
+      () => currentRelease.future,
+      beginsWithDisconnect: false,
+    );
+    observability.observeConnection(const ConnectionIdle());
+    staleRelease.complete();
+    await staleAction;
+    await observability.flush();
+    expect(
+      (await store.readCurrent()).records
+          .where((event) => event['name'] == 'app.connection.attempt.finished')
+          .map((event) => event['outcome']),
+      ['succeeded', 'superseded'],
+      reason: 'an old completion cannot settle the current pending Idle',
+    );
+    currentRelease.complete();
+    await currentAction;
+    await observability.flush();
+    expect(
+      (await store.readCurrent()).records
+          .where((event) => event['name'] == 'app.connection.attempt.finished')
+          .map((event) => event['outcome']),
+      ['succeeded', 'superseded', 'cancelled'],
+      reason: 'settled Idle still completes cancellation without another frame',
+    );
     expect(observability.dispatcher.snapshot().rejectedAsStale, 0);
   });
 
