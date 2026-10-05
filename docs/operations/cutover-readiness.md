@@ -1,17 +1,22 @@
 # Client release status
 
-Public version: **1.4.4+4085**, using the published POKROV Core 1.2.7 artifacts
-and desktop ABI 2. Windows and Android were built from client `0c9b5311`.
-The owner-approved quiet GitHub release `v1.4.4` contains four production-signed Android direct APKs,
+Public version: **1.4.5+4086**, using the published POKROV Core 1.2.7 artifacts
+and desktop ABI 2. Windows and Android were built from client `5a6f268a`.
+The owner-approved quiet GitHub release `v1.4.5` contains four production-signed Android direct APKs,
 unsigned Windows beta setup, `release-index.json` and `SHA256SUMS.txt`.
 GitHub readback matched all seven asset names, sizes and digests; no announcement job was
 created. Windows retains the SmartScreen warning and makes no trusted-signing or
-Store claim. Public 1.4.3 remains available for rollback.
+Store claim. Public 1.4.4 remains available for rollback. Ordinary first launch and
+Auto passed on the owned Windows VM and Android 9 emulator. The physical Android
+phone received the identical APK over USB, and Share opened the system chooser
+and Files. Cloud saving was canceled; Nearby/Bluetooth peer transfer was not checked.
 
-Brain's public feed recommends 1.4.4 on Android and Windows with 100% rollout.
-The minimum supported version remains 1.3.0; both platforms' versions, URLs,
-sizes and digests passed readback, including all four Android APK variants.
-No new broadcast or LiveUpdate was created.
+Local **1.4.6+4087** prepares the WARP selection correction: country Auto matches
+WARP chains to their underlying node country. It also includes the exact compiled
+runtime build number in telemetry. Core 1.2.7, its `7846df3` source pins and Cronet
+remain unchanged. These new client packages require their own build and ordinary
+QA before quiet publication and the Root-owned Brain recommendation handoff;
+the minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.
 
 First online country Auto without cached or staged material now waits up to 40
 seconds for access ACK; pending API-011 asks for an explicit Connect retry with
