@@ -438,7 +438,7 @@ packages:
       path: "../../packages/app_shell"
       relative: true
     source: path
-    version: "1.4.8"
+    version: "1.4.9"
   pokrov_core_domain:
     dependency: "direct main"
     description:

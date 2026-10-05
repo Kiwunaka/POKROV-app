@@ -141,10 +141,12 @@ public seeds, rollout and provider support claims remain unchanged.
 
 Ordinary Full tunnel and “Россия напрямую” continue with the managed VPN profile
 when the optional catalog returns `503 routing_catalog_disabled` or
-`503 routing_catalog_unavailable`. “Россия напрямую” retains its existing RU
-domain/IP rulesets. Selected services and the signed transport-manifest path
+`503 routing_catalog_unavailable`, or when an already authorized cached VPN
+profile has no optional catalog in the cache. “Россия напрямую” retains its
+existing RU domain/IP rulesets. Selected services and the signed transport-manifest path
 still require signed policy; authentication, trust and signature failures remain
-connection failures.
+connection failures, including invalid cached catalogs. A catalog validation
+failure cannot trigger the cached VPN recovery path.
 
 With Smart Access enabled, services referencing provider capabilities also expose
 “Подтверждения Smart Access”. The sheet reads the signed provider policy through

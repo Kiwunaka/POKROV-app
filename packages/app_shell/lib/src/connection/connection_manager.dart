@@ -2533,6 +2533,12 @@ class ConnectionManager extends ChangeNotifier {
                   error.code != 'routing_catalog_unavailable')) {
             rethrow;
           }
+        } on RoutingCatalogFailure catch (error) {
+          if (!offline || error.code != 'catalog_cache_unavailable' ||
+              (payload.routeMode != RouteMode.fullTunnel &&
+                  payload.routeMode != RouteMode.allExceptRu)) {
+            rethrow;
+          }
         }
         if (_disposed ||
             !_connectionCoordinator.ownsOperation(generation) ||
@@ -2929,7 +2935,8 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   bool _isTransientProfileFailure(BootstrapFailure error) {
-    if (error.code.startsWith('candidate_') || error.code == 'managed_profile_superseded') return false;
+    if (error.operation == 'routing_catalog' || error.code.startsWith('candidate_') ||
+        error.code == 'managed_profile_superseded') return false;
     final statusCode = error.statusCode;
     return statusCode == null ||
         statusCode == HttpStatus.requestTimeout ||

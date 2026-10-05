@@ -11,7 +11,7 @@ Auto passed on the owned Windows VM and Android 9 emulator. The physical Android
 phone received the identical APK over USB, and Share opened the system chooser
 and Files. Cloud saving was canceled; Nearby/Bluetooth peer transfer was not checked.
 
-Local **1.4.8+4089** is a private first-Connect and D2 QA candidate with routing catalog enabled
+Local **1.4.9+4090** is a private first-Connect and D2 QA candidate with routing catalog enabled
 and Smart Access disabled. Public release and Brain recommendation are not approved;
 the retained 1.4.6+4087 packages remain unchanged. The candidate retains the WARP selection correction: country Auto matches
 WARP chains to their underlying node country. It also includes the exact compiled
@@ -22,8 +22,10 @@ the minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned
 The candidate lets ordinary VPN modes continue when the optional catalog is
 unpublished, retains closed profile-preparation reasons in the local journal,
 and corrects the installed local-DPI directory permissions before service start.
-Private 1.4.7 failed profile preparation on the Windows VM; this candidate still
-requires its own ordinary Connect check and is not a published fix.
+Private 1.4.8 failed profile preparation because its cached recovery had no optional
+catalog; the original online failure remains unknown. This candidate permits that
+absent catalog only in ordinary VPN modes and retains catalog validation failures.
+It requires its own ordinary Connect check and is not a published fix.
 
 First online country Auto without cached or staged material now waits up to 40
 seconds for access ACK; pending API-011 asks for an explicit Connect retry with

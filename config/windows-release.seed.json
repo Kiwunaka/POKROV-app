@@ -70,7 +70,7 @@
   },
   "signing": {
     "status": "CANDIDATE_ONLY",
-    "blocker_code": "RELEASE_APPROVAL_PENDING_1_4_8",
+    "blocker_code": "RELEASE_APPROVAL_PENDING_1_4_9",
     "required_for_candidate": false,
     "required_for_trusted_claim": true,
     "contract": "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1",
@@ -92,7 +92,7 @@
     "owner_exception": {
       "status": "CANDIDATE_ONLY",
       "authorized_on": "2026-10-05",
-      "version_scope": "1.4.8",
+      "version_scope": "1.4.9",
       "channel_scope": "outside_store_beta",
       "distribution_scope": "direct_download_only",
       "trusted_claim_allowed": false,
@@ -113,7 +113,7 @@
     "The ordinary Windows UI uses the authenticated POKROVService runtime lane and does not load POKROV Core directly.",
     "This exact setup bundles the pinned POKROV Core 1.2.7 bytes, libcronet.dll dependency, the required x64 Microsoft VC143 runtime DLLs, and pokrov_service.exe in one machine-wide installation directory.",
     "The installer performs the one-time administrative SCM registration; the ordinary UI does not receive privileged file, path, or shell execution.",
-    "Local 1.4.8 preparation is for private first-Connect and D2 QA only and retains the unsigned-beta channel, CANDIDATE_ONLY status and the SmartScreen warning above. Public release is not approved; trusted, signed, Store and broad-stable claims remain unavailable.",
+    "Local 1.4.9 preparation is for private first-Connect and D2 QA only and retains the unsigned-beta channel, CANDIDATE_ONLY status and the SmartScreen warning above. Public release is not approved; trusted, signed, Store and broad-stable claims remain unavailable.",
     "Trusted signing accepts no PFX path or password: the private key remains in the selected Windows certificate store and only public certificate and timestamp evidence enters the manifest."
   ],
   "blocked_on": [

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -1552,6 +1553,20 @@ void main() {
       FlutterSecureStoragePlatform.instance = originalStorage;
     });
     var catalogRequests = 0;
+    var managedApiUnavailable = false;
+    var failedManagedRequests = 0;
+    var invalidCatalogSignature = false;
+    final catalogNow = DateTime.now().toUtc();
+    // Alphabetical keys match the existing canonical catalog encoding.
+    final signedPayload = {
+      'audience': 'production', 'evidence': <Object>[],
+      'expires_at': catalogNow.add(const Duration(hours: 1)).toIso8601String(),
+      'issued_at': catalogNow.subtract(const Duration(minutes: 1)).toIso8601String(),
+      'revision': 1, 'schema_version': 'pokrov-routing-catalog-v1', 'security_revision': 1,
+      'services': [<String, Object>{}], 'sources': [<String, Object>{}],
+    };
+    final catalogDigest = (await Sha256().hash(utf8.encode(jsonEncode(signedPayload))))
+        .bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join();
     final downloadedRuleSets = <String>{};
     unawaited(() async {
       await for (final request in server) {
@@ -1565,6 +1580,10 @@ void main() {
             'session': {'session_token': 'synthetic-session', 'account_id': 'synthetic-account'},
             'provisioning': {'status': 'ready', 'sync_ok': true},
           }));
+        } else if (request.uri.path == '/api/client/profile/managed' && managedApiUnavailable) {
+          failedManagedRequests++;
+          request.response.statusCode = HttpStatus.serviceUnavailable;
+          request.response.write('{"detail":"temporarily unavailable"}');
         } else if (request.uri.path == '/api/client/profile/managed') {
           request.response.write(jsonEncode({
             'profile_revision': 'synthetic-profile', 'config_format': 'singbox-json',
@@ -1596,9 +1615,18 @@ void main() {
           }));
         } else if (request.uri.path == '/api/client/routing-catalog') {
           catalogRequests++;
-          request.response.statusCode = HttpStatus.serviceUnavailable;
-          request.response.headers.set('X-POKROV-Error', 'routing_catalog_disabled');
-          request.response.write('{"detail":"routing_catalog_disabled"}');
+          if (invalidCatalogSignature) {
+            request.response.write(jsonEncode({
+              'schema': 'routing-catalog-response-v1',
+              'envelope': {'algorithm': 'Ed25519', 'key_id': 'synthetic',
+                'payload_sha256': catalogDigest, 'payload': signedPayload,
+                'signature_b64': 'invalid'},
+            }));
+          } else {
+            request.response.statusCode = HttpStatus.serviceUnavailable;
+            request.response.headers.set('X-POKROV-Error', 'routing_catalog_disabled');
+            request.response.write('{"detail":"routing_catalog_disabled"}');
+          }
         } else {
           request.response.write('{"ok":true}');
         }
@@ -1652,6 +1680,24 @@ void main() {
     await manager.disconnect();
     expect(manager.status.phase, ConnectionPhase.disconnected);
     expect(manager.busy, isFalse);
+    final catalogRequestsBeforeCache = catalogRequests;
+    managedApiUnavailable = true;
+    await manager.connect();
+    expect(failedManagedRequests, greaterThan(0), reason: 'online refresh failed before cached preparation');
+    expect(catalogRequests, catalogRequestsBeforeCache, reason: 'the quick path reads the absent catalog cache only');
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.presentation.isVerified, isTrue);
+    expect(runtime.connectCalls, 2);
+    expect(jsonDecode(runtime.stagedPayloads.last.configPayload), config,
+      reason: 'authorized cached VPN material and all four RU direct rules are retained');
+    await manager.disconnect();
+    managedApiUnavailable = false;
+    invalidCatalogSignature = true;
+    await manager.connect();
+    expect(catalogRequests, greaterThan(catalogRequestsBeforeCache));
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(manager.presentation.isVerified, isFalse);
+    expect(runtime.connectCalls, 2, reason: 'signature failure cannot fall through to the VPN cache');
   });
 
   test('new command cancels profile work and ignores its late result',
