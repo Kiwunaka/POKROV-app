@@ -235,11 +235,11 @@ class ConnectionExperienceReducer {
     if (snapshot == null) {
       return ConnectionStage.profile;
     }
-    if (snapshot.phase == RuntimePhase.artifactReady) {
+    if (snapshot.phase == RuntimePhase.artifactReady ||
+        snapshot.phase == RuntimePhase.initialized) {
       return ConnectionStage.coreStart;
     }
-    if (snapshot.phase == RuntimePhase.initialized ||
-        snapshot.phase == RuntimePhase.configStaged) {
+    if (snapshot.phase == RuntimePhase.configStaged) {
       return ConnectionStage.tunnel;
     }
     return _verificationStageFor(snapshot);

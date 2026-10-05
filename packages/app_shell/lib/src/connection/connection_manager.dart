@@ -2071,6 +2071,7 @@ class ConnectionManager extends ChangeNotifier {
 
   Future<ManagedProfilePayload> _resolveManagedProfile({
     Duration? deadline,
+    bool initialProfilePreparation = false,
     bool suppressWarpRuntime = false,
     int? ownerGeneration,
     String recoveryCandidateRef = '',
@@ -2236,6 +2237,11 @@ class ConnectionManager extends ChangeNotifier {
             cancelled: cancelled,
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
+            probeTimeout: initialProfilePreparation &&
+                    _appContext.hostPlatform == HostPlatform.android &&
+                    identical(group, ordinaryCandidates)
+                ? const Duration(seconds: 12)
+                : const Duration(seconds: 4),
             selectionTimeout: selectionTimeout,
             onProbeResult: (candidate, result) {
               if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
@@ -3555,6 +3561,7 @@ class ConnectionManager extends ChangeNotifier {
           failureStage = ConnectionStage.profile;
           managedProfile = await _resolveManagedProfile(
             ownerGeneration: generation,
+            initialProfilePreparation: initialProfilePreparation,
             smartAccessVpnFallback: smartAccessVpnFallback,
             deadline: cachedProfileFallbackAllowed
                 ? _cachedProfileRefreshDeadline

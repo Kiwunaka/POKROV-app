@@ -215,6 +215,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
   bool supportsCandidates = false;
+  Duration probeDelay = Duration.zero;
+  final probeTimeouts = <Duration>[];
   String? coreVersion;
   bool holdProbes = false;
   bool failProbeCancellation = false;
@@ -268,6 +270,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   Future<RuntimeCandidateProbeResult> probeCandidate({required String probeId,
       required ManagedProfilePayload payload, required Duration timeout, required String expectedNetworkContext}) async {
     probeContexts.add(expectedNetworkContext);
+    probeTimeouts.add(timeout);
     expect(value(phase).transportCapabilities, isNotNull);
     final protocol = payload.source?.protocol ?? 'vless';
     probedProtocols.add(protocol);
@@ -276,6 +279,11 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     activeProbes[probeId] = cancelled;
     if (!probeStarted.isCompleted) probeStarted.complete();
     if (protocol != 'vless' && !alternateProbeStarted.isCompleted) alternateProbeStarted.complete();
+    if (probeDelay > Duration.zero) {
+      await Future.any<void>([
+        Future<void>.delayed(probeDelay), cancelled.future,
+      ]);
+    }
     if (holdProbes) {
       if (payload.profileName == 'de:profile_1') { await Future.any([probeRelease.future, cancelled.future]); }
       else { await cancelled.future; }
@@ -516,6 +524,10 @@ PokrovWifiNetworkStatus _foregroundWifi(_Runtime runtime, {String? name = 'Cafe'
     networkContextRef: runtime.candidateContext, networkSelectionKey: runtime.candidateKey, manualStopEpoch: 0);
 
 void main() {
+  final originalHttpOverrides = HttpOverrides.current;
+  TestWidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = originalHttpOverrides;
+
   test('Android foreground network context changes reuse protected handoff without rejecting current', () async {
     final runtime = _Runtime()..supportsCandidates = true..captivePortal = false;
     final manager = _manager(runtime, _Bootstrapper(catalog: true),
@@ -1220,6 +1232,35 @@ void main() {
     expect(runtime.probedWarpModes.last, '');
     expect(bootstrapper.resolutions.where((request) => request.selected.isNotEmpty)
         .map((request) => request.selected), isNot(contains(otherWarp.candidateRef)));
+  });
+
+  test('first Android candidate can finish after four seconds while cached probes still cancel', () async {
+    final bootstrapper = _CachedBootstrapper()
+      ..cacheAvailable = false
+      ..candidates = [_candidates.first];
+    final runtime = _Runtime()
+      ..supportsCandidates = true
+      ..probeDelay = const Duration(seconds: 5);
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+
+    await manager.connect();
+    expect(runtime.probeTimeouts, [const Duration(seconds: 12)]);
+    expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
+    expect(runtime.activeProbes, isEmpty);
+    expect(runtime.connectCalls, 1);
+
+    await manager.disconnect();
+    bootstrapper
+      ..cacheAvailable = true
+      ..failure = TimeoutException('managed API unavailable');
+    runtime.probeTimeouts.clear();
+    await manager.connect();
+    expect(runtime.probeTimeouts, isNotEmpty);
+    expect(runtime.probeTimeouts, everyElement(const Duration(seconds: 4)));
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(runtime.activeProbes, isEmpty);
+    expect(runtime.connectCalls, 1);
   });
 
   test('cold candidate HTTP preparation does not consume the native probe budget', () async {

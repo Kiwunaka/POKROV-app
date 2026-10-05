@@ -170,6 +170,29 @@ void main() {
     expect(presentation.primaryActionEnabled, isTrue);
   });
 
+  test('initialized Core stays in the Core stage until a profile is staged', () {
+    RuntimeSnapshot snapshot(RuntimePhase phase) => RuntimeSnapshot(
+      hostPlatform: HostPlatform.android,
+      lane: RuntimeLane.mobileArtifact,
+      phase: phase,
+      artifactDirectory: '/host/runtime',
+      coreBinaryPath: '/host/runtime/pokrov-core.aar',
+      helperBinaryPath: null,
+      stagedConfigPath: phase == RuntimePhase.configStaged ? '/host/runtime/profile.json' : null,
+      supportsLiveConnect: true,
+      canInitialize: false,
+      canConnect: phase == RuntimePhase.configStaged,
+      message: '',
+    );
+    final initialized = _reduce(snapshot(RuntimePhase.initialized),
+      intent: ConnectionTransitionIntent.connect, actionInFlight: true);
+    final staged = _reduce(snapshot(RuntimePhase.configStaged),
+      intent: ConnectionTransitionIntent.connect, actionInFlight: true);
+
+    expect(initialized.stage, ConnectionStage.coreStart);
+    expect(staged.stage, ConnectionStage.tunnel);
+  });
+
   test('disconnect and reconnect require distinct explicit intents', () {
     final running = _runningSnapshot();
     final disconnecting = _reduce(

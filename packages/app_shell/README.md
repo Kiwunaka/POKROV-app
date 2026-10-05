@@ -32,3 +32,5 @@ Current seed contents:
 - locations cards that keep the fixed `VLESS+REALITY`, `VMess`, `Trojan`, `XHTTP` ordering
 
 Android foreground network handling uses the native context reference and the existing protected candidate handoff. The optional untrusted Wi-Fi policy defaults off; it starts only while the app is foreground, with a known untrusted SSID, a non-captive physical uplink and VPN/notification/SSID permissions already granted. Explicit stop suppresses automatic starts on that physical uplink and fences older requests by a native stop epoch. This uses the current request owner and proof flow; it does not start a cold process or a second VPN service.
+
+The first Android connection without a staged or cached profile gives each ordinary candidate up to 12 seconds within the existing selection budget, covering cold Core setup and the authenticated HTTPS probes. Later, cached and recovery probes keep their four-second limit; cancellation still joins native work before staging or connecting. Diagnostics keeps an initialized Core in the Core phase until a profile is staged, so initialization cannot appear as a completed system tunnel.
