@@ -23,14 +23,22 @@ Routing catalog remains enabled but unpublished; Smart Access stays disabled.
 Protected report #78 localized the private Android refusal to the time before
 Start (16.2–16.8 seconds); Start and cleanup occupied only 34–70 milliseconds.
 Protected report #79 measured 2577 ms in AndroidCAStore preparation out of a
-3933 ms failed probe. Private 1.5.0+4097 prepares the same complete CA roots
+3933 ms failed manual CH AWG probe; the manual preference had survived the APK
+update despite the main screen displaying Automatic. Private 1.5.0+4097 prepares
+the same complete CA roots
 off-main before candidate timers and reuses a process snapshot; trust-store
 changes invalidate it, and interrupted, partial or failed reads are not cached.
 The existing Core fallback and active instances remain unchanged. Cancellation
 can finish while the read-only preparation completes. Public 1.4.5 remains
-recommended until the accumulated 1.5.0 passes normal QA.
-This diagnostic Core AAR contains x86_64 only; ARM and Windows artifacts are
-retained from the earlier preparation and have not been rebuilt or accepted.
+recommended until the accumulated 1.5.0 passes normal QA. One normal Auto on the
+owned API28 emulator, after clearing the manual preference in Locations, reached
+its first VPN consent and connected to CH. The app verified TUN, DNS and VPN
+egress; six TUN routes were present, and the same session disconnected cleanly.
+Existing QA data and the failure journal were retained. Fresh final-package and
+physical ARM acceptance are still open.
+The final Android Core AAR contains all four ABIs; its x86_64 library and Java
+classes equal the diagnostic AAR used in this check. Windows Core and Cronet
+bytes are retained. Final ARM and Windows package acceptance remains open.
 The minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.
 Private 1.4.8 failed profile preparation because its cached recovery had no optional
 catalog; the original online failure remains unknown. This candidate permits that
