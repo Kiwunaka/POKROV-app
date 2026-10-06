@@ -3912,7 +3912,7 @@ class ConnectionManager extends ChangeNotifier {
           _connectionCoordinator.finishAction();
         });
       }
-      if (_connectionCoordinator.ownsOperation(generation) &&
+      if (_connectionCoordinator.ownsOperation(generation) && !_candidateRecoveryPending &&
           _runtimeSnapshot?.phase != RuntimePhase.running) {
         _connectionCoordinator.clearAttempt();
       }
@@ -4526,6 +4526,7 @@ class ConnectionManager extends ChangeNotifier {
       _runtimeSnapshot = failed;
       _runtimeHeadline = 'Восстанавливаем защищённое подключение…';
     });
+    String? terminalCode;
     try {
       final retryInitialActivation = _activeCandidateRef == null &&
           !retainsProtection && failed != null &&
@@ -4566,6 +4567,8 @@ class ConnectionManager extends ChangeNotifier {
           if (current.isCleanlyHealthy) {
             _protectedHandoffActive = false;
             _finalizeProvenConnection(current);
+          } else {
+            terminalCode = current.lastFailureKind ?? 'connect_not_running';
           }
           return;
         }
@@ -4707,7 +4710,10 @@ class ConnectionManager extends ChangeNotifier {
         _protectedHandoffActive = false;
         _finalizeProvenConnection(current);
       }
-      if (!tryNext) return;
+      if (!tryNext) {
+        if (!current.isCleanlyHealthy) terminalCode = current.lastFailureKind ?? 'connect_not_running';
+        return;
+      }
       failedActivations.add(_candidateRef!);
       if (_candidateNetworkKey != null) _candidateSelector.recordFailure(
           _candidateNetworkKey!, _candidateRef!, current.lastFailureKind ?? '');
@@ -4719,12 +4725,21 @@ class ConnectionManager extends ChangeNotifier {
       final offlineMessage = error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error)
           ? await _classifyOfflineFailure(generation) : null;
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+      terminalCode = error is BootstrapFailure ? error.operationalErrorCode
+          : _runtimeSnapshot?.lastFailureKind ?? 'connect_unexpected';
       _update(() {
         _activePhase = ConnectionPhase.actionRequired;
         _runtimeHeadline = offlineMessage ?? (error is BootstrapFailure ? error.message
             : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.');
       });
     } finally {
+      if (terminalCode != null && _connectionAttemptDurationMs() != null &&
+          !_disposed && _connectionCoordinator.ownsOperation(generation)) {
+        await _reportClientLifecycle('failed', errorCode: terminalCode, retryable: true);
+        if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
+          _connectionCoordinator.clearAttempt();
+        }
+      }
       if (ownsAction && !_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _connectionCoordinator.finishAction();
         _publish();

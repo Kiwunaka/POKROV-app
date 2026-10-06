@@ -176,6 +176,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   bool failFirstRunningReport = false;
   int failedRunningReports = 0;
   Completer<void>? runningReportGate;
+  Completer<void>? failedReportGate;
   final actualReports = <Map<String, Object?>>[];
 
   @override
@@ -191,8 +192,11 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   }) async {
     runtimeCalls.add({'runtime_phase': runtimePhase, 'error_code': errorCode});
     actualReports.add({'runtime_phase': runtimePhase, 'duration_ms': durationMs,
+      'attempt_number': attemptNumber, 'error_code': errorCode, 'retryable': retryable,
+      'native_kind': connectivitySnapshot?.lastFailureKind,
       'candidate_ref': candidateRef, 'candidate_variant': candidateVariant});
     if (runtimePhase == 'running') await runningReportGate?.future;
+    if (runtimePhase == 'failed') await failedReportGate?.future;
     if (runtimePhase == 'running' && failFirstRunningReport) {
       failFirstRunningReport = false;
       failedRunningReports += 1;
@@ -1515,6 +1519,54 @@ void main() {
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(runtime.overlappingMutation, isFalse);
+  });
+
+  test('failed first activation and exhausted recovery report one terminal attempt', () async {
+    final profileGate = Completer<void>();
+    final reportGate = Completer<void>();
+    final bootstrapper = _StatsBootstrapper()
+      ..candidates = [_candidates.first]
+      ..gate = profileGate
+      ..failedReportGate = reportGate;
+    final runtime = _Runtime()..supportsCandidates = true..failFirstActivation = true;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(() {
+      if (!profileGate.isCompleted) profileGate.complete();
+      if (!reportGate.isCompleted) reportGate.complete();
+      manager.dispose();
+    });
+    final connecting = manager.connect();
+    await bootstrapper.entered.future;
+    await Future<void>.delayed(const Duration(milliseconds: 25));
+    profileGate.complete();
+    await connecting;
+    final deadline = DateTime.now().add(const Duration(seconds: 2));
+    while (!bootstrapper.actualReports.any((report) => report['runtime_phase'] == 'failed') &&
+        DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    final failed = bootstrapper.actualReports.singleWhere((report) => report['runtime_phase'] == 'failed');
+    expect(failed['error_code'], 'CONN-008');
+    expect(failed['attempt_number'], 1);
+    expect(failed['duration_ms'], greaterThanOrEqualTo(25));
+    expect(failed['candidate_ref'], _candidates.first.candidateRef);
+    expect(failed['native_kind'], 'core_egress_timeout');
+    expect(failed['retryable'], isTrue);
+    expect(runtime.connectCalls, 1);
+    expect(manager.busy, isTrue, reason: 'recovery awaits terminal stats before finishing the attempt');
+    reportGate.complete();
+    while (manager.busy && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(manager.busy, isFalse);
+    runtime.failFirstActivation = false;
+    await manager.refresh();
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed'), hasLength(1));
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed'), hasLength(1));
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'connect_requested')
+        .map((report) => report['attempt_number']), [1, 2]);
   });
 
   test('retry after UI restart preserves a guard without in-memory candidate state', () async {

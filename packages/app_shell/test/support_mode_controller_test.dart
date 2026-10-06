@@ -10,6 +10,7 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart';
 import 'package:pokrov_observability_runtime/observability_runtime.dart';
+import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 void main() {
@@ -299,30 +300,64 @@ void main() {
   test('signed crash category includes the closed marker in the preview',
       () async {
     final fixture = await _activationFixture(now: now);
+    final checkedAt = now.subtract(const Duration(seconds: 1));
+    const runtime = RuntimeSnapshot(
+      hostPlatform: HostPlatform.windows,
+      lane: RuntimeLane.windowsService,
+      phase: RuntimePhase.configStaged,
+      artifactDirectory: '/owned/runtime',
+      coreBinaryPath: '/owned/runtime/core',
+      helperBinaryPath: null,
+      stagedConfigPath: '/owned/runtime/profile',
+      supportsLiveConnect: true,
+      canInitialize: true,
+      canConnect: true,
+      message: 'Not exported runtime text.',
+      lastFailureKind: 'core_egress_connect_failed',
+      lastStopReason: 'core_egress_probe_failed',
+      coreEgressValidated: false,
+    );
     PreparedSupportBundle prepare(VerifiedSupportCollectionPolicy? policy) =>
-        preparePokrovClientSupportBundle(
+        PokrovDiagnosticsPresenter.fromRuntime(
           hostPlatform: HostPlatform.windows,
           routeMode: RouteMode.allExceptRu,
-          snapshot: null,
+          snapshot: runtime,
+          statusLabel: 'Нужно внимание',
           warpState: 'disabled',
           now: now,
+          checkedAtUtc: checkedAt,
           appVersion: '1.2.0',
           buildNumber: '30',
           releaseChannel: 'local',
           candidateLabel: 'test-build',
+          encryptedDeliveryAvailable: true,
           supportModePolicy: policy,
           systemSummary: _snapshot().system,
           crashes: _snapshot().crashes,
-        );
+        ).preparedBundle;
     final prepared = prepare(fixture.activation.policy);
     final crashFile = prepared.preview.files
         .singleWhere((file) => file.path == 'crash/index.jsonl');
     expect(crashFile.category, DiagnosticCategory.crashes);
     expect(crashFile.size, greaterThan(0));
+    final expectedEvents = jsonEncode(<String, Object?>{
+      'runtime_phase': 'config_staged',
+      'failure_kind': 'core_egress_connect_failed',
+      'stop_reason': 'core_egress_probe_failed',
+      'occurred_at': checkedAt.toIso8601String(),
+      'outcome': 'observed',
+      'stage': 'snapshot',
+      'subsystem': 'runtime',
+    }) + '\n';
+    final expectedHash = await Sha256().hash(utf8.encode(expectedEvents));
+    expect(prepared.preview.files.singleWhere((file) => file.path == 'events/recent.jsonl').sha256,
+        expectedHash.bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join());
     final ordinary = prepare(null);
     expect(ordinary.preview.profile, SupportDiagnosticProfile.summary);
     expect(ordinary.preview.files.map((file) => file.path),
         isNot(contains('crash/index.jsonl')));
+    expect(ordinary.preview.files.map((file) => file.path),
+        isNot(contains('events/recent.jsonl')));
   });
 
   testWidgets('persistent support-mode indicator exposes open and disable',

@@ -52,6 +52,11 @@ After a declined protected replacement, the client reads a fresh runtime snapsho
 before retiring its local retained-protection flag. Only a confirmed stop clears
 that flag and the active candidate; the attempted candidate remains available for
 diagnostics and a normal retry. The focused recovery regression passed.
+Scheduled first-activation recovery retains the original attempt and sends one
+awaited failed terminal report when recovery is exhausted. A superseded operation
+cannot clear the newer attempt. Protected support events also include a separate
+runtime snapshot with closed phase, failure kind and stop reason at its observed
+read time; this is not a historical native event. Focused regressions passed.
 The final Android Core AAR contains all four ABIs; its x86_64 library and Java
 classes equal the diagnostic AAR used in this check. Windows Core and Cronet
 bytes are retained. Publication remains blocked on fresh Android first-Connect

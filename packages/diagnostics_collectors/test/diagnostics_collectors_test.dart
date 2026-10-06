@@ -63,6 +63,21 @@ void main() {
         ),
         isNot(contains('example.com')),
       );
+      final events = utf8.decode(collection.files
+          .singleWhere((file) => file.path == 'events/recent.jsonl').bytes)
+          .trim().split('\n').map(jsonDecode).toList();
+      expect(events.last, <String, Object?>{
+        'occurred_at': '2026-08-21T10:00:10.000Z',
+        'subsystem': 'runtime', 'stage': 'snapshot', 'outcome': 'observed',
+        'runtime_phase': 'config_staged',
+        'failure_kind': 'core_egress_connect_failed',
+        'stop_reason': 'core_egress_probe_failed',
+      });
+      expect(() => DiagnosticEventRecord(
+        occurredAt: DateTime.utc(2026, 8, 21, 10),
+        subsystem: 'runtime', stage: 'snapshot', outcome: 'observed',
+        runtimePhase: 'config_staged', failureKind: 'unrecognized_transport_error',
+      ), throwsArgumentError);
     },
   );
 
@@ -187,6 +202,12 @@ DiagnosticSnapshot _snapshot() => DiagnosticSnapshot(
           outcome: 'failed',
           errorCode: 'EGRESS-001',
           durationMs: 1200,
+        ),
+        DiagnosticEventRecord(
+          occurredAt: DateTime.utc(2026, 8, 21, 10, 0, 10),
+          subsystem: 'runtime', stage: 'snapshot', outcome: 'observed',
+          runtimePhase: 'config_staged', failureKind: 'core_egress_connect_failed',
+          stopReason: 'core_egress_probe_failed',
         ),
       ],
       crashes: <DiagnosticCrashRecord>[

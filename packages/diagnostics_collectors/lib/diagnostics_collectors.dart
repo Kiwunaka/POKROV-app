@@ -147,6 +147,9 @@ final class DiagnosticEventRecord {
     this.parseDurationMs,
     this.createDurationMs,
     this.certificateDurationMs,
+    this.runtimePhase,
+    this.failureKind,
+    this.stopReason,
   }) {
     _requireUtc(occurredAt, 'occurredAt');
     _requireMatch(subsystem, 'subsystem', RegExp(r'^[a-z][a-z0-9_]{0,31}$'));
@@ -180,7 +183,42 @@ final class DiagnosticEventRecord {
         throw ArgumentError('Invalid candidate setup timings');
       }
     }
+    if (runtimePhase != null || failureKind != null || stopReason != null ||
+        (subsystem == 'runtime' && stage == 'snapshot')) {
+      if (subsystem != 'runtime' || stage != 'snapshot' || outcome != 'observed' ||
+          runtimePhase == null) {
+        throw ArgumentError('Runtime facts require a current snapshot observation.');
+      }
+      _requireToken(runtimePhase!, 'runtimePhase', runtimePhases);
+      if (failureKind != null) _requireToken(failureKind!, 'failureKind', runtimeFailureKinds);
+      if (stopReason != null) _requireToken(stopReason!, 'stopReason', runtimeStopReasons);
+    }
   }
+
+  // The ordinary RuntimeSnapshot public taxonomy, never upstream error text.
+  static const runtimePhases = <String>{
+    'artifact_missing', 'artifact_ready', 'initialized', 'config_staged', 'running',
+  };
+  static const runtimeFailureKinds = <String>{
+    'desktop_competing_vpn_active', 'desktop_loopback_port_conflict', 'desktop_tun_start_failed',
+    'runtime_initialization_failed', 'runtime_start_after_permission_failed', 'runtime_start_failed',
+    'runtime_service_start_failed', 'foreground_start_failed', 'runtime_stop_failed',
+    'protected_handoff_failed', 'connect_cancelled', 'core_egress_probe_failed',
+    'core_egress_dns_failed', 'core_egress_connect_failed', 'core_egress_tls_failed',
+    'core_egress_tls_timeout', 'core_egress_response_timeout', 'core_egress_timeout',
+    'core_egress_probe_unavailable', 'desktop_tun_egress_probe_failed', 'profile_staging_failed',
+    'profile_identity_failed', 'profile_identity_mismatch', 'core_identity_mismatch',
+    'connect_deadline', 'config_apply_failed', 'vpn_permission_denied', 'notification_permission_denied',
+    'resolver_response_error', 'resolver_callback_error', 'resolver_timeout', 'default_network_unavailable',
+    'default_network_interface_unresolved', 'default_network_index_unresolved', 'network_unavailable',
+    'dns_failure', 'endpoint_connect_failed', 'endpoint_connect_refused', 'transport_timeout',
+    'tunnel_handshake_failed', 'runtime_failure',
+  };
+  static const runtimeStopReasons = <String>{
+    'user_requested', 'quick_settings', 'service_destroyed', 'vpn_permission_revoked',
+    'command_server_requested', 'core_egress_probe_failed', 'core_egress_probe_unavailable',
+    'desktop_tun_egress_probe_failed',
+  };
 
   final DateTime occurredAt;
   final String subsystem;
@@ -192,6 +230,9 @@ final class DiagnosticEventRecord {
   final int? parseDurationMs;
   final int? createDurationMs;
   final int? certificateDurationMs;
+  final String? runtimePhase;
+  final String? failureKind;
+  final String? stopReason;
 
   Map<String, Object?> toJson() => <String, Object?>{
         if (durationMs != null) 'duration_ms': durationMs,
@@ -200,6 +241,9 @@ final class DiagnosticEventRecord {
         if (parseDurationMs != null) 'parse_duration_ms': parseDurationMs,
         if (createDurationMs != null) 'create_duration_ms': createDurationMs,
         if (certificateDurationMs != null) 'certificate_duration_ms': certificateDurationMs,
+        if (runtimePhase != null) 'runtime_phase': runtimePhase,
+        if (failureKind != null) 'failure_kind': failureKind,
+        if (stopReason != null) 'stop_reason': stopReason,
         'occurred_at': occurredAt.toUtc().toIso8601String(),
         'outcome': outcome,
         'stage': stage,

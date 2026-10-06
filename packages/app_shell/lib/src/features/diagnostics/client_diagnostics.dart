@@ -390,6 +390,25 @@ abstract final class PokrovDiagnosticsPresenter {
                 errorCode: breadcrumb.errorCode,
               ),
         ...candidateProbeEvents,
+        // This is the time of the ordinary runtime read, not a past native event.
+        if (snapshot != null && checkedAtUtc != null)
+          DiagnosticEventRecord(
+            occurredAt: checkedAtUtc.toUtc(),
+            subsystem: 'runtime',
+            stage: 'snapshot',
+            outcome: 'observed',
+            runtimePhase: switch (snapshot.phase) {
+              RuntimePhase.artifactMissing => 'artifact_missing',
+              RuntimePhase.artifactReady => 'artifact_ready',
+              RuntimePhase.initialized => 'initialized',
+              RuntimePhase.configStaged => 'config_staged',
+              RuntimePhase.running => 'running',
+            },
+            failureKind: DiagnosticEventRecord.runtimeFailureKinds.contains(snapshot.lastFailureKind)
+                ? snapshot.lastFailureKind : null,
+            stopReason: DiagnosticEventRecord.runtimeStopReasons.contains(snapshot.lastStopReason)
+                ? snapshot.lastStopReason : null,
+          ),
       ],
     ]..sort((left, right) => left.occurredAt.compareTo(right.occurredAt));
     final prepared = preparePokrovClientSupportBundle(
