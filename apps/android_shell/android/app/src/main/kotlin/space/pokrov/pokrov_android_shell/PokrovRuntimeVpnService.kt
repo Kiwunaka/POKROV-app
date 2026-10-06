@@ -1147,7 +1147,6 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         cancelRuntimeSession()
         releaseDnsFailureToken()
         AndroidRuntimeState.updateCoreEgressValidation(null)
-        markServiceStopped()
         try {
             commandServer?.closeService()
         } catch (_: Throwable) {
@@ -1181,6 +1180,9 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 stopReason = stopReason,
             )
         }
+        // Publish the stopped service only after cleanup and the terminal
+        // state, so host polling cannot recover from an interim disconnect.
+        markServiceStopped()
         activeTileStartGeneration = null
         PokrovQuickSettingsTileService.completeRuntimeTransition(this, tileGeneration)
         if (ownsLatestRuntimeServiceCommand(commandGeneration, serviceCommandGeneration.get())) {

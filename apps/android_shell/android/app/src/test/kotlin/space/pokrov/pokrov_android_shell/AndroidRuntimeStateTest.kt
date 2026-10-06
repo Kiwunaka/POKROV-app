@@ -370,7 +370,7 @@ class AndroidRuntimeStateTest {
     }
 
     @Test
-    fun coreEgressFailure_isNotPromotedBackToRunningAfterTunClosed() {
+    fun coreEgressFailure_isNotPromotedByStaleTunSnapshot() {
         setPrivateField(
             "environment",
             AndroidRuntimeEnvironment(
@@ -391,7 +391,7 @@ class AndroidRuntimeStateTest {
         )
 
         AndroidRuntimeState.reconcileActiveRuntime(
-            tunEstablished = false,
+            tunEstablished = true,
             runningMessage = "POKROV подключен на этом устройстве.",
         )
         val snapshot = AndroidRuntimeState.snapshot()

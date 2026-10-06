@@ -885,6 +885,9 @@ internal object AndroidRuntimeState {
             }
             return
         }
+        // The host may have sampled TUN before fail-close acquired this lock.
+        // A completed egress failure wins over that stale observation.
+        if (phase != AndroidRuntimePhase.RUNNING && coreEgressValidated == false) return
         phase = AndroidRuntimePhase.RUNNING
         connectionPending = false
         lastStopReason = null

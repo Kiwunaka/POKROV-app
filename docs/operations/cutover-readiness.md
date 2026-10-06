@@ -34,11 +34,24 @@ recommended until the accumulated 1.5.0 passes normal QA. One normal Auto on the
 owned API28 emulator, after clearing the manual preference in Locations, reached
 its first VPN consent and connected to CH. The app verified TUN, DNS and VPN
 egress; six TUN routes were present, and the same session disconnected cleanly.
-Existing QA data and the failure journal were retained. Fresh final-package and
-physical ARM acceptance are still open.
+Existing QA data and the failure journal were retained. Final production-signed
+Android APKs and Windows setup 1.5.0+4097 were built from client `116d7dac`.
+Windows passed ordinary Auto DE, six TUN routes, DNS, owned HTTPS204/64 KiB and
+clean disconnect. A new Android trial passed Auto CH after VPN permission had
+already been granted; its first attempt expired before late OS consent.
+A separate clean API28 AVD then failed its first Auto with timely normal consent:
+DE/VLESS REALITY passed the candidate probe, but activation/recovery ended with
+EGRESS-001 and zero current TUN routes. The saved failure is retained in QA#80;
+no unchanged Connect retry is planned. Its exact native cause remains open.
+Physical ARM acceptance is deferred until the owner connects the phone.
+Android now publishes service stop after cleanup and its terminal runtime state;
+a stale TUN observation cannot promote a completed egress failure to running.
+The focused native state regression passed; this change awaits a new package
+and ordinary first-Connect acceptance.
 The final Android Core AAR contains all four ABIs; its x86_64 library and Java
 classes equal the diagnostic AAR used in this check. Windows Core and Cronet
-bytes are retained. Final ARM and Windows package acceptance remains open.
+bytes are retained. Publication remains blocked on fresh Android first-Connect
+and physical ARM acceptance; Brain still recommends public 1.4.5.
 The minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.
 Private 1.4.8 failed profile preparation because its cached recovery had no optional
 catalog; the original online failure remains unknown. This candidate permits that
