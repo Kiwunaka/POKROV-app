@@ -2150,6 +2150,12 @@ class ConnectionManager extends ChangeNotifier {
         select: !discoverCandidates, cache: !useCandidateProbes);
     requireCurrent();
     final catalog = payload.transportCatalog;
+    // An unproven first attempt can expose fresh public choices after failure.
+    // Keep the current catalog while a proven or restored tunnel is retained.
+    if (_activeCandidateRef == null &&
+        _runtimeSnapshot?.phase != RuntimePhase.running && !retainsProtection) {
+      _update(() => _transportCatalog = catalog);
+    }
     if (useCandidateProbes && catalog != null) {
       final probing = engine as RuntimeCandidateProbing;
       final baseWarpPolicy = payload.warpPolicy.withClientLocalDefaults();

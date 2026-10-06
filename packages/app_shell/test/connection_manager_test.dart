@@ -1048,13 +1048,15 @@ void main() {
     );
     final profileGate = Completer<void>();
     final bootstrapper = _StatsBootstrapper()
-      ..candidates = _candidates.take(2).toList()
+      ..candidates = [_candidates.first, _CachedBootstrapper.alternatives[1]]
       ..gate = profileGate;
     final runtime = _Runtime()
       ..supportsCandidates = true
       ..failedProbeProfiles.addAll(bootstrapper.candidates.map((item) => item.candidateRef));
     var permissionRequests = 0;
+    final experienceStore = _ExperienceStore();
     final manager = _manager(runtime, bootstrapper, observability: observability,
+        experienceStore: experienceStore,
         authorizeAndroid: () async { permissionRequests++; return true; });
     addTearDown(manager.dispose);
 
@@ -1067,6 +1069,13 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(permissionRequests, 0);
     expect(runtime.connectCalls, 0);
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(manager.snapshot?.effectiveProfileSource, isNull);
+    expect(bootstrapper.actualReports.singleWhere((call) => call['runtime_phase'] == 'failed')['candidate_ref'],
+        isEmpty, reason: 'public discovery does not adopt an active candidate');
+    expect(manager.transportCatalog?.candidates.map((candidate) => candidate.candidateRef),
+        bootstrapper.candidates.map((candidate) => candidate.candidateRef),
+        reason: 'verified choices survive first-connection probe exhaustion');
     expect(bootstrapper.runtimeCalls.singleWhere((call) => call['runtime_phase'] == 'failed'),
         {'runtime_phase': 'failed', 'error_code': 'CONN-008'});
     expect(bootstrapper.reports.single['candidate_probes'], hasLength(2));
@@ -1078,6 +1087,12 @@ void main() {
         .singleWhere((event) => event['name'] == 'app.connection.attempt.finished');
     expect(terminal['error'], {'code': 'CONN-008', 'origin': 'core'});
     expect(terminal['outcome'], 'failed');
+    await manager.setInterfaceMode(PokrovInterfaceMode.advanced);
+    await manager.setPreferredCandidate(_CachedBootstrapper.alternatives[1].candidateRef);
+    expect(experienceStore.saved.preferredCandidateRef, _CachedBootstrapper.alternatives[1].candidateRef);
+    expect(runtime.connectCalls, 0);
+    expect(runtime.stagedPayloads, isEmpty,
+        reason: 'pinning AWG after failure does not start or stage another attempt');
   });
 
   test('proven Windows connection retries a probe batch after stats delivery fails', () async {

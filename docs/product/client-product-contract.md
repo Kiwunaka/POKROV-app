@@ -751,6 +751,13 @@ shows locations, available catalog protocols, the latest latency and node status
 and low/medium/high load from node metrics. Manual protocol selection pins the
 existing opaque candidate reference. Missing or stale measurements stay labelled
 as such. Both modes hide endpoint addresses; neither exports connection profiles.
+The verified public transport catalog remains available in «Продвинутый» after
+the first connection exhausts its probes, so another advertised protocol can be
+selected. Showing or pinning that choice does not stage a profile, mark a
+candidate active or establish protection; the normal next connection still
+requires the existing profile admission and native proof.
+Refreshing unproven choices preserves the catalog of a running or retained
+connection until its replacement passes the existing selection gates.
 WARP opt-in controls on Home and Profile are available only in «Продвинутый».
 Switching to «Просто» hides these controls and preserves saved consent and the
 current runtime connection.
