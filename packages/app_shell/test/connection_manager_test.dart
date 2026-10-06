@@ -231,6 +231,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final handoffProfiles = <String>[];
   final stagedPayloads = <ManagedProfilePayload>[];
   String? failedHandoffProfile;
+  bool declineNextHandoff = false;
   bool failFirstActivation = false;
   Object? connectFailure;
   bool restoredHandoffGuard = false;
@@ -315,6 +316,11 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     Future<String> Function(String, RuntimeSnapshot)? persistRestrictions,
   }) async {
     calls.add('replace');
+    if (declineNextHandoff) {
+      declineNextHandoff = false;
+      phase = RuntimePhase.configStaged;
+      throw StateError('protected_handoff_unavailable');
+    }
     stagedProfile = payload.profileName;
     stagedPayloads.add(payload);
     handoffProfiles.add(payload.profileName);
@@ -1464,6 +1470,33 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(runtime.overlappingMutation, isFalse);
+  });
+
+  test('declined protected replacement retires retention after a fresh stopped snapshot', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _Bootstrapper(catalog: true);
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.materialCandidate?.candidateRef, _candidates.first.candidateRef);
+
+    bootstrapper.candidates = [_candidates[1]];
+    runtime.declineNextHandoff = true;
+    await manager.reconnect();
+    final replacement = runtime.calls.lastIndexOf('replace');
+    expect(runtime.calls.skip(replacement + 1), contains('snapshot'),
+        reason: 'decline must read the current host, not reuse the running snapshot');
+    expect(manager.snapshot?.phase, RuntimePhase.configStaged);
+    expect(manager.retainsProtection, isFalse);
+    expect(manager.materialCandidate?.candidateRef, _candidates[1].candidateRef,
+        reason: 'retire the active candidate while preserving the attempted candidate');
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+
+    await manager.connect();
+    expect(runtime.calls.where((call) => call == 'replace'), hasLength(1));
+    expect(runtime.connectCalls, 2);
+    expect(runtime.calls, isNot(contains('disconnect')));
+    expect(manager.status.phase, ConnectionPhase.connected);
   });
 
   test('first activation egress failure retries stage and connect without protected replacement', () async {

@@ -48,6 +48,10 @@ Android now publishes service stop after cleanup and its terminal runtime state;
 a stale TUN observation cannot promote a completed egress failure to running.
 The focused native state regression passed; this change awaits a new package
 and ordinary first-Connect acceptance.
+After a declined protected replacement, the client reads a fresh runtime snapshot
+before retiring its local retained-protection flag. Only a confirmed stop clears
+that flag and the active candidate; the attempted candidate remains available for
+diagnostics and a normal retry. The focused recovery regression passed.
 The final Android Core AAR contains all four ABIs; its x86_64 library and Java
 classes equal the diagnostic AAR used in this check. Windows Core and Cronet
 bytes are retained. Publication remains blocked on fresh Android first-Connect

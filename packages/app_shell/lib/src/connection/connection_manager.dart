@@ -300,7 +300,10 @@ class ConnectionManager extends ChangeNotifier {
   int get _managedProfileRevision => _managedProfileLifecycle.revision;
   RuntimeSnapshot? get _runtimeSnapshot => _connectionCoordinator.snapshot;
   set _runtimeSnapshot(RuntimeSnapshot? value) {
-    if (value?.lastFailureKind == 'protected_handoff_failed' ||
+    if (value != null && _runtimeStopConfirmed(value)) {
+      _protectedHandoffActive = false;
+      _activeCandidateRef = null;
+    } else if (value?.lastFailureKind == 'protected_handoff_failed' ||
         (value?.lastFailureKind == 'connect_cancelled' && value?.phase == RuntimePhase.running)) {
       _protectedHandoffActive = true;
       _activePhase = ConnectionPhase.actionRequired;
@@ -4654,8 +4657,24 @@ class ConnectionManager extends ChangeNotifier {
             ownerGeneration: generation);
       } else {
         _protectedHandoffActive = true;
-        current = await _withRuntimeActionTimeout('replaceManagedProfile',
-            () => _stageManagedProfileWithLeaseBinding(prepared, replaceProtected: true), ownerGeneration: generation);
+        try {
+          current = await _withRuntimeActionTimeout('replaceManagedProfile',
+              () => _stageManagedProfileWithLeaseBinding(prepared, replaceProtected: true), ownerGeneration: generation);
+        } on Object {
+          try {
+            final fresh = await _withRuntimeActionTimeout('protectedHandoffSnapshot',
+                _runtimeEngine.snapshot, ownerGeneration: generation);
+            if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
+              throw const ConnectionOperationSuperseded();
+            }
+            _update(() => _runtimeSnapshot = fresh);
+          } on ConnectionOperationSuperseded {
+            rethrow;
+          } on Object {
+            // An unavailable read cannot retire retained protection.
+          }
+          rethrow;
+        }
       }
       current = await _settleRuntimeTransition(current, ownerGeneration: generation,
           waitForEgressProof: true);
