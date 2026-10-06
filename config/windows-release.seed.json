@@ -70,7 +70,7 @@
   },
   "signing": {
     "status": "CANDIDATE_ONLY",
-    "blocker_code": "RELEASE_APPROVAL_PENDING_1_4_5",
+    "blocker_code": "RELEASE_APPROVAL_PENDING_1_4_12",
     "required_for_candidate": false,
     "required_for_trusted_claim": true,
     "contract": "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1",
