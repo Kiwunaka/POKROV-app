@@ -25,3 +25,5 @@ Properties:
 Production support keys, key custody, deployed remote upload/storage and a
 successful exact-candidate transfer are external `I4` evidence and are not
 claimed by package tests.
+
+Every signed extended policy must allow the package's mandatory `build`, `network` and `redaction` categories and their matching collectors. The verifier rejects incomplete policies before activation and when restoring a saved session; optional categories still require explicit permission in the signed policy.

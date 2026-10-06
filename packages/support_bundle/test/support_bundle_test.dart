@@ -381,6 +381,34 @@ void main() {
     expect(source, isNot(contains('.zip')));
   });
 
+  test('signed events-only policy is rejected before support activation',
+      () async {
+    final signing = Ed25519();
+    final pair = await signing.newKeyPair();
+    final public = await pair.extractPublicKey();
+    final verifier = SupportSignedContractVerifier(
+      signingPublicKeysById: <String, String>{'root-test': _b64(public.bytes)},
+    );
+    final payload = _collectionPolicyPayload(now: now)
+      ..['allowed_categories'] = <String>['events']
+      ..['allowed_collectors'] = <String>['operational_events'];
+
+    await expectLater(
+      verifier.verifyCollectionPolicy(
+        await _signed(signing, pair, payload),
+        now: now,
+        platform: 'windows',
+        appVersion: '1.2.0+30',
+        buildNumber: 'candidate-test',
+      ),
+      throwsA(isA<SupportBundleFailure>().having(
+        (error) => error.code,
+        'code',
+        'support_policy_categories_invalid',
+      )),
+    );
+  });
+
   test('tampered signed contracts and oversized TTL fail closed', () async {
     final signing = Ed25519();
     final pair = await signing.newKeyPair();

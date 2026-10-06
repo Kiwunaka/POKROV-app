@@ -614,6 +614,13 @@ final class SupportSignedContractVerifier {
         throw const SupportBundleFailure('support_policy_categories_invalid');
       }
     }
+    if (!categories.containsAll(const {
+      DiagnosticCategory.build,
+      DiagnosticCategory.network,
+      DiagnosticCategory.redaction,
+    })) {
+      throw const SupportBundleFailure('support_policy_categories_invalid');
+    }
     final rawCollectors = payload['allowed_collectors'];
     if (rawCollectors is! List || rawCollectors.isEmpty) {
       throw const SupportBundleFailure('support_policy_collectors_invalid');
