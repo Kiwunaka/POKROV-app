@@ -11,17 +11,16 @@ Auto passed on the owned Windows VM and Android 9 emulator. The physical Android
 phone received the identical APK over USB, and Share opened the system chooser
 and Files. Cloud saving was canceled; Nearby/Bluetooth peer transfer was not checked.
 
-Local **1.4.9+4090** is a private first-Connect and D2 QA candidate with routing catalog enabled
-and Smart Access disabled. Public release and Brain recommendation are not approved;
-the retained 1.4.6+4087 packages remain unchanged. The candidate retains the WARP selection correction: country Auto matches
-WARP chains to their underlying node country. It also includes the exact compiled
-runtime build number in telemetry. Core 1.2.7, its `7846df3` source pins and Cronet
-remain unchanged. These new client packages require their own build and ordinary
-QA before quiet publication and the Root-owned Brain recommendation handoff;
-the minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.
-The candidate lets ordinary VPN modes continue when the optional catalog is
-unpublished, retains closed profile-preparation reasons in the local journal,
-and corrects the installed local-DPI directory permissions before service start.
+Private **1.4.9+4090** and **1.4.10+4091** failed their fresh Android API28 first
+Connect before VPN consent or TUN creation, with `CONN-008`. Core initialization
+completed in about seven seconds; extending the initial ordinary candidate probe
+from four to twelve seconds did not resolve the failure. Windows 1.4.10 passed a
+fresh account, ordinary Auto, routes/DNS and owned HTTPS204, followed by a clean
+disconnect. Quiet publication is authorized, but these failed candidates remain
+private and Brain still recommends 1.4.5. Private **1.4.11+4092 / Core 1.2.8** adds
+closed native probe-phase diagnostics and awaits its own ordinary Android check.
+Routing catalog remains enabled but unpublished; Smart Access stays disabled.
+The minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.
 Private 1.4.8 failed profile preparation because its cached recovery had no optional
 catalog; the original online failure remains unknown. This candidate permits that
 absent catalog only in ordinary VPN modes and retains catalog validation failures.

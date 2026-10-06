@@ -2557,6 +2557,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   PokrovDiagnosticsReport _buildDiagnosticsReport({
     RuntimeSnapshot? snapshot,
     List<DiagnosticCrashRecord>? nativeCrashes,
+    List<DiagnosticEventRecord>? nativeCandidateEvents,
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
         const ClientReleaseHealthBaseline.unavailable(),
@@ -2582,6 +2583,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         ...?widget.observability?.crashDiagnostics,
         ...?nativeCrashes,
       ],
+      candidateProbeEvents: nativeCandidateEvents ?? const [],
+      candidateDiagnosticsReady: nativeCandidateEvents != null ||
+          !pokrovAndroidCandidateCollectionAllowed(
+            hostPlatform: widget.appContext.hostPlatform,
+            policy: _supportModeController.activePolicy,
+            now: DateTime.now().toUtc(),
+          ),
       crashDiagnosticsReady: nativeCrashes != null ||
           !pokrovWindowsCrashCollectionAllowed(
             hostPlatform: widget.appContext.hostPlatform,
@@ -2641,22 +2649,30 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final data = await _collectProtectionCenterData();
     final policy = _supportModeController.activePolicy;
     List<DiagnosticCrashRecord>? nativeCrashes;
+    List<DiagnosticEventRecord>? nativeCandidateEvents;
     try {
       nativeCrashes = await collectPokrovWindowsCrashDiagnostics(
         hostPlatform: widget.appContext.hostPlatform,
         policy: policy,
         now: DateTime.now().toUtc(),
       );
+      nativeCandidateEvents = await collectPokrovAndroidCandidateDiagnostics(
+        hostPlatform: widget.appContext.hostPlatform,
+        policy: policy,
+        now: DateTime.now().toUtc(),
+      );
     } on Object {
-      // Preserve a usable safe summary; incomplete crash collection cannot be
+      // Preserve a usable safe summary; incomplete native collection cannot be
       // delivered as a complete extended report.
     }
     if (!identical(policy, _supportModeController.activePolicy)) {
       nativeCrashes = null;
+      nativeCandidateEvents = null;
     }
     return _buildDiagnosticsReport(
       snapshot: data.snapshot,
       nativeCrashes: nativeCrashes,
+      nativeCandidateEvents: nativeCandidateEvents,
       checkedAtUtc: data.checkedAt?.toUtc(),
     );
   }

@@ -145,6 +145,16 @@ class RuntimeHostBridge(
                 transportNetworkContext.value.candidateNetwork().channelValue()
             }.getOrDefault(emptyMap<String, Any?>()))
             "runtimeEngine.probeCandidate" -> probeCandidate(call, result)
+            "runtimeEngine.candidateDiagnostics" -> AndroidOperationalJournal.readCandidateDiagnostics { outcome ->
+                activity.runOnUiThread {
+                    if (hostTaskScope.isActive()) {
+                        outcome.fold(
+                            onSuccess = { result.success(it) },
+                            onFailure = { result.error("candidate_diagnostics_unavailable", "Candidate diagnostics unavailable.", null) },
+                        )
+                    }
+                }
+            }
             "runtimeEngine.cancelCandidateProbe" -> cancelCandidateProbe(call, result)
             "runtimeEngine.transportNetworkContext" -> {
                 val reference = runCatching { transportNetworkContext.value.read() }.getOrNull()

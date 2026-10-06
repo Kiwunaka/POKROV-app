@@ -15,6 +15,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
+import java.util.ArrayDeque
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -284,6 +285,35 @@ internal class AndroidOperationalJournalStore(
         makeOwnerOnly(currentFile)
     }
 
+    @Synchronized
+    fun readCandidateDiagnostics(): List<Map<String, Any>> {
+        val records = ArrayDeque<Map<String, Any>>()
+        for (file in listOf(previousFile, currentFile)) {
+            if (!file.exists()) continue
+            check(file.length() <= maxFileBytes) { "android_operational_journal_size_invalid" }
+            file.bufferedReader(StandardCharsets.UTF_8).useLines { lines ->
+                for (line in lines) {
+                    val match = CANDIDATE_RECORD.matchEntire(line) ?: continue
+                    val duration = match.groupValues[3].toLongOrNull() ?: continue
+                    val phase = AndroidCandidateProbePhase.values().firstOrNull {
+                        it.wireValue == match.groupValues[4]
+                    } ?: continue
+                    val started = match.groupValues[5].toLongOrNull() ?: continue
+                    if (started > duration) continue
+                    if (records.size == MAX_CANDIDATE_DIAGNOSTICS) records.removeFirst()
+                    records.addLast(mapOf(
+                        "occurred_at" to match.groupValues[1],
+                        "subsystem" to "candidate_probe",
+                        "stage" to phase.wireValue,
+                        "outcome" to if (match.groupValues[2] == "verified") "succeeded" else "failed",
+                        "duration_ms" to duration,
+                    ))
+                }
+            }
+        }
+        return records.toList()
+    }
+
     private fun rotate() {
         if (previousFile.exists()) {
             check(previousFile.delete()) { "android_operational_journal_previous_delete_failed" }
@@ -313,6 +343,11 @@ internal class AndroidOperationalJournalStore(
         const val DEFAULT_MAX_FILE_BYTES = 256L * 1024L
         const val MIN_MAX_FILE_BYTES = 512L
         const val MAX_RECORD_BYTES = 1024
+        const val MAX_CANDIDATE_DIAGNOSTICS = 256
+        // Accept only the canonical closed record written above, never raw JSON fields.
+        val CANDIDATE_RECORD = Regex(
+            """\{"schema_version":1,"occurred_at_utc":"([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z)","sequence":[1-9][0-9]*,"event":"candidate_probe","outcome":"(verified|failed)"(?:,"generation":[1-9][0-9]*)?,"dropped_before":[0-9]+(?:,"probe_sequence":[1-9][0-9]*)?,"duration_ms":([0-9]+),"phase":"([a-z0-9_]+)","phase_started_ms":([0-9]+)\}""",
+        )
     }
 }
 
@@ -405,6 +440,21 @@ internal object AndroidOperationalJournal {
     ) {
         if (rateLimiter.shouldEmit(event, outcome)) {
             record(event, outcome, generation)
+        }
+    }
+
+    @Synchronized
+    fun readCandidateDiagnostics(complete: (Result<List<Map<String, Any>>>) -> Unit) {
+        try {
+            // The same queue places this read after already submitted records and off the UI thread.
+            writer.execute {
+                complete(runCatching {
+                    checkNotNull(store) { "android_operational_journal_unavailable" }
+                        .readCandidateDiagnostics()
+                })
+            }
+        } catch (failure: RejectedExecutionException) {
+            complete(Result.failure(failure))
         }
     }
 

@@ -62,6 +62,62 @@ DiagnosticCrashRecord _nativeCrashRecord(Object? value) {
   );
 }
 
+bool pokrovAndroidCandidateCollectionAllowed({
+  required HostPlatform hostPlatform,
+  required VerifiedSupportCollectionPolicy? policy,
+  required DateTime now,
+}) =>
+    hostPlatform == HostPlatform.android &&
+    policy != null &&
+    !now.isBefore(policy.issuedAt) &&
+    now.isBefore(policy.expiresAt) &&
+    policy.allowedCategories.contains(DiagnosticCategory.events) &&
+    policy.allowedCollectors.contains('operational_events');
+
+Future<List<DiagnosticEventRecord>> collectPokrovAndroidCandidateDiagnostics({
+  required HostPlatform hostPlatform,
+  required VerifiedSupportCollectionPolicy? policy,
+  required DateTime now,
+}) async {
+  if (!pokrovAndroidCandidateCollectionAllowed(
+    hostPlatform: hostPlatform, policy: policy, now: now,
+  )) return const [];
+  final result = await const MethodChannel('space.pokrov/runtime_engine')
+      .invokeMethod<Object?>('runtimeEngine.candidateDiagnostics')
+      .timeout(const Duration(seconds: 12));
+  if (result is! List || result.length > 256) {
+    throw const FormatException('Invalid native candidate diagnostics');
+  }
+  return [for (final record in result) _nativeCandidateRecord(record)];
+}
+
+DiagnosticEventRecord _nativeCandidateRecord(Object? value) {
+  const phases = {
+    'parse_profile', 'create_instance', 'start_instance', 'select_outbound',
+    'proxy_dial', 'egress_check', 'tls_handshake', 'tls_read', 'tls_write',
+    'tls_processing', 'tls_certificate_verified', 'tls_complete', 'http_204',
+    'http_64k',
+  };
+  if (value is! Map || value.length != 5 ||
+      value['occurred_at'] is! String || value['subsystem'] != 'candidate_probe' ||
+      !phases.contains(value['stage']) ||
+      !const {'failed', 'succeeded'}.contains(value['outcome']) ||
+      value['duration_ms'] is! int) {
+    throw const FormatException('Invalid native candidate record');
+  }
+  final occurredAt = DateTime.tryParse(value['occurred_at'] as String);
+  if (occurredAt == null || !occurredAt.isUtc) {
+    throw const FormatException('Invalid native candidate timestamp');
+  }
+  return DiagnosticEventRecord(
+    occurredAt: occurredAt,
+    subsystem: 'candidate_probe',
+    stage: value['stage'] as String,
+    outcome: value['outcome'] as String,
+    durationMs: value['duration_ms'] as int,
+  );
+}
+
 enum PokrovDiagnosticMessageKey {
   verified('diagnostics.summary.verified'),
   checking('diagnostics.summary.checking'),
@@ -178,6 +234,7 @@ final class PokrovDiagnosticsReport {
     this.coreVersion,
     required this.encryptedDeliveryAvailable,
     this.crashDiagnosticsReady = true,
+    this.candidateDiagnosticsReady = true,
     required List<String> safeActionKeys,
     required List<PokrovDiagnosticTimelineAttempt> timelineAttempts,
     this.releaseHealthBaseline =
@@ -200,6 +257,8 @@ final class PokrovDiagnosticsReport {
   final String? coreVersion;
   final bool encryptedDeliveryAvailable;
   final bool crashDiagnosticsReady;
+  final bool candidateDiagnosticsReady;
+  bool get nativeDiagnosticsReady => crashDiagnosticsReady && candidateDiagnosticsReady;
   final List<String> safeActionKeys;
   final List<PokrovDiagnosticTimelineAttempt> timelineAttempts;
   final ClientReleaseHealthBaseline releaseHealthBaseline;
@@ -221,6 +280,7 @@ final class PokrovDiagnosticsReport {
         coreVersion: coreVersion,
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
         crashDiagnosticsReady: crashDiagnosticsReady,
+        candidateDiagnosticsReady: candidateDiagnosticsReady,
         safeActionKeys: safeActionKeys,
         timelineAttempts: timelineAttempts,
         releaseHealthBaseline:
@@ -244,10 +304,12 @@ abstract final class PokrovDiagnosticsPresenter {
     required String candidateLabel,
     required bool encryptedDeliveryAvailable,
     bool crashDiagnosticsReady = true,
+    bool candidateDiagnosticsReady = true,
     VerifiedSupportCollectionPolicy? supportModePolicy,
     DiagnosticSystemSummary? systemSummary,
     List<OperationalBreadcrumb> timelineBreadcrumbs = const [],
     List<DiagnosticCrashRecord> crashes = const [],
+    List<DiagnosticEventRecord> candidateProbeEvents = const [],
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
         const ClientReleaseHealthBaseline.unavailable(),
@@ -304,6 +366,24 @@ abstract final class PokrovDiagnosticsPresenter {
         PokrovDiagnosticMessageKey.awaitingEvidence,
       _ => PokrovDiagnosticMessageKey.noActiveAttempt,
     };
+    final events = <DiagnosticEventRecord>[
+      if (supportModePolicy != null) ...[
+        for (final breadcrumb in timelineBreadcrumbs)
+          if (_timelinePhase(breadcrumb.name) case final phase?)
+            if (breadcrumb.outcome != ObservabilityOutcome.notApplicable)
+              DiagnosticEventRecord(
+                occurredAt: breadcrumb.occurredAtUtc,
+                subsystem: 'connection',
+                stage: phase.$1,
+                outcome: switch (breadcrumb.outcome) {
+                  ObservabilityOutcome.blocked || ObservabilityOutcome.degraded => 'failed',
+                  _ => breadcrumb.outcome.wireValue,
+                },
+                errorCode: breadcrumb.errorCode,
+              ),
+        ...candidateProbeEvents,
+      ],
+    ]..sort((left, right) => left.occurredAt.compareTo(right.occurredAt));
     final prepared = preparePokrovClientSupportBundle(
       hostPlatform: hostPlatform,
       routeMode: routeMode,
@@ -317,24 +397,7 @@ abstract final class PokrovDiagnosticsPresenter {
       supportModePolicy: supportModePolicy,
       systemSummary: systemSummary,
       crashes: crashes,
-      events: [
-        if (supportModePolicy != null)
-          for (final breadcrumb in timelineBreadcrumbs)
-            if (_timelinePhase(breadcrumb.name) case final phase?)
-              if (breadcrumb.outcome != ObservabilityOutcome.notApplicable)
-                DiagnosticEventRecord(
-                  occurredAt: breadcrumb.occurredAtUtc,
-                  subsystem: 'connection',
-                  stage: phase.$1,
-                  outcome: switch (breadcrumb.outcome) {
-                    ObservabilityOutcome.blocked ||
-                    ObservabilityOutcome.degraded =>
-                      'failed',
-                    _ => breadcrumb.outcome.wireValue,
-                  },
-                  errorCode: breadcrumb.errorCode,
-                ),
-      ],
+      events: events,
     );
     final supportCode = pokrovSupportDiagnosticCode(
       prepared: prepared,
@@ -356,6 +419,7 @@ abstract final class PokrovDiagnosticsPresenter {
       coreVersion: snapshot?.coreVersion,
       encryptedDeliveryAvailable: encryptedDeliveryAvailable,
       crashDiagnosticsReady: crashDiagnosticsReady,
+      candidateDiagnosticsReady: candidateDiagnosticsReady,
       safeActionKeys: problemBook?.safeActions ?? const <String>[],
       timelineAttempts: _timelineAttempts(timelineBreadcrumbs),
       releaseHealthBaseline: releaseHealthBaseline,
@@ -895,7 +959,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     final action = widget.onCreateCaseWithBundle;
     if (_sending ||
         (savedDiagnosticId == null &&
-            (!_report.crashDiagnosticsReady || _refreshing || _supportModeBusy)) ||
+            (!_report.nativeDiagnosticsReady || _refreshing || _supportModeBusy)) ||
         (savedDiagnosticId == null
             ? action == null
             : widget.onRetryPendingBundle == null)) {
@@ -937,7 +1001,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
 
   Future<void> _exportBundle() async {
     final action = widget.onExportBundle;
-    if (action == null || _exporting || !_report.crashDiagnosticsReady ||
+    if (action == null || _exporting || !_report.nativeDiagnosticsReady ||
         _refreshing || _supportModeBusy) {
       return;
     }
@@ -1365,12 +1429,20 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
               ),
               const SizedBox(height: 8),
             ],
+            if (!_report.candidateDiagnosticsReady) ...[
+              const Text(
+                'Этапы проверки подключения Android ещё не прочитаны. Обновите проверку '
+                'или выключите режим поддержки, чтобы отправить обычную сводку.',
+                key: ValueKey('diagnostics-candidates-unavailable'),
+              ),
+              const SizedBox(height: 8),
+            ],
             if (_report.encryptedDeliveryAvailable &&
                 widget.onCreateCaseWithBundle != null)
               OutlinedButton.icon(
                 key: const ValueKey('diagnostics-create-case-bundle'),
                 onPressed: _sending || _refreshing || _supportModeBusy ||
-                        !_report.crashDiagnosticsReady ? null : _createCase,
+                        !_report.nativeDiagnosticsReady ? null : _createCase,
                 icon: _sending
                     ? const SizedBox.square(
                         dimension: 18,
@@ -1385,7 +1457,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
               OutlinedButton.icon(
                 key: const ValueKey('diagnostics-export-bundle'),
                 onPressed: _exporting || _refreshing || _supportModeBusy ||
-                        !_report.crashDiagnosticsReady ? null : _exportBundle,
+                        !_report.nativeDiagnosticsReady ? null : _exportBundle,
                 icon: _exporting
                     ? const SizedBox.square(
                         dimension: 18,

@@ -157,6 +157,47 @@ class AndroidOperationalJournalTest {
     }
 
     @Test
+    fun candidateExportKeepsClosedPhasesFromBothFilesWithoutPrivateFields() {
+        val store = AndroidOperationalJournalStore(
+            temporaryFolder.newFolder("candidate-observability"), maxFileBytes = 1024L,
+        )
+        store.append(record(
+            sequence = 1L,
+            event = AndroidOperationalEvent.CANDIDATE_PROBE,
+            outcome = AndroidOperationalOutcome.FAILED,
+            probeSequence = 1L,
+            candidateProbe = AndroidCandidateProbeDiagnostic.fromNativeFields("tls_read", 0L, 31_000L),
+        ))
+        repeat(4) { index ->
+            store.append(record(
+                sequence = index + 2L,
+                event = AndroidOperationalEvent.NETWORK_CALLBACK,
+                outcome = AndroidOperationalOutcome.CAPABILITIES_CHANGED,
+            ))
+        }
+        val completed = record(
+            sequence = 6L,
+            event = AndroidOperationalEvent.CANDIDATE_PROBE,
+            outcome = AndroidOperationalOutcome.VERIFIED,
+            probeSequence = 2L,
+            candidateProbe = AndroidCandidateProbeDiagnostic.fromNativeFields("http_64k", 10L, 200L),
+        ).copy(occurredAtUtc = "2026-08-22T12:00:01.000Z")
+        store.append(completed)
+        assertTrue(store.previousFile.isFile)
+        store.currentFile.appendText(
+            completed.toJsonLine().replace("http_64k", "private.example/profile") + "\n" +
+                "{\"raw\":\"token=fixture\"}\n",
+        )
+
+        assertEquals(listOf(
+            mapOf("occurred_at" to "2026-08-22T12:00:00.000Z", "subsystem" to "candidate_probe",
+                "stage" to "tls_read", "outcome" to "failed", "duration_ms" to 31_000L),
+            mapOf("occurred_at" to "2026-08-22T12:00:01.000Z", "subsystem" to "candidate_probe",
+                "stage" to "http_64k", "outcome" to "succeeded", "duration_ms" to 200L),
+        ), store.readCandidateDiagnostics())
+    }
+
+    @Test
     fun rateLimiterSeparatesClosedEventOutcomePairs() {
         var now = 1_000L
         val limiter = AndroidOperationalRateLimiter(

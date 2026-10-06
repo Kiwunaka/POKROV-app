@@ -57,6 +57,73 @@ void main() {
     ), throwsFormatException);
   });
 
+  test('Android candidate phases reach the signed event bundle without private fields', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    var calls = 0;
+    Object? native = [
+      {'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
+        'stage': 'tls_read', 'outcome': 'failed', 'duration_ms': 31000},
+      {'occurred_at': now.add(const Duration(seconds: 1)).toIso8601String(),
+        'subsystem': 'candidate_probe', 'stage': 'http_64k',
+        'outcome': 'succeeded', 'duration_ms': 200},
+    ];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'runtimeEngine.candidateDiagnostics');
+      expect(call.arguments, isNull);
+      calls++;
+      return native;
+    });
+    addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null));
+    final denied = await _activationFixture(now: now, platform: 'android', allowEvents: false);
+    final allowed = await _activationFixture(now: now, platform: 'android');
+    for (final policy in [null, denied.activation.policy]) {
+      expect(await collectPokrovAndroidCandidateDiagnostics(
+        hostPlatform: HostPlatform.android, policy: policy, now: now,
+      ), isEmpty);
+    }
+    expect(await collectPokrovAndroidCandidateDiagnostics(
+      hostPlatform: HostPlatform.android, policy: allowed.activation.policy,
+      now: now.add(const Duration(hours: 1)),
+    ), isEmpty);
+    expect(calls, 0);
+    final records = await collectPokrovAndroidCandidateDiagnostics(
+      hostPlatform: HostPlatform.android, policy: allowed.activation.policy, now: now,
+    );
+    PreparedSupportBundle prepare(VerifiedSupportCollectionPolicy? policy) =>
+        PokrovDiagnosticsPresenter.fromRuntime(
+          hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+          snapshot: null, statusLabel: 'Отключено', warpState: 'disabled', now: now,
+          appVersion: '1.2.0', buildNumber: '30', releaseChannel: 'direct',
+          candidateLabel: 'test', encryptedDeliveryAvailable: true,
+          supportModePolicy: policy, systemSummary: DiagnosticSystemSummary(
+            osFamily: 'android', osVersion: '9', architecture: 'x86', locale: 'ru-RU',
+          ),
+          candidateProbeEvents: records,
+        ).preparedBundle;
+    final expectedLines = '${jsonEncode(records[0].toJson())}\n${jsonEncode(records[1].toJson())}\n';
+    final hash = await Sha256().hash(utf8.encode(expectedLines));
+    final eventFile = prepare(allowed.activation.policy).preview.files
+        .singleWhere((file) => file.path == 'events/recent.jsonl');
+    expect(eventFile.sha256, hash.bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join());
+    expect(records.map((record) => record.stage), ['tls_read', 'http_64k']);
+    expect(records.map((record) => record.durationMs), [31000, 200]);
+    expect(records.map((record) => record.occurredAt), [now, now.add(const Duration(seconds: 1))]);
+    expect(records.first.toJson().keys.toSet(),
+        {'occurred_at', 'subsystem', 'stage', 'outcome', 'duration_ms'});
+    expect(prepare(null).preview.files.map((file) => file.path), isNot(contains('events/recent.jsonl')));
+    native = [{'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
+      'stage': 'private.example/profile', 'outcome': 'failed', 'duration_ms': 31000}];
+    await expectLater(collectPokrovAndroidCandidateDiagnostics(
+      hostPlatform: HostPlatform.android, policy: allowed.activation.policy, now: now,
+    ), throwsFormatException);
+    native = [{'raw': 'token=fixture'}];
+    await expectLater(collectPokrovAndroidCandidateDiagnostics(
+      hostPlatform: HostPlatform.android, policy: allowed.activation.policy, now: now,
+    ), throwsFormatException);
+  });
+
   test('support mode requires consent, persists usage and rejects nonce replay',
       () async {
     final temporary = await Directory.systemTemp.createTemp('pokrov-mode-');
@@ -297,6 +364,7 @@ Future<({SupportModeActivation activation, String signingPublicKey})>
   String appVersion = '1.2.0',
   String buildNumber = '30',
   bool allowCrashes = true,
+  bool allowEvents = true,
 }) async {
   final algorithm = Ed25519();
   final keyPair = await algorithm.newKeyPair();
@@ -304,14 +372,15 @@ Future<({SupportModeActivation activation, String signingPublicKey})>
   final payload = <String, Object?>{
     'allowed_categories': DiagnosticCategory.values
         .where((category) =>
-            allowCrashes || category != DiagnosticCategory.crashes)
+            (allowCrashes || category != DiagnosticCategory.crashes) &&
+            (allowEvents || category != DiagnosticCategory.events))
         .map((category) => category.name)
         .toList(),
     'allowed_collectors': <String>[
       'build_summary',
       if (allowCrashes) 'crash_index',
       'network_summary',
-      'operational_events',
+      if (allowEvents) 'operational_events',
       'redaction_report',
       'system_summary',
     ],

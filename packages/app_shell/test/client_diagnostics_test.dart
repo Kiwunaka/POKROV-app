@@ -50,6 +50,33 @@ void main() {
     }
   });
 
+  testWidgets('incomplete Android candidate collection blocks new export and delivery', (tester) async {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+      snapshot: null, statusLabel: 'Отключено', warpState: 'disabled', now: now,
+      appVersion: '1.2.0', buildNumber: '30', releaseChannel: 'direct',
+      candidateLabel: 'test', encryptedDeliveryAvailable: true,
+      candidateDiagnosticsReady: false,
+    );
+    await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
+      initialReport: report, onRefresh: () async => report,
+      onOpenProtection: () {}, onOpenSupport: () {},
+      onCreateCaseWithBundle: (_) async => throw StateError('Must not deliver'),
+      onExportBundle: (_) async => throw StateError('Must not export'),
+    )));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('diagnostics-export-bundle')), 180,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('diagnostics-scroll')), matching: find.byType(Scrollable),
+      ).first,
+    );
+    expect(find.byKey(const ValueKey('diagnostics-candidates-unavailable')), findsOneWidget);
+    for (final key in ['diagnostics-create-case-bundle', 'diagnostics-export-bundle']) {
+      expect(tester.widget<OutlinedButton>(find.byKey(ValueKey(key))).onPressed, isNull);
+    }
+  });
+
   test('verified runtime exposes four current proofs and stable message keys',
       () async {
     final report = PokrovDiagnosticsPresenter.fromRuntime(

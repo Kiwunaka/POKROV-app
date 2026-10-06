@@ -608,6 +608,13 @@ Support contract rules:
   Zero phase-start time is valid; native cleanup may take total time past the
   probe budget. Probe IDs, profiles, destinations and native error text stay out
   of this journal.
+- In the signed temporary support mode that allows operational events, Android
+  Diagnostics reads only candidate-probe records from the bounded current and
+  previous journal files after pending writes. The normal encrypted export and
+  upload retain the recorded UTC time, closed last phase as event stage,
+  succeeded/failed outcome and total duration. Phase-start timing and local
+  sequences stay private. Failed collection blocks a new extended export;
+  switching support mode off keeps the ordinary summary available.
 - the diagnostic preview is the consent boundary: it shows the diagnostic ID,
   categories, virtual files, sizes and redaction count derived from the same
   canonical payload that will be encrypted
