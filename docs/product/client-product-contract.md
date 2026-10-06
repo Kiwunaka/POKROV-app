@@ -457,7 +457,7 @@ After activation:
   `selected_node_code` before the runtime config is materialized
 - a catalog city may carry a safe additive `variants` list. One available
   variant keeps the one-tap location path; multiple available variants open a
-  compact `Обычный` / `Белые списки` choice. The selected stable variant id is
+  compact `Обычный` / `Через мост` choice. The selected stable variant id is
   device-local and persists alongside the explicit preferred node; it is
   cleared when the person returns to `Автоматически`
 - Locations with no available catalog variant cannot be selected. Quality
@@ -482,12 +482,12 @@ After activation:
   one bounded all-variant URL-test before stopping. The sheet may then reuse
   only the exact-catalog in-memory safe snapshot for two minutes, with no
   `Сейчас работает` claim after teardown; raw topology is never persisted
-- when multiple variants exist, the city row itself names `Обычный / Белые
-  списки` (or an equally explicit short list) before the person taps it. A bare
+- when multiple variants exist, the city row itself names `Обычный / Через
+  мост` (or an equally explicit short list) before the person taps it. A bare
   numeric variant count is not sufficient discovery and must not make the live
   capability look absent
 - a manual `Обычный` choice resolves only to the canonical base outbound for
-  that node. A `Белые списки` choice resolves only through a unique safe
+  that node. A `Через мост` choice resolves only through a unique safe
   `_meta.ru_bridge.endpoints[{id,label}]` entry and the exact corresponding
   member of the final selector. Missing, ambiguous, stale, or non-member
   mappings fail closed without exposing or guessing raw topology
@@ -523,9 +523,11 @@ After activation:
   pending node or variant must not replace the last proven live combination
 - automatic selection keeps its existing semantics and never persists a
   server-selected bridge/direct variant as a manual preference
-- WARP plus a manual `Белые списки` variant is blocked before runtime staging
+- WARP plus a manual `Через мост` variant is blocked before runtime staging
   until that composition has focused runtime proof; the app tells the person
   to disable WARP or choose `Обычный` and never silently changes either choice
+
+Public bridge choices use `Через мост`, including labels received from an older cached catalog. The route explanation states that the connection reaches the selected location through an intermediate node. The local direct-service option is labelled `Прямой доступ к сервисам` and retains its existing description of direct access, VPN fallback and IP visibility.
 - after that successful reconnect, the home location chip shows the selected
   city from the live or cached catalog; it must not keep claiming
   `Автоматически` or expose a technical node code. Cached, stale, or unknown

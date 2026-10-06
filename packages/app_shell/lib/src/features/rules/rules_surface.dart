@@ -459,7 +459,7 @@ List<String> _routingPreferenceChangeLabels(
   PokrovRoutingPreferences draft,
 ) =>
     <String>[
-      if (applied.localDpiEnabled != draft.localDpiEnabled) 'обход блокировок',
+      if (applied.localDpiEnabled != draft.localDpiEnabled) 'прямой доступ к сервисам',
       if (applied.dnsPreset != draft.dnsPreset ||
           applied.dnsTransport != draft.dnsTransport ||
           applied.customDnsUrl != draft.customDnsUrl ||

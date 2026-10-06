@@ -142,7 +142,9 @@ class _LocationsSectionState extends State<_LocationsSection> {
                       key: ValueKey(
                           'location-candidate-${candidate.candidateRef}'),
                       title: Text(_locationCandidateLabel(candidate)),
-                      subtitle: Text(_locationNodeStatusLabel(entry.city)),
+                      subtitle: Text(candidate.transport == 'bridge'
+                          ? '$_locationBridgeRouteDescription ${_locationNodeStatusLabel(entry.city)}'
+                          : _locationNodeStatusLabel(entry.city)),
                       trailing:
                           candidate.candidateRef == widget.preferredCandidateRef
                               ? const Icon(Icons.push_pin_rounded)
@@ -156,9 +158,8 @@ class _LocationsSectionState extends State<_LocationsSection> {
                     ListTile(
                       key: ValueKey('location-variant-${variant.id}'),
                       title: Text(_safeLocationLabel(variant.label,
-                          fallback: 'Белые списки')),
-                      subtitle: Text(_safeLocationLabel(variant.description,
-                          fallback: '')),
+                          fallback: 'Через мост')),
+                      subtitle: const Text(_locationBridgeRouteDescription),
                       onTap: () => Navigator.of(context).pop(('', variant.id)),
                     ),
                 ],
@@ -1107,11 +1108,13 @@ class _LocationVariantSheetState extends State<_LocationVariantSheet> {
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
-                          if (variant.description.isNotEmpty) ...[
+                          if (variant.id != 'direct' || variant.description.isNotEmpty) ...[
                             const SizedBox(height: 3),
                             Text(
-                              _safeLocationLabel(variant.description,
-                                  fallback: ''),
+                              variant.id != 'direct'
+                                  ? _locationBridgeRouteDescription
+                                  : _safeLocationLabel(variant.description,
+                                      fallback: ''),
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall

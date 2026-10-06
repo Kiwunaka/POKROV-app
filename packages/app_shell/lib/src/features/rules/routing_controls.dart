@@ -8,7 +8,7 @@ class _LocalDpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _SectionCard(
-    title: 'Обход блокировок',
+    title: 'Прямой доступ к сервисам',
     lines: const ['Для разрешённых каталогом сервисов пробует прямой доступ. При сбое использует VPN. Прямое соединение открывает сервису ваш IP.'],
     child: _RoutingToggleRow(
       key: const ValueKey('rules-local-dpi'),
@@ -297,7 +297,7 @@ class _DnsAndLanCard extends StatelessWidget {
               title: 'DNS напрямую · лаборатория',
               subtitle: preferences.dnsTransport == PokrovDnsTransport.direct
                   ? 'Только зашифрованный DoH идёт без VPN. IP-адрес не меняется.'
-                  : 'DoH идёт через VPN. Надёжнее при сетевых блокировках.',
+                  : 'DoH идёт через VPN.',
               value: preferences.dnsTransport == PokrovDnsTransport.direct,
               onChanged: (value) => onChanged(
                 preferences.copyWith(
