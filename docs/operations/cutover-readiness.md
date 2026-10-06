@@ -46,8 +46,17 @@ no unchanged Connect retry is planned. Its exact native cause remains open.
 Physical ARM acceptance is deferred until the owner connects the phone.
 Android now publishes service stop after cleanup and its terminal runtime state;
 a stale TUN observation cannot promote a completed egress failure to running.
-The focused native state regression passed; this change awaits a new package
-and ordinary first-Connect acceptance.
+The focused native state regression passed. Production-signed private Android
+1.5.0+4098 x86_64 and ARM64 packages were built from client `f46314c3`.
+One first ordinary Auto on a new API28 AVD with a new trial and normal VPN consent
+connected to CH. The exact installation's Brain telemetry recorded running/success
+for attempt 1 with egress proof. TUN, six routes, DNS and MTU 1280 were present;
+the preinstalled browser loaded the owned HTTPS health endpoint, and a request to
+the 64 KiB endpoint increased TUN RX by 71072 bytes. Exact response-body length
+and the +10/+20/+30-second samples were not verified in this run. The reported
+236761 ms includes QA delay at the VPN explanation, so it is not a first-Connect
+speed measurement. Ordinary disconnect removed the TUN and its routes and
+restored the Connect button.
 After a declined protected replacement, the client reads a fresh runtime snapshot
 before retiring its local retained-protection flag. Only a confirmed stop clears
 that flag and the active candidate; the attempted candidate remains available for
@@ -59,8 +68,8 @@ runtime snapshot with closed phase, failure kind and stop reason at its observed
 read time; this is not a historical native event. Focused regressions passed.
 The final Android Core AAR contains all four ABIs; its x86_64 library and Java
 classes equal the diagnostic AAR used in this check. Windows Core and Cronet
-bytes are retained. Publication remains blocked on fresh Android first-Connect
-and physical ARM acceptance; Brain still recommends public 1.4.5.
+bytes are retained. Windows 4098 packaging and its ordinary check remain open,
+as does physical ARM acceptance; Brain still recommends public 1.4.5.
 The minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.
 Private 1.4.8 failed profile preparation because its cached recovery had no optional
 catalog; the original online failure remains unknown. This candidate permits that
