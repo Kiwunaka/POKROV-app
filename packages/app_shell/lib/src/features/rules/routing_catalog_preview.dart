@@ -91,9 +91,9 @@ class _RoutingCatalogPreview {
         if (fallbacks.contains('gateway_unavailable_using_vpn'))
           'Шлюз не подготовлен; выбран запасной маршрут через VPN.',
         if (fallbacks.contains('gateway_unavailable_blocked'))
-          'Шлюз и VPN недоступны; прямой обход запрещён.',
+          'Шлюз и VPN недоступны; прямое соединение запрещено.',
         if (fallbacks.contains('vpn_unavailable_blocked'))
-          'VPN недоступен; прямой обход запрещён.',
+          'VPN недоступен; прямое соединение запрещено.',
       ].map((message) => '\n$message').join();
       return _RoutingCatalogPreviewRow(service.id, service.displayName,
           '${routes.join(' · ')} · доменных правил: ${rules.length}$fallbackText');

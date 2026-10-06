@@ -3395,7 +3395,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             .where((variant) => variant.id == variantId)
             .toList(growable: false);
         return variantMatches.length == 1
-            ? '$cityLabel · ${_safeLocationLabel(variantMatches.single.label, fallback: 'Белые списки')}'
+            ? '$cityLabel · ${_safeLocationLabel(variantMatches.single.label, fallback: 'Через мост')}'
             : cityLabel;
       }
     }

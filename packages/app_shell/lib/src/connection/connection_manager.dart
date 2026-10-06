@@ -2488,7 +2488,7 @@ class ConnectionManager extends ChangeNotifier {
         requestedVariant != 'direct' &&
         warpRuntimeAttemptEnabled) {
       throw const BootstrapFailure(
-        'WARP пока нельзя использовать с вариантом «Белые списки». Выключите WARP или выберите «Обычный».',
+        'WARP пока нельзя использовать с вариантом «Через мост». Выключите WARP или выберите «Обычный».',
       );
     }
     var runtimePayload = payload.copyWith(
@@ -4999,7 +4999,7 @@ class ConnectionManager extends ChangeNotifier {
         _warpRuntimeConsent &&
         _managedWarpPolicy.canOfferRuntime) {
       const message =
-          'WARP пока нельзя использовать с вариантом «Белые списки». Выключите WARP или выберите «Обычный».';
+          'WARP пока нельзя использовать с вариантом «Через мост». Выключите WARP или выберите «Обычный».';
       _update(() {
         _runtimeHeadline = message;
       });

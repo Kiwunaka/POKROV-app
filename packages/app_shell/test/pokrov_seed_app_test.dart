@@ -11175,7 +11175,7 @@ void main() {
     expect(
       find.descendant(
         of: cityRow,
-        matching: find.textContaining('Обычный / Белые списки +2'),
+        matching: find.textContaining('Обычный / Через мост +2'),
       ),
       findsOneWidget,
     );
@@ -11195,7 +11195,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Обычный'), findsOneWidget);
-    expect(find.text('Белые списки'), findsOneWidget);
+    expect(find.text('Через мост'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('location-variant-sheet-scroll')),
       findsOneWidget,
@@ -11420,7 +11420,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Франкфурт · Белые списки'),
+        matching: find.text('Франкфурт · Через мост'),
       ),
       findsOneWidget,
     );

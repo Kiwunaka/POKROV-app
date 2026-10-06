@@ -1,5 +1,8 @@
 part of pokrov_app_shell;
 
+const _locationBridgeRouteDescription =
+    'Через промежуточный узел.';
+
 String _locationCountryDisplayName(String code, String fallback) {
   const names = <String, String>{
     'CH': 'Швейцария',
@@ -134,7 +137,8 @@ String _safeLocationLabel(String value, {required String fallback}) {
       text.contains('://')) {
     return fallback;
   }
-  return text;
+  return text.replaceAll(
+      RegExp(r'белые\s+списки', caseSensitive: false), 'Через мост');
 }
 
 String _locationCandidateLabel(domain.TransportCandidate candidate) {
@@ -148,7 +152,7 @@ String _locationCandidateLabel(domain.TransportCandidate candidate) {
     'awg' => 'AWG 3.1',
     _ => 'Соединение',
   };
-  final path = candidate.transport == 'bridge' ? ' · Белые списки' : '';
+  final path = candidate.transport == 'bridge' ? ' · Через мост' : '';
   final warp = candidate.warpMode == null ? '' : ' · WARP';
   return '$protocol$path$warp';
 }
