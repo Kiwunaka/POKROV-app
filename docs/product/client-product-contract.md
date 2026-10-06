@@ -614,8 +614,10 @@ Support contract rules:
   Diagnostics reads only candidate-probe records from the bounded current and
   previous journal files after pending writes. The normal encrypted export and
   upload retain the recorded UTC time, closed last phase as event stage,
-  succeeded/failed outcome and total duration. Phase-start timing and local
-  sequences stay private. Failed collection blocks a new extended export;
+  succeeded/failed outcome, total duration and optional `phase_started_ms`, a
+  nonnegative phase-start offset no greater than total duration. Records without
+  that field retain their existing serialization; local sequences stay private.
+  Failed collection blocks a new extended export;
   switching support mode off keeps the ordinary summary available.
 - the diagnostic preview is the consent boundary: it shows the diagnostic ID,
   categories, virtual files, sizes and redaction count derived from the same

@@ -143,6 +143,7 @@ final class DiagnosticEventRecord {
     required this.outcome,
     this.errorCode,
     this.durationMs,
+    this.phaseStartedMs,
   }) {
     _requireUtc(occurredAt, 'occurredAt');
     _requireMatch(subsystem, 'subsystem', RegExp(r'^[a-z][a-z0-9_]{0,31}$'));
@@ -164,6 +165,10 @@ final class DiagnosticEventRecord {
     if (durationMs != null && (durationMs! < 0 || durationMs! > 86400000)) {
       throw ArgumentError.value(durationMs, 'durationMs');
     }
+    if (phaseStartedMs != null &&
+        (durationMs == null || phaseStartedMs! < 0 || phaseStartedMs! > durationMs!)) {
+      throw ArgumentError.value(phaseStartedMs, 'phaseStartedMs');
+    }
   }
 
   final DateTime occurredAt;
@@ -172,10 +177,12 @@ final class DiagnosticEventRecord {
   final String outcome;
   final String? errorCode;
   final int? durationMs;
+  final int? phaseStartedMs;
 
   Map<String, Object?> toJson() => <String, Object?>{
         if (durationMs != null) 'duration_ms': durationMs,
         if (errorCode != null) 'error_code': errorCode,
+        if (phaseStartedMs != null) 'phase_started_ms': phaseStartedMs,
         'occurred_at': occurredAt.toUtc().toIso8601String(),
         'outcome': outcome,
         'stage': stage,

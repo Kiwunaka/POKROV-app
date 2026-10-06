@@ -62,7 +62,8 @@ void main() {
     var calls = 0;
     Object? native = [
       {'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
-        'stage': 'tls_read', 'outcome': 'failed', 'duration_ms': 31000},
+        'stage': 'tls_read', 'outcome': 'failed', 'duration_ms': 31000,
+        'phase_started_ms': 2450},
       {'occurred_at': now.add(const Duration(seconds: 1)).toIso8601String(),
         'subsystem': 'candidate_probe', 'stage': 'http_64k',
         'outcome': 'succeeded', 'duration_ms': 200},
@@ -109,10 +110,19 @@ void main() {
     expect(eventFile.sha256, hash.bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join());
     expect(records.map((record) => record.stage), ['tls_read', 'http_64k']);
     expect(records.map((record) => record.durationMs), [31000, 200]);
+    expect(records.map((record) => record.phaseStartedMs), [2450, null]);
+    expect(records.first.toJson()['phase_started_ms'], 2450);
+    expect(records.last.toJson(), isNot(contains('phase_started_ms')));
     expect(records.map((record) => record.occurredAt), [now, now.add(const Duration(seconds: 1))]);
     expect(records.first.toJson().keys.toSet(),
-        {'occurred_at', 'subsystem', 'stage', 'outcome', 'duration_ms'});
+        {'occurred_at', 'subsystem', 'stage', 'outcome', 'duration_ms', 'phase_started_ms'});
     expect(prepare(null).preview.files.map((file) => file.path), isNot(contains('events/recent.jsonl')));
+    native = [{'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
+      'stage': 'start_instance', 'outcome': 'failed', 'duration_ms': 31000,
+      'phase_started_ms': 31001}];
+    await expectLater(collectPokrovAndroidCandidateDiagnostics(
+      hostPlatform: HostPlatform.android, policy: allowed.activation.policy, now: now,
+    ), throwsArgumentError);
     native = [{'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
       'stage': 'private.example/profile', 'outcome': 'failed', 'duration_ms': 31000}];
     await expectLater(collectPokrovAndroidCandidateDiagnostics(

@@ -191,9 +191,9 @@ class AndroidOperationalJournalTest {
 
         assertEquals(listOf(
             mapOf("occurred_at" to "2026-08-22T12:00:00.000Z", "subsystem" to "candidate_probe",
-                "stage" to "tls_read", "outcome" to "failed", "duration_ms" to 31_000L),
+                "stage" to "tls_read", "outcome" to "failed", "duration_ms" to 31_000L, "phase_started_ms" to 0L),
             mapOf("occurred_at" to "2026-08-22T12:00:01.000Z", "subsystem" to "candidate_probe",
-                "stage" to "http_64k", "outcome" to "succeeded", "duration_ms" to 200L),
+                "stage" to "http_64k", "outcome" to "succeeded", "duration_ms" to 200L, "phase_started_ms" to 10L),
         ), store.readCandidateDiagnostics())
     }
 

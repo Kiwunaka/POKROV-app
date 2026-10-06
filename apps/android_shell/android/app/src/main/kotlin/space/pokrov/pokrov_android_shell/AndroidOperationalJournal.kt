@@ -307,6 +307,7 @@ internal class AndroidOperationalJournalStore(
                         "stage" to phase.wireValue,
                         "outcome" to if (match.groupValues[2] == "verified") "succeeded" else "failed",
                         "duration_ms" to duration,
+                        "phase_started_ms" to started,
                     ))
                 }
             }
