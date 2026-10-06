@@ -144,6 +144,9 @@ final class DiagnosticEventRecord {
     this.errorCode,
     this.durationMs,
     this.phaseStartedMs,
+    this.parseDurationMs,
+    this.createDurationMs,
+    this.certificateDurationMs,
   }) {
     _requireUtc(occurredAt, 'occurredAt');
     _requireMatch(subsystem, 'subsystem', RegExp(r'^[a-z][a-z0-9_]{0,31}$'));
@@ -169,6 +172,14 @@ final class DiagnosticEventRecord {
         (durationMs == null || phaseStartedMs! < 0 || phaseStartedMs! > durationMs!)) {
       throw ArgumentError.value(phaseStartedMs, 'phaseStartedMs');
     }
+    if (parseDurationMs != null || createDurationMs != null || certificateDurationMs != null) {
+      if (durationMs == null || parseDurationMs == null || createDurationMs == null ||
+          certificateDurationMs == null || parseDurationMs! < 0 || createDurationMs! < 0 ||
+          createDurationMs! > durationMs! || certificateDurationMs! < 0 ||
+          certificateDurationMs! > createDurationMs! || parseDurationMs! > durationMs! - createDurationMs!) {
+        throw ArgumentError('Invalid candidate setup timings');
+      }
+    }
   }
 
   final DateTime occurredAt;
@@ -178,11 +189,17 @@ final class DiagnosticEventRecord {
   final String? errorCode;
   final int? durationMs;
   final int? phaseStartedMs;
+  final int? parseDurationMs;
+  final int? createDurationMs;
+  final int? certificateDurationMs;
 
   Map<String, Object?> toJson() => <String, Object?>{
         if (durationMs != null) 'duration_ms': durationMs,
         if (errorCode != null) 'error_code': errorCode,
         if (phaseStartedMs != null) 'phase_started_ms': phaseStartedMs,
+        if (parseDurationMs != null) 'parse_duration_ms': parseDurationMs,
+        if (createDurationMs != null) 'create_duration_ms': createDurationMs,
+        if (certificateDurationMs != null) 'certificate_duration_ms': certificateDurationMs,
         'occurred_at': occurredAt.toUtc().toIso8601String(),
         'outcome': outcome,
         'stage': stage,

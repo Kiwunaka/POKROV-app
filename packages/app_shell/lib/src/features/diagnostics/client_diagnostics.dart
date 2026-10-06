@@ -98,13 +98,15 @@ DiagnosticEventRecord _nativeCandidateRecord(Object? value) {
     'tls_processing', 'tls_certificate_verified', 'tls_complete', 'http_204',
     'http_64k',
   };
-  if (value is! Map || (value.length != 5 && value.length != 6) ||
-      (value.length == 6 && !value.containsKey('phase_started_ms')) ||
+  const requiredFields = {'occurred_at', 'subsystem', 'stage', 'outcome', 'duration_ms'};
+  const timingFields = {'phase_started_ms', 'parse_duration_ms', 'create_duration_ms', 'certificate_duration_ms'};
+  if (value is! Map || !value.keys.toSet().containsAll(requiredFields) ||
+      value.keys.any((key) => !requiredFields.contains(key) && !timingFields.contains(key)) ||
       value['occurred_at'] is! String || value['subsystem'] != 'candidate_probe' ||
       !phases.contains(value['stage']) ||
       !const {'failed', 'succeeded'}.contains(value['outcome']) ||
       value['duration_ms'] is! int ||
-      (value.containsKey('phase_started_ms') && value['phase_started_ms'] is! int)) {
+      timingFields.any((field) => value.containsKey(field) && value[field] is! int)) {
     throw const FormatException('Invalid native candidate record');
   }
   final occurredAt = DateTime.tryParse(value['occurred_at'] as String);
@@ -118,6 +120,9 @@ DiagnosticEventRecord _nativeCandidateRecord(Object? value) {
     outcome: value['outcome'] as String,
     durationMs: value['duration_ms'] as int,
     phaseStartedMs: value['phase_started_ms'] as int?,
+    parseDurationMs: value['parse_duration_ms'] as int?,
+    createDurationMs: value['create_duration_ms'] as int?,
+    certificateDurationMs: value['certificate_duration_ms'] as int?,
   );
 }
 

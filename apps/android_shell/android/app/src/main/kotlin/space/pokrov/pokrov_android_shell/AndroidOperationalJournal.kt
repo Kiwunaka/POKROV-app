@@ -175,16 +175,26 @@ internal data class AndroidCandidateProbeDiagnostic(
     val phase: AndroidCandidateProbePhase? = null,
     val phaseStartedMs: Long? = null,
     val durationMs: Long? = null,
+    val parseDurationMs: Long? = null,
+    val createDurationMs: Long? = null,
+    val certificateDurationMs: Long? = null,
 ) {
     init {
         require(durationMs == null || durationMs >= 0L)
         require((phase == null) == (phaseStartedMs == null))
         require(phaseStartedMs == null ||
             (durationMs != null && phaseStartedMs >= 0L && phaseStartedMs <= durationMs))
+        require((parseDurationMs == null && createDurationMs == null && certificateDurationMs == null) ||
+            (durationMs != null && parseDurationMs != null && createDurationMs != null &&
+                certificateDurationMs != null && parseDurationMs >= 0L &&
+                createDurationMs in 0L..durationMs && certificateDurationMs in 0L..createDurationMs &&
+                parseDurationMs <= durationMs - createDurationMs))
     }
 
     companion object {
-        fun fromNativeFields(stage: Any?, stageStartedMs: Any?, durationMs: Any?): AndroidCandidateProbeDiagnostic {
+        fun fromNativeFields(stage: Any?, stageStartedMs: Any?, durationMs: Any?,
+            parseDurationMs: Any? = null, createDurationMs: Any? = null,
+            certificateDurationMs: Any? = null): AndroidCandidateProbeDiagnostic {
             fun millis(value: Any?): Long? = when (value) {
                 is Int -> value.toLong()
                 is Long -> value
@@ -194,11 +204,20 @@ internal data class AndroidCandidateProbeDiagnostic(
             val duration = millis(durationMs)
             val phase = AndroidCandidateProbePhase.values().firstOrNull { it.wireValue == stage }
             val started = millis(stageStartedMs)
-            return if (phase != null && started != null && duration != null && started <= duration) {
-                AndroidCandidateProbeDiagnostic(phase, started, duration)
-            } else {
-                AndroidCandidateProbeDiagnostic(durationMs = duration)
-            }
+            val validPhase = phase != null && started != null && duration != null && started <= duration
+            val parse = millis(parseDurationMs)
+            val create = millis(createDurationMs)
+            val certificate = millis(certificateDurationMs)
+            val validSetup = duration != null && parse != null && create != null && certificate != null &&
+                create <= duration && certificate <= create && parse <= duration - create
+            return AndroidCandidateProbeDiagnostic(
+                phase = if (validPhase) phase else null,
+                phaseStartedMs = if (validPhase) started else null,
+                durationMs = duration,
+                parseDurationMs = if (validSetup) parse else null,
+                createDurationMs = if (validSetup) create else null,
+                certificateDurationMs = if (validSetup) certificate else null,
+            )
         }
     }
 }
@@ -254,6 +273,14 @@ internal data class AndroidOperationalRecord(
                 append("\",\"phase_started_ms\":")
                 append(diagnostic.phaseStartedMs)
             }
+            if (diagnostic.parseDurationMs != null) {
+                append(",\"parse_duration_ms\":")
+                append(diagnostic.parseDurationMs)
+                append(",\"create_duration_ms\":")
+                append(diagnostic.createDurationMs)
+                append(",\"certificate_duration_ms\":")
+                append(diagnostic.certificateDurationMs)
+            }
         }
         append('}')
     }
@@ -300,6 +327,12 @@ internal class AndroidOperationalJournalStore(
                     } ?: continue
                     val started = match.groupValues[5].toLongOrNull() ?: continue
                     if (started > duration) continue
+                    val parse = match.groupValues[6].toLongOrNull()
+                    val create = match.groupValues[7].toLongOrNull()
+                    val certificate = match.groupValues[8].toLongOrNull()
+                    if (match.groupValues[6].isNotEmpty() &&
+                        (parse == null || create == null || certificate == null || create > duration ||
+                            certificate > create || parse > duration - create)) continue
                     if (records.size == MAX_CANDIDATE_DIAGNOSTICS) records.removeFirst()
                     records.addLast(mapOf(
                         "occurred_at" to match.groupValues[1],
@@ -308,7 +341,11 @@ internal class AndroidOperationalJournalStore(
                         "outcome" to if (match.groupValues[2] == "verified") "succeeded" else "failed",
                         "duration_ms" to duration,
                         "phase_started_ms" to started,
-                    ))
+                    ) + if (parse != null) mapOf(
+                        "parse_duration_ms" to parse,
+                        "create_duration_ms" to create!!,
+                        "certificate_duration_ms" to certificate!!,
+                    ) else emptyMap())
                 }
             }
         }
@@ -347,7 +384,7 @@ internal class AndroidOperationalJournalStore(
         const val MAX_CANDIDATE_DIAGNOSTICS = 256
         // Accept only the canonical closed record written above, never raw JSON fields.
         val CANDIDATE_RECORD = Regex(
-            """\{"schema_version":1,"occurred_at_utc":"([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z)","sequence":[1-9][0-9]*,"event":"candidate_probe","outcome":"(verified|failed)"(?:,"generation":[1-9][0-9]*)?,"dropped_before":[0-9]+(?:,"probe_sequence":[1-9][0-9]*)?,"duration_ms":([0-9]+),"phase":"([a-z0-9_]+)","phase_started_ms":([0-9]+)\}""",
+            """\{"schema_version":1,"occurred_at_utc":"([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z)","sequence":[1-9][0-9]*,"event":"candidate_probe","outcome":"(verified|failed)"(?:,"generation":[1-9][0-9]*)?,"dropped_before":[0-9]+(?:,"probe_sequence":[1-9][0-9]*)?,"duration_ms":([0-9]+),"phase":"([a-z0-9_]+)","phase_started_ms":([0-9]+)(?:,"parse_duration_ms":([0-9]+),"create_duration_ms":([0-9]+),"certificate_duration_ms":([0-9]+))?\}""",
         )
     }
 }

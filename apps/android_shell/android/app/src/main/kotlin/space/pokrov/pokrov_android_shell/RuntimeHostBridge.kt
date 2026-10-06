@@ -1722,6 +1722,9 @@ class RuntimeHostBridge(
                             nativeResult.opt("stage"),
                             nativeResult.opt("stage_started_ms"),
                             nativeResult.opt("duration_ms"),
+                            nativeResult.opt("parse_duration_ms"),
+                            nativeResult.opt("create_duration_ms"),
+                            nativeResult.opt("certificate_duration_ms"),
                         ),
                     )
                 }

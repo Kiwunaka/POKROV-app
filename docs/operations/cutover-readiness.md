@@ -20,6 +20,13 @@ disconnect. Quiet publication is authorized, but these failed candidates remain
 private and Brain still recommends 1.4.5. Private **1.4.11+4092 / Core 1.2.8** adds
 closed native probe-phase diagnostics and awaits its own ordinary Android check.
 Routing catalog remains enabled but unpublished; Smart Access stays disabled.
+Protected report #78 localized the private Android refusal to the time before
+Start (16.2–16.8 seconds); Start and cleanup occupied only 34–70 milliseconds.
+The next private 1.5.0 diagnostic candidate records separate parsing, creation
+and certificate-store durations. The CA hypothesis is not yet runtime-proved;
+public 1.4.5 remains recommended until the accumulated 1.5.0 passes normal QA.
+This diagnostic Core AAR contains x86_64 only; ARM and Windows artifacts are
+retained from the earlier preparation and have not been rebuilt or accepted.
 The minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.
 Private 1.4.8 failed profile preparation because its cached recovery had no optional
 catalog; the original online failure remains unknown. This candidate permits that

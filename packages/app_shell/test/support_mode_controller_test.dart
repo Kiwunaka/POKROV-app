@@ -63,7 +63,8 @@ void main() {
     Object? native = [
       {'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
         'stage': 'tls_read', 'outcome': 'failed', 'duration_ms': 31000,
-        'phase_started_ms': 2450},
+        'phase_started_ms': 2450, 'parse_duration_ms': 100,
+        'create_duration_ms': 2100, 'certificate_duration_ms': 2000},
       {'occurred_at': now.add(const Duration(seconds: 1)).toIso8601String(),
         'subsystem': 'candidate_probe', 'stage': 'http_64k',
         'outcome': 'succeeded', 'duration_ms': 200},
@@ -112,10 +113,14 @@ void main() {
     expect(records.map((record) => record.durationMs), [31000, 200]);
     expect(records.map((record) => record.phaseStartedMs), [2450, null]);
     expect(records.first.toJson()['phase_started_ms'], 2450);
+    expect(records.first.toJson()['parse_duration_ms'], 100);
+    expect(records.first.toJson()['create_duration_ms'], 2100);
+    expect(records.first.toJson()['certificate_duration_ms'], 2000);
     expect(records.last.toJson(), isNot(contains('phase_started_ms')));
     expect(records.map((record) => record.occurredAt), [now, now.add(const Duration(seconds: 1))]);
     expect(records.first.toJson().keys.toSet(),
-        {'occurred_at', 'subsystem', 'stage', 'outcome', 'duration_ms', 'phase_started_ms'});
+        {'occurred_at', 'subsystem', 'stage', 'outcome', 'duration_ms', 'phase_started_ms',
+          'parse_duration_ms', 'create_duration_ms', 'certificate_duration_ms'});
     expect(prepare(null).preview.files.map((file) => file.path), isNot(contains('events/recent.jsonl')));
     native = [{'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
       'stage': 'start_instance', 'outcome': 'failed', 'duration_ms': 31000,
@@ -123,6 +128,16 @@ void main() {
     await expectLater(collectPokrovAndroidCandidateDiagnostics(
       hostPlatform: HostPlatform.android, policy: allowed.activation.policy, now: now,
     ), throwsArgumentError);
+    for (final timings in [
+      {'parse_duration_ms': 100, 'create_duration_ms': 2000, 'certificate_duration_ms': 2001},
+      {'parse_duration_ms': 30000, 'create_duration_ms': 2000, 'certificate_duration_ms': 100},
+    ]) {
+      native = [{'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
+        'stage': 'start_instance', 'outcome': 'failed', 'duration_ms': 31000, ...timings}];
+      await expectLater(collectPokrovAndroidCandidateDiagnostics(
+        hostPlatform: HostPlatform.android, policy: allowed.activation.policy, now: now,
+      ), throwsArgumentError);
+    }
     native = [{'occurred_at': now.toIso8601String(), 'subsystem': 'candidate_probe',
       'stage': 'private.example/profile', 'outcome': 'failed', 'duration_ms': 31000}];
     await expectLater(collectPokrovAndroidCandidateDiagnostics(

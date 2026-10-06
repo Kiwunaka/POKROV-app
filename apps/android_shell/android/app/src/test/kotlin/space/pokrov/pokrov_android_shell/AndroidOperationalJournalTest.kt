@@ -86,6 +86,10 @@ class AndroidOperationalJournalTest {
         val invalidDuration = AndroidCandidateProbeDiagnostic.fromNativeFields("tls_read", 0L, "5")
         assertNull(invalidDuration.phase)
         assertNull(invalidDuration.durationMs)
+        val invalidSetup = AndroidCandidateProbeDiagnostic.fromNativeFields("start_instance", 4L, 5L, 1L, 3L, 4L)
+        assertEquals(AndroidCandidateProbePhase.START_INSTANCE, invalidSetup.phase)
+        assertNull(invalidSetup.parseDurationMs)
+        assertNull(AndroidCandidateProbeDiagnostic.fromNativeFields("start_instance", 4L, 5L, 3L, 3L, 1L).createDurationMs)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -180,7 +184,7 @@ class AndroidOperationalJournalTest {
             event = AndroidOperationalEvent.CANDIDATE_PROBE,
             outcome = AndroidOperationalOutcome.VERIFIED,
             probeSequence = 2L,
-            candidateProbe = AndroidCandidateProbeDiagnostic.fromNativeFields("http_64k", 10L, 200L),
+            candidateProbe = AndroidCandidateProbeDiagnostic.fromNativeFields("http_64k", 10L, 200L, 2L, 6L, 5L),
         ).copy(occurredAtUtc = "2026-08-22T12:00:01.000Z")
         store.append(completed)
         assertTrue(store.previousFile.isFile)
@@ -193,7 +197,8 @@ class AndroidOperationalJournalTest {
             mapOf("occurred_at" to "2026-08-22T12:00:00.000Z", "subsystem" to "candidate_probe",
                 "stage" to "tls_read", "outcome" to "failed", "duration_ms" to 31_000L, "phase_started_ms" to 0L),
             mapOf("occurred_at" to "2026-08-22T12:00:01.000Z", "subsystem" to "candidate_probe",
-                "stage" to "http_64k", "outcome" to "succeeded", "duration_ms" to 200L, "phase_started_ms" to 10L),
+                "stage" to "http_64k", "outcome" to "succeeded", "duration_ms" to 200L, "phase_started_ms" to 10L,
+                "parse_duration_ms" to 2L, "create_duration_ms" to 6L, "certificate_duration_ms" to 5L),
         ), store.readCandidateDiagnostics())
     }
 
