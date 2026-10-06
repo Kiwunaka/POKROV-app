@@ -141,9 +141,15 @@ class RuntimeHostBridge(
                 }
             }
             METHOD_SNAPSHOT -> result.success(snapshot())
-            "runtimeEngine.candidateNetwork" -> result.success(runCatching {
-                transportNetworkContext.value.candidateNetwork().channelValue()
-            }.getOrDefault(emptyMap<String, Any?>()))
+            "runtimeEngine.candidateNetwork" -> {
+                val network = transportNetworkContext.value
+                val context = activity.applicationContext
+                executeHostTask(result, emptyMap<String, Any?>()) {
+                    AndroidSystemCertificates.prepare(context)
+                    check(hostTaskScope.isActive())
+                    network.candidateNetwork().channelValue()
+                }
+            }
             "runtimeEngine.probeCandidate" -> probeCandidate(call, result)
             "runtimeEngine.candidateDiagnostics" -> AndroidOperationalJournal.readCandidateDiagnostics { outcome ->
                 activity.runOnUiThread {
@@ -166,7 +172,11 @@ class RuntimeHostBridge(
                 val accepted = AndroidRuntimeDispatchPolicy.initialize(
                     scope = hostTaskScope,
                     postToOwner = { callback -> activity.runOnUiThread(callback) },
-                    task = ::initialize,
+                    task = {
+                        AndroidSystemCertificates.prepare(activity.applicationContext)
+                        check(hostTaskScope.isActive())
+                        initialize()
+                    },
                     complete = { outcome ->
                         outcome.fold(
                             onSuccess = { result.success(it) },

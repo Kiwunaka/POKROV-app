@@ -22,9 +22,13 @@ closed native probe-phase diagnostics and awaits its own ordinary Android check.
 Routing catalog remains enabled but unpublished; Smart Access stays disabled.
 Protected report #78 localized the private Android refusal to the time before
 Start (16.2–16.8 seconds); Start and cleanup occupied only 34–70 milliseconds.
-The next private 1.5.0 diagnostic candidate records separate parsing, creation
-and certificate-store durations. The CA hypothesis is not yet runtime-proved;
-public 1.4.5 remains recommended until the accumulated 1.5.0 passes normal QA.
+Protected report #79 measured 2577 ms in AndroidCAStore preparation out of a
+3933 ms failed probe. Private 1.5.0+4097 prepares the same complete CA roots
+off-main before candidate timers and reuses a process snapshot; trust-store
+changes invalidate it, and interrupted, partial or failed reads are not cached.
+The existing Core fallback and active instances remain unchanged. Cancellation
+can finish while the read-only preparation completes. Public 1.4.5 remains
+recommended until the accumulated 1.5.0 passes normal QA.
 This diagnostic Core AAR contains x86_64 only; ARM and Windows artifacts are
 retained from the earlier preparation and have not been rebuilt or accepted.
 The minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.

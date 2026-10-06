@@ -2173,7 +2173,10 @@ class ConnectionManager extends ChangeNotifier {
           (_explicitWarpRuntimeConsent ?? reportedWarpConsent) &&
           candidateWarpPolicy.canOfferRuntime &&
           (_warpRuntimeRetryPending || _warpRuntimeAttemptAllowed(candidateWarpPolicy));
-      final network = await probing.readCandidateNetwork();
+      final network = await Future.any<RuntimeCandidateNetwork>([
+        probing.readCandidateNetwork(),
+        cancelled.then<RuntimeCandidateNetwork>((_) => throw const ConnectionOperationSuperseded()),
+      ]);
       requireCurrent();
       final nativeKey = network.selectionKey;
       final context = network.contextRef;
@@ -2291,7 +2294,10 @@ class ConnectionManager extends ChangeNotifier {
             code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
       requireCurrent();
-      final currentNetwork = await probing.readCandidateNetwork();
+      final currentNetwork = await Future.any<RuntimeCandidateNetwork>([
+        probing.readCandidateNetwork(),
+        cancelled.then<RuntimeCandidateNetwork>((_) => throw const ConnectionOperationSuperseded()),
+      ]);
       requireCurrent();
       if (currentNetwork.contextRef != context || currentNetwork.selectionKey != nativeKey) {
         throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
@@ -2398,6 +2404,9 @@ class ConnectionManager extends ChangeNotifier {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
           profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
     }
+    final cancelled = _connectionCoordinator.actionInFlight
+        ? _connectionCoordinator.whenOperationEnds(generation)
+        : _connectionCoordinator.whenOperationChanges(generation);
     var selected = cached;
     _candidateNetworkKey = null;
     _candidateOfflineNetworkKey = null;
@@ -2418,7 +2427,10 @@ class ConnectionManager extends ChangeNotifier {
         requireCurrent();
         if (profile != null) available[candidate.candidateRef] = profile;
       }
-      final network = await probing.readCandidateNetwork();
+      final network = await Future.any<RuntimeCandidateNetwork>([
+        probing.readCandidateNetwork(),
+        cancelled.then<RuntimeCandidateNetwork>((_) => throw const ConnectionOperationSuperseded()),
+      ]);
       requireCurrent();
       final key = network.selectionKey;
       final context = network.contextRef;
@@ -2470,7 +2482,10 @@ class ConnectionManager extends ChangeNotifier {
             code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
       requireCurrent();
-      final currentNetwork = await probing.readCandidateNetwork();
+      final currentNetwork = await Future.any<RuntimeCandidateNetwork>([
+        probing.readCandidateNetwork(),
+        cancelled.then<RuntimeCandidateNetwork>((_) => throw const ConnectionOperationSuperseded()),
+      ]);
       final currentProfile = await service.loadCachedManagedProfile(inputs,
           selectedCandidateRef: selected.materialCandidate!.candidateRef, runtimeFeatures: features);
       requireCurrent();

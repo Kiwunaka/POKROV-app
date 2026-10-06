@@ -55,7 +55,7 @@ internal class AndroidCandidateProbePlatform(
     override fun clearDNSCache() = Unit
     override fun readWIFIState(): WIFIState? = null
     override fun localDNSTransport(): LocalDNSTransport = resolver
-    override fun systemCertificates(): StringIterator = ProbeStringIterator(emptyList())
+    override fun systemCertificates(): StringIterator = ProbeStringIterator(AndroidSystemCertificates.read())
     override fun sendNotification(notification: Notification) = Unit
     override fun findConnectionOwner(ipProtocol: Int, sourceAddress: String, sourcePort: Int,
         destinationAddress: String, destinationPort: Int): ConnectionOwner =

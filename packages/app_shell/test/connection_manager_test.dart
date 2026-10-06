@@ -1278,6 +1278,25 @@ void main() {
     expect(runtime.connectCalls, 1);
   });
 
+  test('Android first Connect can cancel while certificate preparation waits', () async {
+    final gate = Completer<RuntimeCandidateNetwork>();
+    final runtime = _Runtime()..supportsCandidates = true..nextNetworkRead = gate;
+    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+    addTearDown(manager.dispose);
+    final connecting = manager.connect();
+    await runtime.networkReadEntered.future;
+    await manager.disconnect().timeout(const Duration(seconds: 1));
+    await connecting;
+    expect(manager.busy, isFalse);
+    expect(runtime.connectCalls, 0);
+    expect(runtime.probeContexts, isEmpty);
+    gate.complete(const RuntimeCandidateNetwork(selectionKey: 'network-a', contextRef: 'context-a',
+        networkAvailable: true, captivePortal: false));
+    await Future<void>.delayed(Duration.zero);
+    expect(runtime.connectCalls, 0);
+    expect(runtime.probeContexts, isEmpty);
+  });
+
   test('cold candidate HTTP preparation does not consume the native probe budget', () async {
     final alternatives = _CachedBootstrapper.alternatives;
     final bootstrapper = _Bootstrapper(catalog: true)

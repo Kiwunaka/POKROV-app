@@ -592,6 +592,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         activeCatalogAppRequired = persistedProfile?.catalogAppIdentityRequired == true
         activeCatalogAppBinding = catalogAppBinding
         armCatalogAppExpiry(catalogAppBinding)
+        AndroidSystemCertificates.prepare(applicationContext)
         val initialized = AndroidRuntimeState.initialize(this)
         if (!ownsRuntimeSession(session)) {
             cleanupSupersededStartup(commandGeneration, tileGeneration)
@@ -2079,7 +2080,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
 
     override fun localDNSTransport(): LocalDNSTransport = AndroidLocalResolver
 
-    override fun systemCertificates(): StringIterator = LibboxStringIterator(emptyList())
+    override fun systemCertificates(): StringIterator = LibboxStringIterator(AndroidSystemCertificates.read())
 
     override fun sendNotification(notification: LibboxNotification) {
         mainHandler.post {
