@@ -21,8 +21,10 @@ import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toBitmap
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.concurrent.atomic.AtomicLong
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import org.json.JSONObject
 import space.pokrov.core.mobile.Mobile
 import space.pokrov.core.mobile.CandidateProbeCancellation
 
@@ -106,6 +108,7 @@ class RuntimeHostBridge(
     private val transportNetworkContext = lazy { AndroidTransportNetworkContext(activity) }
     @Volatile private var foregroundConnectContext: AndroidForegroundConnectContext? = null
     private val candidateProbes = AndroidCandidateProbeJobs()
+    private val candidateProbeSequence = AtomicLong(0L)
 
     init {
         AndroidOperationalRuntime.start(activity)
@@ -1682,6 +1685,7 @@ class RuntimeHostBridge(
             return
         }
         val accepted = candidateProbes.start(id) { cancelled ->
+            val probeSequence = candidateProbeSequence.incrementAndGet()
             val started = System.nanoTime()
             val cancellation = object : CandidateProbeCancellation {
                 override fun isCancelled(): Boolean = cancelled.get() || !context.isCurrent(expected)
@@ -1695,6 +1699,23 @@ class RuntimeHostBridge(
                 failure("unavailable")
             }
             val elapsed = (System.nanoTime() - started) / 1_000_000
+            // Preserve the native phase even if cancellation or bridge closure discards the reply.
+            if (response is String) {
+                runCatching {
+                    val nativeResult = JSONObject(response)
+                    val success = nativeResult.opt("success") as? Boolean ?: return@runCatching
+                    AndroidOperationalJournal.record(
+                        AndroidOperationalEvent.CANDIDATE_PROBE,
+                        if (success) AndroidOperationalOutcome.VERIFIED else AndroidOperationalOutcome.FAILED,
+                        probeSequence = probeSequence,
+                        candidateProbe = AndroidCandidateProbeDiagnostic.fromNativeFields(
+                            nativeResult.opt("stage"),
+                            nativeResult.opt("stage_started_ms"),
+                            nativeResult.opt("duration_ms"),
+                        ),
+                    )
+                }
+            }
             activity.runOnUiThread {
                 candidateProbes.publish(id) { publicationCancelled ->
                     if (hostTaskScope.isActive()) {

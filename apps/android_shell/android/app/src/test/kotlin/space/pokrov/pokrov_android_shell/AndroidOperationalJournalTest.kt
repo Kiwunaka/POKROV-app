@@ -1,6 +1,8 @@
 package space.pokrov.pokrov_android_shell
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -42,6 +44,48 @@ class AndroidOperationalJournalTest {
         assertFalse(line.contains("url"))
         assertFalse(line.contains("profile"))
         assertFalse(line.contains("token"))
+        assertFalse(line.contains("phase"))
+
+        val candidateLine = record(
+            sequence = 8L,
+            event = AndroidOperationalEvent.CANDIDATE_PROBE,
+            outcome = AndroidOperationalOutcome.FAILED,
+            probeSequence = 2L,
+            candidateProbe = AndroidCandidateProbeDiagnostic.fromNativeFields("tls_read", 0, 31_000L),
+        ).toJsonLine()
+        assertTrue(candidateLine.contains("\"phase\":\"tls_read\""))
+        assertTrue(candidateLine.contains("\"phase_started_ms\":0"))
+        assertTrue(candidateLine.contains("\"duration_ms\":31000"))
+        assertTrue(candidateLine.contains("\"probe_sequence\":2"))
+        assertFalse(candidateLine.contains("probe_id"))
+        assertFalse(candidateLine.contains("message"))
+        assertFalse(candidateLine.contains("url"))
+        assertFalse(candidateLine.contains("profile"))
+        assertFalse(candidateLine.contains("token"))
+    }
+
+    @Test
+    fun candidateProbeOmitsFreeFormPhasesAndInvalidNativeTiming() {
+        val unknown = AndroidCandidateProbeDiagnostic.fromNativeFields("secret.example/profile", 0L, 5L)
+        assertNull(unknown.phase)
+        assertNull(unknown.phaseStartedMs)
+        assertEquals(5L, unknown.durationMs)
+        val line = record(
+            sequence = 1L,
+            event = AndroidOperationalEvent.CANDIDATE_PROBE,
+            outcome = AndroidOperationalOutcome.FAILED,
+            probeSequence = 1L,
+            candidateProbe = unknown,
+        ).toJsonLine()
+        assertFalse(line.contains("secret"))
+        assertFalse(line.contains("phase"))
+
+        val invalidStarted = AndroidCandidateProbeDiagnostic.fromNativeFields("tls_read", 6L, 5L)
+        assertNull(invalidStarted.phase)
+        assertNull(invalidStarted.phaseStartedMs)
+        val invalidDuration = AndroidCandidateProbeDiagnostic.fromNativeFields("tls_read", 0L, "5")
+        assertNull(invalidDuration.phase)
+        assertNull(invalidDuration.durationMs)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -177,11 +221,15 @@ class AndroidOperationalJournalTest {
         event: AndroidOperationalEvent,
         outcome: AndroidOperationalOutcome,
         generation: Long? = null,
+        probeSequence: Long? = null,
+        candidateProbe: AndroidCandidateProbeDiagnostic? = null,
     ) = AndroidOperationalRecord(
         occurredAtUtc = "2026-08-22T12:00:00.000Z",
         sequence = sequence,
         event = event,
         outcome = outcome,
         generation = generation,
+        probeSequence = probeSequence,
+        candidateProbe = candidateProbe,
     )
 }

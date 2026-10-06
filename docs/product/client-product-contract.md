@@ -601,6 +601,13 @@ Support contract rules:
 - authenticated browser support should continue through `/api/tickets`, `/api/tickets/{ticket_id}`, `/api/tickets/{ticket_id}/messages`, and `/api/tickets/uploads`
 - app support may attach redacted diagnostics on ticket creation and on one explicitly confirmed follow-up reply
 - diagnostics should expose route mode, DNS policy, transport profile, ruleset/package-catalog version, app version, and linked Telegram state without leaking raw config, keys, or share links
+- Android's existing private operational journal records native candidate-probe
+  completion before an outer cancellation can replace or discard its reply.
+  Each record keeps only a local numeric probe sequence, verified/failed outcome,
+  optional closed phase and validated monotonic phase-start/total milliseconds.
+  Zero phase-start time is valid; native cleanup may take total time past the
+  probe budget. Probe IDs, profiles, destinations and native error text stay out
+  of this journal.
 - the diagnostic preview is the consent boundary: it shows the diagnostic ID,
   categories, virtual files, sizes and redaction count derived from the same
   canonical payload that will be encrypted

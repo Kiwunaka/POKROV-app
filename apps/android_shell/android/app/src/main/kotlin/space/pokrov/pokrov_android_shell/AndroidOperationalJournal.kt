@@ -33,6 +33,7 @@ internal enum class AndroidOperationalEvent(val wireValue: String) {
     UPLINK_SOCKET("uplink_socket"),
     NETWORK_CALLBACK("network_callback"),
     CORE_EGRESS_PROBE("core_egress_probe"),
+    CANDIDATE_PROBE("candidate_probe"),
     DOZE("doze"),
     APP_STANDBY("app_standby"),
     BACKGROUND_RESTRICTION("background_restriction"),
@@ -115,6 +116,10 @@ private val ANDROID_OPERATIONAL_OUTCOMES = mapOf(
         AndroidOperationalOutcome.FAILED,
         AndroidOperationalOutcome.STALLED,
     ),
+    AndroidOperationalEvent.CANDIDATE_PROBE to setOf(
+        AndroidOperationalOutcome.VERIFIED,
+        AndroidOperationalOutcome.FAILED,
+    ),
     AndroidOperationalEvent.DOZE to setOf(
         AndroidOperationalOutcome.ACTIVE,
         AndroidOperationalOutcome.INACTIVE,
@@ -148,6 +153,55 @@ private val ANDROID_OPERATIONAL_OUTCOMES = mapOf(
     ),
 )
 
+internal enum class AndroidCandidateProbePhase(val wireValue: String) {
+    PARSE_PROFILE("parse_profile"),
+    CREATE_INSTANCE("create_instance"),
+    START_INSTANCE("start_instance"),
+    SELECT_OUTBOUND("select_outbound"),
+    PROXY_DIAL("proxy_dial"),
+    EGRESS_CHECK("egress_check"),
+    TLS_HANDSHAKE("tls_handshake"),
+    TLS_READ("tls_read"),
+    TLS_WRITE("tls_write"),
+    TLS_PROCESSING("tls_processing"),
+    TLS_CERTIFICATE_VERIFIED("tls_certificate_verified"),
+    TLS_COMPLETE("tls_complete"),
+    HTTP_204("http_204"),
+    HTTP_64K("http_64k"),
+}
+
+internal data class AndroidCandidateProbeDiagnostic(
+    val phase: AndroidCandidateProbePhase? = null,
+    val phaseStartedMs: Long? = null,
+    val durationMs: Long? = null,
+) {
+    init {
+        require(durationMs == null || durationMs >= 0L)
+        require((phase == null) == (phaseStartedMs == null))
+        require(phaseStartedMs == null ||
+            (durationMs != null && phaseStartedMs >= 0L && phaseStartedMs <= durationMs))
+    }
+
+    companion object {
+        fun fromNativeFields(stage: Any?, stageStartedMs: Any?, durationMs: Any?): AndroidCandidateProbeDiagnostic {
+            fun millis(value: Any?): Long? = when (value) {
+                is Int -> value.toLong()
+                is Long -> value
+                else -> null
+            }?.takeIf { it >= 0L }
+
+            val duration = millis(durationMs)
+            val phase = AndroidCandidateProbePhase.values().firstOrNull { it.wireValue == stage }
+            val started = millis(stageStartedMs)
+            return if (phase != null && started != null && duration != null && started <= duration) {
+                AndroidCandidateProbeDiagnostic(phase, started, duration)
+            } else {
+                AndroidCandidateProbeDiagnostic(durationMs = duration)
+            }
+        }
+    }
+}
+
 internal data class AndroidOperationalRecord(
     val occurredAtUtc: String,
     val sequence: Long,
@@ -155,6 +209,8 @@ internal data class AndroidOperationalRecord(
     val outcome: AndroidOperationalOutcome,
     val generation: Long? = null,
     val droppedBefore: Long = 0L,
+    val probeSequence: Long? = null,
+    val candidateProbe: AndroidCandidateProbeDiagnostic? = null,
 ) {
     init {
         require(ANDROID_OPERATIONAL_TIMESTAMP.matches(occurredAtUtc))
@@ -162,6 +218,8 @@ internal data class AndroidOperationalRecord(
         require(generation == null || generation > 0L)
         require(droppedBefore >= 0L)
         require(outcome in ANDROID_OPERATIONAL_OUTCOMES.getValue(event))
+        require(probeSequence == null || probeSequence > 0L)
+        require((probeSequence == null && candidateProbe == null) || event == AndroidOperationalEvent.CANDIDATE_PROBE)
     }
 
     fun toJsonLine(): String = buildString {
@@ -180,6 +238,22 @@ internal data class AndroidOperationalRecord(
         }
         append(",\"dropped_before\":")
         append(droppedBefore)
+        if (probeSequence != null) {
+            append(",\"probe_sequence\":")
+            append(probeSequence)
+        }
+        candidateProbe?.let { diagnostic ->
+            if (diagnostic.durationMs != null) {
+                append(",\"duration_ms\":")
+                append(diagnostic.durationMs)
+            }
+            if (diagnostic.phase != null) {
+                append(",\"phase\":\"")
+                append(diagnostic.phase.wireValue)
+                append("\",\"phase_started_ms\":")
+                append(diagnostic.phaseStartedMs)
+            }
+        }
         append('}')
     }
 }
@@ -300,6 +374,8 @@ internal object AndroidOperationalJournal {
         event: AndroidOperationalEvent,
         outcome: AndroidOperationalOutcome,
         generation: Long? = null,
+        probeSequence: Long? = null,
+        candidateProbe: AndroidCandidateProbeDiagnostic? = null,
     ) {
         val target = store ?: return
         val record = AndroidOperationalRecord(
@@ -309,6 +385,8 @@ internal object AndroidOperationalJournal {
             outcome = outcome,
             generation = generation,
             droppedBefore = dropped.getAndSet(0L),
+            probeSequence = probeSequence,
+            candidateProbe = candidateProbe,
         )
         try {
             writer.execute {
