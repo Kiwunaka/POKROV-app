@@ -219,6 +219,9 @@ class SmartConnectCandidateSelector {
           stop();
           return;
         }
+      } on ConnectionOperationSuperseded {
+        stop();
+        rethrow;
       } on BootstrapFailure catch (error) {
         if (error.statusCode == HttpStatus.unauthorized || error.statusCode == HttpStatus.forbidden || error.code == 'managed_profile_superseded') {
           stop();

@@ -160,6 +160,9 @@ Online candidate selection fetches exact profiles before charging the native
 probe budget. Each worker has up to 12 seconds of native probes, with at most
 four seconds per candidate; profile HTTP still obeys the connect action deadline.
 Cancellation settles profile and native work before releasing a worker.
+A profile revision supersession propagates through the candidate selector and
+cancels and joins its remaining workers. It is not converted into candidate
+exhaustion, and a stale receipt is not reported under the next attempt.
 The last successful candidate gets up to 350 ms before alternatives. Only typed
 network probe failures suppress a candidate for four minutes or move TCP ahead
 of UDP; an empty filtered catalog retries every eligible candidate.

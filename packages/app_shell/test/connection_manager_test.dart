@@ -1133,6 +1133,49 @@ void main() {
         isEmpty, reason: 'the new direct material must not inherit the previous active bridge');
   });
 
+  test('routing changes supersede candidate probes without reporting exhaustion', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-candidate-superseded-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android, directoryResolver: () async => directory,
+    );
+    final bootstrapper = _StatsBootstrapper(bundle: true)
+      ..candidates = [_candidates[1], _candidates[0]];
+    final runtime = _Runtime()..supportsCandidates = true..holdProbes = true;
+    final manager = _manager(runtime, bootstrapper, observability: observability);
+    addTearDown(manager.dispose);
+    final connecting = manager.connect();
+    await runtime.probeStarted.future;
+    await Future<void>.delayed(Duration.zero);
+    expect(runtime.activeProbes, hasLength(2));
+    final attempt = manager.attemptId;
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults()
+        .copyWith(autoConnectOnUntrustedWifi: true));
+    expect(manager.attemptId, attempt);
+    runtime.probeRelease.complete();
+    await connecting;
+    await observability.flush();
+    expect(bootstrapper.actualReports.where((report) => report['error_code'] == 'CONN-008'),
+        isEmpty, reason: 'a routing revision supersedes its probe instead of exhausting candidates');
+    expect(runtime.activeProbes, isEmpty);
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+    expect(manager.status.phase, ConnectionPhase.disconnected);
+    final oldEvents = observability.connectionTimelineBreadcrumbs;
+    expect(oldEvents.where((event) => event.name == 'app.connection.candidate_probe.finished'), isEmpty);
+    expect(oldEvents.singleWhere((event) => event.name == 'app.connection.attempt.finished').outcome.wireValue,
+        'cancelled');
+    runtime.holdProbes = false;
+    await manager.connect();
+    await observability.flush();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    final probes = observability.connectionTimelineBreadcrumbs
+        .where((event) => event.name == 'app.connection.candidate_probe.finished');
+    expect(probes, isNotEmpty);
+    expect(probes.map((event) => event.generation), everyElement(2));
+    expect(probes.map((event) => event.failureKind), everyElement('none'));
+  });
+
   test('exhausted native candidates retain the early start and terminal Core error', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-candidate-failure-');
     addTearDown(() => directory.delete(recursive: true));

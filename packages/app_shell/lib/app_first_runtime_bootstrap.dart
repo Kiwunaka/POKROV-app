@@ -18,6 +18,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import 'routing_catalog_contract.dart';
+import 'app_shell.dart' show ConnectionOperationSuperseded;
 import 'client_routing_preferences.dart';
 import 'routing_catalog_policy.dart';
 import 'src/features/rules/routing_catalog_store.dart';
