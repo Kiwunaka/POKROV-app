@@ -229,7 +229,12 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
 
   std::string Stop() override {
     ++stop_calls;
+    if (on_stop) on_stop();
     return stop_error;
+  }
+
+  pokrov::service::FirstOwnedDnsState FirstOwnedDnsObservation() const override {
+    return first_owned_dns_state;
   }
 
   int SmartAccessProbeVersion() const override { return smart_probe_version; }
@@ -254,6 +259,9 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
   std::string start_error;
   std::string stop_error;
   std::function<void()> on_start;
+  std::function<void()> on_stop;
+  pokrov::service::FirstOwnedDnsState first_owned_dns_state =
+      pokrov::service::FirstOwnedDnsState::kUnknown;
   int smart_probe_version = 0;
   int smart_probe_calls = 0;
   std::string smart_probe_tag;
@@ -812,8 +820,13 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   auto fake = std::make_unique<FakeCoreRuntime>();
   auto* core = fake.get();
   auto probe = std::make_unique<FakeEgressProbe>();
+  auto* egress = probe.get();
   probe->verify_error =
       "raw DNS and provider response must not cross IPC";
+  probe->observation = EgressProbeObservation{EgressProbeStage::kDnsWait,
+      EgressProbeOutcome::kTimeout, EgressErrorDomain::kNone, 0, 3000};
+  probe->on_verify = [&] { core->first_owned_dns_state = FirstOwnedDnsState::kReplyWritten; };
+  core->on_stop = [&] { core->first_owned_dns_state = FirstOwnedDnsState::kReplyFailed; };
   RuntimeHost host(std::move(fake), std::move(probe),
                    std::make_unique<FakeRecovery>(), root, false);
   host.Initialize();
@@ -833,6 +846,20 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
          "egress failure category was not sanitized");
   Expect(!Contains(result, "provider response"),
          "raw egress probe error crossed the service boundary");
+  Expect(Contains(result, "egress_probe_outcome=timeout") &&
+             Contains(result, "first_owned_dns_state=reply_written") &&
+             Contains(host.Snapshot(), "first_owned_dns_state=reply_written") &&
+             core->first_owned_dns_state == FirstOwnedDnsState::kReplyFailed,
+         "first owned reply was replaced by final native failure or rollback DNS work");
+  egress->on_verify = {};
+  core->on_start = [&] {
+    core->first_owned_dns_state = FirstOwnedDnsState::kUnknown;
+    Expect(!Contains(host.Snapshot(), "first_owned_dns_state="),
+           "new Connect exposed a previous frozen DNS tuple");
+  };
+  const auto next_failure = host.Connect(StagedDigest(host));
+  Expect(Contains(next_failure, "first_owned_dns_state=unknown"),
+         "new Core attempt reused a previous first owned DNS state");
   auto classified_core = std::make_unique<FakeCoreRuntime>();
   auto classified_probe = std::make_unique<FakeEgressProbe>();
   classified_probe->verify_error = "core_egress_response_timeout";
@@ -1385,6 +1412,42 @@ void TestCoreOperationalEventFenceRejectsLateAndUnsafeCallbacks() {
   event.stage = "verify";
   event.phase = "egress";
   Expect(fence.Accept(event), "closed egress failure was rejected");
+  event.sequence += 1;
+  event.name = "core.dns.probe";
+  event.subsystem = "dns";
+  event.phase = "dns";
+  event.stage = "receive";
+  event.outcome = "started";
+  event.severity = "info";
+  event.error_code.clear();
+  Expect(fence.Accept(event) && fence.FirstOwnedDnsObservation() == FirstOwnedDnsState::kReceived,
+         "current owned DNS receive was not recorded");
+  event.sequence += 1;
+  event.stage = "exchange";
+  event.outcome = "succeeded";
+  Expect(fence.Accept(event) && fence.FirstOwnedDnsObservation() == FirstOwnedDnsState::kReceived,
+         "upstream success was promoted to a written DNS reply");
+  event.sequence += 1;
+  event.stage = "reply";
+  Expect(fence.Accept(event) && fence.FirstOwnedDnsObservation() == FirstOwnedDnsState::kReplyWritten,
+         "accepted owned DNS reply was not recorded");
+  event.sequence += 1;
+  event.outcome = "failed";
+  event.severity = "error";
+  event.error_code = "TRANSPORT-001";
+  Expect(!fence.Accept(event) && fence.FirstOwnedDnsObservation() == FirstOwnedDnsState::kReplyWritten,
+         "unsupported DNS error changed the first owned state");
+  event.error_code = "DNS-002";
+  event.generation = 6;
+  Expect(!fence.Accept(event) && fence.FirstOwnedDnsObservation() == FirstOwnedDnsState::kReplyWritten,
+         "late DNS callback changed the current first owned state");
+  Expect(fence.Activate(run_id, second_attempt, 8) &&
+             fence.FirstOwnedDnsObservation() == FirstOwnedDnsState::kUnknown,
+         "new Core generation retained a previous owned DNS state");
+  event.generation = 8;
+  event.stage = "exchange";
+  Expect(fence.Accept(event) && fence.FirstOwnedDnsObservation() == FirstOwnedDnsState::kExchangeFailed,
+         "closed owned DNS exchange failure was not recorded");
 }
 
 void TestInterruptedConnectNeverPublishesProtection() {

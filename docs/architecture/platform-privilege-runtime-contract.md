@@ -353,6 +353,17 @@ and rollback stages. They are a local producer seam only. Unified support
 envelopes, export/upload, remote ingest, retention and alerts belong to the
 observability work order.
 
+The ordinary native Snapshot/Connect egress failure tuple adds the optional
+`first_owned_dns_state`: `unknown`, `received`, `exchange_failed`, `reply_failed`
+or `reply_written`. It describes the first eligible owned IN/A query in the
+accepted Core context/generation, independently of the final native verifier
+retry; that query can be background traffic. The value is frozen after verifier
+failure before Stop/rollback and cleared on the next Connect/context. A written
+reply means Core accepted WritePacket, not Windows receipt or a diagnosis of
+Core-to-TUN loss. Missing callbacks remain unknown. The native parser accepts
+existing five-field tuples as unknown; no addresses, query IDs or Core context
+IDs enter this scalar. Dart, encrypted export and D8 ingest are unchanged.
+
 Debug builds expose bounded isolated handshake modes used by native tests.
 Release builds do not expose that entrypoint. The service and UI client are
 copied into the local release bundle and the Inno source installs a machine-wide

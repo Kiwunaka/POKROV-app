@@ -50,12 +50,24 @@ const char* EgressProbeErrorDomainName(EgressErrorDomain domain) {
   return "invalid";
 }
 
+const char* FirstOwnedDnsStateName(FirstOwnedDnsState state) {
+  switch (state) {
+    case FirstOwnedDnsState::kUnknown: return "unknown";
+    case FirstOwnedDnsState::kReceived: return "received";
+    case FirstOwnedDnsState::kExchangeFailed: return "exchange_failed";
+    case FirstOwnedDnsState::kReplyFailed: return "reply_failed";
+    case FirstOwnedDnsState::kReplyWritten: return "reply_written";
+  }
+  return "invalid";
+}
+
 std::string EncodeEgressProbeObservation(const EgressProbeObservation& observation) {
   return std::string(";egress_probe_stage=") + EgressProbeStageName(observation.stage) +
       ";egress_probe_outcome=" + EgressProbeOutcomeName(observation.outcome) +
       ";egress_error_domain=" + EgressProbeErrorDomainName(observation.error_domain) +
       ";egress_error_code=" + std::to_string(observation.error_code) +
-      ";egress_elapsed_ms=" + std::to_string(observation.elapsed_ms);
+      ";egress_elapsed_ms=" + std::to_string(observation.elapsed_ms) +
+      ";first_owned_dns_state=" + FirstOwnedDnsStateName(observation.first_owned_dns_state);
 }
 
 namespace {

@@ -272,7 +272,9 @@ int main(int argc, char** argv) {
           "routing_catalog_control_version=0;smart_access_runtime_control_version=0;"
           "transport_capabilities=none;core_module_sha256=none;core_version=none;"
           "protection_retained=0;windows_local_dpi_admission_version=0";
-      const auto suffix = EncodeEgressProbeObservation(*observation);
+      auto owned_observation = *observation;
+      owned_observation.first_owned_dns_state = FirstOwnedDnsState::kReplyWritten;
+      const auto suffix = EncodeEgressProbeObservation(owned_observation);
       const std::string transport = ";transport_proof_pending=0;transport_lease_active=0";
       ServiceRuntimeSnapshot parsed;
       expect(ParseServiceRuntimeSnapshot(body + suffix + transport, &parsed) &&
@@ -281,8 +283,18 @@ int main(int argc, char** argv) {
                  parsed.egress_failure_observation->outcome == observation->outcome &&
                  parsed.egress_failure_observation->error_domain == observation->error_domain &&
                  parsed.egress_failure_observation->error_code == observation->error_code &&
-                 parsed.egress_failure_observation->elapsed_ms == observation->elapsed_ms,
+                 parsed.egress_failure_observation->elapsed_ms == observation->elapsed_ms &&
+                 parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kReplyWritten,
              "whole egress failure tuple did not survive the service parser");
+      const auto old_suffix = suffix.substr(0, suffix.find(";first_owned_dns_state="));
+      expect(ParseServiceRuntimeSnapshot(body + old_suffix + transport, &parsed) &&
+                 parsed.egress_failure_observation &&
+                 parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kUnknown,
+             "existing five-field egress tuple was rejected or gained owned DNS proof");
+      expect(!ParseServiceRuntimeSnapshot(body + old_suffix + ";first_owned_dns_state=arbitrary" + transport, &parsed) &&
+                 parsed.egress_failure_observation &&
+                 parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kUnknown,
+             "unknown owned DNS state crossed the parser or changed its previous snapshot");
       expect(!ParseServiceRuntimeSnapshot(body + suffix.substr(0, suffix.find(";egress_elapsed_ms=")) + transport,
                                          &parsed) && parsed.egress_failure_observation &&
                  parsed.egress_failure_observation->elapsed_ms == observation->elapsed_ms,

@@ -52,6 +52,9 @@ class CoreRuntime {
     return "";
   }
   virtual void SetOperationalEventSink(ServiceEventSink* events) {}
+  virtual FirstOwnedDnsState FirstOwnedDnsObservation() const {
+    return FirstOwnedDnsState::kUnknown;
+  }
   virtual int RoutingCatalogWindowVersion() const { return 0; }
   virtual std::string TransportCapabilities() const { return ""; }
   virtual std::string CoreModuleSHA256() const { return ""; }
@@ -101,11 +104,13 @@ class CoreOperationalEventFence {
   bool Activate(const std::string& run_id, const std::string& attempt_id,
                 std::int64_t generation);
   bool Accept(const CoreOperationalEventRecord& event);
+  FirstOwnedDnsState FirstOwnedDnsObservation() const { return first_owned_dns_state_; }
 
  private:
   std::string run_id_;
   std::string attempt_id_;
   std::int64_t generation_ = 0;
+  FirstOwnedDnsState first_owned_dns_state_ = FirstOwnedDnsState::kUnknown;
   std::int64_t last_sequence_ = 0;
 };
 

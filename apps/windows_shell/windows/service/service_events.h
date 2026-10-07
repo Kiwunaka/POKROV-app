@@ -77,17 +77,23 @@ enum class EgressErrorDomain {
   kNone, kWin32, kWinsock, kWinHttp, kDns, kNtStatus, kHttpStatus,
 };
 
+enum class FirstOwnedDnsState {
+  kUnknown, kReceived, kExchangeFailed, kReplyFailed, kReplyWritten,
+};
+
 struct EgressProbeObservation {
   EgressProbeStage stage;
   EgressProbeOutcome outcome;
   EgressErrorDomain error_domain;
   std::uint32_t error_code;
   std::uint64_t elapsed_ms;
+  FirstOwnedDnsState first_owned_dns_state = FirstOwnedDnsState::kUnknown;
 };
 
 const char* EgressProbeStageName(EgressProbeStage stage);
 const char* EgressProbeOutcomeName(EgressProbeOutcome outcome);
 const char* EgressProbeErrorDomainName(EgressErrorDomain domain);
+const char* FirstOwnedDnsStateName(FirstOwnedDnsState state);
 std::string EncodeEgressProbeObservation(const EgressProbeObservation& observation);
 
 enum class TransitionGuardOperation { kStart, kFinish };

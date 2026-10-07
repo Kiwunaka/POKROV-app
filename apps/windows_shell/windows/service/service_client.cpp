@@ -723,16 +723,19 @@ bool ParseServiceRuntimeSnapshot(const std::string& body,
     const auto observation_body = body.substr(observation_start + 1,
         observation_end == std::string::npos ? observation_end : observation_end - observation_start - 1);
     std::size_t offset = 0;
-    std::string stage, outcome, domain, error, elapsed;
+    std::string stage, outcome, domain, error, elapsed, first_dns = "unknown";
+    const bool has_first_dns = observation_body.find(";first_owned_dns_state=") != std::string::npos;
     if (!ReadField(observation_body, &offset, "egress_probe_stage", &stage, false) ||
         !ReadField(observation_body, &offset, "egress_probe_outcome", &outcome, false) ||
         !ReadField(observation_body, &offset, "egress_error_domain", &domain, false) ||
         !ReadField(observation_body, &offset, "egress_error_code", &error, false) ||
-        !ReadField(observation_body, &offset, "egress_elapsed_ms", &elapsed, true) ||
+        !ReadField(observation_body, &offset, "egress_elapsed_ms", &elapsed, !has_first_dns) ||
+        (has_first_dns && !ReadField(observation_body, &offset, "first_owned_dns_state", &first_dns, true)) ||
         offset != observation_body.size()) return false;
     std::optional<EgressProbeStage> parsed_stage;
     std::optional<EgressProbeOutcome> parsed_outcome;
     std::optional<EgressErrorDomain> parsed_domain;
+    std::optional<FirstOwnedDnsState> parsed_first_dns;
     for (int value = 0; value <= static_cast<int>(EgressProbeStage::kRetryWait); ++value) {
       const auto item = static_cast<EgressProbeStage>(value);
       if (stage == EgressProbeStageName(item)) parsed_stage = item;
@@ -745,16 +748,20 @@ bool ParseServiceRuntimeSnapshot(const std::string& body,
       const auto item = static_cast<EgressErrorDomain>(value);
       if (domain == EgressProbeErrorDomainName(item)) parsed_domain = item;
     }
+    for (int value = 0; value <= static_cast<int>(FirstOwnedDnsState::kReplyWritten); ++value) {
+      const auto item = static_cast<FirstOwnedDnsState>(value);
+      if (first_dns == FirstOwnedDnsStateName(item)) parsed_first_dns = item;
+    }
     std::uint32_t error_code = 0;
     std::uint64_t elapsed_ms = 0;
     const auto parsed_error = std::from_chars(error.data(), error.data() + error.size(), error_code);
     const auto parsed_elapsed = std::from_chars(elapsed.data(), elapsed.data() + elapsed.size(), elapsed_ms);
-    if (!parsed_stage || !parsed_outcome || !parsed_domain ||
+    if (!parsed_stage || !parsed_outcome || !parsed_domain || !parsed_first_dns ||
         parsed_error.ec != std::errc{} || parsed_error.ptr != error.data() + error.size() ||
         parsed_elapsed.ec != std::errc{} || parsed_elapsed.ptr != elapsed.data() + elapsed.size() ||
         elapsed_ms > 9223372036854775807ULL) return false;
     parsed.egress_failure_observation = EgressProbeObservation{
-        *parsed_stage, *parsed_outcome, *parsed_domain, error_code, elapsed_ms};
+        *parsed_stage, *parsed_outcome, *parsed_domain, error_code, elapsed_ms, *parsed_first_dns};
     snapshot_body.erase(observation_start,
         observation_end == std::string::npos ? observation_end : observation_end - observation_start);
   }

@@ -352,7 +352,10 @@ bool IsCoreEventDefinition(const CoreOperationalEventRecord& event) {
           event.phase == "stop") ||
          (event.name == "core.egress.probe" &&
           event.subsystem == "egress" && event.stage == "verify" &&
-          event.phase == "egress");
+          event.phase == "egress") ||
+         (event.name == "core.dns.probe" && event.subsystem == "dns" &&
+          event.phase == "dns" &&
+          (event.stage == "receive" || event.stage == "exchange" || event.stage == "reply"));
 }
 
 bool IsCoreErrorCode(const std::string& value) {
@@ -430,6 +433,11 @@ class InstalledCoreRuntime final : public CoreRuntime {
 
   void SetOperationalEventSink(ServiceEventSink* events) override {
     events_ = events;
+  }
+
+  FirstOwnedDnsState FirstOwnedDnsObservation() const override {
+    std::lock_guard<std::mutex> guard(callback_lock_);
+    return event_fence_.FirstOwnedDnsObservation();
   }
 
   int RoutingCatalogWindowVersion() const override {
@@ -1015,7 +1023,8 @@ class InstalledCoreRuntime final : public CoreRuntime {
   }
 
   void AcceptOperationalEvent(const CoreOperationalEventRecord& event) {
-    if (events_ != nullptr && event_fence_.Accept(event)) {
+    if (!event_fence_.Accept(event)) return;
+    if (events_ != nullptr) {
       events_->RecordCoreOperationalEvent(event);
     }
   }
@@ -1137,6 +1146,9 @@ bool CoreOperationalEventFence::Activate(const std::string& run_id,
   if (generation > generation_) {
     last_sequence_ = 0;
   }
+  if (run_id != run_id_ || attempt_id != attempt_id_ || generation != generation_) {
+    first_owned_dns_state_ = FirstOwnedDnsState::kUnknown;
+  }
   run_id_ = run_id;
   attempt_id_ = attempt_id;
   generation_ = generation;
@@ -1160,6 +1172,15 @@ bool CoreOperationalEventFence::Accept(
       (!failed &&
        (event.severity != "info" || !event.error_code.empty()))) {
     return false;
+  }
+  if (event.name == "core.dns.probe") {
+    if ((event.stage == "receive" && event.outcome != "started") ||
+        (event.stage != "receive" && event.outcome == "started") ||
+        (failed && event.error_code != "DNS-002")) return false;
+    if (event.stage == "receive") first_owned_dns_state_ = FirstOwnedDnsState::kReceived;
+    else if (event.stage == "exchange" && failed) first_owned_dns_state_ = FirstOwnedDnsState::kExchangeFailed;
+    else if (event.stage == "reply") first_owned_dns_state_ = failed
+        ? FirstOwnedDnsState::kReplyFailed : FirstOwnedDnsState::kReplyWritten;
   }
   last_sequence_ = event.sequence;
   return true;
@@ -1474,6 +1495,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   if (recovery_ == nullptr) {
     return Fail(Status::kNotReady, "recovery_unavailable");
   }
+  egress_failure_observation_.reset();
   local_dpi_preparation_.reset();
   const auto staged_write_error = WriteProfileAtomically(staged_runtime_config_);
   if (!staged_write_error.empty()) return Fail(Status::kNotReady, staged_write_error.c_str());
@@ -1938,7 +1960,14 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
   }
   if (!egress_probe_) return "core_egress_probe_failed";
   const auto failure = egress_probe_->Verify(interrupted, periodic, deadline_tick);
-  if (!failure.empty()) egress_failure_observation_ = egress_probe_->LastObservation();
+  if (!failure.empty()) {
+    egress_failure_observation_ = egress_probe_->LastObservation();
+    if (egress_failure_observation_) {
+      // This first owned query is independent of the final native probe retry.
+      // Copy before rollback can stop Core and cancel its outstanding DNS work.
+      egress_failure_observation_->first_owned_dns_state = core_->FirstOwnedDnsObservation();
+    }
+  }
   return failure;
 }
 
