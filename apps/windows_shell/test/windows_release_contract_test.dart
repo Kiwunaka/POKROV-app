@@ -276,7 +276,7 @@ void main() {
       prepareToInstall,
       matches(RegExp(
         r"Log\('POKROV_SERVICE_STOP_REQUESTED'\);\s+"
-        r'ResultCode := -1;\s+if Exec\(',
+        r'ResultCode := -1;\s+StopSucceeded := Exec\(',
       )),
     );
     expect(
@@ -287,6 +287,25 @@ void main() {
       prepareToInstall,
       contains('POKROV_SERVICE_STOP_RESULT exec=false exit_code='),
     );
+    expect(prepareToInstall, isNot(contains('net.exe')));
+    expect(prepareToInstall, contains("Get-Service -Name ''POKROVService''"));
+    expect(prepareToInstall, contains(r'if (`$null -eq `$service) { exit 0 }'));
+    expect(prepareToInstall,
+        contains(r'Stop-Service -InputObject `$service -Force -NoWait -ErrorAction Stop;'));
+    expect(prepareToInstall, contains("WaitForStatus(''Stopped'',"));
+    expect(prepareToInstall, contains('TimeSpan]::FromSeconds(30)'));
+    expect(
+      prepareToInstall,
+      contains(r"`$service.Refresh(); if (`$service.Status -ne ''Stopped'') { exit 1 }"),
+    );
+    expect(
+      prepareToInstall,
+      matches(RegExp(
+        r'if not StopSucceeded or \(ResultCode <> 0\) then\s+begin\s+'
+        r"Result := '[^']+';\s+exit;",
+      )),
+    );
+    expect(prepareToInstall, isNot(contains('AbortServiceSetup')));
     expect(scriptContent, contains('create POKROVService'));
     expect(scriptContent, contains('AfterInstall: InstallAndStartService'));
     expect(scriptContent, contains('procedure InstallAndStartService'));

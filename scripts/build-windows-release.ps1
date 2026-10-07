@@ -1099,6 +1099,7 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode: Integer;
   OwnerQuerySucceeded: Boolean;
+  StopSucceeded: Boolean;
 begin
   Result := '';
   LegacyPerUserInstallDirectory :=
@@ -1132,11 +1133,27 @@ begin
   end;
   Log('POKROV_SERVICE_STOP_REQUESTED');
   ResultCode := -1;
-  if Exec(ExpandConstant('{sys}\net.exe'), 'stop POKROVService /y', '', SW_HIDE,
-      ewWaitUntilTerminated, ResultCode) then
+  StopSucceeded := Exec(
+      ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+      '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "' +
+      '`$ErrorActionPreference=''Stop''; try { ' +
+      '`$service=Get-Service -Name ''POKROVService'' -ErrorAction SilentlyContinue; ' +
+      'if (`$null -eq `$service) { exit 0 }; ' +
+      'if (`$service.Status -ne ''Stopped'') { ' +
+      'Stop-Service -InputObject `$service -Force -NoWait -ErrorAction Stop; ' +
+      '`$service.WaitForStatus(''Stopped'', [TimeSpan]::FromSeconds(30)) }; ' +
+      '`$service.Refresh(); if (`$service.Status -ne ''Stopped'') { exit 1 }; ' +
+      'exit 0 } catch { exit 1 }"',
+      '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if StopSucceeded then
     Log('POKROV_SERVICE_STOP_RESULT exec=true exit_code=' + IntToStr(ResultCode))
   else
     Log('POKROV_SERVICE_STOP_RESULT exec=false exit_code=' + IntToStr(ResultCode));
+  if not StopSucceeded or (ResultCode <> 0) then
+  begin
+    Result := 'Не удалось остановить службу POKROV перед установкой.';
+    exit;
+  end;
 end;
 
 function GetInstallOwnerSid(Param: String): String;

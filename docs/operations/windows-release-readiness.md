@@ -23,8 +23,11 @@ service. It waits up to 30 seconds for `POKROVService` to reach `Running` and
 fails the installation if that state is not confirmed. Installed QA separately
 checks the public service status and owner identity.
 
-The installer log marks entry into the synchronous `net stop` call and records
-its launch result and exit code when it returns.
+Before installing files, Setup uses the existing scoped `Stop-Service` pattern,
+waits up to 30 seconds for `Stopped`, and confirms that state with `Refresh`.
+An absent or already stopped service is valid; failure stops preparation before
+file installation. The log retains the stop request, launch result and exit code.
+This change does not establish the cause of an earlier abrupt Setup exit.
 
 An upgrade preserves a valid `InstallOwnerSid` already recorded in
 `HKLM64\Software\space.pokrov\POKROV\Service`, including when another
