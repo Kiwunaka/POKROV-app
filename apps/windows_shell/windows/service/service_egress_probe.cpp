@@ -301,6 +301,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       : host_(host), port_(port), secure_(secure), tun_dns_(tun_dns), events_(events) {}
 
   std::string Verify(const CheckInterruption& interrupted) override {
+    last_observation_.reset();
     std::string failure = "core_egress_probe_failed";
     for (int attempt = 0; attempt < 3 && !Interrupted(interrupted); ++attempt) {
       failure = ProbeOnce(interrupted);
@@ -321,10 +322,13 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     return Interrupted(interrupted) ? "core_egress_probe_failed" : failure;
   }
 
+  std::optional<EgressProbeObservation> LastObservation() const override {
+    return last_observation_;
+  }
+
  private:
   void RecordObservation(const ProbeObservation& observation, ULONGLONG started,
                          bool succeeded, const CheckInterruption& interrupted) {
-    if (events_ == nullptr) return;
     const auto interruption = interrupted ? interrupted() : OperationInterruption::kNone;
     auto outcome = succeeded ? EgressProbeOutcome::kSucceeded
         : observation.timed_out ? EgressProbeOutcome::kTimeout : EgressProbeOutcome::kFailed;
@@ -333,8 +337,12 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     } else if (interruption == OperationInterruption::kDeadlineExceeded) {
       outcome = EgressProbeOutcome::kDeadline;
     }
-    events_->RecordEgressProbeObservation(observation.stage, outcome,
-        observation.domain, observation.error, ::GetTickCount64() - started);
+    last_observation_ = EgressProbeObservation{observation.stage, outcome,
+        observation.domain, observation.error, ::GetTickCount64() - started};
+    if (events_ != nullptr) {
+      events_->RecordEgressProbeObservation(observation.stage, outcome,
+          observation.domain, observation.error, last_observation_->elapsed_ms);
+    }
   }
 
   std::string ProbeOnce(const CheckInterruption& interrupted) {
@@ -465,6 +473,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
   bool secure_;
   bool tun_dns_;
   ServiceEventSink* events_;
+  std::optional<EgressProbeObservation> last_observation_;
 };
 
 }  // namespace

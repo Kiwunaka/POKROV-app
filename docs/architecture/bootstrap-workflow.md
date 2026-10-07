@@ -1293,8 +1293,8 @@ Current blocking dependency:
   three bounded attempts while TUN routes settle. The service may enter
   `running` only after exact HTTP `204` and
   `X-Pokrov-Egress-Probe: pokrov-authenticated-egress-v1`. Failure stops Core,
-  returns to `config_staged` and reports `core_egress_probe_failed`; raw DNS,
-  provider or WinHTTP details never cross IPC
+  returns to `config_staged` and reports a closed egress failure with the bounded
+  observation below; host names and raw provider or WinHTTP text never cross IPC
 - the desktop runtime also keeps a bounded safe event journal at `%APPDATA%/space.pokrov/POKROV/pokrov-runtime/working/pokrov-runtime-events.jsonl`. It records UTC time, platform, a closed typed lifecycle event (`initialization`, `profile`, `core_start`, `tun`, `routes`, `dns`, `egress`, `recovery`, `stop`), bounded probe/stop reason, attempt, outcome, and allowlisted failure kind only; it never records profile contents, endpoints, visited domains, IP addresses, credentials, or raw provider/Core errors. Journal failure cannot block a connection, and files over 128 KiB are reduced to the latest 300 events
 - The Android production and Windows release builders pass the committed Git
   revision and the pubspec build number into the operational build identity.
@@ -1861,6 +1861,16 @@ retain the same failed-egress retry eligibility, three verifier attempts and
 bounded managed fallback; they neither publish protection nor diagnose DPI,
 MTU, ASN or UDP blocking. The UI and native service ship together so their
 closed allowlists agree.
+
+Windows ordinary egress failures expose the last completed probe observation in
+the existing service status and runner snapshot: closed stage, outcome and error
+domain plus numeric error code and elapsed milliseconds. This tuple is retained
+in memory before rollback, resets for each new check and is absent for the
+alternate SmartAccess probe. A cancelled periodic recheck drops its new
+observation before returning the preceding failure status. The client accepts
+all five fields together; partial or unknown values reject the snapshot. No address, packet, profile or
+upstream error text is included, journal access does not change, and the UI keeps
+its existing generic failure message.
 
 Windows also reads the current IPv4/IPv6 default routes and their interface
 link state on each existing desktop status poll. A running VPN interface alone

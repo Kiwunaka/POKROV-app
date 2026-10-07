@@ -195,10 +195,14 @@ class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
     if (on_verify) on_verify();
     return verify_error;
   }
+  std::optional<pokrov::service::EgressProbeObservation> LastObservation() const override {
+    return observation;
+  }
 
   int verify_calls = 0;
   std::string verify_error;
   std::function<void()> on_verify;
+  std::optional<pokrov::service::EgressProbeObservation> observation;
 };
 
 class FakeTransitionGuard final : public pokrov::service::RuntimeTransitionGuard {
@@ -617,20 +621,40 @@ void TestRuntimeLifecycle() {
                transaction->recorded.size() == 4,
            "runtime transaction did not persist every connect stage");
 
-    egress->verify_error = "core_egress_probe_failed";
+    egress->verify_error = "core_egress_dns_failed";
+    egress->observation = EgressProbeObservation{EgressProbeStage::kDnsWait,
+        EgressProbeOutcome::kTimeout, EgressErrorDomain::kNone, 0, 3000};
     const auto failed_recheck = host.RecheckEgress({});
     Expect(failed_recheck.status == Status::kNotReady &&
                Contains(failed_recheck, "core_egress_validated=0") &&
-               Contains(failed_recheck, "failure=core_egress_probe_failed"),
+               Contains(failed_recheck, "failure=core_egress_dns_failed") &&
+               Contains(failed_recheck, "egress_probe_outcome=timeout"),
            "failed egress recheck did not revoke its proof");
     Expect(host.CanRecheckEgress(),
            "failed egress recheck stopped future checks");
+    bool cancelled = false;
+    egress->verify_error = "core_egress_probe_failed";
+    egress->on_verify = [&] {
+      egress->observation = EgressProbeObservation{EgressProbeStage::kDnsWait,
+          EgressProbeOutcome::kCancelled, EgressErrorDomain::kNone, 0, 12};
+      cancelled = true;
+    };
+    const auto cancelled_recheck = host.RecheckEgress([&] {
+      return cancelled ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+    });
+    Expect(Contains(cancelled_recheck, "failure=core_egress_dns_failed") &&
+               !Contains(cancelled_recheck, "egress_probe_stage=") &&
+               Contains(host.Snapshot(), "failure=core_egress_dns_failed") &&
+               !Contains(host.Snapshot(), "egress_probe_stage="),
+           "cancelled recheck attached a new observation to the previous DNS failure");
+    egress->on_verify = {};
+    egress->observation.reset();
     egress->verify_error.clear();
     const auto recovered_recheck = host.RecheckEgress({});
     Expect(recovered_recheck.status == Status::kOk &&
                Contains(recovered_recheck, "core_egress_validated=1") &&
                Contains(recovered_recheck, "failure=none") &&
-               egress->verify_calls == 3,
+               egress->verify_calls == 4,
            "successful egress recheck did not restore proof");
 
     const auto disconnected = host.Disconnect();
@@ -1394,7 +1418,11 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 
 }  // namespace
 
-int main() {
+int main(int argc, char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--periodic-cancel-observation") {
+    TestRuntimeLifecycle();
+    return failures == 0 ? 0 : 1;
+  }
   TestReleasedCoreDescriptorCompatibility();
   TestWindowsTelegramMetadataComposition();
   TestWindowsLocalDpiScopePreparation();

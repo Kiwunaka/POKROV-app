@@ -1335,6 +1335,7 @@ RuntimeResult RuntimeHost::StageProfile(const std::string& body, bool requires_b
   requires_bound_connect_ = requires_bound_connect;
   effective_profile_digest_.clear();
   profile_staged_ = true;
+  egress_failure_observation_.reset();
   phase_ = Phase::kConfigStaged;
   failure_.clear();
   RecordEvent(ServiceEvent::kRuntimeProfileStage,
@@ -1927,12 +1928,16 @@ bool RuntimeHost::CanRecheckEgress() const {
 }
 
 std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& interrupted) {
+  egress_failure_observation_.reset();
   const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_);
   if (target) {
     if (target->empty() || core_->SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
     return core_->ProbeSmartAccess(*target, periodic, interrupted);
   }
-  return egress_probe_ ? egress_probe_->Verify(interrupted) : "core_egress_probe_failed";
+  if (!egress_probe_) return "core_egress_probe_failed";
+  const auto failure = egress_probe_->Verify(interrupted);
+  if (!failure.empty()) egress_failure_observation_ = egress_probe_->LastObservation();
+  return failure;
 }
 
 RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
@@ -1943,7 +1948,10 @@ RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
   const auto interruption = interrupted ? interrupted() : OperationInterruption::kNone;
   // A lifecycle command cancels and joins this check before changing its owner.
   // Failed health leaves the current TUN in place for protected replacement.
-  if (interruption == OperationInterruption::kCancelled) return Snapshot();
+  if (interruption == OperationInterruption::kCancelled) {
+    egress_failure_observation_.reset();
+    return Snapshot();
+  }
   if (!failure.empty() || interruption == OperationInterruption::kDeadlineExceeded) {
     core_egress_validated_ = false;
     RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kFailed);
@@ -2289,7 +2297,9 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
          ";core_version=" +
          (initialized_ && !core_->CoreVersion().empty() ? core_->CoreVersion() : "none") +
          ";protection_retained=" + (guarded ? "1" : "0") +
-         ";windows_local_dpi_admission_version=" + (local_dpi_ready_ ? "1" : "0");
+         ";windows_local_dpi_admission_version=" + (local_dpi_ready_ ? "1" : "0") +
+         (!pending && failure_.rfind("core_egress_", 0) == 0 && egress_failure_observation_
+              ? EncodeEgressProbeObservation(*egress_failure_observation_) : "");
 }
 
 bool RuntimeHost::PrepareDirectories() {

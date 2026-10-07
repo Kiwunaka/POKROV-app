@@ -17,6 +17,12 @@ RuntimeResult WithFailure(RuntimeResult result, Status status, const char* code)
     const auto end = result.body.find(';', field + 1);
     result.body.replace(field, end == std::string::npos ? end : end - field,
                         std::string(";failure=") + code);
+    const auto observation = result.body.find(";egress_probe_stage=");
+    if (observation != std::string::npos) {
+      const auto transport = result.body.find(";transport_proof_pending=", observation);
+      result.body.erase(observation,
+          transport == std::string::npos ? transport : transport - observation);
+    }
   } else {
     result.body = code;
   }

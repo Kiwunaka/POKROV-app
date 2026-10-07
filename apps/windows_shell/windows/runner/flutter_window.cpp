@@ -269,6 +269,17 @@ flutter::EncodableValue RuntimeSnapshotValue(
       snapshot.failure != "service_unavailable") {
     values[flutter::EncodableValue("lastFailureKind")] =
         flutter::EncodableValue(snapshot.failure);
+    if (snapshot.egress_failure_observation && snapshot.failure.rfind("core_egress_", 0) == 0) {
+      const auto& observation = *snapshot.egress_failure_observation;
+      values[flutter::EncodableValue("egressProbeObservation")] =
+          flutter::EncodableValue(flutter::EncodableMap{
+            {flutter::EncodableValue("stage"), flutter::EncodableValue(pokrov::service::EgressProbeStageName(observation.stage))},
+            {flutter::EncodableValue("outcome"), flutter::EncodableValue(pokrov::service::EgressProbeOutcomeName(observation.outcome))},
+            {flutter::EncodableValue("error_domain"), flutter::EncodableValue(pokrov::service::EgressProbeErrorDomainName(observation.error_domain))},
+            {flutter::EncodableValue("error_code"), flutter::EncodableValue(static_cast<std::int64_t>(observation.error_code))},
+            {flutter::EncodableValue("elapsed_ms"), flutter::EncodableValue(static_cast<std::int64_t>(observation.elapsed_ms))},
+          });
+    }
   } else if (uplink == false) {
     values[flutter::EncodableValue("lastFailureKind")] =
         flutter::EncodableValue("network_unavailable");

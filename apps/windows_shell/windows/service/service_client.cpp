@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -712,7 +713,52 @@ bool ParseServiceRuntimeSnapshot(const std::string& body,
                                  ServiceRuntimeSnapshot* output) {
   if (output == nullptr) return false;
   auto parsed = *output;
-  if (!ParseSnapshotBodyInternal(body, &parsed)) return false;
+  parsed.egress_failure_observation.reset();
+  auto snapshot_body = body;
+  const auto observation_start = body.find(";egress_probe_stage=");
+  if (observation_start != std::string::npos) {
+    // Dispatcher transport-state fields follow the RuntimeHost snapshot.
+    const auto observation_end = body.find(";transport_proof_pending=", observation_start);
+    const auto observation_body = body.substr(observation_start + 1,
+        observation_end == std::string::npos ? observation_end : observation_end - observation_start - 1);
+    std::size_t offset = 0;
+    std::string stage, outcome, domain, error, elapsed;
+    if (!ReadField(observation_body, &offset, "egress_probe_stage", &stage, false) ||
+        !ReadField(observation_body, &offset, "egress_probe_outcome", &outcome, false) ||
+        !ReadField(observation_body, &offset, "egress_error_domain", &domain, false) ||
+        !ReadField(observation_body, &offset, "egress_error_code", &error, false) ||
+        !ReadField(observation_body, &offset, "egress_elapsed_ms", &elapsed, true) ||
+        offset != observation_body.size()) return false;
+    std::optional<EgressProbeStage> parsed_stage;
+    std::optional<EgressProbeOutcome> parsed_outcome;
+    std::optional<EgressErrorDomain> parsed_domain;
+    for (int value = 0; value <= static_cast<int>(EgressProbeStage::kRetryWait); ++value) {
+      const auto item = static_cast<EgressProbeStage>(value);
+      if (stage == EgressProbeStageName(item)) parsed_stage = item;
+    }
+    for (int value = 0; value <= static_cast<int>(EgressProbeOutcome::kTimeout); ++value) {
+      const auto item = static_cast<EgressProbeOutcome>(value);
+      if (outcome == EgressProbeOutcomeName(item)) parsed_outcome = item;
+    }
+    for (int value = 0; value <= static_cast<int>(EgressErrorDomain::kHttpStatus); ++value) {
+      const auto item = static_cast<EgressErrorDomain>(value);
+      if (domain == EgressProbeErrorDomainName(item)) parsed_domain = item;
+    }
+    std::uint32_t error_code = 0;
+    std::uint64_t elapsed_ms = 0;
+    const auto parsed_error = std::from_chars(error.data(), error.data() + error.size(), error_code);
+    const auto parsed_elapsed = std::from_chars(elapsed.data(), elapsed.data() + elapsed.size(), elapsed_ms);
+    if (!parsed_stage || !parsed_outcome || !parsed_domain ||
+        parsed_error.ec != std::errc{} || parsed_error.ptr != error.data() + error.size() ||
+        parsed_elapsed.ec != std::errc{} || parsed_elapsed.ptr != elapsed.data() + elapsed.size() ||
+        elapsed_ms > 9223372036854775807ULL) return false;
+    parsed.egress_failure_observation = EgressProbeObservation{
+        *parsed_stage, *parsed_outcome, *parsed_domain, error_code, elapsed_ms};
+    snapshot_body.erase(observation_start,
+        observation_end == std::string::npos ? observation_end : observation_end - observation_start);
+  }
+  if (!ParseSnapshotBodyInternal(snapshot_body, &parsed)) return false;
+  if (parsed.egress_failure_observation && parsed.failure.rfind("core_egress_", 0) != 0) return false;
   *output = std::move(parsed);
   return true;
 }

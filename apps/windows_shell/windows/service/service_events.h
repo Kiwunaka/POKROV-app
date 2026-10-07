@@ -77,6 +77,19 @@ enum class EgressErrorDomain {
   kNone, kWin32, kWinsock, kWinHttp, kDns, kNtStatus, kHttpStatus,
 };
 
+struct EgressProbeObservation {
+  EgressProbeStage stage;
+  EgressProbeOutcome outcome;
+  EgressErrorDomain error_domain;
+  std::uint32_t error_code;
+  std::uint64_t elapsed_ms;
+};
+
+const char* EgressProbeStageName(EgressProbeStage stage);
+const char* EgressProbeOutcomeName(EgressProbeOutcome outcome);
+const char* EgressProbeErrorDomainName(EgressErrorDomain domain);
+std::string EncodeEgressProbeObservation(const EgressProbeObservation& observation);
+
 enum class TransitionGuardOperation { kStart, kFinish };
 enum class TransitionGuardStage {
   kEngineOpen,

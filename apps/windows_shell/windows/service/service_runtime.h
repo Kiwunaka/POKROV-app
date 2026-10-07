@@ -113,6 +113,9 @@ class RuntimeEgressProbe {
  public:
   virtual ~RuntimeEgressProbe() = default;
   virtual std::string Verify(const CheckInterruption& interrupted = {}) = 0;
+  virtual std::optional<EgressProbeObservation> LastObservation() const {
+    return std::nullopt;
+  }
 };
 
 struct RuntimeResult {
@@ -242,6 +245,7 @@ class RuntimeHost {
   bool disable_memory_limit_ = false;
   int bundled_rule_set_slot_ = 0;
   bool core_egress_validated_ = false;
+  std::optional<EgressProbeObservation> egress_failure_observation_;
   Phase phase_ = Phase::kArtifactMissing;
   std::string failure_ = "core_not_initialized";
 };

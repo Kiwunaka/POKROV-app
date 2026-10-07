@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "service_protocol.h"
+#include "service_events.h"
 #include "windows_crash_profile.h"
 
 namespace pokrov::service {
@@ -71,6 +72,7 @@ struct ServiceRuntimeSnapshot {
   std::string effective_profile_digest;
   std::string phase = "artifact_missing";
   std::string failure = "service_unavailable";
+  std::optional<EgressProbeObservation> egress_failure_observation;
   std::vector<windows_crash::WindowsCrashDiagnostic> crash_diagnostics;
 };
 

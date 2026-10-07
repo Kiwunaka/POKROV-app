@@ -2,6 +2,8 @@
 #include <windows.h>
 
 #include "service_runtime.h"
+#include "service_client.h"
+#include "service_profile_identity.h"
 
 #include <atomic>
 #include <iostream>
@@ -168,7 +170,7 @@ class LoopbackServer {
 }  // namespace
 #endif
 
-int main() {
+int main(int argc, char** argv) {
 #ifdef _DEBUG
   using namespace pokrov::service;
   WSADATA wsa{};
@@ -177,6 +179,55 @@ int main() {
   const auto expect = [&](bool value, const char* message) {
     if (!value) { std::cerr << message << '\n'; ++failures; }
   };
+  if (argc == 2 && std::string(argv[1]) == "--failure-observation") {
+    const SOCKET reservation = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    if (reservation == INVALID_SOCKET ||
+        ::bind(reservation, reinterpret_cast<sockaddr*>(&address), sizeof(address))) return 1;
+    int length = sizeof(address);
+    if (::getsockname(reservation, reinterpret_cast<sockaddr*>(&address), &length)) return 1;
+    auto probe = CreateLoopbackEgressProbeForTest(ntohs(address.sin_port));
+    expect(probe->Verify() == "core_egress_connect_failed",
+           "closed loopback endpoint changed its failure category");
+    const auto observation = probe->LastObservation();
+    expect(observation && observation->stage == EgressProbeStage::kConnect &&
+               observation->outcome == EgressProbeOutcome::kFailed &&
+               observation->error_domain == EgressErrorDomain::kWinHttp && observation->error_code != 0,
+           "ordinary probe lost its terminal observation without an event sink");
+    if (observation) {
+      const auto body = std::string("phase=config_staged;core_ready=1;can_initialize=1;can_connect=1;") +
+          "running=0;core_egress_validated=0;dns_ready=0;staged_profile_digest=" + ProfileDigest("0\n{}") +
+          ";effective_profile_digest=none;failure=core_egress_connect_failed;"
+          "routing_catalog_window_version=0;smart_access_lease_version=0;"
+          "routing_catalog_control_version=0;smart_access_runtime_control_version=0;"
+          "transport_capabilities=none;core_module_sha256=none;core_version=none;"
+          "protection_retained=0;windows_local_dpi_admission_version=0";
+      const auto suffix = EncodeEgressProbeObservation(*observation);
+      const std::string transport = ";transport_proof_pending=0;transport_lease_active=0";
+      ServiceRuntimeSnapshot parsed;
+      expect(ParseServiceRuntimeSnapshot(body + suffix + transport, &parsed) &&
+                 parsed.egress_failure_observation &&
+                 parsed.egress_failure_observation->stage == observation->stage &&
+                 parsed.egress_failure_observation->outcome == observation->outcome &&
+                 parsed.egress_failure_observation->error_domain == observation->error_domain &&
+                 parsed.egress_failure_observation->error_code == observation->error_code &&
+                 parsed.egress_failure_observation->elapsed_ms == observation->elapsed_ms,
+             "whole egress failure tuple did not survive the service parser");
+      expect(!ParseServiceRuntimeSnapshot(body + suffix.substr(0, suffix.find(";egress_elapsed_ms=")) + transport,
+                                         &parsed) && parsed.egress_failure_observation &&
+                 parsed.egress_failure_observation->elapsed_ms == observation->elapsed_ms,
+             "partial failure tuple was accepted or changed the previous parsed snapshot");
+      expect(ParseServiceRuntimeSnapshot(body + transport, &parsed) && !parsed.egress_failure_observation,
+             "a later snapshot without observation retained old diagnostic fields");
+    }
+    probe->Verify([] { return OperationInterruption::kCancelled; });
+    expect(!probe->LastObservation(), "Verify retained an observation from the previous attempt");
+    ::closesocket(reservation);
+    ::WSACleanup();
+    return failures == 0 ? 0 : 1;
+  }
   // The probe's DNS transport is a socket owned by this process. Exercise its
   // real SDK decoder and cancellation without a TUN, OS resolver or WFP writes.
   for (const auto reply : {LoopbackDnsServer::Reply::kValid,
@@ -276,6 +327,8 @@ int main() {
   ::WSACleanup();
   return failures == 0 ? 0 : 1;
 #else
+  static_cast<void>(argc);
+  static_cast<void>(argv);
   return 1;
 #endif
 }

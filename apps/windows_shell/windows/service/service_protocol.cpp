@@ -1,11 +1,63 @@
 #include "service_protocol.h"
 #include "service_profile_identity.h"
+#include "service_events.h"
 
 #include <algorithm>
 #include <charconv>
 #include <cstring>
 
 namespace pokrov::service {
+
+const char* EgressProbeStageName(EgressProbeStage stage) {
+  switch (stage) {
+    case EgressProbeStage::kTunDns: return "tun_dns";
+    case EgressProbeStage::kDnsSetup: return "dns_setup";
+    case EgressProbeStage::kDnsSend: return "dns_send";
+    case EgressProbeStage::kDnsWait: return "dns_wait";
+    case EgressProbeStage::kDnsReply: return "dns_reply";
+    case EgressProbeStage::kHttpSetup: return "http_setup";
+    case EgressProbeStage::kConnect: return "connect";
+    case EgressProbeStage::kTls: return "tls";
+    case EgressProbeStage::kSending: return "sending";
+    case EgressProbeStage::kResponse: return "response";
+    case EgressProbeStage::kProof: return "proof";
+    case EgressProbeStage::kRetryWait: return "retry_wait";
+  }
+  return "invalid";
+}
+
+const char* EgressProbeOutcomeName(EgressProbeOutcome outcome) {
+  switch (outcome) {
+    case EgressProbeOutcome::kSucceeded: return "succeeded";
+    case EgressProbeOutcome::kFailed: return "failed";
+    case EgressProbeOutcome::kCancelled: return "cancelled";
+    case EgressProbeOutcome::kDeadline: return "deadline";
+    case EgressProbeOutcome::kTimeout: return "timeout";
+  }
+  return "invalid";
+}
+
+const char* EgressProbeErrorDomainName(EgressErrorDomain domain) {
+  switch (domain) {
+    case EgressErrorDomain::kNone: return "none";
+    case EgressErrorDomain::kWin32: return "win32";
+    case EgressErrorDomain::kWinsock: return "winsock";
+    case EgressErrorDomain::kWinHttp: return "winhttp";
+    case EgressErrorDomain::kDns: return "dns";
+    case EgressErrorDomain::kNtStatus: return "ntstatus";
+    case EgressErrorDomain::kHttpStatus: return "http_status";
+  }
+  return "invalid";
+}
+
+std::string EncodeEgressProbeObservation(const EgressProbeObservation& observation) {
+  return std::string(";egress_probe_stage=") + EgressProbeStageName(observation.stage) +
+      ";egress_probe_outcome=" + EgressProbeOutcomeName(observation.outcome) +
+      ";egress_error_domain=" + EgressProbeErrorDomainName(observation.error_domain) +
+      ";egress_error_code=" + std::to_string(observation.error_code) +
+      ";egress_elapsed_ms=" + std::to_string(observation.elapsed_ms);
+}
+
 namespace {
 
 void AppendUint16(std::vector<std::uint8_t>* output, std::uint16_t value) {
