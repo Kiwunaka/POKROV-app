@@ -308,9 +308,11 @@ The current WO-005B1/005B2/005C source implements:
   protected `working\data\rule-set\profile-{a,b}` generations, secures every
   file and binds the staged profile to the newly completed generation. The
   privileged service never opens a caller-selected source path;
-- service-side selected-outbound proof over WinHTTP with proxy bypass. A green
-  runtime requires HTTPS `204` plus the exact
-  `X-Pokrov-Egress-Probe: pokrov-authenticated-egress-v1` marker. Failure stops
+- service-side proof over WinHTTP with proxy bypass and TUN DNS. Green ordinary
+  startup requires HTTPS `204` and `200` with the exact
+  `X-Pokrov-Egress-Probe: pokrov-authenticated-egress-v1` marker and 65536
+  uncompressed bytes on the same proven connection. Periodic health keeps its
+  lightweight `204`/marker check. Failure stops
   Core, returns to `config_staged`, and emits only
   `core_egress_probe_failed`;
 - a strict status snapshot where `running`, `core_egress_validated` and
@@ -440,7 +442,17 @@ lost-frame/cancel races still require the separate verification stage.
 The egress request uses asynchronous WinHTTP, retains callback state until
 `HANDLE_CLOSING`, and closes the pending request on interruption. Retry waits
 also check interruption. HTTPS, proxy bypass and the required proof marker are
-unchanged. The loopback HTTP factory exists only in Debug test builds. See
+unchanged. Ordinary startup uses the fixed API proof/64K pair, then the fixed
+`pokrov.space/.well-known/pokrov/` reserve pair within the same three attempt
+slots and owner deadline. Both requests require their exact status and marker;
+the payload additionally requires 65536 uncompressed bytes. Redirects are
+disabled, each target uses the same TUN DNS path and default certificate trust,
+and 204/64K responses must report the same actual local/remote socket tuple;
+cross-session WinHTTP pooling is disabled. The pending body buffer lives until
+`HANDLE_CLOSING`. Periodic checks remain
+204/marker only under their original three-second deadline; the primary gets
+three quarters of remaining time after the unchanged next retry wait. The
+loopback HTTP factory exists only in Debug test builds. See
 [WinHTTP cancellation and callback lifetime](https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpclosehandle).
 
 Blocking Core Start/Stop and recovery calls still must return before the

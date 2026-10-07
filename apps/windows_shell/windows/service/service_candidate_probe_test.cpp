@@ -49,7 +49,8 @@ class Recovery final : public RuntimeRecovery {
 
 class HealthProbe final : public RuntimeEgressProbe {
  public:
-  std::string Verify(const CheckInterruption& interrupted) override {
+  std::string Verify(const CheckInterruption& interrupted, bool = false,
+                     std::uint64_t = 0) override {
     if (++active > 1) overlapped = true;
     ++calls;
     while (mode == 1 && interrupted() == OperationInterruption::kNone) ::Sleep(1);

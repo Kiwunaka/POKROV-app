@@ -8,6 +8,7 @@
 
 #include "service_runtime.h"
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <memory>
@@ -21,6 +22,17 @@ bool Interrupted(const CheckInterruption& check) {
 }
 
 constexpr wchar_t kProbeHostname[] = L"api.pokrov.space";
+
+struct ProbeTarget {
+  const wchar_t* hostname;
+  const wchar_t* proof_path;
+  const wchar_t* data_path;
+};
+
+constexpr ProbeTarget kProbeTargets[] = {
+    {kProbeHostname, L"/api/public/authenticated-egress-probe", L"/api/public/egress-probe-64k"},
+    {L"pokrov.space", L"/.well-known/pokrov/egress-probe", L"/.well-known/pokrov/egress-probe-64k.bin"},
+};
 
 struct TunDnsEndpoint {
   ULONG interface_index = 0;
@@ -40,6 +52,22 @@ struct ProbeObservation {
     error = code;
   }
 };
+
+bool SameSocketAddress(const SOCKADDR_STORAGE& left, const SOCKADDR_STORAGE& right) {
+  if (left.ss_family != right.ss_family) return false;
+  if (left.ss_family == AF_INET) {
+    const auto& a = reinterpret_cast<const sockaddr_in&>(left);
+    const auto& b = reinterpret_cast<const sockaddr_in&>(right);
+    return a.sin_addr.s_addr == b.sin_addr.s_addr && a.sin_port == b.sin_port;
+  }
+  if (left.ss_family == AF_INET6) {
+    const auto& a = reinterpret_cast<const sockaddr_in6&>(left);
+    const auto& b = reinterpret_cast<const sockaddr_in6&>(right);
+    return IN6_ADDR_EQUAL(&a.sin6_addr, &b.sin6_addr) &&
+        a.sin6_port == b.sin6_port && a.sin6_scope_id == b.sin6_scope_id;
+  }
+  return false;
+}
 
 bool FindTunDns(TunDnsEndpoint* result, ProbeObservation* observation) {
   ULONG size = 15 * 1024;
@@ -89,6 +117,7 @@ bool FindTunDns(TunDnsEndpoint* result, ProbeObservation* observation) {
 }
 
 std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
+                              const wchar_t* hostname,
                               const CheckInterruption& interrupted,
                               ProbeObservation* observation) {
   observation->stage = EgressProbeStage::kDnsSetup;
@@ -128,7 +157,7 @@ std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
       return;
     }
     if (!::DnsWriteQuestionToBuffer_W(reinterpret_cast<DNS_MESSAGE_BUFFER*>(request.data()),
-            &request_size, kProbeHostname, DNS_TYPE_A, transaction, TRUE)) {
+            &request_size, hostname, DNS_TYPE_A, transaction, TRUE)) {
       observation->Error(EgressErrorDomain::kWin32, ::GetLastError());
       return;
     }
@@ -187,7 +216,7 @@ std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
       }
       for (auto* record = records; record != nullptr; record = record->pNext) {
         if (record->Flags.S.Section != DnsSectionAnswer || record->wType != DNS_TYPE_A ||
-            record->pName == nullptr || !::DnsNameCompare_W(record->pName, kProbeHostname)) continue;
+            record->pName == nullptr || !::DnsNameCompare_W(record->pName, hostname)) continue;
         IN_ADDR address{};
         address.s_addr = record->Data.A.IpAddress;
         wchar_t numeric[INET_ADDRSTRLEN]{};
@@ -268,6 +297,7 @@ class Completion {
       completion->stage.store(ProbeStage::kSending);
     } else if (status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE ||
                status == WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE ||
+               status == WINHTTP_CALLBACK_STATUS_READ_COMPLETE ||
                status == WINHTTP_CALLBACK_STATUS_REQUEST_ERROR) {
       if (status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE) {
         completion->stage.store(ProbeStage::kResponse);
@@ -276,6 +306,9 @@ class Completion {
           information != nullptr && information_size == sizeof(WINHTTP_ASYNC_RESULT)) {
         completion->error.store(
             static_cast<WINHTTP_ASYNC_RESULT*>(information)->dwError);
+      }
+      if (status == WINHTTP_CALLBACK_STATUS_READ_COMPLETE) {
+        completion->read_size.store(information_size);
       }
       completion->status.store(status);
       ::SetEvent(completion->ready);
@@ -286,6 +319,10 @@ class Completion {
   std::atomic<DWORD> error{ERROR_SUCCESS};
   std::atomic<DWORD> wait_error{ERROR_SUCCESS};
   std::atomic<ProbeStage> stage{ProbeStage::kConnect};
+  // WinHTTP may still use this buffer after cancellation. The request keeps
+  // Completion alive until its final HANDLE_CLOSING callback.
+  std::array<unsigned char, 4096> read_buffer{};
+  std::atomic<DWORD> read_size{0};
 
  private:
   ~Completion() { if (ready != nullptr) ::CloseHandle(ready); }
@@ -296,30 +333,54 @@ class Completion {
 
 class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
  public:
-  AuthenticatedEgressProbe(const wchar_t* host, INTERNET_PORT port, bool secure,
+  AuthenticatedEgressProbe(const ProbeTarget* targets, std::size_t target_count,
+                           INTERNET_PORT port, bool secure,
                            bool tun_dns, ServiceEventSink* events)
-      : host_(host), port_(port), secure_(secure), tun_dns_(tun_dns), events_(events) {}
+      : targets_(targets), target_count_(target_count), port_(port), secure_(secure),
+        tun_dns_(tun_dns), events_(events) {}
 
-  std::string Verify(const CheckInterruption& interrupted) override {
+  std::string Verify(const CheckInterruption& interrupted, bool periodic,
+                     std::uint64_t deadline_tick) override {
     last_observation_.reset();
+    const CheckInterruption owner = [&] {
+      const auto reason = interrupted ? interrupted() : OperationInterruption::kNone;
+      if (reason != OperationInterruption::kNone) return reason;
+      return periodic && deadline_tick != 0 && ::GetTickCount64() >= deadline_tick
+          ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+    };
     std::string failure = "core_egress_probe_failed";
-    for (int attempt = 0; attempt < 3 && !Interrupted(interrupted); ++attempt) {
-      failure = ProbeOnce(interrupted);
-      if (failure.empty() && !Interrupted(interrupted)) return "";
+    for (int attempt = 0; attempt < 3 && !Interrupted(owner); ++attempt) {
+      std::uint64_t target_deadline = deadline_tick;
+      if (periodic && deadline_tick != 0 && attempt == 0 && target_count_ > 1) {
+        const auto now = ::GetTickCount64();
+        const auto remaining = deadline_tick > now ? deadline_tick - now : 0;
+        // Keep the existing first retry wait inside the owner's three seconds.
+        const auto available = remaining > 900 ? remaining - 900 : 0;
+        target_deadline = now + available * 3 / 4;
+      }
+      const CheckInterruption target_check = [&, target_deadline] {
+        const auto reason = owner();
+        if (reason != OperationInterruption::kNone) return reason;
+        return periodic && target_deadline != 0 && ::GetTickCount64() >= target_deadline
+            ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+      };
+      const auto target_index = (std::min)(static_cast<std::size_t>(attempt), target_count_ - 1);
+      failure = ProbeOnce(targets_[target_index], periodic, target_check);
+      if (failure.empty() && !Interrupted(owner)) return "";
       if (attempt < 2) {
         const auto started = ::GetTickCount64();
         const auto until = started + (attempt == 0 ? 900 : 1500);
-        while (::GetTickCount64() < until && !Interrupted(interrupted)) {
+        while (::GetTickCount64() < until && !Interrupted(owner)) {
           ::Sleep(25);
         }
-        if (Interrupted(interrupted)) {
+        if (Interrupted(owner)) {
           ProbeObservation observation;
           observation.stage = EgressProbeStage::kRetryWait;
-          RecordObservation(observation, started, false, interrupted);
+          RecordObservation(observation, started, false, owner);
         }
       }
     }
-    return Interrupted(interrupted) ? "core_egress_probe_failed" : failure;
+    return Interrupted(owner) ? "core_egress_probe_failed" : failure;
   }
 
   std::optional<EgressProbeObservation> LastObservation() const override {
@@ -345,14 +406,17 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     }
   }
 
-  std::string ProbeOnce(const CheckInterruption& interrupted) {
+  std::string ProbeOnce(const ProbeTarget& target, bool periodic,
+                        const CheckInterruption& interrupted) {
     auto started = ::GetTickCount64();
     ProbeObservation observation;
     std::wstring numeric;
     if (tun_dns_) {
       TunDnsEndpoint endpoint;
       if (!FindTunDns(&endpoint, &observation) ||
-          (numeric = QueryProbeAddress(endpoint, interrupted, &observation)).empty()) {
+          (numeric = QueryProbeAddress(endpoint, target.hostname, interrupted,
+                                       &observation))
+              .empty()) {
         RecordObservation(observation, started, false, interrupted);
         return "core_egress_dns_failed";
       }
@@ -370,105 +434,233 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       return "core_egress_probe_failed";
     }
     ::WinHttpSetTimeouts(session, 3000, 3000, 3000, 6000);
-    const HINTERNET connection = ::WinHttpConnect(session, host_, port_, 0);
+    BOOL disable_global_pooling = TRUE;
+    if (!::WinHttpSetOption(session, WINHTTP_OPTION_DISABLE_GLOBAL_POOLING,
+                            &disable_global_pooling,
+                            sizeof(disable_global_pooling))) {
+      observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
+      RecordObservation(observation, started, false, interrupted);
+      ::WinHttpCloseHandle(session);
+      return "core_egress_probe_failed";
+    }
+    const HINTERNET connection =
+        ::WinHttpConnect(session, target.hostname, port_, 0);
     if (connection == nullptr) {
       observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
     }
-    const HINTERNET request = connection == nullptr ? nullptr :
-        ::WinHttpOpenRequest(connection, L"GET",
-            L"/api/public/authenticated-egress-probe", nullptr,
-            WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
-            WINHTTP_FLAG_REFRESH | (secure_ ? WINHTTP_FLAG_SECURE : 0));
-    if (connection != nullptr && request == nullptr) {
-      observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-    }
-    auto* completion = new Completion(secure_);
-    if (completion->ready == nullptr) {
-      observation.Error(EgressErrorDomain::kWin32, ::GetLastError());
-    }
-    DWORD_PTR context = reinterpret_cast<DWORD_PTR>(completion);
-    bool callback_installed = false;
-    if (request != nullptr && completion->ready != nullptr) {
-      const bool options_set =
-          (!tun_dns_ || ::WinHttpSetOption(request, WINHTTP_OPTION_RESOLUTION_HOSTNAME,
-              numeric.data(), static_cast<DWORD>((numeric.size() + 1) * sizeof(wchar_t)))) &&
-          ::WinHttpSetOption(request, WINHTTP_OPTION_CONTEXT_VALUE,
-                             &context, sizeof(context));
-      if (options_set) {
-        completion->Retain();
-        callback_installed = ::WinHttpSetStatusCallback(
-            request, Completion::Callback,
-            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES |
-                WINHTTP_CALLBACK_FLAG_CONNECT_TO_SERVER | WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
-            0) != WINHTTP_INVALID_STATUS_CALLBACK;
-        if (!callback_installed) {
-          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-          completion->Release();
-        }
-      } else {
+    bool valid = false;
+    std::string failure = "core_egress_probe_failed";
+    WINHTTP_CONNECTION_INFO proof_connection{};
+    for (int proof_request = 0; proof_request < (periodic ? 1 : 2);
+         ++proof_request) {
+      const bool data = proof_request == 1;
+      const HINTERNET request =
+          connection == nullptr
+              ? nullptr
+              : ::WinHttpOpenRequest(
+                    connection, L"GET",
+                    data ? target.data_path : target.proof_path, nullptr,
+                    WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
+                    WINHTTP_FLAG_REFRESH | (secure_ ? WINHTTP_FLAG_SECURE : 0));
+      if (connection != nullptr && request == nullptr) {
         observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
       }
-    }
-    bool valid = false;
-    DWORD error = ERROR_SUCCESS;
-    if (callback_installed && !Interrupted(interrupted)) {
-      observation.stage = EgressProbeStage::kConnect;
-      if (!::WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS,
-                               0, WINHTTP_NO_REQUEST_DATA, 0, 0, context)) {
-        error = ::GetLastError();
-      } else if (completion->Wait(WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE, interrupted) &&
-                 !Interrupted(interrupted)) {
-        if (!::WinHttpReceiveResponse(request, nullptr)) {
-          error = ::GetLastError();
+      auto* completion = new Completion(secure_);
+      if (completion->ready == nullptr) {
+        observation.Error(EgressErrorDomain::kWin32, ::GetLastError());
+      }
+      DWORD_PTR context = reinterpret_cast<DWORD_PTR>(completion);
+      bool callback_installed = false;
+      if (request != nullptr && completion->ready != nullptr) {
+        DWORD disabled = WINHTTP_DISABLE_REDIRECTS;
+        const bool options_set =
+            ::WinHttpSetOption(request, WINHTTP_OPTION_DISABLE_FEATURE,
+                               &disabled, sizeof(disabled)) &&
+            (!tun_dns_ ||
+             ::WinHttpSetOption(
+                 request, WINHTTP_OPTION_RESOLUTION_HOSTNAME, numeric.data(),
+                 static_cast<DWORD>((numeric.size() + 1) * sizeof(wchar_t)))) &&
+            ::WinHttpSetOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &context,
+                               sizeof(context));
+        if (options_set) {
+          completion->Retain();
+          callback_installed = ::WinHttpSetStatusCallback(
+                                   request, Completion::Callback,
+                                   WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS |
+                                       WINHTTP_CALLBACK_FLAG_HANDLES |
+                                       WINHTTP_CALLBACK_FLAG_CONNECT_TO_SERVER |
+                                       WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
+                                   0) != WINHTTP_INVALID_STATUS_CALLBACK;
+          if (!callback_installed) {
+            observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
+            completion->Release();
+          }
         } else {
-          valid = completion->Wait(WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, interrupted) &&
-                  !Interrupted(interrupted);
+          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
         }
       }
+      valid = false;
+      DWORD error = ERROR_SUCCESS;
+      if (callback_installed && !Interrupted(interrupted)) {
+        observation.stage = EgressProbeStage::kConnect;
+        if (!::WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
+                                  WINHTTP_NO_REQUEST_DATA, 0, 0, context)) {
+          error = ::GetLastError();
+        } else if (completion->Wait(
+                       WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE,
+                       interrupted) &&
+                   !Interrupted(interrupted)) {
+          if (!::WinHttpReceiveResponse(request, nullptr)) {
+            error = ::GetLastError();
+          } else {
+            valid = completion->Wait(WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE,
+                                     interrupted) &&
+                    !Interrupted(interrupted);
+          }
+        }
+      }
+      if (error == ERROR_SUCCESS)
+        error = completion->error.load();
+      if (observation.stage == EgressProbeStage::kConnect) {
+        observation.stage = completion->stage.load();
+      }
+      if (error != ERROR_SUCCESS) {
+        observation.Error(EgressErrorDomain::kWinHttp, error);
+      } else if (completion->wait_error.load() != ERROR_SUCCESS) {
+        observation.Error(EgressErrorDomain::kWin32,
+                          completion->wait_error.load());
+      }
+      DWORD status = 0;
+      DWORD status_size = sizeof(status);
+      if (valid) {
+        observation.stage = EgressProbeStage::kProof;
+        const bool status_read =
+            ::WinHttpQueryHeaders(
+                request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                WINHTTP_HEADER_NAME_BY_INDEX, &status, &status_size,
+                WINHTTP_NO_HEADER_INDEX) != FALSE;
+        valid = status_read &&
+                status == static_cast<DWORD>(data ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT);
+        if (!status_read)
+          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
+        else if (!valid)
+          observation.Error(EgressErrorDomain::kHttpStatus, status);
+      }
+      std::array<wchar_t, 64> proof{};
+      DWORD proof_size = static_cast<DWORD>(proof.size() * sizeof(wchar_t));
+      if (valid) {
+        const bool proof_read =
+            ::WinHttpQueryHeaders(
+                request, WINHTTP_QUERY_CUSTOM, L"x-pokrov-egress-probe",
+                proof.data(), &proof_size, WINHTTP_NO_HEADER_INDEX) != FALSE;
+        valid = proof_read &&
+                std::wstring(proof.data()) == L"pokrov-authenticated-egress-v1";
+        if (!proof_read)
+          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
+      }
+      if (valid && !periodic) {
+        WINHTTP_CONNECTION_INFO current{};
+        current.cbSize = sizeof(current);
+        DWORD connection_size = sizeof(current);
+        const bool connection_read =
+            ::WinHttpQueryOption(request, WINHTTP_OPTION_CONNECTION_INFO,
+                                 &current, &connection_size) != FALSE;
+        valid = connection_read &&
+                (!data || (SameSocketAddress(proof_connection.LocalAddress,
+                                             current.LocalAddress) &&
+                           SameSocketAddress(proof_connection.RemoteAddress,
+                                             current.RemoteAddress)));
+        if (!connection_read)
+          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
+        if (valid && !data)
+          proof_connection = current;
+      }
+      if (valid && data) {
+        DWORD length = 0;
+        DWORD length_size = sizeof(length);
+        const bool length_read =
+            ::WinHttpQueryHeaders(
+                request,
+                WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
+                WINHTTP_HEADER_NAME_BY_INDEX, &length, &length_size,
+                WINHTTP_NO_HEADER_INDEX) != FALSE;
+        valid = length_read && length == 65536;
+        if (!length_read)
+          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
+        if (valid) {
+          std::array<wchar_t, 64> encoding{};
+          DWORD encoding_size =
+              static_cast<DWORD>(encoding.size() * sizeof(wchar_t));
+          const bool encoded =
+              ::WinHttpQueryHeaders(request, WINHTTP_QUERY_CONTENT_ENCODING,
+                                    WINHTTP_HEADER_NAME_BY_INDEX,
+                                    encoding.data(), &encoding_size,
+                                    WINHTTP_NO_HEADER_INDEX) != FALSE;
+          if (encoded)
+            valid = encoding[0] == L'\0';
+          else if (::GetLastError() != ERROR_WINHTTP_HEADER_NOT_FOUND) {
+            observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
+            valid = false;
+          }
+        }
+        std::uint64_t received = 0;
+        if (valid)
+          observation.stage = EgressProbeStage::kResponse;
+        while (valid && !Interrupted(interrupted)) {
+          completion->stage.store(EgressProbeStage::kResponse);
+          completion->read_size.store(0);
+          if (!::WinHttpReadData(
+                  request, completion->read_buffer.data(),
+                  static_cast<DWORD>(completion->read_buffer.size()),
+                  nullptr)) {
+            error = ::GetLastError();
+            valid = false;
+            break;
+          }
+          if (!completion->Wait(WINHTTP_CALLBACK_STATUS_READ_COMPLETE,
+                                interrupted)) {
+            valid = false;
+            break;
+          }
+          const auto bytes = completion->read_size.load();
+          if (bytes == 0) {
+            valid = received == 65536;
+            break;
+          }
+          received += bytes;
+          valid = received <= 65536;
+        }
+        if (Interrupted(interrupted))
+          valid = false;
+        if (valid)
+          observation.stage = EgressProbeStage::kProof;
+      }
+      if (error == ERROR_SUCCESS)
+        error = completion->error.load();
+      if (error != ERROR_SUCCESS)
+        observation.Error(EgressErrorDomain::kWinHttp, error);
+      else if (completion->wait_error.load() != ERROR_SUCCESS) {
+        observation.Error(EgressErrorDomain::kWin32,
+                          completion->wait_error.load());
+      }
+      failure = ObservedFailure(error, completion->stage.load());
+      RecordObservation(observation, started, valid, interrupted);
+      // All request API calls have returned. Closing an async request cancels
+      // pending I/O; no other thread calls WinHTTP with this request handle.
+      if (request != nullptr)
+        ::WinHttpCloseHandle(request);
+      completion->Release();
+      if (!valid || Interrupted(interrupted))
+        break;
     }
-    if (error == ERROR_SUCCESS) error = completion->error.load();
-    if (observation.stage == EgressProbeStage::kConnect) {
-      observation.stage = completion->stage.load();
-    }
-    if (error != ERROR_SUCCESS) {
-      observation.Error(EgressErrorDomain::kWinHttp, error);
-    } else if (completion->wait_error.load() != ERROR_SUCCESS) {
-      observation.Error(EgressErrorDomain::kWin32, completion->wait_error.load());
-    }
-    const auto failure = ObservedFailure(error, completion->stage.load());
-    DWORD status = 0;
-    DWORD status_size = sizeof(status);
-    if (valid) {
-      observation.stage = EgressProbeStage::kProof;
-      const bool status_read = ::WinHttpQueryHeaders(request,
-          WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-          WINHTTP_HEADER_NAME_BY_INDEX, &status, &status_size,
-          WINHTTP_NO_HEADER_INDEX) != FALSE;
-      valid = status_read && status == HTTP_STATUS_NO_CONTENT;
-      if (!status_read) observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-      else if (!valid) observation.Error(EgressErrorDomain::kHttpStatus, status);
-    }
-    std::array<wchar_t, 64> proof{};
-    DWORD proof_size = static_cast<DWORD>(proof.size() * sizeof(wchar_t));
-    if (valid) {
-      const bool proof_read = ::WinHttpQueryHeaders(request, WINHTTP_QUERY_CUSTOM,
-          L"x-pokrov-egress-probe", proof.data(), &proof_size,
-          WINHTTP_NO_HEADER_INDEX) != FALSE;
-      valid = proof_read &&
-          std::wstring(proof.data()) == L"pokrov-authenticated-egress-v1";
-      if (!proof_read) observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-    }
-    RecordObservation(observation, started, valid, interrupted);
-    // All request API calls have returned. Closing an async request cancels
-    // pending I/O; no other thread calls WinHTTP with this request handle.
-    if (request != nullptr) ::WinHttpCloseHandle(request);
-    completion->Release();
-    if (connection != nullptr) ::WinHttpCloseHandle(connection);
+    if (connection != nullptr)
+      ::WinHttpCloseHandle(connection);
     ::WinHttpCloseHandle(session);
     return valid && !Interrupted(interrupted) ? "" : failure;
   }
 
-  const wchar_t* host_;
+  const ProbeTarget* targets_;
+  std::size_t target_count_;
   INTERNET_PORT port_;
   bool secure_;
   bool tun_dns_;
@@ -480,17 +672,25 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
 
 std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe(ServiceEventSink* events) {
   return std::make_unique<AuthenticatedEgressProbe>(
-      kProbeHostname, static_cast<INTERNET_PORT>(INTERNET_DEFAULT_HTTPS_PORT), true, true, events);
+      kProbeTargets, std::size(kProbeTargets),
+      static_cast<INTERNET_PORT>(INTERNET_DEFAULT_HTTPS_PORT), true, true,
+      events);
 }
 
 #ifdef _DEBUG
 std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
-    std::uint16_t port, bool secure, ServiceEventSink* events) {
-  return std::make_unique<AuthenticatedEgressProbe>(L"127.0.0.1", port, secure, false, events);
+    std::uint16_t port, bool secure, ServiceEventSink* events, bool reserve) {
+  static constexpr ProbeTarget targets[] = {
+      {L"127.0.0.1", kProbeTargets[0].proof_path, kProbeTargets[0].data_path},
+      {L"127.0.0.1", kProbeTargets[1].proof_path, kProbeTargets[1].data_path},
+  };
+  return std::make_unique<AuthenticatedEgressProbe>(
+      targets, reserve ? 2 : 1, port, secure, false, events);
 }
 
 std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
-                                            const CheckInterruption& interrupted) {
+                                            const CheckInterruption& interrupted,
+                                            bool reserve) {
   TunDnsEndpoint endpoint;
   endpoint.local.sin_family = AF_INET;
   endpoint.local.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -504,7 +704,8 @@ std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
   if (::GetBestRoute2(nullptr, 0, nullptr, &destination, 0, &route, &source) != NO_ERROR) return {};
   endpoint.interface_index = route.InterfaceIndex;
   ProbeObservation observation;
-  return QueryProbeAddress(endpoint, interrupted, &observation);
+  return QueryProbeAddress(endpoint, kProbeTargets[reserve ? 1 : 0].hostname,
+      interrupted, &observation);
 }
 #endif
 

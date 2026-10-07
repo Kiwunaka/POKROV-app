@@ -229,7 +229,7 @@ void RuntimeDispatcher::CheckRunningEgress() {
     if (cancelled->load()) return OperationInterruption::kCancelled;
     return ::GetTickCount64() >= deadline ? OperationInterruption::kDeadlineExceeded
                                         : OperationInterruption::kNone;
-  });
+  }, deadline);
   next_egress_check_ = ::GetTickCount64() + egress_interval_ms_;
   state.lock();
   if (!cancelled->load() && !closing_) snapshot_ = runtime_->Snapshot();

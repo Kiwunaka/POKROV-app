@@ -112,7 +112,8 @@ class CoreOperationalEventFence {
 class RuntimeEgressProbe {
  public:
   virtual ~RuntimeEgressProbe() = default;
-  virtual std::string Verify(const CheckInterruption& interrupted = {}) = 0;
+  virtual std::string Verify(const CheckInterruption& interrupted = {},
+                             bool periodic = false, std::uint64_t deadline_tick = 0) = 0;
   virtual std::optional<EgressProbeObservation> LastObservation() const {
     return std::nullopt;
   }
@@ -160,7 +161,8 @@ class RuntimeHost {
   RuntimeResult RevokeTransportLease(const TransportLeaseRevocation& target);
   RuntimeResult Disconnect(bool explicit_disconnect = true);
   bool CanRecheckEgress() const;
-  RuntimeResult RecheckEgress(const CheckInterruption& interrupted);
+  RuntimeResult RecheckEgress(const CheckInterruption& interrupted,
+                             std::uint64_t deadline_tick = 0);
   RuntimeResult ReplaceManagedProfile(const std::string& body, const CheckInterruption& interrupted,
       const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
       const CheckInterruption& telegram_interrupted = {});
@@ -208,7 +210,8 @@ class RuntimeHost {
   std::string RecoverPendingRuntime();
   std::string RollbackRuntime();
   void RecordEvent(ServiceEvent event, ServiceEventOutcome outcome);
-  std::string VerifyEgress(bool periodic, const CheckInterruption& interrupted);
+  std::string VerifyEgress(bool periodic, const CheckInterruption& interrupted,
+                          std::uint64_t deadline_tick = 0);
 
   std::unique_ptr<CoreRuntime> core_;
   std::unique_ptr<WindowsLocalDpiExecutor> local_dpi_executor_;
@@ -256,7 +259,8 @@ std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe(
 #ifdef _DEBUG
 // Loopback-only fixture; the production factory has no caller-owned URL.
 std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
-    std::uint16_t port, bool secure = false, ServiceEventSink* events = nullptr);
+    std::uint16_t port, bool secure = false, ServiceEventSink* events = nullptr,
+    bool reserve = false);
 #endif
 std::wstring ResolveServiceRuntimeRoot();
 

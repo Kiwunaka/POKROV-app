@@ -1928,7 +1928,8 @@ bool RuntimeHost::CanRecheckEgress() const {
       !TransitionGuardArmed();
 }
 
-std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& interrupted) {
+std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& interrupted,
+                                    std::uint64_t deadline_tick) {
   egress_failure_observation_.reset();
   const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_);
   if (target) {
@@ -1936,16 +1937,17 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
     return core_->ProbeSmartAccess(*target, periodic, interrupted);
   }
   if (!egress_probe_) return "core_egress_probe_failed";
-  const auto failure = egress_probe_->Verify(interrupted);
+  const auto failure = egress_probe_->Verify(interrupted, periodic, deadline_tick);
   if (!failure.empty()) egress_failure_observation_ = egress_probe_->LastObservation();
   return failure;
 }
 
-RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted) {
+RuntimeResult RuntimeHost::RecheckEgress(const CheckInterruption& interrupted,
+                                       std::uint64_t deadline_tick) {
   if (!CanRecheckEgress() ||
       (interrupted && interrupted() == OperationInterruption::kCancelled)) return Snapshot();
   RecordEvent(ServiceEvent::kRuntimeEgressVerify, ServiceEventOutcome::kAttempted);
-  const auto failure = VerifyEgress(true, interrupted);
+  const auto failure = VerifyEgress(true, interrupted, deadline_tick);
   const auto interruption = interrupted ? interrupted() : OperationInterruption::kNone;
   // A lifecycle command cancels and joins this check before changing its owner.
   // Failed health leaves the current TUN in place for protected replacement.

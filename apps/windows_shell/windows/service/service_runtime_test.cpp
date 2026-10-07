@@ -263,7 +263,10 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
 
 class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
  public:
-  std::string Verify(const pokrov::service::CheckInterruption& = {}) override {
+  std::string Verify(const pokrov::service::CheckInterruption& = {}, bool periodic = false,
+                     std::uint64_t deadline_tick = 0) override {
+    last_periodic = periodic;
+    last_deadline_tick = deadline_tick;
     ++verify_calls;
     if (on_verify) on_verify();
     return verify_error;
@@ -276,6 +279,8 @@ class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
   std::string verify_error;
   std::function<void()> on_verify;
   std::optional<pokrov::service::EgressProbeObservation> observation;
+  bool last_periodic = false;
+  std::uint64_t last_deadline_tick = 0;
 };
 
 class FakeTransitionGuard final : public pokrov::service::RuntimeTransitionGuard {
@@ -688,6 +693,8 @@ void TestRuntimeLifecycle() {
            "service did not derive DNS readiness from the egress proof");
     Expect(egress->verify_calls == 1,
            "authenticated egress probe was not called exactly once");
+    Expect(!egress->last_periodic && egress->last_deadline_tick == 0,
+           "startup was weakened into the lightweight periodic proof");
     Expect(core->start_calls == 1 && core->last_disable_memory_limit,
            "core start did not receive the staged bounded flag");
     Expect(transaction->begin_calls == 1 &&
@@ -697,7 +704,10 @@ void TestRuntimeLifecycle() {
     egress->verify_error = "core_egress_dns_failed";
     egress->observation = EgressProbeObservation{EgressProbeStage::kDnsWait,
         EgressProbeOutcome::kTimeout, EgressErrorDomain::kNone, 0, 3000};
-    const auto failed_recheck = host.RecheckEgress({});
+    const auto recheck_deadline = ::GetTickCount64() + 3000;
+    const auto failed_recheck = host.RecheckEgress({}, recheck_deadline);
+    Expect(egress->last_periodic && egress->last_deadline_tick == recheck_deadline,
+           "runtime did not retain the exact periodic owner deadline");
     Expect(failed_recheck.status == Status::kNotReady &&
                Contains(failed_recheck, "core_egress_validated=0") &&
                Contains(failed_recheck, "failure=core_egress_dns_failed") &&

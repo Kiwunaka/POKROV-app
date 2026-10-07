@@ -103,7 +103,8 @@ class FakeCore final : public CoreRuntime {
 };
 class BlockingProbe final : public RuntimeEgressProbe {
  public:
-  std::string Verify(const CheckInterruption& interrupted) override {
+  std::string Verify(const CheckInterruption& interrupted, bool = false,
+                     std::uint64_t = 0) override {
     const auto generation = ++entered;
     const auto deadline = ::GetTickCount64() + hold_ms.load();
     while (released < generation && ::GetTickCount64() < deadline) {
@@ -286,8 +287,16 @@ int main() {
              "native shutdown waited for a blocking remote operation");
       probe_state->released = 5;
       const auto rollback_deadline = ::GetTickCount64() + 3000;
-      while (core_state->stops < 5 && ::GetTickCount64() < rollback_deadline) ::Sleep(1);
-      Expect(core_state->stops == 5, "abandoned wait failed to request remote cancellation");
+      bool rollback_settled = false;
+      while (::GetTickCount64() < rollback_deadline) {
+        if (core_state->stops == 5 &&
+            Has(control.Call(Command::kStatus), Status::kOk, "phase=config_staged")) {
+          rollback_settled = true;
+          break;
+        }
+        ::Sleep(1);
+      }
+      Expect(rollback_settled, "abandoned wait failed to settle remote cancellation");
 
       // Core startup and egress verification can exceed the former
       // 30-second Connect frame deadline.
@@ -302,6 +311,10 @@ int main() {
       ::Sleep(35000);
       probe_state->released = 6;
       slow_client.join();
+      if (!slow_result.command_accepted || !slow_result.running) {
+        std::cout << "slow_connect_phase=" << slow_result.phase
+                  << " failure=" << slow_result.failure << '\n';
+      }
       Expect(slow_result.command_accepted && slow_result.running &&
                  slow_result.core_egress_validated,
              "ordinary Connect timed out before a slow Core could finish");

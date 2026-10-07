@@ -6,6 +6,7 @@
 #include "service_profile_identity.h"
 
 #include <atomic>
+#include <functional>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -14,7 +15,8 @@
 #ifdef _DEBUG
 namespace pokrov::service {
 std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
-                                            const CheckInterruption& interrupted);
+                                            const CheckInterruption& interrupted,
+                                            bool reserve = false);
 }
 namespace {
 class EgressEvents final : public pokrov::service::ServiceEventSink {
@@ -100,7 +102,12 @@ class LoopbackDnsServer {
 class LoopbackServer {
  public:
   explicit LoopbackServer(std::string reply, bool tls_stall = false)
-      : reply_(std::move(reply)), tls_stall_(tls_stall) {
+      : LoopbackServer([reply = std::move(reply)](const std::string&) { return reply; }, tls_stall) {}
+  explicit LoopbackServer(std::function<std::string(const std::string&)> reply,
+                          bool tls_stall = false, bool keep_open = false,
+                          bool keep_alive = false)
+      : reply_(std::move(reply)), tls_stall_(tls_stall), keep_open_(keep_open),
+        keep_alive_(keep_alive) {
     listener_ = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     sockaddr_in address{};
     address.sin_family = AF_INET;
@@ -117,56 +124,117 @@ class LoopbackServer {
         FD_ZERO(&readable);
         FD_SET(listener_, &readable);
         timeval timeout{0, 100000};
-        if (::select(0, &readable, nullptr, nullptr, &timeout) <= 0) continue;
+        if (::select(0, &readable, nullptr, nullptr, &timeout) <= 0)
+          continue;
         const SOCKET client = ::accept(listener_, nullptr, nullptr);
-        if (client == INVALID_SOCKET) continue;
+        if (client == INVALID_SOCKET)
+          continue;
+        ++connections;
         DWORD receive_timeout = 3000;
         ::setsockopt(client, SOL_SOCKET, SO_RCVTIMEO,
-                     reinterpret_cast<const char*>(&receive_timeout), sizeof(receive_timeout));
-        std::string request;
-        char buffer[2048];
-        while (request.find("\r\n\r\n") == std::string::npos && request.size() < 8192) {
-          const int size = ::recv(client, buffer, sizeof(buffer), 0);
-          if (size <= 0) break;
-          request.append(buffer, size);
-          if (tls_stall_) break;
-        }
-        expected_request_received = tls_stall_
-            ? request.size() >= 2 && static_cast<unsigned char>(request[0]) == 0x16 &&
-                  static_cast<unsigned char>(request[1]) == 0x03
-            : request.find("GET /api/public/authenticated-egress-probe HTTP/") == 0;
-        ++requests;
-        if (reply_.empty()) {
-          receive_timeout = 10000;
-          ::setsockopt(client, SOL_SOCKET, SO_RCVTIMEO,
-                       reinterpret_cast<const char*>(&receive_timeout), sizeof(receive_timeout));
-          const int received = ::recv(client, buffer, sizeof(buffer), 0);
-          peer_cancelled = received == 0 ||
-              (received == SOCKET_ERROR && ::WSAGetLastError() == WSAECONNRESET);
-        } else {
-          ::send(client, reply_.data(), static_cast<int>(reply_.size()), 0);
-        }
+                     reinterpret_cast<const char*>(&receive_timeout),
+                     sizeof(receive_timeout));
+        do {
+          std::string request;
+          char buffer[2048];
+          while (request.find("\r\n\r\n") == std::string::npos &&
+                 request.size() < 8192) {
+            const int size = ::recv(client, buffer, sizeof(buffer), 0);
+            if (size <= 0)
+              break;
+            request.append(buffer, size);
+            if (tls_stall_)
+              break;
+          }
+          if (request.empty())
+            break;
+          expected_request_received =
+              tls_stall_
+                  ? request.size() >= 2 &&
+                        static_cast<unsigned char>(request[0]) == 0x16 &&
+                        static_cast<unsigned char>(request[1]) == 0x03
+                  : request.find(
+                        "GET /api/public/authenticated-egress-probe HTTP/") ==
+                            0 ||
+                        request.find(
+                            "GET /api/public/egress-probe-64k HTTP/") == 0 ||
+                        request.find(
+                            "GET /.well-known/pokrov/egress-probe HTTP/") ==
+                            0 ||
+                        request.find(
+                            "GET /.well-known/pokrov/egress-probe-64k.bin "
+                            "HTTP/") == 0;
+          ++requests;
+          const auto response = reply_(request);
+          for (std::size_t offset = 0; offset < response.size();) {
+            const int sent =
+                ::send(client, response.data() + offset,
+                       static_cast<int>(response.size() - offset), 0);
+            if (sent <= 0)
+              break;
+            offset += sent;
+          }
+          const bool data_request =
+              request.find("egress-probe-64k") != std::string::npos;
+          if (response.empty() || (keep_open_ && data_request)) {
+            receive_timeout = 10000;
+            ::setsockopt(client, SOL_SOCKET, SO_RCVTIMEO,
+                         reinterpret_cast<const char*>(&receive_timeout),
+                         sizeof(receive_timeout));
+            while (!stop_) {
+              const int received = ::recv(client, buffer, sizeof(buffer), 0);
+              if (received > 0) continue;
+              peer_cancelled = received == 0 ||
+                  (received == SOCKET_ERROR && ::WSAGetLastError() == WSAECONNRESET);
+              break;
+            }
+            break;
+          }
+          if (data_request)
+            break;
+        } while (keep_alive_ && !stop_);
         ::closesocket(client);
       }
     });
   }
   ~LoopbackServer() {
     stop_ = true;
-    if (worker_.joinable()) worker_.join();
-    if (listener_ != INVALID_SOCKET) ::closesocket(listener_);
+    if (worker_.joinable())
+      worker_.join();
+    if (listener_ != INVALID_SOCKET)
+      ::closesocket(listener_);
   }
   unsigned short port = 0;
   std::atomic<int> requests{0};
+  std::atomic<int> connections{0};
   std::atomic<bool> peer_cancelled{false};
   std::atomic<bool> expected_request_received{false};
 
  private:
   SOCKET listener_ = INVALID_SOCKET;
-  std::string reply_;
+  std::function<std::string(const std::string&)> reply_;
   bool tls_stall_;
+  bool keep_open_;
+  bool keep_alive_;
   std::atomic<bool> stop_{false};
   std::thread worker_;
 };
+
+std::string ProofReply(bool authenticated = true) {
+  return std::string("HTTP/1.1 204 No Content\r\nConnection: keep-alive\r\nX-Pokrov-Egress-Probe: ") +
+      (authenticated ? "pokrov-authenticated-egress-v1" : "wrong-marker") + "\r\n\r\n";
+}
+
+std::string DataReply(std::size_t bytes = 65536, const std::string& extra_headers = "") {
+  return "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nContent-Length: 65536\r\n"
+      "X-Pokrov-Egress-Probe: pokrov-authenticated-egress-v1\r\n" + extra_headers +
+      "\r\n" + std::string(bytes, 'p');
+}
+
+bool DataRequest(const std::string& request) {
+  return request.find("GET /api/public/egress-probe-64k HTTP/") == 0 ||
+      request.find("GET /.well-known/pokrov/egress-probe-64k.bin HTTP/") == 0;
+}
 }  // namespace
 #endif
 
@@ -298,15 +366,103 @@ int main(int argc, char** argv) {
     std::cout << "pending_headers_deadline_ms=" << elapsed << '\n';
   }
   for (bool authenticated : {true, false}) {
-    LoopbackServer server(std::string("HTTP/1.1 204 No Content\r\nConnection: close\r\n") +
-        "X-Pokrov-Egress-Probe: " +
-        (authenticated ? "pokrov-authenticated-egress-v1" : "wrong-marker") + "\r\n\r\n");
+    LoopbackServer server([authenticated](const std::string& request) {
+      return DataRequest(request) ? DataReply() : ProofReply(authenticated);
+    }, false, false, true);
     expect(server.port != 0, "proof listener failed");
     if (server.port == 0) return 1;
     auto probe = CreateLoopbackEgressProbeForTest(server.port);
     expect(probe->Verify().empty() == authenticated,
            "async egress accepted invalid proof or rejected authenticated marker");
-    expect(server.requests == (authenticated ? 1 : 3), "egress retry count changed");
+    expect(server.requests == (authenticated ? 2 : 3), "egress retry count changed");
+    if (authenticated) expect(server.connections == 1, "startup proof reconnected between 204 and 64K");
+  }
+  {
+    LoopbackDnsServer server(LoopbackDnsServer::Reply::kValid);
+    expect(QueryLoopbackProbeAddressForTest(server.port, {}, true) == L"127.0.0.1",
+           "reserve hostname was not resolved through the owned DNS transport");
+  }
+  for (const bool encoded : {false, true}) {
+    LoopbackServer server([encoded](const std::string& request) {
+      return DataRequest(request) ? DataReply(encoded ? 65536 : 16384,
+          encoded ? "Content-Encoding: gzip\r\n" : "") : ProofReply();
+    }, false, false, true);
+    auto probe = CreateLoopbackEgressProbeForTest(server.port);
+    expect(!probe->Verify().empty() && server.requests == 6,
+           "startup accepted a partial or encoded 64K body, or added retry slots");
+  }
+  {
+    LoopbackServer server([](const std::string& request) {
+      return DataRequest(request) ? DataReply(16384) : ProofReply();
+    }, false, true, true);
+    auto probe = CreateLoopbackEgressProbeForTest(server.port);
+    const auto started = ::GetTickCount64();
+    expect(!probe->Verify([&] {
+      return server.requests >= 2 && ::GetTickCount64() - started >= 250
+          ? OperationInterruption::kCancelled : OperationInterruption::kNone;
+    }).empty(), "cancelled partial-body request was accepted");
+    expect(::GetTickCount64() - started < 1500 && server.requests == 2,
+           "partial-body cancellation retried or waited for the receive timeout");
+    const auto until = ::GetTickCount64() + 1000;
+    while (!server.peer_cancelled && ::GetTickCount64() < until) ::Sleep(10);
+    expect(server.peer_cancelled, "cancelled body read left the owned socket open");
+  }
+  {
+    std::atomic<int> primary{0}, reserve{0};
+    LoopbackServer server([&](const std::string& request) {
+      if (request.find("GET /api/public/") == 0) {
+        ++primary;
+        return std::string("HTTP/1.1 503 Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
+      }
+      ++reserve;
+      return DataRequest(request) ? DataReply() : ProofReply();
+    }, false, false, true);
+    auto probe = CreateLoopbackEgressProbeForTest(server.port, false, nullptr, true);
+    expect(probe->Verify().empty() && primary == 1 && reserve == 2,
+           "startup did not use the owned reserve pair within the existing slots");
+    expect(server.connections == 2, "reserve payload did not retain its proven connection");
+  }
+  {
+    std::atomic<int> primary{0}, reserve{0};
+    LoopbackServer server([&](const std::string& request) {
+      if (request.find("GET /api/public/") == 0) { ++primary; return std::string{}; }
+      ++reserve;
+      return ProofReply();
+    }, false, false, true);
+    auto probe = CreateLoopbackEgressProbeForTest(server.port, false, nullptr, true);
+    const auto started = ::GetTickCount64();
+    expect(probe->Verify({}, true, started + 3000).empty() && primary == 1 && reserve == 1,
+           "periodic reserve added a payload check or lost its remaining-budget slot");
+    expect(::GetTickCount64() - started < 3000,
+           "periodic fallback reset the three-second owner deadline");
+  }
+  {
+    LoopbackServer server([](const std::string& request) {
+      auto reply = DataRequest(request) ? DataReply() : ProofReply();
+      const auto at = reply.find("keep-alive");
+      reply.replace(at, 10, "close");
+      return reply;
+    });
+    auto probe = CreateLoopbackEgressProbeForTest(server.port);
+    expect(!probe->Verify().empty() && server.connections == 6,
+           "startup accepted a reconnect as the original proven connection");
+  }
+  {
+    LoopbackServer server("");
+    auto probe = CreateLoopbackEgressProbeForTest(server.port, false, nullptr, true);
+    const auto started = ::GetTickCount64();
+    expect(!probe->Verify({}, true, started + 3000).empty() &&
+               ::GetTickCount64() - started < 3500 && server.requests <= 2,
+           "failed periodic reserve reset its owner budget or added retry slots");
+  }
+  {
+    LoopbackServer server([](const std::string&) {
+      return std::string("HTTP/1.1 302 Found\r\nConnection: close\r\nContent-Length: 0\r\n"
+                         "Location: /redirected\r\n\r\n");
+    });
+    auto probe = CreateLoopbackEgressProbeForTest(server.port);
+    expect(!probe->Verify().empty() && server.requests == 3,
+           "probe followed a redirect outside its fixed proof target");
   }
   for (bool secure : {false, true}) {
     LoopbackServer server("", secure);
@@ -315,6 +471,11 @@ int main(int argc, char** argv) {
     auto probe = CreateLoopbackEgressProbeForTest(server.port, secure);
     const auto started = ::GetTickCount64();
     const auto failure = probe->Verify();
+    if (const auto observation = probe->LastObservation()) {
+      std::cout << "stall_stage=" << EgressProbeStageName(observation->stage)
+                << " domain=" << EgressProbeErrorDomainName(observation->error_domain)
+                << " code=" << observation->error_code << '\n';
+    }
     expect(failure == (secure ? "core_egress_tls_timeout"
                              : "core_egress_response_timeout"),
            "real stalled connection lost its observed TLS/response phase");
