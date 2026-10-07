@@ -58,14 +58,14 @@ void main() {
       legacyMigration['install_directory'],
       r'{localappdata}\Programs\POKROV',
     );
-    expect(legacyMigration['policy'], 'remove_after_new_service_started');
+    expect(legacyMigration['policy'], 'remove_before_final_service_setup');
     expect(legacyMigration['failure_mode'], 'fail_closed');
 
     final signing = releaseJson['signing'] as Map<String, dynamic>;
     expect(signing['status'], 'CANDIDATE_ONLY');
     expect(
       signing['blocker_code'],
-      'RELEASE_APPROVAL_PENDING_1_4_2',
+      'RELEASE_APPROVAL_PENDING_1_5_0',
     );
     expect(signing['required_for_candidate'], isFalse);
     expect(signing['required_for_trusted_claim'], isTrue);
@@ -73,8 +73,8 @@ void main() {
     final ownerException =
         signing['owner_exception'] as Map<String, dynamic>;
     expect(ownerException['status'], 'CANDIDATE_ONLY');
-    expect(ownerException['authorized_on'], '2026-10-02');
-    expect(ownerException['version_scope'], '1.4.2');
+    expect(ownerException['authorized_on'], '2026-10-05');
+    expect(ownerException['version_scope'], '1.5.0');
     expect(ownerException['channel_scope'], 'outside_store_beta');
     expect(ownerException['distribution_scope'], 'direct_download_only');
     expect(ownerException['trusted_claim_allowed'], isFalse);
@@ -289,6 +289,30 @@ void main() {
       contains('Microsoft.VisualStudio.Component.VC.Redist.14.Latest'),
     );
     expect(scriptContent, contains('procedure MigrateLegacyPerUserInstall'));
+    final serviceSetup = scriptContent.substring(
+      scriptContent.indexOf('procedure InstallAndStartService;'),
+      scriptContent.indexOf('Write-Utf8BomFile -Path \$issPath'),
+    );
+    expect(
+      serviceSetup.indexOf('MigrateLegacyPerUserInstall(CreatedBySetup);'),
+      lessThan(serviceSetup.indexOf('create POKROVService')),
+    );
+    expect(
+      serviceSetup,
+      matches(RegExp(
+        r'MigrateLegacyPerUserInstall\(CreatedBySetup\);\s+'
+        r'CreatedBySetup := not ServiceExists\(\);\s+'
+        r'if not RegWriteStringValue',
+      )),
+    );
+    expect(
+      serviceSetup.indexOf('WaitForStatus'),
+      greaterThan(serviceSetup.indexOf("'start POKROVService'")),
+    );
+    expect(serviceSetup, contains("WaitForStatus(''Running'',"));
+    expect(serviceSetup, contains('TimeSpan]::FromSeconds(30)'));
+    expect(serviceSetup, contains('POKROV_SERVICE_RUNNING_NOT_CONFIRMED'));
+    expect(serviceSetup, contains('POKROV_SERVICE_RUNNING_CONFIRMED'));
     expect(
       scriptContent,
       contains('POKROV_LEGACY_PER_USER_MIGRATION_COMPLETE'),

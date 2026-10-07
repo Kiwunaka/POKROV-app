@@ -16,6 +16,13 @@ and binary before keeping the new service installation. The old uninstaller
 can return success before that second phase finishes; a running UI can also
 hold its EXE and leave a broken partial upgrade.
 
+Legacy cleanup finishes before the final service setup. The installer snapshots
+the previous owner first, then checks service existence again after cleanup and
+applies the saved owner and ACLs before creating/configuring and starting the
+service. It waits up to 30 seconds for `POKROVService` to reach `Running` and
+fails the installation if that state is not confirmed. Installed QA separately
+checks the public service status and owner identity.
+
 An upgrade preserves a valid `InstallOwnerSid` already recorded in
 `HKLM64\Software\space.pokrov\POKROV\Service`, including when another
 administrator launches the installer. The installer queries the original

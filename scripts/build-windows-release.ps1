@@ -1271,6 +1271,8 @@ begin
   InstallOwnerRegistryValueExisted := RegQueryStringValue(HKLM64,
     'Software\space.pokrov\POKROV\Service', 'InstallOwnerSid',
     InstallOwnerPreviousSid);
+  MigrateLegacyPerUserInstall(CreatedBySetup);
+  CreatedBySetup := not ServiceExists();
   if not RegWriteStringValue(HKLM64,
       'Software\space.pokrov\POKROV\Service', 'InstallOwnerSid',
       InstallOwnerSid) then
@@ -1321,10 +1323,23 @@ begin
     ResultCode) then
     AbortServiceSetup('POKROV_SERVICE_RECOVERY_FAILED', CreatedBySetup,
       ResultCode);
+  Log('POKROV_SERVICE_START_REQUESTED');
   if not ExecuteServiceCommand('start POKROVService', ResultCode) then
     AbortServiceSetup('POKROV_SERVICE_START_FAILED', CreatedBySetup,
       ResultCode);
-  MigrateLegacyPerUserInstall(CreatedBySetup);
+  Log('POKROV_SERVICE_START_ACCEPTED');
+  ResultCode := -1;
+  if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+      '-NoProfile -NonInteractive -Command "' +
+      '`$ErrorActionPreference=''Stop''; try { ' +
+      '`$service=Get-Service -Name ''POKROVService'' -ErrorAction Stop; ' +
+      '`$service.WaitForStatus(''Running'', [TimeSpan]::FromSeconds(30)); ' +
+      '`$service.Refresh(); if (`$service.Status -ne ''Running'') { exit 1 }; ' +
+      'exit 0 } catch { exit 1 }"',
+      '', SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    AbortServiceSetup('POKROV_SERVICE_RUNNING_NOT_CONFIRMED', CreatedBySetup,
+      ResultCode);
+  Log('POKROV_SERVICE_RUNNING_CONFIRMED');
 end;
 "@
   Write-Utf8BomFile -Path $issPath -Content $iss

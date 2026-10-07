@@ -61,7 +61,7 @@
     "app_id": "{A8EE9193-93A9-4B13-A7AD-8441D98A48E1}",
     "uninstall_registry_root": "HKCU",
     "install_directory": "{localappdata}\\Programs\\POKROV",
-    "policy": "remove_after_new_service_started",
+    "policy": "remove_before_final_service_setup",
     "failure_mode": "fail_closed"
   },
   "portable_zip": {
