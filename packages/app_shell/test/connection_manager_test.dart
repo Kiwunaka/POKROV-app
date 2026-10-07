@@ -1212,6 +1212,32 @@ void main() {
     expect(bootstrapper.reports, hasLength(1));
   });
 
+  test('late startup capabilities expose cached transports before an unavailable API without Connect', () async {
+    final refreshGate = Completer<void>();
+    final bootstrapper = _CachedBootstrapper()..cacheRefreshGate = refreshGate.future;
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..phase = RuntimePhase.configStaged..coreVersion = '1.2.9';
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+
+    manager.markExperienceLoaded();
+    await Future<void>.delayed(Duration.zero);
+    expect(manager.transportCatalog, isNull);
+    expect(bootstrapper.refreshedCoreReleases, isEmpty);
+    await manager.refresh();
+    await bootstrapper.cacheRefreshEntered.future.timeout(const Duration(seconds: 3));
+    expect(manager.transportCatalog?.candidates.map((candidate) => candidate.protocol),
+        ['vless', 'awg', 'hysteria2']);
+    refreshGate.completeError(const SocketException('offline'));
+    await Future<void>.delayed(Duration.zero);
+    await manager.refresh();
+    expect(bootstrapper.refreshedCoreReleases, ['1.2.9'], reason: 'unchanged snapshots do not refetch');
+    expect(manager.transportCatalog?.candidates, _CachedBootstrapper.alternatives);
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+    expect(runtime.handoffCalls, 0);
+  });
+
   test('loaded Core refresh publishes the full catalog without replacing the running material', () async {
     final refreshGate = Completer<void>();
     final bootstrapper = _CachedBootstrapper()

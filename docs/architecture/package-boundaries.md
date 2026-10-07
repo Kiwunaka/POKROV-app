@@ -293,7 +293,11 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   liveness. Cancellation/child failure withdraws captured IDs before closing
   the child; expiry or catalog revocation uses protected runtime rollback,
   because inactive catalog rules would otherwise reach `route.final`.
-  Failed withdrawal retains the child until confirmed Core Stop. Existing
+  Failed withdrawal retains the child until confirmed Core Stop. Child exit
+  and driver-guard closure must also be confirmed before cleanup
+  reports success; failed cleanup retains the exact handles for retry and
+  prevents a replacement executor from starting. The runtime Stop receipt stays
+  in recovery until that cleanup succeeds. Existing
   connections are never replayed, no shared driver stop/remove is issued, and
   the feature defaults off. This is source readiness; product build, approved
   assets, real device proof and release publication remain separate gates.

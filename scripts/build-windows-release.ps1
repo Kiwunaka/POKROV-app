@@ -1116,12 +1116,12 @@ begin
       'повторите установку.';
     exit;
   end;
-  OwnerQuerySucceeded := QueryOriginalInstallOwnerSid(InstallOwnerSid);
-  if not OwnerQuerySucceeded then
-    InstallOwnerSid := '';
-  if InstallOwnerSid = '' then
+  if not TryReuseExistingInstallOwnerSid() then
   begin
-    if not TryReuseExistingInstallOwnerSid() then
+    OwnerQuerySucceeded := QueryOriginalInstallOwnerSid(InstallOwnerSid);
+    if not OwnerQuerySucceeded then
+      InstallOwnerSid := '';
+    if InstallOwnerSid = '' then
     begin
       if OwnerQuerySucceeded then
         Result := 'Windows вернула некорректный SID владельца установки POKROV.'

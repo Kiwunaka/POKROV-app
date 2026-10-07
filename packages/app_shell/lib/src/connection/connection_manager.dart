@@ -184,6 +184,12 @@ class ConnectionManager extends ChangeNotifier {
     bool current() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
         profileRevision == _managedProfileRevision;
     try {
+      final cached = await (service as CachedManagedProfileBootstrapper).loadCachedManagedProfile(inputs,
+          selectedCandidateRef: selectedCandidateRef, runtimeFeatures: features, coreRelease: coreRelease);
+      if (!current()) return;
+      if (cached?.transportCatalog != null) {
+        _update(() => _transportCatalog = cached!.transportCatalog);
+      }
       await (service as CachedManagedProfileBootstrapper).refreshCachedManagedProfile(
         inputs,
         runtimeFeatures: features,
@@ -317,6 +323,7 @@ class ConnectionManager extends ChangeNotifier {
   int get _managedProfileRevision => _managedProfileLifecycle.revision;
   RuntimeSnapshot? get _runtimeSnapshot => _connectionCoordinator.snapshot;
   set _runtimeSnapshot(RuntimeSnapshot? value) {
+    final hadCapabilities = _runtimeSnapshot?.transportCapabilities?.features.isNotEmpty == true;
     if (value != null && _runtimeStopConfirmed(value)) {
       _protectedHandoffActive = false;
       _activeCandidateRef = null;
@@ -327,6 +334,11 @@ class ConnectionManager extends ChangeNotifier {
     }
     _connectionCoordinator.updateSnapshot(value);
     _protectionRuntimeSnapshot.value = value;
+    if (_clientExperienceLoaded && _transportCatalog == null && !hadCapabilities &&
+        value?.transportCapabilities?.features.isNotEmpty == true) {
+      // Run after the native observation finishes its action ownership.
+      unawaited(Future<void>.delayed(Duration.zero, _refreshManagedProfileCache));
+    }
   }
 
   bool get _runtimeBusy => _connectionCoordinator.actionInFlight;

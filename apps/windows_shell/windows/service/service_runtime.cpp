@@ -2129,8 +2129,8 @@ RuntimeResult RuntimeHost::MaintainTelegramWS(const CheckInterruption& interrupt
   return Snapshot();  // Untimed exact-IP TG rules now use the encrypted VPN fallback.
 }
 
-void RuntimeHost::ClearWindowsLocalDpiAfterCoreStopped() {
-  if (local_dpi_executor_) local_dpi_executor_->StopAfterCoreStopped();
+bool RuntimeHost::ClearWindowsLocalDpiAfterCoreStopped() {
+  if (local_dpi_executor_ && !local_dpi_executor_->StopAfterCoreStopped()) return false;
   local_dpi_preparation_.reset();
   telegram_ws_preparation_.reset();
   telegram_ws_holders_.clear();
@@ -2145,6 +2145,7 @@ void RuntimeHost::ClearWindowsLocalDpiAfterCoreStopped() {
     // bytes from an old proof or a cancelled operation.
     if (!WriteProfileAtomically(staged_runtime_config_).empty()) profile_staged_ = false;
   }
+  return true;
 }
 
 std::string RuntimeHost::RecoverPendingRuntime() {
@@ -2162,7 +2163,7 @@ std::string RuntimeHost::RecoverPendingRuntime() {
   RecordEvent(ServiceEvent::kRuntimeCoreStop,
               ServiceEventOutcome::kAttempted);
   const auto stop_error = core_->Stop();
-  if (stop_error.empty()) ClearWindowsLocalDpiAfterCoreStopped();
+  const bool local_dpi_stopped = stop_error.empty() && ClearWindowsLocalDpiAfterCoreStopped();
   if (!begin_error.empty()) {
     RecordEvent(ServiceEvent::kRuntimeRollbackBegin,
                 ServiceEventOutcome::kFailed);
@@ -2177,6 +2178,7 @@ std::string RuntimeHost::RecoverPendingRuntime() {
   }
   RecordEvent(ServiceEvent::kRuntimeCoreStop,
               ServiceEventOutcome::kSucceeded);
+  if (!local_dpi_stopped) return "local_dpi_withdraw_failed";
   RecordEvent(ServiceEvent::kRuntimeNetworkRestore,
               ServiceEventOutcome::kAttempted);
   const auto network_error = recovery_->RestoreNetworkState();
@@ -2213,7 +2215,7 @@ std::string RuntimeHost::RollbackRuntime() {
   RecordEvent(ServiceEvent::kRuntimeCoreStop,
               ServiceEventOutcome::kAttempted);
   const auto stop_error = core_->Stop();
-  if (stop_error.empty()) ClearWindowsLocalDpiAfterCoreStopped();
+  const bool local_dpi_stopped = stop_error.empty() && ClearWindowsLocalDpiAfterCoreStopped();
   if (!begin_error.empty()) {
     RecordEvent(ServiceEvent::kRuntimeRollbackBegin,
                 ServiceEventOutcome::kFailed);
@@ -2228,6 +2230,7 @@ std::string RuntimeHost::RollbackRuntime() {
   }
   RecordEvent(ServiceEvent::kRuntimeCoreStop,
               ServiceEventOutcome::kSucceeded);
+  if (!local_dpi_stopped) return "local_dpi_withdraw_failed";
   RecordEvent(ServiceEvent::kRuntimeNetworkRestore,
               ServiceEventOutcome::kAttempted);
   const auto network_error = recovery_->RestoreNetworkState();

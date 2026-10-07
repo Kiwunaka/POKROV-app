@@ -48,7 +48,7 @@ class WindowsLocalDpiExecutor final {
   bool AssetsReady();  // Fixed trusted assets and API exports; no driver or child.
   bool AdmitCaptured(const std::string& tag, const std::function<bool()>& current_after_proof);
   bool Stop();  // Confirm withdrawal before closing our Job/filter.
-  void StopAfterCoreStopped();  // Only after the native owner confirmed Core Stop.
+  bool StopAfterCoreStopped();  // Only after the native owner confirmed Core Stop.
 
  private:
   std::string StartChild(const std::string& hostlist, DWORD interface_index,

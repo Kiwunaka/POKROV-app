@@ -15,6 +15,8 @@ bool CoreDescriptorHasRuntimeControl(const std::string& descriptor);
 bool CoreDescriptorHasWindowsLocalDpi(const std::string& descriptor);
 bool CoreDescriptorHasTelegramWS(const std::string& descriptor);
 bool CoreDescriptorHasSmartAccessProbe(const std::string& descriptor);
+bool StopWindowsLocalDpiChild(HANDLE& job, HANDLE& process);
+bool CloseWindowsLocalDpiDriver(HANDLE& guard, BOOL (__cdecl* close)(HANDLE));
 }
 
 namespace {
@@ -123,6 +125,77 @@ void TestWindowsLocalDpiScopePreparation() {
   invalid = service;
   invalid.domains[1].name = "media.example.com,foreign.example.com";
   Expect(WindowsLocalDpiHostList({invalid}).empty(), "hostlist delimiter expanded winws scope");
+}
+
+BOOL __cdecl RefuseDriverClose(HANDLE) { return FALSE; }
+BOOL __cdecl CloseTestDriverGuard(HANDLE handle) { return ::CloseHandle(handle); }
+
+void TestWindowsLocalDpiOwnedCleanup() {
+  using pokrov::service::StopWindowsLocalDpiChild;
+  using pokrov::service::CloseWindowsLocalDpiDriver;
+  std::vector<wchar_t> path(32768);
+  const auto size = ::GetModuleFileNameW(nullptr, path.data(), static_cast<DWORD>(path.size()));
+  Expect(size > 0 && size < path.size(), "local DPI child executable was unavailable");
+  if (size == 0 || size >= path.size()) return;
+  for (const bool kill_on_close : {true, false}) {
+    HANDLE job = ::CreateJobObjectW(nullptr, nullptr);
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
+    limits.BasicLimitInformation.LimitFlags = kill_on_close ? JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE : 0;
+    const bool configured = job != nullptr && ::SetInformationJobObject(job,
+        JobObjectExtendedLimitInformation, &limits, sizeof(limits));
+    Expect(configured, "local DPI test Job was not configured");
+    if (!configured) { if (job != nullptr) ::CloseHandle(job); return; }
+    std::wstring command = L"\"" + std::wstring(path.data(), size) + L"\" --local-dpi-test-child";
+    STARTUPINFOW startup{};
+    startup.cb = sizeof(startup);
+    PROCESS_INFORMATION child{};
+    const bool created = ::CreateProcessW(path.data(), command.data(), nullptr, nullptr, FALSE,
+        CREATE_SUSPENDED | CREATE_NO_WINDOW, nullptr, nullptr, &startup, &child) != FALSE;
+    Expect(created, "local DPI test child was not created");
+    if (!created) { ::CloseHandle(job); return; }
+    const bool assigned = ::AssignProcessToJobObject(job, child.hProcess) != FALSE;
+    Expect(assigned, "local DPI test child was not assigned to its Job");
+    if (!assigned) {
+      ::TerminateProcess(child.hProcess, 1);
+      ::CloseHandle(child.hThread);
+      ::CloseHandle(child.hProcess);
+      ::CloseHandle(job);
+      return;
+    }
+    const auto resumed = ::ResumeThread(child.hThread);
+    ::CloseHandle(child.hThread);
+    Expect(resumed != static_cast<DWORD>(-1), "local DPI test child was not resumed");
+    HANDLE witness = nullptr;
+    const bool duplicated = ::DuplicateHandle(::GetCurrentProcess(), child.hProcess,
+        ::GetCurrentProcess(), &witness, SYNCHRONIZE, FALSE, 0) != FALSE;
+    Expect(duplicated, "local DPI test child exit witness was unavailable");
+    HANDLE process = child.hProcess;
+    const bool stopped = StopWindowsLocalDpiChild(job, process);
+    Expect(job == nullptr && stopped == kill_on_close,
+           "local DPI cleanup did not confirm the owned Job exit");
+    if (kill_on_close) {
+      Expect(process == nullptr && witness != nullptr && ::WaitForSingleObject(witness, 0) == WAIT_OBJECT_0,
+             "local DPI cleanup reported success before its child exited");
+    } else {
+      Expect(process == child.hProcess && ::WaitForSingleObject(process, 0) == WAIT_TIMEOUT,
+             "unconfirmed child cleanup forgot its retry handle");
+    }
+    if (process != nullptr) {
+      ::TerminateProcess(process, 1);  // Only this test's child.
+      ::WaitForSingleObject(process, 2000);
+      Expect(StopWindowsLocalDpiChild(job, process) && process == nullptr,
+             "local DPI cleanup could not retry its retained child");
+    }
+    if (witness != nullptr) ::CloseHandle(witness);
+  }
+  HANDLE guard = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  Expect(guard != nullptr, "local DPI cleanup test guard was unavailable");
+  if (guard == nullptr) return;
+  const auto captured_guard = guard;
+  Expect(!CloseWindowsLocalDpiDriver(guard, RefuseDriverClose) && guard == captured_guard,
+         "failed driver close forgot its captured guard");
+  Expect(CloseWindowsLocalDpiDriver(guard, CloseTestDriverGuard) && guard == INVALID_HANDLE_VALUE,
+         "driver close could not retry its retained guard");
 }
 
 bool Contains(const pokrov::service::RuntimeResult& result,
@@ -1425,6 +1498,14 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--local-dpi-test-child") {
+    ::Sleep(10000);
+    return 0;
+  }
+  if (argc == 2 && std::string(argv[1]) == "--local-dpi-lifecycle") {
+    TestWindowsLocalDpiOwnedCleanup();
+    return failures == 0 ? 0 : 1;
+  }
   if (argc == 2 && std::string(argv[1]) == "--periodic-cancel-observation") {
     TestRuntimeLifecycle();
     return failures == 0 ? 0 : 1;
@@ -1432,6 +1513,7 @@ int main(int argc, char** argv) {
   TestReleasedCoreDescriptorCompatibility();
   TestWindowsTelegramMetadataComposition();
   TestWindowsLocalDpiScopePreparation();
+  TestWindowsLocalDpiOwnedCleanup();
   TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff();
   TestInterruptedConnectNeverPublishesProtection();
   TestProfileIdentityFollowsCommittedRuntime();

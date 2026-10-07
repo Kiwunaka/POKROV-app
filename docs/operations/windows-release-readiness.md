@@ -16,6 +16,12 @@ and binary before keeping the new service installation. The old uninstaller
 can return success before that second phase finishes; a running UI can also
 hold its EXE and leave a broken partial upgrade.
 
+An upgrade preserves a valid `InstallOwnerSid` already recorded in
+`HKLM64\Software\space.pokrov\POKROV\Service`, including when another
+administrator launches the installer. The installer queries the original
+launcher SID only when no valid installation owner is recorded. This keeps the
+existing user's service access across upgrades.
+
 On the owned Windows VM, install from a clean state and update over 1.1.6.
 Connect and disconnect; reboot while VPN is connected and check that network
 access returns. Finally uninstall and check network access again. Record any

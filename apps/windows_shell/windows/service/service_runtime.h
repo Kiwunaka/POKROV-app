@@ -196,7 +196,7 @@ class RuntimeHost {
                             bool finish_transition_guard = true,
                             const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
                             const CheckInterruption& telegram_interrupted = {});
-  void ClearWindowsLocalDpiAfterCoreStopped();
+  bool ClearWindowsLocalDpiAfterCoreStopped();
   bool WithdrawTelegramWS(const std::string& service_id = "");
   std::string SnapshotBody(const char* pending_phase = nullptr) const;
   bool PrepareDirectories();

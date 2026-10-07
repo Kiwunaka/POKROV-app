@@ -113,6 +113,26 @@ std::wstring Quote(const std::wstring& value) {
 }
 }  // namespace
 
+bool StopWindowsLocalDpiChild(HANDLE& job, HANDLE& process) {
+  if (job != nullptr) {
+    if (!::CloseHandle(job)) return false;
+    job = nullptr;
+  }
+  if (process != nullptr) {
+    if (::WaitForSingleObject(process, 2000) != WAIT_OBJECT_0 ||
+        !::CloseHandle(process)) return false;
+    process = nullptr;
+  }
+  return true;
+}
+
+bool CloseWindowsLocalDpiDriver(HANDLE& guard, BOOL (__cdecl* close)(HANDLE)) {
+  if (guard == INVALID_HANDLE_VALUE) return true;
+  if (close == nullptr || !close(guard)) return false;
+  guard = INVALID_HANDLE_VALUE;
+  return true;
+}
+
 struct WindowsLocalDpiExecutor::State {
   using Open = HANDLE (__cdecl*)(const char*, int, std::int16_t, std::uint64_t);
   using Close = BOOL (__cdecl*)(HANDLE);
@@ -191,7 +211,10 @@ bool WindowsLocalDpiExecutor::AssetsReady() {
 std::string WindowsLocalDpiExecutor::StartPrepared(
     const std::vector<WindowsLocalDpiService>& services,
     const std::string& physical_bind_interface, WindowsLocalDpiStrategy strategy) {
-  if (state_->process != nullptr) return "local_dpi_executor_running";
+  if (state_->process != nullptr || state_->job != nullptr ||
+      state_->driver_guard != INVALID_HANDLE_VALUE || !state_->holders.empty()) {
+    return "local_dpi_executor_running";
+  }
   if (core_.WindowsLocalDpiAdmissionVersion() != 1) return "local_dpi_executor_unavailable";
   const auto hostlist = WindowsLocalDpiHostList(services);
   // Never let an empty hostlist become upstream's allow-all mode. Bound the
@@ -256,15 +279,7 @@ std::string WindowsLocalDpiExecutor::RetryPrepared(
   state_->retry_attempted = true;
   // Close only our Job and wait for its child; keep unpublished holders and
   // the driver/assets. A cleanup failure forbids a replacement child.
-  if (state_->job != nullptr) {
-    if (!::CloseHandle(state_->job)) return "local_dpi_child_failed";
-    state_->job = nullptr;
-  }
-  if (state_->process != nullptr) {
-    if (::WaitForSingleObject(state_->process, 2000) != WAIT_OBJECT_0 ||
-        !::CloseHandle(state_->process)) return "local_dpi_child_failed";
-    state_->process = nullptr;
-  }
+  if (!StopWindowsLocalDpiChild(state_->job, state_->process)) return "local_dpi_child_failed";
   const auto wide_interface = WideUtf8(physical_bind_interface);
   NET_LUID luid{};
   NET_IFINDEX index = 0;
@@ -339,32 +354,24 @@ bool WindowsLocalDpiExecutor::Stop() {
     if (core_.ReadLocalDpiAdmissionID(holder.first) == holder.second &&
         core_.WithdrawLocalDpiAdmission(holder.second) < 0) return false;
   }
-  StopAfterCoreStopped();
-  return true;
+  return StopAfterCoreStopped();
 }
 
-void WindowsLocalDpiExecutor::StopAfterCoreStopped() {
+bool WindowsLocalDpiExecutor::StopAfterCoreStopped() {
+  if (!StopWindowsLocalDpiChild(state_->job, state_->process) ||
+      !CloseWindowsLocalDpiDriver(state_->driver_guard, state_->close_driver)) return false;
   state_->holders.clear();
   state_->prepared_services.clear();
   state_->physical_bind_interface.clear();
   state_->interface_index = 0;
   state_->retry_attempted = false;
   state_->admission_attempted = false;
-  if (state_->job != nullptr) { ::CloseHandle(state_->job); state_->job = nullptr; }
-  if (state_->process != nullptr) {
-    ::WaitForSingleObject(state_->process, 2000);
-    ::CloseHandle(state_->process);
-    state_->process = nullptr;
-  }
-  if (state_->driver_guard != INVALID_HANDLE_VALUE && state_->close_driver != nullptr) {
-    state_->close_driver(state_->driver_guard);
-    state_->driver_guard = INVALID_HANDLE_VALUE;
-  }
   if (state_->driver_module != nullptr) { ::FreeLibrary(state_->driver_module); state_->driver_module = nullptr; }
   state_->open_driver = nullptr;
   state_->close_driver = nullptr;
   state_->get_driver_param = nullptr;
   for (const auto file : state_->files) ::CloseHandle(file);
   state_->files.clear();
+  return true;
 }
 }  // namespace pokrov::service

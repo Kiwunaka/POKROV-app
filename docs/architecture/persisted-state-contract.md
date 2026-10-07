@@ -22,6 +22,9 @@ Offline connections still use the separate protected managed-profile cache.
 
 Ordinary managed-profile refresh waits for Core capabilities and sends the
 observed Core version, preserving the authorized catalog before initialization.
+When capabilities arrive after startup preferences, the client resumes that
+refresh once. The locations menu first adopts the validated local catalog, so
+ordinary choices remain visible while the API is slow or unavailable.
 After a successful refresh, the locations menu adopts the full admitted catalog
 from secure storage for the same connection operation and profile inputs. Newly
 ready transports appear without another Connect; adopting this public metadata

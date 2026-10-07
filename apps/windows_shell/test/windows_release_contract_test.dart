@@ -261,6 +261,17 @@ void main() {
       scriptContent,
       contains('ExtractOwnerSid(ExistingOwnerSid) = ExistingOwnerSid'),
     );
+    final prepareToInstall = scriptContent.substring(
+      scriptContent.indexOf('function PrepareToInstall'),
+      scriptContent.indexOf('function GetInstallOwnerSid'),
+    );
+    expect(
+      prepareToInstall,
+      matches(RegExp(
+        r'if not TryReuseExistingInstallOwnerSid\(\) then\s+begin\s+'
+        r'OwnerQuerySucceeded := QueryOriginalInstallOwnerSid\(InstallOwnerSid\);',
+      )),
+    );
     expect(scriptContent, contains('create POKROVService'));
     expect(scriptContent, contains('AfterInstall: InstallAndStartService'));
     expect(scriptContent, contains('procedure InstallAndStartService'));
