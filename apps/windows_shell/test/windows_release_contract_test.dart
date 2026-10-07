@@ -272,6 +272,21 @@ void main() {
         r'OwnerQuerySucceeded := QueryOriginalInstallOwnerSid\(InstallOwnerSid\);',
       )),
     );
+    expect(
+      prepareToInstall,
+      matches(RegExp(
+        r"Log\('POKROV_SERVICE_STOP_REQUESTED'\);\s+"
+        r'ResultCode := -1;\s+if Exec\(',
+      )),
+    );
+    expect(
+      prepareToInstall,
+      contains('POKROV_SERVICE_STOP_RESULT exec=true exit_code='),
+    );
+    expect(
+      prepareToInstall,
+      contains('POKROV_SERVICE_STOP_RESULT exec=false exit_code='),
+    );
     expect(scriptContent, contains('create POKROVService'));
     expect(scriptContent, contains('AfterInstall: InstallAndStartService'));
     expect(scriptContent, contains('procedure InstallAndStartService'));

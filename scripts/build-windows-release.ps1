@@ -1130,8 +1130,13 @@ begin
       exit;
     end;
   end;
-  Exec(ExpandConstant('{sys}\net.exe'), 'stop POKROVService /y', '', SW_HIDE,
-    ewWaitUntilTerminated, ResultCode);
+  Log('POKROV_SERVICE_STOP_REQUESTED');
+  ResultCode := -1;
+  if Exec(ExpandConstant('{sys}\net.exe'), 'stop POKROVService /y', '', SW_HIDE,
+      ewWaitUntilTerminated, ResultCode) then
+    Log('POKROV_SERVICE_STOP_RESULT exec=true exit_code=' + IntToStr(ResultCode))
+  else
+    Log('POKROV_SERVICE_STOP_RESULT exec=false exit_code=' + IntToStr(ResultCode));
 end;
 
 function GetInstallOwnerSid(Param: String): String;
