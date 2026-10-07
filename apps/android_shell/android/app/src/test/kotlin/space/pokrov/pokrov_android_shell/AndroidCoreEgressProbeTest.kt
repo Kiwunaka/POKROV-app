@@ -414,6 +414,22 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
+    fun expiredSmartAccessLeaseHasSeparateCompletedOutcome() {
+        val core = FailedResponseCore("Smart Access lease expired")
+        for (kind in AndroidCoreEgressProbeTargetKind.values()) {
+            assertEquals(if (kind == AndroidCoreEgressProbeTargetKind.SMART_ACCESS)
+                AndroidCoreEgressProbeResult.SMART_ACCESS_LEASE_EXPIRED else AndroidCoreEgressProbeResult.UNAVAILABLE,
+                AndroidCoreEgressProbe.resultFromCore(core, AndroidCoreEgressProbeTarget("target", kind)))
+        }
+        val result = AndroidCoreEgressProbeResult.SMART_ACCESS_LEASE_EXPIRED
+        assertTrue(result.isCompletedFailure)
+        assertEquals("core_smart_access_lease_expired", result.failureKind(periodic = true))
+        assertEquals(AndroidCoreEgressProbeResult.UNAVAILABLE,
+            AndroidCoreEgressProbe.resultFromCore(FailedResponseCore("Smart Access lease expired: private detail"),
+                AndroidCoreEgressProbeTarget("target", AndroidCoreEgressProbeTargetKind.SMART_ACCESS)))
+    }
+
+    @Test
     fun unavailableProbeDiagnosticsKeepClosedCauseWithoutPrivateErrorText() {
         val target = AndroidCoreEgressProbeTarget("private-target", AndroidCoreEgressProbeTargetKind.GROUP)
         val expected = mapOf(

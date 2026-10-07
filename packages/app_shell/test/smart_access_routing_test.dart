@@ -176,6 +176,7 @@ void main() {
     expect(bootstrapper.grantRequests, 1);
     expect(bootstrapper.ordinaryRequests, 0, reason: 'local Smart starts without managed VPN material');
 
+    var expectedGrantRequests = 1;
     Future<void> awaitAutomaticVpn(int requestCount) async {
       final deadline = DateTime.now().add(const Duration(seconds: 8));
       while ((bootstrapper.ordinaryRequests < requestCount || manager.busy ||
@@ -186,7 +187,7 @@ void main() {
       expect(manager.status.phase, ConnectionPhase.connected, reason:
         '${manager.headline}; stage_error=${runtime.stageError}; unsupported=${runtime.unsupported}');
       expect(manager.busy, isFalse);
-      expect(bootstrapper.grantRequests, 1, reason: 'automatic VPN recovery must not reissue failed Smart grants');
+      expect(bootstrapper.grantRequests, expectedGrantRequests, reason: 'automatic VPN recovery must not reissue failed Smart grants');
       final current = jsonDecode(runtime.payload!.configPayload) as Map;
       expect(current['route']['final'], 'direct');
       expect((current['outbounds'] as List).any((row) => row['type'] == 'pokrov-smart-access'), isFalse);
@@ -212,6 +213,34 @@ void main() {
     expect(bootstrapper.grantRequests, 1);
     expect(manager.snapshot?.phase, RuntimePhase.configStaged);
     expect(manager.busy, isFalse);
+
+    await manager.connect();
+    expectedGrantRequests = 2;
+    expect(bootstrapper.grantRequests, expectedGrantRequests);
+    expect(bootstrapper.ordinaryRequests, 3);
+    runtime.fail('core_egress_probe_unavailable', stopped: false);
+    await manager.refresh();
+    expect(bootstrapper.ordinaryRequests, 3,
+        reason: 'unavailable proof alone does not authorize VPN recovery');
+    runtime.fail('core_smart_access_lease_expired', stopped: true);
+    await awaitAutomaticVpn(4);
+    await manager.disconnect();
+
+    await manager.connect();
+    expect(bootstrapper.grantRequests, 3);
+    bootstrapper.ordinaryAccessDenied = true;
+    runtime.fail('core_smart_access_lease_expired', stopped: true);
+    final deniedDeadline = DateTime.now().add(const Duration(seconds: 8));
+    while ((bootstrapper.ordinaryRequests < 5 || manager.busy) &&
+        DateTime.now().isBefore(deniedDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(bootstrapper.ordinaryRequests, 5);
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect((jsonDecode(runtime.payload!.configPayload)['outbounds'] as List)
+        .any((row) => row['type'] == 'pokrov-smart-access'), isTrue,
+        reason: 'denied access must not stage an ordinary VPN profile');
+    await manager.disconnect();
   });
 }
 
@@ -320,6 +349,7 @@ class _LifecycleBootstrapper extends AppFirstRuntimeBootstrapper {
   final _Catalog catalog;
   int grantRequests = 0;
   int ordinaryRequests = 0;
+  bool ordinaryAccessDenied = false;
   @override
   bool get routingCatalogEnabled => true;
   @override
@@ -360,6 +390,10 @@ class _LifecycleBootstrapper extends AppFirstRuntimeBootstrapper {
       bool selectCandidate = true, String selectedCandidateRef = '', bool cacheResult = true,
       Duration? timeout, Future<void>? cancelled}) async {
     ordinaryRequests++;
+    if (ordinaryAccessDenied) {
+      throw const BootstrapFailure('Synthetic access denied',
+          code: 'managed_profile_access_denied', statusCode: 403);
+    }
     final config = jsonDecode(buildLocalSmartAccessBase(hostPlatform: hostPlatform).configPayload) as Map<String, dynamic>;
     config['outbounds'] = [
       {'type': 'socks', 'tag': 'vpn', 'server': '127.0.0.1', 'server_port': 1080},

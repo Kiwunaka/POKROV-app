@@ -20,6 +20,13 @@ API response for device latency measurements. Reading an older convenience file
 strips its probe addresses and rewrites it once, preserving location preferences.
 Offline connections still use the separate protected managed-profile cache.
 
+Ordinary managed-profile refresh waits for Core capabilities and sends the
+observed Core version, preserving the authorized catalog before initialization.
+After a successful refresh, the locations menu adopts the full admitted catalog
+from secure storage for the same connection operation and profile inputs. Newly
+ready transports appear without another Connect; adopting this public metadata
+does not stage a profile, change the running candidate, or renew its proof.
+
 Android Flutter connect/cancel request IDs are process-local only
 (source work, NOT_VERIFIED). The runtime engine uses a weak in-memory snapshot
 association, and the host retains one current request plus its cancellation

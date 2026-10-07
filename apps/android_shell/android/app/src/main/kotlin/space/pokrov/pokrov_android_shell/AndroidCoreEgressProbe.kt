@@ -23,17 +23,20 @@ internal enum class AndroidCoreEgressProbeResult {
     DNS_FAILED,
     CONNECT_FAILED,
     TLS_FAILED,
+    SMART_ACCESS_LEASE_EXPIRED,
     UNAVAILABLE,
     TIMED_OUT;
 
     val isCompletedFailure: Boolean
-        get() = this == FAILED || this == DNS_FAILED || this == CONNECT_FAILED || this == TLS_FAILED
+        get() = this == FAILED || this == DNS_FAILED || this == CONNECT_FAILED || this == TLS_FAILED ||
+            this == SMART_ACCESS_LEASE_EXPIRED
 
     fun failureKind(periodic: Boolean = false): String = when (this) {
         FAILED -> "core_egress_probe_failed"
         DNS_FAILED -> "core_egress_dns_failed"
         CONNECT_FAILED -> "core_egress_connect_failed"
         TLS_FAILED -> "core_egress_tls_failed"
+        SMART_ACCESS_LEASE_EXPIRED -> "core_smart_access_lease_expired"
         TIMED_OUT -> if (periodic) "core_egress_timeout" else "core_egress_probe_unavailable"
         else -> "core_egress_probe_unavailable"
     }
@@ -456,6 +459,11 @@ internal object AndroidCoreEgressProbe {
                 "URL probe connection failed" -> AndroidCoreEgressProbeResult.CONNECT_FAILED
                 "URL probe DNS resolution failed" -> AndroidCoreEgressProbeResult.DNS_FAILED
                 "URL probe TLS negotiation failed" -> AndroidCoreEgressProbeResult.TLS_FAILED
+                "Smart Access lease expired" -> if (target.kind == AndroidCoreEgressProbeTargetKind.SMART_ACCESS) {
+                    AndroidCoreEgressProbeResult.SMART_ACCESS_LEASE_EXPIRED
+                } else {
+                    AndroidCoreEgressProbeResult.UNAVAILABLE
+                }
                 "URL probe response failed", "URL probe failed" -> AndroidCoreEgressProbeResult.FAILED
                 else -> AndroidCoreEgressProbeResult.UNAVAILABLE
             }

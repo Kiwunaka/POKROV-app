@@ -47,7 +47,8 @@ int main() {
   for (const auto* failure : {"deadline_exceeded", "operation_cancelled",
                             "core_egress_dns_failed", "core_egress_connect_failed",
                             "core_egress_tls_failed", "core_egress_tls_timeout",
-                            "core_egress_response_timeout", "core_egress_timeout"}) {
+                            "core_egress_response_timeout", "core_egress_timeout",
+                            "core_smart_access_lease_expired"}) {
     const auto body =
         std::string("phase=config_staged;core_ready=1;can_initialize=1;can_connect=1;") +
         "running=0;core_egress_validated=0;dns_ready=0;staged_profile_digest=" +

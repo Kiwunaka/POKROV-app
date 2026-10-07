@@ -49,7 +49,7 @@ const char* SafeEgressFailure(const std::string& failure) {
            "core_egress_dns_failed", "core_egress_connect_failed",
            "core_egress_tls_failed", "core_egress_tls_timeout",
            "core_egress_response_timeout", "core_egress_timeout",
-           "core_egress_probe_unavailable"}) {
+           "core_egress_probe_unavailable", "core_smart_access_lease_expired"}) {
     if (failure == known) return known;
   }
   return "core_egress_probe_failed";
@@ -521,6 +521,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
     if (result == "URL probe DNS resolution failed") return "core_egress_dns_failed";
     if (result == "URL probe connection failed") return "core_egress_connect_failed";
     if (result == "URL probe TLS negotiation failed") return "core_egress_tls_failed";
+    if (result == "Smart Access lease expired") return "core_smart_access_lease_expired";
     if (result == "context deadline exceeded") return "core_egress_timeout";
     if (result == "URL probe response failed" || result == "URL probe failed") return "core_egress_probe_failed";
     return "core_egress_probe_unavailable";

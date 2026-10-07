@@ -536,6 +536,7 @@ const _coreEgressProbeFailureKinds = <String>{
   'core_egress_tls_timeout',
   'core_egress_response_timeout',
   'core_egress_timeout',
+  'core_smart_access_lease_expired',
 };
 
 const _publicRuntimeFailureKinds = <String>{
@@ -795,6 +796,8 @@ String _publicRuntimeMessage({
       return 'Сервер проверки не ответил вовремя после установки соединения. $egressRuntimeState Причина не установлена.';
     case 'core_egress_timeout':
       return 'Проверка подключения не завершилась вовремя. $egressRuntimeState Причина не установлена.';
+    case 'core_smart_access_lease_expired':
+      return 'Срок разрешения SmartDNS истёк. Подключение требует восстановления.';
     case 'core_egress_probe_unavailable':
       return phase == RuntimePhase.running
           ? 'POKROV не завершил проверку защищенного подключения. $egressRuntimeState Попробуйте еще раз.'

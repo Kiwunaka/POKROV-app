@@ -177,8 +177,10 @@ DNS answer and verified TLS relay, rather than a direct API health request. This
 Android and Windows readiness proves only the captured current bound IPv4
 service group's transport, not all selected services or an AI application's features. This
 source path does not enable public admission or establish live service success.
-Only a completed service DNS/connect/TLS failure for that current bound profile
-can start ordinary VPN recovery for the same selected services. Recovery proves
+Only a completed service DNS/connect/TLS failure or a Core-confirmed lease expiry
+for that current bound profile can start ordinary VPN recovery for the same selected services.
+Expiry remains distinct from revoked or unavailable authority; current catalog
+scope and fresh VPN access are still required. Recovery proves
 the VPN before protected replacement, keeps the remainder Direct and does not
 request new grants from the failed Smart provider; automatic recovery keeps the
 current VPN fallback policy and native digest until an explicit new connection

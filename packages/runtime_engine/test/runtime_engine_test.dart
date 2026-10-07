@@ -1398,6 +1398,10 @@ void main() {
         'core_egress_tls_failed',
         'Не удалось согласовать TLS с сервером проверки. POKROV отключил VPN.'
       ),
+      'core_smart_access_lease_expired': (
+        'core_smart_access_lease_expired',
+        'Срок разрешения SmartDNS истёк. Подключение требует восстановления.'
+      ),
       'default_network_dpi_detected': (
         'runtime_failure',
         'POKROV не смог завершить действие на устройстве.'

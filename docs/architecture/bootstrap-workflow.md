@@ -188,6 +188,8 @@ reports `probe_budget_expired` and never suppresses a candidate.
 The local journal and runtime stats retain the measured probe duration, including
 time spent settling cancelled native work, up to the API limit of one hour.
 They do not shorten a long probe to 30 seconds or extend its selection budget.
+Runtime stats preserve attempt numbers through 2147483647; connections after
+the hundredth attempt keep their own correlation within the same client run.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
 The local probe budget and Core data-stall kinds are valid journal values;

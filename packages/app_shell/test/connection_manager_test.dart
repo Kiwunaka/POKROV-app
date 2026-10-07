@@ -83,7 +83,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
       if (stopped) cancelledExactProfiles.add(selectedCandidateRef);
     }
     if (failure != null) Error.throwWithStackTrace(failure!, failureStack ?? StackTrace.current);
-    final nodeCode = preferredNodeCode.isEmpty ? 'de' : preferredNodeCode;
+    final nodeCode = preferredNodeCode.isEmpty ? candidates.first.nodeCode : preferredNodeCode;
     final selected = candidates.firstWhere((candidate) => candidate.candidateRef ==
         (selectedCandidateRef.isEmpty ? candidates.first.candidateRef : selectedCandidateRef));
     ManagedProfilePayload material(TransportCandidate candidate) => ManagedProfilePayload(
@@ -132,6 +132,9 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   _CachedBootstrapper({bool warpEnabled = false, bool bundle = false})
       : super(catalog: true, warpEnabled: warpEnabled, bundle: bundle);
   bool cacheAvailable = true;
+  Future<void>? cacheRefreshGate;
+  final cacheRefreshEntered = Completer<void>();
+  final refreshedCoreReleases = <String?>[];
   static final alternatives = [
     _candidates.first,
     for (final (index, protocol, protection) in [(1, 'awg', 'awg31'), (2, 'hysteria2', 'tls')])
@@ -154,7 +157,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
           selectedCandidateRef: selected.candidateRef, candidates: alternatives),
       source: RuntimeProfileSource(revision: 'cached', origin: RuntimeProfileSourceOrigin.managedManifest,
           protocol: selected.protocol),
-      configPayload: '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
+      configPayload: materialConfigPayload ?? '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
       materializedForRuntime: true, routeMode: inputs.routeMode, resolvedNodeCode: 'de');
   }
   @override
@@ -164,7 +167,11 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   Future<void> refreshCachedManagedProfile(ManagedProfileCacheInputs inputs, {
     Set<RuntimeTransportFeature> runtimeFeatures = const {}, String? coreRelease, Future<void>? cancelled,
     String selectedCandidateRef = '', bool alternativesOnly = false,
-  }) async {}
+  }) async {
+    refreshedCoreReleases.add(coreRelease);
+    if (!cacheRefreshEntered.isCompleted) cacheRefreshEntered.complete();
+    await cacheRefreshGate;
+  }
   @override
   Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId,
       {String? networkSelectionKey, String? offlineNetworkSelectionKey}) async {
@@ -343,6 +350,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     if (!handoffStarted.isCompleted) handoffStarted.complete();
     await handoffRelease?.future;
     warpEgressFailure = failHandoff || failedHandoffProfile == payload.profileName || cancelled.contains(_request);
+    if (!warpEgressFailure) restoredHandoffGuard = false;
     phase = hostPlatform == HostPlatform.windows && warpEgressFailure
         ? RuntimePhase.configStaged : RuntimePhase.running;
     return value(phase);
@@ -376,6 +384,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
             ? '/test/profile.json'
             : null,
         supportsLiveConnect: true,
+        protectionRetained: restoredHandoffGuard,
         canInitialize: phase == RuntimePhase.artifactReady,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
         message: '',
@@ -724,6 +733,38 @@ void main() {
     expect({base.binding('a', 'i'), country.binding('a', 'i'), pinned.binding('a', 'i')}, hasLength(3));
   });
 
+  test('Auto uses the winning material node when the bundle keeps the initial resolved hint', () async {
+    final initial = TransportCandidate(candidateRef: 'pl:profile_0', profileRef: 'profile_0',
+      nodeCode: 'pl', countryCode: 'PL', protocol: 'vless', transport: 'tcp',
+      protection: 'reality', priority: 0, network: 'tcp', flow: '',
+      minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: const {});
+    final winner = TransportCandidate(candidateRef: 'de2:profile_1', profileRef: 'profile_1',
+      nodeCode: 'de2', countryCode: 'DE', protocol: 'vless', transport: 'tcp',
+      protection: 'reality', priority: 1, network: 'tcp', flow: '',
+      minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: const {});
+    final bootstrapper = _StatsBootstrapper(bundle: true)..candidates = [initial, winner];
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true
+      ..heldProbeProfiles.add(initial.candidateRef);
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+
+    await manager.connect();
+
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.transportCatalog?.selected.nodeCode, 'pl',
+        reason: 'the server selection remains the initial catalog choice');
+    expect(manager.materialCandidate?.nodeCode, 'de2');
+    expect(manager.materialCandidate?.countryCode, 'DE');
+    expect(runtime.stagedPayloads.single.resolvedNodeCode, 'de2',
+        reason: 'staging and the promoted active location must name the winning material');
+    expect(bootstrapper.actualReports.singleWhere((report) => report['runtime_phase'] == 'running')
+        ['selected_node_code'], 'de2');
+  });
+
   test('unexpected connection diagnostics retain only operation type and application frames', () async {
     final store = _ExperienceStore();
     final bootstrapper = _Bootstrapper()
@@ -907,8 +948,10 @@ void main() {
     expect(proven?.cacheEntryId, alternate?.cacheEntryId, reason: 'offline proof promotes the existing entry');
     final downloadedProfile = onlineRuntime.stagedProfile;
     onlineRuntime.failHandoff = true;
+    onlineRuntime.restoredHandoffGuard = true;
     await onlineManager.reconnect();
     expect(onlineManager.status.phase, ConnectionPhase.actionRequired);
+    expect(onlineManager.retainsProtection, isTrue);
     expect(onlineRuntime.phase, RuntimePhase.configStaged);
     expect(onlineRuntime.handoffCalls, 2);
     expect(protectedValues, isNotEmpty);
@@ -917,6 +960,7 @@ void main() {
     onlineRuntime.failHandoff = false;
     await onlineManager.reconnect();
     expect(onlineManager.status.phase, ConnectionPhase.connected);
+    expect(onlineManager.retainsProtection, isFalse);
     expect(onlineManager.offlineState, ManagedProfileOfflineState.apiUnavailable);
     expect(onlineRuntime.handoffCalls, 3);
     expect(onlineRuntime.calls, isNot(contains('disconnect')));
@@ -1166,6 +1210,43 @@ void main() {
       'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 321}]);
     await manager.refresh();
     expect(bootstrapper.reports, hasLength(1));
+  });
+
+  test('loaded Core refresh publishes the full catalog without replacing the running material', () async {
+    final refreshGate = Completer<void>();
+    final bootstrapper = _CachedBootstrapper()
+      ..cacheAvailable = false..cacheRefreshGate = refreshGate.future;
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..coreVersion = '1.2.9';
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+
+    manager.markExperienceLoaded();
+    await Future<void>.delayed(Duration.zero);
+    expect(bootstrapper.refreshedCoreReleases, isEmpty,
+        reason: 'startup does not replace an authorized catalog before Core reports capabilities');
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.transportCatalog?.candidates, _candidates);
+    await bootstrapper.cacheRefreshEntered.future.timeout(const Duration(seconds: 3));
+    final catalogPublished = Completer<void>();
+    manager.addListener(() {
+      if (manager.transportCatalog?.revision == 'cached' && !catalogPublished.isCompleted) {
+        catalogPublished.complete();
+      }
+    });
+    bootstrapper.cacheAvailable = true;
+    refreshGate.complete();
+    await catalogPublished.future.timeout(const Duration(seconds: 3));
+
+    expect(manager.transportCatalog?.candidates.map((candidate) => candidate.protocol),
+        ['vless', 'awg', 'hysteria2']);
+    expect(bootstrapper.refreshedCoreReleases, ['1.2.9']);
+    expect(manager.materialCandidate?.candidateRef, _candidates.first.candidateRef);
+    expect(runtime.stagedPayloads, hasLength(1));
+    expect(runtime.connectCalls, 1);
+    expect(runtime.handoffCalls, 0);
   });
 
   test('managed catalog receives the observed Core release', () async {
@@ -1442,7 +1523,10 @@ void main() {
 
   test('candidate recovery keeps the selected route and DNS policy', () async {
     final runtime = _Runtime()..supportsCandidates = true;
-    final manager = _manager(runtime, _CachedBootstrapper());
+    final store = _ExperienceStore();
+    final bootstrapper = _CachedBootstrapper()
+      ..materialConfigPayload = '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"},"dns":{"servers":[{"tag":"dns-bootstrap","address":"tls://1.1.1.1","detour":"proxy"}]}}';
+    final manager = _manager(runtime, bootstrapper, experienceStore: store);
     addTearDown(manager.dispose);
     manager.selectRouteMode(RouteMode.allExceptRu);
     manager.setRoutingPreferences(
@@ -1453,6 +1537,8 @@ void main() {
     );
 
     await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected,
+        reason: store.saved.protectionEvents.map((event) => event.detail).join('; '));
     final before = jsonDecode(runtime.stagedPayloads.last.configPayload) as Map;
     runtime.warpEgressFailure = true;
     await runtime.handoffStarted.future.timeout(const Duration(seconds: 3));
@@ -1466,11 +1552,13 @@ void main() {
     expect(after['route'], before['route']);
     expect(after['dns'], before['dns']);
     expect((after['route'] as Map)['final'], 'proxy');
-    expect(((after['dns'] as Map)['servers'] as List).single, {
+    expect(((after['dns'] as Map)['servers'] as List).cast<Map>()
+        .singleWhere((server) => server['tag'] == 'pokrov-user-dns'), {
       'tag': 'pokrov-user-dns',
       'type': 'https',
       'server': 'dns.adguard-dns.com',
       'detour': 'proxy',
+      'domain_resolver': 'dns-bootstrap',
     });
   });
 

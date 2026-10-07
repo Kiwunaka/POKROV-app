@@ -170,17 +170,34 @@ class ConnectionManager extends ChangeNotifier {
     if (_disposed || _runtimeBusy || _cacheRefreshInFlight) return;
     final service = _bootstrapper;
     if (service is! CachedManagedProfileBootstrapper) return;
+    final features = _runtimeSnapshot?.transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
+    // Before Core initialization, a legacy-only request would replace the
+    // existing full catalog. Connect refreshes with the loaded capabilities.
+    if (features.isEmpty) return;
     _cacheRefreshInFlight = true;
     final completion = Completer<void>();
     _cacheRefreshCompletion = completion;
+    final inputs = _managedProfileCacheInputs;
+    final profileRevision = _managedProfileRevision;
+    final coreRelease = _runtimeSnapshot?.coreVersion;
+    final selectedCandidateRef = _activeCandidateRef ?? '';
+    bool current() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
+        profileRevision == _managedProfileRevision;
     try {
       await (service as CachedManagedProfileBootstrapper).refreshCachedManagedProfile(
-        _managedProfileCacheInputs,
-        runtimeFeatures: _runtimeSnapshot?.transportCapabilities?.features ?? const {},
-        cancelled: _connectionCoordinator.whenOperationChanges(_connectionCoordinator.operationGeneration),
-        selectedCandidateRef: _activeCandidateRef ?? '',
+        inputs,
+        runtimeFeatures: features,
+        coreRelease: coreRelease,
+        cancelled: _connectionCoordinator.whenOperationChanges(generation),
+        selectedCandidateRef: selectedCandidateRef,
         alternativesOnly: alternativesOnly,
       );
+      if (!current()) return;
+      final refreshed = await (service as CachedManagedProfileBootstrapper).loadCachedManagedProfile(inputs,
+          selectedCandidateRef: selectedCandidateRef, runtimeFeatures: features, coreRelease: coreRelease);
+      if (current() && refreshed?.transportCatalog != null) {
+        _update(() => _transportCatalog = refreshed!.transportCatalog);
+      }
     } on Object {
       // A metadata refresh never interrupts a working connection.
     } finally {
@@ -2652,6 +2669,9 @@ class ConnectionManager extends ChangeNotifier {
       );
     }
     var runtimePayload = payload.copyWith(
+      // A bundled Auto winner can differ from the original profile hint.
+      // Stage and display the exact material's node, not the catalog choice.
+      resolvedNodeCode: payload.materialCandidate?.nodeCode ?? payload.resolvedNodeCode,
       // A server-reported fallback/error is a circuit breaker, not a cosmetic
       // status. Keep the person's consent visible, but stage the ordinary VPN
       // until they explicitly toggle WARP off and on to retry it.
@@ -2946,7 +2966,7 @@ class ConnectionManager extends ChangeNotifier {
           operation: 'routing_catalog');
     }
     if (!_disposed) {
-      final resolvedAutomatic = payload.resolvedNodeCode.trim().toLowerCase();
+      final resolvedAutomatic = configuredPayload.resolvedNodeCode.trim().toLowerCase();
       // Server stickiness is an automatic routing hint, not proof of a manual
       // choice or of the profile actually staged on this device. Only the
       // authoritative resolved code may later identify a failed auto node.
@@ -4546,7 +4566,8 @@ class ConnectionManager extends ChangeNotifier {
   bool _isLocalSmartAccessFailure(RuntimeSnapshot failed) {
     return _smartAccessRouteProfile?.policy.vpnAvailable == false &&
         _isCurrentSmartAccessProfile(failed) &&
-        const {'core_egress_dns_failed', 'core_egress_connect_failed', 'core_egress_tls_failed'}
+        const {'core_egress_dns_failed', 'core_egress_connect_failed', 'core_egress_tls_failed',
+          'core_smart_access_lease_expired'}
             .contains(failed.lastFailureKind);
   }
 

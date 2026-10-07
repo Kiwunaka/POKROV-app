@@ -4186,7 +4186,7 @@ class AppFirstRuntimeBootstrapper
           'route_mode': safeRouteMode,
         if (durationMs != null) 'duration_ms': durationMs.clamp(0, 3600000),
         if (attemptNumber != null)
-          'attempt_number': attemptNumber.clamp(1, 100),
+          'attempt_number': attemptNumber.clamp(1, 2147483647),
         if (retryable != null) 'retryable': retryable,
         if (const {'cellular', 'wifi', 'ethernet', 'other'}.contains(safeNetworkClass))
           'network_class': safeNetworkClass,

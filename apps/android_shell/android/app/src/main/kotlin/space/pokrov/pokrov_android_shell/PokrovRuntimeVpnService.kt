@@ -1928,6 +1928,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 AndroidCoreEgressProbeResult.DNS_FAILED,
                 AndroidCoreEgressProbeResult.CONNECT_FAILED,
                 AndroidCoreEgressProbeResult.TLS_FAILED,
+                AndroidCoreEgressProbeResult.SMART_ACCESS_LEASE_EXPIRED,
                 -> AndroidOperationalOutcome.FAILED
                 AndroidCoreEgressProbeResult.UNAVAILABLE,
                 AndroidCoreEgressProbeResult.TIMED_OUT,

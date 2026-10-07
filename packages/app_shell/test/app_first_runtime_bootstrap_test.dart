@@ -428,7 +428,7 @@ void main() {
     final directConfig = jsonDecode(direct.configPayload) as Map;
     expect((directConfig['outbounds'] as List).where((item) => item['type'] == 'vless'), isEmpty);
     expect((directConfig['outbounds'] as List).where((item) => item['type'] == 'selector').single['outbounds'], ['block']);
-    expect(queries.last['client_release'], '1.5.0+4099');
+    expect(queries.last['client_release'], '$pokrovClientVersion+$pokrovClientBuildNumber');
     const profileStorage = FlutterSecureStorage();
     const profileCacheKey = 'pokrov-managed-profile-windows-v1';
     final previousCache = await profileStorage.read(key: profileCacheKey);
@@ -2204,6 +2204,7 @@ void main() {
       hostPlatform: HostPlatform.android,
       runtimePhase: 'RUNNING',
       connected: true,
+      attemptNumber: 100,
       networkClass: 'cellular',
       carrierMccMnc: '25099',
       carrierName: ' Test Carrier ',
@@ -2226,6 +2227,7 @@ void main() {
       runtimePhase: 'FAILED',
       connected: false,
       errorCode: 'connect_failed',
+      attemptNumber: 101,
       connectivitySnapshot: failedSnapshot,
       candidateTransport: 'warp',
       candidateRef: 'warp:warp_free:warp_direct',
@@ -2238,6 +2240,7 @@ void main() {
       connected: false,
       errorCode: ' conn-008 ',
       failureKind: 'tls_failed',
+      attemptNumber: 2147483648,
       connectivitySnapshot: failedSnapshot,
     );
     await bootstrapper.reportTelegramLinkEvent(
@@ -2315,6 +2318,7 @@ void main() {
       <String, Object?>{
         'runtime_phase': 'running',
         'connected': true,
+        'attempt_number': 100,
         'build_number': const String.fromEnvironment('POKROV_BUILD_NUMBER', defaultValue: '0'),
         'report_run_id': reportRunId,
         'report_sequence': 2,
@@ -2340,6 +2344,7 @@ void main() {
         'connected': false,
         'build_number': const String.fromEnvironment('POKROV_BUILD_NUMBER', defaultValue: '0'),
         'error_code': 'connect_failed',
+        'attempt_number': 101,
         'failure_kind': 'core_egress_timeout',
         'candidate_transport': 'warp',
         'candidate_ref': 'warp:warp_free:warp_direct',
@@ -2355,6 +2360,7 @@ void main() {
         'build_number': const String.fromEnvironment('POKROV_BUILD_NUMBER', defaultValue: '0'),
         'error_code': 'CONN-008',
         'failure_kind': 'tls_failed',
+        'attempt_number': 2147483647,
         'report_run_id': reportRunId,
         'report_sequence': 4,
         'connectivity': {'proof_stage': 'degraded'},

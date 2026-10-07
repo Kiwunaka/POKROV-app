@@ -794,6 +794,12 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   Expect(Contains(smart_failed, "core_egress_validated=0") && Contains(smart_failed, "failure=core_egress_tls_failed") &&
          selected_core->smart_probe_calls == 2 && selected_core->smart_probe_periodic && unrelated_api->verify_calls == 0,
          "periodic Smart failure fell back to healthy Direct API egress");
+  selected_core->smart_probe_error = "core_smart_access_lease_expired";
+  const auto smart_expired = smart.RecheckEgress({});
+  Expect(Contains(smart_expired, "core_egress_validated=0") &&
+         Contains(smart_expired, "failure=core_smart_access_lease_expired") &&
+         selected_core->smart_probe_calls == 3 && unrelated_api->verify_calls == 0,
+         "expired Smart admission lost its closed outcome or used Direct API proof");
   smart.Disconnect();
   auto old_core = std::make_unique<FakeCoreRuntime>();
   auto old_api = std::make_unique<FakeEgressProbe>();
