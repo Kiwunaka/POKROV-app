@@ -861,7 +861,8 @@ class ConnectionManager extends ChangeNotifier {
 
   void _ackCandidateProbeReports(List<Map<String, Object?>> reports) {
     if (reports.isNotEmpty) {
-      _candidateProbeReports.removeRange(0, reports.length);
+      _candidateProbeReports.removeWhere(
+          (probe) => reports.any((sent) => identical(probe, sent)));
     }
   }
 
@@ -3425,6 +3426,7 @@ class ConnectionManager extends ChangeNotifier {
       _candidateAccessNetworkAsn = null;
     }
     if (actionIntent == ConnectionTransitionIntent.connect) {
+      _candidateProbeReports.clear();
       unawaited(_reportClientLifecycle('connect_requested'));
     }
     final generation = _connectionCoordinator.operationGeneration;

@@ -180,8 +180,10 @@ keep their existing ownership; the socket and wrapper close after the exchange.
 the local journal and one bounded batch in the final runtime
 stats event, with catalog candidate refs and transport names but no profile data.
 After a proven connection, the client reports a connected runtime observation
-with the candidate batch. A failed stats POST keeps that batch for retry with
-the same run and sequence; the batch is removed only after a successful POST.
+with the candidate batch. A failed stats POST keeps that batch for retry within
+the same attempt, run and sequence. Starting a new attempt discards unsent probes
+from the previous attempt; a late acknowledgement removes only its sent map
+objects. An identical batch in another attempt receives a new report sequence.
 Managed profile requests include the version reported by the loaded Core.
 Core `probe_failed` and `unexpected_status` are also remembered; a local timer
 reports `probe_budget_expired` and never suppresses a candidate.

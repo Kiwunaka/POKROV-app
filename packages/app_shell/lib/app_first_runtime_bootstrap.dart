@@ -4159,7 +4159,7 @@ class AppFirstRuntimeBootstrapper
     final reportProbes = safeCandidateProbes.isNotEmpty &&
         (phase == 'running' || phase == 'failed' ||
             (phase == 'runtime_observed' && connected));
-    final probeSignature = reportProbes ? jsonEncode(safeCandidateProbes) : null;
+    final probeSignature = reportProbes ? jsonEncode([attemptNumber, safeCandidateProbes]) : null;
     final reportSequence = reportProbes &&
             probeSignature == _pendingProbeReportSignature
         ? _pendingProbeReportSequence!

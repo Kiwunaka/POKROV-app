@@ -189,6 +189,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   final reports = <Map<String, Object?>>[];
   final runtimeCalls = <Map<String, Object?>>[];
   bool failFirstRunningReport = false;
+  final failedProbeReportCandidates = <String>{};
   int failedRunningReports = 0;
   Completer<void>? runningReportGate;
   Completer<void>? failedReportGate;
@@ -219,8 +220,12 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       failedRunningReports += 1;
       throw const BootstrapFailure('temporary stats failure', operationalCode: 'API-002');
     }
+    if (candidateProbes.isNotEmpty && failedProbeReportCandidates.contains(candidateRef)) {
+      throw const BootstrapFailure('temporary stats failure', operationalCode: 'API-002');
+    }
     if (candidateProbes.isNotEmpty) reports.add({
       'runtime_phase': runtimePhase,
+      'attempt_number': attemptNumber,
       'connected': connected,
       'candidate_ref': candidateRef,
       'candidate_transport': candidateTransport,
@@ -1227,6 +1232,86 @@ void main() {
       'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 321}]);
     await manager.refresh();
     expect(bootstrapper.reports, hasLength(1));
+
+    await manager.disconnect();
+    final hy2 = _CachedBootstrapper.alternatives[2];
+    final awg = _CachedBootstrapper.alternatives[1];
+    bootstrapper
+      ..candidates = [hy2]..failFirstRunningReport = true
+      ..failedProbeReportCandidates.add(hy2.candidateRef);
+    runtime.probeDuration = const Duration(milliseconds: 1018);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    final nextFailureDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (bootstrapper.failedRunningReports < 2 && DateTime.now().isBefore(nextFailureDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(bootstrapper.failedRunningReports, 2);
+    await manager.disconnect();
+    bootstrapper.candidates = [awg];
+    runtime.probeDuration = const Duration(milliseconds: 1852);
+    await manager.connect();
+    final nextReportDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (bootstrapper.reports.length < 2 && DateTime.now().isBefore(nextReportDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(bootstrapper.reports, hasLength(2));
+    expect(bootstrapper.reports.last['attempt_number'], 3);
+    expect(bootstrapper.reports.last['candidate_probes'], [
+      {'candidate_ref': awg.candidateRef, 'candidate_transport': 'awg31',
+        'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 1852},
+    ], reason: 'a failed HY2 delivery cannot enter the next AWG attempt');
+  });
+
+  test('late probe acknowledgement preserves the next attempt batch', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-probe-ack-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+        hostPlatform: HostPlatform.windows, directoryResolver: () async => directory);
+    final hy2 = _CachedBootstrapper.alternatives[2];
+    final awg = _CachedBootstrapper.alternatives[1];
+    final reportGate = Completer<void>();
+    addTearDown(() { if (!reportGate.isCompleted) reportGate.complete(); });
+    final bootstrapper = _StatsBootstrapper()
+      ..candidates = [hy2]..runningReportGate = reportGate;
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..coreVersion = '1.2.9'
+      ..probeDuration = const Duration(milliseconds: 1018);
+    final manager = _manager(runtime, bootstrapper, observability: observability,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+
+    await manager.connect();
+    await manager.disconnect();
+    bootstrapper
+      ..candidates = [awg]..runningReportGate = null;
+    runtime.probeDuration = const Duration(milliseconds: 1852);
+    await manager.connect();
+    expect(bootstrapper.reports, isEmpty);
+    reportGate.complete();
+    final oldReportDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (bootstrapper.reports.isEmpty && DateTime.now().isBefore(oldReportDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(bootstrapper.reports.single['attempt_number'], 1);
+    expect(bootstrapper.reports.single['candidate_ref'], hy2.candidateRef);
+    await manager.refresh();
+    final newReportDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (bootstrapper.reports.length < 2 && DateTime.now().isBefore(newReportDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(bootstrapper.reports, hasLength(2));
+    expect(bootstrapper.reports.last['attempt_number'], 2);
+    expect(bootstrapper.reports.last['candidate_probes'], [
+      {'candidate_ref': awg.candidateRef, 'candidate_transport': 'awg31',
+        'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 1852},
+    ], reason: 'the old POST acknowledges only its own map objects');
+    await observability.flush();
+    final events = await File(
+        '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl').readAsLines();
+    expect(events.map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .where((event) => event['name'] == 'app.runtime.stats_delivery.finished'), isEmpty,
+        reason: 'a late acknowledgement cannot fail delivery with RangeError');
   });
 
   for (final platform in [HostPlatform.android, HostPlatform.windows]) {

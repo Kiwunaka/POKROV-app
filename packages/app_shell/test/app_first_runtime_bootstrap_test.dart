@@ -2444,6 +2444,7 @@ void main() {
       await directory.delete(recursive: true);
     });
     final reports = <Map<String, dynamic>>[];
+    var denyStats = true;
     unawaited(() async {
       await for (final request in server) {
         final body = await utf8.decoder.bind(request).join();
@@ -2455,8 +2456,8 @@ void main() {
           }));
         } else if (request.uri.path == '/api/client/runtime/stats') {
           reports.add(jsonDecode(body) as Map<String, dynamic>);
-          if (reports.length < 3) request.response.statusCode = HttpStatus.serviceUnavailable;
-          request.response.write(jsonEncode({'ok': reports.length > 2}));
+          if (denyStats) request.response.statusCode = HttpStatus.serviceUnavailable;
+          request.response.write(jsonEncode({'ok': !denyStats}));
         } else {
           request.response.statusCode = HttpStatus.notFound;
         }
@@ -2478,10 +2479,11 @@ void main() {
       delayScheduler: (_) async {},
     );
 
-    Future<void> report() => bootstrapper.reportRuntimeStats(
+    Future<void> report({int attemptNumber = 1}) => bootstrapper.reportRuntimeStats(
       hostPlatform: HostPlatform.windows,
       runtimePhase: 'runtime_observed',
       connected: true,
+      attemptNumber: attemptNumber,
       networkClass: 'ethernet',
       candidateProbes: const [{
         'candidate_ref': 'ch:legacy_reality_fallback',
@@ -2492,6 +2494,7 @@ void main() {
       }],
     );
     await expectLater(report(), throwsA(isA<BootstrapFailure>()));
+    denyStats = false;
     await report();
 
     expect(reports, hasLength(3));
@@ -2499,6 +2502,18 @@ void main() {
     expect(reports[2], reports[0]);
     expect(reports[0]['report_sequence'], 1);
     expect(reports[0]['candidate_probes'], hasLength(1));
+
+    denyStats = true;
+    await expectLater(report(), throwsA(isA<BootstrapFailure>()));
+    denyStats = false;
+    await report(attemptNumber: 2);
+    expect(reports, hasLength(6));
+    expect(reports[4], reports[3]);
+    expect(reports[3]['report_sequence'], 2);
+    expect(reports.last['candidate_probes'], reports[3]['candidate_probes']);
+    expect(reports.last['attempt_number'], 2);
+    expect(reports.last['report_sequence'], 3,
+        reason: 'an identical probe batch in a new attempt owns a new sequence');
   });
 
   test('acquisition continuation parser is host-bound and rejects extras', () {
