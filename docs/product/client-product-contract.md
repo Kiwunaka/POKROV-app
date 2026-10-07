@@ -799,6 +799,14 @@ variant cannot block country Auto or label the server-selected route as manual.
   WARP after that node remains eligible. Selection, cached alternatives and
   managed-profile validation use the ordinary candidate of the same node and
   profile to resolve its location, while the final exit stays `ZZ`.
+- From 1.5.0+4099 / Core 1.2.8, trial and free access may receive `WARP · бесплатный`
+  as a separate last reserve without POKROV nodes. It requires WARP consent;
+  node routes and the two node-WARP chains keep their existing order. Registration
+  stays on the installation, with a separate local identity and masking. Protected
+  routes and DNS use WARP, explicit Direct rules remain Direct, and the UI labels
+  its exit country as unknown. A later connection tries POKROV nodes first again.
+  Its cache restores the separate local registration identity and preserves the
+  last successful node preference; an unknown WARP exit does not become a saved country choice.
 - raw subscription copy, edit, regenerate, or share actions stay out of the first-layer consumer path
 - raw connection or subscription links must not be treated as account proof in
   first-launch restore or normal code redemption
@@ -862,7 +870,7 @@ staged. They include:
   native staging; a direct-only profile cannot be reported as an applied
   AI/Games VPN policy;
 - explicit domain, IP, and subnet overrides to VPN or direct;
-- Automatic, Cloudflare, Google, AdGuard, and validated custom DoH. The
+- Automatic, Xbox DNS, Comss DNS, Cloudflare, Google, AdGuard, and validated custom DoH. The
   `Блокировать рекламу` toggle selects AdGuard's filtering DoH endpoint as the
   final resolver through the active VPN outbound. This blocks requests to
   domains present in that DNS service's filtering policy; it does not promise
@@ -908,6 +916,29 @@ best-effort basis. Android Wi-Fi inspection requests the platform permission
 when required; Windows uses the current WLAN interface. Failure to identify a
 network never counts as a trusted match.
 
+DNS settings keep Automatic as the POKROV default and save named external
+presets through the existing `dnsPreset` preference. Xbox and Comss use their
+published HTTPS endpoints ([Xbox DNS](https://xbox-dns.ru/),
+[Comss DNS](https://www.comss.ru/page.php?id=7315));
+[AdGuard DNS](https://adguard-dns.io/en/public-dns.html) remains the filtering
+option. These presets change ordinary DNS resolution on the next application
+of routing settings; they do not replace the signed provider, permission or
+TLS relay of a SmartDNS service. The service's POKROV provider remains the
+default, and selecting an external preset is not evidence of service access.
+
+The separate SmartDNS provider picker saves only `smartDnsProviderId` from a
+verified provider policy with a current approved embedded-use permission and
+an eligible platform capability. Automatic keeps the existing owned-first,
+active-affinity and standby selection. An explicit choice limits new leases to
+that provider; missing or expired scope leaves the service's existing VPN
+fallback. The choice is independent of ordinary DNS and AdGuard, takes effect
+on the next connection, and grants no authority without a signed catalog and
+lease. External choices disclose the provider's IP/domain and opaque HTTPS
+relay handling before selection.
+If local DNS-only preparation has no eligible lease, it resolves and starts
+the existing VPN profile in the same connection operation before staging; it
+also retains this protected fallback for automatic recovery.
+
 On Android, direct system DNS resolves infrastructure hosts and explicit
 RU-direct names. Names covered by the VPN use a resolver detoured through the
 active transport, including in `Россия напрямую` and selected-app modes. A
@@ -945,6 +976,10 @@ metadata proves Flutter confirmed the Simple default or completed the Advanced
 first-connect route-scope choice; legacy
 path-only and unconfirmed records, as well as any profile rejected by the
 selected-outbound egress probe, open the app until a fresh stage completes.
+The Android home widget shares the tile's action and runtime checks. Only the
+completion carrying the current widget/tile action generation releases its
+transition; an older action or an ordinary runtime completion without that
+generation refreshes the controls without releasing a pending system action.
 
 Device continuation uses a short-lived, one-time pairing code created by an
 already authenticated device or cabinet. The new device receives its own

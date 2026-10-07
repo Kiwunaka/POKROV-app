@@ -51,7 +51,7 @@ internal object QuickTileTransitionGate {
 
     @Synchronized
     fun complete(generation: Long?) {
-        if (generation == null || generation == activeGeneration) {
+        if (generation != null && generation == activeGeneration) {
             activeGeneration = null
             activeAction = null
         }

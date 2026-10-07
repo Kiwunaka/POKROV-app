@@ -137,6 +137,14 @@ class _WarpConsentSheet extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               if (ready) ...[
+                Text(
+                  'Для пробного и бесплатного доступа WARP также может стать последним резервом без серверов POKROV. В этом случае трафик идёт через Cloudflare, а страна выхода неизвестна.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: secondary,
+                        height: 1.34,
+                      ),
+                ),
+                const SizedBox(height: 12),
                 Divider(color: lineColor),
                 const SizedBox(height: 6),
                 _WarpInfoRow(

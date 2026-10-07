@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
+import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/src/design_system/design_system.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -1064,6 +1065,52 @@ SupportTicketMessage _supportMessage({
     mediaPayload: '',
     createdAt: '2026-06-03T00:00:00Z',
   );
+}
+
+class _SmartDnsChoicePolicy implements VerifiedSmartAccessProviderPolicy {
+  _SmartDnsChoicePolicy() {
+    final now = DateTime.now().toUtc();
+    final window = <String, Object?>{
+      'issued_at': now.subtract(const Duration(minutes: 1)).toIso8601String(),
+      'expires_at': now.add(const Duration(hours: 1)).toIso8601String(),
+    };
+    payload = {...window,
+      'providers': [for (final id in ['owned', 'external', 'unapproved'])
+        <String, Object?>{'provider_id': id, 'kind': id == 'owned' ? 'owned' : 'external',
+          'enabled': true, 'revision': 1, 'permission_id': '$id-permission',
+          'resolver_url': 'https://$id.example/dns-query'}],
+      'permissions': [for (final id in ['owned', 'external', 'unapproved'])
+        <String, Object?>{...window, 'provider_id': id, 'permission_id': '$id-permission',
+          'status': id == 'unapproved' ? 'pending' : 'approved',
+          'embedded_use_allowed': id != 'unapproved'}],
+      'capabilities': [for (final id in ['owned', 'external', 'unapproved'])
+        <String, Object?>{'provider_id': id, 'provider_revision': 1,
+          'enabled': true, 'verification': 'verified', 'platform': 'android',
+          'origin': 'current-origin', 'feature': 'web_request',
+          'transport': 'tls_tcp_443_visible_sni', 'family': 'ipv4',
+          'observed_at': window['issued_at'], 'expires_at': window['expires_at']}],
+    };
+  }
+  @override
+  late final Map<String, Object?> payload;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _SmartDnsChoiceBootstrapper extends _FakeBootstrapper implements AppFirstSmartAccessService {
+  _SmartDnsChoiceBootstrapper() : super(const ManagedProfilePayload(
+    profileName: 'SmartDNS choices', configPayload: _materializedRuntimeConfig,
+    routeMode: RouteMode.allExceptRu));
+  final policy = _SmartDnsChoicePolicy();
+  @override
+  bool get smartAccessEnabled => true;
+  @override
+  Future<VerifiedSmartAccessProviderPolicy> fetchSmartAccessProviders({
+    required HostPlatform hostPlatform, required bool Function() operationIsCurrent,
+    required Duration remainingBudget, required Future<void> cancelled,
+  }) async => policy;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _CachedBootstrapper extends _FakeBootstrapper
@@ -8255,6 +8302,17 @@ void main() {
       store.state.routingPreferences.dnsTransport,
       PokrovDnsTransport.direct,
     );
+    for (final preset in [PokrovDnsPreset.xbox, PokrovDnsPreset.comss]) {
+      final dnsPicker = find.byKey(const ValueKey('rules-dns-picker'));
+      await tester.ensureVisible(dnsPicker);
+      await tester.pumpAndSettle();
+      await tester.tap(dnsPicker);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ValueKey('rules-dns-${preset.name}')));
+      await tester.pumpAndSettle();
+      expect(store.state.routingPreferences.dnsPreset, preset);
+      expect(store.state.routingPreferences.dnsTransport, PokrovDnsTransport.direct);
+    }
     final lanToggle = find.byKey(const ValueKey('rules-lan-toggle'));
     await tester.ensureVisible(lanToggle);
     await tester.pumpAndSettle();
@@ -8335,6 +8393,44 @@ void main() {
 
     expect(store.writeCalls, greaterThanOrEqualTo(4));
     semantics.dispose();
+  });
+
+  testWidgets('signed SmartDNS picker saves approved provider independently and resets Automatic', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(760, 980));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final store = _FakeClientExperienceStore(const PokrovClientExperienceState.empty().copyWith(
+      routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(dnsPreset: PokrovDnsPreset.adguard)));
+    final bootstrapper = _SmartDnsChoiceBootstrapper();
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      clientExperienceStore: store, bootstrapper: bootstrapper));
+    await tester.pumpAndSettle();
+    await _completeFirstLaunchIfPresent(tester);
+    await _tapNav(tester, 'nav-rules');
+    await _openAdvancedRules(tester);
+    final picker = find.byKey(const ValueKey('rules-smart-dns-provider-picker'));
+    Future<void> open() async {
+      await tester.ensureVisible(picker);
+      await tester.pumpAndSettle();
+      await tester.tap(picker);
+      await tester.pumpAndSettle();
+    }
+    await open();
+    expect(find.text('external.example'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rules-smart-dns-provider-unapproved')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('rules-smart-dns-provider-external')));
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.smartDnsProviderId, 'external');
+    expect(store.state.routingPreferences.dnsPreset, PokrovDnsPreset.adguard);
+    final permissions = bootstrapper.policy.payload['permissions']! as List;
+    (permissions[1] as Map<String, Object?>)['expires_at'] = DateTime.now().toUtc().toIso8601String();
+    await open();
+    expect(find.byKey(const ValueKey('rules-smart-dns-provider-external')), findsNothing);
+    expect(find.textContaining('Сохранённый провайдер сейчас недоступен'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('rules-smart-dns-provider-automatic')));
+    await tester.pumpAndSettle();
+    expect(store.state.routingPreferences.smartDnsProviderId, isEmpty);
+    expect(store.state.routingPreferences.dnsPreset, PokrovDnsPreset.adguard);
   });
 
   testWidgets(

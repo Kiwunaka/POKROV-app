@@ -138,7 +138,7 @@ void main() {
 
   test('last successful candidate survives restart for several networks', () async {
     const binding = 'account-A/install-A/route-A';
-    Future<void> prove(String network, String candidate) async {
+    Future<void> prove(String network, String candidate, {bool externalReserve = false}) async {
       await cache.saveDownloaded(platform: 'windows', binding: binding,
         revision: 'catalog-1', verifiedAt: now, payload: {
           'cache_entry_id': candidate,
@@ -147,14 +147,16 @@ void main() {
             'candidates': [
               {'candidate_ref': 'de:reality', 'node_code': 'de'},
               {'candidate_ref': 'de:hy2', 'node_code': 'de'},
+              {'candidate_ref': 'warp:warp_free:warp_direct', 'node_code': ''},
             ],
           },
         });
       await cache.markProven(platform: 'windows', binding: binding,
-        entryId: candidate, networkSelectionKey: network);
+        entryId: candidate, networkSelectionKey: externalReserve ? null : network);
     }
     await prove('selection_wifi', 'de:reality');
     await prove('selection_ethernet', 'de:hy2');
+    await prove('selection_wifi', 'warp:warp_free:warp_direct', externalReserve: true);
     cache = ManagedProfileCache(now: () => now);
     Future<String?> remembered(String network, {String account = binding}) =>
       cache.successfulCandidateRef(platform: 'windows', binding: account,

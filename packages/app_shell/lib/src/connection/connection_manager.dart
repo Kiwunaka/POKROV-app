@@ -1828,6 +1828,24 @@ class ConnectionManager extends ChangeNotifier {
         ? _subscriptionInfo?.accessState : null;
   }
 
+  Future<VerifiedSmartAccessProviderPolicy> _loadSmartDnsProviders() async {
+    final service = _bootstrapper;
+    final revision = _managedProfileRevision;
+    final generation = _connectionCoordinator.operationGeneration;
+    bool current() => !_disposed && revision == _managedProfileRevision &&
+        _connectionCoordinator.ownsOperation(generation);
+    if (service is! AppFirstSmartAccessService ||
+        !(service as AppFirstSmartAccessService).smartAccessEnabled ||
+        !const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform)) {
+      throw const RoutingCatalogFailure('smart_access_disabled');
+    }
+    return (service as AppFirstSmartAccessService).fetchSmartAccessProviders(
+      hostPlatform: _appContext.hostPlatform, operationIsCurrent: current,
+      remainingBudget: _actionTimeout,
+      cancelled: _connectionCoordinator.whenOperationChanges(generation),
+    ).timeout(_actionTimeout);
+  }
+
   Future<_CatalogServiceSelectionData> _loadCatalogServiceSelection(
       {required bool Function() isCurrent,
       required Future<void> cancelled}) async {
@@ -2120,10 +2138,16 @@ class ConnectionManager extends ChangeNotifier {
             code: 'managed_profile_access_denied', statusCode: 403);
       }
       _subscriptionInfo = subscription;
-      return _prepareManagedProfile(
-          service.buildLocalSmartAccessBase(hostPlatform: _appContext.hostPlatform),
-          ownerGeneration: generation,
-          localSmartAccessState: subscription.accessState);
+      try {
+        return await _prepareManagedProfile(
+            service.buildLocalSmartAccessBase(hostPlatform: _appContext.hostPlatform),
+            ownerGeneration: generation,
+            localSmartAccessState: subscription.accessState);
+      } on BootstrapFailure catch (error) {
+        if (error.code != 'catalog_gateway_lease_missing') rethrow;
+        requireCurrent();
+        smartAccessVpnFallback = true;
+      }
     }
     final signedTransport = _bootstrapper is AppFirstTransportManifestService &&
         (_bootstrapper as AppFirstTransportManifestService).transportManifestEnabled;
@@ -2220,20 +2244,26 @@ class ConnectionManager extends ChangeNotifier {
       };
       final eligibleCandidates = catalog.candidates.where((candidate) =>
           (bundled.isEmpty || bundled.containsKey(candidate.candidateRef)) &&
-          (country.isEmpty || candidate.nodeCountryCode(catalog.candidates) == country) &&
+          (candidate.warpMode == 'warp_direct' || country.isEmpty || candidate.nodeCountryCode(catalog.candidates) == country) &&
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
-          (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)).toList();
+          (candidate.warpMode == 'warp_direct' || inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)).toList();
       final warpCandidates = eligibleCandidates.where((candidate) =>
-          candidate.warpMode != null).toList();
+          candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
       final ordinaryCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode == null).toList();
-      final groups = useWarpCandidates && warpCandidates.isNotEmpty
-          ? [warpCandidates, ordinaryCandidates]
-          : [ordinaryCandidates];
+      final directWarpCandidates = eligibleCandidates.where((candidate) =>
+          candidate.warpMode == 'warp_direct').toList();
+      final groups = [
+        if (useWarpCandidates && warpCandidates.isNotEmpty) warpCandidates,
+        ordinaryCandidates,
+        if (useWarpCandidates) directWarpCandidates,
+      ];
       var selectedCandidate = false;
       for (final group in groups) {
         if (group.isEmpty) continue;
-        final selectionTimeout = identical(group, warpCandidates)
+        final selectionTimeout = identical(group, directWarpCandidates)
+            ? const Duration(seconds: 4)
+            : identical(group, warpCandidates)
             ? const Duration(seconds: 5)
             : useWarpCandidates && warpCandidates.isNotEmpty
                 ? const Duration(seconds: 7)
@@ -2277,6 +2307,8 @@ class ConnectionManager extends ChangeNotifier {
               final exact = materialized[candidate.candidateRef]!;
               final probePayload = exact.copyWith(warpPolicy: candidate.warpMode == null
                   ? exact.warpPolicy.withUserConsent(false)
+                  : candidate.warpMode == 'warp_direct'
+                    ? exact.warpPolicy.withUserConsent(true)
                   : candidateWarpPolicy.copyWith(mode: candidate.warpMode,
                       userConsented: true));
               final checked = await _probeManagedCandidate(probing, probePayload, context: context, cancelled: stop,
@@ -2421,12 +2453,13 @@ class ConnectionManager extends ChangeNotifier {
       final available = <String, ManagedProfilePayload>{};
       for (final candidate in catalog.candidates.where((candidate) =>
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
-          (inputs.preferredCountryCode.isEmpty ||
+          (candidate.warpMode == 'warp_direct' || inputs.preferredCountryCode.isEmpty ||
               candidate.nodeCountryCode(catalog.candidates) == inputs.preferredCountryCode) &&
-          (inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode) &&
+          (candidate.warpMode == 'warp_direct' || inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode) &&
           (candidate.warpMode == null || cachedWarpAllowed))) {
         final profile = await service.loadCachedManagedProfile(inputs,
-            selectedCandidateRef: candidate.candidateRef, runtimeFeatures: features);
+            selectedCandidateRef: candidate.candidateRef, runtimeFeatures: features,
+            coreRelease: _runtimeSnapshot?.coreVersion);
         requireCurrent();
         if (profile != null) available[candidate.candidateRef] = profile;
       }
@@ -2451,35 +2484,52 @@ class ConnectionManager extends ChangeNotifier {
         if (remembered != null) _candidateSelector.restoreSuccess(key, remembered);
       }
       try {
-        selected = await _candidateSelector.select(
-          catalog: TransportCandidateCatalog(revision: catalog.revision,
-              selectedCandidateRef: catalog.selectedCandidateRef,
-              candidates: catalog.candidates.where((candidate) => available.containsKey(candidate.candidateRef)).toList()),
-          network: key, platform: inputs.hostPlatform,
-          ipv6Available: network.ipv6Available,
-          cancelled: _connectionCoordinator.whenOperationEnds(generation),
-          recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
-          onProbeResult: (candidate, result) {
-            if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
-            final exact = available[candidate.candidateRef];
-            _recordCandidateProbe(candidate, result, candidateVariant:
-                exact?.materialCandidate?.candidateRef == candidate.candidateRef
-                    ? _materialBridgeVariant(exact!) : '');
-          },
-          probe: (candidate, stop, timeout) async {
-            final exact = available[candidate.candidateRef]!;
-            final probePayload = exact.copyWith(warpPolicy: candidate.warpMode == null
-                ? exact.warpPolicy.withUserConsent(false)
-                : exact.warpPolicy.withClientLocalDefaults().copyWith(
-                    mode: candidate.warpMode, userConsented: true));
-            final checked = await _probeManagedCandidate(probing, probePayload,
-                context: context, cancelled: stop, timeout: timeout,
-                generation: generation, requireCurrent: requireCurrent);
-            return checked.success
-                ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration)
-                : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration);
-          },
-        );
+        final cachedCandidates = catalog.candidates.where((candidate) =>
+            available.containsKey(candidate.candidateRef)).toList();
+        final groups = [
+          cachedCandidates.where((candidate) => candidate.warpMode != 'warp_direct').toList(),
+          cachedCandidates.where((candidate) => candidate.warpMode == 'warp_direct').toList(),
+        ];
+        var found = false;
+        for (final group in groups) {
+          if (group.isEmpty) continue;
+          try {
+            selected = await _candidateSelector.select(
+              catalog: TransportCandidateCatalog(revision: catalog.revision,
+                  selectedCandidateRef: catalog.selectedCandidateRef,
+                  candidates: group),
+              network: key, platform: inputs.hostPlatform,
+              ipv6Available: network.ipv6Available,
+              cancelled: _connectionCoordinator.whenOperationEnds(generation),
+              recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
+              onProbeResult: (candidate, result) {
+                if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+                final exact = available[candidate.candidateRef];
+                _recordCandidateProbe(candidate, result, candidateVariant:
+                    exact?.materialCandidate?.candidateRef == candidate.candidateRef
+                        ? _materialBridgeVariant(exact!) : '');
+              },
+              probe: (candidate, stop, timeout) async {
+                final exact = available[candidate.candidateRef]!;
+                final probePayload = exact.copyWith(warpPolicy: candidate.warpMode == null
+                    ? exact.warpPolicy.withUserConsent(false)
+                    : exact.warpPolicy.withClientLocalDefaults().copyWith(
+                        mode: candidate.warpMode, userConsented: true));
+                final checked = await _probeManagedCandidate(probing, probePayload,
+                    context: context, cancelled: stop, timeout: timeout,
+                    generation: generation, requireCurrent: requireCurrent);
+                return checked.success
+                    ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration)
+                    : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration);
+              },
+            );
+            found = true;
+            break;
+          } on SmartConnectSelectionExhausted {
+            // The external reserve is attempted only after cached node routes.
+          }
+        }
+        if (!found) throw const SmartConnectSelectionExhausted();
       } on SmartConnectSelectionExhausted {
         throw const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.',
             code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
@@ -2490,7 +2540,8 @@ class ConnectionManager extends ChangeNotifier {
         cancelled.then<RuntimeCandidateNetwork>((_) => throw const ConnectionOperationSuperseded()),
       ]);
       final currentProfile = await service.loadCachedManagedProfile(inputs,
-          selectedCandidateRef: selected.materialCandidate!.candidateRef, runtimeFeatures: features);
+          selectedCandidateRef: selected.materialCandidate!.candidateRef, runtimeFeatures: features,
+          coreRelease: _runtimeSnapshot?.coreVersion);
       requireCurrent();
       if (currentProfile == null || currentProfile.cacheEntryId != selected.cacheEntryId) {
         throw const BootstrapFailure('Подготовка подключения отменена.', code: 'managed_profile_superseded', statusCode: 409);
@@ -2773,6 +2824,9 @@ class ConnectionManager extends ChangeNotifier {
                 remaining();
                 // The catalog already declares a protected per-service fallback.
                 // An unavailable authority does not prove that a provider failed.
+              } on RoutingCatalogFailure catch (error) {
+                if (error.code != 'smart_access_policy_not_current') rethrow;
+                remaining();
               }
               final grants = <VerifiedSmartAccessLease>[];
               if (providers != null) {
@@ -2783,6 +2837,7 @@ class ConnectionManager extends ChangeNotifier {
                         serviceIds: wanted,
                         platform: _appContext.hostPlatform.name,
                         now: DateTime.now(),
+                        selectedProviderId: _clientExperience.routingPreferences.smartDnsProviderId,
                         isCurrent: current);
                 remaining();
                 final digest = await smartAccessProfileSha256(
@@ -3528,6 +3583,7 @@ class ConnectionManager extends ChangeNotifier {
                   cacheInputs,
                   preferProven: _cachedProfileFallbackGate.preferProvenProfile,
                   runtimeFeatures: current.transportCapabilities?.features ?? const {},
+                  coreRelease: current.coreVersion,
                 )
                 .timeout(const Duration(seconds: 2), onTimeout: () => null)
             : null;
@@ -3652,7 +3708,8 @@ class ConnectionManager extends ChangeNotifier {
           final stagedPolicy = _preparedCatalogPolicies[resolvedProfile];
           final stagedBinding = _connectionCoordinator.stagedSmartAccessLeases;
           _smartAccessRouteProfile = stagedPolicy != null && stagedBinding != null &&
-              (!stagedPolicy.vpnAvailable || smartAccessVpnFallback)
+              (!stagedPolicy.vpnAvailable || smartAccessVpnFallback ||
+                  (_localSmartAccessSelected && stagedPolicy.smartAccessProfile == null))
               ? (policy: stagedPolicy, digest: stagedBinding.profileDigest) : null;
           _update(() {
             _runtimeSnapshot = current;
@@ -3791,7 +3848,9 @@ class ConnectionManager extends ChangeNotifier {
                       ? current.isCoreEgressValidationPending
                           ? 'Проверяем выход через VPN…'
                           : current.isCleanlyHealthy
-                              ? materialCandidate?.warpMode == 'warp_over_proxy'
+                              ? materialCandidate?.warpMode == 'warp_direct'
+                                  ? 'POKROV подключен: WARP · бесплатный. Страна выхода неизвестна.'
+                                  : materialCandidate?.warpMode == 'warp_over_proxy'
                                   ? 'POKROV подключен через WARP. Страна выхода неизвестна.'
                                   : 'POKROV подключен.'
                               : current.hasCoreEgressValidationFailure
@@ -4117,6 +4176,7 @@ class ConnectionManager extends ChangeNotifier {
       );
 
   void _finalizeProvenConnection(RuntimeSnapshot snapshot) {
+    final directWarp = materialCandidate?.warpMode == 'warp_direct';
     final cacheService = _bootstrapper;
     final cacheInputs = _stagedCacheInputs;
     if (snapshot.isCleanlyHealthy &&
@@ -4124,11 +4184,11 @@ class ConnectionManager extends ChangeNotifier {
         cacheInputs != null) {
       unawaited((cacheService as CachedManagedProfileBootstrapper)
           .markManagedProfileProven(cacheInputs, _stagedProfileCacheEntryId,
-              networkSelectionKey: _candidateNetworkKey,
-              offlineNetworkSelectionKey: _candidateOfflineNetworkKey));
+              networkSelectionKey: directWarp ? null : _candidateNetworkKey,
+              offlineNetworkSelectionKey: directWarp ? null : _candidateOfflineNetworkKey));
     }
     if (_candidateNetworkKey != null && _candidateRef != null) {
-      _candidateSelector.recordSuccess(_candidateNetworkKey!, _candidateRef!);
+      if (!directWarp) _candidateSelector.recordSuccess(_candidateNetworkKey!, _candidateRef!);
       _activeCandidateRef = _candidateRef;
       _activePhysicalNetwork = _candidatePhysicalNetwork;
       _diagnosticsCoordinator.startRuntimePolling(_refreshDesktopRuntimeSnapshot);
@@ -4590,7 +4650,8 @@ class ConnectionManager extends ChangeNotifier {
             !_cachedProfileFallbackGate.canFallback(cachedProfileAvailable: true, inputsVerified: true)) return null;
         final cached = await (cacheService as CachedManagedProfileBootstrapper).loadCachedManagedProfile(
             cacheInputs, preferProven: true,
-            runtimeFeatures: _runtimeSnapshot?.transportCapabilities?.features ?? const {})
+            runtimeFeatures: _runtimeSnapshot?.transportCapabilities?.features ?? const {},
+            coreRelease: _runtimeSnapshot?.coreVersion)
             .timeout(const Duration(seconds: 2), onTimeout: () => null);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
             profileRevision != _managedProfileRevision) throw const ConnectionOperationSuperseded();
@@ -5048,7 +5109,8 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   void _promoteStagedLocationAfterFreshConnect() {
-    if (materialCandidate?.warpMode == 'warp_over_proxy') {
+    if (materialCandidate?.warpMode == 'warp_over_proxy' ||
+        materialCandidate?.warpMode == 'warp_direct') {
       _update(() {
         _activeNodeCode = '';
         _activeVariantId = 'direct';
@@ -5174,8 +5236,9 @@ class ConnectionManager extends ChangeNotifier {
     var country = _clientExperience.preferredCountryCode;
     if (mode == PokrovInterfaceMode.simple) {
       for (final candidate in _transportCatalog?.candidates ?? const <domain.TransportCandidate>[]) {
-        if (candidate.candidateRef == _clientExperience.preferredCandidateRef ||
-            _preferredNodeCode.isNotEmpty && candidate.nodeCode == _preferredNodeCode) {
+        if (candidate.warpMode != 'warp_direct' &&
+            (candidate.candidateRef == _clientExperience.preferredCandidateRef ||
+            _preferredNodeCode.isNotEmpty && candidate.nodeCode == _preferredNodeCode)) {
           country = candidate.nodeCountryCode(_transportCatalog!.candidates);
           break;
         }

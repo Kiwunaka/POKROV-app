@@ -14,6 +14,63 @@ import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 void main() {
+  test('stale signed provider scope preserves VPN fallback and catalog validation', () async {
+    final clock = DateTime.now().toUtc();
+    final now = DateTime.utc(clock.year, clock.month, clock.day,
+        clock.hour, clock.minute, clock.second);
+    final catalog = _Catalog(now);
+    Future<List<Map<String, Object?>>> selected(_Catalog providerCatalog,
+        {VerifiedRoutingCatalog? routingCatalog}) => selectSmartAccessWebCapabilities(
+      catalog: routingCatalog ?? catalog, providers: _Providers(providerCatalog),
+      serviceIds: {'ai'}, platform: 'android', now: now,
+      selectionSeed: '01' * 32, selectedProviderId: 'owned', isCurrent: () => true);
+    expect(await selected(_Catalog(now.subtract(const Duration(hours: 2)))), isEmpty);
+    expect(await selected(_Catalog(now.add(const Duration(hours: 2)))), isEmpty);
+    final fallback = compileCatalogDomainPolicy(
+      policy: RoutingCatalogPolicy.fromVerified(catalog), mode: CatalogRoutingMode.smartSafe,
+      platform: 'android', accessState: 'paid_unlimited', vpnAvailable: true, now: now);
+    expect(fallback.rules.single.action, CatalogRouteAction.vpn);
+    expect(fallback.rules.single.fallbackReason, 'gateway_unavailable_using_vpn');
+    await expectLater(selected(_Catalog(now),
+      routingCatalog: _Catalog(now.subtract(const Duration(hours: 2)))),
+      throwsA(isA<RoutingCatalogFailure>()));
+  });
+
+  test('local SmartDNS without eligible provider connects through existing VPN path', () async {
+    final clock = DateTime.now().toUtc();
+    final now = DateTime.utc(clock.year, clock.month, clock.day,
+        clock.hour, clock.minute, clock.second);
+    final originalStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({});
+    addTearDown(() => FlutterSecureStoragePlatform.instance = originalStorage);
+    final bootstrapper = _LifecycleBootstrapper(_Catalog(now, audience: 'production'));
+    final runtime = _LifecycleRuntime();
+    final store = _ExperienceStore();
+    final manager = ConnectionManager(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      runtimeEngine: runtime, bootstrapper: bootstrapper,
+      accountSessionCoordinator: AccountSessionCoordinator(accountActions: null),
+      firstSessionCoordinator: FirstSessionCoordinator(store: _FirstLaunchStore()),
+      clientExperienceStore: store, connectHintStore: const PokrovFileConnectHintStore(),
+      authorizeAndroidConnect: () async => true, refreshSubscription: () async => true,
+      onNotice: (_, __) {});
+    addTearDown(manager.dispose);
+    manager.setConnectHintDismissed(true);
+    manager.selectCatalogServices({'ai'});
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(
+      selectedCatalogServiceIds: {'ai'}, smartDnsProviderId: 'missing-provider'));
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
+    expect(bootstrapper.grantRequests, 0);
+    expect(bootstrapper.ordinaryRequests, 1);
+    final config = jsonDecode(runtime.payload!.configPayload) as Map;
+    expect((config['outbounds'] as List).any((row) => row['type'] == 'pokrov-smart-access'), isFalse);
+    expect((config['route']['rules'] as List).any((row) =>
+      row['domain_suffix']?.contains('chatgpt.com') == true && row['outbound'] == 'vpn'), isTrue);
+    expect(store.saved.routingPreferences.smartDnsProviderId, 'missing-provider');
+    await manager.disconnect();
+  });
+
   test('owned Smart DNS supports RU-direct and DNS-only with protected fallback', () async {
     final clock = DateTime.now().toUtc();
     final now = DateTime.utc(clock.year, clock.month, clock.day,

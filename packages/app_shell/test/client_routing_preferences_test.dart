@@ -22,6 +22,18 @@ Future<String> _readRoutingFixture(String name) async {
 }
 
 void main() {
+  test('signed SmartDNS provider choice persists independently of ordinary DNS', () {
+    const defaults = PokrovRoutingPreferences.defaults();
+    expect(defaults.toJson().containsKey('smartDnsProviderId'), isFalse);
+    final selected = defaults.copyWith(dnsPreset: PokrovDnsPreset.adguard,
+      smartDnsProviderId: 'approved-external');
+    final restored = PokrovRoutingPreferences.fromJson(selected.toJson());
+    expect(restored.smartDnsProviderId, 'approved-external');
+    expect(restored.dnsPreset, PokrovDnsPreset.adguard);
+    expect(restored.copyWith(smartDnsProviderId: '').toJson().containsKey('smartDnsProviderId'), isFalse);
+    expect(PokrovRoutingPreferences.fromJson({'smartDnsProviderId': 'https://raw.example/dns-query'}).smartDnsProviderId, isEmpty);
+  });
+
   test('Smart Safe keeps RU Direct classifiers behind signed service rules', () {
     final base = _windowsAppProfile(RouteMode.allExceptRu);
     final originalConfig = _jsonMap(base.configPayload);
@@ -447,25 +459,68 @@ void main() {
         [containsPair('domain', ['node.example'])]);
   });
 
-  test('AdGuard toggle stages the filtering DoH resolver through VPN', () {
-    final transformed = applyPokrovRoutingPreferences(
-      _profile(),
-      const PokrovRoutingPreferences.defaults().copyWith(
-        dnsPreset: PokrovDnsPreset.adguard,
-      ),
-      hostPlatform: HostPlatform.android,
-    );
-    final dns = _map(_jsonMap(transformed.configPayload)['dns']);
-    final dnsServers = _maps(dns['servers']);
+  test('named DNS presets persist and stage the DoH resolver through VPN', () {
+    for (final (preset, host) in [
+      (PokrovDnsPreset.adguard, 'dns.adguard-dns.com'),
+      (PokrovDnsPreset.xbox, 'xbox-dns.ru'),
+      (PokrovDnsPreset.comss, 'dns.comss.one'),
+    ]) {
+      final preferences = PokrovRoutingPreferences.fromJson(
+        const PokrovRoutingPreferences.defaults()
+            .copyWith(dnsPreset: preset)
+            .toJson(),
+      );
+      expect(preferences.dnsPreset, preset);
+      final transformed = applyPokrovRoutingPreferences(
+        _profile(),
+        preferences,
+        hostPlatform: HostPlatform.android,
+      );
+      final dns = _map(_jsonMap(transformed.configPayload)['dns']);
+      final dnsServers = _maps(dns['servers']);
 
-    expect(dns['final'], 'pokrov-user-dns');
-    expect(dns['independent_cache'], isTrue);
-    expect(dnsServers.first, <String, Object?>{
-      'tag': 'pokrov-user-dns',
-      'type': 'https',
-      'server': 'dns.adguard-dns.com',
-      'detour': 'proxy',
-    });
+      expect(dns['final'], 'pokrov-user-dns');
+      expect(dns['independent_cache'], isTrue);
+      expect(dnsServers.first, <String, Object?>{
+        'tag': 'pokrov-user-dns',
+        'type': 'https',
+        'server': host,
+        'domain_resolver': 'profile-dns',
+        'detour': 'proxy',
+      });
+    }
+
+    final awgConfig = _jsonMap(_windowsProfile().configPayload);
+    awgConfig['outbounds'] = [{'type': 'direct', 'tag': 'direct'}];
+    awgConfig['endpoints'] = [
+      {'type': 'awg', 'tag': 'proxy',
+        'domain_resolver': {'server': 'dns-remote', 'strategy': 'ipv4_only'}},
+      {'type': 'awg', 'tag': 'unbound'},
+    ];
+    final awg = applyPokrovRoutingPreferences(
+      _windowsProfile().copyWith(configPayload: jsonEncode(awgConfig)),
+      const PokrovRoutingPreferences.defaults().copyWith(dnsPreset: PokrovDnsPreset.comss),
+      hostPlatform: HostPlatform.windows,
+    );
+    final applied = _jsonMap(awg.configPayload);
+    expect(_map(applied['dns'])['final'], 'pokrov-user-dns');
+    final servers = _maps(_map(applied['dns'])['servers']);
+    final userDns = servers.singleWhere((server) => server['tag'] == 'pokrov-user-dns');
+    expect(userDns['server'], 'dns.comss.one');
+    expect(userDns['domain_resolver'], 'dns-remote');
+    final bootstrap = servers.singleWhere((server) => server['tag'] == userDns['domain_resolver']);
+    expect(InternetAddress.tryParse(bootstrap['server'] as String), isNotNull);
+    expect(bootstrap['detour'], 'proxy');
+    final endpoints = _maps(applied['endpoints']);
+    expect(endpoints.first['domain_resolver'],
+      {'server': 'pokrov-user-dns', 'strategy': 'ipv4_only'});
+    expect(endpoints.last.containsKey('domain_resolver'), isFalse);
+    final reapplied = applyPokrovRoutingPreferences(awg,
+      const PokrovRoutingPreferences.defaults().copyWith(dnsPreset: PokrovDnsPreset.comss),
+      hostPlatform: HostPlatform.windows);
+    final repeatedDns = _map(_jsonMap(reapplied.configPayload)['dns']);
+    expect(_maps(repeatedDns['servers']).singleWhere((server) =>
+      server['tag'] == 'pokrov-user-dns')['domain_resolver'], 'dns-remote');
   });
 
   test('direct DoH lab keeps AI traffic on VPN and only DNS on direct', () {

@@ -114,12 +114,13 @@ class PokrovQuickSettingsTileServiceTest {
     }
 
     @Test
-    fun repeatedStartIsBlockedButPendingStartCanBeSupersededByStop() {
+    fun repeatedStartIsBlockedAndStopIgnoresOtherCompletions() {
         val startGeneration = requireNotNull(QuickTileTransitionGate.begin(QuickTileAction.START))
         assertNull(QuickTileTransitionGate.begin(QuickTileAction.START))
 
         val stopGeneration = requireNotNull(QuickTileTransitionGate.begin(QuickTileAction.STOP))
         QuickTileTransitionGate.complete(startGeneration)
+        QuickTileTransitionGate.complete(null)
         assertNull(QuickTileTransitionGate.begin(QuickTileAction.START))
 
         QuickTileTransitionGate.complete(stopGeneration)

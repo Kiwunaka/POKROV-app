@@ -100,8 +100,10 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
           '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
       materializedForRuntime: true,
       routeMode: routeMode,
-      warpPolicy:
-          WarpRuntimePolicy.clientLocalDefault.withUserConsent(warpEnabled),
+      warpPolicy: WarpRuntimePolicy.clientLocalDefault.copyWith(
+          mode: candidate.warpMode == 'warp_direct' ? 'warp_direct' : 'warp_over_proxy',
+          id: candidate.warpMode == 'warp_direct' ? 'warp-direct:test-install' : 'p1',
+          userConsented: warpEnabled),
     );
     final payload = material(selected);
     return bundle ? payload.copyWith(candidateMaterials: {
@@ -120,13 +122,15 @@ class _ManifestBootstrapper extends _Bootstrapper implements AppFirstTransportMa
 
 class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileBootstrapper {
   String? lastSuccessfulNetworkKey;
+  final provenNetworks = <(String?, String?)>[];
   @override
   Future<String?> successfulCandidateRef(ManagedProfileCacheInputs inputs,
       String networkSelectionKey) async {
     lastSuccessfulNetworkKey = networkSelectionKey;
     return null;
   }
-  _CachedBootstrapper() : super(catalog: true);
+  _CachedBootstrapper({bool warpEnabled = false, bool bundle = false})
+      : super(catalog: true, warpEnabled: warpEnabled, bundle: bundle);
   bool cacheAvailable = true;
   static final alternatives = [
     _candidates.first,
@@ -163,7 +167,9 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   }) async {}
   @override
   Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId,
-      {String? networkSelectionKey, String? offlineNetworkSelectionKey}) async {}
+      {String? networkSelectionKey, String? offlineNetworkSelectionKey}) async {
+    provenNetworks.add((networkSelectionKey, offlineNetworkSelectionKey));
+  }
   @override
   Future<ManagedProfileOfflineState> classifyManagedProfileFailure(ManagedProfileCacheInputs inputs,
       {bool? networkAvailable, bool? captivePortal}) async => ManagedProfileOfflineState.apiUnavailable;
@@ -1206,6 +1212,57 @@ void main() {
     addTearDown(manager.dispose);
     await manager.connect();
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+  });
+
+  test('direct WARP is the consented last reserve and retries nodes next time', () async {
+    final base = _candidates.first;
+    final direct = TransportCandidate(candidateRef: 'warp:warp_free:warp_direct',
+      profileRef: 'warp_free', nodeCode: '', countryCode: 'ZZ', protocol: 'warp',
+      transport: 'udp', protection: 'warp', priority: 0, network: 'udp', flow: '',
+      minimumClientRelease: '1.5.0+4099', minimumCoreRelease: '1.2.8',
+      platforms: base.platforms, requiredFeatures: const {}, warpMode: 'warp_direct');
+    final runtime = _Runtime()..supportsCandidates = true
+      ..failedProbeProtocols.add('vless');
+    final bootstrapper = _CachedBootstrapper(warpEnabled: true, bundle: true)
+      ..cacheAvailable = false..candidates = [base, direct];
+    final experienceStore = _ExperienceStore();
+    final manager = _manager(runtime, bootstrapper, experienceStore: experienceStore);
+    addTearDown(manager.dispose);
+    manager.restoreConnectionPreferences(
+      const PokrovClientExperienceState.empty().copyWith(preferredCountryCode: 'DE'), const {});
+
+    await manager.connect();
+    expect(runtime.probedProtocols, ['vless', 'warp']);
+    expect(runtime.stagedPayloads.last.warpPolicy.mode, 'warp_direct');
+    expect(runtime.stagedPayloads.last.warpPolicy.id, 'warp-direct:test-install');
+    expect(manager.headline, contains('WARP · бесплатный'));
+    expect(manager.materialCandidate?.nodeCode, isEmpty);
+    expect(runtime.activeProbes, isEmpty);
+    expect(bootstrapper.provenNetworks.last, (null, null));
+    expect(experienceStore.saved.preferredCountryCode, 'DE');
+
+    await manager.disconnect();
+    runtime.failedProbeProtocols.clear();
+    runtime.probedProtocols.clear();
+    await manager.connect();
+    expect(runtime.probedProtocols, ['vless']);
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
+    expect(bootstrapper.provenNetworks.last.$1, 'network-a');
+    await manager.disconnect();
+    await manager.setInterfaceMode(PokrovInterfaceMode.advanced);
+    await manager.setPreferredCandidate(direct.candidateRef);
+    await manager.setInterfaceMode(PokrovInterfaceMode.simple);
+    await Future<void>.delayed(Duration.zero);
+    expect(experienceStore.saved.preferredCountryCode, isEmpty);
+
+    final noConsentRuntime = _Runtime()..supportsCandidates = true
+      ..failedProbeProtocols.add('vless');
+    final noConsent = _manager(noConsentRuntime,
+      _Bootstrapper(catalog: true, bundle: true)..candidates = [base, direct]);
+    addTearDown(noConsent.dispose);
+    await noConsent.connect();
+    expect(noConsentRuntime.probedProtocols, ['vless']);
+    expect(noConsentRuntime.connectCalls, 0);
   });
 
   test('WARP last does not claim the node country as its exit', () async {

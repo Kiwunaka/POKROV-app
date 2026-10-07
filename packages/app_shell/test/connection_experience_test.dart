@@ -90,18 +90,25 @@ void main() {
       'capabilities': [ownedCapability,
         {...ownedCapability, 'capability_id': 'external-cap', 'provider_id': 'external-provider'}],
     });
-    Future<List<String>> selected({String? affinity}) async =>
+    Future<List<String>> selected({String? affinity, String providerId = ''}) async =>
       (await selectSmartAccessWebCapabilities(catalog: catalog, providers: providers,
         serviceIds: {'test-service'}, platform: 'windows', now: now,
         // This seed ranked the external provider first before owned preference.
         selectionSeed: '0000000000000000000000000000000000000000000000000000000000000003',
         isCurrent: () => true,
+        selectedProviderId: providerId,
         preferredCapabilityIds: affinity == null ? const {} : {'test-service': affinity}))
         .map((row) => row['capability_id']! as String).toList();
     expect(await selected(), ['owned-cap', 'external-cap']);
     expect(await selected(affinity: 'external-cap'), ['external-cap', 'owned-cap']);
+    expect(await selected(providerId: 'external-provider'), ['external-cap']);
+    expect(await selected(providerId: 'missing-provider'), isEmpty);
     ownedCapability['expires_at'] = now.toIso8601String();
     expect(await selected(), ['external-cap']);
+    expect(await selected(providerId: 'owned-provider'), isEmpty);
+    final permissions = providers.payload['permissions']! as List;
+    (permissions.last as Map<String, Object?>)['expires_at'] = now.toIso8601String();
+    expect(await selected(providerId: 'external-provider'), isEmpty);
   });
 
   test('verified state requires every DNS, host, uplink and egress proof', () {

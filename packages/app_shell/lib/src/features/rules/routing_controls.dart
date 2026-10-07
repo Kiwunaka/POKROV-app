@@ -233,11 +233,15 @@ class _CustomRoutingCard extends StatelessWidget {
 
 class _DnsAndLanCard extends StatelessWidget {
   const _DnsAndLanCard({
+    required this.hostPlatform,
+    this.loadSmartDnsProviders,
     required this.preferences,
     required this.onChanged,
     required this.onLanSubnetsChanged,
   });
 
+  final HostPlatform hostPlatform;
+  final Future<VerifiedSmartAccessProviderPolicy> Function()? loadSmartDnsProviders;
   final PokrovRoutingPreferences preferences;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
   final ValueChanged<List<String>> onLanSubnetsChanged;
@@ -289,6 +293,18 @@ class _DnsAndLanCard extends StatelessWidget {
               preferences: preferences,
               onChanged: onChanged,
             ),
+          ),
+          const _SettingsRowDivider(),
+          _SettingsRow(
+            key: const ValueKey('rules-smart-dns-provider-picker'),
+            icon: Icons.dns_outlined,
+            title: 'SmartDNS-провайдер',
+            value: preferences.smartDnsProviderId.isEmpty
+                ? 'Автоматически' : 'Выбран вручную',
+            valueIsAction: true,
+            onTap: () => _showSmartDnsProviderSheet(context,
+              preferences: preferences, hostPlatform: hostPlatform,
+              load: loadSmartDnsProviders, onChanged: onChanged),
           ),
           if (preferences.dnsPreset != PokrovDnsPreset.automatic) ...[
             const _SettingsRowDivider(),
@@ -1114,6 +1130,71 @@ Future<void> _showAddRouteRuleSheet(
   }
 }
 
+Future<void> _showSmartDnsProviderSheet(BuildContext context, {
+  required PokrovRoutingPreferences preferences,
+  required HostPlatform hostPlatform,
+  required Future<VerifiedSmartAccessProviderPolicy> Function()? load,
+  required ValueChanged<PokrovRoutingPreferences> onChanged,
+}) async {
+  final policy = load?.call();
+  final result = await showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
+    builder: (sheetContext) => FutureBuilder<VerifiedSmartAccessProviderPolicy>(
+      future: policy,
+      builder: (context, snapshot) {
+        final p = PokrovPalette.of(context);
+        final providers = snapshot.data == null ? <Map<String, Object?>>[] :
+            availableSmartAccessProviders(policy: snapshot.data!,
+              platform: hostPlatform.name, now: DateTime.now());
+        final selectionAvailable = providers.any((row) => row['provider_id'] == preferences.smartDnsProviderId);
+        return SafeArea(top: false, child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
+          child: Column(mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text('SmartDNS для сервисов', style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: p.ink, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            const Text('Выбор действует при следующем подключении для сервисов с разрешённым SmartDNS. Обычный DNS и AdGuard настраиваются отдельно. Без действующего разрешения сервис идёт через VPN.'),
+            const SizedBox(height: 8),
+            const Text('Выбирая внешнего провайдера, вы разрешаете передавать ему свой IP и домены этих сервисов. Их HTTPS-трафик проходит через его ретранслятор без расшифровки.'),
+            const SizedBox(height: 12),
+            ListTile(key: const ValueKey('rules-smart-dns-provider-automatic'),
+              contentPadding: EdgeInsets.zero, title: const Text('Автоматически'),
+              subtitle: const Text('POKROV по умолчанию; сохраняет текущий выбор и разрешённый резерв.'),
+              trailing: preferences.smartDnsProviderId.isEmpty ? Icon(Icons.check_rounded, color: p.accent) : null,
+              onTap: () => Navigator.of(sheetContext).pop('')),
+            if (snapshot.connectionState == ConnectionState.waiting)
+              const Padding(padding: EdgeInsets.all(12), child: Center(child: CircularProgressIndicator())),
+            if (snapshot.connectionState != ConnectionState.waiting && providers.isEmpty)
+              const Text('Сейчас нет доступных подписанных провайдеров. Можно оставить автоматический выбор.'),
+            if (preferences.smartDnsProviderId.isNotEmpty && !selectionAvailable &&
+                snapshot.connectionState != ConnectionState.waiting)
+              const Text('Сохранённый провайдер сейчас недоступен. До получения действующего разрешения используется VPN.'),
+            for (final provider in providers)
+              ListTile(key: ValueKey('rules-smart-dns-provider-${provider['provider_id']}'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(provider['kind'] == 'owned' ? 'POKROV' : Uri.parse(provider['resolver_url']! as String).host),
+                subtitle: Text(provider['kind'] == 'owned' ? 'Собственный провайдер' : 'Внешний провайдер'),
+                trailing: preferences.smartDnsProviderId == provider['provider_id']
+                    ? Icon(Icons.check_rounded, color: p.accent) : null,
+                onTap: () {
+                  final current = availableSmartAccessProviders(policy: snapshot.data!,
+                    platform: hostPlatform.name, now: DateTime.now());
+                  if (current.any((row) => row['provider_id'] == provider['provider_id'])) {
+                    Navigator.of(sheetContext).pop(provider['provider_id']! as String);
+                  }
+                }),
+          ]),
+        ));
+      },
+    ),
+  );
+  if (result != null) onChanged(preferences.copyWith(smartDnsProviderId: result));
+}
+
 Future<void> _showDnsPresetSheet(
   BuildContext context, {
   required PokrovRoutingPreferences preferences,
@@ -1151,7 +1232,7 @@ Future<void> _showDnsPresetSheet(
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Пресеты используют DNS-over-HTTPS. «Автоматически» сохраняет DNS профиля сервера. Путь DoH можно изменить после выбора пресета.',
+                  '«Автоматически» сохраняет DNS профиля POKROV. Внешние варианты используют DNS-over-HTTPS; путь DoH можно изменить после выбора.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: p.muted,
                       ),
@@ -1162,6 +1243,9 @@ Future<void> _showDnsPresetSheet(
                     key: ValueKey('rules-dns-${preset.name}'),
                     contentPadding: EdgeInsets.zero,
                     title: Text(preset.title),
+                    subtitle: preset == PokrovDnsPreset.automatic
+                        ? const Text('По умолчанию. DNS профиля POKROV.')
+                        : null,
                     trailing: preferences.dnsPreset == preset
                         ? Icon(Icons.check_rounded, color: p.accent)
                         : null,

@@ -14,7 +14,7 @@ enum PokrovRouteAction { vpn, direct }
 
 enum PokrovRouteMatchType { domain, ip, subnet }
 
-enum PokrovDnsPreset { automatic, cloudflare, google, adguard, custom }
+enum PokrovDnsPreset { automatic, xbox, comss, adguard, cloudflare, google, custom }
 
 enum PokrovDnsTransport { vpn, direct }
 
@@ -50,6 +50,8 @@ extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
 extension PokrovDnsPresetPresentation on PokrovDnsPreset {
   String get title => switch (this) {
         PokrovDnsPreset.automatic => 'Автоматически',
+        PokrovDnsPreset.xbox => 'Xbox DNS',
+        PokrovDnsPreset.comss => 'Comss DNS',
         PokrovDnsPreset.cloudflare => 'Cloudflare',
         PokrovDnsPreset.google => 'Google',
         PokrovDnsPreset.adguard => 'AdGuard',
@@ -58,6 +60,8 @@ extension PokrovDnsPresetPresentation on PokrovDnsPreset {
 
   String? get address => switch (this) {
         PokrovDnsPreset.automatic => null,
+        PokrovDnsPreset.xbox => 'https://xbox-dns.ru/dns-query',
+        PokrovDnsPreset.comss => 'https://dns.comss.one/dns-query',
         PokrovDnsPreset.cloudflare => 'https://1.1.1.1/dns-query',
         PokrovDnsPreset.google => 'https://dns.google/dns-query',
         PokrovDnsPreset.adguard => 'https://dns.adguard-dns.com/dns-query',
@@ -142,6 +146,7 @@ class PokrovRoutingPreferences {
     required this.dnsTransport,
     required this.customDnsUrl,
     this.externalSmartDnsEnabled = false,
+    this.smartDnsProviderId = '',
     this.selectedCatalogServiceIds = const <String>{},
     required this.allowLan,
     this.lanSubnets = const <String>[],
@@ -160,6 +165,7 @@ class PokrovRoutingPreferences {
         dnsTransport = PokrovDnsTransport.vpn,
         customDnsUrl = '',
         externalSmartDnsEnabled = false,
+        smartDnsProviderId = '',
         selectedCatalogServiceIds = const <String>{},
         allowLan = false,
         lanSubnets = const <String>[],
@@ -176,6 +182,7 @@ class PokrovRoutingPreferences {
   final PokrovDnsTransport dnsTransport;
   final String customDnsUrl;
   final bool externalSmartDnsEnabled;
+  final String smartDnsProviderId;
   final Set<String> selectedCatalogServiceIds;
   final bool allowLan;
   final List<String> lanSubnets;
@@ -193,6 +200,7 @@ class PokrovRoutingPreferences {
     PokrovDnsTransport? dnsTransport,
     String? customDnsUrl,
     bool? externalSmartDnsEnabled,
+    String? smartDnsProviderId,
     Set<String>? selectedCatalogServiceIds,
     bool? allowLan,
     List<String>? lanSubnets,
@@ -211,6 +219,7 @@ class PokrovRoutingPreferences {
       customDnsUrl: customDnsUrl ?? this.customDnsUrl,
       externalSmartDnsEnabled:
           externalSmartDnsEnabled ?? this.externalSmartDnsEnabled,
+      smartDnsProviderId: smartDnsProviderId ?? this.smartDnsProviderId,
       selectedCatalogServiceIds: Set.unmodifiable(
           selectedCatalogServiceIds ?? this.selectedCatalogServiceIds),
       allowLan: allowLan ?? this.allowLan,
@@ -274,6 +283,7 @@ class PokrovRoutingPreferences {
         dnsTransport == PokrovDnsTransport.direct &&
         purposes.any((purpose) => purpose.supportsExternalSmartDns);
     final lanSubnets = _readLanSubnets(json['lanSubnets']);
+    final providerId = _routingText(json['smartDnsProviderId']);
     return PokrovRoutingPreferences(
       purposeRoutes: Set<PokrovPurposeRoute>.unmodifiable(purposes),
       overrides: List<PokrovRouteOverride>.unmodifiable(overrides),
@@ -281,6 +291,8 @@ class PokrovRoutingPreferences {
       dnsTransport: dnsTransport,
       customDnsUrl: customDns,
       externalSmartDnsEnabled: externalSmartDnsEnabled,
+      smartDnsProviderId: RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$').hasMatch(providerId)
+          ? providerId : '',
       selectedCatalogServiceIds: _readCatalogServiceSelection(json['selectedCatalogServiceIds']),
       allowLan: json['lanScopeEnabled'] == true && lanSubnets.isNotEmpty,
       lanSubnets: lanSubnets,
@@ -301,6 +313,7 @@ class PokrovRoutingPreferences {
         'dnsTransport': dnsTransport.name,
         'customDnsUrl': customDnsUrl,
         'externalSmartDnsEnabled': externalSmartDnsEnabled,
+        if (smartDnsProviderId.isNotEmpty) 'smartDnsProviderId': smartDnsProviderId,
         'selectedCatalogServiceIds': selectedCatalogServiceIds.toList()..sort(),
         // Older clients interpret allowLan as a blanket private-IP bypass.
         // Do not grant that broader permission when they read this file.
@@ -616,6 +629,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   config['route'] = route;
 
   final existingDns = _routingMap(config['dns']);
+  final previousDnsFinal = _routingText(existingDns['final']);
   existingDns['rules'] = [
     for (final rule in _routingListOfMaps(existingDns['rules']))
       if (rule['ip_is_private'] == true && _routingText(rule['server']) == 'dns-direct') ...[
@@ -644,9 +658,14 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     final servers = _routingListOfMaps(dns['servers'])
       ..removeWhere(
           (server) => _routingText(server['tag']) == 'pokrov-user-dns');
+    final bootstrap = InternetAddress.tryParse(Uri.parse(dnsAddress).host) == null
+        ? _dnsBootstrapResolverTag(servers,
+            protectedDetour: preferences.dnsTransport == PokrovDnsTransport.vpn ? proxyTag : null)
+        : null;
     servers.insert(0, <String, dynamic>{
       'tag': 'pokrov-user-dns',
       'address': dnsAddress,
+      if (bootstrap != null) 'address_resolver': bootstrap,
       'detour': preferences.dnsTransport == PokrovDnsTransport.direct
           ? directTag
           : proxyTag,
@@ -682,10 +701,31 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
         vpn: proxyTag, vpnDns: dnsAddress == null ? 'dns-remote' : 'pokrov-user-dns',
         directDns: 'dns-direct');
   }
+  if (dnsAddress != null) {
+    _retargetBoundAwgDnsResolver(config, previousDnsFinal);
+  }
 
   return _applyAllExceptRuDefaults(
       payload.copyWith(configPayload: jsonEncode(config), lanScopeVersion: 1),
       hostPlatform, defaultRuAppPackageIds);
+}
+
+void _retargetBoundAwgDnsResolver(
+    Map<String, dynamic> config, String previousDnsFinal) {
+  final endpoints = _routingListOfMaps(config['endpoints']);
+  var changed = false;
+  for (final endpoint in endpoints) {
+    final resolver = endpoint['domain_resolver'];
+    if (endpoint['type'] == 'awg' && resolver is Map &&
+        resolver['server'] == previousDnsFinal) {
+      endpoint['domain_resolver'] = <String, dynamic>{
+        ..._routingMap(resolver),
+        'server': _routingText(_routingMap(config['dns'])['final']),
+      };
+      changed = true;
+    }
+  }
+  if (changed) config['endpoints'] = endpoints;
 }
 
 ManagedProfilePayload _applyAllExceptRuDefaults(
@@ -792,17 +832,11 @@ ManagedProfilePayload _normalizeRuntimeDns(ManagedProfilePayload payload) {
     if (plainDirectTags.contains(server['detour'])) server.remove('detour');
     servers.add(server);
   }
-  final localResolver = servers.where((server) => server['type'] == 'local')
-      .map((server) => _routingText(server['tag']))
-      .where((tag) => tag.isNotEmpty).firstOrNull;
   for (final server in servers) {
     if (_routingText(server['server']).isNotEmpty &&
         InternetAddress.tryParse(_routingText(server['server'])) == null &&
         _routingText(server['detour']).isEmpty && server['domain_resolver'] == null) {
-      if (localResolver == null) {
-        throw const FormatException('Direct DNS bootstrap resolver unavailable');
-      }
-      server['domain_resolver'] = localResolver;
+      server['domain_resolver'] = _dnsBootstrapResolverTag(servers);
     }
   }
   Map<String, dynamic> migrateRule(Map<String, dynamic> rule) {
@@ -829,6 +863,29 @@ ManagedProfilePayload _normalizeRuntimeDns(ManagedProfilePayload payload) {
   if (dns.containsKey('rules') || rules.isNotEmpty) dns['rules'] = rules;
   config['dns'] = dns;
   return payload.copyWith(configPayload: jsonEncode(config));
+}
+
+String _dnsBootstrapResolverTag(List<Map<String, dynamic>> servers,
+    {String? protectedDetour}) {
+  if (protectedDetour != null) {
+    for (final server in servers) {
+      final tag = _routingText(server['tag']);
+      final address = _routingText(server['address']);
+      final typedHost = _routingText(server['server']);
+      final host = typedHost.isNotEmpty ? typedHost
+          : address.contains('://') ? Uri.tryParse(address)?.host ?? '' : address;
+      if (tag.isNotEmpty && server['detour'] == protectedDetour &&
+          InternetAddress.tryParse(host) != null) return tag;
+    }
+  }
+  final local = servers.where((server) =>
+      server['type'] == 'local' || server['address'] == 'local')
+      .map((server) => _routingText(server['tag']))
+      .where((tag) => tag.isNotEmpty).firstOrNull;
+  if (local == null) {
+    throw const FormatException('Direct DNS bootstrap resolver unavailable');
+  }
+  return local;
 }
 
 ManagedProfilePayload _applyCatalogRoutingPreferences(
@@ -884,6 +941,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   }
   final route = _routingMap(config['route']);
   final dns = _routingMap(config['dns']);
+  final previousDnsFinal = _routingText(dns['final']);
   final direct = _findOutboundByType(outbounds, 'direct');
   final vpn = _resolveProxyTag(outbounds, endpoints, route);
   if (direct.isEmpty ||
@@ -926,10 +984,16 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     vpnDns = 'pokrov-catalog-user-dns-vpn';
     directDns = 'pokrov-catalog-user-dns-direct';
     servers.removeWhere((server) => server['tag'] == vpnDns || server['tag'] == directDns);
+    final needsBootstrap = InternetAddress.tryParse(Uri.parse(dnsAddress).host) == null;
+    final vpnBootstrap = needsBootstrap && policy.vpnAvailable
+        ? _dnsBootstrapResolverTag(servers, protectedDetour: vpn) : null;
+    final directBootstrap = needsBootstrap ? _dnsBootstrapResolverTag(servers) : null;
     servers.addAll([
       if (policy.vpnAvailable)
-        {'tag': vpnDns, 'address': dnsAddress, 'address_resolver': 'dns-local', 'detour': vpn},
-      {'tag': directDns, 'address': dnsAddress, 'address_resolver': 'dns-local', 'detour': direct},
+        {'tag': vpnDns, 'address': dnsAddress,
+          if (vpnBootstrap != null) 'address_resolver': vpnBootstrap, 'detour': vpn},
+      {'tag': directDns, 'address': dnsAddress,
+        if (directBootstrap != null) 'address_resolver': directBootstrap, 'detour': direct},
     ]);
   }
   for (final (tag, target) in [if (policy.vpnAvailable) (vpnDns, vpn), (directDns, direct)]) {
@@ -1061,6 +1125,9 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   if (windowsAppScope) {
     _protectWindowsAppDns(config, preferences,
         vpn: vpn, vpnDns: vpnDns, directDns: directDns);
+  }
+  if (dnsAddress != null) {
+    _retargetBoundAwgDnsResolver(config, previousDnsFinal);
   }
   // Removed automatic classifications must not leave unused remote rule sets
   // that Core would still load. Keep every set referenced by retained rules.

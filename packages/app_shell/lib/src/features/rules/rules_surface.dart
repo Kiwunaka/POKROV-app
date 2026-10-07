@@ -12,6 +12,7 @@ class _RulesSection extends StatelessWidget {
     required this.onRuAppPresetApplied,
     this.loadVerifiedCatalogApps,
     this.loadCatalogPreview,
+    this.loadSmartDnsProviders,
     this.catalogPreviewIdentity,
     this.onEditCatalogServices,
     this.catalogServicesBusy = false,
@@ -36,6 +37,7 @@ class _RulesSection extends StatelessWidget {
   final void Function(RouteMode mode, List<String> appIds, bool verifiedCatalog) onRuAppPresetApplied;
   final Future<Set<String>> Function(bool fresh)? loadVerifiedCatalogApps;
   final Future<_RoutingCatalogPreview?> Function()? loadCatalogPreview;
+  final Future<VerifiedSmartAccessProviderPolicy> Function()? loadSmartDnsProviders;
   final Object? catalogPreviewIdentity;
   final VoidCallback? onEditCatalogServices;
   final bool catalogServicesBusy;
@@ -215,6 +217,7 @@ class _RulesSection extends StatelessWidget {
           ),
         _RulesAdvancedSection(
           hostPlatform: appContext.hostPlatform,
+          loadSmartDnsProviders: loadSmartDnsProviders,
           preferences: routingPreferences,
           fallbackMode: selectedRouteMode,
           onChanged: onRoutingPreferencesChanged,
@@ -234,6 +237,7 @@ class _RulesSection extends StatelessWidget {
 class _RulesAdvancedSection extends StatefulWidget {
   const _RulesAdvancedSection({
     required this.hostPlatform,
+    this.loadSmartDnsProviders,
     required this.preferences,
     required this.fallbackMode,
     required this.onChanged,
@@ -247,6 +251,7 @@ class _RulesAdvancedSection extends StatefulWidget {
   });
 
   final HostPlatform hostPlatform;
+  final Future<VerifiedSmartAccessProviderPolicy> Function()? loadSmartDnsProviders;
   final PokrovRoutingPreferences preferences;
   final RouteMode fallbackMode;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
@@ -325,6 +330,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
             ? 1
             : 0) +
         (_draftPreferences.externalSmartDnsEnabled ? 1 : 0) +
+        (_draftPreferences.smartDnsProviderId.isNotEmpty ? 1 : 0) +
         (_draftPreferences.allowLan ? 1 : 0) +
         _draftPreferences.lanSubnets.length +
         (widget.hostPlatform == HostPlatform.windows &&
@@ -370,6 +376,8 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                       _LocalDpiCard(preferences: _draftPreferences, onChanged: _stage,
                           hostPlatform: widget.hostPlatform),
                     _DnsAndLanCard(
+                      hostPlatform: widget.hostPlatform,
+                      loadSmartDnsProviders: widget.loadSmartDnsProviders,
                       preferences: _draftPreferences,
                       onChanged: _stage,
                       onLanSubnetsChanged: (subnets) => _stage(_draftPreferences.copyWith(
@@ -445,6 +453,7 @@ bool _sameRoutingPreferences(
     left.dnsTransport == right.dnsTransport &&
     left.customDnsUrl == right.customDnsUrl &&
     left.externalSmartDnsEnabled == right.externalSmartDnsEnabled &&
+    left.smartDnsProviderId == right.smartDnsProviderId &&
     left.localDpiEnabled == right.localDpiEnabled &&
     left.allowLan == right.allowLan &&
     listEquals(left.lanSubnets, right.lanSubnets) &&
@@ -464,6 +473,7 @@ List<String> _routingPreferenceChangeLabels(
           applied.dnsTransport != draft.dnsTransport ||
           applied.customDnsUrl != draft.customDnsUrl ||
           applied.externalSmartDnsEnabled != draft.externalSmartDnsEnabled ||
+          applied.smartDnsProviderId != draft.smartDnsProviderId ||
           applied.allowLan != draft.allowLan ||
           !listEquals(applied.lanSubnets, draft.lanSubnets))
         'DNS и локальная сеть',

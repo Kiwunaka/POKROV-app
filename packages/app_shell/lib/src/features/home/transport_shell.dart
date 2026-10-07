@@ -188,6 +188,10 @@ extension _TransportShellOperations on ConnectionManager {
                   if (!authorityUnavailable(error)) rethrow;
                   providerUnavailable = true;
                   await remainingBudget();
+                } on RoutingCatalogFailure catch (error) {
+                  if (error.code != 'smart_access_policy_not_current') rethrow;
+                  providerUnavailable = true;
+                  await remainingBudget();
                 }
                 if (providers == null) return baseline;
                 final now = await grantSource.sample();
@@ -195,6 +199,7 @@ extension _TransportShellOperations on ConnectionManager {
                 final candidates = await _connectionCoordinator.selectSmartAccessCapabilities(
                   catalog: catalog.catalog, providers: providers, serviceIds: wanted,
                   platform: _appContext.hostPlatform.name, now: now.latest,
+                  selectedProviderId: _clientExperience.routingPreferences.smartDnsProviderId,
                   isCurrent: grantCurrent);
                 final digest = await smartAccessProfileSha256(baseProfile);
                 final grants = <VerifiedSmartAccessLease>[];

@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
+import 'package:pokrov_app_shell/client_routing_preferences.dart';
 import 'package:pokrov_app_shell/src/features/rules/ru_app_catalog.dart';
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
@@ -292,6 +293,32 @@ void main() {
             await request.response.close();
             continue;
           }
+          if (query['selected_candidate_ref'] == 'warp:warp_free:warp_direct') {
+            request.response.write(jsonEncode({
+              ..._readyManagedProfile('catalog-rev'),
+              'transport_profile': 'warp_free', 'transport_kind': 'warp_direct',
+              'transport_catalog': {
+                'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'catalog-rev',
+                'selected_candidate_ref': 'warp:warp_free:warp_direct', 'candidates': [{
+                  'candidate_ref': 'warp:warp_free:warp_direct', 'profile_ref': 'warp_free',
+                  'node_code': '', 'country_code': 'ZZ', 'protocol': 'warp', 'transport': 'udp',
+                  'protection': 'warp', 'warp_mode': 'warp_direct', 'priority': 0,
+                  'parameters': {'network': 'udp', 'flow': ''},
+                  'requirements': {'minimum_client_release': '1.5.0+4099', 'minimum_core_release': '1.2.8',
+                    'platforms': ['windows'], 'required_features': []},
+                }],
+              },
+              'config_payload': {
+                'outbounds': [
+                  {'type': 'selector', 'tag': 'proxy', 'outbounds': ['block'], 'default': 'block'},
+                  {'type': 'direct', 'tag': 'direct'}, {'type': 'block', 'tag': 'block'},
+                ],
+                'route': {'final': 'proxy'},
+              },
+            }));
+            await request.response.close();
+            continue;
+          }
           final chosen = !returnWrongSelection && query['selected_candidate_ref'] == 'de:grpc_443_primary';
           final sibling = query['selected_candidate_ref'] == 'ru-spb:grpc_443_primary';
           final xhttp = query['selected_candidate_ref'] == 'de:xhttp_reality';
@@ -387,6 +414,33 @@ void main() {
     final selected = (config['outbounds'] as List).where((item) => item['tag'] == 'de').single;
     expect(selected['transport']['type'], 'grpc', reason: 'winner comes from secure server profile');
     expect((config['outbounds'] as List).where((item) => item['tag'] == 'pl'), isEmpty);
+
+    final direct = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
+      coreRelease: '1.2.9', selectedCandidateRef: 'warp:warp_free:warp_direct',
+      preferredCountryCode: 'DE', selectCandidate: false, cacheResult: false);
+    expect(queries.last.containsKey('selected_node_code'), isFalse);
+    expect(direct.resolvedNodeCode, isEmpty);
+    expect(direct.warpPolicy.mode, 'warp_direct');
+    expect(direct.warpPolicy.id, startsWith('warp-direct:'));
+    expect(direct.warpPolicy.id, isNot('warp-direct:'));
+    expect(direct.warpPolicy.hasServerManagedMaterial, isFalse);
+    final directConfig = jsonDecode(direct.configPayload) as Map;
+    expect((directConfig['outbounds'] as List).where((item) => item['type'] == 'vless'), isEmpty);
+    expect((directConfig['outbounds'] as List).where((item) => item['type'] == 'selector').single['outbounds'], ['block']);
+    expect(queries.last['client_release'], '1.5.0+4099');
+    const profileStorage = FlutterSecureStorage();
+    const profileCacheKey = 'pokrov-managed-profile-windows-v1';
+    final previousCache = await profileStorage.read(key: profileCacheKey);
+    const directInputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'DE');
+    await bootstrapper.cacheResolvedManagedProfile(directInputs, direct);
+    final cachedDirect = await bootstrapper.loadCachedManagedProfile(directInputs,
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(), coreRelease: '1.2.9');
+    expect(cachedDirect?.warpPolicy.mode, 'warp_direct');
+    expect(cachedDirect?.warpPolicy.id, direct.warpPolicy.id);
+    expect(cachedDirect?.warpPolicy.hasServerManagedMaterial, isFalse);
+    await profileStorage.write(key: profileCacheKey, value: previousCache);
 
     final xhttp = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),
@@ -6158,6 +6212,14 @@ void main() {
               }},
               if (awg) 'endpoints': [{'type': 'awg', 'tag': tag,
                 'contract_id': 'pokrov.awg31.endpoint.v1', 'useIntegratedTun': false}],
+              if (awg) 'dns': {
+                'strategy': 'ipv4_only',
+                'servers': [
+                  {'tag': 'bootstrap', 'address': 'local'},
+                  {'tag': 'cloudflare', 'address': 'https://1.1.1.1/dns-query', 'detour': tag},
+                ],
+                'final': 'cloudflare',
+              },
               'outbounds': [
                 if (!awg) {'type': 'hysteria2', 'tag': tag,
                   'server': 'hy2.example.invalid', 'server_port': 443,
@@ -6181,6 +6243,7 @@ void main() {
     );
     for (final scenario in [
       (HostPlatform.android, true, RouteMode.fullTunnel),
+      (HostPlatform.windows, true, RouteMode.fullTunnel),
       (HostPlatform.android, false, RouteMode.fullTunnel),
       (HostPlatform.windows, false, RouteMode.selectedApps),
     ]) {
@@ -6195,18 +6258,37 @@ void main() {
       expect(payload.transportCatalog?.selectedCandidateRef, 'de:$profile');
       expect(payload.resolvedNodeCode, 'de');
       expect(payload.smartConnect?.shortlist.single.code, 'de');
-      final config = jsonDecode(payload.configPayload) as Map;
+      final stagedPayload = awg ? applyPokrovRoutingPreferences(payload,
+        const PokrovRoutingPreferences.defaults(), hostPlatform: scenario.$1) : payload;
+      final config = jsonDecode(stagedPayload.configPayload) as Map;
       expect(config['_meta']?['transport_contract']?['profile'], profile);
       expect(config['route']['final'], scenario.$3 == RouteMode.selectedApps ? 'direct' : 'secure-transport');
+      if (awg) {
+        final expectedResolver = scenario.$1 == HostPlatform.windows ? 'dns-remote' : 'cloudflare';
+        expect((config['endpoints'] as List).single['domain_resolver'],
+          {'server': expectedResolver, 'strategy': 'ipv4_only'});
+        final remoteDns = (config['dns']['servers'] as List)
+          .singleWhere((row) => row['tag'] == expectedResolver);
+        expect(remoteDns['type'], 'https');
+        expect(remoteDns['server'], '1.1.1.1');
+        expect(remoteDns['detour'], 'secure-transport');
+        if (scenario.$1 == HostPlatform.windows) {
+          expect(config['route']['default_domain_resolver'],
+            {'server': 'dns-direct', 'strategy': 'ipv4_only'});
+        }
+      }
       if (!awg && scenario.$1 == HostPlatform.android) {
         final outbound = (config['outbounds'] as List).singleWhere((row) => row['type'] == 'hysteria2') as Map;
         expect(outbound['domain_resolver'], 'dns-local');
       }
-      await expectLater(createRuntimeEngine(hostPlatform: scenario.$1).stageManagedProfile(payload),
+      await expectLater(createRuntimeEngine(hostPlatform: scenario.$1).stageManagedProfile(stagedPayload),
         completes, reason: '${scenario.$1.name} $profile ${scenario.$3.name}');
       expect(staged, isNot(contains('_meta')));
       if (awg) {
         expect((staged!['endpoints'] as List).single['contract_id'], 'pokrov.awg31.endpoint.v1');
+        expect((staged!['endpoints'] as List).single['domain_resolver'],
+          {'server': scenario.$1 == HostPlatform.windows ? 'dns-remote' : 'cloudflare',
+            'strategy': 'ipv4_only'});
       } else {
         final transport = (staged!['outbounds'] as List).singleWhere((row) => row['type'] == 'hysteria2');
         expect(transport['password'], 'synthetic-password');

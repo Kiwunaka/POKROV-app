@@ -297,6 +297,49 @@ String smartAccessDnsTag(VerifiedSmartAccessLease grant) =>
 
 /// The integrated subset is web requests from current-origin. Eligibility is
 /// checked before provider selection; affinity is not a health claim.
+bool _smartAccessScopeCurrent(Object? start, Object? end, DateTime now) {
+  if (start is! String || end is! String) return false;
+  final first = DateTime.tryParse(start);
+  final last = DateTime.tryParse(end);
+  return first != null && last != null && !now.toUtc().isBefore(first) && now.toUtc().isBefore(last);
+}
+
+bool _smartAccessCapabilityEligible(Map<String, Object?> capability,
+    List<Map<String, Object?>> providers, List<Map<String, Object?>> permissions,
+    String platform, DateTime now) {
+  if (capability['enabled'] != true || capability['verification'] != 'verified' ||
+      capability['platform'] != platform || capability['origin'] != 'current-origin' ||
+      capability['feature'] != 'web_request' || capability['transport'] != 'tls_tcp_443_visible_sni' ||
+      !const {'ipv4', 'ipv6'}.contains(capability['family']) ||
+      !_smartAccessScopeCurrent(capability['observed_at'], capability['expires_at'], now)) return false;
+  final matching = providers.where((row) => row['provider_id'] == capability['provider_id']).toList();
+  if (matching.length != 1) return false;
+  final provider = matching.single;
+  if (provider['enabled'] != true || provider['revision'] != capability['provider_revision']) return false;
+  final matchingPermissions = permissions.where((row) => row['permission_id'] == provider['permission_id']).toList();
+  if (matchingPermissions.length != 1) return false;
+  final permission = matchingPermissions.single;
+  return permission['provider_id'] == provider['provider_id'] && permission['status'] == 'approved' &&
+      permission['embedded_use_allowed'] == true &&
+      _smartAccessScopeCurrent(permission['issued_at'], permission['expires_at'], now);
+}
+
+/// Settings expose provider IDs from verified, currently permitted capabilities.
+/// An option does not grant authority; connection still requires catalog and lease.
+List<Map<String, Object?>> availableSmartAccessProviders({
+  required VerifiedSmartAccessProviderPolicy policy,
+  required String platform,
+  required DateTime now,
+}) {
+  if (!_smartAccessScopeCurrent(policy.payload['issued_at'], policy.payload['expires_at'], now)) return const [];
+  final providers = (policy.payload['providers']! as List).cast<Map<String, Object?>>();
+  final permissions = (policy.payload['permissions']! as List).cast<Map<String, Object?>>();
+  final capabilities = (policy.payload['capabilities']! as List).cast<Map<String, Object?>>();
+  return providers.where((provider) => capabilities.any((capability) =>
+      capability['provider_id'] == provider['provider_id'] &&
+      _smartAccessCapabilityEligible(capability, providers, permissions, platform, now))).toList(growable: false);
+}
+
 Future<List<Map<String, Object?>>> selectSmartAccessWebCapabilities({
   required VerifiedRoutingCatalog catalog,
   required VerifiedSmartAccessProviderPolicy providers,
@@ -306,16 +349,11 @@ Future<List<Map<String, Object?>>> selectSmartAccessWebCapabilities({
   required String selectionSeed,
   required bool Function() isCurrent,
   Map<String, String> preferredCapabilityIds = const {},
+  String selectedProviderId = '',
 }) async {
   if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(selectionSeed)) _invalid();
-  bool current(Object? start, Object? end) {
-    if (start is! String || end is! String) return false;
-    final first = DateTime.tryParse(start);
-    final last = DateTime.tryParse(end);
-    return first != null && last != null && !now.toUtc().isBefore(first) && now.toUtc().isBefore(last);
-  }
-  if (!current(catalog.payload['issued_at'], catalog.payload['expires_at']) ||
-      !current(providers.payload['issued_at'], providers.payload['expires_at'])) _invalid();
+  if (!_smartAccessScopeCurrent(catalog.payload['issued_at'], catalog.payload['expires_at'], now)) _invalid();
+  if (!_smartAccessScopeCurrent(providers.payload['issued_at'], providers.payload['expires_at'], now)) return const [];
   final providerRows = (providers.payload['providers']! as List).cast<Map<String, Object?>>();
   final permissionRows = (providers.payload['permissions']! as List).cast<Map<String, Object?>>();
   final capabilities = (providers.payload['capabilities']! as List).cast<Map<String, Object?>>();
@@ -326,21 +364,9 @@ Future<List<Map<String, Object?>>> selectSmartAccessWebCapabilities({
     final service = services.where((row) => row['service_id'] == serviceId).single;
     final refs = service['provider_capability_refs']! as List;
     final eligible = capabilities.where((capability) {
-      if (capability['service_id'] != serviceId || !refs.contains(capability['capability_id']) ||
-          capability['enabled'] != true || capability['verification'] != 'verified' ||
-          capability['platform'] != platform || capability['origin'] != 'current-origin' ||
-          capability['feature'] != 'web_request' || capability['transport'] != 'tls_tcp_443_visible_sni' ||
-          !const {'ipv4', 'ipv6'}.contains(capability['family']) ||
-          !current(capability['observed_at'], capability['expires_at'])) return false;
-      final matching = providerRows.where((row) => row['provider_id'] == capability['provider_id']).toList();
-      if (matching.length != 1) return false;
-      final provider = matching.single;
-      if (provider['enabled'] != true || provider['revision'] != capability['provider_revision']) return false;
-      final permissions = permissionRows.where((row) => row['permission_id'] == provider['permission_id']).toList();
-      if (permissions.length != 1) return false;
-      final permission = permissions.single;
-      return permission['provider_id'] == provider['provider_id'] && permission['status'] == 'approved' &&
-          permission['embedded_use_allowed'] == true && current(permission['issued_at'], permission['expires_at']);
+      return capability['service_id'] == serviceId && refs.contains(capability['capability_id']) &&
+          (selectedProviderId.isEmpty || capability['provider_id'] == selectedProviderId) &&
+          _smartAccessCapabilityEligible(capability, providerRows, permissionRows, platform, now);
     }).toList();
     if (eligible.isEmpty) continue;
     final preferred = eligible.where((row) => row['capability_id'] == preferredCapabilityIds[serviceId]).toList();

@@ -565,6 +565,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   bool get _selectiveServicesAvailable => _connectionManager._selectiveServicesAvailable;
   Future<_CatalogServiceSelectionData> _loadCatalogServiceSelection({required bool Function() isCurrent, required Future<void> cancelled}) => _connectionManager._loadCatalogServiceSelection(isCurrent: isCurrent, cancelled: cancelled);
   Future<_RoutingCatalogPreview?> _loadRoutingCatalogPreview() => _connectionManager._loadRoutingCatalogPreview();
+  Future<VerifiedSmartAccessProviderPolicy> _loadSmartDnsProviders() => _connectionManager._loadSmartDnsProviders();
   Future<Set<String>> _loadVerifiedCatalogDirectApps(bool fresh) => _connectionManager._loadVerifiedCatalogDirectApps(fresh);
   Future<void> _setWarpRuntimeConsent(bool value) { PokrovHaptics.tap(); return _connectionManager._setWarpRuntimeConsent(value); }
   bool _canPrimaryConnect(RuntimeSnapshot? snapshot) => _connectionManager._canPrimaryConnect(snapshot);
@@ -3361,6 +3362,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       if (!_connectionPresentation.isVerified) {
         return 'Локация проверяется';
       }
+      if (_connectionManager.materialCandidate?.warpMode == 'warp_direct') {
+        return 'WARP · бесплатный · страна выхода неизвестна';
+      }
       if (_connectionManager.materialCandidate?.warpMode ==
           'warp_over_proxy') {
         return 'WARP · страна выхода неизвестна';
@@ -3540,6 +3544,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             loadVerifiedCatalogApps: _routingCatalogEnabled && widget.appContext.hostPlatform == HostPlatform.android
                 ? _loadVerifiedCatalogDirectApps : null,
             loadCatalogPreview: _routingCatalogEnabled ? _loadRoutingCatalogPreview : null,
+            loadSmartDnsProviders: _bootstrapper is AppFirstSmartAccessService &&
+                (_bootstrapper as AppFirstSmartAccessService).smartAccessEnabled
+                ? _loadSmartDnsProviders : null,
             catalogPreviewIdentity: (
               _selectedRouteMode, _managedProfileRevision, _freeProfileAccess?.accessState,
               _runtimeSnapshot?.routingCatalogWindowVersion, identityHashCode(_bootstrapper),

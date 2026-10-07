@@ -1022,6 +1022,7 @@ class ConnectionCoordinator {
     required VerifiedRoutingCatalog catalog, required VerifiedSmartAccessProviderPolicy providers,
     required Set<String> serviceIds, required String platform, required DateTime now,
     required bool Function() isCurrent,
+    String selectedProviderId = '',
   }) {
     if (_disposed || !isCurrent()) throw const ConnectionOperationSuperseded();
     final seed = _smartAccessSelectionSeed ??= (() {
@@ -1047,6 +1048,7 @@ class ConnectionCoordinator {
     }
     return selectSmartAccessWebCapabilities(catalog: catalog, providers: providers,
       serviceIds: serviceIds, platform: platform, now: now, selectionSeed: seed,
+      selectedProviderId: selectedProviderId,
       preferredCapabilityIds: preferred, isCurrent: () => !_disposed && isCurrent());
   }
 

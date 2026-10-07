@@ -28,6 +28,7 @@ import 'src/features/rules/transport_manifest_time.dart';
 import 'src/observability/release_health_baseline.dart';
 import 'src/shell/managed_profile_cache.dart';
 import 'src/shell/runtime_connectivity_report.dart';
+import 'src/warp/pokrov_warp_direct.dart';
 
 part 'src/features/rules/transport_manifest_loader.dart';
 part 'src/features/rules/transport_profile_loader.dart';
@@ -3198,13 +3199,16 @@ class AppFirstRuntimeBootstrapper
           .expand((features) => features).toSet();
       final catalog = value.containsKey('transport_catalog')
           ? decodeManagedTransportCatalog(value['transport_catalog'],
-              platform: inputs.hostPlatform, clientRelease: pokrovClientVersion,
+              platform: inputs.hostPlatform, clientRelease: '$pokrovClientVersion+$pokrovClientBuildNumber',
               runtimeFeatures: runtimeFeatures ?? storedFeatures,
               coreRelease: coreRelease ?? (runtimeFeatures == null ? _readText(value['core_release']) : null))
           : null;
       final materialRef = _readText(value['material_candidate_ref']);
       if (materialRef.isNotEmpty &&
           catalog?.candidates.any((candidate) => candidate.candidateRef == materialRef) != true) return null;
+      final materialCandidate = materialRef.isEmpty ? catalog?.selected
+          : catalog?.candidates.firstWhere((candidate) => candidate.candidateRef == materialRef);
+      final warpPolicy = WarpRuntimePolicy.tryParse(value['warp_policy']);
       return ManagedProfilePayload(
         cacheEntryId: _readText(value['cache_entry_id']),
         disableMemoryLimit: inputs.hostPlatform == HostPlatform.windows,
@@ -3222,7 +3226,9 @@ class AppFirstRuntimeBootstrapper
         smartConnect: SmartConnectProfile.tryParse(value['smart_connect']),
         transportCatalog: catalog,
         materialCandidateRef: materialRef,
-        warpPolicy: WarpRuntimePolicy.tryParse(value['warp_policy']),
+        warpPolicy: materialCandidate?.warpMode == 'warp_direct'
+            ? pokrovDirectWarpPolicy(state.installId).withUserConsent(warpPolicy.userConsented)
+            : warpPolicy,
         freeProfileAccess: FreeProfileAccess.tryParse(
           access: value['access'], freeCaps: value['free_caps']),
       );
@@ -6729,7 +6735,8 @@ class AppFirstRuntimeBootstrapper
     // another exit in that country and must request/validate its own node.
     final normalizedPreferredNode = selectedCandidateRef.isEmpty
         ? preferredNodeCode.trim().toLowerCase()
-        : selectedCandidateRef.split(':').first;
+        : selectedCandidateRef == pokrovDirectWarpCandidateRef
+            ? '' : selectedCandidateRef.split(':').first;
     var requestPath = normalizedPreferredNode.isEmpty
         ? path
         : '$path${path.contains('?') ? '&' : '?'}selected_node_code=${Uri.encodeQueryComponent(normalizedPreferredNode)}';
@@ -6744,7 +6751,7 @@ class AppFirstRuntimeBootstrapper
       final query = <String, String>{
         'catalog_version': '1', 'client_platform': hostPlatform.name,
         'candidate_material_limit': '6',
-        'client_release': pokrovClientVersion,
+        'client_release': '$pokrovClientVersion+$pokrovClientBuildNumber',
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
         if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,
         if (selectedCandidateRef.isNotEmpty) 'selected_candidate_ref': selectedCandidateRef,
@@ -6795,7 +6802,7 @@ class AppFirstRuntimeBootstrapper
     final verifiedAt = DateTime.now().toUtc();
     final transportCatalog = response.containsKey('transport_catalog')
         ? decodeManagedTransportCatalog(response['transport_catalog'], platform: hostPlatform,
-            clientRelease: pokrovClientVersion, runtimeFeatures: runtimeFeatures,
+            clientRelease: '$pokrovClientVersion+$pokrovClientBuildNumber', runtimeFeatures: runtimeFeatures,
             coreRelease: coreRelease, requestedNodeCode: normalizedPreferredNode,
             requestedCandidateRef: selectedCandidateRef)
         : null;
@@ -6803,8 +6810,9 @@ class AppFirstRuntimeBootstrapper
       throw const TransportManifestFailure('transport_catalog_selection_mismatch');
     }
     if (preferredCountryCode.isNotEmpty &&
-        (transportCatalog == null || transportCatalog.selected.nodeCountryCode(
-            transportCatalog.candidates) != preferredCountryCode)) {
+        (transportCatalog == null || (transportCatalog.selected.warpMode != 'warp_direct' &&
+          transportCatalog.selected.nodeCountryCode(
+            transportCatalog.candidates) != preferredCountryCode))) {
       throw const TransportManifestFailure('transport_catalog_selection_mismatch');
     }
     if (transportCatalog != null &&
@@ -6849,9 +6857,17 @@ class AppFirstRuntimeBootstrapper
         'xhttp' => ('vless', 'xhttp', candidate.protection),
         'awg31' => ('awg', 'udp', 'awg31'),
         'hysteria2' => ('hysteria2', 'udp', 'tls'),
+        'warp_direct' => ('warp', 'udp', 'warp'),
         _ => ('', '', ''),
       }) {
         throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+      }
+      if (candidate?.warpMode == 'warp_direct') {
+        try {
+          validatePokrovDirectWarpProfile(raw);
+        } on Object {
+          throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+        }
       }
       if (candidate?.transport == 'xhttp') {
         try {
@@ -6944,6 +6960,7 @@ class AppFirstRuntimeBootstrapper
         origin: RuntimeProfileSourceOrigin.managedManifest,
         protocol: switch (kind) {
           'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
+          'warp_direct' => 'warp',
           'reality' || 'grpc' || 'xhttp' || 'ru_bridge' => 'vless',
           _ => 'unknown',
         },
@@ -6964,6 +6981,7 @@ class AppFirstRuntimeBootstrapper
         smartConnect: effectiveSmartConnect,
         supportContext: supportContext,
         clientRuleSetCatalog: clientRuleSetCatalog,
+        directWarp: candidate?.warpMode == 'warp_direct',
       ),
       materializedForRuntime: true,
       routeMode: routeMode,
@@ -6971,7 +6989,9 @@ class AppFirstRuntimeBootstrapper
       transportCatalog: transportCatalog,
       resolvedNodeCode: candidate?.nodeCode ?? effectivePreferredNode,
       materialCandidateRef: materialRef,
-      warpPolicy: warpPolicy,
+      warpPolicy: candidate?.warpMode == 'warp_direct'
+          ? pokrovDirectWarpPolicy(state.installId).withUserConsent(warpPolicy.userConsented)
+          : warpPolicy,
       freeProfileAccess: FreeProfileAccess.tryParse(
         access: response['access'],
         freeCaps: response['free_caps'],
@@ -6991,7 +7011,7 @@ class AppFirstRuntimeBootstrapper
         final admitted = transportCatalog.candidates.where((candidate) => candidate.candidateRef == ref).firstOrNull;
         if (admitted == null || bundled.containsKey(ref) ||
             (bundled.isEmpty && ref != transportCatalog.selectedCandidateRef) ||
-            (preferredCountryCode.isNotEmpty && admitted.nodeCountryCode(
+            (preferredCountryCode.isNotEmpty && admitted.warpMode != 'warp_direct' && admitted.nodeCountryCode(
                 transportCatalog.candidates) != preferredCountryCode)) {
           throw const TransportManifestFailure('transport_catalog_materials_mismatch');
         }
@@ -7056,6 +7076,7 @@ class AppFirstRuntimeBootstrapper
     required SmartConnectProfile? smartConnect,
     required Map<String, dynamic> supportContext,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
+    bool directWarp = false,
   }) async {
     if ((routeMode == RouteMode.selectedApps ||
             routeMode == RouteMode.excludedApps) &&
@@ -7116,6 +7137,7 @@ class AppFirstRuntimeBootstrapper
       selectedApps: selectedApps,
       supportContext: supportContext,
       clientRuleSetCatalog: clientRuleSetCatalog,
+      directWarp: directWarp,
     );
     _promotePreferredSmartConnectOutbound(
       config: runtimeConfig,
@@ -7619,6 +7641,7 @@ class AppFirstRuntimeBootstrapper
     required List<String> selectedApps,
     required Map<String, dynamic> supportContext,
     required _ClientRuleSetCatalog clientRuleSetCatalog,
+    bool directWarp = false,
   }) {
     final outbounds = _readListOfMaps(baseConfig['outbounds']);
     final endpoints = _readListOfMaps(baseConfig['endpoints']);
@@ -7652,6 +7675,8 @@ class AppFirstRuntimeBootstrapper
     final transportPathTags = <String>{
       ...proxyOutboundTags,
       ...awgEndpointTags,
+      // This blocked placeholder becomes WARP only after explicit consent.
+      if (directWarp) 'block',
     }.toList(growable: false);
     final selectorTag = _findOutboundTag(outbounds, 'selector');
     final urlTestTag = _findOutboundTag(outbounds, 'urltest');
@@ -7825,7 +7850,18 @@ class AppFirstRuntimeBootstrapper
     required List<String> awgEndpointTags,
   }) {
     if (awgEndpointTags.isNotEmpty) {
-      runtimeConfig['endpoints'] = endpoints;
+      final dnsResolver = _readText(_readMap(runtimeConfig['dns'])['final']);
+      runtimeConfig['endpoints'] = [
+        for (final endpoint in endpoints)
+          <String, dynamic>{
+            ...endpoint,
+            if (awgEndpointTags.contains(_readText(endpoint['tag'])))
+              'domain_resolver': <String, dynamic>{
+                'server': dnsResolver,
+                'strategy': 'ipv4_only',
+              },
+          },
+      ];
     } else if (!_readListOfMaps(runtimeConfig['outbounds']).any(
       (outbound) => _readText(outbound['type']).toLowerCase() == 'hysteria2',
     )) {

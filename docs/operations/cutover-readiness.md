@@ -66,10 +66,16 @@ awaited failed terminal report when recovery is exhausted. A superseded operatio
 cannot clear the newer attempt. Protected support events also include a separate
 runtime snapshot with closed phase, failure kind and stop reason at its observed
 read time; this is not a historical native event. Focused regressions passed.
-The final Android Core AAR contains all four ABIs; its x86_64 library and Java
-classes equal the diagnostic AAR used in this check. Windows Core and Cronet
-bytes are retained. Windows 4098 packaging and its ordinary check remain open,
-as does physical ARM acceptance; Brain still recommends public 1.4.5.
+The Android 4098 Core AAR contains all four ABIs; its x86_64 library and Java
+classes equal the diagnostic AAR used in this check. Windows 4098 passed an
+ordinary Auto CH after an upgrade: TUN, six routes, DNS, MTU 1280, owned HTTPS204
+and an exact 65536-byte response were verified. Ordinary disconnect removed its
+TUN and routes. A separate CH AWG connection failed at protected DNS before TUN;
+the exact installation's Brain telemetry confirmed AWG and the failure.
+Private 1.5.0+4099 pins Core 1.2.9 with explicit managed AWG DNS and retains the
+existing bootstrap behavior for endpoints without that option. Its changed
+AWG/DNS/WARP paths require ordinary VM acceptance. Physical ARM acceptance is
+deferred until the owner connects the phone; Brain still recommends public 1.4.5.
 The minimum supported version stays 1.3.0. No broadcast or LiveUpdate is planned.
 Private 1.4.8 failed profile preparation because its cached recovery had no optional
 catalog; the original online failure remains unknown. This candidate permits that

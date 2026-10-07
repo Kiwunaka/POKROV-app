@@ -31,9 +31,26 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
     if (rows is! List || rows.isEmpty || rows.length > 1024) throw const FormatException();
     final refs = <String>{};
     final candidates = <TransportCandidate>[];
+    int releaseCompare(String actual, String minimum) {
+      final actualParts = actual.split('+');
+      final minimumParts = minimum.split('+');
+      if (actualParts.length > 2 || minimumParts.length > 2) {
+        throw const TransportManifestFailure('transport_release_invalid');
+      }
+      final order = _transportReleaseCompare(actualParts.first, minimumParts.first);
+      if (order != 0 || minimumParts.length == 1) return order;
+      if (actualParts.length == 1) return -1;
+      final actualBuild = int.tryParse(actualParts.last);
+      final minimumBuild = int.tryParse(minimumParts.last);
+      if (actualBuild == null || minimumBuild == null || actualBuild < 0 || minimumBuild < 0) {
+        throw const TransportManifestFailure('transport_release_invalid');
+      }
+      return actualBuild.compareTo(minimumBuild);
+    }
     for (final raw in rows) {
       final item = _transportMap(raw);
       final warpMode = item['warp_mode'];
+      final warpDirect = warpMode == 'warp_direct';
       _keys(item, warpMode == null
           ? const {'candidate_ref', 'profile_ref', 'node_code', 'country_code',
               'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements'}
@@ -41,7 +58,8 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
               'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements', 'warp_mode'});
       final ref = text(item['candidate_ref'], refPattern, 128);
       final profile = text(item['profile_ref'], refPattern, 64);
-      final node = text(item['node_code'], refPattern, 64);
+      final node = warpDirect && item['node_code'] == ''
+          ? '' : text(item['node_code'], refPattern, 64);
       final country = text(item['country_code'], RegExp(r'^[A-Z]{2}$'), 2);
       final parameters = _transportMap(item['parameters']);
       final deliveryId = parameters['delivery_endpoint_id'];
@@ -58,12 +76,15 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
           throw const FormatException();
         }
       }
-      if (warpMode != null && !const {'proxy_over_warp', 'warp_over_proxy'}.contains(warpMode)) {
+      if (warpMode != null && !const {'proxy_over_warp', 'warp_over_proxy', 'warp_direct'}.contains(warpMode)) {
         throw const FormatException();
       }
       final endpointSuffix = deliveryId == null ? '' : ':endpoint_$deliveryId:$family:g$generation';
-      if (!refs.add(ref) || ref != '$node:$profile$endpointSuffix${warpMode == null ? '' : ':$warpMode'}' ||
-          (warpMode == 'warp_over_proxy' ? country != 'ZZ' : country == 'ZZ') ||
+      final expectedRef = warpDirect ? 'warp:warp_free:warp_direct'
+          : '$node:$profile$endpointSuffix${warpMode == null ? '' : ':$warpMode'}';
+      if (!refs.add(ref) || ref != expectedRef ||
+          (warpMode == 'warp_over_proxy' || warpDirect ? country != 'ZZ' : country == 'ZZ') ||
+          (warpDirect && (node.isNotEmpty || profile != 'warp_free' || deliveryId != null)) ||
           item['priority'] is! int ||
           (item['priority'] as int) < 0) throw const FormatException();
       final protocol = text(item['protocol'], refPattern, 32);
@@ -75,26 +96,34 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
             (transport == 'xhttp' && protection == 'reality'),
         'awg' => transport == 'udp' && protection == 'awg31',
         'hysteria2' => transport == 'udp' && protection == 'tls',
+        'warp' => warpDirect && transport == 'udp' && protection == 'warp',
         _ => false,
       };
-      if (!supported || (warpMode != null && protocol != 'vless')) throw const FormatException();
+      if (!supported || (warpMode != null && !warpDirect && protocol != 'vless')) throw const FormatException();
       if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
           !const {'', 'xtls-rprx-vision'}.contains(parameters['flow'])) throw const FormatException();
       if (transport == 'xhttp' && parameters['flow'] != '') throw const FormatException();
       final requirements = _transportMap(item['requirements']);
       _keys(requirements, const {'minimum_client_release', 'minimum_core_release', 'platforms', 'required_features'});
       final minimumClient = requirements['minimum_client_release'];
+      final minimumClientVersion = minimumClient is String ? minimumClient.split('+').first : '';
       final minimumCore = requirements['minimum_core_release'];
       final platformNames = requirements['platforms'];
       final featureNames = requirements['required_features'];
       if (minimumClient is! String || (minimumCore != null && minimumCore is! String) ||
-          platformNames is! List || platformNames.isEmpty || featureNames is! List || featureNames.isEmpty) {
+          platformNames is! List || platformNames.isEmpty || featureNames is! List ||
+          (featureNames.isEmpty && !warpDirect)) {
         throw const FormatException();
       }
-      if (warpMode != null && _transportReleaseCompare(minimumClient, '1.4.0') < 0) {
+      if (warpMode != null && _transportReleaseCompare(minimumClientVersion, '1.4.0') < 0) {
         throw const FormatException();
       }
-      if (deliveryId != null && _transportReleaseCompare(minimumClient, '1.5.0') < 0) {
+      if (deliveryId != null && _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
+        throw const FormatException();
+      }
+      if (warpDirect && (_transportReleaseCompare(minimumClientVersion, '1.5.0') < 0 ||
+          minimumCore == null || _transportReleaseCompare(minimumCore as String, '1.2.8') < 0 ||
+          parameters['network'] != 'udp' || parameters['flow'] != '')) {
         throw const FormatException();
       }
       final platforms = <HostPlatform>{};
@@ -110,6 +139,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       final candidateFeatures = switch (protocol) {
         'awg' => {RuntimeTransportFeature.awg31},
         'hysteria2' => {RuntimeTransportFeature.hysteria2},
+        'warp' => <RuntimeTransportFeature>{},
         _ => {RuntimeTransportFeature.vless, switch (transport) {
           'grpc' => RuntimeTransportFeature.grpc,
           'xhttp' => RuntimeTransportFeature.xhttp,
@@ -122,7 +152,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       }
       if (!features.containsAll(candidateFeatures)) throw const FormatException();
       if (!platforms.contains(platform) || !runtimeFeatures.containsAll(features) ||
-          _transportReleaseCompare(clientRelease, minimumClient) < 0 ||
+          releaseCompare(clientRelease, minimumClient) < 0 ||
           (minimumCore != null && (coreRelease == null ||
             _transportReleaseCompare(coreRelease, minimumCore) < 0))) {
         throw const TransportManifestFailure('transport_catalog_incompatible');
@@ -140,7 +170,8 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       selectedCandidateRef: selected, candidates: candidates);
     if (!refs.contains(selected) ||
         (requestedCandidateRef.isNotEmpty && selected != requestedCandidateRef) ||
-        (requestedNodeCode.isNotEmpty && catalog.selected.nodeCode != requestedNodeCode)) {
+        (requestedNodeCode.isNotEmpty && catalog.selected.nodeCode != requestedNodeCode &&
+          catalog.selected.warpMode != 'warp_direct')) {
       throw const TransportManifestFailure('transport_catalog_selection_mismatch');
     }
     return catalog;

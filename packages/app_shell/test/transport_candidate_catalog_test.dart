@@ -27,6 +27,26 @@ TransportCandidateCatalog parse(Map<String, Object?> value, {String node = '', S
       requestedNodeCode: node);
 
 void main() {
+  test('direct WARP has no node and requires the client that understands it', () {
+    final direct = candidate('', 'warp_free', protocol: 'warp', transport: 'udp',
+        protection: 'warp', features: [])
+      ..['candidate_ref'] = 'warp:warp_free:warp_direct'
+      ..['warp_mode'] = 'warp_direct'
+      ..['country_code'] = 'ZZ';
+    (direct['requirements'] as Map)['minimum_client_release'] = '1.5.0+4099';
+    (direct['requirements'] as Map)['minimum_core_release'] = '1.2.8';
+    final value = catalog([candidate('de', 'legacy_reality_fallback'), direct]);
+    final parsed = decodeManagedTransportCatalog(value, platform: HostPlatform.windows,
+      clientRelease: '1.5.0+4099', coreRelease: '1.2.9',
+      runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    expect(parsed.candidates.last.nodeCode, isEmpty);
+    expect(parsed.candidates.last.countryCode, 'ZZ');
+    expect(() => decodeManagedTransportCatalog(value, platform: HostPlatform.windows,
+      clientRelease: '1.5.0+4098', coreRelease: '1.2.9',
+      runtimeFeatures: RuntimeTransportFeature.values.toSet()),
+      throwsA(isA<TransportManifestFailure>().having((failure) => failure.code,
+        'code', 'transport_catalog_incompatible')));
+  });
   test('typed delivery candidates separate ingress family and address generation', () {
     Map<String, Object?> delivery(String family, int generation) {
       final row = candidate('de', 'legacy_reality_fallback');
