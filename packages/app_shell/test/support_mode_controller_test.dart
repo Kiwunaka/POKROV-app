@@ -170,7 +170,7 @@ void main() {
     expect(controller.view.active, isFalse);
 
     await controller.activate(fixture.activation, userConfirmed: true);
-    final prepared = PokrovDiagnosticsPresenter.fromRuntime(
+    PreparedSupportBundle prepare({bool stageLess = false}) => PokrovDiagnosticsPresenter.fromRuntime(
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.allExceptRu,
       snapshot: null,
@@ -206,8 +206,20 @@ void main() {
           probeStage: 'proxy_dial',
           durationMs: 777,
         ),
+        if (stageLess)
+          OperationalBreadcrumb(
+            eventId: '44444444-4444-4444-8444-444444444444',
+            occurredAtUtc: now,
+            name: 'app.connection.candidate_probe.finished',
+            outcome: ObservabilityOutcome.degraded,
+            errorCode: 'CONN-008',
+            generation: 1,
+            sequence: 3,
+            failureKind: 'unavailable',
+          ),
       ],
     ).preparedBundle;
+    final prepared = prepare();
     expect(prepared.preview.profile, SupportDiagnosticProfile.extended);
     expect(
       prepared.preview.files
@@ -224,6 +236,12 @@ void main() {
     final eventHash = await Sha256().hash(utf8.encode('$eventLines\n'));
     expect(prepared.preview.files.singleWhere((file) => file.path == 'events/recent.jsonl').sha256,
         eventHash.bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join());
+    final stageLessLines = '${jsonEncode(DiagnosticEventRecord(
+      occurredAt: now, subsystem: 'connection', stage: 'dns', outcome: 'failed', errorCode: 'DNS-002',
+    ).toJson())}\n';
+    final stageLessHash = await Sha256().hash(utf8.encode(stageLessLines));
+    expect(prepare(stageLess: true).preview.files.singleWhere((file) => file.path == 'events/recent.jsonl').sha256,
+        stageLessHash.bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join());
     expect(prepared.preview.files.map((file) => file.path),
         contains('system/summary.json'));
     expect(prepared.preview.files.map((file) => file.path),

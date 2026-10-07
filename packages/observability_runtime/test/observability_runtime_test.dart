@@ -250,13 +250,17 @@ void main() {
       );
       breadcrumbs.add(normal);
       breadcrumbs.add(fatal);
-      breadcrumbs.add(_event(3, attributes: const {'probe_stage': 'tls_read', 'duration_ms': 777}));
+      breadcrumbs.add(_event(3, attributes: const {
+        'probe_stage': 'tls_read', 'duration_ms': 777, 'failure_kind': 'tls_failed',
+      }));
       security.add(normal);
       security.add(fatal);
 
       expect(breadcrumbs.snapshot().map((item) => item.sequence), [2, 3]);
       expect(breadcrumbs.snapshot().first.probeStage, isNull);
+      expect(breadcrumbs.snapshot().first.failureKind, isNull);
       expect(breadcrumbs.snapshot().last.probeStage, 'tls_read');
+      expect(breadcrumbs.snapshot().last.failureKind, 'tls_failed');
       expect(breadcrumbs.snapshot().last.durationMs, 777);
       expect(security.snapshot().single.errorCode, 'SEC-002');
     });

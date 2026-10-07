@@ -168,10 +168,12 @@ final class PokrovDiagnosticTimelineAttempt {
     required this.isReconnect,
     required List<PokrovDiagnosticTimelineEntry> entries,
     this.probeStage,
+    this.probeFailureKind,
   }) : entries = List<PokrovDiagnosticTimelineEntry>.unmodifiable(entries);
 
   final int generation;
   final String? probeStage;
+  final String? probeFailureKind;
   final bool isReconnect;
   final List<PokrovDiagnosticTimelineEntry> entries;
 }
@@ -396,7 +398,8 @@ abstract final class PokrovDiagnosticsPresenter {
               ),
         ...candidateProbeEvents,
         // Android already supplies its bounded native candidate records.
-        if (hostPlatform == HostPlatform.windows && currentProbe != null)
+        if (hostPlatform == HostPlatform.windows && currentProbe != null &&
+            OperationalAttributePolicy.candidateProbeStages.contains(currentProbe.probeStage))
           DiagnosticEventRecord(
             occurredAt: currentProbe.occurredAtUtc,
             subsystem: 'candidate_probe',
@@ -501,6 +504,8 @@ abstract final class PokrovDiagnosticsPresenter {
       if (entries.length > 16) {
         entries.removeRange(0, entries.length - 16);
       }
+      final currentProbe = generation == generations.last
+          ? _candidateProbeForGeneration(breadcrumbs, generation) : null;
       attempts.add(
         PokrovDiagnosticTimelineAttempt(
           generation: generation,
@@ -508,8 +513,10 @@ abstract final class PokrovDiagnosticsPresenter {
             (item) => item.name == 'app.connection.rollback.started',
           ),
           entries: entries,
-          probeStage: generation == generations.last
-              ? _candidateProbeForGeneration(breadcrumbs, generation)?.probeStage : null,
+          probeStage: OperationalAttributePolicy.candidateProbeStages.contains(currentProbe?.probeStage)
+              ? currentProbe?.probeStage : null,
+          probeFailureKind: OperationalAttributePolicy.candidateProbeFailureKinds.contains(currentProbe?.failureKind)
+              ? currentProbe?.failureKind : null,
         ),
       );
     }
@@ -528,7 +535,7 @@ abstract final class PokrovDiagnosticsPresenter {
         latest = breadcrumb;
       }
     }
-    return OperationalAttributePolicy.candidateProbeStages.contains(latest?.probeStage) ? latest : null;
+    return latest;
   }
 
   static PokrovDiagnosticTimelineEntry _timelineEntry(
@@ -1579,6 +1586,11 @@ class _TimelineAttemptView extends StatelessWidget {
           Text(
             'Этап проверки кандидата: ${attempt.probeStage}',
             key: ValueKey('diagnostics-probe-stage-${attempt.generation}'),
+            style: theme.textTheme.bodySmall,
+          ),
+        if (attempt.probeFailureKind != null && attempt.probeFailureKind != 'none')
+          Text(
+            'Причина проверки кандидата: ${attempt.probeFailureKind}',
             style: theme.textTheme.bodySmall,
           ),
         const SizedBox(height: 10),

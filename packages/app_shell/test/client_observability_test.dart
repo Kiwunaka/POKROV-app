@@ -482,6 +482,15 @@ void main() {
     expect(recorded.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .where((value) => value['name'] == 'app.runtime.stats_delivery.finished')
         .single['stage'], 'complete');
+    await observability.runConnectionAction(() async {
+      observability.recordCandidateProbe(
+        failureKind: 'unavailable', duration: Duration.zero,
+      );
+    }, beginsWithDisconnect: false);
+    final stageLess = observability.dispatcher.breadcrumbs.snapshot()
+        .lastWhere((event) => event.name == 'app.connection.candidate_probe.finished');
+    expect(stageLess.failureKind, 'unavailable');
+    expect(stageLess.probeStage, isNull);
   });
 
   test('active app-first client emits correlation header and aggregate batch',

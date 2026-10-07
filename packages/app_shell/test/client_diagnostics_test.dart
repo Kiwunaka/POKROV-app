@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
@@ -336,9 +337,11 @@ void main() {
           errorCode: 'DNS-002',
         ),
         _breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 1,
-            sequence: 5, outcome: ObservabilityOutcome.degraded, probeStage: 'proxy_dial'),
+            sequence: 5, outcome: ObservabilityOutcome.degraded, probeStage: 'proxy_dial',
+            failureKind: 'probe_failed'),
         _breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 2,
-            sequence: 4, outcome: ObservabilityOutcome.degraded, probeStage: 'tls_read'),
+            sequence: 4, outcome: ObservabilityOutcome.degraded, probeStage: 'tls_read',
+            failureKind: 'tls_failed'),
         _breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 99,
             sequence: 1, outcome: ObservabilityOutcome.degraded, probeStage: 'http_64k'),
         ...later,
@@ -360,7 +363,9 @@ void main() {
     );
     expect(report.timelineAttempts.last.entries.last.errorCode, 'DNS-002');
     expect(report.timelineAttempts.first.probeStage, isNull);
+    expect(report.timelineAttempts.first.probeFailureKind, isNull);
     expect(report.timelineAttempts.last.probeStage, 'tls_read');
+    expect(report.timelineAttempts.last.probeFailureKind, 'tls_failed');
     expect(
       report.timelineAttempts
           .expand((attempt) => attempt.entries)
@@ -369,12 +374,19 @@ void main() {
       isNot(contains('private-host')),
     );
     later.add(_breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 2,
-        sequence: 5, outcome: ObservabilityOutcome.degraded, probeStage: 'unknown_phase'));
+        sequence: 5, outcome: ObservabilityOutcome.degraded, probeStage: 'unknown_phase',
+        failureKind: 'unknown_kind'));
     expect(project().timelineAttempts.last.probeStage, isNull);
+    expect(project().timelineAttempts.last.probeFailureKind, isNull);
+    later.add(_breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 2,
+        sequence: 6, outcome: ObservabilityOutcome.degraded, failureKind: 'network_changed'));
+    expect(project().timelineAttempts.last.probeStage, isNull);
+    expect(project().timelineAttempts.last.probeFailureKind, 'network_changed');
     later.add(_breadcrumb(name: 'app.connection.intent.received', generation: 3,
         sequence: 1, outcome: ObservabilityOutcome.started));
     expect(project().timelineAttempts.last.generation, 3);
     expect(project().timelineAttempts.last.probeStage, isNull);
+    expect(project().timelineAttempts.last.probeFailureKind, isNull);
   });
 
   testWidgets('screen renders catalog rule and sanitized safe actions',
@@ -465,6 +477,35 @@ void main() {
     );
     expect(find.text('Этап проверки кандидата: proxy_dial'), findsOneWidget);
     expect(find.byKey(const ValueKey('diagnostics-probe-stage-2')), findsOneWidget);
+    late PokrovDiagnosticsReport stageLess;
+    await tester.runAsync(() async {
+      final directory = await Directory.systemTemp.createTemp('pokrov-stage-less-');
+      addTearDown(() => directory.delete(recursive: true));
+      final observability = await PokrovClientObservability.start(
+        hostPlatform: HostPlatform.windows, directoryResolver: () async => directory,
+      );
+      await observability.runConnectionAction(() async {
+        observability.recordCandidateProbe(failureKind: 'unavailable', duration: Duration.zero);
+      }, beginsWithDisconnect: false);
+      await observability.flush();
+      stageLess = PokrovDiagnosticsPresenter.fromRuntime(
+        hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+        snapshot: null, statusLabel: 'Отключено', warpState: 'disabled', now: now,
+        appVersion: '1.5.0', buildNumber: '4103', releaseChannel: 'local',
+        candidateLabel: 'test-build', encryptedDeliveryAvailable: false,
+        timelineBreadcrumbs: observability.dispatcher.breadcrumbs.snapshot(),
+      );
+    });
+    await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
+      key: const ValueKey('stage-less-report'), initialReport: stageLess,
+      onRefresh: () async => stageLess, onOpenProtection: () {}, onOpenSupport: () {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('diagnostics-timeline')), 120,
+      scrollable: find.descendant(of: find.byKey(const ValueKey('diagnostics-scroll')),
+        matching: find.byType(Scrollable)).first);
+    expect(find.text('Причина проверки кандидата: unavailable'), findsOneWidget);
+    expect(stageLess.timelineAttempts.last.probeStage, isNull);
   });
 
   testWidgets('open diagnostics follows support usage and automatic expiry',
@@ -765,6 +806,7 @@ OperationalBreadcrumb _breadcrumb({
   required ObservabilityOutcome outcome,
   String? errorCode,
   String? probeStage,
+  String? failureKind,
 }) =>
     OperationalBreadcrumb(
       eventId: 'event-$generation-$sequence',
@@ -775,6 +817,7 @@ OperationalBreadcrumb _breadcrumb({
       generation: generation,
       sequence: sequence,
       probeStage: probeStage,
+      failureKind: failureKind,
     );
 
 RuntimeSnapshot _snapshot({

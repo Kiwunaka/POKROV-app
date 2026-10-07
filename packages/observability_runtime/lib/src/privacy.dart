@@ -10,6 +10,23 @@ abstract final class OperationalAttributePolicy {
     'tls_processing', 'tls_certificate_verified', 'tls_complete', 'http_204',
     'http_64k',
   };
+  static const candidateProbeFailureKinds = <String>{
+    'none',
+    'invalid_request',
+    'invalid_profile',
+    'unavailable',
+    'start_failed',
+    'probe_failed',
+    'probe_budget_expired',
+    'connect_failed',
+    'data_stalled',
+    'tls_failed',
+    'unexpected_status',
+    'timeout',
+    'cancelled',
+    'network_changed',
+    'duplicate_probe',
+  };
   static const _booleanKeys = <String>{
     'interface_ready',
     'routes_ready',
@@ -306,23 +323,7 @@ abstract final class OperationalAttributePolicy {
       'transport_https_required',
     },
     'probe_stage': candidateProbeStages,
-    'failure_kind': <String>{
-      'none',
-      'invalid_request',
-      'invalid_profile',
-      'unavailable',
-      'start_failed',
-      'probe_failed',
-      'probe_budget_expired',
-      'connect_failed',
-      'data_stalled',
-      'tls_failed',
-      'unexpected_status',
-      'timeout',
-      'cancelled',
-      'network_changed',
-      'duplicate_probe',
-    },
+    'failure_kind': candidateProbeFailureKinds,
   };
 
   static final _versionPattern = RegExp(

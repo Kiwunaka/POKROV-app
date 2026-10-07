@@ -177,6 +177,7 @@ final class OperationalBreadcrumb {
     required this.generation,
     required this.sequence,
     this.probeStage,
+    this.failureKind,
     this.durationMs,
   });
 
@@ -191,6 +192,8 @@ final class OperationalBreadcrumb {
         sequence: event.correlation.sequence,
         probeStage: OperationalAttributePolicy.candidateProbeStages.contains(event.attributes['probe_stage'])
             ? event.attributes['probe_stage'] as String : null,
+        failureKind: OperationalAttributePolicy.candidateProbeFailureKinds.contains(event.attributes['failure_kind'])
+            ? event.attributes['failure_kind'] as String : null,
         durationMs: event.attributes['duration_ms'] as int?,
       );
 
@@ -202,6 +205,7 @@ final class OperationalBreadcrumb {
   final int generation;
   final int sequence;
   final String? probeStage;
+  final String? failureKind;
   final int? durationMs;
 }
 

@@ -201,6 +201,11 @@ connection timeline, without enabling support mode. A previous generation's stag
 is not carried into a new attempt. With an already active signed support policy,
 Windows also exports the same stage and duration as an existing candidate event;
 Android retains its native candidate records. Support allowances are unchanged.
+The same current-attempt block also shows the existing closed `failure_kind`
+when a candidate result has no stage. Missing or unknown current results do not
+inherit an older reason. `unavailable` can cover bridge/admission/preparation
+failures and does not prove that native probing never ran. Signed export still
+requires a valid native stage; no result is fabricated from an absent event.
 They do not shorten a long probe to 30 seconds or extend its selection budget.
 Runtime stats preserve attempt numbers through 2147483647; connections after
 the hundredth attempt keep their own correlation within the same client run.
