@@ -517,6 +517,7 @@ final class PokrovClientObservability {
   void recordCandidateProbe({
     required String failureKind,
     required Duration duration,
+    String? probeStage,
   }) {
     _emitCurrent(
       name: 'app.connection.candidate_probe.finished',
@@ -529,6 +530,8 @@ final class PokrovClientObservability {
       attributes: <String, Object?>{
         'failure_kind': failureKind.isEmpty ? 'none' : failureKind,
         'duration_ms': duration.inMilliseconds.clamp(0, 3600000),
+        if (RuntimeCandidateProbeResult.probeStages.contains(probeStage))
+          'probe_stage': probeStage,
       },
     );
   }

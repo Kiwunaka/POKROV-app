@@ -2368,8 +2368,10 @@ class ConnectionManager extends ChangeNotifier {
               final checked = await _probeManagedCandidate(probing, probePayload, context: context, cancelled: stop,
                   timeout: timeout, generation: generation, requireCurrent: requireCurrent);
               return checked.success
-                  ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration)
-                  : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration);
+                  ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration,
+                      probeStage: checked.probeStage)
+                  : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration,
+                      probeStage: checked.probeStage);
             },
           );
           selectedCandidate = true;
@@ -2435,7 +2437,8 @@ class ConnectionManager extends ChangeNotifier {
       {String candidateVariant = ''}) {
     try {
       _observability?.recordCandidateProbe(
-          failureKind: result.failureKind, duration: result.duration);
+          failureKind: result.failureKind, duration: result.duration,
+          probeStage: result.probeStage);
     } on Object {
       // Diagnostic validation must not turn a working candidate into a failed connect.
     }
@@ -2474,7 +2477,8 @@ class ConnectionManager extends ChangeNotifier {
       requireCurrent();
       return stopped
           ? RuntimeCandidateProbeResult(success: false,
-              failureKind: 'cancelled', duration: receipt.duration)
+              failureKind: 'cancelled', duration: receipt.duration,
+              probeStage: receipt.probeStage)
           : receipt;
     } finally {
       settled = true;
@@ -2573,8 +2577,10 @@ class ConnectionManager extends ChangeNotifier {
                     context: context, cancelled: stop, timeout: timeout,
                     generation: generation, requireCurrent: requireCurrent);
                 return checked.success
-                    ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration)
-                    : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration);
+                    ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration,
+                        probeStage: checked.probeStage)
+                    : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration,
+                        probeStage: checked.probeStage);
               },
             );
             found = true;

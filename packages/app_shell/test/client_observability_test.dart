@@ -437,10 +437,22 @@ void main() {
       observability.recordCandidateProbe(
         failureKind: 'data_stalled',
         duration: const Duration(milliseconds: 2000),
+        probeStage: 'http_64k',
+      );
+      observability.recordCandidateProbe(
+        failureKind: 'connect_failed',
+        duration: const Duration(milliseconds: 777),
+        probeStage: 'proxy_dial',
+      );
+      observability.recordCandidateProbe(
+        failureKind: 'tls_failed',
+        duration: const Duration(milliseconds: 888),
+        probeStage: 'tls_read',
       );
       observability.recordCandidateProbe(
         failureKind: '',
         duration: const Duration(milliseconds: 737),
+        probeStage: 'unknown_phase',
       );
     }, beginsWithDisconnect: false);
     observability.recordRuntimeStatsDeliveryFailure(errorCode: 'API-002');
@@ -449,7 +461,7 @@ void main() {
     final events = observability.dispatcher.breadcrumbs.snapshot()
         .where((value) => value.name == 'app.connection.candidate_probe.finished')
         .toList();
-    expect(events, hasLength(3));
+    expect(events, hasLength(5));
     expect(events.last.outcome.wireValue, 'succeeded');
     expect(events.last.errorCode, isNull);
     final recorded = await File(
@@ -461,7 +473,10 @@ void main() {
         .toList();
     expect(probes.map((probe) =>
         (probe['attributes'] as Map<String, dynamic>)['failure_kind']),
-        ['probe_budget_expired', 'data_stalled', 'none']);
+        ['probe_budget_expired', 'data_stalled', 'connect_failed', 'tls_failed', 'none']);
+    expect(probes.map((probe) => (probe['attributes'] as Map)['probe_stage']),
+        [null, 'http_64k', 'proxy_dial', 'tls_read', null]);
+    expect(observability.dispatcher.snapshot().rejectedByPrivacy, 0);
     expect((probes.first['attributes'] as Map<String, dynamic>)['duration_ms'],
         134512);
     expect(recorded.map((line) => jsonDecode(line) as Map<String, dynamic>)

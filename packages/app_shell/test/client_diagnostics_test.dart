@@ -278,7 +278,8 @@ void main() {
   });
 
   test('phase timeline is bounded to closed events and marks reconnects', () {
-    final report = PokrovDiagnosticsPresenter.fromRuntime(
+    final later = <OperationalBreadcrumb>[];
+    PokrovDiagnosticsReport project() => PokrovDiagnosticsPresenter.fromRuntime(
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel,
       snapshot: _snapshot(),
@@ -334,8 +335,16 @@ void main() {
           outcome: ObservabilityOutcome.failed,
           errorCode: 'DNS-002',
         ),
+        _breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 1,
+            sequence: 5, outcome: ObservabilityOutcome.degraded, probeStage: 'proxy_dial'),
+        _breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 2,
+            sequence: 4, outcome: ObservabilityOutcome.degraded, probeStage: 'tls_read'),
+        _breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 99,
+            sequence: 1, outcome: ObservabilityOutcome.degraded, probeStage: 'http_64k'),
+        ...later,
       ],
     );
+    final report = project();
 
     expect(report.timelineAttempts, hasLength(2));
     expect(report.timelineAttempts.first.isReconnect, isFalse);
@@ -350,6 +359,8 @@ void main() {
       <String>['rollback', 'dns'],
     );
     expect(report.timelineAttempts.last.entries.last.errorCode, 'DNS-002');
+    expect(report.timelineAttempts.first.probeStage, isNull);
+    expect(report.timelineAttempts.last.probeStage, 'tls_read');
     expect(
       report.timelineAttempts
           .expand((attempt) => attempt.entries)
@@ -357,6 +368,13 @@ void main() {
           .join(' '),
       isNot(contains('private-host')),
     );
+    later.add(_breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 2,
+        sequence: 5, outcome: ObservabilityOutcome.degraded, probeStage: 'unknown_phase'));
+    expect(project().timelineAttempts.last.probeStage, isNull);
+    later.add(_breadcrumb(name: 'app.connection.intent.received', generation: 3,
+        sequence: 1, outcome: ObservabilityOutcome.started));
+    expect(project().timelineAttempts.last.generation, 3);
+    expect(project().timelineAttempts.last.probeStage, isNull);
   });
 
   testWidgets('screen renders catalog rule and sanitized safe actions',
@@ -389,6 +407,8 @@ void main() {
           outcome: ObservabilityOutcome.failed,
           errorCode: 'DNS-002',
         ),
+        _breadcrumb(name: 'app.connection.candidate_probe.finished', generation: 2,
+            sequence: 2, outcome: ObservabilityOutcome.degraded, probeStage: 'proxy_dial'),
       ],
     );
     await tester.pumpWidget(
@@ -443,6 +463,8 @@ void main() {
       find.byKey(const ValueKey('diagnostics-timeline-2-dns')),
       findsOneWidget,
     );
+    expect(find.text('Этап проверки кандидата: proxy_dial'), findsOneWidget);
+    expect(find.byKey(const ValueKey('diagnostics-probe-stage-2')), findsOneWidget);
   });
 
   testWidgets('open diagnostics follows support usage and automatic expiry',
@@ -742,6 +764,7 @@ OperationalBreadcrumb _breadcrumb({
   required int sequence,
   required ObservabilityOutcome outcome,
   String? errorCode,
+  String? probeStage,
 }) =>
     OperationalBreadcrumb(
       eventId: 'event-$generation-$sequence',
@@ -751,6 +774,7 @@ OperationalBreadcrumb _breadcrumb({
       errorCode: errorCode,
       generation: generation,
       sequence: sequence,
+      probeStage: probeStage,
     );
 
 RuntimeSnapshot _snapshot({

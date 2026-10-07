@@ -166,6 +166,35 @@ void main() {
     expect(result, RuntimeCandidateProbeResult.unavailable);
   });
 
+  test('candidate bridge retains closed native stages and accepts stage-less replies', () async {
+    Object? nativeStage;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'runtimeEngine.probeCandidate');
+      return jsonEncode({
+        'success': false,
+        'failure_kind': 'probe_failed',
+        'duration_ms': 777,
+        if (nativeStage != null) 'stage': nativeStage,
+      });
+    });
+    final runtime = MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.windows);
+    final stages = <String?>[];
+    for (final stage in ['proxy_dial', 'tls_read', 'unknown_phase', null]) {
+      nativeStage = stage;
+      final result = await runtime.probeCandidate(
+        probeId: 'candidate-stage',
+        payload: const ManagedProfilePayload(profileName: 'candidate', configPayload: '{}'),
+        timeout: const Duration(seconds: 3),
+        expectedNetworkContext: 'network-context',
+      );
+      expect(result.success, false);
+      expect(result.failureKind, 'probe_failed');
+      expect(result.duration, const Duration(milliseconds: 777));
+      stages.add(result.probeStage);
+    }
+    expect(stages, ['proxy_dial', 'tls_read', null, null]);
+  });
+
   test('candidate bridge preserves cellular carrier and Core data stall', () async {
     var carrier = ' Test Carrier ';
     messenger.setMockMethodCallHandler(channel, (call) async {

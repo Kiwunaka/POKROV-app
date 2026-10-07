@@ -195,6 +195,17 @@ void main() {
           generation: 1,
           sequence: 1,
         ),
+        OperationalBreadcrumb(
+          eventId: '33333333-3333-4333-8333-333333333333',
+          occurredAtUtc: now,
+          name: 'app.connection.candidate_probe.finished',
+          outcome: ObservabilityOutcome.degraded,
+          errorCode: 'CONN-008',
+          generation: 1,
+          sequence: 2,
+          probeStage: 'proxy_dial',
+          durationMs: 777,
+        ),
       ],
     ).preparedBundle;
     expect(prepared.preview.profile, SupportDiagnosticProfile.extended);
@@ -204,6 +215,15 @@ void main() {
           .size,
       greaterThan(0),
     );
+    final eventLines = [
+      DiagnosticEventRecord(occurredAt: now, subsystem: 'connection', stage: 'dns',
+          outcome: 'failed', errorCode: 'DNS-002'),
+      DiagnosticEventRecord(occurredAt: now, subsystem: 'candidate_probe', stage: 'proxy_dial',
+          outcome: 'failed', durationMs: 777),
+    ].map((event) => jsonEncode(event.toJson())).join('\n');
+    final eventHash = await Sha256().hash(utf8.encode('$eventLines\n'));
+    expect(prepared.preview.files.singleWhere((file) => file.path == 'events/recent.jsonl').sha256,
+        eventHash.bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join());
     expect(prepared.preview.files.map((file) => file.path),
         contains('system/summary.json'));
     expect(prepared.preview.files.map((file) => file.path),

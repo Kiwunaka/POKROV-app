@@ -187,6 +187,18 @@ Core `probe_failed` and `unexpected_status` are also remembered; a local timer
 reports `probe_budget_expired` and never suppresses a candidate.
 The local journal and runtime stats retain the measured probe duration, including
 time spent settling cancelled native work, up to the API limit of one hour.
+
+The existing `app.connection.candidate_probe.finished` event also retains the
+Core's last fixed phase as nullable `probe_stage`. Unknown phases and replies
+without a stage omit that attribute. `proxy_dial` separates HY2 establishment
+from a returned stream's TLS/HTTP work; `tls_read` can include the HY2 TCP response
+and does not by itself identify a certificate failure. No upstream error text is
+recorded, and candidate selection, failure kinds and probe budgets are unchanged.
+Ordinary Diagnostics shows that stage under the latest attempt in its existing
+connection timeline, without enabling support mode. A previous generation's stage
+is not carried into a new attempt. With an already active signed support policy,
+Windows also exports the same stage and duration as an existing candidate event;
+Android retains its native candidate records. Support allowances are unchanged.
 They do not shorten a long probe to 30 seconds or extend its selection budget.
 Runtime stats preserve attempt numbers through 2147483647; connections after
 the hundredth attempt keep their own correlation within the same client run.

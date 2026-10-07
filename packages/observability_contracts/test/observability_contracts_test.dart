@@ -78,8 +78,9 @@ void main() {
       ObservabilityPrivacyClass.serverSecurityAudit.wireValue,
       'server_security_audit',
     );
-    expect(ObservabilityAttributeKeys.allowed, hasLength(38));
+    expect(ObservabilityAttributeKeys.allowed, hasLength(41));
     expect(ObservabilityAttributeKeys.allowed, contains('failure_kind'));
+    expect(ObservabilityAttributeKeys.allowed, contains('probe_stage'));
     expect(ObservabilityAttributeKeys.allowed, contains('dns_ready'));
     expect(ObservabilityAttributeKeys.allowed, contains('selected_app_count'));
     expect(ObservabilityAttributeKeys.allowed, isNot(contains('destination')));

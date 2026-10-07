@@ -167,9 +167,11 @@ final class PokrovDiagnosticTimelineAttempt {
     required this.generation,
     required this.isReconnect,
     required List<PokrovDiagnosticTimelineEntry> entries,
+    this.probeStage,
   }) : entries = List<PokrovDiagnosticTimelineEntry>.unmodifiable(entries);
 
   final int generation;
+  final String? probeStage;
   final bool isReconnect;
   final List<PokrovDiagnosticTimelineEntry> entries;
 }
@@ -374,6 +376,9 @@ abstract final class PokrovDiagnosticsPresenter {
         PokrovDiagnosticMessageKey.awaitingEvidence,
       _ => PokrovDiagnosticMessageKey.noActiveAttempt,
     };
+    final timelineAttempts = _timelineAttempts(timelineBreadcrumbs);
+    final currentProbe = timelineAttempts.isEmpty ? null
+        : _candidateProbeForGeneration(timelineBreadcrumbs, timelineAttempts.last.generation);
     final events = <DiagnosticEventRecord>[
       if (supportModePolicy != null) ...[
         for (final breadcrumb in timelineBreadcrumbs)
@@ -390,6 +395,15 @@ abstract final class PokrovDiagnosticsPresenter {
                 errorCode: breadcrumb.errorCode,
               ),
         ...candidateProbeEvents,
+        // Android already supplies its bounded native candidate records.
+        if (hostPlatform == HostPlatform.windows && currentProbe != null)
+          DiagnosticEventRecord(
+            occurredAt: currentProbe.occurredAtUtc,
+            subsystem: 'candidate_probe',
+            stage: currentProbe.probeStage!,
+            outcome: currentProbe.outcome == ObservabilityOutcome.succeeded ? 'succeeded' : 'failed',
+            durationMs: currentProbe.durationMs,
+          ),
         // This is the time of the ordinary runtime read, not a past native event.
         if (snapshot != null && checkedAtUtc != null)
           DiagnosticEventRecord(
@@ -448,7 +462,7 @@ abstract final class PokrovDiagnosticsPresenter {
       crashDiagnosticsReady: crashDiagnosticsReady,
       candidateDiagnosticsReady: candidateDiagnosticsReady,
       safeActionKeys: problemBook?.safeActions ?? const <String>[],
-      timelineAttempts: _timelineAttempts(timelineBreadcrumbs),
+      timelineAttempts: timelineAttempts,
       releaseHealthBaseline: releaseHealthBaseline,
       problemBookId: problemBook?.id,
       errorCode: errorCode,
@@ -494,12 +508,27 @@ abstract final class PokrovDiagnosticsPresenter {
             (item) => item.name == 'app.connection.rollback.started',
           ),
           entries: entries,
+          probeStage: generation == generations.last
+              ? _candidateProbeForGeneration(breadcrumbs, generation)?.probeStage : null,
         ),
       );
     }
     return attempts.length <= 4
         ? attempts
         : attempts.sublist(attempts.length - 4);
+  }
+
+  static OperationalBreadcrumb? _candidateProbeForGeneration(
+      List<OperationalBreadcrumb> breadcrumbs, int generation) {
+    OperationalBreadcrumb? latest;
+    for (final breadcrumb in breadcrumbs) {
+      if (breadcrumb.generation == generation &&
+          breadcrumb.name == 'app.connection.candidate_probe.finished' &&
+          (latest == null || breadcrumb.sequence > latest.sequence)) {
+        latest = breadcrumb;
+      }
+    }
+    return OperationalAttributePolicy.candidateProbeStages.contains(latest?.probeStage) ? latest : null;
   }
 
   static PokrovDiagnosticTimelineEntry _timelineEntry(
@@ -1546,6 +1575,12 @@ class _TimelineAttemptView extends StatelessWidget {
               : 'Попытка #${attempt.generation}',
           style: theme.textTheme.labelLarge,
         ),
+        if (attempt.probeStage != null)
+          Text(
+            'Этап проверки кандидата: ${attempt.probeStage}',
+            key: ValueKey('diagnostics-probe-stage-${attempt.generation}'),
+            style: theme.textTheme.bodySmall,
+          ),
         const SizedBox(height: 10),
         for (var index = 0; index < attempt.entries.length; index++)
           _TimelineEntryRow(

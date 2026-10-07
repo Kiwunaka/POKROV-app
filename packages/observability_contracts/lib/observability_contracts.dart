@@ -100,6 +100,7 @@ abstract final class ObservabilityAttributeKeys {
     'permission_state',
     'phase',
     'prepare_reason',
+    'probe_stage',
     'queue_depth',
     'reason_class',
     'retention_days',

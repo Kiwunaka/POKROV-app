@@ -4,6 +4,12 @@ import 'package:crypto/crypto.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart';
 
 abstract final class OperationalAttributePolicy {
+  static const candidateProbeStages = <String>{
+    'parse_profile', 'create_instance', 'start_instance', 'select_outbound',
+    'proxy_dial', 'egress_check', 'tls_handshake', 'tls_read', 'tls_write',
+    'tls_processing', 'tls_certificate_verified', 'tls_complete', 'http_204',
+    'http_64k',
+  };
   static const _booleanKeys = <String>{
     'interface_ready',
     'routes_ready',
@@ -299,6 +305,7 @@ abstract final class OperationalAttributePolicy {
       'smart_access_verification_failed',
       'transport_https_required',
     },
+    'probe_stage': candidateProbeStages,
     'failure_kind': <String>{
       'none',
       'invalid_request',

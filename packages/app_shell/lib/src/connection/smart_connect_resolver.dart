@@ -5,13 +5,14 @@ typedef SmartConnectCandidateProbe = Future<SmartConnectCandidateProbeResult> Fu
 
 class SmartConnectCandidateProbeResult {
   const SmartConnectCandidateProbeResult.success(this.profile,
-      {this.duration = Duration.zero}) : failureKind = '';
+      {this.duration = Duration.zero, this.probeStage}) : failureKind = '';
   const SmartConnectCandidateProbeResult.failure(this.failureKind,
-      {this.duration = Duration.zero}) : profile = null;
+      {this.duration = Duration.zero, this.probeStage}) : profile = null;
 
   final ManagedProfilePayload? profile;
   final String failureKind;
   final Duration duration;
+  final String? probeStage;
 }
 
 class SmartConnectSelectionExhausted implements Exception {
@@ -240,7 +241,8 @@ class SmartConnectCandidateSelector {
       failures++;
       final failureKind = timedOut ? 'probe_budget_expired' : outcome?.failureKind ?? 'unavailable';
       final failed = SmartConnectCandidateProbeResult.failure(failureKind,
-          duration: outcome?.duration ?? probeClock.elapsed);
+          duration: outcome?.duration ?? probeClock.elapsed,
+          probeStage: outcome?.probeStage);
       onProbeResult?.call(candidate, failed);
       recordFailure(network, candidate.candidateRef, failureKind);
       if (candidate.network == 'udp' && _networkFailureKinds.contains(failureKind)) {

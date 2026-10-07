@@ -62,10 +62,19 @@ class RuntimeCandidateProbeResult {
     required this.success,
     required this.failureKind,
     required this.duration,
+    this.probeStage,
   });
   final bool success;
   final String failureKind;
   final Duration duration;
+  final String? probeStage;
+
+  static const probeStages = {
+    'parse_profile', 'create_instance', 'start_instance', 'select_outbound',
+    'proxy_dial', 'egress_check', 'tls_handshake', 'tls_read', 'tls_write',
+    'tls_processing', 'tls_certificate_verified', 'tls_complete', 'http_204',
+    'http_64k',
+  };
 
   static const unavailable = RuntimeCandidateProbeResult(
     success: false,
@@ -209,7 +218,9 @@ mixin _CandidateProbeChannel
     return RuntimeCandidateProbeResult(
         success: value['success'] as bool,
         failureKind: value['failure_kind'] as String,
-        duration: Duration(milliseconds: value['duration_ms'] as int));
+        duration: Duration(milliseconds: value['duration_ms'] as int),
+        probeStage: RuntimeCandidateProbeResult.probeStages.contains(value['stage'])
+            ? value['stage'] as String : null);
   }
 
   @override

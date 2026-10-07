@@ -176,6 +176,8 @@ final class OperationalBreadcrumb {
     required this.errorCode,
     required this.generation,
     required this.sequence,
+    this.probeStage,
+    this.durationMs,
   });
 
   factory OperationalBreadcrumb.fromEvent(OperationalEvent event) =>
@@ -187,6 +189,9 @@ final class OperationalBreadcrumb {
         errorCode: event.error?.code,
         generation: event.correlation.generation,
         sequence: event.correlation.sequence,
+        probeStage: OperationalAttributePolicy.candidateProbeStages.contains(event.attributes['probe_stage'])
+            ? event.attributes['probe_stage'] as String : null,
+        durationMs: event.attributes['duration_ms'] as int?,
       );
 
   final String eventId;
@@ -196,6 +201,8 @@ final class OperationalBreadcrumb {
   final String? errorCode;
   final int generation;
   final int sequence;
+  final String? probeStage;
+  final int? durationMs;
 }
 
 final class OperationalBreadcrumbRing {

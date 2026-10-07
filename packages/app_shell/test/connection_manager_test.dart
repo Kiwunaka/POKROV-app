@@ -276,6 +276,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   Completer<RuntimeCandidateNetwork>? nextNetworkRead;
   final networkReadEntered = Completer<void>();
   final probeContexts = <String>[];
+  final probeStages = <String, String>{};
 
   @override
   Future<RuntimeNetworkStatusObservation> readNetworkAvailability() async => RuntimeNetworkStatusObservation(
@@ -322,7 +323,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     activeProbes.remove(probeId);
     final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol) &&
         !failedProbeProfiles.contains(payload.profileName);
-    return RuntimeCandidateProbeResult(success: success, failureKind: success ? '' : 'cancelled', duration: probeDuration);
+    return RuntimeCandidateProbeResult(success: success, failureKind: success ? '' : 'cancelled',
+        duration: probeDuration, probeStage: probeStages[payload.profileName]);
   }
   @override
   Future<void> cancelCandidateProbe(String probeId) async {
@@ -1138,7 +1140,9 @@ void main() {
       ..gate = profileGate;
     final runtime = _Runtime()
       ..supportsCandidates = true
-      ..failedProbeProfiles.addAll(bootstrapper.candidates.map((item) => item.candidateRef));
+      ..failedProbeProfiles.addAll(bootstrapper.candidates.map((item) => item.candidateRef))
+      ..probeStages[bootstrapper.candidates.first.candidateRef] = 'proxy_dial'
+      ..probeStages[bootstrapper.candidates.last.candidateRef] = 'tls_read';
     var permissionRequests = 0;
     final experienceStore = _ExperienceStore();
     final manager = _manager(runtime, bootstrapper, observability: observability,
@@ -1169,6 +1173,10 @@ void main() {
     final events = await File(
       '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
     ).readAsLines();
+    final probes = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
+        .where((event) => event['name'] == 'app.connection.candidate_probe.finished');
+    expect(probes.map((event) => (event['attributes'] as Map)['probe_stage']),
+        unorderedEquals(['proxy_dial', 'tls_read']));
     final terminal = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .singleWhere((event) => event['name'] == 'app.connection.attempt.finished');
     expect(terminal['error'], {'code': 'CONN-008', 'origin': 'core'});
