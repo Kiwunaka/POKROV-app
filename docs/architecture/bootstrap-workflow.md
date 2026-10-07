@@ -190,6 +190,12 @@ time spent settling cancelled native work, up to the API limit of one hour.
 They do not shorten a long probe to 30 seconds or extend its selection budget.
 Runtime stats preserve attempt numbers through 2147483647; connections after
 the hundredth attempt keep their own correlation within the same client run.
+Native causes and material sources belong to the attempt whose Stage, Connect,
+or Stop returned that snapshot. A new attempt failing during preparation reports
+its current closed error and probe batch with unknown connectivity; it cannot
+inherit the previous attempt's native failure or material. Idle native evidence
+remains available without attributing it to that new attempt, and an owned Stop
+keeps its cleanup proof.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
 The local probe budget and Core data-stall kinds are valid journal values;

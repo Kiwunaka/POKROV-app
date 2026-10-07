@@ -10,6 +10,7 @@ import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
+import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
@@ -207,6 +208,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     runtimeCalls.add({'runtime_phase': runtimePhase, 'error_code': errorCode});
     actualReports.add({'runtime_phase': runtimePhase, 'duration_ms': durationMs,
       'attempt_number': attemptNumber, 'error_code': errorCode, 'retryable': retryable,
+      'failure_kind': failureKind, 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
       'native_kind': connectivitySnapshot?.lastFailureKind,
       'candidate_ref': candidateRef, 'candidate_variant': candidateVariant,
       'selected_node_code': selectedNodeCode});
@@ -253,6 +255,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   String? failedHandoffProfile;
   bool declineNextHandoff = false;
   bool failFirstActivation = false;
+  String activationFailureKind = 'core_egress_timeout';
+  RuntimeProfileSource? profileSource;
   Object? connectFailure;
   bool restoredHandoffGuard = false;
   final probeRelease = Completer<void>();
@@ -389,6 +393,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         canConnect: phase.index >= RuntimePhase.configStaged.index,
         message: '',
         lastStopReason: lastStopReason,
+        fetchedProfileSource: profileSource,
+        stagedProfileSource: profileSource,
         transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady
             ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
                 'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
@@ -410,7 +416,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         coreEgressValidationRequired: true,
         lastFailureKind: failedHandoffProfile != null && warpEgressFailure && phase == RuntimePhase.configStaged
             ? 'core_egress_dns_failed' : failFirstActivation && connectCalls == 1 && phase == RuntimePhase.configStaged
-            ? 'core_egress_timeout' : restoredHandoffGuard ? 'protected_handoff_failed' : phase == RuntimePhase.running &&
+            ? activationFailureKind : restoredHandoffGuard ? 'protected_handoff_failed' : phase == RuntimePhase.running &&
                 warpEgressFailure &&
                 !pendingFirstEgress
             ? 'core_egress_probe_failed'
@@ -1727,13 +1733,19 @@ void main() {
   });
 
   test('failed first activation and exhausted recovery report one terminal attempt', () async {
+    final awg = _CachedBootstrapper.alternatives[1];
+    final hy2 = _CachedBootstrapper.alternatives[2];
     final profileGate = Completer<void>();
     final reportGate = Completer<void>();
     final bootstrapper = _StatsBootstrapper()
-      ..candidates = [_candidates.first]
+      ..candidates = [awg, hy2]
       ..gate = profileGate
       ..failedReportGate = reportGate;
-    final runtime = _Runtime()..supportsCandidates = true..failFirstActivation = true;
+    final runtime = _Runtime()..supportsCandidates = true..failFirstActivation = true
+      ..activationFailureKind = 'core_egress_dns_failed'
+      ..profileSource = RuntimeProfileSource(revision: 'old-awg',
+          origin: RuntimeProfileSourceOrigin.values.first, protocol: 'awg31')
+      ..failedProbeProfiles.add(hy2.candidateRef);
     final manager = _manager(runtime, bootstrapper);
     addTearDown(() {
       if (!profileGate.isCompleted) profileGate.complete();
@@ -1754,8 +1766,10 @@ void main() {
     expect(failed['error_code'], 'CONN-008');
     expect(failed['attempt_number'], 1);
     expect(failed['duration_ms'], greaterThanOrEqualTo(25));
-    expect(failed['candidate_ref'], _candidates.first.candidateRef);
-    expect(failed['native_kind'], 'core_egress_timeout');
+    expect(failed['candidate_ref'], awg.candidateRef);
+    expect(failed['native_kind'], 'core_egress_dns_failed',
+        reason: 'recovery of the same attempt keeps its own native failure');
+    expect((failed['connectivity'] as Map)['staged_protocol'], 'awg31');
     expect(failed['retryable'], isTrue);
     expect(runtime.connectCalls, 1);
     expect(manager.busy, isTrue, reason: 'recovery awaits terminal stats before finishing the attempt');
@@ -1764,14 +1778,42 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
     expect(manager.busy, isFalse);
+    bootstrapper.failedReportGate = null;
+    await manager.setInterfaceMode(PokrovInterfaceMode.advanced);
+    await manager.setPreferredCandidate(hy2.candidateRef);
+    await manager.connect();
+    final freshFailure = bootstrapper.actualReports.singleWhere((report) =>
+        report['runtime_phase'] == 'failed' && report['attempt_number'] == 2);
+    expect(freshFailure['error_code'], 'CONN-008');
+    expect(freshFailure['failure_kind'], 'candidate_selection_exhausted');
+    expect(freshFailure['native_kind'], isNull);
+    expect(freshFailure['connectivity'], {'proof_stage': 'unknown'},
+        reason: 'a failed pre-stage HY2 probe cannot adopt the old AWG material');
+    expect(freshFailure['selected_node_code'], isEmpty);
+    expect(runtime.connectCalls, 1);
+    expect(bootstrapper.actualReports.singleWhere((report) =>
+        report['runtime_phase'] == 'connect_requested' && report['attempt_number'] == 2)
+        ['connectivity'], {'proof_stage': 'unknown'});
+    expect(manager.snapshot?.lastFailureKind, 'core_egress_dns_failed',
+        reason: 'the native evidence is retained, only report attribution changes');
     runtime.failFirstActivation = false;
+    runtime.failedProbeProfiles.clear();
+    runtime.profileSource = RuntimeProfileSource(revision: 'new-hy2',
+        origin: RuntimeProfileSourceOrigin.values.first, protocol: 'hysteria2');
     await manager.refresh();
-    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed'), hasLength(1));
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed'), hasLength(2));
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
-    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed'), hasLength(1));
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed'), hasLength(2));
     expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'connect_requested')
-        .map((report) => report['attempt_number']), [1, 2]);
+        .map((report) => report['attempt_number']), [1, 2, 3]);
+    bootstrapper.actualReports.clear();
+    await manager.disconnect();
+    await manager.refresh();
+    final stopped = bootstrapper.actualReports.lastWhere((report) =>
+        report['runtime_phase'] == 'runtime_observed');
+    expect((stopped['connectivity'] as Map)['proof_stage'], 'not_running',
+        reason: 'the owned Stop response remains valid runtime evidence');
   });
 
   test('retry after UI restart preserves a guard without in-memory candidate state', () async {

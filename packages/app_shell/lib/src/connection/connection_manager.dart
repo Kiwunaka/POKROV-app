@@ -694,6 +694,7 @@ class ConnectionManager extends ChangeNotifier {
   String _stagedNodeCode = '';
   String _stagedVariantId = 'direct';
   ({int generation, String candidateRef, String variant})? _stagedCandidateVariant;
+  int _runtimeStatsSnapshotAttempt = 0;
   String _stagedTcpFallbackFromRevision = '';
   String _tcpFallbackFromRevision = '';
   String _activeNodeCode = '';
@@ -874,14 +875,19 @@ class ConnectionManager extends ChangeNotifier {
     String phase, {
     bool connected = false,
     String errorCode = '',
+    String failureKind = '',
     bool? retryable,
   }) async {
     final service = _experienceService;
     if (service == null) {
       return;
     }
+    final currentSnapshot = _runtimeStatsSnapshotAttempt == _connectionAttemptNumber;
+    final attemptReport = const {'connect_requested', 'failed'}.contains(phase) ||
+        (phase == 'runtime_observed' && _connectionCoordinator.actionInFlight);
+    final snapshot = attemptReport && !currentSnapshot ? null : _runtimeSnapshot;
     final proven = connected ||
-        (phase == 'runtime_observed' && _runtimeSnapshot?.isCleanlyHealthy == true);
+        (phase == 'runtime_observed' && snapshot?.isCleanlyHealthy == true);
     final reports = phase == 'failed' || proven
         ? _pendingCandidateProbeReports() : const <Map<String, Object?>>[];
     if (reports.isNotEmpty) _candidateProbeReportInFlight = true;
@@ -894,17 +900,19 @@ class ConnectionManager extends ChangeNotifier {
         hostPlatform: _appContext.hostPlatform,
         runtimePhase: phase,
         connected: proven,
-        connectivitySnapshot: _runtimeSnapshot,
+        connectivitySnapshot: snapshot,
         errorCode: errorCode,
+        failureKind: failureKind,
         selectedNodeCode: const {'warp_over_proxy', 'warp_direct'}.contains(materialCandidate?.warpMode)
             ? ''
-            : candidate?.nodeCode ?? (_activeNodeCode.isNotEmpty
+            : candidate?.nodeCode ?? (snapshot == null ? '' : _activeNodeCode.isNotEmpty
                 ? _activeNodeCode
                 : _resolvedProfileNodeCode),
         routeMode: _selectedRouteMode.name,
         durationMs: _connectionAttemptDurationMs(),
         attemptNumber:
-            _connectionAttemptNumber > 0 ? _connectionAttemptNumber : null,
+            _connectionAttemptNumber > 0 && (attemptReport || currentSnapshot)
+                ? _connectionAttemptNumber : null,
         retryable: retryable,
         networkClass: _candidateNetworkClass ?? '',
         carrierMccMnc: _candidateCarrierMccMnc ?? '',
@@ -928,10 +936,11 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> _reportClientRuntimeError(String errorCode) =>
+  Future<void> _reportClientRuntimeError(String errorCode, {String failureKind = ''}) =>
       _reportClientLifecycle(
         'failed',
         errorCode: errorCode,
+        failureKind: failureKind,
         retryable: errorCode != 'redeem_failed',
       );
 
@@ -1771,13 +1780,14 @@ class ConnectionManager extends ChangeNotifier {
     final engine = _runtimeEngine;
     final generation =
         ownerGeneration ?? _connectionCoordinator.operationGeneration;
+    final attempt = _connectionAttemptNumber;
     final RuntimeConnectCancellation? cancellation =
         engine is RuntimeConnectCancellation
             ? engine as RuntimeConnectCancellation
             : null;
     String? startedRequest;
     try {
-      return await _connectionCoordinator.runWithTimeout(
+      final result = await _connectionCoordinator.runWithTimeout(
         operation,
         () {
           final previous = cancellation?.activeConnectRequestId;
@@ -1812,6 +1822,12 @@ class ConnectionManager extends ChangeNotifier {
         hostOwnsTimeout: _appContext.hostPlatform == HostPlatform.linux ||
             _appContext.hostPlatform == HostPlatform.windows,
       );
+      if (_nativeMutationOperations.contains(operation) &&
+          !const {'initialize', 'repairInitialize'}.contains(operation) &&
+          result is RuntimeSnapshot) {
+        _runtimeStatsSnapshotAttempt = attempt;
+      }
+      return result;
     } on Object catch (error) {
       if (error is TimeoutException || error is ConnectionOperationSuperseded) {
         await _cancelOwnedConnect(cancellation, startedRequest);
@@ -3591,6 +3607,7 @@ class ConnectionManager extends ChangeNotifier {
             smartAccessVpnFallback: smartAccessVpnFallback);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation))
           return;
+        _runtimeStatsSnapshotAttempt = _connectionAttemptNumber;
         _finishAndroidVpnPermission(proven);
         _update(() {
           _runtimeSnapshot = proven;
@@ -3977,7 +3994,9 @@ class ConnectionManager extends ChangeNotifier {
         _activePhase = ConnectionPhase.actionRequired;
         _runtimeHeadline = offlineMessage ?? error.message;
       });
-      unawaited(_reportClientRuntimeError(error.operationalErrorCode));
+      unawaited(_reportClientRuntimeError(error.operationalErrorCode,
+          failureKind: _runtimeStatsSnapshotAttempt == _connectionAttemptNumber
+              ? '' : error.apiFailureKind ?? error.code));
       _notify(error.message, tone: PokrovSnackTone.danger);
     } on Object catch (error, stack) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;
@@ -4002,7 +4021,8 @@ class ConnectionManager extends ChangeNotifier {
         detail: _unexpectedConnectionDiagnostic(failureOperation, error, stack),
         tone: PokrovProtectionEventTone.error,
       );
-      unawaited(_reportClientRuntimeError('connect_unexpected'));
+      unawaited(_reportClientRuntimeError('connect_unexpected',
+          failureKind: 'connect_unexpected'));
       _notify(message, tone: PokrovSnackTone.danger);
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
