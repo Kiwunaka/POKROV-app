@@ -509,6 +509,10 @@ proof. Ordinary polling never renews it; unhealthy state or changed effective
 content clears it. Attaching to an already healthy service leaves the time
 unknown. Protocol data missing from an older cache is reported as unknown.
 
+Runtime reports identify the current material candidate's node before any
+previous active or resolved node. Direct WARP and WARP after a node leave
+`selected_node_code` empty because their exit has no delivery-node identity.
+
 If restart or a final journal-write failure leaves the transaction at
 `recovered`, retry clears the saved network snapshot in the atomic `clean`
 commit. A failed write retains the `recovered` checkpoint and its snapshot for

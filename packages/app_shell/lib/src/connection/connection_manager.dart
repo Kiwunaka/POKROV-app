@@ -866,11 +866,11 @@ class ConnectionManager extends ChangeNotifier {
         connected: proven,
         connectivitySnapshot: _runtimeSnapshot,
         errorCode: errorCode,
-        selectedNodeCode: materialCandidate?.warpMode == 'warp_over_proxy'
+        selectedNodeCode: const {'warp_over_proxy', 'warp_direct'}.contains(materialCandidate?.warpMode)
             ? ''
-            : _activeNodeCode.isNotEmpty
+            : candidate?.nodeCode ?? (_activeNodeCode.isNotEmpty
                 ? _activeNodeCode
-                : _resolvedProfileNodeCode,
+                : _resolvedProfileNodeCode),
         routeMode: _selectedRouteMode.name,
         durationMs: _connectionAttemptDurationMs(),
         attemptNumber:
@@ -4125,11 +4125,11 @@ class ConnectionManager extends ChangeNotifier {
         runtimePhase: snapshot.phase.name,
         connected: snapshot.phase == RuntimePhase.running,
         connectivitySnapshot: snapshot,
-        selectedNodeCode: materialCandidate?.warpMode == 'warp_over_proxy'
+        selectedNodeCode: const {'warp_over_proxy', 'warp_direct'}.contains(materialCandidate?.warpMode)
             ? ''
-            : _activeNodeCode.isNotEmpty
+            : candidate?.nodeCode ?? (_activeNodeCode.isNotEmpty
                 ? _activeNodeCode
-                : _resolvedProfileNodeCode,
+                : _resolvedProfileNodeCode),
         routeMode: _selectedRouteMode.name,
         durationMs: attemptDurationMs,
         attemptNumber:

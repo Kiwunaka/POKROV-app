@@ -200,7 +200,8 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     actualReports.add({'runtime_phase': runtimePhase, 'duration_ms': durationMs,
       'attempt_number': attemptNumber, 'error_code': errorCode, 'retryable': retryable,
       'native_kind': connectivitySnapshot?.lastFailureKind,
-      'candidate_ref': candidateRef, 'candidate_variant': candidateVariant});
+      'candidate_ref': candidateRef, 'candidate_variant': candidateVariant,
+      'selected_node_code': selectedNodeCode});
     if (runtimePhase == 'running') await runningReportGate?.future;
     if (runtimePhase == 'failed') await failedReportGate?.future;
     if (runtimePhase == 'running' && failFirstRunningReport) {
@@ -1047,12 +1048,26 @@ void main() {
     expect(probes.map((item) => item['candidate_variant']), everyElement('ru-spb'));
     await manager.disconnect();
     bootstrapper.materialConfigPayload = null;
-    await manager.setPreferredLocation('de', 'direct');
+    final awg = TransportCandidate(candidateRef: 'ch:awg31_lab', profileRef: 'awg31_lab',
+      nodeCode: 'ch', countryCode: 'CH', protocol: 'awg', transport: 'udp',
+      protection: 'awg31', priority: 0, network: 'udp', flow: '',
+      minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: const {});
+    bootstrapper.candidates = [awg];
+    manager.updateLocationsCatalog(ClientLocationsCatalog.fromJson({
+      'countries': [{'code': 'CH', 'country': 'Switzerland', 'cities': [
+        {'code': 'ch', 'city': 'Zurich', 'variants': [{'id': 'direct', 'label': 'Direct'}]},
+      ]}],
+    }));
+    await manager.setPreferredLocation('ch', 'direct');
     bootstrapper.actualReports.clear();
     runtime.connectFailure = StateError('new direct activation failed');
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.actionRequired);
-    expect(bootstrapper.actualReports.singleWhere((report) => report['runtime_phase'] == 'failed')['candidate_variant'],
+    final failed = bootstrapper.actualReports.singleWhere((report) => report['runtime_phase'] == 'failed');
+    expect(failed['candidate_ref'], awg.candidateRef);
+    expect(failed['selected_node_code'], 'ch', reason: 'the attempted candidate replaces the previous active DE node in telemetry');
+    expect(failed['candidate_variant'],
         isEmpty, reason: 'the new direct material must not inherit the previous active bridge');
   });
 
