@@ -512,6 +512,9 @@ unknown. Protocol data missing from an older cache is reported as unknown.
 Runtime reports identify the current material candidate's node before any
 previous active or resolved node. Direct WARP and WARP after a node leave
 `selected_node_code` empty because their exit has no delivery-node identity.
+Direct WARP probe reports use transport `warp` and the exact
+`warp:warp_free:warp_direct` candidate reference, retaining their own outcome
+and duration in the ordinary report batch.
 
 If restart or a final journal-write failure leaves the transaction at
 `recovered`, retry clears the saved network snapshot in the atomic `clean`

@@ -2183,6 +2183,8 @@ void main() {
         {'candidate_ref': 'de:xhttp', 'candidate_transport': 'xhttp_reality',
           'candidate_variant': 'direct',
           'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 300},
+        {'candidate_ref': 'warp:warp_free:warp_direct', 'candidate_transport': 'warp',
+          'stage': 'probe', 'connected': true, 'duration_ms': 321},
       ],
     );
     await bootstrapper.reportRuntimeStats(
@@ -2191,6 +2193,8 @@ void main() {
       connected: false,
       errorCode: 'connect_failed',
       connectivitySnapshot: failedSnapshot,
+      candidateTransport: 'warp',
+      candidateRef: 'warp:warp_free:warp_direct',
       networkClass: 'wifi',
       accessNetworkAsn: 'AS12345',
     );
@@ -2293,6 +2297,8 @@ void main() {
             'stage': 'probe', 'connected': false, 'failure_kind': 'data_stalled', 'duration_ms': 134512},
           {'candidate_ref': 'de:xhttp', 'candidate_transport': 'xhttp_reality',
             'stage': 'probe', 'connected': true, 'duration_ms': 300},
+          {'candidate_ref': 'warp:warp_free:warp_direct', 'candidate_transport': 'warp',
+            'stage': 'probe', 'connected': true, 'duration_ms': 321},
         ],
       },
       <String, Object?>{
@@ -2301,6 +2307,8 @@ void main() {
         'build_number': const String.fromEnvironment('POKROV_BUILD_NUMBER', defaultValue: '0'),
         'error_code': 'connect_failed',
         'failure_kind': 'core_egress_timeout',
+        'candidate_transport': 'warp',
+        'candidate_ref': 'warp:warp_free:warp_direct',
         'network_class': 'wifi',
         'access_network_asn': 'AS12345',
         'report_run_id': reportRunId,

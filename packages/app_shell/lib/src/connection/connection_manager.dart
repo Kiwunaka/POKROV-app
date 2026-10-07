@@ -786,6 +786,7 @@ class ConnectionManager extends ChangeNotifier {
 
   String _candidateTransport(domain.TransportCandidate? candidate) {
     if (candidate == null) return '';
+    if (candidate.protocol == 'warp' && candidate.warpMode == 'warp_direct') return 'warp';
     if (candidate.protocol == 'vless') {
       if (candidate.transport == 'tcp' && candidate.protection == 'reality') return 'vless_reality';
       if (candidate.transport == 'grpc' && candidate.protection == 'tls') return 'vless_grpc_tls';

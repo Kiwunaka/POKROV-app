@@ -4134,7 +4134,7 @@ class AppFirstRuntimeBootstrapper
       if (ref is! String || transport is! String || stage != 'probe' || outcome is! bool ||
           duration is! int || !RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(ref) ||
           !const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-            'xhttp_tls', 'hysteria2', 'awg31'}.contains(transport)) continue;
+            'xhttp_tls', 'hysteria2', 'awg31', 'warp'}.contains(transport)) continue;
       if (!outcome && (failure is! String ||
           !RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(failure))) continue;
       safeCandidateProbes.add({
@@ -4191,7 +4191,7 @@ class AppFirstRuntimeBootstrapper
             !RegExp(r'[\x00-\x1f\x7f]').hasMatch(safeCarrierName))
           'carrier_name': safeCarrierName,
         if (const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-          'xhttp_tls', 'hysteria2', 'awg31'}.contains(safeCandidateTransport))
+          'xhttp_tls', 'hysteria2', 'awg31', 'warp'}.contains(safeCandidateTransport))
           'candidate_transport': safeCandidateTransport,
         if (RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(safeCandidateRef))
           'candidate_ref': safeCandidateRef,

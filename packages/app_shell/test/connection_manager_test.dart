@@ -176,7 +176,8 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
 }
 
 class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceService {
-  _StatsBootstrapper() : super(catalog: true);
+  _StatsBootstrapper({bool warpEnabled = false, bool bundle = false})
+      : super(catalog: true, warpEnabled: warpEnabled, bundle: bundle);
   final reports = <Map<String, Object?>>[];
   final runtimeCalls = <Map<String, Object?>>[];
   bool failFirstRunningReport = false;
@@ -227,6 +228,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final String? heldOperation;
   bool supportsCandidates = false;
   Duration probeDelay = Duration.zero;
+  Duration probeDuration = Duration.zero;
   final probeTimeouts = <Duration>[];
   String? coreVersion;
   bool holdProbes = false;
@@ -308,7 +310,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     activeProbes.remove(probeId);
     final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol) &&
         !failedProbeProfiles.contains(payload.profileName);
-    return RuntimeCandidateProbeResult(success: success, failureKind: success ? '' : 'cancelled', duration: Duration.zero);
+    return RuntimeCandidateProbeResult(success: success, failureKind: success ? '' : 'cancelled', duration: probeDuration);
   }
   @override
   Future<void> cancelCandidateProbe(String probeId) async {
@@ -1127,9 +1129,16 @@ void main() {
   });
 
   test('proven Windows connection retries a probe batch after stats delivery fails', () async {
-    final bootstrapper = _StatsBootstrapper()..failFirstRunningReport = true;
+    final direct = TransportCandidate(candidateRef: 'warp:warp_free:warp_direct',
+      profileRef: 'warp_free', nodeCode: '', countryCode: 'ZZ', protocol: 'warp',
+      transport: 'udp', protection: 'warp', priority: 0, network: 'udp', flow: '',
+      minimumClientRelease: '1.5.0', minimumCoreRelease: '1.2.8',
+      platforms: {HostPlatform.windows}, requiredFeatures: const {}, warpMode: 'warp_direct');
+    final bootstrapper = _StatsBootstrapper(warpEnabled: true, bundle: true)
+      ..candidates = [direct]..failFirstRunningReport = true;
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
-      ..supportsCandidates = true;
+      ..supportsCandidates = true..coreVersion = '1.2.9'
+      ..probeDuration = const Duration(milliseconds: 321);
     final manager = _manager(runtime, bootstrapper,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
@@ -1148,8 +1157,13 @@ void main() {
     }
     expect(bootstrapper.reports, hasLength(1));
     expect(bootstrapper.reports.single['connected'], true);
+    expect(bootstrapper.reports.single['candidate_ref'], direct.candidateRef);
+    expect(bootstrapper.reports.single['candidate_transport'], 'warp');
+    expect(bootstrapper.actualReports.where((report) => report['candidate_ref'] == direct.candidateRef)
+        .map((report) => report['selected_node_code']), everyElement(isEmpty));
     final probes = (bootstrapper.reports.single['candidate_probes'] as List).cast<Map<String, Object?>>();
-    expect(probes.where((item) => item['connected'] == true), hasLength(1));
+    expect(probes, [{'candidate_ref': direct.candidateRef, 'candidate_transport': 'warp',
+      'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 321}]);
     await manager.refresh();
     expect(bootstrapper.reports, hasLength(1));
   });
