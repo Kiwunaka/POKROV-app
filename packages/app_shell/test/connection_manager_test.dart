@@ -392,7 +392,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady
             ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
                 'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
-        coreVersion: coreVersion,
+        coreVersion: phase == RuntimePhase.artifactReady ? null : coreVersion,
         hostHealth: phase == RuntimePhase.running
             ? RuntimeHostHealth.healthy
             : RuntimeHostHealth.unknown,
@@ -1212,11 +1212,11 @@ void main() {
     expect(bootstrapper.reports, hasLength(1));
   });
 
-  test('late startup capabilities expose cached transports before an unavailable API without Connect', () async {
+  test('cold Windows readiness exposes cached transports before an unavailable API without Connect', () async {
     final refreshGate = Completer<void>();
     final bootstrapper = _CachedBootstrapper()..cacheRefreshGate = refreshGate.future;
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
-      ..supportsCandidates = true..phase = RuntimePhase.configStaged..coreVersion = '1.2.9';
+      ..supportsCandidates = true..coreVersion = '1.2.9';
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
 
@@ -1224,7 +1224,11 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(manager.transportCatalog, isNull);
     expect(bootstrapper.refreshedCoreReleases, isEmpty);
+    expect(runtime.value(runtime.phase).coreVersion, isNull);
+    expect(runtime.value(runtime.phase).transportCapabilities, isNull);
     await manager.refresh();
+    expect(manager.snapshot?.phase, RuntimePhase.initialized);
+    expect(manager.snapshot?.coreVersion, '1.2.9');
     await bootstrapper.cacheRefreshEntered.future.timeout(const Duration(seconds: 3));
     expect(manager.transportCatalog?.candidates.map((candidate) => candidate.protocol),
         ['vless', 'awg', 'hysteria2']);
@@ -1236,6 +1240,7 @@ void main() {
     expect(runtime.stagedPayloads, isEmpty);
     expect(runtime.connectCalls, 0);
     expect(runtime.handoffCalls, 0);
+    expect(runtime.calls.where((call) => call == 'initialize'), hasLength(1));
   });
 
   test('loaded Core refresh publishes the full catalog without replacing the running material', () async {

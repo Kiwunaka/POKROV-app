@@ -20,8 +20,11 @@ API response for device latency measurements. Reading an older convenience file
 strips its probe addresses and rewrites it once, preserving location preferences.
 Offline connections still use the separate protected managed-profile cache.
 
-Ordinary managed-profile refresh waits for Core capabilities and sends the
-observed Core version, preserving the authorized catalog before initialization.
+Windows startup readiness initializes an installed local Core through the
+existing service API to discover its capabilities, without staging a profile or
+starting a VPN. Ordinary managed-profile refresh waits for those capabilities
+and sends the observed Core version, preserving the authorized catalog before
+initialization.
 When capabilities arrive after startup preferences, the client resumes that
 refresh once. The locations menu first adopts the validated local catalog, so
 ordinary choices remain visible while the API is slow or unavailable.

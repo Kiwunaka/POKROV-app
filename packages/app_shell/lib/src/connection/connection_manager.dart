@@ -1654,7 +1654,14 @@ class ConnectionManager extends ChangeNotifier {
   Future<void> _refreshRuntimeSnapshot() async {
     RuntimeSnapshot snapshot;
     try {
-      snapshot = await _runRuntimeAction(_snapshotWithTransportReconciliation);
+      snapshot = await _runRuntimeAction(() async {
+        final current = await _snapshotWithTransportReconciliation();
+        if (_appContext.hostPlatform == HostPlatform.windows && current.canInitialize &&
+            current.phase == RuntimePhase.artifactReady) {
+          return _withRuntimeActionTimeout('initialize', _runtimeEngine.initialize);
+        }
+        return current;
+      });
     } on ConnectionOperationSuperseded {
       return;
     } on Object {
