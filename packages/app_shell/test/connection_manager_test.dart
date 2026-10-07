@@ -236,6 +236,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
   bool supportsCandidates = false;
+  bool coreInitializationPending = false;
   Duration probeDelay = Duration.zero;
   Duration probeDuration = Duration.zero;
   final probeTimeouts = <Duration>[];
@@ -389,16 +390,16 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
             : null,
         supportsLiveConnect: true,
         protectionRetained: restoredHandoffGuard,
-        canInitialize: phase == RuntimePhase.artifactReady,
+        canInitialize: phase == RuntimePhase.artifactReady || coreInitializationPending,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
         message: '',
         lastStopReason: lastStopReason,
         fetchedProfileSource: profileSource,
         stagedProfileSource: profileSource,
-        transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady
+        transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady && !coreInitializationPending
             ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
                 'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
-        coreVersion: phase == RuntimePhase.artifactReady ? null : coreVersion,
+        coreVersion: phase == RuntimePhase.artifactReady || coreInitializationPending ? null : coreVersion,
         hostHealth: phase == RuntimePhase.running
             ? RuntimeHostHealth.healthy
             : RuntimeHostHealth.unknown,
@@ -451,8 +452,10 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   }
 
   @override
-  Future<RuntimeSnapshot> initialize() =>
-      mutate('initialize', RuntimePhase.initialized);
+  Future<RuntimeSnapshot> initialize() {
+    coreInitializationPending = false;
+    return mutate('initialize', RuntimePhase.initialized);
+  }
   @override
   Future<RuntimeSnapshot> stageManagedProfile(ManagedProfilePayload payload) {
     expectSync(activeProbes, isEmpty, reason: 'all candidate workers must settle before the single TUN owner starts');
@@ -1223,7 +1226,9 @@ void main() {
     final refreshGate = Completer<void>();
     final bootstrapper = _CachedBootstrapper()..cacheRefreshGate = refreshGate.future;
     final runtime = _Runtime(hostPlatform: platform)
-      ..supportsCandidates = true..coreVersion = '1.2.9';
+      ..supportsCandidates = true..coreVersion = '1.2.9'
+      ..phase = platform == HostPlatform.android ? RuntimePhase.configStaged : RuntimePhase.artifactReady
+      ..coreInitializationPending = platform == HostPlatform.android;
     var consentRequests = 0;
     final manager = _manager(runtime, bootstrapper,
       authorizeAndroid: () async { consentRequests++; return true; },
@@ -1236,6 +1241,10 @@ void main() {
     expect(bootstrapper.refreshedCoreReleases, isEmpty);
     expect(runtime.value(runtime.phase).coreVersion, isNull);
     expect(runtime.value(runtime.phase).transportCapabilities, isNull);
+    if (platform == HostPlatform.android) {
+      expect(runtime.value(runtime.phase).stagedConfigPath, isNotNull,
+          reason: 'restoring a profile pointer does not initialize the loaded Core');
+    }
     await manager.refresh();
     expect(manager.snapshot?.phase, RuntimePhase.initialized);
     expect(manager.snapshot?.coreVersion, '1.2.9');

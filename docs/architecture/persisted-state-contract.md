@@ -26,6 +26,9 @@ requesting VPN consent, or starting a VPN. Ordinary managed-profile refresh wait
 for those capabilities
 and sends the observed Core version, preserving the authorized catalog before
 initialization.
+A restored profile pointer can report `configStaged` before Core initialization.
+Startup readiness also initializes that stopped state when Core version is absent;
+the pointer alone does not establish local Core readiness.
 When capabilities arrive after startup preferences, the client resumes that
 refresh once. The locations menu first adopts the validated local catalog, so
 ordinary choices remain visible while the API is slow or unavailable.

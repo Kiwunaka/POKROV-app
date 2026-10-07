@@ -1666,7 +1666,8 @@ class ConnectionManager extends ChangeNotifier {
       snapshot = await _runRuntimeAction(() async {
         final current = await _snapshotWithTransportReconciliation();
         if (const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) && current.canInitialize &&
-            current.phase == RuntimePhase.artifactReady) {
+            (current.phase == RuntimePhase.artifactReady ||
+                current.phase == RuntimePhase.configStaged && current.coreVersion == null)) {
           return _withRuntimeActionTimeout('initialize', _runtimeEngine.initialize);
         }
         return current;
