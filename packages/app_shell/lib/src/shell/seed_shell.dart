@@ -1200,9 +1200,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         BootstrapFailure failure => failure.operationalErrorCode,
         _ => 'API-002',
       };
-      observability?.recordAuthRequestFinished(errorCode: authCode);
+      final failure = error is BootstrapFailure ? error : null;
+      observability?.recordAuthRequestFinished(errorCode: authCode, failure: failure);
       observability?.recordEntitlementRefreshFinished(
         errorCode: authCode,
+        failure: failure,
       );
       unawaited(_reportClientRuntimeError('subscription_refresh_failed'));
       if (mounted && showFailure) {

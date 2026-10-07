@@ -141,6 +141,8 @@ final class OperationalAttemptTimeline {
     OperationalProofSnapshot? proofs,
     String? prepareReason,
     int? httpStatus,
+    String? apiFailureKind,
+    int? osErrorCode,
   }) {
     _requireActive();
     final open = _open;
@@ -157,6 +159,8 @@ final class OperationalAttemptTimeline {
         ...OperationalAttributePolicy.prepareFailureAttributes(
           reason: prepareReason,
           httpStatus: httpStatus,
+          apiFailureKind: apiFailureKind,
+          osErrorCode: osErrorCode,
         ),
     };
     _emit(

@@ -330,14 +330,17 @@ void main() {
       statusCode: 503,
       code: 'routing_catalog_unavailable',
       operation: 'GET https://private-operation.invalid/profile',
+      apiFailureKind: 'origin_socket',
+      observedHttpStatus: 200,
+      osErrorCode: 10061,
     );
 
     await observability.runConnectionAction(
       () async {
         observability.recordAuthRequestStarted();
         observability.recordEntitlementRefreshStarted();
-        observability.recordAuthRequestFinished();
-        observability.recordEntitlementRefreshFinished();
+        observability.recordAuthRequestFinished(errorCode: failure.operationalErrorCode, failure: failure);
+        observability.recordEntitlementRefreshFinished(errorCode: failure.operationalErrorCode, failure: failure);
         observability.recordConnectionFailure(
           stage: ConnectionStage.profile,
           errorCode: failure.operationalErrorCode,
@@ -360,6 +363,9 @@ void main() {
       code: 'catalog_signature_invalid/private-reason-fixture',
       statusCode: 700,
       operation: 'GET https://private-operation.invalid/profile',
+      apiFailureKind: 'https://private-reason.invalid',
+      observedHttpStatus: 700,
+      osErrorCode: -1,
     );
     await observability.runConnectionAction(() async {
       observability.recordConnectionFailure(
@@ -377,11 +383,23 @@ void main() {
         .where((event) => event['name'] == 'app.connection.profile.finished')
         .toList();
     expect(failures, hasLength(2));
-    expect(failures.first['attributes'], containsPair('http_status', 503));
+    expect(failures.first['attributes'], containsPair('http_status', 200));
+    expect(failures.first['attributes'], containsPair('api_failure_kind', 'origin_socket'));
+    expect(failures.first['attributes'], containsPair('os_error_code', 10061));
     expect(failures.first['attributes'],
         containsPair('prepare_reason', 'routing_catalog_unavailable'));
     expect(failures.last['attributes'], isNot(contains('prepare_reason')));
     expect(failures.last['attributes'], isNot(contains('http_status')));
+    expect(failures.last['attributes'], isNot(contains('api_failure_kind')));
+    expect(failures.last['attributes'], isNot(contains('os_error_code')));
+    final accountFailures = local.records.where((event) =>
+        event['name'] == 'app.auth.request.finished' || event['name'] == 'app.entitlement.refresh.finished');
+    expect(accountFailures, hasLength(2));
+    for (final event in accountFailures) {
+      expect(event['attributes'], containsPair('api_failure_kind', 'origin_socket'));
+      expect(event['attributes'], containsPair('http_status', 200));
+      expect(event['attributes'], containsPair('os_error_code', 10061));
+    }
     expect(local.records.where(
         (event) => event['name'] == 'app.connection.attempt.finished'),
         hasLength(2));
@@ -393,6 +411,8 @@ void main() {
     final remote = jsonEncode(releaseHealth.batches);
     expect(remote, isNot(contains('http_status')));
     expect(remote, isNot(contains('prepare_reason')));
+    expect(remote, isNot(contains('api_failure_kind')));
+    expect(remote, isNot(contains('os_error_code')));
     expect(observability.dispatcher.snapshot().rejectedByPrivacy, 0);
     expect(observability.dispatcher.snapshot().rejectedAsStale, 0);
   });

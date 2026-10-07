@@ -72,6 +72,7 @@ enum ObservabilityErrorOrigin {
 
 abstract final class ObservabilityAttributeKeys {
   static const allowed = <String>{
+    'api_failure_kind',
     'artifact_kind',
     'bundle_item_count',
     'bundle_size_bytes',
@@ -95,6 +96,7 @@ abstract final class ObservabilityAttributeKeys {
     'manifest_version',
     'network_class',
     'operation',
+    'os_error_code',
     'permission_state',
     'phase',
     'prepare_reason',

@@ -83,6 +83,13 @@ meaning. A stale identity or cancelled response cannot clear the current cache.
 After a current 401 clears the cache, the one permitted session refresh uses the
 normal profile budget; a 403 remains fatal and never restores cached authority.
 
+Ordinary account and profile failures retain a closed API failure reason and,
+when available, the observed HTTP status and numeric OS error in the existing
+local diagnostic events. These facts are separate from the status used by auth
+and retry guards. API discovery still reports its existing public error; URLs,
+exception text and response material are excluded, and release-health telemetry
+does not include the added local details.
+
 After a healthy ordinary connect, the existing finite cache refresh fetches the
 exact current profile's latest catalog, then prepares at most two alternatives:
 first an authorized path on another node, then the opposite typed ingress family

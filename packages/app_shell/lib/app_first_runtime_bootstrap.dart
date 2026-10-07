@@ -1014,6 +1014,9 @@ class BootstrapFailure implements Exception {
     this.operation,
     this.code = '',
     this.operationalCode,
+    this.apiFailureKind,
+    this.observedHttpStatus,
+    this.osErrorCode,
   });
 
   final String message;
@@ -1021,6 +1024,9 @@ class BootstrapFailure implements Exception {
   final String? operation;
   final String code;
   final String? operationalCode;
+  final String? apiFailureKind;
+  final int? observedHttpStatus;
+  final int? osErrorCode;
 
   String get operationalErrorCode =>
       operationalCode ??
@@ -9945,6 +9951,9 @@ class AppFirstRuntimeBootstrapper
           'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
           operation: operation,
           operationalCode: 'API-002',
+          apiFailureKind: 'request_socket',
+          observedHttpStatus: traceStatus,
+          osErrorCode: error.osError?.errorCode,
         );
         if (attempt >= attemptLimit - 1) {
           throw failure;
@@ -9958,6 +9967,8 @@ class AppFirstRuntimeBootstrapper
           'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
           operation: operation,
           operationalCode: 'API-002',
+          apiFailureKind: 'request_http',
+          observedHttpStatus: traceStatus,
         );
         if (attempt >= attemptLimit - 1) {
           throw failure;
@@ -9971,6 +9982,8 @@ class AppFirstRuntimeBootstrapper
           'Не удалось безопасно подключиться к сервису. Проверьте дату, время и интернет.',
           operation: operation,
           operationalCode: 'API-003',
+          apiFailureKind: 'request_tls',
+          observedHttpStatus: traceStatus,
         );
         if (attempt >= attemptLimit - 1) {
           throw failure;
@@ -9985,6 +9998,8 @@ class AppFirstRuntimeBootstrapper
           statusCode: HttpStatus.gatewayTimeout,
           operation: operation,
           operationalCode: 'API-002',
+          apiFailureKind: 'request_timeout',
+          observedHttpStatus: traceStatus,
         );
         if (attempt >= attemptLimit - 1) {
           throw failure;
@@ -10029,8 +10044,12 @@ class AppFirstRuntimeBootstrapper
     required HttpClient client,
     required HostPlatform hostPlatform,
   }) async {
+    String? lastFailureKind;
+    int? lastHttpStatus;
+    int? lastOsErrorCode;
     for (final candidate in _apiBaseUrls) {
       _traceBootstrap('origin_probe', 'begin');
+      int? observedHttpStatus;
       try {
         final request = await client.getUrl(
           Uri.parse(candidate).resolve('/api/health'),
@@ -10045,6 +10064,7 @@ class AppFirstRuntimeBootstrapper
           PortalCorrelationScope.currentOrCreate(),
         );
         final response = await request.close().timeout(requestTimeout);
+        observedHttpStatus = response.statusCode;
         _traceBootstrap('origin_probe', 'response', status: response.statusCode);
         final contentType = response.headers.contentType;
         final bytes = await _readBoundedResponseBytes(
@@ -10055,6 +10075,10 @@ class AppFirstRuntimeBootstrapper
         if (response.statusCode < 200 ||
             response.statusCode >= 300 ||
             contentType?.mimeType.toLowerCase() != 'application/json') {
+          lastFailureKind = contentType?.mimeType.toLowerCase() != 'application/json'
+              ? 'origin_content_type' : 'origin_http_status';
+          lastHttpStatus = observedHttpStatus;
+          lastOsErrorCode = null;
           _traceBootstrap('origin_probe', 'fail', status: response.statusCode,
             reason: contentType?.mimeType.toLowerCase() != 'application/json'
               ? 'content_type' : 'http_status');
@@ -10062,6 +10086,9 @@ class AppFirstRuntimeBootstrapper
         }
         final decoded = jsonDecode(utf8.decode(bytes, allowMalformed: true));
         if (decoded is! Map) {
+          lastFailureKind = 'origin_json_not_object';
+          lastHttpStatus = observedHttpStatus;
+          lastOsErrorCode = null;
           _traceBootstrap('origin_probe', 'fail', reason: 'json_not_object',
             status: response.statusCode);
           continue;
@@ -10079,11 +10106,24 @@ class AppFirstRuntimeBootstrapper
             error is! BootstrapFailure) {
           rethrow;
         }
+        lastFailureKind = switch (error) {
+          SocketException() => 'origin_socket',
+          HttpException() => 'origin_http',
+          HandshakeException() => 'origin_tls',
+          TimeoutException() => 'origin_timeout',
+          FormatException() => 'origin_json_syntax',
+          _ => 'origin_response_rejected',
+        };
+        lastHttpStatus = observedHttpStatus;
+        lastOsErrorCode = error is SocketException ? error.osError?.errorCode : null;
       }
     }
-    throw const BootstrapFailure(
+    throw BootstrapFailure(
       'Не удалось связаться с сервисом. Проверьте сеть и попробуйте ещё раз.',
       operationalCode: 'API-002',
+      apiFailureKind: lastFailureKind,
+      observedHttpStatus: lastHttpStatus,
+      osErrorCode: lastOsErrorCode,
     );
   }
 

@@ -501,7 +501,10 @@ final class PokrovClientObservability {
         errorCode: errorCode,
         errorOrigin: errorOrigin,
         prepareReason: preparationFailure.code,
-        httpStatus: preparationFailure.statusCode,
+        httpStatus: preparationFailure.apiFailureKind == null
+            ? preparationFailure.statusCode : preparationFailure.observedHttpStatus,
+        apiFailureKind: preparationFailure.apiFailureKind,
+        osErrorCode: preparationFailure.osErrorCode,
       );
     }
     attempt.finish(
@@ -615,7 +618,7 @@ final class PokrovClientObservability {
     );
   }
 
-  void recordAuthRequestFinished({String? errorCode}) {
+  void recordAuthRequestFinished({String? errorCode, BootstrapFailure? failure}) {
     _emitCurrent(
       name: 'app.auth.request.finished',
       subsystem: 'auth',
@@ -629,6 +632,11 @@ final class PokrovClientObservability {
         'phase': 'auth',
         'operation': 'request',
         'status_class': errorCode == null ? 'success' : 'client_error',
+        ...OperationalAttributePolicy.prepareFailureAttributes(
+          apiFailureKind: failure?.apiFailureKind,
+          httpStatus: failure?.apiFailureKind == null ? failure?.statusCode : failure?.observedHttpStatus,
+          osErrorCode: failure?.osErrorCode,
+        ),
       },
     );
   }
@@ -643,7 +651,7 @@ final class PokrovClientObservability {
     );
   }
 
-  void recordEntitlementRefreshFinished({String? errorCode}) {
+  void recordEntitlementRefreshFinished({String? errorCode, BootstrapFailure? failure}) {
     _emitCurrent(
       name: 'app.entitlement.refresh.finished',
       subsystem: 'entitlement',
@@ -656,6 +664,11 @@ final class PokrovClientObservability {
       attributes: <String, Object?>{
         'operation': 'refresh',
         'status_class': errorCode == null ? 'success' : 'server_error',
+        ...OperationalAttributePolicy.prepareFailureAttributes(
+          apiFailureKind: failure?.apiFailureKind,
+          httpStatus: failure?.apiFailureKind == null ? failure?.statusCode : failure?.observedHttpStatus,
+          osErrorCode: failure?.osErrorCode,
+        ),
       },
     );
   }

@@ -1575,6 +1575,8 @@ void main() {
               'operation',
               'POST /api/client/session/start-trial',
             )
+            .having((error) => error.apiFailureKind, 'closed API kind', 'request_socket')
+            .having((error) => error.observedHttpStatus, 'observed HTTP status', isNull)
             .having(
               (error) => error.message,
               'internal details',
@@ -1585,6 +1587,38 @@ void main() {
               ),
             ),
       ),
+    );
+
+    final primary = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final fallback = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await primary.close(force: true);
+      await fallback.close(force: true);
+    });
+    for (final server in [primary, fallback]) {
+      server.listen((request) async {
+        expect(request.uri.path, '/api/health');
+        request.response.headers.contentType = ContentType.html;
+        request.response.write('not-json');
+        await request.response.close();
+      });
+    }
+    final rejectedOrigins = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${primary.port}/',
+      apiFallbackBaseUrls: ['http://127.0.0.1:${fallback.port}/'],
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+      maxRequestAttempts: 1,
+    );
+    await expectLater(
+      rejectedOrigins.resolveManagedProfile(
+        hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel),
+      throwsA(isA<BootstrapFailure>()
+          .having((error) => error.operationalErrorCode, 'existing public code', 'API-002')
+          .having((error) => error.apiFailureKind, 'origin reason', 'origin_content_type')
+          .having((error) => error.observedHttpStatus, 'observed response', 200)
+          .having((error) => error.statusCode, 'semantic status remains absent', isNull)
+          .having((error) => error.osErrorCode, 'no stale socket error', isNull)),
     );
   });
 

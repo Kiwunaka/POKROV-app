@@ -27,6 +27,7 @@ abstract final class OperationalAttributePolicy {
     'retention_days',
     'error_count',
     'http_status',
+    'os_error_code',
   };
   static const _releaseHealthKeys = <String>{
     'phase',
@@ -51,6 +52,12 @@ abstract final class OperationalAttributePolicy {
     'error_count',
   };
   static const _enums = <String, Set<String>>{
+    'api_failure_kind': <String>{
+      'origin_socket', 'origin_http', 'origin_tls', 'origin_timeout',
+      'origin_content_type', 'origin_http_status', 'origin_json_syntax',
+      'origin_json_not_object', 'origin_response_rejected',
+      'request_socket', 'request_http', 'request_tls', 'request_timeout',
+    },
     'phase': <String>{
       'bootstrap',
       'auth',
@@ -322,12 +329,18 @@ abstract final class OperationalAttributePolicy {
   static Map<String, Object?> prepareFailureAttributes({
     String? reason,
     int? httpStatus,
+    String? apiFailureKind,
+    int? osErrorCode,
   }) =>
       <String, Object?>{
         if (reason != null && _enums['prepare_reason']!.contains(reason))
           'prepare_reason': reason,
         if (httpStatus != null && httpStatus >= 100 && httpStatus <= 599)
           'http_status': httpStatus,
+        if (apiFailureKind != null && _enums['api_failure_kind']!.contains(apiFailureKind))
+          'api_failure_kind': apiFailureKind,
+        if (osErrorCode != null && osErrorCode >= 0)
+          'os_error_code': osErrorCode,
       };
 
   static void validate(

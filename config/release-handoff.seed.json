@@ -7,8 +7,8 @@
   "release_truth": {
     "development_target": {
       "product_version": "1.5.0",
-      "platform_build": 4101,
-      "package_version": "1.5.0+4101"
+      "platform_build": 4102,
+      "package_version": "1.5.0+4102"
     }
   }
 }
