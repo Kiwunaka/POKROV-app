@@ -1218,12 +1218,16 @@ void main() {
     expect(bootstrapper.reports, hasLength(1));
   });
 
-  test('cold Windows readiness exposes cached transports before an unavailable API without Connect', () async {
+  for (final platform in [HostPlatform.android, HostPlatform.windows]) {
+  test('cold ${platform.name} readiness exposes cached transports before an unavailable API without Connect', () async {
     final refreshGate = Completer<void>();
     final bootstrapper = _CachedBootstrapper()..cacheRefreshGate = refreshGate.future;
-    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+    final runtime = _Runtime(hostPlatform: platform)
       ..supportsCandidates = true..coreVersion = '1.2.9';
-    final manager = _manager(runtime, bootstrapper);
+    var consentRequests = 0;
+    final manager = _manager(runtime, bootstrapper,
+      authorizeAndroid: () async { consentRequests++; return true; },
+      authorizeWindows: () async { consentRequests++; return PokrovWindowsTunnelAuthorization.allowed; });
     addTearDown(manager.dispose);
 
     manager.markExperienceLoaded();
@@ -1247,7 +1251,9 @@ void main() {
     expect(runtime.connectCalls, 0);
     expect(runtime.handoffCalls, 0);
     expect(runtime.calls.where((call) => call == 'initialize'), hasLength(1));
+    expect(consentRequests, 0);
   });
+  }
 
   test('loaded Core refresh publishes the full catalog without replacing the running material', () async {
     final refreshGate = Completer<void>();

@@ -20,9 +20,10 @@ API response for device latency measurements. Reading an older convenience file
 strips its probe addresses and rewrites it once, preserving location preferences.
 Offline connections still use the separate protected managed-profile cache.
 
-Windows startup readiness initializes an installed local Core through the
-existing service API to discover its capabilities, without staging a profile or
-starting a VPN. Ordinary managed-profile refresh waits for those capabilities
+Android and Windows startup readiness initialize an installed local Core through
+the existing host API to discover its capabilities, without staging a profile,
+requesting VPN consent, or starting a VPN. Ordinary managed-profile refresh waits
+for those capabilities
 and sends the observed Core version, preserving the authorized catalog before
 initialization.
 When capabilities arrive after startup preferences, the client resumes that
