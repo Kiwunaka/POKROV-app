@@ -159,6 +159,7 @@ class SmartConnectCandidateSelector {
     final probes = <Completer<void>>{};
     final settled = <Future<void>>[];
     ManagedProfilePayload? winner;
+    BootstrapFailure? apiFailure;
     var cancelledByOwner = false;
     var startedCount = 0;
     var failures = 0;
@@ -228,6 +229,7 @@ class SmartConnectCandidateSelector {
           rethrow;
         }
         if (ended.isCompleted) return;
+        if (error.apiFailureKind != null) apiFailure ??= error;
       } on Object {
         if (ended.isCompleted) return;
       } finally {
@@ -290,7 +292,7 @@ class SmartConnectCandidateSelector {
       }
       await Future.wait(settled);
       if (cancelledByOwner) throw const _ManagedProfileCancelled();
-      if (winner == null) throw const SmartConnectSelectionExhausted();
+      if (winner == null) throw apiFailure ?? const SmartConnectSelectionExhausted();
       return winner!;
     } finally {
       stop();

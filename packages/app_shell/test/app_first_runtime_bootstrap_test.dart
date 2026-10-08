@@ -392,9 +392,10 @@ void main() {
         await request.response.close();
       }
     }());
+    final sessionSecrets = MemoryAppFirstSessionSecretStore();
     final bootstrapper = AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'http://127.0.0.1:${server.port}/', supportDirectoryResolver: () async => directory,
-      sessionSecretStore: MemoryAppFirstSessionSecretStore(), maxRequestAttempts: 1,
+      sessionSecretStore: sessionSecrets, maxRequestAttempts: 1,
       smartConnectLatencyProbe: (node) async {
         probes.add(node.code);
         return node.code == 'pl' ? 500 : 20;
@@ -476,6 +477,70 @@ void main() {
     expect(restored?.disableMemoryLimit, isTrue);
     expect(restored?.configPayload, payload.configPayload);
     expect(await bootstrapper.loadCachedManagedProfile(inputs, runtimeFeatures: const {}), isNull);
+    final missingMaterial = restored!.transportCatalog!.candidates.singleWhere(
+        (candidate) => candidate.candidateRef == 'de:xhttp_reality');
+    expect(await bootstrapper.loadCachedManagedProfile(inputs,
+        selectedCandidateRef: missingMaterial.candidateRef,
+        runtimeFeatures: RuntimeTransportFeature.values.toSet()), isNull);
+    final blockedOrigins = <String>{};
+    final offline = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      apiFallbackBaseUrls: ['http://localhost:${server.port}/'],
+      supportDirectoryResolver: () async => directory,
+      sessionSecretStore: sessionSecrets, maxRequestAttempts: 1,
+      httpClientFactory: () => HttpClient()..connectionFactory = (uri, _, __) async {
+        blockedOrigins.add(uri.authority);
+        throw const SocketException('synthetic socket denial',
+            osError: OSError('network access denied', 10013));
+      },
+    );
+    var materialSettled = Completer<void>();
+    Future<void> prepare(TransportCandidate candidate, Future<void> cancelled) async {
+      if (candidate.candidateRef == missingMaterial.candidateRef) {
+        try {
+          await offline.resolveManagedProfile(hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+              selectedCandidateRef: candidate.candidateRef, selectCandidate: false, cacheResult: false,
+              runtimeFeatures: RuntimeTransportFeature.values.toSet(), cancelled: cancelled);
+        } finally {
+          materialSettled.complete();
+        }
+      } else {
+        await materialSettled.future;
+        await Future<void>.delayed(Duration.zero);
+      }
+    }
+    final nativeProbes = <String>[];
+    Future<SmartConnectCandidateProbeResult> probe(TransportCandidate candidate,
+        Future<void> cancelled, Duration timeout) async {
+      nativeProbes.add(candidate.candidateRef);
+      return SmartConnectCandidateProbeResult.success(restored);
+    }
+    final selector = SmartConnectCandidateSelector();
+    await expectLater(selector.select(
+      catalog: restored.transportCatalog!,
+      excludedCandidateRefs: restored.transportCatalog!.candidates
+          .where((candidate) => candidate.candidateRef != missingMaterial.candidateRef)
+          .map((candidate) => candidate.candidateRef).toSet(),
+      network: 'catalog-network', platform: inputs.hostPlatform, cancelled: Completer<void>().future,
+      prepare: prepare, probe: probe,
+    ), throwsA(isA<BootstrapFailure>()
+        .having((error) => error.operationalErrorCode, 'code', 'API-002')
+        .having((error) => error.apiFailureKind, 'kind', 'origin_socket')
+        .having((error) => error.osErrorCode, 'OS error', 10013)
+        .having((error) => error.statusCode, 'HTTP status', isNull)));
+    expect(blockedOrigins, containsAll(['127.0.0.1:${server.port}', 'localhost:${server.port}']));
+    expect(nativeProbes, isEmpty);
+    materialSettled = Completer<void>();
+    expect(await selector.select(
+      catalog: restored.transportCatalog!,
+      excludedCandidateRefs: restored.transportCatalog!.candidates
+          .where((candidate) => candidate.candidateRef != missingMaterial.candidateRef &&
+              candidate.candidateRef != restored.materialCandidate!.candidateRef)
+          .map((candidate) => candidate.candidateRef).toSet(),
+      network: 'catalog-network', platform: inputs.hostPlatform, cancelled: Completer<void>().future,
+      prepare: prepare, probe: probe,
+    ), same(restored), reason: 'an API failure cannot cancel another usable material');
+    expect(nativeProbes, [restored.materialCandidate!.candidateRef]);
     probes.clear();
     final discovery = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel, runtimeFeatures: RuntimeTransportFeature.values.toSet(),

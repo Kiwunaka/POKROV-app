@@ -2314,6 +2314,7 @@ class ConnectionManager extends ChangeNotifier {
         if (useWarpCandidates) directWarpCandidates,
       ];
       var selectedCandidate = false;
+      BootstrapFailure? apiFailure;
       for (final group in groups) {
         if (group.isEmpty) continue;
         final selectionTimeout = identical(group, directWarpCandidates)
@@ -2379,10 +2380,15 @@ class ConnectionManager extends ChangeNotifier {
           break;
         } on SmartConnectSelectionExhausted {
           // A failed WARP chain may use the ordinary candidate catalog.
+        } on BootstrapFailure catch (error) {
+          if (error.statusCode == 401 || error.statusCode == 403 ||
+              error.code == 'managed_profile_superseded' || error.apiFailureKind == null) rethrow;
+          requireCurrent();
+          apiFailure ??= error;
         }
       }
       if (!selectedCandidate) {
-        throw const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.',
+        throw apiFailure ?? const BootstrapFailure('Рабочее подключение не найдено. Проверьте сеть и попробуйте ещё раз.',
             code: 'candidate_selection_exhausted', operationalCode: 'CONN-008');
       }
       requireCurrent();

@@ -1577,6 +1577,23 @@ void main() {
     expect(manager.transportCatalog?.selectedCandidateRef, base.candidateRef);
     expect(runtime.probedWarpModes.last, '');
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
+    final probesBeforeApiFailure = runtime.probedWarpModes.length;
+    final networkRead = Completer<RuntimeCandidateNetwork>();
+    runtime.nextNetworkRead = networkRead;
+    final reconnect = manager.reconnect();
+    await runtime.networkReadEntered.future;
+    bootstrapper.failure = const BootstrapFailure('Synthetic API socket denial',
+        operationalCode: 'API-002', apiFailureKind: 'request_socket', osErrorCode: 10013);
+    networkRead.complete(RuntimeCandidateNetwork(selectionKey: runtime.candidateKey,
+        contextRef: runtime.candidateContext, networkAvailable: true, networkClass: 'wifi'));
+    await reconnect;
+    expect(bootstrapper.resolutions.last.selected, chain.candidateRef,
+        reason: 'the WARP group needs its exact material after the initial ordinary reply');
+    expect(runtime.probedWarpModes.skip(probesBeforeApiFailure), [''],
+        reason: 'a material API failure must leave the ready ordinary group available');
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.materialCandidate?.candidateRef, base.candidateRef);
+    expect(runtime.activeProbes, isEmpty);
   });
 
   test('hanging WARP candidates leave time for ordinary fallback', () async {

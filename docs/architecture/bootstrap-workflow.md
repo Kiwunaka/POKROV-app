@@ -107,6 +107,11 @@ and retry guards. API discovery still reports its existing public error; URLs,
 exception text and response material are excluded, and release-health telemetry
 does not include the added local details.
 
+When an unbundled catalog needs another candidate's material, its API failure
+remains an API failure if selection finds no winner, rather than becoming
+CONN-008. Other ready candidates and the ordinary group after a WARP group still
+run and can win. Authorization denial and supersession retain their priority.
+
 After a healthy ordinary connect, the existing finite cache refresh fetches the
 exact current profile's latest catalog, then prepares at most two alternatives:
 first an authorized path on another node, then the opposite typed ingress family
