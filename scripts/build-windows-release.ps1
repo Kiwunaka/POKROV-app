@@ -723,6 +723,10 @@ if (-not $SkipBuild) {
   }
   Invoke-External -FilePath "flutter" -Arguments $buildPubGetArgs -WorkingDirectory $appDirectory
   Set-StableDartPluginRegistrantPackageUri -AppDirectory $appDirectory
+  $previousFlutterBuildMarker = Join-Path $appDirectory "build\.last_build_id"
+  if (Test-Path -LiteralPath $previousFlutterBuildMarker) {
+    Remove-Item -LiteralPath $previousFlutterBuildMarker
+  }
   Sync-FlutterWindowsCppClientWrapper -AppDirectory $appDirectory
 
   $windowsNativeAssetsDirectory = Join-Path $appDirectory `

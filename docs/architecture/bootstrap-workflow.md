@@ -1119,6 +1119,8 @@ From `POKROV-app/`:
    existing runtime contract and `-CoreArtifactDirectory <path>` for the selected
    Windows artifact directory. Sync accepts that directory for one platform only;
    source, version, ABI and artifact checks still apply, and defaults stay unchanged.
+   The builder removes only Flutter's previous-build marker before compilation,
+   so a previous checkout path cannot delete outputs from the reproducible drive alias.
 6. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1 -DryRun`.
 7. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1` only if you want local config files under `config/local/`.
 8. Treat `melos.yaml` as the future workspace entry once Flutter tooling is available.
