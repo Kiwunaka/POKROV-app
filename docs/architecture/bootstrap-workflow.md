@@ -1115,6 +1115,10 @@ From `POKROV-app/`:
    On a clean checkout, the bootstrap phase materializes the ignored wrapper
    scripts and JAR before the flavor-specific unit-test tasks run.
 5. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\build-windows-release.ps1 -SyncRuntime -CoreRoot <path>` when you want the local Windows analyze, test, build, and unsigned-package lane.
+   Private candidates can pass `-RuntimeArtifactsPath <path>` to use a separate
+   existing runtime contract and `-CoreArtifactDirectory <path>` for the selected
+   Windows artifact directory. Sync accepts that directory for one platform only;
+   source, version, ABI and artifact checks still apply, and defaults stay unchanged.
 6. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1 -DryRun`.
 7. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1` only if you want local config files under `config/local/`.
 8. Treat `melos.yaml` as the future workspace entry once Flutter tooling is available.

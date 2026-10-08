@@ -8,6 +8,8 @@ param(
   [switch]$SkipInstaller,
   [switch]$OfflinePubGet,
   [string]$CoreRoot,
+  [string]$RuntimeArtifactsPath,
+  [string]$CoreArtifactDirectory,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
   [string]$TransportTrustDefinesFile,
@@ -41,6 +43,7 @@ if (-not $CheckTrustedWindowsSigningReadinessOnly) {
   if ($CoreRoot) {
     $versionParityArguments.CoreRoot = $CoreRoot
   }
+  if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
   & (Join-Path $PSScriptRoot "check-client-version-parity.ps1") @versionParityArguments
 }
 
@@ -491,7 +494,9 @@ function Invoke-TrustedAuthenticodeSigning {
 
 $root = Split-Path -Parent $PSScriptRoot
 $windowsReleaseConfigPath = Join-Path $root "config\\windows-release.seed.json"
-$runtimeArtifactsConfigPath = Join-Path $root "config\\runtime-artifacts.seed.json"
+$runtimeArtifactsConfigPath = if ($RuntimeArtifactsPath) {
+  (Resolve-Path -LiteralPath $RuntimeArtifactsPath -ErrorAction Stop).Path
+} else { Join-Path $root "config\\runtime-artifacts.seed.json" }
 $windowsReleaseConfig = Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
 $runtimeArtifactsConfig = Get-Content -Raw -LiteralPath $runtimeArtifactsConfigPath | ConvertFrom-Json
 $expectedSignedFiles = @(
@@ -623,6 +628,7 @@ if (-not $SkipValidateSeed) {
   if ($CoreRoot) {
     $validateSeedArguments.CoreRoot = $CoreRoot
   }
+  if ($RuntimeArtifactsPath) { $validateSeedArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
   & (Join-Path $PSScriptRoot "validate-seed.ps1") @validateSeedArguments
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
@@ -639,6 +645,8 @@ if ($SyncRuntime -or $runtimeMissingFiles.Count -gt 0) {
   if ($CoreRoot) {
     $syncArguments.CoreRoot = $CoreRoot
   }
+  if ($RuntimeArtifactsPath) { $syncArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
+  if ($CoreArtifactDirectory) { $syncArguments.CoreArtifactDirectory = $CoreArtifactDirectory }
   & (Join-Path $PSScriptRoot "sync-pokrov-core-runtime.ps1") @syncArguments
   if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE

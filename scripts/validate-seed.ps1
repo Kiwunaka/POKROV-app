@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
   [string]$PlatformRoot,
-  [string]$CoreRoot
+  [string]$CoreRoot,
+  [string]$RuntimeArtifactsPath
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,6 +10,7 @@ $root = Split-Path -Parent $PSScriptRoot
 
 $parityArguments = @{}
 if ($CoreRoot) { $parityArguments.CoreRoot = $CoreRoot }
+if ($RuntimeArtifactsPath) { $parityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
 & (Join-Path $root "scripts/check-client-version-parity.ps1") @parityArguments
 if (-not $?) { throw "Client/Core artifact binding failed." }
 

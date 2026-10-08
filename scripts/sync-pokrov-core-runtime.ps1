@@ -1,5 +1,7 @@
 param(
   [string]$CoreRoot,
+  [string]$RuntimeArtifactsPath,
+  [string]$CoreArtifactDirectory,
   [ValidateSet("android", "windows")]
   [string[]]$Platforms = @("android", "windows")
 )
@@ -7,9 +9,14 @@ param(
 $ErrorActionPreference = "Stop"
 
 $clientRoot = Split-Path -Parent $PSScriptRoot
-$configPath = Join-Path $clientRoot "config\runtime-artifacts.seed.json"
+$configPath = if ($RuntimeArtifactsPath) {
+  (Resolve-Path -LiteralPath $RuntimeArtifactsPath -ErrorAction Stop).Path
+} else { Join-Path $clientRoot "config\runtime-artifacts.seed.json" }
 $config = Get-Content -Raw -LiteralPath $configPath | ConvertFrom-Json
 $runtime = $config.core
+if ($CoreArtifactDirectory -and $Platforms.Count -ne 1) {
+  throw "CoreArtifactDirectory requires exactly one selected platform."
+}
 
 if (-not $CoreRoot) {
   $cursor = Get-Item -LiteralPath $clientRoot
@@ -66,7 +73,9 @@ function Assert-FileIdentity {
 
 foreach ($platform in $Platforms) {
   $asset = $runtime.assets.$platform
-  $sourceRoot = Join-Path $CoreRoot "dist\$platform"
+  $sourceRoot = if ($CoreArtifactDirectory) {
+    (Resolve-Path -LiteralPath $CoreArtifactDirectory -ErrorAction Stop).Path
+  } else { Join-Path $CoreRoot "dist\$platform" }
   $sourceEntry = Join-Path $sourceRoot $asset.entry
   Assert-FileIdentity `
     -Path $sourceEntry `
