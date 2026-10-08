@@ -806,6 +806,97 @@ void main() {
     expect(runtime.connectCalls, 0);
   });
 
+  test('offline invitation cold restart uses ordinary guards without HTTP before verified Connect', () async {
+    final originalStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(<String, String>{});
+    final directory = await Directory.systemTemp.createTemp('pokrov-invitation-connect-');
+    addTearDown(() async {
+      await directory.delete(recursive: true);
+      FlutterSecureStoragePlatform.instance = originalStorage;
+    });
+    final vector = jsonDecode(await File('test/fixtures/offline-invitation.v1.vector.json').readAsString()) as Map<String, dynamic>;
+    final body = vector['request']['payload'] as Map;
+    List<int> hex(String value) => [for (var i = 0; i < value.length; i += 2)
+      int.parse(value.substring(i, i + 2), radix: 16)];
+    final seeds = vector['seeds'] as Map;
+    final issuer = await Ed25519().newKeyPairFromSeed(hex(seeds['issuer_private_hex'] as String));
+    final trust = OfflineInvitationTrust(audience: 'production', issuerPublicKeys: {
+      vector['envelope']['key_id'] as String: base64Url.encode((await issuer.extractPublicKey()).bytes).replaceAll('=', ''),
+    });
+    var now = DateTime.fromMillisecondsSinceEpoch((vector['envelope']['issued_at'] as int) * 1000 + 1000, isUtc: true);
+    OfflineInvitationReceiver receiver() => OfflineInvitationReceiver(trust: trust, clock: () => now);
+    final preparedReceiver = receiver();
+    await preparedReceiver.createRequest(installId: body['install_id'] as String, platform: 'android', consent: true,
+      clientRelease: body['client_release'] as String, coreRelease: body['core_release'] as String,
+      runtimeFeatures: (body['runtime_features'] as List).cast<String>(), routeMode: 'full_tunnel',
+      operationIsCurrent: () => true,
+      proofKeyPair: await Ed25519().newKeyPairFromSeed(hex(seeds['proof_private_hex'] as String)),
+      deliveryKeyPair: await X25519().newKeyPairFromSeed(hex(seeds['delivery_private_hex'] as String)),
+      nonce: base64Url.decode(base64Url.normalize(body['request_nonce'] as String)));
+    final stateFile = File('${directory.path}/app-first-session-android.json');
+    await stateFile.writeAsString(jsonEncode({'schema_version': 1, 'install_id': body['install_id'],
+      'account_id': '', 'profile_revision': '', 'managed_manifest_path': '/api/client/profile/managed'}));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    final runtime = _Runtime()..supportsCandidates = true..coreVersion = '1.2.9';
+    var prematureClientConstructions = 0;
+    AppFirstRuntimeBootstrapper bootstrapper(OfflineInvitationReceiver recipient) => AppFirstRuntimeBootstrapper(
+      supportDirectoryResolver: () async => directory, sessionSecretStore: secrets,
+      invitationReceiver: recipient, httpClientFactory: () {
+        if (!runtime.value(runtime.phase).isCleanlyHealthy) prematureClientConstructions++;
+        throw StateError('synthetic API unavailable');
+      });
+    final importer = bootstrapper(preparedReceiver);
+    final features = RuntimeTransportFeature.values.toSet();
+    final packet = canonicalInvitationJson(vector['envelope']);
+    await importer.importOfflineInvitation(hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+      packet: packet, runtimeFeatures: features, coreRelease: '1.2.9', operationIsCurrent: () => true);
+    final pendingMetadata = await stateFile.readAsString();
+    final cold = bootstrapper(receiver());
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel);
+    // First cold caller is the existing reporter, not a manual slot preload.
+    await cold.reportRuntimeStats(hostPlatform: HostPlatform.android, runtimePhase: 'failed', connected: false);
+    expect(prematureClientConstructions, 0);
+    expect(cold.invitationNetworkDeferred, isTrue);
+    expect(await cold.openOfflineInvitationProfile(inputs, runtimeFeatures: features, coreRelease: '1.2.9',
+        operationIsCurrent: () => true), isNotNull);
+    final manager = _manager(runtime, cold);
+    addTearDown(manager.dispose);
+    manager.selectRouteMode(RouteMode.fullTunnel);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(prematureClientConstructions, 0);
+    expect(runtime.probedProtocols, ['vless']);
+    expect(runtime.stagedPayloads.single.source?.origin, RuntimeProfileSourceOrigin.managedManifest);
+    expect(runtime.stagedPayloads.single.routeMode, RouteMode.fullTunnel);
+    expect(runtime.stagedPayloads.single.warpPolicy.canEnableRuntime, isFalse);
+    expect(runtime.connectCalls, 1);
+    final released = DateTime.now().add(const Duration(seconds: 2));
+    while (cold.invitationNetworkDeferred && DateTime.now().isBefore(released)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(cold.invitationNetworkDeferred, isFalse);
+    await manager.disconnect();
+    // The normal credential-store API represents a later session replacement;
+    // the old encrypted packet must not intercept that ordinary identity.
+    await secrets.writeSessionPair(hostPlatform: HostPlatform.android, installId: body['install_id'] as String,
+        pair: const AppFirstSessionCredentials(accessToken: 'normal-replacement-session', refreshToken: 'normal-replacement-refresh'));
+    final replacement = bootstrapper(receiver());
+    expect(await replacement.openOfflineInvitationProfile(inputs, runtimeFeatures: features, coreRelease: '1.2.9',
+        operationIsCurrent: () => true), isNull);
+    expect(replacement.invitationNetworkDeferred, isFalse);
+    // Simulate a pending process exiting before native verification. Only the
+    // synthetic public session metadata is replayed; authority stays separate.
+    await stateFile.writeAsString(pendingMetadata);
+    now = DateTime.fromMillisecondsSinceEpoch((vector['envelope']['expires_at'] as int) * 1000, isUtc: true);
+    final expired = bootstrapper(receiver());
+    expect(await expired.openOfflineInvitationProfile(inputs, runtimeFeatures: features, coreRelease: '1.2.9',
+        operationIsCurrent: () => true), isNull);
+    expect(expired.invitationNetworkDeferred, isFalse);
+    expect((jsonDecode(await stateFile.readAsString()) as Map).containsKey('offline_invitation_id'), isFalse);
+    expect(await expired.loadCachedManagedProfile(inputs, runtimeFeatures: features, coreRelease: '1.2.9'), isNull,
+        reason: 'the invitation never forged an HTTP managed-cache record or gained 24-hour grace');
+  });
+
   test('WFP socket denial of both API origins connects the exact cached ordinary AWG', () async {
     final originalStorage = FlutterSecureStoragePlatform.instance;
     FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(<String, String>{});

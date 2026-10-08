@@ -18,6 +18,8 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import 'routing_catalog_contract.dart';
+import 'offline_invitation_contract.dart';
+export 'offline_invitation_contract.dart';
 import 'app_shell.dart' show ConnectionOperationSuperseded;
 import 'client_routing_preferences.dart';
 import 'routing_catalog_policy.dart';
@@ -36,6 +38,8 @@ part 'src/features/rules/transport_profile_loader.dart';
 part 'src/features/rules/transport_profile_preparation.dart';
 part 'src/features/rules/transport_payload_preparation.dart';
 part 'src/connection/smart_connect_resolver.dart';
+part 'src/connection/managed_manifest_decoder.dart';
+part 'src/connection/offline_invitation_bootstrap.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -2972,6 +2976,7 @@ class AppFirstRuntimeBootstrapper
     RoutingCatalogStore? routingCatalogStore,
     TransportManifestStore? transportManifestStore,
     SmartAccessPolicyStore? smartAccessPolicyStore,
+    OfflineInvitationReceiver? invitationReceiver,
   })  : apiBaseUrl = _normalizeApiBaseUrl(apiBaseUrl),
         _apiBaseUrls = _buildApiBaseUrls(
           apiBaseUrl,
@@ -2990,7 +2995,17 @@ class AppFirstRuntimeBootstrapper
         _managedProfileCache = managedProfileCache ?? ManagedProfileCache(),
         _routingCatalogStore = routingCatalogStore ?? RoutingCatalogStore.pinned(),
         _transportManifestStore = transportManifestStore,
-        _smartAccessPolicyStore = smartAccessPolicyStore ?? SmartAccessPolicyStore.pinned();
+        _smartAccessPolicyStore = smartAccessPolicyStore ?? SmartAccessPolicyStore.pinned(),
+        _invitationReceiver = invitationReceiver;
+
+  final OfflineInvitationReceiver? _invitationReceiver;
+  bool _invitationNetworkDeferred = false;
+  int _invitationDeferUntil = 0;
+  Future<void>? _invitationDeferInitialization;
+  bool get invitationNetworkDeferred {
+    final now = (_invitationReceiver?.now ?? DateTime.now()).millisecondsSinceEpoch ~/ 1000;
+    return _invitationNetworkDeferred && now < _invitationDeferUntil && _invitationDeferUntil - now <= 600;
+  }
 
   final String apiBaseUrl;
   final List<String> _apiBaseUrls;
@@ -3061,6 +3076,7 @@ class AppFirstRuntimeBootstrapper
     required String correlationId,
   }) async {
     final state = await _loadOrCreateState(hostPlatform);
+    if (invitationNetworkDeferred) return false;
     if (!state.hasSession) {
       return false;
     }
@@ -4214,6 +4230,7 @@ class AppFirstRuntimeBootstrapper
     // Diagnostics use the current session and never provision or renew it.
     final state = await _loadState(hostPlatform);
     if (state == null || !state.hasSession) return;
+    if (invitationNetworkDeferred) return;
     if (hostPlatform == HostPlatform.android &&
         const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
       unawaited(_reportAutomaticNetworkContext(phase));
@@ -6226,7 +6243,16 @@ class AppFirstRuntimeBootstrapper
     final file = await _stateFile(hostPlatform);
     return _withAppFirstStateFileLock(
       file,
-      () => _loadStateFromFile(hostPlatform, file),
+      () async {
+        final state = await _loadStateFromFile(hostPlatform, file);
+        final now = (_invitationReceiver?.now ?? DateTime.now()).millisecondsSinceEpoch ~/ 1000;
+        if (state != null && state.invitationId.isNotEmpty && state.invitationPendingUntil <= now) {
+          final cleared = state.copyWith(invitationId: '', invitationPendingUntil: 0);
+          await _persistStateToFile(hostPlatform: hostPlatform, file: file, state: cleared);
+          return cleared;
+        }
+        return state;
+      },
     );
   }
 
@@ -6262,6 +6288,11 @@ class AppFirstRuntimeBootstrapper
         (key, value) => MapEntry(key.toString(), value),
       ),
     );
+    final invitationNow = (_invitationReceiver?.now ?? DateTime.now()).millisecondsSinceEpoch ~/ 1000;
+    _invitationDeferUntil = parsed.invitationPendingUntil;
+    _invitationNetworkDeferred = parsed.invitationId.isNotEmpty &&
+        _invitationDeferUntil > invitationNow && _invitationDeferUntil - invitationNow <= 600;
+    _invitationDeferInitialization ??= Future<void>.value();
     // A persisted path is untrusted input. Validate it before reading secrets
     // or allowing any authenticated route-policy/profile request.
     _validatedManagedManifestPath(parsed.managedManifestPath);
@@ -6363,6 +6394,10 @@ class AppFirstRuntimeBootstrapper
     required File file,
     required _StoredBootstrapState state,
   }) async {
+    _invitationDeferUntil = state.invitationPendingUntil;
+    _invitationNetworkDeferred = state.invitationId.isNotEmpty && state.invitationPendingUntil >
+        (_invitationReceiver?.now ?? DateTime.now()).millisecondsSinceEpoch ~/ 1000;
+    _invitationDeferInitialization ??= Future<void>.value();
     _notifyTransportSelectionSessionWrite(file, state);
     var reason = 'state_write';
     try {
@@ -6806,239 +6841,11 @@ class AppFirstRuntimeBootstrapper
       final seconds = retrySeconds is int ? retrySeconds.clamp(1, 5) : 2;
       await _delayScheduler(Duration(seconds: seconds));
     }
-    final verifiedAt = DateTime.now().toUtc();
-    final transportCatalog = response.containsKey('transport_catalog')
-        ? decodeManagedTransportCatalog(response['transport_catalog'], platform: hostPlatform,
-            clientRelease: '$pokrovClientVersion+$pokrovClientBuildNumber', runtimeFeatures: runtimeFeatures,
-            coreRelease: coreRelease, requestedNodeCode: normalizedPreferredNode,
-            requestedCandidateRef: selectedCandidateRef)
-        : null;
-    if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
-      throw const TransportManifestFailure('transport_catalog_selection_mismatch');
-    }
-    if (preferredCountryCode.isNotEmpty &&
-        (transportCatalog == null || (transportCatalog.selected.warpMode != 'warp_direct' &&
-          transportCatalog.selected.nodeCountryCode(
-            transportCatalog.candidates) != preferredCountryCode))) {
-      throw const TransportManifestFailure('transport_catalog_selection_mismatch');
-    }
-    if (transportCatalog != null &&
-        (transportCatalog.revision != _readText(response['profile_revision']) ||
-         transportCatalog.selected.profileRef != _readText(response['transport_profile']))) {
-      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
-    }
-
-    if (tcpFallbackFromRevision.isNotEmpty &&
-        (_readText(response['transport_profile']) !=
-                'legacy_reality_fallback' ||
-            _readText(response['profile_revision']) !=
-                '$tcpFallbackFromRevision:fallback:legacy_reality_fallback')) {
-      throw const BootstrapFailure(
-        'Сервер не подтвердил резервное подключение. Повторите попытку позже.',
-      );
-    }
-    final configFormat = _readText(response['config_format']);
-    if (configFormat != 'singbox-json') {
-      _traceBootstrap('managed_response', 'fail', reason: 'config_format',
-        operationalCode: 'API-008');
-      throw BootstrapFailure(
-        'This device received connection details it cannot use yet.',
-      );
-    }
-
-    final configPayload = response['config_payload'];
-    if (configPayload == null) {
-      _traceBootstrap('managed_response', 'fail', reason: 'config_payload_missing',
-        operationalCode: 'API-008');
-      throw const BootstrapFailure(
-        'POKROV не смог завершить настройку: данных подключения недостаточно.',
-      );
-    }
-    void validateMaterial(TransportCandidate? candidate, String kind, String format, Object? raw) {
-      if (format != 'singbox-json' || raw == null) {
-        throw const TransportManifestFailure('transport_catalog_profile_mismatch');
-      }
-      if (candidate != null && (candidate.protocol, candidate.transport, candidate.protection) != switch (kind) {
-        'reality' => ('vless', 'tcp', 'reality'),
-        'grpc' => ('vless', 'grpc', 'tls'),
-        'xhttp' => ('vless', 'xhttp', candidate.protection),
-        'awg31' => ('awg', 'udp', 'awg31'),
-        'hysteria2' => ('hysteria2', 'udp', 'tls'),
-        'warp_direct' => ('warp', 'udp', 'warp'),
-        _ => ('', '', ''),
-      }) {
-        throw const TransportManifestFailure('transport_catalog_profile_mismatch');
-      }
-      if (candidate?.warpMode == 'warp_direct') {
-        try {
-          validatePokrovDirectWarpProfile(raw);
-        } on Object {
-          throw const TransportManifestFailure('transport_catalog_profile_mismatch');
-        }
-      }
-      if (candidate?.transport == 'xhttp') {
-        try {
-          final config = _readMap(raw is String ? jsonDecode(raw) : raw);
-          final graph = (config['outbounds'] as List).map(_readMap).toList();
-          final ingressTags = graph.map((outbound) => _readText(outbound['detour']))
-              .where((tag) => tag.isNotEmpty).toSet();
-          final outbounds = graph.where((outbound) => outbound['type'] == 'vless' &&
-              !ingressTags.contains(_readText(outbound['tag']))).toList();
-          if (outbounds.isEmpty) throw const FormatException();
-          for (final outbound in outbounds) {
-            final tls = _readMap(outbound['tls']);
-            final transport = _readMap(outbound['transport']);
-            final reality = _readMap(tls['reality'])['enabled'] == true;
-            if (tls['enabled'] != true ||
-                (reality ? 'reality' : 'tls') != candidate!.protection ||
-                transport['type'] != 'xhttp' ||
-                !const {'stream-one', 'stream-up', 'packet-up'}.contains(transport['mode']) ||
-                _readText(outbound['flow']).isNotEmpty ||
-                (reality && (_readMap(tls['utls'])['enabled'] != true ||
-                    tls['alpn'] is! List || (tls['alpn'] as List).firstOrNull != 'h2'))) {
-              throw const FormatException();
-            }
-          }
-        } on Object {
-          throw const TransportManifestFailure('transport_catalog_profile_mismatch');
-        }
-      }
-    }
-    validateMaterial(transportCatalog?.selected, _readText(response['transport_kind']), configFormat, configPayload);
-    final provisioning = _readMap(response['provisioning']);
-    final provisioningReady = _readBool(provisioning['sync_ok']) ||
-        _readText(provisioning['status']) == 'ready';
-    if (!provisioningReady) {
-      throw const BootstrapFailure(
-        'POKROV еще завершает первый запуск. Попробуйте через минуту.',
-        operationalCode: 'API-011',
-      );
-    }
-    final supportContext = _readMap(response['support_context']);
-    final warpPolicy = WarpRuntimePolicy.tryParse(
-      response['warp_policy'] ??
-          _readMap(response['client_policy'])['warp_policy'],
-    );
-    var smartConnect = SmartConnectProfile.tryParse(
-      response['smart_connect'],
-    );
-    if (transportCatalog != null && smartConnect != null) {
-      final nodes = transportCatalog.candidates.map((candidate) => candidate.nodeCode).toSet();
-      final previous = smartConnect;
-      smartConnect = SmartConnectProfile(eligible: previous.eligible,
-        fallbackRequired: previous.fallbackRequired, shortlistReason: previous.shortlistReason,
-        shortlistLimit: previous.shortlistLimit, shortlistRevision: previous.shortlistRevision,
-        transportProfile: previous.transportProfile, profileRevision: previous.profileRevision,
-        fallbackOrder: previous.fallbackOrder, stickiness: previous.stickiness,
-        shortlist: previous.shortlist.where((node) => nodes.contains(node.code)).toList(growable: false));
-    }
-    final isOwnedTransportLab = _ownedTransportLabProfiles.contains(
-      _readText(response['transport_profile']).trim().toLowerCase(),
-    );
-    final effectiveSmartConnect = isOwnedTransportLab && transportCatalog == null
-        ? null : smartConnect;
-    final effectivePreferredNode = isOwnedTransportLab || transportCatalog != null
-        ? '' : normalizedPreferredNode;
-    final clientRuleSetCatalog = await _ensureAllExceptRuRuleSetCatalog(
-      hostPlatform: hostPlatform,
-      routeMode: routeMode,
-      client: client,
-    );
-
-    final fallbackOrder = response['fallback_order'];
-    final reportedAsn = _readText(_readMap(response['access_network'])['asn']);
-    final accessNetworkAsn = RegExp(r'^AS[0-9]{1,10}$').hasMatch(reportedAsn)
-        ? reportedAsn : '';
-    final tcpFallbackRevision =
-        isOwnedTransportLab &&
-            fallbackOrder is List &&
-            fallbackOrder.contains('legacy_reality_fallback')
-        ? _readText(response['profile_revision'])
-        : '';
-    Future<ManagedProfilePayload> materialize(Object raw, String kind, TransportCandidate? candidate,
-        {String materialRef = ''}) async => ManagedProfilePayload(
-      cacheEntryId: ManagedProfileCache.newEntryId(),
-      accessNetworkAsn: accessNetworkAsn,
-      disableMemoryLimit: hostPlatform == HostPlatform.windows,
-      tcpFallbackFromRevision: candidate == null || candidate.candidateRef == transportCatalog?.selectedCandidateRef
-          ? tcpFallbackRevision : '',
-      source: RuntimeProfileSource(
-        revision: _readText(response['profile_revision']),
-        origin: RuntimeProfileSourceOrigin.managedManifest,
-        protocol: switch (kind) {
-          'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
-          'warp_direct' => 'warp',
-          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' => 'vless',
-          _ => 'unknown',
-        },
-      ),
-      profileName: _profileName(
-        hostPlatform: hostPlatform,
-        profileRevision: _readText(response['profile_revision']),
-      ),
-      configPayload: await _materializeRuntimeConfig(
-        rawConfigPayload:
-            raw is String ? raw : jsonEncode(raw),
-        hostPlatform: hostPlatform,
-        routeMode: routeMode,
-        selectedApps: selectedApps,
-        preferredNodeCode: effectivePreferredNode,
-        preferredVariantId:
-            effectivePreferredNode.isEmpty ? 'direct' : preferredVariantId,
-        smartConnect: effectiveSmartConnect,
-        supportContext: supportContext,
-        clientRuleSetCatalog: clientRuleSetCatalog,
-        directWarp: candidate?.warpMode == 'warp_direct',
-      ),
-      materializedForRuntime: true,
-      routeMode: routeMode,
-      smartConnect: effectiveSmartConnect,
-      transportCatalog: transportCatalog,
-      resolvedNodeCode: candidate?.nodeCode ?? effectivePreferredNode,
-      materialCandidateRef: materialRef,
-      warpPolicy: candidate?.warpMode == 'warp_direct'
-          ? pokrovDirectWarpPolicy(state.installId).withUserConsent(warpPolicy.userConsented)
-          : warpPolicy,
-      freeProfileAccess: FreeProfileAccess.tryParse(
-        access: response['access'],
-        freeCaps: response['free_caps'],
-      ),
-    );
-
-    final supplied = response['candidate_materials'];
-    final bundled = <String, ManagedProfilePayload>{};
-    final ManagedProfilePayload payload;
-    if (response.containsKey('candidate_materials')) {
-      if (transportCatalog == null || supplied is! List || supplied.isEmpty || supplied.length > 6) {
-        throw const TransportManifestFailure('transport_catalog_materials_mismatch');
-      }
-      for (final value in supplied) {
-        final row = _readMap(value);
-        final ref = _readText(row['candidate_ref']);
-        final admitted = transportCatalog.candidates.where((candidate) => candidate.candidateRef == ref).firstOrNull;
-        if (admitted == null || bundled.containsKey(ref) ||
-            (bundled.isEmpty && ref != transportCatalog.selectedCandidateRef) ||
-            (preferredCountryCode.isNotEmpty && admitted.warpMode != 'warp_direct' && admitted.nodeCountryCode(
-                transportCatalog.candidates) != preferredCountryCode)) {
-          throw const TransportManifestFailure('transport_catalog_materials_mismatch');
-        }
-        final kind = _readText(row['transport_kind']);
-        final raw = row['config_payload'];
-        validateMaterial(admitted, kind, _readText(row['config_format']), raw);
-        bundled[ref] = await materialize(raw!, kind, admitted, materialRef: ref);
-      }
-      payload = bundled[transportCatalog.selectedCandidateRef]!.copyWith(candidateMaterials: bundled);
-    } else {
-      payload = await materialize(configPayload, _readText(response['transport_kind']), transportCatalog?.selected);
-    }
-
-    return _ManagedManifestEnvelope(
-      payload: payload,
-      response: response,
-      verifiedAt: verifiedAt,
-      profileRevision: _readText(response['profile_revision']),
-      managedManifestPath: path,
-    );
+    return _decodeManagedManifestResponse(response, state: state, hostPlatform: hostPlatform,
+        routeMode: routeMode, selectedApps: selectedApps, normalizedPreferredNode: normalizedPreferredNode,
+        preferredVariantId: preferredVariantId, path: path, verifiedAt: DateTime.now().toUtc(), client: client,
+        tcpFallbackFromRevision: tcpFallbackFromRevision, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
+        selectedCandidateRef: selectedCandidateRef, preferredCountryCode: preferredCountryCode);
   }
 
   String _validatedManagedManifestPath(String value) {
@@ -9817,6 +9624,13 @@ class AppFirstRuntimeBootstrapper
     Map<String, dynamic> Function(String)? responseDecoder,
     bool requireHttps = false,
   }) async {
+    if (_invitationReceiver != null) {
+      await (_invitationDeferInitialization ??= _loadState(hostPlatform).then<void>((_) {}));
+      if (invitationNetworkDeferred) {
+        throw const BootstrapFailure('Первое подключение использует приглашение без API.',
+            code: 'offline_invitation_network_deferred', operationalCode: 'API-002');
+      }
+    }
     if (body != null && rawBody != null) {
       throw ArgumentError('JSON body and raw body are mutually exclusive.');
     }
@@ -11781,6 +11595,8 @@ class _StoredBootstrapState {
     this.refreshToken = '',
     this.expectsSecureSessionToken = false,
     this.sourceSchemaVersion = _appFirstBootstrapStateVersion,
+    this.invitationId = '',
+    this.invitationPendingUntil = 0,
   });
 
   final String installId;
@@ -11791,6 +11607,8 @@ class _StoredBootstrapState {
   final String refreshToken;
   final bool expectsSecureSessionToken;
   final int sourceSchemaVersion;
+  final String invitationId;
+  final int invitationPendingUntil;
 
   bool get hasSession => sessionToken.trim().isNotEmpty;
   bool get requiresSchemaMigration => sourceSchemaVersion == 0;
@@ -11803,7 +11621,12 @@ class _StoredBootstrapState {
     String? profileRevision,
     String? refreshToken,
     bool? expectsSecureSessionToken,
+    String? invitationId,
+    int? invitationPendingUntil,
   }) {
+    final replaced = installId != null && installId != this.installId ||
+        accountId != null && accountId != this.accountId ||
+        sessionToken != null && this.sessionToken.isNotEmpty && sessionToken != this.sessionToken;
     return _StoredBootstrapState(
       installId: installId ?? this.installId,
       sessionToken: sessionToken ?? this.sessionToken,
@@ -11814,6 +11637,8 @@ class _StoredBootstrapState {
       expectsSecureSessionToken:
           expectsSecureSessionToken ?? this.expectsSecureSessionToken,
       sourceSchemaVersion: sourceSchemaVersion,
+      invitationId: invitationId ?? (replaced ? '' : this.invitationId),
+      invitationPendingUntil: invitationPendingUntil ?? (replaced ? 0 : this.invitationPendingUntil),
     );
   }
 
@@ -11826,6 +11651,8 @@ class _StoredBootstrapState {
       'account_id': accountId,
       'managed_manifest_path': managedManifestPath,
       'profile_revision': profileRevision,
+      if (invitationId.isNotEmpty) 'offline_invitation_id': invitationId,
+      if (invitationPendingUntil > 0) 'offline_invitation_pending_until': invitationPendingUntil,
     };
   }
 
@@ -11842,6 +11669,9 @@ class _StoredBootstrapState {
       expectsSecureSessionToken:
           (json['session_token_storage'] ?? '').toString() == 'secure',
       sourceSchemaVersion: sourceSchemaVersion,
+      invitationId: json['offline_invitation_id'] is String ? json['offline_invitation_id'] as String : '',
+      invitationPendingUntil: json['offline_invitation_pending_until'] is int
+          ? json['offline_invitation_pending_until'] as int : 0,
     );
   }
 }

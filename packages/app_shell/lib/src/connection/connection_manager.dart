@@ -169,6 +169,7 @@ class ConnectionManager extends ChangeNotifier {
     if (!_connectionCoordinator.ownsOperation(generation)) return;
     if (_disposed || _runtimeBusy || _cacheRefreshInFlight) return;
     final service = _bootstrapper;
+    if (service is AppFirstRuntimeBootstrapper && service.invitationNetworkDeferred) return;
     if (service is! CachedManagedProfileBootstrapper) return;
     final features = _runtimeSnapshot?.transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
     // Before Core initialization, a legacy-only request would replace the
@@ -684,6 +685,8 @@ class ConnectionManager extends ChangeNotifier {
   bool _warpPolicyBusy = false;
   bool _stagedProfileUsesWarp = false;
   bool _activeConnectUsedWarp = false;
+  OfflineInvitationManagedProfile? _invitationAuthority;
+  int? _invitationAuthorityGeneration;
   bool _accessDenialPending = false;
   bool _warpFallbackInFlight = false;
   SmartConnectProfile? _smartConnectProfile;
@@ -1782,6 +1785,10 @@ class ConnectionManager extends ChangeNotifier {
     final engine = _runtimeEngine;
     final generation =
         ownerGeneration ?? _connectionCoordinator.operationGeneration;
+    if (_invitationAuthorityGeneration == generation && const {
+      'stageManagedProfile', 'repairStageManagedProfile', 'connect', 'repairConnect',
+      'replaceManagedProfile',
+    }.contains(operation)) _invitationAuthority?.requireLive();
     final attempt = _connectionAttemptNumber;
     final RuntimeConnectCancellation? cancellation =
         engine is RuntimeConnectCancellation
@@ -2156,11 +2163,13 @@ class ConnectionManager extends ChangeNotifier {
   }) async {
     final generation = ownerGeneration ?? _connectionCoordinator.operationGeneration;
     final profileRevision = _managedProfileRevision;
+    OfflineInvitationManagedProfile? invitation;
     void requireCurrent() {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
           profileRevision != _managedProfileRevision) {
         throw const ConnectionOperationSuperseded();
       }
+      invitation?.requireLive();
     }
     requireCurrent();
     if (recoveryCandidateRef.isEmpty) {
@@ -2228,7 +2237,15 @@ class ConnectionManager extends ChangeNotifier {
       excludedNodeCodes: inputs.preferredNodeCode.trim().isEmpty ? _activeAutomaticNodeExclusions() : const <String>{},
       selectCandidate: select, selectedCandidateRef: candidateRef, cacheResult: cache,
     );
-    var payload = await resolve(candidateRef: inputs.preferredCandidateRef,
+    if (_bootstrapper is AppFirstRuntimeBootstrapper) {
+      invitation = await (_bootstrapper as AppFirstRuntimeBootstrapper).openOfflineInvitationProfile(inputs,
+          runtimeFeatures: features, coreRelease: _runtimeSnapshot?.coreVersion,
+          operationIsCurrent: () => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
+              profileRevision == _managedProfileRevision);
+    }
+    _invitationAuthority = invitation;
+    _invitationAuthorityGeneration = invitation == null ? null : generation;
+    var payload = invitation?.payload ?? await resolve(candidateRef: inputs.preferredCandidateRef,
         select: !discoverCandidates, cache: !useCandidateProbes);
     requireCurrent();
     final catalog = payload.transportCatalog;
@@ -2275,7 +2292,7 @@ class ConnectionManager extends ChangeNotifier {
       _candidateCarrierName = network.carrierName;
       _candidateAccessNetworkAsn = asn.isEmpty ? null : asn;
       final cache = _bootstrapper;
-      if (cache is CachedManagedProfileBootstrapper) {
+      if (cache is CachedManagedProfileBootstrapper && invitation == null) {
         final remembered = await (cache as CachedManagedProfileBootstrapper)
             .successfulCandidateRef(inputs, key);
         requireCurrent();
@@ -2400,7 +2417,7 @@ class ConnectionManager extends ChangeNotifier {
       if (currentNetwork.contextRef != context || currentNetwork.selectionKey != nativeKey) {
         throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
       }
-      if (cache is CachedManagedProfileBootstrapper) {
+      if (cache is CachedManagedProfileBootstrapper && invitation == null) {
         try {
           await (cache as CachedManagedProfileBootstrapper).cacheResolvedManagedProfile(inputs, payload, cancelled: cancelled);
           final selected = payload.materialCandidate!;
@@ -2434,9 +2451,11 @@ class ConnectionManager extends ChangeNotifier {
     }
     _transportCatalog = payload.transportCatalog;
     _offlineState = null;
-    return _prepareManagedProfile(payload,
+    final prepared = await _prepareManagedProfile(payload, offline: invitation != null,
         smartAccessVpnFallback: smartAccessVpnFallback,
-        suppressWarpRuntime: suppressWarpRuntime, ownerGeneration: generation);
+        suppressWarpRuntime: suppressWarpRuntime || invitation != null, ownerGeneration: generation);
+    requireCurrent();
+    return prepared;
   }
 
   void _recordCandidateProbe(
@@ -4254,7 +4273,7 @@ class ConnectionManager extends ChangeNotifier {
     final directWarp = materialCandidate?.warpMode == 'warp_direct';
     final cacheService = _bootstrapper;
     final cacheInputs = _stagedCacheInputs;
-    if (snapshot.isCleanlyHealthy &&
+    if (snapshot.isCleanlyHealthy && _invitationAuthority == null &&
         cacheService is CachedManagedProfileBootstrapper &&
         cacheInputs != null) {
       unawaited((cacheService as CachedManagedProfileBootstrapper)
@@ -4271,7 +4290,7 @@ class ConnectionManager extends ChangeNotifier {
       final completion = _primaryConnectCompletion?.future ?? Future<void>.value();
       unawaited(completion.then((_) async {
         if (!_disposed && _connectionCoordinator.ownsOperation(generation) && _runtimeSnapshot?.isCleanlyHealthy == true) {
-          await _refreshManagedProfileCache(alternativesOnly: true);
+          if (_invitationAuthority == null) await _refreshManagedProfileCache(alternativesOnly: true);
         }
       }));
     } else if (_isCurrentSmartAccessProfile(snapshot)) {
@@ -4296,7 +4315,18 @@ class ConnectionManager extends ChangeNotifier {
         ),
       );
     }
-    unawaited(_syncSuccessfulConnectionExperience(snapshot));
+    if (_invitationAuthority != null && _bootstrapper is AppFirstRuntimeBootstrapper) {
+      final generation = _connectionCoordinator.operationGeneration;
+      unawaited((_bootstrapper as AppFirstRuntimeBootstrapper).completeOfflineInvitationConnect(
+          _appContext.hostPlatform, operationIsCurrent: () => !_disposed &&
+              _connectionCoordinator.ownsOperation(generation)).then((_) async {
+        if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+        await _syncSuccessfulConnectionExperience(snapshot);
+        await _observability?.flush();
+      }));
+    } else {
+      unawaited(_syncSuccessfulConnectionExperience(snapshot));
+    }
   }
 
   void _schedulePostConnectHostHealthRefresh(

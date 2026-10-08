@@ -11,6 +11,19 @@ The platform contract owner is
 Public download behavior belongs to
 `C:/Users/kiwun/Documents/ai/VPN/docs/architecture/client-downloads-flow.md`.
 
+Offline invitation request/import is SOURCE PREP for D13.2. An explicit recipient
+consent request binds local Ed25519 proof and X25519 delivery keys; a separate
+invitation issuer signs the encrypted new-recipient packet. Import requires that
+local request, private keys, audience and an absolute deadline of at most 600
+seconds. The initial cut supports explicitly selected `full_tunnel` only and
+reuses ordinary managed material validation, probes and native Stage/Connect.
+Its protected authority slot is separate from HTTP profile cache and has no
+24-hour grace. A bounded pending marker defers API before verified connection;
+verification, expiry, cancellation or session replacement releases that context.
+Python/Dart vectors and simulated runtime checks do not establish D13.3: QR UI
+and production issuance are not connected. Live first connection and ordinary
+continuation through the same bridge after 600 seconds remain unverified.
+
 ## Automatic access-network context (owner decision 2026-09-07)
 
 Android reports source-network context on app open/connect/running/failure,

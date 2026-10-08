@@ -10469,6 +10469,8 @@ void main() {
       apiBaseUrl: 'http://127.0.0.1:${server.port}/',
       supportDirectoryResolver: () async => tempDirectory,
       sessionSecretStore: secretStore,
+      invitationReceiver: OfflineInvitationReceiver(
+          trust: OfflineInvitationTrust(audience: 'production', issuerPublicKeys: const {})),
       maxRequestAttempts: 3,
     );
     final services = <Future<dynamic>>[
@@ -10480,11 +10482,11 @@ void main() {
       bootstrapper.fetchClientDevices(hostPlatform: HostPlatform.windows),
     ];
 
-    await startRead.future;
+    await startRead.future.timeout(const Duration(seconds: 5));
     await Future<void>.delayed(Duration.zero);
     expect(starts, 1);
     releaseStart.complete();
-    await Future.wait<dynamic>(services);
+    await Future.wait<dynamic>(services).timeout(const Duration(seconds: 5));
 
     final stateFile = File(
       '${tempDirectory.path}${Platform.pathSeparator}'
