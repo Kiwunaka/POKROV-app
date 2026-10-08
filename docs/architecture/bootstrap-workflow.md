@@ -248,6 +248,14 @@ Windows managed profiles use only TUN (no loopback mixed listener) and start
 Core with `disableMemoryLimit=true`, including restored cached profiles. A
 confirmed candidate-network read clears a stale Windows probe-settlement latch
 when no candidate probes remain.
+On 2026-10-08, installed Windows 1.5.0+4103 (App a743432e/Core af, 1.2.9)
+passed the 200-plus connection check in Full Tunnel mode: the owned CSS receiver
+had an observed peak of 201 established sockets and 201 successful strict TLS,
+HTTP/1.1 transfers. The service PID and TUN stayed active; its route and byte
+counters confirmed the traffic used the tunnel. Normal Stop left no owned
+curl connections, TUN, routes, DNS or transition filters, with the service Running.
+The original VLESS pin, Russia-direct mode and WARP-off setting were restored.
+This checks connection continuity, not Core heap, CPU improvement or native family.
 
 The managed `allExceptRu` route rejects sniffed BitTorrent traffic before
 Direct rules. On Android, the same mode excludes package IDs from the reviewed
