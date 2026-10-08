@@ -47,7 +47,9 @@ On 2026-10-08, installed Windows 1.5.0+4103 (App a743432e/Core af, 1.2.9)
 received one ordinary DE AWG connect with WARP off while a finite dynamic WFP
 fault blocked both API origins for the UI executable only. The ordinary UI
 reported that it could not reach the service before a TUN appeared; cache use
-and eligibility were not established. There was no retry, cache read/restore,
+and eligibility were not established. Its retained ordinary Diagnostics timeline
+shows Core ready, then profile and terminal API-002 in that same attempt;
+it does not expose why the cache was ineligible. There was no retry, cache read/restore,
 or native payload PASS. After the helper's 180-second expiry, its exact filters
 were absent and the OS had no TUN or owned routes/DNS; the service was Running.
 This does not close the current catalog/material offline path or replace the
