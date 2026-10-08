@@ -70,6 +70,9 @@ the subsequent ordinary Diagnostics read, so protocol, cache eligibility and
 failure cause remain unknown. The exact rule was removed before returning adb
 to UID 2000; VPN, timer and owned processes were cleared. Offline connection and
 runtime API-error classification remain unaccepted; source fixtures are separate.
+One read-only D8 query for the previously linked QA identity and build 4104,
+through Brain UTC 11:22:30, found no current event/probe/connect rows. Delivery
+remains unknown; these zero rows do not establish zero execution or probes.
 
 Locations refresh keeps direct Node latency probes disabled while a bridge is
 selected or running, and for a bridge transport catalog. The current API catalog
