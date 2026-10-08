@@ -43,6 +43,21 @@ stops at candidate-network admission; this does not exercise protected-cache
 reuse. The saved-stage check did not inspect historical TUN fields and does not
 establish migration of a legacy TUN shape. Android API-only failure was not tested.
 
+On 2026-10-08, installed Windows 1.5.0+4103 (App a743432e/Core af, 1.2.9)
+received one ordinary DE AWG connect with WARP off while a finite dynamic WFP
+fault blocked both API origins for the UI executable only. The ordinary UI
+reported that it could not reach the service before a TUN appeared; cache use
+and eligibility were not established. There was no retry, cache read/restore,
+or native payload PASS. After the helper's 180-second expiry, its exact filters
+were absent and the OS had no TUN or owned routes/DNS; the service was Running.
+This does not close the current catalog/material offline path or replace the
+older Core 1.1.2 cache acceptance above.
+The existing manager fixture with valid current catalog/material, the exact AWG
+pin and Russia-direct mode passes the same socket denial on both API origins:
+API-002 remains transient and the authorized cache reaches simulated AWG
+probe/stage/connect. HTTP authorization denials retain their separate cache
+invalidation. This source check does not establish the real VM's cache state.
+
 Locations refresh keeps direct Node latency probes disabled while a bridge is
 selected or running, and for a bridge transport catalog. The current API catalog
 and Portal health still refresh; an ordinary direct selection retains the

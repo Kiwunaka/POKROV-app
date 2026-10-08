@@ -806,6 +806,109 @@ void main() {
     expect(runtime.connectCalls, 0);
   });
 
+  test('WFP socket denial of both API origins connects the exact cached ordinary AWG', () async {
+    final originalStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(<String, String>{});
+    final directory = await Directory.systemTemp.createTemp('pokrov-offline-awg-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+      FlutterSecureStoragePlatform.instance = originalStorage;
+    });
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(jsonEncode(request.uri.path == '/api/client/session/start-trial'
+            ? {'session': {'session_token': 'awg-test-session', 'account_id': 'awg-test-account'},
+                'provisioning': {'status': 'ready', 'sync_ok': true}}
+            : request.uri.path == '/api/client/profile/managed' ? {
+              'profile_revision': 'cached-awg', 'config_format': 'singbox-json',
+              'transport_profile': 'awg31_lab', 'transport_kind': 'awg31',
+              'provisioning': {'status': 'ready', 'sync_ok': true},
+              'access': {'access_state': 'active',
+                'expiry_at': DateTime.now().toUtc().add(const Duration(days: 1)).toIso8601String()},
+              'transport_catalog': {
+                'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'cached-awg',
+                'selected_candidate_ref': 'de:awg31_lab', 'candidates': [{
+                  'candidate_ref': 'de:awg31_lab', 'profile_ref': 'awg31_lab', 'node_code': 'de',
+                  'country_code': 'DE', 'protocol': 'awg', 'transport': 'udp', 'protection': 'awg31',
+                  'priority': 0, 'parameters': {'network': 'udp', 'flow': ''},
+                  'requirements': {'minimum_client_release': pokrovClientVersion, 'minimum_core_release': null,
+                    'platforms': ['windows'], 'required_features': ['pokrov_awg31_endpoint_v1']},
+                }],
+              },
+              'config_payload': {
+                '_meta': {'transport_contract': {
+                  'id': 'pokrov.awg31.endpoint.v1',
+                  'sha256': '1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818',
+                  'profile': 'awg31_lab', 'state': 'enabled', 'generation': 'ordinary-v1',
+                }},
+                'endpoints': [{'type': 'awg', 'tag': 'awg-node',
+                  'contract_id': 'pokrov.awg31.endpoint.v1', 'useIntegratedTun': false}],
+                'outbounds': [{'type': 'direct', 'tag': 'direct'}],
+                'route': {'final': 'awg-node'},
+              },
+            } : {'ok': true}));
+        await request.response.close();
+      }
+    }());
+    var blocked = false;
+    final blockedOrigins = <String>{};
+    AppFirstRuntimeBootstrapper bootstrapper() => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      apiFallbackBaseUrls: ['http://localhost:${server.port}/'],
+      supportDirectoryResolver: () async => directory,
+      allExceptRuRuleSetUrlsResolver: (_) => const [], maxRequestAttempts: 1,
+      httpClientFactory: () {
+        final client = HttpClient();
+        if (blocked) {
+          client.connectionFactory = (uri, _, __) async {
+            blockedOrigins.add(uri.authority);
+            throw const SocketException('synthetic WFP denial', osError: OSError('network access denied', 10013));
+          };
+        }
+        return client;
+      },
+    );
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.allExceptRu, preferredCandidateRef: 'de:awg31_lab');
+    final seed = bootstrapper();
+    await seed.resolveManagedProfile(hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+      preferredCandidateRef: inputs.preferredCandidateRef, selectCandidate: false,
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(), coreRelease: '1.2.9');
+    final cached = await seed.loadCachedManagedProfile(inputs,
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(), coreRelease: '1.2.9');
+    expect(cached?.materialCandidate?.candidateRef, 'de:awg31_lab');
+    expect(cached?.source?.protocol, 'awg31');
+    blocked = true;
+    final offline = bootstrapper();
+    await expectLater(offline.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
+      routeMode: inputs.routeMode, preferredCandidateRef: inputs.preferredCandidateRef,
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(), coreRelease: '1.2.9'),
+      throwsA(isA<BootstrapFailure>().having((error) => error.operationalErrorCode, 'code', 'API-002')
+          .having((error) => error.apiFailureKind, 'kind', 'origin_socket')
+          .having((error) => error.osErrorCode, 'OS error', 10013)
+          .having((error) => error.statusCode, 'HTTP status', isNull)));
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..coreVersion = '1.2.9';
+    final manager = _manager(runtime, offline,
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    manager.restoreConnectionPreferences(const PokrovClientExperienceState.empty().copyWith(
+      interfaceMode: PokrovInterfaceMode.advanced, preferredCandidateRef: 'de:awg31_lab'), const {});
+    manager.selectRouteMode(RouteMode.allExceptRu);
+    await manager.connect();
+    expect(blockedOrigins, containsAll(['127.0.0.1:${server.port}', 'localhost:${server.port}']));
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.offlineState, ManagedProfileOfflineState.apiUnavailable);
+    expect(runtime.probedProtocols, ['awg31']);
+    expect(runtime.stagedPayloads.single.materialCandidate?.candidateRef, 'de:awg31_lab');
+    expect(runtime.stagedPayloads.single.warpPolicy.canEnableRuntime, isFalse);
+    expect(runtime.connectCalls, 1);
+  });
+
   test('API outage and failed node use an authorized cached other node through expiry grace', () async {
     final originalStorage = FlutterSecureStoragePlatform.instance;
     final protectedValues = <String, String>{};
