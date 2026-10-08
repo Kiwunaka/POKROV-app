@@ -160,6 +160,7 @@ void main() {
     final sentCorrelations = <String>[];
     final firstSend = Completer<void>();
     final firstResponse = Completer<bool>();
+    var offline = true;
     var activeSends = 0;
     var maximumActiveSends = 0;
     final mirror = ReleaseHealthMirrorWriter(
@@ -174,7 +175,7 @@ void main() {
             firstSend.complete();
             return await firstResponse.future;
           }
-          return true;
+          return !offline;
         } finally {
           activeSends -= 1;
         }
@@ -193,13 +194,18 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     firstResponse.complete(false);
     await Future.wait(<Future<void>>[firstAppend, nextAppend]);
-    await mirror.appendBatch(const <SerializedOperationalEvent>[]);
+    offline = false;
+    final dispatcher = OperationalEventDispatcher(writer: mirror);
+    await dispatcher.flush();
+    await dispatcher.flush();
 
     expect(local.events, <OperationalEvent>[event, nextEvent]);
-    expect(sent, hasLength(3));
+    expect(sent, hasLength(4));
     expect((sent.first['events'] as List).single['event_id'], event.eventId);
     expect(sent[1], same(sent[0]));
+    expect(sent[2], same(sent[0]));
     expect(sentCorrelations, [
+      event.correlation.attemptId,
       event.correlation.attemptId,
       event.correlation.attemptId,
       nextEvent.correlation.attemptId
@@ -212,7 +218,7 @@ void main() {
     expect(serialized, contains('"privacy_class":"release_health"'));
     expect(mirror.snapshot().projected, 2);
     expect(mirror.snapshot().acceptedBatches, 2);
-    expect(mirror.snapshot().rejectedBatches, 1);
+    expect(mirror.snapshot().rejectedBatches, 2);
   });
 
   test('release-health mirrors count only for exact Android routing terminal',

@@ -28,6 +28,11 @@ never enter the batch body, transport failure is best-effort, and this package
 owns no credentials, session creation or portal endpoint. It does not build
 support bundles or grant support access.
 
+An explicit dispatcher flush retries the mirror's retained unacknowledged batch
+through the same serialized delivery chain, without rewriting local events or
+resending an acknowledged batch. App detach/disposal already invokes this flush;
+foreground network recovery alone does not schedule delivery.
+
 `tool/runtime_overhead_benchmark.dart` measures the in-process pipeline's
 payload, volume, queue-loss and emit-time observations against the initial
 Android/Windows budgets. Its result is always `PARTIAL_LOCAL`: idle CPU,

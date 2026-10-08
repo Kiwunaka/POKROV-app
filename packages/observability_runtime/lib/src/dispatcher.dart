@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'model.dart';
 import 'queue.dart';
+import 'release_health.dart';
 import 'store.dart';
 
 enum OperationalEmitResult {
@@ -119,6 +120,8 @@ final class OperationalEventDispatcher {
         await pending;
       }
     }
+    final mirror = writer;
+    if (mirror is ReleaseHealthMirrorWriter) await mirror.flushPending();
   }
 
   OperationalPipelineSnapshot snapshot() {

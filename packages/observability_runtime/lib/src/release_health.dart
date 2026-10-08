@@ -50,9 +50,13 @@ final class ReleaseHealthMirrorWriter implements OperationalEventWriter {
         _pending.tryAdd(record);
       }
     }
+    await flushPending();
+  }
+
+  Future<void> flushPending() {
     final delivery = _delivery.then((_) => _drainPending());
     _delivery = delivery;
-    await delivery;
+    return delivery;
   }
 
   Future<void> _drainPending() async {
