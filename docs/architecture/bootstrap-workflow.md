@@ -235,7 +235,10 @@ time spent settling cancelled native work, up to the API limit of one hour.
 The existing `app.connection.candidate_probe.finished` event also retains the
 Core's last fixed phase as nullable `probe_stage`. Unknown phases and replies
 without a stage omit that attribute. `proxy_dial` separates HY2 establishment
-from a returned stream's TLS/HTTP work; `tls_read` can include the HY2 TCP response
+from a returned stream's TLS/HTTP work; the same allowlisted phase now accompanies
+its existing runtime-stats candidate batch, failure kind and measured duration.
+Portal stores it as nullable `probe_stage`, separate from `stage=probe|connect`;
+older stage-less reports stay valid. `tls_read` can include the HY2 TCP response
 and does not by itself identify a certificate failure. No upstream error text is
 recorded, and candidate selection, failure kinds and probe budgets are unchanged.
 Ordinary Diagnostics shows that stage under the latest attempt in its existing

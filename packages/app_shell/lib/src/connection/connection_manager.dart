@@ -2506,6 +2506,8 @@ class ConnectionManager extends ChangeNotifier {
       'candidate_transport': transport,
       if (candidateVariant.isNotEmpty) 'candidate_variant': candidateVariant,
       'stage': 'probe',
+      if (RuntimeCandidateProbeResult.probeStages.contains(result.probeStage))
+        'probe_stage': result.probeStage,
       'connected': result.profile != null,
       'failure_kind': result.failureKind,
       'duration_ms': result.duration.inMilliseconds,

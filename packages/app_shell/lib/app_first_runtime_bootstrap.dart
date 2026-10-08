@@ -4151,6 +4151,7 @@ class AppFirstRuntimeBootstrapper
       final transport = probe['candidate_transport'];
       final variant = probe['candidate_variant'];
       final stage = probe['stage'];
+      final probeStage = probe['probe_stage'];
       final outcome = probe['connected'];
       final failure = probe['failure_kind'];
       final duration = probe['duration_ms'];
@@ -4167,6 +4168,8 @@ class AppFirstRuntimeBootstrapper
             normalizeClientLocationVariantId(variant) == variant)
           'candidate_variant': variant,
         'stage': stage,
+        if (RuntimeCandidateProbeResult.probeStages.contains(probeStage))
+          'probe_stage': probeStage,
         'connected': outcome,
         'duration_ms': duration.clamp(0, 3600000),
         if (!outcome)

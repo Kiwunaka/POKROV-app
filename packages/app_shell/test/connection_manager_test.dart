@@ -1425,6 +1425,10 @@ void main() {
         {'runtime_phase': 'failed', 'error_code': 'CONN-008'});
     expect(bootstrapper.reports.single['candidate_probes'], hasLength(2));
     await observability.flush();
+    final reportedProbes = (bootstrapper.reports.single['candidate_probes'] as List)
+        .cast<Map<String, Object?>>();
+    expect(reportedProbes.map((probe) => probe['probe_stage']),
+        unorderedEquals(['proxy_dial', 'tls_read']));
     final events = await File(
       '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
     ).readAsLines();
