@@ -33,12 +33,18 @@ Happ disconnected, the same probe returned HTTP 200 immediately. These are
 LDPlayer failures, not proof that the production nodes or the subscription
 work through either client. No client or Core fix is attributed to this result.
 
-The owner deferred physical-phone testing. When resumed, on the Huawei device
-update over 1.1.6, grant VPN permission, and connect to
-CH plus two other nodes on Wi-Fi and Beeline LTE. Verify “everything except
-Russia”: a Russian site opens directly and a foreign site uses VPN. Switch
-Wi-Fi to LTE and back while connected. After disconnect, ordinary internet
-must work. Record any failed step against the exact installed package.
+Physical 1.5.0 acceptance begins when the owner connects the Huawei device.
+First record its actual installed version, UID and first-install time privately;
+update once with the current production-signed ARM64 APK using `adb install -r`,
+without clearing data or restoring an old session/cache. Confirm the version,
+preserved account/access/settings and Core version in normal Diagnostics. Grant
+VPN permission normally if requested. Run ordinary Auto on Wi-Fi and Beeline LTE
+for CH and two other currently available nodes; confirm TUN/routes/DNS/egress and
+“Russia directly” with a Russian and a foreign service. While connected, switch
+Wi-Fi to LTE and back, then Stop and verify VPN/routes cleanup and ordinary
+internet. Keep existing logs and use normal Diagnostics for any failed step;
+repeat only behavior changed by a subsequent fix. Build checks alone do not
+accept this physical sequence.
 
 Run Flutter analyze/tests for changed packages and both
 `testDirectDebugUnitTest` and `testStoreDebugUnitTest` for Android host
