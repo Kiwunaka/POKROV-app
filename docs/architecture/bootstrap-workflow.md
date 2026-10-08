@@ -67,7 +67,10 @@ reselect a location or protocol. The input command completed successfully;
 the collector reached EOF and OS checks at 10/20/30 seconds found no VPN.
 The UI remained unprotected. Current attempt/code/API details were not found in
 the subsequent ordinary Diagnostics read, so protocol, cache eligibility and
-failure cause remain unknown. The exact rule was removed before returning adb
+failure cause remain unknown. Admission to the manager's recorded connect action
+is also unknown: restore/generation guards and route-selection UI precede
+`beginAction` and `connect_requested`, and were not distinguished by the observer.
+The exact rule was removed before returning adb
 to UID 2000; VPN, timer and owned processes were cleared. Offline connection and
 runtime API-error classification remain unaccepted; source fixtures are separate.
 One read-only D8 query for the previously linked QA identity and build 4104,
