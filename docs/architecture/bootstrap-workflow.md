@@ -60,6 +60,17 @@ API-002 remains transient and the authorized cache reaches simulated AWG
 probe/stage/connect. HTTP authorization denials retain their separate cache
 invalidation. This source check does not establish the real VM's cache state.
 
+Private Android 1.5.0+4104 (App 15fb0cdc, ready Core dbc/1.2.9) was updated in
+place without resetting data, then tested with a finite UID-only block of both
+API origins active before cold launch. The last-saved-profile case did not
+reselect a location or protocol. The input command completed successfully;
+the collector reached EOF and OS checks at 10/20/30 seconds found no VPN.
+The UI remained unprotected. Current attempt/code/API details were not found in
+the subsequent ordinary Diagnostics read, so protocol, cache eligibility and
+failure cause remain unknown. The exact rule was removed before returning adb
+to UID 2000; VPN, timer and owned processes were cleared. Offline connection and
+runtime API-error classification remain unaccepted; source fixtures are separate.
+
 Locations refresh keeps direct Node latency probes disabled while a bridge is
 selected or running, and for a bridge transport catalog. The current API catalog
 and Portal health still refresh; an ordinary direct selection retains the
