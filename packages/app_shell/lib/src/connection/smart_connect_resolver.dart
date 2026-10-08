@@ -73,6 +73,7 @@ class SmartConnectCandidateSelector {
     'probe_failed', 'unexpected_status',
     'core_egress_connect_failed', 'core_egress_tls_failed',
     'core_egress_dns_failed', 'core_egress_probe_failed',
+    'core_egress_tls_timeout', 'core_egress_response_timeout',
   };
 
   void recordSuccess(String network, String candidateRef) {

@@ -299,9 +299,11 @@ void main() {
     expect(reported, ['invalid_profile', '']);
   });
 
-  test('probe failure and unexpected status suppress only their candidate', () async {
+  test('typed network failures suppress only their candidate and network', () async {
     final catalog = _catalog([_candidate(0), _candidate(1)]);
-    for (final kind in ['probe_failed', 'unexpected_status']) {
+    final selectedByFailureKind = <String, String>{};
+    for (final kind in ['probe_failed', 'unexpected_status',
+        'core_egress_tls_timeout', 'core_egress_response_timeout']) {
       final selector = SmartConnectCandidateSelector();
       selector.recordFailure('network-a', 'de:profile_0', kind);
       final result = await selector.select(
@@ -309,8 +311,27 @@ void main() {
         cancelled: Completer<void>().future,
         probe: (candidate, cancelled, timeout) async => _success(candidate),
       );
-      expect(result.profileName, 'de:profile_1');
+      selectedByFailureKind[kind] = result.profileName;
+      final otherNetwork = await selector.select(
+        catalog: catalog, network: 'network-b', platform: HostPlatform.windows,
+        cancelled: Completer<void>().future,
+        probe: (candidate, cancelled, timeout) async => _success(candidate),
+      );
+      expect(otherNetwork.profileName, 'de:profile_0', reason: kind);
     }
+    final selector = SmartConnectCandidateSelector();
+    for (final kind in ['core_egress_timeout', 'deadline_exceeded',
+        'invalid_profile', 'cancelled', 'network_changed']) {
+      selector.recordFailure('network-a', 'de:profile_0', kind);
+    }
+    final ignored = await selector.select(
+      catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async => _success(candidate),
+    );
+    expect(ignored.profileName, 'de:profile_0');
+    expect(selectedByFailureKind.values, everyElement('de:profile_1'),
+        reason: selectedByFailureKind.toString());
   });
 
   test('local probe budget expiry does not suppress the candidate', () async {

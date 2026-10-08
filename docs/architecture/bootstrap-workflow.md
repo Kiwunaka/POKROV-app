@@ -205,6 +205,9 @@ exhaustion, and a stale receipt is not reported under the next attempt.
 The last successful candidate gets up to 350 ms before alternatives. Only typed
 network probe failures suppress a candidate for four minutes or move TCP ahead
 of UDP; an empty filtered catalog retries every eligible candidate.
+Typed `core_egress_tls_timeout` and `core_egress_response_timeout` also suppress
+only that network's exact candidate. Generic Core/action deadlines, profile
+failures, cancellation and network changes do not add failure memory.
 For a direct typed IPv6/IPv4 pair on the same node and profile, IPv6 probes first;
 IPv4 starts after 250 ms of the IPv6 native probe, or sooner after its failure.
 The same three/four worker limit, cancellation and settlement apply. A physical
