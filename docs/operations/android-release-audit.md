@@ -1,8 +1,8 @@
-# Android 1.2.0 acceptance
+# Android acceptance
 
-Published version: `1.2.0+4061`, direct APK, POKROV Core 1.1.0. Current
-Huawei acceptance is recorded in `cutover-readiness.md`. The 4055 emulator
-results below are historical; LDPlayer is not used for VPN acceptance.
+Public version remains `1.4.5`; 1.5.0 candidates are private. Older Huawei
+acceptance is recorded in `cutover-readiness.md`. The 4061 and 4055 results
+below are historical; LDPlayer is not used for VPN acceptance.
 
 The x86_64 direct 4055 APK was installed in a fresh LDPlayer instance. It
 started, created a trial, and received Android VPN permission. DE and CH both
@@ -53,8 +53,15 @@ reset. Update preservation from the absent main-profile version was not tested.
 An ordinary activity exit and reopen left the running VPN healthy but lost its
 location label. The host now supplies displayNodeCode only from the stored profile
 matching the healthy effective digest. This is display metadata, without candidate,
-lease or upstream profile authority. Physical verification of the corrected build
-is still pending; 4106 remains a private candidate and does not accept this fix.
+lease or upstream profile authority. Physical verification passed on production-signed ARM64 1.5.0+4107: the update
+from 4106 preserved the main profile's data inode, UID, access and preferences.
+One DE/Wi-Fi connection remained protected while the activity exited to the
+launcher; reopening restored Frankfurt in Home and normal Diagnostics with
+healthy tunnel/DNS/egress checks, without another Connect. Final Stop removed
+VPN/tun0/routes; Auto and the original network settings were restored. The first
+4106 LTE Auto failure and CH LTE 25.735-second connect remain unresolved; their
+prepare/native stages were not delivered. No release or full physical acceptance
+is inferred from this targeted fix check.
 Run Flutter analyze/tests for changed packages and both
 `testDirectDebugUnitTest` and `testStoreDebugUnitTest` for Android host
 changes. A local APK build or emulator run does not close the Huawei checks.

@@ -1,17 +1,19 @@
-# Windows 1.2.0 acceptance
+# Windows acceptance
 
-On 2026-10-08 the owned Clean VM upgraded from 4103 to the private unsigned
-1.5.0+4105 candidate (App `30863114`, Core `dbc73e1` / 1.2.9). Direct installer
-UAC, terminal Inno success, actual version, stable Auto/LocalSystem service and
-preserved identity/owner passed. One ordinary Auto reached protected Home with
-TUN, six routes and DNS. After a 10.037-second NIC loss, protected recovery within
-60 seconds was not proved; a later UI showed blocked traffic. Normal Stop cleared
-TUN/routes/DNS and restored preferences, with cable on and sessions closed. BFE
-verification remains unknown after the ordinary reader's policy rejection.
-Unchanged 4103 reboot/uninstall acceptance is carried; this does not accept a
-fresh user, physical ARM, the full 1.5.0 release or public signing.
-
-Published: `1.2.0+4061`, unsigned Windows beta, POKROV Core 1.1.0.
+On 2026-10-08 the owned Clean VM upgraded from 4105 to private unsigned
+1.5.0+4107 (App code `d09f555c`, unchanged Core `dbc73e1` / 1.2.9).
+Direct UAC/terminal installer success, actual AOT/Core/Cronet, stable
+Auto/LocalSystem service and preserved identity/owner passed. One Auto reached
+protected Home and normal Diagnostics confirmed tunnel/routes/DNS/egress.
+The NIC was off for 10.084 seconds: the loss frame needed attention, then Home
+returned to Connected/Germany 10.08 seconds after cable-on. Fresh native proof
+within 60 seconds and the exact source-fix branch were not observed; the earlier
+4105 blocked-traffic cause remains unknown. Normal Stop cleared TUN/routes/DNS,
+with service/PID stable; original preferences, cable-on and closed sessions were
+confirmed. BFE remains unknown; its rejected reader was not repeated. Unchanged
+4103 reboot/uninstall acceptance is carried. This does not accept a fresh user,
+the full 1.5.0 release or public signing.
+Public version remains `1.4.5`. Historical `1.2.0+4061` was an unsigned Windows beta with Core 1.1.0.
 Version 1.1.6 remains available for rollback. The earlier 4055 installed-VM checks remain historical. On
 the same VM, 4053 connected to DE while 4054 timed out; replacing only Core
 with the fixed DLL restored the connection. The exact 4055 installer was then
