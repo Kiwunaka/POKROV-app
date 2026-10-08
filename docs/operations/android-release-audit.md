@@ -33,19 +33,28 @@ Happ disconnected, the same probe returned HTTP 200 immediately. These are
 LDPlayer failures, not proof that the production nodes or the subscription
 work through either client. No client or Core fix is attributed to this result.
 
-Physical 1.5.0 acceptance begins when the owner connects the Huawei device.
-First record its actual installed version, UID and first-install time privately;
-update once with the current production-signed ARM64 APK using `adb install -r`,
-without clearing data or restoring an old session/cache. Confirm the version,
-preserved account/access/settings and Core version in normal Diagnostics. Grant
-VPN permission normally if requested. Run ordinary Auto on Wi-Fi and Beeline LTE
-for CH and two other currently available nodes; confirm TUN/routes/DNS/egress and
-“Russia directly” with a Russian and a foreign service. While connected, switch
-Wi-Fi to LTE and back, then Stop and verify VPN/routes cleanup and ordinary
-internet. Keep existing logs and use normal Diagnostics for any failed step;
-repeat only behavior changed by a subsequent fix. Build checks alone do not
-accept this physical sequence.
+On 2026-10-08 the production-signed ARM64 1.5.0+4106 candidate (Core 1.2.9)
+was installed on the Huawei Android 12 main profile, where POKROV was already
+absent. The shared package recorded 1.4.5+4086 in a stopped secondary profile;
+Android updated the shared code while that profile's data stayed untouched. Main
+app data was fresh, and ordinary onboarding showed five days of trial access;
+this does not establish a new server account. The first Beeline LTE Auto attempt
+exhausted selection with CONN-008 before VPN permission. Preparation versus native
+probe failure remains unknown; the initial DNS warning does not establish cause.
+Distinct Wi-Fi Auto selected CH, followed by ordinary Android VPN consent. CH, DE
+and US then passed normal tunnel/DNS/egress checks across Wi-Fi and LTE; DE on LTE
+was reached by automatic handoff. Wi-Fi to LTE and back retained the VPN, but an
+exact recovery deadline was not measured. The owner opened new ya.ru and
+pokrov.space pages in Russia-direct mode and a new ya.ru page after Stop.
+Final Stop removed the VPN, tun0 and its routes; Auto and original Wi-Fi-off,
+mobile-data-on settings were restored. No app cache/session or server trial was
+reset. Update preservation from the absent main-profile version was not tested.
 
+An ordinary activity exit and reopen left the running VPN healthy but lost its
+location label. The host now supplies displayNodeCode only from the stored profile
+matching the healthy effective digest. This is display metadata, without candidate,
+lease or upstream profile authority. Physical verification of the corrected build
+is still pending; 4106 remains a private candidate and does not accept this fix.
 Run Flutter analyze/tests for changed packages and both
 `testDirectDebugUnitTest` and `testStoreDebugUnitTest` for Android host
 changes. A local APK build or emulator run does not close the Huawei checks.

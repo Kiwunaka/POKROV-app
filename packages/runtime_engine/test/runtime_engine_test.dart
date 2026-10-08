@@ -1776,6 +1776,7 @@ void main() {
         'stagedProfileDigest': stagedDigest,
         'effectiveProfileDigest': effectiveDigest,
         'profileIdentityOrigin': 'android_private_stage_request_sha256',
+        'activeDisplayNodeCode': effectiveDigest == digestA ? 'de' : 'ch',
         'coreEgressValidated': effectiveDigest != null,
         'dnsReady': effectiveDigest != null,
         'hostHealth': 'healthy', 'dnsState': 'healthy', 'uplinkState': 'healthy',
@@ -1804,8 +1805,10 @@ void main() {
     expect(state.fetchedProfileSource, same(sourceA));
     expect(state.stagedProfileSource, same(sourceA));
     expect(state.effectiveProfileSource, isNull);
+    expect(state.activeDisplayNodeCode, isNull);
     state = await engine.connect();
     expect(state.effectiveProfileSource, same(sourceA));
+    expect(state.activeDisplayNodeCode, 'de');
     final provenAt = state.proofObservedAt;
     expect(provenAt, isNotNull);
     expect((await engine.snapshot()).proofObservedAt, provenAt);
@@ -1817,6 +1820,7 @@ void main() {
     expect(state.fetchedProfileSource, same(sourceB));
     expect(state.stagedProfileSource, same(sourceA));
     expect(state.effectiveProfileSource, same(sourceA));
+    expect(state.activeDisplayNodeCode, 'de');
 
     rejectStage = false;
     nextDigest = digestB;
@@ -1826,13 +1830,17 @@ void main() {
     expect(state.effectiveProfileSource, isNull);
     effectiveDigest =
         digestA; // Delayed previous proof cannot confirm revision B.
-    expect((await engine.snapshot()).effectiveProfileSource, isNull);
+    final previousProof = await engine.snapshot();
+    expect(previousProof.effectiveProfileSource, isNull);
+    expect(previousProof.activeDisplayNodeCode, isNull);
     state = await engine.connect();
     expect(state.effectiveProfileSource, same(sourceB));
     // A new consumer cannot reconstruct upstream authority from the local hash.
     final freshEngine = createRuntimeEngine(hostPlatform: HostPlatform.android);
-    expect((await freshEngine.snapshot()).effectiveProfileSource, isNull);
-    expect((await freshEngine.snapshot()).proofObservedAt, isNull);
+    final freshSnapshot = await freshEngine.snapshot();
+    expect(freshSnapshot.effectiveProfileSource, isNull);
+    expect(freshSnapshot.proofObservedAt, isNull);
+    expect(freshSnapshot.activeDisplayNodeCode, 'ch');
   });
 
   test('windows profile mismatch remains unprotected with explicit recovery',

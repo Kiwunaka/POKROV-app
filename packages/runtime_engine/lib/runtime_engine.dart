@@ -122,6 +122,7 @@ class RuntimeSnapshot {
     this.stagedProfileDigest,
     this.effectiveProfileDigest,
     this.profileIdentityOrigin,
+    this.activeDisplayNodeCode,
     this.fetchedProfileSource,
     this.stagedProfileSource,
     this.effectiveProfileSource,
@@ -174,6 +175,9 @@ class RuntimeSnapshot {
   final String? stagedProfileDigest;
   final String? effectiveProfileDigest;
   final String? profileIdentityOrigin;
+  /// Public display metadata bound by the host to its healthy effective profile.
+  /// This is not measured exit geography, candidate or transport-lease authority.
+  final String? activeDisplayNodeCode;
   final RuntimeProfileSource? fetchedProfileSource;
   final RuntimeProfileSource? stagedProfileSource;
   final RuntimeProfileSource? effectiveProfileSource;
@@ -242,6 +246,7 @@ class RuntimeSnapshot {
         stagedProfileDigest,
         effectiveProfileDigest,
         profileIdentityOrigin,
+        activeDisplayNodeCode,
         (fetchedProfileSource?.revision, fetchedProfileSource?.origin, fetchedProfileSource?.protocol),
         (stagedProfileSource?.revision, stagedProfileSource?.origin, stagedProfileSource?.protocol),
         (effectiveProfileSource?.revision, effectiveProfileSource?.origin, effectiveProfileSource?.protocol),
@@ -4448,6 +4453,13 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       stagedConfigPath: response['stagedConfigPath'] as String?,
       stagedProfileDigest: stagedDigest,
       effectiveProfileDigest: effectiveDigest,
+      activeDisplayNodeCode: hostPlatform == HostPlatform.android && fullProof &&
+              response['protectionRetained'] != true && effectiveDigest != null &&
+              effectiveDigest == stagedDigest &&
+              response['profileIdentityOrigin'] == 'android_private_stage_request_sha256' &&
+              response['activeDisplayNodeCode'] is String &&
+              RegExp(r'^[a-z0-9][a-z0-9_-]{0,63}$').hasMatch(response['activeDisplayNodeCode'] as String)
+          ? response['activeDisplayNodeCode'] as String : null,
       fetchedProfileSource: _fetchedSource,
       stagedProfileSource: stagedSource,
       effectiveProfileSource: effectiveSource,

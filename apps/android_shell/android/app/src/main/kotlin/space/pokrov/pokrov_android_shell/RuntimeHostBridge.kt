@@ -565,7 +565,10 @@ class RuntimeHostBridge(
             runningMessage = PokrovRuntimeVpnService.latestRuntimeMessage(),
         )
         AndroidRuntimeState.updateVpnValidation(AndroidVpnNetworkHealth.resolve(activity))
-        return AndroidRuntimeState.snapshot()
+        val snapshot = AndroidRuntimeState.snapshot()
+        return snapshot + ("activeDisplayNodeCode" to activeRuntimeDisplayNodeCode(snapshot) {
+            AndroidRuntimeProfileStore.load(activity)
+        })
     }
 
     private fun initialize(): Map<String, Any?> {

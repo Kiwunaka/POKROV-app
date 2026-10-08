@@ -303,6 +303,11 @@ Exhausted protected recovery still reports its current failure under the origina
 attempt number after that duration is consumed. It does not start another user
 attempt or measure a new connect duration; operation ownership and tunnel retention
 remain required.
+If ordinary Windows recovery fails before native replacement, the unchanged
+running owner can later pass its own periodic verifier. Fresh healthy proof with
+the same profile digest and source retires only the App recovery presentation
+guard; pending settings, authorization denial, native retention and bound leases
+still block that reconciliation. It does not retry or stage a profile.
 Ordinary catalog location changes use the location catalog's policy metadata,
 so the previous AWG candidate cannot impose
 a legacy laboratory node allowlist. A completed explicit Android Disconnect

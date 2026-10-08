@@ -31,6 +31,22 @@ internal fun PersistedRuntimeProfile.canStartFromQuickSettings(): Boolean =
     quickSettingsEligible && !requiresBoundConnect && !catalogAppIdentityRequired && lanScopeVersion == 1 &&
         routeMode.isNotBlank() && isRuntimeProfileDigest(configDigest)
 
+internal fun activeRuntimeDisplayNodeCode(
+    snapshot: Map<String, Any?>,
+    loadProfile: () -> PersistedRuntimeProfile?,
+): String? {
+    if (snapshot["phase"] != "running" || snapshot["hostHealth"] != "healthy" ||
+        snapshot["dnsState"] != "healthy" || snapshot["uplinkState"] != "healthy" ||
+        snapshot["dns_ready"] == false || snapshot["core_egress_validated"] != true ||
+        snapshot["transportProofPending"] == true || snapshot["protectionRetained"] == true) return null
+    val effectiveDigest = snapshot["effectiveProfileDigest"] as? String
+    if (!isRuntimeProfileDigest(effectiveDigest)) return null
+    val profile = loadProfile() ?: return null
+    if (profile.configDigest != effectiveDigest) return null
+    return profile.displayNodeCode.trim().lowercase()
+        .takeIf { it.matches(Regex("[a-z0-9][a-z0-9_-]{0,63}")) }
+}
+
 internal fun coreEgressProbeRequiredForRuntime(
     profile: PersistedRuntimeProfile?,
     configPath: String,

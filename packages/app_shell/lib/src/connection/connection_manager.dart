@@ -324,6 +324,7 @@ class ConnectionManager extends ChangeNotifier {
   int get _managedProfileRevision => _managedProfileLifecycle.revision;
   RuntimeSnapshot? get _runtimeSnapshot => _connectionCoordinator.snapshot;
   set _runtimeSnapshot(RuntimeSnapshot? value) {
+    final previous = _runtimeSnapshot;
     final hadCapabilities = _runtimeSnapshot?.transportCapabilities?.features.isNotEmpty == true;
     if (value != null && _runtimeStopConfirmed(value)) {
       _protectedHandoffActive = false;
@@ -333,6 +334,12 @@ class ConnectionManager extends ChangeNotifier {
       _protectedHandoffActive = true;
       _activePhase = ConnectionPhase.actionRequired;
     }
+    if (value != null) _reconcileHealthyNativeRecovery(previous, value);
+    final displayNodeCode = value?.activeDisplayNodeCode;
+    if (_appContext.hostPlatform == HostPlatform.android &&
+        value?.isCleanlyHealthy == true && displayNodeCode != null) {
+      _activeNodeCode = displayNodeCode;
+    }
     _connectionCoordinator.updateSnapshot(value);
     _protectionRuntimeSnapshot.value = value;
     if (_clientExperienceLoaded && _transportCatalog == null && !hadCapabilities &&
@@ -340,6 +347,29 @@ class ConnectionManager extends ChangeNotifier {
       // Run after the native observation finishes its action ownership.
       unawaited(Future<void>.delayed(Duration.zero, _refreshManagedProfileCache));
     }
+  }
+
+  void _reconcileHealthyNativeRecovery(RuntimeSnapshot? previous, RuntimeSnapshot current) {
+    // Failed preparation can outlive the unchanged Core owner's self-recovery.
+    if (_appContext.hostPlatform != HostPlatform.windows || _disposed ||
+        _activePhase != ConnectionPhase.actionRequired || !_protectedHandoffActive ||
+        _runtimeIntent != ConnectionTransitionIntent.none || _runtimeActionsInFlight.isNotEmpty ||
+        _managedProfileDirty || _accessDenialPending || _cachedProfileFallbackGate.authorizationDenied ||
+        _activeCandidateRef == null || _activeCandidateRef != _candidateRef ||
+        previous == null || previous.phase != RuntimePhase.running || previous.protectionRetained ||
+        !previous.hasCoreEgressProbeFailure || previous.proofObservedAt != null ||
+        previous.transportProofPending == true || previous.transportLeaseActive == true || current.transportLeaseActive == true ||
+        !_isConnectionProven(current) || current.lastFailureKind != null || current.proofObservedAt == null) return;
+    final digest = previous.effectiveProfileDigest;
+    final source = previous.stagedProfileSource;
+    final currentSource = current.effectiveProfileSource;
+    if (digest == null || digest != previous.stagedProfileDigest ||
+        digest != current.stagedProfileDigest || digest != current.effectiveProfileDigest ||
+        source == null || source.revision.isEmpty || currentSource == null || source.revision != currentSource.revision ||
+        source.origin != currentSource.origin || source.protocol != currentSource.protocol) return;
+    _protectedHandoffActive = false;
+    _activePhase = null;
+    _runtimeHeadline = null;
   }
 
   bool get _runtimeBusy => _connectionCoordinator.actionInFlight;

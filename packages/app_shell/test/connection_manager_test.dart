@@ -263,6 +263,10 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool failFirstActivation = false;
   String activationFailureKind = 'core_egress_timeout';
   RuntimeProfileSource? profileSource;
+  String? profileDigest;
+  DateTime? proofObservedAt;
+  String? activeDisplayNodeCode;
+  bool? transportProofPending;
   Object? connectFailure;
   bool restoredHandoffGuard = false;
   final probeRelease = Completer<void>();
@@ -403,6 +407,15 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         lastStopReason: lastStopReason,
         fetchedProfileSource: profileSource,
         stagedProfileSource: profileSource,
+        effectiveProfileSource: profileDigest != null && phase == RuntimePhase.running &&
+            !warpEgressFailure && !pendingFirstEgress ? profileSource : null,
+        stagedProfileDigest: stagedProfile == null ? null : profileDigest,
+        effectiveProfileDigest: phase == RuntimePhase.running ? profileDigest : null,
+        profileIdentityOrigin: profileDigest == null ? null : hostPlatform == HostPlatform.android
+            ? 'android_private_stage_request_sha256' : 'windows_service_stage_request_sha256',
+        proofObservedAt: phase == RuntimePhase.running && !warpEgressFailure ? proofObservedAt : null,
+        activeDisplayNodeCode: activeDisplayNodeCode,
+        transportProofPending: transportProofPending,
         transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady && !coreInitializationPending
             ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
                 'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
@@ -2051,6 +2064,77 @@ void main() {
     await manager.toggle();
     expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(1));
     expect(manager.retainsProtection, isFalse);
+  });
+
+  test('fresh native proof retires a preparation-only recovery failure', () async {
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true
+      ..profileDigest = 'a' * 64
+      ..proofObservedAt = DateTime.utc(2026, 10, 8)
+      ..profileSource = RuntimeProfileSource(revision: 'current-owner',
+          origin: RuntimeProfileSourceOrigin.values.first, protocol: 'vless');
+    final bootstrapper = _StatsBootstrapper();
+    final manager = _manager(runtime, bootstrapper,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    runtime.failedProbeProfiles.addAll(_candidates.map((candidate) => candidate.candidateRef));
+    runtime.warpEgressFailure = true;
+    final deadline = DateTime.now().add(const Duration(seconds: 3));
+    while ((manager.status.phase != ConnectionPhase.actionRequired || manager.busy) &&
+        DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed'), hasLength(1));
+    expect(runtime.stagedPayloads, hasLength(1));
+    expect(runtime.connectCalls, 1);
+    expect(runtime.handoffCalls, 0, reason: 'recovery exhausted before native replacement');
+    expect(manager.snapshot?.phase, RuntimePhase.running);
+    expect(manager.snapshot?.protectionRetained, isFalse);
+    expect(manager.snapshot?.proofObservedAt, isNull);
+    expect(manager.retainsProtection, isTrue, reason: 'App protects traffic while preparation fails');
+
+    runtime.warpEgressFailure = false; // The same unbound owner passed its periodic verifier.
+    runtime.proofObservedAt = DateTime.utc(2026, 10, 8, 0, 0, 1);
+    await manager.refresh();
+    expect(manager.snapshot?.isCleanlyHealthy, isTrue);
+    expect(manager.snapshot?.lastFailureKind, isNull);
+    expect(manager.snapshot?.proofObservedAt, runtime.proofObservedAt);
+    expect(manager.snapshot?.stagedProfileSource, runtime.profileSource);
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.retainsProtection, isFalse);
+    expect(runtime.stagedPayloads, hasLength(1));
+    expect(runtime.connectCalls, 1);
+    expect(runtime.handoffCalls, 0);
+    expect(runtime.calls, isNot(contains('disconnect')));
+  });
+
+  test('cold healthy Android owner restores its display node without selecting a candidate', () async {
+    final runtime = _Runtime()
+      ..phase = RuntimePhase.running
+      ..stagedProfile = 'existing-owner'
+      ..profileDigest = 'b' * 64
+      ..activeDisplayNodeCode = 'ch';
+    final bootstrapper = _StatsBootstrapper();
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.refresh();
+    expect(bootstrapper.actualReports.last['selected_node_code'], 'ch');
+    expect(manager.status.routes.profileDirty, isTrue, reason: 'displaying the active owner cannot apply pending settings');
+    expect(manager.materialCandidate, isNull);
+    expect(manager.transportCatalog, isNull);
+    expect(bootstrapper.resolutions, isEmpty);
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+    expect(runtime.handoffCalls, 0);
+
+    runtime.transportProofPending = true;
+    runtime.activeDisplayNodeCode = 'de';
+    await manager.refresh();
+    expect(bootstrapper.actualReports.last['selected_node_code'], 'ch',
+        reason: 'a pending proof cannot replace the last active display node');
   });
 
   test('successful probe followed by activation failure advances without disconnect', () async {

@@ -11,6 +11,7 @@ class CachedProfileFallbackGate {
 
   bool _blockedUntilFreshProfile = false;
   bool _authorizationDenied = false;
+  bool get authorizationDenied => _authorizationDenied;
   bool preferProvenProfile = false;
 
   static Duration refreshDeadline(Duration actionTimeout) {
