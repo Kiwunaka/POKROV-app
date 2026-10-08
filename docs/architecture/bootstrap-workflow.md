@@ -299,6 +299,10 @@ Runtime stats retain a staged bridge variant only for the current operation
 and exact material candidate. Preflight reports preserve each validated bridge
 variant. Terminal success consumes the attempt duration before awaiting delivery,
 so a healthy refresh cannot count the same attempt twice or clear the next one.
+Exhausted protected recovery still reports its current failure under the original
+attempt number after that duration is consumed. It does not start another user
+attempt or measure a new connect duration; operation ownership and tunnel retention
+remain required.
 Ordinary catalog location changes use the location catalog's policy metadata,
 so the previous AWG candidate cannot impose
 a legacy laboratory node allowlist. A completed explicit Android Disconnect

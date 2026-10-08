@@ -4900,7 +4900,7 @@ class ConnectionManager extends ChangeNotifier {
             : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.');
       });
     } finally {
-      if (terminalCode != null && _connectionAttemptDurationMs() != null &&
+      if (terminalCode != null &&
           !_disposed && _connectionCoordinator.ownsOperation(generation)) {
         await _reportClientLifecycle('failed', errorCode: terminalCode, retryable: true);
         if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {

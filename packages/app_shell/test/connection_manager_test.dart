@@ -2014,20 +2014,38 @@ void main() {
   }
 
   test('failed protected recovery never disconnects and explicit off releases it', () async {
-    final runtime = _Runtime()..supportsCandidates = true..warpEgressFailure = true..failHandoff = true;
-    final manager = _manager(runtime, _Bootstrapper(catalog: true));
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _StatsBootstrapper();
+    final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    await manager.refresh();
+    final successful = bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'running');
+    expect(successful.where((report) => report['duration_ms'] != null), hasLength(1));
+    expect(bootstrapper.actualReports.last['duration_ms'], isNull,
+        reason: 'the healthy report already consumed the original attempt clock');
+    runtime.warpEgressFailure = true;
+    runtime.failHandoff = true;
     await runtime.handoffStarted.future;
     while (manager.busy) { await Future<void>.delayed(Duration.zero); }
+    final failed = bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed').toList();
+    expect(failed, hasLength(1), reason: 'exhausted recovery must report after a healthy connection');
+    expect(failed.single['attempt_number'], 1);
+    expect(failed.single['duration_ms'], isNull, reason: 'automatic recovery cannot renew the user attempt');
+    expect(failed.single['error_code'], 'core_egress_probe_failed');
+    expect(failed.single['native_kind'], 'core_egress_probe_failed');
+    expect(failed.single['retryable'], isTrue);
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'connect_requested'), hasLength(1));
+    expect(runtime.connectCalls, 1);
     expect(runtime.handoffCalls, 3);
     expect(runtime.handoffProfiles.toSet(), hasLength(3), reason: 'activation failures advance to different candidates');
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(manager.retainsProtection, isTrue);
     await expectLater(manager.repair(), throwsA(isA<BootstrapFailure>()));
     expect(runtime.handoffCalls, inInclusiveRange(4, 6), reason: 'a retry also keeps the native guard');
     expect(runtime.calls, isNot(contains('disconnect')));
-    expect(manager.retainsProtection, isTrue);
     expect(manager.presentation.primaryActionLabel, 'Отключить');
     expect(manager.presentation.primaryActionEnabled, isTrue);
     await manager.toggle();
