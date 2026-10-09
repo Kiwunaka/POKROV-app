@@ -31,6 +31,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   Set<String>? bundledCandidateRefs;
   List<TransportCandidate> candidates = _candidates;
   Duration exactProfileDelay = Duration.zero;
+  Object? exactProfileFailure;
   String accessNetworkAsn = '';
   String? materialConfigPayload;
   final cancelledExactProfiles = <String>[];
@@ -88,6 +89,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
       if (stopped) cancelledExactProfiles.add(selectedCandidateRef);
     }
     if (failure != null) Error.throwWithStackTrace(failure!, failureStack ?? StackTrace.current);
+    if (selectedCandidateRef.isNotEmpty && exactProfileFailure != null) throw exactProfileFailure!;
     final nodeCode = preferredNodeCode.isEmpty ? candidates.first.nodeCode : preferredNodeCode;
     final selected = candidates.firstWhere((candidate) => candidate.candidateRef ==
         (selectedCandidateRef.isEmpty ? candidates.first.candidateRef : selectedCandidateRef));
@@ -300,6 +302,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final networkReadEntered = Completer<void>();
   final probeContexts = <String>[];
   final probeStages = <String, String>{};
+  final probeFailureKinds = <String, String>{};
 
   @override
   Future<RuntimeNetworkStatusObservation> readNetworkAvailability() async => RuntimeNetworkStatusObservation(
@@ -346,7 +349,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     activeProbes.remove(probeId);
     final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol) &&
         !failedProbeProfiles.contains(payload.profileName);
-    return RuntimeCandidateProbeResult(success: success, failureKind: success ? '' : 'cancelled',
+    return RuntimeCandidateProbeResult(success: success,
+        failureKind: success ? '' : probeFailureKinds[payload.profileName] ?? 'cancelled',
         duration: probeDuration, probeStage: probeStages[payload.profileName]);
   }
   @override
@@ -1724,6 +1728,49 @@ void main() {
     expect(runtime.connectCalls, 0);
     expect(runtime.stagedPayloads, isEmpty,
         reason: 'pinning AWG after failure does not start or stage another attempt');
+  });
+
+  test('current diagnostic card separates rejected candidate material from native failure', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-candidate-prepare-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android, directoryResolver: () async => directory,
+    );
+    final vless = _candidates.first;
+    final awg = _CachedBootstrapper.alternatives[1];
+    final bootstrapper = _StatsBootstrapper()
+      ..candidates = [vless, awg]
+      ..exactProfileDelay = const Duration(milliseconds: 30)
+      ..exactProfileFailure = const TransportManifestFailure('transport_catalog_profile_mismatch');
+    final runtime = _Runtime()
+      ..supportsCandidates = true
+      ..failedProbeProfiles.add(vless.candidateRef)
+      ..probeFailureKinds[vless.candidateRef] = 'connect_failed'
+      ..probeStages[vless.candidateRef] = 'proxy_dial';
+    final manager = _manager(runtime, bootstrapper, observability: observability);
+    addTearDown(manager.dispose);
+
+    await manager.connect();
+    await observability.flush();
+
+    expect(runtime.probedProtocols, ['vless'], reason: 'rejected AWG material never reaches the native callback');
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    final breadcrumbs = observability.connectionTimelineBreadcrumbs;
+    final native = breadcrumbs.singleWhere((event) => event.name == 'app.connection.candidate_probe.finished' &&
+        event.failureKind == 'connect_failed');
+    expect(native.probeStage, 'proxy_dial');
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+      snapshot: manager.snapshot, statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: '4115', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false, timelineBreadcrumbs: breadcrumbs,
+    );
+    final current = report.timelineAttempts.last;
+    expect(native.generation, current.generation);
+    expect((current.probeFailureKind, current.probeStage), ('invalid_profile', 'parse_profile'),
+        reason: 'closed material rejection must survive selector exhaustion in the current card');
   });
 
   test('proven Windows connection retries a probe batch after stats delivery fails', () async {

@@ -231,6 +231,10 @@ class SmartConnectCandidateSelector {
         }
         if (ended.isCompleted) return;
         if (error.apiFailureKind != null) apiFailure ??= error;
+      } on TransportManifestFailure {
+        if (ended.isCompleted) return;
+        outcome = const SmartConnectCandidateProbeResult.failure('invalid_profile',
+            probeStage: 'parse_profile');
       } on Object {
         if (ended.isCompleted) return;
       } finally {
