@@ -1077,6 +1077,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       _selectedIndex = tab.index;
     });
     if (tab == SeedTab.locations) {
+      unawaited(_connectionManager.refreshTransportCatalog());
       unawaited(_refreshLocationsCatalog());
     }
     if (tab == SeedTab.profile && widget.bootstrapper != null) {

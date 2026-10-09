@@ -163,6 +163,10 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
+  Future<void> refreshTransportCatalog() async {
+    if (_transportCatalog == null) await _refreshManagedProfileCache();
+  }
+
   Future<void> _refreshManagedProfileCache({bool alternativesOnly = false}) async {
     final generation = _connectionCoordinator.operationGeneration;
     if (alternativesOnly && _cacheRefreshInFlight) await _cacheRefreshCompletion?.future;

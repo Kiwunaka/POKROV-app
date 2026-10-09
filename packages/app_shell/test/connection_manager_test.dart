@@ -140,8 +140,11 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
       : super(catalog: true, warpEnabled: warpEnabled, bundle: bundle);
   bool cacheAvailable = true;
   Future<void>? cacheRefreshGate;
+  Object? nextCacheRefreshFailure;
   final cacheRefreshEntered = Completer<void>();
   final refreshedCoreReleases = <String?>[];
+  final refreshedInputs = <ManagedProfileCacheInputs>[];
+  final refreshedFeatures = <Set<RuntimeTransportFeature>>[];
   static final alternatives = [
     _candidates.first,
     for (final (index, protocol, protection) in [(1, 'awg', 'awg31'), (2, 'hysteria2', 'tls')])
@@ -176,8 +179,13 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
     String selectedCandidateRef = '', bool alternativesOnly = false,
   }) async {
     refreshedCoreReleases.add(coreRelease);
+    refreshedInputs.add(inputs);
+    refreshedFeatures.add(runtimeFeatures);
     if (!cacheRefreshEntered.isCompleted) cacheRefreshEntered.complete();
     await cacheRefreshGate;
+    final failure = nextCacheRefreshFailure;
+    nextCacheRefreshFailure = null;
+    if (failure != null) throw failure;
   }
   @override
   Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId,
@@ -551,13 +559,17 @@ class _FirstLaunchStore implements PokrovFirstLaunchStore {
   Future<void> markCompleted() async {}
 }
 
-class _CatalogPickerBootstrapper extends _Bootstrapper implements
+class _CatalogPickerBootstrapper extends _CachedBootstrapper implements
     AppFirstRoutingCatalogService, AppFirstClientDataService, AppFirstSmartAccessService {
   _CatalogPickerBootstrapper(this.result, {this.coldAccess = false});
   final RoutingCatalogFetchResult result;
   final bool coldAccess;
   int subscriptionReads = 0;
   int catalogReads = 0;
+  ClientLocationsCatalog? locationsCatalog;
+  @override
+  Future<ClientLocationsCatalog> fetchLocationsCatalog({required HostPlatform hostPlatform, String query = ''}) async =>
+      locationsCatalog ?? ClientLocationsCatalog.fromJson({'countries': []});
   @override
   bool get routingCatalogEnabled => true;
   @override
@@ -1876,6 +1888,70 @@ void main() {
     expect(consentRequests, 0);
   });
   }
+
+  testWidgets('Locations adopts ready cached protocols after one failed cold metadata refresh', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final nativeMutations = <String>[];
+    var nativeSnapshots = 0;
+    final features = RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort();
+    final bootstrapper = _CatalogPickerBootstrapper((await tester.runAsync(_pickerCatalog))!)
+      ..cacheAvailable = false
+      ..nextCacheRefreshFailure = const SocketException('offline')
+      ..locationsCatalog = ClientLocationsCatalog.fromJson({
+        'countries': [{'code': 'DE', 'country': 'Germany', 'cities': [
+          {'code': 'de', 'city': 'Frankfurt', 'variants': [
+            {'id': 'direct', 'label': 'Обычный'},
+          ]},
+        ]}],
+      });
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.snapshot') nativeSnapshots++;
+      if (const {'runtimeEngine.initialize', 'runtimeEngine.stageManagedProfile', 'runtimeEngine.connect'}
+          .contains(call.method)) nativeMutations.add(call.method);
+      return {'phase': 'initialized', 'coreVersion': '1.2.10',
+        'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true,
+        'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': features})};
+    });
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    expect(bootstrapper.refreshedInputs, hasLength(1));
+    expect(bootstrapper.refreshedInputs.single.preferredVariantId, 'direct');
+    expect(bootstrapper.refreshedFeatures.single,
+        containsAll({RuntimeTransportFeature.awg31, RuntimeTransportFeature.hysteria2}));
+    expect(bootstrapper.refreshedCoreReleases, ['1.2.10']);
+    expect(bootstrapper.nextCacheRefreshFailure, isNull);
+    final snapshotsBefore = nativeSnapshots;
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(nativeSnapshots, greaterThan(snapshotsBefore));
+    expect(bootstrapper.refreshedInputs, hasLength(1), reason: 'unchanged capabilities do not retry metadata');
+
+    bootstrapper.cacheAvailable = true;
+    await tester.tap(find.text('Локации'));
+    await tester.pumpAndSettle();
+    final dynamic locations = tester.widget(find.byWidgetPredicate(
+        (widget) => widget.runtimeType.toString() == '_LocationsSection'));
+    expect(locations.interfaceMode, PokrovInterfaceMode.advanced);
+    expect(nativeMutations, isEmpty);
+    expect(locations.hasOrdinaryTransportCatalog, isTrue,
+        reason: 'normal Locations entry must adopt ready protocols without a warming Connect');
+    expect((locations.transportCatalog as TransportCandidateCatalog).candidates.map((candidate) => candidate.protocol),
+        ['vless', 'awg', 'hysteria2']);
+  });
 
   test('loaded Core refresh publishes the full catalog without replacing the running material', () async {
     final refreshGate = Completer<void>();

@@ -15,6 +15,11 @@ that fallback and does not claim the new assignment was applied. The owner's
 last downloaded or last proven profile within its original offline window.
 An explicit authorization denial is separate from an unreachable API.
 
+Opening Locations retries the existing cache-first managed catalog refresh when
+the transport catalog is absent. This recovers after a failed startup metadata
+request without connecting or changing the selected route; the existing Core
+capability, session, expiry and compatibility checks still apply.
+
 The final routing assembler converts legacy DNS servers to typed transports
 after applying user and catalog preferences, including restored offline profiles.
 It preserves resolver tags, VPN paths and DNS response-code rules, while removing
