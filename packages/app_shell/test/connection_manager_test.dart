@@ -695,6 +695,78 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = originalHttpOverrides;
 
+  testWidgets('Rules syncs immediate Wi-Fi policy without discarding pending routing edits', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final nativeMutations = <String>[];
+    final experienceStore = _CatalogPickerExperience();
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.stageManagedProfile' || call.method == 'runtimeEngine.connect') {
+        nativeMutations.add(call.method);
+      }
+      return {'phase': 'initialized', 'coreVersion': '1.2.10',
+        'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true};
+    });
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: _Bootstrapper(), firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: experienceStore, themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+      currentWifiProbe: () async => const PokrovWifiNetworkStatus(
+        connected: false, name: null, permissionRequired: false, reason: 'not_connected'),
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Правила'));
+    await tester.pumpAndSettle();
+    final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
+    await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
+      of: find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'),
+      matching: find.byType(Scrollable),
+    ).first);
+    await tester.tap(advanced);
+    await tester.pumpAndSettle();
+    final auto = find.byKey(const ValueKey('rules-untrusted-wifi-auto-connect'));
+    dynamic rules() => tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'));
+    bool autoValue() => (tester.widget(auto) as dynamic).value as bool;
+    void externalAuto(bool value) => rules().onRoutingPreferencesChanged(
+      (rules().routingPreferences as PokrovRoutingPreferences).copyWith(autoConnectOnUntrustedWifi: value));
+    expect(autoValue(), isFalse);
+    externalAuto(true);
+    await tester.pumpAndSettle();
+    expect(autoValue(), isTrue);
+    externalAuto(false);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(auto);
+    await tester.pumpAndSettle();
+    await tester.tap(auto);
+    await tester.pumpAndSettle();
+    expect(autoValue(), isTrue);
+    expect(experienceStore.saved.routingPreferences.autoConnectOnUntrustedWifi, isTrue);
+    expect(find.byKey(const ValueKey('rules-change-summary')), findsNothing);
+    expect(find.byKey(const ValueKey('rules-apply-changes')), findsNothing);
+    final dynamic dns = tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_DnsAndLanCard'));
+    dns.onChanged((dns.preferences as PokrovRoutingPreferences).copyWith(dnsPreset: PokrovDnsPreset.cloudflare));
+    await tester.pumpAndSettle();
+    externalAuto(false);
+    await tester.pumpAndSettle();
+    expect(autoValue(), isFalse);
+    expect(experienceStore.saved.routingPreferences.autoConnectOnUntrustedWifi, isFalse);
+    final dynamic pendingDns = tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_DnsAndLanCard'));
+    expect((pendingDns.preferences as PokrovRoutingPreferences).dnsPreset, PokrovDnsPreset.cloudflare);
+    final summary = find.byKey(const ValueKey('rules-change-summary'));
+    expect(summary, findsOneWidget);
+    expect(find.descendant(of: summary, matching: find.text('DNS и локальная сеть')), findsOneWidget);
+    expect(nativeMutations, isEmpty);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
   testWidgets('Selective first open uses trial access with Smart Access off and no prepared profile', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     addTearDown(() {

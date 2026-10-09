@@ -282,6 +282,10 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
   @override
   void didUpdateWidget(covariant _RulesAdvancedSection oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // This policy applies immediately, independently of pending routing edits.
+    final autoConnect = widget.preferences.autoConnectOnUntrustedWifi;
+    _appliedPreferences = _appliedPreferences.copyWith(autoConnectOnUntrustedWifi: autoConnect);
+    _draftPreferences = _draftPreferences.copyWith(autoConnectOnUntrustedWifi: autoConnect);
     if (_sameRoutingPreferences(widget.preferences, _draftPreferences)) {
       return;
     }
@@ -299,6 +303,9 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
     );
     setState(() {
       _draftPreferences = merged;
+      _appliedPreferences = _appliedPreferences.copyWith(
+        autoConnectOnUntrustedWifi: merged.autoConnectOnUntrustedWifi,
+      );
     });
     widget.onChanged(merged);
   }
@@ -460,6 +467,7 @@ bool _sameRoutingPreferences(
     setEquals(left.selectedCatalogServiceIds, right.selectedCatalogServiceIds) &&
     listEquals(left.trustedWifiNames, right.trustedWifiNames) &&
     left.pauseOnTrustedWifi == right.pauseOnTrustedWifi &&
+    left.autoConnectOnUntrustedWifi == right.autoConnectOnUntrustedWifi &&
     left.windowsConnectionMode == right.windowsConnectionMode &&
     left.tunStack == right.tunStack;
 
