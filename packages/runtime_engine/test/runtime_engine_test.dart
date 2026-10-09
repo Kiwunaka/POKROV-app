@@ -550,6 +550,7 @@ void main() {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var nativeFailure = _sensitiveRuntimeDetail;
     messenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'runtimeEngine.snapshot') {
         return <String, Object?>{
@@ -559,7 +560,7 @@ void main() {
           'canConnect': true,
           'message': _sensitiveRuntimeDetail,
           'default_network_interface': _sensitiveRuntimeDetail,
-          'last_failure_kind': _sensitiveRuntimeDetail,
+          'last_failure_kind': nativeFailure,
           'last_stop_reason': _sensitiveRuntimeDetail,
           'hostDiagnostics': <String, Object?>{
             'summary': _sensitiveRuntimeDetail,
@@ -598,6 +599,19 @@ void main() {
     ]) {
       _expectNoSensitiveRuntimeDetail(value);
     }
+    final closed = <String, String?>{};
+    for (final kind in ['core_start_failed', 'local_dpi_withdraw_failed',
+        'recovery_network_restore_failed']) {
+      nativeFailure = kind;
+      final windows = await createRuntimeEngine(hostPlatform: HostPlatform.windows).snapshot();
+      closed[kind] = windows.lastFailureKind;
+      _expectNoSensitiveRuntimeDetail(windows.message);
+    }
+    expect(closed, {
+      'core_start_failed': 'core_start_failed',
+      'local_dpi_withdraw_failed': 'local_dpi_withdraw_failed',
+      'recovery_network_restore_failed': 'recovery_network_restore_failed',
+    });
   });
 
   test('mobile lane preserves actionable VPN permission denial', () async {

@@ -1908,6 +1908,10 @@ The individual closed probe failures remain the evidence for the underlying caus
 Native failure categories pass through an exact allowlist before reaching public
 messages. Offline state, unresolved network interface, DNS failure, refused
 endpoint, transport timeout and handshake failure retain distinct observations.
+Windows' fixed Core-start, DPI withdrawal/catalog/owner and recovery failures
+also retain their exact category through the ordinary snapshot, runtime stats
+and diagnostic records. Operational codes, retry permissions and health proof
+are unchanged; older generic failures cannot recover their original category.
 Unknown `dns_`, `default_network_`, `vless_` or `reality_` prefixes do not establish
 a cause and become generic runtime failure. A timeout alone does not identify
 UDP blocking, DPI, MTU, ASN policy or a whitelist. Request-scoped protocol log

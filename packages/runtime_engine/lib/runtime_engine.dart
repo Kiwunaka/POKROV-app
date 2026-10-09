@@ -611,6 +611,11 @@ const _coreEgressProbeFailureKinds = <String>{
 };
 
 const _publicRuntimeFailureKinds = <String>{
+  'core_start_failed',
+  'local_dpi_withdraw_failed', 'local_dpi_catalog_expired', 'local_dpi_owner_changed',
+  'recovery_unavailable', 'recovery_required', 'recovery_journal_invalid',
+  'recovery_generation_failed', 'recovery_stage_invalid', 'recovery_write_failed',
+  'recovery_core_stop_failed', 'recovery_network_capture_failed', 'recovery_network_restore_failed',
   'desktop_competing_vpn_active',
   'desktop_loopback_port_conflict',
   'desktop_tun_start_failed',
