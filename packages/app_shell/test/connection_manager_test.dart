@@ -15,6 +15,7 @@ import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 final _candidates = List.generate(4, (index) => TransportCandidate(
@@ -1892,6 +1893,32 @@ void main() {
     expect(native.generation, current.generation);
     expect((current.probeFailureKind, current.probeStage), ('invalid_profile', 'parse_profile'),
         reason: 'closed material rejection must survive selector exhaustion in the current card');
+    await observability.runConnectionAction(manager.disconnect, beginsWithDisconnect: true);
+    await observability.flush();
+    final stoppedReport = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      snapshot: manager.snapshot, statusLabel: 'stopped', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: '4116', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false, timelineBreadcrumbs: observability.connectionTimelineBreadcrumbs,
+    );
+    final ownFailedAttempt = stoppedReport.timelineAttempts
+        .singleWhere((attempt) => attempt.generation == current.generation);
+    expect((ownFailedAttempt.probeFailureKind, ownFailedAttempt.probeStage),
+        ('invalid_profile', 'parse_profile'), reason: 'Stop must not erase the failed attempt receipt');
+    expect(stoppedReport.timelineAttempts.last.generation, greaterThan(current.generation));
+    expect((stoppedReport.timelineAttempts.last.probeFailureKind, stoppedReport.timelineAttempts.last.probeStage),
+        (null, null), reason: 'the new Stop attempt must not inherit the old failure');
+    final supportEvent = DiagnosticEventRecord(
+      occurredAt: ownFailedAttempt.entries.last.occurredAtUtc, subsystem: 'candidate_probe',
+      stage: ownFailedAttempt.probeStage!, outcome: 'failed',
+      candidateFailureKind: ownFailedAttempt.probeFailureKind,
+    ).toJson();
+    expect(supportEvent['candidate_failure_kind'], 'invalid_profile');
+    expect(supportEvent.containsKey('failure_kind'), isFalse);
+    expect(() => DiagnosticEventRecord(
+      occurredAt: DateTime.now().toUtc(), subsystem: 'candidate_probe', stage: 'probe', outcome: 'failed',
+      candidateFailureKind: 'unknown_sensitive_reason',
+    ), throwsArgumentError);
   });
 
   test('proven Windows connection retries a probe batch after stats delivery fails', () async {

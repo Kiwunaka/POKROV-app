@@ -252,6 +252,12 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   device-local routing store and managed-profile request; the release-health
   mirror strips every other attribute. Windows does not emit this projection.
 
+Diagnostics retains each candidate probe's closed reason and stage on its own
+attempt generation after Stop or another attempt; a new attempt never inherits
+the previous reason. Windows encrypted support events carry the nullable
+`candidate_failure_kind` only for `candidate_probe`, independently of current
+runtime snapshot failures. Missing native stages remain unknown.
+
 ### Core ABI and lifecycle compatibility
 
 - POKROV Core owns `config/abi-contract.json`; the client mirrors only the

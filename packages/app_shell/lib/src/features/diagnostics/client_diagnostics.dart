@@ -398,8 +398,6 @@ abstract final class PokrovDiagnosticsPresenter {
       _ => PokrovDiagnosticMessageKey.noActiveAttempt,
     };
     final timelineAttempts = _timelineAttempts(timelineBreadcrumbs);
-    final currentProbe = timelineAttempts.isEmpty ? null
-        : _candidateProbeForGeneration(timelineBreadcrumbs, timelineAttempts.last.generation);
     final events = <DiagnosticEventRecord>[
       if (supportModePolicy != null) ...[
         for (final breadcrumb in timelineBreadcrumbs)
@@ -417,15 +415,19 @@ abstract final class PokrovDiagnosticsPresenter {
               ),
         ...candidateProbeEvents,
         // Android already supplies its bounded native candidate records.
-        if (hostPlatform == HostPlatform.windows && currentProbe != null &&
-            OperationalAttributePolicy.candidateProbeStages.contains(currentProbe.probeStage))
-          DiagnosticEventRecord(
-            occurredAt: currentProbe.occurredAtUtc,
-            subsystem: 'candidate_probe',
-            stage: currentProbe.probeStage!,
-            outcome: currentProbe.outcome == ObservabilityOutcome.succeeded ? 'succeeded' : 'failed',
-            durationMs: currentProbe.durationMs,
-          ),
+        if (hostPlatform == HostPlatform.windows)
+          for (final attempt in timelineAttempts)
+            if (_candidateProbeForGeneration(timelineBreadcrumbs, attempt.generation) case final probe?)
+              DiagnosticEventRecord(
+                occurredAt: probe.occurredAtUtc,
+                subsystem: 'candidate_probe',
+                stage: OperationalAttributePolicy.candidateProbeStages.contains(probe.probeStage)
+                    ? probe.probeStage! : 'probe',
+                outcome: probe.outcome == ObservabilityOutcome.succeeded ? 'succeeded' : 'failed',
+                durationMs: probe.durationMs,
+                candidateFailureKind: DiagnosticEventRecord.candidateFailureKinds.contains(probe.failureKind)
+                    ? probe.failureKind : null,
+              ),
         // This is the time of the ordinary runtime read, not a past native event.
         if (snapshot != null && checkedAtUtc != null)
           DiagnosticEventRecord(
@@ -529,8 +531,7 @@ abstract final class PokrovDiagnosticsPresenter {
       if (entries.length > 16) {
         entries.removeRange(0, entries.length - 16);
       }
-      final currentProbe = generation == generations.last
-          ? _candidateProbeForGeneration(breadcrumbs, generation) : null;
+      final currentProbe = _candidateProbeForGeneration(breadcrumbs, generation);
       attempts.add(
         PokrovDiagnosticTimelineAttempt(
           generation: generation,

@@ -149,6 +149,7 @@ final class DiagnosticEventRecord {
     this.certificateDurationMs,
     this.runtimePhase,
     this.failureKind,
+    this.candidateFailureKind,
     this.stopReason,
   }) {
     _requireUtc(occurredAt, 'occurredAt');
@@ -193,7 +194,18 @@ final class DiagnosticEventRecord {
       if (failureKind != null) _requireToken(failureKind!, 'failureKind', runtimeFailureKinds);
       if (stopReason != null) _requireToken(stopReason!, 'stopReason', runtimeStopReasons);
     }
+    if (candidateFailureKind != null) {
+      if (subsystem != 'candidate_probe') throw ArgumentError('Candidate facts require a candidate probe.');
+      _requireToken(candidateFailureKind!, 'candidateFailureKind', candidateFailureKinds);
+    }
   }
+
+  static const candidateFailureKinds = <String>{
+    'invalid_request', 'invalid_profile', 'unavailable', 'start_failed',
+    'probe_failed', 'probe_budget_expired', 'connect_failed', 'data_stalled',
+    'tls_failed', 'unexpected_status', 'timeout', 'cancelled', 'network_changed',
+    'duplicate_probe',
+  };
 
   // The ordinary RuntimeSnapshot public taxonomy, never upstream error text.
   static const runtimePhases = <String>{
@@ -237,6 +249,7 @@ final class DiagnosticEventRecord {
   final int? certificateDurationMs;
   final String? runtimePhase;
   final String? failureKind;
+  final String? candidateFailureKind;
   final String? stopReason;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -248,6 +261,7 @@ final class DiagnosticEventRecord {
         if (certificateDurationMs != null) 'certificate_duration_ms': certificateDurationMs,
         if (runtimePhase != null) 'runtime_phase': runtimePhase,
         if (failureKind != null) 'failure_kind': failureKind,
+        if (candidateFailureKind != null) 'candidate_failure_kind': candidateFailureKind,
         if (stopReason != null) 'stop_reason': stopReason,
         'occurred_at': occurredAt.toUtc().toIso8601String(),
         'outcome': outcome,
