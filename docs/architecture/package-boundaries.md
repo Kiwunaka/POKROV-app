@@ -301,6 +301,13 @@ receives the encrypted `.pokrov-support` envelope, never prepared plaintext.
   connections are never replayed, no shared driver stop/remove is issued, and
   the feature defaults off. This is source readiness; product build, approved
   assets, real device proof and release publication remain separate gates.
+  Normal Windows Snapshot and Diagnostics separately report the current captured
+  holders' admission, completed withdrawal and successful local/VPN TCP route
+  handoffs. These observations contain no holder IDs or connection material.
+  A stopped, superseded or unavailable owner reports no observation. Counts are
+  route handoffs, not TLS verification, bytes or delivery; a fresh request to the
+  same selected service must demonstrate the VPN branch after withdrawal. Old
+  streams are closed and are never replayed. Runtime acceptance remains separate.
 - Windows Telegram WS uses its separate native admission version 1 and five
   symbols, compiled catalog pins, a captured physical interface and a private
   signed preparation receipt; it does not require winws assets or a Job child.

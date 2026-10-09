@@ -96,6 +96,68 @@ class RuntimeProfileSource {
   final String protocol;
 }
 
+/// Counts for the Windows host's privately captured current Core session.
+/// Handoffs count successful router-owned TCP dial and attach operations;
+/// they do not prove TLS, bytes transferred or delivery.
+final class WindowsLocalDpiRuntime {
+  const WindowsLocalDpiRuntime._({
+    required this.services,
+    required this.admitted,
+    required this.failed,
+    required this.withdrawCompleted,
+    required this.localHandoffs,
+    required this.vpnHandoffs,
+  });
+
+  final int services;
+  final int admitted;
+  final int failed;
+  final int withdrawCompleted;
+  final int localHandoffs;
+  final int vpnHandoffs;
+
+  /// An absent or invalid observation stays unknown, never all-zero counts.
+  static WindowsLocalDpiRuntime? fromWire(Object? input) {
+    const fields = [
+      'services',
+      'admitted',
+      'failed',
+      'withdraw_completed',
+      'local_handoffs',
+      'vpn_handoffs',
+    ];
+    if (input is! Map || input.length != fields.length ||
+        fields.any((key) => input[key] is! int || (input[key] as int) < 0)) {
+      return null;
+    }
+    final services = input['services'] as int;
+    final admitted = input['admitted'] as int;
+    final failed = input['failed'] as int;
+    final withdrawCompleted = input['withdraw_completed'] as int;
+    if (services > 256 || admitted + failed + withdrawCompleted > services) {
+      return null;
+    }
+    return WindowsLocalDpiRuntime._(
+      services: services,
+      admitted: admitted,
+      failed: failed,
+      withdrawCompleted: withdrawCompleted,
+      localHandoffs: input['local_handoffs'] as int,
+      vpnHandoffs: input['vpn_handoffs'] as int,
+    );
+  }
+
+  Record get _stateValues =>
+      (services, admitted, failed, withdrawCompleted, localHandoffs, vpnHandoffs);
+
+  @override
+  bool operator ==(Object other) =>
+      other is WindowsLocalDpiRuntime && _stateValues == other._stateValues;
+
+  @override
+  int get hashCode => _stateValues.hashCode;
+}
+
 class RuntimeSnapshot {
   const RuntimeSnapshot({
     required this.hostPlatform,
@@ -143,6 +205,7 @@ class RuntimeSnapshot {
     this.smartAccessRuntimeControlVersion = 0,
     this.routingCatalogControlVersion = 0,
     this.windowsLocalDpiAdmissionVersion = 0,
+    this.windowsLocalDpiRuntime,
     this.transportCapabilities,
     this.coreModuleSha256,
     this.coreVersion,
@@ -208,6 +271,8 @@ class RuntimeSnapshot {
   /// Native Windows Core, compiled trust, approved assets and existing driver.
   /// This is readiness for opt-in preparation, never current TLS proof.
   final int windowsLocalDpiAdmissionVersion;
+  /// Null when the current captured Core session cannot be observed.
+  final WindowsLocalDpiRuntime? windowsLocalDpiRuntime;
   final RuntimeTransportCapabilities? transportCapabilities;
   /// Native-observed executable/module digest. Never a profile/package hash.
   final String? coreModuleSha256;
@@ -267,6 +332,7 @@ class RuntimeSnapshot {
         smartAccessRuntimeControlVersion,
         routingCatalogControlVersion,
         windowsLocalDpiAdmissionVersion,
+        windowsLocalDpiRuntime,
         transportCapabilities?.canonicalJson,
         coreModuleSha256,
         coreVersion,
@@ -4518,6 +4584,10 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
               const {2, 3, 4}.contains(response['routingCatalogControlVersion']) ? 1 : 0,
       windowsLocalDpiAdmissionVersion: hostPlatform == HostPlatform.windows &&
           response['windowsLocalDpiAdmissionVersion'] == 1 ? 1 : 0,
+      windowsLocalDpiRuntime: hostPlatform == HostPlatform.windows &&
+              !connectionPending && transportProofPending != true
+          ? WindowsLocalDpiRuntime.fromWire(response['windowsLocalDpiRuntime'])
+          : null,
       routingCatalogControlVersion:
           response['routingCatalogControlVersion'] is int &&
                   const {1, 2, 3, 4}.contains(response['routingCatalogControlVersion']) &&

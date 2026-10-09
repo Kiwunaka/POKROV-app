@@ -13,6 +13,7 @@
 #include "service_network_observer.h"
 #include "service_recovery.h"
 #include "service_events.h"
+#include "service_local_dpi.h"
 #include "service_transition_guard.h"
 
 namespace pokrov::service {
@@ -78,6 +79,7 @@ class CoreRuntime {
   virtual std::string ReadLocalDpiAdmissionID(const std::string& tag) { return ""; }
   virtual int AdmitLocalDpiAdmission(const std::string& id) { return -1; }
   virtual int WithdrawLocalDpiAdmission(const std::string& id) { return -1; }
+  virtual std::string ReadLocalDpiObservation(const std::string& id) { return ""; }
   virtual int TelegramWSAdmissionVersion() const { return 0; }
   virtual std::string PrepareTelegramWSProfile(
       const std::string& config, const std::string& compiled_public_keys,
@@ -206,6 +208,7 @@ class RuntimeHost {
   bool ClearWindowsLocalDpiAfterCoreStopped();
   bool WithdrawTelegramWS(const std::string& service_id = "");
   std::string SnapshotBody(const char* pending_phase = nullptr) const;
+  std::optional<WindowsLocalDpiRuntimeObservation> ReadLocalDpiRuntimeObservation() const;
   bool PrepareDirectories();
   std::string WriteProfileAtomically(const std::string& profile);
   bool WriteBundledRuleSets(

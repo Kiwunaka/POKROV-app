@@ -481,6 +481,11 @@ class InstalledCoreRuntime final : public CoreRuntime {
     return WindowsLocalDpiAdmissionVersion() == 1 ? withdraw_local_dpi_admission_(id.c_str()) : -1;
   }
 
+  std::string ReadLocalDpiObservation(const std::string& id) override {
+    return initialized_ && read_local_dpi_observation_ != nullptr
+        ? StringResult(read_local_dpi_observation_(id.c_str())) : "";
+  }
+
   int TelegramWSAdmissionVersion() const override {
     return initialized_ && telegram_ws_version_ != nullptr ? 1 : 0;
   }
@@ -610,6 +615,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
     read_local_dpi_admission_ = nullptr;
     admit_local_dpi_admission_ = nullptr;
     withdraw_local_dpi_admission_ = nullptr;
+    read_local_dpi_observation_ = nullptr;
     telegram_ws_version_ = nullptr;
     prepare_telegram_ws_ = nullptr;
     read_telegram_ws_ = nullptr;
@@ -715,6 +721,11 @@ class InstalledCoreRuntime final : public CoreRuntime {
             prepare_windows_local_dpi_ == nullptr || read_local_dpi_admission_ == nullptr ||
             admit_local_dpi_admission_ == nullptr || withdraw_local_dpi_admission_ == nullptr) {
           return "core_abi_incompatible";
+        }
+        if (descriptor.find("\"windows_local_dpi_observation_version\":1,") != std::string::npos) {
+          read_local_dpi_observation_ = reinterpret_cast<ReadLocalDpiAdmissionFunction>(
+              ::GetProcAddress(module_, "pokrovCoreReadLocalDpiObservation"));
+          if (read_local_dpi_observation_ == nullptr) return "core_abi_incompatible";
         }
       }
       const bool has_renewal = descriptor == renewal_descriptor || has_runtime_control;
@@ -1046,6 +1057,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
   ReadLocalDpiAdmissionFunction read_local_dpi_admission_ = nullptr;
   LocalDpiAdmissionFunction admit_local_dpi_admission_ = nullptr;
   LocalDpiAdmissionFunction withdraw_local_dpi_admission_ = nullptr;
+  ReadLocalDpiAdmissionFunction read_local_dpi_observation_ = nullptr;
   AbiFunction telegram_ws_version_ = nullptr;
   PrepareWindowsLocalDpiFunction prepare_telegram_ws_ = nullptr;
   ReadLocalDpiAdmissionFunction read_telegram_ws_ = nullptr;
@@ -1100,6 +1112,11 @@ InstalledCoreRuntime* InstalledCoreRuntime::callback_runtime_ = nullptr;
 
 bool CoreDescriptorHasRuntimeControl(const std::string& descriptor) {
   std::string compatible(descriptor);
+  const std::string observation_field = "\"windows_local_dpi_observation_version\":1,";
+  const auto observation_position = compatible.find(observation_field);
+  if (observation_position != std::string::npos &&
+      compatible.find("\"windows_local_dpi_admission_version\":1,") == std::string::npos) return false;
+  if (observation_position != std::string::npos) compatible.erase(observation_position, observation_field.size());
   const std::string probe_field = "\"smart_access_probe_version\":1,";
   const auto probe_position = compatible.find(probe_field);
   if (probe_position != std::string::npos) compatible.erase(probe_position, probe_field.size());
@@ -1635,6 +1652,11 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
           : local_dpi_executor_->RetryPrepared(local_dpi_preparation_->services,
                 local_dpi_network->bind_interface, strategies[attempt]);
       if (!dpi_start_error.empty()) break;
+      if (attempt == 0) {
+        for (auto& service : local_dpi_preparation_->services) {
+          service.captured_admission_id = local_dpi_executor_->CapturedAdmissionID(service.outbound_tag);
+        }
+      }
       proved = true;
       for (const auto& service : local_dpi_preparation_->services) {
         if (!local_dpi_current() ||
@@ -2302,6 +2324,17 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
   const bool can_connect = !pending && initialized_ && profile_staged_ &&
                            !requires_bound_connect_ &&
                            phase_ == Phase::kConfigStaged;
+  std::string local_dpi_observation;
+  if (!pending) {
+    if (const auto value = ReadLocalDpiRuntimeObservation()) {
+      local_dpi_observation = ";windows_local_dpi_services=" + std::to_string(value->services) +
+          ";windows_local_dpi_admitted=" + std::to_string(value->admitted) +
+          ";windows_local_dpi_failed=" + std::to_string(value->failed) +
+          ";windows_local_dpi_withdraw_completed=" + std::to_string(value->withdraw_completed) +
+          ";windows_local_dpi_local_handoffs=" + std::to_string(value->local_handoffs) +
+          ";windows_local_dpi_vpn_handoffs=" + std::to_string(value->vpn_handoffs);
+    }
+  }
   return std::string("phase=") + (pending ? pending_phase : PhaseName(phase)) +
          ";core_ready=" + (core_ready ? "1" : "0") +
          ";can_initialize=" + (can_initialize ? "1" : "0") +
@@ -2333,8 +2366,33 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
          (initialized_ && !core_->CoreVersion().empty() ? core_->CoreVersion() : "none") +
          ";protection_retained=" + (guarded ? "1" : "0") +
          ";windows_local_dpi_admission_version=" + (local_dpi_ready_ ? "1" : "0") +
+         local_dpi_observation +
          (!pending && failure_.rfind("core_egress_", 0) == 0 && egress_failure_observation_
               ? EncodeEgressProbeObservation(*egress_failure_observation_) : "");
+}
+
+std::optional<WindowsLocalDpiRuntimeObservation> RuntimeHost::ReadLocalDpiRuntimeObservation() const {
+  if (!initialized_ || phase_ != Phase::kRunning || !local_dpi_preparation_ ||
+      effective_profile_digest_ != local_dpi_profile_digest_ ||
+      core_->CoreModuleSHA256() != local_dpi_core_digest_ ||
+      !WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_)) return std::nullopt;
+  WindowsLocalDpiRuntimeObservation result;
+  for (const auto& service : local_dpi_preparation_->services) {
+    if (service.captured_admission_id.empty()) return std::nullopt;
+    const auto value = ReadWindowsLocalDpiHolderObservation(
+        core_->ReadLocalDpiObservation(service.captured_admission_id));
+    if (!value) return std::nullopt;
+    ++result.services;
+    if (value->state == "ready") ++result.admitted;
+    if (value->state == "failed") ++result.failed;
+    if (value->withdraw_completed) ++result.withdraw_completed;
+    constexpr std::uint64_t maximum = 9007199254740991ULL;
+    if (value->local_handoffs > maximum - result.local_handoffs ||
+        value->vpn_handoffs > maximum - result.vpn_handoffs) return std::nullopt;
+    result.local_handoffs += value->local_handoffs;
+    result.vpn_handoffs += value->vpn_handoffs;
+  }
+  return result;
 }
 
 bool RuntimeHost::PrepareDirectories() {

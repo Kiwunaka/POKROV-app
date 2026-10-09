@@ -44,6 +44,28 @@ int main() {
          "trailing service field accepted");
   expect(snapshot(digest).size() <= kMaxControlBodySize,
          "snapshot exceeded bounded IPC response");
+  const auto dpi_snapshot = snapshot(digest) +
+      ";routing_catalog_window_version=1;smart_access_lease_version=1;"
+      "routing_catalog_control_version=4;smart_access_runtime_control_version=1;"
+      "transport_capabilities=none;core_module_sha256=none;core_version=1.2.9;"
+      "protection_retained=0;windows_local_dpi_admission_version=1;"
+      "windows_local_dpi_services=1;windows_local_dpi_admitted=0;windows_local_dpi_failed=0;"
+      "windows_local_dpi_withdraw_completed=1;windows_local_dpi_local_handoffs=1;windows_local_dpi_vpn_handoffs=0;"
+      "transport_proof_pending=0;transport_lease_active=0";
+  ServiceRuntimeSnapshot dpi_parsed;
+  expect(ParseServiceRuntimeSnapshot(dpi_snapshot, &dpi_parsed) && dpi_parsed.windows_local_dpi_runtime &&
+             dpi_parsed.windows_local_dpi_runtime->withdraw_completed == 1 &&
+             dpi_parsed.windows_local_dpi_runtime->vpn_handoffs == 0,
+         "withdrawal with no fresh VPN handoff was not carried through the normal snapshot");
+  const auto dpi_mismatch = BindSnapshotToProfileIntent(dpi_parsed, std::string(64, '0'));
+  expect(!dpi_mismatch.windows_local_dpi_runtime,
+         "another desired profile inherited captured-holder observations");
+  auto dpi_invalid = dpi_snapshot;
+  dpi_invalid.replace(dpi_invalid.find("windows_local_dpi_services=1"),
+      std::string("windows_local_dpi_services=1").size(), "windows_local_dpi_services=0");
+  ServiceRuntimeSnapshot dpi_rejected;
+  expect(!ParseServiceRuntimeSnapshot(dpi_invalid, &dpi_rejected) && !dpi_rejected.windows_local_dpi_runtime,
+         "inconsistent captured-holder state was accepted");
   for (const auto* failure : {"deadline_exceeded", "operation_cancelled",
                             "core_egress_dns_failed", "core_egress_connect_failed",
                             "core_egress_tls_failed", "core_egress_tls_timeout",

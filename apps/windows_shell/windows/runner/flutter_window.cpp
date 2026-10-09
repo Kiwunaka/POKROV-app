@@ -216,6 +216,16 @@ flutter::EncodableValue RuntimeSnapshotValue(
       flutter::EncodableValue(snapshot.compatible ? snapshot.smart_access_runtime_control_version : 0);
   values[flutter::EncodableValue("windowsLocalDpiAdmissionVersion")] =
       flutter::EncodableValue(snapshot.compatible ? snapshot.windows_local_dpi_admission_version : 0);
+  if (snapshot.compatible && snapshot.windows_local_dpi_runtime) {
+    const auto& observation = *snapshot.windows_local_dpi_runtime;
+    values[flutter::EncodableValue("windowsLocalDpiRuntime")] = flutter::EncodableValue(flutter::EncodableMap{
+        {flutter::EncodableValue("services"), flutter::EncodableValue(static_cast<std::int64_t>(observation.services))},
+        {flutter::EncodableValue("admitted"), flutter::EncodableValue(static_cast<std::int64_t>(observation.admitted))},
+        {flutter::EncodableValue("failed"), flutter::EncodableValue(static_cast<std::int64_t>(observation.failed))},
+        {flutter::EncodableValue("withdraw_completed"), flutter::EncodableValue(static_cast<std::int64_t>(observation.withdraw_completed))},
+        {flutter::EncodableValue("local_handoffs"), flutter::EncodableValue(static_cast<std::int64_t>(observation.local_handoffs))},
+        {flutter::EncodableValue("vpn_handoffs"), flutter::EncodableValue(static_cast<std::int64_t>(observation.vpn_handoffs))}});
+  }
   values[flutter::EncodableValue("phase")] =
       flutter::EncodableValue(DartRuntimePhase(snapshot.phase));
   values[flutter::EncodableValue("supportsLiveConnect")] =

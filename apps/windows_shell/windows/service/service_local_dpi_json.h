@@ -28,6 +28,14 @@ bool StripWindowsLocalDpiMetadata(const std::string& original,
 std::optional<WindowsLocalDpiPreparation> ReadWindowsLocalDpiPreparation(
     const std::string& encoded);
 bool WindowsLocalDpiPreparationCurrent(const WindowsLocalDpiPreparation& value);
+struct WindowsLocalDpiHolderObservation {
+  std::string state;
+  bool withdraw_completed = false;
+  std::uint64_t local_handoffs = 0;
+  std::uint64_t vpn_handoffs = 0;
+};
+std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObservation(
+    const std::string& encoded);
 std::optional<WindowsTelegramWSPreparation> ReadWindowsTelegramWSPreparation(
     const std::string& encoded);
 bool WindowsTelegramWSPreparationCurrent(const WindowsTelegramWSPreparation& value);

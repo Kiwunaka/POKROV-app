@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace pokrov::service {
 class CoreRuntime;
@@ -22,6 +23,16 @@ struct WindowsLocalDpiService {
   std::string outbound_tag;
   std::string control_host;
   std::vector<WindowsLocalDpiDomain> domains;
+  std::string captured_admission_id;  // Private current Core owner, never IPC.
+};
+
+struct WindowsLocalDpiRuntimeObservation {
+  std::uint64_t services = 0;
+  std::uint64_t admitted = 0;
+  std::uint64_t failed = 0;
+  std::uint64_t withdraw_completed = 0;
+  std::uint64_t local_handoffs = 0;
+  std::uint64_t vpn_handoffs = 0;
 };
 enum class WindowsLocalDpiStrategy { kMultisplit568, kMultisplit681 };
 
@@ -47,6 +58,7 @@ class WindowsLocalDpiExecutor final {
   bool Alive() const;
   bool AssetsReady();  // Fixed trusted assets and API exports; no driver or child.
   bool AdmitCaptured(const std::string& tag, const std::function<bool()>& current_after_proof);
+  std::string CapturedAdmissionID(const std::string& tag) const;
   bool Stop();  // Confirm withdrawal before closing our Job/filter.
   bool StopAfterCoreStopped();  // Only after the native owner confirmed Core Stop.
 

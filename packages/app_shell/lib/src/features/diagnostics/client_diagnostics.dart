@@ -244,6 +244,8 @@ final class PokrovDiagnosticsReport {
     required this.preparedBundle,
     required this.supportCode,
     this.coreVersion,
+    this.showWindowsLocalDpiRuntime = false,
+    this.windowsLocalDpiRuntime,
     required this.encryptedDeliveryAvailable,
     this.crashDiagnosticsReady = true,
     this.candidateDiagnosticsReady = true,
@@ -267,6 +269,8 @@ final class PokrovDiagnosticsReport {
   final PreparedSupportBundle preparedBundle;
   final String supportCode;
   final String? coreVersion;
+  final bool showWindowsLocalDpiRuntime;
+  final WindowsLocalDpiRuntime? windowsLocalDpiRuntime;
   final bool encryptedDeliveryAvailable;
   final bool crashDiagnosticsReady;
   final bool candidateDiagnosticsReady;
@@ -290,6 +294,8 @@ final class PokrovDiagnosticsReport {
         preparedBundle: preparedBundle,
         supportCode: supportCode,
         coreVersion: coreVersion,
+        showWindowsLocalDpiRuntime: showWindowsLocalDpiRuntime,
+        windowsLocalDpiRuntime: windowsLocalDpiRuntime,
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
         crashDiagnosticsReady: crashDiagnosticsReady,
         candidateDiagnosticsReady: candidateDiagnosticsReady,
@@ -461,6 +467,9 @@ abstract final class PokrovDiagnosticsPresenter {
       preparedBundle: prepared,
       supportCode: supportCode,
       coreVersion: snapshot?.coreVersion,
+      showWindowsLocalDpiRuntime: hostPlatform == HostPlatform.windows &&
+          routeMode == RouteMode.selectiveServices,
+      windowsLocalDpiRuntime: snapshot?.windowsLocalDpiRuntime,
       encryptedDeliveryAvailable: encryptedDeliveryAvailable,
       crashDiagnosticsReady: crashDiagnosticsReady,
       candidateDiagnosticsReady: candidateDiagnosticsReady,
@@ -1236,6 +1245,18 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 ],
               ),
             ),
+            if (_report.showWindowsLocalDpiRuntime) ...[
+              const SizedBox(height: 12),
+              Text('Пути выбранных сервисов', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              _DiagnosticsCard(
+                child: Text(
+                  _windowsLocalDpiRuntimeRu(_report.windowsLocalDpiRuntime),
+                  key: const ValueKey('diagnostics-windows-local-dpi-runtime'),
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Text('Что видит POKROV', style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
@@ -1542,6 +1563,30 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       ),
     );
   }
+}
+
+String _windowsLocalDpiRuntimeRu(WindowsLocalDpiRuntime? observation) {
+  if (observation == null) {
+    return 'Сведения о путях выбранных сервисов текущей сессии недоступны. '
+        'Готовность прямого пути не подтверждает его работу.';
+  }
+  final status = observation.vpnHandoffs > 0
+      ? 'Наблюдались передачи TCP выбранных сервисов в VPN-путь.'
+      : observation.services > 0 &&
+              observation.withdrawCompleted == observation.services
+          ? 'Прямой путь снят, новый VPN-путь ещё не наблюдался'
+          : observation.services == 0
+              ? 'В текущей сессии нет выбранных сервисов.'
+              : 'Новый VPN-путь выбранных сервисов ещё не наблюдался.';
+  return 'Сервисы текущей сессии: ${observation.services} · '
+      'допущено: ${observation.admitted} · '
+      'ошибка: ${observation.failed} · '
+      'снято: ${observation.withdrawCompleted}.\n'
+      'Передачи TCP: прямой путь — ${observation.localHandoffs} · '
+      'VPN-путь — ${observation.vpnHandoffs}.\n'
+      '$status\n'
+      'Счётчики отражают передачу TCP-соединения в выбранный путь; '
+      'TLS и доставка данных ими не подтверждаются.';
 }
 
 class _DiagnosticsCard extends StatelessWidget {

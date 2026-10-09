@@ -9,6 +9,7 @@
 #include <climits>
 #include <cwchar>
 #include <set>
+#include <cmath>
 
 namespace pokrov::service {
 namespace {
@@ -205,6 +206,40 @@ bool DirectDoh(IJsonObject* server, const std::string& direct) {
       std::wstring(parts.lpszUrlPath, parts.dwUrlPathLength) == L"/dns-query";
 }
 }  // namespace
+
+std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObservation(
+    const std::string& encoded) {
+  if (encoded.empty() || encoded.size() > 512) return std::nullopt;
+  JsonApartment apartment;
+  if (!apartment.Ready()) return std::nullopt;
+  const auto object = ParseObject(encoded);
+  ComPtr<JsonMap> map;
+  UINT32 size = 0;
+  if (!object || FAILED(object.As(&map)) || FAILED(map->get_Size(&size)) || size != 4) return std::nullopt;
+  WindowsLocalDpiHolderObservation result;
+  result.state = String(object.Get(), L"state");
+  if (result.state != "unpublished" && result.state != "ready" &&
+      result.state != "failed" && result.state != "withdrawn") return std::nullopt;
+  HString completed_name;
+  boolean completed = false;
+  if (!completed_name.Set(L"withdraw_completed") ||
+      FAILED(object->GetNamedBoolean(completed_name.value, &completed)) ||
+      (completed && result.state != "withdrawn")) return std::nullopt;
+  result.withdraw_completed = completed;
+  const auto count = [&](const wchar_t* field, std::uint64_t* output) {
+    HString name;
+    double value = 0;
+    if (!name.Set(field) || FAILED(object->GetNamedNumber(name.value, &value)) ||
+        !std::isfinite(value) || value < 0 || value > 9007199254740991.0 ||
+        std::floor(value) != value) return false;
+    *output = static_cast<std::uint64_t>(value);
+    return true;
+  };
+  if (!count(L"local_handoffs", &result.local_handoffs) ||
+      !count(L"vpn_handoffs", &result.vpn_handoffs)) return std::nullopt;
+  return result;
+}
+
 
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& encoded) {
   JsonApartment apartment;

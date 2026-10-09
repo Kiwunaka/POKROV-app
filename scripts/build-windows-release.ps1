@@ -34,7 +34,7 @@ if ($TransportTrustDefinesFile) {
   $transportTrustArguments = @("--dart-define-from-file=$transportTrustPath")
 }
 
-$versionParityArguments = @{}
+$versionParityArguments = @{ Platforms = @("windows") }
 if ($CoreRoot) {
   $versionParityArguments.CoreRoot = $CoreRoot
 }

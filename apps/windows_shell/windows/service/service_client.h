@@ -8,6 +8,7 @@
 
 #include "service_protocol.h"
 #include "service_events.h"
+#include "service_local_dpi.h"
 #include "windows_crash_profile.h"
 
 namespace pokrov::service {
@@ -65,6 +66,7 @@ struct ServiceRuntimeSnapshot {
   int routing_catalog_control_version = 0;
   int smart_access_runtime_control_version = 0;
   int windows_local_dpi_admission_version = 0;
+  std::optional<WindowsLocalDpiRuntimeObservation> windows_local_dpi_runtime;
   std::string transport_capabilities_json;
   std::string core_module_sha256;
   std::string core_version;

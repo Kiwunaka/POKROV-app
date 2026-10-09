@@ -705,6 +705,44 @@ void main() {
         'Сервер проверки не ответил вовремя после установки соединения. POKROV отключил VPN. Причина не установлена.');
   });
 
+  test('windows DPI runtime observation decodes by value and stays unknown when invalid',
+      () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final response = <String, Object?>{'phase': 'running'};
+    messenger.setMockMethodCallHandler(channel, (call) async => response);
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
+    expect((await engine.snapshot()).windowsLocalDpiRuntime, isNull);
+
+    final observation = <String, int>{
+      'services': 1,
+      'admitted': 0,
+      'failed': 0,
+      'withdraw_completed': 1,
+      'local_handoffs': 2,
+      'vpn_handoffs': 0,
+    };
+    response['windowsLocalDpiRuntime'] = observation;
+    final withdrawn = await engine.snapshot();
+    expect(withdrawn.windowsLocalDpiRuntime?.withdrawCompleted, 1);
+    expect(withdrawn.windowsLocalDpiRuntime?.localHandoffs, 2);
+    expect(withdrawn.hasSameStateAs(await engine.snapshot()), isTrue);
+
+    observation['vpn_handoffs'] = 1;
+    final vpnObserved = await engine.snapshot();
+    expect(vpnObserved.windowsLocalDpiRuntime?.vpnHandoffs, 1);
+    expect(withdrawn.hasSameStateAs(vpnObserved), isFalse);
+    expect(withdrawn.windowsLocalDpiRuntime?.vpnHandoffs, 0);
+
+    response['connectionPending'] = true;
+    expect((await engine.snapshot()).windowsLocalDpiRuntime, isNull);
+    response['connectionPending'] = false;
+    observation['admitted'] = 1;
+    expect((await engine.snapshot()).windowsLocalDpiRuntime, isNull);
+  });
+
   test('windows profile mismatch remains unprotected with explicit recovery',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

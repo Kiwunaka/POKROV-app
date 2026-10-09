@@ -334,6 +334,13 @@ bool WindowsLocalDpiExecutor::Alive() const {
   return state_->process != nullptr && ::WaitForSingleObject(state_->process, 0) == WAIT_TIMEOUT;
 }
 
+std::string WindowsLocalDpiExecutor::CapturedAdmissionID(const std::string& tag) const {
+  for (const auto& holder : state_->holders) {
+    if (holder.first == tag) return holder.second;
+  }
+  return "";
+}
+
 bool WindowsLocalDpiExecutor::AdmitCaptured(const std::string& tag,
                                           const std::function<bool()>& current_after_proof) {
   for (const auto& holder : state_->holders) {

@@ -715,6 +715,7 @@ bool ParseServiceRuntimeSnapshot(const std::string& body,
   if (output == nullptr) return false;
   auto parsed = *output;
   parsed.egress_failure_observation.reset();
+  parsed.windows_local_dpi_runtime.reset();
   auto snapshot_body = body;
   const auto observation_start = body.find(";egress_probe_stage=");
   if (observation_start != std::string::npos) {
@@ -765,7 +766,35 @@ bool ParseServiceRuntimeSnapshot(const std::string& body,
     snapshot_body.erase(observation_start,
         observation_end == std::string::npos ? observation_end : observation_end - observation_start);
   }
+  const auto dpi_start = snapshot_body.find(";windows_local_dpi_services=");
+  if (dpi_start != std::string::npos) {
+    const auto dpi_end = snapshot_body.find(";transport_proof_pending=", dpi_start);
+    const auto fields = snapshot_body.substr(dpi_start + 1,
+        dpi_end == std::string::npos ? dpi_end : dpi_end - dpi_start - 1);
+    const std::array<const char*, 6> names = {"windows_local_dpi_services", "windows_local_dpi_admitted",
+        "windows_local_dpi_failed", "windows_local_dpi_withdraw_completed",
+        "windows_local_dpi_local_handoffs", "windows_local_dpi_vpn_handoffs"};
+    std::array<std::uint64_t, 6> values{};
+    std::size_t offset = 0;
+    for (std::size_t index = 0; index < names.size(); ++index) {
+      std::string text;
+      if (!ReadField(fields, &offset, names[index], &text, index + 1 == names.size())) return false;
+      const auto number = std::from_chars(text.data(), text.data() + text.size(), values[index]);
+      if (number.ec != std::errc{} || number.ptr != text.data() + text.size() ||
+          values[index] > 9007199254740991ULL) return false;
+    }
+    if (offset != fields.size() || values[0] > 256 ||
+        values[1] + values[2] + values[3] > values[0]) return false;
+    parsed.windows_local_dpi_runtime = WindowsLocalDpiRuntimeObservation{
+        values[0], values[1], values[2], values[3], values[4], values[5]};
+    snapshot_body.erase(dpi_start,
+        dpi_end == std::string::npos ? dpi_end : dpi_end - dpi_start);
+  }
   if (!ParseSnapshotBodyInternal(snapshot_body, &parsed)) return false;
+  if (parsed.windows_local_dpi_runtime && (!parsed.running || !parsed.core_ready ||
+      parsed.windows_local_dpi_admission_version != 1 || parsed.transport_proof_pending)) {
+    parsed.windows_local_dpi_runtime.reset();
+  }
   if (parsed.egress_failure_observation && parsed.failure.rfind("core_egress_", 0) != 0) return false;
   *output = std::move(parsed);
   return true;
@@ -778,6 +807,7 @@ ServiceRuntimeSnapshot BindSnapshotToProfileIntent(
   if (!expected_profile_digest.empty() &&
       snapshot.staged_profile_digest != expected_profile_digest && !matches_running_without_reuse) {
     snapshot.core_egress_validated = false;
+    snapshot.windows_local_dpi_runtime.reset();
     snapshot.dns_ready = false;
     snapshot.can_connect = false;
     snapshot.failure = "profile_identity_mismatch";

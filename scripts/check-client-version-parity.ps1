@@ -4,7 +4,9 @@ param(
   [string]$RuntimeArtifactsPath,
   [string]$ReleaseHandoffPath,
   [string]$WindowsReleasePath,
-  [string]$CoreRoot
+  [string]$CoreRoot,
+  [ValidateSet("android", "windows")]
+  [string[]]$Platforms = @("android", "windows")
 )
 
 $ErrorActionPreference = "Stop"
@@ -67,7 +69,7 @@ if ($runtime.release_tag -ne "v$($runtime.version)" -or
   throw "Core release identity disagrees with the client runtime contract."
 }
 
-foreach ($platform in @("android", "windows")) {
+foreach ($platform in $Platforms) {
   $asset = $runtime.assets.$platform
   $path = Join-Path $root $asset.sync_destination
   Assert-Asset (Join-Path $path $asset.entry) ([long]$asset.size) ([string]$asset.sha256)

@@ -53,6 +53,16 @@ void TestReleasedCoreDescriptorCompatibility() {
   Expect(!pokrov::service::CoreDescriptorHasTelegramWS(windows_next) &&
          !pokrov::service::CoreDescriptorHasTelegramWS(core122),
          "old Core descriptor acquired Telegram WS admission");
+  auto windows_observation = windows_next;
+  const std::string observation_version = "\"windows_local_dpi_observation_version\":1,";
+  windows_observation.insert(windows_observation.find("\"capabilities\""), observation_version);
+  Expect(pokrov::service::CoreDescriptorHasRuntimeControl(windows_observation) &&
+         pokrov::service::CoreDescriptorHasWindowsLocalDpi(windows_observation),
+         "ordinary Windows observation descriptor was rejected");
+  auto observation_without_owner = core122;
+  observation_without_owner.insert(observation_without_owner.find("\"capabilities\""), observation_version);
+  Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(observation_without_owner),
+         "observation metadata bypassed the Windows admission descriptor");
   std::string telegram_next(windows_next);
   const std::string telegram_admission = "\"telegram_ws_admission_version\":1,";
   telegram_next.insert(telegram_next.find("\"capabilities\""), telegram_admission);
