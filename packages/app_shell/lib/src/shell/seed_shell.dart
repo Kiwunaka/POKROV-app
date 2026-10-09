@@ -2715,6 +2715,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
               listenable: _supportModeController,
               builder: (context, child) => PokrovDiagnosticsScreen(
                 initialReport: _buildDiagnosticsReport(),
+                onStartFirstProviderQa: _connectionManager.firstProviderQaAdmissionId == null ? null : () async {
+                  final id = _connectionManager.firstProviderQaAdmissionId;
+                  if (id == null) throw const RoutingCatalogFailure('smart_access_qa_unavailable');
+                  await _connectionManager.startFirstProviderQa(id);
+                },
+                onReadFirstProviderQaContext: _connectionManager.readFirstProviderQaContext,
                 onRefresh: _refreshDiagnosticsReport,
                 onReleaseHealthRefresh: _releaseHealthService == null
                     ? null

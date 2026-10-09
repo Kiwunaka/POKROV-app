@@ -399,6 +399,38 @@ CatalogDomainPolicy compileCatalogDomainPolicy({
 
 Never _fail(String code) => throw RoutingCatalogFailure('catalog_$code');
 
+/// Private first-provider scope; the original public catalog stays unchanged.
+CatalogDomainPolicy compileFirstProviderQaDomainPolicy({
+  required RoutingCatalogPolicy policy, required VerifiedFirstProviderQaPermit permit,
+  required SmartAccessProfileLeases profile, required String accessState, required DateTime now,
+}) {
+  final catalog = policy.catalog;
+  if (permit.payload['catalog_sha256'] != catalog.payloadSha256 ||
+      now.toUtc().isBefore(catalog.issuedAt) || !now.toUtc().isBefore(catalog.expiresAt) ||
+      !now.toUtc().isBefore(permit.expiresAt) || !permit.grant.admitsNewFlows(now) ||
+      profile.byService.length != 1 || profile.byService['gemini']?.length != 1 ||
+      !identical(profile.byService['gemini']!.single, permit.grant)) _fail('qa_scope_changed');
+  final services = policy.services.where((service) => service.id == 'gemini').toList();
+  if (services.length != 1 || services.single.enabled ||
+      !services.single.platforms.contains('windows') || !services.single.accessStates.contains(accessState)) {
+    _fail('qa_scope_changed');
+  }
+  final domains = services.single.domains.where((domain) =>
+      domain.name == 'gemini.google.com' && !domain.suffix && !domain.shared).toList();
+  if (domains.length != 1) _fail('qa_scope_changed');
+  return CatalogDomainPolicy._(
+    catalog: catalog, localDpiControlHosts: const {}, revision: catalog.revision,
+    securityRevision: catalog.securityRevision, payloadSha256: catalog.payloadSha256,
+    audience: catalog.payload['audience']! as String, issuedAt: catalog.issuedAt,
+    // Member expiry closes the gateway, not its independently authorized VPN fallback.
+    expiresAt: catalog.expiresAt, mode: CatalogRoutingMode.selective, platform: 'windows', accessState: accessState,
+    defaultAction: CatalogRouteAction.direct, selectedServiceIds: const {'gemini'},
+    rules: [CatalogDomainDecision._('gemini', domains.single, CatalogRouteAction.approvedGateway,
+      null, profile.byService['gemini']!, CatalogRouteAction.approvedGateway)],
+    smartAccessProfile: profile, vpnAvailable: true,
+  );
+}
+
 Future<String> _runtimeRuleDigest(String serviceId, CatalogDomain domain, CatalogRouteAction action,
     [String? localDpiControlHost]) => smartAccessProfileSha256(jsonEncode([
       serviceId, domain.name, domain.suffix, action.name,

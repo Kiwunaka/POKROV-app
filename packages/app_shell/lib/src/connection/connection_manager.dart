@@ -292,6 +292,14 @@ class ConnectionManager extends ChangeNotifier {
   final _preparedSmartAccessGrants = Expando<List<VerifiedSmartAccessLease>>();
   final _preparedCatalogPolicies = Expando<CatalogDomainPolicy>();
   ({CatalogDomainPolicy policy, String digest})? _smartAccessRouteProfile;
+  String? _pendingFirstProviderQaAdmissionId;
+  String? _startedFirstProviderQaAdmissionId;
+  ({VerifiedFirstProviderQaPermit permit, int generation, int profileRevision,
+    String transportCandidateRef, String? profileDigest, String? requestId})? _activeFirstProviderQa;
+  RuntimeSmartAccessReadiness? _firstProviderQaReadiness;
+  bool _firstProviderQaProofClosed = false;
+  bool? _firstProviderQaNativeGuardClosed;
+  bool _firstProviderQaControlConfirmed = false;
   bool _smartAccessRefreshInFlight = false;
   int? _smartAccessRenewalEnrollmentGeneration;
   String? _smartAccessRenewalEnrollmentProfile;
@@ -479,6 +487,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<void> connect() {
+    if (_pendingFirstProviderQaAdmissionId == null) _activeFirstProviderQa = null;
     _clearAutomaticAndroidStop();
     return _replaceCommand(() {
       _smartAccessRouteProfile = null;
@@ -490,6 +499,7 @@ class ConnectionManager extends ChangeNotifier {
   Future<void> disconnect() {
     _suppressAutomaticAndroidNetwork();
     return _replaceCommand(() async {
+        _activeFirstProviderQa = null;
         _smartAccessRouteProfile = null;
         if (retainsProtection) { await _disconnectProtectedHandoff(); return; }
         if (_runtimeSnapshot?.phase == RuntimePhase.running ||
@@ -498,6 +508,50 @@ class ConnectionManager extends ChangeNotifier {
         }
       });
   }
+
+  String? get firstProviderQaAdmissionId {
+    final id = _subscriptionInfo?.firstProviderQaAdmissionId;
+    final preferences = _clientExperience.routingPreferences;
+    if (_appContext.hostPlatform != HostPlatform.windows || _bootstrapper is! AppFirstRuntimeBootstrapper ||
+        !(_bootstrapper as AppFirstRuntimeBootstrapper).firstProviderQaConfigured || _disposed || _runtimeBusy ||
+        retainsProtection || _runtimeSnapshot?.phase == RuntimePhase.running || _runtimeSnapshot?.connectionPending == true ||
+        _selectedRouteMode == RouteMode.selectedApps || _selectedRouteMode == RouteMode.excludedApps ||
+        preferences.overrides.isNotEmpty || preferences.purposeRoutes.isNotEmpty || preferences.localDpiEnabled ||
+        _warpRuntimeConsent || id == _startedFirstProviderQaAdmissionId) return null;
+    return id;
+  }
+
+  Future<void> startFirstProviderQa(String admissionId) async {
+    if (admissionId != firstProviderQaAdmissionId) {
+      throw const RoutingCatalogFailure('smart_access_qa_unavailable');
+    }
+    _startedFirstProviderQaAdmissionId = admissionId;
+    _pendingFirstProviderQaAdmissionId = admissionId;
+    _activeFirstProviderQa = null;
+    _firstProviderQaReadiness = null;
+    _firstProviderQaProofClosed = false;
+    _firstProviderQaNativeGuardClosed = null;
+    _firstProviderQaControlConfirmed = false;
+    try {
+      await connect();
+      final qa = _activeFirstProviderQa;
+      final engine = _runtimeEngine;
+      if (qa != null && _runtimeSnapshot?.isCleanlyHealthy == true && engine is RuntimeConnectCancellation) {
+        final requestId = (engine as RuntimeConnectCancellation).activeConnectRequestId;
+        if (requestId != null) {
+          _activeFirstProviderQa = (permit: qa.permit, generation: qa.generation, profileRevision: qa.profileRevision,
+            transportCandidateRef: qa.transportCandidateRef, profileDigest: qa.profileDigest, requestId: requestId);
+          await _refreshSmartAccessLeases();
+        }
+      }
+    } finally {
+      _pendingFirstProviderQaAdmissionId = null;
+      if (_runtimeSnapshot?.phase != RuntimePhase.running) _activeFirstProviderQa = null;
+    }
+  }
+
+  /// Safe correlation markers, never credentials or feature acceptance.
+  Future<Map<String, Object?>?> readFirstProviderQaContext() => _readFirstProviderQaContext();
   Future<void> reconnect() {
     _clearAutomaticAndroidStop();
     return _replaceCommand(() {
@@ -2226,7 +2280,7 @@ class ConnectionManager extends ChangeNotifier {
     final inputs = _managedProfileCacheInputs;
     smartAccessVpnFallback = smartAccessVpnFallback ||
         _isCurrentSmartAccessVpnFallback(_runtimeSnapshot);
-    if (_localSmartAccessSelected && !smartAccessVpnFallback) {
+    if (_pendingFirstProviderQaAdmissionId == null && _localSmartAccessSelected && !smartAccessVpnFallback) {
       _smartAccessRouteProfile = null;
       _transportCatalog = null;
       _candidateNetworkKey = null;
@@ -2696,7 +2750,7 @@ class ConnectionManager extends ChangeNotifier {
   ManagedProfileCacheInputs get _managedProfileCacheInputs =>
       ManagedProfileCacheInputs(
         hostPlatform: _appContext.hostPlatform,
-        routeMode: _selectedRouteMode,
+        routeMode: _pendingFirstProviderQaAdmissionId == null ? _selectedRouteMode : RouteMode.selectiveServices,
         selectedApps: _selectedRouteMode == RouteMode.selectedApps ||
                 _selectedRouteMode == RouteMode.excludedApps
             ? List<String>.of(_selectedAppIds)
@@ -2731,7 +2785,7 @@ class ConnectionManager extends ChangeNotifier {
         ? _connectionCoordinator.whenOperationEnds(generation)
         : _connectionCoordinator.whenOperationChanges(generation);
     final baseWarpPolicy = payload.warpPolicy.withClientLocalDefaults();
-    final warpStatus = offline || localSmartAccessState != null
+    final warpStatus = offline || localSmartAccessState != null || _pendingFirstProviderQaAdmissionId != null
         ? null
         : await _fetchWarpStatusOrNull(
             ownerGeneration: generation, cancelled: cancelled);
@@ -2898,8 +2952,35 @@ class ConnectionManager extends ChangeNotifier {
                         : const {},
                 smartAccessProfile: leases,
               );
-          catalogPolicy = compile(null);
-          if (!offline && !smartAccessVpnFallback &&
+          final qaAdmissionId = _pendingFirstProviderQaAdmissionId;
+          if (qaAdmissionId != null) {
+            final qaService = _bootstrapper;
+            final actualCandidate = payload.materialCandidate;
+            final actualCore = native.coreModuleSha256;
+            if (offline || result.usingCache || qaService is! AppFirstRuntimeBootstrapper ||
+                actualCandidate == null || actualCandidate.warpMode != null ||
+                native.coreVersion == null || actualCore == null || nativeSmartAccessLeaseVersion != 1 ||
+                nativeCatalogControlVersion != 4 || payload.routeMode != RouteMode.selectiveServices) {
+              throw const RoutingCatalogFailure('smart_access_qa_scope_unavailable');
+            }
+            bool qaCurrent() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
+                profileRevision == _managedProfileRevision && _pendingFirstProviderQaAdmissionId == qaAdmissionId &&
+                preparationClock.elapsed < _actionTimeout;
+            final permit = await qaService.claimFirstProviderQa(admissionId: qaAdmissionId,
+              baseProfile: runtimePayload.configPayload, catalog: result.catalog,
+              coreVersion: native.coreVersion!, coreModuleSha256: actualCore, operationIsCurrent: qaCurrent,
+              remainingBudget: _actionTimeout - preparationClock.elapsed, cancelled: cancelled);
+            if (!qaCurrent()) throw const ConnectionOperationSuperseded();
+            final bound = await SmartAccessProfileLeases.bind(baseProfile: runtimePayload.configPayload, leases: [permit.grant]);
+            if (!qaCurrent()) throw const ConnectionOperationSuperseded();
+            catalogPolicy = compileFirstProviderQaDomainPolicy(policy: catalogProjection, permit: permit,
+              profile: bound, accessState: accessState, now: DateTime.now().toUtc());
+            _activeFirstProviderQa = (permit: permit, generation: generation, profileRevision: profileRevision,
+              transportCandidateRef: actualCandidate.candidateRef, profileDigest: null, requestId: null);
+          } else {
+            catalogPolicy = compile(null);
+          }
+          if (qaAdmissionId == null && !offline && !smartAccessVpnFallback &&
               !result.usingCache &&
               const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(catalogMode) &&
               nativeSmartAccessLeaseVersion == 1 &&
@@ -3018,7 +3099,8 @@ class ConnectionManager extends ChangeNotifier {
       }
       configuredPayload = applyPokrovRoutingPreferences(
         runtimePayload,
-        _clientExperience.routingPreferences,
+        _pendingFirstProviderQaAdmissionId == null ? _clientExperience.routingPreferences
+            : _clientExperience.routingPreferences.copyWith(selectedCatalogServiceIds: const {'gemini'}),
         hostPlatform: _appContext.hostPlatform,
         catalogPolicy: catalogPolicy,
         catalogAccessState: localSmartAccessState,
@@ -3028,6 +3110,10 @@ class ConnectionManager extends ChangeNotifier {
             ? pokrovRuAppCatalog.map((entry) => entry.packageId).toList()
             : const <String>[],
       );
+      if (_pendingFirstProviderQaAdmissionId != null) {
+        _validateFirstProviderQaRuleOrder(configuredPayload.configPayload,
+          _activeFirstProviderQa!.permit.grant.lease['lease_id']! as String);
+      }
       final grants = catalogPolicy?.smartAccessProfile?.byService.values
           .expand((group) => group);
       if (localSmartAccessState != null && (grants == null || grants.isEmpty)) {

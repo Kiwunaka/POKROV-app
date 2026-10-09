@@ -613,6 +613,15 @@ A WARP rewrite of such a profile requires fresh preparation and a new binding;
 the existing bounded WARP fallback uses fresh baseline staging in that case.
 It does not copy the old lease into a different profile identity.
 
+First-provider QA is a separate, explicit Diagnostics action for an authenticated
+Windows device with a prepared admission. Its signed one-attempt projection keeps
+the original service/capability disabled and uses ordinary managed preparation,
+stage, connect and owner-bound runtime control. Closing the QA lease retains the
+service's protected VPN fallback and the selective Direct default. Diagnostics
+latches three stages from one completed native probe under the same live scope;
+the safe context never marks the browser feature verified. Public admission and
+runtime acceptance remain separate from this source preparation.
+
 Existing foreground resume and account-summary refresh fetch one fresh signed
 restriction control response before the provider policy, with no retry loop. The
 control response binds a fresh nonce, per-request account/device hash, native

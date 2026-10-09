@@ -1674,13 +1674,94 @@ abstract interface class RuntimeSmartAccessControl {
     required String leaseId, required bool terminateActive});
 }
 
+class RuntimeSmartAccessReadinessStage {
+  const RuntimeSmartAccessReadinessStage({required this.stage, required this.result,
+    required this.observedAtMs, required this.durationMs, this.reason});
+  final String stage;
+  final String result;
+  final int observedAtMs;
+  final int durationMs;
+  final String? reason;
+}
+
+class RuntimeSmartAccessReadiness {
+  RuntimeSmartAccessReadiness({required this.probeId, required this.leaseId,
+    required this.startedAtMs, required this.completedAtMs, required this.status,
+    required List<RuntimeSmartAccessReadinessStage> stages, required this.fallbackGuardClosed})
+      : stages = List.unmodifiable(stages);
+  final int probeId;
+  final String leaseId;
+  final int startedAtMs;
+  final int? completedAtMs;
+  final String status;
+  final List<RuntimeSmartAccessReadinessStage> stages;
+  final bool fallbackGuardClosed;
+
+  /// Three native observations from one completed probe. This does not verify
+  /// the browser feature, QA permit, current profile or absence of fallback.
+  bool get hasCompletedStagePasses => status == 'pass' && completedAtMs != null &&
+      stages.length == 3 && stages[0].stage == 'resolver' && stages[1].stage == 'dns' &&
+      stages[2].stage == 'tls' && stages.every((stage) => stage.result == 'pass');
+
+  static RuntimeSmartAccessReadiness? fromWire(Object? value) {
+    if (value == null) return null;
+    Never invalid() => throw StateError('smart_access_lease_read_unconfirmed');
+    const fields = {'probe_id', 'lease_id', 'started_at_ms', 'completed_at_ms',
+      'status', 'stages', 'fallback_guard_closed'};
+    if (value is! Map<String, dynamic> || value.length != fields.length ||
+        value.keys.any((key) => !fields.contains(key)) ||
+        value['probe_id'] is! int || (value['probe_id'] as int) < 1 ||
+        value['lease_id'] is! String ||
+        (value['lease_id'] != '' && !RegExp(r'^[a-f0-9]{32}$').hasMatch(value['lease_id'] as String)) ||
+        value['started_at_ms'] is! int || (value['started_at_ms'] as int) < 0 ||
+        !const {'pending', 'pass', 'failure'}.contains(value['status']) ||
+        value['stages'] is! List || (value['stages'] as List).length > 3 ||
+        value['fallback_guard_closed'] is! bool) invalid();
+    final startedAt = value['started_at_ms'] as int;
+    final completedAt = value['completed_at_ms'];
+    final status = value['status'] as String;
+    if (status == 'pending' ? completedAt != null :
+        (completedAt is! int || completedAt < startedAt)) invalid();
+    const stageNames = ['resolver', 'dns', 'tls'];
+    const stageFields = {'stage', 'result', 'observed_at_ms', 'duration_ms', 'reason'};
+    const reasons = {'dns_lookup', 'udp_timeout', 'tls_timeout', 'response_timeout'};
+    final stages = <RuntimeSmartAccessReadinessStage>[];
+    var previousStage = -1;
+    var previousObservedAt = startedAt;
+    for (final row in value['stages'] as List) {
+      if (row is! Map<String, dynamic> || (row.length != 4 && row.length != 5) ||
+          row.keys.any((key) => !stageFields.contains(key)) || row['stage'] is! String ||
+          !const {'pass', 'failure'}.contains(row['result']) ||
+          row['observed_at_ms'] is! int || (row['observed_at_ms'] as int) < previousObservedAt ||
+          (completedAt is int && (row['observed_at_ms'] as int) > completedAt) ||
+          row['duration_ms'] is! int || (row['duration_ms'] as int) < 0 ||
+          (row.containsKey('reason') && (!reasons.contains(row['reason']) || row['result'] == 'pass'))) invalid();
+      final index = stageNames.indexOf(row['stage'] as String);
+      if (index <= previousStage) invalid();
+      previousStage = index;
+      previousObservedAt = row['observed_at_ms'] as int;
+      stages.add(RuntimeSmartAccessReadinessStage(stage: row['stage'] as String,
+        result: row['result'] as String, observedAtMs: previousObservedAt,
+        durationMs: row['duration_ms'] as int, reason: row['reason'] as String?));
+    }
+    final readiness = RuntimeSmartAccessReadiness(probeId: value['probe_id'] as int,
+      leaseId: value['lease_id'] as String, startedAtMs: startedAt, completedAtMs: completedAt as int?,
+      status: status, stages: stages, fallbackGuardClosed: value['fallback_guard_closed'] as bool);
+    if ((status == 'pass' && (!readiness.hasCompletedStagePasses || readiness.leaseId.isEmpty ||
+          readiness.fallbackGuardClosed)) ||
+        (status == 'pending' && stages.any((stage) => stage.result == 'failure'))) invalid();
+    return readiness;
+  }
+}
+
 class RuntimeSmartAccessSelection {
   const RuntimeSmartAccessSelection({required this.leaseId, required this.selectionIndex,
-    required this.state, required this.available});
+    required this.state, required this.available, this.readiness});
   final String leaseId;
   final int selectionIndex;
   final String state;
   final bool available;
+  final RuntimeSmartAccessReadiness? readiness;
 }
 
 class RuntimeSmartAccessLeaseState {
@@ -3533,7 +3614,9 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
     if (rows.length > 256) throw StateError('smart_access_lease_read_unconfirmed');
     final selections = <String, RuntimeSmartAccessSelection>{};
     for (final row in rows) {
-      if (row is! Map<String, dynamic> || row.length != 5 || row['service_id'] is! String ||
+      if (row is! Map<String, dynamic> ||
+          (row.length != 5 && !(row.length == 6 && row.containsKey('readiness'))) ||
+          row['service_id'] is! String ||
           !RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$').hasMatch(row['service_id'] as String) ||
           row['lease_id'] is! String || row['selection_index'] is! int || row['available'] is! bool ||
           !const {'pending', 'gateway', 'unavailable'}.contains(row['state']) ||
@@ -3543,7 +3626,8 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       if (row['state'] == 'unavailable' ? (index != -1 || id.isNotEmpty || row['available'] != false) :
           (index < 0 || index >= 16 || !leaseIds.contains(id))) throw StateError('smart_access_lease_read_unconfirmed');
       selections[row['service_id'] as String] = RuntimeSmartAccessSelection(leaseId: id,
-        selectionIndex: index, state: row['state'] as String, available: row['available'] as bool);
+        selectionIndex: index, state: row['state'] as String, available: row['available'] as bool,
+        readiness: RuntimeSmartAccessReadiness.fromWire(row['readiness']));
     }
     return RuntimeSmartAccessLeaseState(profileDigest: profileDigest, leaseIds: leaseIds,
       selections: Map.unmodifiable(selections));

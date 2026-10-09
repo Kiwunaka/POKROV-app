@@ -1,6 +1,97 @@
 part of pokrov_app_shell;
 
 extension _SmartAccessRuntimeOperations on ConnectionManager {
+  void _validateFirstProviderQaRuleOrder(String payload, String leaseId) {
+    final config = jsonDecode(payload) as Map;
+    final blockedOutbounds = (config['outbounds'] as List).cast<Map>()
+        .where((row) => row['type'] == 'block').map((row) => row['tag']).toSet();
+    final blockedDns = ((config['dns'] as Map)['servers'] as List).cast<Map>()
+        .where((row) => row['address'] is String && (row['address'] as String).startsWith('rcode://'))
+        .map((row) => row['tag']).toSet();
+    for (final section in const ['route', 'dns']) {
+      final rules = ((config[section] as Map)['rules'] as List).cast<Map>();
+      final first = rules.indexWhere((rule) => (rule['pokrov_catalog_window'] as Map?)?['lease_id'] == leaseId);
+      if (first < 0) throw const RoutingCatalogFailure('smart_access_qa_rule_missing');
+      for (final rule in rules.take(first)) {
+        // Safety rules may stop the request. They cannot silently route it by
+        // an earlier user/app rule or resolve Gemini through bootstrap Direct.
+        if (const {'sniff', 'hijack-dns', 'reject'}.contains(rule['action'])) continue;
+        if (blockedOutbounds.contains(rule['outbound']) || blockedDns.contains(rule['server'])) continue;
+        if (rule['ip_cidr'] != null && _clientExperience.routingPreferences.allowLan &&
+            jsonEncode(rule['ip_cidr']) == jsonEncode(_clientExperience.routingPreferences.lanSubnets)) continue;
+        final domains = rule['domain'];
+        if (domains is List && domains.isNotEmpty && domains.every((domain) => domain is String &&
+            domain.toLowerCase().replaceFirst(RegExp(r'\.$'), '') != 'gemini.google.com') &&
+            !rule.containsKey('domain_suffix') && !rule.containsKey('domain_regex') && !rule.containsKey('rule_set')) continue;
+        throw const RoutingCatalogFailure('smart_access_qa_earlier_rule');
+      }
+    }
+  }
+
+  Future<Map<String, Object?>?> _readFirstProviderQaContext() async {
+    final qa = _activeFirstProviderQa;
+    final engine = _runtimeEngine;
+    final binding = _connectionCoordinator.activeSmartAccessLeases;
+    if (qa == null || qa.profileDigest == null || engine is! RuntimeSmartAccessBackgroundControl || binding == null) return null;
+    final leaseId = qa.permit.grant.lease['lease_id']! as String;
+    bool current() => !_disposed && !_runtimeBusy && identical(_activeFirstProviderQa?.permit, qa.permit) &&
+      _firstProviderQaControlConfirmed && qa.requestId != null && engine is RuntimeConnectCancellation &&
+      (engine as RuntimeConnectCancellation).activeConnectRequestId == qa.requestId &&
+      _connectionCoordinator.ownsOperation(qa.generation) && qa.profileRevision == _managedProfileRevision &&
+      !_accessDenialPending && !_cachedProfileFallbackGate.authorizationDenied &&
+      (_activeCandidateRef ?? _candidateRef) == qa.transportCandidateRef &&
+      _runtimeSnapshot?.isCleanlyHealthy == true && _runtimeSnapshot?.protectionRetained == false &&
+      _runtimeSnapshot?.stagedProfileDigest == qa.profileDigest && _runtimeSnapshot?.effectiveProfileDigest == qa.profileDigest &&
+      _runtimeSnapshot?.coreModuleSha256 == qa.permit.payload['core_module_sha256'] &&
+      identical(_connectionCoordinator.activeSmartAccessLeases, binding) && binding.leases.length == 1 &&
+      binding.leases.single.leaseId == leaseId && DateTime.now().toUtc().isBefore(qa.permit.expiresAt) &&
+      !_connectionCoordinator.receivedCatalogRevocation(binding) &&
+      _connectionCoordinator.receivedCatalogServiceRevocations(binding).isEmpty &&
+      _connectionCoordinator.receivedSmartAccessRevocations(binding).isEmpty;
+    if (!current()) _firstProviderQaProofClosed = true;
+    if (!_firstProviderQaProofClosed) {
+      try {
+        final native = await (engine as RuntimeSmartAccessBackgroundControl)
+            .readSmartAccessLeases(qa.profileDigest!).timeout(_actionTimeout);
+        final selection = native.selections['gemini'];
+        if (!current() || native.leaseIds.length != 1 || !native.leaseIds.contains(leaseId) || selection?.leaseId != leaseId) {
+          _firstProviderQaProofClosed = true;
+        } else {
+          final proof = selection!.readiness;
+          _firstProviderQaNativeGuardClosed = proof?.fallbackGuardClosed;
+          if (proof?.fallbackGuardClosed == true || proof?.status == 'failure' ||
+              (proof != null && proof.leaseId.isNotEmpty && proof.leaseId != leaseId)) {
+            _firstProviderQaProofClosed = true;
+          } else if (proof?.hasCompletedStagePasses == true && selection.available && proof!.leaseId == leaseId) {
+            final issuedAt = DateTime.parse(qa.permit.payload['issued_at']! as String).millisecondsSinceEpoch;
+            if (proof.startedAtMs < issuedAt || proof.completedAtMs! >= qa.permit.expiresAt.millisecondsSinceEpoch) {
+              _firstProviderQaProofClosed = true;
+            } else {
+              _firstProviderQaReadiness ??= proof;
+            }
+          }
+        }
+      } on Object { _firstProviderQaProofClosed = true; }
+    }
+    if (!identical(_activeFirstProviderQa?.permit, qa.permit)) return null;
+    final proof = _firstProviderQaProofClosed ? null : _firstProviderQaReadiness;
+    return Map.unmodifiable({
+      'permit_id': qa.permit.permitId, 'service_id': 'gemini', 'candidate_ref': qa.permit.payload['candidate_ref'],
+      'lease_id': leaseId, 'runtime_scope_sha256': qa.permit.grant.lease['runtime_scope_sha256'],
+      'profile_digest': qa.profileDigest, 'generation': qa.generation, 'profile_revision': qa.profileRevision,
+      'request_id': qa.requestId,
+      for (final field in const ['catalog_sha256', 'provider_policy_sha256', 'client_release', 'core_version',
+        'core_module_sha256', 'route_mode']) field: qa.permit.payload[field],
+      'expires_at': qa.permit.payload['expires_at'], 'native_stages': proof == null ? 'NOT_VERIFIED' : 'PASS',
+      'feature_request': 'NOT_VERIFIED', 'proof_current': proof != null,
+      'fallback_guard_closed': _firstProviderQaNativeGuardClosed,
+      if (proof != null) ...{'probe_id': proof.probeId, 'started_at_ms': proof.startedAtMs,
+        'completed_at_ms': proof.completedAtMs,
+        'stages': [for (final stage in proof.stages) {'stage': stage.stage, 'result': stage.result,
+          'observed_at_ms': stage.observedAtMs, 'duration_ms': stage.durationMs}]},
+    });
+  }
+
   void _applyNativeSmartAccessRestrictions(Iterable<NativeSmartAccessRestriction> restrictions) {
     final binding = _connectionCoordinator.activeSmartAccessLeases;
     if (binding == null) return;
@@ -75,6 +166,12 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     bool current() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
         elapsed.elapsed < _actionTimeout;
     final grants = _preparedSmartAccessGrants[payload] ?? const <VerifiedSmartAccessLease>[];
+    final qa = _activeFirstProviderQa;
+    if (qa != null && (qa.generation != generation || qa.profileRevision != _managedProfileRevision ||
+        payload.materialCandidate?.candidateRef != qa.transportCandidateRef || grants.length != 1 ||
+        !identical(grants.single, qa.permit.grant) || !DateTime.now().toUtc().isBefore(qa.permit.expiresAt))) {
+      throw const RoutingCatalogFailure('smart_access_qa_scope_changed');
+    }
     final catalog = _preparedCatalogPolicies[payload];
     if (catalog != null && _connectionCoordinator.isCatalogRevoked(catalog.payloadSha256, DateTime.now().toUtc())) {
       throw const RoutingCatalogFailure('catalog_stage_revoked');
@@ -91,6 +188,10 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     if (grants.isNotEmpty || catalog != null) {
       if (engine is! RuntimeSmartAccessControl) throw const RoutingCatalogFailure('smart_access_stage_unsupported');
       Future<String> persistRestrictions(String identityInput, RuntimeSnapshot native) async {
+          if (qa != null && (native.coreModuleSha256 != qa.permit.payload['core_module_sha256'] ||
+              native.coreVersion != qa.permit.payload['core_version'])) {
+            throw const RoutingCatalogFailure('smart_access_qa_core_changed');
+          }
           await _recoverNativeSmartAccessRestrictions(native, forStage: true, current: current,
             waitFor: <T>(Future<T> operation) => operation.timeout(_actionTimeout - elapsed.elapsed));
           if (!current()) throw const ConnectionOperationSuperseded();
@@ -114,6 +215,14 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
           : await engine.stageManagedProfile(payload);
     }
     if (current()) {
+      if (qa != null) {
+        if (staged.stagedProfileDigest == null || staged.coreModuleSha256 != qa.permit.payload['core_module_sha256'] ||
+            qa.profileRevision != _managedProfileRevision || !DateTime.now().toUtc().isBefore(qa.permit.expiresAt)) {
+          throw const RoutingCatalogFailure('smart_access_qa_stage_changed');
+        }
+        _activeFirstProviderQa = (permit: qa.permit, generation: qa.generation, profileRevision: qa.profileRevision,
+          transportCandidateRef: qa.transportCandidateRef, profileDigest: staged.stagedProfileDigest, requestId: qa.requestId);
+      }
       _connectionCoordinator.acknowledgeSmartAccessStage(staged,
         grants, generation: generation, catalogIssuedAt: catalog?.issuedAt, catalogExpiresAt: catalog?.expiresAt,
         catalogSha256: catalog?.payloadSha256, catalogIdentity: identity);
@@ -128,6 +237,15 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     final engine = _runtimeEngine;
     final snapshot = _runtimeSnapshot;
     final digest = snapshot?.effectiveProfileDigest;
+    final qa = _activeFirstProviderQa;
+    if (qa != null && digest != null && digest == qa.profileDigest && snapshot?.phase == RuntimePhase.running &&
+        _connectionCoordinator.ownsOperation(qa.generation)) {
+      await _refreshFirstProviderQa(qa, digest);
+      return;
+    }
+    if (qa != null && (digest != qa.profileDigest || !_connectionCoordinator.ownsOperation(qa.generation))) {
+      _activeFirstProviderQa = null;
+    }
     if (_disposed || _runtimeBusy || _smartAccessRefreshInFlight ||
         engine is! RuntimeSmartAccessControl || snapshot?.phase != RuntimePhase.running ||
         (snapshot?.smartAccessLeaseVersion != 1 && !const {1, 2, 3, 4}.contains(snapshot?.routingCatalogControlVersion)) || digest == null ||
@@ -315,6 +433,62 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     } on Object {
       // No acknowledgement on timeout, missing lease, invalid policy or host
       // rejection. A later foreground refresh may retry the idempotent revoke.
+    } finally {
+      _smartAccessRefreshInFlight = false;
+    }
+  }
+
+  Future<void> _refreshFirstProviderQa(
+    ({VerifiedFirstProviderQaPermit permit, int generation, int profileRevision,
+      String transportCandidateRef, String? profileDigest, String? requestId}) qa, String digest,
+  ) async {
+    final engine = _runtimeEngine;
+    final service = _bootstrapper;
+    final binding = _connectionCoordinator.activeSmartAccessLeases;
+    if (_disposed || _runtimeBusy || _smartAccessRefreshInFlight || engine is! RuntimeSmartAccessControl ||
+        service is! AppFirstRuntimeBootstrapper || binding == null || binding.profileDigest != digest ||
+        qa.profileDigest != digest || binding.leases.length != 1 ||
+        binding.leases.single.leaseId != qa.permit.grant.lease['lease_id']) return;
+    _smartAccessRefreshInFlight = true;
+    final elapsed = Stopwatch()..start();
+    bool current() => !_disposed && identical(_activeFirstProviderQa?.permit, qa.permit) &&
+        qa.requestId != null && engine is RuntimeConnectCancellation &&
+        (engine as RuntimeConnectCancellation).activeConnectRequestId == qa.requestId &&
+        _connectionCoordinator.ownsOperation(qa.generation) && _runtimeSnapshot?.phase == RuntimePhase.running &&
+        _runtimeSnapshot?.effectiveProfileDigest == digest && elapsed.elapsed < _actionTimeout;
+    Duration remaining() => _actionTimeout - elapsed.elapsed;
+    Future<void> closeMember() async {
+      _firstProviderQaProofClosed = true;
+      await _retainAndDeliverSmartAccessRevocations(engine as RuntimeSmartAccessControl, binding,
+        {qa.permit.grant.lease['lease_id']! as String: SmartAccessLeaseRevocation.terminate}, current, remaining);
+    }
+    try {
+      if (!current()) return;
+      if (qa.profileRevision != _managedProfileRevision ||
+          (_activeCandidateRef ?? _candidateRef) != qa.transportCandidateRef ||
+          _runtimeSnapshot?.coreModuleSha256 != qa.permit.payload['core_module_sha256'] ||
+          !DateTime.now().toUtc().isBefore(qa.permit.expiresAt)) {
+        await closeMember();
+        return;
+      }
+      final control = await service.fetchFirstProviderQaControl(permit: qa.permit, profileDigest: digest,
+        operationIsCurrent: current, remainingBudget: remaining(),
+        cancelled: _connectionCoordinator.whenOperationChanges(qa.generation));
+      if (!current()) return;
+      if (control.control.action == 'terminate') {
+        await closeMember();
+      } else if (engine is RuntimeBoundSmartAccessControl) {
+        final config = service.firstProviderQaRuntimeConfig(qa.permit, digest, control.runtimeCapability!);
+        if (!current()) return;
+        final configured = await (engine as RuntimeBoundSmartAccessControl).configureBoundSmartAccessRuntimeControl(
+          requestId: qa.requestId!, profileDigest: digest, configJson: config).timeout(remaining());
+        if (current() && configured) _firstProviderQaControlConfirmed = true;
+      }
+    } on RoutingCatalogFailure catch (error) {
+      if (current() && error.code == 'smart_access_qa_superseded') await closeMember();
+      // Unknown delivery cannot extend a grant. Its native deadline remains active.
+    } on BootstrapFailure catch (error) {
+      if (current() && (error.statusCode == 401 || error.statusCode == 403)) await closeMember();
     } finally {
       _smartAccessRefreshInFlight = false;
     }

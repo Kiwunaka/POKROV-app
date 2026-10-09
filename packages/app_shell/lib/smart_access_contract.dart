@@ -211,6 +211,27 @@ Future<String> _smartAccessRuntimeScopeSha256(Map<String, Object?> grant, Map<St
 
 /// Public policy and device grants have separate pins and signing contexts.
 /// Verification supplies no native route, health proof or retry policy.
+class VerifiedFirstProviderQaPermit {
+  const VerifiedFirstProviderQaPermit._(this.payload, this.grant);
+  final Map<String, Object?> payload;
+  final VerifiedSmartAccessLease grant;
+  String get permitId => payload['permit_id']! as String;
+  Map<String, Object?> get projection => payload['qa_projection']! as Map<String, Object?>;
+  DateTime get expiresAt => _time(payload['expires_at']);
+}
+
+// Created only after the purpose-specific QA signature and subject are checked.
+class _FirstProviderQaScope {
+  const _FirstProviderQaScope(this.payload, this.audience);
+  final Map<String, Object?> payload;
+  final String audience;
+  Map<String, Object?> get projection => payload['qa_projection']! as Map<String, Object?>;
+  Map<String, Object?> get providerRows => {
+    'audience': audience, 'providers': [projection['provider']],
+    'permissions': [projection['permission']], 'capabilities': [projection['capability']],
+  };
+}
+
 class SmartAccessVerifier {
   SmartAccessVerifier({required Map<String, String> providerKeysById,
     required Map<String, String> leaseKeysById, required this.audience})
@@ -413,14 +434,149 @@ class SmartAccessVerifier {
       on Object { throw const RoutingCatalogFailure('smart_access_verification_failed'); }
   }
 
+  Future<({VerifiedSmartAccessControl control, String? runtimeCapability})> verifyFirstProviderQaControl(
+    Map<String, dynamic> response, {
+    required Map<String, Object?> request, required VerifiedFirstProviderQaPermit permit,
+    required String accountId, required String installId, required DateTime now,
+  }) async {
+    _keys(request, const {'schema_version', 'permit_id', 'request_nonce', 'profile_digest'});
+    _keys(response, response.containsKey('runtime_capability')
+        ? const {'schema', 'envelope', 'runtime_capability'} : const {'schema', 'envelope'});
+    if (request['schema_version'] != 'pokrov-smart-access-first-provider-qa-control-v1' ||
+        request['permit_id'] != permit.permitId ||
+        response['schema'] != 'smart-access-first-provider-qa-control-response-v1') {
+      throw const RoutingCatalogFailure('smart_access_qa_control_invalid');
+    }
+    // The signature and subject format are unchanged; only the HTTP authority is QA-specific.
+    final control = await verifyControl(response['envelope'], request: {
+      'schema_version': 'pokrov-smart-access-control-request-v1',
+      'request_nonce': request['request_nonce'], 'profile_digest': request['profile_digest'], 'platform': 'windows',
+    }, accountId: accountId, installId: installId, now: now);
+    final capability = response['runtime_capability'];
+    if (!const {'current', 'access_denied'}.contains(control.reason) ||
+        (control.action == 'none' && (capability is! String || capability.length > 4096 ||
+          !RegExp(r'^saqa1\.[A-Za-z0-9_-]+\.[a-f0-9]{64}$').hasMatch(capability))) ||
+        (control.action == 'terminate' && capability != null)) {
+      throw const RoutingCatalogFailure('smart_access_qa_control_invalid');
+    }
+    return (control: control, runtimeCapability: capability as String?);
+  }
+
+  String firstProviderQaRuntimeConfig({required VerifiedFirstProviderQaPermit permit,
+    required String profileDigest, required String capability, required String apiBaseUrl, required DateTime now}) {
+    final uri = Uri.tryParse(apiBaseUrl);
+    if (!controlConfigured || !now.toUtc().isBefore(permit.expiresAt) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(profileDigest) || capability.length > 4096 ||
+        !RegExp(r'^saqa1\.[A-Za-z0-9_-]+\.[a-f0-9]{64}$').hasMatch(capability) ||
+        uri == null || uri.scheme != 'https' || uri.host.isEmpty || uri.userInfo.isNotEmpty ||
+        uri.hasQuery || uri.hasFragment || (uri.path.isNotEmpty && uri.path != '/') || uri.port != 443) {
+      throw const RoutingCatalogFailure('smart_access_qa_runtime_invalid');
+    }
+    return jsonEncode({'schema_version': 'pokrov-smart-access-runtime-worker-v1',
+      'catalog_sha256': permit.payload['catalog_sha256'], 'profile_digest': profileDigest,
+      'platform': 'windows', 'audience': audience, 'api_base_url': apiBaseUrl, 'dns_resolver': 'dns-direct',
+      'capability': capability, 'issued_at': permit.payload['issued_at'],
+      'expires_at': permit.payload['expires_at'], 'lease_keys_by_id': _leaseKeys});
+  }
+
+  Future<VerifiedFirstProviderQaPermit> verifyFirstProviderQa(Object? input, {
+    required Map<String, Object?> request, required String accountId, required String installId,
+    required VerifiedRoutingCatalog catalog, required DateTime now,
+  }) async {
+    try {
+      _keys(request, const {'schema_version', 'admission_id', 'request_nonce', 'profile_sha256',
+        'route_mode', 'client_release', 'core_version', 'core_module_sha256'});
+      if (request['schema_version'] != 'pokrov-smart-access-first-provider-qa-claim-v1' ||
+          request['route_mode'] != 'selective' || accountId.isEmpty || installId.isEmpty ||
+          !RegExp(r'^[a-f0-9]{32}$').hasMatch(request['admission_id']?.toString() ?? '') ||
+          !RegExp(r'^[a-f0-9]{32}$').hasMatch(request['request_nonce']?.toString() ?? '') ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(request['profile_sha256']?.toString() ?? '') ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(request['core_module_sha256']?.toString() ?? '')) {
+        throw const RoutingCatalogFailure('smart_access_qa_request_invalid');
+      }
+      final envelope = await _verifyEnvelope(input, pins: _leaseKeys,
+        context: 'pokrov-smart-access-first-provider-qa-v1\n', maximumBytes: smartAccessLeaseMaximumBytes);
+      final payload = envelope['payload']! as Map<String, Object?>;
+      _keys(payload, const {'schema_version', 'permit_id', 'request_nonce', 'device_binding', 'candidate_ref',
+        'profile_sha256', 'catalog_sha256', 'provider_policy_sha256', 'client_release', 'core_version',
+        'core_module_sha256', 'route_mode', 'issued_at', 'expires_at', 'max_attempts', 'renewable',
+        'qa_projection', 'grant_envelope'});
+      final binding = (await Sha256().hash(utf8.encode(
+        'pokrov-smart-access-device-v1\u0000${request['request_nonce']}\u0000$accountId\u0000$installId'))).bytes
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+      if (payload['schema_version'] != 'pokrov-smart-access-first-provider-qa-v1' ||
+          payload['permit_id'] != request['admission_id'] || payload['device_binding'] != binding ||
+          const ['request_nonce', 'profile_sha256', 'route_mode', 'client_release', 'core_version',
+            'core_module_sha256'].any((field) => payload[field] != request[field]) ||
+          payload['catalog_sha256'] != catalog.payloadSha256 || payload['max_attempts'] != 1 ||
+          payload['renewable'] != false || catalog.payload['audience'] != audience ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(payload['provider_policy_sha256']?.toString() ?? '')) {
+        throw const RoutingCatalogFailure('smart_access_qa_binding_mismatch');
+      }
+      final issued = _time(payload['issued_at']);
+      final expires = _time(payload['expires_at']);
+      if (!expires.isAfter(issued) || expires.difference(issued) > const Duration(minutes: 10) ||
+          now.toUtc().isBefore(issued) || !now.toUtc().isBefore(expires) ||
+          issued.isBefore(catalog.issuedAt) || expires.isAfter(catalog.expiresAt)) {
+        throw const RoutingCatalogFailure('smart_access_qa_not_current');
+      }
+      final scope = _FirstProviderQaScope(payload, audience);
+      final projection = scope.projection;
+      _keys(projection, const {'service', 'provider', 'permission', 'capability', 'action', 'route_mode'});
+      _validateProviderRows(scope.providerRows);
+      final service = projection['service']! as Map<String, Object?>;
+      final provider = projection['provider']! as Map<String, Object?>;
+      final permission = projection['permission']! as Map<String, Object?>;
+      final capability = projection['capability']! as Map<String, Object?>;
+      final original = (catalog.payload['services']! as List).whereType<Map<String, Object?>>()
+        .where((row) => row['service_id'] == service['service_id']).toList();
+      final domains = capability['domains'];
+      if (projection['action'] != 'approved_gateway' || projection['route_mode'] != 'selective' ||
+          service['service_id'] != 'gemini' || service['enabled'] != false ||
+          original.length != 1 || _canonical(original.single) != _canonical(service) ||
+          provider['kind'] != 'owned' || provider['enabled'] != true ||
+          permission['status'] != 'approved' || permission['embedded_use_allowed'] != true ||
+          capability['capability_id'] != payload['candidate_ref'] || capability['enabled'] != false ||
+          capability['verification'] != 'source_only' || capability['platform'] != 'windows' ||
+          capability['family'] != 'ipv4' || capability['feature'] != 'web_request' ||
+          (capability['checks']! as Map).values.any((value) => value != 'NOT_VERIFIED') ||
+          domains is! List || domains.length != 1 ||
+          _canonical(domains.single) != _canonical({'name': 'gemini.google.com', 'match': 'exact'})) {
+        throw const RoutingCatalogFailure('smart_access_qa_projection_invalid');
+      }
+      final grant = await _verifyLease(payload['grant_envelope'],
+        request: {'request_nonce': request['request_nonce'], 'profile_sha256': request['profile_sha256'],
+          'route_mode': request['route_mode'], 'catalog_sha256': catalog.payloadSha256,
+          'provider_policy_sha256': payload['provider_policy_sha256'],
+          for (final field in const ['capability_id', 'platform', 'origin', 'family', 'feature']) field: capability[field]},
+        accountId: accountId, installId: installId, catalog: catalog, qaScope: scope, now: now);
+      if (grant.issuedAt != issued || grant.newFlowsUntil != expires || grant.activeFlowsUntil != expires) {
+        throw const RoutingCatalogFailure('smart_access_qa_binding_mismatch');
+      }
+      return VerifiedFirstProviderQaPermit._(payload, grant);
+    } on RoutingCatalogFailure { rethrow; }
+      on Object { throw const RoutingCatalogFailure('smart_access_qa_verification_failed'); }
+  }
+
   Future<VerifiedSmartAccessLease> verifyLease(Object? input, {
     required Map<String, Object?> request, required String accountId, required String installId,
     required VerifiedRoutingCatalog catalog, required VerifiedSmartAccessProviderPolicy providerPolicy,
     required DateTime now,
+  }) => _verifyLease(input, request: request, accountId: accountId, installId: installId,
+      catalog: catalog, providerPolicy: providerPolicy, now: now);
+
+  Future<VerifiedSmartAccessLease> _verifyLease(Object? input, {
+    required Map<String, Object?> request, required String accountId, required String installId,
+    required VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy? providerPolicy,
+    _FirstProviderQaScope? qaScope, required DateTime now,
   }) async {
     try {
       final expected = _freeze(request, 0)! as Map<String, Object?>;
-      if (!configured) throw const RoutingCatalogFailure('smart_access_trust_unconfigured');
+      if (qaScope == null ? !configured : !controlConfigured) {
+        throw const RoutingCatalogFailure('smart_access_trust_unconfigured');
+      }
+      final providerPayload = providerPolicy?.payload ?? qaScope!.providerRows;
+      final providerSha256 = providerPolicy?.payloadSha256 ?? qaScope!.payload['provider_policy_sha256'];
       final envelope = await _verifyEnvelope(input, pins: _leaseKeys,
         context: 'pokrov-smart-access-grant-v1\n', maximumBytes: smartAccessLeaseMaximumBytes);
       final grant = envelope['payload']! as Map<String, Object?>;
@@ -448,13 +604,13 @@ class SmartAccessVerifier {
         'relay_connect_policy'});
       _validateRelayConnectPolicy(lease['relay_connect_policy']);
       if (lease['schema_version'] != 'pokrov-smart-access-lease-v1' || lease['audience'] != audience ||
-          catalog.payload['audience'] != audience || providerPolicy.payload['audience'] != audience ||
+          catalog.payload['audience'] != audience || providerPayload['audience'] != audience ||
           lease['catalog_sha256'] != catalog.payloadSha256 || expected['catalog_sha256'] != catalog.payloadSha256 ||
-          lease['provider_policy_sha256'] != providerPolicy.payloadSha256 ||
-          expected['provider_policy_sha256'] != providerPolicy.payloadSha256 ||
+          lease['provider_policy_sha256'] != providerSha256 ||
+          expected['provider_policy_sha256'] != providerSha256 ||
           lease['catalog_revision'] != catalog.revision || lease['catalog_security_revision'] != catalog.securityRevision ||
-          lease['provider_policy_revision'] != providerPolicy.revision ||
-          lease['provider_security_revision'] != providerPolicy.securityRevision ||
+          (providerPolicy != null && (lease['provider_policy_revision'] != providerPolicy.revision ||
+              lease['provider_security_revision'] != providerPolicy.securityRevision)) ||
           lease['transport'] != 'tls_tcp_443_visible_sni' ||
           const ['capability_id', 'platform', 'origin', 'family', 'feature'].any((key) => lease[key] != expected[key])) {
         throw const RoutingCatalogFailure('smart_access_lease_scope_mismatch');
@@ -466,14 +622,14 @@ class SmartAccessVerifier {
           newUntil.difference(issued) > const Duration(minutes: 10) ||
           activeUntil.difference(issued) > const Duration(hours: 1) ||
           now.toUtc().isBefore(issued) || !now.toUtc().isBefore(newUntil) ||
-          issued.isBefore(catalog.issuedAt) || issued.isBefore(providerPolicy.issuedAt) ||
-          newUntil.isAfter(catalog.expiresAt) || newUntil.isAfter(providerPolicy.expiresAt)) {
+          issued.isBefore(catalog.issuedAt) || (providerPolicy != null && issued.isBefore(providerPolicy.issuedAt)) ||
+          newUntil.isAfter(catalog.expiresAt) || (providerPolicy != null && newUntil.isAfter(providerPolicy.expiresAt))) {
         throw const RoutingCatalogFailure('smart_access_lease_not_current');
       }
       // Endpoints/domains come from the authenticated exact provider capability,
       // not from an independently supplied route or URL.
       Map<String, Object?> row(String field, String key, Object? id) {
-        final matches = (providerPolicy.payload[field]! as List).cast<Map<String, Object?>>()
+        final matches = (providerPayload[field]! as List).cast<Map<String, Object?>>()
           .where((value) => value[key] == id).toList();
         if (matches.length != 1) throw const RoutingCatalogFailure('smart_access_reference_invalid');
         return matches.single;
@@ -483,7 +639,7 @@ class SmartAccessVerifier {
       final permission = row('permissions', 'permission_id', lease['permission_id']);
       final relays = lease['relay_addresses'];
       final providerRelays = provider['relay_addresses'];
-      if (provider['enabled'] != true || capability['enabled'] != true || capability['verification'] != 'verified' ||
+      if (provider['enabled'] != true || (qaScope == null && (capability['enabled'] != true || capability['verification'] != 'verified')) ||
           permission['status'] != 'approved' || permission['embedded_use_allowed'] != true ||
           provider['permission_id'] != lease['permission_id'] || permission['provider_id'] != lease['provider_id'] ||
           provider['revision'] != lease['provider_revision'] || permission['revision'] != lease['permission_revision'] ||
@@ -518,11 +674,11 @@ class SmartAccessVerifier {
       final intents = service['route_intents'];
       final platforms = service['platforms'];
       final serviceDomains = service['domains'];
-      if (service['enabled'] != true || service['evidence_status'] != 'verified' ||
-          service['external_gateway_policy'] != 'approved' || platforms is! List ||
-          !platforms.contains(lease['platform']) || capabilityRefs is! List ||
+      if ((qaScope == null && (service['enabled'] != true || service['evidence_status'] != 'verified' ||
+          service['external_gateway_policy'] != 'approved' || capabilityRefs is! List ||
           !capabilityRefs.contains(lease['capability_id']) || intents is! List ||
-          !intents.any((item) => item is Map && item['mode'] == grant['route_mode'] && item['action'] == 'approved_gateway') ||
+          !intents.any((item) => item is Map && item['mode'] == grant['route_mode'] && item['action'] == 'approved_gateway'))) || platforms is! List ||
+          !platforms.contains(lease['platform']) ||
           serviceDomains is! List || domains.any((domain) => domain is! Map ||
             domain.length != 2 || domain['name'] is! String || !const {'exact', 'suffix'}.contains(domain['match']) ||
             !serviceDomains.any((candidate) => candidate is Map && candidate['shared'] == false &&

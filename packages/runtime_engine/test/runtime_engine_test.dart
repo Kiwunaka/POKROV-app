@@ -304,8 +304,22 @@ void main() {
 
     String? stagedConfigPath;
     Map<Object?, Object?>? stagedArguments;
+    final profileDigest = 'a'.padLeft(64, 'a');
+    final leaseId = 'b'.padLeft(32, 'b');
+    final selection = <String, Object?>{
+      'service_id': 'gemini', 'lease_id': leaseId, 'selection_index': 0,
+      'state': 'gateway', 'available': true,
+    };
     messenger.setMockMethodCallHandler(channel, (call) async {
       switch (call.method) {
+        case 'runtimeEngine.readSmartAccessLeases':
+          expect((call.arguments as Map)['profileDigest'], profileDigest);
+          return <String, Object?>{
+            'schema': 1, 'profileDigest': profileDigest,
+            'leaseIdsJson': jsonEncode({
+              'schema': 1, 'lease_ids': [leaseId], 'selections': [selection],
+            }),
+          };
         case 'runtimeEngine.snapshot':
           return <String, Object?>{
             'phase': 'artifactReady',
@@ -388,6 +402,57 @@ void main() {
         (config['outbounds'] as List<dynamic>).first as Map<String, dynamic>;
     expect(node['detour'], isNull);
     expect((config['route'] as Map<String, dynamic>)['final'], 'pokrov-warp');
+
+    final control = engine as RuntimeSmartAccessBackgroundControl;
+    expect((await control.readSmartAccessLeases(profileDigest))
+        .selections['gemini']!.readiness, isNull);
+    selection['readiness'] = null;
+    expect((await control.readSmartAccessLeases(profileDigest))
+        .selections['gemini']!.readiness, isNull);
+    final stages = <Map<String, Object?>>[
+      for (final stage in ['resolver', 'dns', 'tls'])
+        {'stage': stage, 'result': 'pass', 'observed_at_ms': 1010,
+         'duration_ms': 0},
+    ];
+    final readiness = <String, Object?>{
+      'probe_id': 7, 'lease_id': leaseId, 'started_at_ms': 1000,
+      'completed_at_ms': 1020, 'status': 'pass', 'stages': stages,
+      'fallback_guard_closed': false,
+    };
+    selection['readiness'] = readiness;
+    readiness['completed_at_ms'] = null;
+    readiness['status'] = 'pending';
+    readiness['stages'] = [stages.first];
+    expect((await control.readSmartAccessLeases(profileDigest))
+        .selections['gemini']!.readiness!.hasCompletedStagePasses, isFalse);
+    readiness['completed_at_ms'] = 1020;
+    readiness['status'] = 'pass';
+    readiness['stages'] = stages;
+    var observed = (await control.readSmartAccessLeases(profileDigest))
+        .selections['gemini']!.readiness!;
+    expect(observed.hasCompletedStagePasses, isTrue);
+    expect(observed.probeId, 7);
+    expect(observed.leaseId, leaseId);
+    expect(observed.stages.map((stage) => stage.stage), ['resolver', 'dns', 'tls']);
+    expect(observed.stages.last.durationMs, 0);
+
+    stages.removeLast();
+    await expectLater(control.readSmartAccessLeases(profileDigest), throwsStateError);
+    stages.last['result'] = 'failure';
+    stages.last['reason'] = 'dns_lookup';
+    readiness['status'] = 'failure';
+    readiness['fallback_guard_closed'] = true;
+    observed = (await control.readSmartAccessLeases(profileDigest))
+        .selections['gemini']!.readiness!;
+    expect(observed.hasCompletedStagePasses, isFalse);
+    expect(observed.stages.last.reason, 'dns_lookup');
+    expect(observed.fallbackGuardClosed, isTrue);
+
+    stages.last['reason'] = 'unknown_sensitive_reason';
+    await expectLater(control.readSmartAccessLeases(profileDigest), throwsStateError);
+    stages.last['reason'] = 'dns_lookup';
+    readiness['unknown_field'] = 'sensitive';
+    await expectLater(control.readSmartAccessLeases(profileDigest), throwsStateError);
   });
 
   test('mobile lane forwards materialized runtime configs without re-parsing',

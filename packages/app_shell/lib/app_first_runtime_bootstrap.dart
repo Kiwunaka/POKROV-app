@@ -18,6 +18,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import 'routing_catalog_contract.dart';
+import 'smart_access_profile.dart';
 import 'offline_invitation_contract.dart';
 export 'offline_invitation_contract.dart';
 import 'app_shell.dart' show ConnectionOperationSuperseded;
@@ -1426,6 +1427,7 @@ class ClientSubscriptionInfo {
     this.telegramUsername = '',
     this.emailAddress = '',
     this.emailVerified = false,
+    this.firstProviderQaAdmissionId,
   });
 
   final String lane;
@@ -1444,12 +1446,16 @@ class ClientSubscriptionInfo {
   final String telegramUsername;
   final String emailAddress;
   final bool emailVerified;
+  /// Availability only. It cannot authorize a route or a native operation.
+  final String? firstProviderQaAdmissionId;
 
   factory ClientSubscriptionInfo.fromJson(Map<String, dynamic> json) {
     final usage = _clientObjectMap(json['usage']);
     final identities = _clientObjectMap(json['identities']);
     final telegram = _clientObjectMap(identities['telegram']);
     final email = _clientObjectMap(identities['email']);
+    final qa = _clientObjectMap(json['first_provider_qa']);
+    final qaId = _clientText(qa['admission_id']);
     return ClientSubscriptionInfo(
       lane: _clientText(json['lane']),
       accessState: _clientText(json['accessState'] ?? json['access_state']),
@@ -1477,6 +1483,9 @@ class ClientSubscriptionInfo {
       telegramUsername: _clientText(telegram['username']),
       emailAddress: _clientText(email['address']),
       emailVerified: _clientBool(email['verified']),
+      firstProviderQaAdmissionId: qa.length == 2 && qa['state'] == 'pending' &&
+              RegExp(r'^[a-f0-9]{32}$').hasMatch(qaId)
+          ? qaId : null,
     );
   }
 }
@@ -3039,6 +3048,7 @@ class AppFirstRuntimeBootstrapper
   final RoutingCatalogStore _routingCatalogStore;
   final TransportManifestStore? _transportManifestStore;
   final SmartAccessPolicyStore _smartAccessPolicyStore;
+  ({VerifiedFirstProviderQaPermit permit, _StoredBootstrapState state})? _firstProviderQaClaim;
   final Map<HostPlatform, _RoutingCatalogFlight> _routingCatalogFlights = {};
   final String _runtimeReportRunId = OperationalIdFactory().uuidV4();
   int _runtimeReportSequence = 0;
@@ -4739,6 +4749,98 @@ class AppFirstRuntimeBootstrapper
   bool get smartAccessEnabled => _smartAccessPolicyStore.available && _routingCatalogStore.available;
   @override
   bool get smartAccessControlAvailable => _smartAccessPolicyStore.verifier.controlConfigured;
+
+  bool get firstProviderQaConfigured => smartAccessControlAvailable && _routingCatalogStore.available;
+
+  Future<VerifiedFirstProviderQaPermit> claimFirstProviderQa({
+    required String admissionId, required String baseProfile, required VerifiedRoutingCatalog catalog,
+    required String coreVersion, required String coreModuleSha256,
+    required bool Function() operationIsCurrent, required Duration remainingBudget, required Future<void> cancelled,
+  }) async {
+    if (!firstProviderQaConfigured) throw const RoutingCatalogFailure('smart_access_qa_unconfigured');
+    final state = await _loadState(HostPlatform.windows);
+    if (state == null || !state.hasSession) throw const BootstrapFailure('Для проверки нужен вход.', statusCode: HttpStatus.unauthorized);
+    final policyGeneration = _smartAccessPolicyStore.generation;
+    final catalogGeneration = _routingCatalogStore.invalidationGeneration;
+    final elapsed = Stopwatch()..start();
+    Future<void> requireCurrent() async {
+      final current = await _loadState(HostPlatform.windows);
+      if (!operationIsCurrent() || elapsed.elapsed >= remainingBudget || current == null ||
+          current.accountId != state.accountId || current.installId != state.installId ||
+          current.sessionToken != state.sessionToken || policyGeneration != _smartAccessPolicyStore.generation ||
+          catalogGeneration != _routingCatalogStore.invalidationGeneration) {
+        throw const RoutingCatalogFailure('smart_access_qa_superseded');
+      }
+    }
+    final random = Random.secure();
+    final request = <String, Object?>{
+      'schema_version': 'pokrov-smart-access-first-provider-qa-claim-v1', 'admission_id': admissionId,
+      'request_nonce': List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join(),
+      'profile_sha256': await smartAccessProfileSha256(baseProfile), 'route_mode': 'selective',
+      'client_release': '$pokrovClientVersion+$pokrovClientBuildNumber', 'core_version': coreVersion,
+      'core_module_sha256': coreModuleSha256,
+    };
+    await requireCurrent();
+    final client = _createHttpClient(HostPlatform.windows);
+    final timer = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
+    var finished = false;
+    unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
+    try {
+      final response = await _requestJson(method: 'POST', path: '/api/client/smart-access/first-provider-qa/claim',
+        hostPlatform: HostPlatform.windows, client: client, bearerToken: state.sessionToken, body: request,
+        maximumResponseBytes: smartAccessLeaseMaximumBytes + 1024, allowRetries: false);
+      await requireCurrent();
+      if (response.length != 2 || response['schema'] != 'smart-access-first-provider-qa-response-v1') {
+        throw const RoutingCatalogFailure('smart_access_qa_response_invalid');
+      }
+      final permit = await _smartAccessPolicyStore.verifier.verifyFirstProviderQa(response['envelope'],
+        request: request, accountId: state.accountId, installId: state.installId, catalog: catalog, now: DateTime.now().toUtc());
+      await requireCurrent();
+      _firstProviderQaClaim = (permit: permit, state: state);
+      return permit;
+    } finally { finished = true; timer.cancel(); client.close(force: true); }
+  }
+
+  Future<({VerifiedSmartAccessControl control, String? runtimeCapability})> fetchFirstProviderQaControl({
+    required VerifiedFirstProviderQaPermit permit, required String profileDigest,
+    required bool Function() operationIsCurrent, required Duration remainingBudget, required Future<void> cancelled,
+  }) async {
+    final captured = _firstProviderQaClaim;
+    if (captured == null || !identical(captured.permit, permit)) throw const RoutingCatalogFailure('smart_access_qa_superseded');
+    final state = captured.state;
+    final elapsed = Stopwatch()..start();
+    Future<void> requireCurrent() async {
+      final current = await _loadState(HostPlatform.windows);
+      if (!operationIsCurrent() || elapsed.elapsed >= remainingBudget || current == null ||
+          current.accountId != state.accountId || current.installId != state.installId || current.sessionToken != state.sessionToken) {
+        _firstProviderQaClaim = null;
+        throw const RoutingCatalogFailure('smart_access_qa_superseded');
+      }
+    }
+    await requireCurrent();
+    final random = Random.secure();
+    final request = <String, Object?>{'schema_version': 'pokrov-smart-access-first-provider-qa-control-v1',
+      'permit_id': permit.permitId, 'request_nonce': List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join(),
+      'profile_digest': profileDigest};
+    final client = _createHttpClient(HostPlatform.windows);
+    final timer = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
+    var finished = false;
+    unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
+    try {
+      final response = await _requestJson(method: 'POST', path: '/api/client/smart-access/first-provider-qa/control',
+        hostPlatform: HostPlatform.windows, client: client, bearerToken: state.sessionToken, body: request,
+        maximumResponseBytes: smartAccessControlMaximumBytes + 8192, allowRetries: false);
+      await requireCurrent();
+      final result = await _smartAccessPolicyStore.verifier.verifyFirstProviderQaControl(response,
+        request: request, permit: permit, accountId: state.accountId, installId: state.installId, now: DateTime.now().toUtc());
+      await requireCurrent();
+      return result;
+    } finally { finished = true; timer.cancel(); client.close(force: true); }
+  }
+
+  String firstProviderQaRuntimeConfig(VerifiedFirstProviderQaPermit permit, String profileDigest, String capability) =>
+      _smartAccessPolicyStore.verifier.firstProviderQaRuntimeConfig(permit: permit, profileDigest: profileDigest,
+        capability: capability, apiBaseUrl: _activeApiBaseUrl ?? _apiBaseUrls.single, now: DateTime.now().toUtc());
 
   @override
   Future<String> requestSmartAccessRuntimeRenewal({required HostPlatform hostPlatform, required String profileDigest,

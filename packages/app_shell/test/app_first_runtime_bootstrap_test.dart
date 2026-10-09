@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -9,6 +10,10 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
+import 'package:pokrov_app_shell/routing_catalog_contract.dart';
+import 'package:pokrov_app_shell/routing_catalog_policy.dart';
+import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
+import 'package:pokrov_app_shell/src/features/rules/smart_access_policy_store.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -45,6 +50,38 @@ Map<String, Object?> _readyManagedProfile(String revision,
       'route': <String, Object?>{'final': 'proxy'},
     },
   };
+}
+
+Object? _qaSorted(Object? value) {
+  if (value is Map) return {for (final key in value.keys.cast<String>().toList()..sort()) key: _qaSorted(value[key])};
+  if (value is List) return value.map(_qaSorted).toList();
+  return value;
+}
+
+Future<String> _qaDigest(String value) async => (await Sha256().hash(utf8.encode(value))).bytes
+    .map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+
+Future<Map<String, Object?>> _qaSigned(Map<String, Object?> payload, String purpose, SimpleKeyPair key) async {
+  final body = jsonEncode(_qaSorted(payload));
+  final signature = await Ed25519().sign(utf8.encode('$purpose\n$body'), keyPair: key);
+  return {'algorithm': 'Ed25519', 'key_id': 'qa-test', 'payload': payload,
+    'payload_sha256': await _qaDigest(body), 'signature_b64': base64UrlEncode(signature.bytes).replaceAll('=', '')};
+}
+
+// Keep normal HTTPS configuration validation while the synthetic API stays local.
+class _QaLocalHttpClient implements HttpClient {
+  _QaLocalHttpClient(this.port);
+  final int port;
+  final HttpClient _client = HttpClient();
+  @override
+  set connectionTimeout(Duration? value) => _client.connectionTimeout = value;
+  @override
+  Future<HttpClientRequest> openUrl(String method, Uri url) => _client.openUrl(method,
+      url.replace(scheme: 'http', host: '127.0.0.1', port: port));
+  @override
+  void close({bool force = false}) => _client.close(force: force);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 ClientAppUpdateInfo _clientUpdateInfo({
@@ -180,6 +217,251 @@ class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
 }
 
 void main() {
+  test('explicit first-provider QA uses the signed disabled projection through ordinary managed stage', () async {
+    final httpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = httpOverrides);
+    final directory = await Directory.systemTemp.createTemp('pokrov-first-provider-qa-');
+    addTearDown(() => directory.delete(recursive: true));
+    final now = DateTime.now().toUtc();
+    String wire(DateTime time) => '${time.toIso8601String().substring(0, 19)}Z';
+    final start = wire(now.subtract(const Duration(seconds: 1)));
+    final end = wire(now.add(const Duration(hours: 1)));
+    final qaEnd = wire(now.add(const Duration(minutes: 5)));
+    final key = await Ed25519().newKeyPairFromSeed(List.generate(32, (i) => i + 1));
+    final public = base64Encode((await key.extractPublicKey()).bytes);
+    final coreHash = await _qaDigest('actual fixture core');
+    const admission = '1234567890abcdef1234567890abcdef';
+    const leaseId = 'abcdef0123456789abcdef0123456789';
+    final service = <String, Object?>{'service_id': 'gemini', 'display_name': 'Gemini', 'categories': ['ai'],
+      'enabled': false, 'classification': 'geo_restricted', 'reason': 'test domain metadata', 'evidence_status': 'source_only',
+      'source_ids': ['qa-source'], 'evidence_ids': ['domain-review'], 'platforms': ['windows'],
+      'access_states': ['paid_unlimited'], 'route_intents': <Object>[], 'android': <Object>[], 'windows': <Object>[],
+      'domains': [{'name': 'gemini.google.com', 'match': 'exact', 'shared': false, 'role': 'web', 'source_ids': ['qa-source']}],
+      'networks': <Object>[], 'provider_capability_refs': <Object>[], 'external_gateway_policy': 'forbidden'};
+    final catalogEnvelope = await _qaSigned({'schema_version': 'pokrov-routing-catalog-v1', 'revision': 1,
+      'security_revision': 1, 'audience': 'lab', 'issued_at': start, 'expires_at': end,
+      'sources': [{'source_id': 'qa-source', 'url': 'https://source.example.test/', 'revision': '1',
+        'sha256': await _qaDigest('source'), 'license': 'test', 'retrieved_at': start, 'expires_at': end}],
+      'evidence': [{'evidence_id': 'domain-review', 'service_id': 'gemini', 'source_ids': ['qa-source'],
+        'sha256': await _qaDigest('domain metadata'), 'origin': 'synthetic', 'observed_at': start, 'expires_at': end}],
+      'services': [service]}, 'pokrov-routing-catalog-v1', key);
+    final catalogVerifier = RoutingCatalogVerifier(publicKeysById: {'qa-test': public}, audience: 'lab');
+    final catalog = await catalogVerifier.verify(catalogEnvelope, now: now, minimumRevision: 0,
+      minimumSecurityRevision: 1, currentPayloadSha256: null);
+    final policy = RoutingCatalogPolicy.fromVerified(catalog);
+    expect(() => compileCatalogDomainPolicy(policy: policy, mode: CatalogRoutingMode.selective,
+      platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true,
+      now: now, selectedServiceIds: const {'gemini'}), throwsA(isA<RoutingCatalogFailure>()),
+      reason: 'the public compiler must keep the original disabled service unavailable');
+    final permission = <String, Object?>{'permission_id': 'owned-permission', 'provider_id': 'owned-provider', 'revision': 1,
+      'status': 'approved', 'embedded_use_allowed': true, 'review_ref': 'permission-review',
+      'review_sha256': await _qaDigest('permission'), 'issued_at': start, 'expires_at': end,
+      'max_new_connections_per_minute': 1, 'max_concurrent_connections_per_lease': 1, 'relay_connect_policy': null};
+    final provider = <String, Object?>{'provider_id': 'owned-provider', 'revision': 1, 'kind': 'owned', 'enabled': true,
+      'permission_id': 'owned-permission', 'resolver_url': 'https://dns.example.test/dns-query',
+      'relay_addresses': ['1.1.1.1'], 'privacy_review_ref': 'privacy-review', 'privacy_review_sha256': await _qaDigest('privacy')};
+    final capability = <String, Object?>{'capability_id': 'gemini-qa', 'provider_id': 'owned-provider', 'provider_revision': 1,
+      'service_id': 'gemini', 'enabled': false, 'verification': 'source_only',
+      'checks': {for (final name in const ['resolver_transport', 'dns_answer', 'tls_certificate', 'feature_request']) name: 'NOT_VERIFIED'},
+      'platform': 'windows', 'origin': 'current-origin', 'family': 'ipv4', 'feature': 'web_request',
+      'transport': 'tls_tcp_443_visible_sni', 'domains': [{'name': 'gemini.google.com', 'match': 'exact'}],
+      'proof_ref': 'unverified-proof', 'proof_sha256': await _qaDigest('unverified proof'), 'observed_at': start, 'expires_at': end};
+    final providerHash = await _qaDigest(jsonEncode(_qaSorted({'schema_version': 'pokrov-smart-access-providers-v1',
+      'revision': 1, 'security_revision': 1, 'audience': 'lab', 'issued_at': start, 'expires_at': end,
+      'permissions': [permission], 'providers': [provider], 'capabilities': [capability]})));
+    String? installId;
+    Map<String, Object?>? permitEnvelope;
+    Map<String, dynamic>? claimRequest;
+    var terminateQa = false;
+    final requests = <String>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    unawaited(() async {
+      await for (final request in server) {
+        requests.add(request.uri.path);
+        final raw = await utf8.decoder.bind(request).join();
+        final body = raw.isEmpty ? <String, dynamic>{} : jsonDecode(raw) as Map<String, dynamic>;
+        request.response.headers.contentType = ContentType.json;
+        Object reply = {'ok': true};
+        switch (request.uri.path) {
+          case '/api/client/session/start-trial':
+            installId = body['install_id'] as String;
+            reply = {'session': {'session_token': 'synthetic-qa-session', 'account_id': 'synthetic-qa-account'},
+              'provisioning': {'status': 'ready', 'sync_ok': true}};
+          case '/api/client/subscription':
+            reply = {'access_state': 'paid_unlimited', 'lane': 'paid', 'first_provider_qa': {'admission_id': admission, 'state': 'pending'}};
+          case '/api/client/profile/managed':
+            reply = {..._readyManagedProfile('qa-real-material'),
+              'transport_profile': 'qa_vless', 'transport_kind': 'reality',
+              'access': {'access_state': 'paid_unlimited', 'expiry_at': end},
+              'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1', 'revision': 'qa-real-material',
+                'selected_candidate_ref': 'de:qa_vless', 'candidates': [{'candidate_ref': 'de:qa_vless', 'profile_ref': 'qa_vless',
+                  'node_code': 'de', 'country_code': 'DE', 'protocol': 'vless', 'transport': 'tcp', 'protection': 'reality',
+                  'priority': 0, 'parameters': {'network': 'tcp', 'flow': ''}, 'requirements': {'minimum_client_release': '1.2.0',
+                    'minimum_core_release': null, 'platforms': ['windows'], 'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']}}]},
+              'config_payload': {'outbounds': [{'type': 'selector', 'tag': 'proxy', 'outbounds': ['qa-vpn'], 'default': 'qa-vpn'},
+                {'type': 'vless', 'tag': 'qa-vpn', 'server': 'vpn.example.invalid', 'server_port': 443,
+                  'uuid': '11111111-1111-4111-8111-111111111111', 'tls': {'enabled': true, 'server_name': 'vpn.example.invalid',
+                    'utls': {'enabled': true, 'fingerprint': 'chrome'},
+                    'reality': {'enabled': true, 'public_key': base64UrlEncode(List.filled(32, 1)).replaceAll('=', ''), 'short_id': '0123456789abcdef'}}}],
+                'route': {'final': 'proxy'}}};
+          case '/api/client/routing-catalog':
+            reply = {'schema': 'routing-catalog-response-v1', 'envelope': catalogEnvelope};
+          case '/api/client/smart-access/first-provider-qa/claim':
+            claimRequest = body;
+            final binding = await _qaDigest('pokrov-smart-access-device-v1\u0000${body['request_nonce']}\u0000synthetic-qa-account\u0000$installId');
+            final issued = wire(DateTime.now().toUtc());
+            final lease = <String, Object?>{'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': leaseId,
+              'audience': 'lab', 'provider_id': 'owned-provider', 'provider_revision': 1, 'permission_id': 'owned-permission',
+              'permission_revision': 1, 'capability_id': 'gemini-qa', 'provider_policy_revision': 1, 'provider_security_revision': 1,
+              'provider_policy_sha256': providerHash, 'catalog_revision': 1, 'catalog_security_revision': 1,
+              'catalog_sha256': catalog.payloadSha256, 'service_id': 'gemini', 'platform': 'windows', 'origin': 'current-origin',
+              'family': 'ipv4', 'feature': 'web_request', 'transport': 'tls_tcp_443_visible_sni', 'issued_at': issued,
+              'new_flows_until': qaEnd, 'active_flows_until': qaEnd, 'resolver_url': provider['resolver_url'],
+              'relay_addresses': provider['relay_addresses'], 'domains': capability['domains'],
+              'max_new_connections_per_minute': 1, 'max_concurrent_connections': 1, 'relay_connect_policy': null};
+            final grant = await _qaSigned({'schema_version': 'pokrov-smart-access-grant-v1', 'request_nonce': body['request_nonce'],
+              'device_binding': binding, 'profile_sha256': body['profile_sha256'], 'route_mode': body['route_mode'], 'lease': lease},
+              'pokrov-smart-access-grant-v1', key);
+            permitEnvelope = await _qaSigned({'schema_version': 'pokrov-smart-access-first-provider-qa-v1', 'permit_id': admission,
+              'request_nonce': body['request_nonce'], 'device_binding': binding, 'candidate_ref': 'gemini-qa',
+              'profile_sha256': body['profile_sha256'], 'catalog_sha256': catalog.payloadSha256, 'provider_policy_sha256': providerHash,
+              'client_release': body['client_release'], 'core_version': body['core_version'], 'core_module_sha256': body['core_module_sha256'],
+              'route_mode': body['route_mode'], 'issued_at': issued, 'expires_at': qaEnd, 'max_attempts': 1, 'renewable': false,
+              'qa_projection': {'service': service, 'provider': provider, 'permission': permission, 'capability': capability,
+                'action': 'approved_gateway', 'route_mode': body['route_mode']}, 'grant_envelope': grant},
+              'pokrov-smart-access-first-provider-qa-v1', key);
+            reply = {'schema': 'smart-access-first-provider-qa-response-v1', 'envelope': permitEnvelope};
+          case '/api/client/smart-access/first-provider-qa/control':
+            final issued = DateTime.now().toUtc();
+            reply = {'schema': 'smart-access-first-provider-qa-control-response-v1',
+              if (!terminateQa) 'runtime_capability': 'saqa1.c3ludGhldGlj.${await _qaDigest('synthetic hmac')}',
+              'envelope': await _qaSigned({'schema_version': 'pokrov-smart-access-control-v1',
+                'request_nonce': body['request_nonce'],
+                'device_binding': await _qaDigest('pokrov-smart-access-device-v1\u0000${body['request_nonce']}\u0000synthetic-qa-account\u0000$installId'),
+                'profile_digest': body['profile_digest'], 'platform': 'windows', 'audience': 'lab',
+                'action': terminateQa ? 'terminate' : 'none', 'reason': terminateQa ? 'access_denied' : 'current',
+                'issued_at': wire(issued), 'expires_at': wire(issued.add(const Duration(seconds: 60)))},
+                'pokrov-smart-access-control-v1', key)};
+        }
+        request.response.write(jsonEncode(reply));
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'https://api.pokrov.test',
+      httpClientFactory: () => _QaLocalHttpClient(server.port),
+      supportDirectoryResolver: () async => directory, sessionSecretStore: MemoryAppFirstSessionSecretStore(), maxRequestAttempts: 1,
+      allExceptRuRuleSetUrlsResolver: (_) => const [],
+      routingCatalogStore: RoutingCatalogStore(enabled: true, verifier: catalogVerifier),
+      smartAccessPolicyStore: SmartAccessPolicyStore(enabled: false,
+        verifier: SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab')));
+    await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      runtimeFeatures: {RuntimeTransportFeature.reality, RuntimeTransportFeature.tls, RuntimeTransportFeature.utls, RuntimeTransportFeature.vless}, coreRelease: '1.2.10');
+    final account = AccountSessionCoordinator(accountActions: bootstrapper)
+      ..updateSubscriptionInfo(await bootstrapper.fetchClientSubscription(hostPlatform: HostPlatform.windows));
+    final phase = <String, Object?>{'phase': 'initialized', 'supportsLiveConnect': true, 'canConnect': true,
+      'canInitialize': false, 'coreVersion': '1.2.10', 'coreModuleSha256': coreHash,
+      'routingCatalogWindowVersion': 1, 'routingCatalogControlVersion': 4, 'smartAccessLeaseVersion': 1,
+      'smartAccessRuntimeControlVersion': 1, 'coreEgressValidationRequired': true,
+      'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']})};
+    final nativeCalls = <String>[];
+    Map? staged;
+    var probeId = 1;
+    var guardClosed = false;
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      nativeCalls.add(call.method);
+      final args = call.arguments as Map? ?? {};
+      switch (call.method) {
+        case 'runtimeEngine.candidateNetwork':
+          return {'selection_key': 'qa-network', 'context_ref': 'qa-context', 'network_available': true, 'ipv6_available': false};
+        case 'runtimeEngine.probeCandidate':
+          return {'success': true, 'failure_kind': '', 'duration_ms': 1, 'stage': 'http_64k'};
+        case 'runtimeEngine.readSmartAccessRestrictions':
+          return {'schema': 1, 'journalJson': jsonEncode({'schema': 1, 'snapshot_sha256': await _qaDigest('[]'), 'entries': <Object>[]})};
+        case 'runtimeEngine.acknowledgeSmartAccessRestrictions':
+          return {'schema': 1, 'snapshotSha256': args['snapshotSha256'], 'acknowledged': true};
+        case 'runtimeEngine.stageManagedProfile':
+          staged = jsonDecode(args['configPayload'] as String) as Map;
+          phase.addAll({'phase': 'configStaged', 'stagedProfileDigest': args['expectedProfileDigest'],
+            'stagedConfigPath': '/synthetic/managed.json', 'profileIdentityOrigin': 'windows_service_stage_request_sha256'});
+        case 'runtimeEngine.connect':
+          phase.addAll({'phase': 'running', 'effectiveProfileDigest': phase['stagedProfileDigest'],
+            'hostHealth': 'healthy', 'dnsState': 'healthy', 'uplinkState': 'healthy', 'dnsReady': true,
+            'coreEgressValidated': true, 'tunInterfacePresent': true, 'vpnRoutesPresent': true});
+        case 'runtimeEngine.readSmartAccessLeases':
+          final startedAt = DateTime.parse((permitEnvelope!['payload'] as Map)['issued_at'] as String).millisecondsSinceEpoch + 1;
+          return {'schema': 1, 'profileDigest': args['profileDigest'], 'leaseIdsJson': jsonEncode({'schema': 1,
+            'lease_ids': [leaseId], 'selections': [{'service_id': 'gemini', 'lease_id': leaseId, 'selection_index': 0,
+              'state': 'gateway', 'available': true, 'readiness': {'probe_id': probeId, 'lease_id': leaseId,
+                'started_at_ms': startedAt, 'completed_at_ms': startedAt + 3,
+                'status': guardClosed ? 'failure' : 'pass', 'fallback_guard_closed': guardClosed,
+                'stages': [for (var i = 0; i < 3; i++) {'stage': ['resolver', 'dns', 'tls'][i], 'result': 'pass',
+                  'observed_at_ms': startedAt + i + 1, 'duration_ms': 1}]}}]})};
+        case 'runtimeEngine.configureBoundSmartAccessRuntimeControl':
+          final config = jsonDecode(args['configJson'] as String) as Map;
+          expect(config['capability'], startsWith('saqa1.'));
+          expect(config['profile_digest'], phase['stagedProfileDigest']);
+          return {'schema': 1, 'requestId': args['requestId'], 'profileDigest': args['profileDigest'], 'configured': true};
+        case 'runtimeEngine.revokeSmartAccessLease':
+          expect(args['leaseId'], leaseId);
+          return {'schema': 1, 'profileDigest': args['profileDigest'], 'leaseId': args['leaseId'], 'revoked': true};
+        case 'runtimeEngine.disconnect':
+          phase.addAll({'phase': 'initialized', 'coreEgressValidated': false, 'dnsReady': false,
+            'effectiveProfileDigest': '', 'tunInterfacePresent': false, 'vpnRoutesPresent': false});
+      }
+      return {...phase};
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final firstLaunch = _RestoredFirstLaunch()..completion.complete(true);
+    final first = FirstSessionCoordinator(store: firstLaunch)..complete(animated: false);
+    final manager = ConnectionManager(appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      runtimeEngine: createRuntimeEngine(hostPlatform: HostPlatform.windows), bootstrapper: bootstrapper,
+      accountSessionCoordinator: account, firstSessionCoordinator: first, clientExperienceStore: _HomeExperience(),
+      connectHintStore: const PokrovFileConnectHintStore(), windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
+      authorizeAndroidConnect: () async => true, refreshSubscription: () async => true, onNotice: (_, __) {});
+    addTearDown(manager.dispose);
+    expect(requests.where((path) => path.endsWith('/claim')), isEmpty, reason: 'availability cannot issue a permit');
+    await manager.startFirstProviderQa(admission);
+    expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.probeCandidate'), hasLength(1));
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.stageManagedProfile'), hasLength(1));
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.connect'), hasLength(1));
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.configureBoundSmartAccessRuntimeControl'), hasLength(1));
+    expect(claimRequest!.containsKey('candidate_ref'), isFalse);
+    expect(claimRequest!['core_module_sha256'], coreHash);
+    final route = staged!['route'] as Map;
+    final domainRules = (route['rules'] as List).cast<Map>().where((row) => (row['domain'] as List?)?.contains('gemini.google.com') == true).toList();
+    expect(domainRules[0]['pokrov_catalog_window']['lease_id'], leaseId);
+    expect(domainRules[1]['outbound'], 'proxy', reason: 'closed QA member retains protected VPN fallback');
+    expect(route['final'], 'direct', reason: 'other traffic retains Direct');
+    final context = await manager.readFirstProviderQaContext();
+    expect(context!['native_stages'], 'PASS');
+    expect(context['proof_current'], isTrue);
+    expect(context['fallback_guard_closed'], isFalse);
+    expect(context['feature_request'], 'NOT_VERIFIED');
+    probeId = 2;
+    expect((await manager.readFirstProviderQaContext())!['probe_id'], 1, reason: 'same live scope keeps the atomic first completion');
+    guardClosed = true;
+    final closedContext = await manager.readFirstProviderQaContext();
+    expect(closedContext!['native_stages'], 'NOT_VERIFIED');
+    expect(closedContext['proof_current'], isFalse);
+    expect(closedContext['fallback_guard_closed'], isTrue);
+    final verifier = SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab');
+    await expectLater(verifier.verifyFirstProviderQa(permitEnvelope, request: {...claimRequest!, 'core_module_sha256': await _qaDigest('other core')},
+      accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, now: DateTime.now().toUtc()),
+      throwsA(isA<RoutingCatalogFailure>()));
+    expect(manager.firstProviderQaAdmissionId, isNull, reason: 'one explicit attempt cannot be renewed');
+    terminateQa = true;
+    await manager.refresh();
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.revokeSmartAccessLease'), hasLength(1));
+    expect(nativeCalls, isNot(contains('runtimeEngine.revokeRoutingCatalog')));
+    expect(manager.status.phase, ConnectionPhase.connected, reason: 'QA termination closes the member, not ordinary VPN access');
+    await manager.disconnect();
+    expect(await manager.readFirstProviderQaContext(), isNull);
+  });
   testWidgets('restored Windows Home remains painted while inactive and after returning', (tester) async {
     final firstLaunch = _RestoredFirstLaunch();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;

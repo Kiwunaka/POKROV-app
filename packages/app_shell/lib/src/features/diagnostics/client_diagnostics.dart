@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -868,6 +869,8 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
     this.initialSupportMode = const PokrovSupportModeView.inactive(),
     this.onActivateSupportMode,
     this.onDisableSupportMode,
+    this.onStartFirstProviderQa,
+    this.onReadFirstProviderQaContext,
     super.key,
   });
 
@@ -885,6 +888,8 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
   final PokrovSupportModeView initialSupportMode;
   final Future<PokrovSupportModeView> Function()? onActivateSupportMode;
   final Future<void> Function()? onDisableSupportMode;
+  final Future<void> Function()? onStartFirstProviderQa;
+  final Future<Map<String, Object?>?> Function()? onReadFirstProviderQaContext;
 
   @override
   State<PokrovDiagnosticsScreen> createState() =>
@@ -894,6 +899,10 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
 class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
   late PokrovDiagnosticsReport _report;
   bool _refreshing = false;
+  bool _qaStarted = false;
+  bool _qaStarting = false;
+  String? _qaStartError;
+  Map<String, Object?>? _qaContext;
   bool _sending = false;
   String? _refreshError;
   SupportBundleDeliveryResult? _delivery;
@@ -980,6 +989,25 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     await _refresh();
   }
 
+  Future<void> _startFirstProviderQa() async {
+    final action = widget.onStartFirstProviderQa;
+    if (action == null || _qaStarted) return;
+    setState(() {
+      _qaStarted = true;
+      _qaStarting = true;
+    });
+    try {
+      await action();
+      if (mounted) await _refresh();
+    } on Object {
+      if (mounted) {
+        setState(() => _qaStartError = 'Проверка сейчас недоступна. Обновите сведения для поддержки.');
+      }
+    } finally {
+      if (mounted) setState(() => _qaStarting = false);
+    }
+  }
+
   Future<void> _refresh({bool includeReleaseHealth = true}) async {
     if (_refreshing) {
       return;
@@ -990,6 +1018,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     });
     try {
       var next = await widget.onRefresh();
+      final qaContext = await widget.onReadFirstProviderQaContext?.call();
       final releaseHealthRefresh = widget.onReleaseHealthRefresh;
       if (includeReleaseHealth && releaseHealthRefresh != null) {
         next = next.copyWith(
@@ -1001,6 +1030,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       }
       setState(() {
         _report = next;
+        _qaContext = qaContext;
       });
     } on Object {
       if (mounted) {
@@ -1250,6 +1280,36 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 ],
               ),
             ),
+            if (widget.onStartFirstProviderQa != null || _qaContext != null) ...[
+              const SizedBox(height: 12),
+              _DiagnosticsCard(
+                key: const ValueKey('diagnostics-first-provider-qa'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Разрешённая проверка SmartDNS', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 8),
+                    const Text('Одна попытка для этого устройства. Ответы сервиса проверяются отдельно.'),
+                    const SizedBox(height: 8),
+                    if (widget.onStartFirstProviderQa != null) FilledButton(
+                      key: const ValueKey('diagnostics-first-provider-qa-start'),
+                      onPressed: _qaStarted ? null : () => unawaited(_startFirstProviderQa()),
+                      child: Text(_qaStarting ? 'Проверка выполняется…' : 'Начать проверку SmartDNS'),
+                    ),
+                    if (_qaContext case final context?) ...[
+                      const SizedBox(height: 8),
+                      SelectableText(const JsonEncoder.withIndent('  ').convert(context),
+                        key: const ValueKey('diagnostics-first-provider-qa-context'),
+                        style: theme.textTheme.bodySmall),
+                    ],
+                    if (_qaStartError case final error?) ...[
+                      const SizedBox(height: 8),
+                      Text(error, style: TextStyle(color: colors.error)),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             if (_report.releaseHealthBaseline.state !=
                 ClientReleaseHealthBaselineState.unavailable) ...[
               const SizedBox(height: 12),
