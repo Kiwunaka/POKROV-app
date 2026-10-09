@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
+import 'package:pokrov_app_shell/app_shell.dart' show pokrovSafeCrashSignature;
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -156,6 +157,16 @@ class _FailingFlutterSecureStorage extends FlutterSecureStorage {
 }
 
 void main() {
+  test('safe Home crash signature retains its owned frame without private messages or paths', () {
+    final signature = pokrovSafeCrashSignature(StateError('private-message'),
+      StackTrace.fromString('#0 foreign (file:///private-location:8:9)\n'
+        '#1 _HomeStageState.build (package:pokrov_app_shell/src/features/home/home_surface.dart:321:9)'));
+    expect(signature, 'c101090000014100');
+    expect(pokrovSafeCrashSignature(StateError('different-message'),
+      StackTrace.fromString('#0 different (file:///another-location:99:9)\n'
+        '#1 _HomeStageState.build (package:pokrov_app_shell/src/features/home/home_surface.dart:321:9)')),
+      signature, reason: 'only the closed kind and owned source location classify this failure');
+  });
   final defaultSecureStoragePlatform = FlutterSecureStoragePlatform.instance;
   setUp(() {
     FlutterSecureStoragePlatform.instance =

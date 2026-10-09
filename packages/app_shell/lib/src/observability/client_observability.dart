@@ -184,6 +184,7 @@ String pokrovSafeCrashSignature(Object error, StackTrace? stack) {
     'candidate_probe.dart',
     'client_routing_preferences.dart',
     'client_observability.dart',
+    'home_surface.dart',
   ];
   var source = 0;
   var line = 0;
@@ -234,6 +235,9 @@ final class PokrovClientObservability {
         if (_previousCrash case final crash?) crash,
         if (_currentCrash case final crash?) crash,
       ];
+
+  DiagnosticCrashRecord? get previousCrashDiagnostic => _previousCrash;
+  DiagnosticCrashRecord? get currentCrashDiagnostic => _currentCrash;
 
   /// Returns only the already-sanitized, bounded connection timeline used by
   /// the local diagnostics screen. The dispatcher ring remains the authority;

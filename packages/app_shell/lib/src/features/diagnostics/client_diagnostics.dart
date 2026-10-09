@@ -244,6 +244,9 @@ final class PokrovDiagnosticsReport {
     required this.preparedBundle,
     required this.supportCode,
     this.coreVersion,
+    this.appCrashDiagnosticsAvailable = false,
+    this.previousAppCrash,
+    this.currentAppCrash,
     this.showWindowsLocalDpiRuntime = false,
     this.windowsLocalDpiRuntime,
     required this.encryptedDeliveryAvailable,
@@ -269,6 +272,9 @@ final class PokrovDiagnosticsReport {
   final PreparedSupportBundle preparedBundle;
   final String supportCode;
   final String? coreVersion;
+  final bool appCrashDiagnosticsAvailable;
+  final DiagnosticCrashRecord? previousAppCrash;
+  final DiagnosticCrashRecord? currentAppCrash;
   final bool showWindowsLocalDpiRuntime;
   final WindowsLocalDpiRuntime? windowsLocalDpiRuntime;
   final bool encryptedDeliveryAvailable;
@@ -294,6 +300,9 @@ final class PokrovDiagnosticsReport {
         preparedBundle: preparedBundle,
         supportCode: supportCode,
         coreVersion: coreVersion,
+        appCrashDiagnosticsAvailable: appCrashDiagnosticsAvailable,
+        previousAppCrash: previousAppCrash,
+        currentAppCrash: currentAppCrash,
         showWindowsLocalDpiRuntime: showWindowsLocalDpiRuntime,
         windowsLocalDpiRuntime: windowsLocalDpiRuntime,
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
@@ -327,6 +336,9 @@ abstract final class PokrovDiagnosticsPresenter {
     DiagnosticSystemSummary? systemSummary,
     List<OperationalBreadcrumb> timelineBreadcrumbs = const [],
     List<DiagnosticCrashRecord> crashes = const [],
+    bool appCrashDiagnosticsAvailable = false,
+    DiagnosticCrashRecord? previousAppCrash,
+    DiagnosticCrashRecord? currentAppCrash,
     List<DiagnosticEventRecord> candidateProbeEvents = const [],
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
@@ -467,6 +479,9 @@ abstract final class PokrovDiagnosticsPresenter {
       preparedBundle: prepared,
       supportCode: supportCode,
       coreVersion: snapshot?.coreVersion,
+      appCrashDiagnosticsAvailable: appCrashDiagnosticsAvailable,
+      previousAppCrash: previousAppCrash,
+      currentAppCrash: currentAppCrash,
       showWindowsLocalDpiRuntime: hostPlatform == HostPlatform.windows &&
           routeMode == RouteMode.selectiveServices,
       windowsLocalDpiRuntime: snapshot?.windowsLocalDpiRuntime,
@@ -1207,6 +1222,22 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                                 color: colors.onSurfaceVariant,
                               ),
                             ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _report.appCrashDiagnosticsAvailable
+                                  ? _appCrashSummary('Текущий запуск', _report.currentAppCrash)
+                                  : 'Сведения об ошибках приложения недоступны.',
+                              key: const ValueKey('diagnostics-current-app-crash'),
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            if (_report.previousAppCrash != null) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                _appCrashSummary('Предыдущий запуск', _report.previousAppCrash),
+                                key: const ValueKey('diagnostics-previous-app-crash'),
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -1563,6 +1594,21 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       ),
     );
   }
+}
+
+String _appCrashSummary(String run, DiagnosticCrashRecord? crash) {
+  if (crash == null) return '$run: ошибка приложения не зафиксирована.';
+  final code = const {'CRASH-001', 'CRASH-002', 'CRASH-003'}.contains(crash.errorCode)
+      ? crash.errorCode : 'код неизвестен';
+  final signature = RegExp(r'^c1(0[0-5])(0[0-9])([0-9a-f]{8})00$')
+      .firstMatch(crash.signature);
+  if (signature == null) return '$run: $code. Подпись не подтверждена.';
+  final line = int.parse(signature[3]!, radix: 16);
+  if (line > 9999999) return '$run: $code. Подпись не подтверждена.';
+  final kind = int.parse(signature[1]!, radix: 16);
+  final source = int.parse(signature[2]!, radix: 16);
+  return '$run, последняя запись: $code · тип $kind · участок $source · '
+      'строка $line · подпись ${signature[0]}.';
 }
 
 String _windowsLocalDpiRuntimeRu(WindowsLocalDpiRuntime? observation) {
