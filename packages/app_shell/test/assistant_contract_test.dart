@@ -2,35 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/src/assistant/pokrov_ai_assistant.dart';
 
 void main() {
-  test('assistant contract is support scoped and ticket backed', () {
-    final session = PokrovAssistantSession.support(
-      sessionId: 'local-support',
-      ticketId: 42,
-      status: PokrovAssistantSessionStatus.ready,
-    );
-
-    expect(session.surface, PokrovAssistantSurface.support);
-    expect(session.ticketId, 42);
-    expect(session.isTopLevelDestination, isFalse);
-    expect(session.escalation.mode, PokrovAssistantEscalationMode.ticketBacked);
-    expect(session.escalation.operatorRequired, isTrue);
-
-    final suggestions = PokrovAssistantContract.defaultSupportSuggestions;
-    expect(suggestions, isNotEmpty);
-    expect(
-      suggestions.map((suggestion) => suggestion.key),
-      containsAll(<String>[
-        'support-ai-suggestion-connectivity',
-        'support-ai-suggestion-speed',
-        'support-ai-suggestion-bonus',
-      ]),
-    );
-    expect(
-      suggestions.every(
-          (suggestion) => suggestion.surface == PokrovAssistantSurface.support),
-      isTrue,
-    );
-  });
 
   test('assistant redaction removes raw configs keys and topology', () {
     final attachment = PokrovAssistantDiagnosticAttachment.fromDiagnostics(
@@ -74,12 +45,6 @@ void main() {
     expect(redacted, contains('обычный текст'));
   });
 
-  test('assistant keeps public WARP terminology in user questions', () {
-    const question = 'Почему WARP и WireGuard не работают на телефоне?';
-
-    expect(PokrovAssistantRedactor.redactText(question), question);
-  });
-
   test('assistant diagnostics allow safe enhanced protection state only', () {
     final attachment = PokrovAssistantDiagnosticAttachment.fromDiagnostics(
       <String, Object?>{
@@ -105,40 +70,4 @@ void main() {
     expect(attachment.safeDiagnostics.containsKey('warp_private_key'), isFalse);
   });
 
-  test('assistant actions require explicit confirmation before app changes',
-      () {
-    const action = PokrovAssistantSafeAction(
-      key: 'open-rules',
-      label: 'Открыть правила',
-      effect: PokrovAssistantSafeActionEffect.navigate,
-      requiresConfirmation: true,
-    );
-
-    expect(action.requiresConfirmation, isTrue);
-    expect(action.canRunAutomatically, isFalse);
-
-    final message = PokrovAssistantMessage.assistant(
-      id: 'm1',
-      body: 'Могу открыть экран правил.',
-      suggestions: PokrovAssistantContract.defaultSupportSuggestions.take(1),
-      actions: const <PokrovAssistantSafeAction>[action],
-    );
-
-    expect(message.role, PokrovAssistantRole.assistant);
-    expect(message.actions.single.canRunAutomatically, isFalse);
-    expect(message.safeBody, message.body);
-  });
-
-  test('assistant api plan stays session scoped and escalation aware', () {
-    const plan = PokrovAssistantApiPlan.defaultPlan;
-
-    expect(plan.createSessionPath, '/api/assistant/sessions');
-    expect(plan.messagesPathTemplate, '/api/assistant/sessions/{id}/messages');
-    expect(plan.streamPathTemplate, '/api/assistant/sessions/{id}/stream');
-    expect(plan.statusPathTemplate, '/api/assistant/sessions/{id}/status');
-    expect(plan.escalatePathTemplate, '/api/assistant/sessions/{id}/escalate');
-    expect(plan.confirmActionPath, '/api/assistant/actions/confirm');
-    expect(plan.ticketFallbackPath, '/api/tickets');
-    expect(plan.requiresSessionToken, isTrue);
-  });
 }

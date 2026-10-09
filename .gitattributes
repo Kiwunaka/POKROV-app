@@ -9,8 +9,5 @@ apps/linux_shell/packaging/debian/prerm text eol=lf
 apps/linux_shell/packaging/debian/postrm text eol=lf
 apps/linux_shell/packaging/linux-packages-public.asc -text
 docs/README.md text eol=lf
-packages/app_shell/test/fixtures/app-first-session-v0.json text eol=lf
 packages/app_shell/test/fixtures/secure-session-v0.txt text eol=lf
-packages/app_shell/test/fixtures/client-experience-v0.json text eol=lf
-packages/app_shell/test/fixtures/routing-preferences-v0.json text eol=lf
 apps/android_shell/android/app/src/test/resources/runtime-profile-v0.properties text eol=lf
