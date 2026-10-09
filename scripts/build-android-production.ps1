@@ -244,35 +244,10 @@ foreach ($artifact in $artifacts) {
 
   $apk = Get-Item -LiteralPath $apkPath
   $artifactHash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
-  $evidence = [ordered]@{
-    schema_version = 1
-    artifact = $apk.Name
-    abi = [string]$artifact.abi
-    package_name = $artifactPackage
-    version_name = $versionName
-    version_code = $versionCode
-    distribution = "direct_apk"
-    build_mode = "release"
-    debuggable = $false
-    signing_state = "production_self_managed"
-    certificate_sha256 = $artifactFingerprint
-    apk_sha256 = $artifactHash
-    size_bytes = [int64]$apk.Length
-    api_base_url = $ApiBaseUrl
-    verified_at_utc = [DateTime]::UtcNow.ToString("o")
-  }
-  $evidencePath = "$apkPath.signing.json"
-  [System.IO.File]::WriteAllText(
-    $evidencePath,
-    ($evidence | ConvertTo-Json -Depth 4),
-    [System.Text.UTF8Encoding]::new($false)
-  )
-
   Write-Host "Android production APK built and verified." -ForegroundColor Green
   Write-Host "ABI: $($artifact.abi)"
   Write-Host "APK: $apkPath"
   Write-Host "Size: $($apk.Length) bytes"
   Write-Host "APK SHA-256: $artifactHash"
   Write-Host "Certificate SHA-256: $artifactFingerprint"
-  Write-Host "Evidence: $evidencePath"
 }

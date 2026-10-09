@@ -10,7 +10,6 @@ bridge_client:
 base_strategy_gate: docs/decisions/2026-04-18-karing-vs-clean-room-gate.md
 workspace:
   manager: melos
-  validation_script: scripts/validate-seed.ps1
   bootstrap_script: scripts/bootstrap-local.ps1
   workspace_bootstrap_script: scripts/bootstrap-workspace.ps1
   test_script: scripts/run-tests.ps1

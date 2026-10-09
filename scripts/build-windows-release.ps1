@@ -1,8 +1,5 @@
 param(
   [switch]$SyncRuntime,
-  [switch]$SkipValidateSeed,
-  [switch]$SkipAnalyze,
-  [switch]$SkipTests,
   [switch]$SkipBuild,
   [switch]$SkipZip,
   [switch]$SkipInstaller,
@@ -14,7 +11,6 @@ param(
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
   [string]$TransportTrustDefinesFile,
   [switch]$RequireTrustedWindowsSigning,
-  [switch]$CheckTrustedWindowsSigningReadinessOnly,
   [string]$WindowsSigningCertificateThumbprint = $env:POKROV_WINDOWS_SIGNING_CERTIFICATE_THUMBPRINT,
   [string]$WindowsSigningExpectedSubject = $env:POKROV_WINDOWS_SIGNING_EXPECTED_SUBJECT,
   [string]$WindowsSigningTimestampUrl = $env:POKROV_WINDOWS_SIGNING_TIMESTAMP_URL,
@@ -38,14 +34,12 @@ if ($TransportTrustDefinesFile) {
   $transportTrustArguments = @("--dart-define-from-file=$transportTrustPath")
 }
 
-if (-not $CheckTrustedWindowsSigningReadinessOnly) {
-  $versionParityArguments = @{}
-  if ($CoreRoot) {
-    $versionParityArguments.CoreRoot = $CoreRoot
-  }
-  if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
-  & (Join-Path $PSScriptRoot "check-client-version-parity.ps1") @versionParityArguments
+$versionParityArguments = @{}
+if ($CoreRoot) {
+  $versionParityArguments.CoreRoot = $CoreRoot
 }
+if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
+& (Join-Path $PSScriptRoot "check-client-version-parity.ps1") @versionParityArguments
 
 $SupportSigningKeyId = [string]$SupportSigningKeyId
 $SupportSigningPublicKey = [string]$SupportSigningPublicKey
@@ -54,17 +48,14 @@ $WindowsSigningExpectedSubject = ([string]$WindowsSigningExpectedSubject).Trim()
 $WindowsSigningTimestampUrl = ([string]$WindowsSigningTimestampUrl).Trim()
 $SignToolPath = ([string]$SignToolPath).Trim()
 $MsvcRuntimeDirectory = ([string]$MsvcRuntimeDirectory).Trim()
-if (-not $CheckTrustedWindowsSigningReadinessOnly) {
-  . (Join-Path $PSScriptRoot 'support-signing-pin.ps1')
-  $supportSigningPin = Resolve-PokrovSupportSigningPin `
-    -RepositoryRoot (Split-Path -Parent $PSScriptRoot) `
-    -ProvidedKeyId $SupportSigningKeyId `
-    -ProvidedPublicKeyB64Url $SupportSigningPublicKey
-  $SupportSigningKeyId = $supportSigningPin.key_id
-  $SupportSigningPublicKey = $supportSigningPin.public_key_b64url
-}
+. (Join-Path $PSScriptRoot 'support-signing-pin.ps1')
+$supportSigningPin = Resolve-PokrovSupportSigningPin `
+  -RepositoryRoot (Split-Path -Parent $PSScriptRoot) `
+  -ProvidedKeyId $SupportSigningKeyId `
+  -ProvidedPublicKeyB64Url $SupportSigningPublicKey
+$SupportSigningKeyId = $supportSigningPin.key_id
+$SupportSigningPublicKey = $supportSigningPin.public_key_b64url
 $trustedWindowsSigningRequested = [bool]$RequireTrustedWindowsSigning -or
-  [bool]$CheckTrustedWindowsSigningReadinessOnly -or
   [bool]$WindowsSigningCertificateThumbprint -or
   [bool]$WindowsSigningExpectedSubject -or
   [bool]$WindowsSigningTimestampUrl -or
@@ -82,7 +73,7 @@ if ($trustedWindowsSigningRequested) {
       $timestampUri.Scheme -ne 'https') {
     throw "Trusted Windows signing requires an absolute HTTPS RFC3161 timestamp URL."
   }
-  if ($SkipInstaller -and -not $CheckTrustedWindowsSigningReadinessOnly) {
+  if ($SkipInstaller) {
     throw "Trusted Windows signing requires the exact installer; -SkipInstaller is not allowed."
   }
 }
@@ -290,39 +281,6 @@ function Resolve-AppLocalMsvcRuntimeDirectory {
   return $runtimeDirectory
 }
 
-function New-ReleaseManifestFileList {
-  param(
-    [Parameter(Mandatory = $true)]
-    [string]$BasePath,
-    [Parameter(Mandatory = $true)]
-    [string[]]$RelativePaths
-  )
-
-  $files = foreach ($relativePath in $RelativePaths) {
-    $fullPath = Join-Path $BasePath $relativePath
-    $item = Get-Item -LiteralPath $fullPath
-    [ordered]@{
-      path = $relativePath
-      size_bytes = [int64]$item.Length
-      sha256 = (Get-FileHash -LiteralPath $fullPath -Algorithm SHA256).Hash
-    }
-  }
-
-  return $files
-}
-
-function Write-Utf8File {
-  param(
-    [Parameter(Mandatory = $true)]
-    [string]$Path,
-    [Parameter(Mandatory = $true)]
-    [string]$Content
-  )
-
-  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-  [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
-}
-
 function Get-CertificateSha256 {
   param(
     [Parameter(Mandatory = $true)]
@@ -494,55 +452,11 @@ function Invoke-TrustedAuthenticodeSigning {
 
 $root = Split-Path -Parent $PSScriptRoot
 $windowsReleaseConfigPath = Join-Path $root "config\\windows-release.seed.json"
-$runtimeArtifactsConfigPath = if ($RuntimeArtifactsPath) {
-  (Resolve-Path -LiteralPath $RuntimeArtifactsPath -ErrorAction Stop).Path
-} else { Join-Path $root "config\\runtime-artifacts.seed.json" }
 $windowsReleaseConfig = Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
-$runtimeArtifactsConfig = Get-Content -Raw -LiteralPath $runtimeArtifactsConfigPath | ConvertFrom-Json
-$expectedSignedFiles = @(
-  [string]$windowsReleaseConfig.binary_name,
-  [string]$windowsReleaseConfig.runtime.service_binary,
-  [string]$windowsReleaseConfig.installer_name_template,
-  "unins???.exe"
-)
-$configuredSignedFiles = @($windowsReleaseConfig.signing.required_signed_files | ForEach-Object { [string]$_ })
-$signedFileContractDifference = @(Compare-Object -ReferenceObject $expectedSignedFiles -DifferenceObject $configuredSignedFiles)
-if ($signedFileContractDifference.Count -ne 0) {
-  throw "Windows signing seed must require the exact UI, service and installer targets."
-}
 $appDirectory = Join-Path $root "apps\\windows_shell"
 $pubspecPath = Join-Path $appDirectory "pubspec.yaml"
 $version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
 $productVersion = ($version -split '\+', 2)[0]
-$ownerUnsignedException = $windowsReleaseConfig.signing.owner_exception
-$ownerAuthorizationDate = [DateTime]::MinValue
-$ownerUnsignedExceptionActive =
-  $windowsReleaseConfig.public_approved -eq $false -and
-  $windowsReleaseConfig.artifact_status -eq "unsigned_beta_candidate" -and
-  $windowsReleaseConfig.signing.status -eq "CANDIDATE_ONLY" -and
-  $windowsReleaseConfig.signing.blocker_code -eq ("RELEASE_APPROVAL_PENDING_" + $productVersion.Replace('.', '_')) -and
-  $windowsReleaseConfig.signing.required_for_candidate -eq $false -and
-  $windowsReleaseConfig.signing.required_for_trusted_claim -eq $true -and
-  $windowsReleaseConfig.channel -eq "outside_store_beta" -and
-  $ownerUnsignedException.status -eq "CANDIDATE_ONLY" -and
-  [DateTime]::TryParseExact(
-    [string]$ownerUnsignedException.authorized_on,
-    "yyyy-MM-dd",
-    [Globalization.CultureInfo]::InvariantCulture,
-    [Globalization.DateTimeStyles]::None,
-    [ref]$ownerAuthorizationDate
-  ) -and
-  $ownerUnsignedException.version_scope -eq $productVersion -and
-  $ownerUnsignedException.channel_scope -eq "outside_store_beta" -and
-  $ownerUnsignedException.distribution_scope -eq "direct_download_only" -and
-  $ownerUnsignedException.trusted_claim_allowed -eq $false -and
-  $ownerUnsignedException.store_claim_allowed -eq $false -and
-  $ownerUnsignedException.smartscreen_warning_required -eq $true -and
-  $ownerUnsignedException.expires_when_trusted_signing_is_available -eq $true
-if ($windowsReleaseConfig.signing.required_for_candidate -ne $true -and
-    -not $ownerUnsignedExceptionActive) {
-  throw "Unsigned Windows candidate policy is incomplete or outside the exact $productVersion preparation scope. Public release requires the owner's decision."
-}
 $trustedWindowsSigningContext = $null
 if ($trustedWindowsSigningRequested) {
   $trustedWindowsSigningContext = Resolve-TrustedWindowsSigningContext `
@@ -551,36 +465,6 @@ if ($trustedWindowsSigningRequested) {
     -TimestampUrl $WindowsSigningTimestampUrl `
     -StoreLocation $WindowsSigningStoreLocation `
     -ExplicitSignToolPath $SignToolPath
-}
-if ($CheckTrustedWindowsSigningReadinessOnly) {
-  $readinessReceipt = [ordered]@{
-    schema = "pokrov.windows-signing-readiness-receipt.v1"
-    status = "PASS"
-    scope = "local_certificate_store_readiness"
-    checked_at_utc = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
-    signing_contract = "AUTHENTICODE_SHA256_RFC3161_HTTPS_V1"
-    store_location = $trustedWindowsSigningContext.store_location
-    signer_subject = $trustedWindowsSigningContext.certificate.Subject
-    signer_thumbprint_sha1 = $trustedWindowsSigningContext.certificate.Thumbprint
-    signer_certificate_sha256 = Get-CertificateSha256 `
-      -Certificate $trustedWindowsSigningContext.certificate
-    certificate_not_before_utc = $trustedWindowsSigningContext.certificate.NotBefore.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-    certificate_not_after_utc = $trustedWindowsSigningContext.certificate.NotAfter.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-    code_signing_eku = $true
-    private_key_present = $true
-    self_signed = $false
-    chain_trusted = $true
-    chain_revocation_mode = "ONLINE_ENTIRE_CHAIN"
-    signtool_present = $true
-    timestamp_url = $trustedWindowsSigningContext.timestamp_url
-    pfx_path_or_password_accepted = $false
-    artifacts_signed = $false
-    candidate_created = $false
-    production_runtime_mutated = $false
-    private_key_value_exposed = $false
-  }
-  Write-Output ($readinessReceipt | ConvertTo-Json -Depth 4)
-  return
 }
 if (($windowsReleaseConfig.PSObject.Properties.Name -contains "portable_zip") -and
     -not [bool]$windowsReleaseConfig.portable_zip.supported) {
@@ -600,17 +484,6 @@ if (-not $SkipBuild) {
   $clientRevision = $clientRevision.ToLowerInvariant()
   $clientBuildNumber = ($version -split '\+', 2)[1]
 }
-if ($ownerUnsignedExceptionActive) {
-  $unsignedWarning = [string]$windowsReleaseConfig.signing.user_warning
-  if ($productVersion -ne [string]$ownerUnsignedException.version_scope) {
-    throw "The unsigned Windows owner exception does not cover product version $productVersion."
-  }
-  if ([string]::IsNullOrWhiteSpace($unsignedWarning) -or
-      ($unsignedWarning -notmatch 'SmartScreen') -or
-      ($unsignedWarning -notmatch 'unknown-publisher')) {
-    throw "The unsigned Windows beta requires the canonical SmartScreen and unknown-publisher warning."
-  }
-}
 
 $runtimeDirectory = Join-Path $root $windowsReleaseConfig.runtime.artifact_directory
 $runtimeRequiredFiles = @(
@@ -621,18 +494,6 @@ if ($windowsReleaseConfig.runtime.PSObject.Properties.Name -contains "helper_bin
 }
 if ($windowsReleaseConfig.runtime.PSObject.Properties.Name -contains "runtime_dependencies") {
   $runtimeRequiredFiles += @($windowsReleaseConfig.runtime.runtime_dependencies)
-}
-
-if (-not $SkipValidateSeed) {
-  $validateSeedArguments = @{}
-  if ($CoreRoot) {
-    $validateSeedArguments.CoreRoot = $CoreRoot
-  }
-  if ($RuntimeArtifactsPath) { $validateSeedArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
-  & (Join-Path $PSScriptRoot "validate-seed.ps1") @validateSeedArguments
-  if ($LASTEXITCODE -ne 0) {
-    exit $LASTEXITCODE
-  }
 }
 
 $runtimeMissingFiles = @(
@@ -680,7 +541,7 @@ $missingMsvcRuntimeFiles = @(
 if ($missingMsvcRuntimeFiles.Count -gt 0) {
   throw "Missing expected app-local Microsoft VC runtime files: $($missingMsvcRuntimeFiles -join ', ')"
 }
-$appLocalMsvcRuntimeEvidence = foreach ($runtimeFile in $appLocalMsvcRuntimeFiles) {
+foreach ($runtimeFile in $appLocalMsvcRuntimeFiles) {
   $runtimePath = Join-Path $appLocalMsvcRuntimeDirectory $runtimeFile
   $signature = Get-AuthenticodeSignature -FilePath $runtimePath
   if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid -or
@@ -688,32 +549,6 @@ $appLocalMsvcRuntimeEvidence = foreach ($runtimeFile in $appLocalMsvcRuntimeFile
       $signature.SignerCertificate.Subject -notmatch '(?i)Microsoft') {
     throw "App-local Microsoft VC runtime file is not validly Microsoft-signed: $runtimeFile"
   }
-  [ordered]@{
-    path = $runtimeFile
-    product_version = [string](Get-Item -LiteralPath $runtimePath).VersionInfo.ProductVersion
-    sha256 = (Get-FileHash -LiteralPath $runtimePath -Algorithm SHA256).Hash
-  }
-}
-
-if (-not $SkipTests) {
-  $runTestsArgs = @()
-  if ($OfflinePubGet) {
-    $runTestsArgs += "-OfflinePubGet"
-  }
-  & (Join-Path $PSScriptRoot "run-tests.ps1") @runTestsArgs
-  if ($LASTEXITCODE -ne 0) {
-    exit $LASTEXITCODE
-  }
-} elseif ($SkipBuild) {
-  $pubGetArgs = @("pub", "get")
-  if ($OfflinePubGet) {
-    $pubGetArgs += "--offline"
-  }
-  Invoke-External -FilePath "flutter" -Arguments $pubGetArgs -WorkingDirectory $appDirectory
-}
-
-if (-not $SkipAnalyze) {
-  Invoke-External -FilePath "flutter" -Arguments @("analyze") -WorkingDirectory $appDirectory
 }
 
 if (-not $SkipBuild) {
@@ -837,11 +672,9 @@ $artifactRoot = Join-Path $root $windowsReleaseConfig.artifact_root
 $bundleFolderName = $windowsReleaseConfig.bundle_folder_template.Replace("{version}", $version)
 $zipName = $windowsReleaseConfig.zip_name_template.Replace("{version}", $version)
 $installerName = $windowsReleaseConfig.installer_name_template.Replace("{version}", $version)
-$manifestName = $windowsReleaseConfig.manifest_name_template.Replace("{version}", $version)
 $stagedBundleDirectory = Join-Path $artifactRoot $bundleFolderName
 $zipPath = Join-Path $artifactRoot $zipName
 $installerPath = Join-Path $artifactRoot $installerName
-$manifestPath = Join-Path $artifactRoot $manifestName
 
 New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
 
@@ -862,14 +695,13 @@ if ($missingStagedFiles.Count -gt 0) {
   throw "Missing expected staged Windows release outputs: $($missingStagedFiles -join ', ')"
 }
 
-$trustedSigningEvidence = @()
 if ($trustedWindowsSigningContext) {
   foreach ($signedBinaryName in @(
       $windowsReleaseConfig.binary_name,
       $windowsReleaseConfig.runtime.service_binary
     )) {
     $signedBinaryPath = Join-Path $stagedBundleDirectory $signedBinaryName
-    $trustedSigningEvidence += Invoke-TrustedAuthenticodeSigning `
+    $null = Invoke-TrustedAuthenticodeSigning `
       -Path $signedBinaryPath `
       -SigningContext $trustedWindowsSigningContext `
       -WorkingDirectory $artifactRoot
@@ -1386,104 +1218,20 @@ end;
     throw "ISCC.exe did not produce installer: $installerPath"
   }
   if ($trustedWindowsSigningContext) {
-    $installerSigningEvidence = Get-TrustedAuthenticodeEvidence `
+    $null = Get-TrustedAuthenticodeEvidence `
       -Path $installerPath `
       -SigningContext $trustedWindowsSigningContext
-    $installerSigningEvidence["target_role"] = "installer"
-    $trustedSigningEvidence += $installerSigningEvidence
 
     $signedUninstallers = @(Get-ChildItem -LiteralPath $signedUninstallerDirectory -Filter "unins*.exe" -File)
     if ($signedUninstallers.Count -ne 1) {
-      throw "Inno Setup must produce exactly one signed uninstaller evidence file; found $($signedUninstallers.Count)."
+      throw "Inno Setup must produce exactly one signed uninstaller; found $($signedUninstallers.Count)."
     }
-    $uninstallerSigningEvidence = Get-TrustedAuthenticodeEvidence `
+    $null = Get-TrustedAuthenticodeEvidence `
       -Path $signedUninstallers[0].FullName `
       -SigningContext $trustedWindowsSigningContext
-    $uninstallerSigningEvidence["target_role"] = "embedded_uninstaller"
-    $trustedSigningEvidence += $uninstallerSigningEvidence
   }
   $installerSha256 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash
 }
-
-$trustedSigningStatus = if ($trustedWindowsSigningContext) {
-  "PASS"
-} elseif ($ownerUnsignedExceptionActive) {
-  "CANDIDATE_ONLY"
-} else {
-  "MISSING"
-}
-$trustedSigningManifest = [ordered]@{
-  status = $trustedSigningStatus
-  contract = [string]$windowsReleaseConfig.signing.contract
-  blocker_code = if ($trustedWindowsSigningContext) {
-    $null
-  } elseif ($ownerUnsignedExceptionActive) {
-    [string]$windowsReleaseConfig.signing.blocker_code
-  } else {
-    "MISSING_TRUSTED_WINDOWS_SIGNATURE"
-  }
-  required_for_candidate = [bool]$windowsReleaseConfig.signing.required_for_candidate
-  required_for_trusted_claim = [bool]$windowsReleaseConfig.signing.required_for_trusted_claim
-  requested = [bool]$trustedWindowsSigningRequested
-  certificate_store_location = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.store_location } else { $null }
-  expected_subject = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.certificate.Subject } else { $null }
-  signer_thumbprint_sha1 = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.certificate.Thumbprint } else { $null }
-  signer_certificate_sha256 = if ($trustedWindowsSigningContext) {
-    Get-CertificateSha256 -Certificate $trustedWindowsSigningContext.certificate
-  } else {
-    $null
-  }
-  timestamp_url = if ($trustedWindowsSigningContext) { $trustedWindowsSigningContext.timestamp_url } else { $null }
-  owner_exception = if ($ownerUnsignedExceptionActive -and -not $trustedWindowsSigningContext) {
-    [ordered]@{
-      status = [string]$ownerUnsignedException.status
-      authorized_on = [string]$ownerUnsignedException.authorized_on
-      version_scope = [string]$ownerUnsignedException.version_scope
-      channel_scope = [string]$ownerUnsignedException.channel_scope
-      distribution_scope = [string]$ownerUnsignedException.distribution_scope
-      trusted_claim_allowed = [bool]$ownerUnsignedException.trusted_claim_allowed
-      store_claim_allowed = [bool]$ownerUnsignedException.store_claim_allowed
-      smartscreen_warning_required = [bool]$ownerUnsignedException.smartscreen_warning_required
-      expires_when_trusted_signing_is_available = [bool]$ownerUnsignedException.expires_when_trusted_signing_is_available
-    }
-  } else {
-    $null
-  }
-  user_warning = if ($trustedWindowsSigningContext) { $null } else { [string]$windowsReleaseConfig.signing.user_warning }
-  targets = @($trustedSigningEvidence)
-}
-
-$manifest = [ordered]@{
-  generated_at_utc = (Get-Date).ToUniversalTime().ToString("o")
-  display_name = $windowsReleaseConfig.display_name
-  version = $version
-  public_approved = [bool]$windowsReleaseConfig.public_approved
-  runtime_release_tag = $runtimeArtifactsConfig.core.release_tag
-  release_output_directory = $releaseOutputDirectory
-  staged_bundle_directory = $stagedBundleDirectory
-  zip_path = if ($SkipZip) { $null } else { $zipPath }
-  installer_path = if ($SkipInstaller) { $null } else { $installerPath }
-  installer_sha256 = $installerSha256
-  signing = $trustedSigningManifest
-  app_local_msvc_runtime = [ordered]@{
-    deployment = [string]$windowsReleaseConfig.app_local_msvc_runtime.deployment
-    architecture = [string]$windowsReleaseConfig.app_local_msvc_runtime.architecture
-    toolset_directory = [string]$windowsReleaseConfig.app_local_msvc_runtime.toolset_directory
-    files = @($appLocalMsvcRuntimeEvidence)
-  }
-  executable = [ordered]@{
-    file_name = $windowsReleaseConfig.binary_name
-    file_description = $versionInfo.FileDescription
-    product_name = $versionInfo.ProductName
-    product_version = $versionInfo.ProductVersion
-    is_prerelease = [bool]$versionInfo.IsPreRelease
-  }
-  required_files = New-ReleaseManifestFileList -BasePath $stagedBundleDirectory -RelativePaths $windowsReleaseConfig.required_files
-  safe_claims = @($windowsReleaseConfig.safe_claims)
-  blocked_on = @($windowsReleaseConfig.blocked_on)
-}
-
-$manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding utf8
 
 Write-Host "Windows bundle ready." -ForegroundColor Green
 Write-Host "Version: $version"
@@ -1494,5 +1242,6 @@ if (-not $SkipZip) {
 }
 if (-not $SkipInstaller) {
   Write-Host "Installer: $installerPath"
+  Write-Host "Installer size: $((Get-Item -LiteralPath $installerPath).Length) bytes"
+  Write-Host "Installer SHA-256: $installerSha256"
 }
-Write-Host "Manifest: $manifestPath"
