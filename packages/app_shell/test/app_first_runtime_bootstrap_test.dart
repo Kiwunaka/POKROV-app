@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
-import 'package:pokrov_app_shell/app_shell.dart' show pokrovSafeCrashSignature;
+import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
@@ -156,7 +156,83 @@ class _FailingFlutterSecureStorage extends FlutterSecureStorage {
   }
 }
 
+class _RestoredFirstLaunch implements PokrovFirstLaunchStore {
+  final completion = Completer<bool>();
+  @override
+  Future<bool> isCompleted() => completion.future;
+  @override
+  Future<void> markCompleted() async {}
+}
+
+class _HomeExperience implements PokrovClientExperienceStore {
+  @override
+  Future<PokrovClientExperienceState> read() async =>
+      const PokrovClientExperienceState.empty().copyWith(
+          interfaceMode: PokrovInterfaceMode.advanced);
+  @override
+  Future<void> write(PokrovClientExperienceState state) async {}
+}
+
+class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
+  @override
+  Never noSuchMethod(Invocation invocation) =>
+      throw StateError('Home visibility must not request a managed profile');
+}
+
 void main() {
+  testWidgets('restored Windows Home remains painted while inactive and after returning', (tester) async {
+    final firstLaunch = _RestoredFirstLaunch();
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, isNot(anyOf('runtimeEngine.stageManagedProfile', 'runtimeEngine.connect')));
+      return {'phase': 'initialized', 'coreVersion': '1.2.10',
+        'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true};
+    });
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: _NoConnectBootstrapper(), firstLaunchStore: firstLaunch,
+      clientExperienceStore: _HomeExperience(),
+    ));
+    firstLaunch.completion.complete(true);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+    double homeOpacity() {
+      final label = find.descendant(of: find.byKey(const ValueKey('home-boot-reveal')),
+          matching: find.text('POKROV VPN'));
+      expect(label, findsOneWidget);
+      var opacity = 1.0;
+      tester.element(label).visitAncestorElements((element) {
+        final widget = element.widget;
+        if (widget is Opacity) opacity *= widget.opacity;
+        if (widget is FadeTransition) opacity *= widget.opacity.value;
+        return true;
+      });
+      return opacity;
+    }
+    final initialOpacity = homeOpacity();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+    await tester.tap(find.text('Профиль'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+    await tester.tap(find.text('Защита'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(homeOpacity(), greaterThan(0.9), reason: 'returning Home must stay painted');
+    expect(initialOpacity, greaterThan(0.9), reason: 'an inactive first frame must not hide ready Home');
+  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
   test('safe Home crash signature retains its owned frame without private messages or paths', () {
     final signature = pokrovSafeCrashSignature(StateError('private-message'),
       StackTrace.fromString('#0 foreign (file:///private-location:8:9)\n'

@@ -226,7 +226,11 @@ class _HomeStageState extends State<_HomeStage>
     }
     if (!_revealStarted && !widget.revealHold) {
       _revealStarted = true;
-      _revealController.forward();
+      if (TickerMode.of(context)) {
+        _revealController.forward();
+      } else {
+        _revealController.value = 1;
+      }
     }
   }
 
@@ -237,7 +241,7 @@ class _HomeStageState extends State<_HomeStage>
       return;
     }
     _revealStarted = true;
-    if (_MotionScope.of(context).disableAnimations) {
+    if (_MotionScope.of(context).disableAnimations || !TickerMode.of(context)) {
       _revealController.value = 1;
       return;
     }
@@ -245,7 +249,11 @@ class _HomeStageState extends State<_HomeStage>
     // the brand lockup reads as one mark persisting across the crossfade.
     _revealTimer = Timer(const Duration(milliseconds: 80), () {
       if (mounted) {
-        _revealController.forward();
+        if (TickerMode.of(context)) {
+          _revealController.forward();
+        } else {
+          _revealController.value = 1;
+        }
       }
     });
   }

@@ -185,6 +185,11 @@ succeeded. The welcome/restore choice does not start an authenticated refresh
 merely because the app resumes. Pending Telegram verification keeps its existing
 dedicated refresh path.
 
+Ready Home paints its first frame even when the app is inactive and widget
+tickers are muted. Its initial reveal completes immediately in that state,
+including focus loss during the welcome handover; the welcome/access gate and
+foreground runtime work remain unchanged.
+
 Foreground, profile-tab and initial account-summary requests share one in-flight
 refresh, keeping subscription, bonus and inbox reads sequential. Inbox reads
 also wait for the access choice because their session helper can create a trial
