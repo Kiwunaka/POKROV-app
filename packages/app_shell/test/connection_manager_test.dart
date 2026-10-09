@@ -6,8 +6,11 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
+import 'package:pokrov_app_shell/routing_catalog_policy.dart';
 import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
@@ -545,6 +548,113 @@ class _FirstLaunchStore implements PokrovFirstLaunchStore {
   Future<void> markCompleted() async {}
 }
 
+class _CatalogPickerBootstrapper extends _Bootstrapper implements
+    AppFirstRoutingCatalogService, AppFirstClientDataService, AppFirstSmartAccessService {
+  _CatalogPickerBootstrapper(this.result, {this.coldAccess = false});
+  final RoutingCatalogFetchResult result;
+  final bool coldAccess;
+  int subscriptionReads = 0;
+  int catalogReads = 0;
+  @override
+  bool get routingCatalogEnabled => true;
+  @override
+  bool get smartAccessEnabled => false;
+  @override
+  Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
+    Duration? requestTimeout, Future<void>? cancelled}) async {
+    subscriptionReads++;
+    return ClientSubscriptionInfo(lane: 'trial',
+      accessState: coldAccess && subscriptionReads == 1 ? '' : 'trial_premium',
+      expiresAt: '', daysLeft: 4, autoRenew: false, renewUrl: null,
+      plans: const [], trafficPolicy: const {});
+  }
+  @override
+  Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({required HostPlatform hostPlatform,
+    bool cacheOnly = false, Future<void>? cancelled}) async {
+    catalogReads++;
+    return result;
+  }
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _CatalogPickerExperience extends _ExperienceStore {
+  @override
+  Future<PokrovClientExperienceState> read() async =>
+      const PokrovClientExperienceState.empty().copyWith(interfaceMode: PokrovInterfaceMode.advanced);
+}
+
+Future<RoutingCatalogFetchResult> _pickerCatalog() async {
+  final now = DateTime.now().toUtc();
+  final issued = '${now.subtract(const Duration(minutes: 1)).toIso8601String().split('.').first}Z';
+  final expires = '${now.add(const Duration(hours: 1)).toIso8601String().split('.').first}Z';
+  final payload = <String, Object?>{
+    'audience': 'lab', 'evidence': <Object>[], 'expires_at': expires,
+    'issued_at': issued, 'revision': 1, 'schema_version': 'pokrov-routing-catalog-v1',
+    'security_revision': 1,
+    'services': [{
+      'access_states': ['trial_premium'], 'android': <Object>[], 'categories': ['test'],
+      'classification': 'unknown', 'display_name': 'Fixture service', 'domains': <Object>[],
+      'enabled': false, 'evidence_ids': <Object>[], 'evidence_status': 'source_only',
+      'external_gateway_policy': 'forbidden', 'networks': <Object>[], 'platforms': ['windows'],
+      'provider_capability_refs': <Object>[], 'reason': 'No route authority',
+      'route_intents': <Object>[], 'service_id': 'test-service', 'source_ids': ['fixture'],
+      'windows': <Object>[],
+    }],
+    'sources': [{
+      'expires_at': expires, 'license': 'test', 'retrieved_at': issued,
+      'revision': 'test', 'sha256': List.filled(32, '01').join(),
+      'source_id': 'fixture', 'url': 'https://fixture.invalid/catalog',
+    }],
+  };
+  final body = utf8.encode(jsonEncode(payload));
+  final algorithm = Ed25519();
+  final key = await algorithm.newKeyPair();
+  final public = await key.extractPublicKey();
+  final signature = await algorithm.sign(
+      [...utf8.encode('pokrov-routing-catalog-v1\n'), ...body], keyPair: key);
+  final digest = (await Sha256().hash(body)).bytes
+      .map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  final catalog = await RoutingCatalogVerifier(publicKeysById: {'fixture': base64Encode(public.bytes)},
+      audience: 'lab').verify({
+    'algorithm': 'Ed25519', 'key_id': 'fixture', 'payload': payload,
+    'payload_sha256': digest, 'signature_b64': base64UrlEncode(signature.bytes).replaceAll('=', ''),
+  }, now: now, minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
+  RoutingCatalogPolicy.fromVerified(catalog);
+  return RoutingCatalogFetchResult(catalog: catalog, usingCache: false);
+}
+
+Future<void> _openPicker(WidgetTester tester, _CatalogPickerBootstrapper bootstrapper,
+    {bool holdNativeSnapshot = false}) async {
+  tester.view.physicalSize = const Size(1280, 900);
+  tester.view.devicePixelRatio = 1;
+  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  const channel = MethodChannel('space.pokrov/runtime_engine');
+  messenger.setMockMethodCallHandler(channel, (call) async {
+    expect(call.method, isNot(anyOf('runtimeEngine.stageManagedProfile', 'runtimeEngine.connect')));
+    if (holdNativeSnapshot && bootstrapper.catalogReads > 0 && call.method == 'runtimeEngine.snapshot') {
+      return Completer<Map<String, Object?>>().future;
+    }
+    return {'phase': 'initialized', 'coreVersion': '1.2.10',
+      'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true,
+      'routingCatalogWindowVersion': 1};
+  });
+  await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+    appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+    bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+    clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+    onThemeModeChanged: (_) {}, runtimeActionTimeout: const Duration(seconds: 2),
+  )));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Правила'));
+  await tester.pumpAndSettle();
+  final action = find.text('Выбрать сервисы и режим');
+  await tester.ensureVisible(action);
+  await tester.tap(action);
+  await tester.pump(const Duration(milliseconds: 500));
+  await tester.pump();
+}
+
 ConnectionManager _manager(
   _Runtime runtime,
   ManagedProfileBootstrapper bootstrapper, {
@@ -584,6 +694,55 @@ void main() {
   final originalHttpOverrides = HttpOverrides.current;
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = originalHttpOverrides;
+
+  testWidgets('Selective first open uses trial access with Smart Access off and no prepared profile', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final result = (await tester.runAsync(_pickerCatalog))!;
+    final known = _CatalogPickerBootstrapper(result);
+    await _openPicker(tester, known);
+    expect(find.text('Fixture service'), findsOneWidget,
+      reason: tester.widgetList<Text>(find.textContaining('Не удалось обновить каталог'))
+          .map((text) => text.data).join('; '));
+    expect(known.subscriptionReads, 1, reason: 'known authenticated trial does not need another access read');
+    expect(known.catalogReads, 1);
+    expect(find.textContaining('Не удалось обновить каталог'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+
+    final cold = _CatalogPickerBootstrapper(result, coldAccess: true);
+    await _openPicker(tester, cold);
+    expect(cold.subscriptionReads, 2, reason: 'unknown startup access is read normally by the picker');
+    expect(cold.catalogReads, 1);
+    expect(find.text('Fixture service'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('Selective picker labels a native Snapshot timeout separately from catalog delivery', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final result = (await tester.runAsync(_pickerCatalog))!;
+    final bootstrapper = _CatalogPickerBootstrapper(result);
+    await _openPicker(tester, bootstrapper, holdNativeSnapshot: true);
+    await tester.pump(const Duration(seconds: 3));
+    expect(bootstrapper.catalogReads, 1);
+    expect(find.textContaining('Модуль подключения: timeout.'), findsOneWidget,
+      reason: tester.widgetList<Text>(find.textContaining('Не удалось обновить каталог'))
+          .map((text) => text.data).join('; '));
+    expect(find.textContaining('Каталог: timeout.'), findsNothing);
+    expect(find.text('Каталог недоступен'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
 
   test('Android foreground network context changes reuse protected handoff without rejecting current', () async {
     final runtime = _Runtime()..supportsCandidates = true..captivePortal = false;

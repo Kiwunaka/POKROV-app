@@ -950,6 +950,13 @@ revision requires refresh/review. Expiry disables save, resume refreshes the
 view, and pop/disposal invalidates pending reads/saves. The scrollable header
 and list share a bounded sheet with a separate save button.
 
+Service selection accepts the authenticated subscription access state even
+when Smart Access is disabled; if access is unknown, the normal subscription
+read precedes the catalog read. This does not enable providers or leases and
+retains catalog trust, access, revision and native capability checks. A failed
+picker load shows only its access/catalog/native-snapshot stage, a closed code
+and an observed HTTP status when available; raw errors are not displayed.
+
 Save updates the explicit mode and local service set together, invalidates the
 reusable staged profile and takes effect on the next connection. It does not
 disconnect the current tunnel. Missing native capability is disclosed before

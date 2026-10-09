@@ -1,5 +1,45 @@
 part of pokrov_app_shell;
 
+/// Only closed presentation data from this picker load, never the raw failure.
+class _CatalogServiceSelectionFailure implements Exception {
+  const _CatalogServiceSelectionFailure(this.stage, this.code, this.httpStatus);
+  factory _CatalogServiceSelectionFailure.from(String stage, Object error) {
+    final code = switch (error) {
+      RoutingCatalogFailure(:final code) => switch (code) {
+        'catalog_selective_unavailable' || 'catalog_preview_superseded' ||
+        'catalog_trust_unconfigured' || 'catalog_disabled' ||
+        'catalog_response_invalid' || 'catalog_signature_invalid' ||
+        'catalog_key_not_trusted' || 'catalog_audience_mismatch' ||
+        'catalog_rollback_rejected' || 'catalog_not_current' ||
+        'catalog_clock_rollback' || 'catalog_session_changed' ||
+        'catalog_fetch_superseded' || 'catalog_cache_unavailable' => code,
+        _ => 'catalog_invalid',
+      },
+      BootstrapFailure() => KnownOperationalErrorCodes.values
+          .contains(error.operationalErrorCode)
+          ? error.operationalErrorCode : 'unknown',
+      TimeoutException() => 'timeout',
+      _ => 'unknown',
+    };
+    final status = error is BootstrapFailure
+        ? error.observedHttpStatus ?? error.statusCode : null;
+    return _CatalogServiceSelectionFailure(stage, code,
+        status != null && status >= 100 && status <= 599 ? status : null);
+  }
+  final String stage;
+  final String code;
+  final int? httpStatus;
+  String get description {
+    final label = switch (stage) {
+      'access' => 'Доступ',
+      'catalog' => 'Каталог',
+      'native_snapshot' => 'Модуль подключения',
+      _ => 'Неизвестный этап',
+    };
+    return '$label: $code${httpStatus == null ? '' : ', HTTP $httpStatus'}.';
+  }
+}
+
 class _CatalogServiceSelectionData {
   const _CatalogServiceSelectionData({required this.catalog, required this.platform,
     required this.accessState, required this.profileRevision, required this.nativeWindowVersion,
@@ -146,9 +186,12 @@ class _CatalogServiceSelectionSheetState extends State<_CatalogServiceSelectionS
         }));
       }
       _scheduleMetadataBoundary(data, generation);
-    } on Object {
+    } on Object catch (error) {
       if (mounted && generation == _generation) {
-        setState(() => _error = 'Не удалось обновить каталог. Повторите попытку.');
+        final closed = error is _CatalogServiceSelectionFailure
+            ? error : _CatalogServiceSelectionFailure.from('unknown', error);
+        setState(() => _error =
+            'Не удалось обновить каталог. ${closed.description} Повторите попытку.');
       }
     }
   }

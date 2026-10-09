@@ -1913,11 +1913,11 @@ class ConnectionManager extends ChangeNotifier {
     if (access != null && access.hasKnownAccessState && access.isConsistent) {
       return access.accessState;
     }
-    final service = _bootstrapper;
-    return service is AppFirstSmartAccessService &&
-        (service as AppFirstSmartAccessService).smartAccessEnabled &&
-        _subscriptionInfo?.lane != 'expiredOrBlocked'
-        ? _subscriptionInfo?.accessState : null;
+    final subscription = _subscriptionInfo;
+    return subscription != null && subscription.lane != 'expiredOrBlocked' &&
+        const {'trial_premium', 'bonus_premium', 'paid_unlimited',
+          'free_monthly', 'free_soft_mode'}.contains(subscription.accessState)
+        ? subscription.accessState : null;
   }
 
   Future<VerifiedSmartAccessProviderPolicy> _loadSmartDnsProviders() async {
@@ -1941,132 +1941,137 @@ class ConnectionManager extends ChangeNotifier {
   Future<_CatalogServiceSelectionData> _loadCatalogServiceSelection(
       {required bool Function() isCurrent,
       required Future<void> cancelled}) async {
-    final service = _bootstrapper;
-    final revision = _managedProfileRevision;
-    final generation = _connectionCoordinator.operationGeneration;
-    if (_catalogSelectionAccessState == null &&
-        service is AppFirstClientDataService &&
-        service is AppFirstSmartAccessService &&
-        (service as AppFirstSmartAccessService).smartAccessEnabled) {
-      final subscription = await (service as AppFirstClientDataService)
-          .fetchClientSubscription(hostPlatform: _appContext.hostPlatform,
-              requestTimeout: _actionTimeout, cancelled: cancelled);
-      if (_disposed || !isCurrent() || revision != _managedProfileRevision ||
-          !_connectionCoordinator.ownsOperation(generation)) {
+    var stage = 'access';
+    try {
+      final service = _bootstrapper;
+      final revision = _managedProfileRevision;
+      final generation = _connectionCoordinator.operationGeneration;
+      if (_catalogSelectionAccessState == null && _selectiveServicesAvailable &&
+          service is AppFirstClientDataService) {
+        final subscription = await (service as AppFirstClientDataService)
+            .fetchClientSubscription(hostPlatform: _appContext.hostPlatform,
+                requestTimeout: _actionTimeout, cancelled: cancelled);
+        if (_disposed || !isCurrent() || revision != _managedProfileRevision ||
+            !_connectionCoordinator.ownsOperation(generation)) {
+          throw const RoutingCatalogFailure('catalog_preview_superseded');
+        }
+        _subscriptionInfo = subscription;
+      }
+      final accessState = _catalogSelectionAccessState;
+      bool metadataCurrent() =>
+          !_disposed &&
+          isCurrent() &&
+          _selectiveServicesAvailable &&
+          revision == _managedProfileRevision &&
+          _catalogSelectionAccessState == accessState &&
+          _connectionCoordinator.ownsOperation(generation);
+      if (!_selectiveServicesAvailable ||
+          service is! AppFirstRoutingCatalogService ||
+          accessState == null || accessState.isEmpty) {
+        throw const RoutingCatalogFailure('catalog_selective_unavailable');
+      }
+      stage = 'catalog';
+      final result = await (service as AppFirstRoutingCatalogService)
+          .fetchRoutingCatalog(hostPlatform: _appContext.hostPlatform)
+          .timeout(_actionTimeout);
+      if (result == null)
+        throw const RoutingCatalogFailure('catalog_selective_unavailable');
+      final catalog = RoutingCatalogPolicy.fromVerified(result.catalog);
+      stage = 'native_snapshot';
+      final native = await _runtimeEngine.snapshot().timeout(_actionTimeout);
+      if (_disposed ||
+          !_selectiveServicesAvailable ||
+          revision != _managedProfileRevision ||
+          _catalogSelectionAccessState != accessState) {
         throw const RoutingCatalogFailure('catalog_preview_superseded');
       }
-      _subscriptionInfo = subscription;
-    }
-    final accessState = _catalogSelectionAccessState;
-    bool metadataCurrent() =>
-        !_disposed &&
-        isCurrent() &&
-        _selectiveServicesAvailable &&
-        revision == _managedProfileRevision &&
-        _catalogSelectionAccessState == accessState &&
-        _connectionCoordinator.ownsOperation(generation);
-    if (!_selectiveServicesAvailable ||
-        service is! AppFirstRoutingCatalogService ||
-        accessState == null || accessState.isEmpty) {
-      throw const RoutingCatalogFailure('catalog_selective_unavailable');
-    }
-    final result = await (service as AppFirstRoutingCatalogService)
-        .fetchRoutingCatalog(hostPlatform: _appContext.hostPlatform)
-        .timeout(_actionTimeout);
-    if (result == null)
-      throw const RoutingCatalogFailure('catalog_selective_unavailable');
-    final catalog = RoutingCatalogPolicy.fromVerified(result.catalog);
-    final native = await _runtimeEngine.snapshot().timeout(_actionTimeout);
-    if (_disposed ||
-        !_selectiveServicesAvailable ||
-        revision != _managedProfileRevision ||
-        _catalogSelectionAccessState != accessState) {
-      throw const RoutingCatalogFailure('catalog_preview_superseded');
-    }
-    RuntimeSmartAccessLeaseState? runtime;
-    DateTime? runtimeObservedAt;
-    final engine = _runtimeEngine;
-    final digest = native.effectiveProfileDigest;
-    bool runtimeCurrent() {
-      final binding = _connectionCoordinator.activeSmartAccessLeases;
-      final now = DateTime.now().toUtc();
-      return !_disposed &&
-          isCurrent() &&
-          !_runtimeBusy &&
-          _connectionCoordinator.ownsOperation(generation) &&
-          _runtimeSnapshot?.phase == RuntimePhase.running &&
-          _runtimeSnapshot?.effectiveProfileDigest == digest &&
-          binding != null &&
-          binding.profileDigest == digest &&
-          binding.catalogExpiresAt != null &&
-          now.isBefore(binding.catalogExpiresAt!) &&
-          !_connectionCoordinator.receivedCatalogRevocation(binding);
-    }
+      RuntimeSmartAccessLeaseState? runtime;
+      DateTime? runtimeObservedAt;
+      final engine = _runtimeEngine;
+      final digest = native.effectiveProfileDigest;
+      bool runtimeCurrent() {
+        final binding = _connectionCoordinator.activeSmartAccessLeases;
+        final now = DateTime.now().toUtc();
+        return !_disposed &&
+            isCurrent() &&
+            !_runtimeBusy &&
+            _connectionCoordinator.ownsOperation(generation) &&
+            _runtimeSnapshot?.phase == RuntimePhase.running &&
+            _runtimeSnapshot?.effectiveProfileDigest == digest &&
+            binding != null &&
+            binding.profileDigest == digest &&
+            binding.catalogExpiresAt != null &&
+            now.isBefore(binding.catalogExpiresAt!) &&
+            !_connectionCoordinator.receivedCatalogRevocation(binding);
+      }
 
-    if (engine is RuntimeSmartAccessBackgroundControl &&
-        native.phase == RuntimePhase.running &&
-        native.smartAccessRuntimeControlVersion == 1 &&
-        digest != null &&
-        runtimeCurrent()) {
-      try {
-        final state = await (engine as RuntimeSmartAccessBackgroundControl)
-            .readSmartAccessLeases(digest)
-            .timeout(_actionTimeout);
-        if (runtimeCurrent()) {
-          runtime = state;
-          runtimeObservedAt = DateTime.now().toUtc();
+      if (engine is RuntimeSmartAccessBackgroundControl &&
+          native.phase == RuntimePhase.running &&
+          native.smartAccessRuntimeControlVersion == 1 &&
+          digest != null &&
+          runtimeCurrent()) {
+        try {
+          final state = await (engine as RuntimeSmartAccessBackgroundControl)
+              .readSmartAccessLeases(digest)
+              .timeout(_actionTimeout);
+          if (runtimeCurrent()) {
+            runtime = state;
+            runtimeObservedAt = DateTime.now().toUtc();
+          }
+        } on Object {
+          // Native state is optional presentation data, never inferred from the
+          // prepared catalog or retained inventory when readback is unavailable.
         }
-      } on Object {
-        // Native state is optional presentation data, never inferred from the
-        // prepared catalog or retained inventory when readback is unavailable.
       }
-    }
-    final smartAccessEnabled = service is AppFirstSmartAccessService &&
-        (service as AppFirstSmartAccessService).smartAccessEnabled;
-    VerifiedSmartAccessProviderPolicy? providers;
-    DateTime? providersObservedAt;
-    if (smartAccessEnabled &&
-        service is AppFirstSmartAccessService &&
-        metadataCurrent() &&
-        catalog.services
-            .any((item) => item.providerCapabilityRefs.isNotEmpty)) {
-      try {
-        providers = await (service as AppFirstSmartAccessService)
-            .fetchSmartAccessProviders(
-                hostPlatform: _appContext.hostPlatform,
-                operationIsCurrent: metadataCurrent,
-                remainingBudget: _actionTimeout,
-                cancelled: Future.any<void>([
-                  cancelled,
-                  _connectionCoordinator.whenOperationChanges(generation)
-                ]))
-            .timeout(_actionTimeout);
-        providersObservedAt = DateTime.now().toUtc();
-      } on Object {
-        // Optional signed metadata must not block a valid catalog selection.
-        // Missing evidence remains unknown and never grants route authority.
+      final smartAccessEnabled = service is AppFirstSmartAccessService &&
+          (service as AppFirstSmartAccessService).smartAccessEnabled;
+      VerifiedSmartAccessProviderPolicy? providers;
+      DateTime? providersObservedAt;
+      if (smartAccessEnabled &&
+          service is AppFirstSmartAccessService &&
+          metadataCurrent() &&
+          catalog.services
+              .any((item) => item.providerCapabilityRefs.isNotEmpty)) {
+        try {
+          providers = await (service as AppFirstSmartAccessService)
+              .fetchSmartAccessProviders(
+                  hostPlatform: _appContext.hostPlatform,
+                  operationIsCurrent: metadataCurrent,
+                  remainingBudget: _actionTimeout,
+                  cancelled: Future.any<void>([
+                    cancelled,
+                    _connectionCoordinator.whenOperationChanges(generation)
+                  ]))
+              .timeout(_actionTimeout);
+          providersObservedAt = DateTime.now().toUtc();
+        } on Object {
+          // Optional signed metadata must not block a valid catalog selection.
+          // Missing evidence remains unknown and never grants route authority.
+        }
       }
+      if (_disposed ||
+          revision != _managedProfileRevision ||
+          _catalogSelectionAccessState != accessState) {
+        throw const RoutingCatalogFailure('catalog_preview_superseded');
+      }
+      return _CatalogServiceSelectionData(
+          catalog: catalog,
+          platform: _appContext.hostPlatform.name,
+          accessState: accessState,
+          profileRevision: revision,
+          nativeWindowVersion: native.routingCatalogWindowVersion,
+          runtime: runtime,
+          runtimeObservedAt: runtimeObservedAt,
+          runtimeIsCurrent: runtimeCurrent,
+          runtimeInvalidated:
+              _connectionCoordinator.whenOperationChanges(generation),
+          smartAccessEnabled: smartAccessEnabled,
+          providerPolicy: providers,
+          providerPolicyObservedAt: providersObservedAt,
+          metadataIsCurrent: metadataCurrent);
+    } on Object catch (error) {
+      throw _CatalogServiceSelectionFailure.from(stage, error);
     }
-    if (_disposed ||
-        revision != _managedProfileRevision ||
-        _catalogSelectionAccessState != accessState) {
-      throw const RoutingCatalogFailure('catalog_preview_superseded');
-    }
-    return _CatalogServiceSelectionData(
-        catalog: catalog,
-        platform: _appContext.hostPlatform.name,
-        accessState: accessState,
-        profileRevision: revision,
-        nativeWindowVersion: native.routingCatalogWindowVersion,
-        runtime: runtime,
-        runtimeObservedAt: runtimeObservedAt,
-        runtimeIsCurrent: runtimeCurrent,
-        runtimeInvalidated:
-            _connectionCoordinator.whenOperationChanges(generation),
-        smartAccessEnabled: smartAccessEnabled,
-        providerPolicy: providers,
-        providerPolicyObservedAt: providersObservedAt,
-        metadataIsCurrent: metadataCurrent);
   }
 
   Future<_RoutingCatalogPreview?> _loadRoutingCatalogPreview() async {
