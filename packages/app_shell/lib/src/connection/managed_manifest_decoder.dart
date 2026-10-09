@@ -180,9 +180,9 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         hostPlatform: hostPlatform,
         routeMode: routeMode,
         selectedApps: selectedApps,
-        preferredNodeCode: effectivePreferredNode,
+        preferredNodeCode: candidate?.bridgeId != null ? candidate!.nodeCode : effectivePreferredNode,
         preferredVariantId:
-            effectivePreferredNode.isEmpty ? 'direct' : preferredVariantId,
+            candidate?.bridgeId ?? (effectivePreferredNode.isEmpty ? 'direct' : preferredVariantId),
         smartConnect: effectiveSmartConnect,
         supportContext: supportContext,
         clientRuleSetCatalog: clientRuleSetCatalog,

@@ -46,7 +46,7 @@ class TransportCandidate {
     required this.network, required this.flow, required this.minimumClientRelease,
     required this.minimumCoreRelease, required Set<HostPlatform> platforms,
     required Set<RuntimeTransportFeature> requiredFeatures, this.warpMode,
-    this.family = 'ipv4', this.deliveryEndpointId, this.endpointGeneration})
+    this.family = 'ipv4', this.deliveryEndpointId, this.endpointGeneration, this.bridgeId})
       : platforms = Set.unmodifiable(platforms), requiredFeatures = Set.unmodifiable(requiredFeatures);
 
   final String candidateRef, profileRef, nodeCode, countryCode;
@@ -55,6 +55,8 @@ class TransportCandidate {
   final String family;
   final String? deliveryEndpointId;
   final int? endpointGeneration;
+  /// Admitted bridge ingress; node and country still identify the exit.
+  final String? bridgeId;
   /// Null for an ordinary route. WARP last has no known country of exit.
   final String? warpMode;
   final int priority;

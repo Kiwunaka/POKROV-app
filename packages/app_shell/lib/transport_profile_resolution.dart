@@ -64,8 +64,13 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       final parameters = _transportMap(item['parameters']);
       final deliveryId = parameters['delivery_endpoint_id'];
       final generation = parameters['endpoint_generation'];
+      final bridgeId = parameters['bridge_id'];
       final family = parameters['family'] ?? 'ipv4';
-      if (deliveryId == null) {
+      if (bridgeId != null) {
+        _keys(parameters, const {'network', 'flow', 'bridge_id'});
+        text(bridgeId, RegExp(r'^[a-z0-9][a-z0-9._-]*$'), 64);
+        if (bridgeId == 'direct' || warpMode != null || deliveryId != null) throw const FormatException();
+      } else if (deliveryId == null) {
         _keys(parameters, const {'network', 'flow'});
       } else {
         _keys(parameters, const {'network', 'flow', 'family',
@@ -81,7 +86,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       }
       final endpointSuffix = deliveryId == null ? '' : ':endpoint_$deliveryId:$family:g$generation';
       final expectedRef = warpDirect ? 'warp:warp_free:warp_direct'
-          : '$node:$profile$endpointSuffix${warpMode == null ? '' : ':$warpMode'}';
+          : '$node:$profile${bridgeId == null ? '' : ':bridge_$bridgeId'}$endpointSuffix${warpMode == null ? '' : ':$warpMode'}';
       if (!refs.add(ref) || ref != expectedRef ||
           (warpMode == 'warp_over_proxy' || warpDirect ? country != 'ZZ' : country == 'ZZ') ||
           (warpDirect && (node.isNotEmpty || profile != 'warp_free' || deliveryId != null)) ||
@@ -100,6 +105,9 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         _ => false,
       };
       if (!supported || (warpMode != null && !warpDirect && protocol != 'vless')) throw const FormatException();
+      if (bridgeId != null && (protocol != 'vless' || transport != 'tcp' || protection != 'reality')) {
+        throw const FormatException();
+      }
       if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
           !const {'', 'xtls-rprx-vision'}.contains(parameters['flow'])) throw const FormatException();
       if (transport == 'xhttp' && parameters['flow'] != '') throw const FormatException();
@@ -121,6 +129,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       if (deliveryId != null && _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
         throw const FormatException();
       }
+      if (bridgeId != null && releaseCompare(minimumClient, '1.5.0+4116') < 0) throw const FormatException();
       if (warpDirect && (_transportReleaseCompare(minimumClientVersion, '1.5.0') < 0 ||
           minimumCore == null || _transportReleaseCompare(minimumCore as String, '1.2.8') < 0 ||
           parameters['network'] != 'udp' || parameters['flow'] != '')) {
@@ -163,6 +172,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         network: parameters['network'] as String, flow: parameters['flow'] as String,
         minimumClientRelease: minimumClient, minimumCoreRelease: minimumCore as String?,
         platforms: platforms, requiredFeatures: features, warpMode: warpMode as String?,
+        bridgeId: bridgeId as String?,
         family: family as String, deliveryEndpointId: deliveryId as String?,
         endpointGeneration: generation as int?));
     }

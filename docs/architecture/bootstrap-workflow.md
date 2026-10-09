@@ -135,6 +135,11 @@ CONN-008. Other ready candidates and the ordinary group after a WARP group still
 run and can win. Authorization denial and supersession retain their priority.
 Known candidate-material validation failures retain `invalid_profile`/`parse_profile`
 in the current attempt; native failures retain their own closed reason and stage.
+Ordinary bridge candidates retain the exit Node/country and actual VLESS TCP/REALITY
+metadata. `bridge_id` selects the admitted existing graph without changing stored
+preferences and requires client 1.5.0+4116. Auto settles eligible direct candidates
+before bridge probes within the existing selector budget; explicit pins, WARP and
+cached-authority guards still apply.
 
 After a healthy ordinary connect, the existing finite cache refresh fetches the
 exact current profile's latest catalog, then prepares at most two alternatives:

@@ -152,7 +152,7 @@ String _locationCandidateLabel(domain.TransportCandidate candidate) {
     'awg' => 'AWG 3.1',
     _ => 'Соединение',
   };
-  final path = candidate.transport == 'bridge' ? ' · Через мост' : '';
+  final path = candidate.bridgeId != null ? ' · Через мост' : '';
   final warp = candidate.warpMode == null ? '' : ' · WARP';
   return '$protocol$path$warp';
 }

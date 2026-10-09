@@ -267,6 +267,9 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool failHandoff = false;
   final failedProbeProtocols = <String>{};
   final failedProbeProfiles = <String>{};
+  final failedProbeCandidates = <String>{};
+  final heldProbeCandidates = <String>{};
+  final probedPayloads = <ManagedProfilePayload>[];
   final probedWarpModes = <String>[];
   final heldProbeProtocols = <String>{};
   final heldProbeProfiles = <String>{};
@@ -326,6 +329,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     probeTimeouts.add(timeout);
     expect(value(phase).transportCapabilities, isNotNull);
     final protocol = payload.source?.protocol ?? 'vless';
+    probedPayloads.add(payload);
     probedProtocols.add(protocol);
     probedWarpModes.add(payload.warpPolicy.canEnableRuntime ? payload.warpPolicy.mode : '');
     final cancelled = Completer<void>();
@@ -343,11 +347,15 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     }
     if (heldProbeProtocols.contains(protocol)) await cancelled.future;
     if (heldProbeProfiles.contains(payload.profileName)) await cancelled.future;
+    if (heldProbeCandidates.contains(payload.materialCandidate?.candidateRef)) {
+      await Future.any([probeRelease.future, cancelled.future]);
+    }
     if (alternateProbeGate != null && protocol != 'vless') {
       await Future.any([alternateProbeGate!, cancelled.future]);
     }
     activeProbes.remove(probeId);
     final success = !cancelled.isCompleted && !failedProbeProtocols.contains(protocol) &&
+        !failedProbeCandidates.contains(payload.materialCandidate?.candidateRef) &&
         !failedProbeProfiles.contains(payload.profileName);
     return RuntimeCandidateProbeResult(success: success,
         failureKind: success ? '' : probeFailureKinds[payload.profileName] ?? 'cancelled',
@@ -1525,6 +1533,119 @@ void main() {
     expect(manager.materialCandidate?.candidateRef, awg.candidateRef);
     expect(manager.transportCatalog?.candidates, [vless, awg]);
     expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.activeProbes, isEmpty);
+  });
+
+  test('US country Auto exhausts direct before the exact admitted bridge material', () async {
+    final originalStorage = FlutterSecureStoragePlatform.instance;
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({});
+    final directory = await Directory.systemTemp.createTemp('pokrov-us-bridge-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+      FlutterSecureStoragePlatform.instance = originalStorage;
+    });
+    const profile = 'legacy_reality_fallback';
+    const directRef = 'us:$profile';
+    const bridgeRef = 'us:$profile:bridge_mini';
+    const baseTag = 'US fixture';
+    const bridgeLabel = 'Mini fixture';
+    const bridgeTag = '$baseTag · $bridgeLabel';
+    const detourTag = 'mini-fixture-ingress';
+    final queries = <Map<String, String>>[];
+    Map<String, Object?> leaf(String tag, {String? detour}) => {
+      'type': 'vless', 'tag': tag, 'server': 'us.example.invalid', 'server_port': 443,
+      'uuid': '11111111-1111-4111-8111-111111111111',
+      if (detour != null) 'detour': detour,
+      'tls': {'enabled': true, 'server_name': 'fixture.invalid',
+        'utls': {'enabled': true, 'fingerprint': 'chrome'},
+        'reality': {'enabled': true, 'public_key': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'}},
+    };
+    Map<String, Object?> graph(String selectedTag) => {
+      'outbounds': [
+        {'type': 'selector', 'tag': 'proxy', 'outbounds': [selectedTag], 'default': selectedTag},
+        leaf(baseTag), leaf(bridgeTag, detour: detourTag),
+        {...leaf(detourTag), 'server': 'mini.example.invalid',
+          'uuid': '22222222-2222-4222-8222-222222222222'},
+      ],
+      'route': {'final': 'proxy'},
+      '_meta': {'ru_bridge': {'enabled': true, 'endpoints': [{'id': 'mini', 'label': bridgeLabel}]}},
+    };
+    Map<String, Object?> candidate(String ref, int priority, {String? bridge}) => {
+      'candidate_ref': ref, 'profile_ref': profile, 'node_code': 'us', 'country_code': 'US',
+      'protocol': 'vless', 'transport': 'tcp', 'protection': 'reality', 'priority': priority,
+      'parameters': {'network': 'tcp', 'flow': '', if (bridge != null) 'bridge_id': bridge},
+      'requirements': {'minimum_client_release': bridge == null ? '1.2.0' : '1.5.0+4116',
+        'minimum_core_release': null, 'platforms': ['windows'],
+        'required_features': ['singbox_vless_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_reality_v1']},
+    };
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'synthetic-session', 'account_id': 'synthetic-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          queries.add(request.uri.queryParameters);
+          request.response.write(jsonEncode({
+            'profile_revision': 'us-bridge-fixture', 'config_format': 'singbox-json',
+            'transport_profile': profile, 'transport_kind': 'reality', 'config_payload': graph(baseTag),
+            'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
+              'revision': 'us-bridge-fixture', 'selected_candidate_ref': directRef,
+              'candidates': [candidate(directRef, 0), candidate(bridgeRef, 1, bridge: 'mini')]},
+            'candidate_materials': [for (final ref in [directRef, bridgeRef]) {
+              'candidate_ref': ref, 'transport_kind': 'reality',
+              'config_format': 'singbox-json', 'config_payload': graph(ref == directRef ? baseTag : bridgeTag),
+            }],
+            'smart_connect': {'eligible': true, 'shortlist': [{'code': 'us', 'country': 'US', 'outbound_tag': baseTag}]},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+            'access': {'access_state': 'paid_unlimited',
+              'expiry_at': DateTime.now().toUtc().add(const Duration(days: 2)).toIso8601String()},
+          }));
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      supportDirectoryResolver: () async => directory, maxRequestAttempts: 1,
+      allExceptRuRuleSetUrlsResolver: (_) => const []);
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..coreVersion = '1.2.10'
+      ..heldProbeCandidates.add(directRef)..failedProbeCandidates.add(directRef);
+    final experience = _ExperienceStore();
+    final manager = _manager(runtime, bootstrapper, experienceStore: experience,
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    manager.restoreConnectionPreferences(const PokrovClientExperienceState.empty().copyWith(
+      interfaceMode: PokrovInterfaceMode.advanced, preferredCountryCode: 'US',
+      firstRouteScopeConfirmed: true, firstRouteScopeMode: RouteMode.fullTunnel), const {});
+    final connecting = manager.connect();
+    await Future.any([runtime.probeStarted.future, connecting]);
+    expect(runtime.probedPayloads.map((payload) => payload.materialCandidate?.candidateRef), [directRef],
+      reason: 'typed bridge material must be admitted, but cannot race a still-held direct route');
+    runtime.probeRelease.complete();
+    await connecting;
+    expect(runtime.probedPayloads.map((payload) => payload.materialCandidate?.candidateRef), [directRef, bridgeRef]);
+    expect(manager.status.phase, ConnectionPhase.connected);
+    final staged = runtime.stagedPayloads.single;
+    expect(staged.materialCandidate?.candidateRef, bridgeRef);
+    expect(staged.materialCandidate?.countryCode, 'US');
+    expect(staged.resolvedNodeCode, 'us');
+    final material = jsonDecode(staged.configPayload) as Map;
+    final selected = (material['outbounds'] as List).cast<Map>().singleWhere((row) => row['tag'] == 'proxy');
+    expect(selected['default'], bridgeTag);
+    expect(selected['outbounds'], [bridgeTag]);
+    final chosen = (material['outbounds'] as List).cast<Map>().singleWhere((row) => row['tag'] == bridgeTag);
+    expect(chosen['detour'], detourTag);
+    expect((experience.saved.preferredCountryCode, experience.saved.preferredNodeCode,
+        experience.saved.preferredCandidateRef, experience.saved.preferredVariantId), ('US', '', '', 'direct'));
+    expect(queries.first['selected_country_code'], 'US');
     expect(runtime.activeProbes, isEmpty);
   });
 

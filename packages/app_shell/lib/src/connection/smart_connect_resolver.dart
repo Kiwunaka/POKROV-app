@@ -27,6 +27,7 @@ class SmartConnectCandidateSelector {
   static bool _familySiblings(TransportCandidate a, TransportCandidate b) =>
       a.warpMode == null && b.warpMode == null &&
       (a.deliveryEndpointId != null || b.deliveryEndpointId != null) &&
+      a.bridgeId == b.bridgeId &&
       a.nodeCode == b.nodeCode && a.profileRef == b.profileRef &&
       a.family != b.family;
 
@@ -121,6 +122,8 @@ class SmartConnectCandidateSelector {
       !_failedUntil.containsKey((network, candidate.candidateRef))).toList();
     final candidates = (remembered.isEmpty ? eligible : remembered)
       ..sort((a, b) {
+        if (a.bridgeId == null && b.bridgeId != null) return -1;
+        if (b.bridgeId == null && a.bridgeId != null) return 1;
         if (a.candidateRef == preferred && b.candidateRef != preferred) return -1;
         if (b.candidateRef == preferred && a.candidateRef != preferred) return 1;
         if (_udpFailedUntil.containsKey(network) && a.network != b.network) {
@@ -165,6 +168,9 @@ class SmartConnectCandidateSelector {
     var startedCount = 0;
     var failures = 0;
     final maxAttempts = recoveryCandidateRef.isEmpty ? candidates.length : 3;
+    var directRemaining = candidates.where((candidate) => candidate.bridgeId == null).length;
+    final directSettled = Completer<void>();
+    if (directRemaining == 0) directSettled.complete();
     void stop() {
       if (!ended.isCompleted) ended.complete();
       for (final cancellation in probes) {
@@ -246,6 +252,7 @@ class SmartConnectCandidateSelector {
         probes.remove(cancellation);
         final familyFinish = familySettled[candidate.candidateRef];
         if (familyFinish != null && !familyFinish.isCompleted) familyFinish.complete();
+        if (candidate.bridgeId == null && --directRemaining == 0) directSettled.complete();
       }
       if (ended.isCompleted) return;
       failures++;
@@ -259,7 +266,11 @@ class SmartConnectCandidateSelector {
         _udpFailedUntil[network] = _now().add(failureMemory);
         final tcp = candidates.where((item) => item.network == 'tcp').toList();
         final udp = candidates.where((item) => item.network != 'tcp').toList();
-        candidates..clear()..addAll(tcp)..addAll(udp);
+        candidates..clear()
+          ..addAll(tcp.where((candidate) => candidate.bridgeId == null))
+          ..addAll(udp.where((candidate) => candidate.bridgeId == null))
+          ..addAll(tcp.where((candidate) => candidate.bridgeId != null))
+          ..addAll(udp.where((candidate) => candidate.bridgeId != null));
       }
     }
     Duration preferredProbeTime = Duration.zero;
@@ -272,6 +283,10 @@ class SmartConnectCandidateSelector {
             Future<void>.delayed(Duration(milliseconds: (250 << (failures - 1).clamp(0, 2))))]);
         }
         if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
+        if (candidates.first.bridgeId != null && !directSettled.isCompleted) {
+          await Future.any<void>([ended.future, directSettled.future]);
+          if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
+        }
         await run(candidates.removeAt(0), selectionTimeout - probeTime,
             (elapsed) => probeTime += elapsed);
       }
