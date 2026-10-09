@@ -154,6 +154,8 @@ final class PokrovDiagnosticTimelineEntry {
     required this.occurredAtUtc,
     required this.state,
     this.errorCode,
+    this.prepareReason,
+    this.errorOrigin,
   });
 
   final String phaseKey;
@@ -161,6 +163,8 @@ final class PokrovDiagnosticTimelineEntry {
   final DateTime occurredAtUtc;
   final PokrovDiagnosticTimelineState state;
   final String? errorCode;
+  final String? prepareReason;
+  final ObservabilityErrorOrigin? errorOrigin;
 }
 
 final class PokrovDiagnosticTimelineAttempt {
@@ -585,6 +589,8 @@ abstract final class PokrovDiagnosticsPresenter {
         _ => PokrovDiagnosticTimelineState.ended,
       },
       errorCode: breadcrumb.errorCode,
+      prepareReason: phaseKey == 'profile' ? breadcrumb.prepareReason : null,
+      errorOrigin: phaseKey == 'profile' ? breadcrumb.errorOrigin : null,
     );
   }
 
@@ -1838,6 +1844,10 @@ class _TimelineEntryRow extends StatelessWidget {
                       text: ' · $code',
                       style: theme.textTheme.bodySmall?.copyWith(color: tone),
                     ),
+                  if (entry.prepareReason case final reason?)
+                    TextSpan(text: '\nПричина подготовки: $reason', style: theme.textTheme.bodySmall),
+                  if (entry.errorOrigin case final origin?)
+                    TextSpan(text: '\nИсточник ошибки: ${origin.name}', style: theme.textTheme.bodySmall),
                 ],
               ),
             ),

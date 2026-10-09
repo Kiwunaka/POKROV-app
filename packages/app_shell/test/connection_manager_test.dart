@@ -1893,6 +1893,9 @@ void main() {
     expect(native.generation, current.generation);
     expect((current.probeFailureKind, current.probeStage), ('invalid_profile', 'parse_profile'),
         reason: 'closed material rejection must survive selector exhaustion in the current card');
+    final ownProfile = current.entries.singleWhere((entry) => entry.phaseKey == 'profile');
+    expect((ownProfile.prepareReason, ownProfile.errorOrigin?.name),
+        ('candidate_selection_exhausted', 'core'));
     await observability.runConnectionAction(manager.disconnect, beginsWithDisconnect: true);
     await observability.flush();
     final stoppedReport = PokrovDiagnosticsPresenter.fromRuntime(
@@ -1908,6 +1911,11 @@ void main() {
     expect(stoppedReport.timelineAttempts.last.generation, greaterThan(current.generation));
     expect((stoppedReport.timelineAttempts.last.probeFailureKind, stoppedReport.timelineAttempts.last.probeStage),
         (null, null), reason: 'the new Stop attempt must not inherit the old failure');
+    final retainedProfile = ownFailedAttempt.entries.singleWhere((entry) => entry.phaseKey == 'profile');
+    expect((retainedProfile.prepareReason, retainedProfile.errorOrigin?.name),
+        ('candidate_selection_exhausted', 'core'));
+    expect(stoppedReport.timelineAttempts.last.entries
+        .every((entry) => entry.prepareReason == null && entry.errorOrigin == null), isTrue);
     final supportEvent = DiagnosticEventRecord(
       occurredAt: ownFailedAttempt.entries.last.occurredAtUtc, subsystem: 'candidate_probe',
       stage: ownFailedAttempt.probeStage!, outcome: 'failed',

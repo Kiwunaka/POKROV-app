@@ -257,6 +257,8 @@ attempt generation after Stop or another attempt; a new attempt never inherits
 the previous reason. Windows encrypted support events carry the nullable
 `candidate_failure_kind` only for `candidate_probe`, independently of current
 runtime snapshot failures. Missing native stages remain unknown.
+The profile phase also retains its already emitted, allowlisted preparation
+reason and error origin on the same attempt; later attempts do not inherit them.
 
 ### Core ABI and lifecycle compatibility
 

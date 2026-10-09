@@ -179,6 +179,8 @@ final class OperationalBreadcrumb {
     this.probeStage,
     this.failureKind,
     this.durationMs,
+    this.prepareReason,
+    this.errorOrigin,
   });
 
   factory OperationalBreadcrumb.fromEvent(OperationalEvent event) =>
@@ -195,6 +197,11 @@ final class OperationalBreadcrumb {
         failureKind: OperationalAttributePolicy.candidateProbeFailureKinds.contains(event.attributes['failure_kind'])
             ? event.attributes['failure_kind'] as String : null,
         durationMs: event.attributes['duration_ms'] as int?,
+        prepareReason: OperationalAttributePolicy.prepareFailureAttributes(
+          reason: event.attributes['prepare_reason'] is String
+              ? event.attributes['prepare_reason'] as String : null,
+        )['prepare_reason'] as String?,
+        errorOrigin: event.error?.origin,
       );
 
   final String eventId;
@@ -207,6 +214,8 @@ final class OperationalBreadcrumb {
   final String? probeStage;
   final String? failureKind;
   final int? durationMs;
+  final String? prepareReason;
+  final ObservabilityErrorOrigin? errorOrigin;
 }
 
 final class OperationalBreadcrumbRing {
