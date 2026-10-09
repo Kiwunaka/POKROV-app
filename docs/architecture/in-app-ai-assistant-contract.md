@@ -39,9 +39,8 @@ sends the node address, provider record, UUID, or connection material.
 
 The current client reads the assistant reply, escalation flag, and safe
 suggested actions. App-session renewal follows the same client API behavior as
-other app-first calls. The focused contract is covered by
-`app_first_runtime_bootstrap_test.dart` under
-`client support assistant uses app-session auth and a safe wire token`.
+other app-first calls. Only assistant redaction is covered by client tests
+(`assistant_contract_test.dart`).
 
 Ticket APIs remain the operator escalation and continuity lane:
 

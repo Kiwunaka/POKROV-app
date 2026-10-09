@@ -46,14 +46,9 @@ Capture the app shell at these widths:
 
 ## Current Local Status
 
-- Widget width matrix: implemented in `pokrov_seed_app_test.dart`.
-- Critical 200% text-scale paths: locally proved for first session, Home,
-  Locations and Support in `pokrov_seed_app_test.dart`.
-- Automated widget goldens: tracked for idle light, first route-scope dark,
-  verified dark and degraded light at `390 x 844`; exact Windows and Ubuntu
-  baselines are separate because host rasterization differs. The test disables
-  animation, clears inherited image-cache state once before the matrix and
-  compares all four files without update mode in the normal suite.
+- Widget width matrix, 200% text-scale checks and widget goldens were
+  removed from the automated suite on 2026-10-09; layout is checked by eye on
+  real devices.
 - Android/Windows real artifact captures: `MANUAL_OWNER_TEST`.
 
 ## Retained History

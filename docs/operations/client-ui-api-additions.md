@@ -27,8 +27,6 @@ Client:
 Verification:
 
 - Root backend: `python -m pytest tests\test_client_ui_api_additions.py -q`
-- Client service: `flutter test test\app_first_runtime_bootstrap_test.dart --plain-name "client P0/P1 API additions use the app-first session"`
-- Client UI: `flutter test test\pokrov_seed_app_test.dart --plain-name "locations screen renders backend catalog cities"`
 
 ### WARP runtime proof
 
@@ -49,7 +47,6 @@ Verification:
 
 - Runtime: `flutter test test\runtime_engine_test.dart`
 - Android bridge: `.\gradlew.bat testDebugUnitTest`
-- Client UI: `flutter test test\pokrov_seed_app_test.dart --plain-name "enhanced protection asks for explicit consent before activation"`
 
 ## P1
 
@@ -96,7 +93,7 @@ Client:
 
 Verification:
 
-- `flutter test test\app_first_runtime_bootstrap_test.dart --plain-name "client support assistant uses app-session auth"`
+- No client test; covered by the backend test above.
 
 ### Devices
 

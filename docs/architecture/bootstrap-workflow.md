@@ -1112,7 +1112,7 @@ remain for the separate validation stage; no build or device scan was run.
 
 From `POKROV-app/`:
 
-1. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\validate-seed.ps1`.
+1. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\check-client-version-parity.ps1`.
 2. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-workspace.ps1`.
    If an ignored Android Gradle wrapper script or JAR is missing, bootstrap first
    creates a GUID-named project under the system temp directory with Flutter's
@@ -1129,7 +1129,7 @@ From `POKROV-app/`:
    `:app:testDirectDebugUnitTest` / `:app:testStoreDebugUnitTest` tasks.
    On a clean checkout, the bootstrap phase materializes the ignored wrapper
    scripts and JAR before the flavor-specific unit-test tasks run.
-5. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\build-windows-release.ps1 -SyncRuntime -CoreRoot <path>` when you want the local Windows analyze, test, build, and unsigned-package lane.
+5. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\build-windows-release.ps1 -SyncRuntime -CoreRoot <path>` when you want the local Windows build and unsigned-package lane; it does not run analyze or tests.
    Private candidates can pass `-RuntimeArtifactsPath <path>` to use a separate
    existing runtime contract and `-CoreArtifactDirectory <path>` for the selected
    Windows artifact directory. Sync accepts that directory for one platform only;

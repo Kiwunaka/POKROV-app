@@ -80,7 +80,7 @@ Capture these raw values:
   Locations, Rules and Profile and while exercising the connect ritual. Debug
   mode and six-frame `gfxinfo` samples are not release evidence.
 - Windows idle: after stabilization, collect CPU or working-set samples from the
-  exact UI/service processes with the client helper. Android idle CPU/PSS uses
+  exact UI/service processes with `Get-Counter`. Android idle CPU/PSS uses
   the selected physical-device profiler; record no domains, config or process
   command lines.
   Every CPU counter must be readable at every observation; an unavailable
@@ -89,20 +89,7 @@ Capture these raw values:
 - APK/installer size: collect the exact candidate byte length, then compare it
   with the prior same-kind artifact baseline.
 
-The client helper writes numeric arrays only:
-
-```powershell
-pwsh -File .\scripts\collect-client-performance-samples.ps1 `
-  -Mode WindowsIdleCpu -TargetProcessId <pid> -Warmups 30 -Samples 60 `
-  -OutputPath <temporary-path>\windows-idle-cpu.json
-
-pwsh -File .\scripts\collect-client-performance-samples.ps1 `
-  -Mode ArtifactSize -ArtifactPath <exact-candidate> `
-  -OutputPath <temporary-path>\artifact-size.json
-```
-
-For Android/profile-mode sources, first export a numeric JSON array from the
-approved profiler, then use `-Mode RecordedSamples -InputPath ... -Samples ...`.
+Export each series as a numeric JSON array from the profiler or counter.
 Normalize each array with the platform
 `scripts/new_performance_evidence.py`; validate it with
 `scripts/performance_budget_gate.py`. The builder never turns
@@ -110,8 +97,6 @@ Normalize each array with the platform
 
 ## Current 1.2.0 evidence state
 
-- capture contract, numeric client helper and its executable contract test:
-  `PASS` locally;
 - candidate.33 Windows UI idle CPU on the dedicated headless Windows 11 VM:
   `PASS`, p95 `1.0% <= 1.0%` from 60 retained one-second samples after 30
   discarded warmups; working-set p95 `98693120` bytes is

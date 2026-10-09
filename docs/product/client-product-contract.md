@@ -45,10 +45,7 @@ current tunnel proof independently determine whether connection can proceed.
 `docs/generated/platform-copy-contract.md` maps every
 platform copy namespace, the active-client `app.*` review baseline and the
 authority boundary. It is generated reference evidence, not runtime copy or a
-new source of truth. `validate-seed.ps1`
-runs the platform synchronizer in read-only `--check` mode and fails on any
-seed, digest, generated-document, generated-Dart, product-copy hardcode or
-runtime-consumer drift. Prices, promo terms,
+new source of truth. Prices, promo terms,
 referral account state and payment outcomes remain server response authority;
 the generated projection does not make the client a commercial authority.
 

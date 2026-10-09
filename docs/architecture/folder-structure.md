@@ -73,4 +73,3 @@ This scaffold now includes:
 - `melos.yaml` as a workspace anchor for Flutter and Dart package discovery
 - starter `pubspec.yaml` files for Android, iOS, macOS, and Windows host shells plus the shared packages
 - a local bootstrap flow for `config/local/`
-- a second validation lane in `test/seed-layout.ps1`

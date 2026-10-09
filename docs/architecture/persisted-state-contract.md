@@ -372,25 +372,16 @@ shape is compatible.
 
 ## Fixtures and Gates
 
-`config/state-migrations.v1.json` is the machine-readable 1.1.x-to-1.2.0
-authority. It binds the target product/build, every supported migration owner,
-source and target schema, synthetic fixture SHA-256, migration behavior,
-rollback policy and named regression. Both `validate-seed.ps1` and the
-cross-platform app-shell contract test reject missing fixtures, hash drift or
-a removed regression.
-
 Sanitized previous-version fixtures live at:
 
-- `packages/app_shell/test/fixtures/app-first-session-v0.json`
 - `packages/app_shell/test/fixtures/secure-session-v0.txt`
-- `packages/app_shell/test/fixtures/client-experience-v0.json`
-- `packages/app_shell/test/fixtures/routing-preferences-v0.json`
 - `apps/android_shell/android/app/src/test/resources/runtime-profile-v0.properties`
 
-The app-shell tests prove v0-to-v1 rewrite, idempotence, future-version
-preservation, secret-store migration, and failure preservation. Android JVM
+The app-shell tests prove secret-store migration of legacy session tokens,
+future credential-schema preservation and failure preservation. Android JVM
 tests prove schema routing, safe legacy defaults, idempotent encoding, and
-future-version rejection. The raw-credential fixture contains only the literal
+future-version rejection. There is no separate migration registry or
+fixture-hash gate. The raw-credential fixture contains only the literal
 synthetic test value named by the test; no fixture contains a real credential,
 provider endpoint, private key or account/customer identifier.
 

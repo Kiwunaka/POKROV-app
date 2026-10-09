@@ -7,18 +7,22 @@ SmartScreen/unknown-publisher warning. Android and Windows use POKROV Core
 
 ## Local build
 
-Sync the Core AAR, DLL and libcronet.dll from the Core checkout, then validate
-the version and artifact hashes:
+Sync the Core AAR, DLL and libcronet.dll from the Core checkout, then check
+the version and Core artifact hashes:
 
 ```powershell
 ./scripts/sync-pokrov-core-runtime.ps1 -CoreRoot ../POKROV-core
-./scripts/validate-seed.ps1 -CoreRoot ../POKROV-core -PlatformRoot ../VPN
+./scripts/check-client-version-parity.ps1 -CoreRoot ../POKROV-core
 ```
 
-Use `flutter analyze` and `flutter test` in changed packages. For Android
-host changes, run both app unit-test flavors from
-`apps/android_shell/android`. For Windows host changes, build on Windows.
-Release packaging scripts are in `scripts/`.
+Use `flutter analyze` and `flutter test` in changed packages;
+`scripts/run-tests.ps1` runs every package plus both Android unit-test
+flavors. Tests guard only real breakage: the connect/disconnect state machine,
+candidate selection and fallback, the offline last-known-good profile, code
+login and session refresh, profile parsing, the update check and secret
+handling. UI copy, widget trees, goldens and release paperwork are not tested.
+For Windows host changes, build on Windows. Release packaging scripts are in
+`scripts/`.
 
 Core libraries and client packages stay outside git and LFS. Core libraries
 come from the local Core build or its GitHub Release. Public client files live
