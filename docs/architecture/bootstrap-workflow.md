@@ -151,6 +151,11 @@ rewrite the catalog's server-selected ref. The encrypted cache retains that
 material ref for proof and recovery, including the first reserve on another node
 in the selected country. Older responses without materials keep their existing
 resolution path.
+An online partial material bundle does not narrow the admitted catalog. Auto
+reuses supplied materials and resolves an omitted candidate through the existing
+exact managed-profile request before probing it. Country, manual pins and
+capability/authorization gates still apply; offline selection requires cached
+material.
 If the API is unreachable, recovery probes
 these cached profiles with the existing native selector and activates its winner.
 Failed activation advances to another candidate, with at most three activations

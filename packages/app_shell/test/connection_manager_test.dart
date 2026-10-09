@@ -28,6 +28,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   _Bootstrapper({this.warpEnabled = false, this.catalog = false, this.bundle = false});
   final bool catalog;
   final bool bundle;
+  Set<String>? bundledCandidateRefs;
   List<TransportCandidate> candidates = _candidates;
   Duration exactProfileDelay = Duration.zero;
   String accessNetworkAsn = '';
@@ -111,7 +112,9 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     );
     final payload = material(selected);
     return bundle ? payload.copyWith(candidateMaterials: {
-      for (final candidate in candidates) candidate.candidateRef: material(candidate),
+      for (final candidate in candidates)
+        if (bundledCandidateRefs?.contains(candidate.candidateRef) ?? true)
+          candidate.candidateRef: material(candidate),
     }) : payload;
   }
 }
@@ -1475,6 +1478,38 @@ void main() {
     expect(manager.transportCatalog?.selectedCandidateRef, 'de:profile_0',
         reason: 'the winning material does not rewrite authenticated catalog selection');
     expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
+  test('country Auto resolves an admitted AWG missing from a partial bundle', () async {
+    final vless = _candidates.first;
+    final awg = _CachedBootstrapper.alternatives[1];
+    final bootstrapper = _Bootstrapper(catalog: true, bundle: true)
+      ..candidates = [vless, awg]
+      ..bundledCandidateRefs = {vless.candidateRef};
+    final runtime = _Runtime()
+      ..supportsCandidates = true
+      ..failedProbeProfiles.add(vless.candidateRef);
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    manager.restoreConnectionPreferences(
+      const PokrovClientExperienceState.empty().copyWith(preferredCountryCode: 'DE'),
+      const {},
+    );
+
+    await manager.connect();
+
+    expect(runtime.probedProtocols, ['vless', 'awg'],
+        reason: 'the material bundle must not exclude another admitted candidate');
+    expect(bootstrapper.resolutions, [
+      (selected: '', select: false, cache: false),
+      (selected: awg.candidateRef, select: false, cache: false),
+    ]);
+    expect(bootstrapper.requestedCountries, everyElement('DE'));
+    expect(runtime.stagedProfile, awg.candidateRef);
+    expect(manager.materialCandidate?.candidateRef, awg.candidateRef);
+    expect(manager.transportCatalog?.candidates, [vless, awg]);
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.activeProbes, isEmpty);
   });
 
   test('first connection remembers the observed AS for a desktop uplink', () async {

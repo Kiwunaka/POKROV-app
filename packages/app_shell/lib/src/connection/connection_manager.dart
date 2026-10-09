@@ -2350,7 +2350,6 @@ class ConnectionManager extends ChangeNotifier {
         ...bundled,
       };
       final eligibleCandidates = catalog.candidates.where((candidate) =>
-          (bundled.isEmpty || bundled.containsKey(candidate.candidateRef)) &&
           (candidate.warpMode == 'warp_direct' || country.isEmpty || candidate.nodeCountryCode(catalog.candidates) == country) &&
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
           (candidate.warpMode == 'warp_direct' || inputs.preferredNodeCode.isEmpty || candidate.nodeCode == inputs.preferredNodeCode)).toList();
