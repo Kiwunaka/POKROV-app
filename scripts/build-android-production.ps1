@@ -4,7 +4,11 @@ param(
   [string]$ApiBaseUrl = "https://app.pokrov.space",
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
-  [string]$TransportTrustDefinesFile
+  [string]$TransportTrustDefinesFile,
+  [string]$CoreRoot,
+  [string]$RuntimeArtifactsPath,
+  [string]$CoreArtifactDirectory,
+  [switch]$Arm64Only
 )
 
 $ErrorActionPreference = "Stop"
@@ -60,7 +64,17 @@ function Set-ProcessEnvironmentValue {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-& (Join-Path $PSScriptRoot "check-client-version-parity.ps1")
+$versionParityArguments = @{ Platforms = @("android") }
+if ($CoreRoot) { $versionParityArguments.CoreRoot = $CoreRoot }
+if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
+if ($RuntimeArtifactsPath -or $CoreArtifactDirectory) {
+  $syncArguments = @{ Platforms = @("android") }
+  if ($CoreRoot) { $syncArguments.CoreRoot = $CoreRoot }
+  if ($RuntimeArtifactsPath) { $syncArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
+  if ($CoreArtifactDirectory) { $syncArguments.CoreArtifactDirectory = $CoreArtifactDirectory }
+  & (Join-Path $PSScriptRoot "sync-pokrov-core-runtime.ps1") @syncArguments
+}
+& (Join-Path $PSScriptRoot "check-client-version-parity.ps1") @versionParityArguments
 $androidRoot = Join-Path $repoRoot "apps\android_shell"
 $pubspecPath = Join-Path $androidRoot "pubspec.yaml"
 $pubspecText = Get-Content -Raw -LiteralPath $pubspecPath
@@ -128,7 +142,7 @@ try {
       "apk",
       "--release",
       "--flavor", "direct",
-      "--target-platform", "android-arm,android-arm64,android-x64",
+      "--target-platform", $(if ($Arm64Only) { "android-arm64" } else { "android-arm,android-arm64,android-x64" }),
       "--android-project-arg=pokrov.singleVersionSplitApks=true",
       "--dart-define=POKROV_API_BASE_URL=$ApiBaseUrl",
       "--dart-define=POKROV_APP_VERSION=$declaredVersionName",
@@ -174,6 +188,9 @@ $artifacts = @(
     abi = "x86_64"
   }
 )
+if ($Arm64Only) {
+  $artifacts = @($artifacts | Where-Object { $_.abi -in @("universal", "arm64-v8a") })
+}
 
 foreach ($artifact in $artifacts) {
   $apkPath = [string]$artifact.path
@@ -233,7 +250,9 @@ foreach ($artifact in $artifacts) {
   if ($versionCode -ne $declaredVersionCode) {
     throw "A production APK version code does not match apps/android_shell/pubspec.yaml."
   }
-  $expectedNativeAbis = if ($artifact.abi -eq "universal") {
+  $expectedNativeAbis = if ($Arm64Only) {
+    @("arm64-v8a")
+  } elseif ($artifact.abi -eq "universal") {
     @("armeabi-v7a", "arm64-v8a", "x86_64")
   } else {
     @([string]$artifact.abi)

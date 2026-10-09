@@ -1141,6 +1141,10 @@ From `POKROV-app/`:
    existing runtime contract and `-CoreArtifactDirectory <path>` for the selected
    Windows artifact directory. Sync accepts that directory for one platform only;
    source, version, ABI and artifact checks still apply, and defaults stay unchanged.
+   `build-android-production.ps1` accepts the same private runtime path, Core root
+   and artifact directory; it synchronizes Android before checking the binding.
+   `-Arm64Only` uses one Flutter build for the ARM64 split and universal APK,
+   checking production signing, version and ARM64 contents of both outputs.
    The builder removes only Flutter's previous-build marker before compilation,
    so a previous checkout path cannot delete outputs from the reproducible drive alias.
 6. Run `powershell -ExecutionPolicy Bypass -File .\\scripts\\bootstrap-local.ps1 -DryRun`.
