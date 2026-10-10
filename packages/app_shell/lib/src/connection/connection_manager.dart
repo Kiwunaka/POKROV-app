@@ -855,6 +855,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   String _unexpectedConnectionDiagnostic(String operation, Object error, StackTrace stack) {
+    if (error is RuntimeBoundConnectFailure) return error.toString();
     final type = error.runtimeType.toString();
     final safeType = RegExp(r'^[_A-Za-z][_A-Za-z0-9]{0,63}$').hasMatch(type) ? type : 'Object';
     final frames = RegExp(
@@ -4229,7 +4230,7 @@ class ConnectionManager extends ChangeNotifier {
         tone: PokrovProtectionEventTone.error,
       );
       unawaited(_reportClientRuntimeError('connect_unexpected',
-          failureKind: 'connect_unexpected'));
+          failureKind: error is RuntimeBoundConnectFailure ? error.failureKind : 'connect_unexpected'));
       _notify(message, tone: PokrovSnackTone.danger);
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {

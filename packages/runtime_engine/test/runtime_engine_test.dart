@@ -822,6 +822,65 @@ void main() {
     expect((await engine.snapshot()).windowsLocalDpiRuntime, isNull);
   });
 
+  test('negative bound Connect preserves the matched native cause through failed cleanup', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final core = 'a' * 64;
+    final profile = 'b' * 64;
+    const boot = 'windows:0123456789abcdef0123456789abcdef';
+    String? requestId;
+    var stopConfirmed = false;
+    var stops = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      final args = call.arguments as Map? ?? {};
+      if (call.method == 'runtimeEngine.clockSnapshot') {
+        return {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1};
+      }
+      if (call.method == 'runtimeEngine.connectWithCoreIdentity') {
+        requestId = args['requestId'] as String;
+        throw PlatformException(code: 'core_identity_connect_failed', message: _sensitiveRuntimeDetail,
+          details: {'schema': 1, 'requestId': requestId, 'operation': 'core_connect',
+            'nativePhase': 'config_staged', 'failureKind': 'core_egress_tls_failed',
+            'moduleMatches': true, 'profileMatches': true});
+      }
+      if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
+        expect(args['requestId'], requestId);
+        stops++;
+        return {'schema': 1, 'requestId': requestId, 'settled': stopConfirmed};
+      }
+      throw StateError('unexpected_test_runtime_call');
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
+    try {
+      Object? failure;
+      try {
+        await (engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+          expectedCoreModuleSha256: core, expectedProfileDigest: profile,
+          expectedNetworkContextRef: 'network_0123456789abcdef0123456789abcdef',
+          budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+            {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+          budget: const Duration(seconds: 18), onRequestCreated: (_) {});
+      } on Object catch (error) { failure = error; }
+      expect(stops, 1);
+      expect((engine as RuntimeConnectCancellation).activeConnectRequestId, requestId,
+        reason: 'unconfirmed cleanup must retain the exact owner');
+      expect(failure, isA<RuntimeBoundConnectFailure>()
+        .having((value) => value.failureKind, 'primary cause', 'core_egress_tls_failed')
+        .having((value) => value.nativePhase, 'native phase', 'config_staged')
+        .having((value) => value.moduleMatches && value.profileMatches, 'identity matched', isTrue)
+        .having((value) => value.cleanupConfirmed, 'cleanup', isFalse));
+      expect(failure.toString(), contains('core_egress_tls_failed'));
+      expect(failure.toString(), contains('core_identity_connect_cancel_unconfirmed'));
+      _expectNoSensitiveRuntimeDetail(failure.toString());
+    } finally {
+      stopConfirmed = true;
+      if (requestId != null) {
+        expect(await (engine as RuntimeConnectSettlement).cancelAndConfirmConnectStopped(requestId!), isTrue);
+      }
+    }
+  });
+
   test('windows profile mismatch remains unprotected with explicit recovery',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

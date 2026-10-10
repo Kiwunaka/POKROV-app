@@ -971,7 +971,24 @@ bool FlutterWindow::OnCreate() {
                 if (!snapshot.command_accepted || !snapshot.running ||
                     snapshot.core_module_sha256 != target.core_module_sha256 ||
                     snapshot.effective_profile_digest != target.profile_digest) {
-                  reply->Error("core_identity_connect_failed", "Service did not acknowledge this connection.");
+                  // Preserve only the closed negative receipt before exact
+                  // cancellation can replace the service's primary failure.
+                  // Service parsing already allowlists phase/failure tokens.
+                  reply->Error("core_identity_connect_failed", "Service did not acknowledge this connection.",
+                      flutter::EncodableValue(flutter::EncodableMap{
+                          {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
+                          {flutter::EncodableValue("requestId"), flutter::EncodableValue(id)},
+                          {flutter::EncodableValue("operation"), flutter::EncodableValue("core_connect")},
+                          {flutter::EncodableValue("nativePhase"), flutter::EncodableValue(snapshot.phase)},
+                          {flutter::EncodableValue("failureKind"), flutter::EncodableValue(
+                              snapshot.trusted && snapshot.compatible && snapshot.failure != "none"
+                                  ? snapshot.failure : "runtime_failure")},
+                          {flutter::EncodableValue("moduleMatches"), flutter::EncodableValue(
+                              snapshot.core_module_sha256 == target.core_module_sha256)},
+                          {flutter::EncodableValue("profileMatches"), flutter::EncodableValue(
+                              snapshot.staged_profile_digest == target.profile_digest ||
+                              snapshot.effective_profile_digest == target.profile_digest)},
+                      }));
                   return;
                 }
                 reply->Success(flutter::EncodableValue(flutter::EncodableMap{

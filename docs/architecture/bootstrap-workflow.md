@@ -309,6 +309,10 @@ its current closed error and probe batch with unknown connectivity; it cannot
 inherit the previous attempt's native failure or material. Idle native evidence
 remains available without attributing it to that new attempt, and an owned Stop
 keeps its cleanup proof.
+An identity-bound negative Connect ACK retains its request-matched closed native
+cause, phase and identity-match booleans before exact-owner cleanup. Protection
+history and the existing runtime failure report preserve that primary cause;
+unconfirmed cleanup remains a separate result and retains the owner for Stop.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
 The local probe budget and Core data-stall kinds are valid journal values;

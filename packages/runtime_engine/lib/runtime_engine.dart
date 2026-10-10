@@ -1546,6 +1546,57 @@ abstract interface class RuntimeConnectProgress {
   Future<RuntimeSnapshot> snapshotForConnectRequest(String requestId);
 }
 
+/// Closed negative acknowledgement captured before stopping the exact owner.
+class RuntimeBoundConnectFailure implements Exception {
+  const RuntimeBoundConnectFailure._(this.failureKind, this.nativePhase,
+    this.moduleMatches, this.profileMatches, this.cleanupConfirmed);
+  final String failureKind;
+  final String nativePhase;
+  final bool moduleMatches;
+  final bool profileMatches;
+  final bool? cleanupConfirmed;
+  String get operation => 'core_connect';
+
+  static RuntimeBoundConnectFailure? _fromAck(Object error, String requestId, bool current) {
+    if (!current || error is! PlatformException || error.code != 'core_identity_connect_failed') return null;
+    final details = error.details;
+    if (details is! Map || details.length != 7 || details['schema'] is! int || details['schema'] != 1 ||
+        details['requestId'] != requestId || details['operation'] != 'core_connect' ||
+        !const {'artifact_missing', 'artifact_ready', 'connecting', 'busy', 'initialized',
+          'config_staged', 'running', 'recovery_required'}.contains(details['nativePhase']) ||
+        details['moduleMatches'] is! bool || details['profileMatches'] is! bool ||
+        !_nativeFailureKinds.contains(details['failureKind'])) return null;
+    final moduleMatches = details['moduleMatches'] as bool;
+    final profileMatches = details['profileMatches'] as bool;
+    return RuntimeBoundConnectFailure._(moduleMatches && profileMatches ? details['failureKind'] as String : 'runtime_failure',
+      details['nativePhase'] as String, moduleMatches, profileMatches, null);
+  }
+
+  // Existing Windows service_client IsKnownFailure categories; no upstream text.
+  static const _nativeFailureKinds = {
+    'core_not_initialized', 'core_missing', 'runtime_directory_failed', 'core_load_failed', 'core_abi_incompatible',
+    'core_capabilities_incompatible', 'local_dpi_withdraw_failed', 'local_dpi_catalog_expired', 'local_dpi_owner_changed',
+    'telegram_ws_withdraw_failed', 'runtime_path_invalid', 'core_setup_failed', 'profile_request_invalid',
+    'profile_payload_invalid', 'profile_write_failed', 'profile_security_failed', 'runtime_running', 'profile_not_staged',
+    'profile_identity_failed', 'profile_identity_mismatch', 'core_identity_mismatch', 'connect_deadline', 'core_start_failed',
+    'core_egress_probe_failed', 'core_egress_probe_unavailable', 'core_smart_access_lease_expired',
+    'protected_handoff_unavailable', 'transition_guard_failed', 'transition_guard_active', 'core_egress_dns_failed',
+    'core_egress_connect_failed', 'core_egress_tls_failed', 'core_egress_tls_timeout', 'core_egress_response_timeout',
+    'core_egress_timeout', 'deadline_exceeded', 'operation_cancelled', 'runtime_busy', 'core_stop_failed',
+    'recovery_unavailable', 'recovery_journal_invalid', 'recovery_required', 'recovery_generation_failed',
+    'recovery_stage_invalid', 'recovery_write_failed', 'recovery_core_stop_failed', 'recovery_network_unavailable',
+    'recovery_network_capture_failed', 'recovery_network_snapshot_invalid', 'recovery_network_snapshot_too_large',
+    'recovery_network_owner_ambiguous', 'recovery_network_owner_missing', 'recovery_network_restore_failed', 'runtime_failure',
+  };
+
+  RuntimeBoundConnectFailure _settled(bool confirmed) =>
+    RuntimeBoundConnectFailure._(failureKind, nativePhase, moduleMatches, profileMatches, confirmed);
+
+  @override
+  String toString() => '$operation: $failureKind; phase=$nativePhase; module=$moduleMatches; profile=$profileMatches'
+    '${cleanupConfirmed == false ? '; cleanup=core_identity_connect_cancel_unconfirmed' : ''}';
+}
+
 /// Explicit native admission for the selector's exact Core and staged profile.
 /// A returned snapshot acknowledges this request, not tunnel health or proof.
 abstract interface class RuntimeCoreIdentityConnect {
@@ -4161,13 +4212,19 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       }
       _connectSnapshots[result] = requestId;
       return result;
-    } catch (_) {
+    } catch (error) {
+      final primary = RuntimeBoundConnectFailure._fromAck(error, requestId,
+        _activeConnectRequestId == requestId && _boundConnectRequestId == requestId && !cancellation.isCompleted);
       if (!cancellation.isCompleted) cancellation.complete();
       final stop = _boundConnectDispatched ? _requestConnectStopped(requestId) : Future.value(true);
       await Future.wait(pending);
       final confirmed = await stop;
-      if (_boundConnectDispatched && !confirmed) throw StateError('core_identity_connect_cancel_unconfirmed');
+      if (_boundConnectDispatched && !confirmed) {
+        if (primary != null) throw primary._settled(false);
+        throw StateError('core_identity_connect_cancel_unconfirmed');
+      }
       _releaseBoundConnectRequest(requestId);
+      if (primary != null) throw primary._settled(true);
       rethrow;
     } finally {
       outerDeadline.cancel();
