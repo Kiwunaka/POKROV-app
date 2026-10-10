@@ -41,7 +41,9 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       !_accessDenialPending && !_cachedProfileFallbackGate.authorizationDenied &&
       (_activeCandidateRef ?? _candidateRef) == qa.transportCandidateRef &&
       _runtimeSnapshot?.isCleanlyHealthy == true && _runtimeSnapshot?.protectionRetained == false &&
-      _runtimeSnapshot?.stagedProfileDigest == qa.profileDigest && _runtimeSnapshot?.effectiveProfileDigest == qa.profileDigest &&
+      // qa.profileDigest captures the acknowledged final stage. Runtime control
+      // withdraws reusable staged bytes while retaining this effective owner.
+      _runtimeSnapshot?.effectiveProfileDigest == qa.profileDigest && binding.profileDigest == qa.profileDigest &&
       _runtimeSnapshot?.coreModuleSha256 == qa.permit.payload['core_module_sha256'] &&
       identical(_connectionCoordinator.activeSmartAccessLeases, binding) && binding.leases.length == 1 &&
       binding.leases.single.leaseId == leaseId && DateTime.now().toUtc().isBefore(qa.permit.expiresAt) &&
@@ -77,7 +79,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     final proof = _firstProviderQaProofClosed ? null : _firstProviderQaReadiness;
     return Map.unmodifiable({
       'permit_id': qa.permit.permitId, 'service_id': 'gemini', 'candidate_ref': qa.permit.payload['candidate_ref'],
-      'lease_id': leaseId, 'runtime_scope_sha256': qa.permit.grant.lease['runtime_scope_sha256'],
+      'lease_id': leaseId, 'runtime_scope_sha256': qa.permit.grant.runtimeScopeSha256,
       'profile_digest': qa.profileDigest, 'generation': qa.generation, 'profile_revision': qa.profileRevision,
       'request_id': qa.requestId,
       for (final field in const ['catalog_sha256', 'provider_policy_sha256', 'client_release', 'core_version',

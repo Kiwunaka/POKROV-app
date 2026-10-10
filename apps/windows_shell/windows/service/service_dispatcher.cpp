@@ -1,5 +1,6 @@
 #include "service_dispatcher.h"
 #include "service_boot_clock.h"
+#include "service_local_dpi_json.h"
 #include <chrono>
 #include <utility>
 #include <algorithm>
@@ -108,8 +109,9 @@ RuntimeResult RuntimeDispatcher::ProjectBoundState(RuntimeResult result) {
     if (!operation->network_revision || !network_.IsCurrent(*operation->network_revision)) {
       operation->cancelled = true;
     }
-    if (promoted ? !IsActiveTransportLeaseCurrent(*operation->bound, promoted)
-                 : !IsConnectDeadlineCurrent(*operation->bound)) operation->deadline_expired = true;
+    if (!operation->ordinary_control_handoff &&
+        (promoted ? !IsActiveTransportLeaseCurrent(*operation->bound, promoted)
+                  : !IsConnectDeadlineCurrent(*operation->bound))) operation->deadline_expired = true;
     if (operation->cancelled || operation->deadline_expired) {
       watch_changed_.notify_all();
       // Status cannot read RuntimeHost while Start/Stop holds the execution
@@ -122,9 +124,10 @@ RuntimeResult RuntimeDispatcher::ProjectBoundState(RuntimeResult result) {
       }
     }
   }
+  const bool transport_bound = bound && operation->requires_transport_lease;
   return WithTransportState(std::move(result),
-      bound && (operation->promoted_until_elapsed_ms.load() == 0 || operation->transport_terminated.load()),
-      bound && operation->promoted_until_elapsed_ms.load() != 0 && !operation->transport_terminated.load());
+      transport_bound && (operation->promoted_until_elapsed_ms.load() == 0 || operation->transport_terminated.load()),
+      transport_bound && operation->promoted_until_elapsed_ms.load() != 0 && !operation->transport_terminated.load());
 }
 
 void RuntimeDispatcher::WatchBoundConnect() {
@@ -184,9 +187,13 @@ void RuntimeDispatcher::WatchBoundConnect() {
     }
     RefreshBoundNetwork(operation);
     const auto promoted = operation->promoted_until_elapsed_ms.load();
-    if (promoted ? !IsActiveTransportLeaseCurrent(*operation->bound, promoted)
-                 : !IsConnectDeadlineCurrent(*operation->bound)) operation->deadline_expired = true;
-    if (!operation->cancelled && !operation->deadline_expired) continue;
+    if (!operation->ordinary_control_handoff &&
+        (promoted ? !IsActiveTransportLeaseCurrent(*operation->bound, promoted)
+                  : !IsConnectDeadlineCurrent(*operation->bound))) operation->deadline_expired = true;
+    if (!operation->cancelled && !operation->deadline_expired) {
+      if (operation->ordinary_control_handoff) CheckRunningEgress();
+      continue;
+    }
     // Core lifecycle remains serial. The flag reaches cooperative startup
     // checks now; Stop waits for any in-progress native Start to return.
     std::unique_lock<std::mutex> execution(execution_lock_);
@@ -481,9 +488,10 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     std::shared_ptr<ActiveConnect> owner;
     const auto current = [&] {
       return owner && owner == active_connect_ && owner->bound &&
-          SameTarget(owner->target, *target) && !owner->cancelled && !owner->deadline_expired &&
+          SameTarget(owner->target, *target) && !owner->cancelled && !owner->deadline_expired && !owner->cleanup_attempted &&
           owner->network_revision && network_.IsCurrent(*owner->network_revision) &&
-          owner->bound->profile_digest == body.substr(0, 64) && IsConnectDeadlineCurrent(*owner->bound) &&
+          owner->bound->profile_digest == body.substr(0, 64) &&
+          (owner->ordinary_control_handoff || IsConnectDeadlineCurrent(*owner->bound)) &&
           ::GetTickCount64() < deadline && ::WaitForSingleObject(stop_event, 0) != WAIT_OBJECT_0;
     };
     {
@@ -496,10 +504,24 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     // The execution lock excludes Stop and replacement for the whole native
     // mutation. Cancellation may signal concurrently; it suppresses receipt
     // publication and its serial cleanup follows this command.
-    const auto result = runtime_->ConfigureSmartAccessRuntimeControl(body);
+    const auto result = runtime_->ConfigureSmartAccessRuntimeControl(body, false, [&] {
+      std::lock_guard<std::mutex> state(state_lock_);
+      if (current()) return OperationInterruption::kNone;
+      return owner && owner->bound &&
+          (owner->deadline_expired || (!owner->ordinary_control_handoff && !IsConnectDeadlineCurrent(*owner->bound)) ||
+            ::GetTickCount64() >= deadline)
+          ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kCancelled;
+    });
     RefreshBoundNetwork(owner);
     std::lock_guard<std::mutex> state(state_lock_);
     snapshot_ = runtime_->Snapshot();
+    if (current() && !owner->requires_transport_lease && result.status == Status::kOk &&
+        result.body == "configured=1" && IsWindowsFirstProviderQaRuntimeControl(body.substr(65))) {
+      // Core accepted the QA worker and the same owner's one Smart probe.
+      // Only startup ends here; request/network/app-death/Stop fences remain.
+      owner->ordinary_control_handoff = true;
+      watch_changed_.notify_all();
+    }
     return current() ? result : RuntimeResult{Status::kNotReady, "connect_owner_changed"};
   }
   const auto operation = IsConnectCommand(request.command)
@@ -534,6 +556,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     if (operation) {
       operation->target = {request.session_token, request.operation_nonce};
       operation->bound = bound;
+      operation->requires_transport_lease = bound && runtime_->RequiresBoundConnect();
       operation->network_revision = network_revision;
       operation->local_dpi_owner = requests_dpi && local_dpi_network.has_value();
       operation->telegram_ws_owner = requests_telegram && local_dpi_network.has_value();

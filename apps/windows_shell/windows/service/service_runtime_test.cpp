@@ -254,7 +254,13 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
     smart_probe_tag = tag;
     smart_probe_periodic = periodic;
     if (interrupted && interrupted() != pokrov::service::OperationInterruption::kNone) return "core_egress_probe_unavailable";
+    if (on_smart_probe) on_smart_probe();
     return smart_probe_error;
+  }
+  int SmartAccessRuntimeControlVersion() const override { return smart_control_version; }
+  int ConfigureSmartAccessRuntimeControl(const std::string&, const std::string&) override {
+    ++smart_control_calls;
+    return smart_control_result;
   }
 
   int initialize_calls = 0;
@@ -277,6 +283,10 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
   std::string smart_probe_tag;
   bool smart_probe_periodic = false;
   std::string smart_probe_error;
+  std::function<void()> on_smart_probe;
+  int smart_control_version = 0;
+  int smart_control_result = 1;
+  int smart_control_calls = 0;
 };
 
 class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
@@ -944,9 +954,64 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   mixed.insert(mixed.find("\"rules\":[", dns_start) + std::string("\"rules\":[").size(),
       "{\"domain\":[\"api.pokrov.space\"],\"action\":\"route\",\"server\":\"dns-vpn\",\"disable_cache\":true,\"rewrite_ttl\":0},");
   Expect(!ReadWindowsSmartAccessProbeTarget(mixed), "normal selective VPN proof lost precedence to Smart");
+  Expect(ReadWindowsSmartAccessProbeTarget(mixed, true) == smart_target,
+         "explicit QA did not select the service behind the valid mixed VPN boundary");
+  auto qa_core = std::make_unique<FakeCoreRuntime>();
+  auto* qa_native = qa_core.get();
+  qa_native->smart_probe_version = 1;
+  qa_native->smart_control_version = 1;
+  auto qa_api = std::make_unique<FakeEgressProbe>();
+  auto* qa_vpn = qa_api.get();
+  RuntimeHost qa(std::move(qa_core), std::move(qa_api), std::make_unique<FakeRecovery>(), root, false);
+  qa.Initialize(); qa.StageProfile("0\n" + mixed);
+  const auto qa_digest = StagedDigest(qa);
+  Expect(qa.Connect(qa_digest).status == Status::kOk && qa_vpn->verify_calls == 1 &&
+         qa_native->smart_probe_calls == 0 && Contains(qa.Snapshot(), "core_egress_validated=1"),
+         "mixed QA Connect replaced ordinary protected VPN verification");
+  const std::string qa_config = "{\"schema_version\":\"pokrov-smart-access-runtime-worker-v1\",\"profile_digest\":\"" + qa_digest +
+      "\",\"catalog_sha256\":\"" + std::string(64, 'a') + "\",\"platform\":\"windows\",\"audience\":\"production\"," +
+      "\"api_base_url\":\"https://api.example\",\"dns_resolver\":\"dns-direct\",\"capability\":\"saqa1.synthetic." +
+      std::string(64, 'b') + "\",\"issued_at\":\"2026-10-05T10:00:00Z\",\"expires_at\":\"2099-01-01T00:00:00Z\"," +
+      "\"lease_keys_by_id\":{\"synthetic\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\"}}";
+  const auto qa_body = qa_digest + "|" + qa_config;
+  auto public_config = qa_config;
+  public_config.replace(public_config.find("saqa1."), 6, "pkr_src1.");
+  bool qa_current = true;
+  const CheckInterruption qa_owner = [&] {
+    return qa_current ? OperationInterruption::kNone : OperationInterruption::kCancelled;
+  };
+  Expect(qa.ConfigureSmartAccessRuntimeControl(qa_digest + "|" + public_config, false, qa_owner).status == Status::kOk &&
+         qa_native->smart_probe_calls == 0, "ordinary control unexpectedly initiated QA service proof");
+  const auto admitted = qa.ConfigureSmartAccessRuntimeControl(qa_body, false, qa_owner);
+  Expect(admitted.status == Status::kOk && admitted.body == "configured=1" && qa_native->smart_probe_calls == 1 &&
+         qa_native->smart_probe_periodic && qa_native->smart_probe_tag == *smart_target &&
+         Contains(qa.Snapshot(), "core_egress_validated=1"), "QA configure did not admit one scoped service probe after VPN proof");
+  Expect(qa.ConfigureSmartAccessRuntimeControl(qa_body, false, qa_owner).status == Status::kOk &&
+         qa_native->smart_probe_calls == 1, "foreground QA control repeated the first admission probe");
+  qa.Disconnect(); qa.StageProfile("0\n" + mixed); qa.Connect(StagedDigest(qa));
+  qa_native->smart_probe_error = "core_egress_tls_failed";
+  const auto failed_qa = qa.ConfigureSmartAccessRuntimeControl(qa_body, false, qa_owner);
+  qa_native->smart_probe_error.clear();
+  const auto repeated_failure = qa.ConfigureSmartAccessRuntimeControl(qa_body, false, qa_owner);
+  Expect(failed_qa.status == Status::kNotReady && failed_qa.body == "core_egress_tls_failed" &&
+         repeated_failure.status == failed_qa.status && repeated_failure.body == failed_qa.body &&
+         qa_native->smart_probe_calls == 2 && Contains(qa.Snapshot(), "core_egress_validated=1"),
+         "failed QA admission lost its typed outcome, revived proof, or cleared ordinary VPN health");
+  qa.Disconnect(); qa.StageProfile("0\n" + mixed); qa.Connect(StagedDigest(qa));
+  qa_native->on_smart_probe = [&] { qa_current = false; };
+  const auto stale_qa = qa.ConfigureSmartAccessRuntimeControl(qa_body, false, qa_owner);
+  qa_current = true;
+  qa_native->on_smart_probe = {};
+  const auto repeated_stale = qa.ConfigureSmartAccessRuntimeControl(qa_body, false, qa_owner);
+  Expect(stale_qa.status == Status::kNotReady && stale_qa.body == "operation_cancelled" &&
+         repeated_stale.body == stale_qa.body && qa_native->smart_probe_calls == 3 &&
+         Contains(qa.Snapshot(), "core_egress_validated=1"), "a stale captured QA owner received an ACK or revived its probe");
+  qa.Disconnect();
   mixed.replace(mixed.find("\"port\":[443]"), std::string("\"port\":[443]").size(), "\"port\":[80]");
   const auto invalid_boundary = ReadWindowsSmartAccessProbeTarget(mixed);
-  Expect(invalid_boundary && invalid_boundary->empty(), "partial owned VPN boundary silently became Smart proof");
+  const auto invalid_qa_boundary = ReadWindowsSmartAccessProbeTarget(mixed, true);
+  Expect(invalid_boundary && invalid_boundary->empty() && invalid_qa_boundary && invalid_qa_boundary->empty(),
+         "partial owned VPN boundary silently became Smart proof");
   RemoveTestRoot(root);
 }
 
@@ -1591,6 +1656,10 @@ int main(int argc, char** argv) {
   }
   if (argc == 2 && std::string(argv[1]) == "--periodic-cancel-observation") {
     TestRuntimeLifecycle();
+    return failures == 0 ? 0 : 1;
+  }
+  if (argc == 2 && std::string(argv[1]) == "--smart-access-admission") {
+    TestEgressFailureStopsCoreAndIsSanitized();
     return failures == 0 ? 0 : 1;
   }
   TestReleasedCoreDescriptorCompatibility();

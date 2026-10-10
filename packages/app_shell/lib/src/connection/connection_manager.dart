@@ -3986,9 +3986,39 @@ class ConnectionManager extends ChangeNotifier {
         failureOperation = 'core_connect';
         failureStage = ConnectionStage.coreStart;
         _setPhase(ConnectionPhase.activating, generation);
+        Future<RuntimeSnapshot> Function() connectAction = _runtimeEngine.connect;
+        final qa = _activeFirstProviderQa;
+        if (qa != null && _appContext.hostPlatform == HostPlatform.windows) {
+          final engine = _runtimeEngine;
+          if (engine is! RuntimeCoreIdentityConnect || engine is! RuntimeBootClock ||
+              engine is! RuntimeTransportNetworkContext) {
+            throw const RoutingCatalogFailure('smart_access_qa_connect_unsupported');
+          }
+          final startedAt = await (engine as RuntimeBootClock).readBootClock();
+          final networkRef = await (engine as RuntimeTransportNetworkContext).readTransportNetworkContext();
+          final permitRemaining = qa.permit.expiresAt.difference(DateTime.now().toUtc());
+          bool qaCurrent() => !_disposed && _connectionCoordinator.ownsOperation(generation) &&
+              identical(_activeFirstProviderQa?.permit, qa.permit) && qa.generation == generation &&
+              qa.profileRevision == _managedProfileRevision && profileRevision == _managedProfileRevision &&
+              qa.profileDigest != null && current.stagedProfileDigest == qa.profileDigest &&
+              current.coreModuleSha256 == qa.permit.payload['core_module_sha256'] &&
+              DateTime.now().toUtc().isBefore(qa.permit.expiresAt);
+          if (!qaCurrent()) throw const ConnectionOperationSuperseded();
+          connectAction = () => (engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+            expectedCoreModuleSha256: current.coreModuleSha256!, expectedProfileDigest: qa.profileDigest!,
+            expectedNetworkContextRef: networkRef, budgetStartedAt: startedAt,
+            budget: permitRemaining < _actionTimeout ? permitRemaining : _actionTimeout,
+            onRequestCreated: (requestId) {
+              if (!qaCurrent()) throw const ConnectionOperationSuperseded();
+              _activeFirstProviderQa = (permit: qa.permit, generation: qa.generation,
+                profileRevision: qa.profileRevision, transportCandidateRef: qa.transportCandidateRef,
+                profileDigest: qa.profileDigest, requestId: requestId);
+              _connectionCoordinator.bindCancellableConnect(requestId, generation: generation);
+            });
+        }
         current = await runOwnedRuntimeAction(
           'connect',
-          _runtimeEngine.connect,
+          connectAction,
         );
         failureOperation = 'tunnel_settle';
         failureStage = ConnectionStage.tunnel;

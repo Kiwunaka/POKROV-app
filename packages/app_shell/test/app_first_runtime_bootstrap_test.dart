@@ -367,6 +367,9 @@ void main() {
       'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']})};
     final nativeCalls = <String>[];
     Map? staged;
+    const bootRef = 'windows:0123456789abcdef0123456789abcdef';
+    const networkRef = 'network_0123456789abcdef0123456789abcdef';
+    String? nativeBoundRequestId;
     var probeId = 1;
     var guardClosed = false;
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -375,6 +378,10 @@ void main() {
       nativeCalls.add(call.method);
       final args = call.arguments as Map? ?? {};
       switch (call.method) {
+        case 'runtimeEngine.clockSnapshot':
+          return {'schema': 1, 'boot_ref': bootRef, 'elapsed_ms': 1000, 'quantum_ms': 1};
+        case 'runtimeEngine.transportNetworkContext':
+          return {'schema': 1, 'network_context_ref': networkRef};
         case 'runtimeEngine.candidateNetwork':
           return {'selection_key': 'qa-network', 'context_ref': 'qa-context', 'network_available': true, 'ipv6_available': false};
         case 'runtimeEngine.probeCandidate':
@@ -388,9 +395,25 @@ void main() {
           phase.addAll({'phase': 'configStaged', 'stagedProfileDigest': args['expectedProfileDigest'],
             'stagedConfigPath': '/synthetic/managed.json', 'profileIdentityOrigin': 'windows_service_stage_request_sha256'});
         case 'runtimeEngine.connect':
+        case 'runtimeEngine.connectWithCoreIdentity':
+          nativeBoundRequestId = null;
+          if (call.method == 'runtimeEngine.connectWithCoreIdentity') {
+            expect(args, hasLength(7));
+            expect(args['expectedCoreModuleSha256'], coreHash);
+            expect(args['expectedProfileDigest'], phase['stagedProfileDigest']);
+            expect(args['expectedNetworkContextRef'], networkRef);
+            expect(args['bootRef'], bootRef);
+            expect(args['startedElapsedMs'], 1000);
+            expect(args['deadlineElapsedMs'], 19000);
+            expect(args['requestId'], matches(r'^[a-f0-9]{32}$'));
+            nativeBoundRequestId = args['requestId'] as String;
+          }
           phase.addAll({'phase': 'running', 'effectiveProfileDigest': phase['stagedProfileDigest'],
             'hostHealth': 'healthy', 'dnsState': 'healthy', 'uplinkState': 'healthy', 'dnsReady': true,
             'coreEgressValidated': true, 'tunInterfacePresent': true, 'vpnRoutesPresent': true});
+          if (nativeBoundRequestId != null) {
+            return {'schema': 1, 'requestId': nativeBoundRequestId, 'snapshot': {...phase}};
+          }
         case 'runtimeEngine.readSmartAccessLeases':
           final startedAt = DateTime.parse((permitEnvelope!['payload'] as Map)['issued_at'] as String).millisecondsSinceEpoch + 1;
           return {'schema': 1, 'profileDigest': args['profileDigest'], 'leaseIdsJson': jsonEncode({'schema': 1,
@@ -401,16 +424,28 @@ void main() {
                 'stages': [for (var i = 0; i < 3; i++) {'stage': ['resolver', 'dns', 'tls'][i], 'result': 'pass',
                   'observed_at_ms': startedAt + i + 1, 'duration_ms': 1}]}}]})};
         case 'runtimeEngine.configureBoundSmartAccessRuntimeControl':
+          if (nativeBoundRequestId == null || args['requestId'] != nativeBoundRequestId) {
+            throw PlatformException(code: 'connect_owner_changed');
+          }
           final config = jsonDecode(args['configJson'] as String) as Map;
           expect(config['capability'], startsWith('saqa1.'));
           expect(config['profile_digest'], phase['stagedProfileDigest']);
+          phase.remove('stagedProfileDigest');
           return {'schema': 1, 'requestId': args['requestId'], 'profileDigest': args['profileDigest'], 'configured': true};
         case 'runtimeEngine.revokeSmartAccessLease':
           expect(args['leaseId'], leaseId);
           return {'schema': 1, 'profileDigest': args['profileDigest'], 'leaseId': args['leaseId'], 'revoked': true};
         case 'runtimeEngine.disconnect':
+        case 'runtimeEngine.cancelAndConfirmConnectStopped':
+          if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
+            expect(args['requestId'], nativeBoundRequestId);
+          }
           phase.addAll({'phase': 'initialized', 'coreEgressValidated': false, 'dnsReady': false,
             'effectiveProfileDigest': '', 'tunInterfacePresent': false, 'vpnRoutesPresent': false});
+          if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
+            nativeBoundRequestId = null;
+            return {'schema': 1, 'requestId': args['requestId'], 'settled': true};
+          }
       }
       return {...phase};
     });
@@ -428,7 +463,8 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
     expect(nativeCalls.where((method) => method == 'runtimeEngine.probeCandidate'), hasLength(1));
     expect(nativeCalls.where((method) => method == 'runtimeEngine.stageManagedProfile'), hasLength(1));
-    expect(nativeCalls.where((method) => method == 'runtimeEngine.connect'), hasLength(1));
+    expect(nativeCalls, isNot(contains('runtimeEngine.connect')));
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.connectWithCoreIdentity'), hasLength(1));
     expect(nativeCalls.where((method) => method == 'runtimeEngine.configureBoundSmartAccessRuntimeControl'), hasLength(1));
     expect(claimRequest!.containsKey('candidate_ref'), isFalse);
     expect(claimRequest!['core_module_sha256'], coreHash);
@@ -437,8 +473,12 @@ void main() {
     expect(domainRules[0]['pokrov_catalog_window']['lease_id'], leaseId);
     expect(domainRules[1]['outbound'], 'proxy', reason: 'closed QA member retains protected VPN fallback');
     expect(route['final'], 'direct', reason: 'other traffic retains Direct');
+    await manager.readSnapshot();
     final context = await manager.readFirstProviderQaContext();
-    expect(context!['native_stages'], 'PASS');
+    expect(context!['runtime_scope_sha256'], isA<String>().having((value) => value.length, 'length', 64));
+    expect(context['request_id'], nativeBoundRequestId);
+    expect(context['profile_digest'], phase['effectiveProfileDigest']);
+    expect(context['native_stages'], 'PASS');
     expect(context['proof_current'], isTrue);
     expect(context['fallback_guard_closed'], isFalse);
     expect(context['feature_request'], 'NOT_VERIFIED');

@@ -241,7 +241,16 @@ std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObserva
 }
 
 
-std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& encoded) {
+bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config) {
+  JsonApartment apartment;
+  if (!apartment.Ready()) return false;
+  const auto worker = ParseObject(config);
+  return worker && String(worker.Get(), L"platform") == "windows" &&
+      String(worker.Get(), L"capability").rfind("saqa1.", 0) == 0;
+}
+
+std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& encoded,
+    bool first_provider_qa) {
   JsonApartment apartment;
   if (!apartment.Ready()) return std::string{};
   const auto profile = ParseObject(encoded);
@@ -290,12 +299,14 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
         (endpoint || (type != "direct" && type != "block" && type != "dns" && type != "pokrov-smart-access"));
     HString cache_name;
     boolean disabled = false;
-    if (Fields(rr.Get(), 5) && exact_owned(rr.Get()) && String(rr.Get(), L"network") == "tcp" &&
+    if (!(Fields(rr.Get(), 5) && exact_owned(rr.Get()) && String(rr.Get(), L"network") == "tcp" &&
         SingleNumber(rr.Get(), L"port", 443) && String(rr.Get(), L"action") == "route" &&
         tag != final_tag && protected_proxy &&
         Fields(dr.Get(), 5) && exact_owned(dr.Get()) && String(dr.Get(), L"action") == "route" &&
         cache_name.Set(L"disable_cache") && SUCCEEDED(dr->GetNamedBoolean(cache_name.value, &disabled)) && disabled &&
-        Number(dr.Get(), L"rewrite_ttl", 0) && resolver && String(resolver.Get(), L"detour") == tag) return std::nullopt;
+        Number(dr.Get(), L"rewrite_ttl", 0) && resolver && String(resolver.Get(), L"detour") == tag)) return std::string{};
+    if (!first_provider_qa) return std::nullopt;
+  } else if (first_provider_qa) {
     return std::string{};
   }
   auto lease_id = [](const std::string& value) {

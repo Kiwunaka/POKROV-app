@@ -41,6 +41,10 @@ std::optional<WindowsTelegramWSPreparation> ReadWindowsTelegramWSPreparation(
 bool WindowsTelegramWSPreparationCurrent(const WindowsTelegramWSPreparation& value);
 // No value means the ordinary VPN verifier. An empty target is a local
 // SmartAccess intent without a valid bound anchor and must fail closed.
-std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& profile);
+// First-provider QA selects the service only behind a valid owned VPN boundary.
+std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& profile,
+    bool first_provider_qa = false);
+// Purpose check only; Core validates the complete worker config before admission.
+bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config);
 }  // namespace pokrov::service
 #endif

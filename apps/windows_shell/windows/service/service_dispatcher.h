@@ -34,6 +34,8 @@ class RuntimeDispatcher {
     std::atomic<bool> cancelled{false};
     std::atomic<bool> deadline_expired{false};
     std::optional<BoundConnectTarget> bound;
+    bool requires_transport_lease = false;  // Captured stage fact, not a QA/ATS inference.
+    std::atomic<bool> ordinary_control_handoff{false};
     std::atomic<std::uint64_t> promoted_until_elapsed_ms{0};
     std::atomic<bool> transport_terminated{false};
     std::string promoted_lease_ref;

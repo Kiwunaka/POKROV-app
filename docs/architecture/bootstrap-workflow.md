@@ -656,6 +656,19 @@ latches three stages from one completed native probe under the same live scope;
 the safe context never marks the browser feature verified. Public admission and
 runtime acceptance remain separate from this source preparation.
 
+Explicit QA control admission preserves the ordinary VPN proof and performs one
+bounded service-readiness probe for the same native owner and final profile. A
+successful handoff settles only the startup deadline; network, process and Stop
+fences remain active. Diagnostics refresh and lease readback remain read-only;
+a configured worker receipt alone does not establish the three native stages.
+The native bound-owner fixture runs with a normal Administrator token because
+the service boot clock uses a protected volatile HKLM key.
+
+QA readback uses the verified grant's computed runtime scope and the captured
+final-stage acknowledgement together with the current owner, Core module,
+effective profile and active lease. Withdrawing reusable staged bytes during
+runtime-control configuration does not itself change that running identity.
+
 Windows Diagnostics keeps a collapsed technical readout of whether its current
 subscription DTO contains an accepted pending QA admission and the first closed
 eligibility reason. It shares the Start getter's guards and recomputes on normal

@@ -1,5 +1,7 @@
 #include "service_dispatcher.h"
 #include "service_profile_identity.h"
+#include "service_boot_clock.h"
+#include "service_server.h"
 
 #include <atomic>
 #include <filesystem>
@@ -17,6 +19,19 @@ class ProbeCore final : public CoreRuntime {
   std::string Initialize(const RuntimeDirectories&) override { return ""; }
   std::string SecureFile(const std::wstring&) override { return ""; }
   std::string Start(const std::wstring&, bool) override { ++starts; return ""; }
+  bool SupportsInterruptibleStart() const override { return true; }
+  std::string StartInterruptible(const std::wstring& path, bool disabled,
+      const CheckInterruption& interrupted) override {
+    return interrupted() == OperationInterruption::kNone ? Start(path, disabled) : "cancelled";
+  }
+  std::string CoreModuleSHA256() const override { return std::string(64, 'a'); }
+  int SmartAccessRuntimeControlVersion() const override { return 1; }
+  int SmartAccessProbeVersion() const override { return 1; }
+  int ConfigureSmartAccessRuntimeControl(const std::string&, const std::string&) override { return 1; }
+  std::string ProbeSmartAccess(const std::string&, bool periodic, const CheckInterruption& interrupted) override {
+    ++smart_probes;
+    return periodic && interrupted && interrupted() == OperationInterruption::kNone ? "" : "cancelled";
+  }
   std::string Stop() override { ++stops; return ""; }
   std::string ProbeCandidate(const CandidateProbeRequest& request, const std::string& binding,
                               const CheckInterruption& interrupted) override {
@@ -32,7 +47,8 @@ class ProbeCore final : public CoreRuntime {
                      : "{\"success\":true,\"failure_kind\":\"\",\"duration_ms\":15}";
   }
   std::atomic<int> active{0}, entered{0}, invalid{0};
-  int starts = 0, stops = 0;
+  std::atomic<int> starts{0}, stops{0};
+  int smart_probes = 0;
   std::atomic<bool> release{false};
 };
 class Recovery final : public RuntimeRecovery {
@@ -182,6 +198,83 @@ void TestPeriodicEgressDeadlineRetainsTun(const std::filesystem::path& root, HAN
   Expect(call(Command::kDisconnect).status == Status::kOk,
          "timed-out periodic probe could not disconnect");
 }
+
+void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDLE stop) {
+  auto core = std::make_unique<ProbeCore>();
+  auto* observed = core.get();
+  auto probe = std::make_unique<HealthProbe>();
+  auto* health = probe.get();
+  RuntimeHost runtime(std::move(core), std::move(probe), std::make_unique<Recovery>(), root.wstring(), false);
+  RuntimeDispatcher dispatcher(&runtime, {}, {}, 10);
+  // A real local pipe supplies the kernel-owned client PID; no production Core or network mutation.
+  const auto name = std::wstring(kTestPipePrefix) + L"SmartHandoff." + std::to_wstring(::GetCurrentProcessId());
+  const HANDLE pipe = ::CreateNamedPipeW(name.c_str(), PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
+      1, 4096, 4096, 0, nullptr);
+  const HANDLE client = ::CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+  if (pipe == INVALID_HANDLE_VALUE || client == INVALID_HANDLE_VALUE) {
+    Expect(false, "bound Smart fixture could not create its local owner pipe");
+    if (client != INVALID_HANDLE_VALUE) ::CloseHandle(client);
+    if (pipe != INVALID_HANDLE_VALUE) ::CloseHandle(pipe);
+    return;
+  }
+  const bool connected_pipe = ::ConnectNamedPipe(pipe, nullptr) || ::GetLastError() == ERROR_PIPE_CONNECTED;
+  Expect(connected_pipe, "bound Smart fixture owner pipe was not connected");
+  const auto call = [&](Command command, const std::string& body = "", unsigned nonce = 1) {
+    Frame request{};
+    request.command = command; request.body = body;
+    request.session_token[0] = 1; request.operation_nonce[0] = static_cast<std::uint8_t>(nonce);
+    return dispatcher.Execute(request, stop, ::GetTickCount64() + 5000, pipe);
+  };
+  const std::string profile = R"(0
+{"inbounds":[{"type":"tun"}],"outbounds":[{"type":"direct","tag":"direct"},{"type":"vless","tag":"vpn"},
+ {"type":"pokrov-smart-access","tag":"pokrov-smart-access-00000000000000000000000000000000","lease_id":"00000000000000000000000000000000",
+  "domains":[{"name":"service.example","match":"exact"}],"relay_addresses":["203.0.113.1"]}],
+ "route":{"final":"direct","rules":[{"domain":["api.pokrov.space"],"network":"tcp","port":[443],"action":"route","outbound":"vpn"},
+  {"domain":["service.example"],"network":"tcp","port":[443],"ip_version":4,"action":"route","outbound":"pokrov-smart-access-00000000000000000000000000000000",
+   "pokrov_catalog_window":{"issued_at":"2026-10-05T10:00:00Z","expires_at":"2099-01-01T00:00:00Z","service_id":"owned-service",
+    "lease_id":"00000000000000000000000000000000","lease_group":["00000000000000000000000000000000"]}}]},
+ "dns":{"servers":[{"tag":"dns-vpn","detour":"vpn"},{"tag":"pokrov-smart-access-dns-00000000000000000000000000000000","address":"https://resolver.example/dns-query","detour":"direct"}],
+  "rules":[{"domain":["api.pokrov.space"],"action":"route","server":"dns-vpn","disable_cache":true,"rewrite_ttl":0},
+   {"domain":["service.example"],"query_type":["A"],"action":"route","server":"pokrov-smart-access-dns-00000000000000000000000000000000","disable_cache":true,"rewrite_ttl":0,
+    "pokrov_catalog_window":{"issued_at":"2026-10-05T10:00:00Z","expires_at":"2099-01-01T00:00:00Z","service_id":"owned-service",
+     "lease_id":"00000000000000000000000000000000","lease_group":["00000000000000000000000000000000"]}}]}})";
+  Expect(call(Command::kStageProfile, profile).status == Status::kOk, "bound Smart fixture could not stage");
+  const auto clock = ReadBootClock();
+  const auto network = call(Command::kReadTransportNetworkContext);
+  if (!clock || network.status != Status::kOk) {
+    Expect(clock.has_value(), "bound Smart fixture requires the privileged service boot clock");
+    Expect(network.status == Status::kOk, "bound Smart fixture requires an available physical network context");
+    ::CloseHandle(client); ::CloseHandle(pipe);
+    return;
+  }
+  const auto digest = ProfileDigest(profile);
+  const BoundConnectTarget identity{std::string(64, 'a'), digest, clock->boot_ref,
+      clock->elapsed_ms, clock->elapsed_ms + 800, network.body};
+  const auto connected = call(Command::kConnectWithIdentity, EncodeBoundConnect(identity));
+  Expect(connected.status == Status::kOk && connected.body.find("core_egress_validated=1;dns_ready=1") != std::string::npos &&
+      connected.body.find("transport_proof_pending=0;transport_lease_active=0") != std::string::npos,
+      "ordinary bound Smart start was masked as an unproven ATS lease");
+  Identifier session{}, nonce{}; session[0] = 1; nonce[0] = 1;
+  const auto owner = EncodeCancellationTarget({session, nonce});
+  const auto config = digest + "|{\"platform\":\"windows\",\"capability\":\"saqa1.fixture." + std::string(64, 'a') + "\"}";
+  const auto configured = call(Command::kConfigureBoundSmartAccessRuntimeControl, owner + "|" + config);
+  Expect(configured.status == Status::kOk && configured.body == "configured=1" && observed->smart_probes == 1,
+      "bound Smart control did not join one native probe");
+  while (ReadBootClock()->elapsed_ms < identity.deadline_elapsed_ms + 150) ::Sleep(1);
+  const auto running = call(Command::kStatus);
+  Expect(running.status == Status::kOk && running.body.find("phase=running;") == 0 &&
+      observed->stops == 0 && health->calls > 1,
+      "handed-off ordinary owner expired at startup deadline or lost periodic VPN checks");
+  Expect(call(Command::kConfigureBoundSmartAccessRuntimeControl, owner + "|" + config).body == "configured=1" &&
+      observed->smart_probes == 1, "same native owner reprobed after its startup handoff");
+  nonce[0] = 2;
+  Expect(call(Command::kConfigureBoundSmartAccessRuntimeControl,
+      EncodeCancellationTarget({session, nonce}) + "|" + config).body == "connect_owner_changed",
+      "foreign owner crossed the configured Smart fence");
+  Expect(call(Command::kCancelConnectAndConfirm, owner).body == "settled=1" && observed->stops == 1,
+      "exact stop did not settle the handed-off ordinary native owner");
+  ::CloseHandle(client); ::CloseHandle(pipe);
+}
 }
 
 int main() {
@@ -249,6 +342,7 @@ int main() {
   }
   TestPeriodicEgressLifecycle(root / "periodic", stop);
   TestPeriodicEgressDeadlineRetainsTun(root / "periodic-deadline", stop);
+  TestBoundSmartAccessStartupHandoff(root / "bound-smart", stop);
   ::CloseHandle(stop);
   std::filesystem::remove_all(root);
   return failures == 0 ? 0 : 1;

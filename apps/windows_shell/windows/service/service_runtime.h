@@ -156,6 +156,7 @@ class RuntimeHost {
                                     const CheckInterruption& interrupted = {},
                                     const std::optional<CandidateNetworkContext>& local_dpi_network = std::nullopt,
                                     const CheckInterruption& telegram_interrupted = {});
+  bool RequiresBoundConnect() const { return requires_bound_connect_; }
   bool RequestsWindowsLocalDpi() const { return local_dpi_requested_ && local_dpi_ready_; }
   bool ReplacementRequestsWindowsLocalDpi(const std::string& body) const;
   bool HasWindowsLocalDpi() const { return local_dpi_preparation_ != nullptr; }
@@ -179,7 +180,8 @@ class RuntimeHost {
   RuntimeResult RevokeRoutingCatalogService(const std::string& body);
   RuntimeResult RevokeSmartAccessPolicy(const std::string& body);
   RuntimeResult RenewSmartAccessLease(const std::string& body);
-  RuntimeResult ConfigureSmartAccessRuntimeControl(const std::string& body, bool renewal = false);
+  RuntimeResult ConfigureSmartAccessRuntimeControl(const std::string& body, bool renewal = false,
+      const CheckInterruption& qa_interrupted = {});
   RuntimeResult ReadSmartAccessRestrictions();
   RuntimeResult ReadSmartAccessLeases(const std::string& profile_digest);
   // Available after Initialize; probes never read/write the TUN lifecycle state.
@@ -256,6 +258,9 @@ class RuntimeHost {
   bool disable_memory_limit_ = false;
   int bundled_rule_set_slot_ = 0;
   bool core_egress_validated_ = false;
+  // One admission result per live Core; foreground control cannot reprobe it.
+  std::string first_provider_qa_control_config_;
+  std::optional<RuntimeResult> first_provider_qa_admission_result_;
   std::optional<EgressProbeObservation> egress_failure_observation_;
   Phase phase_ = Phase::kArtifactMissing;
   std::string failure_ = "core_not_initialized";

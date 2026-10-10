@@ -1514,6 +1514,8 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   }
   egress_failure_observation_.reset();
   local_dpi_preparation_.reset();
+  first_provider_qa_control_config_.clear();
+  first_provider_qa_admission_result_.reset();
   const auto staged_write_error = WriteProfileAtomically(staged_runtime_config_);
   if (!staged_write_error.empty()) return Fail(Status::kNotReady, staged_write_error.c_str());
   // Native compiled trust and the captured physical interface are the only
@@ -1862,22 +1864,59 @@ RuntimeResult RuntimeHost::AcknowledgeSmartAccessRestrictions(const std::string&
   return {Status::kOk, acknowledged == 1 ? "acknowledged=1" : "acknowledged=0"};
 }
 
-RuntimeResult RuntimeHost::ConfigureSmartAccessRuntimeControl(const std::string& body, bool renewal) {
+RuntimeResult RuntimeHost::ConfigureSmartAccessRuntimeControl(const std::string& body, bool renewal,
+    const CheckInterruption& qa_interrupted) {
   if (!IsSmartAccessRuntimeControl(body)) return {Status::kInvalid, "invalid_smart_access_runtime_control"};
   const auto profile_digest = body.substr(0, 64);
   if (!initialized_ || phase_ != Phase::kRunning || effective_profile_digest_ != profile_digest) {
     return {Status::kNotReady, "smart_access_profile_changed"};
   }
   if (core_->SmartAccessRuntimeControlVersion() != 1) return {Status::kUnsupported, "smart_access_runtime_control_unsupported"};
+  const auto config = body.substr(65);
+  const bool qa_admission = !renewal && qa_interrupted && IsWindowsFirstProviderQaRuntimeControl(config);
+  if (qa_admission && (!core_egress_validated_ || requires_bound_connect_)) {
+    return {Status::kNotReady, "core_egress_probe_unavailable"};
+  }
+  if (qa_admission && !first_provider_qa_control_config_.empty() && first_provider_qa_control_config_ != config) {
+    return {Status::kNotReady, "smart_access_runtime_control_unconfirmed"};
+  }
   // Background restriction delivery outlives Flutter. Old saved bytes must not
   // restart before fresh preparation; the live instance and assets stay intact.
   if (staged_profile_digest_ == profile_digest) {
     profile_staged_ = false;
     staged_profile_digest_.clear();
   }
-  const auto result = renewal ? core_->ConfigureSmartAccessRenewal(profile_digest, body.substr(65))
-                              : core_->ConfigureSmartAccessRuntimeControl(profile_digest, body.substr(65));
+  const auto result = renewal ? core_->ConfigureSmartAccessRenewal(profile_digest, config)
+                              : core_->ConfigureSmartAccessRuntimeControl(profile_digest, config);
   if (result != 0 && result != 1) return {Status::kNotReady, "smart_access_runtime_control_unconfirmed"};
+  if (result == 1 && qa_admission) {
+    const auto interrupted = [&]() -> std::optional<RuntimeResult> {
+      const auto reason = qa_interrupted();
+      if (reason == OperationInterruption::kNone) return std::nullopt;
+      return RuntimeResult{reason == OperationInterruption::kDeadlineExceeded ? Status::kDeadlineExceeded : Status::kNotReady,
+          reason == OperationInterruption::kDeadlineExceeded ? "connect_deadline" : "operation_cancelled"};
+    };
+    if (const auto stopped = interrupted()) {
+      if (!first_provider_qa_admission_result_) {
+        first_provider_qa_control_config_ = config;
+        first_provider_qa_admission_result_ = *stopped;
+      }
+      return *stopped;
+    }
+    if (first_provider_qa_admission_result_) return *first_provider_qa_admission_result_;
+    first_provider_qa_control_config_ = config;
+    const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_, true);
+    const auto failure = !target || target->empty() || core_->SmartAccessProbeVersion() != 1
+        ? "core_egress_probe_unavailable" : core_->ProbeSmartAccess(*target, true, qa_interrupted);
+    first_provider_qa_admission_result_ = failure.empty()
+        ? RuntimeResult{Status::kOk, "configured=1"} : RuntimeResult{Status::kNotReady, failure};
+    if (failure.empty()) {
+      if (const auto stopped = interrupted()) first_provider_qa_admission_result_ = *stopped;
+    }
+    // This ACK admits the worker under the captured owner. Actual stage proof
+    // stays in Core readiness; ordinary VPN egress is never replaced by it.
+    return *first_provider_qa_admission_result_;
+  }
   return {Status::kOk, result == 1 ? "configured=1" : "configured=0"};
 }
 
