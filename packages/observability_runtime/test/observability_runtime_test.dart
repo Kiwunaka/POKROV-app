@@ -16,6 +16,10 @@ void main() {
         throwsArgumentError,
       );
       expect(
+        () => _event(1, attributes: const {'http_64k_failure': 'unknown_detail'}),
+        throwsArgumentError,
+      );
+      expect(
         () => _event(
           1,
           privacyClass: ObservabilityPrivacyClass.releaseHealth,

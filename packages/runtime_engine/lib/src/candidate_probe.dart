@@ -63,11 +63,17 @@ class RuntimeCandidateProbeResult {
     required this.failureKind,
     required this.duration,
     this.probeStage,
+    this.http64kFailure,
   });
   final bool success;
   final String failureKind;
   final Duration duration;
   final String? probeStage;
+  final String? http64kFailure;
+
+  static const http64kFailures = {
+    'write_error', 'header_error', 'body_short', 'body_read_error',
+  };
 
   static const probeStages = {
     'parse_profile', 'create_instance', 'start_instance', 'select_outbound',
@@ -220,7 +226,10 @@ mixin _CandidateProbeChannel
         failureKind: value['failure_kind'] as String,
         duration: Duration(milliseconds: value['duration_ms'] as int),
         probeStage: RuntimeCandidateProbeResult.probeStages.contains(value['stage'])
-            ? value['stage'] as String : null);
+            ? value['stage'] as String : null,
+        http64kFailure: value['failure_kind'] == 'probe_failed' && value['stage'] == 'http_64k' &&
+                RuntimeCandidateProbeResult.http64kFailures.contains(value['http_64k_failure'])
+            ? value['http_64k_failure'] as String : null);
   }
 
   @override

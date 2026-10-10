@@ -101,6 +101,7 @@ abstract final class ObservabilityAttributeKeys {
     'phase',
     'prepare_reason',
     'probe_stage',
+    'http_64k_failure',
     'queue_depth',
     'reason_class',
     'retention_days',

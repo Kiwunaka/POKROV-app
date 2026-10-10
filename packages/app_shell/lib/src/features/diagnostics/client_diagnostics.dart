@@ -198,11 +198,13 @@ final class PokrovDiagnosticTimelineAttempt {
     required List<PokrovDiagnosticTimelineEntry> entries,
     this.probeStage,
     this.probeFailureKind,
+    this.http64kFailure,
   }) : entries = List<PokrovDiagnosticTimelineEntry>.unmodifiable(entries);
 
   final int generation;
   final String? probeStage;
   final String? probeFailureKind;
+  final String? http64kFailure;
   final bool isReconnect;
   final List<PokrovDiagnosticTimelineEntry> entries;
 }
@@ -571,6 +573,7 @@ abstract final class PokrovDiagnosticsPresenter {
               ? currentProbe?.probeStage : null,
           probeFailureKind: OperationalAttributePolicy.candidateProbeFailureKinds.contains(currentProbe?.failureKind)
               ? currentProbe?.failureKind : null,
+          http64kFailure: currentProbe?.http64kFailure,
         ),
       );
     }
@@ -1786,6 +1789,16 @@ class _TimelineAttemptView extends StatelessWidget {
         if (attempt.probeFailureKind != null && attempt.probeFailureKind != 'none')
           Text(
             'Причина проверки кандидата: ${attempt.probeFailureKind}',
+            style: theme.textTheme.bodySmall,
+          ),
+        if (attempt.http64kFailure != null)
+          Text(
+            'Проверка 64 КиБ: ${const <String, String>{
+              'write_error': 'не удалось отправить запрос',
+              'header_error': 'не удалось прочитать заголовки ответа',
+              'body_short': 'ответ короче 64 КиБ',
+              'body_read_error': 'не удалось прочитать тело ответа',
+            }[attempt.http64kFailure]!}',
             style: theme.textTheme.bodySmall,
           ),
         const SizedBox(height: 10),

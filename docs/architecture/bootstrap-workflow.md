@@ -295,6 +295,12 @@ connection timeline, without enabling support mode. A previous generation's stag
 is not carried into a new attempt. With an already active signed support policy,
 Windows also exports the same stage and duration as an existing candidate event;
 Android retains its native candidate records. Support allowances are unchanged.
+Generic GET 64 KiB failures also retain the optional closed `http_64k_failure`
+detail from the Core ACK through selector normalization and the owning attempt's
+ordinary Diagnostics card. Only `write_error`, `header_error`, `body_short` and
+`body_read_error` are accepted for `http_64k`/`probe_failed`; existing failure
+kinds, candidate reports and probe budgets remain unchanged.
+The card shows a Russian description for each detail.
 The same current-attempt block also shows the existing closed `failure_kind`
 when a candidate result has no stage. Missing or unknown current results do not
 inherit an older reason. `unavailable` can cover bridge/admission/preparation
@@ -2927,3 +2933,4 @@ unconfirmed stop retains the unverified presentation. A live UI with the exact
 lease owner continues its normal policy refresh; closing the UI alone does not
 cancel the native lease. This is source only, NOT_VERIFIED; native proof producers
 and full restart/device verification remain open.
+

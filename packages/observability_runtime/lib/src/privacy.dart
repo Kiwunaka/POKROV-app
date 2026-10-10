@@ -4,6 +4,9 @@ import 'package:crypto/crypto.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart';
 
 abstract final class OperationalAttributePolicy {
+  static const candidateHTTP64KFailures = <String>{
+    'write_error', 'header_error', 'body_short', 'body_read_error',
+  };
   static const candidateProbeStages = <String>{
     'parse_profile', 'create_instance', 'start_instance', 'select_outbound',
     'proxy_dial', 'egress_check', 'tls_handshake', 'tls_read', 'tls_write',
@@ -323,6 +326,7 @@ abstract final class OperationalAttributePolicy {
       'transport_https_required',
     },
     'probe_stage': candidateProbeStages,
+    'http_64k_failure': candidateHTTP64KFailures,
     'failure_kind': candidateProbeFailureKinds,
   };
 

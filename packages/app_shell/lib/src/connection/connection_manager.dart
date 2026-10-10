@@ -2523,7 +2523,7 @@ class ConnectionManager extends ChangeNotifier {
                   ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration,
                       probeStage: checked.probeStage)
                   : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration,
-                      probeStage: checked.probeStage);
+                      probeStage: checked.probeStage, http64kFailure: checked.http64kFailure);
             },
           );
           selectedCandidate = true;
@@ -2597,7 +2597,7 @@ class ConnectionManager extends ChangeNotifier {
     try {
       _observability?.recordCandidateProbe(
           failureKind: result.failureKind, duration: result.duration,
-          probeStage: result.probeStage);
+          probeStage: result.probeStage, http64kFailure: result.http64kFailure);
     } on Object {
       // Diagnostic validation must not turn a working candidate into a failed connect.
     }
@@ -2741,7 +2741,7 @@ class ConnectionManager extends ChangeNotifier {
                     ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration,
                         probeStage: checked.probeStage)
                     : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration,
-                        probeStage: checked.probeStage);
+                        probeStage: checked.probeStage, http64kFailure: checked.http64kFailure);
               },
             );
             found = true;

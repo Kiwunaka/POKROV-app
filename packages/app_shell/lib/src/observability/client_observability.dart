@@ -522,6 +522,7 @@ final class PokrovClientObservability {
     required String failureKind,
     required Duration duration,
     String? probeStage,
+    String? http64kFailure,
   }) {
     _emitCurrent(
       name: 'app.connection.candidate_probe.finished',
@@ -536,6 +537,9 @@ final class PokrovClientObservability {
         'duration_ms': duration.inMilliseconds.clamp(0, 3600000),
         if (RuntimeCandidateProbeResult.probeStages.contains(probeStage))
           'probe_stage': probeStage,
+        if (failureKind == 'probe_failed' && probeStage == 'http_64k' &&
+            RuntimeCandidateProbeResult.http64kFailures.contains(http64kFailure))
+          'http_64k_failure': http64kFailure,
       },
     );
   }

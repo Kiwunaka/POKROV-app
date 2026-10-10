@@ -168,6 +168,7 @@ void main() {
 
   test('candidate bridge retains closed native stages and accepts stage-less replies', () async {
     Object? nativeStage;
+    Object? nativeHttp64kFailure;
     messenger.setMockMethodCallHandler(channel, (call) async {
       expect(call.method, 'runtimeEngine.probeCandidate');
       return jsonEncode({
@@ -175,6 +176,7 @@ void main() {
         'failure_kind': 'probe_failed',
         'duration_ms': 777,
         if (nativeStage != null) 'stage': nativeStage,
+        if (nativeHttp64kFailure != null) 'http_64k_failure': nativeHttp64kFailure,
       });
     });
     final runtime = MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.windows);
@@ -193,6 +195,19 @@ void main() {
       stages.add(result.probeStage);
     }
     expect(stages, ['proxy_dial', 'tls_read', null, null]);
+    nativeStage = 'http_64k';
+    nativeHttp64kFailure = 'body_short';
+    Future<RuntimeCandidateProbeResult> detailedProbe() => runtime.probeCandidate(
+      probeId: 'candidate-http-detail',
+      payload: const ManagedProfilePayload(profileName: 'candidate', configPayload: '{}'),
+      timeout: const Duration(seconds: 3), expectedNetworkContext: 'network-context',
+    );
+    final detailed = await detailedProbe();
+    expect((detailed.failureKind, detailed.probeStage, detailed.http64kFailure),
+        ('probe_failed', 'http_64k', 'body_short'));
+    nativeHttp64kFailure = 'unknown_detail';
+    final unknown = await detailedProbe();
+    expect((unknown.failureKind, unknown.http64kFailure), ('probe_failed', null));
   });
 
   test('candidate bridge preserves cellular carrier and Core data stall', () async {

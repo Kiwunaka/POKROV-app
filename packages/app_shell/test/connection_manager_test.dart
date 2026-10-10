@@ -311,6 +311,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final networkReadEntered = Completer<void>();
   final probeContexts = <String>[];
   final probeStages = <String, String>{};
+  final probeHTTP64KFailures = <String, String>{};
   final probeFailureKinds = <String, String>{};
 
   @override
@@ -365,7 +366,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         !failedProbeProfiles.contains(payload.profileName);
     return RuntimeCandidateProbeResult(success: success,
         failureKind: success ? '' : probeFailureKinds[payload.profileName] ?? 'cancelled',
-        duration: probeDuration, probeStage: probeStages[payload.profileName]);
+        duration: probeDuration, probeStage: probeStages[payload.profileName],
+        http64kFailure: probeHTTP64KFailures[payload.profileName]);
   }
   @override
   Future<void> cancelCandidateProbe(String probeId) async {
@@ -1916,7 +1918,9 @@ void main() {
       ..supportsCandidates = true
       ..failedProbeProfiles.addAll(bootstrapper.candidates.map((item) => item.candidateRef))
       ..probeStages[bootstrapper.candidates.first.candidateRef] = 'proxy_dial'
-      ..probeStages[bootstrapper.candidates.last.candidateRef] = 'tls_read';
+      ..probeStages[bootstrapper.candidates.last.candidateRef] = 'http_64k'
+      ..probeFailureKinds[bootstrapper.candidates.last.candidateRef] = 'probe_failed'
+      ..probeHTTP64KFailures[bootstrapper.candidates.last.candidateRef] = 'body_short';
     var permissionRequests = 0;
     final experienceStore = _ExperienceStore();
     final manager = _manager(runtime, bootstrapper, observability: observability,
@@ -1947,14 +1951,24 @@ void main() {
     final reportedProbes = (bootstrapper.reports.single['candidate_probes'] as List)
         .cast<Map<String, Object?>>();
     expect(reportedProbes.map((probe) => probe['probe_stage']),
-        unorderedEquals(['proxy_dial', 'tls_read']));
+        unorderedEquals(['proxy_dial', 'http_64k']));
+    expect(reportedProbes.every((probe) => !probe.containsKey('http_64k_failure')), isTrue,
+        reason: 'the existing D8 candidate report contract is unchanged');
     final events = await File(
       '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
     ).readAsLines();
     final probes = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .where((event) => event['name'] == 'app.connection.candidate_probe.finished');
     expect(probes.map((event) => (event['attributes'] as Map)['probe_stage']),
-        unorderedEquals(['proxy_dial', 'tls_read']));
+        unorderedEquals(['proxy_dial', 'http_64k']));
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      snapshot: manager.snapshot, statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false, timelineBreadcrumbs: observability.connectionTimelineBreadcrumbs,
+    );
+    expect((report.timelineAttempts.last.probeFailureKind, report.timelineAttempts.last.probeStage,
+        report.timelineAttempts.last.http64kFailure), ('probe_failed', 'http_64k', 'body_short'));
     final terminal = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .singleWhere((event) => event['name'] == 'app.connection.attempt.finished');
     expect(terminal['error'], {'code': 'CONN-008', 'origin': 'core'});
