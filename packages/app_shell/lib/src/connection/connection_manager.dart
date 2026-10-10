@@ -502,9 +502,9 @@ class ConnectionManager extends ChangeNotifier {
         _activeFirstProviderQa = null;
         _smartAccessRouteProfile = null;
         final engine = _runtimeEngine;
-        final requestId = engine is RuntimeConnectCancellation
-            ? (engine as RuntimeConnectCancellation).activeConnectRequestId : null;
-        if (requestId != null && engine is RuntimeConnectSettlement &&
+        final requestId = engine is RuntimeConnectSettlement
+            ? (engine as RuntimeConnectSettlement).boundConnectRequestId : null;
+        if (requestId != null &&
             _runtimeSnapshot?.phase != RuntimePhase.running && _runtimeSnapshot?.connectionPending != true) {
           // A negative Connect can retain its owner while the UI still has the
           // staged snapshot. Only the exact settlement receipt releases it.

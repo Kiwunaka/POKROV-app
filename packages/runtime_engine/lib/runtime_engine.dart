@@ -1537,6 +1537,7 @@ abstract interface class RuntimeConnectCancellation {
 /// Confirmation that this exact invocation and its native resources have ended.
 /// false/throw retains ownership; a cancellation ACK or idle snapshot is not proof.
 abstract interface class RuntimeConnectSettlement {
+  String? get boundConnectRequestId;
   Future<bool> cancelAndConfirmConnectStopped(String requestId);
 }
 
@@ -3716,6 +3717,9 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
 
   @override
   String? get activeConnectRequestId => _activeConnectRequestId;
+
+  @override
+  String? get boundConnectRequestId => _boundConnectRequestId;
 
   @override
   String? connectRequestForSnapshot(RuntimeSnapshot snapshot) => _connectSnapshots[snapshot];

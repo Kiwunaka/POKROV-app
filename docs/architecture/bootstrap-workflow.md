@@ -315,6 +315,8 @@ history preserves that primary cause; the existing runtime report includes kinds
 within its established field bounds. An
 unconfirmed cleanup remains a separate result and retains the owner for Stop.
 Explicit Stop settles that exact owner even when the last UI snapshot is staged.
+This path uses the retained bound request ID; ordinary connections and protected
+replacements keep their normal disconnect, including explicit release of the guard.
 Android network callbacks keep the session captured when their listener was
 registered; a delayed callback cannot reset a replacement session.
 Probe journal entries use the validated `verify` stage and typed failure kind;

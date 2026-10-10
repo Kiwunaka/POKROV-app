@@ -189,6 +189,9 @@ final class LinuxDaemonRuntimeEngine implements PokrovRuntimeEngine, RuntimeConn
   String? get activeConnectRequestId => _activeConnectRequestId;
 
   @override
+  String? get boundConnectRequestId => _boundConnectRequestId;
+
+  @override
   String? connectRequestForSnapshot(RuntimeSnapshot snapshot) => _connectSnapshots[snapshot];
 
   @override

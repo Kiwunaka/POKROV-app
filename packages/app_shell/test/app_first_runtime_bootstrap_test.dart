@@ -451,7 +451,8 @@ void main() {
             if (!stopConfirmed) return {'schema': 1, 'requestId': args['requestId'], 'settled': false};
           }
           phase.addAll({'phase': 'initialized', 'coreEgressValidated': false, 'dnsReady': false,
-            'effectiveProfileDigest': '', 'tunInterfacePresent': false, 'vpnRoutesPresent': false});
+            'effectiveProfileDigest': '', 'tunInterfacePresent': false, 'vpnRoutesPresent': false,
+            'protectionRetained': false});
           if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
             nativeBoundRequestId = null;
             return {'schema': 1, 'requestId': args['requestId'], 'settled': true};
@@ -536,6 +537,24 @@ void main() {
       hasLength(stopsBeforeRetry + 1), reason: 'explicit Stop retries the retained owner even with a staged snapshot');
     expect((runtime as RuntimeConnectCancellation).activeConnectRequestId, isNull);
     expect(nativeCalls, isNot(contains('runtimeEngine.disconnect')), reason: 'bound Stop remains exact-owner settlement');
+
+    // An ordinary failed replacement can retain its guard with a staged snapshot.
+    await runtime.connect();
+    expect((runtime as RuntimeConnectCancellation).activeConnectRequestId, isNotNull);
+    phase.addAll({'phase': 'configStaged', 'coreEgressValidated': false, 'dnsReady': false,
+      'effectiveProfileDigest': '', 'tunInterfacePresent': false, 'vpnRoutesPresent': false,
+      'protectionRetained': true});
+    await manager.readSnapshot();
+    expect(manager.retainsProtection, isTrue);
+    await manager.disconnect();
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.disconnect'), hasLength(1),
+      reason: 'ordinary retained protection needs the ordinary native Stop');
+    expect(manager.retainsProtection, isFalse);
+    await manager.disconnect();
+    expect(manager.status.phase, ConnectionPhase.disconnected, reason: 'repeated Stop remains settled for an ordinary owner');
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.disconnect'), hasLength(1));
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.cancelAndConfirmConnectStopped'),
+      hasLength(stopsBeforeRetry + 1), reason: 'ordinary Stop must not use bound settlement');
   });
   testWidgets('restored Windows Home remains painted while inactive and after returning', (tester) async {
     final firstLaunch = _RestoredFirstLaunch();
