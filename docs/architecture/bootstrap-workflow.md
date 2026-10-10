@@ -311,7 +311,8 @@ remains available without attributing it to that new attempt, and an owned Stop
 keeps its cleanup proof.
 An identity-bound negative Connect ACK retains its request-matched closed native
 cause, phase and identity-match booleans before exact-owner cleanup. Protection
-history and the existing runtime failure report preserve that primary cause;
+history preserves that primary cause; the existing runtime report includes kinds
+within its established field bounds. An
 unconfirmed cleanup remains a separate result and retains the owner for Stop.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
