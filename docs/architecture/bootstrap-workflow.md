@@ -301,6 +301,11 @@ ordinary Diagnostics card. Only `write_error`, `header_error`, `body_short` and
 `body_read_error` are accepted for `http_64k`/`probe_failed`; existing failure
 kinds, candidate reports and probe budgets remain unchanged.
 The card shows a Russian description for each detail.
+Failed body reads may also carry the exact closed `http_64k_observation` tuple:
+owned primary/reserve target, HTTP 200, received bytes and expected 65536 bytes.
+Ordinary Diagnostics displays that count for the latest matching attempt. An
+observed zero remains zero; absent, unperformed and timeout reads stay unknown.
+No URL, body, header or raw error is retained, and D8 candidate batches are unchanged.
 The same current-attempt block also shows the existing closed `failure_kind`
 when a candidate result has no stage. Missing or unknown current results do not
 inherit an older reason. `unavailable` can cover bridge/admission/preparation

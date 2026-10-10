@@ -64,12 +64,24 @@ class RuntimeCandidateProbeResult {
     required this.duration,
     this.probeStage,
     this.http64kFailure,
+    this.http64kObservation,
   });
   final bool success;
   final String failureKind;
   final Duration duration;
   final String? probeStage;
   final String? http64kFailure;
+  final Map<String, Object>? http64kObservation;
+
+  static Map<String, Object>? http64kObservationFromWire(Object? value) {
+    if (value is! Map || value.length != 4 ||
+        !const {'owned_api', 'owned_reserve'}.contains(value['target']) || value['status'] != 200 ||
+        value['status'] is! int || value['received_bytes'] is! int ||
+        (value['received_bytes'] as int) < 0 || (value['received_bytes'] as int) >= 65536 ||
+        value['expected_bytes'] is! int || value['expected_bytes'] != 65536) return null;
+    return Map<String, Object>.unmodifiable({'target': value['target'] as String,
+      'status': value['status'] as int, 'received_bytes': value['received_bytes'] as int, 'expected_bytes': 65536});
+  }
 
   static const http64kFailures = {
     'write_error', 'header_error', 'body_short', 'body_read_error',
@@ -229,7 +241,10 @@ mixin _CandidateProbeChannel
             ? value['stage'] as String : null,
         http64kFailure: value['failure_kind'] == 'probe_failed' && value['stage'] == 'http_64k' &&
                 RuntimeCandidateProbeResult.http64kFailures.contains(value['http_64k_failure'])
-            ? value['http_64k_failure'] as String : null);
+            ? value['http_64k_failure'] as String : null,
+        http64kObservation: value['failure_kind'] == 'probe_failed' && value['stage'] == 'http_64k' &&
+                const {'body_short', 'body_read_error'}.contains(value['http_64k_failure'])
+            ? RuntimeCandidateProbeResult.http64kObservationFromWire(value['http_64k_observation']) : null);
   }
 
   @override

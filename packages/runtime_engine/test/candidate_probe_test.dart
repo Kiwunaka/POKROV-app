@@ -169,14 +169,17 @@ void main() {
   test('candidate bridge retains closed native stages and accepts stage-less replies', () async {
     Object? nativeStage;
     Object? nativeHttp64kFailure;
+    Object? nativeHttp64kObservation;
+    var nativeFailureKind = 'probe_failed';
     messenger.setMockMethodCallHandler(channel, (call) async {
       expect(call.method, 'runtimeEngine.probeCandidate');
       return jsonEncode({
         'success': false,
-        'failure_kind': 'probe_failed',
+        'failure_kind': nativeFailureKind,
         'duration_ms': 777,
         if (nativeStage != null) 'stage': nativeStage,
         if (nativeHttp64kFailure != null) 'http_64k_failure': nativeHttp64kFailure,
+        if (nativeHttp64kObservation != null) 'http_64k_observation': nativeHttp64kObservation,
       });
     });
     final runtime = MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.windows);
@@ -197,6 +200,7 @@ void main() {
     expect(stages, ['proxy_dial', 'tls_read', null, null]);
     nativeStage = 'http_64k';
     nativeHttp64kFailure = 'body_short';
+    nativeHttp64kObservation = {'target': 'owned_api', 'status': 200, 'received_bytes': 0, 'expected_bytes': 65536};
     Future<RuntimeCandidateProbeResult> detailedProbe() => runtime.probeCandidate(
       probeId: 'candidate-http-detail',
       payload: const ManagedProfilePayload(profileName: 'candidate', configPayload: '{}'),
@@ -205,9 +209,17 @@ void main() {
     final detailed = await detailedProbe();
     expect((detailed.failureKind, detailed.probeStage, detailed.http64kFailure),
         ('probe_failed', 'http_64k', 'body_short'));
+    expect(detailed.http64kObservation, nativeHttp64kObservation);
+    expect(() => detailed.http64kObservation!['received_bytes'] = 1, throwsUnsupportedError);
+    nativeHttp64kObservation = {'target': 'owned_reserve', 'status': 200, 'received_bytes': 16384, 'expected_bytes': 65536};
+    expect((await detailedProbe()).http64kObservation, nativeHttp64kObservation);
     nativeHttp64kFailure = 'unknown_detail';
     final unknown = await detailedProbe();
     expect((unknown.failureKind, unknown.http64kFailure), ('probe_failed', null));
+    expect(unknown.http64kObservation, isNull);
+    nativeFailureKind = 'timeout';
+    nativeHttp64kFailure = 'body_short';
+    expect((await detailedProbe()).http64kObservation, isNull);
   });
 
   test('candidate bridge preserves cellular carrier and Core data stall', () async {

@@ -199,12 +199,14 @@ final class PokrovDiagnosticTimelineAttempt {
     this.probeStage,
     this.probeFailureKind,
     this.http64kFailure,
+    this.http64kObservation,
   }) : entries = List<PokrovDiagnosticTimelineEntry>.unmodifiable(entries);
 
   final int generation;
   final String? probeStage;
   final String? probeFailureKind;
   final String? http64kFailure;
+  final Map<String, Object>? http64kObservation;
   final bool isReconnect;
   final List<PokrovDiagnosticTimelineEntry> entries;
 }
@@ -574,6 +576,7 @@ abstract final class PokrovDiagnosticsPresenter {
           probeFailureKind: OperationalAttributePolicy.candidateProbeFailureKinds.contains(currentProbe?.failureKind)
               ? currentProbe?.failureKind : null,
           http64kFailure: currentProbe?.http64kFailure,
+          http64kObservation: currentProbe?.http64kObservation,
         ),
       );
     }
@@ -1799,6 +1802,13 @@ class _TimelineAttemptView extends StatelessWidget {
               'body_short': 'ответ короче 64 КиБ',
               'body_read_error': 'не удалось прочитать тело ответа',
             }[attempt.http64kFailure]!}',
+            style: theme.textTheme.bodySmall,
+          ),
+        if (attempt.http64kObservation case final observation?)
+          Text(
+            'Ответ: ${observation['received_bytes']}/${observation['expected_bytes']} байт · '
+            '${observation['target'] == 'owned_api' ? 'основная цель' : 'резервная цель'} · HTTP ${observation['status']}',
+            key: ValueKey('diagnostics-http64k-observation-${attempt.generation}'),
             style: theme.textTheme.bodySmall,
           ),
         const SizedBox(height: 10),

@@ -178,6 +178,7 @@ final class OperationalBreadcrumb {
     required this.sequence,
     this.probeStage,
     this.http64kFailure,
+    this.http64kObservation,
     this.failureKind,
     this.durationMs,
     this.prepareReason,
@@ -198,6 +199,9 @@ final class OperationalBreadcrumb {
         http64kFailure: event.attributes['failure_kind'] == 'probe_failed' && event.attributes['probe_stage'] == 'http_64k' &&
                 OperationalAttributePolicy.candidateHTTP64KFailures.contains(event.attributes['http_64k_failure'])
             ? event.attributes['http_64k_failure'] as String : null,
+        http64kObservation: event.attributes['failure_kind'] == 'probe_failed' && event.attributes['probe_stage'] == 'http_64k' &&
+                const {'body_short', 'body_read_error'}.contains(event.attributes['http_64k_failure'])
+            ? OperationalAttributePolicy.candidateHTTP64KObservation(event.attributes['http_64k_observation']) : null,
         failureKind: OperationalAttributePolicy.candidateProbeFailureKinds.contains(event.attributes['failure_kind'])
             ? event.attributes['failure_kind'] as String : null,
         durationMs: event.attributes['duration_ms'] as int?,
@@ -217,6 +221,7 @@ final class OperationalBreadcrumb {
   final int sequence;
   final String? probeStage;
   final String? http64kFailure;
+  final Map<String, Object>? http64kObservation;
   final String? failureKind;
   final int? durationMs;
   final String? prepareReason;

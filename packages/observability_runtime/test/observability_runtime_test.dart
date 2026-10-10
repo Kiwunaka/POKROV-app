@@ -19,6 +19,14 @@ void main() {
         () => _event(1, attributes: const {'http_64k_failure': 'unknown_detail'}),
         throwsArgumentError,
       );
+      const observation = {'target': 'owned_api', 'status': 200, 'received_bytes': 0, 'expected_bytes': 65536};
+      final measured = _event(1, attributes: const {'failure_kind': 'probe_failed', 'probe_stage': 'http_64k',
+        'http_64k_failure': 'body_short', 'http_64k_observation': observation});
+      expect(OperationalBreadcrumb.fromEvent(measured).http64kObservation, observation);
+      expect(() => _event(1, attributes: const {'http_64k_observation': observation}), throwsArgumentError);
+      expect(() => _event(1, attributes: {'failure_kind': 'probe_failed', 'probe_stage': 'http_64k',
+        'http_64k_failure': 'body_short', 'http_64k_observation': {...observation, 'target': 'https://example.test'}}),
+        throwsArgumentError);
       expect(
         () => _event(
           1,

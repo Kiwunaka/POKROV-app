@@ -312,6 +312,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final probeContexts = <String>[];
   final probeStages = <String, String>{};
   final probeHTTP64KFailures = <String, String>{};
+  final probeHTTP64KObservations = <String, Map<String, Object>>{};
   final probeFailureKinds = <String, String>{};
 
   @override
@@ -367,7 +368,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     return RuntimeCandidateProbeResult(success: success,
         failureKind: success ? '' : probeFailureKinds[payload.profileName] ?? 'cancelled',
         duration: probeDuration, probeStage: probeStages[payload.profileName],
-        http64kFailure: probeHTTP64KFailures[payload.profileName]);
+        http64kFailure: probeHTTP64KFailures[payload.profileName],
+        http64kObservation: probeHTTP64KObservations[payload.profileName]);
   }
   @override
   Future<void> cancelCandidateProbe(String probeId) async {
@@ -1920,7 +1922,9 @@ void main() {
       ..probeStages[bootstrapper.candidates.first.candidateRef] = 'proxy_dial'
       ..probeStages[bootstrapper.candidates.last.candidateRef] = 'http_64k'
       ..probeFailureKinds[bootstrapper.candidates.last.candidateRef] = 'probe_failed'
-      ..probeHTTP64KFailures[bootstrapper.candidates.last.candidateRef] = 'body_short';
+      ..probeHTTP64KFailures[bootstrapper.candidates.last.candidateRef] = 'body_short'
+      ..probeHTTP64KObservations[bootstrapper.candidates.last.candidateRef] = const {
+        'target': 'owned_reserve', 'status': 200, 'received_bytes': 32768, 'expected_bytes': 65536};
     var permissionRequests = 0;
     final experienceStore = _ExperienceStore();
     final manager = _manager(runtime, bootstrapper, observability: observability,
@@ -1954,6 +1958,7 @@ void main() {
         unorderedEquals(['proxy_dial', 'http_64k']));
     expect(reportedProbes.every((probe) => !probe.containsKey('http_64k_failure')), isTrue,
         reason: 'the existing D8 candidate report contract is unchanged');
+    expect(reportedProbes.every((probe) => !probe.containsKey('http_64k_observation')), isTrue);
     final events = await File(
       '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
     ).readAsLines();
@@ -1969,6 +1974,8 @@ void main() {
     );
     expect((report.timelineAttempts.last.probeFailureKind, report.timelineAttempts.last.probeStage,
         report.timelineAttempts.last.http64kFailure), ('probe_failed', 'http_64k', 'body_short'));
+    expect(report.timelineAttempts.last.http64kObservation,
+        {'target': 'owned_reserve', 'status': 200, 'received_bytes': 32768, 'expected_bytes': 65536});
     final terminal = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .singleWhere((event) => event['name'] == 'app.connection.attempt.finished');
     expect(terminal['error'], {'code': 'CONN-008', 'origin': 'core'});

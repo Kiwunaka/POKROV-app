@@ -2523,7 +2523,8 @@ class ConnectionManager extends ChangeNotifier {
                   ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration,
                       probeStage: checked.probeStage)
                   : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration,
-                      probeStage: checked.probeStage, http64kFailure: checked.http64kFailure);
+                      probeStage: checked.probeStage, http64kFailure: checked.http64kFailure,
+                      http64kObservation: checked.http64kObservation);
             },
           );
           selectedCandidate = true;
@@ -2597,7 +2598,8 @@ class ConnectionManager extends ChangeNotifier {
     try {
       _observability?.recordCandidateProbe(
           failureKind: result.failureKind, duration: result.duration,
-          probeStage: result.probeStage, http64kFailure: result.http64kFailure);
+          probeStage: result.probeStage, http64kFailure: result.http64kFailure,
+          http64kObservation: result.http64kObservation);
     } on Object {
       // Diagnostic validation must not turn a working candidate into a failed connect.
     }
@@ -2741,7 +2743,8 @@ class ConnectionManager extends ChangeNotifier {
                     ? SmartConnectCandidateProbeResult.success(exact, duration: checked.duration,
                         probeStage: checked.probeStage)
                     : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration,
-                        probeStage: checked.probeStage, http64kFailure: checked.http64kFailure);
+                        probeStage: checked.probeStage, http64kFailure: checked.http64kFailure,
+                        http64kObservation: checked.http64kObservation);
               },
             );
             found = true;

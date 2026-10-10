@@ -7,6 +7,14 @@ abstract final class OperationalAttributePolicy {
   static const candidateHTTP64KFailures = <String>{
     'write_error', 'header_error', 'body_short', 'body_read_error',
   };
+  static Map<String, Object>? candidateHTTP64KObservation(Object? value) {
+    if (value is! Map || value.length != 4 ||
+        !const {'owned_api', 'owned_reserve'}.contains(value['target']) || value['status'] is! int || value['status'] != 200 ||
+        value['received_bytes'] is! int || (value['received_bytes'] as int) < 0 || (value['received_bytes'] as int) >= 65536 ||
+        value['expected_bytes'] is! int || value['expected_bytes'] != 65536) return null;
+    return Map<String, Object>.unmodifiable({'target': value['target'] as String, 'status': 200,
+      'received_bytes': value['received_bytes'] as int, 'expected_bytes': 65536});
+  }
   static const candidateProbeStages = <String>{
     'parse_profile', 'create_instance', 'start_instance', 'select_outbound',
     'proxy_dial', 'egress_check', 'tls_handshake', 'tls_read', 'tls_write',
@@ -362,6 +370,11 @@ abstract final class OperationalAttributePolicy {
     if (attributes.length > 12) {
       throw ArgumentError.value(attributes.length, 'attributes');
     }
+    if (attributes.containsKey('http_64k_observation') && (attributes['failure_kind'] != 'probe_failed' ||
+        attributes['probe_stage'] != 'http_64k' ||
+        !const {'body_short', 'body_read_error'}.contains(attributes['http_64k_failure']))) {
+      throw ArgumentError('HTTP64 observation requires a failed body read');
+    }
     final allowedForMode = switch (privacyClass) {
       ObservabilityPrivacyClass.releaseHealth => _releaseHealthKeys,
       ObservabilityPrivacyClass.serverSecurityAudit => _serverAuditKeys,
@@ -383,6 +396,10 @@ abstract final class OperationalAttributePolicy {
   }
 
   static void _validateValue(String key, Object? value) {
+    if (key == 'http_64k_observation') {
+      if (candidateHTTP64KObservation(value) == null) throw ArgumentError('Invalid HTTP64 observation');
+      return;
+    }
     if (_booleanKeys.contains(key)) {
       if (value is! bool) {
         throw ArgumentError.value(value, key, 'Boolean required');
