@@ -720,6 +720,69 @@ PokrovWifiNetworkStatus _foregroundWifi(_Runtime runtime, {String? name = 'Cafe'
     networkContextRef: runtime.candidateContext, networkSelectionKey: runtime.candidateKey, manualStopEpoch: 0);
 
 void main() {
+  testWidgets('production pinned pending QA admission exposes the Diagnostics card without starting', (tester) async {
+    const admissionId = '1234567890abcdef1234567890abcdef';
+    var httpCalls = 0;
+    var claimClicks = 0;
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+      supportDirectoryResolver: () async => Directory('${Directory.systemTemp.path}/pokrov-qa-visibility-${DateTime.now().microsecondsSinceEpoch}'),
+      httpClientFactory: () { httpCalls++; throw StateError('unexpected QA fixture HTTP'); },
+    );
+    expect(bootstrapper.firstProviderQaConfigured, isTrue,
+        reason: 'this focused fixture uses the actual production D2 define file');
+    final account = AccountSessionCoordinator(accountActions: bootstrapper)
+      ..updateSubscriptionInfo(ClientSubscriptionInfo.fromJson({
+        'lane': 'paid', 'access_state': 'paid_unlimited',
+        'first_provider_qa': {'admission_id': admissionId, 'state': 'pending'},
+      }));
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..phase = RuntimePhase.initialized
+      ..coreVersion = '1.2.12';
+    final manager = ConnectionManager(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows), runtimeEngine: runtime,
+      bootstrapper: bootstrapper, accountSessionCoordinator: account,
+      firstSessionCoordinator: FirstSessionCoordinator(store: _FirstLaunchStore()),
+      clientExperienceStore: _ExperienceStore(), connectHintStore: const PokrovFileConnectHintStore(),
+      authorizeAndroidConnect: () async => true, refreshSubscription: () async => true, onNotice: (_, __) {},
+    );
+    try {
+      await tester.runAsync(manager.refresh);
+      expect(manager.snapshot?.phase, RuntimePhase.initialized);
+      expect(manager.snapshot?.coreVersion, '1.2.12');
+      expect(manager.firstProviderQaAdmissionId, admissionId);
+      final report = PokrovDiagnosticsPresenter.fromRuntime(
+        hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+        snapshot: manager.snapshot, statusLabel: 'idle', warpState: 'disabled', now: DateTime.now().toUtc(),
+        appVersion: '1.5.0', buildNumber: '4119', releaseChannel: 'private', candidateLabel: 'fixture',
+        encryptedDeliveryAvailable: false,
+      );
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() { tester.view.resetPhysicalSize(); tester.view.resetDevicePixelRatio(); });
+      await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
+        initialReport: report, onRefresh: () async => report, onOpenProtection: () {}, onOpenSupport: () {},
+        onStartFirstProviderQa: manager.firstProviderQaAdmissionId == null ? null : () async {
+          claimClicks++;
+          await manager.startFirstProviderQa(manager.firstProviderQaAdmissionId!);
+        },
+      )));
+      await tester.pump();
+      final card = find.byKey(const ValueKey('diagnostics-first-provider-qa'));
+      expect(card, findsOneWidget);
+      await tester.ensureVisible(card);
+      final start = find.byKey(const ValueKey('diagnostics-first-provider-qa-start'));
+      expect(start, findsOneWidget);
+      expect(tester.widget<FilledButton>(start).onPressed, isNotNull);
+      expect(claimClicks, 0);
+      expect(httpCalls, 0);
+      expect(runtime.stagedPayloads, isEmpty);
+      expect(runtime.connectCalls, 0);
+    } finally {
+      manager.dispose();
+    }
+  }, skip: !const bool.fromEnvironment('POKROV_ROUTING_CATALOG_ENABLED'));
+
   final originalHttpOverrides = HttpOverrides.current;
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = originalHttpOverrides;
