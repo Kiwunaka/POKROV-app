@@ -1993,6 +1993,12 @@ Exhausted native candidates retain `CONN-008` with Core origin in local diagnost
 and the catalog code in runtime stats; other portal failures keep their own code.
 The individual closed probe failures remain the evidence for the underlying cause.
 
+For unexpected connection failures, `ConnectionManager` retains only the exact
+`PlatformException` codes `runtime_clock_unavailable`, `runtime_busy` and
+`network_context_unavailable` in protection History and the runtime failure report.
+Other platform exception codes keep the generic failure; exception messages,
+details and native stacks are excluded.
+
 Native failure categories pass through an exact allowlist before reaching public
 messages. Offline state, unresolved network interface, DNS failure, refused
 endpoint, transport timeout and handshake failure retain distinct observations.

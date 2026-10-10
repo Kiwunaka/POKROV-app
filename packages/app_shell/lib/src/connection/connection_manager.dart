@@ -871,14 +871,20 @@ class ConnectionManager extends ChangeNotifier {
     _queueClientExperienceWrite();
   }
 
+  String? _connectionPlatformFailureCode(Object error) =>
+      error is PlatformException && const {
+        'runtime_clock_unavailable', 'runtime_busy', 'network_context_unavailable',
+      }.contains(error.code) ? error.code : null;
+
   String _unexpectedConnectionDiagnostic(String operation, Object error, StackTrace stack) {
     if (error is RuntimeBoundConnectFailure) return error.toString();
     final type = error.runtimeType.toString();
     final safeType = RegExp(r'^[_A-Za-z][_A-Za-z0-9]{0,63}$').hasMatch(type) ? type : 'Object';
+    final platformCode = _connectionPlatformFailureCode(error);
     final frames = RegExp(
       r'package:(?:pokrov_app_shell|pokrov_runtime_engine|pokrov_core_domain)/[A-Za-z0-9_/.-]*?([A-Za-z0-9_]{1,64}\.dart):([0-9]{1,7})(?::[0-9]+)?',
     ).allMatches(stack.toString()).map((frame) => '${frame[1]}:${frame[2]}').toSet().take(2);
-    final detail = '$operation: $safeType${frames.isEmpty ? '' : '; ${frames.join(', ')}'}';
+    final detail = '$operation: $safeType${platformCode == null ? '' : ' ($platformCode)'}${frames.isEmpty ? '' : '; ${frames.join(', ')}'}';
     return detail.length <= 180 ? detail : detail.substring(0, 180);
   }
 
@@ -4247,7 +4253,8 @@ class ConnectionManager extends ChangeNotifier {
         tone: PokrovProtectionEventTone.error,
       );
       unawaited(_reportClientRuntimeError('connect_unexpected',
-          failureKind: error is RuntimeBoundConnectFailure ? error.failureKind : 'connect_unexpected'));
+          failureKind: error is RuntimeBoundConnectFailure ? error.failureKind
+              : _connectionPlatformFailureCode(error) ?? 'connect_unexpected'));
       _notify(message, tone: PokrovSnackTone.danger);
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {

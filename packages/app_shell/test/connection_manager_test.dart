@@ -1136,7 +1136,7 @@ void main() {
         ['selected_node_code'], 'de2');
   });
 
-  test('unexpected connection diagnostics retain only operation type and application frames', () async {
+  test('unexpected connection diagnostics retain only operation type, closed platform codes and application frames', () async {
     final store = _ExperienceStore();
     final bootstrapper = _Bootstrapper()
       ..failure = StateError('synthetic-private-token https://private.example/profile')
@@ -1159,6 +1159,38 @@ void main() {
     expect(jsonEncode(event.toJson()), isNot(contains('private.example')));
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(runtime.connectCalls, 0);
+
+    for (final code in ['runtime_clock_unavailable', 'runtime_busy',
+      'network_context_unavailable', 'synthetic_private_code']) {
+      final platformStore = _ExperienceStore();
+      final platformBootstrapper = _StatsBootstrapper();
+      final platformRuntime = _Runtime(hostPlatform: HostPlatform.windows)
+        ..connectFailure = PlatformException(code: code,
+          message: 'synthetic-private-message https://private.example/profile',
+          details: {'profile': 'synthetic-private-details'},
+          stacktrace: 'synthetic-private-native-stack C:/private/customer-profile.dart:3:4');
+      final platformManager = _manager(platformRuntime, platformBootstrapper,
+        experienceStore: platformStore,
+        authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+      addTearDown(platformManager.dispose);
+      await platformManager.connect();
+
+      final platformEvent = platformStore.saved.protectionEvents.singleWhere(
+        (event) => event.kind == 'connect_unexpected_core_connect');
+      final failedReport = platformBootstrapper.actualReports.singleWhere(
+        (report) => report['runtime_phase'] == 'failed');
+      final permitted = code != 'synthetic_private_code';
+      expect(platformEvent.detail, startsWith('core_connect: PlatformException${permitted ? ' ($code)' : ''}'));
+      expect(platformEvent.detail.length, lessThanOrEqualTo(180));
+      expect(failedReport['failure_kind'], permitted ? code : 'connect_unexpected');
+      final recorded = jsonEncode([platformEvent.toJson(), failedReport]);
+      for (final private in ['synthetic_private_code', 'synthetic-private-message',
+        'synthetic-private-details', 'synthetic-private-native-stack', 'private.example', 'customer-profile.dart']) {
+        expect(recorded, isNot(contains(private)));
+      }
+      expect(platformManager.status.phase, ConnectionPhase.actionRequired);
+      expect(platformRuntime.connectCalls, 1);
+    }
   });
 
   test('offline invitation cold restart uses ordinary guards without HTTP before verified Connect', () async {
