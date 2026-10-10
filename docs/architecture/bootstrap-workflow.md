@@ -2933,4 +2933,3 @@ unconfirmed stop retains the unverified presentation. A live UI with the exact
 lease owner continues its normal policy refresh; closing the UI alone does not
 cancel the native lease. This is source only, NOT_VERIFIED; native proof producers
 and full restart/device verification remain open.
-
