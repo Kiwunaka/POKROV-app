@@ -148,6 +148,8 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
   final refreshedCoreReleases = <String?>[];
   final refreshedInputs = <ManagedProfileCacheInputs>[];
   final refreshedFeatures = <Set<RuntimeTransportFeature>>[];
+  TransportCandidateCatalog? cachedCatalog;
+  TransportCandidateCatalog? refreshedCatalog;
   static final alternatives = [
     _candidates.first,
     for (final (index, protocol, protection) in [(1, 'awg', 'awg31'), (2, 'hysteria2', 'tls')])
@@ -163,15 +165,16 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
     Set<RuntimeTransportFeature>? runtimeFeatures, String? coreRelease,
   }) async {
     if (!cacheAvailable) return null;
-    final selected = alternatives.firstWhere((candidate) =>
-        candidate.candidateRef == (selectedCandidateRef.isEmpty ? 'de:profile_0' : selectedCandidateRef));
+    final cachedCandidates = cachedCatalog?.candidates ?? alternatives;
+    final selected = cachedCandidates.firstWhere((candidate) =>
+        candidate.candidateRef == (selectedCandidateRef.isEmpty ? cachedCatalog?.selectedCandidateRef ?? 'de:profile_0' : selectedCandidateRef));
     return ManagedProfilePayload(profileName: selected.candidateRef, cacheEntryId: selected.candidateRef,
-      transportCatalog: TransportCandidateCatalog(revision: 'cached',
+      transportCatalog: cachedCatalog ?? TransportCandidateCatalog(revision: 'cached',
           selectedCandidateRef: selected.candidateRef, candidates: alternatives),
       source: RuntimeProfileSource(revision: 'cached', origin: RuntimeProfileSourceOrigin.managedManifest,
           protocol: selected.protocol),
       configPayload: materialConfigPayload ?? '{"inbounds":[{"type":"tun","tag":"tun-in"}],"outbounds":[{"type":"socks","tag":"node","server":"127.0.0.1","server_port":1080},{"type":"selector","tag":"proxy","outbounds":["node"]},{"type":"direct","tag":"direct"}],"route":{"final":"proxy"}}',
-      materializedForRuntime: true, routeMode: inputs.routeMode, resolvedNodeCode: 'de');
+      materializedForRuntime: true, routeMode: inputs.routeMode, resolvedNodeCode: selected.nodeCode);
   }
   @override
   Future<void> cacheResolvedManagedProfile(ManagedProfileCacheInputs inputs, ManagedProfilePayload payload,
@@ -189,6 +192,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
     final failure = nextCacheRefreshFailure;
     nextCacheRefreshFailure = null;
     if (failure != null) throw failure;
+    if (refreshedCatalog != null) cachedCatalog = refreshedCatalog;
   }
   @override
   Future<void> markManagedProfileProven(ManagedProfileCacheInputs inputs, String entryId,
@@ -2170,6 +2174,49 @@ void main() {
     expect(consentRequests, 0);
   });
   }
+
+  test('explicit Locations catalog refresh adopts a newly admitted bridge before Connect', () async {
+    const directRef = 'us:legacy_reality_fallback';
+    Map<String, Object?> candidate({bool bridge = false}) => {
+      'candidate_ref': bridge ? '$directRef:bridge_mini' : directRef,
+      'profile_ref': 'legacy_reality_fallback', 'node_code': 'us', 'country_code': 'US',
+      'protocol': 'vless', 'transport': 'tcp', 'protection': 'reality', 'priority': bridge ? 1 : 0,
+      'parameters': {'network': 'tcp', 'flow': '', if (bridge) 'bridge_id': 'mini'},
+      'requirements': {'minimum_client_release': bridge ? '1.5.0+4116' : '1.2.0', 'minimum_core_release': null,
+        'platforms': ['windows'], 'required_features': ['singbox_vless_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_reality_v1']},
+    };
+    TransportCandidateCatalog catalog({required bool bridge}) => decodeManagedTransportCatalog({
+      'schema_version': 'pokrov-transport-catalog-v1', 'revision': bridge ? 'ready-mini' : 'before-admission',
+      'selected_candidate_ref': directRef, 'candidates': [candidate(), if (bridge) candidate(bridge: true)],
+    }, platform: HostPlatform.windows, clientRelease: '1.5.0+4119', runtimeFeatures: RuntimeTransportFeature.values.toSet());
+    final bootstrapper = _CachedBootstrapper()..cachedCatalog = catalog(bridge: false);
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..coreVersion = '1.2.12'..phase = RuntimePhase.initialized;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    manager.restoreConnectionPreferences(const PokrovClientExperienceState.empty().copyWith(
+      interfaceMode: PokrovInterfaceMode.advanced, preferredCountryCode: 'US', preferredCandidateRef: directRef,
+      preferredVariantId: 'direct', firstRouteScopeConfirmed: true, firstRouteScopeMode: RouteMode.fullTunnel), const {});
+    await manager.refresh();
+    manager.markExperienceLoaded();
+    await bootstrapper.cacheRefreshEntered.future;
+    await Future<void>.delayed(Duration.zero);
+    expect(manager.transportCatalog?.revision, 'before-admission');
+    expect(bootstrapper.refreshedInputs, hasLength(1));
+    bootstrapper.refreshedCatalog = catalog(bridge: true);
+    await manager.refreshTransportCatalog();
+    expect(manager.transportCatalog?.revision, 'before-admission', reason: 'navigation reuses the catalog');
+    await manager.refreshTransportCatalog(force: true);
+    expect(manager.transportCatalog?.revision, 'ready-mini');
+    expect(manager.transportCatalog?.candidates.last.bridgeId, 'mini');
+    expect(manager.transportCatalog?.candidates.last.countryCode, 'US');
+    expect(bootstrapper.refreshedInputs, hasLength(2));
+    expect(bootstrapper.nodePreferences, isEmpty, reason: 'metadata refresh does not rewrite the preference pin');
+    expect(manager.materialCandidate?.candidateRef, directRef);
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+    expect(runtime.handoffCalls, 0);
+  });
 
   testWidgets('Locations adopts ready cached protocols after one failed cold metadata refresh', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

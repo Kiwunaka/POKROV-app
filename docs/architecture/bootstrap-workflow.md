@@ -19,6 +19,10 @@ Opening Locations retries the existing cache-first managed catalog refresh when
 the transport catalog is absent. This recovers after a failed startup metadata
 request without connecting or changing the selected route; the existing Core
 capability, session, expiry and compatibility checks still apply.
+The existing explicit Locations Refresh also refreshes a nonempty managed
+catalog before reading public locations, so a newly admitted finite bridge can
+appear without Connect. It retains the current operation/revision and material
+guards; ordinary navigation and runtime snapshots do not force network refreshes.
 
 The final routing assembler converts legacy DNS servers to typed transports
 after applying user and catalog preferences, including restored offline profiles.
@@ -83,7 +87,8 @@ through Brain UTC 11:22:30, found no current event/probe/connect rows. Delivery
 remains unknown; these zero rows do not establish zero execution or probes.
 
 Locations refresh keeps direct Node latency probes disabled while a bridge is
-selected or running, and for a bridge transport catalog. The current API catalog
+selected or running, including a typed candidate whose separate bridge ID is set
+while its ordinary variant remains Direct, and for a bridge transport catalog. The current API catalog
 and Portal health still refresh; an ordinary direct selection retains the
 device latency check. This prevents an explicit ping refresh in «Белые списки»
 from opening direct connections to the assigned destination Nodes.

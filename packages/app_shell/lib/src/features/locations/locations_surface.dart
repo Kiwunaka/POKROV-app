@@ -142,7 +142,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
                       key: ValueKey(
                           'location-candidate-${candidate.candidateRef}'),
                       title: Text(_locationCandidateLabel(candidate)),
-                      subtitle: Text(candidate.transport == 'bridge'
+                      subtitle: Text(candidate.bridgeId != null
                           ? '$_locationBridgeRouteDescription ${_locationNodeStatusLabel(entry.city)}'
                           : _locationNodeStatusLabel(entry.city)),
                       trailing:

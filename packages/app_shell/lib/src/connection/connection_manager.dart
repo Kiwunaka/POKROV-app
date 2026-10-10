@@ -163,8 +163,8 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTransportCatalog() async {
-    if (_transportCatalog == null) await _refreshManagedProfileCache();
+  Future<void> refreshTransportCatalog({bool force = false}) async {
+    if (force || _transportCatalog == null) await _refreshManagedProfileCache();
   }
 
   Future<void> _refreshManagedProfileCache({bool alternativesOnly = false}) async {

@@ -1085,7 +1085,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _refreshLocationsCatalog({bool measureDevice = false}) async {
+  Future<void> _refreshLocationsCatalog({bool measureDevice = false, bool forceTransportCatalog = false}) async {
     final service = _clientDataService;
     if (service == null || _locationsCatalogBusy) {
       return;
@@ -1097,12 +1097,16 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       });
     }
     try {
+      if (forceTransportCatalog) await _connectionManager.refreshTransportCatalog(force: true);
       final serverCatalog = await service.fetchLocationsCatalog(
         hostPlatform: widget.appContext.hostPlatform,
       );
       // City probe targets are direct Node addresses. A selected or running
       // bridge must keep those targets unopened, including an explicit refresh.
       final bridgeSelected =
+          (_connectionManager.transportCatalog?.candidates.any((candidate) =>
+                  candidate.candidateRef == _clientExperience.preferredCandidateRef && candidate.bridgeId != null) ?? false) ||
+          (_runtimeSnapshot?.phase == RuntimePhase.running && _connectionManager.materialCandidate?.bridgeId != null) ||
           (normalizeClientLocationVariantId(_preferredVariantId) ?? 'direct') !=
               'direct' ||
           (_runtimeSnapshot?.phase == RuntimePhase.running &&
@@ -3533,7 +3537,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             locationsUsingCache: _locationsUsingCache,
             locationsCachedAt: _clientExperience.locationsCachedAt,
             onRefreshLocationsCatalog: () {
-              unawaited(_refreshLocationsCatalog(measureDevice: true));
+              unawaited(_refreshLocationsCatalog(measureDevice: true, forceTransportCatalog: true));
             },
             preferredNodeCode: _preferredNodeCode,
             preferredVariantId: _preferredVariantId,
