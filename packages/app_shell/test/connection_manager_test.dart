@@ -213,7 +213,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   final actualReports = <Map<String, Object?>>[];
 
   @override
-  Future<void> reportRuntimeStats({
+  Future<bool> reportRuntimeStats({
     required HostPlatform hostPlatform, required String runtimePhase,
     required bool connected, String errorCode = '', String failureKind = '',
     String selectedNodeCode = '', String routeMode = '', int? durationMs,
@@ -235,7 +235,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     if (runtimePhase == 'running' && failFirstRunningReport) {
       failFirstRunningReport = false;
       failedRunningReports += 1;
-      throw const BootstrapFailure('temporary stats failure', operationalCode: 'API-002');
+      return false;
     }
     if (candidateProbes.isNotEmpty && failedProbeReportCandidates.contains(candidateRef)) {
       throw const BootstrapFailure('temporary stats failure', operationalCode: 'API-002');
@@ -248,6 +248,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       'candidate_transport': candidateTransport,
       'candidate_probes': candidateProbes,
     });
+    return true;
   }
 
   @override

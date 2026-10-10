@@ -241,11 +241,35 @@ keep their existing ownership; the socket and wrapper close after the exchange.
 `data_stalled` is one of those typed network failures. Probe outcomes enter
 the local journal and one bounded batch in the final runtime
 stats event, with catalog candidate refs and transport names but no profile data.
+Runtime stats also capture the explicit application `pokrov`, optional app version
+and build number when the sanitized report body is created, before awaiting the
+session. A delayed retry keeps that body and its original report IDs; older
+reports without application or version remain unknown. Protocol and user-agent
+values do not identify a third-party application.
 After a proven connection, the client reports a connected runtime observation
-with the candidate batch. A failed stats POST keeps that batch for retry within
-the same attempt, run and sequence. Starting a new attempt discards unsent probes
-from the previous attempt; a late acknowledgement removes only its sent map
-objects. An identical batch in another attempt receives a new report sequence.
+with the candidate batch. Bound sanitized reports use the existing private atomic
+writer and lock in one runtime-stats outbox: at most 4096 records, 4 MiB total,
+8 KiB per record and seven days of retention. Original report IDs, event time,
+version and build survive process exit. Existing authenticated app-open, resume
+and connection observations flush it without another timer or probe. The captured
+current packet goes first, with at most 16 matching records per flush and the
+existing three-second telemetry deadline for all delivery requests together.
+Closing the client on that deadline retains records without an acknowledgement. The
+account and installation must still match the current authenticated session;
+tokens are never stored. An unbound event, deferred invitation or failed POST is
+not an acknowledgement. Only HTTP 200 with `ok: true` after the portal transaction
+removes the exact record and acknowledges its original probe maps. An
+HTTP 202 response with `ok: true` keeps the record pending. A recovery
+observation receives a separate report ID without duplicating already queued
+probes; each probe is reserved before the first asynchronous state read, and a
+failed enqueue releases only that report's reservation. A successful trial or
+refresh response containing both the legacy and canonical account IDs can rebind
+only that legacy account's records on the same installation, preserving event
+bodies and IDs. Storage errors or exceeded queue limits leave the pending records
+for the next ordinary authenticated refresh or TTL and do not block authentication.
+Starting a new attempt clears only the previous attempt's RAM probe view;
+durable records remain until their acknowledgement or TTL. This endpoint and
+outbox are separate from identity-free release health and encrypted support bundles.
 Managed profile requests include the version reported by the loaded Core.
 Core `probe_failed` and `unexpected_status` are also remembered; a local timer
 reports `probe_budget_expired` and never suppresses a candidate.

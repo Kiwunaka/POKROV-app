@@ -41,6 +41,7 @@ part 'src/features/rules/transport_payload_preparation.dart';
 part 'src/connection/smart_connect_resolver.dart';
 part 'src/connection/managed_manifest_decoder.dart';
 part 'src/connection/offline_invitation_bootstrap.dart';
+part 'src/observability/runtime_stats_outbox.dart';
 
 /// Build identity shared by provisioning, update checks, and diagnostics.
 ///
@@ -724,7 +725,7 @@ abstract interface class AppFirstReleaseActionService {
 /// Best-effort app UX telemetry. The platform must not treat this as trusted
 /// connection evidence; observer traffic remains the verification authority.
 abstract interface class AppFirstExperienceService {
-  Future<void> reportRuntimeStats({
+  Future<bool> reportRuntimeStats({
     required HostPlatform hostPlatform,
     required String runtimePhase,
     required bool connected,
@@ -3052,8 +3053,10 @@ class AppFirstRuntimeBootstrapper
   final Map<HostPlatform, _RoutingCatalogFlight> _routingCatalogFlights = {};
   final String _runtimeReportRunId = OperationalIdFactory().uuidV4();
   int _runtimeReportSequence = 0;
-  int? _pendingProbeReportSequence;
-  String? _pendingProbeReportSignature;
+  final Map<HostPlatform, _RuntimeStatsBinding> _runtimeStatsBindings = {};
+  late final _RuntimeStatsOutbox _runtimeStatsOutbox = _RuntimeStatsOutbox(this);
+  String? _runtimeProbeAttempt;
+  final Map<String, ({String packetKey, bool accepted})> _runtimeProbeReports = {};
   bool _networkContextInFlight = false;
   DateTime? _lastNetworkContextAt;
   String _lastNetworkContextAccount = '';
@@ -3063,6 +3066,13 @@ class AppFirstRuntimeBootstrapper
       <String, Future<_StoredBootstrapState>>{};
   final Map<String, Future<_StoredBootstrapState>> _refreshFlights =
       <String, Future<_StoredBootstrapState>>{};
+  void _rememberRuntimeStatsBinding(HostPlatform platform, _StoredBootstrapState? state) {
+    if (state?.hasSession == true && state!.accountId.isNotEmpty && state.installId.isNotEmpty) {
+      _runtimeStatsBindings[platform] = _RuntimeStatsBinding(state.accountId, state.installId);
+    } else {
+      _runtimeStatsBindings.remove(platform);
+    }
+  }
   String? _activeApiBaseUrl;
   late final _SmartConnectResolver _smartConnectResolver =
       _SmartConnectResolver(this);
@@ -4116,7 +4126,7 @@ class AppFirstRuntimeBootstrapper
   }
 
   @override
-  Future<void> reportRuntimeStats({
+  Future<bool> reportRuntimeStats({
     required HostPlatform hostPlatform,
     required String runtimePhase,
     required bool connected,
@@ -4137,6 +4147,8 @@ class AppFirstRuntimeBootstrapper
     List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
   }) async {
+    final occurredAt = DateTime.now().toUtc();
+    final binding = _runtimeStatsBindings[hostPlatform];
     final phase = runtimePhase.trim().toLowerCase();
     final catalogErrorCode = errorCode.trim().toUpperCase();
     final safeErrorCode = KnownOperationalErrorCodes.contains(catalogErrorCode)
@@ -4189,21 +4201,37 @@ class AppFirstRuntimeBootstrapper
     final reportProbes = safeCandidateProbes.isNotEmpty &&
         (phase == 'running' || phase == 'failed' ||
             (phase == 'runtime_observed' && connected));
-    final probeSignature = reportProbes ? jsonEncode([attemptNumber, safeCandidateProbes]) : null;
-    final reportSequence = reportProbes &&
-            probeSignature == _pendingProbeReportSignature
-        ? _pendingProbeReportSequence!
-        : ++_runtimeReportSequence;
+    final probeAttempt = jsonEncode([hostPlatform.name, binding?.accountId, binding?.installId, attemptNumber]);
+    if (_runtimeProbeAttempt != probeAttempt) {
+      _runtimeProbeAttempt = probeAttempt;
+      _runtimeProbeReports.clear();
+    }
+    final reportSequence = ++_runtimeReportSequence;
+    final newProbes = <Map<String, Object?>>[];
+    final newProbeSignatures = <String>[];
+    final relatedPackets = <String, bool>{};
     if (reportProbes) {
-      _pendingProbeReportSequence = reportSequence;
-      _pendingProbeReportSignature = probeSignature;
+      for (final probe in safeCandidateProbes) {
+        final signature = jsonEncode(probe);
+        final previous = _runtimeProbeReports[signature];
+        if (previous == null) {
+          newProbes.add(probe);
+          newProbeSignatures.add(signature);
+        } else {
+          relatedPackets[previous.packetKey] = previous.accepted;
+        }
+      }
     }
     final body = <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,
+        'client_application': 'pokrov',
+        'platform': hostPlatform.name,
+        if (pokrovClientVersion.isNotEmpty) 'app_version': pokrovClientVersion,
         'build_number': pokrovClientBuildNumber,
         'report_run_id': _runtimeReportRunId,
         'report_sequence': reportSequence,
+        'occurred_at': occurredAt.toIso8601String(),
         'connectivity': runtimeConnectivityReport(connectivitySnapshot),
         if (KnownOperationalErrorCodes.contains(safeErrorCode) ||
             RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
@@ -4236,48 +4264,50 @@ class AppFirstRuntimeBootstrapper
           'candidate_variant': safeCandidateVariant,
         if (RegExp(r'^AS[0-9]{1,10}$').hasMatch(safeAccessNetworkAsn))
           'access_network_asn': safeAccessNetworkAsn,
-        if (reportProbes)
-          'candidate_probes': safeCandidateProbes,
+        if (newProbes.isNotEmpty)
+          'candidate_probes': newProbes,
       };
-    // Reserve the sequence before this await, including an early connect start.
-    // Diagnostics use the current session and never provision or renew it.
-    final state = await _loadState(hostPlatform);
-    if (state == null || !state.hasSession) return;
-    if (invitationNetworkDeferred) return;
-    if (hostPlatform == HostPlatform.android &&
+    // Freeze before asynchronous state reads; a later account cannot own this event.
+    final record = binding == null ? null : _RuntimeStatsRecord(binding, jsonEncode(body));
+    if (record != null) {
+      for (final signature in newProbeSignatures) {
+        _runtimeProbeReports[signature] = (packetKey: record.key, accepted: false);
+      }
+    }
+    _StoredBootstrapState? state;
+    var stored = false;
+    try {
+      state = await _loadState(hostPlatform);
+      if (record != null && binding!.matches(state)) {
+        stored = await _runtimeStatsOutbox.enqueue(hostPlatform, record);
+      }
+    } finally {
+      if (!stored && record != null) {
+        for (final signature in newProbeSignatures) {
+          if (_runtimeProbeReports[signature]?.packetKey == record.key) {
+            _runtimeProbeReports.remove(signature);
+          }
+        }
+      }
+    }
+    if (state?.hasSession == true && !invitationNetworkDeferred && hostPlatform == HostPlatform.android &&
         const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
       unawaited(_reportAutomaticNetworkContext(phase));
     }
-    final client = _createHttpClient(hostPlatform);
-    try {
-      for (var attempt = 0; ; attempt += 1) {
-        try {
-          await _requestJson(
-            client: client,
-            bearerToken: state.sessionToken,
-            hostPlatform: hostPlatform,
-            method: 'POST',
-            path: '/api/client/runtime/stats',
-            body: body,
-          );
-          if (reportProbes && _pendingProbeReportSequence == reportSequence) {
-            _pendingProbeReportSequence = null;
-            _pendingProbeReportSignature = null;
-          }
-          return;
-        } on BootstrapFailure catch (error) {
-          if (!reportProbes || attempt > 0 ||
-              (error.operationalCode != 'API-002' &&
-               error.operationalCode != 'API-003' &&
-               (error.statusCode == null || !_shouldRetryStatus(error.statusCode!)))) {
-            rethrow;
-          }
-          await _delayScheduler(_retryDelayForAttempt(attempt));
-        }
+    final accepted = await _runtimeStatsOutbox.flush(hostPlatform, priorityPacketKey: stored ? record!.key : null);
+    for (final entry in _runtimeProbeReports.entries.toList()) {
+      if (accepted.contains(entry.value.packetKey)) {
+        _runtimeProbeReports[entry.key] = (packetKey: entry.value.packetKey, accepted: true);
       }
-    } finally {
-      client.close(force: true);
     }
+    final acknowledged = stored && accepted.contains(record!.key) &&
+        relatedPackets.entries.every((entry) => entry.value || accepted.contains(entry.key));
+    if (acknowledged) {
+      for (final probe in safeCandidateProbes) {
+        _runtimeProbeReports.remove(jsonEncode(probe));
+      }
+    }
+    return acknowledged;
   }
 
   Future<void> _reportAutomaticNetworkContext(String phase) async {
@@ -6317,6 +6347,7 @@ class AppFirstRuntimeBootstrapper
     return _withAppFirstStateFileLock(file, () async {
       final existing = await _loadStateFromFile(hostPlatform, file);
       if (existing != null) {
+        _rememberRuntimeStatsBinding(hostPlatform, existing);
         return existing;
       }
       final created = _StoredBootstrapState(
@@ -6356,6 +6387,7 @@ class AppFirstRuntimeBootstrapper
           await _persistStateToFile(hostPlatform: hostPlatform, file: file, state: cleared);
           return cleared;
         }
+        _rememberRuntimeStatsBinding(hostPlatform, state);
         return state;
       },
     );
@@ -6529,6 +6561,7 @@ class AppFirstRuntimeBootstrapper
       }
       reason = 'state_write';
       await _stateFileWriter(file, jsonEncode(state.toJson()));
+      _rememberRuntimeStatsBinding(hostPlatform, state);
       _traceBootstrap('pair_persist', 'ok', reason: reason);
     } on Object catch (error) {
       _traceBootstrap('pair_persist', 'fail', reason: reason, error: error);
@@ -6668,9 +6701,10 @@ class AppFirstRuntimeBootstrapper
     }
 
     final accountId = _readText(
-      session['account_id'] ??
-          response['account_id'] ??
-          response['canonical_account_id'],
+      session['canonical_account_id'] ??
+          response['canonical_account_id'] ??
+          session['account_id'] ??
+          response['account_id'],
     );
     final managedManifestPath = _readText(managedManifest['url']);
     _traceBootstrap('trial_response', 'ok');
@@ -6682,6 +6716,10 @@ class AppFirstRuntimeBootstrapper
       managedManifestPath: _validatedManagedManifestPath(managedManifestPath),
       expectsSecureSessionToken: true,
     );
+    await _runtimeStatsOutbox.rebindAccount(hostPlatform,
+      legacyAccountId: _readText(session['account_id'] ?? response['account_id']),
+      canonicalAccountId: _readText(session['canonical_account_id'] ?? response['canonical_account_id']),
+      installId: nextState.installId);
     await _saveState(hostPlatform, nextState);
     return await _loadState(hostPlatform) ?? nextState;
   }
@@ -6787,13 +6825,18 @@ class AppFirstRuntimeBootstrapper
         sessionToken: pair.accessToken,
         refreshToken: pair.refreshToken,
         accountId: _readText(
-          session['account_id'] ??
-              response['account_id'] ??
-              response['canonical_account_id'],
+          session['canonical_account_id'] ??
+              response['canonical_account_id'] ??
+              session['account_id'] ??
+              response['account_id'],
           fallback: state.accountId,
         ),
         expectsSecureSessionToken: true,
       );
+      await _runtimeStatsOutbox.rebindAccount(hostPlatform,
+        legacyAccountId: _readText(session['account_id'] ?? response['account_id']),
+        canonicalAccountId: _readText(session['canonical_account_id'] ?? response['canonical_account_id']),
+        installId: nextState.installId);
       await _saveState(hostPlatform, nextState);
       return nextState;
     } on BootstrapFailure catch (error) {
@@ -9817,7 +9860,9 @@ class AppFirstRuntimeBootstrapper
         );
         final text = utf8.decode(bytes, allowMalformed: responseDecoder == null ||
             response.statusCode < 200 || response.statusCode >= 300);
-        if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (response.statusCode < 200 || response.statusCode >= 300 ||
+            (method == 'POST' && path == '/api/client/runtime/stats' &&
+                response.statusCode != HttpStatus.ok)) {
           traceReason = _bootstrapHttpReason(response);
           final failure = BootstrapFailure(
             _errorMessageForResponse(text, response.statusCode),

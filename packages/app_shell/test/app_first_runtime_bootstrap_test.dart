@@ -527,11 +527,269 @@ void main() {
   });
   final defaultSecureStoragePlatform = FlutterSecureStoragePlatform.instance;
   setUp(() {
+    // Widget binding's HTTP 400 stub must not intercept the local API fixtures.
+    final httpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = httpOverrides);
     FlutterSecureStoragePlatform.instance =
         TestFlutterSecureStoragePlatform(<String, String>{});
   });
   tearDown(() {
     FlutterSecureStoragePlatform.instance = defaultSecureStoragePlatform;
+  });
+
+  test('runtime stats freezes reports offline and cleans only same-account accepted receipts after restart', () async {
+    final httpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = httpOverrides);
+    final directory = await Directory.systemTemp.createTemp('pokrov-runtime-stats-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    await File('${directory.path}/app-first-session-windows.json').writeAsString(jsonEncode({
+      'schema_version': 1,
+      'install_id': 'stats-fixture-install',
+      'account_id': '42',
+      'session_token_storage': 'secure',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.windows,
+        installId: 'stats-fixture-install', sessionToken: 'stats-fixture-token');
+    var sessionReadStarted = Completer<void>();
+    var releaseSessionRead = Completer<void>();
+    var gateNextSessionRead = false;
+    var offline = false;
+    var stallNextRequest = false;
+    var runtimeStatsStatus = HttpStatus.ok;
+    const canonicalAccountId = '22222222-2222-4222-8222-222222222222';
+    var statsToken = 'stats-fixture-token';
+    var managedRequests = 0;
+    var expireNextManagedRequest = false;
+    final received = <Map<String, dynamic>>[];
+    unawaited(() async {
+      await for (final request in server) {
+        if (request.uri.path == '/api/client/session/refresh' ||
+            request.uri.path == '/api/client/route-policy' ||
+            request.uri.path == '/api/client/profile/managed') {
+          await utf8.decoder.bind(request).join();
+          request.response.headers.contentType = ContentType.json;
+          if (request.uri.path == '/api/client/session/refresh') {
+            statsToken = 'renewed-stats-fixture-token';
+            request.response.write(jsonEncode({'ok': true, 'session': {
+              'account_id': '42', 'canonical_account_id': canonicalAccountId,
+              'access_token': statsToken, 'refresh_token': 'renewed-stats-fixture-refresh',
+            }}));
+          } else if (request.uri.path == '/api/client/profile/managed') {
+            managedRequests++;
+            final expired = expireNextManagedRequest;
+            expireNextManagedRequest = false;
+            request.response.statusCode = expired ? HttpStatus.unauthorized : HttpStatus.ok;
+            request.response.write(expired
+                ? '{"detail":"expired"}' : jsonEncode(_readyManagedProfile('stats')));
+          } else {
+            request.response.write('{"ok":true}');
+          }
+          await request.response.close();
+          continue;
+        }
+        expect(request.uri.path, '/api/client/runtime/stats');
+        expect(request.headers.value(HttpHeaders.authorizationHeader), 'Bearer $statsToken');
+        received.add(jsonDecode(await utf8.decoder.bind(request).join()) as Map<String, dynamic>);
+        if (stallNextRequest) {
+          stallNextRequest = false;
+          continue;
+        }
+        request.response.headers.contentType = ContentType.json;
+        request.response.statusCode = received.length == 1 ? 503 : runtimeStatsStatus;
+        request.response.write(received.length == 1 ? '{"detail":"unavailable"}' : '{"ok":true}');
+        await request.response.close();
+      }
+    }());
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'https://api.pokrov.space/', apiFallbackBaseUrls: const [],
+      supportDirectoryResolver: () async {
+        if (gateNextSessionRead && !sessionReadStarted.isCompleted) {
+          sessionReadStarted.complete();
+          await releaseSessionRead.future;
+        }
+        return directory;
+      },
+      sessionSecretStore: secrets, httpClientFactory: () {
+        if (offline) throw StateError('synthetic transport unavailable');
+        return _QaLocalHttpClient(server.port);
+      },
+      maxRequestAttempts: 1, delayScheduler: (_) async {},
+    );
+    expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false), isFalse,
+        reason: 'a cold unbound event cannot be assigned after its first await');
+    expect(received, isEmpty);
+    gateNextSessionRead = true;
+    final probe = <String, Object?>{
+      'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
+      'stage': 'probe', 'connected': false, 'failure_kind': 'timeout',
+      'duration_ms': 900, 'unrecognized_content': 'must-not-be-delivered',
+    };
+    final report = bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe]);
+    await sessionReadStarted.future;
+    probe['duration_ms'] = 1234;
+    releaseSessionRead.complete();
+    expect(await report, isTrue);
+    expect(received, hasLength(2));
+    expect(received[1], received[0], reason: 'delayed retry keeps the original report and dedupe identity');
+    expect(received[0]['client_application'], 'pokrov');
+    expect(received[0]['platform'], 'windows');
+    expect(received[0]['app_version'], pokrovClientVersion);
+    expect(received[0]['build_number'], pokrovClientBuildNumber);
+    expect(received[0]['candidate_probes'], [{
+      'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
+      'stage': 'probe', 'connected': false, 'duration_ms': 900, 'failure_kind': 'timeout',
+    }]);
+    expect(jsonEncode(received), isNot(contains('must-not-be-delivered')));
+    final outbox = File('${directory.path}/runtime-stats-outbox-windows.json');
+    List<dynamic> pending() => (jsonDecode(outbox.readAsStringSync()) as Map)['records'] as List;
+    expect(pending(), isEmpty);
+
+    offline = true;
+    expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: false, attemptNumber: 2, candidateProbes: [probe]), isFalse);
+    expect(pending(), hasLength(1));
+    final frozenBody = Map<String, dynamic>.from(pending().single['body'] as Map);
+    expect(jsonEncode(pending()), isNot(contains('stats-fixture-token')));
+    AppFirstRuntimeBootstrapper restart({AppFirstStateFileWriter? stateFileWriter}) => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'https://api.pokrov.space/', apiFallbackBaseUrls: const [],
+      supportDirectoryResolver: () async => directory, sessionSecretStore: secrets,
+      httpClientFactory: () => _QaLocalHttpClient(server.port), maxRequestAttempts: 1,
+      delayScheduler: (_) async {}, stateFileWriter: stateFileWriter,
+    );
+    runtimeStatsStatus = HttpStatus.accepted;
+    final recovered = restart();
+    expect(await recovered.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false), isFalse,
+        reason: 'ACK of an older bound report is not ACK of this unbound current event');
+    expect(received, hasLength(3));
+    expect(received.last, frozenBody, reason: 'restart retains original IDs, time, version, build and probes');
+    expect(pending(), hasLength(1), reason: 'HTTP 202 with ok: true is not a committed ACK');
+    runtimeStatsStatus = HttpStatus.ok;
+    await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false);
+    expect(received, hasLength(4));
+    expect(received.last, frozenBody, reason: 'HTTP 200 acknowledges the same retained report');
+    expect(pending(), isEmpty);
+    await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false);
+    expect(received, hasLength(4), reason: 'the acknowledged record is never replayed');
+
+    for (var index = 0; index < 16; index++) {
+      expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+          runtimePhase: 'failed', connected: false, durationMs: index), isFalse);
+    }
+    expect(pending(), hasLength(16));
+    final beforeBatch = received.length;
+    expect(await recovered.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: false, durationMs: 999), isTrue);
+    expect(received.length - beforeBatch, 16);
+    expect(received[beforeBatch]['duration_ms'], 999, reason: 'the current terminal packet goes before the backlog');
+    expect(pending(), hasLength(1));
+    await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false);
+    expect(pending(), isEmpty);
+
+    stallNextRequest = true;
+    final deadlineWatch = Stopwatch()..start();
+    expect(await recovered.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: false), isFalse);
+    expect(deadlineWatch.elapsed, lessThan(recovered.smartConnectTelemetryDeadline * 2));
+    expect(pending(), hasLength(1), reason: 'a delivery deadline is not an ACK');
+    await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false);
+    expect(pending(), isEmpty);
+    sessionReadStarted = Completer<void>();
+    releaseSessionRead = Completer<void>();
+    final overlappingReport = bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: false, attemptNumber: 3, candidateProbes: [probe]);
+    await sessionReadStarted.future;
+    expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: false, attemptNumber: 3, candidateProbes: [probe]), isFalse);
+    releaseSessionRead.complete();
+    expect(await overlappingReport, isFalse);
+    expect(pending(), hasLength(2));
+    expect(pending().where((item) => (item['body'] as Map).containsKey('candidate_probes')),
+        hasLength(1), reason: 'overlapping reports reserve each probe before the first state read');
+    await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false);
+    expect(pending(), isEmpty);
+    expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: false, attemptNumber: 4, candidateProbes: [probe]), isFalse);
+    final beforeRefresh = jsonDecode(outbox.readAsStringSync()) as Map<String, dynamic>;
+    final legacyRecord = (beforeRefresh['records'] as List).single as Map<String, dynamic>;
+    final foreignRecord = <String, dynamic>{
+      ...legacyRecord, 'account_id': '99',
+      'body': {...legacyRecord['body'] as Map, 'report_sequence': 1000},
+    };
+    (beforeRefresh['records'] as List).add(foreignRecord);
+    await outbox.writeAsString(jsonEncode(beforeRefresh));
+    await secrets.writeSessionPair(hostPlatform: HostPlatform.windows,
+        installId: 'stats-fixture-install', pair: AppFirstSessionCredentials(
+          accessToken: statsToken, refreshToken: 'stats-fixture-refresh'));
+    final beforeFailedRebind = await outbox.readAsString();
+    var rebindWriteFailed = false;
+    expireNextManagedRequest = true;
+    await restart(stateFileWriter: (file, contents) async {
+      if (file.uri == outbox.uri) {
+        rebindWriteFailed = true;
+        throw const FileSystemException('synthetic outbox write failure');
+      }
+      await file.writeAsString(contents);
+    }).resolveManagedProfile(hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel);
+    expect(rebindWriteFailed, isTrue);
+    expect(await outbox.readAsString(), beforeFailedRebind,
+        reason: 'failed telemetry rebind preserves pending data while session refresh succeeds');
+    expect((jsonDecode(await File('${directory.path}/app-first-session-windows.json')
+        .readAsString()) as Map)['account_id'], canonicalAccountId);
+    expireNextManagedRequest = true;
+    await restart().resolveManagedProfile(hostPlatform: HostPlatform.windows,
+        routeMode: RouteMode.fullTunnel);
+    expect(managedRequests, 4, reason: 'the next ordinary refresh retries the proven account rebind');
+    expect(pending().first['account_id'], canonicalAccountId);
+    expect(pending().first['body'], legacyRecord['body'], reason: 'canonical binding keeps the original event identity');
+    expect(pending().last, foreignRecord);
+    final beforeCanonicalDelivery = received.length;
+    await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false);
+    expect(received, hasLength(beforeCanonicalDelivery + 1));
+    expect(received.last, legacyRecord['body']);
+    expect(pending(), [foreignRecord], reason: 'a proven account alias never rebinds another account on the same install');
+    final deliveredBeforeAccountChange = received.length;
+
+    // A fresh account must not receive the previous account's queued event.
+    final held = jsonDecode(outbox.readAsStringSync()) as Map<String, dynamic>;
+    final stateFile = File('${directory.path}/app-first-session-windows.json');
+    final nextState = jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>;
+    nextState['account_id'] = 'changed-fixture-account';
+    await stateFile.writeAsString(jsonEncode(nextState));
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.windows,
+        installId: 'stats-fixture-install', sessionToken: 'changed-fixture-token');
+    expect(await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false), isFalse);
+    expect(jsonDecode(await outbox.readAsString()), held);
+    expect(received, hasLength(deliveredBeforeAccountChange));
+    (held['records'] as List).single['body']['occurred_at'] = DateTime.now().toUtc()
+        .subtract(const Duration(days: 7, seconds: 1)).toIso8601String();
+    await outbox.writeAsString(jsonEncode(held));
+    await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false);
+    expect(pending(), isEmpty, reason: 'TTL cleanup does not pretend a server ACK');
+    expect(received, hasLength(deliveredBeforeAccountChange));
+    await outbox.writeAsBytes(List.filled(4 * 1024 * 1024 + 1, 32));
+    await expectLater(restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'app_opened', connected: false), throwsFormatException);
+    expect(received, hasLength(deliveredBeforeAccountChange), reason: 'an oversized pending file is never transmitted');
   });
 
   test('protected managed cache restores exact profile after restart and respects server denial', () async {
@@ -1688,6 +1946,9 @@ void main() {
 
   test('refreshes an expired access session without starting a second trial',
       () async {
+    final httpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = httpOverrides);
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-bootstrap-refresh-test-',
     );
@@ -1698,21 +1959,35 @@ void main() {
     var starts = 0;
     var refreshes = 0;
     var profiles = 0;
+    const canonicalAccountId = '11111111-1111-4111-8111-111111111111';
+    String? trialInstallId;
+    final savedBindings = <Map<String, dynamic>>[];
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}app-first-session-windows.json',
+    );
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
       await for (final request in server) {
-        await utf8.decoder.bind(request).join();
+        final body = await utf8.decoder.bind(request).join();
         final path = request.uri.path;
         if (path == '/api/client/session/start-trial') {
           starts += 1;
+          trialInstallId = (jsonDecode(body) as Map)['install_id'] as String;
           request.response
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(<String, Object?>{
               'access_token': 'expired-access',
               'refresh_token': 'refresh-one',
               'account_id': '42',
-              'session': <String, Object?>{'session_token': 'expired-access'},
+              'canonical_account_id': canonicalAccountId,
+              'session': <String, Object?>{
+                'access_token': 'expired-access',
+                'session_token': 'expired-access',
+                'refresh_token': 'refresh-one',
+                'account_id': '42',
+                'canonical_account_id': canonicalAccountId,
+              },
               'provisioning': <String, Object?>{
                 'status': 'ready',
                 'sync_ok': true
@@ -1720,12 +1995,19 @@ void main() {
             }));
         } else if (path == '/api/client/session/refresh') {
           refreshes += 1;
+          final session = <String, Object?>{
+            'access_token': 'fresh-access',
+            'session_token': 'fresh-access',
+            'refresh_token': 'refresh-two',
+            'account_id': '42',
+            'canonical_account_id': canonicalAccountId,
+          };
           request.response
             ..headers.contentType = ContentType.json
             ..write(jsonEncode(<String, Object?>{
-              'access_token': 'fresh-access',
-              'refresh_token': 'refresh-two',
-              'account_id': '42',
+              'ok': true,
+              ...session,
+              'session': session,
             }));
         } else if (path == '/api/client/route-policy') {
           request.response
@@ -1733,6 +2015,9 @@ void main() {
             ..write('{"ok":true}');
         } else if (path == '/api/client/profile/managed') {
           profiles += 1;
+          savedBindings.add(
+            jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>,
+          );
           if (profiles == 1)
             request.response.statusCode = HttpStatus.unauthorized;
           request.response
@@ -1758,6 +2043,11 @@ void main() {
     expect(payload.profileName, 'pokrov-windows-refresh');
     expect(starts, 1);
     expect(refreshes, 1);
+    expect(savedBindings.map((state) => state['account_id']),
+        [canonicalAccountId, canonicalAccountId]);
+    expect(trialInstallId, isNotEmpty);
+    expect(savedBindings.map((state) => state['install_id']),
+        [trialInstallId, trialInstallId]);
   });
 
   test('refresh failure never starts a second trial for an existing install',

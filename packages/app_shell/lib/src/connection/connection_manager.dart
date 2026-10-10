@@ -988,7 +988,7 @@ class ConnectionManager extends ChangeNotifier {
           ? _reportedCandidate(proven ? (_activeCandidateRef ?? _candidateRef) : _candidateRef)
           : null;
       final stagedVariant = _stagedCandidateVariant;
-      await service.reportRuntimeStats(
+      final accepted = await service.reportRuntimeStats(
         hostPlatform: _appContext.hostPlatform,
         runtimePhase: phase,
         connected: proven,
@@ -1019,7 +1019,7 @@ class ConnectionManager extends ChangeNotifier {
                     ? stagedVariant!.variant : '',
         candidateProbes: reports,
       );
-      _ackCandidateProbeReports(reports);
+      if (accepted) _ackCandidateProbeReports(reports);
     } on Object catch (error) {
       if (reports.isNotEmpty) _recordRuntimeStatsDeliveryFailure(error);
       // Diagnostics must never replace the original user-facing failure.
@@ -4340,7 +4340,7 @@ class ConnectionManager extends ChangeNotifier {
     if (reports.isNotEmpty) _candidateProbeReportInFlight = true;
     try {
       final candidate = _reportedCandidate(_activeCandidateRef ?? _candidateRef);
-      await service.reportRuntimeStats(
+      final accepted = await service.reportRuntimeStats(
         hostPlatform: _appContext.hostPlatform,
         runtimePhase: snapshot.phase.name,
         connected: snapshot.phase == RuntimePhase.running,
@@ -4363,7 +4363,7 @@ class ConnectionManager extends ChangeNotifier {
         candidateVariant: candidate == null ? '' : _activeVariantId,
         candidateProbes: reports,
       );
-      _ackCandidateProbeReports(reports);
+      if (accepted) _ackCandidateProbeReports(reports);
     } catch (error) {
       if (reports.isNotEmpty) _recordRuntimeStatsDeliveryFailure(error);
       // UX telemetry must never turn a working tunnel into a failed connect.
