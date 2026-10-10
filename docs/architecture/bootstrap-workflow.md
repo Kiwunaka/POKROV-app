@@ -651,6 +651,12 @@ latches three stages from one completed native probe under the same live scope;
 the safe context never marks the browser feature verified. Public admission and
 runtime acceptance remain separate from this source preparation.
 
+Windows Diagnostics keeps a collapsed technical readout of whether its current
+subscription DTO contains an accepted pending QA admission and the first closed
+eligibility reason. It shares the Start getter's guards and recomputes on normal
+Diagnostics refresh, without fetching account data or exposing an admission ID.
+Server-side pending availability alone does not establish client delivery or QA authority.
+
 Existing foreground resume and account-summary refresh fetch one fresh signed
 restriction control response before the provider policy, with no retry loop. The
 control response binds a fresh nonce, per-request account/device hash, native

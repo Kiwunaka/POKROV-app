@@ -509,16 +509,33 @@ class ConnectionManager extends ChangeNotifier {
       });
   }
 
-  String? get firstProviderQaAdmissionId {
+  ({String? admissionId, bool pendingPresent, PokrovFirstProviderQaAvailabilityReason reason}) _firstProviderQaEligibility() {
     final id = _subscriptionInfo?.firstProviderQaAdmissionId;
     final preferences = _clientExperience.routingPreferences;
-    if (_appContext.hostPlatform != HostPlatform.windows || _bootstrapper is! AppFirstRuntimeBootstrapper ||
-        !(_bootstrapper as AppFirstRuntimeBootstrapper).firstProviderQaConfigured || _disposed || _runtimeBusy ||
-        retainsProtection || _runtimeSnapshot?.phase == RuntimePhase.running || _runtimeSnapshot?.connectionPending == true ||
-        _selectedRouteMode == RouteMode.selectedApps || _selectedRouteMode == RouteMode.excludedApps ||
-        preferences.overrides.isNotEmpty || preferences.purposeRoutes.isNotEmpty || preferences.localDpiEnabled ||
-        _warpRuntimeConsent || id == _startedFirstProviderQaAdmissionId) return null;
-    return id;
+    final reason = _appContext.hostPlatform != HostPlatform.windows ? PokrovFirstProviderQaAvailabilityReason.unsupportedPlatform
+        : _bootstrapper is! AppFirstRuntimeBootstrapper ? PokrovFirstProviderQaAvailabilityReason.unsupportedBootstrapper
+        : !(_bootstrapper as AppFirstRuntimeBootstrapper).firstProviderQaConfigured ? PokrovFirstProviderQaAvailabilityReason.unconfigured
+        : _disposed ? PokrovFirstProviderQaAvailabilityReason.disposed
+        : _runtimeBusy ? PokrovFirstProviderQaAvailabilityReason.runtimeBusy
+        : retainsProtection ? PokrovFirstProviderQaAvailabilityReason.protectionRetained
+        : _runtimeSnapshot?.phase == RuntimePhase.running ? PokrovFirstProviderQaAvailabilityReason.vpnRunning
+        : _runtimeSnapshot?.connectionPending == true ? PokrovFirstProviderQaAvailabilityReason.connectionPending
+        : _selectedRouteMode == RouteMode.selectedApps || _selectedRouteMode == RouteMode.excludedApps ? PokrovFirstProviderQaAvailabilityReason.appScope
+        : preferences.overrides.isNotEmpty || preferences.purposeRoutes.isNotEmpty ? PokrovFirstProviderQaAvailabilityReason.explicitRouting
+        : preferences.localDpiEnabled ? PokrovFirstProviderQaAvailabilityReason.localDpiEnabled
+        : _warpRuntimeConsent ? PokrovFirstProviderQaAvailabilityReason.warpEnabled
+        : id != null && id == _startedFirstProviderQaAdmissionId ? PokrovFirstProviderQaAvailabilityReason.attemptConsumed
+        : id == null ? PokrovFirstProviderQaAvailabilityReason.pendingAbsent
+        : PokrovFirstProviderQaAvailabilityReason.ready;
+    return (admissionId: reason == PokrovFirstProviderQaAvailabilityReason.ready ? id : null,
+        pendingPresent: id != null, reason: reason);
+  }
+
+  String? get firstProviderQaAdmissionId => _firstProviderQaEligibility().admissionId;
+
+  ({bool pendingPresent, PokrovFirstProviderQaAvailabilityReason reason}) get firstProviderQaAvailability {
+    final current = _firstProviderQaEligibility();
+    return (pendingPresent: current.pendingPresent, reason: current.reason);
   }
 
   Future<void> startFirstProviderQa(String admissionId) async {

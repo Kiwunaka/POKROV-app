@@ -751,6 +751,8 @@ void main() {
       expect(manager.snapshot?.phase, RuntimePhase.initialized);
       expect(manager.snapshot?.coreVersion, '1.2.12');
       expect(manager.firstProviderQaAdmissionId, admissionId);
+      expect(manager.firstProviderQaAvailability,
+          (pendingPresent: true, reason: PokrovFirstProviderQaAvailabilityReason.ready));
       final report = PokrovDiagnosticsPresenter.fromRuntime(
         hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
         snapshot: manager.snapshot, statusLabel: 'idle', warpState: 'disabled', now: DateTime.now().toUtc(),
@@ -766,6 +768,7 @@ void main() {
           claimClicks++;
           await manager.startFirstProviderQa(manager.firstProviderQaAdmissionId!);
         },
+        onReadFirstProviderQaAvailability: () => manager.firstProviderQaAvailability,
       )));
       await tester.pump();
       final card = find.byKey(const ValueKey('diagnostics-first-provider-qa'));
@@ -774,6 +777,18 @@ void main() {
       final start = find.byKey(const ValueKey('diagnostics-first-provider-qa-start'));
       expect(start, findsOneWidget);
       expect(tester.widget<FilledButton>(start).onPressed, isNotNull);
+      final details = find.byKey(const ValueKey('diagnostics-first-provider-qa-details'));
+      await tester.ensureVisible(details);
+      await tester.tap(find.descendant(of: details, matching: find.text('Технические сведения')));
+      await tester.pumpAndSettle();
+      expect(find.text('Допуск в приложении: да'), findsOneWidget);
+      expect(find.textContaining('(ready)'), findsOneWidget);
+      account.updateSubscriptionInfo(ClientSubscriptionInfo.fromJson({'lane': 'paid', 'access_state': 'paid_unlimited'}));
+      await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));
+      await tester.pumpAndSettle();
+      expect(find.text('Допуск в приложении: нет'), findsOneWidget);
+      expect(find.textContaining('(pendingAbsent)'), findsOneWidget,
+          reason: 'normal Diagnostics refresh reads current eligibility instead of the initial open value');
       expect(claimClicks, 0);
       expect(httpCalls, 0);
       expect(runtime.stagedPayloads, isEmpty);

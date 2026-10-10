@@ -15,6 +15,30 @@ import '../../../app_first_runtime_bootstrap.dart'
 import '../../observability/release_health_baseline.dart';
 import 'support_mode.dart';
 
+enum PokrovFirstProviderQaAvailabilityReason {
+  ready, pendingAbsent, unsupportedPlatform, unsupportedBootstrapper, unconfigured,
+  disposed, runtimeBusy, protectionRetained, vpnRunning, connectionPending,
+  appScope, explicitRouting, localDpiEnabled, warpEnabled, attemptConsumed,
+}
+
+String _firstProviderQaAvailabilityLabel(PokrovFirstProviderQaAvailabilityReason reason) => switch (reason) {
+  PokrovFirstProviderQaAvailabilityReason.ready => 'Условия кнопки проверки соблюдены',
+  PokrovFirstProviderQaAvailabilityReason.pendingAbsent => 'Нет принятого ожидающего допуска',
+  PokrovFirstProviderQaAvailabilityReason.unsupportedPlatform => 'Проверка доступна только в Windows',
+  PokrovFirstProviderQaAvailabilityReason.unsupportedBootstrapper => 'Этот источник профиля не поддерживает проверку',
+  PokrovFirstProviderQaAvailabilityReason.unconfigured => 'Ключи проверки или каталог не настроены',
+  PokrovFirstProviderQaAvailabilityReason.disposed => 'Текущий экран подключения закрыт',
+  PokrovFirstProviderQaAvailabilityReason.runtimeBusy => 'Выполняется действие подключения',
+  PokrovFirstProviderQaAvailabilityReason.protectionRetained => 'Сохранена защита предыдущего подключения',
+  PokrovFirstProviderQaAvailabilityReason.vpnRunning => 'VPN уже включён',
+  PokrovFirstProviderQaAvailabilityReason.connectionPending => 'Подключение ещё выполняется',
+  PokrovFirstProviderQaAvailabilityReason.appScope => 'Выбран режим отдельных приложений',
+  PokrovFirstProviderQaAvailabilityReason.explicitRouting => 'Выбраны отдельные правила маршрутизации',
+  PokrovFirstProviderQaAvailabilityReason.localDpiEnabled => 'Включён локальный DPI-контроль',
+  PokrovFirstProviderQaAvailabilityReason.warpEnabled => 'Включён WARP',
+  PokrovFirstProviderQaAvailabilityReason.attemptConsumed => 'Попытка этого допуска уже начата',
+};
+
 bool pokrovWindowsCrashCollectionAllowed({
   required HostPlatform hostPlatform,
   required VerifiedSupportCollectionPolicy? policy,
@@ -878,6 +902,7 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
     this.onDisableSupportMode,
     this.onStartFirstProviderQa,
     this.onReadFirstProviderQaContext,
+    this.onReadFirstProviderQaAvailability,
     super.key,
   });
 
@@ -897,6 +922,7 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
   final Future<void> Function()? onDisableSupportMode;
   final Future<void> Function()? onStartFirstProviderQa;
   final Future<Map<String, Object?>?> Function()? onReadFirstProviderQaContext;
+  final ({bool pendingPresent, PokrovFirstProviderQaAvailabilityReason reason}) Function()? onReadFirstProviderQaAvailability;
 
   @override
   State<PokrovDiagnosticsScreen> createState() =>
@@ -1184,6 +1210,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final qaAvailability = widget.onReadFirstProviderQaAvailability?.call();
     final colors = theme.colorScheme;
     final preview = _report.preparedBundle.preview;
     final safeActions = _report.safeActionKeys
@@ -1366,6 +1393,16 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                     _report.supportCode,
                     key: const ValueKey('diagnostics-support-code'),
                     style: theme.textTheme.titleSmall,
+                  ),
+                  if (qaAvailability != null) ExpansionTile(
+                    key: const ValueKey('diagnostics-first-provider-qa-details'),
+                    title: const Text('Технические сведения'),
+                    children: [
+                      Text('Допуск в приложении: ${qaAvailability.pendingPresent ? 'да' : 'нет'}',
+                        key: const ValueKey('diagnostics-first-provider-qa-pending')),
+                      Text('Проверка SmartDNS: ${_firstProviderQaAvailabilityLabel(qaAvailability.reason)} (${qaAvailability.reason.name})',
+                        key: const ValueKey('diagnostics-first-provider-qa-reason')),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   OutlinedButton.icon(
