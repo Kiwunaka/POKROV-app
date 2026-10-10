@@ -21,13 +21,15 @@ class ConnectionStatus {
       required this.transport,
       required this.routes,
       required this.dns,
-      required this.egress});
+      required this.egress,
+      this.runtimeStatsDelivery});
   final int attemptId;
   final ConnectionPhase phase;
   final RuntimePhase? transport;
   final ({int? ipv4, int? ipv6, bool profileDirty}) routes;
   final ({RuntimeDiagnosticState state, bool? ready}) dns;
   final ({bool? validated, bool? required, bool? transportProofPending}) egress;
+  final RuntimeStatsDeliveryReceipt? runtimeStatsDelivery;
 }
 
 class ConnectionManager extends ChangeNotifier {
@@ -421,6 +423,7 @@ class ConnectionManager extends ChangeNotifier {
   String? _candidateRef;
   String? _activeCandidateRef;
   final List<Map<String, Object?>> _candidateProbeReports = [];
+  RuntimeStatsDeliveryReceipt? _runtimeStatsDelivery;
   bool _candidateProbeReportInFlight = false;
   bool _candidateRecoveryPending = false;
   bool _protectedHandoffActive = false;
@@ -452,6 +455,7 @@ class ConnectionManager extends ChangeNotifier {
         };
     return ConnectionStatus(
         attemptId: attemptId,
+        runtimeStatsDelivery: _runtimeStatsDelivery,
         phase: phase,
         transport: runtime?.phase,
         routes: (
@@ -1004,6 +1008,15 @@ class ConnectionManager extends ChangeNotifier {
     );
   }
 
+  void _acceptRuntimeStatsDelivery(RuntimeStatsDeliveryReceipt receipt,
+      {required int attempt, required String phase}) {
+    if (_disposed || attempt <= 0 || attempt != _connectionAttemptNumber ||
+        receipt.attemptNumber != attempt || receipt.runtimePhase != phase.trim().toLowerCase() ||
+        (_runtimeStatsDelivery != null &&
+            receipt.reportSequence <= _runtimeStatsDelivery!.reportSequence)) return;
+    _update(() => _runtimeStatsDelivery = receipt);
+  }
+
   Future<void> _reportClientLifecycle(
     String phase, {
     bool connected = false,
@@ -1029,6 +1042,7 @@ class ConnectionManager extends ChangeNotifier {
           ? _reportedCandidate(proven ? (_activeCandidateRef ?? _candidateRef) : _candidateRef)
           : null;
       final stagedVariant = _stagedCandidateVariant;
+      final reportAttempt = _connectionAttemptNumber;
       final accepted = await service.reportRuntimeStats(
         hostPlatform: _appContext.hostPlatform,
         runtimePhase: phase,
@@ -1059,6 +1073,8 @@ class ConnectionManager extends ChangeNotifier {
                 stagedVariant?.candidateRef == candidate.candidateRef
                     ? stagedVariant!.variant : '',
         candidateProbes: reports,
+        onDeliveryReceipt: (receipt) => _acceptRuntimeStatsDelivery(receipt,
+            attempt: reportAttempt, phase: phase),
       );
       if (accepted) _ackCandidateProbeReports(reports);
     } on Object catch (error) {
@@ -3622,6 +3638,7 @@ class ConnectionManager extends ChangeNotifier {
     }
     if (actionIntent == ConnectionTransitionIntent.connect) {
       _candidateProbeReports.clear();
+      _runtimeStatsDelivery = null;
       unawaited(_reportClientLifecycle('connect_requested'));
     }
     final generation = _connectionCoordinator.operationGeneration;
@@ -4413,6 +4430,7 @@ class ConnectionManager extends ChangeNotifier {
     _connectionAttemptStartedAt = null;
     final reports = _pendingCandidateProbeReports();
     if (reports.isNotEmpty) _candidateProbeReportInFlight = true;
+    final reportAttempt = _connectionAttemptNumber;
     try {
       final candidate = _reportedCandidate(_activeCandidateRef ?? _candidateRef);
       final accepted = await service.reportRuntimeStats(
@@ -4437,6 +4455,8 @@ class ConnectionManager extends ChangeNotifier {
         candidateRef: candidate?.candidateRef ?? '',
         candidateVariant: candidate == null ? '' : _activeVariantId,
         candidateProbes: reports,
+        onDeliveryReceipt: (receipt) => _acceptRuntimeStatsDelivery(receipt,
+            attempt: reportAttempt, phase: snapshot.phase.name),
       );
       if (accepted) _ackCandidateProbeReports(reports);
     } catch (error) {

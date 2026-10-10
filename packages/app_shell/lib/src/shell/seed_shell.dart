@@ -2587,6 +2587,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           transferService?.supportBundleEncryptionConfigured ?? false,
       timelineBreadcrumbs:
           widget.observability?.connectionTimelineBreadcrumbs ?? const [],
+      runtimeStatsDelivery: _connectionManager.status.runtimeStatsDelivery,
       crashes: [
         ...?widget.observability?.crashDiagnostics,
         ...?nativeCrashes,

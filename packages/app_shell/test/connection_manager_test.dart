@@ -215,6 +215,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   Completer<void>? runningReportGate;
   Completer<void>? failedReportGate;
   final actualReports = <Map<String, Object?>>[];
+  int reportSequence = 0;
 
   @override
   Future<bool> reportRuntimeStats({
@@ -226,7 +227,9 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     String candidateRef = '', String candidateVariant = '',
     String accessNetworkAsn = '', List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
+    void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
   }) async {
+    final sequence = ++reportSequence;
     runtimeCalls.add({'runtime_phase': runtimePhase, 'error_code': errorCode});
     actualReports.add({'runtime_phase': runtimePhase, 'duration_ms': durationMs,
       'attempt_number': attemptNumber, 'error_code': errorCode, 'retryable': retryable,
@@ -252,6 +255,12 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       'candidate_transport': candidateTransport,
       'candidate_probes': candidateProbes,
     });
+    onDeliveryReceipt?.call(RuntimeStatsDeliveryReceipt(
+      appVersion: pokrovClientVersion, buildNumber: pokrovClientBuildNumber,
+      runtimePhase: runtimePhase, reportSequence: sequence,
+      attemptNumber: attemptNumber, enqueued: true, acknowledged: true,
+      httpStatus: 200, capturedAt: DateTime.now().toUtc(),
+    ));
     return true;
   }
 
@@ -2166,6 +2175,8 @@ void main() {
     }
     expect(bootstrapper.reports.single['attempt_number'], 1);
     expect(bootstrapper.reports.single['candidate_ref'], hy2.candidateRef);
+    expect(manager.status.runtimeStatsDelivery?.attemptNumber, 2,
+        reason: 'the late old ACK cannot replace the current attempt receipt');
     await manager.refresh();
     final newReportDeadline = DateTime.now().add(const Duration(seconds: 2));
     while (bootstrapper.reports.length < 2 && DateTime.now().isBefore(newReportDeadline)) {
@@ -2173,6 +2184,16 @@ void main() {
     }
     expect(bootstrapper.reports, hasLength(2));
     expect(bootstrapper.reports.last['attempt_number'], 2);
+    expect(manager.status.runtimeStatsDelivery?.acknowledged, isTrue);
+    final diagnostics = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      snapshot: manager.snapshot, statusLabel: 'connected', warpState: 'disabled',
+      now: DateTime.now().toUtc(), appVersion: pokrovClientVersion,
+      buildNumber: pokrovClientBuildNumber, releaseChannel: 'private',
+      candidateLabel: 'fixture', encryptedDeliveryAvailable: false,
+      runtimeStatsDelivery: manager.status.runtimeStatsDelivery,
+    );
+    expect(diagnostics.copyWith().runtimeStatsDelivery?.attemptNumber, 2);
     expect(bootstrapper.reports.last['candidate_probes'], [
       {'candidate_ref': awg.candidateRef, 'candidate_transport': 'awg31',
         'stage': 'probe', 'connected': true, 'failure_kind': '', 'duration_ms': 1852},

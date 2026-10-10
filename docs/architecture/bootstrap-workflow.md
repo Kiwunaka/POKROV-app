@@ -272,6 +272,9 @@ refresh response containing both the legacy and canonical account IDs can rebind
 only that legacy account's records on the same installation, preserving event
 bodies and IDs. Storage errors or exceeded queue limits leave the pending records
 for the next ordinary authenticated refresh or TTL and do not block authentication.
+
+Ordinary Diagnostics displays the current attempt's in-memory stats delivery receipt from the existing sender call: frozen version/build, report phase/sequence, nullable enqueue/ACK, observed HTTP status/closed API failure and capture time. ACK applies only to the exact current record; a coalesced flush or missing binding leaves unobserved fields unknown, and a late previous-attempt receipt cannot replace the current one. This receipt does not read the outbox or force delivery and is not VPN proof.
+
 Starting a new attempt clears only the previous attempt's RAM probe view;
 durable records remain until their acknowledgement or TTL. This endpoint and
 outbox are separate from identity-free release health and encrypted support bundles.

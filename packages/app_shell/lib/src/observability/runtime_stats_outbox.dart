@@ -235,12 +235,13 @@ final class _RuntimeStatsOutbox {
   }
 
   Future<Set<String>> flush(HostPlatform platform,
-      {String? priorityPacketKey}) async {
+      {String? priorityPacketKey,
+      void Function(int? httpStatus, String? failureKind)? onCurrentPacketResult}) async {
     final file = await _file(platform);
     final key = file.absolute.path.toLowerCase();
     final previous = _runtimeStatsDeliveryFlights[key];
     if (previous != null) return previous;
-    final pending = _drain(platform, file, priorityPacketKey);
+    final pending = _drain(platform, file, priorityPacketKey, onCurrentPacketResult);
     _runtimeStatsDeliveryFlights[key] = pending;
     try {
       return await pending;
@@ -251,7 +252,8 @@ final class _RuntimeStatsOutbox {
   }
 
   Future<Set<String>> _drain(
-      HostPlatform platform, File file, String? priorityPacketKey) async {
+      HostPlatform platform, File file, String? priorityPacketKey,
+      void Function(int? httpStatus, String? failureKind)? onCurrentPacketResult) async {
     final accepted = <String>{};
     final records = await _withAppFirstStateFileLock(file, () async {
       final records = await _read(file);
@@ -279,6 +281,7 @@ final class _RuntimeStatsOutbox {
       if (!record.binding.matches(state) || owner.invitationNetworkDeferred)
         return accepted;
       HttpClient? client;
+      var requestStarted = false;
       try {
         client = owner._createHttpClient(platform);
         for (var attempt = 0;; attempt++) {
@@ -286,6 +289,7 @@ final class _RuntimeStatsOutbox {
               owner.smartConnectTelemetryDeadline - elapsed.elapsed;
           if (remaining <= Duration.zero) return accepted;
           try {
+            requestStarted = true;
             final response = await owner
                 ._requestJson(
                     client: client,
@@ -295,9 +299,15 @@ final class _RuntimeStatsOutbox {
                     path: '/api/client/runtime/stats',
                     body: record.body)
                 .timeout(remaining);
+            // _requestJson accepts only HTTP 200 for this exact stats POST.
+            if (record.key == priorityPacketKey) onCurrentPacketResult?.call(200, null);
             if (response['ok'] != true) return accepted;
             break;
           } on BootstrapFailure catch (error) {
+            if (record.key == priorityPacketKey) {
+              onCurrentPacketResult?.call(
+                  error.statusCode ?? error.observedHttpStatus, error.apiFailureKind);
+            }
             if (record.body['candidate_probes'] == null ||
                 attempt > 0 ||
                 (error.operationalCode != 'API-002' &&
@@ -308,7 +318,10 @@ final class _RuntimeStatsOutbox {
             await owner._delayScheduler(owner._retryDelayForAttempt(attempt));
           }
         }
-      } on Object {
+      } on Object catch (error) {
+        if (requestStarted && record.key == priorityPacketKey) {
+          onCurrentPacketResult?.call(null, error is TimeoutException ? 'request_timeout' : null);
+        }
         return accepted;
       } finally {
         client?.close(force: true);

@@ -11,7 +11,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import '../../../app_first_runtime_bootstrap.dart'
-    show SupportBundleTransferFailure;
+    show SupportBundleTransferFailure, RuntimeStatsDeliveryReceipt;
 import '../../observability/release_health_baseline.dart';
 import 'support_mode.dart';
 
@@ -291,6 +291,7 @@ final class PokrovDiagnosticsReport {
         const ClientReleaseHealthBaseline.unavailable(),
     this.problemBookId,
     this.errorCode,
+    this.runtimeStatsDelivery,
   })  : evidence = List<PokrovDiagnosticEvidence>.unmodifiable(evidence),
         safeActionKeys = List<String>.unmodifiable(safeActionKeys),
         timelineAttempts = List<PokrovDiagnosticTimelineAttempt>.unmodifiable(
@@ -319,6 +320,7 @@ final class PokrovDiagnosticsReport {
   final ClientReleaseHealthBaseline releaseHealthBaseline;
   final String? problemBookId;
   final String? errorCode;
+  final RuntimeStatsDeliveryReceipt? runtimeStatsDelivery;
 
   PokrovDiagnosticsReport copyWith({
     DateTime? checkedAtUtc,
@@ -347,6 +349,7 @@ final class PokrovDiagnosticsReport {
             releaseHealthBaseline ?? this.releaseHealthBaseline,
         problemBookId: problemBookId,
         errorCode: errorCode,
+        runtimeStatsDelivery: runtimeStatsDelivery,
       );
 }
 
@@ -365,6 +368,7 @@ abstract final class PokrovDiagnosticsPresenter {
     required bool encryptedDeliveryAvailable,
     bool crashDiagnosticsReady = true,
     bool candidateDiagnosticsReady = true,
+    RuntimeStatsDeliveryReceipt? runtimeStatsDelivery,
     VerifiedSupportCollectionPolicy? supportModePolicy,
     DiagnosticSystemSummary? systemSummary,
     List<OperationalBreadcrumb> timelineBreadcrumbs = const [],
@@ -523,6 +527,7 @@ abstract final class PokrovDiagnosticsPresenter {
       encryptedDeliveryAvailable: encryptedDeliveryAvailable,
       crashDiagnosticsReady: crashDiagnosticsReady,
       candidateDiagnosticsReady: candidateDiagnosticsReady,
+      runtimeStatsDelivery: runtimeStatsDelivery,
       safeActionKeys: problemBook?.safeActions ?? const <String>[],
       timelineAttempts: timelineAttempts,
       releaseHealthBaseline: releaseHealthBaseline,
@@ -1472,6 +1477,12 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            _DiagnosticsCard(child: Text(
+              _runtimeStatsDeliveryRu(_report.runtimeStatsDelivery),
+              key: const ValueKey('diagnostics-runtime-stats-delivery'),
+              style: theme.textTheme.bodySmall,
+            )),
             if (_report.timelineAttempts.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text('Ход подключения', style: theme.textTheme.titleSmall),
@@ -1743,6 +1754,25 @@ String _windowsLocalDpiRuntimeRu(WindowsLocalDpiRuntime? observation) {
       '$status\n'
       'Счётчики отражают передачу TCP-соединения в выбранный путь; '
       'TLS и доставка данных ими не подтверждаются.';
+}
+
+String _runtimeStatsDeliveryRu(RuntimeStatsDeliveryReceipt? receipt) {
+  if (receipt == null) return 'Доставка текущего отчёта диагностики неизвестна: '
+      'результат отправки ещё не наблюдался.';
+  final state = receipt.acknowledged == true
+      ? 'Сервер подтвердил этот отчёт.'
+      : receipt.enqueued == true
+          ? 'Отчёт сохранён, подтверждение сервера ${receipt.acknowledged == false ? 'не получено' : 'неизвестно'}.'
+          : receipt.enqueued == null
+              ? 'Сохранение и отправка этого отчёта не наблюдались.'
+              : 'Сохранение этого отчёта не подтверждено.';
+  return 'Доставка диагностики: $state\n'
+      'Сборка ${receipt.appVersion}+${receipt.buildNumber} · '
+      'попытка ${receipt.attemptNumber ?? '—'} · отчёт ${receipt.reportSequence} · '
+      'этап ${receipt.runtimePhase ?? 'unknown'}.\n'
+      'HTTP: ${receipt.httpStatus ?? '—'} · причина: ${receipt.failureKind ?? '—'} · '
+      'наблюдение UTC: ${receipt.capturedAt.toIso8601String()}.\n'
+      'Подтверждение доставки относится к этому отчёту; работу VPN оно не доказывает.';
 }
 
 class _DiagnosticsCard extends StatelessWidget {

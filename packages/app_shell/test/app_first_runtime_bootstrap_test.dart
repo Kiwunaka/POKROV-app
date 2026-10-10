@@ -657,12 +657,14 @@ void main() {
     var gateNextSessionRead = false;
     var offline = false;
     var stallNextRequest = false;
+    Completer<void>? stalledRequestStarted;
     var runtimeStatsStatus = HttpStatus.ok;
     const canonicalAccountId = '22222222-2222-4222-8222-222222222222';
     var statsToken = 'stats-fixture-token';
     var managedRequests = 0;
     var expireNextManagedRequest = false;
     final received = <Map<String, dynamic>>[];
+    final receipts = <RuntimeStatsDeliveryReceipt>[];
     unawaited(() async {
       await for (final request in server) {
         if (request.uri.path == '/api/client/session/refresh' ||
@@ -694,6 +696,7 @@ void main() {
         received.add(jsonDecode(await utf8.decoder.bind(request).join()) as Map<String, dynamic>);
         if (stallNextRequest) {
           stallNextRequest = false;
+          stalledRequestStarted?.complete();
           continue;
         }
         request.response.headers.contentType = ContentType.json;
@@ -718,9 +721,13 @@ void main() {
       maxRequestAttempts: 1, delayScheduler: (_) async {},
     );
     expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
-        runtimePhase: 'app_opened', connected: false), isFalse,
+        runtimePhase: RuntimePhase.initialized.name, connected: false,
+        onDeliveryReceipt: (receipt) => receipts.add(receipt)), isFalse,
         reason: 'a cold unbound event cannot be assigned after its first await');
     expect(received, isEmpty);
+    expect((receipts.last.enqueued, receipts.last.acknowledged, receipts.last.httpStatus),
+        (null, null, null));
+    expect(receipts.last.runtimePhase, RuntimePhase.initialized.name);
     gateNextSessionRead = true;
     final probe = <String, Object?>{
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
@@ -728,11 +735,26 @@ void main() {
       'duration_ms': 900, 'unrecognized_content': 'must-not-be-delivered',
     };
     final report = bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
-        runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe]);
+        runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe],
+        onDeliveryReceipt: (receipt) => receipts.add(receipt));
     await sessionReadStarted.future;
     probe['duration_ms'] = 1234;
     releaseSessionRead.complete();
     expect(await report, isTrue);
+    expect((receipts.last.enqueued, receipts.last.acknowledged, receipts.last.httpStatus),
+        (true, true, 200));
+    expect(receipts.last.attemptNumber, 1);
+    expect((receipts.last.appVersion, receipts.last.buildNumber),
+        (pokrovClientVersion, pokrovClientBuildNumber));
+    final closedReceipt = jsonEncode(receipts.last.toJson());
+    for (final privateField in ['stats-fixture-install', 'stats-fixture-token',
+      'candidate_ref', 'candidate_probes', 'report_run_id', 'account_id']) {
+      expect(closedReceipt, isNot(contains(privateField)));
+    }
+    expect(RuntimeStatsDeliveryReceipt(appVersion: pokrovClientVersion,
+      buildNumber: pokrovClientBuildNumber, runtimePhase: 'failed', reportSequence: 1,
+      attemptNumber: 1, enqueued: true, acknowledged: false,
+      capturedAt: DateTime.now(), failureKind: 'raw_sensitive_exception').failureKind, isNull);
     expect(received, hasLength(2));
     expect(received[1], received[0], reason: 'delayed retry keeps the original report and dedupe identity');
     expect(received[0]['client_application'], 'pokrov');
@@ -763,8 +785,11 @@ void main() {
     runtimeStatsStatus = HttpStatus.accepted;
     final recovered = restart();
     expect(await recovered.reportRuntimeStats(hostPlatform: HostPlatform.windows,
-        runtimePhase: 'app_opened', connected: false), isFalse,
+        runtimePhase: 'app_opened', connected: false,
+        onDeliveryReceipt: (receipt) => receipts.add(receipt)), isFalse,
         reason: 'ACK of an older bound report is not ACK of this unbound current event');
+    expect((receipts.last.enqueued, receipts.last.acknowledged, receipts.last.httpStatus),
+        (null, null, null), reason: 'the older POST supplies no current-key HTTP receipt');
     expect(received, hasLength(3));
     expect(received.last, frozenBody, reason: 'restart retains original IDs, time, version, build and probes');
     expect(pending(), hasLength(1), reason: 'HTTP 202 with ok: true is not a committed ACK');
@@ -777,6 +802,18 @@ void main() {
     await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'app_opened', connected: false);
     expect(received, hasLength(4), reason: 'the acknowledged record is never replayed');
+
+    runtimeStatsStatus = HttpStatus.accepted;
+    expect(await recovered.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+      runtimePhase: RuntimePhase.configStaged.name, connected: false, attemptNumber: 2,
+      onDeliveryReceipt: (receipt) => receipts.add(receipt)), isFalse);
+    expect((receipts.last.enqueued, receipts.last.acknowledged, receipts.last.httpStatus),
+        (true, false, 202), reason: 'HTTP 202 is observed but does not ACK the current key');
+    expect(receipts.last.runtimePhase, RuntimePhase.configStaged.name.toLowerCase());
+    runtimeStatsStatus = HttpStatus.ok;
+    expect(await recovered.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+      runtimePhase: 'failed', connected: false, attemptNumber: 2), isTrue);
+    expect(pending(), isEmpty);
 
     for (var index = 0; index < 16; index++) {
       expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
@@ -794,11 +831,20 @@ void main() {
     expect(pending(), isEmpty);
 
     stallNextRequest = true;
+    stalledRequestStarted = Completer<void>();
     final deadlineWatch = Stopwatch()..start();
+    final stalled = recovered.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'failed', connected: false);
+    await stalledRequestStarted.future;
     expect(await recovered.reportRuntimeStats(hostPlatform: HostPlatform.windows,
-        runtimePhase: 'failed', connected: false), isFalse);
+        runtimePhase: 'failed', connected: false,
+        onDeliveryReceipt: (receipt) => receipts.add(receipt)), isFalse);
+    expect(await stalled, isFalse);
+    expect((receipts.last.enqueued, receipts.last.acknowledged,
+        receipts.last.httpStatus, receipts.last.failureKind), (true, null, null, null),
+        reason: 'a coalesced caller has no evidence of its own POST or acknowledgement');
     expect(deadlineWatch.elapsed, lessThan(recovered.smartConnectTelemetryDeadline * 2));
-    expect(pending(), hasLength(1), reason: 'a delivery deadline is not an ACK');
+    expect(pending(), hasLength(2), reason: 'a delivery deadline is not an ACK');
     await restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'app_opened', connected: false);
     expect(pending(), isEmpty);

@@ -722,6 +722,47 @@ abstract interface class AppFirstReleaseActionService {
   });
 }
 
+/// Per-report delivery facts, without identity or request content.
+final class RuntimeStatsDeliveryReceipt {
+  RuntimeStatsDeliveryReceipt({
+    required this.appVersion, required this.buildNumber,
+    required String runtimePhase, required this.reportSequence,
+    required this.attemptNumber, required this.enqueued,
+    required this.acknowledged, required DateTime capturedAt,
+    int? httpStatus, String? failureKind,
+  }) : runtimePhase = _phases.contains(runtimePhase.trim().toLowerCase())
+           ? runtimePhase.trim().toLowerCase() : null,
+       capturedAt = capturedAt.toUtc(),
+       httpStatus = OperationalAttributePolicy.prepareFailureAttributes(
+           httpStatus: httpStatus)['http_status'] as int?,
+       failureKind = OperationalAttributePolicy.prepareFailureAttributes(
+           apiFailureKind: failureKind)['api_failure_kind'] as String?;
+
+  static final _phases = <String>{
+    for (final phase in RuntimePhase.values) phase.name.toLowerCase(),
+    'app_opened', 'connect_requested', 'running', 'failed', 'runtime_observed',
+  };
+
+  final String appVersion;
+  final String buildNumber;
+  final String? runtimePhase;
+  final int reportSequence;
+  final int? attemptNumber;
+  final bool? enqueued;
+  final bool? acknowledged;
+  final int? httpStatus;
+  final String? failureKind;
+  final DateTime capturedAt;
+
+  Map<String, Object?> toJson() => {
+    'app_version': appVersion, 'build_number': buildNumber,
+    'runtime_phase': runtimePhase, 'report_sequence': reportSequence,
+    'attempt_number': attemptNumber, 'enqueued': enqueued,
+    'acknowledged': acknowledged, 'http_status': httpStatus,
+    'failure_kind': failureKind, 'captured_at': capturedAt.toIso8601String(),
+  };
+}
+
 /// Best-effort app UX telemetry. The platform must not treat this as trusted
 /// connection evidence; observer traffic remains the verification authority.
 abstract interface class AppFirstExperienceService {
@@ -745,6 +786,7 @@ abstract interface class AppFirstExperienceService {
     String accessNetworkAsn = '',
     List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
+    void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
   });
 
   Future<void> completeAccountOnboarding({
@@ -4146,6 +4188,7 @@ class AppFirstRuntimeBootstrapper
     String accessNetworkAsn = '',
     List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
+    void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
   }) async {
     final occurredAt = DateTime.now().toUtc();
     final binding = _runtimeStatsBindings[hostPlatform];
@@ -4276,38 +4319,64 @@ class AppFirstRuntimeBootstrapper
     }
     _StoredBootstrapState? state;
     var stored = false;
+    bool? enqueued;
+    bool? currentAcknowledged;
+    var currentRequestObserved = false;
+    int? httpStatus;
+    String? deliveryFailureKind;
     try {
-      state = await _loadState(hostPlatform);
-      if (record != null && binding!.matches(state)) {
-        stored = await _runtimeStatsOutbox.enqueue(hostPlatform, record);
-      }
-    } finally {
-      if (!stored && record != null) {
-        for (final signature in newProbeSignatures) {
-          if (_runtimeProbeReports[signature]?.packetKey == record.key) {
-            _runtimeProbeReports.remove(signature);
+      try {
+        state = await _loadState(hostPlatform);
+        if (record != null && binding!.matches(state)) {
+          stored = await _runtimeStatsOutbox.enqueue(hostPlatform, record);
+          enqueued = stored;
+        }
+      } finally {
+        if (!stored && record != null) {
+          for (final signature in newProbeSignatures) {
+            if (_runtimeProbeReports[signature]?.packetKey == record.key) {
+              _runtimeProbeReports.remove(signature);
+            }
           }
         }
       }
-    }
-    if (state?.hasSession == true && !invitationNetworkDeferred && hostPlatform == HostPlatform.android &&
-        const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
-      unawaited(_reportAutomaticNetworkContext(phase));
-    }
-    final accepted = await _runtimeStatsOutbox.flush(hostPlatform, priorityPacketKey: stored ? record!.key : null);
-    for (final entry in _runtimeProbeReports.entries.toList()) {
-      if (accepted.contains(entry.value.packetKey)) {
-        _runtimeProbeReports[entry.key] = (packetKey: entry.value.packetKey, accepted: true);
+      if (state?.hasSession == true && !invitationNetworkDeferred && hostPlatform == HostPlatform.android &&
+          const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
+        unawaited(_reportAutomaticNetworkContext(phase));
       }
-    }
-    final acknowledged = stored && accepted.contains(record!.key) &&
-        relatedPackets.entries.every((entry) => entry.value || accepted.contains(entry.key));
-    if (acknowledged) {
-      for (final probe in safeCandidateProbes) {
-        _runtimeProbeReports.remove(jsonEncode(probe));
+      final accepted = await _runtimeStatsOutbox.flush(hostPlatform,
+          priorityPacketKey: stored ? record!.key : null,
+          onCurrentPacketResult: (status, failureKind) {
+            currentRequestObserved = true;
+            if (status != null) httpStatus = status;
+            deliveryFailureKind = failureKind;
+          });
+      if (stored) {
+        currentAcknowledged = accepted.contains(record!.key)
+            ? true : currentRequestObserved ? false : null;
       }
+      for (final entry in _runtimeProbeReports.entries.toList()) {
+        if (accepted.contains(entry.value.packetKey)) {
+          _runtimeProbeReports[entry.key] = (packetKey: entry.value.packetKey, accepted: true);
+        }
+      }
+      final acknowledged = stored && accepted.contains(record!.key) &&
+          relatedPackets.entries.every((entry) => entry.value || accepted.contains(entry.key));
+      if (acknowledged) {
+        for (final probe in safeCandidateProbes) {
+          _runtimeProbeReports.remove(jsonEncode(probe));
+        }
+      }
+      return acknowledged;
+    } finally {
+      onDeliveryReceipt?.call(RuntimeStatsDeliveryReceipt(
+        appVersion: pokrovClientVersion, buildNumber: pokrovClientBuildNumber,
+        runtimePhase: phase, reportSequence: reportSequence,
+        attemptNumber: body['attempt_number'] as int?, enqueued: enqueued,
+        acknowledged: currentAcknowledged, httpStatus: httpStatus,
+        failureKind: deliveryFailureKind, capturedAt: DateTime.now().toUtc(),
+      ));
     }
-    return acknowledged;
   }
 
   Future<void> _reportAutomaticNetworkContext(String phase) async {
