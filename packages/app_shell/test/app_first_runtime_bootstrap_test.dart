@@ -372,6 +372,8 @@ void main() {
     String? nativeBoundRequestId;
     var probeId = 1;
     var guardClosed = false;
+    var failBoundConnect = false;
+    var stopConfirmed = true;
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(channel, (call) async {
@@ -407,6 +409,13 @@ void main() {
             expect(args['deadlineElapsedMs'], 19000);
             expect(args['requestId'], matches(r'^[a-f0-9]{32}$'));
             nativeBoundRequestId = args['requestId'] as String;
+            if (failBoundConnect) {
+              throw PlatformException(code: 'core_identity_connect_failed', details: {
+                'schema': 1, 'requestId': nativeBoundRequestId, 'operation': 'core_connect',
+                'nativePhase': 'config_staged', 'failureKind': 'core_start_failed',
+                'moduleMatches': true, 'profileMatches': true,
+              });
+            }
           }
           phase.addAll({'phase': 'running', 'effectiveProfileDigest': phase['stagedProfileDigest'],
             'hostHealth': 'healthy', 'dnsState': 'healthy', 'uplinkState': 'healthy', 'dnsReady': true,
@@ -439,6 +448,7 @@ void main() {
         case 'runtimeEngine.cancelAndConfirmConnectStopped':
           if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
             expect(args['requestId'], nativeBoundRequestId);
+            if (!stopConfirmed) return {'schema': 1, 'requestId': args['requestId'], 'settled': false};
           }
           phase.addAll({'phase': 'initialized', 'coreEgressValidated': false, 'dnsReady': false,
             'effectiveProfileDigest': '', 'tunInterfacePresent': false, 'vpnRoutesPresent': false});
@@ -452,8 +462,9 @@ void main() {
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
     final firstLaunch = _RestoredFirstLaunch()..completion.complete(true);
     final first = FirstSessionCoordinator(store: firstLaunch)..complete(animated: false);
+    final runtime = createRuntimeEngine(hostPlatform: HostPlatform.windows);
     final manager = ConnectionManager(appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      runtimeEngine: createRuntimeEngine(hostPlatform: HostPlatform.windows), bootstrapper: bootstrapper,
+      runtimeEngine: runtime, bootstrapper: bootstrapper,
       accountSessionCoordinator: account, firstSessionCoordinator: first, clientExperienceStore: _HomeExperience(),
       connectHintStore: const PokrovFileConnectHintStore(), windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
       authorizeAndroidConnect: () async => true, refreshSubscription: () async => true, onNotice: (_, __) {});
@@ -501,6 +512,30 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected, reason: 'QA termination closes the member, not ordinary VPN access');
     await manager.disconnect();
     expect(await manager.readFirstProviderQaContext(), isNull);
+
+    // Recreate an unconfirmed native Connect with the UI's last staged snapshot.
+    final failedProfile = await _qaDigest('failed-bound-profile');
+    phase.addAll({'phase': 'configStaged', 'stagedProfileDigest': failedProfile});
+    await manager.readSnapshot();
+    failBoundConnect = true;
+    stopConfirmed = false;
+    await expectLater((runtime as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+      expectedCoreModuleSha256: coreHash, expectedProfileDigest: failedProfile,
+      expectedNetworkContextRef: networkRef,
+      budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+        {'schema': 1, 'boot_ref': bootRef, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+      budget: const Duration(seconds: 18), onRequestCreated: (_) {}),
+      throwsA(isA<RuntimeBoundConnectFailure>().having((error) => error.cleanupConfirmed, 'cleanup', isFalse)));
+    expect(manager.snapshot?.phase, RuntimePhase.configStaged);
+    expect(manager.busy, isFalse);
+    expect((runtime as RuntimeConnectCancellation).activeConnectRequestId, isNotNull);
+    final stopsBeforeRetry = nativeCalls.where((method) => method == 'runtimeEngine.cancelAndConfirmConnectStopped').length;
+    stopConfirmed = true;
+    await manager.disconnect();
+    expect(nativeCalls.where((method) => method == 'runtimeEngine.cancelAndConfirmConnectStopped'),
+      hasLength(stopsBeforeRetry + 1), reason: 'explicit Stop retries the retained owner even with a staged snapshot');
+    expect((runtime as RuntimeConnectCancellation).activeConnectRequestId, isNull);
+    expect(nativeCalls, isNot(contains('runtimeEngine.disconnect')), reason: 'bound Stop remains exact-owner settlement');
   });
   testWidgets('restored Windows Home remains painted while inactive and after returning', (tester) async {
     final firstLaunch = _RestoredFirstLaunch();

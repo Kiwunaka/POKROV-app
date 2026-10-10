@@ -501,6 +501,16 @@ class ConnectionManager extends ChangeNotifier {
     return _replaceCommand(() async {
         _activeFirstProviderQa = null;
         _smartAccessRouteProfile = null;
+        final engine = _runtimeEngine;
+        final requestId = engine is RuntimeConnectCancellation
+            ? (engine as RuntimeConnectCancellation).activeConnectRequestId : null;
+        if (requestId != null && engine is RuntimeConnectSettlement &&
+            _runtimeSnapshot?.phase != RuntimePhase.running && _runtimeSnapshot?.connectionPending != true) {
+          // A negative Connect can retain its owner while the UI still has the
+          // staged snapshot. Only the exact settlement receipt releases it.
+          await _disconnectProtectedHandoff(requestId: requestId);
+          return;
+        }
         if (retainsProtection) { await _disconnectProtectedHandoff(); return; }
         if (_runtimeSnapshot?.phase == RuntimePhase.running ||
             _runtimeSnapshot?.connectionPending == true) {
@@ -588,13 +598,20 @@ class ConnectionManager extends ChangeNotifier {
       _replaceCommand(() =>
           _repairRuntime(onStep: onStep, onCancelAvailable: onCancelAvailable));
 
-  Future<void> _disconnectProtectedHandoff() async {
+  Future<void> _disconnectProtectedHandoff({String? requestId}) async {
     _smartAccessRouteProfile = null;
     _connectionCoordinator.beginAction(ConnectionTransitionIntent.disconnect);
     final generation = _connectionCoordinator.operationGeneration;
     _update(() => _activePhase = ConnectionPhase.disconnecting);
     try {
-      var stopped = await _withRuntimeActionTimeout('disconnect', _runtimeEngine.disconnect, ownerGeneration: generation);
+      var stopped = await _withRuntimeActionTimeout('disconnect', () async {
+        if (requestId == null) return _runtimeEngine.disconnect();
+        if (!await _connectionCoordinator.stopTransportConnect() ||
+            !await (_runtimeEngine as RuntimeConnectSettlement).cancelAndConfirmConnectStopped(requestId)) {
+          throw StateError('connect_cancel_unconfirmed');
+        }
+        return _runtimeEngine.snapshot();
+      }, ownerGeneration: generation);
       stopped = await _settleRuntimeDisconnectTransition(stopped, ownerGeneration: generation);
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       _runtimeSnapshot = stopped;

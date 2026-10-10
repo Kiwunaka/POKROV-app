@@ -740,10 +740,10 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                             this@PokrovRuntimeVpnService,
                             listener,
                             resetRuntimeNetwork = {
-                                if (ownsRuntimeSession(session)) reloadActiveRuntimeAfterDefaultNetworkChange()
+                                if (ownsRuntimeSession(session)) reloadActiveRuntimeAfterDefaultNetworkChange(session)
                             },
                             resetCoreNetwork = {
-                                if (ownsRuntimeSession(session)) resetActiveCoreNetworkAfterLinkChange()
+                                if (ownsRuntimeSession(session)) resetActiveCoreNetworkAfterLinkChange(session)
                             },
                         )
                     }
@@ -2010,8 +2010,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
     }
 
-    private fun resetActiveCoreNetworkAfterLinkChange() {
-        val session = activeRuntimeSession ?: return
+    private fun resetActiveCoreNetworkAfterLinkChange(session: AndroidLifecycleTaskScope) {
         runCatching {
             runtimeExecutor.execute {
                 if (ownsRuntimeSession(session) && activeTun != null) {
@@ -2022,8 +2021,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
     }
 
-    private fun reloadActiveRuntimeAfterDefaultNetworkChange() {
-        val session = activeRuntimeSession ?: return
+    private fun reloadActiveRuntimeAfterDefaultNetworkChange(session: AndroidLifecycleTaskScope) {
         runCatching {
             runtimeExecutor.execute {
                 if (!ownsRuntimeSession(session) || activeTun == null) {
@@ -2063,11 +2061,12 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
     override fun readWIFIState(): WIFIState? = null
 
     override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
+        val session = activeRuntimeSession ?: return
         AndroidDefaultNetworkMonitor.start(
             this,
             listener,
-            resetRuntimeNetwork = { reloadActiveRuntimeAfterDefaultNetworkChange() },
-            resetCoreNetwork = { resetActiveCoreNetworkAfterLinkChange() },
+            resetRuntimeNetwork = { reloadActiveRuntimeAfterDefaultNetworkChange(session) },
+            resetCoreNetwork = { resetActiveCoreNetworkAfterLinkChange(session) },
         )
     }
 

@@ -314,6 +314,9 @@ cause, phase and identity-match booleans before exact-owner cleanup. Protection
 history preserves that primary cause; the existing runtime report includes kinds
 within its established field bounds. An
 unconfirmed cleanup remains a separate result and retains the owner for Stop.
+Explicit Stop settles that exact owner even when the last UI snapshot is staged.
+Android network callbacks keep the session captured when their listener was
+registered; a delayed callback cannot reset a replacement session.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
 The local probe budget and Core data-stall kinds are valid journal values;
