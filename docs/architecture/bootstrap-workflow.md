@@ -2229,6 +2229,12 @@ Flutter's `--dart-define-from-file`. The file is a Flutter defines JSON object:
 and `POKROV_TRANSPORT_AUDIENCE` is `lab` or `production`. It contains public pins
 only and must be retained with the exact candidate's build inputs. Omission adds
 no pins. Other Flutter host builds use the same defines-file input directly.
+The private Windows D3 candidate uses the existing QA defines with Routing
+Catalog enabled and public Smart Access disabled. Its catalog and lease pins
+remain production pins; admission still requires the ordinary finite operator
+QA lease. The baseline defines with Routing Catalog disabled cannot run this
+case. Build 4129 changes this build input and reuses the existing Core 1.2.13
+Windows artifact; it does not publish a client or build an Android package.
 This source change supplies no key file, does not build/distribute a release,
 and does not enable transport admission. Parser/signature/cache parity and
 overlap/retirement evidence remain NOT_VERIFIED until the later check stage.
