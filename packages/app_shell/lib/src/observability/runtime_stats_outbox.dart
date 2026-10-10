@@ -49,6 +49,7 @@ final class _RuntimeStatsRecord {
       'connectivity',
       'error_code',
       'failure_kind',
+      'failure_operation',
       'selected_node_code',
       'route_mode',
       'duration_ms',
@@ -81,6 +82,9 @@ final class _RuntimeStatsRecord {
         DateTime.tryParse(body['occurred_at'] as String) == null ||
         (body.containsKey('client_application') &&
             body['client_application'] != 'pokrov')) {
+      throw const FormatException('runtime_stats_body_invalid');
+    }
+    if (body.containsKey('failure_operation') && !connectionFailureOperations.contains(body['failure_operation'])) {
       throw const FormatException('runtime_stats_body_invalid');
     }
     final connectivity = body['connectivity'];

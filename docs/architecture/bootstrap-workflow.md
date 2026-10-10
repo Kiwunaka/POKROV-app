@@ -2950,3 +2950,11 @@ unconfirmed stop retains the unverified presentation. A live UI with the exact
 lease owner continues its normal policy refresh; closing the UI alone does not
 cancel the native lease. This is source only, NOT_VERIFIED; native proof producers
 and full restart/device verification remain open.
+
+Local Stage/Connect admission failures retain their fixed guard code and current
+operation in the ordinary attempt diagnostics and runtime-stats Event. Only the
+listed PlatformException/RoutingCatalogFailure codes are exposed; arbitrary
+StateError text, native messages, details and stacks are excluded. The optional
+failure_operation is omitted for unknown operations and older clients. These
+guards remain excluded from network-quality outcomes; a successful candidate
+HTTP probe does not establish the cause or success of the later Connect.

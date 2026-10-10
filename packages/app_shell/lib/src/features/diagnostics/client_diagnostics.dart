@@ -200,6 +200,8 @@ final class PokrovDiagnosticTimelineAttempt {
     this.probeFailureKind,
     this.http64kFailure,
     this.http64kObservation,
+    this.failureKind,
+    this.failureOperation,
   }) : entries = List<PokrovDiagnosticTimelineEntry>.unmodifiable(entries);
 
   final int generation;
@@ -207,6 +209,8 @@ final class PokrovDiagnosticTimelineAttempt {
   final String? probeFailureKind;
   final String? http64kFailure;
   final Map<String, Object>? http64kObservation;
+  final String? failureKind;
+  final String? failureOperation;
   final bool isReconnect;
   final List<PokrovDiagnosticTimelineEntry> entries;
 }
@@ -569,6 +573,7 @@ abstract final class PokrovDiagnosticsPresenter {
         entries.removeRange(0, entries.length - 16);
       }
       final currentProbe = _candidateProbeForGeneration(breadcrumbs, generation);
+      final terminal = source.where((item) => item.name == 'app.connection.attempt.finished').lastOrNull;
       attempts.add(
         PokrovDiagnosticTimelineAttempt(
           generation: generation,
@@ -582,6 +587,8 @@ abstract final class PokrovDiagnosticsPresenter {
               ? currentProbe?.failureKind : null,
           http64kFailure: currentProbe?.http64kFailure,
           http64kObservation: currentProbe?.http64kObservation,
+          failureKind: connectionClosedGuardCodes.contains(terminal?.failureKind) ? terminal?.failureKind : null,
+          failureOperation: terminal?.failureOperation,
         ),
       );
     }
@@ -1813,6 +1820,10 @@ class _TimelineAttemptView extends StatelessWidget {
               : 'Попытка #${attempt.generation}',
           style: theme.textTheme.labelLarge,
         ),
+        if (attempt.failureOperation != null)
+          Text('Операция отказа: ${attempt.failureOperation}', style: theme.textTheme.bodySmall),
+        if (attempt.failureKind != null)
+          Text('Код отказа: ${attempt.failureKind}', style: theme.textTheme.bodySmall),
         if (attempt.probeStage != null)
           Text(
             'Этап проверки кандидата: ${attempt.probeStage}',

@@ -875,10 +875,15 @@ class ConnectionManager extends ChangeNotifier {
     _queueClientExperienceWrite();
   }
 
-  String? _connectionPlatformFailureCode(Object error) =>
-      error is PlatformException && const {
-        'runtime_clock_unavailable', 'runtime_busy', 'network_context_unavailable',
-      }.contains(error.code) ? error.code : null;
+  String? _connectionPlatformFailureCode(Object error) {
+    if (error is RuntimeBoundConnectFailure) return error.failureKind;
+    final code = switch (error) {
+      PlatformException() => error.code,
+      RoutingCatalogFailure() => error.code,
+      _ => null,
+    };
+    return connectionClosedGuardCodes.contains(code) ? code : null;
+  }
 
   String _unexpectedConnectionDiagnostic(String operation, Object error, StackTrace stack) {
     if (error is RuntimeBoundConnectFailure) return error.toString();
@@ -1022,6 +1027,7 @@ class ConnectionManager extends ChangeNotifier {
     bool connected = false,
     String errorCode = '',
     String failureKind = '',
+    String? failureOperation,
     bool? retryable,
   }) async {
     final service = _experienceService;
@@ -1050,6 +1056,7 @@ class ConnectionManager extends ChangeNotifier {
         connectivitySnapshot: snapshot,
         errorCode: errorCode,
         failureKind: failureKind,
+        failureOperation: failureOperation,
         selectedNodeCode: const {'warp_over_proxy', 'warp_direct'}.contains(materialCandidate?.warpMode)
             ? ''
             : candidate?.nodeCode ?? (snapshot == null ? '' : _activeNodeCode.isNotEmpty
@@ -1085,11 +1092,12 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> _reportClientRuntimeError(String errorCode, {String failureKind = ''}) =>
+  Future<void> _reportClientRuntimeError(String errorCode, {String failureKind = '', String? failureOperation}) =>
       _reportClientLifecycle(
         'failed',
         errorCode: errorCode,
         failureKind: failureKind,
+        failureOperation: failureOperation,
         retryable: errorCode != 'redeem_failed',
       );
 
@@ -4251,9 +4259,13 @@ class ConnectionManager extends ChangeNotifier {
       _notify(error.message, tone: PokrovSnackTone.danger);
     } on Object catch (error, stack) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;
+      final closedFailure = _connectionPlatformFailureCode(error);
+      final closedOperation = connectionFailureOperations.contains(failureOperation) ? failureOperation : null;
       _observability?.recordConnectionFailure(
         stage: failureStage,
         errorCode: 'CONN-005',
+        failureKind: closedFailure,
+        failureOperation: closedOperation,
       );
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
         return;
@@ -4273,8 +4285,7 @@ class ConnectionManager extends ChangeNotifier {
         tone: PokrovProtectionEventTone.error,
       );
       unawaited(_reportClientRuntimeError('connect_unexpected',
-          failureKind: error is RuntimeBoundConnectFailure ? error.failureKind
-              : _connectionPlatformFailureCode(error) ?? 'connect_unexpected'));
+          failureKind: closedFailure ?? 'connect_unexpected', failureOperation: closedOperation));
       _notify(message, tone: PokrovSnackTone.danger);
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {

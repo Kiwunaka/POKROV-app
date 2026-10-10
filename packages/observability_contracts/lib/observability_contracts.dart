@@ -89,6 +89,7 @@ abstract final class ObservabilityAttributeKeys {
     'egress_ready',
     'error_count',
     'failure_kind',
+    'failure_operation',
     'from_version',
     'http_status',
     'interface_ready',
@@ -117,6 +118,24 @@ abstract final class ObservabilityAttributeKeys {
     'update_channel',
   };
 }
+
+const connectionFailureOperations = <String>{
+  'managed_profile_stage', 'core_connect', 'tunnel_settle', 'managed_profile_refresh',
+};
+
+// Literal local admission guards; these are not network-quality failures.
+const connectionClosedGuardCodes = <String>{
+  'runtime_clock_unavailable', 'runtime_busy', 'network_context_unavailable',
+  'core_identity_connect_unavailable', 'catalog_native_control_unsupported',
+  'invalid_connect_identity', 'invalid_connect_deadline',
+  'managed_profile_stage_failed', 'smart_access_stage_identity_invalid',
+  'core_identity_stage_binding_mismatch', 'core_identity_stage_superseded', 'smart_access_stage_superseded',
+  'connect_deadline', 'operation_cancelled', 'core_identity_connect_superseded',
+  'core_identity_connect_unacknowledged', 'core_identity_connect_mismatch', 'core_identity_connect_cancel_unconfirmed',
+  'smart_access_qa_binding_mismatch', 'smart_access_qa_verification_failed', 'smart_access_qa_response_invalid',
+  'smart_access_qa_not_current', 'smart_access_qa_superseded', 'smart_access_qa_stage_changed',
+  'smart_access_qa_scope_changed', 'smart_access_qa_core_changed', 'smart_access_qa_connect_unsupported',
+};
 
 abstract final class KnownOperationalErrorCodes {
   static const values = <String>{

@@ -492,6 +492,8 @@ final class PokrovClientObservability {
     required String errorCode,
     ObservabilityErrorOrigin errorOrigin = ObservabilityErrorOrigin.client,
     BootstrapFailure? preparationFailure,
+    String? failureKind,
+    String? failureOperation,
   }) {
     final attempt = _attempt;
     if (attempt == null || attempt.isTerminal) {
@@ -515,6 +517,8 @@ final class PokrovClientObservability {
       OperationalTerminalKind.failed,
       errorCode: errorCode,
       errorOrigin: errorOrigin,
+      failureKind: failureKind,
+      failureOperation: failureOperation,
     );
   }
 

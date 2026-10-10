@@ -335,7 +335,8 @@ abstract final class OperationalAttributePolicy {
     },
     'probe_stage': candidateProbeStages,
     'http_64k_failure': candidateHTTP64KFailures,
-    'failure_kind': candidateProbeFailureKinds,
+    'failure_kind': {...candidateProbeFailureKinds, ...connectionClosedGuardCodes},
+    'failure_operation': connectionFailureOperations,
   };
 
   static final _versionPattern = RegExp(

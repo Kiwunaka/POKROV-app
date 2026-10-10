@@ -221,6 +221,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   Future<bool> reportRuntimeStats({
     required HostPlatform hostPlatform, required String runtimePhase,
     required bool connected, String errorCode = '', String failureKind = '',
+    String? failureOperation,
     String selectedNodeCode = '', String routeMode = '', int? durationMs,
     int? attemptNumber, bool? retryable, String networkClass = '',
     String carrierMccMnc = '', String carrierName = '', String candidateTransport = '',
@@ -234,6 +235,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     actualReports.add({'runtime_phase': runtimePhase, 'duration_ms': durationMs,
       'attempt_number': attemptNumber, 'error_code': errorCode, 'retryable': retryable,
       'failure_kind': failureKind, 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
+      'failure_operation': failureOperation,
       'native_kind': connectivitySnapshot?.lastFailureKind,
       'candidate_ref': candidateRef, 'candidate_variant': candidateVariant,
       'selected_node_code': selectedNodeCode});
@@ -1174,16 +1176,26 @@ void main() {
     expect(runtime.connectCalls, 0);
 
     for (final code in ['runtime_clock_unavailable', 'runtime_busy',
-      'network_context_unavailable', 'synthetic_private_code']) {
+      'network_context_unavailable', 'core_identity_connect_unacknowledged',
+      'core_identity_connect_unavailable', 'catalog_native_control_unsupported',
+      'invalid_connect_identity', 'invalid_connect_deadline',
+      'smart_access_qa_verification_failed', 'synthetic_private_code']) {
       final platformStore = _ExperienceStore();
       final platformBootstrapper = _StatsBootstrapper();
       final platformRuntime = _Runtime(hostPlatform: HostPlatform.windows)
-        ..connectFailure = PlatformException(code: code,
+        ..connectFailure = code == 'smart_access_qa_verification_failed'
+            ? RoutingCatalogFailure(code) : PlatformException(code: code,
           message: 'synthetic-private-message https://private.example/profile',
           details: {'profile': 'synthetic-private-details'},
           stacktrace: 'synthetic-private-native-stack C:/private/customer-profile.dart:3:4');
+      final directory = code == 'core_identity_connect_unacknowledged'
+          ? await Directory.systemTemp.createTemp('closed-connect-guard-') : null;
+      if (directory != null) addTearDown(() => directory.delete(recursive: true));
+      final observability = directory == null ? null : await PokrovClientObservability.start(
+        hostPlatform: HostPlatform.windows, directoryResolver: () async => directory);
       final platformManager = _manager(platformRuntime, platformBootstrapper,
         experienceStore: platformStore,
+        observability: observability,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
       addTearDown(platformManager.dispose);
       await platformManager.connect();
@@ -1193,9 +1205,23 @@ void main() {
       final failedReport = platformBootstrapper.actualReports.singleWhere(
         (report) => report['runtime_phase'] == 'failed');
       final permitted = code != 'synthetic_private_code';
-      expect(platformEvent.detail, startsWith('core_connect: PlatformException${permitted ? ' ($code)' : ''}'));
+      expect(platformEvent.detail, startsWith('core_connect: ${code == 'smart_access_qa_verification_failed' ? 'RoutingCatalogFailure' : 'PlatformException'}${permitted ? ' ($code)' : ''}'));
       expect(platformEvent.detail.length, lessThanOrEqualTo(180));
       expect(failedReport['failure_kind'], permitted ? code : 'connect_unexpected');
+      expect(failedReport['failure_operation'], 'core_connect');
+      if (observability != null) {
+        await observability.flush();
+        final terminal = observability.connectionTimelineBreadcrumbs.lastWhere(
+          (entry) => entry.name == 'app.connection.attempt.finished');
+        expect((terminal.failureKind, terminal.failureOperation), (code, 'core_connect'));
+        final report = PokrovDiagnosticsPresenter.fromRuntime(
+          hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+          snapshot: platformManager.snapshot, statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
+          appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+          encryptedDeliveryAvailable: false, timelineBreadcrumbs: observability.connectionTimelineBreadcrumbs);
+        expect((report.timelineAttempts.last.failureKind, report.timelineAttempts.last.failureOperation),
+          (code, 'core_connect'));
+      }
       final recorded = jsonEncode([platformEvent.toJson(), failedReport]);
       for (final private in ['synthetic_private_code', 'synthetic-private-message',
         'synthetic-private-details', 'synthetic-private-native-stack', 'private.example', 'customer-profile.dart']) {

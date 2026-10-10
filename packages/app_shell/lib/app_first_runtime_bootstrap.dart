@@ -12,7 +12,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart'
-    show KnownOperationalErrorCodes;
+    show KnownOperationalErrorCodes, connectionClosedGuardCodes, connectionFailureOperations;
 import 'package:pokrov_observability_runtime/observability_runtime.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
@@ -772,6 +772,7 @@ abstract interface class AppFirstExperienceService {
     required bool connected,
     String errorCode = '',
     String failureKind = '',
+    String? failureOperation,
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,
@@ -4174,6 +4175,7 @@ class AppFirstRuntimeBootstrapper
     required bool connected,
     String errorCode = '',
     String failureKind = '',
+    String? failureOperation,
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,
@@ -4279,8 +4281,9 @@ class AppFirstRuntimeBootstrapper
         if (KnownOperationalErrorCodes.contains(safeErrorCode) ||
             RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,
-        if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeFailureKind))
+        if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeFailureKind) || connectionClosedGuardCodes.contains(safeFailureKind))
           'failure_kind': safeFailureKind,
+        if (connectionFailureOperations.contains(failureOperation)) 'failure_operation': failureOperation,
         if (RegExp(r'^[a-z0-9_.-]{1,32}$').hasMatch(safeNodeCode))
           'selected_node_code': safeNodeCode,
         if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeRouteMode))

@@ -215,6 +215,8 @@ final class OperationalAttemptTimeline {
     OperationalTerminalKind kind, {
     String? errorCode,
     ObservabilityErrorOrigin errorOrigin = ObservabilityErrorOrigin.client,
+    String? failureKind,
+    String? failureOperation,
   }) {
     _requireActive();
     if (kind == OperationalTerminalKind.succeeded && !_verified) {
@@ -257,6 +259,8 @@ final class OperationalAttemptTimeline {
       errorOrigin: errorOrigin,
       attributes: <String, Object?>{
         'phase': _verified ? 'egress' : 'stop',
+        if (connectionClosedGuardCodes.contains(failureKind)) 'failure_kind': failureKind,
+        if (connectionFailureOperations.contains(failureOperation)) 'failure_operation': failureOperation,
         if (kind == OperationalTerminalKind.timeout) 'status_class': 'timeout',
         if (kind == OperationalTerminalKind.cancelled)
           'status_class': 'cancelled',

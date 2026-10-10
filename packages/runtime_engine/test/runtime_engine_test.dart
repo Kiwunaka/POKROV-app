@@ -833,6 +833,9 @@ void main() {
     var stops = 0;
     messenger.setMockMethodCallHandler(channel, (call) async {
       final args = call.arguments as Map? ?? {};
+      if (call.method == 'runtimeEngine.snapshot') {
+        return {'phase': 'initialized', 'routingCatalogControlVersion': 3};
+      }
       if (call.method == 'runtimeEngine.clockSnapshot') {
         return {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1};
       }
@@ -854,6 +857,34 @@ void main() {
     final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
     try {
       Object? failure;
+      await expectLater((engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+        expectedCoreModuleSha256: core, expectedProfileDigest: profile,
+        budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+          {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+        budget: const Duration(seconds: 18), onRequestCreated: (_) => fail('guard must reject before dispatch')),
+        throwsA(isA<PlatformException>().having((error) => error.code, 'literal guard', 'network_context_unavailable')
+          .having((error) => error.message, 'no raw message', isNull).having((error) => error.details, 'no raw details', isNull)));
+      await expectLater(MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.ios).connectWithCoreIdentity(
+        expectedCoreModuleSha256: core, expectedProfileDigest: profile,
+        budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+          {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+        budget: const Duration(seconds: 18), onRequestCreated: (_) => fail('unsupported guard must precede dispatch')),
+        throwsA(isA<PlatformException>().having((error) => error.code, 'literal guard', 'core_identity_connect_unavailable')));
+      await expectLater((engine as RuntimeSmartAccessControl).stageSmartAccessProfile(
+        const ManagedProfilePayload(profileName: 'guard', configPayload: '{"outbounds":[{"type":"direct","tag":"direct"}]}',
+          materializedForRuntime: true),
+        persistRestrictions: (_, __) async => fail('control guard must precede restriction writes'), operationIsCurrent: () => true),
+        throwsA(isA<PlatformException>().having((error) => error.code, 'literal guard', 'catalog_native_control_unsupported')));
+      for (final invalid in const [('bad', Duration(seconds: 18), 'invalid_connect_identity'),
+          (null, Duration.zero, 'invalid_connect_deadline')]) {
+        await expectLater((engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+          expectedCoreModuleSha256: invalid.$1 ?? core, expectedProfileDigest: profile,
+          expectedNetworkContextRef: 'network_0123456789abcdef0123456789abcdef',
+          budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+            {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+          budget: invalid.$2, onRequestCreated: (_) => fail('argument guard must precede dispatch')),
+          throwsA(isA<PlatformException>().having((error) => error.code, 'literal guard', invalid.$3)));
+      }
       try {
         await (engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
           expectedCoreModuleSha256: core, expectedProfileDigest: profile,

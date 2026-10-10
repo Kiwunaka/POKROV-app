@@ -180,6 +180,7 @@ final class OperationalBreadcrumb {
     this.http64kFailure,
     this.http64kObservation,
     this.failureKind,
+    this.failureOperation,
     this.durationMs,
     this.prepareReason,
     this.errorOrigin,
@@ -202,8 +203,11 @@ final class OperationalBreadcrumb {
         http64kObservation: event.attributes['failure_kind'] == 'probe_failed' && event.attributes['probe_stage'] == 'http_64k' &&
                 const {'body_short', 'body_read_error'}.contains(event.attributes['http_64k_failure'])
             ? OperationalAttributePolicy.candidateHTTP64KObservation(event.attributes['http_64k_observation']) : null,
-        failureKind: OperationalAttributePolicy.candidateProbeFailureKinds.contains(event.attributes['failure_kind'])
+        failureKind: (OperationalAttributePolicy.candidateProbeFailureKinds.contains(event.attributes['failure_kind']) ||
+                connectionClosedGuardCodes.contains(event.attributes['failure_kind']))
             ? event.attributes['failure_kind'] as String : null,
+        failureOperation: connectionFailureOperations.contains(event.attributes['failure_operation'])
+            ? event.attributes['failure_operation'] as String : null,
         durationMs: event.attributes['duration_ms'] as int?,
         prepareReason: OperationalAttributePolicy.prepareFailureAttributes(
           reason: event.attributes['prepare_reason'] is String
@@ -223,6 +227,7 @@ final class OperationalBreadcrumb {
   final String? http64kFailure;
   final Map<String, Object>? http64kObservation;
   final String? failureKind;
+  final String? failureOperation;
   final int? durationMs;
   final String? prepareReason;
   final ObservabilityErrorOrigin? errorOrigin;

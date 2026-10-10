@@ -736,6 +736,7 @@ void main() {
     };
     final report = bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe],
+        failureKind: 'core_identity_connect_unacknowledged', failureOperation: 'core_connect',
         onDeliveryReceipt: (receipt) => receipts.add(receipt));
     await sessionReadStarted.future;
     probe['duration_ms'] = 1234;
@@ -761,6 +762,8 @@ void main() {
     expect(received[0]['platform'], 'windows');
     expect(received[0]['app_version'], pokrovClientVersion);
     expect(received[0]['build_number'], pokrovClientBuildNumber);
+    expect(received[0]['failure_kind'], 'core_identity_connect_unacknowledged');
+    expect(received[0]['failure_operation'], 'core_connect');
     expect(received[0]['candidate_probes'], [{
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
       'stage': 'probe', 'connected': false, 'duration_ms': 900, 'failure_kind': 'timeout',

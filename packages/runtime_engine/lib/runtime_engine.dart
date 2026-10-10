@@ -3982,10 +3982,10 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
     String? replacementRequestId,
   }) async {
     if (!payload.materializedForRuntime) {
-      throw StateError('managed_profile_stage_failed');
+      throw PlatformException(code: 'managed_profile_stage_failed');
     }
     if (bindIdentity != null && operationIsCurrent?.call() != true) {
-      throw StateError('core_identity_stage_superseded');
+      throw PlatformException(code: 'core_identity_stage_superseded');
     }
     _fetchedSource = payload.source;
     final configPayload = _materializePokrovCoreConfig(
@@ -4019,10 +4019,10 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
     String? expectedProfileDigest;
     if (persistRestrictions != null || bindIdentity != null) {
       final current = await snapshot();
-      if (operationIsCurrent?.call() != true) throw StateError('smart_access_stage_superseded');
+      if (operationIsCurrent?.call() != true) throw PlatformException(code: 'smart_access_stage_superseded');
       if (bindIdentity != null) _requireIdentityStageOwner(current, expectedCoreModuleSha256!, operationIsCurrent!);
       if (persistRestrictions != null && current.routingCatalogControlVersion != 4) {
-        throw StateError('catalog_native_control_unsupported');
+        throw PlatformException(code: 'catalog_native_control_unsupported');
       }
       // These are the existing host digest inputs, after materialization and
       // Windows rule-set bundling. The signed grant's base digest is separate.
@@ -4035,17 +4035,17 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
           ? '${payload.disableMemoryLimit ? 1 : 0}\n${serviceProfileBundle ?? configPayload}'
           : '${payload.coreEgressProbeRequired ? 1 : 0}\n$serviceRouteMode\n$configPayload';
       if (bindIdentity != null) expectedProfileDigest = await bindIdentity(identityInput, current);
-      if (operationIsCurrent?.call() != true) throw StateError('core_identity_stage_superseded');
+      if (operationIsCurrent?.call() != true) throw PlatformException(code: 'core_identity_stage_superseded');
       if (persistRestrictions != null) {
         final retained = await persistRestrictions(identityInput, current);
         if (expectedProfileDigest != null && retained != expectedProfileDigest) {
-          throw StateError('core_identity_stage_binding_mismatch');
+          throw PlatformException(code: 'core_identity_stage_binding_mismatch');
         }
         expectedProfileDigest = retained;
       }
-      if (operationIsCurrent?.call() != true) throw StateError('smart_access_stage_superseded');
+      if (operationIsCurrent?.call() != true) throw PlatformException(code: 'smart_access_stage_superseded');
       if (expectedProfileDigest == null || !RegExp(r'^[a-f0-9]{64}$').hasMatch(expectedProfileDigest)) {
-        throw StateError('smart_access_stage_identity_invalid');
+        throw PlatformException(code: 'smart_access_stage_identity_invalid');
       }
     }
     if (replacementRequestId != null && operationIsCurrent?.call() != true) throw StateError('managed_profile_superseded');
@@ -4098,7 +4098,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
         (hostSnapshot.stagedConfigPath ?? '').isEmpty ||
         ((hostSnapshot.lastFailureKind?.isNotEmpty ?? false) &&
             hostSnapshot.lastFailureKind != 'notification_permission_denied')) {
-      throw StateError('managed_profile_stage_failed');
+      throw PlatformException(code: 'managed_profile_stage_failed');
     }
     _stagedPayload = payload;
     _stagedRequiresBoundConnect = bindIdentity != null;
@@ -4127,26 +4127,26 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
     required void Function(String requestId) onRequestCreated,
   }) async {
     if (!const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform)) {
-      throw UnsupportedError('core_identity_connect_unavailable');
+      throw PlatformException(code: 'core_identity_connect_unavailable');
     }
     if (expectedNetworkContextRef == null || !RegExp(r'^network_[a-f0-9]{32}$').hasMatch(expectedNetworkContextRef)) {
-      throw StateError('network_context_unavailable');
+      throw PlatformException(code: 'network_context_unavailable');
     }
     if (_boundConnectRequestId != null) {
-      throw StateError('runtime_busy');
+      throw PlatformException(code: 'runtime_busy');
     }
     if (_coreModuleDigestFromWire(expectedCoreModuleSha256) == null ||
         _coreModuleDigestFromWire(expectedProfileDigest) == null) {
-      throw ArgumentError('invalid_connect_identity');
+      throw PlatformException(code: 'invalid_connect_identity');
     }
     final budgetMs = budget.inMilliseconds;
     final deadlineMs = budgetStartedAt.elapsedMilliseconds + budgetMs;
     if (budgetMs <= 0 || budgetMs > 86400000 || deadlineMs > 9007199254740991) {
-      throw ArgumentError('invalid_connect_deadline');
+      throw PlatformException(code: 'invalid_connect_deadline');
     }
     void requireCurrentClock(RuntimeBootClockSnapshot now) {
       if (now.bootRef != budgetStartedAt.bootRef || now.elapsedMilliseconds < budgetStartedAt.elapsedMilliseconds ||
-          now.elapsedMilliseconds >= deadlineMs) throw StateError('connect_deadline');
+          now.elapsedMilliseconds >= deadlineMs) throw PlatformException(code: 'connect_deadline');
     }
     final random = math.Random.secure();
     final requestId = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
@@ -4168,7 +4168,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       pending.add(operation.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
       return Future.any<T>([
         operation,
-        cancellation.future.then<T>((_) => throw StateError(
+        cancellation.future.then<T>((_) => throw PlatformException(code:
           deadlineElapsed ? 'connect_deadline' : 'operation_cancelled')),
       ]);
     }
@@ -4176,7 +4176,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       onRequestCreated(requestId);
       final before = await awaitAttempt(readBootClock());
       requireCurrentClock(before);
-      if (_activeConnectRequestId != requestId || cancellation.isCompleted) throw StateError('core_identity_connect_superseded');
+      if (_activeConnectRequestId != requestId || cancellation.isCompleted) throw PlatformException(code: 'core_identity_connect_superseded');
       nativeDeadline = Timer(Duration(milliseconds: deadlineMs - before.elapsedMilliseconds), () {
         deadlineElapsed = true;
         if (!cancellation.isCompleted) cancellation.complete();
@@ -4204,7 +4204,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       }));
       if (response == null || response.length != 3 || response['schema'] is! int ||
           response['schema'] != 1 || response['requestId'] != requestId || response['snapshot'] is! Map) {
-        throw StateError('core_identity_connect_unacknowledged');
+        throw PlatformException(code: 'core_identity_connect_unacknowledged');
       }
       final result = _snapshotFromHostMap(Map<String, Object?>.from(response['snapshot'] as Map));
       requireCurrentClock(await awaitAttempt(readBootClock()));
@@ -4212,7 +4212,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
           result.stagedProfileDigest != expectedProfileDigest ||
           (hostPlatform == HostPlatform.windows && (result.phase != RuntimePhase.running ||
             result.effectiveProfileDigest != expectedProfileDigest))) {
-        throw StateError('core_identity_connect_mismatch');
+        throw PlatformException(code: 'core_identity_connect_mismatch');
       }
       _connectSnapshots[result] = requestId;
       return result;
@@ -4225,7 +4225,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       final confirmed = await stop;
       if (_boundConnectDispatched && !confirmed) {
         if (primary != null) throw primary._settled(false);
-        throw StateError('core_identity_connect_cancel_unconfirmed');
+        throw PlatformException(code: 'core_identity_connect_cancel_unconfirmed');
       }
       _releaseBoundConnectRequest(requestId);
       if (primary != null) throw primary._settled(true);
