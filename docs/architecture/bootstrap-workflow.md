@@ -178,6 +178,9 @@ these cached profiles with the existing native selector and activates its winner
 Failed activation advances to another candidate, with at most three activations
 per recovery. A retained native guard is shown as blocked traffic, including
 after UI restart; Home, tray and protection details offer explicit Disconnect.
+The Windows tray retains the action rendered in each menu item. A displayed
+Disconnect dispatches the existing explicit disconnect even if runtime state
+changes before the click; it cannot reinterpret that intent as a new Connect.
 
 Simple mode selects a country through `selected_country_code` and keeps Auto
 within its authorized catalog candidates. Advanced mode can pin an exact catalog

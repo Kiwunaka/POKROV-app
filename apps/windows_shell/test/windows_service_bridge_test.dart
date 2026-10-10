@@ -2,9 +2,41 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_windows_shell/main.dart' as windows;
+
+class _TrayController extends PokrovShellController {
+  bool connected = true;
+  int connects = 0;
+  int disconnects = 0;
+
+  @override
+  Future<void> toggleConnection() async {
+    if (connected) {
+      disconnects++;
+    } else {
+      connects++;
+    }
+  }
+
+  @override
+  Future<void> disconnectConnection() async => disconnects++;
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('rendered tray disconnect never connects after runtime becomes idle', () async {
+    final controller = _TrayController();
+    addTearDown(controller.dispose);
+    final item = windows.pokrovWindowsTrayConnectionItem(
+      attached: true, connected: controller.connected, busy: false, canToggle: true,
+    );
+    expect(item.label, 'Отключить VPN');
+    controller.connected = false;
+    await windows.pokrovWindowsTrayConnectionAction(item, controller);
+    expect(controller.disconnects, 1);
+    expect(controller.connects, 0);
+  });
 
   test('windows tunnel authorization accepts the authenticated service',
       () async {

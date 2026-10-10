@@ -156,6 +156,28 @@ String pokrovWindowsTrayConnectionLabel({
   return connected ? 'Отключить VPN' : 'Подключить VPN';
 }
 
+@visibleForTesting
+MenuItem pokrovWindowsTrayConnectionItem({
+  required bool attached,
+  required bool connected,
+  required bool busy,
+  required bool canToggle,
+}) => MenuItem(
+  key: connected ? 'disconnect_connection' : 'toggle_connection',
+  label: pokrovWindowsTrayConnectionLabel(attached: attached, connected: connected, busy: busy),
+  disabled: !canToggle,
+);
+
+@visibleForTesting
+Future<void> pokrovWindowsTrayConnectionAction(
+    MenuItem item, PokrovShellController? controller) async {
+  if (item.key == 'disconnect_connection') {
+    await controller?.disconnectConnection();
+  } else if (item.key == 'toggle_connection') {
+    await controller?.toggleConnection();
+  }
+}
+
 final class _PokrovWindowsTray with TrayListener, WindowListener {
   _PokrovWindowsTray._();
 
@@ -197,14 +219,11 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
       Menu(
         items: [
           MenuItem(key: 'show_window', label: 'Открыть POKROV'),
-          MenuItem(
-            key: 'toggle_connection',
-            label: pokrovWindowsTrayConnectionLabel(
-              attached: attached,
-              connected: connected || retainsProtection,
-              busy: busy,
-            ),
-            disabled: controller?.canToggle != true,
+          pokrovWindowsTrayConnectionItem(
+            attached: attached,
+            connected: connected || retainsProtection,
+            busy: busy,
+            canToggle: controller?.canToggle == true,
           ),
           MenuItem.separator(),
           MenuItem(key: 'exit_app', label: 'Выход'),
@@ -213,8 +232,8 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
     );
   }
 
-  Future<void> _toggleConnection() async {
-    await _shellController?.toggleConnection();
+  Future<void> _toggleConnection(MenuItem item) async {
+    await pokrovWindowsTrayConnectionAction(item, _shellController);
     await _applyControllerState();
   }
 
@@ -270,7 +289,8 @@ final class _PokrovWindowsTray with TrayListener, WindowListener {
         unawaited(_showWindow());
         break;
       case 'toggle_connection':
-        unawaited(_toggleConnection());
+      case 'disconnect_connection':
+        unawaited(_toggleConnection(menuItem));
         break;
       case 'exit_app':
         unawaited(

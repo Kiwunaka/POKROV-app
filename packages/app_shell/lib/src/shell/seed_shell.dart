@@ -712,6 +712,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final runtimeEngine = createRuntimeEngine(hostPlatform: widget.appContext.hostPlatform);
     widget.shellController?._attach(
       toggle: _toggleRuntime,
+      disconnect: () => _connectionManager.disconnect(),
       isConnected: () => _connectionPresentation.isVerified,
       retainsProtection: () => _connectionManager.retainsProtection,
       isBusy: () => _runtimeBusy,

@@ -361,6 +361,7 @@ typedef PokrovWindowsShellPreferencesUpdater
 /// permission checks, trusted Wi-Fi and error handling cannot diverge.
 class PokrovShellController extends ChangeNotifier {
   Future<void> Function()? _toggle;
+  Future<void> Function()? _disconnect;
   bool Function()? _isConnected;
   bool Function()? _retainsProtection;
   bool Function()? _isBusy;
@@ -388,18 +389,33 @@ class PokrovShellController extends ChangeNotifier {
     }
   }
 
+  Future<void> disconnectConnection() async {
+    final action = _disconnect;
+    if (action == null) return;
+    _externalActionBusy = true;
+    notifyListeners();
+    try {
+      await action();
+    } finally {
+      _externalActionBusy = false;
+      notifyListeners();
+    }
+  }
+
   void refresh() {
     notifyListeners();
   }
 
   void _attach({
     required Future<void> Function() toggle,
+    required Future<void> Function() disconnect,
     required bool Function() isConnected,
     required bool Function() retainsProtection,
     required bool Function() isBusy,
     required bool Function() canToggle,
   }) {
     _toggle = toggle;
+    _disconnect = disconnect;
     _isConnected = isConnected;
     _retainsProtection = retainsProtection;
     _isBusy = isBusy;
@@ -409,6 +425,7 @@ class PokrovShellController extends ChangeNotifier {
 
   void _detach() {
     _toggle = null;
+    _disconnect = null;
     _isConnected = null;
     _retainsProtection = null;
     _isBusy = null;
