@@ -121,10 +121,12 @@ abstract final class ObservabilityAttributeKeys {
 
 const connectionFailureOperations = <String>{
   'managed_profile_stage', 'core_connect', 'tunnel_settle', 'managed_profile_refresh',
+  'qa_claim', 'managed_profile', 'routing_catalog', 'auth_refresh',
 };
 
-// Literal local admission guards; these are not network-quality failures.
+// Fixed admission/request failures; these are not network-quality failures.
 const connectionClosedGuardCodes = <String>{
+  'request_socket', 'request_http', 'request_timeout',
   'runtime_clock_unavailable', 'runtime_busy', 'network_context_unavailable',
   'core_identity_connect_unavailable', 'catalog_native_control_unsupported',
   'invalid_connect_identity', 'invalid_connect_deadline',

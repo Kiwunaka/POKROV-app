@@ -885,6 +885,17 @@ class ConnectionManager extends ChangeNotifier {
     return connectionClosedGuardCodes.contains(code) ? code : null;
   }
 
+  String? _bootstrapFailureOperation(String? operation) {
+    if (operation == 'GET /api/client/profile/managed' ||
+        operation?.startsWith('GET /api/client/profile/managed?') == true) return 'managed_profile';
+    return switch (operation) {
+      'POST /api/client/smart-access/first-provider-qa/claim' => 'qa_claim',
+      'GET /api/client/routing-catalog' => 'routing_catalog',
+      'POST /api/client/session/refresh' => 'auth_refresh',
+      _ => null,
+    };
+  }
+
   String _unexpectedConnectionDiagnostic(String operation, Object error, StackTrace stack) {
     if (error is RuntimeBoundConnectFailure) return error.toString();
     final type = error.runtimeType.toString();
@@ -4235,12 +4246,17 @@ class ConnectionManager extends ChangeNotifier {
       return;
     } on BootstrapFailure catch (error) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;
+      final businessOperation = _bootstrapFailureOperation(error.operation);
+      final ioKind = const {'request_socket', 'request_http', 'request_timeout'}.contains(error.apiFailureKind)
+          ? error.apiFailureKind : null;
       _observability?.recordConnectionFailure(
         stage: failureStage,
         errorCode: error.operationalErrorCode,
         errorOrigin: error.code == 'candidate_selection_exhausted'
             ? ObservabilityErrorOrigin.core : ObservabilityErrorOrigin.portal,
         preparationFailure: failureStage == ConnectionStage.profile ? error : null,
+        failureKind: ioKind,
+        failureOperation: businessOperation,
       );
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
         return;
@@ -4255,7 +4271,8 @@ class ConnectionManager extends ChangeNotifier {
       });
       unawaited(_reportClientRuntimeError(error.operationalErrorCode,
           failureKind: _runtimeStatsSnapshotAttempt == _connectionAttemptNumber
-              ? '' : error.apiFailureKind ?? error.code));
+              ? '' : error.apiFailureKind ?? error.code,
+          failureOperation: businessOperation));
       _notify(error.message, tone: PokrovSnackTone.danger);
     } on Object catch (error, stack) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;

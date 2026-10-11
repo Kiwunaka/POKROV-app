@@ -2958,3 +2958,11 @@ StateError text, native messages, details and stacks are excluded. The optional
 failure_operation is omitted for unknown operations and older clients. These
 guards remain excluded from network-quality outcomes; a successful candidate
 HTTP probe does not establish the cause or success of the later Connect.
+
+Business HTTP failures classify only the existing QA claim, managed profile,
+routing catalog and session refresh operations as qa_claim, managed_profile,
+routing_catalog or auth_refresh. Managed-profile query values are discarded;
+unknown operations and absolute URIs are omitted. The fixed request_socket,
+request_http and request_timeout kinds reach the current attempt diagnostics and
+support output. Stats delivery receipts remain separate from the business error;
+these fields do not establish its network cause.

@@ -1175,6 +1175,45 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(runtime.connectCalls, 0);
 
+    for (final operation in const [
+      ('POST /api/client/smart-access/first-provider-qa/claim', 'qa_claim'),
+      ('GET /api/client/profile/managed?selected_node_code=synthetic-private-query', 'managed_profile'),
+      ('POST https://private.example/claim?token=synthetic-private-query', null),
+    ]) {
+      final business = _StatsBootstrapper()..failure = BootstrapFailure('synthetic-private-message',
+        operation: operation.$1, operationalCode: 'API-002', apiFailureKind: 'request_socket', osErrorCode: 10013);
+      final businessRuntime = _Runtime();
+      final directory = operation.$2 == 'qa_claim'
+          ? await Directory.systemTemp.createTemp('business-operation-') : null;
+      if (directory != null) addTearDown(() => directory.delete(recursive: true));
+      final observability = directory == null ? null : await PokrovClientObservability.start(
+        hostPlatform: HostPlatform.android, directoryResolver: () async => directory);
+      final businessManager = _manager(businessRuntime, business, observability: observability);
+      addTearDown(businessManager.dispose);
+      await businessManager.connect();
+      final report = business.actualReports.singleWhere((value) => value['runtime_phase'] == 'failed');
+      expect(report['failure_operation'], operation.$2);
+      expect(report['failure_kind'], 'request_socket');
+      if (observability != null) {
+        await observability.flush();
+        final terminal = observability.connectionTimelineBreadcrumbs.lastWhere(
+          (entry) => entry.name == 'app.connection.attempt.finished');
+        expect((terminal.failureKind, terminal.failureOperation), ('request_socket', 'qa_claim'));
+        final diagnostics = PokrovDiagnosticsPresenter.fromRuntime(
+          hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+          snapshot: businessManager.snapshot, statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
+          appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+          encryptedDeliveryAvailable: false, timelineBreadcrumbs: observability.connectionTimelineBreadcrumbs);
+        expect((diagnostics.timelineAttempts.last.failureKind, diagnostics.timelineAttempts.last.failureOperation),
+          ('request_socket', 'qa_claim'));
+      }
+      final encoded = jsonEncode(report);
+      for (final private in ['synthetic-private-query', 'synthetic-private-message', 'private.example', '/api/client/']) {
+        expect(encoded, isNot(contains(private)));
+      }
+      expect(businessRuntime.connectCalls, 0);
+    }
+
     for (final code in ['runtime_clock_unavailable', 'runtime_busy',
       'network_context_unavailable', 'core_identity_connect_unacknowledged',
       'core_identity_connect_unavailable', 'catalog_native_control_unsupported',
