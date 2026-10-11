@@ -33,7 +33,7 @@ std::optional<DWORD> BoundIpcWaitMs(const std::string& body) {
   if (!target) return std::nullopt;
   using QueryTime = VOID(WINAPI*)(PULONGLONG);
   const auto query = reinterpret_cast<QueryTime>(::GetProcAddress(
-      ::GetModuleHandleW(L"kernel32.dll"), "QueryInterruptTimePrecise"));
+      ::GetModuleHandleW(L"KernelBase.dll"), "QueryInterruptTimePrecise"));
   if (query == nullptr) return std::nullopt;
   ULONGLONG ticks = 0;
   query(&ticks);

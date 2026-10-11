@@ -81,7 +81,7 @@ std::optional<BootClockSnapshot> ReadBootClock() {
   std::lock_guard<std::mutex> guard(clock_lock);
   using QueryTime = VOID(WINAPI*)(PULONGLONG);
   const auto query = reinterpret_cast<QueryTime>(::GetProcAddress(
-      ::GetModuleHandleW(L"kernel32.dll"), "QueryInterruptTimePrecise"));
+      ::GetModuleHandleW(L"KernelBase.dll"), "QueryInterruptTimePrecise"));
   if (query == nullptr) return std::nullopt;
   const auto boot = BootReference();
   if (!boot) return std::nullopt;

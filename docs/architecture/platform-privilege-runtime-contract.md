@@ -1261,7 +1261,9 @@ never diagnostic/telemetry/API identifiers. Unsupported hosts fail closed.
   The reply's `clock` object is separate from tunnel health/snapshot.
 - Windows adds authenticated service command 20 and capability bit 14. The
   Flutter method queues that command and returns its bounded local JSON. The
-  service uses `QueryInterruptTimePrecise`; absence fails closed. A protected
+  service and bound IPC deadline reader resolve `QueryInterruptTimePrecise`
+  from `KernelBase.dll`. A missing export still fails closed, without another clock or a
+  wall-clock fallback. A protected
   SYSTEM/Administrators-only volatile registry key at
   `HKLM\SOFTWARE\space.pokrov\POKROV\Service\TransportClock` contains random
   `BootRef`. It is created on the first clock request, survives app/service
