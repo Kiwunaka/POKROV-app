@@ -331,6 +331,27 @@ String _authRequestSummary(PokrovAuthRequestDiagnostic? request) {
   return 'Запрос доступа: $state.${details.isEmpty ? '' : ' ${details.join(' · ')}'}';
 }
 
+enum PokrovConnectionFailureSource { nativeAcknowledgement, platformException }
+
+final class PokrovConnectionFailureDiagnostic {
+  const PokrovConnectionFailureDiagnostic._(this.source, this.nativeFailure);
+
+  static PokrovConnectionFailureDiagnostic? fromError(Object error) {
+    if (error is RuntimeBoundConnectFailure) {
+      return PokrovConnectionFailureDiagnostic._(
+        PokrovConnectionFailureSource.nativeAcknowledgement, error);
+    }
+    if (error is PlatformException) {
+      return const PokrovConnectionFailureDiagnostic._(
+        PokrovConnectionFailureSource.platformException, null);
+    }
+    return null;
+  }
+
+  final PokrovConnectionFailureSource source;
+  final RuntimeBoundConnectFailure? nativeFailure;
+}
+
 final class PokrovDiagnosticsReport {
   PokrovDiagnosticsReport({
     required this.statusLabel,
@@ -345,6 +366,7 @@ final class PokrovDiagnosticsReport {
     this.previousAppCrash,
     this.currentAppCrash,
     this.authRequest,
+    this.connectionFailure,
     this.showWindowsLocalDpiRuntime = false,
     this.windowsLocalDpiRuntime,
     required this.encryptedDeliveryAvailable,
@@ -375,6 +397,7 @@ final class PokrovDiagnosticsReport {
   final DiagnosticCrashRecord? previousAppCrash;
   final DiagnosticCrashRecord? currentAppCrash;
   final PokrovAuthRequestDiagnostic? authRequest;
+  final PokrovConnectionFailureDiagnostic? connectionFailure;
   final bool showWindowsLocalDpiRuntime;
   final WindowsLocalDpiRuntime? windowsLocalDpiRuntime;
   final bool encryptedDeliveryAvailable;
@@ -405,6 +428,7 @@ final class PokrovDiagnosticsReport {
         previousAppCrash: previousAppCrash,
         currentAppCrash: currentAppCrash,
         authRequest: authRequest,
+        connectionFailure: connectionFailure,
         showWindowsLocalDpiRuntime: showWindowsLocalDpiRuntime,
         windowsLocalDpiRuntime: windowsLocalDpiRuntime,
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
@@ -444,6 +468,7 @@ abstract final class PokrovDiagnosticsPresenter {
     DiagnosticCrashRecord? previousAppCrash,
     DiagnosticCrashRecord? currentAppCrash,
     PokrovAuthRequestDiagnostic? authRequest,
+    PokrovConnectionFailureDiagnostic? connectionFailure,
     List<DiagnosticEventRecord> candidateProbeEvents = const [],
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
@@ -590,6 +615,7 @@ abstract final class PokrovDiagnosticsPresenter {
       previousAppCrash: previousAppCrash,
       currentAppCrash: currentAppCrash,
       authRequest: authRequest,
+      connectionFailure: connectionFailure,
       showWindowsLocalDpiRuntime: hostPlatform == HostPlatform.windows &&
           routeMode == RouteMode.selectiveServices,
       windowsLocalDpiRuntime: snapshot?.windowsLocalDpiRuntime,
@@ -1561,6 +1587,25 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
               key: const ValueKey('diagnostics-runtime-stats-delivery'),
               style: theme.textTheme.bodySmall,
             )),
+            if (_report.connectionFailure case final failure?) ...[
+              const SizedBox(height: 12),
+              _DiagnosticsCard(
+                key: const ValueKey('diagnostics-connect-failure'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(failure.source == PokrovConnectionFailureSource.nativeAcknowledgement
+                        ? 'Источник отказа: подтверждённый ответ нативного сервиса'
+                        : 'Источник отказа: PlatformException; нативное подтверждение не получено'),
+                    if (failure.nativeFailure case final native?) ...[
+                      Text('Нативное состояние: ${native.nativePhase}'),
+                      Text('Совпадение модуля: ${native.moduleMatches}; профиля: ${native.profileMatches}'),
+                      Text('Очистка подтверждена: ${native.cleanupConfirmed?.toString() ?? 'неизвестно'}'),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             if (_report.timelineAttempts.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text('Ход подключения', style: theme.textTheme.titleSmall),

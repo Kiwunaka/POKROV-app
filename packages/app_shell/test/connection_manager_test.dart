@@ -834,6 +834,93 @@ PokrovWifiNetworkStatus _foregroundWifi(_Runtime runtime, {String? name = 'Cafe'
     networkContextRef: runtime.candidateContext, networkSelectionKey: runtime.candidateKey, manualStopEpoch: 0);
 
 void main() {
+  testWidgets('Diagnostics separates current native receipt from platform failure and clears prior attempt', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    const boot = 'windows:0123456789abcdef0123456789abcdef';
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      final args = call.arguments as Map? ?? {};
+      if (call.method == 'runtimeEngine.clockSnapshot') {
+        return {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1};
+      }
+      if (call.method == 'runtimeEngine.connectWithCoreIdentity') {
+        throw PlatformException(code: 'core_identity_connect_failed', message: 'private-native-message',
+          details: {'schema': 1, 'requestId': args['requestId'], 'operation': 'core_connect',
+            'nativePhase': 'config_staged', 'failureKind': 'operation_cancelled',
+            'moduleMatches': true, 'profileMatches': true});
+      }
+      if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
+        return {'schema': 1, 'requestId': args['requestId'], 'settled': true};
+      }
+      throw StateError('unexpected native receipt fixture call');
+    });
+    RuntimeBoundConnectFailure? nativeFailure;
+    await tester.runAsync(() async {
+      final engine = createRuntimeEngine(hostPlatform: HostPlatform.windows);
+      try {
+        await (engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+          expectedCoreModuleSha256: 'a' * 64, expectedProfileDigest: 'b' * 64,
+          expectedNetworkContextRef: 'network_0123456789abcdef0123456789abcdef',
+          budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+            {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+          budget: const Duration(seconds: 18), onRequestCreated: (_) {});
+      } on RuntimeBoundConnectFailure catch (failure) {
+        nativeFailure = failure;
+      } finally {
+        messenger.setMockMethodCallHandler(channel, null);
+      }
+    });
+    expect(nativeFailure, isNotNull);
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)..connectFailure = nativeFailure;
+    final manager = _manager(runtime, _StatsBootstrapper(),
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    try {
+      await tester.runAsync(manager.connect);
+      PokrovDiagnosticsReport report() => PokrovDiagnosticsPresenter.fromRuntime(
+        hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+        snapshot: manager.snapshot, statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
+        appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+        encryptedDeliveryAvailable: false, connectionFailure: manager.connectionFailureDiagnostic,
+      );
+      expect(report().copyWith(checkedAtUtc: DateTime.now().toUtc()).connectionFailure?.nativeFailure?.cleanupConfirmed,
+        isTrue);
+      await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
+        initialReport: report(), onRefresh: () async => report(), onOpenProtection: () {}, onOpenSupport: () {},
+      )));
+      await tester.pump();
+      final diagnosticsScroll = find.descendant(of: find.byKey(const ValueKey('diagnostics-scroll')),
+        matching: find.byType(Scrollable)).first;
+      await tester.scrollUntilVisible(find.byKey(const ValueKey('diagnostics-connect-failure')), 200,
+        scrollable: diagnosticsScroll);
+      expect(find.text('Источник отказа: подтверждённый ответ нативного сервиса'), findsOneWidget);
+      expect(find.text('Нативное состояние: config_staged'), findsOneWidget);
+      expect(find.text('Совпадение модуля: true; профиля: true'), findsOneWidget);
+      expect(find.text('Очистка подтверждена: true'), findsOneWidget);
+      for (final private in ['private-native-message', 'a' * 64, 'b' * 64, boot]) {
+        expect(find.textContaining(private), findsNothing);
+      }
+      var clearedAtStart = false;
+      manager.addListener(() {
+        if (manager.status.phase == ConnectionPhase.preparing) {
+          clearedAtStart = manager.connectionFailureDiagnostic == null;
+        }
+      });
+      runtime.connectFailure = PlatformException(code: 'operation_cancelled', message: 'private-platform-message');
+      await tester.runAsync(manager.connect);
+      expect(clearedAtStart, isTrue);
+      expect(manager.connectionFailureDiagnostic?.nativeFailure, isNull);
+      await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.byKey(const ValueKey('diagnostics-connect-failure')), 200,
+        scrollable: diagnosticsScroll);
+      expect(find.text('Источник отказа: PlatformException; нативное подтверждение не получено'), findsOneWidget);
+      expect(find.textContaining('Нативное состояние:'), findsNothing);
+      expect(find.textContaining('private-platform-message'), findsNothing);
+    } finally {
+      manager.dispose();
+    }
+  });
+
   test('pending QA preserves fresh profile deadline and primary failure instead of offline catalog fallback', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-qa-profile-failure-');
     addTearDown(() => directory.delete(recursive: true));

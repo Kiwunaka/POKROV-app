@@ -23,6 +23,11 @@ deadline is not shortened by the ordinary cached-profile fallback, and a fresh
 preparation failure is preserved instead of entering offline catalog lookup.
 Ordinary connect and reconnect retain their existing authorized cache fallback.
 
+Diagnostics also distinguishes the current attempt's matched native negative
+receipt from a PlatformException. Native receipts expose only the already
+validated phase and module/profile/cleanup booleans; other failures do not gain
+native fields. A new attempt clears this in-memory summary.
+
 Ordinary Android and Windows connect/reconnect refresh the authorized managed
 profile before staging, even when a reusable staged path exists. Server-side
 assignment changes therefore do not depend on the repair action or a local

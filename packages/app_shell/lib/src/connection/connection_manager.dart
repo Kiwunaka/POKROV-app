@@ -424,6 +424,8 @@ class ConnectionManager extends ChangeNotifier {
   String? _activeCandidateRef;
   final List<Map<String, Object?>> _candidateProbeReports = [];
   RuntimeStatsDeliveryReceipt? _runtimeStatsDelivery;
+  PokrovConnectionFailureDiagnostic? _connectionFailureDiagnostic;
+  PokrovConnectionFailureDiagnostic? get connectionFailureDiagnostic => _connectionFailureDiagnostic;
   bool _candidateProbeReportInFlight = false;
   bool _candidateRecoveryPending = false;
   bool _protectedHandoffActive = false;
@@ -3636,6 +3638,9 @@ class ConnectionManager extends ChangeNotifier {
           : actionIntent == ConnectionTransitionIntent.disconnect
               ? null
               : ConnectionPhase.preparing;
+      if (actionIntent != ConnectionTransitionIntent.disconnect) {
+        _connectionFailureDiagnostic = null;
+      }
       _connectionCoordinator.beginAction(
         actionIntent,
         recordAttempt: actionIntent == ConnectionTransitionIntent.connect,
@@ -4295,6 +4300,7 @@ class ConnectionManager extends ChangeNotifier {
       _update(() {
         _activePhase = ConnectionPhase.actionRequired;
         _runtimeHeadline = message;
+        _connectionFailureDiagnostic = PokrovConnectionFailureDiagnostic.fromError(error);
       });
       _recordProtectionEvent(
         kind: 'connect_unexpected_$failureOperation',
