@@ -85,14 +85,14 @@ void RuntimeDispatcher::RefreshBoundNetwork(const std::shared_ptr<ActiveConnect>
   if ((operation->promoted_until_elapsed_ms.load() == 0 || operation->transport_terminated.load()) &&
       (operation->client_process == nullptr ||
        ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) {
-    operation->cancelled = true;
+    operation->Interrupt(ActiveConnect::Interruption::kOwnerChanged);
     watch_changed_.notify_all();
     return;
   }
   const auto current = operation->local_dpi_owner ? operation->network_revision : network_.Sample();
   if (!current || current != operation->network_revision ||
       !(operation->local_dpi_owner ? candidate_current_(*current) : network_.IsCurrent(*current))) {
-    operation->cancelled = true;
+    operation->Interrupt(ActiveConnect::Interruption::kNetworkChanged);
     watch_changed_.notify_all();
   }
 }
@@ -104,14 +104,14 @@ RuntimeResult RuntimeDispatcher::ProjectBoundState(RuntimeResult result) {
     const auto promoted = operation->promoted_until_elapsed_ms.load();
     if ((promoted == 0 || operation->transport_terminated.load()) && (operation->client_process == nullptr ||
         ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) {
-      operation->cancelled = true;
+      operation->Interrupt(ActiveConnect::Interruption::kOwnerChanged);
     }
     if (!operation->network_revision || !network_.IsCurrent(*operation->network_revision)) {
-      operation->cancelled = true;
+      operation->Interrupt(ActiveConnect::Interruption::kNetworkChanged);
     }
     if (!operation->ordinary_control_handoff &&
         (promoted ? !IsActiveTransportLeaseCurrent(*operation->bound, promoted)
-                  : !IsConnectDeadlineCurrent(*operation->bound))) operation->deadline_expired = true;
+                  : !IsConnectDeadlineCurrent(*operation->bound))) operation->Interrupt(ActiveConnect::Interruption::kDeadline);
     if (operation->cancelled || operation->deadline_expired) {
       watch_changed_.notify_all();
       // Status cannot read RuntimeHost while Start/Stop holds the execution
@@ -119,8 +119,7 @@ RuntimeResult RuntimeDispatcher::ProjectBoundState(RuntimeResult result) {
       // Preserve a recorded recovery failure rather than masking it as busy.
       if (result.body.rfind("phase=", 0) == 0 && result.body.rfind("phase=recovery_required;", 0) != 0) {
         result = WithFailure(operation->stopping_snapshot,
-            operation->deadline_expired ? Status::kDeadlineExceeded : Status::kNotReady,
-            operation->deadline_expired ? "connect_deadline" : "operation_cancelled");
+            operation->FailureStatus(), operation->FailureCode());
       }
     }
   }
@@ -189,7 +188,7 @@ void RuntimeDispatcher::WatchBoundConnect() {
     const auto promoted = operation->promoted_until_elapsed_ms.load();
     if (!operation->ordinary_control_handoff &&
         (promoted ? !IsActiveTransportLeaseCurrent(*operation->bound, promoted)
-                  : !IsConnectDeadlineCurrent(*operation->bound))) operation->deadline_expired = true;
+                  : !IsConnectDeadlineCurrent(*operation->bound))) operation->Interrupt(ActiveConnect::Interruption::kDeadline);
     if (!operation->cancelled && !operation->deadline_expired) {
       if (operation->ordinary_control_handoff) CheckRunningEgress();
       continue;
@@ -207,8 +206,7 @@ void RuntimeDispatcher::WatchBoundConnect() {
     std::lock_guard<std::mutex> state(state_lock_);
     snapshot_ = runtime_->Snapshot();
     if (stopped.status == Status::kOk) {
-      snapshot_ = WithFailure(snapshot_, operation->deadline_expired ? Status::kDeadlineExceeded : Status::kNotReady,
-          operation->deadline_expired ? "connect_deadline" : "operation_cancelled");
+      snapshot_ = WithFailure(snapshot_, operation->FailureStatus(), operation->FailureCode());
       RetireConnect();
     }
     // Failed restoration retains the exact owner. An explicit cancel retries;
@@ -252,7 +250,7 @@ RuntimeResult RuntimeDispatcher::Cancel(const std::string& body) {
       active_connect_->target.operation_nonce != target->operation_nonce) {
     return {Status::kNotReady, "operation_not_active"};
   }
-  active_connect_->cancelled = true;
+  active_connect_->Interrupt(ActiveConnect::Interruption::kCancelled);
   active_connect_->cleanup_attempted = false;
   watch_changed_.notify_all();
   return {Status::kOk, "cancellation_requested"};
@@ -274,7 +272,7 @@ RuntimeResult RuntimeDispatcher::CancelAndConfirm(const std::string& body) {
     if (!operation || !operation->bound || !SameTarget(operation->target, *target)) {
       return {Status::kOk, "settled=0"};
     }
-    operation->cancelled = true;
+    operation->Interrupt(ActiveConnect::Interruption::kCancelled);
   }
   // Signal first, then join the serial runtime owner. A queued/native Start
   // must return before Stop can confirm restoration of this exact invocation.
@@ -376,7 +374,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     if (!context || (bound && context->reference != bound->network_context_ref) || !network_.IsCurrent(context->revision)) {
       std::lock_guard<std::mutex> state(state_lock_);
       stopped_connect_ = CancellationTarget{request.session_token, request.operation_nonce};
-      return ProjectBoundState(WithFailure(snapshot_, Status::kNotReady, "operation_cancelled"));
+      return ProjectBoundState(WithFailure(snapshot_, Status::kNotReady, "network_context_unavailable"));
     }
     network_revision = context->revision;
   }
@@ -583,25 +581,32 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     case Command::kConnectWithIdentity:
     case Command::kReplaceManagedProfile: {
       const CheckInterruption interrupted = [this, operation, stop_event, deadline] {
+        if (operation->interruption == ActiveConnect::Interruption::kNone &&
+            ::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0) {
+          operation->Interrupt(ActiveConnect::Interruption::kCancelled);
+        }
         if ((operation->bound || operation->local_dpi_owner) && (operation->client_process == nullptr ||
-            ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) operation->cancelled = true;
+            ::WaitForSingleObject(operation->client_process, 0) != WAIT_TIMEOUT)) operation->Interrupt(ActiveConnect::Interruption::kOwnerChanged);
         if (operation->network_revision &&
             !(operation->local_dpi_owner ? candidate_current_(*operation->network_revision)
-                                        : network_.IsCurrent(*operation->network_revision))) operation->cancelled = true;
+                                        : network_.IsCurrent(*operation->network_revision))) operation->Interrupt(ActiveConnect::Interruption::kNetworkChanged);
         if (operation->local_dpi_owner) {
           std::lock_guard<std::mutex> state(state_lock_);
-          if (active_connect_ != operation) operation->cancelled = true;
+          if (active_connect_ != operation) operation->Interrupt(ActiveConnect::Interruption::kOwnerChanged);
         }
-        if (operation->cancelled ||
-            ::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0) {
-          return OperationInterruption::kCancelled;
+        if (operation->interruption != ActiveConnect::Interruption::kNone) {
+          return operation->FailureStatus() == Status::kDeadlineExceeded
+              ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kCancelled;
         }
         if (operation->bound && (operation->deadline_expired || !IsConnectDeadlineCurrent(*operation->bound))) {
-          operation->deadline_expired = true;
+          operation->Interrupt(ActiveConnect::Interruption::kDeadline);
           return OperationInterruption::kDeadlineExceeded;
         }
-        return ::GetTickCount64() >= deadline
-                   ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+        if (::GetTickCount64() >= deadline) {
+          operation->Interrupt(ActiveConnect::Interruption::kDeadline);
+          return OperationInterruption::kDeadlineExceeded;
+        }
+        return OperationInterruption::kNone;
       };
       const CheckInterruption telegram_interrupted = [this, operation, &interrupted] {
         const auto global = interrupted();
@@ -632,17 +637,31 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     case Command::kAcknowledgeSmartAccessRestrictions: result = runtime_->AcknowledgeSmartAccessRestrictions(request.body); break;
     default: result = {Status::kNotReady, "runtime_not_owned"}; break;
   }
+  // Capture the cooperative failure before rollback/network observations can
+  // describe a different interruption. Preserve recovery and other errors.
+  if (operation && (result.body == "operation_cancelled" ||
+      result.body.find(";failure=operation_cancelled") != std::string::npos)) {
+    operation->Interrupt(ActiveConnect::Interruption::kCancelled);
+    result = WithFailure(std::move(result), operation->FailureStatus(), operation->FailureCode());
+  } else if (operation && (result.body == "connect_deadline" || result.body == "deadline_exceeded" ||
+      result.body.find(";failure=connect_deadline") != std::string::npos ||
+      result.body.find(";failure=deadline_exceeded") != std::string::npos)) {
+    operation->Interrupt(ActiveConnect::Interruption::kDeadline);
+    result = WithFailure(std::move(result), operation->FailureStatus(), operation->FailureCode());
+  }
   bool cancel_after_commit = false;
   RefreshBoundNetwork(operation);
   if (operation && operation->network_revision &&
       !(operation->local_dpi_owner ? candidate_current_(*operation->network_revision)
-                                  : network_.IsCurrent(*operation->network_revision))) operation->cancelled = true;
+                                  : network_.IsCurrent(*operation->network_revision))) operation->Interrupt(ActiveConnect::Interruption::kNetworkChanged);
   {
     std::lock_guard<std::mutex> state(state_lock_);
     // Bound owners survive successful start. Retire other owners under the
     // cancellation-matching lock so late cancellation cannot reach a successor.
-    cancel_after_commit = operation && (operation->cancelled || operation->deadline_expired ||
-        (bound && !IsConnectDeadlineCurrent(*bound))) && result.status == Status::kOk;
+    if (operation && bound && !IsConnectDeadlineCurrent(*bound)) {
+      operation->Interrupt(ActiveConnect::Interruption::kDeadline);
+    }
+    cancel_after_commit = operation && (operation->cancelled || operation->deadline_expired) && result.status == Status::kOk;
     if (!cancel_after_commit) {
       snapshot_ = runtime_->Snapshot();
       if (operation) {
@@ -667,9 +686,7 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
     result = operation->protected_handoff
         ? runtime_->CancelProtectedHandoff() : runtime_->Disconnect();
     if (result.status == Status::kOk) {
-      const bool expired = bound && (operation->deadline_expired || !IsConnectDeadlineCurrent(*bound));
-      result = WithFailure(std::move(result), expired ? Status::kDeadlineExceeded : Status::kNotReady,
-                           expired ? "connect_deadline" : "operation_cancelled");
+      result = WithFailure(std::move(result), operation->FailureStatus(), operation->FailureCode());
     }
     std::lock_guard<std::mutex> state(state_lock_);
     snapshot_ = runtime_->Snapshot();

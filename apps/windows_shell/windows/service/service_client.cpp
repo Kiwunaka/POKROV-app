@@ -499,7 +499,7 @@ bool IsKnownPhase(const std::string& value) {
 }
 
 bool IsKnownFailure(const std::string& value) {
-  static constexpr std::array<const char*, 55> failures = {
+  static constexpr std::array<const char*, 57> failures = {
       "none",
       "core_not_initialized",
       "core_missing",
@@ -538,6 +538,8 @@ bool IsKnownFailure(const std::string& value) {
       "core_egress_timeout",
       "deadline_exceeded",
       "operation_cancelled",
+      "network_context_unavailable",
+      "connect_owner_changed",
       "runtime_busy",
       "core_stop_failed",
       "recovery_unavailable",

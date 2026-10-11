@@ -29,8 +29,27 @@ class RuntimeDispatcher {
 
  private:
   struct ActiveConnect {
+    enum class Interruption { kNone, kCancelled, kOwnerChanged, kNetworkChanged, kDeadline };
+    void Interrupt(Interruption cause) {
+      auto first = Interruption::kNone;
+      interruption.compare_exchange_strong(first, cause);
+      if (cause == Interruption::kDeadline) deadline_expired = true;
+      else cancelled = true;
+    }
+    const char* FailureCode() const {
+      switch (interruption.load()) {
+        case Interruption::kOwnerChanged: return "connect_owner_changed";
+        case Interruption::kNetworkChanged: return "network_context_unavailable";
+        case Interruption::kDeadline: return bound ? "connect_deadline" : "deadline_exceeded";
+        default: return "operation_cancelled";
+      }
+    }
+    Status FailureStatus() const {
+      return interruption == Interruption::kDeadline ? Status::kDeadlineExceeded : Status::kNotReady;
+    }
     ~ActiveConnect() { if (client_process != nullptr) ::CloseHandle(client_process); }
     CancellationTarget target;
+    std::atomic<Interruption> interruption{Interruption::kNone};
     std::atomic<bool> cancelled{false};
     std::atomic<bool> deadline_expired{false};
     std::optional<BoundConnectTarget> bound;

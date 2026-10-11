@@ -127,7 +127,7 @@ const connectionFailureOperations = <String>{
 // Fixed admission/request failures; these are not network-quality failures.
 const connectionClosedGuardCodes = <String>{
   'request_socket', 'request_http', 'request_timeout',
-  'runtime_clock_unavailable', 'runtime_busy', 'network_context_unavailable',
+  'runtime_clock_unavailable', 'runtime_busy', 'network_context_unavailable', 'connect_owner_changed',
   'core_identity_connect_unavailable', 'catalog_native_control_unsupported',
   'invalid_connect_identity', 'invalid_connect_deadline',
   'managed_profile_stage_failed', 'smart_access_stage_identity_invalid',

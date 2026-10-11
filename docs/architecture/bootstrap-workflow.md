@@ -2989,3 +2989,9 @@ unknown operations and absolute URIs are omitted. The fixed request_socket,
 request_http and request_timeout kinds reach the current attempt diagnostics and
 support output. Stats delivery receipts remain separate from the business error;
 these fields do not establish its network cause.
+
+Windows bound Connect preserves the first interruption before rollback. A stale
+physical network returns network_context_unavailable; a lost client process
+returns connect_owner_changed. Explicit cancellation/service stop remains
+operation_cancelled, and deadline expiry keeps its deadline code. Later cleanup
+observations cannot replace this cause; recovery failures retain priority.

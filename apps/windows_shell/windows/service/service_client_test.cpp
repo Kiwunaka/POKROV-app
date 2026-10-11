@@ -66,7 +66,7 @@ int main() {
   ServiceRuntimeSnapshot dpi_rejected;
   expect(!ParseServiceRuntimeSnapshot(dpi_invalid, &dpi_rejected) && !dpi_rejected.windows_local_dpi_runtime,
          "inconsistent captured-holder state was accepted");
-  for (const auto* failure : {"deadline_exceeded", "operation_cancelled",
+  for (const auto* failure : {"deadline_exceeded", "operation_cancelled", "network_context_unavailable", "connect_owner_changed",
                             "core_egress_dns_failed", "core_egress_connect_failed",
                             "core_egress_tls_failed", "core_egress_tls_timeout",
                             "core_egress_response_timeout", "core_egress_timeout",

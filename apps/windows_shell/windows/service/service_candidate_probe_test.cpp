@@ -58,9 +58,10 @@ class Recovery final : public RuntimeRecovery {
   std::string Begin() override { ++mutations; return ""; }
   std::string Record(RecoveryStage) override { ++mutations; return ""; }
   std::string BeginRollback() override { ++mutations; return ""; }
-  std::string RestoreNetworkState() override { ++mutations; return ""; }
+  std::string RestoreNetworkState() override { ++mutations; if (before_restore) before_restore(); return ""; }
   std::string CompleteRollback() override { ++mutations; return ""; }
   int mutations = 0;
+  std::function<void()> before_restore;
 };
 
 class HealthProbe final : public RuntimeEgressProbe {
@@ -204,7 +205,9 @@ void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDL
   auto* observed = core.get();
   auto probe = std::make_unique<HealthProbe>();
   auto* health = probe.get();
-  RuntimeHost runtime(std::move(core), std::move(probe), std::make_unique<Recovery>(), root.wstring(), false);
+  auto recovery = std::make_unique<Recovery>();
+  auto* restored = recovery.get();
+  RuntimeHost runtime(std::move(core), std::move(probe), std::move(recovery), root.wstring(), false);
   RuntimeDispatcher dispatcher(&runtime, {}, {}, 10);
   // A real local pipe supplies the kernel-owned client PID; no production Core or network mutation.
   const auto name = std::wstring(kTestPipePrefix) + L"SmartHandoff." + std::to_wstring(::GetCurrentProcessId());
@@ -250,6 +253,11 @@ void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDL
   const auto digest = ProfileDigest(profile);
   const BoundConnectTarget identity{std::string(64, 'a'), digest, clock->boot_ref,
       clock->elapsed_ms, clock->elapsed_ms + 800, network.body};
+  auto stale_network = identity;
+  stale_network.network_context_ref = "network_" + std::string(32, 'f');
+  const auto rejected = call(Command::kConnectWithIdentity, EncodeBoundConnect(stale_network), 3);
+  Expect(rejected.status == Status::kNotReady && rejected.body.find("failure=network_context_unavailable") != std::string::npos &&
+      observed->starts == 0, "stale network admission lost its fixed cause or started Core");
   const auto connected = call(Command::kConnectWithIdentity, EncodeBoundConnect(identity));
   Expect(connected.status == Status::kOk && connected.body.find("core_egress_validated=1;dns_ready=1") != std::string::npos &&
       connected.body.find("transport_proof_pending=0;transport_lease_active=0") != std::string::npos,
@@ -273,6 +281,39 @@ void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDL
       "foreign owner crossed the configured Smart fence");
   Expect(call(Command::kCancelConnectAndConfirm, owner).body == "settled=1" && observed->stops == 1,
       "exact stop did not settle the handed-off ordinary native owner");
+  // Explicit cancellation wins even when its rollback crosses the deadline.
+  Expect(call(Command::kStageProfile, profile).status == Status::kOk, "cancellation fixture could not restage");
+  const auto next_network = call(Command::kReadTransportNetworkContext);
+  const auto next_clock = ReadBootClock();
+  auto next_identity = identity;
+  next_identity.boot_ref = next_clock->boot_ref;
+  next_identity.started_elapsed_ms = next_clock->elapsed_ms;
+  next_identity.deadline_elapsed_ms = next_clock->elapsed_ms + 2000;
+  next_identity.network_context_ref = next_network.body;
+  restored->before_restore = [&] {
+    while (ReadBootClock()->elapsed_ms <= next_identity.deadline_elapsed_ms + 50) ::Sleep(1);
+  };
+  health->mode = 1;
+  const auto calls_before = health->calls.load();
+  RuntimeResult cancelled;
+  std::thread connecting([&] {
+    cancelled = call(Command::kConnectWithIdentity, EncodeBoundConnect(next_identity), 4);
+  });
+  const auto wait_until = ::GetTickCount64() + 1000;
+  while (health->calls == calls_before && ::GetTickCount64() < wait_until) ::Sleep(1);
+  Expect(health->calls > calls_before, "cancellation fixture never entered startup probe");
+  nonce[0] = 4;
+  Expect(call(Command::kCancel, EncodeCancellationTarget({session, nonce})).status == Status::kOk,
+      "bound explicit cancellation was rejected");
+  connecting.join();
+  if (cancelled.body.find("failure=operation_cancelled") == std::string::npos) {
+    const auto field = cancelled.body.find(";failure=");
+    const auto kind = field == std::string::npos ? cancelled.body : cancelled.body.substr(field + 9);
+    std::cerr << "fixture_interruption_result=" << kind.substr(0, kind.find(';')) << '\n';
+  }
+  Expect(cancelled.status == Status::kNotReady && cancelled.body.find("failure=operation_cancelled") != std::string::npos &&
+      cancelled.body.find("phase=config_staged;") == 0 && observed->stops == 2,
+      "rollback expiry replaced the first cancellation cause or skipped cleanup");
   ::CloseHandle(client); ::CloseHandle(pipe);
 }
 }

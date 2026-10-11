@@ -843,7 +843,7 @@ void main() {
         requestId = args['requestId'] as String;
         throw PlatformException(code: 'core_identity_connect_failed', message: _sensitiveRuntimeDetail,
           details: {'schema': 1, 'requestId': requestId, 'operation': 'core_connect',
-            'nativePhase': 'config_staged', 'failureKind': 'core_egress_tls_failed',
+            'nativePhase': 'config_staged', 'failureKind': 'network_context_unavailable',
             'moduleMatches': true, 'profileMatches': true});
       }
       if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
@@ -897,11 +897,11 @@ void main() {
       expect((engine as RuntimeConnectCancellation).activeConnectRequestId, requestId,
         reason: 'unconfirmed cleanup must retain the exact owner');
       expect(failure, isA<RuntimeBoundConnectFailure>()
-        .having((value) => value.failureKind, 'primary cause', 'core_egress_tls_failed')
+        .having((value) => value.failureKind, 'primary cause', 'network_context_unavailable')
         .having((value) => value.nativePhase, 'native phase', 'config_staged')
         .having((value) => value.moduleMatches && value.profileMatches, 'identity matched', isTrue)
         .having((value) => value.cleanupConfirmed, 'cleanup', isFalse));
-      expect(failure.toString(), contains('core_egress_tls_failed'));
+      expect(failure.toString(), contains('network_context_unavailable'));
       expect(failure.toString(), contains('core_identity_connect_cancel_unconfirmed'));
       _expectNoSensitiveRuntimeDetail(failure.toString());
     } finally {

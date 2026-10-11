@@ -1583,7 +1583,7 @@ class RuntimeBoundConnectFailure implements Exception {
     'core_egress_probe_failed', 'core_egress_probe_unavailable', 'core_smart_access_lease_expired',
     'protected_handoff_unavailable', 'transition_guard_failed', 'transition_guard_active', 'core_egress_dns_failed',
     'core_egress_connect_failed', 'core_egress_tls_failed', 'core_egress_tls_timeout', 'core_egress_response_timeout',
-    'core_egress_timeout', 'deadline_exceeded', 'operation_cancelled', 'runtime_busy', 'core_stop_failed',
+    'core_egress_timeout', 'deadline_exceeded', 'operation_cancelled', 'network_context_unavailable', 'connect_owner_changed', 'runtime_busy', 'core_stop_failed',
     'recovery_unavailable', 'recovery_journal_invalid', 'recovery_required', 'recovery_generation_failed',
     'recovery_stage_invalid', 'recovery_write_failed', 'recovery_core_stop_failed', 'recovery_network_unavailable',
     'recovery_network_capture_failed', 'recovery_network_snapshot_invalid', 'recovery_network_snapshot_too_large',
