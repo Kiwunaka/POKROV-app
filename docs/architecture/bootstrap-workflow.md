@@ -2995,3 +2995,8 @@ physical network returns network_context_unavailable; a lost client process
 returns connect_owner_changed. Explicit cancellation/service stop remains
 operation_cancelled, and deadline expiry keeps its deadline code. Later cleanup
 observations cannot replace this cause; recovery failures retain priority.
+
+The Windows observer recognizes Core’s own TUN by its fixed requested GUID as
+well as its existing alias/LUID. This covers Wintun’s arrival notification before
+the POKROV alias is assigned. Foreign and unknown interfaces still invalidate
+the bound network context; failed lookups never establish ownership.

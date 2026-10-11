@@ -103,6 +103,14 @@ std::string LoadSelectionSalt() {
 
 }  // namespace
 
+bool IsOwnedTunInterface(const GUID& guid, std::wstring_view alias) {
+  // Core requests the raw MD5("wintun" + "POKROV") bytes as a Windows GUID.
+  // Wintun publishes the interface before setting its cosmetic alias.
+  static constexpr GUID owned = {0xe9b6977d, 0x1754, 0xd627,
+      {0x33, 0xc3, 0x1c, 0xba, 0xcd, 0x74, 0x28, 0xf0}};
+  return ::IsEqualGUID(guid, owned) || alias == L"POKROV";
+}
+
 struct ServiceNetworkObserver::State {
   std::atomic<std::uint64_t> revision{1};
   std::atomic<bool> ready{false};
@@ -143,9 +151,11 @@ struct ServiceNetworkObserver::State {
 
   bool IsOwned(const NET_LUID& luid) {
     if (luid.Value != 0 && luid.Value == owned_luid.load()) return true;
+    GUID guid{};
+    if (::ConvertInterfaceLuidToGuid(&luid, &guid) != NO_ERROR) guid = {};
     WCHAR alias[IF_MAX_STRING_SIZE + 1]{};
-    if (::ConvertInterfaceLuidToAlias(&luid, alias, IF_MAX_STRING_SIZE + 1) == NO_ERROR &&
-        std::wstring(alias) == L"POKROV") {
+    if (::ConvertInterfaceLuidToAlias(&luid, alias, IF_MAX_STRING_SIZE + 1) != NO_ERROR) alias[0] = L'\0';
+    if (IsOwnedTunInterface(guid, alias)) {
       owned_luid = luid.Value;
       return true;
     }

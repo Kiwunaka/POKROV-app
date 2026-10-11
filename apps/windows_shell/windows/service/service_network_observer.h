@@ -2,11 +2,15 @@
 #define POKROV_SERVICE_SERVICE_NETWORK_OBSERVER_H_
 
 #include <cstdint>
+#include <guiddef.h>
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace pokrov::service {
+
+bool IsOwnedTunInterface(const GUID& guid, std::wstring_view alias);
 
 struct ServiceNetworkContext {
   std::uint64_t revision;

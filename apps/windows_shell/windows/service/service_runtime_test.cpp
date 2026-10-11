@@ -1,5 +1,6 @@
 #include "service_runtime.h"
 #include "service_profile_identity.h"
+#include "service_network_observer.h"
 #include "service_local_dpi.h"
 #include "service_local_dpi_json.h"
 
@@ -1650,6 +1651,16 @@ int main(int argc, char** argv) {
     ::Sleep(10000);
     return 0;
   }
+  // Wintun notifies interface arrival before assigning its cosmetic name.
+  // The requested GUID is already fixed by Core's Windows POKROV TUN contract.
+  const GUID owned_tun = {0xe9b6977d, 0x1754, 0xd627, {0x33, 0xc3, 0x1c, 0xba, 0xcd, 0x74, 0x28, 0xf0}};
+  Expect(pokrov::service::IsOwnedTunInterface(owned_tun, L""),
+         "own TUN arrival before alias was mistaken for an external network change");
+  GUID foreign = owned_tun;
+  ++foreign.Data1;
+  Expect(!pokrov::service::IsOwnedTunInterface(foreign, L"Ethernet") &&
+         !pokrov::service::IsOwnedTunInterface(GUID{}, L""),
+         "foreign or unknown interface bypassed the network change guard");
   if (argc == 2 && std::string(argv[1]) == "--local-dpi-lifecycle") {
     TestWindowsLocalDpiOwnedCleanup();
     return failures == 0 ? 0 : 1;
