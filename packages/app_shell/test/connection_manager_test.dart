@@ -214,6 +214,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   int failedRunningReports = 0;
   Completer<void>? runningReportGate;
   Completer<void>? failedReportGate;
+  Completer<void>? appOpenedReportGate;
   final actualReports = <Map<String, Object?>>[];
   int reportSequence = 0;
 
@@ -241,6 +242,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       'selected_node_code': selectedNodeCode});
     if (runtimePhase == 'running') await runningReportGate?.future;
     if (runtimePhase == 'failed') await failedReportGate?.future;
+    if (runtimePhase == 'app_opened') await appOpenedReportGate?.future;
     if (runtimePhase == 'running' && failFirstRunningReport) {
       failFirstRunningReport = false;
       failedRunningReports += 1;
@@ -268,6 +270,22 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
 
   @override
   Future<void> completeAccountOnboarding({required HostPlatform hostPlatform}) async {}
+}
+
+class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirstClientDataService {
+  int subscriptionReads = 0;
+
+  @override
+  Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
+    Duration? requestTimeout, Future<void>? cancelled}) async {
+    subscriptionReads++;
+    return const ClientSubscriptionInfo(lane: 'trialPremium', accessState: 'trial_premium',
+      expiresAt: '', daysLeft: 1, autoRenew: false, renewUrl: null,
+      plans: [], trafficPolicy: {});
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
@@ -820,6 +838,38 @@ void main() {
   final originalHttpOverrides = HttpOverrides.current;
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = originalHttpOverrides;
+
+  testWidgets('startup refreshes subscription while app-open telemetry is pending', (tester) async {
+    final telemetry = Completer<void>();
+    final bootstrapper = _StartupAccountBootstrapper()..appOpenedReportGate = telemetry;
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (_) async =>
+      {'phase': 'initialized', 'coreVersion': '1.2.13', 'supportsLiveConnect': true,
+       'canInitialize': false, 'canConnect': true});
+    addTearDown(() {
+      if (!telemetry.isCompleted) telemetry.complete();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    expect(bootstrapper.subscriptionReads, 1,
+      reason: 'best-effort telemetry must not hold the authenticated access refresh');
+    expect(telemetry.isCompleted, isFalse);
+    expect(bootstrapper.runtimeCalls.any((call) => call['runtime_phase'] == 'app_opened'), isTrue);
+    expect(find.text('Статус доступа уточняется'), findsNothing);
+    telemetry.complete();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
 
   testWidgets('Rules syncs immediate Wi-Fi policy without discarding pending routing edits', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

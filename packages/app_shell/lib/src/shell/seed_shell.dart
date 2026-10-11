@@ -895,9 +895,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     if (!mounted || !_firstSessionCoordinator.isReady) {
       return;
     }
+    await _refreshAccountSummary();
     await _reportClientOpenOnce();
     await _reportEstablishedFirstSession(includeHome: true);
-    await _refreshAccountSummary();
   }
 
   Future<void> _refreshAccountSummary() async {

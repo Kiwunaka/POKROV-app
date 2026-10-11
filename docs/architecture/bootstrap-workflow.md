@@ -5,6 +5,11 @@ This workflow gives client workers a consistent way to validate the canonical
 materialize local-only config. The clean-room/Wave 7 wording below is retained
 only where it explains bootstrap provenance.
 
+Cold startup refreshes the account summary before sending app-open and
+first-session events. Delayed best-effort telemetry therefore cannot hold the
+subscription/authentication refresh or leave the access label unresolved.
+The existing session refresh, identity and entitlement rules remain unchanged.
+
 Ordinary Android and Windows connect/reconnect refresh the authorized managed
 profile before staging, even when a reusable staged path exists. Server-side
 assignment changes therefore do not depend on the repair action or a local
