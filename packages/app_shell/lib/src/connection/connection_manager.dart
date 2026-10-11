@@ -3897,6 +3897,7 @@ class ConnectionManager extends ChangeNotifier {
           ? _hasFreshCachedManagedProfile(current.stagedConfigPath)
           : cachedPayload != null;
       final cachedProfileFallbackAllowed =
+          _pendingFirstProviderQaAdmissionId == null &&
           !_localSmartAccessSelected && _cachedProfileFallbackGate.canFallback(
                   cachedProfileAvailable: cachedProfileAvailable,
                   inputsVerified: cachedPayload != null) &&

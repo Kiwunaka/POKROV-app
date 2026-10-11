@@ -285,6 +285,70 @@ class _CatalogFailureBootstrapper extends _StatsBootstrapper implements AppFirst
   }) async => throw const RoutingCatalogFailure('catalog_response_invalid');
 }
 
+class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
+  _QaProfileFailureBootstrapper(Directory directory)
+      : super(supportDirectoryResolver: () async => directory,
+          sessionSecretStore: MemoryAppFirstSessionSecretStore(),
+          httpClientFactory: () => throw StateError('unexpected QA fixture HTTP')) {
+    cached.failure = const BootstrapFailure('fixture profile request failed',
+      operation: 'GET /api/client/profile/managed', operationalCode: 'API-002',
+      apiFailureKind: 'request_socket', osErrorCode: 10013);
+  }
+
+  final cached = _CachedBootstrapper();
+  int offlineCatalogReads = 0;
+
+  @override
+  bool get firstProviderQaConfigured => true;
+  @override
+  bool get routingCatalogEnabled => true;
+  @override
+  bool get transportManifestEnabled => false;
+
+  @override
+  Future<ManagedProfilePayload> resolveManagedProfile({
+    required HostPlatform hostPlatform, required RouteMode routeMode,
+    List<String> selectedApps = const [], String preferredNodeCode = '',
+    String preferredVariantId = 'direct', String preferredCountryCode = '',
+    String preferredCandidateRef = '', Set<String> excludedNodeCodes = const {},
+    String tcpFallbackFromRevision = '', Set<RuntimeTransportFeature> runtimeFeatures = const {},
+    String? coreRelease, bool selectCandidate = true, String selectedCandidateRef = '',
+    bool cacheResult = true, Duration? timeout, Future<void>? cancelled,
+  }) => cached.resolveManagedProfile(hostPlatform: hostPlatform, routeMode: routeMode,
+      timeout: timeout, cancelled: cancelled);
+
+  @override
+  Future<ManagedProfilePayload?> loadCachedManagedProfile(ManagedProfileCacheInputs inputs, {
+    bool preferProven = false, String selectedCandidateRef = '',
+    Set<RuntimeTransportFeature>? runtimeFeatures, String? coreRelease,
+  }) => cached.loadCachedManagedProfile(inputs, preferProven: preferProven,
+      selectedCandidateRef: selectedCandidateRef, runtimeFeatures: runtimeFeatures, coreRelease: coreRelease);
+
+  @override
+  Future<ManagedProfileOfflineState> classifyManagedProfileFailure(ManagedProfileCacheInputs inputs, {
+    bool? networkAvailable, bool? captivePortal,
+  }) async => ManagedProfileOfflineState.apiUnavailable;
+
+  @override
+  Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({
+    required HostPlatform hostPlatform, bool cacheOnly = false, Future<void>? cancelled,
+  }) async {
+    if (cacheOnly) offlineCatalogReads++;
+    throw const RoutingCatalogFailure('catalog_cache_unavailable');
+  }
+
+  @override
+  Future<bool> reportRuntimeStats({
+    required HostPlatform hostPlatform, required String runtimePhase, required bool connected,
+    String errorCode = '', String failureKind = '', String? failureOperation,
+    String selectedNodeCode = '', String routeMode = '', int? durationMs, int? attemptNumber,
+    bool? retryable, String networkClass = '', String carrierMccMnc = '', String carrierName = '',
+    String candidateTransport = '', String candidateRef = '', String candidateVariant = '',
+    String accessNetworkAsn = '', List<Map<String, Object?>> candidateProbes = const [],
+    RuntimeSnapshot? connectivitySnapshot, void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
+  }) async => true;
+}
+
 class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirstClientDataService {
   int subscriptionReads = 0;
 
@@ -770,6 +834,44 @@ PokrovWifiNetworkStatus _foregroundWifi(_Runtime runtime, {String? name = 'Cafe'
     networkContextRef: runtime.candidateContext, networkSelectionKey: runtime.candidateKey, manualStopEpoch: 0);
 
 void main() {
+  test('pending QA preserves fresh profile deadline and primary failure instead of offline catalog fallback', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-qa-profile-failure-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.windows, directoryResolver: () async => directory);
+    addTearDown(observability.flush);
+    final bootstrapper = _QaProfileFailureBootstrapper(directory);
+    const admission = '1234567890abcdef1234567890abcdef';
+    final account = AccountSessionCoordinator(accountActions: null)
+      ..updateSubscriptionInfo(ClientSubscriptionInfo.fromJson({
+        'lane': 'paid', 'access_state': 'paid_unlimited',
+        'first_provider_qa': {'admission_id': admission, 'state': 'pending'},
+      }));
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..phase = RuntimePhase.initialized..coreVersion = '1.2.13';
+    final manager = ConnectionManager(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows), runtimeEngine: runtime,
+      bootstrapper: bootstrapper, accountSessionCoordinator: account,
+      firstSessionCoordinator: FirstSessionCoordinator(store: _FirstLaunchStore()),
+      clientExperienceStore: _ExperienceStore(), connectHintStore: const PokrovFileConnectHintStore(),
+      actionTimeout: const Duration(seconds: 20),
+      authorizeAndroidConnect: () async => true,
+      windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
+      refreshSubscription: () async => true, onNotice: (_, __) {}, observability: observability,
+    );
+    addTearDown(manager.dispose);
+    await manager.refresh();
+    expect(manager.firstProviderQaAdmissionId, admission);
+    await manager.startFirstProviderQa(admission);
+    final terminal = observability.connectionTimelineBreadcrumbs.lastWhere(
+      (entry) => entry.name == 'app.connection.attempt.finished');
+    expect((terminal.errorCode, terminal.failureOperation, terminal.failureKind,
+        bootstrapper.cached.lastProfileTimeout, bootstrapper.offlineCatalogReads),
+      ('API-002', 'managed_profile', 'request_socket', const Duration(seconds: 20), 0));
+    expect(runtime.stagedPayloads, isEmpty);
+    await observability.flush();
+  });
+
   testWidgets('Diagnostics shows current auth progress and allowlisted failure facts', (tester) async {
     final directory = await tester.runAsync(
       () => Directory.systemTemp.createTemp('pokrov-auth-diagnostic-'),
@@ -1489,6 +1591,9 @@ void main() {
   });
 
   test('WFP socket denial of both API origins connects the exact cached ordinary AWG', () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = originalHttpOverrides);
     final originalStorage = FlutterSecureStoragePlatform.instance;
     FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(<String, String>{});
     final directory = await Directory.systemTemp.createTemp('pokrov-offline-awg-');

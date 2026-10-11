@@ -18,6 +18,11 @@ the application crash summary is a separate observation.
 Local routing-catalog validation failures retain the existing `routing_catalog`
 operation in connection diagnostics and runtime reports.
 
+An admitted first-provider QA attempt requires fresh online preparation. Its
+deadline is not shortened by the ordinary cached-profile fallback, and a fresh
+preparation failure is preserved instead of entering offline catalog lookup.
+Ordinary connect and reconnect retain their existing authorized cache fallback.
+
 Ordinary Android and Windows connect/reconnect refresh the authorized managed
 profile before staging, even when a reusable staged path exists. Server-side
 assignment changes therefore do not depend on the repair action or a local
