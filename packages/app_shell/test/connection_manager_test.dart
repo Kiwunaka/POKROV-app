@@ -757,6 +757,58 @@ PokrovWifiNetworkStatus _foregroundWifi(_Runtime runtime, {String? name = 'Cafe'
     networkContextRef: runtime.candidateContext, networkSelectionKey: runtime.candidateKey, manualStopEpoch: 0);
 
 void main() {
+  testWidgets('Diagnostics shows current auth progress and allowlisted failure facts', (tester) async {
+    final directory = await tester.runAsync(
+      () => Directory.systemTemp.createTemp('pokrov-auth-diagnostic-'),
+    );
+    final observability = await tester.runAsync(() => PokrovClientObservability.start(
+      hostPlatform: HostPlatform.windows, directoryResolver: () async => directory!,
+    ));
+    addTearDown(() => directory!.delete(recursive: true));
+    PokrovDiagnosticsReport report() => PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      snapshot: null, statusLabel: 'idle', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false, authRequest: observability!.authRequestDiagnostic,
+    );
+    await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
+      initialReport: report(), onRefresh: () async => report(),
+      onOpenProtection: () {}, onOpenSupport: () {},
+    )));
+    await tester.pump();
+    expect(find.text('Запрос доступа: не наблюдался в этом запуске.'), findsOneWidget);
+
+    observability!.recordAuthRequestStarted();
+    await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));
+    await tester.pumpAndSettle();
+    expect(find.text('Запрос доступа: начат, завершение не наблюдалось.'), findsOneWidget);
+
+    observability.recordAuthRequestFinished(errorCode: 'API-002', failure: const BootstrapFailure(
+      'private exception fixture', operation: '/private-operation',
+      apiFailureKind: 'request_socket', observedHttpStatus: 401, osErrorCode: 10060,
+    ));
+    expect(report().copyWith(checkedAtUtc: DateTime.now().toUtc()).authRequest?.httpStatus, 401);
+    await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));
+    await tester.pumpAndSettle();
+    expect(find.text('Запрос доступа: завершён с ошибкой. API-002 · request_socket · HTTP 401 · IO 10060'),
+        findsOneWidget);
+    expect(find.textContaining('private'), findsNothing);
+
+    final rejected = PokrovAuthRequestDiagnostic.finished(errorCode: 'private unknown code',
+      failure: const BootstrapFailure('private', apiFailureKind: 'private failure',
+        observedHttpStatus: 999, osErrorCode: -1));
+    expect((rejected.errorCode, rejected.apiFailureKind, rejected.httpStatus, rejected.osErrorCode),
+        (null, null, null, null));
+
+    observability.recordAuthRequestStarted();
+    observability.recordAuthRequestFinished();
+    await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));
+    await tester.pumpAndSettle();
+    expect(find.text('Запрос доступа: завершён успешно.'), findsOneWidget);
+    expect(find.textContaining('HTTP 401'), findsNothing);
+    await tester.runAsync(observability.flush);
+  });
+
   testWidgets('production pinned pending QA admission exposes the Diagnostics card without starting', (tester) async {
     const admissionId = '1234567890abcdef1234567890abcdef';
     var httpCalls = 0;

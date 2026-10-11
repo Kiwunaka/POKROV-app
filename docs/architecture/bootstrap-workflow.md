@@ -10,6 +10,12 @@ first-session events. Delayed best-effort telemetry therefore cannot hold the
 subscription/authentication refresh or leave the access label unresolved.
 The existing session refresh, identity and entitlement rules remain unchanged.
 
+The ordinary Diagnostics screen shows the current run's last access request:
+not observed, started without an observed completion, or finished. Failures show
+only the existing allowlisted operational code, API failure kind and HTTP/IO
+numbers. This in-memory summary does not read credentials or private journals;
+the application crash summary is a separate observation.
+
 Ordinary Android and Windows connect/reconnect refresh the authorized managed
 profile before staging, even when a reusable staged path exists. Server-side
 assignment changes therefore do not depend on the repair action or a local

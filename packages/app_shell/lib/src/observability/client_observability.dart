@@ -228,6 +228,9 @@ final class PokrovClientObservability {
   int _lastAndroidSelectedAppCount = -1;
   DiagnosticCrashRecord? _previousCrash;
   DiagnosticCrashRecord? _currentCrash;
+  PokrovAuthRequestDiagnostic? _authRequest;
+
+  PokrovAuthRequestDiagnostic? get authRequestDiagnostic => _authRequest;
 
   /// Closed marker facts only; exception text, stacks and run IDs stay out of
   /// the support preview. At most the previous and current run are retained.
@@ -625,6 +628,7 @@ final class PokrovClientObservability {
   }
 
   void recordAuthRequestStarted() {
+    _authRequest = const PokrovAuthRequestDiagnostic.started();
     _emitCurrent(
       name: 'app.auth.request.started',
       subsystem: 'auth',
@@ -638,6 +642,9 @@ final class PokrovClientObservability {
   }
 
   void recordAuthRequestFinished({String? errorCode, BootstrapFailure? failure}) {
+    _authRequest = PokrovAuthRequestDiagnostic.finished(
+      errorCode: errorCode, failure: failure,
+    );
     _emitCurrent(
       name: 'app.auth.request.finished',
       subsystem: 'auth',

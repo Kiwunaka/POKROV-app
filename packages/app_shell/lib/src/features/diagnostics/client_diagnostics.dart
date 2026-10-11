@@ -11,7 +11,7 @@ import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_support_bundle/support_bundle.dart';
 
 import '../../../app_first_runtime_bootstrap.dart'
-    show SupportBundleTransferFailure, RuntimeStatsDeliveryReceipt;
+    show BootstrapFailure, SupportBundleTransferFailure, RuntimeStatsDeliveryReceipt;
 import '../../observability/release_health_baseline.dart';
 import 'support_mode.dart';
 
@@ -271,6 +271,66 @@ final class PokrovDiagnosticEvidence {
   final PokrovDiagnosticEvidenceState state;
 }
 
+final class PokrovAuthRequestDiagnostic {
+  const PokrovAuthRequestDiagnostic.started()
+      : outcome = ObservabilityOutcome.started,
+        errorCode = null,
+        apiFailureKind = null,
+        httpStatus = null,
+        osErrorCode = null;
+
+  const PokrovAuthRequestDiagnostic._({
+    required this.outcome,
+    this.errorCode,
+    this.apiFailureKind,
+    this.httpStatus,
+    this.osErrorCode,
+  });
+
+  factory PokrovAuthRequestDiagnostic.finished({
+    String? errorCode,
+    BootstrapFailure? failure,
+  }) {
+    final attributes = OperationalAttributePolicy.prepareFailureAttributes(
+      apiFailureKind: failure?.apiFailureKind,
+      httpStatus: failure?.apiFailureKind == null
+          ? failure?.statusCode : failure?.observedHttpStatus,
+      osErrorCode: failure?.osErrorCode,
+    );
+    return PokrovAuthRequestDiagnostic._(
+      outcome: errorCode == null
+          ? ObservabilityOutcome.succeeded : ObservabilityOutcome.failed,
+      errorCode: errorCode != null && KnownOperationalErrorCodes.contains(errorCode)
+          ? errorCode : null,
+      apiFailureKind: attributes['api_failure_kind'] as String?,
+      httpStatus: attributes['http_status'] as int?,
+      osErrorCode: attributes['os_error_code'] as int?,
+    );
+  }
+
+  final ObservabilityOutcome outcome;
+  final String? errorCode;
+  final String? apiFailureKind;
+  final int? httpStatus;
+  final int? osErrorCode;
+}
+
+String _authRequestSummary(PokrovAuthRequestDiagnostic? request) {
+  final state = switch (request?.outcome) {
+    null => 'не наблюдался в этом запуске',
+    ObservabilityOutcome.started => 'начат, завершение не наблюдалось',
+    ObservabilityOutcome.succeeded => 'завершён успешно',
+    _ => 'завершён с ошибкой',
+  };
+  final details = <String>[
+    if (request?.errorCode case final code?) code,
+    if (request?.apiFailureKind case final kind?) kind,
+    if (request?.httpStatus case final status?) 'HTTP $status',
+    if (request?.osErrorCode case final code?) 'IO $code',
+  ];
+  return 'Запрос доступа: $state.${details.isEmpty ? '' : ' ${details.join(' · ')}'}';
+}
+
 final class PokrovDiagnosticsReport {
   PokrovDiagnosticsReport({
     required this.statusLabel,
@@ -284,6 +344,7 @@ final class PokrovDiagnosticsReport {
     this.appCrashDiagnosticsAvailable = false,
     this.previousAppCrash,
     this.currentAppCrash,
+    this.authRequest,
     this.showWindowsLocalDpiRuntime = false,
     this.windowsLocalDpiRuntime,
     required this.encryptedDeliveryAvailable,
@@ -313,6 +374,7 @@ final class PokrovDiagnosticsReport {
   final bool appCrashDiagnosticsAvailable;
   final DiagnosticCrashRecord? previousAppCrash;
   final DiagnosticCrashRecord? currentAppCrash;
+  final PokrovAuthRequestDiagnostic? authRequest;
   final bool showWindowsLocalDpiRuntime;
   final WindowsLocalDpiRuntime? windowsLocalDpiRuntime;
   final bool encryptedDeliveryAvailable;
@@ -342,6 +404,7 @@ final class PokrovDiagnosticsReport {
         appCrashDiagnosticsAvailable: appCrashDiagnosticsAvailable,
         previousAppCrash: previousAppCrash,
         currentAppCrash: currentAppCrash,
+        authRequest: authRequest,
         showWindowsLocalDpiRuntime: showWindowsLocalDpiRuntime,
         windowsLocalDpiRuntime: windowsLocalDpiRuntime,
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
@@ -380,6 +443,7 @@ abstract final class PokrovDiagnosticsPresenter {
     bool appCrashDiagnosticsAvailable = false,
     DiagnosticCrashRecord? previousAppCrash,
     DiagnosticCrashRecord? currentAppCrash,
+    PokrovAuthRequestDiagnostic? authRequest,
     List<DiagnosticEventRecord> candidateProbeEvents = const [],
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
@@ -525,6 +589,7 @@ abstract final class PokrovDiagnosticsPresenter {
       appCrashDiagnosticsAvailable: appCrashDiagnosticsAvailable,
       previousAppCrash: previousAppCrash,
       currentAppCrash: currentAppCrash,
+      authRequest: authRequest,
       showWindowsLocalDpiRuntime: hostPlatform == HostPlatform.windows &&
           routeMode == RouteMode.selectiveServices,
       windowsLocalDpiRuntime: snapshot?.windowsLocalDpiRuntime,
@@ -1310,6 +1375,12 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                                   ? _appCrashSummary('Текущий запуск', _report.currentAppCrash)
                                   : 'Сведения об ошибках приложения недоступны.',
                               key: const ValueKey('diagnostics-current-app-crash'),
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _authRequestSummary(_report.authRequest),
+                              key: const ValueKey('diagnostics-auth-request'),
                               style: theme.textTheme.bodySmall,
                             ),
                             if (_report.previousAppCrash != null) ...[

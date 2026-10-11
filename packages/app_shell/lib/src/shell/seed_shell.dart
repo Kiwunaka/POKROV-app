@@ -2596,6 +2596,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       appCrashDiagnosticsAvailable: widget.observability != null,
       previousAppCrash: widget.observability?.previousCrashDiagnostic,
       currentAppCrash: widget.observability?.currentCrashDiagnostic,
+      authRequest: widget.observability?.authRequestDiagnostic,
       candidateProbeEvents: nativeCandidateEvents ?? const [],
       candidateDiagnosticsReady: nativeCandidateEvents != null ||
           !pokrovAndroidCandidateCollectionAllowed(
