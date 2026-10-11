@@ -272,6 +272,19 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   Future<void> completeAccountOnboarding({required HostPlatform hostPlatform}) async {}
 }
 
+class _CatalogFailureBootstrapper extends _StatsBootstrapper implements AppFirstRoutingCatalogService {
+  @override
+  bool get routingCatalogEnabled => true;
+
+  @override
+  Future<void> discardRoutingCatalog() async {}
+
+  @override
+  Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({
+    required HostPlatform hostPlatform, bool cacheOnly = false, Future<void>? cancelled,
+  }) async => throw const RoutingCatalogFailure('catalog_response_invalid');
+}
+
 class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirstClientDataService {
   int subscriptionReads = 0;
 
@@ -1315,6 +1328,17 @@ void main() {
       }
       expect(businessRuntime.connectCalls, 0);
     }
+
+    final catalog = _CatalogFailureBootstrapper();
+    final catalogRuntime = _Runtime();
+    final catalogManager = _manager(catalogRuntime, catalog);
+    addTearDown(catalogManager.dispose);
+    await catalogManager.connect();
+    final catalogReport = catalog.actualReports.singleWhere((value) => value['runtime_phase'] == 'failed');
+    expect(catalogReport['failure_operation'], 'routing_catalog',
+        reason: 'a local RoutingCatalogFailure keeps its owning operation after the BootstrapFailure wrapper');
+    expect(catalogManager.status.phase, ConnectionPhase.actionRequired);
+    expect(catalogRuntime.connectCalls, 0);
 
     for (final code in ['runtime_clock_unavailable', 'runtime_busy',
       'network_context_unavailable', 'core_identity_connect_unacknowledged',

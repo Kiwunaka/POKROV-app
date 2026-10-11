@@ -15,6 +15,8 @@ not observed, started without an observed completion, or finished. Failures show
 only the existing allowlisted operational code, API failure kind and HTTP/IO
 numbers. This in-memory summary does not read credentials or private journals;
 the application crash summary is a separate observation.
+Local routing-catalog validation failures retain the existing `routing_catalog`
+operation in connection diagnostics and runtime reports.
 
 Ordinary Android and Windows connect/reconnect refresh the authorized managed
 profile before staging, even when a reusable staged path exists. Server-side

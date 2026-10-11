@@ -890,7 +890,7 @@ class ConnectionManager extends ChangeNotifier {
         operation?.startsWith('GET /api/client/profile/managed?') == true) return 'managed_profile';
     return switch (operation) {
       'POST /api/client/smart-access/first-provider-qa/claim' => 'qa_claim',
-      'GET /api/client/routing-catalog' => 'routing_catalog',
+      'GET /api/client/routing-catalog' || 'routing_catalog' => 'routing_catalog',
       'POST /api/client/session/refresh' => 'auth_refresh',
       _ => null,
     };
