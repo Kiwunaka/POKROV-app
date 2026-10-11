@@ -52,6 +52,18 @@ Map<String, Object?> _readyManagedProfile(String revision,
   };
 }
 
+class _PausedProfileCacheClear extends ManagedProfileCache {
+  final clearStarted = Completer<void>();
+  final releaseClear = Completer<void>();
+
+  @override
+  Future<void> clear(String platform) async {
+    await super.clear(platform);
+    clearStarted.complete();
+    await releaseClear.future;
+  }
+}
+
 Object? _qaSorted(Object? value) {
   if (value is Map) return {for (final key in value.keys.cast<String>().toList()..sort()) key: _qaSorted(value[key])};
   if (value is List) return value.map(_qaSorted).toList();
@@ -483,7 +495,20 @@ void main() {
     final route = staged!['route'] as Map;
     final domainRules = (route['rules'] as List).cast<Map>().where((row) => (row['domain'] as List?)?.contains('gemini.google.com') == true).toList();
     expect(domainRules[0]['pokrov_catalog_window']['lease_id'], leaseId);
+    expect(domainRules[0]['network'], 'tcp');
+    expect(domainRules[0]['port'], [443]);
+    expect(domainRules[0]['ip_version'], 4);
     expect(domainRules[1]['outbound'], 'proxy', reason: 'closed QA member retains protected VPN fallback');
+    final domainDnsRules = ((staged!['dns'] as Map)['rules'] as List).cast<Map>()
+        .where((row) => (row['domain'] as List?)?.contains('gemini.google.com') == true).toList();
+    expect(domainDnsRules[0]['query_type'], ['A', 'AAAA', 'HTTPS', 'SVCB'],
+      reason: 'browser address and service-binding queries must reach the owned IPv4 resolver');
+    expect(domainDnsRules[0]['server'], 'pokrov-smart-access-dns-$leaseId');
+    expect(domainDnsRules[0]['pokrov_catalog_window'], domainRules[0]['pokrov_catalog_window']);
+    expect(domainDnsRules[0]['disable_cache'], isTrue);
+    expect(domainDnsRules[0]['rewrite_ttl'], 0);
+    expect(domainDnsRules.last, {'domain': ['gemini.google.com'], 'action': 'reject'},
+      reason: 'the untimed exact-domain rejection survives catalog expiry');
     expect(route['final'], 'direct', reason: 'other traffic retains Direct');
     await manager.readSnapshot();
     final context = await manager.readFirstProviderQaContext();
@@ -512,7 +537,9 @@ void main() {
     expect(nativeCalls, isNot(contains('runtimeEngine.revokeRoutingCatalog')));
     expect(manager.status.phase, ConnectionPhase.connected, reason: 'QA termination closes the member, not ordinary VPN access');
     await manager.disconnect();
-    expect(await manager.readFirstProviderQaContext(), isNull);
+    expect(await manager.readFirstProviderQaContext(),
+      {'control_delivery': 'confirmed', 'control_native_accepted': true},
+      reason: 'disconnect retains only the closed control diagnostic, without live lease or proof bindings');
 
     // Recreate an unconfirmed native Connect with the UI's last staged snapshot.
     final failedProfile = await _qaDigest('failed-bound-profile');
@@ -2191,6 +2218,130 @@ void main() {
     expect(trialInstallId, isNotEmpty);
     expect(savedBindings.map((state) => state['install_id']),
         [trialInstallId, trialInstallId]);
+  });
+
+  test('preserves account when concurrent refresh completes during profile denial',
+      () async {
+    final httpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = httpOverrides);
+    final tempDirectory = await Directory.systemTemp.createTemp(
+      'pokrov-bootstrap-concurrent-refresh-test-',
+    );
+    addTearDown(() async => tempDirectory.delete(recursive: true));
+    const canonicalAccountId = '11111111-1111-4111-8111-111111111111';
+    const installId = 'concurrent-refresh-install';
+    final stateFile = File(
+      '${tempDirectory.path}${Platform.pathSeparator}app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(jsonEncode(<String, Object?>{
+      'schema_version': 1,
+      'install_id': installId,
+      'account_id': canonicalAccountId,
+      'session_token_storage': 'secure',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionPair(
+      hostPlatform: HostPlatform.windows,
+      installId: installId,
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'expired-access', refreshToken: 'refresh-one'),
+    );
+    var starts = 0;
+    var refreshes = 0;
+    final profileBearers = <String?>[];
+    final savedBindings = <Map<String, dynamic>>[];
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final request in server) {
+        final body = await utf8.decoder.bind(request).join();
+        final path = request.uri.path;
+        request.response.headers.contentType = ContentType.json;
+        if (path == '/api/client/session/start-trial') {
+          starts += 1;
+          request.response.statusCode = HttpStatus.badRequest;
+        } else if (path == '/api/client/session/refresh') {
+          refreshes += 1;
+          expect(jsonDecode(body), {'refresh_token': 'refresh-one'});
+          request.response.write(jsonEncode(<String, Object?>{
+            'session': <String, Object?>{
+              'access_token': 'fresh-access',
+              'refresh_token': 'refresh-two',
+              'account_id': '42',
+              'canonical_account_id': canonicalAccountId,
+            },
+          }));
+        } else if (path == '/api/client/route-policy') {
+          request.response.write('{"ok":true}');
+        } else if (path == '/api/client/profile/managed') {
+          profileBearers.add(request.headers.value(HttpHeaders.authorizationHeader));
+          savedBindings.add(
+            jsonDecode(await stateFile.readAsString()) as Map<String, dynamic>,
+          );
+          if (profileBearers.length == 1) {
+            request.response
+              ..statusCode = HttpStatus.unauthorized
+              ..write('{"detail":"expired"}');
+          } else {
+            request.response.write(jsonEncode(_readyManagedProfile('refresh')));
+          }
+        } else if (path == '/api/client/subscription') {
+          if (request.headers.value(HttpHeaders.authorizationHeader) ==
+              'Bearer expired-access') {
+            request.response
+              ..statusCode = HttpStatus.unauthorized
+              ..write('{"detail":"expired"}');
+          } else {
+            expect(request.headers.value(HttpHeaders.authorizationHeader),
+                'Bearer fresh-access');
+            request.response.write('{"lane":"trial"}');
+          }
+        } else {
+          request.response.statusCode = HttpStatus.notFound;
+        }
+        await request.response.close();
+      }
+    }());
+    final cache = _PausedProfileCacheClear();
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => tempDirectory,
+      sessionSecretStore: secrets,
+      managedProfileCache: cache,
+      delayScheduler: (_) async {},
+    );
+    final resolving = bootstrapper.resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    // The profile's identity guard has passed, but its refresh has not read
+    // the latest credentials yet. Complete the concurrent rotation here.
+    await cache.clearStarted.future;
+    try {
+      final subscription = await bootstrapper.fetchClientSubscription(
+        hostPlatform: HostPlatform.windows,
+      );
+      expect(subscription.lane, 'trial');
+      expect(refreshes, 1);
+    } finally {
+      cache.releaseClear.complete();
+    }
+    final payload = await resolving;
+    expect(payload.profileName, 'pokrov-windows-refresh');
+    expect(starts, 0);
+    expect(refreshes, 1);
+    expect(profileBearers, ['Bearer expired-access', 'Bearer fresh-access']);
+    expect(savedBindings.map((state) => state['account_id']),
+        [canonicalAccountId, canonicalAccountId]);
+    expect(savedBindings.map((state) => state['install_id']),
+        [installId, installId]);
+    final cached = await bootstrapper.loadCachedManagedProfile(
+      const ManagedProfileCacheInputs(
+        hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel),
+    );
+    expect(cached?.profileName, payload.profileName);
   });
 
   test('refresh failure never starts a second trial for an existing install',

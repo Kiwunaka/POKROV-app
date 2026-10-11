@@ -150,6 +150,12 @@ meaning. A stale identity or cancelled response cannot clear the current cache.
 After a current 401 clears the cache, the one permitted session refresh uses the
 normal profile budget; a 403 remains fatal and never restores cached authority.
 
+The managed-profile 401 retry clears the expired access token while preserving
+the account and install binding. If another request completes session rotation
+after the identity check, the retry reuses the new stored credentials with that
+same binding. Final identity and cache-generation checks still reject superseded
+work; an existing session never starts a second trial.
+
 Ordinary account and profile failures retain a closed API failure reason and,
 when available, the observed HTTP status and numeric OS error in the existing
 local diagnostic events. These facts are separate from the status used by auth

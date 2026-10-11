@@ -3831,7 +3831,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,

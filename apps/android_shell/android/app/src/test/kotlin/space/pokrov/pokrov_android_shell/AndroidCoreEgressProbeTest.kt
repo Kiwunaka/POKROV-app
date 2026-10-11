@@ -279,7 +279,7 @@ class AndroidCoreEgressProbeTest {
         val routeRule = mapOf("domain" to listOf("service.example"), "network" to "tcp",
             "port" to listOf(443), "ip_version" to 4, "action" to "route",
             "outbound" to tag, "pokrov_catalog_window" to window)
-        val dnsRule = mapOf("domain" to listOf("service.example"), "query_type" to listOf("A"),
+        val dnsRule = mapOf("domain" to listOf("service.example"), "query_type" to listOf("A", "AAAA", "HTTPS", "SVCB"),
             "action" to "route", "server" to dnsTag, "disable_cache" to true,
             "rewrite_ttl" to 0, "pokrov_catalog_window" to window)
         // This is the typed HTTPS shape passed to Core after normalization.
@@ -287,6 +287,9 @@ class AndroidCoreEgressProbeTest {
         val target = AndroidCoreEgressProbe.resolveSmartAccessTarget(
             "direct", outbounds, listOf(routeRule), listOf(dnsRule), dnsServers)
         assertEquals(AndroidCoreEgressProbeTarget(tag, AndroidCoreEgressProbeTargetKind.SMART_ACCESS), target)
+        assertNull("Unsupported DNS types must not acquire SmartAccess authority",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds, listOf(routeRule),
+                listOf(dnsRule + ("query_type" to listOf("A", "AAAA", "HTTPS", "SVCB", "TXT"))), dnsServers))
         val core = ReachableCore()
         assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.resultFromCore(core, target!!))
         assertEquals("Probe the bound service, never Direct", tag, core.lastTag)

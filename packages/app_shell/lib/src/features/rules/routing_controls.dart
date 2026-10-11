@@ -248,7 +248,6 @@ class _DnsAndLanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final adBlockEnabled = preferences.dnsPreset == PokrovDnsPreset.adguard;
     final hasSmartDnsPurpose = preferences.purposeRoutes.any(
       (purpose) => purpose.supportsExternalSmartDns,
     );
@@ -267,21 +266,6 @@ class _DnsAndLanCard extends StatelessWidget {
       ],
       child: Column(
         children: [
-          _RoutingToggleRow(
-            key: const ValueKey('rules-ad-block-toggle'),
-            title: 'Блокировать рекламу',
-            subtitle:
-                'AdGuard DNS. Некоторые объявления внутри приложений могут остаться.',
-            value: adBlockEnabled,
-            onChanged: (value) => onChanged(
-              preferences.copyWith(
-                dnsPreset:
-                    value ? PokrovDnsPreset.adguard : PokrovDnsPreset.automatic,
-                externalSmartDnsEnabled: false,
-              ),
-            ),
-          ),
-          const _SettingsRowDivider(),
           _SettingsRow(
             key: const ValueKey('rules-dns-picker'),
             icon: Icons.dns_outlined,

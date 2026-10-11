@@ -869,11 +869,11 @@ staged. They include:
   native staging; a direct-only profile cannot be reported as an applied
   AI/Games VPN policy;
 - explicit domain, IP, and subnet overrides to VPN or direct;
-- Automatic, Xbox DNS, Comss DNS, Cloudflare, Google, AdGuard, and validated custom DoH. The
-  `Блокировать рекламу` toggle selects AdGuard's filtering DoH endpoint as the
-  final resolver through the active VPN outbound. This blocks requests to
-  domains present in that DNS service's filtering policy; it does not promise
-  removal of first-party, baked-in, or otherwise non-DNS in-app advertising;
+- Automatic, Xbox DNS, Comss DNS, Cloudflare, Google, AdGuard, and validated custom DoH.
+  AdGuard remains selectable in the DNS picker. Rules has no separate ad-blocking
+  switch: DNS selection does not enable or disable POKROV's shared ad-blocking
+  policy. AdGuard filters domains on its own list; it does not promise removal
+  of first-party, baked-in, or otherwise non-DNS in-app advertising;
 - a non-Automatic resolver may opt into the collapsed
   `DNS напрямую · лаборатория` path. The default remains VPN. The opt-in
   changes only that HTTPS DoH server's detour to the managed profile's direct

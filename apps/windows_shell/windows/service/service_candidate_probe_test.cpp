@@ -238,7 +238,7 @@ void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDL
     "lease_id":"00000000000000000000000000000000","lease_group":["00000000000000000000000000000000"]}}]},
  "dns":{"servers":[{"tag":"dns-vpn","detour":"vpn"},{"tag":"pokrov-smart-access-dns-00000000000000000000000000000000","address":"https://resolver.example/dns-query","detour":"direct"}],
   "rules":[{"domain":["api.pokrov.space"],"action":"route","server":"dns-vpn","disable_cache":true,"rewrite_ttl":0},
-   {"domain":["service.example"],"query_type":["A"],"action":"route","server":"pokrov-smart-access-dns-00000000000000000000000000000000","disable_cache":true,"rewrite_ttl":0,
+   {"domain":["service.example"],"query_type":["A","AAAA","HTTPS","SVCB"],"action":"route","server":"pokrov-smart-access-dns-00000000000000000000000000000000","disable_cache":true,"rewrite_ttl":0,
     "pokrov_catalog_window":{"issued_at":"2026-10-05T10:00:00Z","expires_at":"2099-01-01T00:00:00Z","service_id":"owned-service",
      "lease_id":"00000000000000000000000000000000","lease_group":["00000000000000000000000000000000"]}}]}})";
   Expect(call(Command::kStageProfile, profile).status == Status::kOk, "bound Smart fixture could not stage");

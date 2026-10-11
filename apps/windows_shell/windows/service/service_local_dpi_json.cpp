@@ -345,7 +345,7 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
       HString cache_name;
       boolean disabled = false;
       if (Fields(dns_rule.Get(), 7) && Strings(Array(dns_rule.Get(), key).Get()) == names &&
-          Strings(Array(dns_rule.Get(), L"query_type").Get()) == std::optional<std::vector<std::string>>{{"A"}} &&
+          Strings(Array(dns_rule.Get(), L"query_type").Get()) == std::optional<std::vector<std::string>>{{"A", "AAAA", "HTTPS", "SVCB"}} &&
           Fields(dns_window.Get(), 5) && Strings(Array(dns_window.Get(), L"lease_group").Get()) == group &&
           String(dns_window.Get(), L"lease_id") == lease && String(dns_window.Get(), L"service_id") == String(window.Get(), L"service_id") &&
           String(dns_window.Get(), L"issued_at") == String(window.Get(), L"issued_at") &&

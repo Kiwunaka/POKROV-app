@@ -901,13 +901,20 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
        "issued_at":"2026-10-05T10:00:00Z","expires_at":"2099-01-01T00:00:00Z","service_id":"owned-service",
        "lease_id":"00000000000000000000000000000000","lease_group":["00000000000000000000000000000000"]}}]},
     "dns":{"servers":[{"tag":"pokrov-smart-access-dns-00000000000000000000000000000000","address":"https://resolver.example/dns-query","detour":"direct"}],
-     "rules":[{"domain":["service.example"],"query_type":["A"],"action":"route","server":"pokrov-smart-access-dns-00000000000000000000000000000000",
+     "rules":[{"domain":["service.example"],"query_type":["A","AAAA","HTTPS","SVCB"],"action":"route","server":"pokrov-smart-access-dns-00000000000000000000000000000000",
       "disable_cache":true,"rewrite_ttl":0,"pokrov_catalog_window":{
        "issued_at":"2026-10-05T10:00:00Z","expires_at":"2099-01-01T00:00:00Z","service_id":"owned-service",
        "lease_id":"00000000000000000000000000000000","lease_group":["00000000000000000000000000000000"]}}]}})";
   const auto smart_target = ReadWindowsSmartAccessProbeTarget(smart_profile);
   Expect(smart_target && *smart_target == "pokrov-smart-access-00000000000000000000000000000000",
          "bound service graph did not select its Smart anchor");
+  auto unsupported_dns = smart_profile;
+  const std::string query_types = "\"query_type\":[\"A\",\"AAAA\",\"HTTPS\",\"SVCB\"]";
+  unsupported_dns.replace(unsupported_dns.find(query_types), query_types.size(),
+      "\"query_type\":[\"A\",\"AAAA\",\"HTTPS\",\"SVCB\",\"TXT\"]");
+  const auto unsupported_dns_target = ReadWindowsSmartAccessProbeTarget(unsupported_dns);
+  Expect(unsupported_dns_target && unsupported_dns_target->empty(),
+         "unsupported DNS types acquired SmartAccess authority");
   auto smart_core = std::make_unique<FakeCoreRuntime>();
   auto* selected_core = smart_core.get();
   selected_core->smart_probe_version = 1;
