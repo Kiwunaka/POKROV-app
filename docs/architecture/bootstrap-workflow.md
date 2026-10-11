@@ -3000,3 +3000,9 @@ The Windows observer recognizes Core’s own TUN by its fixed requested GUID as
 well as its existing alias/LUID. This covers Wintun’s arrival notification before
 the POKROV alias is assigned. Foreign and unknown interfaces still invalidate
 the bound network context; failed lookups never establish ownership.
+
+First-provider QA diagnostics retain the current control delivery step and fixed
+guard/failure categories after the live owner ends. HTTP/IO fields use the
+existing operational allowlist; exception text and request material are omitted.
+The summary clears on the next connection attempt. Delivery acceptance alone
+does not establish native probe or feature acceptance.

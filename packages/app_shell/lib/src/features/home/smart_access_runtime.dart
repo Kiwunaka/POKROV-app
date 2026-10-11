@@ -32,7 +32,10 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     final qa = _activeFirstProviderQa;
     final engine = _runtimeEngine;
     final binding = _connectionCoordinator.activeSmartAccessLeases;
-    if (qa == null || qa.profileDigest == null || engine is! RuntimeSmartAccessBackgroundControl || binding == null) return null;
+    if (qa == null || qa.profileDigest == null || engine is! RuntimeSmartAccessBackgroundControl || binding == null) {
+      final diagnostic = _firstProviderQaControlDiagnostic;
+      return diagnostic == null ? null : Map.unmodifiable(diagnostic);
+    }
     final leaseId = qa.permit.grant.lease['lease_id']! as String;
     bool current() => !_disposed && !_runtimeBusy && identical(_activeFirstProviderQa?.permit, qa.permit) &&
       _firstProviderQaControlConfirmed && qa.requestId != null && engine is RuntimeConnectCancellation &&
@@ -78,6 +81,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     if (!identical(_activeFirstProviderQa?.permit, qa.permit)) return null;
     final proof = _firstProviderQaProofClosed ? null : _firstProviderQaReadiness;
     return Map.unmodifiable({
+      ...?_firstProviderQaControlDiagnostic,
       'permit_id': qa.permit.permitId, 'service_id': 'gemini', 'candidate_ref': qa.permit.payload['candidate_ref'],
       'lease_id': leaseId, 'runtime_scope_sha256': qa.permit.grant.runtimeScopeSha256,
       'profile_digest': qa.profileDigest, 'generation': qa.generation, 'profile_revision': qa.profileRevision,
@@ -246,6 +250,10 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       return;
     }
     if (qa != null && (digest != qa.profileDigest || !_connectionCoordinator.ownsOperation(qa.generation))) {
+      if (_firstProviderQaControlDiagnostic != null && _startedFirstProviderQaAdmissionId == qa.permit.permitId &&
+          !const {'failed', 'terminated', 'confirmed', 'skipped'}.contains(_firstProviderQaControlDiagnostic?['control_delivery'])) {
+        _firstProviderQaControlDiagnostic = const {'control_delivery': 'skipped', 'control_reason': 'scope_changed'};
+      }
       _activeFirstProviderQa = null;
     }
     if (_disposed || _runtimeBusy || _smartAccessRefreshInFlight ||
@@ -447,10 +455,26 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     final engine = _runtimeEngine;
     final service = _bootstrapper;
     final binding = _connectionCoordinator.activeSmartAccessLeases;
-    if (_disposed || _runtimeBusy || _smartAccessRefreshInFlight || engine is! RuntimeSmartAccessControl ||
+    void setDiagnostic(Map<String, Object?> value) {
+      // Late delivery from an ended owner cannot repopulate a successor's summary.
+      if (!_disposed && _firstProviderQaControlDiagnostic != null &&
+          _startedFirstProviderQaAdmissionId == qa.permit.permitId &&
+          _connectionCoordinator.ownsOperation(qa.generation)) {
+        _firstProviderQaControlDiagnostic = Map.unmodifiable(value);
+      }
+    }
+    if (_smartAccessRefreshInFlight) return;
+    if (_disposed || _runtimeBusy || engine is! RuntimeSmartAccessControl ||
         service is! AppFirstRuntimeBootstrapper || binding == null || binding.profileDigest != digest ||
         qa.profileDigest != digest || binding.leases.length != 1 ||
-        binding.leases.single.leaseId != qa.permit.grant.lease['lease_id']) return;
+        binding.leases.single.leaseId != qa.permit.grant.lease['lease_id']) {
+      final blocked = _disposed ? 'disposed' : _runtimeBusy ? 'runtime_busy'
+          : engine is! RuntimeSmartAccessControl || service is! AppFirstRuntimeBootstrapper ? 'control_unsupported'
+          : binding == null ? 'binding_absent'
+          : binding.profileDigest != digest || qa.profileDigest != digest ? 'profile_mismatch' : 'lease_mismatch';
+      setDiagnostic({'control_delivery': 'skipped', 'control_reason': blocked});
+      return;
+    }
     _smartAccessRefreshInFlight = true;
     final elapsed = Stopwatch()..start();
     bool current() => !_disposed && identical(_activeFirstProviderQa?.permit, qa.permit) &&
@@ -465,32 +489,65 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
         {qa.permit.grant.lease['lease_id']! as String: SmartAccessLeaseRevocation.terminate}, current, remaining);
     }
     try {
-      if (!current()) return;
+      if (!current()) {
+        setDiagnostic(const {'control_delivery': 'skipped', 'control_reason': 'scope_changed'});
+        return;
+      }
       if (qa.profileRevision != _managedProfileRevision ||
           (_activeCandidateRef ?? _candidateRef) != qa.transportCandidateRef ||
           _runtimeSnapshot?.coreModuleSha256 != qa.permit.payload['core_module_sha256'] ||
           !DateTime.now().toUtc().isBefore(qa.permit.expiresAt)) {
+        setDiagnostic(const {'control_delivery': 'terminated', 'control_reason': 'scope_changed'});
         await closeMember();
         return;
       }
+      setDiagnostic(const {'control_delivery': 'fetching'});
       final control = await service.fetchFirstProviderQaControl(permit: qa.permit, profileDigest: digest,
         operationIsCurrent: current, remainingBudget: remaining(),
         cancelled: _connectionCoordinator.whenOperationChanges(qa.generation));
-      if (!current()) return;
+      if (!current()) {
+        setDiagnostic(const {'control_delivery': 'failed', 'control_reason': 'scope_changed'});
+        return;
+      }
       if (control.control.action == 'terminate') {
+        setDiagnostic(const {'control_delivery': 'terminated'});
         await closeMember();
       } else if (engine is RuntimeBoundSmartAccessControl) {
         final config = service.firstProviderQaRuntimeConfig(qa.permit, digest, control.runtimeCapability!);
-        if (!current()) return;
+        if (!current()) {
+          setDiagnostic(const {'control_delivery': 'failed', 'control_reason': 'scope_changed'});
+          return;
+        }
+        setDiagnostic(const {'control_delivery': 'configuring'});
         final configured = await (engine as RuntimeBoundSmartAccessControl).configureBoundSmartAccessRuntimeControl(
           requestId: qa.requestId!, profileDigest: digest, configJson: config).timeout(remaining());
-        if (current() && configured) _firstProviderQaControlConfirmed = true;
+        if (current() && configured) {
+          _firstProviderQaControlConfirmed = true;
+          setDiagnostic(const {'control_delivery': 'confirmed', 'control_native_accepted': true});
+        } else {
+          setDiagnostic({'control_delivery': 'failed', 'control_native_accepted': configured,
+            'control_reason': current() ? 'native_unconfirmed' : 'scope_changed'});
+        }
+      } else {
+        setDiagnostic(const {'control_delivery': 'skipped', 'control_reason': 'bound_control_unsupported'});
       }
     } on RoutingCatalogFailure catch (error) {
+      const controlCodes = {'smart_access_qa_control_invalid', 'smart_access_qa_runtime_invalid',
+        'smart_access_control_binding_mismatch', 'smart_access_control_not_current',
+        'smart_access_control_request_invalid', 'smart_access_verification_failed'};
+      setDiagnostic({'control_delivery': 'failed',
+        'control_reason': controlCodes.contains(error.code) ? error.code : _connectionPlatformFailureCode(error) ?? 'unclassified'});
       if (current() && error.code == 'smart_access_qa_superseded') await closeMember();
       // Unknown delivery cannot extend a grant. Its native deadline remains active.
     } on BootstrapFailure catch (error) {
+      setDiagnostic({'control_delivery': 'failed',
+        ...OperationalAttributePolicy.prepareFailureAttributes(apiFailureKind: error.apiFailureKind,
+          httpStatus: error.observedHttpStatus ?? error.statusCode, osErrorCode: error.osErrorCode)});
       if (current() && (error.statusCode == 401 || error.statusCode == 403)) await closeMember();
+    } on Object catch (error) {
+      setDiagnostic({'control_delivery': 'failed',
+        'control_reason': _connectionPlatformFailureCode(error) ?? (error is TimeoutException ? 'timeout' : 'unclassified')});
+      rethrow;
     } finally {
       _smartAccessRefreshInFlight = false;
     }

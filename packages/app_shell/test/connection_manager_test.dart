@@ -956,6 +956,10 @@ void main() {
         bootstrapper.cached.lastProfileTimeout, bootstrapper.offlineCatalogReads),
       ('API-002', 'managed_profile', 'request_socket', const Duration(seconds: 20), 0));
     expect(runtime.stagedPayloads, isEmpty);
+    final controlDiagnostic = await manager.readFirstProviderQaContext();
+    expect(controlDiagnostic,
+      {'control_delivery': 'skipped', 'control_reason': 'connection_unavailable'});
+    expect(() => controlDiagnostic!['untrusted'] = 'value', throwsUnsupportedError);
     await observability.flush();
   });
 

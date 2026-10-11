@@ -302,6 +302,7 @@ class ConnectionManager extends ChangeNotifier {
   bool _firstProviderQaProofClosed = false;
   bool? _firstProviderQaNativeGuardClosed;
   bool _firstProviderQaControlConfirmed = false;
+  Map<String, Object?>? _firstProviderQaControlDiagnostic;
   bool _smartAccessRefreshInFlight = false;
   int? _smartAccessRenewalEnrollmentGeneration;
   String? _smartAccessRenewalEnrollmentProfile;
@@ -493,7 +494,10 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<void> connect() {
-    if (_pendingFirstProviderQaAdmissionId == null) _activeFirstProviderQa = null;
+    if (_pendingFirstProviderQaAdmissionId == null) {
+      _activeFirstProviderQa = null;
+      _firstProviderQaControlDiagnostic = null;
+    }
     _clearAutomaticAndroidStop();
     return _replaceCommand(() {
       _smartAccessRouteProfile = null;
@@ -565,6 +569,7 @@ class ConnectionManager extends ChangeNotifier {
     _firstProviderQaProofClosed = false;
     _firstProviderQaNativeGuardClosed = null;
     _firstProviderQaControlConfirmed = false;
+    _firstProviderQaControlDiagnostic = const {'control_delivery': 'not_started'};
     try {
       await connect();
       final qa = _activeFirstProviderQa;
@@ -575,6 +580,14 @@ class ConnectionManager extends ChangeNotifier {
           _activeFirstProviderQa = (permit: qa.permit, generation: qa.generation, profileRevision: qa.profileRevision,
             transportCandidateRef: qa.transportCandidateRef, profileDigest: qa.profileDigest, requestId: requestId);
           await _refreshSmartAccessLeases();
+        } else {
+          if (_firstProviderQaControlDiagnostic != null && _startedFirstProviderQaAdmissionId == admissionId) {
+            _firstProviderQaControlDiagnostic = const {'control_delivery': 'skipped', 'control_reason': 'owner_unavailable'};
+          }
+        }
+      } else {
+        if (_firstProviderQaControlDiagnostic != null && _startedFirstProviderQaAdmissionId == admissionId) {
+          _firstProviderQaControlDiagnostic = const {'control_delivery': 'skipped', 'control_reason': 'connection_unavailable'};
         }
       }
     } finally {
