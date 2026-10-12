@@ -1,5 +1,10 @@
 # Windows acceptance
 
+Private Windows candidate `1.5.0+4150` adds the bounded ChatGPT QA path and keeps
+an available candidate from the other TCP/UDP family within the three-candidate
+recovery limit. It reuses the exact Core and Cronet artifacts from 4148.
+Runtime acceptance of these changes is pending.
+
 Private Windows candidate `1.5.0+4149` shows only the confirmed active protocol
 and direct or bridge path in Diagnostics. It reuses the exact Core `1.2.14` and
 Cronet artifacts from 4148. Physical verification of this display is pending.
