@@ -4,6 +4,26 @@ Public version remains `1.4.5`; 1.5.0 candidates are private. Older Huawei
 acceptance is recorded in `cutover-readiness.md`. The 4061 and 4055 results
 below are historical; LDPlayer is not used for VPN acceptance.
 
+On 2026-10-12, the Huawei main profile running private ARM64 1.5.0+4144
+(Core 1.2.14) connected to the ordinary US VLESS REALITY candidate over Beeline
+LTE in full-device mode. Normal Diagnostics confirmed tunnel, routes, DNS and
+protected egress. Chrome passed the owned HTTPS 204 and complete 65536-byte
+checks; its independent country check returned US. Gemini's fresh public app
+page instead showed “Gemini isn’t currently supported in your country” with no
+prompt field, so no query was sent and Gemini acceptance failed. The country
+disagreement is unexplained; this result does not cover SmartDNS or a US bridge.
+
+The same candidate's ordinary US AWG 3.1 attempt failed on both Beeline LTE and
+saved Wi-Fi with `CONN-008`, `probe_budget_expired` and preparation reason
+`candidate_selection_exhausted`. US Hysteria 2 reached candidate stage `http_64k`
+but then failed at the Core step with `CONN-008`; no more specific cause was shown.
+The admitted CH Mini RAW route initially confirmed all four native checks, then
+automatically reconnected twice and entered TrafficBlocked with protected egress
+requiring attention. Its owned browser HTTPS check and ingress continuity were
+not accepted. Stop removed the tunnel, routes and VPN service; Wi-Fi was returned
+off with mobile data on, and DevTools forwards were removed. Auto and Russia-direct
+were selected through the UI, but the final preference readback was not completed.
+
 The x86_64 direct 4055 APK was installed in a fresh LDPlayer instance. It
 started, created a trial, and received Android VPN permission. DE and CH both
 failed the protected-egress check, after which the app removed the system VPN.
