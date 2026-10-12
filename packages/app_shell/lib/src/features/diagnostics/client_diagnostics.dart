@@ -331,10 +331,11 @@ String _authRequestSummary(PokrovAuthRequestDiagnostic? request) {
   return 'Запрос доступа: $state.${details.isEmpty ? '' : ' ${details.join(' · ')}'}';
 }
 
-enum PokrovConnectionFailureSource { nativeAcknowledgement, platformException }
+enum PokrovConnectionFailureSource { nativeAcknowledgement, platformException, runtimeRecovery }
 
 final class PokrovConnectionFailureDiagnostic {
-  const PokrovConnectionFailureDiagnostic._(this.source, this.nativeFailure);
+  const PokrovConnectionFailureDiagnostic._(this.source, this.nativeFailure,
+      {this.recoveryFailureKind});
 
   static PokrovConnectionFailureDiagnostic? fromError(Object error) {
     if (error is RuntimeBoundConnectFailure) {
@@ -348,8 +349,16 @@ final class PokrovConnectionFailureDiagnostic {
     return null;
   }
 
+  static PokrovConnectionFailureDiagnostic? fromRecovery(RuntimeSnapshot? snapshot) {
+    final kind = snapshot?.lastFailureKind;
+    if (!DiagnosticEventRecord.runtimeFailureKinds.contains(kind)) return null;
+    return PokrovConnectionFailureDiagnostic._(
+      PokrovConnectionFailureSource.runtimeRecovery, null, recoveryFailureKind: kind);
+  }
+
   final PokrovConnectionFailureSource source;
   final RuntimeBoundConnectFailure? nativeFailure;
+  final String? recoveryFailureKind;
 }
 
 final class PokrovDiagnosticsReport {
@@ -1594,9 +1603,14 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(failure.source == PokrovConnectionFailureSource.nativeAcknowledgement
-                        ? 'Источник отказа: подтверждённый ответ нативного сервиса'
-                        : 'Источник отказа: PlatformException; нативное подтверждение не получено'),
+                    Text(switch (failure.source) {
+                      PokrovConnectionFailureSource.nativeAcknowledgement =>
+                        'Источник отказа: подтверждённый ответ нативного сервиса',
+                      PokrovConnectionFailureSource.platformException =>
+                        'Источник отказа: PlatformException; нативное подтверждение не получено',
+                      PokrovConnectionFailureSource.runtimeRecovery =>
+                        'Причина последнего восстановления: ${failure.recoveryFailureKind}',
+                    }),
                     if (failure.nativeFailure case final native?) ...[
                       Text('Нативное состояние: ${native.nativePhase}'),
                       Text('Совпадение модуля: ${native.moduleMatches}; профиля: ${native.profileMatches}'),

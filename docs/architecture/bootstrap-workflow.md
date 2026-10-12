@@ -27,6 +27,12 @@ Diagnostics also distinguishes the current attempt's matched native negative
 receipt from a PlatformException. Native receipts expose only the already
 validated phase and module/profile/cleanup booleans; other failures do not gain
 native fields. A new attempt clears this in-memory summary.
+Android automatic candidate recovery retains the triggering snapshot's existing
+closed failure kind in that same summary before handoff replaces the snapshot.
+Diagnostics labels it as the cause of the last recovery, independently of current
+health; a later recovery replaces it, while an explicit connection, Stop or a
+profile-scope change clears it.
+Unknown native text is omitted. This source change still requires device acceptance.
 
 Ordinary Android and Windows connect/reconnect refresh the authorized managed
 profile before staging, even when a reusable staged path exists. Server-side

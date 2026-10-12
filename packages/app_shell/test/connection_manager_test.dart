@@ -406,6 +406,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool declineNextHandoff = false;
   bool failFirstActivation = false;
   String activationFailureKind = 'core_egress_timeout';
+  String periodicFailureKind = 'core_egress_probe_failed';
   RuntimeProfileSource? profileSource;
   String? profileDigest;
   DateTime? proofObservedAt;
@@ -595,7 +596,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
             ? activationFailureKind : restoredHandoffGuard ? 'protected_handoff_failed' : phase == RuntimePhase.running &&
                 warpEgressFailure &&
                 !pendingFirstEgress
-            ? 'core_egress_probe_failed'
+            ? periodicFailureKind
             : null,
       );
 
@@ -3162,27 +3163,64 @@ void main() {
     });
   });
 
-  test('repeated periodic failure recovers when the UI reads the failed snapshot first', () async {
-    final runtime = _Runtime()..supportsCandidates = true;
-    final bootstrapper = _CachedBootstrapper();
-    final manager = _manager(runtime, bootstrapper);
-    addTearDown(manager.dispose);
-    await manager.connect();
-    runtime.warpEgressFailure = true;
-    await runtime.handoffStarted.future.timeout(const Duration(seconds: 3));
-    while (manager.busy) { await Future<void>.delayed(Duration.zero); }
-    expect(runtime.handoffProfiles, ['de:cached_1']);
-    expect(manager.status.phase, ConnectionPhase.connected);
+  testWidgets('repeated periodic failure retains its trigger in Diagnostics after recovery', (tester) async {
+    late _Runtime runtime;
+    late ConnectionManager manager;
+    await tester.runAsync(() async {
+      runtime = _Runtime()..supportsCandidates = true;
+      manager = _manager(runtime, _CachedBootstrapper());
+      await manager.connect();
+      runtime.warpEgressFailure = true;
+      await runtime.handoffStarted.future.timeout(const Duration(seconds: 3));
+      while (manager.busy) { await Future<void>.delayed(Duration.zero); }
+      expect(runtime.handoffProfiles, ['de:cached_1']);
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(manager.snapshot?.lastFailureKind, isNull);
+      expect(manager.connectionFailureDiagnostic?.recoveryFailureKind, 'core_egress_probe_failed');
 
-    runtime.warpEgressFailure = true;
-    expect((await manager.readSnapshot()).hasCoreEgressProbeFailure, isTrue);
-    final deadline = DateTime.now().add(const Duration(seconds: 3));
-    while ((runtime.handoffCalls < 2 || manager.busy) && DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-    }
-    expect(runtime.handoffProfiles, ['de:cached_1', 'de:cached_2']);
-    expect(manager.status.phase, ConnectionPhase.connected);
-    expect(runtime.calls, isNot(contains('disconnect')));
+      runtime.periodicFailureKind = 'core_egress_dns_failed';
+      runtime.warpEgressFailure = true;
+      expect((await manager.readSnapshot()).hasCoreEgressProbeFailure, isTrue);
+      final deadline = DateTime.now().add(const Duration(seconds: 3));
+      while ((runtime.handoffCalls < 2 || manager.busy) && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(runtime.handoffProfiles, ['de:cached_1', 'de:cached_2']);
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(runtime.calls, isNot(contains('disconnect')));
+      expect(manager.snapshot?.lastFailureKind, isNull);
+      expect(manager.connectionFailureDiagnostic?.recoveryFailureKind, 'core_egress_dns_failed');
+    });
+    addTearDown(manager.dispose);
+    PokrovDiagnosticsReport report() => PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+      snapshot: manager.snapshot, statusLabel: 'connected', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false, connectionFailure: manager.connectionFailureDiagnostic,
+    );
+    expect(report().copyWith(checkedAtUtc: DateTime.now().toUtc()).connectionFailure?.recoveryFailureKind,
+      'core_egress_dns_failed');
+    expect(PokrovConnectionFailureDiagnostic.fromRecovery(const RuntimeSnapshot(
+      hostPlatform: HostPlatform.android, lane: RuntimeLane.mobileArtifact,
+      phase: RuntimePhase.running, supportsLiveConnect: true,
+      artifactDirectory: null, coreBinaryPath: null, helperBinaryPath: null, stagedConfigPath: null,
+      canInitialize: false, canConnect: false, message: 'fixture',
+      lastFailureKind: 'private-upstream-error')), isNull);
+    await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
+      initialReport: report(), onRefresh: () async => report(), onOpenProtection: () {}, onOpenSupport: () {},
+    )));
+    final diagnosticsScroll = find.descendant(of: find.byKey(const ValueKey('diagnostics-scroll')),
+      matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('diagnostics-connect-failure')), 200,
+      scrollable: diagnosticsScroll);
+    expect(find.text('Причина последнего восстановления: core_egress_dns_failed'), findsOneWidget);
+    expect(find.textContaining('Причина последнего восстановления: core_egress_probe_failed'), findsNothing);
+    await tester.runAsync(() async {
+      await manager.disconnect();
+      expect(manager.connectionFailureDiagnostic, isNull);
+      await manager.connect();
+      expect(manager.connectionFailureDiagnostic, isNull);
+    });
   });
 
   for (final interrupt in ['cancel', 'deny']) {

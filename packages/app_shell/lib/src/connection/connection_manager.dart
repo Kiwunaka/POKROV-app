@@ -654,7 +654,12 @@ class ConnectionManager extends ChangeNotifier {
   Future<void> _replaceCommand(Future<void> Function() action,
       {bool automatic = false}) {
     final number = ++_commandNumber;
-    if (!automatic) _cancelAutomaticFailover();
+    if (!automatic) {
+      _cancelAutomaticFailover();
+      if (_connectionFailureDiagnostic?.source == PokrovConnectionFailureSource.runtimeRecovery) {
+        _connectionFailureDiagnostic = null;
+      }
+    }
     final previous = _commandTail;
     // Cleanup belongs to the old native invocation. Later commands may replace
     // the queued command, but cannot cancel or skip its confirmed stop.
@@ -3580,6 +3585,9 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   void _invalidateQuickSettingsProfile() {
+    if (_connectionFailureDiagnostic?.source == PokrovConnectionFailureSource.runtimeRecovery) {
+      _connectionFailureDiagnostic = null;
+    }
     _connectionCoordinator.invalidateTransportRoutingIntent();
     _managedProfileLifecycle.invalidate();
   }
@@ -4959,6 +4967,10 @@ class ConnectionManager extends ChangeNotifier {
     _update(() {
       _activePhase = ConnectionPhase.recovering;
       _runtimeSnapshot = failed;
+      if (_appContext.hostPlatform == HostPlatform.android) {
+        _connectionFailureDiagnostic = confirmedFailure
+            ? PokrovConnectionFailureDiagnostic.fromRecovery(failed) : null;
+      }
       _runtimeHeadline = 'Восстанавливаем защищённое подключение…';
     });
     String? terminalCode;
