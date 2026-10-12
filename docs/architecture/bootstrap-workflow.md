@@ -195,6 +195,11 @@ country Auto and recovery. Server priority orders candidates within each tier;
 the last successful route and UDP failure memory apply inside that tier. The
 finite cache prefers a bridge when reserving another node. Explicit pins, WARP
 and cached-authority guards still apply; the selected country names the exit.
+Recovery keeps at most three probes. If its first three eligible candidates all
+use TCP or all use UDP, the third slot takes the first eligible other network
+family. If none exists and all three share protocol/transport/protection, it
+takes the first different transport; the first two retain their existing priority.
+Bridge settlement and IP-family barriers cover only this actual shortlist.
 This source change requires a new client candidate and device acceptance.
 
 After a healthy ordinary connect, the existing finite cache refresh fetches the

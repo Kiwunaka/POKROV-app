@@ -478,6 +478,36 @@ void main() {
     expect(starts, hasLength(3));
   });
 
+  test('recovery reaches a working UDP reserve after different TCP transports fail within three attempts', () async {
+    final failed = _candidate(0, bridge: 'old');
+    final bridges = [for (var index = 1; index <= 2; index++) _candidate(index, bridge: 'bridge-$index')];
+    final xhttp = TransportCandidate(candidateRef: 'de:xhttp', profileRef: 'xhttp', nodeCode: 'de',
+      countryCode: 'DE', protocol: 'vless', transport: 'xhttp', protection: 'tls',
+      priority: 3, network: 'tcp', flow: '', minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: const {});
+    final reserve = _candidate(4, udp: true);
+    final started = <TransportCandidate>[];
+    var active = 0;
+    final selected = await SmartConnectCandidateSelector().select(
+      catalog: _catalog([failed, ...bridges, xhttp, reserve]), network: 'network-a',
+      platform: HostPlatform.windows, preferredCountryCode: 'DE',
+      recoveryCandidateRef: failed.candidateRef, excludedCandidateRefs: {failed.candidateRef},
+      cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async {
+        started.add(candidate);
+        active++;
+        await Future<void>.delayed(Duration.zero);
+        active--;
+        return candidate == reserve ? _success(candidate)
+            : const SmartConnectCandidateProbeResult.failure('connect_failed');
+      });
+    expect(selected.profileName, reserve.candidateRef);
+    expect(started, hasLength(3), reason: 'protocol diversity must fit the existing recovery limit');
+    expect(started.take(2).map((candidate) => candidate.bridgeId), everyElement(isNotNull));
+    expect(started, isNot(contains(failed)), reason: 'confirmed failure is not probed again');
+    expect(active, 0, reason: 'the bridge probes settle before recovery returns');
+  });
+
   test('probe timeout cancels native work before selection completes', () async {
     final selector = SmartConnectCandidateSelector();
     var settled = false;

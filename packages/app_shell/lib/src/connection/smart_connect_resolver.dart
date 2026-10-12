@@ -157,6 +157,26 @@ class SmartConnectCandidateSelector {
         candidates.insert(index, candidates.removeAt(siblingIndex));
       }
     }
+    // Reserve a different network family before spending every recovery slot
+    // on TCP or UDP. Otherwise retain diversity between protocol variants.
+    if (recoveryCandidateRef.isNotEmpty && candidates.length > 3) {
+      final networks = candidates.take(3).map((candidate) => candidate.network).toSet();
+      var reserve = networks.length == 1 ? candidates.skip(3).where((candidate) =>
+          !networks.contains(candidate.network)).firstOrNull : null;
+      if (reserve == null) {
+        final transports = candidates.take(3).map((candidate) =>
+            (candidate.protocol, candidate.transport, candidate.protection)).toSet();
+        if (transports.length == 1) {
+          reserve = candidates.skip(3).where((candidate) =>
+              !transports.contains((candidate.protocol, candidate.transport, candidate.protection))).firstOrNull;
+        }
+      }
+      if (reserve != null) candidates[2] = reserve;
+      candidates.removeRange(3, candidates.length);
+      final refs = candidates.map((candidate) => candidate.candidateRef).toSet();
+      ipv6Siblings.removeWhere((ref, sibling) =>
+          !refs.contains(ref) || !refs.contains(sibling.candidateRef));
+    }
     final familyStarted = <String, Completer<void>>{
       for (final sibling in ipv6Siblings.values)
         sibling.candidateRef: Completer<void>(),
