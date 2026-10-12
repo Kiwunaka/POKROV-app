@@ -200,6 +200,7 @@ final class PokrovDiagnosticTimelineAttempt {
     this.probeFailureKind,
     this.http64kFailure,
     this.http64kObservation,
+    this.probeError,
     this.failureKind,
     this.failureOperation,
   }) : entries = List<PokrovDiagnosticTimelineEntry>.unmodifiable(entries);
@@ -209,6 +210,7 @@ final class PokrovDiagnosticTimelineAttempt {
   final String? probeFailureKind;
   final String? http64kFailure;
   final Map<String, Object>? http64kObservation;
+  final Map<String, Object>? probeError;
   final String? failureKind;
   final String? failureOperation;
   final bool isReconnect;
@@ -687,6 +689,7 @@ abstract final class PokrovDiagnosticsPresenter {
               ? currentProbe?.failureKind : null,
           http64kFailure: currentProbe?.http64kFailure,
           http64kObservation: currentProbe?.http64kObservation,
+          probeError: currentProbe?.probeError,
           failureKind: connectionClosedGuardCodes.contains(terminal?.failureKind) ? terminal?.failureKind : null,
           failureOperation: terminal?.failureOperation,
         ),
@@ -1982,6 +1985,24 @@ class _TimelineAttemptView extends StatelessWidget {
             key: ValueKey('diagnostics-http64k-observation-${attempt.generation}'),
             style: theme.textTheme.bodySmall,
           ),
+        if (attempt.probeError case final detail?)
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Проверка соединения: ${const {
+              'dial': 'не удалось открыть соединение', 'tls': 'не удалось завершить защищённое соединение',
+              'write': 'не удалось отправить запрос', 'read_headers': 'не удалось получить ответ сервера',
+              'read_body': 'не удалось дочитать ответ сервера', 'validate_response': 'сервер вернул неожиданный ответ',
+            }[detail['operation']]}. Повторите подключение или выберите другой сервер.', style: theme.textTheme.bodySmall),
+            ExpansionTile(
+              title: const Text('Подробности проверки'), tilePadding: EdgeInsets.zero,
+              children: [Text('${detail['target'] == 'owned_api' ? 'Основная' : 'Резервная'} проверка · '
+                '${detail['request']} · ${detail['operation']} · ${detail['cause']}\n'
+                'Отмена: ${detail['cancel_state']} · HTTP: ${detail['status'] ?? 'нет ответа'} · '
+                'Ошибка ОС: ${detail['os_error_code'] ?? 'не получена'}\n'
+                'Начало этапа: ${detail['stage_started_ms']} мс · операция: ${detail['elapsed_ms']} мс · '
+                'вся проверка: ${detail['duration_ms']} мс',
+                key: ValueKey('diagnostics-probe-error-${attempt.generation}'), style: theme.textTheme.bodySmall)],
+            ),
+          ]),
         const SizedBox(height: 10),
         for (var index = 0; index < attempt.entries.length; index++)
           _TimelineEntryRow(

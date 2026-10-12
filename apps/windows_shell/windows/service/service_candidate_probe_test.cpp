@@ -43,7 +43,7 @@ class ProbeCore final : public CoreRuntime {
     // Model native Close/join: cancellation cannot settle before teardown.
     ::Sleep(15);
     --active;
-    return cancelled ? "{\"success\":false,\"failure_kind\":\"cancelled\",\"duration_ms\":15}"
+    return cancelled ? R"({"success":false,"failure_kind":"cancelled","duration_ms":15,"stage":"http_204","stage_started_ms":5,"probe_error":{"operation":"read_headers","cause":"closed","cancel_state":"cancelled","target":"owned_reserve","request":"egress_204","elapsed_ms":10,"stage_started_ms":5,"duration_ms":15}})"
                      : "{\"success\":true,\"failure_kind\":\"\",\"duration_ms\":15}";
   }
   std::atomic<int> active{0}, entered{0}, invalid{0};
@@ -368,10 +368,19 @@ int main() {
     workers[0].join();
     Expect(observed->active == 3 && results[0].body.find("cancelled") != std::string::npos,
            "candidate cancellation did not join or cancelled siblings");
+    Expect(results[0].body.find("\"stage\":\"http_204\"") != std::string::npos &&
+               results[0].body.find("\"probe_error\":") != std::string::npos &&
+               results[0].body.find("\"elapsed_ms\":10") != std::string::npos,
+           "candidate cancellation discarded the completed Core error and timing");
     current = false;
     for (std::size_t i = 1; i < workers.size(); ++i) {
       workers[i].join();
-      Expect(results[i].body.find("network_changed") != std::string::npos, "late probe proof survived network change");
+      Expect(results[i].body.find("\"failure_kind\":\"network_changed\"") != std::string::npos,
+             "late probe proof survived network change");
+      Expect(results[i].body.find("\"stage\":\"http_204\"") != std::string::npos &&
+                 results[i].body.find("\"probe_error\":") != std::string::npos &&
+                 results[i].body.find("\"duration_ms\":15") != std::string::npos,
+             "network change discarded the completed Core diagnostic");
     }
     current = true;
     observed->release = true;

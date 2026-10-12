@@ -17,8 +17,12 @@ class AndroidCandidateProbeJobsTest {
             assertNotNull(jobs.cancel("reply_pending"))
             var publishedCancellation = false
             var published: Map<String, Any>? = null
+            val probeError = mapOf("operation" to "read_headers", "cause" to "closed", "cancel_state" to "cancelled",
+                "target" to "owned_reserve", "request" to "egress_204", "elapsed_ms" to 100L,
+                "stage_started_ms" to 11_900L, "duration_ms" to 12_000L)
             val nativeDiagnostic = AndroidCandidateProbeDiagnostic.fromNativeFields(
                 "proxy_dial", 7L, 12_000L,
+                probeError = probeError,
             )
             jobs.publish("reply_pending") {
                 publishedCancellation = it.get()
@@ -29,7 +33,11 @@ class AndroidCandidateProbeJobsTest {
             assertEquals(false, published!!["success"])
             assertEquals("cancelled", published!!["failure_kind"])
             assertEquals(12_034L, published!!["duration_ms"])
-            assertEquals(setOf("success", "failure_kind", "duration_ms", "stage"), published!!.keys)
+            assertEquals(probeError, published!!["probe_error"])
+            assertEquals(setOf("success", "failure_kind", "duration_ms", "stage", "probe_error"), published!!.keys)
+            assertFalse(AndroidCandidateProbeDiagnostic.fromNativeFields(
+                "http_204", 7L, 12_000L, probeError = probeError + ("raw_error" to "sensitive-host")
+            ).cancelledResponse(12_034L).containsKey("probe_error"))
             assertFalse(AndroidCandidateProbeDiagnostic.fromNativeFields(
                 "not-an-allowed-phase", 7L, 12_000L,
             ).cancelledResponse(12_034L).containsKey("stage"))

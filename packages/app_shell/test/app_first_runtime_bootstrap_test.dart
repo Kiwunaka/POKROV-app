@@ -865,10 +865,14 @@ void main() {
         (null, null, null));
     expect(receipts.last.runtimePhase, RuntimePhase.initialized.name);
     gateNextSessionRead = true;
+    const probeError = {'operation': 'read_headers', 'cause': 'closed', 'cancel_state': 'cancelled',
+      'target': 'owned_reserve', 'request': 'egress_204', 'elapsed_ms': 100,
+      'stage_started_ms': 800, 'duration_ms': 900};
     final probe = <String, Object?>{
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
       'stage': 'probe', 'connected': false, 'failure_kind': 'timeout',
       'duration_ms': 900, 'unrecognized_content': 'must-not-be-delivered',
+      'probe_error': probeError,
     };
     final report = bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe],
@@ -903,6 +907,7 @@ void main() {
     expect(received[0]['candidate_probes'], [{
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
       'stage': 'probe', 'connected': false, 'duration_ms': 900, 'failure_kind': 'timeout',
+      'probe_error': probeError,
     }]);
     expect(jsonEncode(received), isNot(contains('must-not-be-delivered')));
     final outbox = File('${directory.path}/runtime-stats-outbox-windows.json');

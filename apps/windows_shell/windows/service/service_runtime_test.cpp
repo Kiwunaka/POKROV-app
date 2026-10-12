@@ -964,6 +964,18 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   Expect(!ReadWindowsSmartAccessProbeTarget(mixed), "normal selective VPN proof lost precedence to Smart");
   Expect(ReadWindowsSmartAccessProbeTarget(mixed, true) == smart_target,
          "explicit QA did not select the service behind the valid mixed VPN boundary");
+  const std::string single_api_domain = "\"domain\":[\"api.pokrov.space\"]";
+  const std::string paired_api_domains = "\"domain\":[\"api.pokrov.space\",\"app.pokrov.space\"]";
+  for (std::size_t offset = 0; (offset = mixed.find(single_api_domain, offset)) != std::string::npos;) {
+    mixed.replace(offset, single_api_domain.size(), paired_api_domains);
+    offset += paired_api_domains.size();
+  }
+  // The selective Dart producer protects both API origins in its matching
+  // TCP/443 and DNS rules. Ordinary VPN proof must still run before QA proof.
+  Expect(!ReadWindowsSmartAccessProbeTarget(mixed),
+         "current paired API origins lost ordinary protected VPN verification");
+  Expect(ReadWindowsSmartAccessProbeTarget(mixed, true) == smart_target,
+         "current paired API origins rejected the explicit QA service target");
   auto qa_core = std::make_unique<FakeCoreRuntime>();
   auto* qa_native = qa_core.get();
   qa_native->smart_probe_version = 1;
@@ -1015,6 +1027,31 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
          repeated_stale.body == stale_qa.body && qa_native->smart_probe_calls == 3 &&
          Contains(qa.Snapshot(), "core_egress_validated=1"), "a stale captured QA owner received an ACK or revived its probe");
   qa.Disconnect();
+  const auto invalid_scope = [&](std::string candidate) {
+    const auto normal = ReadWindowsSmartAccessProbeTarget(candidate);
+    const auto explicit_qa = ReadWindowsSmartAccessProbeTarget(candidate, true);
+    return normal && normal->empty() && explicit_qa && explicit_qa->empty();
+  };
+  for (const auto* domains : {
+      "\"domain\":[\"api.pokrov.space\",\"app.pokrov.space\",\"other.example\"]",
+      "\"domain\":[\"api.pokrov.space\",\"app.pokrov.space\",\"api.pokrov.space\"]",
+      "\"domain_suffix\":[\"api.pokrov.space\",\"app.pokrov.space\"]",
+      "\"domain\":[\"app.pokrov.space\"]"}) {
+    auto invalid = mixed;
+    for (std::size_t offset = 0; (offset = invalid.find(paired_api_domains, offset)) != std::string::npos;) {
+      invalid.replace(offset, paired_api_domains.size(), domains);
+      offset += std::string(domains).size();
+    }
+    Expect(invalid_scope(invalid), "expanded, duplicate, suffix or incomplete API scope became proof");
+  }
+  auto mismatched_dns = mixed;
+  mismatched_dns.replace(mismatched_dns.rfind(paired_api_domains), paired_api_domains.size(), single_api_domain);
+  Expect(invalid_scope(mismatched_dns), "different TCP and DNS API scopes became proof");
+  auto direct_dns = mixed;
+  const std::string protected_dns = "\"tag\":\"dns-vpn\",\"detour\":\"vpn\"";
+  direct_dns.replace(direct_dns.find(protected_dns), protected_dns.size(),
+      "\"tag\":\"dns-vpn\",\"detour\":\"direct\"");
+  Expect(invalid_scope(direct_dns), "Direct API DNS bypassed the protected VPN boundary");
   mixed.replace(mixed.find("\"port\":[443]"), std::string("\"port\":[443]").size(), "\"port\":[80]");
   const auto invalid_boundary = ReadWindowsSmartAccessProbeTarget(mixed);
   const auto invalid_qa_boundary = ReadWindowsSmartAccessProbeTarget(mixed, true);

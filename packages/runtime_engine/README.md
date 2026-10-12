@@ -45,3 +45,14 @@ and DNS references while preserving explicit Direct rules. Registration keeps
 its direct detour; the data endpoint omits it only for a bare Direct outbound,
 which sing-box 1.14 cannot use as a detour. Configured Direct options are retained.
 This materializer does not add WARP to automatic selection.
+
+## Candidate failure details
+
+The optional closed `probe_error` retains Core's attempted operation, cause,
+logical owned target/request, observed HTTP status or OS error number, and
+stage/operation/total timing. Android and Windows host cancellation and network replacement,
+the selector's probe budget and Diagnostics details preserve that observation
+without changing the terminal result. The ordinary D8 outbox keeps all candidate
+outcomes and only the latest failure detail within its existing 8 KiB record limit;
+local events retain each detail. Missing detail
+means no observation; raw exceptions, destinations and response content are rejected.

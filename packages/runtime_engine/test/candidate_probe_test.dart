@@ -170,6 +170,7 @@ void main() {
     Object? nativeStage;
     Object? nativeHttp64kFailure;
     Object? nativeHttp64kObservation;
+    Object? nativeProbeError;
     var nativeFailureKind = 'probe_failed';
     messenger.setMockMethodCallHandler(channel, (call) async {
       expect(call.method, 'runtimeEngine.probeCandidate');
@@ -180,6 +181,7 @@ void main() {
         if (nativeStage != null) 'stage': nativeStage,
         if (nativeHttp64kFailure != null) 'http_64k_failure': nativeHttp64kFailure,
         if (nativeHttp64kObservation != null) 'http_64k_observation': nativeHttp64kObservation,
+        if (nativeProbeError != null) 'probe_error': nativeProbeError,
       });
     });
     final runtime = MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.windows);
@@ -220,6 +222,14 @@ void main() {
     nativeFailureKind = 'timeout';
     nativeHttp64kFailure = 'body_short';
     expect((await detailedProbe()).http64kObservation, isNull);
+    nativeFailureKind = 'cancelled';
+    nativeStage = 'http_204';
+    nativeProbeError = {'operation': 'read_headers', 'cause': 'closed', 'cancel_state': 'cancelled',
+      'target': 'owned_reserve', 'request': 'egress_204', 'elapsed_ms': 77,
+      'stage_started_ms': 700, 'duration_ms': 777};
+    expect((await detailedProbe()).probeError, nativeProbeError);
+    nativeProbeError = {...nativeProbeError as Map, 'raw_error': 'sensitive-host'};
+    expect((await detailedProbe()).probeError, isNull);
   });
 
   test('candidate bridge preserves cellular carrier and Core data stall', () async {

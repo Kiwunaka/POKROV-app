@@ -2579,7 +2579,7 @@ class ConnectionManager extends ChangeNotifier {
                       probeStage: checked.probeStage)
                   : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration,
                       probeStage: checked.probeStage, http64kFailure: checked.http64kFailure,
-                      http64kObservation: checked.http64kObservation);
+                      http64kObservation: checked.http64kObservation, probeError: checked.probeError);
             },
           );
           selectedCandidate = true;
@@ -2654,7 +2654,7 @@ class ConnectionManager extends ChangeNotifier {
       _observability?.recordCandidateProbe(
           failureKind: result.failureKind, duration: result.duration,
           probeStage: result.probeStage, http64kFailure: result.http64kFailure,
-          http64kObservation: result.http64kObservation);
+          http64kObservation: result.http64kObservation, probeError: result.probeError);
     } on Object {
       // Diagnostic validation must not turn a working candidate into a failed connect.
     }
@@ -2671,6 +2671,8 @@ class ConnectionManager extends ChangeNotifier {
       'connected': result.profile != null,
       'failure_kind': result.failureKind,
       'duration_ms': result.duration.inMilliseconds,
+      if (RuntimeCandidateProbeResult.probeErrorFromWire(result.probeError) case final detail?)
+        'probe_error': detail,
     });
   }
 
@@ -2696,7 +2698,7 @@ class ConnectionManager extends ChangeNotifier {
       return stopped
           ? RuntimeCandidateProbeResult(success: false,
               failureKind: 'cancelled', duration: receipt.duration,
-              probeStage: receipt.probeStage)
+              probeStage: receipt.probeStage, probeError: receipt.probeError)
           : receipt;
     } finally {
       settled = true;
@@ -2799,7 +2801,7 @@ class ConnectionManager extends ChangeNotifier {
                         probeStage: checked.probeStage)
                     : SmartConnectCandidateProbeResult.failure(checked.failureKind, duration: checked.duration,
                         probeStage: checked.probeStage, http64kFailure: checked.http64kFailure,
-                        http64kObservation: checked.http64kObservation);
+                        http64kObservation: checked.http64kObservation, probeError: checked.probeError);
               },
             );
             found = true;

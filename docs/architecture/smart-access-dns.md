@@ -15,6 +15,15 @@ domain rejection, disabled DNS cache and TTL zero retain their existing roles.
 The finite first-provider QA permit remains nonrenewable. A native A/TLS probe
 does not prove a browser feature request.
 
+Windows recognizes the selective producer's exact `api.pokrov.space` /
+`app.pokrov.space` pair in matching TCP/443 and VPN DNS rules. Ordinary connect
+keeps the protected VPN verifier; explicit QA selects the leased service only
+after that boundary passes. The previously supported single API rule remains
+valid, while extra, duplicate, suffix, mismatched DNS and Direct DNS scopes fail
+closed. The native regression failed with the paired producer input before the
+parser fix and passed afterwards; this does not identify the exact branch of a
+historical device failure or establish browser functionality.
+
 Core observes a bypass only for the compiled window's own domain matcher.
 Walking past another domain's window in the same lease keeps readiness open;
 an actual bypass of the matching domain's rule still closes its guard. The

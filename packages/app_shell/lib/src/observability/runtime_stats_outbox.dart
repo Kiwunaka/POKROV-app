@@ -110,6 +110,7 @@ final class _RuntimeStatsRecord {
       'candidate_variant',
       'stage',
       'probe_stage',
+      'probe_error',
       'connected',
       'duration_ms',
       'failure_kind'
@@ -120,8 +121,9 @@ final class _RuntimeStatsRecord {
             probes.any((probe) =>
                 probe is! Map ||
                 probe.keys.any((key) => !probeFields.contains(key)) ||
-                probe.values.any((value) =>
-                    value is! String && value is! int && value is! bool)))) {
+                probe.entries.any((entry) => entry.key == 'probe_error'
+                    ? RuntimeCandidateProbeResult.probeErrorFromWire(entry.value) == null
+                    : entry.value is! String && entry.value is! int && entry.value is! bool)))) {
       throw const FormatException('runtime_stats_probes_invalid');
     }
     final bodyJson = jsonEncode(body);

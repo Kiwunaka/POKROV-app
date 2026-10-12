@@ -46,5 +46,9 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
     bool first_provider_qa = false);
 // Purpose check only; Core validates the complete worker config before admission.
 bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config);
+// Override only cancellation status; retain the trusted Core's completed stages.
+// Invalid JSON has no diagnostic to preserve.
+std::string CancelWindowsCandidateProbeResult(const std::string& encoded,
+    bool network_changed);
 }  // namespace pokrov::service
 #endif

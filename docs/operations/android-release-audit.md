@@ -23,6 +23,13 @@ candidate stage `http_204`; this does not prove receipt of an HTTP 204 response.
 No usable VPN was established. Final checks found no tunnel, VPN service or
 tunnel routes; Auto, Russia-direct, Wi-Fi off and mobile data on were restored.
 
+During the subsequent bounded RU-ingress canary, one CH Mini RAW attempt on
+4146 reached native Connected with all four checks confirmed. The server owner
+cancelled the case after a strict TLS failure and rolled back; no browser check
+was run, so ingress continuity was not accepted. Normal Stop and baseline
+restoration completed at 08:50:02 UTC: Auto, Russia-direct, Wi-Fi off, mobile data
+on, and no tunnel, tunnel routes, VPN service or Chrome diagnostic forwards.
+
 On 2026-10-12, the in-place 4144→4145 update preserved the package UID, main-profile
 data inode and secondary-profile state. One ordinary CH Mini RAW connection on
 Beeline LTE in full-device mode passed tunnel, routes, DNS and protected-egress

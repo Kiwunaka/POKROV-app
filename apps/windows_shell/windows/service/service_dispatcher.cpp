@@ -761,11 +761,17 @@ RuntimeResult RuntimeDispatcher::ProbeCandidate(const Frame& frame, HANDLE stop_
     return ::GetTickCount64() >= deadline ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
   };
   const auto result = core->ProbeCandidate(*request, network->bind_interface, interrupted);
-  if (!candidate_current_(network->network.revision)) return failed("network_changed");
-  if (operation->cancelled) return failed("cancelled");
+  const bool network_changed = !candidate_current_(network->network.revision);
   if (result.empty() || result.size() > kMaxControlBodySize ||
       std::any_of(result.begin(), result.end(), [](unsigned char c) { return c < 32 || c > 126; })) {
-    return failed("unavailable");
+    return failed(network_changed ? "network_changed" : operation->cancelled ? "cancelled" : "unavailable");
+  }
+  if (network_changed || operation->cancelled) {
+    // Core has joined its IO. Retain its stage/cause/timing while rejecting
+    // late success under the current host cancellation or network ownership.
+    const auto cancelled = CancelWindowsCandidateProbeResult(result, network_changed);
+    return cancelled.empty() ? failed(network_changed ? "network_changed" : "cancelled")
+                             : RuntimeResult{Status::kOk, cancelled};
   }
   return {Status::kOk, result};
 }

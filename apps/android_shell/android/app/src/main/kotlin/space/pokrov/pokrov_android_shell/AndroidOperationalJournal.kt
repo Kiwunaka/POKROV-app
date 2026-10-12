@@ -178,12 +178,14 @@ internal data class AndroidCandidateProbeDiagnostic(
     val parseDurationMs: Long? = null,
     val createDurationMs: Long? = null,
     val certificateDurationMs: Long? = null,
+    val probeError: Map<String, Any>? = null,
 ) {
     fun cancelledResponse(elapsedMs: Long): Map<String, Any> = buildMap {
         put("success", false)
         put("failure_kind", "cancelled")
         put("duration_ms", elapsedMs)
         phase?.let { put("stage", it.wireValue) }
+        probeError?.let { put("probe_error", it) }
     }
 
     init {
@@ -201,7 +203,7 @@ internal data class AndroidCandidateProbeDiagnostic(
     companion object {
         fun fromNativeFields(stage: Any?, stageStartedMs: Any?, durationMs: Any?,
             parseDurationMs: Any? = null, createDurationMs: Any? = null,
-            certificateDurationMs: Any? = null): AndroidCandidateProbeDiagnostic {
+            certificateDurationMs: Any? = null, probeError: Any? = null): AndroidCandidateProbeDiagnostic {
             fun millis(value: Any?): Long? = when (value) {
                 is Int -> value.toLong()
                 is Long -> value
@@ -224,7 +226,32 @@ internal data class AndroidCandidateProbeDiagnostic(
                 parseDurationMs = if (validSetup) parse else null,
                 createDurationMs = if (validSetup) create else null,
                 certificateDurationMs = if (validSetup) certificate else null,
+                probeError = safeProbeError(probeError),
             )
+        }
+
+        private fun safeProbeError(value: Any?): Map<String, Any>? {
+            val fields = value as? Map<*, *> ?: return null
+            val enums = mapOf(
+                "operation" to setOf("dial", "tls", "write", "read_headers", "read_body", "validate_response"),
+                "cause" to setOf("io", "timeout", "cancelled", "eof", "unexpected_eof", "closed", "dns", "tls_certificate", "invalid_response"),
+                "cancel_state" to setOf("active", "deadline", "cancelled"),
+                "target" to setOf("owned_api", "owned_reserve"), "request" to setOf("egress_204", "egress_64k"),
+            )
+            val timing = setOf("elapsed_ms", "stage_started_ms", "duration_ms")
+            val required = enums.keys + timing
+            if (!fields.keys.containsAll(required) || fields.keys.any { it !in required && it !in setOf("status", "os_error_code") } ||
+                enums.any { (key, allowed) -> fields[key] !in allowed }) return null
+            fun number(key: String): Long? = when (val number = fields[key]) {
+                is Int -> number.toLong()
+                is Long -> number
+                else -> null
+            }
+            if (timing.any { number(it) !in 0L..86_400_000L } ||
+                number("elapsed_ms")!! > number("duration_ms")!! || number("stage_started_ms")!! > number("duration_ms")!! ||
+                fields.containsKey("status") && number("status") !in 100L..599L ||
+                fields.containsKey("os_error_code") && number("os_error_code") !in 1L..2147483647L) return null
+            return fields.entries.associate { (key, field) -> key as String to field as Any }
         }
     }
 }

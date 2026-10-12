@@ -249,6 +249,26 @@ bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config) {
       String(worker.Get(), L"capability").rfind("saqa1.", 0) == 0;
 }
 
+std::string CancelWindowsCandidateProbeResult(const std::string& encoded,
+    bool network_changed) {
+  JsonApartment apartment;
+  if (!apartment.Ready()) return "";
+  const auto result = ParseObject(encoded);
+  const auto cancelled = ParseObject(network_changed
+      ? R"({"success":false,"failure_kind":"network_changed"})"
+      : R"({"success":false,"failure_kind":"cancelled"})");
+  ComPtr<JsonMap> fields;
+  if (!result || !cancelled || FAILED(result->QueryInterface(IID_PPV_ARGS(fields.GetAddressOf())))) return "";
+  for (const auto* field : {L"success", L"failure_kind"}) {
+    HString name;
+    ComPtr<IJsonValue> value;
+    boolean replaced = false;
+    if (!name.Set(field) || FAILED(cancelled->GetNamedValue(name.value, value.GetAddressOf())) ||
+        FAILED(fields->Insert(name.value, value.Get(), &replaced))) return "";
+  }
+  return Encode(result.Get());
+}
+
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& encoded,
     bool first_provider_qa) {
   JsonApartment apartment;
@@ -273,13 +293,16 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
   auto owned = [](IJsonObject* rule) {
     for (const auto* field : {L"domain", L"domain_suffix"}) {
       const auto values = Strings(Array(rule, field).Get());
-      if (values && std::find(values->begin(), values->end(), "api.pokrov.space") != values->end()) return true;
+      if (values && std::any_of(values->begin(), values->end(), [](const auto& value) {
+            return value == "api.pokrov.space" || value == "app.pokrov.space";
+          })) return true;
     }
     return false;
   };
   auto exact_owned = [](IJsonObject* rule) {
-    return Strings(Array(rule, L"domain").Get()) ==
-        std::optional<std::vector<std::string>>{{"api.pokrov.space"}};
+    const auto domains = Strings(Array(rule, L"domain").Get());
+    return domains == std::optional<std::vector<std::string>>{{"api.pokrov.space"}} ||
+        domains == std::optional<std::vector<std::string>>{{"api.pokrov.space", "app.pokrov.space"}};
   };
   std::vector<ComPtr<IJsonObject>> owned_routes, owned_dns;
   std::copy_if(routes.begin(), routes.end(), std::back_inserter(owned_routes), [&](const auto& rule) { return owned(rule.Get()); });
@@ -302,7 +325,8 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
     if (!(Fields(rr.Get(), 5) && exact_owned(rr.Get()) && String(rr.Get(), L"network") == "tcp" &&
         SingleNumber(rr.Get(), L"port", 443) && String(rr.Get(), L"action") == "route" &&
         tag != final_tag && protected_proxy &&
-        Fields(dr.Get(), 5) && exact_owned(dr.Get()) && String(dr.Get(), L"action") == "route" &&
+        Fields(dr.Get(), 5) && Strings(Array(dr.Get(), L"domain").Get()) ==
+            Strings(Array(rr.Get(), L"domain").Get()) && String(dr.Get(), L"action") == "route" &&
         cache_name.Set(L"disable_cache") && SUCCEEDED(dr->GetNamedBoolean(cache_name.value, &disabled)) && disabled &&
         Number(dr.Get(), L"rewrite_ttl", 0) && resolver && String(resolver.Get(), L"detour") == tag)) return std::string{};
     if (!first_provider_qa) return std::nullopt;

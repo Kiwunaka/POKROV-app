@@ -65,6 +65,7 @@ class RuntimeCandidateProbeResult {
     this.probeStage,
     this.http64kFailure,
     this.http64kObservation,
+    this.probeError,
   });
   final bool success;
   final String failureKind;
@@ -72,6 +73,26 @@ class RuntimeCandidateProbeResult {
   final String? probeStage;
   final String? http64kFailure;
   final Map<String, Object>? http64kObservation;
+  final Map<String, Object>? probeError;
+
+  static Map<String, Object>? probeErrorFromWire(Object? value) {
+    const required = {'operation', 'cause', 'cancel_state', 'target', 'request',
+      'elapsed_ms', 'stage_started_ms', 'duration_ms'};
+    if (value is! Map || !value.keys.toSet().containsAll(required) ||
+        value.keys.any((key) => !required.contains(key) && key != 'status' && key != 'os_error_code') ||
+        !const {'dial', 'tls', 'write', 'read_headers', 'read_body', 'validate_response'}.contains(value['operation']) ||
+        !const {'io', 'timeout', 'cancelled', 'eof', 'unexpected_eof', 'closed', 'dns', 'tls_certificate', 'invalid_response'}.contains(value['cause']) ||
+        !const {'active', 'deadline', 'cancelled'}.contains(value['cancel_state']) ||
+        !const {'owned_api', 'owned_reserve'}.contains(value['target']) ||
+        !const {'egress_204', 'egress_64k'}.contains(value['request']) ||
+        const ['elapsed_ms', 'stage_started_ms', 'duration_ms'].any((key) =>
+          value[key] is! int || (value[key] as int) < 0 || (value[key] as int) > 86400000) ||
+        (value['stage_started_ms'] as int) > (value['duration_ms'] as int) ||
+        (value['elapsed_ms'] as int) > (value['duration_ms'] as int) ||
+        value.containsKey('status') && (value['status'] is! int || (value['status'] as int) < 100 || (value['status'] as int) > 599) ||
+        value.containsKey('os_error_code') && (value['os_error_code'] is! int || (value['os_error_code'] as int) < 1 || (value['os_error_code'] as int) > 2147483647)) return null;
+    return Map<String, Object>.unmodifiable(value.cast<String, Object>());
+  }
 
   static Map<String, Object>? http64kObservationFromWire(Object? value) {
     if (value is! Map || value.length != 4 ||
@@ -237,6 +258,7 @@ mixin _CandidateProbeChannel
         success: value['success'] as bool,
         failureKind: value['failure_kind'] as String,
         duration: Duration(milliseconds: value['duration_ms'] as int),
+        probeError: value['success'] == false ? RuntimeCandidateProbeResult.probeErrorFromWire(value['probe_error']) : null,
         probeStage: RuntimeCandidateProbeResult.probeStages.contains(value['stage'])
             ? value['stage'] as String : null,
         http64kFailure: value['failure_kind'] == 'probe_failed' && value['stage'] == 'http_64k' &&

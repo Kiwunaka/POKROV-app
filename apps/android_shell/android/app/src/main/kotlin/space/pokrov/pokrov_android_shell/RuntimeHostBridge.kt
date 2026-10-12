@@ -1720,6 +1720,9 @@ class RuntimeHostBridge(
                         nativeResult.opt("parse_duration_ms"),
                         nativeResult.opt("create_duration_ms"),
                         nativeResult.opt("certificate_duration_ms"),
+                        nativeResult.optJSONObject("probe_error")?.let { detail ->
+                            detail.keys().asSequence().associateWith { key -> detail.opt(key) }
+                        },
                     )
                     AndroidOperationalJournal.record(
                         AndroidOperationalEvent.CANDIDATE_PROBE,
@@ -1734,7 +1737,8 @@ class RuntimeHostBridge(
                     if (hostTaskScope.isActive()) {
                         val published = when {
                             publicationCancelled.get() -> nativeDiagnostic.cancelledResponse(elapsed)
-                            context.read() != expected -> failure("network_changed", elapsed)
+                            context.read() != expected -> nativeDiagnostic.cancelledResponse(elapsed) +
+                                ("failure_kind" to "network_changed")
                             else -> response
                         }
                         result.success(published)

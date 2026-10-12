@@ -433,6 +433,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   final probeStages = <String, String>{};
   final probeHTTP64KFailures = <String, String>{};
   final probeHTTP64KObservations = <String, Map<String, Object>>{};
+  final probeErrors = <String, Map<String, Object>>{};
   final probeFailureKinds = <String, String>{};
 
   @override
@@ -489,7 +490,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         failureKind: success ? '' : probeFailureKinds[payload.profileName] ?? 'cancelled',
         duration: probeDuration, probeStage: probeStages[payload.profileName],
         http64kFailure: probeHTTP64KFailures[payload.profileName],
-        http64kObservation: probeHTTP64KObservations[payload.profileName]);
+        http64kObservation: probeHTTP64KObservations[payload.profileName], probeError: probeErrors[payload.profileName]);
   }
   @override
   Future<void> cancelCandidateProbe(String probeId) async {
@@ -2356,6 +2357,9 @@ void main() {
   });
 
   test('exhausted native candidates retain the early start and terminal Core error', () async {
+    const probeError = {'operation': 'read_body', 'cause': 'unexpected_eof', 'cancel_state': 'active',
+      'target': 'owned_reserve', 'request': 'egress_64k', 'elapsed_ms': 100,
+      'stage_started_ms': 700, 'duration_ms': 800};
     final directory = await Directory.systemTemp.createTemp('pokrov-candidate-failure-');
     addTearDown(() => directory.delete(recursive: true));
     final observability = await PokrovClientObservability.start(
@@ -2372,6 +2376,7 @@ void main() {
       ..probeStages[bootstrapper.candidates.last.candidateRef] = 'http_64k'
       ..probeFailureKinds[bootstrapper.candidates.last.candidateRef] = 'probe_failed'
       ..probeHTTP64KFailures[bootstrapper.candidates.last.candidateRef] = 'body_short'
+      ..probeErrors[bootstrapper.candidates.last.candidateRef] = probeError
       ..probeHTTP64KObservations[bootstrapper.candidates.last.candidateRef] = const {
         'target': 'owned_reserve', 'status': 200, 'received_bytes': 32768, 'expected_bytes': 65536};
     var permissionRequests = 0;
@@ -2408,6 +2413,7 @@ void main() {
     expect(reportedProbes.every((probe) => !probe.containsKey('http_64k_failure')), isTrue,
         reason: 'the existing D8 candidate report contract is unchanged');
     expect(reportedProbes.every((probe) => !probe.containsKey('http_64k_observation')), isTrue);
+    expect(reportedProbes.last['probe_error'], probeError);
     final events = await File(
       '${directory.path}/pokrov-observability/operational-events.v1.0.jsonl',
     ).readAsLines();
@@ -2425,6 +2431,7 @@ void main() {
         report.timelineAttempts.last.http64kFailure), ('probe_failed', 'http_64k', 'body_short'));
     expect(report.timelineAttempts.last.http64kObservation,
         {'target': 'owned_reserve', 'status': 200, 'received_bytes': 32768, 'expected_bytes': 65536});
+    expect(report.timelineAttempts.last.probeError, probeError);
     final terminal = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .singleWhere((event) => event['name'] == 'app.connection.attempt.finished');
     expect(terminal['error'], {'code': 'CONN-008', 'origin': 'core'});

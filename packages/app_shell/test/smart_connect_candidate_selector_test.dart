@@ -376,20 +376,25 @@ void main() {
   });
 
   test('local probe budget expiry does not suppress the candidate', () async {
+    const probeError = {'operation': 'read_headers', 'cause': 'closed', 'cancel_state': 'cancelled',
+      'target': 'owned_reserve', 'request': 'egress_204', 'elapsed_ms': 10,
+      'stage_started_ms': 10, 'duration_ms': 20};
     final selector = SmartConnectCandidateSelector();
     final catalog = _catalog([_candidate(0), _candidate(1)]);
     final reported = <String>[];
+    final details = <Map<String, Object>?>[];
     await expectLater(selector.select(
       catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
       cancelled: Completer<void>().future,
       probeTimeout: const Duration(milliseconds: 20),
-      onProbeResult: (_, result) => reported.add(result.failureKind),
+      onProbeResult: (_, result) { reported.add(result.failureKind); details.add(result.probeError); },
       probe: (candidate, cancelled, timeout) async {
         if (candidate.priority == 0) await cancelled;
-        return const SmartConnectCandidateProbeResult.failure('invalid_profile');
+        return const SmartConnectCandidateProbeResult.failure('cancelled', probeError: probeError);
       },
     ), throwsA(isA<SmartConnectSelectionExhausted>()));
     expect(reported, contains('probe_budget_expired'));
+    expect(details, everyElement(probeError));
     final selected = await selector.select(
       catalog: catalog, network: 'network-a', platform: HostPlatform.windows,
       cancelled: Completer<void>().future,

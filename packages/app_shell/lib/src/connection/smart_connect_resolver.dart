@@ -5,9 +5,9 @@ typedef SmartConnectCandidateProbe = Future<SmartConnectCandidateProbeResult> Fu
 
 class SmartConnectCandidateProbeResult {
   const SmartConnectCandidateProbeResult.success(this.profile,
-      {this.duration = Duration.zero, this.probeStage}) : failureKind = '', http64kFailure = null, http64kObservation = null;
+      {this.duration = Duration.zero, this.probeStage}) : failureKind = '', http64kFailure = null, http64kObservation = null, probeError = null;
   const SmartConnectCandidateProbeResult.failure(this.failureKind,
-      {this.duration = Duration.zero, this.probeStage, this.http64kFailure, this.http64kObservation}) : profile = null;
+      {this.duration = Duration.zero, this.probeStage, this.http64kFailure, this.http64kObservation, this.probeError}) : profile = null;
 
   final ManagedProfilePayload? profile;
   final String failureKind;
@@ -15,6 +15,7 @@ class SmartConnectCandidateProbeResult {
   final String? probeStage;
   final String? http64kFailure;
   final Map<String, Object>? http64kObservation;
+  final Map<String, Object>? probeError;
 }
 
 class SmartConnectSelectionExhausted implements Exception {
@@ -266,6 +267,7 @@ class SmartConnectCandidateSelector {
       final failed = SmartConnectCandidateProbeResult.failure(failureKind,
           duration: outcome?.duration ?? probeClock.elapsed,
           probeStage: outcome?.probeStage,
+          probeError: outcome?.probeError,
           http64kFailure: failureKind == 'probe_failed' ? outcome?.http64kFailure : null,
           http64kObservation: failureKind == 'probe_failed' ? outcome?.http64kObservation : null);
       onProbeResult?.call(candidate, failed);

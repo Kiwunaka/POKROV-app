@@ -8,8 +8,9 @@ exit 0, version 4144, preserved identity/owner and Running/Auto/LocalSystem
 service were confirmed. W32Time Auto now uses `time.windows.com,0x8`, with
 subsequent automatic synchronization confirmed. After SaveState/resume, run
 ordinary elevated `w32tm /resync /rediscover` and require NTP residuals below
-one second before authentication; the latest three samples were within 14 ms.
-Leap 0 and Last Sync Error 0 were confirmed after the peer fix. The owner-approved test-VM policy is now
+one second before authentication; the latest three samples were within 37 ms.
+Leap 0 and Last Sync Error 0 were confirmed after the peer fix. The
+owner-approved test-VM policy is now
 `ConsentPromptBehaviorAdmin=0`, with `EnableLUA=1` and
 `PromptOnSecureDesktop=1`; normal RunAs administrator access passed without a
 prompt. Original DWORD 5 is retained in guest
@@ -33,17 +34,35 @@ Cloudflare `loc=US`; this is observed geolocation, not exact-node attestation.
 Every Stop restored TUN 0, routes 16 and DNS counts 1/0. Gemini opened an unsigned
 editor, but the test text remained pending after native keyboard entry and an
 enabled Send click, with no response or public error; functionality is UNKNOWN.
-Country/protocol Auto, WARP variants and fresh Smart DNS remain open. Old QA
-cases are closed; a new finite case requires a current reviewed signing chain.
-Its fresh registered-source fetch stopped with `source_address_not_public`
-because host DNS returned the Hiddify fake-IP range; no snapshot, signing,
-publication or QA admission occurred, and host DNS/Hiddify were preserved.
+Country/protocol Auto and WARP variants remain open.
 
-At 07:29:16 UTC the VM baseline was restored: app, auxiliary processes, TUN,
+A new Smart DNS case used a fresh public source fetch on Brain after the host's
+Hiddify fake-IP was rejected by the normal source guard. Reviewed catalog 25 /
+security 2 and private provider policy 26 / security 1 passed signature checks;
+the catalog was published once, with public provider and issuer OFF and the
+provider pointer NULL. Four source-only checks remained `NOT_VERIFIED`. After
+natural access-token expiry, ordinary same-account refresh gave 857 seconds of
+parent coverage. One audited, nonrenewable 600-second admission matched the
+actual 4144/Core module and expired at 08:30:43 UTC.
+
+QA Start at 08:22:24 UTC failed at 08:22:34 during `core_connect`, candidate
+phase `http_64k`: the timeline showed `CONN-005`, the support rule `CONN-008`,
+and native status `core_egress_probe_unavailable`. Native rollback left no TUN
+or VPN routes. The admission was claimed; no control/proof context or Gemini
+request was obtained, and no second Start or renewal was made. This is an early
+Core connect failure, distinct from the historical case 781 control POST failure;
+the underlying native branch remains unknown.
+The subsequent native regression reproduced rejection of the current Dart
+producer's paired API rules. The parser now accepts their exact matching
+TCP/443 and DNS scope, with negative-boundary checks passing. A new installed
+candidate and fresh runtime acceptance are still required; the old case is closed.
+
+At 08:27:34 UTC the VM baseline was restored: app, auxiliary processes, TUN,
 VPN routes, WinDivert and consent prompts were absent; routes were 16, DNS
 counts 1/0, DHCP4/6 enabled and proxy off. Guest sessions were zero; SaveState
-reached EOF with exit 0; Saved/Unlocked with an empty session was confirmed at
-07:31:03 UTC. Only the three public browser test tabs were closed.
+reached EOF with exit 0 and Saved/Unlocked with an empty session was confirmed.
+Operator sessions were revoked; the deploy lease was released with six current
+ACKs and fresh health at 08:28:02 UTC. Only the owned browser test tabs were closed.
 The Intel bridge and GetHostTimeDisabled setting remain; the corrected NTP
 source and owner-approved admin consent policy are the new guest baseline.
 

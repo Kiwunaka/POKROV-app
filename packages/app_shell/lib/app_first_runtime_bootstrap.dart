@@ -4212,6 +4212,7 @@ class AppFirstRuntimeBootstrapper
     final safeCandidateVariant = candidateVariant.trim().toLowerCase();
     final safeAccessNetworkAsn = accessNetworkAsn.trim().toUpperCase();
     final safeCandidateProbes = <Map<String, Object?>>[];
+    Map<String, Object?>? latestDetailedProbe;
     for (final probe in candidateProbes.take(16)) {
       final ref = probe['candidate_ref'];
       final transport = probe['candidate_transport'];
@@ -4227,7 +4228,7 @@ class AppFirstRuntimeBootstrapper
             'xhttp_tls', 'hysteria2', 'awg31', 'warp'}.contains(transport)) continue;
       if (!outcome && (failure is! String ||
           !RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(failure))) continue;
-      safeCandidateProbes.add({
+      final safeProbe = <String, Object?>{
         'candidate_ref': ref,
         'candidate_transport': transport,
         if (variant is String && variant != 'direct' &&
@@ -4240,7 +4241,16 @@ class AppFirstRuntimeBootstrapper
         'duration_ms': duration.clamp(0, 3600000),
         if (!outcome)
           'failure_kind': failure,
-      });
+      };
+      final detail = !outcome ? RuntimeCandidateProbeResult.probeErrorFromWire(probe['probe_error']) : null;
+      if (detail != null) {
+        // Keep every candidate outcome and the last failure's detail inside
+        // the existing 8 KiB D8 record budget. Local events retain each detail.
+        latestDetailedProbe?.remove('probe_error');
+        safeProbe['probe_error'] = detail;
+        latestDetailedProbe = safeProbe;
+      }
+      safeCandidateProbes.add(safeProbe);
     }
     final reportProbes = safeCandidateProbes.isNotEmpty &&
         (phase == 'running' || phase == 'failed' ||
