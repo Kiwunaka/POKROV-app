@@ -18,6 +18,19 @@ import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
+Future<void> _deleteTestDirectory(Directory directory) async {
+  // Synchronous manager disposal can leave a bootstrap file read settling on Windows.
+  for (var attempt = 0;; attempt++) {
+    try {
+      await directory.delete(recursive: true);
+      return;
+    } on FileSystemException catch (error) {
+      if (!Platform.isWindows || error.osError?.errorCode != 32 || attempt == 24) rethrow;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+  }
+}
+
 final _candidates = List.generate(4, (index) => TransportCandidate(
   candidateRef: 'de:profile_$index', profileRef: 'profile_$index', nodeCode: 'de',
   countryCode: 'DE', protocol: 'vless', transport: 'tcp', protection: 'reality',
@@ -1626,7 +1639,7 @@ void main() {
     FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(<String, String>{});
     final directory = await Directory.systemTemp.createTemp('pokrov-invitation-connect-');
     addTearDown(() async {
-      await directory.delete(recursive: true);
+      await _deleteTestDirectory(directory);
       FlutterSecureStoragePlatform.instance = originalStorage;
     });
     final vector = jsonDecode(await File('test/fixtures/offline-invitation.v1.vector.json').readAsString()) as Map<String, dynamic>;
@@ -1819,6 +1832,9 @@ void main() {
   });
 
   test('API outage and failed node use an authorized cached other node through expiry grace', () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = originalHttpOverrides);
     final originalStorage = FlutterSecureStoragePlatform.instance;
     final protectedValues = <String, String>{};
     FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(protectedValues);
@@ -2083,7 +2099,10 @@ void main() {
     expect(runtime.activeProbes, isEmpty);
   });
 
-  test('US country Auto exhausts direct before the exact admitted bridge material', () async {
+  test('US country Auto proves the exact admitted bridge before trying direct', () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = originalHttpOverrides);
     final originalStorage = FlutterSecureStoragePlatform.instance;
     FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({});
     final directory = await Directory.systemTemp.createTemp('pokrov-us-bridge-');
@@ -2164,7 +2183,7 @@ void main() {
       allExceptRuRuleSetUrlsResolver: (_) => const []);
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
       ..supportsCandidates = true..coreVersion = '1.2.10'
-      ..heldProbeCandidates.add(directRef)..failedProbeCandidates.add(directRef);
+      ..heldProbeCandidates.add(bridgeRef);
     final experience = _ExperienceStore();
     final manager = _manager(runtime, bootstrapper, experienceStore: experience,
       authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
@@ -2174,11 +2193,13 @@ void main() {
       firstRouteScopeConfirmed: true, firstRouteScopeMode: RouteMode.fullTunnel), const {});
     final connecting = manager.connect();
     await Future.any([runtime.probeStarted.future, connecting]);
-    expect(runtime.probedPayloads.map((payload) => payload.materialCandidate?.candidateRef), [directRef],
-      reason: 'typed bridge material must be admitted, but cannot race a still-held direct route');
+    expect(manager.status.phase, ConnectionPhase.probing,
+      reason: experience.saved.protectionEvents.map((event) => event.detail).join('; '));
+    expect(runtime.probedPayloads.map((payload) => payload.materialCandidate?.candidateRef), [bridgeRef],
+      reason: 'the admitted bridge must settle before a direct route can start');
     runtime.probeRelease.complete();
     await connecting;
-    expect(runtime.probedPayloads.map((payload) => payload.materialCandidate?.candidateRef), [directRef, bridgeRef]);
+    expect(runtime.probedPayloads.map((payload) => payload.materialCandidate?.candidateRef), [bridgeRef]);
     expect(manager.status.phase, ConnectionPhase.connected);
     final staged = runtime.stagedPayloads.single;
     expect(staged.materialCandidate?.candidateRef, bridgeRef);
@@ -3581,13 +3602,16 @@ void main() {
 
   test('ordinary VPN tolerates an absent optional catalog and retains RU rules',
       () async {
+    final originalHttpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = originalHttpOverrides);
     final originalStorage = FlutterSecureStoragePlatform.instance;
     FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform({});
     final directory = await Directory.systemTemp.createTemp('pokrov-optional-catalog-');
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() async {
       await server.close(force: true);
-      await directory.delete(recursive: true);
+      await _deleteTestDirectory(directory);
       FlutterSecureStoragePlatform.instance = originalStorage;
     });
     var catalogRequests = 0;

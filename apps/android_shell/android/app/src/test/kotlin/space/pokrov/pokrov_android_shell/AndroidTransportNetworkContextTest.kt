@@ -8,6 +8,21 @@ import java.net.InetAddress
 
 class AndroidTransportNetworkContextTest {
     @Test
+    fun vpnContextFollowsRuntimeHandoverWhilePreviousCellularRemainsAvailable() {
+        fun select(retained: String, runtime: String): String? = selectTransportUnderlyingNetwork(
+            activeIsVpn = true,
+            retained = retained,
+            runtime = runtime,
+            isEligible = { it == "cellular" || it == "wifi" },
+            selectDefault = { error("The running VPN already has an observed physical uplink") },
+        )
+
+        val connected = select(retained = "cellular", runtime = "cellular")
+        assertEquals("cellular", connected)
+        assertEquals("wifi", select(retained = connected!!, runtime = "wifi"))
+    }
+
+    @Test
     fun ipv6RequiresUsableSourceAndDefaultRouteOnCapturedUplink() {
         val available = AndroidTransportNetworkContext.CandidateNetwork.Companion::ipv6Available
         val global = listOf(InetAddress.getByName("2001:db8::2"))

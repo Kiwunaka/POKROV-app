@@ -157,6 +157,8 @@ internal object AndroidDefaultNetworkMonitor {
         if (currentNetwork == null) null else currentNetworkGeneration
     }
 
+    fun currentUplink(): Network? = currentNetwork
+
     fun matchesTransportContext(network: Network, links: LinkProperties): Boolean = synchronized(networkLock) {
         currentNetwork == network && currentNetworkLinkProperties == links
     }

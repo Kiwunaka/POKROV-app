@@ -18,6 +18,16 @@ import java.net.Inet6Address
 import java.net.InetAddress
 import java.util.UUID
 
+internal fun <T> selectTransportUnderlyingNetwork(
+    activeIsVpn: Boolean,
+    retained: T?,
+    runtime: T?,
+    isEligible: (T) -> Boolean,
+    selectDefault: () -> T?,
+): T? = if (activeIsVpn) {
+    runtime?.takeIf(isEligible) ?: retained?.takeIf(isEligible) ?: selectDefault()
+} else selectDefault()
+
 /** Bridge-owned observation only: no requestNetwork, sockets or runtime monitor ownership. */
 internal class AndroidTransportNetworkContext(context: Context) {
     internal data class CandidateNetwork(
@@ -246,12 +256,16 @@ internal class AndroidTransportNetworkContext(context: Context) {
             val selected = runCatching {
                 val active = manager.activeNetwork
                 val activeCapabilities = active?.let(manager::getNetworkCapabilities)
-                val retained = network
                 // Starting our VPN changes the system default to the VPN.
-                // Keep its observed uplink rather than reranking other networks.
-                if (activeCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true &&
-                    retained != null && AndroidNodeLatencyProbe.isEligibleUnderlyingNetwork(manager.getNetworkCapabilities(retained)))
-                    retained else AndroidNodeLatencyProbe.selectUnderlyingNetwork(manager)
+                // Follow Core's physical uplink after a handover, even when the
+                // previous mobile network remains available behind the VPN.
+                selectTransportUnderlyingNetwork(
+                    activeIsVpn = activeCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true,
+                    retained = network,
+                    runtime = AndroidDefaultNetworkMonitor.currentUplink(),
+                    isEligible = { AndroidNodeLatencyProbe.isEligibleUnderlyingNetwork(manager.getNetworkCapabilities(it)) },
+                    selectDefault = { AndroidNodeLatencyProbe.selectUnderlyingNetwork(manager) },
+                )
             }.getOrNull()
             val properties = selected?.let { runCatching { manager.getLinkProperties(it) }.getOrNull() }
             val currentCapabilities = selected?.let {

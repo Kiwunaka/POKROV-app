@@ -40,7 +40,11 @@ class SmartConnectCandidateSelector {
         candidate.candidateRef != selected.candidateRef &&
         (!countryOnly || candidate.nodeCountryCode(catalog.candidates) ==
             selected.nodeCountryCode(catalog.candidates))).toList()
-      ..sort((a, b) => a.priority.compareTo(b.priority));
+      ..sort((a, b) {
+        if (a.bridgeId != null && b.bridgeId == null) return -1;
+        if (b.bridgeId != null && a.bridgeId == null) return 1;
+        return a.priority.compareTo(b.priority);
+      });
     final alternatives = <TransportCandidate>[];
     final families = {selected.protocol};
     for (final candidate in ordered) {
@@ -124,8 +128,8 @@ class SmartConnectCandidateSelector {
       !_failedUntil.containsKey((network, candidate.candidateRef))).toList();
     final candidates = (remembered.isEmpty ? eligible : remembered)
       ..sort((a, b) {
-        if (a.bridgeId == null && b.bridgeId != null) return -1;
-        if (b.bridgeId == null && a.bridgeId != null) return 1;
+        if (a.bridgeId != null && b.bridgeId == null) return -1;
+        if (b.bridgeId != null && a.bridgeId == null) return 1;
         if (a.candidateRef == preferred && b.candidateRef != preferred) return -1;
         if (b.candidateRef == preferred && a.candidateRef != preferred) return 1;
         if (_udpFailedUntil.containsKey(network) && a.network != b.network) {
@@ -170,9 +174,9 @@ class SmartConnectCandidateSelector {
     var startedCount = 0;
     var failures = 0;
     final maxAttempts = recoveryCandidateRef.isEmpty ? candidates.length : 3;
-    var directRemaining = candidates.where((candidate) => candidate.bridgeId == null).length;
-    final directSettled = Completer<void>();
-    if (directRemaining == 0) directSettled.complete();
+    var bridgeRemaining = candidates.where((candidate) => candidate.bridgeId != null).length;
+    final bridgesSettled = Completer<void>();
+    if (bridgeRemaining == 0) bridgesSettled.complete();
     void stop() {
       if (!ended.isCompleted) ended.complete();
       for (final cancellation in probes) {
@@ -254,7 +258,7 @@ class SmartConnectCandidateSelector {
         probes.remove(cancellation);
         final familyFinish = familySettled[candidate.candidateRef];
         if (familyFinish != null && !familyFinish.isCompleted) familyFinish.complete();
-        if (candidate.bridgeId == null && --directRemaining == 0) directSettled.complete();
+        if (candidate.bridgeId != null && --bridgeRemaining == 0) bridgesSettled.complete();
       }
       if (ended.isCompleted) return;
       failures++;
@@ -271,10 +275,10 @@ class SmartConnectCandidateSelector {
         final tcp = candidates.where((item) => item.network == 'tcp').toList();
         final udp = candidates.where((item) => item.network != 'tcp').toList();
         candidates..clear()
-          ..addAll(tcp.where((candidate) => candidate.bridgeId == null))
-          ..addAll(udp.where((candidate) => candidate.bridgeId == null))
           ..addAll(tcp.where((candidate) => candidate.bridgeId != null))
-          ..addAll(udp.where((candidate) => candidate.bridgeId != null));
+          ..addAll(udp.where((candidate) => candidate.bridgeId != null))
+          ..addAll(tcp.where((candidate) => candidate.bridgeId == null))
+          ..addAll(udp.where((candidate) => candidate.bridgeId == null));
       }
     }
     Duration preferredProbeTime = Duration.zero;
@@ -287,8 +291,8 @@ class SmartConnectCandidateSelector {
             Future<void>.delayed(Duration(milliseconds: (250 << (failures - 1).clamp(0, 2))))]);
         }
         if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
-        if (candidates.first.bridgeId != null && !directSettled.isCompleted) {
-          await Future.any<void>([ended.future, directSettled.future]);
+        if (candidates.first.bridgeId == null && !bridgesSettled.isCompleted) {
+          await Future.any<void>([ended.future, bridgesSettled.future]);
           if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
         }
         await run(candidates.removeAt(0), selectionTimeout - probeTime,

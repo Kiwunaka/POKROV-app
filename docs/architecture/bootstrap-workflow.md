@@ -171,9 +171,13 @@ Known candidate-material validation failures retain `invalid_profile`/`parse_pro
 in the current attempt; native failures retain their own closed reason and stage.
 Ordinary bridge candidates retain the exit Node/country and actual VLESS TCP/REALITY
 metadata. `bridge_id` selects the admitted existing graph without changing stored
-preferences and requires client 1.5.0+4116. Auto settles eligible direct candidates
-before bridge probes within the existing selector budget; explicit pins, WARP and
-cached-authority guards still apply.
+preferences and requires client 1.5.0+4116. Ordinary Auto settles eligible bridge
+candidates before direct probes within the existing selector budget, including
+country Auto and recovery. Server priority orders candidates within each tier;
+the last successful route and UDP failure memory apply inside that tier. The
+finite cache prefers a bridge when reserving another node. Explicit pins, WARP
+and cached-authority guards still apply; the selected country names the exit.
+This source change requires a new client candidate and device acceptance.
 
 After a healthy ordinary connect, the existing finite cache refresh fetches the
 exact current profile's latest catalog, then prepares at most two alternatives:
@@ -231,23 +235,29 @@ which application requested a name. The existing DNS hijack therefore uses the
 remote VPN resolver as its default; this is shared DNS protection, not a
 per-application DNS attribution guarantee.
 
-After ordinary Android or Windows egress is verified, the native session repeats
+After ordinary Windows egress is verified, the native session repeats
 the active Core 204 check two seconds after each success, with a three-second
-periodic deadline and a one-second manager status poll. Android uses Core's
-bounded runtime probe; startup readiness waits and diagnostic-log waits do not
-delay it. Checks do not overlap, and cancelled/replaced sessions cannot publish
+periodic deadline and a one-second manager status poll. Checks do not overlap,
+and cancelled/replaced sessions cannot publish
 late results. A failed check retains the TUN. Confirmed automatic recovery
 excludes that failed candidate and immediately probes authorized cached
 alternatives in parallel with the existing selector, before waiting for the API.
 Manual reconnect keeps its current-candidate-first order. Cache account binding,
 expiry, authorization denial and the protected handoff still apply; initial
-probe retries and signed transport lease rules are unchanged. The five-second
+probe retries and signed transport lease rules are unchanged. The Windows five-second
 native detection budget is not an end-to-end failover measurement. The runtime
 observer also evaluates a confirmed candidate failure when a UI or resume read
 has already stored the same snapshot. Existing pending-recovery and action-required
 guards still bound retries; reading diagnostics cannot consume the recovery event.
 The regression covers a second failure after VLESS-to-AWG recovery, followed by
 cached HY2 activation without Disconnect.
+
+Android repeats its bounded three-second Core probe when traffic counters grow
+and at least 60 seconds have elapsed since the previous healthy probe. A DNS or
+link-change suspicion, or further traffic after a failed check, can trigger it
+after five seconds. Idle sessions have no periodic probe timer; the Windows
+five-second detection budget does not apply. Failed repeat checks retain the
+TUN, and only the current session may publish a result.
 
 Online candidate selection fetches exact profiles before charging the native
 probe budget. Each worker has up to 12 seconds of native probes, with at most
@@ -365,6 +375,10 @@ This path uses the retained bound request ID; ordinary connections and protected
 replacements keep their normal disconnect, including explicit release of the guard.
 Android network callbacks keep the session captured when their listener was
 registered; a delayed callback cannot reset a replacement session.
+While the system default is the VPN, Android candidate-network and trusted-Wi-Fi
+reads follow Core's observed physical uplink. An LTE-to-Wi-Fi handover therefore
+does not retain cellular identity merely because mobile data remains available.
+The selected Wi-Fi still requires its own permission-authorized SSID callback.
 Probe journal entries use the validated `verify` stage and typed failure kind;
 a failed candidate is a degraded child event and cannot abort selection.
 The local probe budget and Core data-stall kinds are valid journal values;
@@ -3021,3 +3035,11 @@ categories and existing numeric HTTP/IO fields after the QA owner ends.
 An unknown delivery keeps the ordinary connected tunnel and original native
 lease deadline, without confirming SmartDNS readiness or renewing the grant.
 The request has no automatic retry.
+
+Selective VPN routes the exact bootstrap/control origins `app.pokrov.space`
+and `api.pokrov.space` through the existing VPN TCP/443 and DNS rules. The
+selected/excluded application mode keeps its existing service-only API probe
+rule. This change covers the Flutter control request; the separate native
+background control and Smart DNS resolver still use their protected direct
+dialers. The routing regression does not establish the historical cause of
+case 781 or replace a real Gemini response check.

@@ -1060,11 +1060,13 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     manualDns.add({'domain_suffix': _purposeDomains[purpose],
       if (isDirect || policy.vpnAvailable) 'server': isDirect ? directDns : vpnDns else 'action': 'reject'});
   }
-  // Native health must exercise this exact protected target even when the
-  // remainder defaults to Direct. Keep the owned HTTPS probe before user and
-  // catalog classifications, without changing the rest of the device scope.
+  // Selective mode keeps both owned control origins reachable through the VPN
+  // after startup chooses either one. App-scoped modes retain the native probe.
+  final protectedApiDomains = selective
+      ? const ['api.pokrov.space', 'app.pokrov.space']
+      : const ['api.pokrov.space'];
   final probeRoute = <String, dynamic>{
-    'domain': ['api.pokrov.space'], 'network': 'tcp', 'port': [443],
+    'domain': protectedApiDomains, 'network': 'tcp', 'port': [443],
     if (windowsAppScope) 'process_name': ['pokrov_service.exe'],
     'action': 'route', 'outbound': vpn,
   };
@@ -1100,8 +1102,8 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
         _routingText(outbound['server']),
   }.toList()..sort();
   if ((selective || windowsAppScope) && bootstrapDomains.any((domain) =>
-      domain.toLowerCase().replaceFirst(RegExp(r'\.$'), '') == 'api.pokrov.space')) {
-    // A tunnel cannot depend on its own protected proof hostname to bootstrap.
+      protectedApiDomains.contains(domain.toLowerCase().replaceFirst(RegExp(r'\.$'), '')))) {
+    // A tunnel cannot depend on its own protected API hostname to bootstrap.
     throw const RoutingCatalogFailure('catalog_probe_bootstrap_conflict');
   }
   dns['servers'] = servers;
@@ -1109,7 +1111,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     ...dnsSafety,
     if (bootstrapDomains.isNotEmpty) {'domain': bootstrapDomains, 'server': directDns},
     if (selective && policy.vpnAvailable) {
-      'domain': ['api.pokrov.space'], 'action': 'route', 'server': vpnDns,
+      'domain': protectedApiDomains, 'action': 'route', 'server': vpnDns,
       'disable_cache': true, 'rewrite_ttl': 0,
     },
     if (lanSubnets.isNotEmpty) {'ip_cidr': lanSubnets, 'server': directDns},

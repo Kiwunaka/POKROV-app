@@ -82,15 +82,20 @@ Future<Map<String, Object?>> _qaSigned(Map<String, Object?> payload, String purp
 
 // Keep normal HTTPS configuration validation while the synthetic API stays local.
 class _QaLocalHttpClient implements HttpClient {
-  _QaLocalHttpClient(this.port, {this.controlTlsPort, this.controlError});
+  _QaLocalHttpClient(this.port, {this.controlTlsPort, this.controlError, this.controlRouteAvailable});
   final int port;
   final int? controlTlsPort;
   final Completer<Object>? controlError;
+  final bool Function(Uri)? controlRouteAvailable;
   final HttpClient _client = HttpClient();
   @override
   set connectionTimeout(Duration? value) => _client.connectionTimeout = value;
   @override
   Future<HttpClientRequest> openUrl(String method, Uri url) async {
+    if (method == 'POST' && url.path == '/api/client/smart-access/first-provider-qa/control' &&
+        controlRouteAvailable != null && !controlRouteAvailable!(url)) {
+      throw const SocketException('Synthetic Direct API path is blocked');
+    }
     final stallControl = controlTlsPort != null && method == 'POST' &&
         url.path == '/api/client/smart-access/first-provider-qa/control';
     try {
@@ -394,8 +399,22 @@ void main() {
         await request.response.close();
       }
     }());
-    final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'https://api.pokrov.test',
-      httpClientFactory: () => _QaLocalHttpClient(server.port, controlTlsPort: controlServer?.port, controlError: controlError),
+    Map? staged;
+    bool controlRouteAvailable(Uri url) {
+      final route = staged!['route'] as Map;
+      final dns = staged!['dns'] as Map;
+      final routeRule = (route['rules'] as List).cast<Map>().where((rule) =>
+        (rule['domain'] as List?)?.contains(url.host) == true &&
+        rule['network'] == 'tcp' && (rule['port'] as List?)?.contains(url.port) == true).firstOrNull;
+      final dnsRule = (dns['rules'] as List).cast<Map>().where((rule) =>
+        (rule['domain'] as List?)?.contains(url.host) == true).firstOrNull;
+      final dnsServer = (dns['servers'] as List).cast<Map>().firstWhere((server) =>
+        server['tag'] == (dnsRule?['server'] ?? dns['final']));
+      return (routeRule?['outbound'] ?? route['final']) == 'proxy' && dnsServer['detour'] == 'proxy';
+    }
+    final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'https://app.pokrov.space', apiFallbackBaseUrls: const [],
+      httpClientFactory: () => _QaLocalHttpClient(server.port, controlTlsPort: controlServer?.port, controlError: controlError,
+        controlRouteAvailable: controlRouteAvailable),
       supportDirectoryResolver: () async => directory, sessionSecretStore: MemoryAppFirstSessionSecretStore(), maxRequestAttempts: 1,
       allExceptRuRuleSetUrlsResolver: (_) => const [],
       routingCatalogStore: RoutingCatalogStore(enabled: true, verifier: catalogVerifier),
@@ -411,7 +430,6 @@ void main() {
       'smartAccessRuntimeControlVersion': 1, 'coreEgressValidationRequired': true,
       'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']})};
     final nativeCalls = <String>[];
-    Map? staged;
     const bootRef = 'windows:0123456789abcdef0123456789abcdef';
     const networkRef = 'network_0123456789abcdef0123456789abcdef';
     String? nativeBoundRequestId;
@@ -595,6 +613,11 @@ void main() {
     expect(domainDnsRules.last, {'domain': ['gemini.google.com'], 'action': 'reject'},
       reason: 'the untimed exact-domain rejection survives catalog expiry');
     expect(route['final'], 'direct', reason: 'other traffic retains Direct');
+    for (final host in const ['app.pokrov.space', 'api.pokrov.space']) {
+      expect(controlRouteAvailable(Uri.https(host, '/api/client/smart-access/first-provider-qa/control')), isTrue,
+        reason: 'both owned API origins must deliver control when the Direct API path is blocked');
+    }
+    expect(controlRouteAvailable(Uri.https('unrelated.example.test', '/')), isFalse);
     await manager.readSnapshot();
     final context = await manager.readFirstProviderQaContext();
     expect(context!['runtime_scope_sha256'], isA<String>().having((value) => value.length, 'length', 64));

@@ -5,11 +5,11 @@ import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
-TransportCandidate _candidate(int index, {bool udp = false, String node = 'de', String country = 'DE'}) => TransportCandidate(
+TransportCandidate _candidate(int index, {bool udp = false, String node = 'de', String country = 'DE', String? bridge}) => TransportCandidate(
   candidateRef: '$node:profile_$index', profileRef: 'profile_$index', nodeCode: node,
   countryCode: country, protocol: udp ? 'awg' : 'vless', transport: udp ? 'udp' : 'tcp',
   protection: udp ? 'awg31' : 'reality', priority: index, network: udp ? 'udp' : 'tcp',
-  flow: '', minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+  flow: '', minimumClientRelease: '1.2.0', minimumCoreRelease: null, bridgeId: bridge,
   platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {},
 );
 
@@ -59,6 +59,47 @@ void main() {
     expect(SmartConnectCandidateSelector.cacheAlternatives(v6,
         withOtherNode, countryOnly: false, catalog: _catalog(withOtherNode)).map((item) => item.candidateRef),
         [otherNode.candidateRef, v4.candidateRef]);
+  });
+
+  test('cache prefers an admitted bridge on another node over a higher ranked direct route', () {
+    final selected = _candidate(0, bridge: 'mini');
+    final direct = _candidate(1, node: 'ch', country: 'CH');
+    final bridge = _candidate(2, node: 'us', country: 'US', bridge: 'ru-spb');
+    final candidates = [selected, direct, bridge];
+    expect(SmartConnectCandidateSelector.cacheAlternatives(selected,
+        candidates, countryOnly: false, catalog: _catalog(candidates)), [bridge]);
+  });
+
+  test('Auto settles bridges in server priority order before trying a remembered direct route', () async {
+    final selector = SmartConnectCandidateSelector();
+    final direct = _candidate(0, node: 'us', country: 'US');
+    final firstBridge = _candidate(1, bridge: 'mini');
+    final secondBridge = _candidate(2, node: 'ch', country: 'CH', bridge: 'ru-spb');
+    selector.recordSuccess('network-a', direct.candidateRef);
+    final bothStarted = Completer<void>();
+    final releaseFirst = Completer<void>();
+    final releaseSecond = Completer<void>();
+    final started = <String>[];
+    final selected = selector.select(
+      catalog: _catalog([direct, secondBridge, firstBridge]),
+      network: 'network-a', platform: HostPlatform.android,
+      cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async {
+        started.add(candidate.candidateRef);
+        if (candidate.bridgeId == null) return _success(candidate);
+        if (started.length == 2) bothStarted.complete();
+        await (candidate == firstBridge ? releaseFirst.future : releaseSecond.future);
+        return const SmartConnectCandidateProbeResult.failure('connect_failed');
+      },
+    );
+    await bothStarted.future;
+    expect(started, [firstBridge.candidateRef, secondBridge.candidateRef]);
+    releaseFirst.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(started, [firstBridge.candidateRef, secondBridge.candidateRef]);
+    releaseSecond.complete();
+    expect((await selected).profileName, direct.candidateRef);
+    expect(started, [firstBridge.candidateRef, secondBridge.candidateRef, direct.candidateRef]);
   });
 
   for (final (platform, parallelism) in [(HostPlatform.android, 3), (HostPlatform.windows, 4)]) {
