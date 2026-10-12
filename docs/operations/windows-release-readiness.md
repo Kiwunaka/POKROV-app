@@ -1,20 +1,31 @@
 # Windows acceptance
 
-Private unsigned Windows `1.5.0+4144` was built once from App `f1466ff8` on
-2026-10-12, reusing the exact 4142 Core `1.2.14` / Cronet artifacts. Package
-checks passed; the installer is 28,665,967 bytes. The owned Clean VM upgraded
-through its normal installer after owner-confirmed UAC: terminal success and
-exit 0, version 4144, preserved identity/owner and Running/Auto/LocalSystem
-service were confirmed. W32Time Auto now uses `time.windows.com,0x8`, with
+Private unsigned Windows `1.5.0+4147` from App `7f9f57f1` / Core `ac9f6fa`
+(`1.2.14`, existing Cronet) upgraded the owned Clean VM in place on 2026-10-12.
+The 28,670,832-byte normal installer exited 0; version 4147, the expected loaded
+Core module, reused Cronet and running service were confirmed. W32Time Auto uses `time.windows.com,0x8`, with
 subsequent automatic synchronization confirmed. After SaveState/resume, run
 ordinary elevated `w32tm /resync /rediscover` and require NTP residuals below
-one second before authentication; the latest three samples were within 37 ms.
+one second before authentication; the latest three samples were within 6 ms.
 Leap 0 and Last Sync Error 0 were confirmed after the peer fix. The
 owner-approved test-VM policy is now
 `ConsentPromptBehaviorAdmin=0`, with `EnableLUA=1` and
 `PromptOnSecureDesktop=1`; normal RunAs administrator access passed without a
 prompt. Original DWORD 5 is retained in guest
 `Downloads/windows4144-admin-policy.safe.json`. Host time and Hiddify remain.
+
+One ordinary 4147 US VLESS REALITY selection connected with the UI label
+New York, native DNS/egress readiness, TUN and nine routes. Real Edge 204/64 KiB
+checks passed with increased TUN traffic; public Cloudflare geography was US.
+Gemini accepted native keyboard entry into its anonymous editor. After an
+actual enabled Send pointer click, the prompt remained visible, with no response,
+generation control or public error. Editor contents versus a submitted user
+bubble were not distinguished: submission and Gemini functionality are UNKNOWN,
+not a Gemini or VPN rejection. No resend or browser login followed.
+The complete native candidate-probe fixture then passed elevated with exit 0,
+including cancellation/network-change detail retention and bound Smart handoff.
+Its first launch stopped in the loader (`0xC0000135`); the one corrected run used
+only a process-local PATH to the VC runtime DLLs already installed with POKROV.
 
 One ordinary audited 48-hour extension activated the existing account until
 2026-10-14 04:58:28 UTC without charge or identity/key reset; UI refresh showed
@@ -54,15 +65,15 @@ Core connect failure, distinct from the historical case 781 control POST failure
 the underlying native branch remains unknown.
 The subsequent native regression reproduced rejection of the current Dart
 producer's paired API rules. The parser now accepts their exact matching
-TCP/443 and DNS scope, with negative-boundary checks passing. A new installed
-candidate and fresh runtime acceptance are still required; the old case is closed.
+TCP/443 and DNS scope, with negative-boundary checks passing. Version 4147 is
+installed; fresh SmartDNS runtime acceptance remains required. The old case is closed.
 
-At 08:27:34 UTC the VM baseline was restored: app, auxiliary processes, TUN,
+At 10:23:23 UTC the VM baseline was restored: app, auxiliary processes, TUN,
 VPN routes, WinDivert and consent prompts were absent; routes were 16, DNS
 counts 1/0, DHCP4/6 enabled and proxy off. Guest sessions were zero; SaveState
 reached EOF with exit 0 and Saved/Unlocked with an empty session was confirmed.
-Operator sessions were revoked; the deploy lease was released with six current
-ACKs and fresh health at 08:28:02 UTC. Only the owned browser test tabs were closed.
+The 4147 case made no server writes or QA admissions; the prior deploy lease
+was already released. Only the three owned browser test tabs were closed.
 The Intel bridge and GetHostTimeDisabled setting remain; the corrected NTP
 source and owner-approved admin consent policy are the new guest baseline.
 
