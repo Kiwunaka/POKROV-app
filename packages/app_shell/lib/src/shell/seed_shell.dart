@@ -2577,6 +2577,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       hostPlatform: widget.appContext.hostPlatform,
       routeMode: _selectedRouteMode,
       snapshot: snapshot ?? _runtimeSnapshot,
+      confirmedConnection: _connectionManager.confirmedConnectionForDiagnostics(snapshot ?? _runtimeSnapshot),
       statusLabel: _connectionPresentation.title,
       warpState: _diagnosticWarpState(diagnostics),
       now: DateTime.now().toUtc(),

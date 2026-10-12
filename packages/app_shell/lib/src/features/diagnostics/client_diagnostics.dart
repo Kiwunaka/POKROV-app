@@ -480,6 +480,7 @@ abstract final class PokrovDiagnosticsPresenter {
     DiagnosticCrashRecord? currentAppCrash,
     PokrovAuthRequestDiagnostic? authRequest,
     PokrovConnectionFailureDiagnostic? connectionFailure,
+    ({String transport, bool? throughBridge})? confirmedConnection,
     List<DiagnosticEventRecord> candidateProbeEvents = const [],
     DateTime? checkedAtUtc,
     ClientReleaseHealthBaseline releaseHealthBaseline =
@@ -510,6 +511,26 @@ abstract final class PokrovDiagnosticsPresenter {
         state: _egressState(snapshot),
       ),
     ];
+    final transportLabel = switch (confirmedConnection?.transport) {
+      'vless_reality' => 'VLESS REALITY',
+      'vless_grpc_tls' => 'VLESS gRPC / TLS',
+      'xhttp_reality' => 'XHTTP REALITY',
+      'xhttp_tls' => 'XHTTP TLS',
+      'hysteria2' => 'Hysteria2',
+      'awg31' => 'AWG3.1',
+      _ => null,
+    };
+    if (snapshot?.isCleanlyHealthy == true && transportLabel != null) {
+      evidence.addAll([
+        PokrovDiagnosticEvidence(key: 'active-transport', label: 'Протокол: $transportLabel',
+            state: PokrovDiagnosticEvidenceState.confirmed),
+        PokrovDiagnosticEvidence(key: 'active-path',
+            label: 'Подключение: ${switch (confirmedConnection!.throughBridge) {
+              true => 'Через мост', false => 'Напрямую', null => 'Не подтверждено'}}',
+            state: confirmedConnection.throughBridge == null
+                ? PokrovDiagnosticEvidenceState.unknown : PokrovDiagnosticEvidenceState.confirmed),
+      ]);
+    }
     final protocolDiagnosticCode = snapshot?.safeProtocolDiagnosticCode ?? '';
     final protocolDiagnosticOccurrence =
         snapshot?.safeProtocolDiagnosticOccurrence;

@@ -34,6 +34,18 @@ health; a later recovery replaces it, while an explicit connection, Stop or a
 profile-scope change clears it.
 Unknown native text is omitted. This source change still requires device acceptance.
 
+Ordinary Diagnostics also shows the confirmed transport and whether it uses a
+bridge. These rows come from the successful candidate captured with its native
+profile digest and operation owner, only while both the current snapshot and
+the displayed observation retain matching healthy native proof. Staged choices,
+changed profiles, pending actions and retained guards do not supply these rows.
+Only the closed transport label and bridge/direct result are displayed; profile
+digests, candidate refs and bridge IDs stay private. Refresh time is an observation
+time, not a new native proof epoch; WARP chains do not claim a direct ordinary path.
+An explicit bridge reports bridged; typed delivery, AWG and HY2 report direct.
+Untyped VLESS can switch direct/bridge leaves inside one profile, so its path is
+shown as unconfirmed independently of its confirmed transport.
+
 Ordinary Android and Windows connect/reconnect refresh the authorized managed
 profile before staging, even when a reusable staged path exists. Server-side
 assignment changes therefore do not depend on the repair action or a local

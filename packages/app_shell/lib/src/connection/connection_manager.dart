@@ -418,6 +418,26 @@ class ConnectionManager extends ChangeNotifier {
     return catalog.candidates
         .where((candidate) => candidate.candidateRef == ref).firstOrNull;
   }
+  ({String transport, bool? throughBridge})? confirmedConnectionForDiagnostics(RuntimeSnapshot? snapshot) {
+    final confirmed = _confirmedCandidate;
+    final current = _runtimeSnapshot;
+    if (_disposed || _runtimeBusy || _managedProfileDirty || retainsProtection ||
+        confirmed == null || current == null || snapshot == null ||
+        confirmed.generation != _connectionCoordinator.operationGeneration ||
+        _activeCandidateRef != confirmed.candidate.candidateRef || _candidateRef != _activeCandidateRef ||
+        !_isConnectionProven(current) || !_isConnectionProven(snapshot) ||
+        current.effectiveProfileSource == null || snapshot.effectiveProfileSource == null ||
+        current.effectiveProfileDigest != confirmed.digest || current.stagedProfileDigest != confirmed.digest ||
+        snapshot.effectiveProfileDigest != confirmed.digest || snapshot.stagedProfileDigest != confirmed.digest ||
+        _activeConnectUsedWarp || confirmed.candidate.warpMode != null) return null;
+    final transport = _candidateTransport(confirmed.candidate);
+    // Legacy VLESS Auto can keep both direct and bridged leaves in one profile.
+    final throughBridge = confirmed.candidate.bridgeId != null ? true
+        : confirmed.candidate.deliveryEndpointId != null ||
+            const {'awg', 'hysteria2'}.contains(confirmed.candidate.protocol) ? false : null;
+    return transport.isEmpty ? null : (transport: transport, throughBridge: throughBridge);
+  }
+  ({int generation, String digest, domain.TransportCandidate candidate})? _confirmedCandidate;
   TransportCandidateCatalog? _transportCatalog;
   final _candidateSelector = SmartConnectCandidateSelector();
   String? _candidateNetworkKey;
@@ -4578,6 +4598,12 @@ class ConnectionManager extends ChangeNotifier {
     if (_candidateNetworkKey != null && _candidateRef != null) {
       if (!directWarp) _candidateSelector.recordSuccess(_candidateNetworkKey!, _candidateRef!);
       _activeCandidateRef = _candidateRef;
+      final candidate = _reportedCandidate(_activeCandidateRef);
+      final digest = snapshot.effectiveProfileDigest;
+      _confirmedCandidate = candidate != null && digest != null &&
+              digest == snapshot.stagedProfileDigest && _isConnectionProven(snapshot)
+          ? (generation: _connectionCoordinator.operationGeneration, digest: digest, candidate: candidate)
+          : null;
       _activePhysicalNetwork = _candidatePhysicalNetwork;
       _diagnosticsCoordinator.startRuntimePolling(_refreshDesktopRuntimeSnapshot);
       final generation = _connectionCoordinator.operationGeneration;

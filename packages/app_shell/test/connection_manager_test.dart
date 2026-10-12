@@ -1483,17 +1483,27 @@ void main() {
     final winner = TransportCandidate(candidateRef: 'de2:profile_1', profileRef: 'profile_1',
       nodeCode: 'de2', countryCode: 'DE', protocol: 'vless', transport: 'tcp',
       protection: 'reality', priority: 1, network: 'tcp', flow: '',
-      minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+      minimumClientRelease: '1.2.0', minimumCoreRelease: null, bridgeId: 'mini',
       platforms: {HostPlatform.windows}, requiredFeatures: const {});
     final bootstrapper = _StatsBootstrapper(bundle: true)..candidates = [initial, winner];
-    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows, heldOperation: 'connect')
       ..supportsCandidates = true
+      ..profileDigest = 'a' * 64
+      ..profileSource = const RuntimeProfileSource(revision: 'test',
+          origin: RuntimeProfileSourceOrigin.managedManifest, protocol: 'vless')
       ..heldProbeProfiles.add(initial.candidateRef);
     final manager = _manager(runtime, bootstrapper,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
 
-    await manager.connect();
+    final connecting = manager.connect();
+    await Future.any([runtime.operationEntered.future, connecting]);
+    expect(runtime.operationEntered.isCompleted, isTrue,
+        reason: bootstrapper.actualReports.toString());
+    expect(manager.confirmedConnectionForDiagnostics(manager.snapshot), isNull,
+        reason: 'a selected and staged candidate has no active native proof yet');
+    runtime.releaseOperation.complete();
+    await connecting;
 
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(manager.transportCatalog?.selected.nodeCode, 'pl',
@@ -1504,6 +1514,49 @@ void main() {
         reason: 'staging and the promoted active location must name the winning material');
     expect(bootstrapper.actualReports.singleWhere((report) => report['runtime_phase'] == 'running')
         ['selected_node_code'], 'de2');
+    PokrovDiagnosticsReport report() => PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      snapshot: manager.snapshot, confirmedConnection: manager.confirmedConnectionForDiagnostics(manager.snapshot),
+      statusLabel: 'connected', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false);
+    List<String> labels() => report().evidence.map((item) => item.label).toList();
+    expect(labels(), containsAll(['Протокол: VLESS REALITY', 'Подключение: Через мост']));
+    for (final private in [winner.candidateRef, winner.bridgeId!, 'a' * 64]) {
+      expect(labels().any((label) => label.contains(private)), isFalse);
+    }
+
+    final previousProof = manager.snapshot;
+    runtime.profileDigest = 'b' * 64;
+    await manager.readSnapshot();
+    expect(manager.confirmedConnectionForDiagnostics(previousProof), isNull,
+        reason: 'a healthy snapshot for a different current native profile cannot label the previous winner');
+    expect(report().evidence.where((item) => item.key.startsWith('active-')), isEmpty);
+
+    await manager.disconnect();
+    final direct = TransportCandidate(candidateRef: 'de2:xhttp', profileRef: 'xhttp',
+      nodeCode: 'de2', countryCode: 'DE', protocol: 'vless', transport: 'xhttp',
+      protection: 'tls', priority: 0, network: 'tcp', flow: '',
+      deliveryEndpointId: 'fixture', endpointGeneration: 1,
+      minimumClientRelease: '1.2.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: const {});
+    bootstrapper.candidates = [direct];
+    await manager.connect();
+    expect(labels(), containsAll(['Протокол: XHTTP TLS', 'Подключение: Напрямую']));
+    expect(labels(), isNot(contains('Подключение: Через мост')));
+    await manager.disconnect();
+    bootstrapper.candidates = [initial];
+    runtime.heldProbeProfiles.clear();
+    await manager.connect();
+    expect(labels(), containsAll(['Протокол: VLESS REALITY', 'Подключение: Не подтверждено']));
+    expect(labels(), isNot(contains('Подключение: Напрямую')),
+        reason: 'untyped VLESS can select a bridged leaf inside the same native profile');
+    expect(report().evidence.singleWhere((item) => item.key == 'active-path').state,
+        PokrovDiagnosticEvidenceState.unknown);
+    runtime.transportProofPending = true;
+    await manager.readSnapshot();
+    expect(manager.confirmedConnectionForDiagnostics(manager.snapshot), isNull,
+        reason: 'the same digest without current native proof is not confirmed');
   });
 
   test('unexpected connection diagnostics retain only operation type, closed platform codes and application frames', () async {
