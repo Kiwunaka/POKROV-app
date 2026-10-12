@@ -1,5 +1,9 @@
 # Windows acceptance
 
+Private Windows candidate `1.5.0+4149` shows only the confirmed active protocol
+and direct or bridge path in Diagnostics. It reuses the exact Core `1.2.14` and
+Cronet artifacts from 4148. Physical verification of this display is pending.
+
 Private unsigned Windows `1.5.0+4148` from App `919c62c4` / Core `2df0fdd`
 (`1.2.14`, existing Cronet) upgraded the owned Clean VM in place on 2026-10-12.
 The 28,679,169-byte normal installer exited 0; version 4148, the expected loaded
