@@ -2,8 +2,26 @@
 
 Private Windows candidate `1.5.0+4151` also retains an already materialized
 UDP reserve beside TCP candidates in the runtime cache, without another HTTP
-request. Core and Cronet remain the exact 4148 artifacts; native Auto recovery
-verification is pending.
+request. Core and Cronet remain the exact 4148 artifacts. The 28,679,408-byte
+installer completed once in the owned Clean VM; PE 4151 and fresh guest clock
+offset at most 1.7 ms were verified. One Auto connection on 2026-10-12 showed
+current VLESS REALITY through a bridge with healthy native DNS/egress. A bounded
+guest-only TCP firewall rule for the service and physical interface was present
+for 40.559 seconds, with a separate cleanup watchdog. Native failure and a
+protocol change were not observed. Rule/filter readback does not prove packet
+blocking; the removed rule's ActiveStore enforcement was not recorded. This is
+an inconclusive fault test, not a failed recovery or successful failover.
+Both rule and task were removed. Normal Stop/Exit restored app/aux/TUN/VPN
+routes/WinDivert to zero, routes 16, DNS 1/0, DHCP on, proxy off and link up.
+After a separate read-only prerequisites check, BFE/MpsSvc were running, the
+active Public firewall profile enabled, local rules allowed and the physical
+interface not excluded. The fault had used the actual service process image;
+a later whitespace parsing error was confined to that read-only comparison.
+No new connection or firewall change was made during it. Final guest sessions
+closed, SaveState RC0/EOF and Saved/Unlocked were confirmed at host time
+17:24:32 UTC. Browser and Smart DNS operations remained held after the earlier
+automatic-review denial; no alternate launcher was used. Host Hiddify, guest
+physical bridge and saved identity/preferences were preserved.
 
 Private Windows candidate `1.5.0+4150` adds the bounded ChatGPT QA path and keeps
 an available candidate from the other TCP/UDP family within the three-candidate
