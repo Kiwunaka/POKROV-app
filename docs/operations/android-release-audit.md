@@ -4,6 +4,12 @@ Public version remains `1.4.5`; 1.5.0 candidates are private. Older Huawei
 acceptance is recorded in `cutover-readiness.md`. The 4061 and 4055 results
 below are historical; LDPlayer is not used for VPN acceptance.
 
+The next private ARM64 candidate, `1.5.0+4145`, retains the closed native recovery
+cause in current Diagnostics and uses the updated Core `1.2.14` that accepts a
+successfully verified egress probe with a measured duration of zero milliseconds.
+Physical verification of both fixes is pending; the 4144 results below remain
+the observed behavior of that earlier candidate.
+
 On 2026-10-12, the Huawei main profile running private ARM64 1.5.0+4144
 (Core 1.2.14) connected to the ordinary US VLESS REALITY candidate over Beeline
 LTE in full-device mode. Normal Diagnostics confirmed tunnel, routes, DNS and
@@ -21,8 +27,8 @@ The admitted CH Mini RAW route initially confirmed all four native checks, then
 automatically reconnected twice and entered TrafficBlocked with protected egress
 requiring attention. Its owned browser HTTPS check and ingress continuity were
 not accepted. Stop removed the tunnel, routes and VPN service; Wi-Fi was returned
-off with mobile data on, and DevTools forwards were removed. Auto and Russia-direct
-were selected through the UI, but the final preference readback was not completed.
+off with mobile data on, and DevTools forwards were removed. A subsequent normal
+UI readback confirmed Auto and Russia-direct with the VPN disconnected.
 
 The x86_64 direct 4055 APK was installed in a fresh LDPlayer instance. It
 started, created a trial, and received Android VPN permission. DE and CH both
