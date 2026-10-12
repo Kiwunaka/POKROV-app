@@ -1,5 +1,28 @@
 # Windows acceptance
 
+On 2026-10-12 private unsigned Windows `1.5.0+4142` was built from App
+`89674dcd` with Core `1.2.14` (`7db9519`) and the unchanged pinned Cronet.
+The single DLL and installer builds completed successfully; the 48 required
+Core exports, ABI 2, package versions/files, Core/Cronet binding and compiled
+native/Dart trust pins passed. The Core suite had one zero-millisecond
+`lightReserve` timing assertion failure; the test now accepts a valid zero-ms
+result and its focused run passed. Windows `service_runtime` passed;
+`candidate_probe` stopped because the host token could not read the privileged
+boot clock. Public version remains `1.4.5`.
+
+The owned bridged Clean VM installed 4142 successfully. Case 779 used a fresh
+session (809/808 seconds remaining before admission) and corrected guest time
+(NTP offset 57–58 ms), without changing host Hiddify or the host clock. One QA
+Start at 00:16:57 UTC reached profile/Core/TUN/routes/DNS/egress READY, then
+reported `control_delivery=failed`, `control_reason=unclassified`. Current
+Smart DNS proof and a real Gemini answer were not obtained; no browser query
+or second Start was made. The client exited normally; OS baseline at 00:23:13
+had no app/auxiliary process, TUN, VPN route or WinDivert, with 16 routes,
+DNS counts 1/0, DHCP enabled and proxy off. Guest sessions closed and
+SaveState completed with exit 0; Saved/Unlocked was confirmed. The physical
+bridge, clock correction, identity, preferences and browser were preserved.
+This case is closed; the underlying control failure is still unknown.
+
 On 2026-10-08 the owned Clean VM upgraded from 4105 to private unsigned
 1.5.0+4107 (App code `d09f555c`, unchanged Core `dbc73e1` / 1.2.9).
 Direct UAC/terminal installer success, actual AOT/Core/Cronet, stable

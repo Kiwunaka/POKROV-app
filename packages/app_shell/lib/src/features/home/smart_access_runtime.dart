@@ -488,6 +488,17 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       await _retainAndDeliverSmartAccessRevocations(engine as RuntimeSmartAccessControl, binding,
         {qa.permit.grant.lease['lease_id']! as String: SmartAccessLeaseRevocation.terminate}, current, remaining);
     }
+    const controlCodes = {'smart_access_qa_control_invalid', 'smart_access_qa_runtime_invalid',
+      'smart_access_control_binding_mismatch', 'smart_access_control_not_current',
+      'smart_access_control_request_invalid', 'smart_access_verification_failed',
+      'smart_access_trust_unconfigured', 'smart_access_envelope_invalid', 'smart_access_signature_invalid',
+      'catalog_shape_invalid', 'catalog_time_invalid', 'catalog_nesting_invalid',
+      'catalog_field_invalid', 'catalog_value_invalid',
+      'invalid_runtime_control', 'invalid_smart_access_runtime_control',
+      'bound_runtime_control_capability_required', 'smart_access_runtime_control_unsupported',
+      'smart_access_profile_changed', 'smart_access_runtime_control_unconfirmed', 'service_unavailable',
+      'core_egress_probe_unavailable', 'core_egress_dns_failed', 'core_egress_connect_failed',
+      'core_egress_tls_failed', 'core_egress_timeout', 'core_egress_probe_failed', 'core_smart_access_lease_expired'};
     try {
       if (!current()) {
         setDiagnostic(const {'control_delivery': 'skipped', 'control_reason': 'scope_changed'});
@@ -532,9 +543,6 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
         setDiagnostic(const {'control_delivery': 'skipped', 'control_reason': 'bound_control_unsupported'});
       }
     } on RoutingCatalogFailure catch (error) {
-      const controlCodes = {'smart_access_qa_control_invalid', 'smart_access_qa_runtime_invalid',
-        'smart_access_control_binding_mismatch', 'smart_access_control_not_current',
-        'smart_access_control_request_invalid', 'smart_access_verification_failed'};
       setDiagnostic({'control_delivery': 'failed',
         'control_reason': controlCodes.contains(error.code) ? error.code : _connectionPlatformFailureCode(error) ?? 'unclassified'});
       if (current() && error.code == 'smart_access_qa_superseded') await closeMember();
@@ -545,8 +553,10 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
           httpStatus: error.observedHttpStatus ?? error.statusCode, osErrorCode: error.osErrorCode)});
       if (current() && (error.statusCode == 401 || error.statusCode == 403)) await closeMember();
     } on Object catch (error) {
+      final code = error is PlatformException ? error.code : null;
       setDiagnostic({'control_delivery': 'failed',
-        'control_reason': _connectionPlatformFailureCode(error) ?? (error is TimeoutException ? 'timeout' : 'unclassified')});
+        'control_reason': controlCodes.contains(code) ? code
+          : _connectionPlatformFailureCode(error) ?? (error is TimeoutException ? 'timeout' : 'unclassified')});
       rethrow;
     } finally {
       _smartAccessRefreshInFlight = false;

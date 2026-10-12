@@ -229,7 +229,8 @@ class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
 }
 
 void main() {
-  test('explicit first-provider QA uses the signed disabled projection through ordinary managed stage', () async {
+  for (final controlFailure in const [null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid']) {
+  test('explicit first-provider QA uses the signed disabled projection through ordinary managed stage${controlFailure == null ? '' : ' with $controlFailure'}', () async {
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = httpOverrides);
@@ -356,6 +357,9 @@ void main() {
                 'action': terminateQa ? 'terminate' : 'none', 'reason': terminateQa ? 'access_denied' : 'current',
                 'issued_at': wire(issued), 'expires_at': wire(issued.add(const Duration(seconds: 60)))},
                 'pokrov-smart-access-control-v1', key)};
+            if (controlFailure == 'smart_access_signature_invalid') {
+              ((reply as Map)['envelope'] as Map)['signature_b64'] = base64UrlEncode(List.filled(64, 0)).replaceAll('=', '');
+            }
         }
         request.response.write(jsonEncode(reply));
         await request.response.close();
@@ -448,6 +452,10 @@ void main() {
           if (nativeBoundRequestId == null || args['requestId'] != nativeBoundRequestId) {
             throw PlatformException(code: 'connect_owner_changed');
           }
+          if (controlFailure != null) {
+            throw PlatformException(code: controlFailure, message: 'private control message',
+              details: const {'capability': 'private control capability'});
+          }
           final config = jsonDecode(args['configJson'] as String) as Map;
           expect(config['capability'], startsWith('saqa1.'));
           expect(config['profile_digest'], phase['stagedProfileDigest']);
@@ -481,8 +489,31 @@ void main() {
       accountSessionCoordinator: account, firstSessionCoordinator: first, clientExperienceStore: _HomeExperience(),
       connectHintStore: const PokrovFileConnectHintStore(), windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
       authorizeAndroidConnect: () async => true, refreshSubscription: () async => true, onNotice: (_, __) {});
-    addTearDown(manager.dispose);
+    addTearDown(() async {
+      manager.dispose();
+      // Join background lifecycle delivery before removing its temporary outbox.
+      await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+        runtimePhase: 'disconnected', connected: false);
+    });
     expect(requests.where((path) => path.endsWith('/claim')), isEmpty, reason: 'availability cannot issue a permit');
+    if (controlFailure != null) {
+      if (controlFailure == 'smart_access_signature_invalid') {
+        await manager.startFirstProviderQa(admission);
+        expect(nativeCalls, isNot(contains('runtimeEngine.configureBoundSmartAccessRuntimeControl')));
+      } else {
+        await expectLater(manager.startFirstProviderQa(admission), throwsA(isA<PlatformException>()));
+      }
+      final context = await manager.readFirstProviderQaContext();
+      final connected = manager.status.phase;
+      await manager.disconnect();
+      expect(context?['control_delivery'], 'failed');
+      expect(context?['control_reason'], controlFailure == 'unknown_private_control_code' ? 'unclassified' : controlFailure);
+      expect(jsonEncode(context), isNot(contains('private')));
+      expect(context?['proof_current'], isNot(true));
+      expect(connected, ConnectionPhase.connected,
+        reason: 'failed QA control must retain the ordinary VPN health');
+      return;
+    }
     await manager.startFirstProviderQa(admission);
     expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
     expect(nativeCalls.where((method) => method == 'runtimeEngine.probeCandidate'), hasLength(1));
@@ -583,6 +614,7 @@ void main() {
     expect(nativeCalls.where((method) => method == 'runtimeEngine.cancelAndConfirmConnectStopped'),
       hasLength(stopsBeforeRetry + 1), reason: 'ordinary Stop must not use bound settlement');
   });
+  }
   testWidgets('restored Windows Home remains painted while inactive and after returning', (tester) async {
     final firstLaunch = _RestoredFirstLaunch();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;

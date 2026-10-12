@@ -20,3 +20,33 @@ Walking past another domain's window in the same lease keeps readiness open;
 an actual bypass of the matching domain's rule still closes its guard. The
 regressions cover synthetic DNS and route walks, not the historical cause of a
 particular browser failure.
+
+QA control diagnostics retain the closed native rejection code and exact verifier
+failure code. Windows passes a native code only from a trusted, compatible service
+response; an unavailable IPC exchange remains `service_unavailable`. Unknown
+codes, exception messages and details do not enter the QA context. A failed
+Smart probe leaves the separate ordinary VPN health unchanged.
+
+## Resolver location and service egress
+
+Smart DNS changes a service's visible source address by directing selected
+connections through a relay, not by moving DNS resolution alone. Control D
+documents this DNS-answer and transparent-proxy design; Getflix describes the
+same selected-domain relay model. For POKROV the resolver and relay are distinct
+roles: an existing US node is a possible relay candidate, not a fix for an
+unclassified client control failure. Changing the exit requires a scoped
+functional comparison after that failure is understood. No US cutover was
+performed during the 2026-10-12 review.
+
+Google publishes exact Gemini network dependencies beyond `gemini.google.com`.
+That firewall allowlist is not a requirement to relay every listed host: add only
+an observed necessary dependency to the agreed service scope. Real browser
+response acceptance remains required; country, successful DNS/TLS and page HTML
+do not establish it. COMSS's current documentation describes migration from its
+old Control D endpoint to PowerDNS; it does not establish closure of the entire
+service or disclose the current relay topology.
+
+Sources checked 2026-10-12: [Control D](https://docs.controld.com/docs/getting-started),
+[Getflix](https://www.getflix.com/faqs/),
+[Gemini firewall settings](https://knowledge.workspace.google.com/admin/generative-ai/gemini-app/gemini-app-firewall-settings),
+[COMSS DNS](https://www.comss.ru/page.php?id=7315).

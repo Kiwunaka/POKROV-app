@@ -70,7 +70,8 @@ int main() {
                             "core_egress_dns_failed", "core_egress_connect_failed",
                             "core_egress_tls_failed", "core_egress_tls_timeout",
                             "core_egress_response_timeout", "core_egress_timeout",
-                            "core_smart_access_lease_expired"}) {
+                            "core_smart_access_lease_expired", "smart_access_profile_changed",
+                            "invalid_smart_access_runtime_control", "smart_access_runtime_control_unconfirmed"}) {
     const auto body =
         std::string("phase=config_staged;core_ready=1;can_initialize=1;can_connect=1;") +
         "running=0;core_egress_validated=0;dns_ready=0;staged_profile_digest=" +
@@ -81,6 +82,11 @@ int main() {
                !interrupted.core_egress_validated && interrupted.can_connect,
            "interrupted runtime response lost retry state or became incompatible");
   }
+  auto private_failure = snapshot(digest);
+  private_failure.replace(private_failure.find("failure=none"), std::string("failure=none").size(),
+                          "failure=unknown_private_control_code");
+  expect(!ParseServiceRuntimeSnapshot(private_failure, &rejected),
+         "unknown private failure crossed the closed native code boundary");
   for (const auto* phase : {"connecting", "busy"}) {
     const auto pending = std::string("phase=") + phase +
         ";core_ready=1;can_initialize=0;can_connect=0;running=0;"

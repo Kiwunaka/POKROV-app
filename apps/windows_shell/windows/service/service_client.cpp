@@ -499,7 +499,7 @@ bool IsKnownPhase(const std::string& value) {
 }
 
 bool IsKnownFailure(const std::string& value) {
-  static constexpr std::array<const char*, 57> failures = {
+  static constexpr std::array<const char*, 63> failures = {
       "none",
       "core_not_initialized",
       "core_missing",
@@ -527,6 +527,12 @@ bool IsKnownFailure(const std::string& value) {
       "core_egress_probe_failed",
       "core_egress_probe_unavailable",
       "core_smart_access_lease_expired",
+      "invalid_runtime_control",
+      "invalid_smart_access_runtime_control",
+      "bound_runtime_control_capability_required",
+      "smart_access_runtime_control_unsupported",
+      "smart_access_profile_changed",
+      "smart_access_runtime_control_unconfirmed",
       "protected_handoff_unavailable",
       "transition_guard_failed",
       "transition_guard_active",
@@ -923,6 +929,9 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
   }
   if (command == Command::kConfigureSmartAccessRuntimeControl || command == Command::kConfigureSmartAccessRenewal ||
       command == Command::kConfigureBoundSmartAccessRuntimeControl) {
+    if (!result.command_accepted && exchange.response->body != "none" && IsKnownFailure(exchange.response->body)) {
+      result.failure = exchange.response->body;
+    }
     if (result.command_accepted && exchange.response->body != "configured=0" && exchange.response->body != "configured=1") {
       result.compatible = false;
       result.command_accepted = false;

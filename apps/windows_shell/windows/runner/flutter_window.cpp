@@ -764,7 +764,10 @@ bool FlutterWindow::OnCreate() {
                 if (!snapshot.command_accepted || !snapshot.compatible ||
                     (!id.empty() && (!pending_connect_bound_ || !pending_connect_ ||
                       pending_connect_request_id_ != id || pending_connect_->cancel_requested))) {
-                  reply->Error("smart_access_runtime_control_unconfirmed", "Runtime control was not confirmed.");
+                  reply->Error(snapshot.client_state == pokrov::service::ClientState::kUnavailable ? "service_unavailable" :
+                      snapshot.trusted && snapshot.compatible && snapshot.failure != "none" &&
+                          snapshot.failure != "service_unavailable"
+                      ? snapshot.failure : "smart_access_runtime_control_unconfirmed", "Runtime control was not confirmed.");
                   return;
                 }
                 flutter::EncodableMap receipt{
