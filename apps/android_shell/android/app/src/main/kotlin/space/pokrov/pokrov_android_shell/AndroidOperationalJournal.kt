@@ -230,7 +230,7 @@ internal data class AndroidCandidateProbeDiagnostic(
             )
         }
 
-        private fun safeProbeError(value: Any?): Map<String, Any>? {
+        private fun safeProbeError(value: Any?, allowPrimary: Boolean = true): Map<String, Any>? {
             val fields = value as? Map<*, *> ?: return null
             val enums = mapOf(
                 "operation" to setOf("dial", "tls", "write", "read_headers", "read_body", "validate_response"),
@@ -240,7 +240,7 @@ internal data class AndroidCandidateProbeDiagnostic(
             )
             val timing = setOf("elapsed_ms", "stage_started_ms", "duration_ms")
             val required = enums.keys + timing
-            if (!fields.keys.containsAll(required) || fields.keys.any { it !in required && it !in setOf("status", "os_error_code") } ||
+            if (!fields.keys.containsAll(required) || fields.keys.any { it !in required && it !in setOf("status", "os_error_code") && !(allowPrimary && it == "primary_error") } ||
                 enums.any { (key, allowed) -> fields[key] !in allowed }) return null
             fun number(key: String): Long? = when (val number = fields[key]) {
                 is Int -> number.toLong()
@@ -251,7 +251,10 @@ internal data class AndroidCandidateProbeDiagnostic(
                 number("elapsed_ms")!! > number("duration_ms")!! || number("stage_started_ms")!! > number("duration_ms")!! ||
                 fields.containsKey("status") && number("status") !in 100L..599L ||
                 fields.containsKey("os_error_code") && number("os_error_code") !in 1L..2147483647L) return null
-            return fields.entries.associate { (key, field) -> key as String to field as Any }
+            val primary = if (fields.containsKey("primary_error")) safeProbeError(fields["primary_error"], false) else null
+            if (fields.containsKey("primary_error") && (primary == null || fields["target"] != "owned_reserve" ||
+                    primary["target"] != "owned_api" || (primary["duration_ms"] as Number).toLong() > number("duration_ms")!!)) return null
+            return fields.entries.associate { (key, field) -> key as String to (if (key == "primary_error") primary!! else field as Any) }
         }
     }
 }

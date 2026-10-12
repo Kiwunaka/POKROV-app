@@ -228,6 +228,18 @@ void main() {
       'target': 'owned_reserve', 'request': 'egress_204', 'elapsed_ms': 77,
       'stage_started_ms': 700, 'duration_ms': 777};
     expect((await detailedProbe()).probeError, nativeProbeError);
+    final primary = {'operation': 'read_headers', 'cause': 'timeout', 'cancel_state': 'deadline',
+      'target': 'owned_api', 'request': 'egress_204', 'elapsed_ms': 400,
+      'stage_started_ms': 200, 'duration_ms': 600};
+    nativeProbeError = {...nativeProbeError as Map, 'primary_error': primary};
+    expect((await detailedProbe()).probeError, nativeProbeError);
+    expect(utf8.encode(jsonEncode({'primary_error': primary})).length, lessThan(350));
+    final paired = nativeProbeError;
+    nativeProbeError = {...paired as Map, 'primary_error': {...primary, 'primary_error': primary}};
+    expect((await detailedProbe()).probeError, isNull);
+    nativeProbeError = {...paired, 'primary_error': {...primary, 'raw_error': 'private-host'}};
+    expect((await detailedProbe()).probeError, isNull);
+    nativeProbeError = paired;
     nativeProbeError = {...nativeProbeError as Map, 'raw_error': 'sensitive-host'};
     expect((await detailedProbe()).probeError, isNull);
   });

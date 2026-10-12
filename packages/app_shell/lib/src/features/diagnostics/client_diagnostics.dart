@@ -1991,16 +1991,17 @@ class _TimelineAttemptView extends StatelessWidget {
               'dial': 'не удалось открыть соединение', 'tls': 'не удалось завершить защищённое соединение',
               'write': 'не удалось отправить запрос', 'read_headers': 'не удалось получить ответ сервера',
               'read_body': 'не удалось дочитать ответ сервера', 'validate_response': 'сервер вернул неожиданный ответ',
-            }[detail['operation']]}. Повторите подключение или выберите другой сервер.', style: theme.textTheme.bodySmall),
+            }[(detail['primary_error'] as Map? ?? detail)['operation']]}. Повторите подключение или выберите другой сервер.', style: theme.textTheme.bodySmall),
             ExpansionTile(
               title: const Text('Подробности проверки'), tilePadding: EdgeInsets.zero,
-              children: [Text('${detail['target'] == 'owned_api' ? 'Основная' : 'Резервная'} проверка · '
-                '${detail['request']} · ${detail['operation']} · ${detail['cause']}\n'
-                'Отмена: ${detail['cancel_state']} · HTTP: ${detail['status'] ?? 'нет ответа'} · '
-                'Ошибка ОС: ${detail['os_error_code'] ?? 'не получена'}\n'
-                'Начало этапа: ${detail['stage_started_ms']} мс · операция: ${detail['elapsed_ms']} мс · '
-                'вся проверка: ${detail['duration_ms']} мс',
-                key: ValueKey('diagnostics-probe-error-${attempt.generation}'), style: theme.textTheme.bodySmall)],
+              children: [for (final error in [if (detail['primary_error'] case final Map primary) primary, detail])
+                Text('${error['target'] == 'owned_api' ? 'Основная' : 'Резервная'} проверка · '
+                '${error['request']} · ${error['operation']} · ${error['cause']}\n'
+                'Отмена: ${error['cancel_state']} · HTTP: ${error['status'] ?? 'нет ответа'} · '
+                'Ошибка ОС: ${error['os_error_code'] ?? 'не получена'}\n'
+                'Начало этапа: ${error['stage_started_ms']} мс · операция: ${error['elapsed_ms']} мс · '
+                'время завершения: ${error['duration_ms']} мс',
+                key: ValueKey('diagnostics-probe-error-${attempt.generation}-${error['target']}'), style: theme.textTheme.bodySmall)],
             ),
           ]),
         const SizedBox(height: 10),

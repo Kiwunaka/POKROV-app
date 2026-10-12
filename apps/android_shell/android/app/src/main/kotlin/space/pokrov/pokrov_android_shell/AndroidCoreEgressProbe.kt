@@ -57,12 +57,14 @@ internal class AndroidCoreEgressMonitor(
     private var lastProbeAt = Long.MIN_VALUE
     private var lastResult = AndroidCoreEgressProbeResult.HEALTHY
     private var lastTrafficTotal: Long? = null
+    private var suspectedFailure = false
 
     @Synchronized fun start() {
         if (cancelled || inFlight != null || !isCurrent() || (periodic && !canRepeat())) return
         val token = ++sequence
         inFlight = token
         lastProbeAt = clockMillis()
+        suspectedFailure = false
         startProbe(token, periodic)
     }
 
@@ -72,13 +74,15 @@ internal class AndroidCoreEgressMonitor(
         val previous = lastTrafficTotal
         lastTrafficTotal = total
         if (previous != null && total > previous && periodic &&
-            clockMillis() - lastProbeAt >= if (lastResult == AndroidCoreEgressProbeResult.HEALTHY)
+            clockMillis() - lastProbeAt >= if (!suspectedFailure && lastResult == AndroidCoreEgressProbeResult.HEALTHY)
                 INTERVAL_MILLIS else SUSPECT_INTERVAL_MILLIS
         ) start()
     }
 
     @Synchronized fun onSuspectedFailure() {
-        if (periodic && clockMillis() - lastProbeAt >= SUSPECT_INTERVAL_MILLIS) start()
+        if (!periodic) return
+        suspectedFailure = true
+        if (clockMillis() - lastProbeAt >= SUSPECT_INTERVAL_MILLIS) start()
     }
 
     @Synchronized fun owns(token: Long): Boolean =

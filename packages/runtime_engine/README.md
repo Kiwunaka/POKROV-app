@@ -56,3 +56,5 @@ without changing the terminal result. The ordinary D8 outbox keeps all candidate
 outcomes and only the latest failure detail within its existing 8 KiB record limit;
 local events retain each detail. Missing detail
 means no observation; raw exceptions, destinations and response content are rejected.
+
+If primary and reserve both fail, `probe_error.primary_error` keeps one additional flat primary snapshot, including its original stage and completion time. Validators allow exactly two targets and reject deeper nesting or unknown fields. Diagnostics shows the primary cause first and retains both in its existing details section; D8 preserves the pair only on the latest failed candidate, within the same record limit. A successful reserve retains the existing success behavior.

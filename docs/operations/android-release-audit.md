@@ -4,6 +4,19 @@ Public version remains `1.4.5`; 1.5.0 candidates are private. Older Huawei
 acceptance is recorded in `cutover-readiness.md`. The 4061 and 4055 results
 below are historical; LDPlayer is not used for VPN acceptance.
 
+On 2026-10-12, the in-place 4146→4147 update preserved the package UID,
+main-profile data inode and secondary-profile state. With the updated Core,
+one ordinary manual US AWG 3.1 attempt on Beeline LTE still failed with
+`CONN-008`, `probe_budget_expired`, `candidate_selection_exhausted` and origin
+`core`. Visible Diagnostics retained stage `tls_read`; its expanded details
+reported a reserve `egress_204` check, operation `tls`, cause and cancellation
+state `cancelled`, no HTTP response and no OS error code. The stage started at
+3650 ms, the operation took 346 ms and the probe took 3998 ms. No usable VPN or
+browser check followed. At 09:57:56 UTC, Auto and Russia-direct were restored,
+Wi-Fi was off and mobile data on, with no tunnel, tunnel routes, VPN service or
+Chrome diagnostic forwards. This run localizes the terminal probe cancellation;
+it does not establish the underlying TLS or transport cause.
+
 Private ARM64 candidate `1.5.0+4145` retains the closed native recovery
 cause in current Diagnostics and uses the updated Core `1.2.14` that accepts a
 successfully verified egress probe with a measured duration of zero milliseconds.

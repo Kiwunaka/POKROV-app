@@ -1832,6 +1832,7 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(manager.offlineState, ManagedProfileOfflineState.apiUnavailable);
     expect(runtime.probedProtocols, ['awg31']);
+    expect(runtime.probeTimeouts, [const Duration(seconds: 4)]);
     expect(runtime.stagedPayloads.single.materialCandidate?.candidateRef, 'de:awg31_lab');
     expect(runtime.stagedPayloads.single.warpPolicy.canEnableRuntime, isFalse);
     expect(runtime.connectCalls, 1);
@@ -2363,7 +2364,10 @@ void main() {
   test('exhausted native candidates retain the early start and terminal Core error', () async {
     const probeError = {'operation': 'read_body', 'cause': 'unexpected_eof', 'cancel_state': 'active',
       'target': 'owned_reserve', 'request': 'egress_64k', 'elapsed_ms': 100,
-      'stage_started_ms': 700, 'duration_ms': 800};
+      'stage_started_ms': 700, 'duration_ms': 800,
+      'primary_error': {'operation': 'read_headers', 'cause': 'timeout', 'cancel_state': 'deadline',
+        'target': 'owned_api', 'request': 'egress_204', 'elapsed_ms': 300,
+        'stage_started_ms': 200, 'duration_ms': 500}};
     final directory = await Directory.systemTemp.createTemp('pokrov-candidate-failure-');
     addTearDown(() => directory.delete(recursive: true));
     final observability = await PokrovClientObservability.start(
@@ -3038,10 +3042,13 @@ void main() {
         .map((request) => request.selected), isNot(contains(otherWarp.candidateRef)));
   });
 
-  test('first Android candidate can finish after four seconds while cached probes still cancel', () async {
+  test('cold Android AWG connects after four seconds with fresh or cached material', () async {
+    final awg = _CachedBootstrapper.alternatives[1];
     final bootstrapper = _CachedBootstrapper()
       ..cacheAvailable = false
-      ..candidates = [_candidates.first];
+      ..candidates = [awg]
+      ..cachedCatalog = TransportCandidateCatalog(revision: 'cached',
+          selectedCandidateRef: awg.candidateRef, candidates: [awg]);
     final runtime = _Runtime()
       ..supportsCandidates = true
       ..probeDelay = const Duration(seconds: 5);
@@ -3060,11 +3067,12 @@ void main() {
       ..failure = TimeoutException('managed API unavailable');
     runtime.probeTimeouts.clear();
     await manager.connect();
-    expect(runtime.probeTimeouts, isNotEmpty);
-    expect(runtime.probeTimeouts, everyElement(const Duration(seconds: 4)));
-    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(runtime.probeTimeouts, [const Duration(seconds: 12)]);
+    expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
+    expect(manager.offlineState, ManagedProfileOfflineState.apiUnavailable);
+    expect(runtime.probedProtocols, ['awg', 'awg']);
     expect(runtime.activeProbes, isEmpty);
-    expect(runtime.connectCalls, 1);
+    expect(runtime.connectCalls, 2);
   });
 
   test('Android first Connect can cancel while certificate preparation waits', () async {
@@ -3127,6 +3135,7 @@ void main() {
     expect(bootstrapper.resolutions, hasLength(resolutionsBefore), reason: 'ready cache never waits for the API');
     expect(runtime.probedProtocols.skip(probesBefore), ['awg', 'hysteria2'],
         reason: 'the confirmed failed current is not probed again');
+    expect(runtime.probeTimeouts.skip(probesBefore), everyElement(const Duration(seconds: 4)));
     expect(runtime.handoffProfiles, ['de:cached_2']);
     expect(runtime.activeProbes, isEmpty, reason: 'the losing AWG probe settles before handoff');
     expect(runtime.calls, isNot(contains('disconnect')));

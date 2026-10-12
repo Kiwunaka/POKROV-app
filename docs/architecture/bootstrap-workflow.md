@@ -189,7 +189,11 @@ After a healthy ordinary connect, the existing finite cache refresh fetches the
 exact current profile's latest catalog, then prepares at most two alternatives:
 first an authorized path on another node, then the opposite typed ingress family
 on the selected node/profile; another protocol fills any remaining slot in server
-priority order. In a mixed catalog, the legacy IPv4 base shares its typed IPv6
+priority order. Reserve diversity compares protocol, transport, protection and
+bridge ID, so REALITY and XHTTP remain separate alternatives even though both use
+VLESS; another admitted bridge or a direct route on the same exit can also fill
+a remaining slot. The two-reserve limit and bridge-first order stay unchanged.
+In a mixed catalog, the legacy IPv4 base shares its typed IPv6
 sibling's native-start fence and cannot probe while that sibling is preparing.
 A manually selected country keeps both reserves in that country,
 without delaying connection or probing them. Already materialized profiles are
@@ -264,10 +268,18 @@ link-change suspicion, or further traffic after a failed check, can trigger it
 after five seconds. Idle sessions have no periodic probe timer; the Windows
 five-second detection budget does not apply. Failed repeat checks retain the
 TUN, and only the current session may publish a result.
+One DNS/link suspicion inside the five-second interval, including during an
+older probe, is retained until the next probe starts. Continued traffic can then
+recheck after that interval; a healthy older result cannot restore the minute
+interval before the pending suspicion is checked.
 
 Online candidate selection fetches exact profiles before charging the native
 probe budget. Each worker has up to 12 seconds of native probes, with at most
-four seconds per candidate; profile HTTP still obeys the connect action deadline.
+four seconds per candidate. Android's initial ordinary selection permits a
+candidate to use that existing 12-second worker budget; a cold Connect from an
+ordinary-only cache uses the same allowance because it starts a new native
+instance too. Recovery, Windows and cached WARP groups keep their four-second
+candidate bound. Profile HTTP still obeys the connect action deadline.
 Cancellation settles profile and native work before releasing a worker.
 A profile revision supersession propagates through the candidate selector and
 cancels and joins its remaining workers. It is not converted into candidate

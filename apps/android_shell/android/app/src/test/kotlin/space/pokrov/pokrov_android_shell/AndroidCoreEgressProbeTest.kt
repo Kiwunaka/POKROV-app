@@ -136,16 +136,28 @@ class AndroidCoreEgressProbeTest {
         )
         monitor.start()
         monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
+        monitor.onTraffic(0, 0)
         now = 4_000L
         monitor.onSuspectedFailure()
+        monitor.onTraffic(1, 0)
         assertEquals(1, started.size)
         now = 5_000L
+        monitor.onTraffic(2, 0)
+        assertEquals("A single throttled suspicion must survive until traffic can recheck", 2, started.size)
+        now = 6_000L
         monitor.onSuspectedFailure()
         assertEquals(2, started.size)
         // An isolated AAAA failure requests this recheck; it is not a failed IPv4 probe.
         assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY), published)
         monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
         assertEquals(listOf(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbeResult.HEALTHY), published)
+        now = 10_000L
+        monitor.onTraffic(3, 0)
+        assertEquals("A suspicion during an older probe must survive its completion", 3, started.size)
+        monitor.complete(started.last(), AndroidCoreEgressProbeResult.HEALTHY)
+        now = 15_000L
+        monitor.onTraffic(4, 0)
+        assertEquals("The follow-up consumes suspicion and restores the healthy interval", 3, started.size)
         monitor.cancel()
     }
 

@@ -47,24 +47,24 @@ class SmartConnectCandidateSelector {
         return a.priority.compareTo(b.priority);
       });
     final alternatives = <TransportCandidate>[];
-    final families = {selected.protocol};
+    final variants = {(selected.protocol, selected.transport, selected.protection, selected.bridgeId)};
     for (final candidate in ordered) {
       if (candidate.nodeCode == selected.nodeCode) continue;
       alternatives.add(candidate);
-      families.add(candidate.protocol);
+      variants.add((candidate.protocol, candidate.transport, candidate.protection, candidate.bridgeId));
       break;
     }
     for (final candidate in ordered) {
       if (alternatives.length == 2) break;
       if (candidate.deliveryEndpointId != null && _familySiblings(selected, candidate)) {
         alternatives.add(candidate);
-        families.add(candidate.protocol);
+        variants.add((candidate.protocol, candidate.transport, candidate.protection, candidate.bridgeId));
         break;
       }
     }
     for (final candidate in ordered) {
       if (alternatives.length == 2) break;
-      if (families.add(candidate.protocol)) alternatives.add(candidate);
+      if (variants.add((candidate.protocol, candidate.transport, candidate.protection, candidate.bridgeId))) alternatives.add(candidate);
     }
     return alternatives;
   }

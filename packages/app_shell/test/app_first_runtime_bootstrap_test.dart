@@ -912,7 +912,10 @@ void main() {
     gateNextSessionRead = true;
     const probeError = {'operation': 'read_headers', 'cause': 'closed', 'cancel_state': 'cancelled',
       'target': 'owned_reserve', 'request': 'egress_204', 'elapsed_ms': 100,
-      'stage_started_ms': 800, 'duration_ms': 900};
+      'stage_started_ms': 800, 'duration_ms': 900,
+      'primary_error': {'operation': 'read_headers', 'cause': 'timeout', 'cancel_state': 'deadline',
+        'target': 'owned_api', 'request': 'egress_204', 'elapsed_ms': 300,
+        'stage_started_ms': 200, 'duration_ms': 500}};
     final probe = <String, Object?>{
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
       'stage': 'probe', 'connected': false, 'failure_kind': 'timeout',
@@ -964,6 +967,7 @@ void main() {
         runtimePhase: 'failed', connected: false, attemptNumber: 2, candidateProbes: [probe]), isFalse);
     expect(pending(), hasLength(1));
     final frozenBody = Map<String, dynamic>.from(pending().single['body'] as Map);
+    expect(utf8.encode(jsonEncode(pending().single)).length, lessThanOrEqualTo(8 * 1024));
     expect(jsonEncode(pending()), isNot(contains('stats-fixture-token')));
     AppFirstRuntimeBootstrapper restart({AppFirstStateFileWriter? stateFileWriter}) => AppFirstRuntimeBootstrapper(
       apiBaseUrl: 'https://api.pokrov.space/', apiFallbackBaseUrls: const [],
@@ -1119,6 +1123,94 @@ void main() {
     await expectLater(restart().reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'app_opened', connected: false), throwsFormatException);
     expect(received, hasLength(deliveredBeforeAccountChange), reason: 'an oversized pending file is never transmitted');
+  });
+
+  test('country Auto caches XHTTP beside REALITY and restores its exact material offline', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-transport-reserve-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    const realityRef = 'de:legacy_reality_fallback';
+    const xhttpRef = 'de:xhttp_stream_one';
+    final queries = <Map<String, String>>[];
+    Map<String, Object?> config(bool xhttp) => {
+      'outbounds': [
+        {'type': 'selector', 'tag': 'proxy', 'outbounds': ['fixture-node'], 'default': 'fixture-node'},
+        {'type': 'vless', 'tag': 'fixture-node', 'server': 'fixture.invalid', 'server_port': 443,
+          'uuid': '11111111-1111-4111-8111-111111111111',
+          'tls': {'enabled': true, 'server_name': 'fixture.invalid'},
+          if (xhttp) 'transport': {'type': 'xhttp', 'mode': 'stream-one', 'path': '/fixture'}},
+      ],
+      'route': {'final': 'proxy'},
+    };
+    Map<String, Object?> candidate(bool xhttp) => {
+      'candidate_ref': xhttp ? xhttpRef : realityRef,
+      'profile_ref': xhttp ? 'xhttp_stream_one' : 'legacy_reality_fallback',
+      'node_code': 'de', 'country_code': 'DE', 'protocol': 'vless',
+      'transport': xhttp ? 'xhttp' : 'tcp', 'protection': xhttp ? 'tls' : 'reality',
+      'priority': xhttp ? 1 : 0, 'parameters': {'network': 'tcp', 'flow': ''},
+      'requirements': {'minimum_client_release': '1.2.0', 'minimum_core_release': null,
+        'platforms': ['windows'], 'required_features': [
+          'singbox_vless_v1', xhttp ? 'singbox_xhttp_v1' : 'singbox_reality_v1']},
+    };
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'synthetic-session', 'account_id': 'synthetic-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          queries.add(request.uri.queryParameters);
+          request.response.write(jsonEncode({
+            'profile_revision': 'transport-reserve', 'config_format': 'singbox-json',
+            'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
+            'config_payload': config(false),
+            'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
+              'revision': 'transport-reserve', 'selected_candidate_ref': realityRef,
+              'candidates': [candidate(false), candidate(true)]},
+            'candidate_materials': [for (final xhttp in [false, true]) {
+              'candidate_ref': xhttp ? xhttpRef : realityRef,
+              'transport_kind': xhttp ? 'xhttp' : 'reality',
+              'config_format': 'singbox-json', 'config_payload': config(xhttp),
+            }],
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+            'access': {'access_state': 'paid_unlimited',
+              'expiry_at': DateTime.now().toUtc().add(const Duration(days: 2)).toIso8601String()},
+          }));
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    AppFirstRuntimeBootstrapper create({bool offline = false}) => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}', supportDirectoryResolver: () async => directory,
+      maxRequestAttempts: 1,
+      httpClientFactory: offline ? () => throw StateError('offline restore used HTTP') : null);
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'DE');
+    final features = RuntimeTransportFeature.values.toSet();
+    final online = create();
+    final selected = await online.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
+      routeMode: inputs.routeMode, preferredCountryCode: inputs.preferredCountryCode,
+      runtimeFeatures: features, selectCandidate: false);
+    expect(queries.single['selected_country_code'], 'DE');
+    expect(selected.materialCandidate?.candidateRef, realityRef);
+    await online.markManagedProfileProven(inputs, selected.cacheEntryId);
+    final restarted = create(offline: true);
+    final reserve = await restarted.loadCachedManagedProfile(inputs,
+      selectedCandidateRef: xhttpRef, runtimeFeatures: features);
+    expect(reserve, isNotNull, reason: 'XHTTP is a distinct admitted transport despite sharing VLESS with REALITY');
+    expect(reserve?.materialCandidate?.candidateRef, xhttpRef);
+    expect(reserve?.materialCandidate?.countryCode, 'DE');
+    expect(reserve?.configPayload, selected.candidateMaterials[xhttpRef]?.configPayload);
+    expect((await restarted.loadCachedManagedProfile(inputs, preferProven: true,
+      runtimeFeatures: features))?.materialCandidate?.candidateRef, realityRef);
   });
 
   test('protected managed cache restores exact profile after restart and respects server denial', () async {

@@ -2718,7 +2718,7 @@ class ConnectionManager extends ChangeNotifier {
 
   Future<ManagedProfilePayload> _resolveCachedCandidateProfile(ManagedProfileCacheInputs inputs,
       ManagedProfilePayload cached, {required int generation, String recoveryCandidateRef = '',
-      Set<String> excludedCandidateRefs = const {}}) async {
+      Set<String> excludedCandidateRefs = const {}, bool coldConnect = false}) async {
     final engine = _runtimeEngine;
     final cache = _bootstrapper;
     final catalog = cached.transportCatalog;
@@ -2790,6 +2790,10 @@ class ConnectionManager extends ChangeNotifier {
               ipv6Available: network.ipv6Available,
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
+              probeTimeout: coldConnect && inputs.hostPlatform == HostPlatform.android &&
+                      group.every((candidate) => candidate.warpMode == null)
+                  ? const Duration(seconds: 12)
+                  : const Duration(seconds: 4),
               onProbeResult: (candidate, result) {
                 if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
                 final exact = available[candidate.candidateRef];
@@ -4015,7 +4019,8 @@ class ConnectionManager extends ChangeNotifier {
         if (usedCachedProfile && cachedPayload != null) {
           // Restore from the protected original, including after process restart
           // or a host clear. Restaging must not renew the cache timestamp.
-          cachedPayload = await _resolveCachedCandidateProfile(cacheInputs, cachedPayload, generation: generation);
+          cachedPayload = await _resolveCachedCandidateProfile(cacheInputs, cachedPayload,
+              generation: generation, coldConnect: actionIntent == ConnectionTransitionIntent.connect);
           managedProfile = await _prepareManagedProfile(cachedPayload,
               offline: true, ownerGeneration: generation,
               smartAccessVpnFallback: smartAccessVpnFallback);

@@ -67,7 +67,16 @@ void main() {
     final bridge = _candidate(2, node: 'us', country: 'US', bridge: 'ru-spb');
     final candidates = [selected, direct, bridge];
     expect(SmartConnectCandidateSelector.cacheAlternatives(selected,
-        candidates, countryOnly: false, catalog: _catalog(candidates)), [bridge]);
+        candidates, countryOnly: false, catalog: _catalog(candidates)), [bridge, direct]);
+  });
+
+  test('country Auto reserves another admitted bridge then direct on the same exit node', () {
+    final selected = _candidate(1, node: 'us', country: 'US', bridge: 'mini');
+    final direct = _candidate(0, node: 'us', country: 'US');
+    final bridge = _candidate(2, node: 'us', country: 'US', bridge: 'ru-spb');
+    final candidates = [direct, selected, bridge];
+    expect(SmartConnectCandidateSelector.cacheAlternatives(selected,
+        candidates, countryOnly: true, catalog: _catalog(candidates)), [bridge, direct]);
   });
 
   test('Auto settles bridges in server priority order before trying a remembered direct route', () async {

@@ -4,11 +4,11 @@ import 'package:crypto/crypto.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart';
 
 abstract final class OperationalAttributePolicy {
-  static Map<String, Object>? candidateProbeError(Object? value) {
+  static Map<String, Object>? candidateProbeError(Object? value, {bool allowPrimary = true}) {
     const required = {'operation', 'cause', 'cancel_state', 'target', 'request',
       'elapsed_ms', 'stage_started_ms', 'duration_ms'};
     if (value is! Map || !value.keys.toSet().containsAll(required) ||
-        value.keys.any((key) => !required.contains(key) && key != 'status' && key != 'os_error_code') ||
+        value.keys.any((key) => !required.contains(key) && key != 'status' && key != 'os_error_code' && !(allowPrimary && key == 'primary_error')) ||
         !const {'dial', 'tls', 'write', 'read_headers', 'read_body', 'validate_response'}.contains(value['operation']) ||
         !const {'io', 'timeout', 'cancelled', 'eof', 'unexpected_eof', 'closed', 'dns', 'tls_certificate', 'invalid_response'}.contains(value['cause']) ||
         !const {'active', 'deadline', 'cancelled'}.contains(value['cancel_state']) ||
@@ -20,7 +20,11 @@ abstract final class OperationalAttributePolicy {
         (value['elapsed_ms'] as int) > (value['duration_ms'] as int) ||
         value.containsKey('status') && (value['status'] is! int || (value['status'] as int) < 100 || (value['status'] as int) > 599) ||
         value.containsKey('os_error_code') && (value['os_error_code'] is! int || (value['os_error_code'] as int) < 1 || (value['os_error_code'] as int) > 2147483647)) return null;
-    return Map<String, Object>.unmodifiable(value.cast<String, Object>());
+    final primary = value.containsKey('primary_error')
+        ? candidateProbeError(value['primary_error'], allowPrimary: false) : null;
+    if (value.containsKey('primary_error') && (primary == null || value['target'] != 'owned_reserve' ||
+        primary['target'] != 'owned_api' || (primary['duration_ms'] as int) > (value['duration_ms'] as int))) return null;
+    return Map<String, Object>.unmodifiable({...value.cast<String, Object>(), if (primary != null) 'primary_error': primary});
   }
   static const candidateHTTP64KFailures = <String>{
     'write_error', 'header_error', 'body_short', 'body_read_error',
