@@ -66,6 +66,11 @@ class SmartConnectCandidateSelector {
       if (alternatives.length == 2) break;
       if (variants.add((candidate.protocol, candidate.transport, candidate.protection, candidate.bridgeId))) alternatives.add(candidate);
     }
+    if (alternatives.length == 2 &&
+        alternatives.every((candidate) => candidate.network == selected.network)) {
+      final reserve = ordered.where((candidate) => candidate.network != selected.network).firstOrNull;
+      if (reserve != null) alternatives.add(reserve);
+    }
     return alternatives;
   }
 

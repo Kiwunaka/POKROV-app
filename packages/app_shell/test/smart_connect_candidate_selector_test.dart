@@ -55,10 +55,11 @@ void main() {
         candidates, countryOnly: true, catalog: _catalog(candidates)).map((item) => item.candidateRef),
         [v4.candidateRef]);
     final otherNode = _candidate(2, node: 'ch', country: 'CH');
-    final withOtherNode = [legacy, _candidate(1, udp: true), otherNode, v4, v6];
+    final awg = _candidate(1, udp: true);
+    final withOtherNode = [legacy, awg, otherNode, v4, v6];
     expect(SmartConnectCandidateSelector.cacheAlternatives(v6,
         withOtherNode, countryOnly: false, catalog: _catalog(withOtherNode)).map((item) => item.candidateRef),
-        [otherNode.candidateRef, v4.candidateRef]);
+        [otherNode.candidateRef, v4.candidateRef, awg.candidateRef]);
   });
 
   test('cache prefers an admitted bridge on another node over a higher ranked direct route', () {

@@ -203,16 +203,19 @@ Bridge settlement and IP-family barriers cover only this actual shortlist.
 This source change requires a new client candidate and device acceptance.
 
 After a healthy ordinary connect, the existing finite cache refresh fetches the
-exact current profile's latest catalog, then prepares at most two alternatives:
+exact current profile's latest catalog, then prepares up to two usual alternatives:
 first an authorized path on another node, then the opposite typed ingress family
 on the selected node/profile; another protocol fills any remaining slot in server
 priority order. Reserve diversity compares protocol, transport, protection and
 bridge ID, so REALITY and XHTTP remain separate alternatives even though both use
 VLESS; another admitted bridge or a direct route on the same exit can also fill
-a remaining slot. The two-reserve limit and bridge-first order stay unchanged.
+a remaining slot. If the selected route and both reserves all use TCP or all use
+UDP, one additional already materialized reserve may use the other network family.
+This exception keeps the original two choices and adds no profile request; the
+existing 8 MiB cache limit, expiry and account binding still apply.
 In a mixed catalog, the legacy IPv4 base shares its typed IPv6
 sibling's native-start fence and cannot probe while that sibling is preparing.
-A manually selected country keeps both reserves in that country,
+A manually selected country keeps all reserves in that country,
 without delaying connection or probing them. Already materialized profiles are
 reused in the same encrypted account-bound record; catalog changes, expiry and
 explicit denial still restrict reuse. A proven profile reads the latest catalog
