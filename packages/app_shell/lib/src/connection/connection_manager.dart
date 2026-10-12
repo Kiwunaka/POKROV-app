@@ -163,6 +163,11 @@ class ConnectionManager extends ChangeNotifier {
       unawaited(_refreshManagedProfileCache());
       _cacheRefreshTimer = Timer.periodic(const Duration(hours: 6), (_) => unawaited(_refreshManagedProfileCache()));
     }
+    if (_networkContextTimer == null && _appContext.hostPlatform == HostPlatform.android &&
+        _bootstrapper is AppFirstRuntimeBootstrapper) {
+      _networkContextTimer = Timer.periodic(const Duration(hours: 1), (_) =>
+          unawaited((_bootstrapper as AppFirstRuntimeBootstrapper).refreshNetworkContext()));
+    }
   }
 
   Future<void> refreshTransportCatalog({bool force = false}) async {
@@ -433,6 +438,7 @@ class ConnectionManager extends ChangeNotifier {
   ManagedProfileOfflineState? _offlineState;
   ManagedProfileOfflineState? get offlineState => _offlineState;
   Timer? _cacheRefreshTimer;
+  Timer? _networkContextTimer;
   bool _cacheRefreshInFlight = false;
   Completer<void>? _cacheRefreshCompletion;
   String? get headline => _runtimeHeadline;
@@ -804,6 +810,7 @@ class ConnectionManager extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _cacheRefreshTimer?.cancel();
+    _networkContextTimer?.cancel();
     _stopTransportPolicyRefresh();
     _managedProfileLifecycle.dispose();
     _diagnosticsCoordinator.dispose();
@@ -1133,6 +1140,9 @@ class ConnectionManager extends ChangeNotifier {
       );
 
   Future<void> _resumeRuntimeAndTrustedWifiChecks() async {
+    if (_appContext.hostPlatform == HostPlatform.android && _bootstrapper is AppFirstRuntimeBootstrapper) {
+      unawaited((_bootstrapper as AppFirstRuntimeBootstrapper).refreshNetworkContext());
+    }
     if (!_diagnosticsCoordinator.beginResumeRefresh()) {
       return;
     }

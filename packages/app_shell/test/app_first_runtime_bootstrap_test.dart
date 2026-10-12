@@ -768,6 +768,51 @@ void main() {
     FlutterSecureStoragePlatform.instance = defaultSecureStoragePlatform;
   });
 
+  test('network context keeps the report run and does not retry through VPN egress', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-network-context-');
+    addTearDown(() => directory.delete(recursive: true));
+    await File('${directory.path}/app-first-session-android.json').writeAsString(jsonEncode({
+      'schema_version': 1, 'install_id': 'network-fixture-install', 'account_id': '42',
+      'session_token_storage': 'secure', 'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    String sessionToken(int expires) => '${base64Url.encode(utf8.encode(jsonEncode({'exp': expires})))}.fixture-signature';
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.android,
+      installId: 'network-fixture-install', sessionToken: sessionToken(1));
+    var calls = 0;
+    var status = 'skipped';
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'runtimeEngine.observeNetworkContext');
+      final fields = call.arguments as Map;
+      expect(fields['reportRunId'], matches(RegExp(r'^[0-9a-f-]{36}$')));
+      calls++;
+      return {'status': status, 'network_class': 'cellular'};
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'https://api.pokrov.space/',
+      apiFallbackBaseUrls: const [], supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets, httpClientFactory: () => throw StateError('ordinary transport must not run'));
+    await bootstrapper.refreshNetworkContext();
+    expect(calls, 0, reason: 'an expired session waits for the normal session refresh');
+    await secrets.writeSessionToken(hostPlatform: HostPlatform.android,
+      installId: 'network-fixture-install', sessionToken: sessionToken(DateTime.now().millisecondsSinceEpoch ~/ 1000 + 900));
+    await bootstrapper.refreshNetworkContext();
+    expect(await File('${directory.path}/runtime-stats-outbox-android.json').exists(), isFalse,
+      reason: 'resource suppression is not a failed availability observation');
+    status = 'unavailable';
+    await bootstrapper.refreshNetworkContext();
+    await bootstrapper.refreshNetworkContext();
+    expect(calls, 2, reason: 'resume and connect share the hourly due check after an attempted request');
+    final queued = jsonDecode(await File('${directory.path}/runtime-stats-outbox-android.json').readAsString()) as Map;
+    final body = (queued['records'] as List).single['body'] as Map;
+    expect(body['network_observation'], {'source_network': 'unknown', 'outcome': 'unavailable', 'network_class': 'cellular'});
+    expect(body['runtime_phase'], 'network_observed');
+    expect(body.containsKey('connected'), isFalse);
+    expect(body.containsKey('connectivity'), isFalse);
+  });
+
   test('runtime stats freezes reports offline and cleans only same-account accepted receipts after restart', () async {
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;

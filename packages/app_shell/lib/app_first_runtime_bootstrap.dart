@@ -4391,15 +4391,29 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
+  Future<void> refreshNetworkContext() => _reportAutomaticNetworkContext('runtime_observed');
+
   Future<void> _reportAutomaticNetworkContext(String phase) async {
-    if (_networkContextInFlight) return;
+    if (_networkContextInFlight || invitationNetworkDeferred) return;
     _networkContextInFlight = true;
     try {
       final state = await _loadState(HostPlatform.android);
       if (state == null || !state.hasSession || state.accountId.isEmpty) return;
       final now = DateTime.now();
+      // Read only the expiry hint from the existing signed session envelope.
+      // This cannot authorize anything; the server still verifies the token.
+      // Analytics never refreshes credentials or retries an expired session.
+      try {
+        final parts = state.sessionToken.split('.');
+        if (parts.length != 2) return;
+        final claims = jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(parts.first))));
+        if (claims is! Map || claims['exp'] is! int ||
+            (claims['exp'] as int) <= now.millisecondsSinceEpoch ~/ 1000 + 6) return;
+      } on FormatException {
+        return;
+      }
       if (_lastNetworkContextAccount == state.accountId && _lastNetworkContextAt != null &&
-          now.difference(_lastNetworkContextAt!) < const Duration(minutes: 1)) return;
+          now.difference(_lastNetworkContextAt!) < const Duration(hours: 1)) return;
       _lastNetworkContextAccount = state.accountId;
       _lastNetworkContextAt = now;
       final result = await _appFirstRuntimeEngineChannel.invokeMapMethod<String, dynamic>(
@@ -4407,29 +4421,25 @@ class AppFirstRuntimeBootstrapper
           'apiBaseUrl': apiBaseUrl, 'sessionToken': state.sessionToken,
           'appVersion': pokrovClientVersion, 'profileRevision': state.profileRevision,
           'runtimePhase': phase,
+          'reportRunId': _runtimeReportRunId,
         },
-      ).timeout(const Duration(seconds: 6));
-      if (result == null || result['status'] != 'unavailable') return;
-      final current = await _loadState(HostPlatform.android);
-      if (current?.accountId != state.accountId || current?.sessionToken != state.sessionToken) return;
-      final network = _readText(result['network_class']);
-      final carrier = _readText(result['carrier']);
-      if (!const {'cellular', 'wifi', 'ethernet', 'other', 'unknown'}.contains(network)) return;
-      // A request through the ordinary API can report carrier/unknown, never
-      // infer the underlying IP from the tunnel's exit address.
-      final client = _createHttpClient(HostPlatform.android);
-      try {
-        await _requestJson(
-          client: client, method: 'POST', path: '/api/client/network/context',
-          bearerToken: state.sessionToken, hostPlatform: HostPlatform.android,
-          body: <String, Object?>{
-            'network_class': network, 'direct_observation': false,
-            if (network == 'cellular' && carrier.isNotEmpty && carrier.length <= 80) 'carrier': carrier,
-            'profile_revision': state.profileRevision, 'runtime_phase': phase,
-          },
-        );
-      } finally {
-        client.close(force: true);
+      ).timeout(const Duration(seconds: 6), onTimeout: () => {'status': 'unavailable', 'network_class': 'unknown'});
+      // An ACK confirms delivery, not an ASN/region readback. A failed bound
+      // request remains unknown; never infer the physical network from VPN egress.
+      if (result?['status'] == 'skipped') _lastNetworkContextAt = null;
+      if (result?['status'] == 'unavailable') {
+        final network = _readText(result?['network_class']);
+        await _runtimeStatsOutbox.enqueue(HostPlatform.android, _RuntimeStatsRecord(
+          _RuntimeStatsBinding(state.accountId, state.installId), jsonEncode({
+            'runtime_phase': 'network_observed',
+            'client_application': 'pokrov', 'platform': 'android',
+            'app_version': pokrovClientVersion, 'build_number': pokrovClientBuildNumber,
+            'report_run_id': _runtimeReportRunId, 'report_sequence': ++_runtimeReportSequence,
+            'occurred_at': now.toUtc().toIso8601String(),
+            'network_observation': {'source_network': 'unknown', 'outcome': 'unavailable',
+              'network_class': const {'cellular', 'wifi', 'ethernet', 'other'}.contains(network) ? network : 'unknown'},
+          }),
+        ));
       }
     } on Object {
       // Automatic diagnostics cannot block connect or trigger session renewal.

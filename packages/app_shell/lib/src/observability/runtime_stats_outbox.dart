@@ -62,17 +62,19 @@ final class _RuntimeStatsRecord {
       'candidate_ref',
       'candidate_variant',
       'access_network_asn',
-      'candidate_probes'
+      'candidate_probes',
+      'network_observation'
     };
     if (body.keys.any((key) => !fields.contains(key)) ||
         body.entries.any((entry) =>
             entry.key != 'connectivity' &&
             entry.key != 'candidate_probes' &&
+            entry.key != 'network_observation' &&
             entry.value is! String &&
             entry.value is! int &&
             entry.value is! bool) ||
         body['runtime_phase'] is! String ||
-        body['connected'] is! bool ||
+        (body['network_observation'] == null && body['connected'] is! bool) ||
         body['report_run_id'] is! String ||
         !RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')
             .hasMatch(body['report_run_id'] as String) ||
@@ -87,6 +89,12 @@ final class _RuntimeStatsRecord {
     if (body.containsKey('failure_operation') && !connectionFailureOperations.contains(body['failure_operation'])) {
       throw const FormatException('runtime_stats_body_invalid');
     }
+    final observation = body['network_observation'];
+    if (observation != null && (observation is! Map || observation.length != 3 ||
+        observation['source_network'] != 'unknown' || observation['outcome'] != 'unavailable' ||
+        !const {'cellular', 'wifi', 'ethernet', 'other', 'unknown'}.contains(observation['network_class']))) {
+      throw const FormatException('runtime_stats_network_observation_invalid');
+    }
     final connectivity = body['connectivity'];
     const connectivityFields = {
       'fetched_revision',
@@ -98,9 +106,9 @@ final class _RuntimeStatsRecord {
       'proof_stage',
       'observed_at_ms'
     };
-    if (connectivity is! Map ||
+    if ((observation == null || connectivity != null) && (connectivity is! Map ||
         connectivity.keys.any((key) => !connectivityFields.contains(key)) ||
-        connectivity.values.any((value) => value is! String && value is! int)) {
+        connectivity.values.any((value) => value is! String && value is! int))) {
       throw const FormatException('runtime_stats_connectivity_invalid');
     }
     final probes = body['candidate_probes'];

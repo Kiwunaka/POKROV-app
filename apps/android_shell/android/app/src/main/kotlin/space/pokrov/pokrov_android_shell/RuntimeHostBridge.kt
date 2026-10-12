@@ -242,6 +242,7 @@ class RuntimeHostBridge(
                     call.argument<String>("appVersion").orEmpty(),
                     call.argument<String>("profileRevision").orEmpty(),
                     call.argument<String>("runtimePhase").orEmpty(),
+                    call.argument<String>("reportRunId").orEmpty(),
                 )
             }
             METHOD_MEASURE_LOCATION_VARIANTS -> measureLocationVariants(call, result)
