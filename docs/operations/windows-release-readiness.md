@@ -1,12 +1,14 @@
 # Windows acceptance
 
-Private unsigned Windows `1.5.0+4147` from App `7f9f57f1` / Core `ac9f6fa`
+Private unsigned Windows `1.5.0+4148` from App `919c62c4` / Core `2df0fdd`
 (`1.2.14`, existing Cronet) upgraded the owned Clean VM in place on 2026-10-12.
-The 28,670,832-byte normal installer exited 0; version 4147, the expected loaded
-Core module, reused Cronet and running service were confirmed. W32Time Auto uses `time.windows.com,0x8`, with
+The 28,679,169-byte normal installer exited 0; version 4148, the expected loaded
+Core module, reused Cronet and running service were confirmed. Cold UI showed
+active access for two days and no public error. Functional testing started only
+after backend readiness; no new QA admission was issued. W32Time Auto uses `time.windows.com,0x8`, with
 subsequent automatic synchronization confirmed. After SaveState/resume, run
 ordinary elevated `w32tm /resync /rediscover` and require NTP residuals below
-one second before authentication; the latest three samples were within 6 ms.
+one second before authentication; the latest three samples were within 2 ms.
 Leap 0 and Last Sync Error 0 were confirmed after the peer fix. The
 owner-approved test-VM policy is now
 `ConsentPromptBehaviorAdmin=0`, with `EnableLUA=1` and
@@ -14,18 +16,33 @@ owner-approved test-VM policy is now
 prompt. Original DWORD 5 is retained in guest
 `Downloads/windows4144-admin-policy.safe.json`. Host time and Hiddify remain.
 
-One ordinary 4147 US VLESS REALITY selection connected with the UI label
-New York, native DNS/egress readiness, TUN and nine routes. Real Edge 204/64 KiB
-checks passed with increased TUN traffic; public Cloudflare geography was US.
-Gemini accepted native keyboard entry into its anonymous editor. After an
-actual enabled Send pointer click, the prompt remained visible, with no response,
-generation control or public error. Editor contents versus a submitted user
-bubble were not distinguished: submission and Gemini functionality are UNKNOWN,
-not a Gemini or VPN rejection. No resend or browser login followed.
-The complete native candidate-probe fixture then passed elevated with exit 0,
+One ordinary 4148 US AWG 3.1 selection passed native DNS/egress readiness,
+TUN and nine routes. Real Edge 204/64 KiB checks passed with increased TUN
+traffic; public Cloudflare geography was US. Gemini's editor was focused and
+filled with actual keyboard input. Before the one enabled `Send message`
+Invoke action, the scoped editor exactly matched the controlled prompt, with
+zero matching text nodes outside the editor. Both immediate and delayed reads
+afterwards found the same nonempty editor, no new user bubble, no generation
+control, no answer or response actions, and no recognized country/request error.
+Submission and Gemini functionality remain UNKNOWN, not a network failure.
+No resend or browser login followed. The earlier 4147 US VLESS REALITY case
+also passed its native/browser/geography checks; Gemini submission was unknown.
+On 4147 the complete native candidate-probe fixture passed elevated with exit 0,
 including cancellation/network-change detail retention and bound Smart handoff.
 Its first launch stopped in the loader (`0xC0000135`); the one corrected run used
 only a process-local PATH to the VC runtime DLLs already installed with POKROV.
+
+One 4148 Auto attempt, after clearing manual country/protocol pins in the UI,
+selected Frankfurt and passed native DNS/egress plus the owned browser 204/64 KiB
+check. Current UI/IPC did not expose the selected protocol or bridge identity;
+bridge-first selection remains unverified. Exactly one guest link interruption
+held the cable down for five seconds and restored it in `finally` (both commands
+exited 0). Guest Up → Down → Up was observed. After link restoration, without
+manual Connect or retry, the native snapshot reported running/DNS/egress ready and a newly reloaded owned browser
+document passed 204/64 KiB again (RX +115,456 / TX +113,184 bytes). This is a
+network-return functional PASS; the during-down native snapshot was unavailable,
+and no proof epoch or protocol switch was established. Exact UTC times for the
+initial Auto acceptance and first browser check were not recorded.
 
 One ordinary audited 48-hour extension activated the existing account until
 2026-10-14 04:58:28 UTC without charge or identity/key reset; UI refresh showed
@@ -65,17 +82,22 @@ Core connect failure, distinct from the historical case 781 control POST failure
 the underlying native branch remains unknown.
 The subsequent native regression reproduced rejection of the current Dart
 producer's paired API rules. The parser now accepts their exact matching
-TCP/443 and DNS scope, with negative-boundary checks passing. Version 4147 is
+TCP/443 and DNS scope, with negative-boundary checks passing. Version 4148 is
 installed; fresh SmartDNS runtime acceptance remains required. The old case is closed.
 
-At 10:23:23 UTC the VM baseline was restored: app, auxiliary processes, TUN,
+At 11:55:34 UTC the VM baseline was restored: app, auxiliary processes, TUN,
 VPN routes, WinDivert and consent prompts were absent; routes were 16, DNS
 counts 1/0, DHCP4/6 enabled and proxy off. Guest sessions were zero; SaveState
 reached EOF with exit 0 and Saved/Unlocked with an empty session was confirmed.
-The 4147 case made no server writes or QA admissions; the prior deploy lease
-was already released. Only the three owned browser test tabs were closed.
+The 4147 and 4148 cases made no administrative server writes or QA admissions;
+the prior deploy lease was already released. Earlier three Ctrl+W requests were
+sent, but individual tab closure was not verified. In the Auto case, closure
+targeted the confirmed current owned self-check document; afterwards it was
+confirmed no longer current. Other browser tabs were preserved.
 The Intel bridge and GetHostTimeDisabled setting remain; the corrected NTP
 source and owner-approved admin consent policy are the new guest baseline.
+Auto selection, Russia Direct, WARP off, Advanced mode and guest link UP were
+confirmed before final exit/save.
 
 Private unsigned Windows `1.5.0+4143` was built once from App `f581aa68` to
 preserve the first Smart DNS control rejection across service, runner and Dart.
