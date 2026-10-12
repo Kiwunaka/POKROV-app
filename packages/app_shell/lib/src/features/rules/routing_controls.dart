@@ -402,7 +402,7 @@ class _TrustedWifiCardState extends State<_TrustedWifiCard> {
       _busy = false;
       _lastStatus = status;
     });
-    final name = status.name?.trim();
+    final name = status.name;
     if (name == null || name.isEmpty) {
       return;
     }
@@ -430,14 +430,14 @@ class _TrustedWifiCardState extends State<_TrustedWifiCard> {
   }
 
   void _addName(String rawName) {
-    final name = rawName.trim().replaceAll(RegExp(r'[\r\n\t]+'), ' ');
+    final name = rawName;
     if (name.isEmpty || name.length > 64) {
       return;
     }
     final names = <String>[
       name,
       ...widget.preferences.trustedWifiNames.where(
-        (item) => item.trim().toLowerCase() != name.toLowerCase(),
+        (item) => item != name,
       ),
     ].take(20).toList(growable: false);
     widget.onChanged(widget.preferences.copyWith(trustedWifiNames: names));
@@ -483,12 +483,12 @@ class _TrustedWifiCardState extends State<_TrustedWifiCard> {
                 input = value;
               },
               onSubmitted: (value) =>
-                  Navigator.of(sheetContext).pop(value.trim()),
+                  Navigator.of(sheetContext).pop(value),
             ),
             const SizedBox(height: 10),
             FilledButton(
               key: const ValueKey('rules-trusted-wifi-manual-save'),
-              onPressed: () => Navigator.of(sheetContext).pop(input.trim()),
+              onPressed: () => Navigator.of(sheetContext).pop(input),
               child: const Text('Добавить'),
             ),
           ],
@@ -513,7 +513,10 @@ class _TrustedWifiCardState extends State<_TrustedWifiCard> {
       return 'После системного разрешения нажмите «Определить текущую» ещё раз.';
     }
     if (status.permissionRequired) {
-      return 'Android скрывает имя сети без отдельного разрешения.';
+      return 'Android скрывает имя сети без разрешения на точное местоположение.';
+    }
+    if (status.reason == 'ssid_unavailable') {
+      return 'Android пока не сообщил имя сети. Проверьте, что геолокация включена, и нажмите «Определить текущую» ещё раз.';
     }
     if (!status.connected) {
       return 'Устройство сейчас не подключено к Wi-Fi.';

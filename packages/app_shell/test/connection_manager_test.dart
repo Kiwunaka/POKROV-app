@@ -1132,6 +1132,7 @@ void main() {
   testWidgets('Rules syncs immediate Wi-Fi policy without discarding pending routing edits', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final nativeMutations = <String>[];
+    var currentWifiName = 'Home';
     final experienceStore = _CatalogPickerExperience();
     addTearDown(() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
@@ -1152,8 +1153,8 @@ void main() {
       bootstrapper: _Bootstrapper(), firstLaunchStore: _FirstLaunchStore(),
       clientExperienceStore: experienceStore, themeMode: ThemeMode.light,
       onThemeModeChanged: (_) {},
-      currentWifiProbe: () async => const PokrovWifiNetworkStatus(
-        connected: false, name: null, permissionRequired: false, reason: 'not_connected'),
+      currentWifiProbe: () async => PokrovWifiNetworkStatus(
+        connected: true, name: currentWifiName, permissionRequired: false, reason: null),
     )));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Правила'));
@@ -1196,6 +1197,15 @@ void main() {
     final summary = find.byKey(const ValueKey('rules-change-summary'));
     expect(summary, findsOneWidget);
     expect(find.descendant(of: summary, matching: find.text('DNS и локальная сеть')), findsOneWidget);
+    final detectWifi = find.byKey(const ValueKey('rules-trusted-wifi-detect'));
+    for (final name in ['Home', 'home', ' Home']) {
+      currentWifiName = name;
+      await tester.ensureVisible(detectWifi);
+      await tester.pumpAndSettle();
+      await tester.tap(detectWifi);
+      await tester.pumpAndSettle();
+    }
+    expect(experienceStore.saved.routingPreferences.trustedWifiNames, [' Home', 'home', 'Home']);
     expect(nativeMutations, isEmpty);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -1266,7 +1276,7 @@ void main() {
     await manager.refresh();
     expect(runtime.handoffCalls, 1, reason: 'one replacement per native context');
     manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(
-        pauseOnTrustedWifi: true, trustedWifiNames: ['cafe']));
+        pauseOnTrustedWifi: true, trustedWifiNames: ['Cafe']));
     runtime.candidateContext = 'context-trusted';
     await manager.refresh();
     expect(runtime.handoffCalls, 1, reason: 'trusted Wi-Fi pauses before any network handoff');
@@ -1317,6 +1327,27 @@ void main() {
     expect(runtime.connectCalls, 2);
   });
 
+  test('Trusted Wi-Fi keeps Home and home distinct during automatic connection and pause', () async {
+    final runtime = _Runtime()..captivePortal = false;
+    var name = 'home';
+    final manager = _manager(runtime, _Bootstrapper(),
+        currentWifiProbe: () async => _foregroundWifi(runtime, name: name),
+        foregroundConnectPolicy: (_, __, ___) async => true);
+    addTearDown(manager.dispose);
+    manager.markExperienceLoaded();
+    manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(
+        autoConnectOnUntrustedWifi: true, pauseOnTrustedWifi: true, trustedWifiNames: ['Home']));
+    await manager.refresh();
+    expect(runtime.connectCalls, 1, reason: 'home is not the trusted SSID Home');
+    name = 'Home';
+    await manager.refresh();
+    expect(runtime.calls, contains('disconnect'), reason: 'the exact trusted SSID pauses the tunnel');
+    expect(_foregroundWifi(runtime, name: ' Home').matches(['Home']), isFalse);
+    expect(PokrovRoutingPreferences.fromJson(const PokrovRoutingPreferences.defaults()
+        .copyWith(trustedWifiNames: ['Home', 'home', ' Home']).toJson()).trustedWifiNames,
+        ['Home', 'home', ' Home']);
+  });
+
   test('Android foreground network policy skips disabled trusted unknown captive and unauthorized Wi-Fi', () async {
     final runtime = _Runtime()..captivePortal = false;
     var wifi = _foregroundWifi(runtime);
@@ -1327,7 +1358,7 @@ void main() {
     manager.markExperienceLoaded();
     await manager.refresh(); // Default false.
     manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(
-        autoConnectOnUntrustedWifi: true, trustedWifiNames: ['cafe']));
+        autoConnectOnUntrustedWifi: true, trustedWifiNames: ['Cafe']));
     await manager.refresh();
     manager.setRoutingPreferences(const PokrovRoutingPreferences.defaults().copyWith(autoConnectOnUntrustedWifi: true));
     wifi = _foregroundWifi(runtime, name: null);

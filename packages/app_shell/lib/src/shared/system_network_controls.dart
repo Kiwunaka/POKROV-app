@@ -38,12 +38,12 @@ class PokrovWifiNetworkStatus {
   final bool manualStopSuppressed;
 
   bool matches(Iterable<String> trustedNames) {
-    final normalized = name?.trim().toLowerCase();
+    final normalized = name;
     if (normalized == null || normalized.isEmpty) {
       return false;
     }
     return trustedNames.any(
-      (candidate) => candidate.trim().toLowerCase() == normalized,
+      (candidate) => candidate == normalized,
     );
   }
 }
@@ -794,7 +794,7 @@ Future<PokrovWifiNetworkStatus> probePokrovCurrentWifi(
           .invokeMapMethod<String, Object?>('runtimeEngine.currentWifi');
       return PokrovWifiNetworkStatus(
         connected: value?['connected'] == true,
-        name: (value?['name'] as String?)?.trim(),
+        name: value?['name'] as String?,
         permissionRequired: value?['permissionRequired'] == true,
         reason: value?['reason'] as String?,
         foreground: value?['foreground'] == true,
@@ -827,11 +827,11 @@ Future<PokrovWifiNetworkStatus> probePokrovCurrentWifi(
       }
       final output = result.stdout.toString();
       final match = RegExp(
-        r'^\s*SSID\s*:\s*(.+?)\s*$',
+        r'^[ \t]*SSID[ \t]*: ([^\r\n]+)\r?$',
         multiLine: true,
         caseSensitive: false,
       ).firstMatch(output);
-      final name = match?.group(1)?.trim();
+      final name = match?.group(1);
       return PokrovWifiNetworkStatus(
         connected: name != null && name.isNotEmpty,
         name: name,

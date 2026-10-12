@@ -27,6 +27,16 @@ class AndroidTransportNetworkContextTest {
     }
 
     @Test
+    fun ssidDecodingPreservesExactIdentityAndRejectsRedactedValue() {
+        val decode = AndroidTransportNetworkContext.Companion::decodeWifiSsid
+        assertEquals("Home", decode("\"Home\""))
+        assertEquals("home", decode("\"home\""))
+        assertEquals(" Home ", decode("\" Home \""))
+        assertEquals(null, decode("<unknown ssid>"))
+        assertEquals("<unknown ssid>", decode("\"<unknown ssid>\""))
+    }
+
+    @Test
     fun carrierIsExposedOnlyForCellularCandidates() {
         val cellular = AndroidTransportNetworkContext.CandidateNetwork(
             null, null, null, true, false, "cellular", "25001", "МТС",
@@ -35,8 +45,10 @@ class AndroidTransportNetworkContextTest {
         assertEquals("25001", cellular["mcc_mnc"])
 
         val wifi = AndroidTransportNetworkContext.CandidateNetwork(
-            null, null, null, true, false, "wifi",
+            null, null, null, true, false, "wifi", wifiSsid = "Home",
         ).channelValue()
         assertFalse(wifi.containsKey("carrier"))
+        assertFalse(wifi.containsKey("wifiSsid"))
+        assertFalse(wifi.containsValue("Home"))
     }
 }

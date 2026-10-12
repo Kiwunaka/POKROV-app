@@ -913,7 +913,15 @@ takes effect on the next connection. The route explainer uses the same
 validated preferences and reports a routing-lesson completion event on a
 best-effort basis. Android Wi-Fi inspection requests the platform permission
 when required; Windows uses the current WLAN interface. Failure to identify a
-network never counts as a trusted match.
+network never counts as a trusted match. SSID comparison and saved names preserve
+case and spaces (`Home`, `home` and ` Home` are distinct). Android 12+ reads the
+SSID from the existing physical-network callback with location info enabled only
+while precise-location permission and the system location toggle allow it; the
+current VPN default is not used as the Wi-Fi identity. Concurrent physical Wi-Fi networks keep separate SSID entries. Android requests coarse
+and fine location together, including on Android 13+, only through the explicit
+Wi-Fi permission action. SSIDs remain local to this feature and are omitted from
+candidate-network diagnostics. Missing or redacted SSIDs never admit automatic
+connection or a trusted-network pause.
 
 DNS settings keep Automatic as the POKROV default and save named external
 presets through the existing `dnsPreset` preference. Xbox and Comss use their

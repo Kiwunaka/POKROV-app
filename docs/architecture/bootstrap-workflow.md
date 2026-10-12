@@ -3012,3 +3012,12 @@ guard/failure categories after the live owner ends. HTTP/IO fields use the
 existing operational allowlist; exception text and request material are omitted.
 The summary clears on the next connection attempt. Delivery acceptance alone
 does not establish native probe or feature acceptance.
+
+The Windows first-provider QA control request uses the remaining existing
+18-second action budget. Expiry records `qa_control` / `API-002` /
+`request_timeout` before closing its HTTP client; a late TLS/socket error cannot
+replace that result. The local summary retains only the closed operation/error
+categories and existing numeric HTTP/IO fields after the QA owner ends.
+An unknown delivery keeps the ordinary connected tunnel and original native
+lease deadline, without confirming SmartDNS readiness or renewing the grant.
+The request has no automatic retry.

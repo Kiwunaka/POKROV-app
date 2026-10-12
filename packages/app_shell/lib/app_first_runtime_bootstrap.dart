@@ -4924,13 +4924,24 @@ class AppFirstRuntimeBootstrapper
       'permit_id': permit.permitId, 'request_nonce': List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join(),
       'profile_digest': profileDigest};
     final client = _createHttpClient(HostPlatform.windows);
-    final timer = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
+    final deadline = Completer<Map<String, dynamic>>();
+    final timer = Timer(remainingBudget - elapsed.elapsed, () {
+      // Closing an in-flight TLS handshake can surface a later SocketException.
+      // Complete the operation with its actual cause before closing the handle.
+      deadline.completeError(const BootstrapFailure('Сервис не ответил вовремя. Попробуйте ещё раз.',
+        operation: 'POST /api/client/smart-access/first-provider-qa/control',
+        operationalCode: 'API-002', apiFailureKind: 'request_timeout'));
+      client.close(force: true);
+    });
     var finished = false;
     unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
     try {
-      final response = await _requestJson(method: 'POST', path: '/api/client/smart-access/first-provider-qa/control',
-        hostPlatform: HostPlatform.windows, client: client, bearerToken: state.sessionToken, body: request,
-        maximumResponseBytes: smartAccessControlMaximumBytes + 8192, allowRetries: false);
+      final response = await Future.any([
+        _requestJson(method: 'POST', path: '/api/client/smart-access/first-provider-qa/control',
+          hostPlatform: HostPlatform.windows, client: client, bearerToken: state.sessionToken, body: request,
+          maximumResponseBytes: smartAccessControlMaximumBytes + 8192, allowRetries: false),
+        deadline.future,
+      ]);
       await requireCurrent();
       final result = await _smartAccessPolicyStore.verifier.verifyFirstProviderQaControl(response,
         request: request, permit: permit, accountId: state.accountId, installId: state.installId, now: DateTime.now().toUtc());

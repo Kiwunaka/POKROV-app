@@ -549,6 +549,8 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       // Unknown delivery cannot extend a grant. Its native deadline remains active.
     } on BootstrapFailure catch (error) {
       setDiagnostic({'control_delivery': 'failed',
+        'failure_operation': 'qa_control',
+        if (KnownOperationalErrorCodes.contains(error.operationalErrorCode)) 'error_code': error.operationalErrorCode,
         ...OperationalAttributePolicy.prepareFailureAttributes(apiFailureKind: error.apiFailureKind,
           httpStatus: error.observedHttpStatus ?? error.statusCode, osErrorCode: error.osErrorCode)});
       if (current() && (error.statusCode == 401 || error.statusCode == 403)) await closeMember();

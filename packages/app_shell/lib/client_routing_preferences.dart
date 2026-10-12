@@ -260,7 +260,7 @@ class PokrovRoutingPreferences {
     final customDns =
         _normalizeDnsUrl(_routingText(json['customDnsUrl'])) ?? '';
     final trustedWifi = _routingList(json['trustedWifiNames'])
-        .map(_routingText)
+        .whereType<String>()
         .where((item) => item.isNotEmpty && item.length <= 64)
         .toSet()
         .take(20)

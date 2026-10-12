@@ -6,11 +6,8 @@ import android.content.ClipData
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.VpnService
 import android.net.Uri
-import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
@@ -489,6 +486,10 @@ class RuntimeHostBridge(
         permissions: Array<out String>,
         grantResults: IntArray,
     ) {
+        if (requestCode == REQUEST_WIFI_PERMISSION) {
+            if (transportNetworkContext.isInitialized()) transportNetworkContext.value.candidateNetwork()
+            return
+        }
         if (requestCode != REQUEST_NOTIFICATION_PERMISSION ||
             !permissions.contains(Manifest.permission.POST_NOTIFICATIONS)
         ) {
@@ -1335,8 +1336,8 @@ class RuntimeHostBridge(
     }
 
     private fun currentWifiWithEligibility(): Map<String, Any?> {
-        val wifi = currentWifi()
         val network = transportNetworkContext.value.candidateNetwork()
+        val wifi = currentWifi(network)
         return wifi + AndroidForegroundNetworkEligibility.read(activity, network, wifi)
     }
 
@@ -1360,13 +1361,8 @@ class RuntimeHostBridge(
         return true
     }
 
-    private fun currentWifi(): Map<String, Any?> {
-        val connectivityManager = activity.getSystemService(
-            ConnectivityManager::class.java,
-        )
-        val activeNetwork = connectivityManager?.activeNetwork
-        val capabilities = activeNetwork?.let(connectivityManager::getNetworkCapabilities)
-        val connected = capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+    private fun currentWifi(network: AndroidTransportNetworkContext.CandidateNetwork): Map<String, Any?> {
+        val connected = network.networkClass == "wifi"
         if (!connected) {
             return mapOf(
                 "connected" to false,
@@ -1390,23 +1386,17 @@ class RuntimeHostBridge(
 
         return try {
             @Suppress("DEPRECATION")
-            val wifiInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                capabilities.transportInfo as? WifiInfo
+            val name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                network.wifiSsid
             } else {
-                activity.applicationContext
+                AndroidTransportNetworkContext.decodeWifiSsid(activity.applicationContext
                     .getSystemService(WifiManager::class.java)
-                    ?.connectionInfo
+                    ?.connectionInfo?.ssid)
             }
-            val name = wifiInfo?.ssid
-                ?.trim()
-                ?.removeSurrounding("\"")
-                ?.takeUnless {
-                    it.isBlank() || it.equals(WifiManager.UNKNOWN_SSID, ignoreCase = true)
-                }
             mapOf(
                 "connected" to true,
                 "name" to name,
-                "permissionRequired" to (name == null),
+                "permissionRequired" to false,
                 "reason" to if (name == null) "ssid_unavailable" else null,
             )
         } catch (_: SecurityException) {
@@ -1430,7 +1420,7 @@ class RuntimeHostBridge(
         activity.runOnUiThread {
             ActivityCompat.requestPermissions(
                 activity,
-                arrayOf(permission),
+                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, permission),
                 REQUEST_WIFI_PERMISSION,
             )
         }
@@ -1566,12 +1556,7 @@ class RuntimeHostBridge(
         )
     }
 
-    private fun wifiPermissionName(): String =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.NEARBY_WIFI_DEVICES
-        } else {
-            Manifest.permission.ACCESS_FINE_LOCATION
-        }
+    private fun wifiPermissionName(): String = Manifest.permission.ACCESS_FINE_LOCATION
 
     private fun openVpnSettings(): Boolean {
         return runCatching {

@@ -82,14 +82,25 @@ Future<Map<String, Object?>> _qaSigned(Map<String, Object?> payload, String purp
 
 // Keep normal HTTPS configuration validation while the synthetic API stays local.
 class _QaLocalHttpClient implements HttpClient {
-  _QaLocalHttpClient(this.port);
+  _QaLocalHttpClient(this.port, {this.controlTlsPort, this.controlError});
   final int port;
+  final int? controlTlsPort;
+  final Completer<Object>? controlError;
   final HttpClient _client = HttpClient();
   @override
   set connectionTimeout(Duration? value) => _client.connectionTimeout = value;
   @override
-  Future<HttpClientRequest> openUrl(String method, Uri url) => _client.openUrl(method,
-      url.replace(scheme: 'http', host: '127.0.0.1', port: port));
+  Future<HttpClientRequest> openUrl(String method, Uri url) async {
+    final stallControl = controlTlsPort != null && method == 'POST' &&
+        url.path == '/api/client/smart-access/first-provider-qa/control';
+    try {
+      return await _client.openUrl(method, url.replace(scheme: stallControl ? 'https' : 'http',
+          host: '127.0.0.1', port: stallControl ? controlTlsPort : port));
+    } on Object catch (error) {
+      if (stallControl) controlError!.complete(error);
+      rethrow;
+    }
+  }
   @override
   void close({bool force = false}) => _client.close(force: force);
   @override
@@ -229,7 +240,7 @@ class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
 }
 
 void main() {
-  for (final controlFailure in const [null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid']) {
+  for (final controlFailure in const [null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline']) {
   test('explicit first-provider QA uses the signed disabled projection through ordinary managed stage${controlFailure == null ? '' : ' with $controlFailure'}', () async {
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
@@ -288,6 +299,24 @@ void main() {
     Map<String, dynamic>? claimRequest;
     var terminateQa = false;
     final requests = <String>[];
+    final controlDeadline = controlFailure == 'control_deadline';
+    final actionTimeout = Duration(seconds: controlDeadline ? 2 : 18);
+    final controlError = Completer<Object>();
+    final controlAccepted = Completer<void>();
+    ServerSocket? controlServer;
+    if (controlDeadline) {
+      controlServer = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      final sockets = <Socket>[];
+      controlServer.listen((socket) {
+        sockets.add(socket);
+        socket.listen((_) {});
+        if (!controlAccepted.isCompleted) controlAccepted.complete();
+      });
+      addTearDown(() async {
+        for (final socket in sockets) { socket.destroy(); }
+        await controlServer!.close();
+      });
+    }
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() => server.close(force: true));
     unawaited(() async {
@@ -366,7 +395,7 @@ void main() {
       }
     }());
     final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'https://api.pokrov.test',
-      httpClientFactory: () => _QaLocalHttpClient(server.port),
+      httpClientFactory: () => _QaLocalHttpClient(server.port, controlTlsPort: controlServer?.port, controlError: controlError),
       supportDirectoryResolver: () async => directory, sessionSecretStore: MemoryAppFirstSessionSecretStore(), maxRequestAttempts: 1,
       allExceptRuRuleSetUrlsResolver: (_) => const [],
       routingCatalogStore: RoutingCatalogStore(enabled: true, verifier: catalogVerifier),
@@ -422,7 +451,7 @@ void main() {
             expect(args['expectedNetworkContextRef'], networkRef);
             expect(args['bootRef'], bootRef);
             expect(args['startedElapsedMs'], 1000);
-            expect(args['deadlineElapsedMs'], 19000);
+            expect(args['deadlineElapsedMs'], 1000 + actionTimeout.inMilliseconds);
             expect(args['requestId'], matches(r'^[a-f0-9]{32}$'));
             nativeBoundRequestId = args['requestId'] as String;
             if (failBoundConnect) {
@@ -485,7 +514,7 @@ void main() {
     final first = FirstSessionCoordinator(store: firstLaunch)..complete(animated: false);
     final runtime = createRuntimeEngine(hostPlatform: HostPlatform.windows);
     final manager = ConnectionManager(appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
-      runtimeEngine: runtime, bootstrapper: bootstrapper,
+      runtimeEngine: runtime, bootstrapper: bootstrapper, actionTimeout: actionTimeout,
       accountSessionCoordinator: account, firstSessionCoordinator: first, clientExperienceStore: _HomeExperience(),
       connectHintStore: const PokrovFileConnectHintStore(), windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
       authorizeAndroidConnect: () async => true, refreshSubscription: () async => true, onNotice: (_, __) {});
@@ -496,6 +525,31 @@ void main() {
         runtimePhase: 'disconnected', connected: false);
     });
     expect(requests.where((path) => path.endsWith('/claim')), isEmpty, reason: 'availability cannot issue a permit');
+    if (controlDeadline) {
+      final elapsed = Stopwatch()..start();
+      final pending = manager.startFirstProviderQa(admission);
+      await controlAccepted.future.timeout(const Duration(seconds: 5));
+      expect(manager.status.phase, ConnectionPhase.connected);
+      await pending;
+      expect(elapsed.elapsed, lessThan(const Duration(seconds: 4)), reason: 'the control deadline bounds an unfinished TLS handshake');
+      expect(await controlError.future.timeout(const Duration(seconds: 10)),
+        isA<SocketException>().having((error) => error.osError, 'OS error', isNull));
+      final context = await manager.readFirstProviderQaContext();
+      expect(context?['control_delivery'], 'failed');
+      expect(context?['api_failure_kind'], 'request_timeout');
+      expect(context?['failure_operation'], 'qa_control');
+      expect(context?['error_code'], 'API-002');
+      expect(context?['os_error_code'], isNull);
+      expect(context?['proof_current'], isNot(true));
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(nativeCalls, isNot(contains('runtimeEngine.configureBoundSmartAccessRuntimeControl')));
+      await manager.disconnect();
+      expect(await manager.readFirstProviderQaContext(), {
+        'control_delivery': 'failed', 'failure_operation': 'qa_control', 'error_code': 'API-002',
+        'api_failure_kind': 'request_timeout',
+      });
+      return;
+    }
     if (controlFailure != null) {
       if (controlFailure == 'smart_access_signature_invalid') {
         await manager.startFirstProviderQa(admission);

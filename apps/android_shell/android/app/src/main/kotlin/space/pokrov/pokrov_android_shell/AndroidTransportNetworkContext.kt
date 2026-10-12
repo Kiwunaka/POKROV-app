@@ -1,12 +1,19 @@
 package space.pokrov.pokrov_android_shell
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.Build
+import android.net.wifi.WifiInfo
+import android.net.wifi.WifiManager
+import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.util.UUID
@@ -22,6 +29,7 @@ internal class AndroidTransportNetworkContext(context: Context) {
         val networkClass: String? = null,
         val mccMnc: String? = null,
         val carrier: String? = null,
+        val wifiSsid: String? = null,
     ) {
         fun channelValue(): Map<String, Any?> = mapOf(
             "selection_key" to selectionKey(network?.networkHandle, networkClass, mccMnc),
@@ -66,10 +74,32 @@ internal class AndroidTransportNetworkContext(context: Context) {
     private var capabilities: UplinkCapabilities? = null
     @Volatile private var reference: String? = null
 
-    private val callback = object : ConnectivityManager.NetworkCallback() {
+    private val networkRequest = NetworkRequest.Builder()
+        .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+        .build()
+    private var wifiLocationAllowed = canReadWifiSsid()
+    private val wifiSsids = mutableMapOf<Network, String?>()
+    private var callback = createNetworkCallback()
+
+    private fun createNetworkCallback(): UplinkCallback =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            UplinkCallback(if (wifiLocationAllowed) ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO else 0)
+        } else UplinkCallback()
+
+    private inner class UplinkCallback : ConnectivityManager.NetworkCallback {
+        constructor() : super()
+        @android.annotation.TargetApi(Build.VERSION_CODES.S)
+        constructor(flags: Int) : super(flags)
         override fun onAvailable(network: Network) { refresh() }
         override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
             val changed = synchronized(lock) {
+                if (closed || callback !== this) return
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                    wifiSsids[network] = if (wifiLocationAllowed && canReadWifiSsid())
+                        decodeWifiSsid((capabilities.transportInfo as? WifiInfo)?.ssid) else null
+                }
                 !closed && this@AndroidTransportNetworkContext.network == network &&
                     this@AndroidTransportNetworkContext.capabilities != uplinkCapabilities(capabilities)
             }
@@ -77,6 +107,10 @@ internal class AndroidTransportNetworkContext(context: Context) {
             refresh()
         }
         override fun onLost(network: Network) {
+            synchronized(lock) {
+                if (closed || callback !== this) return
+                wifiSsids.remove(network)
+            }
             invalidateSelected(network)
             refresh()
         }
@@ -84,7 +118,8 @@ internal class AndroidTransportNetworkContext(context: Context) {
             // Use the event as well as a fresh read so an intervening DNS/route
             // change cannot disappear merely because the network changed back.
             val changed = synchronized(lock) {
-                !closed && this@AndroidTransportNetworkContext.network == network && links != linkProperties
+                if (closed || callback !== this) return
+                this@AndroidTransportNetworkContext.network == network && links != linkProperties
             }
             if (changed) invalidateSelected(network)
             refresh()
@@ -106,10 +141,7 @@ internal class AndroidTransportNetworkContext(context: Context) {
         // Older Android cannot provide the default-network event stream used
         // here. Ordinary Connect is unchanged; ATS cannot claim this binding.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) throw IllegalStateException("network_context_unavailable")
-        manager.registerNetworkCallback(NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
-            .build(), callback)
+        manager.registerNetworkCallback(networkRequest, callback)
         try {
             manager.registerDefaultNetworkCallback(defaultCallback)
         } catch (error: Exception) {
@@ -125,6 +157,7 @@ internal class AndroidTransportNetworkContext(context: Context) {
     }
 
     fun candidateNetwork(): CandidateNetwork {
+        refreshWifiLocationAccess()
         refresh()
         val observed = synchronized(lock) {
             if (closed) return@synchronized CandidateNetwork(null, null, null, null, null)
@@ -137,7 +170,8 @@ internal class AndroidTransportNetworkContext(context: Context) {
                     else -> "other"
                 }
                 CandidateNetwork(network, links, reference, true, observed.captivePortal,
-                    networkClass)
+                    networkClass, wifiSsid = if (observed.wifi && canReadWifiSsid())
+                        network?.let(wifiSsids::get) else null)
             } else {
                 // A failed/racing capability read is unknown, not proof of no network.
                 val available = runCatching {
@@ -152,6 +186,27 @@ internal class AndroidTransportNetworkContext(context: Context) {
         if (observed.networkClass != "cellular") return observed
         val mobile = AndroidNetworkDiagnostics.mobileOperator(appContext)
         return observed.copy(mccMnc = mobile?.mccMnc, carrier = mobile?.carrier)
+    }
+
+    private fun canReadWifiSsid(): Boolean =
+        ContextCompat.checkSelfPermission(appContext, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED &&
+            LocationManagerCompat.isLocationEnabled(appContext.getSystemService(LocationManager::class.java))
+
+    private fun refreshWifiLocationAccess() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        synchronized(lock) {
+            if (closed) return
+            val allowed = canReadWifiSsid()
+            if (allowed == wifiLocationAllowed) return
+            // A grant/toggle change needs fresh callback capabilities; synchronous
+            // getNetworkCapabilities always redacts location-sensitive Wi-Fi info.
+            manager.unregisterNetworkCallback(callback)
+            wifiLocationAllowed = allowed
+            wifiSsids.clear()
+            callback = createNetworkCallback()
+            manager.registerNetworkCallback(networkRequest, callback)
+        }
     }
 
     fun isCurrent(expected: String): Boolean = reference == expected
@@ -232,6 +287,7 @@ internal class AndroidTransportNetworkContext(context: Context) {
         synchronized(lock) {
             if (closed) return
             closed = true
+            wifiSsids.clear()
             reference = null
             network = null
             links = null
@@ -240,5 +296,12 @@ internal class AndroidTransportNetworkContext(context: Context) {
         AndroidConnectRequestOwner.cancelIfNetworkChanged()
         runCatching { manager.unregisterNetworkCallback(callback) }
         runCatching { manager.unregisterNetworkCallback(defaultCallback) }
+    }
+
+    companion object {
+        internal fun decodeWifiSsid(raw: String?): String? = raw
+            ?.takeUnless { it == WifiManager.UNKNOWN_SSID }
+            ?.removeSurrounding("\"")
+            ?.takeUnless { it.isEmpty() }
     }
 }
