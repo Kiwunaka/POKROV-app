@@ -10,10 +10,10 @@ successfully verified egress probe with a measured duration of zero milliseconds
 The result below does not establish the historical 4144 failure cause or verify
 the retained-reason display during a new failure.
 
-Current Android source also preserves the allowlisted native candidate stage in
+Private ARM64 candidate `1.5.0+4146` preserves the allowlisted native candidate stage in
 a cancelled reply, so Diagnostics can show the last native stage alongside `probe_budget_expired`.
 Cancellation still fails and waits for native cleanup; its deadlines are unchanged.
-This host change is pending delivery and does not establish the cause of the AWG failures.
+Physical verification is pending; this change does not establish the cause of the AWG failures.
 
 On 2026-10-12, the in-place 4144→4145 update preserved the package UID, main-profile
 data inode and secondary-profile state. One ordinary CH Mini RAW connection on
