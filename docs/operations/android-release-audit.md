@@ -13,7 +13,15 @@ the retained-reason display during a new failure.
 Private ARM64 candidate `1.5.0+4146` preserves the allowlisted native candidate stage in
 a cancelled reply, so Diagnostics can show the last native stage alongside `probe_budget_expired`.
 Cancellation still fails and waits for native cleanup; its deadlines are unchanged.
-Physical verification is pending; this change does not establish the cause of the AWG failures.
+The physical result below verifies the retained stage, not an AWG connectivity fix.
+
+On 2026-10-12, the in-place 4145→4146 update preserved the package UID, main-profile
+data inode and secondary-profile state. One US AWG 3.1 attempt on Beeline LTE
+failed with `CONN-008`, `probe_budget_expired`, preparation reason
+`candidate_selection_exhausted` and origin `core`. Diagnostics now retained
+candidate stage `http_204`; this does not prove receipt of an HTTP 204 response.
+No usable VPN was established. Final checks found no tunnel, VPN service or
+tunnel routes; Auto, Russia-direct, Wi-Fi off and mobile data on were restored.
 
 On 2026-10-12, the in-place 4144→4145 update preserved the package UID, main-profile
 data inode and secondary-profile state. One ordinary CH Mini RAW connection on
