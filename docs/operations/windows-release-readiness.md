@@ -1,5 +1,23 @@
 # Windows acceptance
 
+Private unsigned Windows `1.5.0+4144` was built once from App `f1466ff8` on
+2026-10-12, reusing the exact 4142 Core `1.2.14` / Cronet artifacts. Package
+checks passed; the installer is 28,665,967 bytes. The owned Clean VM upgraded
+through its normal installer after owner-confirmed UAC: terminal success and
+exit 0, version 4144, preserved identity/owner and Running/Auto/LocalSystem
+service were confirmed. The resumed guest clock was stale. Elevated W32Time
+accepted a resync request but remained unsynchronized; independent NTP samples
+showed about 8,558 seconds of offset. A separate normal UAC for one correction
+ended without confirmation or a result; no correction is claimed. Its helper
+parsed successfully in the guest. Current entitlement, ordinary US connectivity,
+Smart DNS and Gemini were not checked; no app launch or Connect occurred.
+At host 03:45:43 UTC, the guest baseline had no app, auxiliary process, TUN,
+VPN route, WinDivert or consent prompt, with 16 routes, DNS counts 1/0, DHCP
+enabled and proxy off. Guest sessions were zero; SaveState reached EOF with
+exit 0 and Saved/Unlocked was confirmed. The Intel bridge, W32Time Auto and
+GetHostTimeDisabled setting remain; fresh guest clock correction is required
+before the next authentication or connection check.
+
 Private unsigned Windows `1.5.0+4143` was built once from App `f581aa68` to
 preserve the first Smart DNS control rejection across service, runner and Dart.
 The build and runner compilation passed; the installer is 28,661,152 bytes and
