@@ -29,6 +29,9 @@ cancelled the case after a strict TLS failure and rolled back; no browser check
 was run, so ingress continuity was not accepted. Normal Stop and baseline
 restoration completed at 08:50:02 UTC: Auto, Russia-direct, Wi-Fi off, mobile data
 on, and no tunnel, tunnel routes, VPN service or Chrome diagnostic forwards.
+The next canary was cancelled by its server owner before phone authorization
+because strict TLS failed again. It made zero phone connections or browser
+checks; the same baseline was restored at 09:30:41 UTC.
 
 On 2026-10-12, the in-place 4144→4145 update preserved the package UID, main-profile
 data inode and secondary-profile state. One ordinary CH Mini RAW connection on
