@@ -1,5 +1,10 @@
 # Windows acceptance
 
+Private Windows candidate `1.5.0+4151` also retains an already materialized
+UDP reserve beside TCP candidates in the runtime cache, without another HTTP
+request. Core and Cronet remain the exact 4148 artifacts; native Auto recovery
+verification is pending.
+
 Private Windows candidate `1.5.0+4150` adds the bounded ChatGPT QA path and keeps
 an available candidate from the other TCP/UDP family within the three-candidate
 recovery limit. It reuses the exact Core and Cronet artifacts from 4148.
