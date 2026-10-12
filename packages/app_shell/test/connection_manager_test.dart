@@ -16,6 +16,7 @@ import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
+import 'package:pokrov_observability_runtime/observability_runtime.dart' show OperationalFailureMapper;
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 Future<void> _deleteTestDirectory(Directory directory) async {
@@ -1583,7 +1584,7 @@ void main() {
       'network_context_unavailable', 'core_identity_connect_unacknowledged',
       'core_identity_connect_unavailable', 'catalog_native_control_unsupported',
       'invalid_connect_identity', 'invalid_connect_deadline',
-      'smart_access_qa_verification_failed', 'synthetic_private_code']) {
+      'smart_access_qa_verification_failed', 'profile_payload_invalid', 'synthetic_private_code']) {
       final platformStore = _ExperienceStore();
       final platformBootstrapper = _StatsBootstrapper();
       final platformRuntime = _Runtime(hostPlatform: HostPlatform.windows)
@@ -1592,7 +1593,7 @@ void main() {
           message: 'synthetic-private-message https://private.example/profile',
           details: {'profile': 'synthetic-private-details'},
           stacktrace: 'synthetic-private-native-stack C:/private/customer-profile.dart:3:4');
-      final directory = code == 'core_identity_connect_unacknowledged'
+      final directory = ['core_identity_connect_unacknowledged', 'profile_payload_invalid', 'synthetic_private_code'].contains(code)
           ? await Directory.systemTemp.createTemp('closed-connect-guard-') : null;
       if (directory != null) addTearDown(() => directory.delete(recursive: true));
       final observability = directory == null ? null : await PokrovClientObservability.start(
@@ -1617,14 +1618,17 @@ void main() {
         await observability.flush();
         final terminal = observability.connectionTimelineBreadcrumbs.lastWhere(
           (entry) => entry.name == 'app.connection.attempt.finished');
-        expect((terminal.failureKind, terminal.failureOperation), (code, 'core_connect'));
+        expect((terminal.failureKind, terminal.failureOperation), (permitted ? code : null, 'core_connect'));
         final report = PokrovDiagnosticsPresenter.fromRuntime(
           hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
           snapshot: platformManager.snapshot, statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
           appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
           encryptedDeliveryAvailable: false, timelineBreadcrumbs: observability.connectionTimelineBreadcrumbs);
         expect((report.timelineAttempts.last.failureKind, report.timelineAttempts.last.failureOperation),
-          (code, 'core_connect'));
+          (permitted ? code : null, 'core_connect'));
+        if (code == 'profile_payload_invalid') {
+          expect(OperationalFailureMapper.connection(code), 'CONN-005');
+        }
       }
       final recorded = jsonEncode([platformEvent.toJson(), failedReport]);
       for (final private in ['synthetic_private_code', 'synthetic-private-message',

@@ -631,6 +631,7 @@ const _publicRuntimeFailureKinds = <String>{
   'core_egress_probe_unavailable',
   'desktop_tun_egress_probe_failed',
   'profile_staging_failed',
+  'profile_payload_invalid',
   'profile_identity_failed',
   'profile_identity_mismatch',
   'core_identity_mismatch',
@@ -889,6 +890,8 @@ String _publicRuntimeMessage({
     case 'profile_identity_failed':
     case 'profile_staging_failed':
       return 'POKROV не смог подготовить настройки подключения.';
+    case 'profile_payload_invalid':
+      return 'POKROV отклонил некорректные настройки подключения.';
     case 'config_apply_failed':
       return 'POKROV не смог применить настройки подключения.';
     case 'vpn_permission_denied':

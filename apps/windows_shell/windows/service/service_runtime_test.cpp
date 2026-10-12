@@ -1057,6 +1057,21 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   const auto invalid_qa_boundary = ReadWindowsSmartAccessProbeTarget(mixed, true);
   Expect(invalid_boundary && invalid_boundary->empty() && invalid_qa_boundary && invalid_qa_boundary->empty(),
          "partial owned VPN boundary silently became Smart proof");
+  auto malformed_core = std::make_unique<FakeCoreRuntime>();
+  auto* malformed_native = malformed_core.get();
+  malformed_native->smart_probe_version = 1;
+  auto malformed_api = std::make_unique<FakeEgressProbe>();
+  auto* malformed_api_calls = malformed_api.get();
+  RuntimeHost malformed(std::move(malformed_core), std::move(malformed_api),
+                        std::make_unique<FakeRecovery>(), root, false);
+  malformed.Initialize();
+  Expect(malformed.StageProfile("0\n" + mixed).status == Status::kOk,
+         "malformed boundary fixture did not reach the egress gate");
+  const auto rejected_boundary = malformed.Connect(StagedDigest(malformed));
+  Expect(Contains(rejected_boundary, "failure=profile_payload_invalid") &&
+         Contains(rejected_boundary, "running=0;core_egress_validated=0;dns_ready=0") &&
+         malformed_native->smart_probe_calls == 0 && malformed_api_calls->verify_calls == 0,
+         "malformed protected boundary lost its exact rejection or reached a probe");
   RemoveTestRoot(root);
 }
 

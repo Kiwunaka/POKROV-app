@@ -666,16 +666,20 @@ void main() {
     }
     final closed = <String, String?>{};
     for (final kind in ['core_start_failed', 'local_dpi_withdraw_failed',
-        'recovery_network_restore_failed']) {
+        'recovery_network_restore_failed', 'profile_payload_invalid']) {
       nativeFailure = kind;
       final windows = await createRuntimeEngine(hostPlatform: HostPlatform.windows).snapshot();
       closed[kind] = windows.lastFailureKind;
       _expectNoSensitiveRuntimeDetail(windows.message);
+      if (kind == 'profile_payload_invalid') {
+        expect(windows.message, 'POKROV отклонил некорректные настройки подключения.');
+      }
     }
     expect(closed, {
       'core_start_failed': 'core_start_failed',
       'local_dpi_withdraw_failed': 'local_dpi_withdraw_failed',
       'recovery_network_restore_failed': 'recovery_network_restore_failed',
+      'profile_payload_invalid': 'profile_payload_invalid',
     });
   });
 

@@ -23,6 +23,10 @@ valid, while extra, duplicate, suffix, mismatched DNS and Direct DNS scopes fail
 closed. The native regression failed with the paired producer input before the
 parser fix and passed afterwards; this does not identify the exact branch of a
 historical device failure or establish browser functionality.
+Malformed protected boundaries return the existing `profile_payload_invalid`
+code through the native snapshot, UI timeline and D8 closed taxonomy (CONN-005).
+An unsupported probe ABI still returns `core_egress_probe_unavailable`; unknown
+private codes remain rejected or redacted at those boundaries.
 
 Core observes a bypass only for the compiled window's own domain matcher.
 Walking past another domain's window in the same lease keeps readiness open;

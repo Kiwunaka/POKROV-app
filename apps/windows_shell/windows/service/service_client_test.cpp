@@ -70,7 +70,7 @@ int main() {
                             "core_egress_dns_failed", "core_egress_connect_failed",
                             "core_egress_tls_failed", "core_egress_tls_timeout",
                             "core_egress_response_timeout", "core_egress_timeout",
-                            "core_smart_access_lease_expired", "smart_access_profile_changed",
+                            "core_smart_access_lease_expired", "smart_access_profile_changed", "profile_payload_invalid",
                             "invalid_smart_access_runtime_control", "smart_access_runtime_control_unconfirmed"}) {
     const auto body =
         std::string("phase=config_staged;core_ready=1;can_initialize=1;can_connect=1;") +

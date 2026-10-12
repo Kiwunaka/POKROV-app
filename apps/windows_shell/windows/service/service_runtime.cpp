@@ -49,7 +49,7 @@ const char* SafeEgressFailure(const std::string& failure) {
            "core_egress_dns_failed", "core_egress_connect_failed",
            "core_egress_tls_failed", "core_egress_tls_timeout",
            "core_egress_response_timeout", "core_egress_timeout",
-           "core_egress_probe_unavailable", "core_smart_access_lease_expired"}) {
+           "core_egress_probe_unavailable", "core_smart_access_lease_expired", "profile_payload_invalid"}) {
     if (failure == known) return known;
   }
   return "core_egress_probe_failed";
@@ -1906,8 +1906,9 @@ RuntimeResult RuntimeHost::ConfigureSmartAccessRuntimeControl(const std::string&
     if (first_provider_qa_admission_result_) return *first_provider_qa_admission_result_;
     first_provider_qa_control_config_ = config;
     const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_, true);
-    const auto failure = !target || target->empty() || core_->SmartAccessProbeVersion() != 1
-        ? "core_egress_probe_unavailable" : core_->ProbeSmartAccess(*target, true, qa_interrupted);
+    const auto failure = target && target->empty() ? "profile_payload_invalid"
+        : !target || core_->SmartAccessProbeVersion() != 1 ? "core_egress_probe_unavailable"
+        : core_->ProbeSmartAccess(*target, true, qa_interrupted);
     first_provider_qa_admission_result_ = failure.empty()
         ? RuntimeResult{Status::kOk, "configured=1"} : RuntimeResult{Status::kNotReady, failure};
     if (failure.empty()) {
@@ -2016,7 +2017,8 @@ std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& in
   egress_failure_observation_.reset();
   const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_);
   if (target) {
-    if (target->empty() || core_->SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
+    if (target->empty()) return "profile_payload_invalid";
+    if (core_->SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
     return core_->ProbeSmartAccess(*target, periodic, interrupted);
   }
   if (!egress_probe_) return "core_egress_probe_failed";

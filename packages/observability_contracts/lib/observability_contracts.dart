@@ -131,7 +131,7 @@ const connectionClosedGuardCodes = <String>{
   'runtime_clock_unavailable', 'runtime_busy', 'network_context_unavailable', 'connect_owner_changed',
   'core_identity_connect_unavailable', 'catalog_native_control_unsupported',
   'invalid_connect_identity', 'invalid_connect_deadline',
-  'managed_profile_stage_failed', 'smart_access_stage_identity_invalid',
+  'managed_profile_stage_failed', 'smart_access_stage_identity_invalid', 'profile_payload_invalid',
   'core_identity_stage_binding_mismatch', 'core_identity_stage_superseded', 'smart_access_stage_superseded',
   'connect_deadline', 'operation_cancelled', 'core_identity_connect_superseded',
   'core_identity_connect_unacknowledged', 'core_identity_connect_mismatch', 'core_identity_connect_cancel_unconfirmed',
