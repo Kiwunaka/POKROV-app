@@ -5,18 +5,31 @@ Private unsigned Windows `1.5.0+4144` was built once from App `f1466ff8` on
 checks passed; the installer is 28,665,967 bytes. The owned Clean VM upgraded
 through its normal installer after owner-confirmed UAC: terminal success and
 exit 0, version 4144, preserved identity/owner and Running/Auto/LocalSystem
-service were confirmed. The resumed guest clock was stale. Elevated W32Time
-accepted a resync request but remained unsynchronized; independent NTP samples
-showed about 8,558 seconds of offset. A separate normal UAC for one correction
-ended without confirmation or a result; no correction is claimed. Its helper
-parsed successfully in the guest. Current entitlement, ordinary US connectivity,
-Smart DNS and Gemini were not checked; no app launch or Connect occurred.
-At host 03:45:43 UTC, the guest baseline had no app, auxiliary process, TUN,
-VPN route, WinDivert or consent prompt, with 16 routes, DNS counts 1/0, DHCP
-enabled and proxy off. Guest sessions were zero; SaveState reached EOF with
-exit 0 and Saved/Unlocked was confirmed. The Intel bridge, W32Time Auto and
-GetHostTimeDisabled setting remain; fresh guest clock correction is required
-before the next authentication or connection check.
+service were confirmed. W32Time Auto now uses `time.windows.com,0x8`, with
+subsequent automatic synchronization confirmed. After SaveState/resume, run
+ordinary elevated `w32tm /resync /rediscover` and require NTP residuals below
+one second before authentication; the latest check passed below 0.7 ms with
+Leap 0 and Last Sync Error 0. The owner-approved test-VM policy is now
+`ConsentPromptBehaviorAdmin=0`, with `EnableLUA=1` and
+`PromptOnSecureDesktop=1`; normal RunAs administrator access passed without a
+prompt. Original DWORD 5 is retained in guest
+`Downloads/windows4144-admin-policy.safe.json`. Host time and Hiddify remain.
+
+One ordinary audited 48-hour extension activated the existing account until
+2026-10-14 04:58:28 UTC without charge or identity/key reset; UI refresh showed
+two days. The first real Auto attempt ended before TUN with `access_preparing`
+/ `API-011`: expiry had disabled all six assignments, leaving zero sync targets.
+That cause is closed; audited restoration confirmed canonical ACKs and mappings
+6/6 with account, keys and expiry preserved. Cold access refresh passed again;
+the next Auto attempt was held for API maintenance. US/protocols, browser
+HTTPS 204/64 KiB, Gemini and fresh Smart DNS remain open; old QA cases are closed.
+
+At 06:46:27 UTC the VM was restored and saved: app, auxiliary processes, TUN,
+VPN routes, WinDivert and consent prompts were absent; routes were 16, DNS
+counts 1/0, DHCP4/6 enabled and proxy off. Guest sessions were zero; SaveState
+reached EOF with exit 0 and Saved/Unlocked with an empty session was confirmed.
+The Intel bridge and GetHostTimeDisabled setting remain; the corrected NTP
+source and owner-approved admin consent policy are the new guest baseline.
 
 Private unsigned Windows `1.5.0+4143` was built once from App `f581aa68` to
 preserve the first Smart DNS control rejection across service, runner and Dart.
