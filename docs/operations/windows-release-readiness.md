@@ -1,5 +1,30 @@
 # Windows acceptance
 
+Private unsigned Windows `1.5.0+4143` was built once from App `f581aa68` to
+preserve the first Smart DNS control rejection across service, runner and Dart.
+The build and runner compilation passed; the installer is 28,661,152 bytes and
+reuses the exact 4142 Core `1.2.14` / Cronet artifacts. Version, required files,
+source/trust pins and runtime binding checks passed. The source regression file
+passed 32 tests, analysis passed, and native service runtime/client tests passed.
+This diagnostic change does not establish the cause of case 779.
+
+Case 781 ran once on 2026-10-12 with the corrected guest clock (56–57 ms NTP
+offset), a fresh parent session (880/879 seconds before admission) and the
+independent physical bridge. QA Start at 01:04:19 UTC reached ordinary
+Core/TUN/routes/DNS/egress READY, then reported `control_delivery=failed` and
+`api_failure_kind=request_socket`. Operation, HTTP status, errno and the
+preparation reason were not displayed. Current bound Smart DNS proof was not
+obtained; no Gemini query was submitted. The source places this exception at
+the QA control POST; the underlying socket cause remains unknown.
+
+The client exited normally at 01:08:28 UTC. Fresh guest baseline at 01:08:59
+confirmed no app/auxiliary process, TUN, VPN route or WinDivert, with 16 routes,
+DNS counts 1/0, DHCP enabled and proxy off. Guest sessions closed, SaveState
+completed with exit 0 and Saved/Unlocked was confirmed. Bridge, guest time
+correction, identity, preferences and browser were preserved; host Hiddify and
+host time were unchanged. Case 781 is closed without replay or renewal;
+real Gemini functionality remains unverified.
+
 On 2026-10-12 private unsigned Windows `1.5.0+4142` was built from App
 `89674dcd` with Core `1.2.14` (`7db9519`) and the unchanged pinned Cronet.
 The single DLL and installer builds completed successfully; the 48 required
