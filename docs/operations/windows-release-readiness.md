@@ -7,7 +7,17 @@ Runtime acceptance of these changes is pending.
 
 Private Windows candidate `1.5.0+4149` shows only the confirmed active protocol
 and direct or bridge path in Diagnostics. It reuses the exact Core `1.2.14` and
-Cronet artifacts from 4148. Physical verification of this display is pending.
+Cronet artifacts from 4148. On 2026-10-12 one unpinned Auto connection in the
+owned Clean VM reached native running/DNS/egress at 16:43:07 UTC. Current
+Diagnostics at 16:46:59 confirmed VLESS REALITY through a bridge and all four
+native checks. No terminal failure or primary/reserve error was observed.
+The fresh Edge self-check launch was rejected before execution by automatic
+approval review; browser verification, fault injection and Smart DNS were not
+performed. Normal Stop and tray Exit restored app/aux/TUN/VPN routes/WinDivert
+to zero, routes 16, DNS counts 1/0, DHCP on, proxy off and link up. Guest sessions
+closed; SaveState ended RC0/EOF and Saved/Unlocked at 16:56:52 UTC. The physical
+bridge, guest clock correction and host Hiddify were preserved. 4150 was not
+installed in this case.
 
 Private unsigned Windows `1.5.0+4148` from App `919c62c4` / Core `2df0fdd`
 (`1.2.14`, existing Cronet) upgraded the owned Clean VM in place on 2026-10-12.
