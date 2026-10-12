@@ -1708,22 +1708,24 @@ class RuntimeHostBridge(
             }
             val elapsed = (System.nanoTime() - started) / 1_000_000
             // Preserve the native phase even if cancellation or bridge closure discards the reply.
+            var nativeDiagnostic = AndroidCandidateProbeDiagnostic()
             if (response is String) {
                 runCatching {
                     val nativeResult = JSONObject(response)
                     val success = nativeResult.opt("success") as? Boolean ?: return@runCatching
+                    nativeDiagnostic = AndroidCandidateProbeDiagnostic.fromNativeFields(
+                        nativeResult.opt("stage"),
+                        nativeResult.opt("stage_started_ms"),
+                        nativeResult.opt("duration_ms"),
+                        nativeResult.opt("parse_duration_ms"),
+                        nativeResult.opt("create_duration_ms"),
+                        nativeResult.opt("certificate_duration_ms"),
+                    )
                     AndroidOperationalJournal.record(
                         AndroidOperationalEvent.CANDIDATE_PROBE,
                         if (success) AndroidOperationalOutcome.VERIFIED else AndroidOperationalOutcome.FAILED,
                         probeSequence = probeSequence,
-                        candidateProbe = AndroidCandidateProbeDiagnostic.fromNativeFields(
-                            nativeResult.opt("stage"),
-                            nativeResult.opt("stage_started_ms"),
-                            nativeResult.opt("duration_ms"),
-                            nativeResult.opt("parse_duration_ms"),
-                            nativeResult.opt("create_duration_ms"),
-                            nativeResult.opt("certificate_duration_ms"),
-                        ),
+                        candidateProbe = nativeDiagnostic,
                     )
                 }
             }
@@ -1731,7 +1733,7 @@ class RuntimeHostBridge(
                 candidateProbes.publish(id) { publicationCancelled ->
                     if (hostTaskScope.isActive()) {
                         val published = when {
-                            publicationCancelled.get() -> failure("cancelled", elapsed)
+                            publicationCancelled.get() -> nativeDiagnostic.cancelledResponse(elapsed)
                             context.read() != expected -> failure("network_changed", elapsed)
                             else -> response
                         }

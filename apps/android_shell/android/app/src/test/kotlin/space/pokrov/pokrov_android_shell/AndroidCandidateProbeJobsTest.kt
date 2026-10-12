@@ -16,8 +16,23 @@ class AndroidCandidateProbeJobsTest {
             worker.awaitFinished()
             assertNotNull(jobs.cancel("reply_pending"))
             var publishedCancellation = false
-            jobs.publish("reply_pending") { publishedCancellation = it.get() }
+            var published: Map<String, Any>? = null
+            val nativeDiagnostic = AndroidCandidateProbeDiagnostic.fromNativeFields(
+                "proxy_dial", 7L, 12_000L,
+            )
+            jobs.publish("reply_pending") {
+                publishedCancellation = it.get()
+                if (publishedCancellation) published = nativeDiagnostic.cancelledResponse(12_034L)
+            }
             assertTrue(publishedCancellation)
+            assertEquals("proxy_dial", published!!["stage"])
+            assertEquals(false, published!!["success"])
+            assertEquals("cancelled", published!!["failure_kind"])
+            assertEquals(12_034L, published!!["duration_ms"])
+            assertEquals(setOf("success", "failure_kind", "duration_ms", "stage"), published!!.keys)
+            assertFalse(AndroidCandidateProbeDiagnostic.fromNativeFields(
+                "not-an-allowed-phase", 7L, 12_000L,
+            ).cancelledResponse(12_034L).containsKey("stage"))
             assertNull(jobs.cancel("reply_pending"))
         } finally {
             jobs.close()

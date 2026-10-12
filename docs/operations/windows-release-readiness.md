@@ -8,8 +8,8 @@ exit 0, version 4144, preserved identity/owner and Running/Auto/LocalSystem
 service were confirmed. W32Time Auto now uses `time.windows.com,0x8`, with
 subsequent automatic synchronization confirmed. After SaveState/resume, run
 ordinary elevated `w32tm /resync /rediscover` and require NTP residuals below
-one second before authentication; the latest check passed below 0.7 ms with
-Leap 0 and Last Sync Error 0. The owner-approved test-VM policy is now
+one second before authentication; the latest three samples were within 14 ms.
+Leap 0 and Last Sync Error 0 were confirmed after the peer fix. The owner-approved test-VM policy is now
 `ConsentPromptBehaviorAdmin=0`, with `EnableLUA=1` and
 `PromptOnSecureDesktop=1`; normal RunAs administrator access passed without a
 prompt. Original DWORD 5 is retained in guest
@@ -20,14 +20,30 @@ One ordinary audited 48-hour extension activated the existing account until
 two days. The first real Auto attempt ended before TUN with `access_preparing`
 / `API-011`: expiry had disabled all six assignments, leaving zero sync targets.
 That cause is closed; audited restoration confirmed canonical ACKs and mappings
-6/6 with account, keys and expiry preserved. Cold access refresh passed again;
-the next Auto attempt was held for API maintenance. US/protocols, browser
-HTTPS 204/64 KiB, Gemini and fresh Smart DNS remain open; old QA cases are closed.
+6/6 with account, keys and expiry preserved. After the backend fix was released,
+one Auto connected, with native tunnel/DNS/egress readiness and real browser
+HTTPS 204/64 KiB passing. Its UI label was Germany; external DE geography and
+the exact automatic route were not observed, and Auto was not repeated.
 
-At 06:46:27 UTC the VM was restored and saved: app, auxiliary processes, TUN,
+Four ordinary US catalog pins passed separately: VLESS REALITY, AWG 3.1,
+Hysteria 2 and VLESS XHTTP. Each reached native running/DNS/egress readiness,
+TUN plus nine routes, then browser 204/200 with the exact 65,536-byte marker
+body and increased TUN traffic. The REALITY connection also returned public
+Cloudflare `loc=US`; this is observed geolocation, not exact-node attestation.
+Every Stop restored TUN 0, routes 16 and DNS counts 1/0. Gemini opened an unsigned
+editor, but the test text remained pending after native keyboard entry and an
+enabled Send click, with no response or public error; functionality is UNKNOWN.
+Country/protocol Auto, WARP variants and fresh Smart DNS remain open. Old QA
+cases are closed; a new finite case requires a current reviewed signing chain.
+Its fresh registered-source fetch stopped with `source_address_not_public`
+because host DNS returned the Hiddify fake-IP range; no snapshot, signing,
+publication or QA admission occurred, and host DNS/Hiddify were preserved.
+
+At 07:29:16 UTC the VM baseline was restored: app, auxiliary processes, TUN,
 VPN routes, WinDivert and consent prompts were absent; routes were 16, DNS
 counts 1/0, DHCP4/6 enabled and proxy off. Guest sessions were zero; SaveState
-reached EOF with exit 0 and Saved/Unlocked with an empty session was confirmed.
+reached EOF with exit 0; Saved/Unlocked with an empty session was confirmed at
+07:31:03 UTC. Only the three public browser test tabs were closed.
 The Intel bridge and GetHostTimeDisabled setting remain; the corrected NTP
 source and owner-approved admin consent policy are the new guest baseline.
 

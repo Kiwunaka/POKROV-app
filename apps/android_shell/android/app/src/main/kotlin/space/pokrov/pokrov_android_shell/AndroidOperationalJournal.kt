@@ -179,6 +179,13 @@ internal data class AndroidCandidateProbeDiagnostic(
     val createDurationMs: Long? = null,
     val certificateDurationMs: Long? = null,
 ) {
+    fun cancelledResponse(elapsedMs: Long): Map<String, Any> = buildMap {
+        put("success", false)
+        put("failure_kind", "cancelled")
+        put("duration_ms", elapsedMs)
+        phase?.let { put("stage", it.wireValue) }
+    }
+
     init {
         require(durationMs == null || durationMs >= 0L)
         require((phase == null) == (phaseStartedMs == null))

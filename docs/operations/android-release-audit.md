@@ -4,11 +4,26 @@ Public version remains `1.4.5`; 1.5.0 candidates are private. Older Huawei
 acceptance is recorded in `cutover-readiness.md`. The 4061 and 4055 results
 below are historical; LDPlayer is not used for VPN acceptance.
 
-The next private ARM64 candidate, `1.5.0+4145`, retains the closed native recovery
+Private ARM64 candidate `1.5.0+4145` retains the closed native recovery
 cause in current Diagnostics and uses the updated Core `1.2.14` that accepts a
 successfully verified egress probe with a measured duration of zero milliseconds.
-Physical verification of both fixes is pending; the 4144 results below remain
-the observed behavior of that earlier candidate.
+The result below does not establish the historical 4144 failure cause or verify
+the retained-reason display during a new failure.
+
+Current Android source also preserves the allowlisted native candidate stage in
+a cancelled reply, so Diagnostics can show the last native stage alongside `probe_budget_expired`.
+Cancellation still fails and waits for native cleanup; its deadlines are unchanged.
+This host change is pending delivery and does not establish the cause of the AWG failures.
+
+On 2026-10-12, the in-place 4144→4145 update preserved the package UID, main-profile
+data inode and secondary-profile state. One ordinary CH Mini RAW connection on
+Beeline LTE in full-device mode passed tunnel, routes, DNS and protected-egress
+checks. Chrome passed the owned HTTPS 204 and complete 65536-byte check. After
+about 230 seconds, refreshed Diagnostics still confirmed all four checks and its
+current timeline contained one connection attempt without recovery entries.
+Normal Stop removed the tunnel, routes and VPN service; Auto and Russia-direct
+were restored, with Wi-Fi off and mobile data on. This does not cover ingress
+changes, US Mini, other transports or SmartDNS.
 
 On 2026-10-12, the Huawei main profile running private ARM64 1.5.0+4144
 (Core 1.2.14) connected to the ordinary US VLESS REALITY candidate over Beeline
