@@ -1,7 +1,9 @@
 part of pokrov_app_shell;
 
 extension _SmartAccessRuntimeOperations on ConnectionManager {
-  void _validateFirstProviderQaRuleOrder(String payload, String leaseId) {
+  void _validateFirstProviderQaRuleOrder(String payload, VerifiedFirstProviderQaPermit permit) {
+    final leaseId = permit.grant.lease['lease_id'];
+    final admittedDomains = permit.domainNames.toSet();
     final config = jsonDecode(payload) as Map;
     final blockedOutbounds = (config['outbounds'] as List).cast<Map>()
         .where((row) => row['type'] == 'block').map((row) => row['tag']).toSet();
@@ -10,20 +12,23 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
         .map((row) => row['tag']).toSet();
     for (final section in const ['route', 'dns']) {
       final rules = ((config[section] as Map)['rules'] as List).cast<Map>();
-      final first = rules.indexWhere((rule) => (rule['pokrov_catalog_window'] as Map?)?['lease_id'] == leaseId);
-      if (first < 0) throw const RoutingCatalogFailure('smart_access_qa_rule_missing');
-      for (final rule in rules.take(first)) {
-        // Safety rules may stop the request. They cannot silently route it by
-        // an earlier user/app rule or resolve Gemini through bootstrap Direct.
-        if (const {'sniff', 'hijack-dns', 'reject'}.contains(rule['action'])) continue;
-        if (blockedOutbounds.contains(rule['outbound']) || blockedDns.contains(rule['server'])) continue;
-        if (rule['ip_cidr'] != null && _clientExperience.routingPreferences.allowLan &&
-            jsonEncode(rule['ip_cidr']) == jsonEncode(_clientExperience.routingPreferences.lanSubnets)) continue;
-        final domains = rule['domain'];
-        if (domains is List && domains.isNotEmpty && domains.every((domain) => domain is String &&
-            domain.toLowerCase().replaceFirst(RegExp(r'\.$'), '') != 'gemini.google.com') &&
-            !rule.containsKey('domain_suffix') && !rule.containsKey('domain_regex') && !rule.containsKey('rule_set')) continue;
-        throw const RoutingCatalogFailure('smart_access_qa_earlier_rule');
+      for (final admittedDomain in admittedDomains) {
+        final first = rules.indexWhere((rule) => (rule['pokrov_catalog_window'] as Map?)?['lease_id'] == leaseId &&
+            (rule['domain'] as List?)?.contains(admittedDomain) == true);
+        if (first < 0) throw const RoutingCatalogFailure('smart_access_qa_rule_missing');
+        for (final rule in rules.take(first)) {
+          // Safety rules may stop the request. They cannot silently route it by
+          // an earlier user/app rule or resolve an admitted host through bootstrap Direct.
+          if (const {'sniff', 'hijack-dns', 'reject'}.contains(rule['action'])) continue;
+          if (blockedOutbounds.contains(rule['outbound']) || blockedDns.contains(rule['server'])) continue;
+          if (rule['ip_cidr'] != null && _clientExperience.routingPreferences.allowLan &&
+              jsonEncode(rule['ip_cidr']) == jsonEncode(_clientExperience.routingPreferences.lanSubnets)) continue;
+          final domains = rule['domain'];
+          if (domains is List && domains.isNotEmpty && domains.every((domain) => domain is String &&
+              domain.toLowerCase().replaceFirst(RegExp(r'\.$'), '') != admittedDomain) &&
+              !rule.containsKey('domain_suffix') && !rule.containsKey('domain_regex') && !rule.containsKey('rule_set')) continue;
+          throw const RoutingCatalogFailure('smart_access_qa_earlier_rule');
+        }
       }
     }
   }
@@ -58,7 +63,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
       try {
         final native = await (engine as RuntimeSmartAccessBackgroundControl)
             .readSmartAccessLeases(qa.profileDigest!).timeout(_actionTimeout);
-        final selection = native.selections['gemini'];
+        final selection = native.selections[qa.permit.serviceId];
         if (!current() || native.leaseIds.length != 1 || !native.leaseIds.contains(leaseId) || selection?.leaseId != leaseId) {
           _firstProviderQaProofClosed = true;
         } else {
@@ -82,7 +87,7 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     final proof = _firstProviderQaProofClosed ? null : _firstProviderQaReadiness;
     return Map.unmodifiable({
       ...?_firstProviderQaControlDiagnostic,
-      'permit_id': qa.permit.permitId, 'service_id': 'gemini', 'candidate_ref': qa.permit.payload['candidate_ref'],
+      'permit_id': qa.permit.permitId, 'service_id': qa.permit.serviceId, 'candidate_ref': qa.permit.payload['candidate_ref'],
       'lease_id': leaseId, 'runtime_scope_sha256': qa.permit.grant.runtimeScopeSha256,
       'profile_digest': qa.profileDigest, 'generation': qa.generation, 'profile_revision': qa.profileRevision,
       'request_id': qa.requestId,

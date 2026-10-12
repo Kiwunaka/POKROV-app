@@ -216,6 +216,9 @@ class VerifiedFirstProviderQaPermit {
   final Map<String, Object?> payload;
   final VerifiedSmartAccessLease grant;
   String get permitId => payload['permit_id']! as String;
+  String get serviceId => grant.lease['service_id']! as String;
+  Iterable<String> get domainNames => (grant.lease['domains']! as List)
+      .cast<Map<String, Object?>>().map((domain) => domain['name']! as String);
   Map<String, Object?> get projection => payload['qa_projection']! as Map<String, Object?>;
   DateTime get expiresAt => _time(payload['expires_at']);
 }
@@ -530,18 +533,24 @@ class SmartAccessVerifier {
       final capability = projection['capability']! as Map<String, Object?>;
       final original = (catalog.payload['services']! as List).whereType<Map<String, Object?>>()
         .where((row) => row['service_id'] == service['service_id']).toList();
-      final domains = capability['domains'];
+      final domains = (capability['domains']! as List).cast<Map<String, Object?>>();
+      final domainScopeAllowed = service['service_id'] == 'gemini'
+          ? domains.length == 1 && _canonical(domains.single) == _canonical({'name': 'gemini.google.com', 'match': 'exact'})
+          : domains.any((domain) => domain['name'] == 'chatgpt.com') &&
+            domains.every((domain) => domain['match'] == 'exact' &&
+              const ['chatgpt.com', 'openai.com', 'oaistatic.com', 'oaiusercontent.com'].any((root) =>
+                domain['name'] == root || (domain['name']! as String).endsWith('.$root')));
       if (projection['action'] != 'approved_gateway' || projection['route_mode'] != 'selective' ||
-          service['service_id'] != 'gemini' || service['enabled'] != false ||
+          !const {'gemini', 'chatgpt'}.contains(service['service_id']) || service['enabled'] != false ||
           original.length != 1 || _canonical(original.single) != _canonical(service) ||
           provider['kind'] != 'owned' || provider['enabled'] != true ||
           permission['status'] != 'approved' || permission['embedded_use_allowed'] != true ||
           capability['capability_id'] != payload['candidate_ref'] || capability['enabled'] != false ||
+          capability['service_id'] != service['service_id'] || capability['origin'] != 'current-origin' ||
           capability['verification'] != 'source_only' || capability['platform'] != 'windows' ||
           capability['family'] != 'ipv4' || capability['feature'] != 'web_request' ||
           (capability['checks']! as Map).values.any((value) => value != 'NOT_VERIFIED') ||
-          domains is! List || domains.length != 1 ||
-          _canonical(domains.single) != _canonical({'name': 'gemini.google.com', 'match': 'exact'})) {
+          !domainScopeAllowed) {
         throw const RoutingCatalogFailure('smart_access_qa_projection_invalid');
       }
       final grant = await _verifyLease(payload['grant_envelope'],

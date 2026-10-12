@@ -15,6 +15,16 @@ domain rejection, disabled DNS cache and TTL zero retain their existing roles.
 The finite first-provider QA permit remains nonrenewable. A native A/TLS probe
 does not prove a browser feature request.
 
+Private Windows QA accepts Gemini or ChatGPT only. The verified permit and grant
+select the service and exact hosts for compilation, earlier-rule checks and native
+proof; browser input cannot choose this scope. Gemini keeps its single exact host.
+ChatGPT requires `chatgpt.com` and may include individually admitted exact hosts
+under the existing ChatGPT/OpenAI/static/content roots, each matched to a
+nonshared domain in the same disabled catalog service. Unknown services and
+suffix scopes fail closed. Public selection stays disabled, and the one attempt
+remains nonrenewable and limited to 600 seconds. Source tests do not establish a
+real ChatGPT response through the owned relay.
+
 Windows recognizes the selective producer's exact `api.pokrov.space` /
 `app.pokrov.space` pair in matching TCP/443 and VPN DNS rules. Ordinary connect
 keeps the protected VPN verifier; explicit QA selects the leased service only

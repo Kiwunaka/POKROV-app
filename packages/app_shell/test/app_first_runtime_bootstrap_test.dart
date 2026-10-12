@@ -245,8 +245,12 @@ class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
 }
 
 void main() {
-  for (final controlFailure in const [null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline']) {
-  test('explicit first-provider QA uses the signed disabled projection through ordinary managed stage${controlFailure == null ? '' : ' with $controlFailure'}', () async {
+  for (final (serviceId, controlFailure) in <(String, String?)>[
+    for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
+      ('gemini', failure),
+    ('chatgpt', null),
+  ]) {
+  test('explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${controlFailure == null ? '' : ' with $controlFailure'}', () async {
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = httpOverrides);
@@ -262,17 +266,18 @@ void main() {
     final coreHash = await _qaDigest('actual fixture core');
     const admission = '1234567890abcdef1234567890abcdef';
     const leaseId = 'abcdef0123456789abcdef0123456789';
-    final service = <String, Object?>{'service_id': 'gemini', 'display_name': 'Gemini', 'categories': ['ai'],
+    final domainNames = serviceId == 'gemini' ? ['gemini.google.com'] : ['chatgpt.com', 'ws.chatgpt.com'];
+    final service = <String, Object?>{'service_id': serviceId, 'display_name': serviceId, 'categories': ['ai'],
       'enabled': false, 'classification': 'geo_restricted', 'reason': 'test domain metadata', 'evidence_status': 'source_only',
       'source_ids': ['qa-source'], 'evidence_ids': ['domain-review'], 'platforms': ['windows'],
       'access_states': ['paid_unlimited'], 'route_intents': <Object>[], 'android': <Object>[], 'windows': <Object>[],
-      'domains': [{'name': 'gemini.google.com', 'match': 'exact', 'shared': false, 'role': 'web', 'source_ids': ['qa-source']}],
+      'domains': [for (final name in domainNames) {'name': name, 'match': 'exact', 'shared': false, 'role': 'web', 'source_ids': ['qa-source']}],
       'networks': <Object>[], 'provider_capability_refs': <Object>[], 'external_gateway_policy': 'forbidden'};
     final catalogEnvelope = await _qaSigned({'schema_version': 'pokrov-routing-catalog-v1', 'revision': 1,
       'security_revision': 1, 'audience': 'lab', 'issued_at': start, 'expires_at': end,
       'sources': [{'source_id': 'qa-source', 'url': 'https://source.example.test/', 'revision': '1',
         'sha256': await _qaDigest('source'), 'license': 'test', 'retrieved_at': start, 'expires_at': end}],
-      'evidence': [{'evidence_id': 'domain-review', 'service_id': 'gemini', 'source_ids': ['qa-source'],
+      'evidence': [{'evidence_id': 'domain-review', 'service_id': serviceId, 'source_ids': ['qa-source'],
         'sha256': await _qaDigest('domain metadata'), 'origin': 'synthetic', 'observed_at': start, 'expires_at': end}],
       'services': [service]}, 'pokrov-routing-catalog-v1', key);
     final catalogVerifier = RoutingCatalogVerifier(publicKeysById: {'qa-test': public}, audience: 'lab');
@@ -281,7 +286,7 @@ void main() {
     final policy = RoutingCatalogPolicy.fromVerified(catalog);
     expect(() => compileCatalogDomainPolicy(policy: policy, mode: CatalogRoutingMode.selective,
       platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true,
-      now: now, selectedServiceIds: const {'gemini'}), throwsA(isA<RoutingCatalogFailure>()),
+      now: now, selectedServiceIds: {serviceId}), throwsA(isA<RoutingCatalogFailure>()),
       reason: 'the public compiler must keep the original disabled service unavailable');
     final permission = <String, Object?>{'permission_id': 'owned-permission', 'provider_id': 'owned-provider', 'revision': 1,
       'status': 'approved', 'embedded_use_allowed': true, 'review_ref': 'permission-review',
@@ -290,11 +295,11 @@ void main() {
     final provider = <String, Object?>{'provider_id': 'owned-provider', 'revision': 1, 'kind': 'owned', 'enabled': true,
       'permission_id': 'owned-permission', 'resolver_url': 'https://dns.example.test/dns-query',
       'relay_addresses': ['1.1.1.1'], 'privacy_review_ref': 'privacy-review', 'privacy_review_sha256': await _qaDigest('privacy')};
-    final capability = <String, Object?>{'capability_id': 'gemini-qa', 'provider_id': 'owned-provider', 'provider_revision': 1,
-      'service_id': 'gemini', 'enabled': false, 'verification': 'source_only',
+    final capability = <String, Object?>{'capability_id': '$serviceId-qa', 'provider_id': 'owned-provider', 'provider_revision': 1,
+      'service_id': serviceId, 'enabled': false, 'verification': 'source_only',
       'checks': {for (final name in const ['resolver_transport', 'dns_answer', 'tls_certificate', 'feature_request']) name: 'NOT_VERIFIED'},
       'platform': 'windows', 'origin': 'current-origin', 'family': 'ipv4', 'feature': 'web_request',
-      'transport': 'tls_tcp_443_visible_sni', 'domains': [{'name': 'gemini.google.com', 'match': 'exact'}],
+      'transport': 'tls_tcp_443_visible_sni', 'domains': [for (final name in domainNames) {'name': name, 'match': 'exact'}],
       'proof_ref': 'unverified-proof', 'proof_sha256': await _qaDigest('unverified proof'), 'observed_at': start, 'expires_at': end};
     final providerHash = await _qaDigest(jsonEncode(_qaSorted({'schema_version': 'pokrov-smart-access-providers-v1',
       'revision': 1, 'security_revision': 1, 'audience': 'lab', 'issued_at': start, 'expires_at': end,
@@ -361,9 +366,9 @@ void main() {
             final issued = wire(DateTime.now().toUtc());
             final lease = <String, Object?>{'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': leaseId,
               'audience': 'lab', 'provider_id': 'owned-provider', 'provider_revision': 1, 'permission_id': 'owned-permission',
-              'permission_revision': 1, 'capability_id': 'gemini-qa', 'provider_policy_revision': 1, 'provider_security_revision': 1,
+              'permission_revision': 1, 'capability_id': '$serviceId-qa', 'provider_policy_revision': 1, 'provider_security_revision': 1,
               'provider_policy_sha256': providerHash, 'catalog_revision': 1, 'catalog_security_revision': 1,
-              'catalog_sha256': catalog.payloadSha256, 'service_id': 'gemini', 'platform': 'windows', 'origin': 'current-origin',
+              'catalog_sha256': catalog.payloadSha256, 'service_id': serviceId, 'platform': 'windows', 'origin': 'current-origin',
               'family': 'ipv4', 'feature': 'web_request', 'transport': 'tls_tcp_443_visible_sni', 'issued_at': issued,
               'new_flows_until': qaEnd, 'active_flows_until': qaEnd, 'resolver_url': provider['resolver_url'],
               'relay_addresses': provider['relay_addresses'], 'domains': capability['domains'],
@@ -372,7 +377,7 @@ void main() {
               'device_binding': binding, 'profile_sha256': body['profile_sha256'], 'route_mode': body['route_mode'], 'lease': lease},
               'pokrov-smart-access-grant-v1', key);
             permitEnvelope = await _qaSigned({'schema_version': 'pokrov-smart-access-first-provider-qa-v1', 'permit_id': admission,
-              'request_nonce': body['request_nonce'], 'device_binding': binding, 'candidate_ref': 'gemini-qa',
+              'request_nonce': body['request_nonce'], 'device_binding': binding, 'candidate_ref': '$serviceId-qa',
               'profile_sha256': body['profile_sha256'], 'catalog_sha256': catalog.payloadSha256, 'provider_policy_sha256': providerHash,
               'client_release': body['client_release'], 'core_version': body['core_version'], 'core_module_sha256': body['core_module_sha256'],
               'route_mode': body['route_mode'], 'issued_at': issued, 'expires_at': qaEnd, 'max_attempts': 1, 'renewable': false,
@@ -489,7 +494,7 @@ void main() {
         case 'runtimeEngine.readSmartAccessLeases':
           final startedAt = DateTime.parse((permitEnvelope!['payload'] as Map)['issued_at'] as String).millisecondsSinceEpoch + 1;
           return {'schema': 1, 'profileDigest': args['profileDigest'], 'leaseIdsJson': jsonEncode({'schema': 1,
-            'lease_ids': [leaseId], 'selections': [{'service_id': 'gemini', 'lease_id': leaseId, 'selection_index': 0,
+            'lease_ids': [leaseId], 'selections': [{'service_id': serviceId, 'lease_id': leaseId, 'selection_index': 0,
               'state': 'gateway', 'available': true, 'readiness': {'probe_id': probeId, 'lease_id': leaseId,
                 'started_at_ms': startedAt, 'completed_at_ms': startedAt + 3,
                 'status': guardClosed ? 'failure' : 'pass', 'fallback_guard_closed': guardClosed,
@@ -596,22 +601,25 @@ void main() {
     expect(claimRequest!.containsKey('candidate_ref'), isFalse);
     expect(claimRequest!['core_module_sha256'], coreHash);
     final route = staged!['route'] as Map;
-    final domainRules = (route['rules'] as List).cast<Map>().where((row) => (row['domain'] as List?)?.contains('gemini.google.com') == true).toList();
+    for (final domainName in domainNames) {
+    final domainRules = (route['rules'] as List).cast<Map>().where((row) => (row['domain'] as List?)?.contains(domainName) == true).toList();
     expect(domainRules[0]['pokrov_catalog_window']['lease_id'], leaseId);
     expect(domainRules[0]['network'], 'tcp');
     expect(domainRules[0]['port'], [443]);
     expect(domainRules[0]['ip_version'], 4);
     expect(domainRules[1]['outbound'], 'proxy', reason: 'closed QA member retains protected VPN fallback');
     final domainDnsRules = ((staged!['dns'] as Map)['rules'] as List).cast<Map>()
-        .where((row) => (row['domain'] as List?)?.contains('gemini.google.com') == true).toList();
+        .where((row) => (row['domain'] as List?)?.contains(domainName) == true).toList();
     expect(domainDnsRules[0]['query_type'], ['A', 'AAAA', 'HTTPS', 'SVCB'],
       reason: 'browser address and service-binding queries must reach the owned IPv4 resolver');
     expect(domainDnsRules[0]['server'], 'pokrov-smart-access-dns-$leaseId');
     expect(domainDnsRules[0]['pokrov_catalog_window'], domainRules[0]['pokrov_catalog_window']);
     expect(domainDnsRules[0]['disable_cache'], isTrue);
     expect(domainDnsRules[0]['rewrite_ttl'], 0);
-    expect(domainDnsRules.last, {'domain': ['gemini.google.com'], 'action': 'reject'},
+    expect(domainDnsRules.last['domain'], contains(domainName));
+    expect(domainDnsRules.last['action'], 'reject',
       reason: 'the untimed exact-domain rejection survives catalog expiry');
+    }
     expect(route['final'], 'direct', reason: 'other traffic retains Direct');
     for (final host in const ['app.pokrov.space', 'api.pokrov.space']) {
       expect(controlRouteAvailable(Uri.https(host, '/api/client/smart-access/first-provider-qa/control')), isTrue,
@@ -620,7 +628,8 @@ void main() {
     expect(controlRouteAvailable(Uri.https('unrelated.example.test', '/')), isFalse);
     await manager.readSnapshot();
     final context = await manager.readFirstProviderQaContext();
-    expect(context!['runtime_scope_sha256'], isA<String>().having((value) => value.length, 'length', 64));
+    expect(context!['service_id'], serviceId);
+    expect(context['runtime_scope_sha256'], isA<String>().having((value) => value.length, 'length', 64));
     expect(context['request_id'], nativeBoundRequestId);
     expect(context['profile_digest'], phase['effectiveProfileDigest']);
     expect(context['native_stages'], 'PASS');
@@ -635,6 +644,19 @@ void main() {
     expect(closedContext['proof_current'], isFalse);
     expect(closedContext['fallback_guard_closed'], isTrue);
     final verifier = SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab');
+    if (serviceId == 'chatgpt') {
+      for (final changes in <Map<String, Object?>>[
+        {'domains': [{'name': 'chatgpt.com', 'match': 'suffix'}]},
+        {'service_id': 'gemini'},
+      ]) {
+        final rejected = jsonDecode(jsonEncode(permitEnvelope!['payload'])) as Map<String, dynamic>;
+        ((rejected['qa_projection'] as Map)['capability'] as Map).addAll(changes);
+        final signed = await _qaSigned(rejected, 'pokrov-smart-access-first-provider-qa-v1', key);
+        await expectLater(verifier.verifyFirstProviderQa(signed, request: claimRequest!,
+          accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, now: DateTime.now().toUtc()),
+          throwsA(isA<RoutingCatalogFailure>().having((failure) => failure.code, 'code', 'smart_access_qa_projection_invalid')));
+      }
+    }
     await expectLater(verifier.verifyFirstProviderQa(permitEnvelope, request: {...claimRequest!, 'core_module_sha256': await _qaDigest('other core')},
       accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, now: DateTime.now().toUtc()),
       throwsA(isA<RoutingCatalogFailure>()));

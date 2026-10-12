@@ -3235,7 +3235,7 @@ class ConnectionManager extends ChangeNotifier {
       configuredPayload = applyPokrovRoutingPreferences(
         runtimePayload,
         _pendingFirstProviderQaAdmissionId == null ? _clientExperience.routingPreferences
-            : _clientExperience.routingPreferences.copyWith(selectedCatalogServiceIds: const {'gemini'}),
+            : _clientExperience.routingPreferences.copyWith(selectedCatalogServiceIds: {_activeFirstProviderQa!.permit.serviceId}),
         hostPlatform: _appContext.hostPlatform,
         catalogPolicy: catalogPolicy,
         catalogAccessState: localSmartAccessState,
@@ -3247,7 +3247,7 @@ class ConnectionManager extends ChangeNotifier {
       );
       if (_pendingFirstProviderQaAdmissionId != null) {
         _validateFirstProviderQaRuleOrder(configuredPayload.configPayload,
-          _activeFirstProviderQa!.permit.grant.lease['lease_id']! as String);
+          _activeFirstProviderQa!.permit);
       }
       final grants = catalogPolicy?.smartAccessProfile?.byService.values
           .expand((group) => group);
