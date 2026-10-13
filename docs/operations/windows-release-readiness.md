@@ -1,5 +1,34 @@
 # Windows acceptance
 
+On 2026-10-13, private 4151 passed an actual automatic protocol failover in the
+owned Clean VM, without an application rebuild. Runtime readback confirmed
+sing-tun's two service AppID hard permits at ALE_AUTH_CONNECT_V4/V6, with
+CLEAR_ACTION_RIGHT and sublayer weight 65535. These permits explain why the
+earlier ordinary firewall block was ineffective; neither permit was changed.
+A finite dynamic WFP fault instead blocked physical-interface TCP at
+OUTBOUND_TRANSPORT_V4/V6, excluding loopback and preserving UDP. The SDK helper
+required a start gate after its separate 55-second process watchdog was armed;
+its own monotonic timer closed the dynamic session after 40 seconds. Harness
+command-length and PowerShell argument-mode errors were corrected before any
+packet fault occurred.
+
+The one actual fault began at guest 00:10:43.168 UTC. Current VLESS REALITY
+through a bridge failed with `core_egress_timeout` after 3.370 seconds. At
+22.732 seconds, native DNS/egress were healthy again with a changed profile
+binding; refreshed Diagnostics confirmed AWG3.1 directly, with that same current
+binding, while the TCP filters were still active. No manual Connect occurred.
+The helper exited 0 and confirmed both filters and its sublayer absent; its
+watchdog was removed. This accepts native automatic protocol recovery; a fresh
+browser traffic check and Smart DNS response were not performed.
+
+Normal Stop and Exit restored app/aux/TUN/VPN routes/WinDivert/helper/task to
+zero, routes 16, DNS 1/0, DHCP on, proxy off and link up at guest 00:12:28 UTC.
+The separately requested Edge self-check launch was again rejected before
+execution by automatic review (`blocked by policy`, no further reason).
+No alternate launch or private QA admission followed. Guest sessions closed;
+SaveState RC0/EOF and Saved/Unlocked with an empty session were confirmed at
+host 00:15:04 UTC. Physical bridge, guest clock policy and host Hiddify remain.
+
 Private Windows candidate `1.5.0+4151` also retains an already materialized
 UDP reserve beside TCP candidates in the runtime cache, without another HTTP
 request. Core and Cronet remain the exact 4148 artifacts. The 28,679,408-byte
@@ -26,7 +55,8 @@ physical bridge and saved identity/preferences were preserved.
 Private Windows candidate `1.5.0+4150` adds the bounded ChatGPT QA path and keeps
 an available candidate from the other TCP/UDP family within the three-candidate
 recovery limit. It reuses the exact Core and Cronet artifacts from 4148.
-Runtime acceptance of these changes is pending.
+4150 was not installed; native recovery was subsequently accepted on 4151.
+ChatGPT browser functionality remains pending.
 
 Private Windows candidate `1.5.0+4149` shows only the confirmed active protocol
 and direct or bridge path in Diagnostics. It reuses the exact Core `1.2.14` and
