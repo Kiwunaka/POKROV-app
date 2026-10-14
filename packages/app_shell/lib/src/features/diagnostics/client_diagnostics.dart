@@ -444,6 +444,7 @@ final class PokrovDiagnosticsReport {
         'egress_stage': observation.stage, 'egress_outcome': observation.outcome,
         'egress_error_domain': observation.errorDomain, 'egress_error_code': observation.errorCode,
         'egress_elapsed_ms': observation.elapsedMs,
+        'egress_http_local_is_tun': observation.httpLocalIsTun,
         if (observation.target != null) ...{
           'egress_target': observation.target,
           'egress_owner_remaining_ms_at_entry': observation.ownerRemainingMsAtEntry,
@@ -1687,7 +1688,8 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 '${observation.errorDomain} ${observation.errorCode} · ${observation.elapsedMs} мс · '
                 'цель: ${observation.target ?? 'неизвестно'} · '
                 'остаток при входе: ${observation.ownerRemainingMsAtEntry?.toString() ?? 'неизвестно'} мс · '
-                'DNS A принят: ${observation.dnsAAccepted?.toString() ?? 'неизвестно'}',
+                'DNS A принят: ${observation.dnsAAccepted?.toString() ?? 'неизвестно'} · '
+                'локальный адрес HTTPS — TUN: ${observation.httpLocalIsTun?.toString() ?? 'неизвестно'}',
                 key: const ValueKey('diagnostics-native-egress')),
             ],
             if (_report.timelineAttempts.isNotEmpty) ...[

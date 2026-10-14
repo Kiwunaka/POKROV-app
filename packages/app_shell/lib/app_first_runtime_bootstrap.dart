@@ -4360,6 +4360,7 @@ class AppFirstRuntimeBootstrapper
           'egress_probe': {'stage': observation.stage, 'outcome': observation.outcome,
             'error_domain': observation.errorDomain, 'error_code': observation.errorCode,
             'elapsed_ms': observation.elapsedMs,
+            'http_local_is_tun': observation.httpLocalIsTun,
             if (observation.target != null) ...{
               'target': observation.target,
               'owner_remaining_ms_at_entry': observation.ownerRemainingMsAtEntry,
@@ -11228,6 +11229,7 @@ class AppFirstSupportTicketService
     'egress_target',
     'egress_owner_remaining_ms_at_entry',
     'egress_dns_a_accepted',
+    'egress_http_local_is_tun',
     'error_code',
     'probe_stage',
     'probe_operation',
@@ -11754,9 +11756,10 @@ class AppFirstSupportTicketService
       if (!_allowedDiagnosticKeys.contains(key)) {
         continue;
       }
+      if (key == 'egress_http_local_is_tun' && entry.value != null && entry.value is! bool) continue;
       final value = _safeDiagnosticValue(entry.value);
       if (value != null || (entry.value == null && const {
-        'egress_owner_remaining_ms_at_entry', 'egress_dns_a_accepted',
+        'egress_owner_remaining_ms_at_entry', 'egress_dns_a_accepted', 'egress_http_local_is_tun',
       }.contains(key))) {
         safe[key] = value;
       }
@@ -11772,7 +11775,7 @@ class AppFirstSupportTicketService
       for (final key in const ['report_run_id', 'report_sequence', 'attempt_number',
         'failure_kind', 'failure_operation', 'native_phase', 'error_code', 'probe_stage',
         'egress_stage', 'egress_outcome', 'egress_error_domain', 'egress_error_code', 'egress_elapsed_ms',
-        'egress_target', 'egress_owner_remaining_ms_at_entry', 'egress_dns_a_accepted',
+        'egress_target', 'egress_owner_remaining_ms_at_entry', 'egress_dns_a_accepted', 'egress_http_local_is_tun',
         'probe_operation', 'probe_cause', 'probe_target', 'probe_request',
         'probe_os_error_code', 'probe_status'])
         if (safe.containsKey(key)) key: safe[key],

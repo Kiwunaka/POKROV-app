@@ -273,7 +273,8 @@ std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe(
 // Loopback-only fixture; the production factory has no caller-owned URL.
 std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
     std::uint16_t port, bool secure = false, ServiceEventSink* events = nullptr,
-    bool reserve = false);
+    bool reserve = false,
+    std::optional<std::uint32_t> expected_tun_ipv4 = std::nullopt);
 #endif
 std::wstring ResolveServiceRuntimeRoot();
 

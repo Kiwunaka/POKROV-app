@@ -2555,7 +2555,7 @@ void main() {
         canInitialize: true, canConnect: true, message: 'fixture',
         lastFailureKind: 'core_egress_response_timeout',
         egressProbeObservation: (stage: 'response', outcome: 'timeout', errorDomain: 'winhttp', errorCode: 12002, elapsedMs: 6000,
-          target: 'owned_reserve', ownerRemainingMsAtEntry: 1425, dnsAAccepted: true)),
+          target: 'owned_reserve', ownerRemainingMsAtEntry: 1425, dnsAAccepted: true, httpLocalIsTun: true)),
       statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
       appVersion: '1.5.0', buildNumber: '4191', releaseChannel: 'private', candidateLabel: 'fixture',
       encryptedDeliveryAvailable: false);
@@ -2565,6 +2565,7 @@ void main() {
     expect(report.supportDiagnosticFields(), containsPair('egress_target', 'owned_reserve'));
     expect(report.supportDiagnosticFields(), containsPair('egress_owner_remaining_ms_at_entry', 1425));
     expect(report.supportDiagnosticFields(), containsPair('egress_dns_a_accepted', true));
+    expect(report.supportDiagnosticFields(), containsPair('egress_http_local_is_tun', true));
   });
 
   test('current diagnostic card separates rejected candidate material from native failure', () async {

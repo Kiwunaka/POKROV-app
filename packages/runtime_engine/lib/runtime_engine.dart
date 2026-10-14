@@ -160,10 +160,13 @@ final class WindowsLocalDpiRuntime {
 
 typedef RuntimeEgressProbeObservation = ({String stage, String outcome,
   String errorDomain, int errorCode, int elapsedMs, String? target,
-  int? ownerRemainingMsAtEntry, bool? dnsAAccepted});
+  int? ownerRemainingMsAtEntry, bool? dnsAAccepted, bool? httpLocalIsTun});
 
 RuntimeEgressProbeObservation? runtimeEgressProbeObservationFromWire(Object? value) {
-  if (value is! Map || (value.length != 5 && value.length != 8) ||
+  if (value is! Map) return null;
+  final legacyFieldCount = value.length - (value.containsKey('http_local_is_tun') ? 1 : 0);
+  if ((legacyFieldCount != 5 && legacyFieldCount != 8) ||
+      (value['http_local_is_tun'] != null && value['http_local_is_tun'] is! bool) ||
       !const {'tun_dns', 'dns_setup', 'dns_send', 'dns_wait', 'dns_reply', 'http_setup',
         'connect', 'tls', 'sending', 'response', 'proof', 'retry_wait'}.contains(value['stage']) ||
       !const {'succeeded', 'failed', 'cancelled', 'deadline', 'timeout'}.contains(value['outcome']) ||
@@ -172,19 +175,20 @@ RuntimeEgressProbeObservation? runtimeEgressProbeObservationFromWire(Object? val
       value['elapsed_ms'] is! int || (value['elapsed_ms'] as int) < 0 || (value['elapsed_ms'] as int) > 86400000) return null;
   const contextKeys = {'target', 'owner_remaining_ms_at_entry', 'dns_a_accepted'};
   final hasContext = contextKeys.any(value.containsKey);
-  if ((hasContext && (value.length != 8 || !contextKeys.every(value.containsKey) ||
+  if ((hasContext && (legacyFieldCount != 8 || !contextKeys.every(value.containsKey) ||
       !const {'owned_api', 'owned_reserve'}.contains(value['target']) ||
       (value['owner_remaining_ms_at_entry'] != null &&
         (value['owner_remaining_ms_at_entry'] is! int ||
          (value['owner_remaining_ms_at_entry'] as int) < 0 ||
          (value['owner_remaining_ms_at_entry'] as int) > 3000)) ||
       (value['dns_a_accepted'] != null && value['dns_a_accepted'] is! bool))) ||
-      (!hasContext && value.length != 5)) return null;
+      (!hasContext && legacyFieldCount != 5)) return null;
   return (stage: value['stage'] as String, outcome: value['outcome'] as String,
     errorDomain: value['error_domain'] as String, errorCode: value['error_code'] as int,
     elapsedMs: value['elapsed_ms'] as int, target: value['target'] as String?,
     ownerRemainingMsAtEntry: value['owner_remaining_ms_at_entry'] as int?,
-    dnsAAccepted: value['dns_a_accepted'] as bool?);
+    dnsAAccepted: value['dns_a_accepted'] as bool?,
+    httpLocalIsTun: value['http_local_is_tun'] as bool?);
 }
 
 class RuntimeSnapshot {

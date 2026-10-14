@@ -736,17 +736,20 @@ bool ParseServiceRuntimeSnapshot(const std::string& body,
     std::size_t offset = 0;
     std::string stage, outcome, domain, error, elapsed, first_dns = "unknown";
     std::string target, owner_remaining, dns_accepted;
+    std::string http_local = "unknown";
     const bool has_first_dns = observation_body.find(";first_owned_dns_state=") != std::string::npos;
     const bool has_target = observation_body.find(";egress_probe_target=") != std::string::npos;
+    const bool has_http_local = observation_body.find(";egress_http_local_is_tun=") != std::string::npos;
     if (!ReadField(observation_body, &offset, "egress_probe_stage", &stage, false) ||
         !ReadField(observation_body, &offset, "egress_probe_outcome", &outcome, false) ||
         !ReadField(observation_body, &offset, "egress_error_domain", &domain, false) ||
         !ReadField(observation_body, &offset, "egress_error_code", &error, false) ||
-        !ReadField(observation_body, &offset, "egress_elapsed_ms", &elapsed, !has_first_dns && !has_target) ||
-        (has_first_dns && !ReadField(observation_body, &offset, "first_owned_dns_state", &first_dns, !has_target)) ||
+        !ReadField(observation_body, &offset, "egress_elapsed_ms", &elapsed, !has_first_dns && !has_target && !has_http_local) ||
+        (has_first_dns && !ReadField(observation_body, &offset, "first_owned_dns_state", &first_dns, !has_target && !has_http_local)) ||
         (has_target && (!ReadField(observation_body, &offset, "egress_probe_target", &target, false) ||
             !ReadField(observation_body, &offset, "egress_owner_remaining_ms_at_entry", &owner_remaining, false) ||
-            !ReadField(observation_body, &offset, "egress_dns_a_accepted", &dns_accepted, true))) ||
+            !ReadField(observation_body, &offset, "egress_dns_a_accepted", &dns_accepted, !has_http_local))) ||
+        (has_http_local && !ReadField(observation_body, &offset, "egress_http_local_is_tun", &http_local, true)) ||
         offset != observation_body.size()) return false;
     std::optional<EgressProbeStage> parsed_stage;
     std::optional<EgressProbeOutcome> parsed_outcome;
@@ -795,6 +798,9 @@ bool ParseServiceRuntimeSnapshot(const std::string& body,
       else if (dns_accepted == "0") observation.dns_a_accepted = false;
       else if (dns_accepted != "unknown") return false;
     }
+    if (http_local == "1") parsed.egress_failure_observation->http_local_is_tun = true;
+    else if (http_local == "0") parsed.egress_failure_observation->http_local_is_tun = false;
+    else if (http_local != "unknown") return false;
     snapshot_body.erase(observation_start,
         observation_end == std::string::npos ? observation_end : observation_end - observation_start);
   }

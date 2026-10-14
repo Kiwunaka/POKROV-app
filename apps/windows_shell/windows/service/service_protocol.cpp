@@ -83,6 +83,8 @@ std::string EncodeEgressProbeObservation(const EgressProbeObservation& observati
         ";egress_dns_a_accepted=" + (observation.dns_a_accepted
             ? (*observation.dns_a_accepted ? "1" : "0") : "unknown");
   }
+  result += std::string(";egress_http_local_is_tun=") + (observation.http_local_is_tun
+      ? (*observation.http_local_is_tun ? "1" : "0") : "unknown");
   return result;
 }
 

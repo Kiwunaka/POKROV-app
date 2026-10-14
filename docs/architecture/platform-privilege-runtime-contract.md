@@ -375,6 +375,14 @@ Diagnostics, D8 and the support summary. Old tuples remain unknown; partial or
 invalid blocks are rejected. No addresses, packet data or new journal are added,
 and timeout, retry, routing and certificate validation behavior is unchanged.
 
+The independent nullable `http_local_is_tun` compares WinHTTP's actual local
+IPv4 with the current attempt's TUN IPv4 before closing the request. Query
+failure, an unavailable address or an unsupported family stays unknown; old
+tuples without this field also stay unknown. Only the boolean enters IPC,
+Diagnostics and support, never an address. It identifies the HTTP socket's
+local source, not the outbound subsequently chosen inside Core, and does not
+change proof acceptance, deadlines, retry, routing or TLS validation.
+
 Debug builds expose bounded isolated handshake modes used by native tests.
 Release builds do not expose that entrypoint. The service and UI client are
 copied into the local release bundle and the Inno source installs a machine-wide

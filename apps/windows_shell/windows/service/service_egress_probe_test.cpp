@@ -296,7 +296,8 @@ int main(int argc, char** argv) {
         ::bind(reservation, reinterpret_cast<sockaddr*>(&address), sizeof(address))) return 1;
     int length = sizeof(address);
     if (::getsockname(reservation, reinterpret_cast<sockaddr*>(&address), &length)) return 1;
-    auto probe = CreateLoopbackEgressProbeForTest(ntohs(address.sin_port));
+    auto probe = CreateLoopbackEgressProbeForTest(ntohs(address.sin_port), false,
+        nullptr, false, htonl(INADDR_LOOPBACK));
     expect(probe->Verify() == "core_egress_connect_failed",
            "closed loopback endpoint changed its failure category");
     const auto observation = probe->LastObservation();
@@ -304,6 +305,8 @@ int main(int argc, char** argv) {
                observation->outcome == EgressProbeOutcome::kFailed &&
                observation->error_domain == EgressErrorDomain::kWinHttp && observation->error_code != 0,
            "ordinary probe lost its terminal observation without an event sink");
+    expect(observation && !observation->http_local_is_tun,
+           "failed connection gained a local HTTP endpoint");
     if (observation) {
       const auto body = std::string("phase=config_staged;core_ready=1;can_initialize=1;can_connect=1;") +
           "running=0;core_egress_validated=0;dns_ready=0;staged_profile_digest=" + ProfileDigest("0\n{}") +
@@ -320,6 +323,7 @@ int main(int argc, char** argv) {
       owned_observation.target = EgressProbeTarget::kOwnedReserve;
       owned_observation.owner_remaining_ms_at_entry = 1425;
       owned_observation.dns_a_accepted = true;
+      owned_observation.http_local_is_tun = true;
       const auto suffix = EncodeEgressProbeObservation(owned_observation);
       const std::string transport = ";transport_proof_pending=0;transport_lease_active=0";
       ServiceRuntimeSnapshot parsed;
@@ -327,7 +331,8 @@ int main(int argc, char** argv) {
                  parsed.egress_failure_observation &&
                  parsed.egress_failure_observation->target == EgressProbeTarget::kOwnedApi &&
                  !parsed.egress_failure_observation->owner_remaining_ms_at_entry &&
-                 !parsed.egress_failure_observation->dns_a_accepted,
+                 !parsed.egress_failure_observation->dns_a_accepted &&
+                 !parsed.egress_failure_observation->http_local_is_tun,
              "unknown target context values did not survive IPC");
       expect(ParseServiceRuntimeSnapshot(body + suffix + transport, &parsed) &&
                  parsed.egress_failure_observation &&
@@ -339,7 +344,8 @@ int main(int argc, char** argv) {
                  parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kReplyWritten &&
                  parsed.egress_failure_observation->target == EgressProbeTarget::kOwnedReserve &&
                  parsed.egress_failure_observation->owner_remaining_ms_at_entry == 1425U &&
-                 parsed.egress_failure_observation->dns_a_accepted == true,
+                 parsed.egress_failure_observation->dns_a_accepted == true &&
+                 parsed.egress_failure_observation->http_local_is_tun == true,
              "whole egress failure tuple did not survive the service parser");
       const auto old_suffix = suffix.substr(0, suffix.find(";first_owned_dns_state="));
       expect(!ParseServiceRuntimeSnapshot(body + suffix.substr(0, suffix.find(";egress_dns_a_accepted=")) + transport, &parsed),
@@ -351,8 +357,18 @@ int main(int argc, char** argv) {
              "legacy six-field tuple gained target evidence");
       expect(ParseServiceRuntimeSnapshot(body + old_suffix + transport, &parsed) &&
                  parsed.egress_failure_observation &&
-                 parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kUnknown,
+                 parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kUnknown &&
+                 !parsed.egress_failure_observation->http_local_is_tun,
              "existing five-field egress tuple was rejected or gained owned DNS proof");
+      expect(ParseServiceRuntimeSnapshot(body + old_suffix + ";egress_http_local_is_tun=0" + transport, &parsed) &&
+                 parsed.egress_failure_observation &&
+                 parsed.egress_failure_observation->http_local_is_tun == false &&
+                 !parsed.egress_failure_observation->target,
+             "standalone HTTP local-address observation required target context or lost false");
+      expect(!ParseServiceRuntimeSnapshot(body + old_suffix + ";egress_http_local_is_tun=false" + transport, &parsed) &&
+                 parsed.egress_failure_observation &&
+                 parsed.egress_failure_observation->http_local_is_tun == false,
+             "invalid HTTP local-address scalar was accepted or replaced the previous snapshot");
       expect(!ParseServiceRuntimeSnapshot(body + old_suffix + ";first_owned_dns_state=arbitrary" + transport, &parsed) &&
                  parsed.egress_failure_observation &&
                  parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kUnknown,
@@ -412,18 +428,23 @@ int main(int argc, char** argv) {
     std::cout << "closed_endpoint_failure=" << failure << '\n';
     ::closesocket(reservation);
   }
-  {
+  for (const bool local_matches : {true, false}) {
     LoopbackServer server("");
     expect(server.port != 0, "loopback listener failed");
     if (server.port == 0) return 1;
     EgressEvents events;
-    auto probe = CreateLoopbackEgressProbeForTest(server.port, false, &events);
+    auto probe = CreateLoopbackEgressProbeForTest(server.port, false, &events, false,
+        htonl(local_matches ? INADDR_LOOPBACK : 0xc0000201U));
     const auto start = ::GetTickCount64();
     const auto failure = probe->Verify([&] {
       return ::GetTickCount64() - start >= 300
                  ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
     });
     const auto elapsed = ::GetTickCount64() - start;
+    if (!events.observations.empty()) {
+      std::cout << "pending_headers_stage=" << EgressProbeStageName(events.observations[0].stage)
+                << " observation_count=" << events.observations.size() << '\n';
+    }
     expect(!failure.empty() && elapsed < 1500 && server.requests == 1,
            "deadline did not stop pending headers before timeout or retried");
     expect(events.observations.size() == 2 &&
@@ -438,6 +459,12 @@ int main(int argc, char** argv) {
                server.expected_request_received,
            "deadline erased the observed HTTP stage or invented a native timeout error");
     const auto retained = probe->LastObservation();
+    if (retained) {
+      std::cout << "http_local_is_tun=" << (retained->http_local_is_tun
+          ? (*retained->http_local_is_tun ? "true" : "false") : "unknown") << '\n';
+    }
+    expect(retained && retained->http_local_is_tun == local_matches,
+           "pending response lost actual HTTP local-address readback before headers");
     expect(retained && !events.observations.empty() &&
                retained->stage == events.observations[0].stage &&
                retained->outcome == events.observations[0].outcome &&
@@ -449,6 +476,10 @@ int main(int argc, char** argv) {
     while (!server.peer_cancelled && ::GetTickCount64() < close_deadline) ::Sleep(10);
     expect(server.peer_cancelled, "cancelled WinHTTP request left its socket open");
     std::cout << "pending_headers_deadline_ms=" << elapsed << '\n';
+  }
+  if (argc == 2 && std::string(argv[1]) == "--http-local-readback") {
+    ::WSACleanup();
+    return failures == 0 ? 0 : 1;
   }
   for (bool authenticated : {true, false}) {
     LoopbackServer server([authenticated](const std::string& request) {

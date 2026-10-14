@@ -346,6 +346,8 @@ flutter::EncodableValue RuntimeSnapshotValue(
         {flutter::EncodableValue("error_domain"), flutter::EncodableValue(pokrov::service::EgressProbeErrorDomainName(observation.error_domain))},
         {flutter::EncodableValue("error_code"), flutter::EncodableValue(static_cast<std::int64_t>(observation.error_code))},
         {flutter::EncodableValue("elapsed_ms"), flutter::EncodableValue(static_cast<std::int64_t>(observation.elapsed_ms))},
+        {flutter::EncodableValue("http_local_is_tun"), observation.http_local_is_tun
+            ? flutter::EncodableValue(*observation.http_local_is_tun) : flutter::EncodableValue()},
       };
       if (observation.target) {
         probe_values[flutter::EncodableValue("target")] =

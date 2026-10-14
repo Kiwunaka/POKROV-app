@@ -94,6 +94,7 @@ struct EgressProbeObservation {
   std::optional<EgressProbeTarget> target;
   std::optional<std::uint32_t> owner_remaining_ms_at_entry;
   std::optional<bool> dns_a_accepted;
+  std::optional<bool> http_local_is_tun;
 };
 
 const char* EgressProbeStageName(EgressProbeStage stage);

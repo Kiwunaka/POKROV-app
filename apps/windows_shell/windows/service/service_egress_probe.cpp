@@ -48,6 +48,7 @@ struct ProbeObservation {
   std::optional<EgressProbeTarget> target;
   std::optional<std::uint32_t> owner_remaining_ms_at_entry;
   std::optional<bool> dns_a_accepted;
+  std::optional<bool> http_local_is_tun;
 
   void Error(EgressErrorDomain source, DWORD code) {
     if (domain != EgressErrorDomain::kNone) return;
@@ -70,6 +71,19 @@ bool SameSocketAddress(const SOCKADDR_STORAGE& left, const SOCKADDR_STORAGE& rig
         a.sin6_port == b.sin6_port && a.sin6_scope_id == b.sin6_scope_id;
   }
   return false;
+}
+
+std::optional<bool> ReadHttpLocalIsTun(
+    HINTERNET request, const std::optional<std::uint32_t>& expected_tun_ipv4) {
+  if (request == nullptr || !expected_tun_ipv4) return std::nullopt;
+  WINHTTP_CONNECTION_INFO connection{};
+  connection.cbSize = sizeof(connection);
+  DWORD size = sizeof(connection);
+  if (!::WinHttpQueryOption(request, WINHTTP_OPTION_CONNECTION_INFO, &connection, &size) ||
+      size != sizeof(connection) || connection.LocalAddress.ss_family != AF_INET) return std::nullopt;
+  const auto address = reinterpret_cast<const sockaddr_in&>(connection.LocalAddress).sin_addr.s_addr;
+  if (address == INADDR_ANY) return std::nullopt;
+  return address == *expected_tun_ipv4;
 }
 
 bool FindTunDns(TunDnsEndpoint* result, ProbeObservation* observation) {
@@ -340,9 +354,10 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
  public:
   AuthenticatedEgressProbe(const ProbeTarget* targets, std::size_t target_count,
                            INTERNET_PORT port, bool secure,
-                           bool tun_dns, ServiceEventSink* events)
+                           bool tun_dns, ServiceEventSink* events,
+                           std::optional<std::uint32_t> loopback_tun_ipv4 = std::nullopt)
       : targets_(targets), target_count_(target_count), port_(port), secure_(secure),
-        tun_dns_(tun_dns), events_(events) {}
+        tun_dns_(tun_dns), events_(events), loopback_tun_ipv4_(loopback_tun_ipv4) {}
 
   std::string Verify(const CheckInterruption& interrupted, bool periodic,
                      std::uint64_t deadline_tick) override {
@@ -420,6 +435,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     last_observation_->target = observation.target;
     last_observation_->owner_remaining_ms_at_entry = observation.owner_remaining_ms_at_entry;
     last_observation_->dns_a_accepted = observation.dns_a_accepted;
+    last_observation_->http_local_is_tun = observation.http_local_is_tun;
     if (events_ != nullptr) {
       events_->RecordEgressProbeObservation(observation.stage, outcome,
           observation.domain, observation.error, last_observation_->elapsed_ms);
@@ -437,6 +453,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
           (std::min)(owner_deadline > started ? owner_deadline - started : 0, std::uint64_t{3000}));
     }
     std::wstring numeric;
+    auto expected_tun_ipv4 = loopback_tun_ipv4_;
     if (tun_dns_) {
       TunDnsEndpoint endpoint;
       if (!FindTunDns(&endpoint, &observation) ||
@@ -446,6 +463,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
         RecordObservation(observation, started, false, interrupted);
         return "core_egress_dns_failed";
       }
+      expected_tun_ipv4 = endpoint.local.sin_addr.s_addr;
       RecordObservation(observation, started, true, interrupted);
       // Keep this target's entry budget and accepted DNS evidence for HTTP.
       observation.domain = EgressErrorDomain::kNone;
@@ -673,6 +691,9 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
                           completion->wait_error.load());
       }
       failure = ObservedFailure(error, completion->stage.load());
+      // The request owner reads metadata before CloseHandle; callbacks never
+      // query or close this handle. Missing metadata is unknown, not non-TUN.
+      observation.http_local_is_tun = ReadHttpLocalIsTun(request, expected_tun_ipv4);
       RecordObservation(observation, started, valid, interrupted);
       // All request API calls have returned. Closing an async request cancels
       // pending I/O; no other thread calls WinHTTP with this request handle.
@@ -694,6 +715,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
   bool secure_;
   bool tun_dns_;
   ServiceEventSink* events_;
+  const std::optional<std::uint32_t> loopback_tun_ipv4_;
   std::optional<EgressProbeObservation> last_observation_;
 };
 
@@ -708,13 +730,14 @@ std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe(ServiceEventS
 
 #ifdef _DEBUG
 std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
-    std::uint16_t port, bool secure, ServiceEventSink* events, bool reserve) {
+    std::uint16_t port, bool secure, ServiceEventSink* events, bool reserve,
+    std::optional<std::uint32_t> expected_tun_ipv4) {
   static constexpr ProbeTarget targets[] = {
       {L"127.0.0.1", kProbeTargets[0].proof_path, kProbeTargets[0].data_path},
       {L"127.0.0.1", kProbeTargets[1].proof_path, kProbeTargets[1].data_path},
   };
   return std::make_unique<AuthenticatedEgressProbe>(
-      targets, reserve ? 2 : 1, port, secure, false, events);
+      targets, reserve ? 2 : 1, port, secure, false, events, expected_tun_ipv4);
 }
 
 std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
