@@ -31,18 +31,27 @@ void main() {
     final opening = Completer<ClientNotificationInbox>();
     client.pending = opening;
     final beforeOpen = client.inboxCalls;
+    // A foreground timer has already started reading a newly arrived reply.
+    await tester.pump(const Duration(seconds: 60));
+    expect(client.inboxCalls, beforeOpen + 1);
     await tester.tap(find.byTooltip('Уведомления · 1'));
     await tester.tap(find.byTooltip('Уведомления · 1'));
     expect(client.inboxCalls, beforeOpen + 1);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('profile-notifications-sheet')), findsNothing);
     client.pending = null;
+    client.inbox = _inbox(2);
     opening.complete(client.inbox);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.byKey(const ValueKey('profile-notifications-sheet')), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('profile-notification-cta-support.reply.1')));
+    expect(find.byKey(const ValueKey('profile-notification-cta-support.reply.1')), findsNothing);
+    expect(client.readBatches, [['support.reply.2']]);
+    await tester.tap(find.byKey(const ValueKey('profile-notification-cta-support.reply.2')));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Operator answer from notification'), findsOneWidget);
+    expect(client.requestedTicketIds, [21]);
     expect(find.byKey(const ValueKey('profile-notifications-sheet'), skipOffstage: false), findsNothing);
     await tester.binding.handlePopRoute();
     await tester.pump(const Duration(seconds: 1));
@@ -110,16 +119,24 @@ class _InboxClient implements ManagedProfileBootstrapper, AppFirstClientDataServ
     items: [], nextCursor: '', unreadCount: 0,
   );
   Completer<ClientNotificationInbox>? pending;
+  final readBatches = <List<String>>[];
+  final requestedTicketIds = <int>[];
 
   @override
-  Future<bool> markClientNotificationsRead({required HostPlatform hostPlatform, required List<String> ids}) async => true;
+  Future<bool> markClientNotificationsRead({required HostPlatform hostPlatform, required List<String> ids}) async {
+    readBatches.add(ids);
+    return true;
+  }
 
   @override
-  Future<SupportTicketThread> getTicket({required HostPlatform hostPlatform, required int ticketId}) async => SupportTicketThread(
+  Future<SupportTicketThread> getTicket({required HostPlatform hostPlatform, required int ticketId}) async {
+    requestedTicketIds.add(ticketId);
+    return SupportTicketThread(
     id: ticketId, status: 'closed', statusTitle: 'Закрыто', subject: '', createdAt: '', updatedAt: '', closedAt: '', lastMessagePreview: '',
     messages: [SupportTicketMessage(id: 1, ticketId: ticketId, senderRole: 'admin', body: 'Operator answer from notification',
       mediaType: '', mediaFileId: '', mediaPayload: '', createdAt: '')],
-  );
+    );
+  }
 
   @override
   Future<ClientNotificationInbox> fetchClientNotifications({

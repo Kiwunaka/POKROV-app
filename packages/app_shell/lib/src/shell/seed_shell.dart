@@ -683,6 +683,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       const PokrovWindowsShellPreferences();
   ClientNotificationInbox? _notificationsInbox;
   bool _notificationsBusy = false;
+  Future<void>? _notificationsRequest;
   bool _notificationsInboxOpen = false;
   int _notificationsUnread = 0;
   Timer? _notificationsRefreshTimer;
@@ -1285,7 +1286,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
-  Future<void> _refreshNotifications() async {
+  Future<void> _refreshNotifications() {
+    return _notificationsRequest ??= _loadNotifications().whenComplete(() {
+      _notificationsRequest = null;
+    });
+  }
+
+  Future<void> _loadNotifications() async {
     final service = _clientDataService;
     if (service == null ||
         _notificationsBusy ||
