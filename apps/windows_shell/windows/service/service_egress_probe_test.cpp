@@ -185,8 +185,11 @@ class LoopbackServer {
             while (!stop_) {
               const int received = ::recv(client, buffer, sizeof(buffer), 0);
               if (received > 0) continue;
+              const auto error = received == SOCKET_ERROR ? ::WSAGetLastError() : 0;
+              if (error == WSAETIMEDOUT) ++stall_receive_timeouts;
+              stall_socket_error = error;
               peer_cancelled = received == 0 ||
-                  (received == SOCKET_ERROR && ::WSAGetLastError() == WSAECONNRESET);
+                  error == WSAECONNRESET;
               break;
             }
             break;
@@ -210,6 +213,8 @@ class LoopbackServer {
   std::atomic<int> connections{0};
   std::atomic<bool> peer_cancelled{false};
   std::atomic<bool> expected_request_received{false};
+  std::atomic<int> stall_receive_timeouts{0};
+  std::atomic<int> stall_socket_error{0};
 
  private:
   SOCKET listener_ = INVALID_SOCKET;
@@ -236,6 +241,35 @@ bool DataRequest(const std::string& request) {
   return request.find("GET /api/public/egress-probe-64k HTTP/") == 0 ||
       request.find("GET /.well-known/pokrov/egress-probe-64k.bin HTTP/") == 0;
 }
+
+void CheckStalledConnections(const std::function<void(bool, const char*)>& expect) {
+  using namespace pokrov::service;
+  for (bool secure : {false, true}) {
+    LoopbackServer server("", secure);
+    expect(server.port != 0, "stall listener failed");
+    if (server.port == 0) return;
+    auto probe = CreateLoopbackEgressProbeForTest(server.port, secure);
+    const auto started = ::GetTickCount64();
+    const auto failure = probe->Verify();
+    if (const auto observation = probe->LastObservation()) {
+      std::cout << "stall_stage=" << EgressProbeStageName(observation->stage)
+                << " domain=" << EgressProbeErrorDomainName(observation->error_domain)
+                << " code=" << observation->error_code << '\n';
+    }
+    expect(failure == (secure ? "core_egress_tls_timeout"
+                             : "core_egress_response_timeout"),
+           "real stalled connection lost its observed TLS/response phase");
+    expect(server.requests == 3, "stalled egress changed the three-attempt budget");
+    expect(server.expected_request_received,
+           "stall fixture did not observe the expected TLS/HTTP request");
+    expect(server.stall_receive_timeouts == 0,
+           "stall fixture closed its peer on a local receive timeout");
+    std::cout << (secure ? "tls" : "response") << "_stall_failure=" << failure
+              << " elapsed_ms=" << (::GetTickCount64() - started)
+              << " fixture_receive_timeouts=" << server.stall_receive_timeouts
+              << " fixture_socket_error=" << server.stall_socket_error << std::endl;
+  }
+}
 }  // namespace
 #endif
 
@@ -248,6 +282,11 @@ int main(int argc, char** argv) {
   const auto expect = [&](bool value, const char* message) {
     if (!value) { std::cerr << message << '\n'; ++failures; }
   };
+  if (argc == 2 && std::string(argv[1]) == "--stalls") {
+    CheckStalledConnections(expect);
+    ::WSACleanup();
+    return failures == 0 ? 0 : 1;
+  }
   if (argc == 2 && std::string(argv[1]) == "--failure-observation") {
     const SOCKET reservation = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     sockaddr_in address{};
@@ -534,27 +573,7 @@ int main(int argc, char** argv) {
     expect(!probe->Verify().empty() && server.requests == 3,
            "probe followed a redirect outside its fixed proof target");
   }
-  for (bool secure : {false, true}) {
-    LoopbackServer server("", secure);
-    expect(server.port != 0, "stall listener failed");
-    if (server.port == 0) return 1;
-    auto probe = CreateLoopbackEgressProbeForTest(server.port, secure);
-    const auto started = ::GetTickCount64();
-    const auto failure = probe->Verify();
-    if (const auto observation = probe->LastObservation()) {
-      std::cout << "stall_stage=" << EgressProbeStageName(observation->stage)
-                << " domain=" << EgressProbeErrorDomainName(observation->error_domain)
-                << " code=" << observation->error_code << '\n';
-    }
-    expect(failure == (secure ? "core_egress_tls_timeout"
-                             : "core_egress_response_timeout"),
-           "real stalled connection lost its observed TLS/response phase");
-    expect(server.requests == 3, "stalled egress changed the three-attempt budget");
-    expect(server.expected_request_received,
-           "stall fixture did not observe the expected TLS/HTTP request");
-    std::cout << (secure ? "tls" : "response") << "_stall_failure=" << failure
-              << " elapsed_ms=" << (::GetTickCount64() - started) << '\n';
-  }
+  CheckStalledConnections(expect);
   ::WSACleanup();
   return failures == 0 ? 0 : 1;
 #else

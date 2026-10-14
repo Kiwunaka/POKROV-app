@@ -9,6 +9,12 @@ has not run. Platform `76ffd21` must be delivered first so the strict API accept
 the fields and support displays boolean/unknown values. Android remains the saved
 4154 ARM64 build; no FullABI or public release. The VM remains restored and off.
 
+The two historical native stall cases and one full instrumented suite subsequently
+passed with WinHTTP 12002 at the expected response/TLS stages. The fixture recorded
+zero local receive timeouts and client reset 10054. The earlier 12152/12029 cause
+was not reproduced or fixed. Only test counters, their assertion and the existing
+case selector were changed; this does not require rebuilding production 4157.
+
 Windows candidate **1.5.0+4156** (`7bc66d6e`) was built once as a 28,619,862-byte
 private unsigned installer and installed with exit 0, exact version/Core binding
 and running service verified. A local regression confirmed that
