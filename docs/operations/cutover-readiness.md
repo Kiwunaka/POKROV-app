@@ -1,18 +1,28 @@
 # Client release status
 
-14 October follow-up: source target **4153** fixes loss of the confirmed protocol
-and bridge label after foreground resume. The connection itself remained healthy;
-only the proof generation was stale. The regression fails before the change and
-passes afterward; changed native bindings still hide the old label. Windows build
-and real fallback acceptance are pending. No Android rebuild is requested.
+Current Windows candidate (14 October): **1.5.0+4153**, source `b3a06e6d`,
+28,619,590-byte unsigned installer; built once and installed successfully in the
+owned VM. Core 1.2.14/Cronet reuse remains bound to the accepted 4151 manifest.
+The foreground-resume diagnostic fix passed its regression and actual VM use: a
+healthy unchanged native binding keeps its protocol/path labels across focus changes.
 
-4152 runtime: ordinary Auto selected PL/AWG direct and passed owned HTTP 204 and
-64 KiB transfer; Stop restored the guest baseline. Country CH also passed both
-transfers, but its transport/path labels were lost on resume. Bridge priority and
-HY2 are not accepted by those results. The existing test account now has the
-owner-authorized 30 days through 13 November 15:24 UTC, without key replacement.
+Real Windows checks passed: CH CountryAuto selected VLESS REALITY through a bridge
+and transferred owned HTTP 204/64 KiB. A finite physical TCP failure produced a
+native egress failure, then automatic AWG direct recovery after 19.902 seconds
+while the block was active, without another Connect action. AWG transferred the
+same owned checks afterward. A separate cold CH case selected Hysteria2; its
+current native binding and real 204/65,536-byte transfer passed at 16:40:01 UTC.
+That case blocked eight resolved TCP/AWG tuples for 40 seconds and skipped two
+TCP hostnames returning HostNotFound. The observer did not capture the HY2 label
+before its deadline: strict HY2-during-fault evidence is not claimed; actual HY2
+traffic was checked after cleanup. Both finite faults removed their objects,
+helper processes and watchdog tasks. Final Stop at 16:40:45 UTC restored TUN 0,
+11 IPv4 routes and proxy OFF. VM stays running only for the next Telegram test.
+US is held until the owner replaces its IP; it was not accepted here. One earlier
+unexpected RUNNING observation has no established cause; a later stopped-country
+change remained stopped. Public release and Android acceptance remain pending.
 
-Current private candidate (14 October 2026): Windows **1.5.0+4152**, built from
+Previous private Windows candidate (14 October 2026): **1.5.0+4152**, built from
 `228cd5a5`. The setup is 28,619,514 bytes, unsigned, and its application PE version
 is `1.5.0+4152`. It reuses the bound Core `2df0fdd` / 1.2.14 ABI2 and Cronet from
 `windows4151-runtime-artifacts.json`; do not sync the different DLL currently in
