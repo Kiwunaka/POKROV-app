@@ -1,11 +1,26 @@
 # Client release status
 
-The next Windows candidate is **1.5.0+4155**: it preserves the failed native IO
+Windows candidate **1.5.0+4155**, source `ffbf7f5e`, preserves the failed native IO
 observation when the retry wait reaches its deadline and includes the stopped
 Home country-label fix. The existing loopback regression failed before the
 observation fix and passed afterward; the native egress suite and IPC/first-DNS
 compatibility case passed. Retry timings and guard behavior are unchanged.
-Its build/runtime acceptance are pending; Android 4154 ARM64 remains the saved APK.
+It was built once (28,621,221-byte unsigned installer) with the accepted
+Core 1.2.14/Cronet 4151 manifest and installed with exit 0; installed version,
+running service and exact Core binding passed. One ordinary CH/WARP-OFF runtime
+check started at 18:36:06 UTC (API health 200 beforehand), reached healthy running
+at 18:36:20 and captured the first periodic failure at 18:36:29:
+`core_egress_timeout`, `dns_reply/deadline/none/0/516ms`, guard 0.
+The new native observation survived, confirming the diagnostic fix on device.
+`first_owned_dns_state=reply_written` belongs to the first owned query in that
+Core context, not necessarily this periodic query; it does not prove an accepted
+DNS answer here. The failing target and underlying network cause remain unknown.
+The 3-second periodic schedule currently reserves 1,575 ms for primary, then
+waits 900 ms and leaves at most 525 ms for reserve; a local regression is being
+used to determine whether that cross-target wait starves a working reserve.
+No injected fault or second Connect was used. Stop restored the guest baseline
+at 18:38:36 UTC (TUN/helpers/tasks 0, routes 11, original DNS, proxy/WARP OFF),
+then PoweredOff/Unlocked was confirmed. Android 4154 ARM64 remains the saved APK.
 
 Private **1.5.0+4154** was built on 14 October from `8de02b00`: the Windows
 installer is 28,619,788 bytes, unsigned, with PE version 1.5.0+4154. The
