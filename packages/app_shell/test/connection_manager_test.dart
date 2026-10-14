@@ -1542,8 +1542,21 @@ void main() {
       expect(labels().any((label) => label.contains(private)), isFalse);
     }
 
+    final resolutionsBeforeResume = bootstrapper.resolutions.length;
+    final runningReportsBeforeResume = bootstrapper.actualReports
+        .where((report) => report['runtime_phase'] == 'running').length;
+    await manager.resume();
+    await manager.readSnapshot();
+    expect(labels(), containsAll(['Протокол: VLESS REALITY', 'Подключение: Через мост']),
+        reason: 'foreground observation preserves proof of the unchanged active binding');
+    expect(runtime.connectCalls, 1);
+    expect(bootstrapper.resolutions.length, resolutionsBeforeResume);
+    expect(bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'running'),
+        hasLength(runningReportsBeforeResume));
+
     final previousProof = manager.snapshot;
     runtime.profileDigest = 'b' * 64;
+    await manager.resume();
     await manager.readSnapshot();
     expect(manager.confirmedConnectionForDiagnostics(previousProof), isNull,
         reason: 'a healthy snapshot for a different current native profile cannot label the previous winner');

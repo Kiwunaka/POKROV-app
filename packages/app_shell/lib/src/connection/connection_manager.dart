@@ -450,18 +450,24 @@ class ConnectionManager extends ChangeNotifier {
     return catalog.candidates
         .where((candidate) => candidate.candidateRef == ref).firstOrNull;
   }
-  ({String transport, bool? throughBridge})? confirmedConnectionForDiagnostics(RuntimeSnapshot? snapshot) {
+  bool _confirmedCandidateHasCurrentBinding(RuntimeSnapshot? snapshot) {
     final confirmed = _confirmedCandidate;
     final current = _runtimeSnapshot;
     if (_disposed || _runtimeBusy || _managedProfileDirty || retainsProtection ||
         confirmed == null || current == null || snapshot == null ||
-        confirmed.generation != _connectionCoordinator.operationGeneration ||
         _activeCandidateRef != confirmed.candidate.candidateRef || _candidateRef != _activeCandidateRef ||
         !_isConnectionProven(current) || !_isConnectionProven(snapshot) ||
         current.effectiveProfileSource == null || snapshot.effectiveProfileSource == null ||
         current.effectiveProfileDigest != confirmed.digest || current.stagedProfileDigest != confirmed.digest ||
         snapshot.effectiveProfileDigest != confirmed.digest || snapshot.stagedProfileDigest != confirmed.digest ||
-        _activeConnectUsedWarp || confirmed.candidate.warpMode != null) return null;
+        _activeConnectUsedWarp || confirmed.candidate.warpMode != null) return false;
+    return true;
+  }
+
+  ({String transport, bool? throughBridge})? confirmedConnectionForDiagnostics(RuntimeSnapshot? snapshot) {
+    if (!_confirmedCandidateHasCurrentBinding(snapshot) ||
+        _confirmedCandidate!.generation != _connectionCoordinator.operationGeneration) return null;
+    final confirmed = _confirmedCandidate!;
     final transport = _candidateTransport(confirmed.candidate);
     // Legacy VLESS Auto can keep both direct and bridged leaves in one profile.
     final throughBridge = confirmed.candidate.bridgeId != null ? true
@@ -1214,6 +1220,8 @@ class ConnectionManager extends ChangeNotifier {
         return;
       }
 
+      final confirmedBeforeResume = confirmedConnectionForDiagnostics(_runtimeSnapshot) != null
+          ? _confirmedCandidate : null;
       var snapshot =
           await _runRuntimeAction(_snapshotWithTransportReconciliation);
       final generation = _connectionCoordinator.operationGeneration;
@@ -1240,6 +1248,15 @@ class ConnectionManager extends ChangeNotifier {
       await _pauseRunningTunnelOnTrustedWifi();
       await _observeAndroidNetwork(_runtimeSnapshot ?? snapshot);
       await _refreshSmartAccessLeases();
+      if (confirmedBeforeResume != null && _confirmedCandidate == confirmedBeforeResume &&
+          _connectionCoordinator.ownsOperation(generation) &&
+          _confirmedCandidateHasCurrentBinding(_runtimeSnapshot)) {
+        // Resume owns a new observation generation, not a new connection.
+        // Carry the unchanged native proof without repeating success side effects.
+        _confirmedCandidate = (generation: generation, digest: confirmedBeforeResume.digest,
+            candidate: confirmedBeforeResume.candidate);
+        _publish();
+      }
     } on ConnectionOperationSuperseded {
       return;
     } finally {

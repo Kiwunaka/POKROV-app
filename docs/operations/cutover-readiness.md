@@ -1,5 +1,17 @@
 # Client release status
 
+14 October follow-up: source target **4153** fixes loss of the confirmed protocol
+and bridge label after foreground resume. The connection itself remained healthy;
+only the proof generation was stale. The regression fails before the change and
+passes afterward; changed native bindings still hide the old label. Windows build
+and real fallback acceptance are pending. No Android rebuild is requested.
+
+4152 runtime: ordinary Auto selected PL/AWG direct and passed owned HTTP 204 and
+64 KiB transfer; Stop restored the guest baseline. Country CH also passed both
+transfers, but its transport/path labels were lost on resume. Bridge priority and
+HY2 are not accepted by those results. The existing test account now has the
+owner-authorized 30 days through 13 November 15:24 UTC, without key replacement.
+
 Current private candidate (14 October 2026): Windows **1.5.0+4152**, built from
 `228cd5a5`. The setup is 28,619,514 bytes, unsigned, and its application PE version
 is `1.5.0+4152`. It reuses the bound Core `2df0fdd` / 1.2.14 ABI2 and Cronet from
