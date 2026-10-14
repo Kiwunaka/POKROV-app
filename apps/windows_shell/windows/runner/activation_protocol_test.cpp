@@ -42,13 +42,15 @@ void TestRoundTrips() {
                                     acquisition_frame.size()) == acquisition,
          "acquisition frame did not round-trip");
 
-  const Message pairing{Command::kAcquisitionContinue,
-                        "pokrov://pair?code=ABCD-9XYZ"};
-  const auto pairing_frame = pokrov::activation::Encode(pairing);
-  Expect(!pairing_frame.empty() &&
-             pokrov::activation::Decode(pairing_frame.data(),
-                                        pairing_frame.size()) == pairing,
-         "pairing continuation did not reach the existing app");
+  for (const auto* uri : {"pokrov://pair?code=ABCD-9XYZ",
+                          "pokrov://pair/?code=ABCD-9XYZ"}) {
+    const Message pairing{Command::kAcquisitionContinue, uri};
+    const auto pairing_frame = pokrov::activation::Encode(pairing);
+    Expect(!pairing_frame.empty() &&
+               pokrov::activation::Decode(pairing_frame.data(),
+                                          pairing_frame.size()) == pairing,
+           "pairing continuation did not reach the existing app");
+  }
 }
 
 void TestRejectsMalformedFrames() {
@@ -63,6 +65,11 @@ void TestRejectsMalformedFrames() {
              Command::kAcquisitionContinue, "https://example.invalid/"})
              .empty(),
          "acquisition accepted another origin");
+  for (const auto* uri : {"pokrov://pair/another?code=ABCD-9XYZ",
+                          "pokrov://pair//?code=ABCD-9XYZ"}) {
+    Expect(!pokrov::activation::IsPokrovAcquisitionUri(uri),
+           "pairing accepted a non-root path");
+  }
   Expect(pokrov::activation::Encode(Message{
              Command::kAcquisitionContinue,
              "pokrov://acquisition/continue?state=line\nbreak"})

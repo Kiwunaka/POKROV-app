@@ -7,10 +7,17 @@ final class PokrovWindowsAcquisitionLinks {
     MethodChannel channel = const MethodChannel(
       'space.pokrov/acquisition-links',
     ),
-  }) : _channel = channel;
+  }) : _channel = channel {
+    _controller = StreamController<Uri>.broadcast(onListen: () {
+      final pending = _pendingUri;
+      _pendingUri = null;
+      if (pending != null) _controller.add(pending);
+    });
+  }
 
   final MethodChannel _channel;
-  final StreamController<Uri> _controller = StreamController<Uri>.broadcast();
+  late final StreamController<Uri> _controller;
+  Uri? _pendingUri;
 
   Stream<Uri> get stream => _controller.stream;
 
@@ -19,7 +26,12 @@ final class PokrovWindowsAcquisitionLinks {
       if (call.method == 'uriChanged') {
         final uri = _safeUri(call.arguments);
         if (uri != null && !_controller.isClosed) {
-          _controller.add(uri);
+          if (_controller.hasListener) {
+            _controller.add(uri);
+          } else {
+            // main awaits startup services before the shell subscribes.
+            _pendingUri = uri;
+          }
         }
       }
     });
@@ -34,6 +46,7 @@ final class PokrovWindowsAcquisitionLinks {
 
   Future<void> dispose() async {
     _channel.setMethodCallHandler(null);
+    _pendingUri = null;
     await _controller.close();
   }
 

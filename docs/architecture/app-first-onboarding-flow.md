@@ -546,6 +546,17 @@ claim and completes onboarding after success. Opening or dismissing the link
 does not change the account. Duplicate, extra or malformed URI parameters are
 rejected, and codes stay in memory rather than logs or preferences.
 
+Windows Shell's `UrlCanonicalizeW` can add a single `/` after the pairing host.
+Native activation, visible-startup selection and the shared pairing parser accept
+both empty and single-root paths. Nested/double-slash paths, extra or duplicate
+query parameters, fragments, userinfo and ports remain rejected.
+
+On Windows, a URI delivered after the initial-link read but before the shell
+subscribes is retained in one in-memory slot. The latest pending URI is delivered
+once when the listener attaches; normal running-app delivery is unchanged. This
+closes the startup subscription gap and does not establish the cause of a
+separate running-app handoff failure.
+
 Repeated website login sends the current bound client session. If the code and
 that session belong to the same canonical account, the server consumes the code
 without issuing credentials or another device slot; the app preserves its

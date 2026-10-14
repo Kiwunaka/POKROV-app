@@ -1,5 +1,21 @@
 # Client release status
 
+Private **1.5.0+4160** (`f6eed53e`) includes same-account website pairing reuse
+and the support polling fix. Windows was built once (28,623,254 bytes, unsigned),
+installed with exit 0, and its UI/service/Core binding checked. Android was built
+once, production-signed ARM64 only (85,199,980 bytes), and saved under
+`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4160-arm64.apk`; no phone or
+FullABI acceptance. Both reuse the accepted Core 1.2.14/Cronet artifacts.
+Platform `0dcb3a4` pairing modules are live after one API restart; seven backend
+and five client tests plus scoped analysis passed. The real normal cabinet
+showed 1 of 1 devices and issued a code, but browser protocol launch did not open
+the app form. Same user/session/medium integrity and effective URL registration
+matched. Direct launch of the installed EXE with the same raw URI opened the form;
+Windows `UrlCanonicalizeW` adds the single root slash which the existing parsers
+reject. The expired form was dismissed without submitting. A narrow root-path
+compatibility fix and independent startup-link retention fix are under acceptance;
+the actual website claim has not yet passed. No new device or subscription grant.
+
 Private Windows **1.5.0+4159** (`8664bf81`) was built once and installed with exit
 0: 28,622,962 bytes, unsigned, service/UI version and retained Core 1.2.14 binding
 verified. Its optional `http_local_is_tun` diagnostic passed focused native/IPC,

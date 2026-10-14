@@ -79,7 +79,8 @@ bool pokrovWindowsShouldStartHidden(Iterable<String> arguments) {
     startup = startup || normalized == '--startup';
     acquisition =
         acquisition || normalized.startsWith('pokrov://acquisition/continue?') ||
-        normalized.startsWith('pokrov://pair?');
+        normalized.startsWith('pokrov://pair?') ||
+        normalized.startsWith('pokrov://pair/?');
   }
   return startup && !acquisition;
 }

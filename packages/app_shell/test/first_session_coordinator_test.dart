@@ -96,17 +96,24 @@ void main() {
   });
 
   test('pairing continuation accepts only one bounded login code', () {
-    final pairing = PokrovDevicePairingHandoff.tryParse(
-      Uri.parse('pokrov://pair?code=ABCD-9XYZ'),
-    );
-    expect(pairing?.code, 'ABCD-9XYZ');
+    for (final path in ['', '/']) {
+      final pairing = PokrovDevicePairingHandoff.tryParse(
+        Uri.parse('pokrov://pair$path?code=ABCD-9XYZ'),
+      );
+      expect(pairing?.code, 'ABCD-9XYZ');
+    }
     for (final link in [
       'pokrov://pair?code=ABCD-9XYZ&code=EFGH-2345',
       'pokrov://pair?code=ABCD-9XYZ&session=untrusted',
+      'pokrov://pair/?code=ABCD-9XYZ&session=untrusted',
       'pokrov://pair?code=invalid',
       'https://pair?code=ABCD-9XYZ',
       'pokrov://pair/another?code=ABCD-9XYZ',
+      'pokrov://pair//?code=ABCD-9XYZ',
+      'pokrov://other@pair/?code=ABCD-9XYZ',
+      'pokrov://pair:42/?code=ABCD-9XYZ',
       'pokrov://pair?code=ABCD-9XYZ#extra',
+      'pokrov://pair/?code=ABCD-9XYZ#extra',
     ]) {
       expect(PokrovDevicePairingHandoff.tryParse(Uri.parse(link)), isNull);
     }

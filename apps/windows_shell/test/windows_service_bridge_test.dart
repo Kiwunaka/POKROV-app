@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_windows_shell/main.dart' as windows;
+import 'package:pokrov_windows_shell/acquisition_links.dart';
 
 class _TrayController extends PokrovShellController {
   bool connected = true;
@@ -24,6 +27,38 @@ class _TrayController extends PokrovShellController {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('Windows links retain the last startup URI until the shell listens', () async {
+    expect(windows.pokrovWindowsShouldStartHidden(['--startup']), isTrue);
+    for (final path in ['', '/']) {
+      expect(windows.pokrovWindowsShouldStartHidden(['--startup', 'pokrov://pair$path?code=ABCD-2345']), isFalse);
+    }
+    expect(windows.pokrovWindowsShouldStartHidden(['--startup', 'pokrov://pair/another?code=ABCD-2345']), isTrue);
+    expect(windows.pokrovWindowsShouldStartHidden(['--startup', 'pokrov://pair//?code=ABCD-2345']), isTrue);
+    const channel = MethodChannel('space.pokrov/acquisition-links');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async => null);
+    final links = PokrovWindowsAcquisitionLinks(channel: channel);
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    addTearDown(links.dispose);
+    Future<void> deliver(String uri) async {
+      final reply = Completer<void>();
+      ServicesBinding.instance.channelBuffers.push(channel.name,
+          const StandardMethodCodec().encodeMethodCall(MethodCall('uriChanged', uri)),
+          (_) => reply.complete());
+      await reply.future;
+    }
+    expect(await links.start(), isNull);
+    await deliver('pokrov://pair?code=ABCD-2345');
+    await deliver('pokrov://pair?code=EFGH-6789');
+    final received = <Uri>[];
+    final subscription = links.stream.listen(received.add);
+    addTearDown(subscription.cancel);
+    await Future<void>.delayed(Duration.zero);
+    expect(received, [Uri.parse('pokrov://pair?code=EFGH-6789')]);
+    await deliver('pokrov://pair?code=JKLM-2345');
+    expect(received, [Uri.parse('pokrov://pair?code=EFGH-6789'), Uri.parse('pokrov://pair?code=JKLM-2345')]);
+  });
 
   test('rendered tray disconnect never connects after runtime becomes idle', () async {
     final controller = _TrayController();

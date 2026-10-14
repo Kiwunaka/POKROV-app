@@ -852,7 +852,7 @@ final class PokrovDevicePairingHandoff {
     final code = values['code']?.singleOrNull?.toUpperCase() ?? '';
     if (uri.scheme.toLowerCase() != 'pokrov' ||
         uri.host.toLowerCase() != 'pair' ||
-        uri.path.isNotEmpty ||
+        (uri.path.isNotEmpty && uri.path != '/') ||
         uri.userInfo.isNotEmpty ||
         uri.hasPort ||
         uri.hasFragment ||
