@@ -45,6 +45,9 @@ struct ProbeObservation {
   EgressErrorDomain domain = EgressErrorDomain::kNone;
   DWORD error = 0;
   bool timed_out = false;
+  std::optional<EgressProbeTarget> target;
+  std::optional<std::uint32_t> owner_remaining_ms_at_entry;
+  std::optional<bool> dns_a_accepted;
 
   void Error(EgressErrorDomain source, DWORD code) {
     if (domain != EgressErrorDomain::kNone) return;
@@ -121,6 +124,7 @@ std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
                               const CheckInterruption& interrupted,
                               ProbeObservation* observation) {
   observation->stage = EgressProbeStage::kDnsSetup;
+  observation->dns_a_accepted = false;
   WSADATA wsa{};
   const int startup_error = ::WSAStartup(MAKEWORD(2, 2), &wsa);
   if (startup_error != 0) {
@@ -222,6 +226,7 @@ std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
         wchar_t numeric[INET_ADDRSTRLEN]{};
         if (::InetNtopW(AF_INET, &address, numeric, INET_ADDRSTRLEN)) {
           result = numeric;
+          observation->dns_a_accepted = true;
         } else {
           observation->Error(EgressErrorDomain::kWinsock, ::WSAGetLastError());
         }
@@ -366,7 +371,9 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
             ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
       };
       const auto target_index = (std::min)(static_cast<std::size_t>(attempt), target_count_ - 1);
-      failure = ProbeOnce(targets_[target_index], periodic, target_check);
+      failure = ProbeOnce(targets_[target_index], periodic, target_check,
+          target_index == 0 ? EgressProbeTarget::kOwnedApi : EgressProbeTarget::kOwnedReserve,
+          deadline_tick);
       if (failure.empty() && !Interrupted(owner)) return "";
       // Periodic failover to a different target gets the remaining budget
       // immediately. Startup and same-target retries retain their backoff.
@@ -410,6 +417,9 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     }
     last_observation_ = EgressProbeObservation{observation.stage, outcome,
         observation.domain, observation.error, ::GetTickCount64() - started};
+    last_observation_->target = observation.target;
+    last_observation_->owner_remaining_ms_at_entry = observation.owner_remaining_ms_at_entry;
+    last_observation_->dns_a_accepted = observation.dns_a_accepted;
     if (events_ != nullptr) {
       events_->RecordEgressProbeObservation(observation.stage, outcome,
           observation.domain, observation.error, last_observation_->elapsed_ms);
@@ -417,9 +427,15 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
   }
 
   std::string ProbeOnce(const ProbeTarget& target, bool periodic,
-                        const CheckInterruption& interrupted) {
+                        const CheckInterruption& interrupted,
+                        EgressProbeTarget target_kind, std::uint64_t owner_deadline) {
     auto started = ::GetTickCount64();
     ProbeObservation observation;
+    observation.target = target_kind;
+    if (periodic && owner_deadline != 0) {
+      observation.owner_remaining_ms_at_entry = static_cast<std::uint32_t>(
+          (std::min)(owner_deadline > started ? owner_deadline - started : 0, std::uint64_t{3000}));
+    }
     std::wstring numeric;
     if (tun_dns_) {
       TunDnsEndpoint endpoint;
@@ -431,7 +447,10 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
         return "core_egress_dns_failed";
       }
       RecordObservation(observation, started, true, interrupted);
-      observation = {};
+      // Keep this target's entry budget and accepted DNS evidence for HTTP.
+      observation.domain = EgressErrorDomain::kNone;
+      observation.error = 0;
+      observation.timed_out = false;
       started = ::GetTickCount64();
     }
     observation.stage = EgressProbeStage::kHttpSetup;
@@ -700,7 +719,7 @@ std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
 
 std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
                                             const CheckInterruption& interrupted,
-                                            bool reserve) {
+                                            bool reserve, std::optional<bool>* dns_a_accepted) {
   TunDnsEndpoint endpoint;
   endpoint.local.sin_family = AF_INET;
   endpoint.local.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -714,8 +733,10 @@ std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
   if (::GetBestRoute2(nullptr, 0, nullptr, &destination, 0, &route, &source) != NO_ERROR) return {};
   endpoint.interface_index = route.InterfaceIndex;
   ProbeObservation observation;
-  return QueryProbeAddress(endpoint, kProbeTargets[reserve ? 1 : 0].hostname,
+  auto result = QueryProbeAddress(endpoint, kProbeTargets[reserve ? 1 : 0].hostname,
       interrupted, &observation);
+  if (dns_a_accepted != nullptr) *dns_a_accepted = observation.dns_a_accepted;
+  return result;
 }
 #endif
 

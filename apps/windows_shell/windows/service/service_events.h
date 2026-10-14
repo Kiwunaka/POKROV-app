@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "service_protocol.h"
@@ -81,6 +82,8 @@ enum class FirstOwnedDnsState {
   kUnknown, kReceived, kExchangeFailed, kReplyFailed, kReplyWritten,
 };
 
+enum class EgressProbeTarget { kOwnedApi, kOwnedReserve };
+
 struct EgressProbeObservation {
   EgressProbeStage stage;
   EgressProbeOutcome outcome;
@@ -88,12 +91,16 @@ struct EgressProbeObservation {
   std::uint32_t error_code;
   std::uint64_t elapsed_ms;
   FirstOwnedDnsState first_owned_dns_state = FirstOwnedDnsState::kUnknown;
+  std::optional<EgressProbeTarget> target;
+  std::optional<std::uint32_t> owner_remaining_ms_at_entry;
+  std::optional<bool> dns_a_accepted;
 };
 
 const char* EgressProbeStageName(EgressProbeStage stage);
 const char* EgressProbeOutcomeName(EgressProbeOutcome outcome);
 const char* EgressProbeErrorDomainName(EgressErrorDomain domain);
 const char* FirstOwnedDnsStateName(FirstOwnedDnsState state);
+const char* EgressProbeTargetName(EgressProbeTarget target);
 std::string EncodeEgressProbeObservation(const EgressProbeObservation& observation);
 
 enum class TransitionGuardOperation { kStart, kFinish };

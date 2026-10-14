@@ -444,6 +444,11 @@ final class PokrovDiagnosticsReport {
         'egress_stage': observation.stage, 'egress_outcome': observation.outcome,
         'egress_error_domain': observation.errorDomain, 'egress_error_code': observation.errorCode,
         'egress_elapsed_ms': observation.elapsedMs,
+        if (observation.target != null) ...{
+          'egress_target': observation.target,
+          'egress_owner_remaining_ms_at_entry': observation.ownerRemainingMsAtEntry,
+          'egress_dns_a_accepted': observation.dnsAAccepted,
+        },
       },
       if (attempt?.probeStage != null) 'probe_stage': attempt!.probeStage,
       if (probe != null)
@@ -1679,7 +1684,10 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
             if (_report.egressProbeObservation case final observation?) ...[
               const SizedBox(height: 12),
               Text('Нативная проверка выхода: ${observation.stage} · ${observation.outcome} · '
-                '${observation.errorDomain} ${observation.errorCode} · ${observation.elapsedMs} мс',
+                '${observation.errorDomain} ${observation.errorCode} · ${observation.elapsedMs} мс · '
+                'цель: ${observation.target ?? 'неизвестно'} · '
+                'остаток при входе: ${observation.ownerRemainingMsAtEntry?.toString() ?? 'неизвестно'} мс · '
+                'DNS A принят: ${observation.dnsAAccepted?.toString() ?? 'неизвестно'}',
                 key: const ValueKey('diagnostics-native-egress')),
             ],
             if (_report.timelineAttempts.isNotEmpty) ...[

@@ -159,19 +159,32 @@ final class WindowsLocalDpiRuntime {
 }
 
 typedef RuntimeEgressProbeObservation = ({String stage, String outcome,
-  String errorDomain, int errorCode, int elapsedMs});
+  String errorDomain, int errorCode, int elapsedMs, String? target,
+  int? ownerRemainingMsAtEntry, bool? dnsAAccepted});
 
 RuntimeEgressProbeObservation? runtimeEgressProbeObservationFromWire(Object? value) {
-  if (value is! Map || value.length != 5 ||
+  if (value is! Map || (value.length != 5 && value.length != 8) ||
       !const {'tun_dns', 'dns_setup', 'dns_send', 'dns_wait', 'dns_reply', 'http_setup',
         'connect', 'tls', 'sending', 'response', 'proof', 'retry_wait'}.contains(value['stage']) ||
       !const {'succeeded', 'failed', 'cancelled', 'deadline', 'timeout'}.contains(value['outcome']) ||
       !const {'none', 'win32', 'winsock', 'winhttp', 'dns', 'ntstatus', 'http_status'}.contains(value['error_domain']) ||
       value['error_code'] is! int || (value['error_code'] as int) < 0 || (value['error_code'] as int) > 0xffffffff ||
       value['elapsed_ms'] is! int || (value['elapsed_ms'] as int) < 0 || (value['elapsed_ms'] as int) > 86400000) return null;
+  const contextKeys = {'target', 'owner_remaining_ms_at_entry', 'dns_a_accepted'};
+  final hasContext = contextKeys.any(value.containsKey);
+  if ((hasContext && (value.length != 8 || !contextKeys.every(value.containsKey) ||
+      !const {'owned_api', 'owned_reserve'}.contains(value['target']) ||
+      (value['owner_remaining_ms_at_entry'] != null &&
+        (value['owner_remaining_ms_at_entry'] is! int ||
+         (value['owner_remaining_ms_at_entry'] as int) < 0 ||
+         (value['owner_remaining_ms_at_entry'] as int) > 3000)) ||
+      (value['dns_a_accepted'] != null && value['dns_a_accepted'] is! bool))) ||
+      (!hasContext && value.length != 5)) return null;
   return (stage: value['stage'] as String, outcome: value['outcome'] as String,
     errorDomain: value['error_domain'] as String, errorCode: value['error_code'] as int,
-    elapsedMs: value['elapsed_ms'] as int);
+    elapsedMs: value['elapsed_ms'] as int, target: value['target'] as String?,
+    ownerRemainingMsAtEntry: value['owner_remaining_ms_at_entry'] as int?,
+    dnsAAccepted: value['dns_a_accepted'] as bool?);
 }
 
 class RuntimeSnapshot {

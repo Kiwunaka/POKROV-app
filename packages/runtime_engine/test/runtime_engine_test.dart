@@ -784,7 +784,20 @@ void main() {
     expect(failed.windowsLocalDpiAdmissionVersion, 1);
     expect(failed.lastFailureKind, 'core_egress_response_timeout');
     expect(failed.egressProbeObservation, (stage: 'response', outcome: 'timeout',
-      errorDomain: 'winhttp', errorCode: 12002, elapsedMs: 6000));
+      errorDomain: 'winhttp', errorCode: 12002, elapsedMs: 6000,
+      target: null, ownerRemainingMsAtEntry: null, dnsAAccepted: null));
+    final fullObservation = <String, Object?>{'stage': 'tls', 'outcome': 'deadline',
+      'error_domain': 'none', 'error_code': 0, 'elapsed_ms': 1438,
+      'target': 'owned_reserve', 'owner_remaining_ms_at_entry': 1425, 'dns_a_accepted': true};
+    expect(runtimeEgressProbeObservationFromWire(fullObservation),
+      (stage: 'tls', outcome: 'deadline', errorDomain: 'none', errorCode: 0, elapsedMs: 1438,
+        target: 'owned_reserve', ownerRemainingMsAtEntry: 1425, dnsAAccepted: true));
+    expect(runtimeEgressProbeObservationFromWire({...fullObservation,
+      'owner_remaining_ms_at_entry': null, 'dns_a_accepted': null}),
+      (stage: 'tls', outcome: 'deadline', errorDomain: 'none', errorCode: 0, elapsedMs: 1438,
+        target: 'owned_reserve', ownerRemainingMsAtEntry: null, dnsAAccepted: null));
+    expect(runtimeEgressProbeObservationFromWire({...fullObservation}..remove('dns_a_accepted')), isNull);
+    expect(runtimeEgressProbeObservationFromWire({...fullObservation, 'owner_remaining_ms_at_entry': 3001}), isNull);
     expect(runtimeEgressProbeObservationFromWire({'stage': 'response', 'outcome': 'timeout',
       'error_domain': 'winhttp', 'error_code': 12002, 'elapsed_ms': 6000, 'raw': 'private'}), isNull);
     expect(failed.protectionRetained, isTrue);

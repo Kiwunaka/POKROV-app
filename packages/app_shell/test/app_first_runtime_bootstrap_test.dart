@@ -988,10 +988,20 @@ void main() {
     expect(pending(), isEmpty);
 
     offline = true;
+    const egressSnapshot = RuntimeSnapshot(hostPlatform: HostPlatform.windows, lane: RuntimeLane.windowsService,
+      phase: RuntimePhase.running, artifactDirectory: null, coreBinaryPath: null, helperBinaryPath: null,
+      stagedConfigPath: null, supportsLiveConnect: true, canInitialize: true, canConnect: true,
+      message: 'fixture', lastFailureKind: 'core_egress_timeout',
+      egressProbeObservation: (stage: 'tls', outcome: 'deadline', errorDomain: 'none', errorCode: 0,
+        elapsedMs: 1438, target: 'owned_reserve', ownerRemainingMsAtEntry: 1425, dnsAAccepted: true));
     expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
-        runtimePhase: 'failed', connected: false, attemptNumber: 2, candidateProbes: [probe]), isFalse);
+        runtimePhase: 'failed', connected: false, attemptNumber: 2, candidateProbes: [probe],
+        connectivitySnapshot: egressSnapshot), isFalse);
     expect(pending(), hasLength(1));
     final frozenBody = Map<String, dynamic>.from(pending().single['body'] as Map);
+    expect(frozenBody['egress_probe'], {'stage': 'tls', 'outcome': 'deadline', 'error_domain': 'none',
+      'error_code': 0, 'elapsed_ms': 1438, 'target': 'owned_reserve',
+      'owner_remaining_ms_at_entry': 1425, 'dns_a_accepted': true});
     expect(utf8.encode(jsonEncode(pending().single)).length, lessThanOrEqualTo(8 * 1024));
     expect(jsonEncode(pending()), isNot(contains('stats-fixture-token')));
     AppFirstRuntimeBootstrapper restart({AppFirstStateFileWriter? stateFileWriter}) => AppFirstRuntimeBootstrapper(

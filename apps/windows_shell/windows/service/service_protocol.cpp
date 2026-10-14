@@ -61,13 +61,29 @@ const char* FirstOwnedDnsStateName(FirstOwnedDnsState state) {
   return "invalid";
 }
 
+const char* EgressProbeTargetName(EgressProbeTarget target) {
+  switch (target) {
+    case EgressProbeTarget::kOwnedApi: return "owned_api";
+    case EgressProbeTarget::kOwnedReserve: return "owned_reserve";
+  }
+  return "invalid";
+}
+
 std::string EncodeEgressProbeObservation(const EgressProbeObservation& observation) {
-  return std::string(";egress_probe_stage=") + EgressProbeStageName(observation.stage) +
+  auto result = std::string(";egress_probe_stage=") + EgressProbeStageName(observation.stage) +
       ";egress_probe_outcome=" + EgressProbeOutcomeName(observation.outcome) +
       ";egress_error_domain=" + EgressProbeErrorDomainName(observation.error_domain) +
       ";egress_error_code=" + std::to_string(observation.error_code) +
       ";egress_elapsed_ms=" + std::to_string(observation.elapsed_ms) +
       ";first_owned_dns_state=" + FirstOwnedDnsStateName(observation.first_owned_dns_state);
+  if (observation.target) {
+    result += std::string(";egress_probe_target=") + EgressProbeTargetName(*observation.target) +
+        ";egress_owner_remaining_ms_at_entry=" + (observation.owner_remaining_ms_at_entry
+            ? std::to_string(*observation.owner_remaining_ms_at_entry) : "unknown") +
+        ";egress_dns_a_accepted=" + (observation.dns_a_accepted
+            ? (*observation.dns_a_accepted ? "1" : "0") : "unknown");
+  }
+  return result;
 }
 
 namespace {

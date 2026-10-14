@@ -340,14 +340,24 @@ flutter::EncodableValue RuntimeSnapshotValue(
         flutter::EncodableValue(snapshot.failure);
     if (snapshot.egress_failure_observation && snapshot.failure.rfind("core_egress_", 0) == 0) {
       const auto& observation = *snapshot.egress_failure_observation;
-      values[flutter::EncodableValue("egressProbeObservation")] =
-          flutter::EncodableValue(flutter::EncodableMap{
-            {flutter::EncodableValue("stage"), flutter::EncodableValue(pokrov::service::EgressProbeStageName(observation.stage))},
-            {flutter::EncodableValue("outcome"), flutter::EncodableValue(pokrov::service::EgressProbeOutcomeName(observation.outcome))},
-            {flutter::EncodableValue("error_domain"), flutter::EncodableValue(pokrov::service::EgressProbeErrorDomainName(observation.error_domain))},
-            {flutter::EncodableValue("error_code"), flutter::EncodableValue(static_cast<std::int64_t>(observation.error_code))},
-            {flutter::EncodableValue("elapsed_ms"), flutter::EncodableValue(static_cast<std::int64_t>(observation.elapsed_ms))},
-          });
+      flutter::EncodableMap probe_values{
+        {flutter::EncodableValue("stage"), flutter::EncodableValue(pokrov::service::EgressProbeStageName(observation.stage))},
+        {flutter::EncodableValue("outcome"), flutter::EncodableValue(pokrov::service::EgressProbeOutcomeName(observation.outcome))},
+        {flutter::EncodableValue("error_domain"), flutter::EncodableValue(pokrov::service::EgressProbeErrorDomainName(observation.error_domain))},
+        {flutter::EncodableValue("error_code"), flutter::EncodableValue(static_cast<std::int64_t>(observation.error_code))},
+        {flutter::EncodableValue("elapsed_ms"), flutter::EncodableValue(static_cast<std::int64_t>(observation.elapsed_ms))},
+      };
+      if (observation.target) {
+        probe_values[flutter::EncodableValue("target")] =
+            flutter::EncodableValue(pokrov::service::EgressProbeTargetName(*observation.target));
+        probe_values[flutter::EncodableValue("owner_remaining_ms_at_entry")] =
+            observation.owner_remaining_ms_at_entry
+                ? flutter::EncodableValue(static_cast<std::int64_t>(*observation.owner_remaining_ms_at_entry))
+                : flutter::EncodableValue();
+        probe_values[flutter::EncodableValue("dns_a_accepted")] = observation.dns_a_accepted
+            ? flutter::EncodableValue(*observation.dns_a_accepted) : flutter::EncodableValue();
+      }
+      values[flutter::EncodableValue("egressProbeObservation")] = flutter::EncodableValue(probe_values);
     }
   } else if (uplink == false) {
     values[flutter::EncodableValue("lastFailureKind")] =

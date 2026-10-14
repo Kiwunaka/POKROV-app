@@ -364,6 +364,17 @@ Core-to-TUN loss. Missing callbacks remain unknown. The native parser accepts
 existing five-field tuples as unknown; no addresses, query IDs or Core context
 IDs enter this scalar. Dart, encrypted export and D8 ingest are unchanged.
 
+The verifier tuple separately carries `target` (`owned_api` or `owned_reserve`),
+`owner_remaining_ms_at_entry` (0–3000 ms, sampled before that target's DNS work)
+and `dns_a_accepted` (whether this query passed the existing correlated A-answer
+validation). The latter two are nullable: startup has no periodic owner deadline,
+and a query that never started has unknown DNS acceptance. Accepted DNS remains
+true even if the deadline then discards its result; it is not TLS or egress proof.
+This complete optional block travels through native IPC, the runner, ordinary
+Diagnostics, D8 and the support summary. Old tuples remain unknown; partial or
+invalid blocks are rejected. No addresses, packet data or new journal are added,
+and timeout, retry, routing and certificate validation behavior is unchanged.
+
 Debug builds expose bounded isolated handshake modes used by native tests.
 Release builds do not expose that entrypoint. The service and UI client are
 copied into the local release bundle and the Inno source installs a machine-wide

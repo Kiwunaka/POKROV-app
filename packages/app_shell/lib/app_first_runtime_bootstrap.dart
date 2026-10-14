@@ -4359,7 +4359,12 @@ class AppFirstRuntimeBootstrapper
         if (egressObservation case final observation?)
           'egress_probe': {'stage': observation.stage, 'outcome': observation.outcome,
             'error_domain': observation.errorDomain, 'error_code': observation.errorCode,
-            'elapsed_ms': observation.elapsedMs},
+            'elapsed_ms': observation.elapsedMs,
+            if (observation.target != null) ...{
+              'target': observation.target,
+              'owner_remaining_ms_at_entry': observation.ownerRemainingMsAtEntry,
+              'dns_a_accepted': observation.dnsAAccepted,
+            }},
         if (KnownOperationalErrorCodes.contains(safeErrorCode) ||
             RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,
@@ -11220,6 +11225,9 @@ class AppFirstSupportTicketService
     'egress_error_domain',
     'egress_error_code',
     'egress_elapsed_ms',
+    'egress_target',
+    'egress_owner_remaining_ms_at_entry',
+    'egress_dns_a_accepted',
     'error_code',
     'probe_stage',
     'probe_operation',
@@ -11747,7 +11755,9 @@ class AppFirstSupportTicketService
         continue;
       }
       final value = _safeDiagnosticValue(entry.value);
-      if (value != null) {
+      if (value != null || (entry.value == null && const {
+        'egress_owner_remaining_ms_at_entry', 'egress_dns_a_accepted',
+      }.contains(key))) {
         safe[key] = value;
       }
     }
@@ -11762,9 +11772,10 @@ class AppFirstSupportTicketService
       for (final key in const ['report_run_id', 'report_sequence', 'attempt_number',
         'failure_kind', 'failure_operation', 'native_phase', 'error_code', 'probe_stage',
         'egress_stage', 'egress_outcome', 'egress_error_domain', 'egress_error_code', 'egress_elapsed_ms',
+        'egress_target', 'egress_owner_remaining_ms_at_entry', 'egress_dns_a_accepted',
         'probe_operation', 'probe_cause', 'probe_target', 'probe_request',
         'probe_os_error_code', 'probe_status'])
-        if (safe[key] != null) key: safe[key],
+        if (safe.containsKey(key)) key: safe[key],
       'platform': safe['platform'],
       'route_mode': safe['route_mode'],
       'connection_status': safe['connection_status'],

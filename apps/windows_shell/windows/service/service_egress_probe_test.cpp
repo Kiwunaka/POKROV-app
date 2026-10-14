@@ -16,7 +16,8 @@
 namespace pokrov::service {
 std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,
                                             const CheckInterruption& interrupted,
-                                            bool reserve = false);
+                                            bool reserve = false,
+                                            std::optional<bool>* dns_a_accepted = nullptr);
 }
 namespace {
 class EgressEvents final : public pokrov::service::ServiceEventSink {
@@ -274,9 +275,21 @@ int main(int argc, char** argv) {
           "protection_retained=0;windows_local_dpi_admission_version=0";
       auto owned_observation = *observation;
       owned_observation.first_owned_dns_state = FirstOwnedDnsState::kReplyWritten;
+      expect(owned_observation.target == EgressProbeTarget::kOwnedApi &&
+                 !owned_observation.owner_remaining_ms_at_entry && !owned_observation.dns_a_accepted,
+             "startup gained an owner budget or loopback gained DNS evidence");
+      owned_observation.target = EgressProbeTarget::kOwnedReserve;
+      owned_observation.owner_remaining_ms_at_entry = 1425;
+      owned_observation.dns_a_accepted = true;
       const auto suffix = EncodeEgressProbeObservation(owned_observation);
       const std::string transport = ";transport_proof_pending=0;transport_lease_active=0";
       ServiceRuntimeSnapshot parsed;
+      expect(ParseServiceRuntimeSnapshot(body + EncodeEgressProbeObservation(*observation) + transport, &parsed) &&
+                 parsed.egress_failure_observation &&
+                 parsed.egress_failure_observation->target == EgressProbeTarget::kOwnedApi &&
+                 !parsed.egress_failure_observation->owner_remaining_ms_at_entry &&
+                 !parsed.egress_failure_observation->dns_a_accepted,
+             "unknown target context values did not survive IPC");
       expect(ParseServiceRuntimeSnapshot(body + suffix + transport, &parsed) &&
                  parsed.egress_failure_observation &&
                  parsed.egress_failure_observation->stage == observation->stage &&
@@ -284,9 +297,19 @@ int main(int argc, char** argv) {
                  parsed.egress_failure_observation->error_domain == observation->error_domain &&
                  parsed.egress_failure_observation->error_code == observation->error_code &&
                  parsed.egress_failure_observation->elapsed_ms == observation->elapsed_ms &&
-                 parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kReplyWritten,
+                 parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kReplyWritten &&
+                 parsed.egress_failure_observation->target == EgressProbeTarget::kOwnedReserve &&
+                 parsed.egress_failure_observation->owner_remaining_ms_at_entry == 1425U &&
+                 parsed.egress_failure_observation->dns_a_accepted == true,
              "whole egress failure tuple did not survive the service parser");
       const auto old_suffix = suffix.substr(0, suffix.find(";first_owned_dns_state="));
+      expect(!ParseServiceRuntimeSnapshot(body + suffix.substr(0, suffix.find(";egress_dns_a_accepted=")) + transport, &parsed),
+             "partial target context was accepted");
+      expect(ParseServiceRuntimeSnapshot(body + suffix.substr(0, suffix.find(";egress_probe_target=")) + transport, &parsed) &&
+                 parsed.egress_failure_observation && !parsed.egress_failure_observation->target &&
+                 !parsed.egress_failure_observation->owner_remaining_ms_at_entry &&
+                 !parsed.egress_failure_observation->dns_a_accepted,
+             "legacy six-field tuple gained target evidence");
       expect(ParseServiceRuntimeSnapshot(body + old_suffix + transport, &parsed) &&
                  parsed.egress_failure_observation &&
                  parsed.egress_failure_observation->first_owned_dns_state == FirstOwnedDnsState::kUnknown,
@@ -319,10 +342,13 @@ int main(int argc, char** argv) {
     expect(server.port != 0, "DNS loopback listener failed");
     if (server.port == 0) return 1;
     const auto started = ::GetTickCount64();
+    std::optional<bool> accepted;
     const auto address = QueryLoopbackProbeAddressForTest(server.port, [&] {
       return reply == LoopbackDnsServer::Reply::kWait && server.requests > 0
                  ? OperationInterruption::kCancelled : OperationInterruption::kNone;
-    });
+    }, false, &accepted);
+    expect(accepted == (reply == LoopbackDnsServer::Reply::kValid),
+           "DNS observation did not distinguish an accepted A from a received invalid reply");
     expect(reply == LoopbackDnsServer::Reply::kValid ? address == L"127.0.0.1" : address.empty(),
            "DNS accepted a mismatched/error reply or rejected the owned valid answer");
     expect(server.requests == 1, "DNS transport did not send exactly one query");
@@ -468,6 +494,13 @@ int main(int argc, char** argv) {
            "periodic reserve added a payload check or lost its remaining-budget slot");
     expect(::GetTickCount64() - started < 3000,
            "periodic fallback reset the three-second owner deadline");
+    const auto observation = probe->LastObservation();
+    expect(observation && observation->target == EgressProbeTarget::kOwnedReserve &&
+               observation->owner_remaining_ms_at_entry &&
+               *observation->owner_remaining_ms_at_entry > 600 &&
+               *observation->owner_remaining_ms_at_entry < 1500 &&
+               !observation->dns_a_accepted,
+           "periodic reserve lost its entry budget or fabricated loopback DNS proof");
   }
   if (argc == 2 && std::string(argv[1]) == "--periodic-reserve") {
     ::WSACleanup();
