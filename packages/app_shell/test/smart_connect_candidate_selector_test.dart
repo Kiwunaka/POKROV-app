@@ -71,6 +71,20 @@ void main() {
         candidates, countryOnly: false, catalog: _catalog(candidates)), [bridge, direct]);
   });
 
+  test('ordinary cache reserves do not spend a slot on WARP', () {
+    final selected = _candidate(0);
+    final warp = TransportCandidate(candidateRef: 'warp:warp_free:warp_direct',
+      profileRef: 'warp_free', nodeCode: '', countryCode: 'ZZ', protocol: 'warp',
+      transport: 'udp', protection: 'warp', priority: 0, network: 'udp', flow: '',
+      minimumClientRelease: '1.5.0+4099', minimumCoreRelease: '1.2.8',
+      platforms: selected.platforms, requiredFeatures: const {}, warpMode: 'warp_direct');
+    final bridge = _candidate(1, node: 'us', country: 'US', bridge: 'mini');
+    final udp = _candidate(2, udp: true);
+    final candidates = [selected, warp, bridge, udp];
+    expect(SmartConnectCandidateSelector.cacheAlternatives(selected,
+        candidates, countryOnly: false, catalog: _catalog(candidates)), [bridge, udp]);
+  });
+
   test('country Auto reserves another admitted bridge then direct on the same exit node', () {
     final selected = _candidate(1, node: 'us', country: 'US', bridge: 'mini');
     final direct = _candidate(0, node: 'us', country: 'US');

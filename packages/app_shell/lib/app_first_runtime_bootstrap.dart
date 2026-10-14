@@ -729,7 +729,7 @@ final class RuntimeStatsDeliveryReceipt {
     required String runtimePhase, required this.reportSequence,
     required this.attemptNumber, required this.enqueued,
     required this.acknowledged, required DateTime capturedAt,
-    int? httpStatus, String? failureKind,
+    int? httpStatus, String? failureKind, this.reportRunId,
   }) : runtimePhase = _phases.contains(runtimePhase.trim().toLowerCase())
            ? runtimePhase.trim().toLowerCase() : null,
        capturedAt = capturedAt.toUtc(),
@@ -747,6 +747,7 @@ final class RuntimeStatsDeliveryReceipt {
   final String buildNumber;
   final String? runtimePhase;
   final int reportSequence;
+  final String? reportRunId;
   final int? attemptNumber;
   final bool? enqueued;
   final bool? acknowledged;
@@ -839,6 +840,31 @@ String? pokrovAcquisitionPurposeForHost(HostPlatform hostPlatform) {
     HostPlatform.windows => 'windows_install',
     _ => null,
   };
+}
+
+final class PokrovDevicePairingHandoff {
+  const PokrovDevicePairingHandoff({required this.code});
+
+  final String code;
+
+  static PokrovDevicePairingHandoff? tryParse(Uri uri) {
+    final values = uri.queryParametersAll;
+    final code = values['code']?.singleOrNull?.toUpperCase() ?? '';
+    if (uri.scheme.toLowerCase() != 'pokrov' ||
+        uri.host.toLowerCase() != 'pair' ||
+        uri.path.isNotEmpty ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasPort ||
+        uri.hasFragment ||
+        values.length != 1 ||
+        !RegExp(r'^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}-?[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$').hasMatch(code)) {
+      return null;
+    }
+    final normalized = code.replaceAll('-', '');
+    return PokrovDevicePairingHandoff(
+      code: '${normalized.substring(0, 4)}-${normalized.substring(4)}',
+    );
+  }
 }
 
 final class PokrovAcquisitionHandoff {
@@ -3323,6 +3349,42 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
+  Future<void> migrateCachedManagedProfileInputs(
+      ManagedProfileCacheInputs previous, ManagedProfileCacheInputs current) async {
+    if (previous.hostPlatform != current.hostPlatform || previous.routeMode != current.routeMode ||
+        previous.selectedApps.join('\n') != current.selectedApps.join('\n') ||
+        current.preferredNodeCode.isNotEmpty || current.preferredCandidateRef.isNotEmpty ||
+        current.preferredVariantId != 'direct') return;
+    try {
+      final state = await _loadState(previous.hostPlatform);
+      if (state == null || !state.hasSession || state.accountId.isEmpty) return;
+      final generation = _managedProfileCache.generation(previous.hostPlatform.name);
+      final cached = await loadCachedManagedProfile(previous);
+      final catalog = cached?.transportCatalog;
+      if (catalog == null) return;
+      final entries = <String>{};
+      for (final candidate in catalog.candidates.where((candidate) =>
+          candidate.warpMode == null && (current.preferredCountryCode.isEmpty ||
+            candidate.nodeCountryCode(catalog.candidates) == current.preferredCountryCode))) {
+        final profile = await loadCachedManagedProfile(previous,
+            selectedCandidateRef: candidate.candidateRef);
+        if (profile != null && profile.cacheEntryId.isNotEmpty) entries.add(profile.cacheEntryId);
+      }
+      final latest = await _loadState(previous.hostPlatform);
+      if (entries.isEmpty || latest == null || !latest.hasSession ||
+          latest.accountId != state.accountId || latest.installId != state.installId ||
+          latest.sessionToken != state.sessionToken) return;
+      await _managedProfileCache.rebindInputs(
+        platform: previous.hostPlatform.name,
+        previousBinding: previous.binding(state.accountId, state.installId),
+        currentBinding: current.binding(state.accountId, state.installId),
+        entryIds: entries, expectedGeneration: generation,
+      );
+    } on Object {
+      // An unavailable cache cannot delay the preference upgrade or gain authority.
+    }
+  }
+
   @override
   Future<void> cacheResolvedManagedProfile(
     ManagedProfileCacheInputs inputs,
@@ -4278,6 +4340,10 @@ class AppFirstRuntimeBootstrapper
         }
       }
     }
+    final deviceModel = phase == 'app_opened'
+        ? await _deviceModel(hostPlatform) : null;
+    final egressObservation = connectivitySnapshot?.lastFailureKind == safeFailureKind
+        ? connectivitySnapshot?.egressProbeObservation : null;
     final body = <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,
@@ -4285,10 +4351,15 @@ class AppFirstRuntimeBootstrapper
         'platform': hostPlatform.name,
         if (pokrovClientVersion.isNotEmpty) 'app_version': pokrovClientVersion,
         'build_number': pokrovClientBuildNumber,
+        if (deviceModel != null) 'device_model': deviceModel,
         'report_run_id': _runtimeReportRunId,
         'report_sequence': reportSequence,
         'occurred_at': occurredAt.toIso8601String(),
         'connectivity': runtimeConnectivityReport(connectivitySnapshot),
+        if (egressObservation case final observation?)
+          'egress_probe': {'stage': observation.stage, 'outcome': observation.outcome,
+            'error_domain': observation.errorDomain, 'error_code': observation.errorCode,
+            'elapsed_ms': observation.elapsedMs},
         if (KnownOperationalErrorCodes.contains(safeErrorCode) ||
             RegExp(r'^[a-z][a-z0-9_]{0,63}$').hasMatch(safeErrorCode))
           'error_code': safeErrorCode,
@@ -4354,9 +4425,10 @@ class AppFirstRuntimeBootstrapper
           }
         }
       }
-      if (state?.hasSession == true && !invitationNetworkDeferred && hostPlatform == HostPlatform.android &&
+      if (state?.hasSession == true && !invitationNetworkDeferred &&
+          const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) &&
           const {'app_opened', 'connect_requested', 'running', 'failed'}.contains(phase)) {
-        unawaited(_reportAutomaticNetworkContext(phase));
+        unawaited(_reportAutomaticNetworkContext(phase, hostPlatform, loadedState: state));
       }
       final accepted = await _runtimeStatsOutbox.flush(hostPlatform,
           priorityPacketKey: stored ? record!.key : null,
@@ -4385,6 +4457,7 @@ class AppFirstRuntimeBootstrapper
     } finally {
       onDeliveryReceipt?.call(RuntimeStatsDeliveryReceipt(
         appVersion: pokrovClientVersion, buildNumber: pokrovClientBuildNumber,
+        reportRunId: _runtimeReportRunId,
         runtimePhase: phase, reportSequence: reportSequence,
         attemptNumber: body['attempt_number'] as int?, enqueued: enqueued,
         acknowledged: currentAcknowledged, httpStatus: httpStatus,
@@ -4393,13 +4466,15 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
-  Future<void> refreshNetworkContext() => _reportAutomaticNetworkContext('runtime_observed');
+  Future<void> refreshNetworkContext({required HostPlatform hostPlatform}) =>
+      _reportAutomaticNetworkContext('runtime_observed', hostPlatform);
 
-  Future<void> _reportAutomaticNetworkContext(String phase) async {
+  Future<void> _reportAutomaticNetworkContext(String phase, HostPlatform hostPlatform,
+      {_StoredBootstrapState? loadedState}) async {
     if (_networkContextInFlight || invitationNetworkDeferred) return;
     _networkContextInFlight = true;
     try {
-      final state = await _loadState(HostPlatform.android);
+      final state = loadedState ?? await _loadState(hostPlatform);
       if (state == null || !state.hasSession || state.accountId.isEmpty) return;
       final now = DateTime.now();
       // Read only the expiry hint from the existing signed session envelope.
@@ -4431,10 +4506,10 @@ class AppFirstRuntimeBootstrapper
       if (result?['status'] == 'skipped') _lastNetworkContextAt = null;
       if (result?['status'] == 'unavailable') {
         final network = _readText(result?['network_class']);
-        await _runtimeStatsOutbox.enqueue(HostPlatform.android, _RuntimeStatsRecord(
+        await _runtimeStatsOutbox.enqueue(hostPlatform, _RuntimeStatsRecord(
           _RuntimeStatsBinding(state.accountId, state.installId), jsonEncode({
             'runtime_phase': 'network_observed',
-            'client_application': 'pokrov', 'platform': 'android',
+            'client_application': 'pokrov', 'platform': hostPlatform.name,
             'app_version': pokrovClientVersion, 'build_number': pokrovClientBuildNumber,
             'report_run_id': _runtimeReportRunId, 'report_sequence': ++_runtimeReportSequence,
             'occurred_at': now.toUtc().toIso8601String(),
@@ -10485,7 +10560,7 @@ class AppFirstRuntimeBootstrapper
       // A platform identity is helpful presentation data, never a bootstrap
       // dependency. Fall back without exposing a native channel failure.
     }
-    if (host.isEmpty) {
+    if (host.isEmpty && hostPlatform != HostPlatform.windows) {
       host = _safeLocalHostName();
     }
     final normalized = host.trim().toLowerCase();
@@ -10501,6 +10576,16 @@ class AppFirstRuntimeBootstrapper
           : 'POKROV ${hostPlatform.label} $usefulHost',
       120,
     );
+  }
+
+  Future<String?> _deviceModel(HostPlatform hostPlatform) async {
+    try {
+      final model = (await deviceNameResolver?.call(hostPlatform))?.trim();
+      return model == null || model.isEmpty || model.length > 80 ||
+          RegExp(r'[\x00-\x1f\x7f]').hasMatch(model) ? null : model;
+    } on Object {
+      return null;
+    }
   }
 
   String _userAgent(HostPlatform hostPlatform) =>
@@ -11122,6 +11207,27 @@ class AppFirstSupportTicketService
   static const _diagnosticMediaType = 'app_diagnostics';
   static const _allowedDiagnosticKeys = <String>{
     'app_version',
+    'build_number',
+    'report_run_id',
+    'report_sequence',
+    'attempt_number',
+    'runtime_phase',
+    'failure_kind',
+    'failure_operation',
+    'native_phase',
+    'egress_stage',
+    'egress_outcome',
+    'egress_error_domain',
+    'egress_error_code',
+    'egress_elapsed_ms',
+    'error_code',
+    'probe_stage',
+    'probe_operation',
+    'probe_cause',
+    'probe_target',
+    'probe_request',
+    'probe_os_error_code',
+    'probe_status',
     'platform',
     'os_version',
     'route_mode',
@@ -11629,6 +11735,7 @@ class AppFirstSupportTicketService
   }) {
     final safe = <String, Object?>{
       'app_version': pokrovClientVersion,
+      'build_number': pokrovClientBuildNumber,
       'platform': hostPlatform.name,
       'route_mode': _routeModeDiagnosticValue(routeMode),
       'connection_status': _safeDiagnosticValue(statusLabel),
@@ -11651,6 +11758,13 @@ class AppFirstSupportTicketService
     }
     return jsonEncode(<String, Object?>{
       'app_version': safe['app_version'],
+      'build_number': safe['build_number'],
+      for (final key in const ['report_run_id', 'report_sequence', 'attempt_number',
+        'failure_kind', 'failure_operation', 'native_phase', 'error_code', 'probe_stage',
+        'egress_stage', 'egress_outcome', 'egress_error_domain', 'egress_error_code', 'egress_elapsed_ms',
+        'probe_operation', 'probe_cause', 'probe_target', 'probe_request',
+        'probe_os_error_code', 'probe_status'])
+        if (safe[key] != null) key: safe[key],
       'platform': safe['platform'],
       'route_mode': safe['route_mode'],
       'connection_status': safe['connection_status'],

@@ -44,6 +44,20 @@ constexpr std::uint64_t kCapabilityBoundProfileStage = 1ULL << 19;
 constexpr std::uint64_t kCapabilityTransportLeaseHandoff = 1ULL << 20;
 constexpr std::uint64_t kCapabilityCandidateProbe = 1ULL << 21;
 constexpr std::uint64_t kCapabilityProtectedHandoff = 1ULL << 22;
+constexpr std::uint64_t kCapabilityNetworkObservation = 1ULL << 23;
+
+struct NetworkObservationRequest {
+  std::string host;
+  std::string session_token;
+  std::string app_version;
+  std::string profile_revision;
+  std::string runtime_phase;
+  std::string report_run_id;
+};
+std::string EncodeNetworkObservation(const NetworkObservationRequest& request);
+std::optional<NetworkObservationRequest> DecodeNetworkObservation(const std::string& body);
+std::string NetworkObservationHttpRequest(const NetworkObservationRequest& request,
+                                          const std::string& network_class);
 
 struct CandidateProbeRequest {
   std::string probe_id;
@@ -159,6 +173,7 @@ enum class Command : std::uint16_t {
   kProbeCandidate = 29,
   kCancelCandidateProbe = 30,
   kReplaceManagedProfile = 31,
+  kObserveNetworkContext = 32,
 };
 
 bool IsConnectCommand(Command command);

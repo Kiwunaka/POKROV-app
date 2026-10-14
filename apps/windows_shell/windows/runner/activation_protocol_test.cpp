@@ -41,6 +41,14 @@ void TestRoundTrips() {
   Expect(pokrov::activation::Decode(acquisition_frame.data(),
                                     acquisition_frame.size()) == acquisition,
          "acquisition frame did not round-trip");
+
+  const Message pairing{Command::kAcquisitionContinue,
+                        "pokrov://pair?code=ABCD-9XYZ"};
+  const auto pairing_frame = pokrov::activation::Encode(pairing);
+  Expect(!pairing_frame.empty() &&
+             pokrov::activation::Decode(pairing_frame.data(),
+                                        pairing_frame.size()) == pairing,
+         "pairing continuation did not reach the existing app");
 }
 
 void TestRejectsMalformedFrames() {

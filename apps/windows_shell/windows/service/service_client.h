@@ -47,6 +47,7 @@ struct ServiceRuntimeSnapshot {
   std::string transport_network_context_ref;
   std::string candidate_selection_key;
   std::string candidate_network_class;
+  std::string network_observation_status;
   std::optional<bool> candidate_ipv6_available;
   std::string candidate_probe_json;
   bool routing_catalog_found = false;

@@ -790,16 +790,17 @@ void main() {
     FlutterSecureStoragePlatform.instance = defaultSecureStoragePlatform;
   });
 
-  test('network context keeps the report run and does not retry through VPN egress', () async {
+  for (final hostPlatform in const [HostPlatform.android, HostPlatform.windows]) {
+  test('${hostPlatform.name} network context keeps the report run and does not retry through VPN egress', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-network-context-');
     addTearDown(() => directory.delete(recursive: true));
-    await File('${directory.path}/app-first-session-android.json').writeAsString(jsonEncode({
+    await File('${directory.path}/app-first-session-${hostPlatform.name}.json').writeAsString(jsonEncode({
       'schema_version': 1, 'install_id': 'network-fixture-install', 'account_id': '42',
       'session_token_storage': 'secure', 'managed_manifest_path': '/api/client/profile/managed',
     }));
     final secrets = MemoryAppFirstSessionSecretStore();
     String sessionToken(int expires) => '${base64Url.encode(utf8.encode(jsonEncode({'exp': expires})))}.fixture-signature';
-    await secrets.writeSessionToken(hostPlatform: HostPlatform.android,
+    await secrets.writeSessionToken(hostPlatform: hostPlatform,
       installId: 'network-fixture-install', sessionToken: sessionToken(1));
     var calls = 0;
     var status = 'skipped';
@@ -816,24 +817,25 @@ void main() {
     final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'https://api.pokrov.space/',
       apiFallbackBaseUrls: const [], supportDirectoryResolver: () async => directory,
       sessionSecretStore: secrets, httpClientFactory: () => throw StateError('ordinary transport must not run'));
-    await bootstrapper.refreshNetworkContext();
+    await bootstrapper.refreshNetworkContext(hostPlatform: hostPlatform);
     expect(calls, 0, reason: 'an expired session waits for the normal session refresh');
-    await secrets.writeSessionToken(hostPlatform: HostPlatform.android,
+    await secrets.writeSessionToken(hostPlatform: hostPlatform,
       installId: 'network-fixture-install', sessionToken: sessionToken(DateTime.now().millisecondsSinceEpoch ~/ 1000 + 900));
-    await bootstrapper.refreshNetworkContext();
-    expect(await File('${directory.path}/runtime-stats-outbox-android.json').exists(), isFalse,
+    await bootstrapper.refreshNetworkContext(hostPlatform: hostPlatform);
+    expect(await File('${directory.path}/runtime-stats-outbox-${hostPlatform.name}.json').exists(), isFalse,
       reason: 'resource suppression is not a failed availability observation');
     status = 'unavailable';
-    await bootstrapper.refreshNetworkContext();
-    await bootstrapper.refreshNetworkContext();
+    await bootstrapper.refreshNetworkContext(hostPlatform: hostPlatform);
+    await bootstrapper.refreshNetworkContext(hostPlatform: hostPlatform);
     expect(calls, 2, reason: 'resume and connect share the hourly due check after an attempted request');
-    final queued = jsonDecode(await File('${directory.path}/runtime-stats-outbox-android.json').readAsString()) as Map;
+    final queued = jsonDecode(await File('${directory.path}/runtime-stats-outbox-${hostPlatform.name}.json').readAsString()) as Map;
     final body = (queued['records'] as List).single['body'] as Map;
     expect(body['network_observation'], {'source_network': 'unknown', 'outcome': 'unavailable', 'network_class': 'cellular'});
     expect(body['runtime_phase'], 'network_observed');
     expect(body.containsKey('connected'), isFalse);
     expect(body.containsKey('connectivity'), isFalse);
   });
+  }
 
   test('runtime stats freezes reports offline and cleans only same-account accepted receipts after restart', () async {
     final httpOverrides = HttpOverrides.current;
@@ -972,6 +974,7 @@ void main() {
     expect(received[0]['platform'], 'windows');
     expect(received[0]['app_version'], pokrovClientVersion);
     expect(received[0]['build_number'], pokrovClientBuildNumber);
+    expect(receipts.last.reportRunId, received[0]['report_run_id']);
     expect(received[0]['failure_kind'], 'core_identity_connect_unacknowledged');
     expect(received[0]['failure_operation'], 'core_connect');
     expect(received[0]['candidate_probes'], [{

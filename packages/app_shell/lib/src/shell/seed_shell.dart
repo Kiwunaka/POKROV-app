@@ -567,7 +567,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   Future<_RoutingCatalogPreview?> _loadRoutingCatalogPreview() => _connectionManager._loadRoutingCatalogPreview();
   Future<VerifiedSmartAccessProviderPolicy> _loadSmartDnsProviders() => _connectionManager._loadSmartDnsProviders();
   Future<Set<String>> _loadVerifiedCatalogDirectApps(bool fresh) => _connectionManager._loadVerifiedCatalogDirectApps(fresh);
-  Future<void> _setWarpRuntimeConsent(bool value) { PokrovHaptics.tap(); return _connectionManager._setWarpRuntimeConsent(value); }
+  Future<void> _setWarpRuntimeConsent(bool value) { PokrovHaptics.tap(); return _connectionManager.setWarpRuntimeConsent(value); }
   bool _canPrimaryConnect(RuntimeSnapshot? snapshot) => _connectionManager._canPrimaryConnect(snapshot);
 
 
@@ -683,13 +683,18 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       const PokrovWindowsShellPreferences();
   ClientNotificationInbox? _notificationsInbox;
   bool _notificationsBusy = false;
+  bool _notificationsInboxOpen = false;
   int _notificationsUnread = 0;
+  Timer? _notificationsRefreshTimer;
+  bool _notificationsSessionReady = false;
+  bool _notificationsForeground = true;
   final ClientUpdateCoordinator _clientUpdateCoordinator =
       ClientUpdateCoordinator();
   ClientAppUpdateInfo? _appShareUpdate;
   bool _appShareBusy = false;
   bool _clientLifecycleOpenReported = false;
   StreamSubscription<Uri>? _acquisitionUriSubscription;
+  bool _pairingLinkOpen = false;
 
   _FirstLaunchStep get _firstLaunchStep =>
       _firstSessionCoordinator._stepForView;
@@ -709,6 +714,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    _notificationsForeground =
+        lifecycleState == null || lifecycleState == AppLifecycleState.resumed;
     final runtimeEngine = createRuntimeEngine(hostPlatform: widget.appContext.hostPlatform);
     widget.shellController?._attach(
       toggle: _toggleRuntime,
@@ -842,6 +850,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
   }
 
   Future<void> _consumeAcquisitionUri(Uri uri) async {
+    final pairing = PokrovDevicePairingHandoff.tryParse(uri);
+    if (pairing != null) {
+      await _openDevicePairingUri(pairing);
+      return;
+    }
     final service = _acquisitionService;
     final handoff = PokrovAcquisitionHandoff.tryParse(
       uri,
@@ -898,6 +911,29 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _refreshAccountSummary();
     await _reportClientOpenOnce();
     await _reportEstablishedFirstSession(includeHome: true);
+  }
+
+  Future<void> _openDevicePairingUri(PokrovDevicePairingHandoff pairing) async {
+    if (_pairingLinkOpen) return;
+    _pairingLinkOpen = true;
+    try {
+      await _firstSessionLoadFuture;
+      if (!mounted) return;
+      if (_firstSessionCoordinator.busy) {
+        showPokrovSnack(context, 'Дождитесь завершения входа и откройте ссылку ещё раз.');
+        return;
+      }
+      await _showRedeemSheet(
+        context,
+        hintCode: pairing.code,
+        onRedeem: (code) {
+          _firstLaunchRestoreCodeController.text = code;
+          unawaited(_redeemFirstLaunchRestoreCode());
+        },
+      );
+    } finally {
+      _pairingLinkOpen = false;
+    }
   }
 
   Future<void> _refreshAccountSummary() async {
@@ -1183,6 +1219,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _subscriptionInfo = info;
+        _notificationsSessionReady = true;
         if (info.telegramLinked) {
           _telegramLinkVerificationPending = false;
           _telegramBonusStatus = info.telegramUsername.trim().isEmpty
@@ -1191,6 +1228,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           _telegramBonusError = null;
         }
       });
+      _scheduleNotificationsRefresh();
       if (info.lane == 'expiredOrBlocked') {
         await _connectionManager.denyAccess();
       }
@@ -1207,6 +1245,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _ => 'API-002',
       };
       final failure = error is BootstrapFailure ? error : null;
+      _stopNotificationsOnSessionFailure(error);
       observability?.recordAuthRequestFinished(errorCode: authCode, failure: failure);
       observability?.recordEntitlementRefreshFinished(
         errorCode: authCode,
@@ -1224,10 +1263,33 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     }
   }
 
+  void _scheduleNotificationsRefresh() {
+    _notificationsRefreshTimer?.cancel();
+    _notificationsRefreshTimer = null;
+    if (!mounted || !_notificationsForeground || !_notificationsSessionReady ||
+        !_firstSessionCoordinator.isReady || _clientDataService == null) {
+      return;
+    }
+    _notificationsRefreshTimer = Timer(const Duration(seconds: 60), () {
+      _notificationsRefreshTimer = null;
+      unawaited(_refreshNotifications());
+    });
+  }
+
+  void _stopNotificationsOnSessionFailure(Object error) {
+    if (error is BootstrapFailure &&
+        (error.statusCode == 401 || error.statusCode == 403)) {
+      _notificationsSessionReady = false;
+      _notificationsRefreshTimer?.cancel();
+      _notificationsRefreshTimer = null;
+    }
+  }
+
   Future<void> _refreshNotifications() async {
     final service = _clientDataService;
     if (service == null ||
         _notificationsBusy ||
+        !_notificationsForeground ||
         !_firstSessionCoordinator.isReady) {
       return;
     }
@@ -1236,6 +1298,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         _notificationsBusy = true;
       });
     }
+    _notificationsRefreshTimer?.cancel();
+    _notificationsRefreshTimer = null;
     try {
       final inbox = await service.fetchClientNotifications(
         hostPlatform: widget.appContext.hostPlatform,
@@ -1245,6 +1309,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       }
       setState(() {
         _notificationsInbox = inbox;
+        _notificationsSessionReady = true;
         _notificationsUnread = inbox.unreadCount;
         _notificationsUsingCache = false;
         _clientExperience = _clientExperience.copyWith(
@@ -1253,7 +1318,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         );
       });
       _queueClientExperienceWrite();
-    } on Object {
+    } on Object catch (error) {
+      _stopNotificationsOnSessionFailure(error);
       // Notifications are best-effort; keep the last known inbox.
       if (mounted) {
         setState(() {
@@ -1265,6 +1331,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         setState(() {
           _notificationsBusy = false;
         });
+        _scheduleNotificationsRefresh();
       }
     }
   }
@@ -1321,18 +1388,26 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
   }
 
-  void _openNotificationsInbox() {
-    _markNotificationsRead();
-    _showNotificationsSheet(
-      context,
-      notifications:
-          _notificationsInbox?.items ?? const <ClientNotificationItem>[],
-      usingCache: _notificationsUsingCache,
-      cachedAt: _clientExperience.notificationsCachedAt,
-      onRefresh: _refreshNotifications,
-      onDismiss: _dismissNotifications,
-      onOpenHandoff: _showSeedHandoff,
-    );
+  Future<void> _openNotificationsInbox() async {
+    if (_notificationsInboxOpen) return;
+    _notificationsInboxOpen = true;
+    try {
+      await _refreshNotifications();
+      if (!mounted || !_notificationsForeground) return;
+      _markNotificationsRead();
+      await _showNotificationsSheet(
+        context,
+        notifications:
+            _notificationsInbox?.items ?? const <ClientNotificationItem>[],
+        usingCache: _notificationsUsingCache,
+        cachedAt: _clientExperience.notificationsCachedAt,
+        onRefresh: _refreshNotifications,
+        onDismiss: _dismissNotifications,
+        onOpenHandoff: _showSeedHandoff,
+      );
+    } finally {
+      _notificationsInboxOpen = false;
+    }
   }
 
   Future<bool> _dismissNotifications(List<String> ids) async {
@@ -1428,6 +1503,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   @override
   void dispose() {
+    _notificationsRefreshTimer?.cancel();
+    _notificationsRefreshTimer = null;
     _connectionManager.removeListener(_onConnectionChanged);
     _connectionManager.dispose();
     unawaited(_acquisitionUriSubscription?.cancel());
@@ -1449,6 +1526,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _notificationsForeground = state == AppLifecycleState.resumed;
+    _scheduleNotificationsRefresh();
     if (state == AppLifecycleState.detached) {
       final observability = widget.observability;
       if (observability != null) {
@@ -2465,6 +2544,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
 
   void _showSeedHandoff(String label, String value) {
     switch (label) {
+      case 'support-reply':
+        final ticketId = int.tryParse(Uri.tryParse(value)?.queryParameters['id'] ?? '');
+        if (ticketId != null && ticketId > 0) {
+          unawaited(_showSupportHub(initialTicketId: ticketId));
+        }
+        return;
       case 'redeem':
         unawaited(_redeemCodeInApp(value));
         return;
@@ -3088,7 +3173,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _reportClientLifecycle('app_opened');
   }
 
-  Future<void> _showSupportHub() {
+  Future<void> _showSupportHub({int? initialTicketId}) {
     PokrovHaptics.tap();
     return Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
@@ -3104,11 +3189,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           }
           return _SupportChatScreen(
             appContext: widget.appContext,
+            diagnosticsReport: _buildDiagnosticsReport(),
             selectedRouteMode: _selectedRouteMode,
             statusLabel: _connectionPresentation.title,
             runtimeSnapshot: _runtimeSnapshot,
             extraDiagnostics: _extendedProtectionDiagnostics(),
             supportTicketService: _supportTicketService,
+            initialTicketId: initialTicketId,
             observability: widget.observability,
             askAssistant:
                 _clientDataService == null ? null : _askSupportAssistant,

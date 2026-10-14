@@ -615,7 +615,7 @@ Future<bool> openPokrovInAppWebSurface(
 }
 
 Future<String?> resolvePokrovDeviceName(HostPlatform hostPlatform) async {
-  if (hostPlatform != HostPlatform.android) {
+  if (hostPlatform != HostPlatform.android && hostPlatform != HostPlatform.windows) {
     return null;
   }
   try {

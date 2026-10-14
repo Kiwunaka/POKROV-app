@@ -1,5 +1,6 @@
 #include "flutter_window.h"
 
+#include <cwctype>
 #include <optional>
 #include <windows.h>
 
@@ -28,6 +29,64 @@ constexpr wchar_t kCloseToTrayValue[] = L"CloseToTray";
 bool IsConnectRequestId(const std::string& value) {
   return value.size() == 32 &&
       value.find_first_not_of("0123456789abcdef") == std::string::npos;
+}
+
+std::wstring ReadDeviceModelField(const wchar_t* name) {
+  wchar_t value[128]{};
+  DWORD size = sizeof(value);
+  if (::RegGetValueW(HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\BIOS",
+                     name, RRF_RT_REG_SZ, nullptr, value, &size) !=
+      ERROR_SUCCESS) {
+    return L"";
+  }
+  std::wstring normalized;
+  bool space = false;
+  for (const wchar_t character : std::wstring(value)) {
+    if (std::iswspace(character) || std::iswcntrl(character)) {
+      space = !normalized.empty();
+      continue;
+    }
+    if (space) normalized += L' ';
+    normalized += character;
+    space = false;
+  }
+  return normalized;
+}
+
+std::string DeviceModelName() {
+  const auto manufacturer = ReadDeviceModelField(L"SystemManufacturer");
+  const auto model = ReadDeviceModelField(L"SystemProductName");
+  if (model.empty()) return Utf8FromUtf16(manufacturer.c_str());
+  if (manufacturer.empty() ||
+      (model.size() >= manufacturer.size() &&
+       ::CompareStringOrdinal(model.c_str(), static_cast<int>(manufacturer.size()),
+                              manufacturer.c_str(), -1, TRUE) == CSTR_EQUAL)) {
+    return Utf8FromUtf16(model.c_str());
+  }
+  return Utf8FromUtf16((manufacturer + L" " + model).c_str());
+}
+
+bool BeginNetworkObservation() {
+  SYSTEM_POWER_STATUS power{};
+  if (!::GetSystemPowerStatus(&power) || power.SystemStatusFlag != 0 ||
+      (power.ACLineStatus != 1 && (power.BatteryLifePercent <= 20 || power.BatteryLifePercent == 255))) return false;
+  constexpr wchar_t value_name[] = L"LastNetworkContextAttempt";
+  ULONGLONG previous = 0;
+  DWORD size = sizeof(previous);
+  const auto read = ::RegGetValueW(HKEY_CURRENT_USER, kPokrovPreferencesKey, value_name,
+                                    RRF_RT_REG_QWORD, nullptr, &previous, &size);
+  if (read != ERROR_SUCCESS && read != ERROR_FILE_NOT_FOUND) return false;
+  FILETIME file_time{};
+  ::GetSystemTimeAsFileTime(&file_time);
+  const ULARGE_INTEGER now{{file_time.dwLowDateTime, file_time.dwHighDateTime}};
+  if (previous != 0 && (now.QuadPart <= previous || now.QuadPart - previous < 3600ULL * 10000000ULL)) return false;
+  HKEY key = nullptr;
+  if (::RegCreateKeyExW(HKEY_CURRENT_USER, kPokrovPreferencesKey, 0, nullptr, 0,
+                        KEY_SET_VALUE, nullptr, &key, nullptr) != ERROR_SUCCESS) return false;
+  const auto written = ::RegSetValueExW(key, value_name, 0, REG_QWORD,
+      reinterpret_cast<const BYTE*>(&now.QuadPart), sizeof(now.QuadPart));
+  ::RegCloseKey(key);
+  return written == ERROR_SUCCESS;
 }
 
 std::wstring CurrentExecutablePath() {
@@ -358,13 +417,14 @@ bool FlutterWindow::QueueRuntime(pokrov::service::Command command, std::string b
       (pokrov::service::IsConnectCommand(command) || command == Command::kStageProfile ||
        command == Command::kStageBoundProfile ||
        command == Command::kInvalidateProfile || command == Command::kInitialize)) return false;
-  if (command == Command::kDiagnosticState && !diagnostic_tasks_) {
+  const bool diagnostic = command == Command::kDiagnosticState || command == Command::kObserveNetworkContext;
+  if (diagnostic && !diagnostic_tasks_) {
     const HWND window = GetHandle();
     diagnostic_tasks_ = std::make_unique<RuntimeTaskRunner>([window] {
       ::PostMessageW(window, kRuntimeCompletionMessage, 0, 0);
     });
   }
-  auto* tasks = command == Command::kDiagnosticState
+  auto* tasks = diagnostic
                     ? diagnostic_tasks_.get() : runtime_tasks_.get();
   auto control = std::make_shared<pokrov::service::ServiceCallControl>();
   if (!tasks || !tasks->Submit(command, std::move(body), control,
@@ -505,6 +565,47 @@ bool FlutterWindow::OnCreate() {
           reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
           return false;
         };
+        if (call.method_name() == "runtimeEngine.deviceName") {
+          const auto model = DeviceModelName();
+          reply->Success(model.empty() ? flutter::EncodableValue()
+                                       : flutter::EncodableValue(model));
+          return;
+        }
+        if (call.method_name() == "runtimeEngine.observeNetworkContext") {
+          const auto respond = [reply](const std::string& status, const std::string& network_class = "unknown") {
+            reply->Success(flutter::EncodableValue(flutter::EncodableMap{
+                {flutter::EncodableValue("status"), flutter::EncodableValue(status)},
+                {flutter::EncodableValue("network_class"), flutter::EncodableValue(network_class)},
+            }));
+          };
+          const auto* arguments = MapArguments(call);
+          const auto* base = StringArgument(arguments, "apiBaseUrl");
+          const auto* token = StringArgument(arguments, "sessionToken");
+          const auto* version = StringArgument(arguments, "appVersion");
+          const auto* profile = StringArgument(arguments, "profileRevision");
+          const auto* phase = StringArgument(arguments, "runtimePhase");
+          const auto* run = StringArgument(arguments, "reportRunId");
+          if (arguments == nullptr || arguments->size() != 6 || base == nullptr || token == nullptr ||
+              version == nullptr || profile == nullptr || phase == nullptr || run == nullptr) {
+            respond("unavailable");
+            return;
+          }
+          std::string host;
+          for (const std::string owned : {"api.pokrov.space", "app.pokrov.space"}) {
+            const auto url = "https://" + owned;
+            if (*base == url || *base == url + "/" || *base == url + ":443" || *base == url + ":443/") host = owned;
+          }
+          const auto body = pokrov::service::EncodeNetworkObservation({host, *token, *version, *profile, *phase, *run});
+          if (body.empty()) { respond("unavailable"); return; }
+          if (!BeginNetworkObservation()) { respond("skipped"); return; }
+          if (!QueueRuntime(Command::kObserveNetworkContext, body, [respond](auto snapshot) {
+                respond(snapshot.command_accepted && !snapshot.network_observation_status.empty()
+                            ? snapshot.network_observation_status : "unavailable",
+                        snapshot.command_accepted && !snapshot.candidate_network_class.empty()
+                            ? snapshot.candidate_network_class : "unknown");
+              })) respond("unavailable");
+          return;
+        }
         if (call.method_name() == "runtimeEngine.snapshot") {
           snapshot_call(Command::kStatus, "", expected_profile_digest_);
           return;

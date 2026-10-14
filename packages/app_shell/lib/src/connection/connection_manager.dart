@@ -163,10 +163,11 @@ class ConnectionManager extends ChangeNotifier {
       unawaited(_refreshManagedProfileCache());
       _cacheRefreshTimer = Timer.periodic(const Duration(hours: 6), (_) => unawaited(_refreshManagedProfileCache()));
     }
-    if (_networkContextTimer == null && _appContext.hostPlatform == HostPlatform.android &&
+    if (_networkContextTimer == null &&
+        const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) &&
         _bootstrapper is AppFirstRuntimeBootstrapper) {
       _networkContextTimer = Timer.periodic(const Duration(hours: 1), (_) =>
-          unawaited((_bootstrapper as AppFirstRuntimeBootstrapper).refreshNetworkContext()));
+          unawaited((_bootstrapper as AppFirstRuntimeBootstrapper).refreshNetworkContext(hostPlatform: _appContext.hostPlatform)));
     }
   }
 
@@ -175,6 +176,8 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<void> _refreshManagedProfileCache({bool alternativesOnly = false}) async {
+    final migration = _connectionPreferenceMigration;
+    if (migration != null) await migration;
     final generation = _connectionCoordinator.operationGeneration;
     if (alternativesOnly && _cacheRefreshInFlight) await _cacheRefreshCompletion?.future;
     if (!_connectionCoordinator.ownsOperation(generation)) return;
@@ -253,6 +256,35 @@ class ConnectionManager extends ChangeNotifier {
         (mode == RouteMode.selectiveServices ||
             _appContext.runtimeProfile.supportedRouteModes.contains(mode))) {
       _selectedRouteMode = mode;
+    }
+    if (value.preferredNodeCode.isNotEmpty || value.preferredCandidateRef.isNotEmpty) {
+      final previous = _managedProfileCacheInputs;
+      final node = value.preferredCandidateRef.isNotEmpty
+          ? value.preferredCandidateRef.split(':').first : value.preferredNodeCode;
+      var country = value.preferredCountryCode;
+      if (country.isEmpty && node != 'warp') {
+        for (final location in value.cachedLocations?.countries ?? const <ClientLocationCountry>[]) {
+          if (location.cities.any((city) => city.code == node)) {
+            country = location.code;
+            break;
+          }
+        }
+        // Legacy node names use country prefixes; DE2 is the second German node.
+        if (country.isEmpty) country = _locationCountryCodeFromNode(
+            node.replaceFirst(RegExp(r'\d+$'), ''), '');
+      }
+      _preferredNodeCode = '';
+      _preferredVariantId = 'direct';
+      _clientExperience = value.copyWith(preferredCountryCode: country,
+          preferredNodeCode: '', preferredVariantId: 'direct', preferredCandidateRef: '');
+      final current = _managedProfileCacheInputs;
+      _connectionPreferenceMigration = () async {
+        final cache = _bootstrapper;
+        if (cache is AppFirstRuntimeBootstrapper) {
+          await cache.migrateCachedManagedProfileInputs(previous, current);
+        }
+        if (!_disposed) _queueClientExperienceWrite();
+      }();
     }
   }
 
@@ -864,6 +896,7 @@ class ConnectionManager extends ChangeNotifier {
   bool _warpFallbackInFlight = false;
   SmartConnectProfile? _smartConnectProfile;
   String _preferredNodeCode = '';
+  Future<void>? _connectionPreferenceMigration;
   String _preferredVariantId = 'direct';
   String _resolvedProfileNodeCode = '';
   String _resolvedProfileVariantId = 'direct';
@@ -1160,8 +1193,8 @@ class ConnectionManager extends ChangeNotifier {
       );
 
   Future<void> _resumeRuntimeAndTrustedWifiChecks() async {
-    if (_appContext.hostPlatform == HostPlatform.android && _bootstrapper is AppFirstRuntimeBootstrapper) {
-      unawaited((_bootstrapper as AppFirstRuntimeBootstrapper).refreshNetworkContext());
+    if (const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) && _bootstrapper is AppFirstRuntimeBootstrapper) {
+      unawaited((_bootstrapper as AppFirstRuntimeBootstrapper).refreshNetworkContext(hostPlatform: _appContext.hostPlatform));
     }
     if (!_diagnosticsCoordinator.beginResumeRefresh()) {
       return;
@@ -2485,10 +2518,8 @@ class ConnectionManager extends ChangeNotifier {
           : null;
       requireCurrent();
       final candidateWarpPolicy = warpStatus?.applyTo(baseWarpPolicy) ?? baseWarpPolicy;
-      final reportedWarpConsent = (warpStatus?.consented ?? false) ||
-          _warpRuntimeConsent || baseWarpPolicy.userConsented;
       final useWarpCandidates =
-          (_explicitWarpRuntimeConsent ?? reportedWarpConsent) &&
+          _explicitWarpRuntimeConsent == true &&
           candidateWarpPolicy.canOfferRuntime &&
           (_warpRuntimeRetryPending || _warpRuntimeAttemptAllowed(candidateWarpPolicy));
       final network = await Future.any<RuntimeCandidateNetwork>([
@@ -2756,7 +2787,7 @@ class ConnectionManager extends ChangeNotifier {
     if (catalog != null && engine is RuntimeCandidateProbing && cache is CachedManagedProfileBootstrapper) {
       final probing = engine as RuntimeCandidateProbing;
       final service = cache as CachedManagedProfileBootstrapper;
-      final cachedWarpAllowed = _explicitWarpRuntimeConsent ?? _warpRuntimeConsent;
+      final cachedWarpAllowed = _explicitWarpRuntimeConsent == true;
       final features = _runtimeSnapshot?.transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
       final available = <String, ManagedProfilePayload>{};
       for (final candidate in catalog.candidates.where((candidate) =>
@@ -2916,6 +2947,8 @@ class ConnectionManager extends ChangeNotifier {
         _clientExperience.catalogVerifiedRuPreset &&
         (payload.routeMode == RouteMode.selectedApps ||
             payload.routeMode == RouteMode.excludedApps);
+    final optionalCatalog = payload.routeMode != RouteMode.selectiveServices &&
+        !catalogAppScopeRequired;
     final cancelled = _connectionCoordinator.actionInFlight
         ? _connectionCoordinator.whenOperationEnds(generation)
         : _connectionCoordinator.whenOperationChanges(generation);
@@ -2939,11 +2972,10 @@ class ConnectionManager extends ChangeNotifier {
             userConsented: true,
           )
         : serverDisplayWarpPolicy;
-    final reportedConsent = (warpStatus?.consented ?? false) ||
-        _warpRuntimeConsent ||
-        baseWarpPolicy.userConsented;
+    // Saved/server consent is retained, but Auto requires a current manual
+    // WARP choice before admitting a chain or a direct WARP reserve.
     final warpConsentStillValid =
-        (_explicitWarpRuntimeConsent ?? reportedConsent) &&
+        _explicitWarpRuntimeConsent == true &&
             displayWarpPolicy.canOfferRuntime;
     final selectedWarpMode = payload.materialCandidate?.warpMode;
     final catalogHasWarpCandidates = payload.transportCatalog?.candidates.any(
@@ -3001,8 +3033,7 @@ class ConnectionManager extends ChangeNotifier {
               )
               .timeout(_actionTimeout);
         } on BootstrapFailure catch (error) {
-          if ((payload.routeMode != RouteMode.fullTunnel &&
-                  payload.routeMode != RouteMode.allExceptRu) ||
+          if (!optionalCatalog ||
               error.statusCode != HttpStatus.serviceUnavailable ||
               (error.code != 'routing_catalog_disabled' &&
                   error.code != 'routing_catalog_unavailable')) {
@@ -3010,8 +3041,7 @@ class ConnectionManager extends ChangeNotifier {
           }
         } on RoutingCatalogFailure catch (error) {
           if (!offline || error.code != 'catalog_cache_unavailable' ||
-              (payload.routeMode != RouteMode.fullTunnel &&
-                  payload.routeMode != RouteMode.allExceptRu)) {
+              !optionalCatalog) {
             rethrow;
           }
         }
@@ -3300,9 +3330,7 @@ class ConnectionManager extends ChangeNotifier {
       // choice or of the profile actually staged on this device. Only the
       // authoritative resolved code may later identify a failed auto node.
       _update(() {
-        _managedWarpPolicy = displayWarpPolicy.withUserConsent(
-          warpConsentStillValid,
-        );
+        _managedWarpPolicy = displayWarpPolicy;
         _warpRuntimeRetryPending = false;
         if (localSmartAccessState == null) _freeProfileAccess = payload.freeProfileAccess;
         _warpRuntimeConsent = warpConsentStillValid;
@@ -3522,7 +3550,7 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> _setWarpRuntimeConsent(bool value) async {
+  Future<void> setWarpRuntimeConsent(bool value) async {
     if (_warpPolicyBusy) {
       return;
     }
@@ -3928,6 +3956,8 @@ class ConnectionManager extends ChangeNotifier {
           ? _bootstrapper as CachedManagedProfileBootstrapper
           : null;
       Future<ManagedProfilePayload?> readCache() async {
+        final migration = _connectionPreferenceMigration;
+        if (migration != null) await migration;
         if (_localSmartAccessSelected) return null;
         if (_disposed ||
             !_connectionCoordinator.ownsOperation(generation) ||
@@ -5075,6 +5105,8 @@ class ConnectionManager extends ChangeNotifier {
             failed?.lastFailureKind ?? '');
       }
       Future<ManagedProfilePayload?> recoverCached({bool offline = false}) async {
+        final migration = _connectionPreferenceMigration;
+        if (migration != null) await migration;
         final cacheService = _bootstrapper;
         if (cacheService is! CachedManagedProfileBootstrapper || _tcpFallbackFromRevision.isNotEmpty ||
             !_cachedProfileFallbackGate.canFallback(cachedProfileAvailable: true, inputsVerified: true)) return null;

@@ -157,6 +157,33 @@ void TestRejectsInvalidFrames() {
   Expect(!Decode(bytes.data(), bytes.size()), "trailing byte was accepted");
 }
 
+void TestNetworkObservationBoundary() {
+  using namespace pokrov::service;
+  NetworkObservationRequest observation{"api.pokrov.space", "synthetic.token", "1.5.0",
+      "fixture", "running", "00000000-0000-4000-8000-000000000001"};
+  const auto body = EncodeNetworkObservation(observation);
+  const auto decoded = DecodeNetworkObservation(body);
+  Expect(decoded && decoded->session_token == observation.session_token &&
+      decoded->report_run_id == observation.report_run_id, "network observation lost its bounded request");
+  const Frame request{FrameKind::kRequest, Command::kObserveNetworkContext, Status::kNone,
+      Identifier(1), Identifier(2), Identifier(3), 4102444800000ULL, 0, body};
+  const auto frame = Encode(request);
+  Expect(Decode(frame.data(), frame.size()) == request, "network observation command did not round-trip");
+  const auto http = NetworkObservationHttpRequest(observation, "ethernet");
+  Expect(http.rfind("POST /api/client/network/context HTTP/1.1\r\nHost: api.pokrov.space\r\n", 0) == 0 &&
+      http.find("\r\nUser-Agent: POKROV/windows/1.5.0\r\n") != std::string::npos &&
+      http.find("\"direct_observation\":true,\"source_network\":\"physical\"") != std::string::npos,
+      "network observation did not use its fixed owned endpoint and physical contract");
+  observation.host = "api.pokrov.space/another-path";
+  Expect(NetworkObservationHttpRequest(observation, "ethernet").empty(), "network observation accepted a caller URL");
+  observation.host = "api.pokrov.space";
+  observation.session_token += "\r\nInjected: value";
+  Expect(EncodeNetworkObservation(observation).empty(), "network observation accepted header injection");
+  observation.session_token = "synthetic.token";
+  observation.profile_revision = "\"injected\"";
+  Expect(EncodeNetworkObservation(observation).empty(), "network observation accepted unescaped metadata");
+}
+
 }  // namespace
 
 int main() {
@@ -171,5 +198,6 @@ int main() {
          "candidate probe admitted an injected ID boundary");
   TestRoundTrips();
   TestRejectsInvalidFrames();
+  TestNetworkObservationBoundary();
   return failures == 0 ? 0 : 1;
 }

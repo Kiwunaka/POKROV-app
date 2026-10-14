@@ -158,6 +158,22 @@ final class WindowsLocalDpiRuntime {
   int get hashCode => _stateValues.hashCode;
 }
 
+typedef RuntimeEgressProbeObservation = ({String stage, String outcome,
+  String errorDomain, int errorCode, int elapsedMs});
+
+RuntimeEgressProbeObservation? runtimeEgressProbeObservationFromWire(Object? value) {
+  if (value is! Map || value.length != 5 ||
+      !const {'tun_dns', 'dns_setup', 'dns_send', 'dns_wait', 'dns_reply', 'http_setup',
+        'connect', 'tls', 'sending', 'response', 'proof', 'retry_wait'}.contains(value['stage']) ||
+      !const {'succeeded', 'failed', 'cancelled', 'deadline', 'timeout'}.contains(value['outcome']) ||
+      !const {'none', 'win32', 'winsock', 'winhttp', 'dns', 'ntstatus', 'http_status'}.contains(value['error_domain']) ||
+      value['error_code'] is! int || (value['error_code'] as int) < 0 || (value['error_code'] as int) > 0xffffffff ||
+      value['elapsed_ms'] is! int || (value['elapsed_ms'] as int) < 0 || (value['elapsed_ms'] as int) > 86400000) return null;
+  return (stage: value['stage'] as String, outcome: value['outcome'] as String,
+    errorDomain: value['error_domain'] as String, errorCode: value['error_code'] as int,
+    elapsedMs: value['elapsed_ms'] as int);
+}
+
 class RuntimeSnapshot {
   const RuntimeSnapshot({
     required this.hostPlatform,
@@ -190,6 +206,7 @@ class RuntimeSnapshot {
     this.effectiveProfileSource,
     this.proofObservedAt,
     this.lastFailureKind,
+    this.egressProbeObservation,
     this.lastStopReason,
     this.safeProtocolDiagnosticCode,
     this.safeProtocolDiagnosticOccurrence,
@@ -249,6 +266,7 @@ class RuntimeSnapshot {
   /// already proven service; polling alone never renews this timestamp.
   final DateTime? proofObservedAt;
   final String? lastFailureKind;
+  final RuntimeEgressProbeObservation? egressProbeObservation;
   final String? lastStopReason;
   final String? safeProtocolDiagnosticCode;
   final int? safeProtocolDiagnosticOccurrence;
@@ -317,6 +335,7 @@ class RuntimeSnapshot {
         (effectiveProfileSource?.revision, effectiveProfileSource?.origin, effectiveProfileSource?.protocol),
         proofObservedAt,
         lastFailureKind,
+        egressProbeObservation,
         lastStopReason,
         safeProtocolDiagnosticCode,
         safeProtocolDiagnosticOccurrence,
@@ -4708,6 +4727,9 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       coreEgressValidationRequired: coreEgressValidationRequired,
       lastFailureKind: lastFailureKind,
       lastStopReason: lastStopReason,
+      egressProbeObservation: hostPlatform == HostPlatform.windows &&
+          (lastFailureKind?.startsWith('core_egress_') ?? false)
+          ? runtimeEgressProbeObservationFromWire(response['egressProbeObservation']) : null,
       safeProtocolDiagnosticCode: safeProtocolDiagnosticCode,
       safeProtocolDiagnosticOccurrence: safeProtocolDiagnosticCode == null
           ? null

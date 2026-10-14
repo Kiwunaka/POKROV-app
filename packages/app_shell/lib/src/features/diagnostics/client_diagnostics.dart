@@ -390,6 +390,7 @@ final class PokrovDiagnosticsReport {
     this.problemBookId,
     this.errorCode,
     this.runtimeStatsDelivery,
+    this.egressProbeObservation,
   })  : evidence = List<PokrovDiagnosticEvidence>.unmodifiable(evidence),
         safeActionKeys = List<String>.unmodifiable(safeActionKeys),
         timelineAttempts = List<PokrovDiagnosticTimelineAttempt>.unmodifiable(
@@ -421,6 +422,35 @@ final class PokrovDiagnosticsReport {
   final String? problemBookId;
   final String? errorCode;
   final RuntimeStatsDeliveryReceipt? runtimeStatsDelivery;
+  final RuntimeEgressProbeObservation? egressProbeObservation;
+
+  Map<String, Object?> supportDiagnosticFields() {
+    final attempt = timelineAttempts.lastOrNull;
+    final receipt = runtimeStatsDelivery;
+    final native = connectionFailure?.nativeFailure;
+    final probe = RuntimeCandidateProbeResult.probeErrorFromWire(attempt?.probeError);
+    return {
+      if (receipt?.reportRunId != null) 'report_run_id': receipt!.reportRunId,
+      if (receipt != null) 'report_sequence': receipt.reportSequence,
+      if (attempt != null) 'attempt_number': attempt.generation
+      else if (receipt?.attemptNumber != null) 'attempt_number': receipt!.attemptNumber,
+      if (receipt?.runtimePhase != null) 'runtime_phase': receipt!.runtimePhase,
+      if (errorCode != null) 'error_code': errorCode,
+      if (attempt?.failureKind ?? native?.failureKind ?? connectionFailure?.recoveryFailureKind ?? attempt?.probeFailureKind case final kind?)
+        'failure_kind': kind,
+      if (attempt?.failureOperation != null) 'failure_operation': attempt!.failureOperation,
+      if (native != null) 'native_phase': native.nativePhase,
+      if (egressProbeObservation case final observation?) ...{
+        'egress_stage': observation.stage, 'egress_outcome': observation.outcome,
+        'egress_error_domain': observation.errorDomain, 'egress_error_code': observation.errorCode,
+        'egress_elapsed_ms': observation.elapsedMs,
+      },
+      if (attempt?.probeStage != null) 'probe_stage': attempt!.probeStage,
+      if (probe != null)
+        for (final key in const ['operation', 'cause', 'target', 'request', 'os_error_code', 'status'])
+          if (probe[key] != null) 'probe_$key': probe[key],
+    };
+  }
 
   PokrovDiagnosticsReport copyWith({
     DateTime? checkedAtUtc,
@@ -452,6 +482,7 @@ final class PokrovDiagnosticsReport {
         problemBookId: problemBookId,
         errorCode: errorCode,
         runtimeStatsDelivery: runtimeStatsDelivery,
+        egressProbeObservation: egressProbeObservation,
       );
 }
 
@@ -655,6 +686,7 @@ abstract final class PokrovDiagnosticsPresenter {
       crashDiagnosticsReady: crashDiagnosticsReady,
       candidateDiagnosticsReady: candidateDiagnosticsReady,
       runtimeStatsDelivery: runtimeStatsDelivery,
+      egressProbeObservation: snapshot?.egressProbeObservation,
       safeActionKeys: problemBook?.safeActions ?? const <String>[],
       timelineAttempts: timelineAttempts,
       releaseHealthBaseline: releaseHealthBaseline,
@@ -1643,6 +1675,12 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                   ],
                 ),
               ),
+            ],
+            if (_report.egressProbeObservation case final observation?) ...[
+              const SizedBox(height: 12),
+              Text('Нативная проверка выхода: ${observation.stage} · ${observation.outcome} · '
+                '${observation.errorDomain} ${observation.errorCode} · ${observation.elapsedMs} мс',
+                key: const ValueKey('diagnostics-native-egress')),
             ],
             if (_report.timelineAttempts.isNotEmpty) ...[
               const SizedBox(height: 12),

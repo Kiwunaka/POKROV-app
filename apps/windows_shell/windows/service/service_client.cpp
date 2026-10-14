@@ -268,7 +268,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
           kCapabilityProfileIdentity | kCapabilityCancellation | kCapabilitySanitizedDiagnostic |
           kCapabilityRoutingCatalogWindow | kCapabilitySmartAccessLease | kCapabilityRoutingCatalogControl |
           kCapabilitySmartAccessPolicyControl | kCapabilityRoutingCatalogServiceControl | kCapabilitySmartAccessRenewal |
-          kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff | kCapabilityCandidateProbe | kCapabilityProtectedHandoff,
+          kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff | kCapabilityCandidateProbe | kCapabilityProtectedHandoff | kCapabilityNetworkObservation,
       "",
   };
   if (!WriteFrame(pipe, hello, ::GetTickCount64() + 3000, control)) {
@@ -306,7 +306,9 @@ ExchangeResult Exchange(Command command, const std::string& body,
     ::CloseHandle(pipe);
     return result;
   }
-  if ((command == Command::kConfigureBoundSmartAccessRuntimeControl &&
+  if ((command == Command::kObserveNetworkContext &&
+       (hello_response->capabilities & kCapabilityNetworkObservation) == 0) ||
+      (command == Command::kConfigureBoundSmartAccessRuntimeControl &&
        (hello_response->capabilities & (kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl)) !=
            (kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl)) ||
       (command == Command::kConnectWithIdentity &&
@@ -365,7 +367,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
     ::CloseHandle(pipe);
     return result;
   }
-  const DWORD ipc_wait_ms = short_control ? 3000
+  const DWORD ipc_wait_ms = command == Command::kObserveNetworkContext ? 7000 : short_control ? 3000
       : (command == Command::kConnect || command == Command::kReplaceManagedProfile) ? kStandardConnectIpcWaitMs
       : bound_wait_ms.value_or(30000);
   const Frame request{
@@ -861,6 +863,19 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
   if (command == Command::kProbeCandidate) {
     if (result.command_accepted && !exchange.response->body.empty() && exchange.response->body.size() <= kMaxControlBodySize) {
       result.candidate_probe_json = exchange.response->body;
+    } else { result.command_accepted = false; }
+    return result;
+  }
+  if (command == Command::kObserveNetworkContext) {
+    const auto& value = exchange.response->body;
+    const auto delimiter = value.find(';');
+    const auto status = value.substr(0, delimiter);
+    const auto network_class = delimiter == std::string::npos ? "" : value.substr(delimiter + 1);
+    if (result.command_accepted &&
+        (status == "acknowledged" || status == "denied" || status == "unavailable") &&
+        (network_class == "wifi" || network_class == "ethernet" || network_class == "other" || network_class == "unknown")) {
+      result.network_observation_status = status;
+      result.candidate_network_class = network_class;
     } else { result.command_accepted = false; }
     return result;
   }

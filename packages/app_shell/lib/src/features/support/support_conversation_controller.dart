@@ -12,6 +12,7 @@ class SupportConversationController extends ChangeNotifier {
   SupportConversationController({
     required SupportTicketService service,
     required HostPlatform hostPlatform,
+    int? initialTicketId,
     bool foreground = true,
     VoidCallback? onMessagesChanged,
     void Function(String)? onMessageAccepted,
@@ -20,6 +21,7 @@ class SupportConversationController extends ChangeNotifier {
     SupportPollingClock? clock,
   })  : _service = service,
         _hostPlatform = hostPlatform,
+        _initialTicketId = initialTicketId,
         _supportPollingForeground = foreground,
         _onMessagesChanged = onMessagesChanged,
         _onMessageAccepted = onMessageAccepted {
@@ -33,6 +35,7 @@ class SupportConversationController extends ChangeNotifier {
 
   final SupportTicketService _service;
   final HostPlatform _hostPlatform;
+  final int? _initialTicketId;
   final VoidCallback? _onMessagesChanged;
   final void Function(String)? _onMessageAccepted;
   late final SupportPollingCoordinator _threadPolling;
@@ -80,20 +83,24 @@ class SupportConversationController extends ChangeNotifier {
     });
 
     try {
-      final tickets = await _service.listTickets(
-        hostPlatform: _hostPlatform,
-        limit: 5,
-      );
-      SupportTicketThread? selected;
-      for (final ticket in tickets) {
-        if (!ticket.isClosed) {
-          selected = ticket;
-          break;
+      var selectedTicketId = _initialTicketId;
+      if (selectedTicketId == null) {
+        final tickets = await _service.listTickets(
+          hostPlatform: _hostPlatform,
+          limit: 5,
+        );
+        SupportTicketThread? selected;
+        for (final ticket in tickets) {
+          if (!ticket.isClosed) {
+            selected = ticket;
+            break;
+          }
         }
+        selected ??= tickets.isEmpty ? null : tickets.first;
+        selectedTicketId = selected?.id;
       }
-      selected ??= tickets.isEmpty ? null : tickets.first;
 
-      if (selected == null) {
+      if (selectedTicketId == null) {
         if (!_active) {
           return;
         }
@@ -111,7 +118,7 @@ class SupportConversationController extends ChangeNotifier {
 
       final thread = await _service.getTicket(
         hostPlatform: _hostPlatform,
-        ticketId: selected.id,
+        ticketId: selectedTicketId,
       );
       if (!_active) {
         return;
@@ -120,6 +127,7 @@ class SupportConversationController extends ChangeNotifier {
         _loadingThread = false;
         _applyThread(thread);
       });
+      _onMessagesChanged?.call();
       _syncThreadPolling();
     } on SupportTicketFailure catch (error) {
       if (!_active) {
@@ -202,6 +210,9 @@ class SupportConversationController extends ChangeNotifier {
         _threadError = null;
         changed = _applyThread(thread);
       });
+      if (changed) {
+        _onMessagesChanged?.call();
+      }
       _syncThreadPolling();
       final result = changed
           ? SupportPollingResult.changed

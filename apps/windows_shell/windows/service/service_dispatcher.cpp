@@ -1,6 +1,7 @@
 #include "service_dispatcher.h"
 #include "service_boot_clock.h"
 #include "service_local_dpi_json.h"
+#include "service_local_dpi_probe.h"
 #include <chrono>
 #include <utility>
 #include <algorithm>
@@ -295,6 +296,24 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
                                          ULONGLONG deadline, HANDLE client_pipe) {
   if (request.command == Command::kProbeCandidate) return ProbeCandidate(request, stop_event, deadline, client_pipe);
   if (request.command == Command::kCancelCandidateProbe) return CancelCandidateProbe(request.body);
+  if (request.command == Command::kObserveNetworkContext) {
+    const auto observation = DecodeNetworkObservation(request.body);
+    if (!observation) return {Status::kInvalid, "invalid_network_observation"};
+    const auto context = candidate_network_();
+    if (!context) return {Status::kOk, "unavailable;unknown"};
+    const CheckInterruption interrupted = [&, revision = context->network.revision] {
+      DWORD available = 0;
+      if (::WaitForSingleObject(stop_event, 0) == WAIT_OBJECT_0 || !candidate_current_(revision) ||
+          (client_pipe != nullptr && !::PeekNamedPipe(client_pipe, nullptr, 0, nullptr, &available, nullptr))) {
+        return OperationInterruption::kCancelled;
+      }
+      return ::GetTickCount64() >= deadline ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
+    };
+    const auto status = ObserveWindowsNetworkContext(*observation, context->network_class,
+                                                     context->bind_interface, interrupted);
+    if (interrupted() != OperationInterruption::kNone) return {Status::kOk, "unavailable;unknown"};
+    return {Status::kOk, status + ";" + context->network_class};
+  }
   if (request.command == Command::kReadCandidateNetwork) {
     if (!request.body.empty()) return {Status::kInvalid, "invalid_network_context_request"};
     const auto context = candidate_network_();

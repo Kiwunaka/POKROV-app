@@ -449,84 +449,28 @@ After activation:
   warning but suppress numeric and qualitative health values plus any
   healthy-colored signal indicator; missing or out-of-range health scores also
   stay neutral
-- when `smart_connect.shortlist` is present, `Locations` shows only those real
-  eligible nodes and lets the user save a preferred node
-- saved node choice is sent through `POST /api/client/nodes/select` with
-  `mode=manual`, and the next managed profile may be fetched with
-  `selected_node_code` before the runtime config is materialized
-- a catalog city may carry a safe additive `variants` list. One available
-  variant keeps the one-tap location path; multiple available variants open a
-  compact `Обычный` / `Через мост` choice. The selected stable variant id is
-  device-local and persists alongside the explicit preferred node; it is
-  cleared when the person returns to `Автоматически`
-- Locations with no available catalog variant cannot be selected. Quality
-  labels require a positive latency measurement; absent measurement timestamps
-  do not turn missing load into zero. Country labels include Switzerland in
-  Russian, and protection details prefer the currently verified active node
-  over absent live-counter location metadata. A rejected location preference
-  is shown with Russian user-facing copy. Missing variant probe metadata is
-  described as an unavailable check, without claiming the VPN is disconnected.
-  For a known ordinary transport catalog, including one restored from the
-  offline profile cache, legacy variant checks are disabled before invocation;
-  selecting a location or its connection variant remains available.
-- for the selected city, Android probes the exact already-staged private
-  URL-test group and projects only safe variant ID, availability, measured
-  latency/freshness and active variant ID. Endpoint/tag/key/profile material
-  never crosses the host bridge. The sheet distinguishes `Выбрано` from
-  `Сейчас работает`, shows red unavailable state, fresh/stale age, supports
-  refresh-all and per-row retry, and sorts available/fast before unknown,
-  stale and unavailable. A URL-test is reachability evidence for that outbound,
-  not proof of Chrome or another app's egress
-- when the selected variant itself fails, Android keeps the TUN fail-closed for
-  one bounded all-variant URL-test before stopping. The sheet may then reuse
-  only the exact-catalog in-memory safe snapshot for two minutes, with no
-  `Сейчас работает` claim after teardown; raw topology is never persisted
-- when multiple variants exist, the city row itself names `Обычный / Через
-  мост` (or an equally explicit short list) before the person taps it. A bare
-  numeric variant count is not sufficient discovery and must not make the live
-  capability look absent
-- a manual `Обычный` choice resolves only to the canonical base outbound for
-  that node. A `Через мост` choice resolves only through a unique safe
-  `_meta.ru_bridge.endpoints[{id,label}]` entry and the exact corresponding
-  member of the final selector. Missing, ambiguous, stale, or non-member
-  mappings fail closed without exposing or guessing raw topology
-- an explicit saved node is fail-closed: its code must remain in the returned
-  eligible Smart Connect shortlist and map unambiguously to a direct proxy in
-  the returned profile. The canonical identity is the shortlist item's
-  `outbound_tag`; while older deployed servers omit that field, the client may
-  use the raw node code, the deterministic legacy localized tag, or a unique
-  probe host/port match in that order. A uniquely verified direct tag may be
-  inserted into the final selector when an unreachable internal selector also
-  references it; that hidden selector is not treated as a valid routing path.
-  Non-direct variants must remain exact members of the reachable selector.
-  A mismatch, ambiguity, or stale cached profile must show that the selected
-  location is unavailable instead of connecting through a different displayed
-  location
-- when a saved manual location becomes unavailable, `Locations` still lets the
-  user explicitly return to `Автоматически` before the first successful
-  connection; that action clears the device-local manual preference and the
-  next managed-profile request uses Smart Connect without a manual node code
-- server-reported Smart Connect stickiness is an automatic routing hint and
-  must not be persisted as a device-local manual location; only an explicit
-  user selection may add `selected_node_code` to later profile requests
-- the node resolved by an automatic connection is runtime evidence, not a
-  saved manual preference. After disconnect or cold restart the client must
-  still show and request `Автоматически`; while connected it may show the exact
-  verified city selected for that tunnel
-- while a tunnel is already running, a manual choice is pending for the next
-  reconnect: Home keeps the last verified active city and states that the
-  change applies after reconnect; it must not attest that the new city is
-  active before a fresh profile is staged and the runtime connects
-  successfully
-- the active location label may include the verified non-direct variant, but a
-  pending node or variant must not replace the last proven live combination
-- automatic selection keeps its existing semantics and never persists a
-  server-selected bridge/direct variant as a manual preference
-- WARP plus a manual `Через мост` variant is blocked before runtime staging
-  until that composition has focused runtime proof; the app tells the person
-  to disable WARP or choose `Обычный` and never silently changes either choice
-
-Public bridge choices use `Через мост`, including labels received from an older cached catalog. The route explanation states that the connection reaches the selected location through an intermediate node. The local direct-service option is labelled `Прямой доступ к сервисам` and retains its existing description of direct access, VPN fallback and IP visibility.
+- Both «Простой» and «Продвинутый» offer countries and `Автоматически` only.
+  Tapping a country immediately saves CountryAuto for that exit country; it
+  never opens a protocol, node or path list. POKROV selects the protocol and
+  path automatically, settling healthy admitted bridges before direct nodes.
+  A country always names the internet exit, including a path through a bridge.
+- On restore, legacy node/protocol pins become CountryAuto: retain an explicit
+  country, otherwise resolve the old node's country from cached locations or its
+  country-coded name. A direct WARP pin without a country becomes `Автоматически`.
+  Favourites, recent locations and other preferences survive. Already authorized
+  ordinary cached materials in that country receive the new input binding only
+  after the normal account, expiry and catalog checks; proof times, access windows
+  and denial fences are preserved across restart. Explicit internal diagnostic
+  pins remain available for the current session. Speed and gaming modes are outside this release.
+- An automatic winner never becomes a saved manual node or path. While a
+  connection changes, Home retains the last verified live location until the
+  new connection passes its runtime checks. Missing, ambiguous or unauthorized
+  candidate material remains unavailable; cache expiry and access denial keep
+  their existing restrictions.
+- CountryAuto keeps cached reserves within the selected exit country, with
+  admitted bridges preferred over direct routes. A cache or server status
+  cannot add WARP to ordinary Auto: WARP requires the person's current manual
+  enable action. Saved consent alone is not that action and is not reset.
 - after that successful reconnect, the home location chip shows the selected
   city from the live or cached catalog; it must not keep claiming
   `Автоматически` or expose a technical node code. Cached, stale, or unknown
@@ -601,6 +545,8 @@ Support contract rules:
 - app support should prepare account and device context before handing the user into the ticket flow or fallback channels
 - authenticated browser support should continue through `/api/tickets`, `/api/tickets/{ticket_id}`, `/api/tickets/{ticket_id}/messages`, and `/api/tickets/uploads`
 - app support may attach redacted diagnostics on ticket creation and on one explicitly confirmed follow-up reply
+- The attached short summary includes the build and the current run/attempt/report references, plus closed native and probe failure fields when observed. The normal delivery-receipt display still omits the run reference; it enters the explicitly attached support summary. Device model is obtained through the existing native channel (Android manufacturer/model; Windows BIOS manufacturer/product only) and sent once with `app_opened`; the existing server telemetry keeps the reported model separately from user labels. Windows does not fall back to the computer name. Android and Windows run the lightweight native access-network check on the existing 60-minute lifecycle timer; failure remains unknown in the bounded outbox, without an app-transport retry or session refresh. Windows uses only a hardware-bound IPv4 path; no suitable path means unknown network context.
+- Windows native egress failures retain their closed stage/outcome/error-domain/error-code/elapsed-time observation in the runtime snapshot, Diagnostics and support summary. Runtime stats include it only when the snapshot's failure matches the report's failure, so an old egress observation is not attached to a later API error. No WinHTTP request, endpoint, response or raw error text is collected.
 - diagnostics should expose route mode, DNS policy, transport profile, ruleset/package-catalog version, app version, and linked Telegram state without leaking raw config, keys, or share links
 - Android's existing private operational journal records native candidate-probe
   completion before an outer cancellation can replace or discard its reply.
@@ -787,7 +733,7 @@ variant cannot block country Auto or label the server-selected route as manual.
   the default runtime path is client-local Pokrov-core WARP. The UI must still
   avoid claiming production-proof anonymity or stronger privacy until
   Android/Windows release-build WARP evidence exists.
-- From 1.4.0, consented WARP routes are transport-catalog candidates. The
+- WARP routes are transport-catalog candidates only after a current manual enable action. The
   candidate probe checks the composed route before connection; an ordinary
   fallback stays ordinary. WARP and ordinary fallback share one bounded
   selection window, so a hanging WARP probe leaves time for ordinary fallback.
@@ -799,7 +745,7 @@ variant cannot block country Auto or label the server-selected route as manual.
   managed-profile validation use the ordinary candidate of the same node and
   profile to resolve its location, while the final exit stays `ZZ`.
 - From 1.5.0+4099 / Core 1.2.8, trial and free access may receive `WARP · бесплатный`
-  as a separate last reserve without POKROV nodes. It requires WARP consent;
+  as a separate last reserve without POKROV nodes after a current manual WARP enable action;
   node routes and the two node-WARP chains keep their existing order. Registration
   stays on the installation, with a separate local identity and masking. Protected
   routes and DNS use WARP, explicit Direct rules remain Direct, and the UI labels

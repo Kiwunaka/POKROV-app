@@ -38,6 +38,7 @@ class SmartConnectCandidateSelector {
       TransportCandidate selected, Iterable<TransportCandidate> candidates,
       {required bool countryOnly, required TransportCandidateCatalog catalog}) {
     final ordered = candidates.where((candidate) =>
+        candidate.warpMode == null &&
         candidate.candidateRef != selected.candidateRef &&
         (!countryOnly || candidate.nodeCountryCode(catalog.candidates) ==
             selected.nodeCountryCode(catalog.candidates))).toList()

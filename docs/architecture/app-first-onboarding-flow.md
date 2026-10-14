@@ -120,10 +120,20 @@ Ordinary connection preparation now calls this API when enabled and feeds the
 verified catalog to the [profile assembler](bootstrap-workflow.md#connection-preparation-with-the-catalog-not_verified).
 Cached managed-profile restoration explicitly requests `cacheOnly`: no HTTP,
 the same session fence, and fresh verification of retained keys/lifetime/floors.
-No valid cached envelope means preparation fails. Fetching metadata alone still
-does not mutate a native host. No app inventory is sent or provider lease granted.
-The feature remains disabled and artifact pins are unchanged; tests/builds/runtime
-checks are deferred to the separate validation phase.
+Ordinary Full, All Except RU and manually selected/excluded apps may continue
+without this optional layer when the server explicitly returns a 503
+`routing_catalog_disabled`/`routing_catalog_unavailable`, or the offline cache
+has no valid catalog. Selective Services and a catalog-verified RU app preset
+still require current signed authority. Signature, malformed-policy and auth
+failures remain blocking. Ordinary RU domain/IP rules come from the managed
+profile and are retained independently. Fetching metadata alone does not mutate
+a native host, send app inventory or grant a provider lease.
+
+Public 1.4.5+4086 was built from `5a6f268a`, whose connection preparation did not
+have the optional-catalog exception above. An enabled catalog could therefore
+block even ordinary VPN on that source. The exact public compile flag is not
+established by repository release metadata, and a support case with an unknown
+client build cannot be assigned this cause from source alone.
 
 ## Goal
 
@@ -527,6 +537,14 @@ The AI assistant, ticket creation, and ticket message POSTs use a 120-second req
   surfaces.
 
 ### Acquisition continuation
+
+Cabinet login uses the existing ten-minute one-time pairing code through
+`pokrov://pair?code=...`. Android VIEW intents and Windows initial/repeated
+activation deliver it to the shared shell. The shell opens the existing code
+sheet with the code filled in; only the user's submit calls the normal pairing
+claim and completes onboarding after success. Opening or dismissing the link
+does not change the account. Duplicate, extra or malformed URI parameters are
+rejected, and codes stay in memory rather than logs or preferences.
 
 Official Android and Windows links may carry an opaque `acq` continuation
 handle issued by the POKROV backend. The client accepts it only from the

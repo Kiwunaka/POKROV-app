@@ -161,10 +161,11 @@ class MainActivity : FlutterActivity() {
 
     private fun acquisitionUri(intent: android.content.Intent?): String? {
         val uri = intent?.data ?: return null
+        val acquisition = uri.host.equals("acquisition", ignoreCase = true) && uri.path == "/continue"
+        val pairing = uri.host.equals("pair", ignoreCase = true) && uri.path.isNullOrEmpty()
         if (intent.action != android.content.Intent.ACTION_VIEW ||
             !uri.scheme.equals("pokrov", ignoreCase = true) ||
-            !uri.host.equals("acquisition", ignoreCase = true) ||
-            uri.path != "/continue"
+            !(acquisition || pairing)
         ) {
             return null
         }

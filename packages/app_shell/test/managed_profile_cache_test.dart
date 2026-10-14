@@ -48,11 +48,18 @@ void main() {
       revision: 'a', verifiedAt: now, payload: {
         'cache_entry_id': 'a', 'access': {'expiry_at': expiry.toIso8601String()},
       });
+    final verifiedAt = (await read())?['cache_verified_at'];
+    await cache.rebindInputs(platform: 'android', previousBinding: 'account-A/install-A/route-A',
+      currentBinding: 'account-A/install-A/country-DE', entryIds: {'a'},
+      expectedGeneration: cache.generation('android'));
     now = expiry.add(const Duration(hours: 24));
     cache = ManagedProfileCache(now: () => now);
-    expect((await read())?['cache_entry_id'], 'a');
+    final migrated = await cache.read(platform: 'android', binding: 'account-A/install-A/country-DE');
+    expect(migrated?['cache_entry_id'], 'a');
+    expect(migrated?['cache_verified_at'], verifiedAt);
+    expect(await read(), isNull);
     now = now.add(const Duration(seconds: 1));
-    final expired = await cache.readResult(platform: 'android', binding: 'account-A/install-A/route-A');
+    final expired = await cache.readResult(platform: 'android', binding: 'account-A/install-A/country-DE');
     expect(expired.payload, isNull);
     expect(expired.accessEnded, isTrue);
   });
@@ -61,6 +68,8 @@ void main() {
     final generation = cache.generation('android');
     await save('a');
     await cache.clear('android');
+    await cache.rebindInputs(platform: 'android', previousBinding: 'account-A/install-A/route-A',
+      currentBinding: 'account-A/install-A/country-DE', entryIds: {'a'}, expectedGeneration: generation);
     await cache.saveDownloaded(platform: 'android', binding: 'account-A/install-A/route-A',
       revision: 'late', verifiedAt: now, expectedGeneration: generation,
       payload: {'cache_entry_id': 'late', 'access': {'expiry_at': null}});

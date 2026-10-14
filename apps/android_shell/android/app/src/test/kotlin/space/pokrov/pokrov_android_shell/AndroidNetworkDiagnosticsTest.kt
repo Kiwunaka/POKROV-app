@@ -4,6 +4,9 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class AndroidNetworkDiagnosticsTest {
+    @Test fun userAgentUsesTheBackendClientVersionContract() {
+        assertEquals("POKROV/android/1.5.0+4191", AndroidNetworkDiagnostics.userAgent("1.5.0+4191"))
+    }
     @Test fun hourlyChecksRespectResourceLimits() {
         val interval = AndroidNetworkDiagnostics.intervalMs
         assertTrue(AndroidNetworkDiagnostics.checkDue(interval + 1, 1, 75, false, false))

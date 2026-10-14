@@ -1,11 +1,11 @@
 part of pokrov_app_shell;
 
-void _showRedeemSheet(
+Future<void> _showRedeemSheet(
   BuildContext context, {
   required String hintCode,
   required ValueChanged<String> onRedeem,
 }) {
-  showModalBottomSheet<void>(
+  return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
@@ -598,7 +598,7 @@ class _DeviceRow extends StatelessWidget {
   }
 }
 
-void _showNotificationsSheet(
+Future<void> _showNotificationsSheet(
   BuildContext context, {
   required List<ClientNotificationItem> notifications,
   required bool usingCache,
@@ -607,7 +607,7 @@ void _showNotificationsSheet(
   required Future<bool> Function(List<String> ids) onDismiss,
   required void Function(String label, String value) onOpenHandoff,
 }) {
-  showModalBottomSheet<void>(
+  return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
@@ -824,9 +824,13 @@ class _NotificationRow extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: TextButton(
                 key: ValueKey('profile-notification-cta-${item.id}'),
-                onPressed: () {
-                  Navigator.of(context).maybePop();
-                  onOpenHandoff('notification', href.toString());
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  if (!await navigator.maybePop() || !navigator.mounted) return;
+                  onOpenHandoff(
+                    item.kind == 'support' ? 'support-reply' : 'notification',
+                    href.toString(),
+                  );
                 },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,

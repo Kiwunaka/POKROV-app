@@ -13,6 +13,8 @@ class _SupportChatScreen extends StatefulWidget {
     required this.onOpenHandoff,
     required this.promoSlot,
     required this.onPromoEvent,
+    this.initialTicketId,
+    this.diagnosticsReport,
   });
 
   final SeedAppContext appContext;
@@ -21,6 +23,8 @@ class _SupportChatScreen extends StatefulWidget {
   final RuntimeSnapshot? runtimeSnapshot;
   final Map<String, Object?> extraDiagnostics;
   final SupportTicketService supportTicketService;
+  final int? initialTicketId;
+  final PokrovDiagnosticsReport? diagnosticsReport;
   final PokrovClientObservability? observability;
 
   /// Knowledge-base question -> answer lane for the AI assistant sheet.
@@ -54,6 +58,7 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
     _conversation = SupportConversationController(
       service: widget.supportTicketService,
       hostPlatform: widget.appContext.hostPlatform,
+      initialTicketId: widget.initialTicketId,
       foreground:
           lifecycleState == null || lifecycleState == AppLifecycleState.resumed,
       onMessagesChanged: _scrollToLatestMessage,
@@ -136,6 +141,8 @@ class _SupportChatScreenState extends State<_SupportChatScreen>
   Map<String, Object?> _supportDiagnostics() {
     return <String, Object?>{
       'app_version': pokrovClientVersion,
+      'build_number': pokrovClientBuildNumber,
+      ...?widget.diagnosticsReport?.supportDiagnosticFields(),
       'platform': widget.appContext.hostPlatform.name,
       'route_mode': widget.selectedRouteMode.name,
       'connection_status': widget.statusLabel,

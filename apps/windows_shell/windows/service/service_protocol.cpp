@@ -157,6 +157,7 @@ bool IsKnownCommand(Command command) {
     case Command::kProbeCandidate:
     case Command::kCancelCandidateProbe:
     case Command::kReplaceManagedProfile:
+    case Command::kObserveNetworkContext:
       return true;
   }
   return false;
@@ -199,6 +200,8 @@ bool IsValidFrame(const Frame& frame) {
              frame.deadline_unix_ms != 0 && frame.capabilities == 0 &&
              (frame.command == Command::kConfigureBoundSmartAccessRuntimeControl
                   ? IsBoundSmartAccessRuntimeControl(frame.body)
+                  : frame.command == Command::kObserveNetworkContext
+                  ? DecodeNetworkObservation(frame.body).has_value()
                   : frame.command == Command::kProbeCandidate
                   ? DecodeCandidateProbe(frame.body).has_value()
                   : frame.command == Command::kCancelCandidateProbe
@@ -270,6 +273,61 @@ bool IsTransportNetworkContextRef(const std::string& value) {
 bool IsCandidateProbeId(const std::string& value) {
   return !value.empty() && value.size() <= 128 &&
       value.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-") == std::string::npos;
+}
+
+std::string EncodeNetworkObservation(const NetworkObservationRequest& request) {
+  const auto safe = [](const std::string& value, std::size_t limit, const char* extra) {
+    return value.size() <= limit && std::all_of(value.begin(), value.end(), [extra](unsigned char c) {
+      return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+          (c >= '0' && c <= '9') || (c != 0 && std::strchr(extra, c) != nullptr);
+    });
+  };
+  const auto& id = request.report_run_id;
+  if ((request.host != "api.pokrov.space" && request.host != "app.pokrov.space") ||
+      request.session_token.empty() || !safe(request.session_token, 8192, ".-_") ||
+      request.app_version.empty() || !safe(request.app_version, 32, ".+-") ||
+      !safe(request.profile_revision, 128, " .()+'-_") ||
+      !safe(request.runtime_phase, 32, "-_") || id.size() != 36 ||
+      id[8] != '-' || id[13] != '-' || id[18] != '-' || id[23] != '-' ||
+      id[14] != '4' || std::string("89ab").find(id[19]) == std::string::npos) return "";
+  for (std::size_t i = 0; i < id.size(); ++i) {
+    if (i == 8 || i == 13 || i == 18 || i == 23) continue;
+    if (!((id[i] >= '0' && id[i] <= '9') || (id[i] >= 'a' && id[i] <= 'f'))) return "";
+  }
+  return request.host + "\n" + request.session_token + "\n" + request.app_version + "\n" +
+      request.profile_revision + "\n" + request.runtime_phase + "\n" + request.report_run_id;
+}
+
+std::optional<NetworkObservationRequest> DecodeNetworkObservation(const std::string& body) {
+  if (body.size() > 8704) return std::nullopt;
+  std::array<std::string, 6> fields;
+  std::size_t begin = 0;
+  for (std::size_t i = 0; i < fields.size() - 1; ++i) {
+    const auto end = body.find('\n', begin);
+    if (end == std::string::npos) return std::nullopt;
+    fields[i] = body.substr(begin, end - begin);
+    begin = end + 1;
+  }
+  fields.back() = body.substr(begin);
+  NetworkObservationRequest request{fields[0], fields[1], fields[2], fields[3], fields[4], fields[5]};
+  if (EncodeNetworkObservation(request) != body) return std::nullopt;
+  return request;
+}
+
+std::string NetworkObservationHttpRequest(const NetworkObservationRequest& request,
+                                          const std::string& network_class) {
+  if (EncodeNetworkObservation(request).empty() ||
+      (network_class != "wifi" && network_class != "ethernet" && network_class != "other")) return "";
+  const auto body = "{\"network_class\":\"" + network_class +
+      "\",\"direct_observation\":true,\"source_network\":\"physical\",\"report_run_id\":\"" +
+      request.report_run_id + "\",\"profile_revision\":\"" + request.profile_revision +
+      "\",\"runtime_phase\":\"" + request.runtime_phase + "\"}";
+  if (body.size() > 1024) return "";
+  return "POST /api/client/network/context HTTP/1.1\r\nHost: " + request.host +
+      "\r\nAuthorization: Bearer " + request.session_token +
+      "\r\nUser-Agent: POKROV/windows/" + request.app_version +
+      "\r\nContent-Type: application/json\r\nConnection: close\r\nContent-Length: " +
+      std::to_string(body.size()) + "\r\n\r\n" + body;
 }
 
 std::string EncodeCandidateProbe(const CandidateProbeRequest& request) {

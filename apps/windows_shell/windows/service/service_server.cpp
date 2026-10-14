@@ -27,7 +27,7 @@ constexpr std::uint64_t kServiceCapabilities =
     kCapabilityProfileIdentity | kCapabilityCancellation | kCapabilitySanitizedDiagnostic |
     kCapabilityRoutingCatalogWindow | kCapabilitySmartAccessLease | kCapabilityRoutingCatalogControl |
     kCapabilitySmartAccessPolicyControl | kCapabilityRoutingCatalogServiceControl | kCapabilitySmartAccessRenewal |
-    kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff | kCapabilityCandidateProbe | kCapabilityProtectedHandoff;
+    kCapabilitySmartAccessRuntimeControl | kCapabilityBootClock | kCapabilityBoundConnect | kCapabilityConnectSettlement | kCapabilityBoundRuntimeControl | kCapabilityTransportNetworkContext | kCapabilityBoundProfileStage | kCapabilityTransportLeaseHandoff | kCapabilityCandidateProbe | kCapabilityProtectedHandoff | kCapabilityNetworkObservation;
 constexpr std::uint64_t kMaximumDeadlineLeadMs = 5 * 60 * 1000;
 // Release a stalled session before the normal client's five-second pipe
 // acquisition budget expires. Header and body share one transfer deadline.
@@ -280,6 +280,10 @@ bool ProcessClient(HANDLE pipe, HANDLE stop_event,
                  (negotiated_capabilities & kCapabilityRuntimeControl) == 0) {
         status = Status::kUnsupported;
         body = "runtime_capability_required";
+      } else if (request->command == Command::kObserveNetworkContext &&
+                 (negotiated_capabilities & kCapabilityNetworkObservation) == 0) {
+        status = Status::kUnsupported;
+        body = "network_observation_capability_required";
       } else if (request->command == Command::kReplaceManagedProfile &&
                  (negotiated_capabilities & kCapabilityProtectedHandoff) == 0) {
         status = Status::kUnsupported;

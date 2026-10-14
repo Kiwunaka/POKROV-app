@@ -6,6 +6,7 @@ namespace pokrov::activation {
 namespace {
 
 constexpr char kAcquisitionPrefix[] = "pokrov://acquisition/continue?";
+constexpr char kPairingPrefix[] = "pokrov://pair?";
 
 void AppendUint16(std::vector<std::uint8_t>* output, std::uint16_t value) {
   output->push_back(static_cast<std::uint8_t>(value & 0xFF));
@@ -51,7 +52,9 @@ bool IsValidMessage(const Message& message) {
 }  // namespace
 
 bool IsPokrovAcquisitionUri(const std::string& value) {
-  return IsBoundedAscii(value) && value.rfind(kAcquisitionPrefix, 0) == 0;
+  return IsBoundedAscii(value) &&
+         (value.rfind(kAcquisitionPrefix, 0) == 0 ||
+          value.rfind(kPairingPrefix, 0) == 0);
 }
 
 std::vector<std::uint8_t> Encode(const Message& message) {

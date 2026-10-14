@@ -132,6 +132,7 @@ const char* CommandName(Command command) {
     case Command::kStatus:
     case Command::kReadTransportNetworkContext:
     case Command::kReadCandidateNetwork:
+    case Command::kObserveNetworkContext:
       return "status";
     case Command::kProbeCandidate:
       return "candidate_probe";

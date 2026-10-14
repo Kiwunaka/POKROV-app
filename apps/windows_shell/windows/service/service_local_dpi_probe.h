@@ -8,5 +8,10 @@ namespace pokrov::service {
 std::string VerifyWindowsLocalDpiControlHost(const std::string& control_host,
                                            const std::string& bind_interface,
                                            const CheckInterruption& interrupted);
+// Fixed owned network-context endpoint only; no response body or address leaves this call.
+std::string ObserveWindowsNetworkContext(const NetworkObservationRequest& request,
+                                        const std::string& network_class,
+                                        const std::string& bind_interface,
+                                        const CheckInterruption& interrupted);
 }
 #endif

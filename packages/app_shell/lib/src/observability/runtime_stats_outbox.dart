@@ -42,11 +42,13 @@ final class _RuntimeStatsRecord {
       'client_application',
       'platform',
       'app_version',
+      'device_model',
       'build_number',
       'report_run_id',
       'report_sequence',
       'occurred_at',
       'connectivity',
+      'egress_probe',
       'error_code',
       'failure_kind',
       'failure_operation',
@@ -68,6 +70,7 @@ final class _RuntimeStatsRecord {
     if (body.keys.any((key) => !fields.contains(key)) ||
         body.entries.any((entry) =>
             entry.key != 'connectivity' &&
+            entry.key != 'egress_probe' &&
             entry.key != 'candidate_probes' &&
             entry.key != 'network_observation' &&
             entry.value is! String &&
@@ -88,6 +91,9 @@ final class _RuntimeStatsRecord {
     }
     if (body.containsKey('failure_operation') && !connectionFailureOperations.contains(body['failure_operation'])) {
       throw const FormatException('runtime_stats_body_invalid');
+    }
+    if (body.containsKey('egress_probe') && runtimeEgressProbeObservationFromWire(body['egress_probe']) == null) {
+      throw const FormatException('runtime_stats_egress_probe_invalid');
     }
     final observation = body['network_observation'];
     if (observation != null && (observation is! Map || observation.length != 3 ||

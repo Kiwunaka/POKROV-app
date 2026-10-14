@@ -138,7 +138,7 @@ class _WarpConsentSheet extends StatelessWidget {
               const SizedBox(height: 18),
               if (ready) ...[
                 Text(
-                  'Для пробного и бесплатного доступа WARP также может стать последним резервом без серверов POKROV. В этом случае трафик идёт через Cloudflare, а страна выхода неизвестна.',
+                  'WARP включается только вручную. Автоматический выбор страны и пути сам его не включает. После включения для пробного и бесплатного доступа доступен также резерв через Cloudflare без серверов POKROV; его страна выхода неизвестна.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: secondary,
                         height: 1.34,
@@ -151,7 +151,9 @@ class _WarpConsentSheet extends StatelessWidget {
                   icon: Icons.bolt_rounded,
                   title: lifecycle.phase == PokrovWarpPhase.active
                       ? 'WARP активен в текущем подключении.'
-                      : 'WARP включится при следующем подключении.',
+                      : enabled
+                          ? 'WARP включится при следующем подключении.'
+                          : 'Включите WARP, чтобы использовать его при подключении.',
                   value: '',
                   foreground: foreground,
                   muted: secondary,

@@ -775,12 +775,18 @@ void main() {
           'coreEgressValidated': false,
           'dnsReady': false,
           'lastFailureKind': 'core_egress_response_timeout',
+          'egressProbeObservation': {'stage': 'response', 'outcome': 'timeout',
+            'error_domain': 'winhttp', 'error_code': 12002, 'elapsed_ms': 6000},
           'protectionRetained': true,
           'windowsLocalDpiAdmissionVersion': 1,
         });
     final failed = await engine.snapshot();
     expect(failed.windowsLocalDpiAdmissionVersion, 1);
     expect(failed.lastFailureKind, 'core_egress_response_timeout');
+    expect(failed.egressProbeObservation, (stage: 'response', outcome: 'timeout',
+      errorDomain: 'winhttp', errorCode: 12002, elapsedMs: 6000));
+    expect(runtimeEgressProbeObservationFromWire({'stage': 'response', 'outcome': 'timeout',
+      'error_domain': 'winhttp', 'error_code': 12002, 'elapsed_ms': 6000, 'raw': 'private'}), isNull);
     expect(failed.protectionRetained, isTrue);
     expect(failed.hasCoreEgressProbeFailure, isTrue);
     expect(failed.isCleanlyHealthy, isFalse);

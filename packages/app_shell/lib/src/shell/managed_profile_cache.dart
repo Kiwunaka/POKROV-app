@@ -235,6 +235,56 @@ class ManagedProfileCache {
     return const ManagedProfileCacheRead();
   });
 
+  /// Rebind only entries admitted by the normal account/expiry/catalog reader.
+  /// Keep their original proof time and the latest authoritative access window.
+  Future<void> rebindInputs({
+    required String platform,
+    required String previousBinding,
+    required String currentBinding,
+    required Set<String> entryIds,
+    required int expectedGeneration,
+  }) => _serialize(() async {
+    if (generation(platform) != expectedGeneration || previousBinding == currentBinding) return;
+    final value = await _load(platform);
+    final downloaded = value['downloaded'];
+    if (downloaded is! Map || downloaded['binding'] != previousBinding) return;
+    final downloadedPayload = downloaded['payload'];
+    final latestAccess = downloadedPayload is Map ? downloadedPayload['access'] : null;
+    final latestCatalog = downloadedPayload is Map ? downloadedPayload['transport_catalog'] : null;
+    Map<String, dynamic>? migrate(Object? entry) {
+      if (entry is! Map || entry['binding'] != previousBinding || entry['payload'] is! Map) return null;
+      final payload = Map<String, dynamic>.from(entry['payload'] as Map);
+      if (!entryIds.contains(payload['cache_entry_id'])) return null;
+      if (latestAccess is Map && latestAccess.containsKey('expiry_at')) payload['access'] = latestAccess;
+      if (latestCatalog is Map) {
+        // A catalog refresh may have withdrawn a candidate after its checked read.
+        final catalog = payload['transport_catalog'];
+        if (catalog is! Map || catalog['revision'] != latestCatalog['revision'] ||
+            !(latestCatalog['candidates'] as List).any((candidate) =>
+                candidate is Map && candidate['candidate_ref'] == _candidateRef(payload))) return null;
+        payload['transport_catalog'] = {...latestCatalog,
+          if (payload['material_candidate_ref'] == null || payload['material_candidate_ref'] == '')
+            'selected_candidate_ref': _candidateRef(payload)};
+      }
+      return {...Map<String, dynamic>.from(entry), 'binding': currentBinding, 'payload': payload};
+    }
+    final candidates = value['candidates'] is Map ? Map<String, dynamic>.from(value['candidates']) : <String, dynamic>{};
+    Map<String, dynamic>? selected = migrate(downloaded);
+    for (final key in candidates.keys.toList()) {
+      final entry = migrate(candidates[key]);
+      if (entry == null) continue;
+      candidates[key] = entry;
+      selected ??= entry;
+    }
+    final proven = migrate(value['proven']);
+    selected ??= proven;
+    if (selected == null || generation(platform) != expectedGeneration) return;
+    value['downloaded'] = selected;
+    if (proven != null) value['proven'] = proven;
+    if (candidates.isNotEmpty) value['candidates'] = candidates;
+    await _write(platform, value);
+  });
+
   Future<void> markProven({
     required String platform,
     required String binding,

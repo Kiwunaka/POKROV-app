@@ -20,13 +20,15 @@ import 'package:pokrov_observability_runtime/observability_runtime.dart' show Op
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 Future<void> _deleteTestDirectory(Directory directory) async {
-  // Synchronous manager disposal can leave a bootstrap file read settling on Windows.
+  // Synchronous disposal can leave bootstrap reads or atomic-file cleanup settling.
   for (var attempt = 0;; attempt++) {
     try {
       await directory.delete(recursive: true);
       return;
     } on FileSystemException catch (error) {
-      if (!Platform.isWindows || error.osError?.errorCode != 32 || attempt == 24) rethrow;
+      final code = error.osError?.errorCode;
+      if (Platform.isWindows && code == 2 && !await directory.exists()) return;
+      if (!Platform.isWindows || !const {2, 32, 145}.contains(code) || attempt == 24) rethrow;
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
   }
@@ -287,6 +289,8 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
 }
 
 class _CatalogFailureBootstrapper extends _StatsBootstrapper implements AppFirstRoutingCatalogService {
+  Object catalogFailure = const RoutingCatalogFailure('catalog_response_invalid');
+
   @override
   bool get routingCatalogEnabled => true;
 
@@ -296,7 +300,7 @@ class _CatalogFailureBootstrapper extends _StatsBootstrapper implements AppFirst
   @override
   Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({
     required HostPlatform hostPlatform, bool cacheOnly = false, Future<void>? cancelled,
-  }) async => throw const RoutingCatalogFailure('catalog_response_invalid');
+  }) async => throw catalogFailure;
 }
 
 class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
@@ -1428,20 +1432,32 @@ void main() {
     expect(policies, [true, false]);
   });
 
-  test('Simple ignores saved manual pins for country Auto and Advanced probes only its exact candidate', () async {
+  test('restore migrates legacy pins to country Auto while current diagnostic pins remain exact', () async {
     final runtime = _Runtime()..supportsCandidates = true;
-    final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true);
-    final manager = _manager(runtime, bootstrapper);
+    final bridge = TransportCandidate(candidateRef: 'de:bridge', profileRef: 'bridge', nodeCode: 'de',
+      countryCode: 'DE', protocol: 'vless', transport: 'tcp', protection: 'reality',
+      priority: 10, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
+      minimumCoreRelease: null, platforms: {HostPlatform.android}, requiredFeatures: const {}, bridgeId: 'mini');
+    final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true)
+      ..candidates = [..._candidates, bridge];
+    final experience = _ExperienceStore();
+    final manager = _manager(runtime, bootstrapper, experienceStore: experience);
     addTearDown(manager.dispose);
     manager.restoreConnectionPreferences(
       const PokrovClientExperienceState.empty().copyWith(
+        interfaceMode: PokrovInterfaceMode.advanced,
         preferredCountryCode: 'DE', preferredNodeCode: 'ch',
-        preferredVariantId: 'ru-spb', preferredCandidateRef: 'ch:legacy'),
+        preferredVariantId: 'ru-spb', preferredCandidateRef: 'ch:legacy',
+        favoriteNodeCodes: ['us'], recentNodeCodes: ['ch'], selectedAppIds: ['fixture.app']),
       const {},
     );
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
-    expect(runtime.stagedProfile, _candidates.first.candidateRef);
+    expect(runtime.stagedProfile, bridge.candidateRef);
+    expect((experience.saved.preferredCountryCode, experience.saved.preferredNodeCode,
+        experience.saved.preferredCandidateRef, experience.saved.preferredVariantId), ('DE', '', '', 'direct'));
+    expect(experience.saved.favoriteNodeCodes, ['us']);
+    expect(experience.saved.selectedAppIds, ['fixture.app']);
     expect(runtime.stagedPayloads.last.resolvedNodeCode, 'de');
     expect(bootstrapper.requestedCountries, everyElement('DE'));
     expect(manager.transportCatalog?.selected.countryCode, 'DE');
@@ -1464,7 +1480,7 @@ void main() {
     await manager.setAutomaticLocation();
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
-    expect(runtime.stagedProfile, _candidates.first.candidateRef);
+    expect(runtime.stagedProfile, bridge.candidateRef);
     expect(bootstrapper.requestedCountries.last, '');
     const base = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel);
     const country = ManagedProfileCacheInputs(hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
@@ -1794,7 +1810,7 @@ void main() {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() async {
       await server.close(force: true);
-      await directory.delete(recursive: true);
+      await _deleteTestDirectory(directory);
       FlutterSecureStoragePlatform.instance = originalStorage;
     });
     unawaited(() async {
@@ -1889,6 +1905,14 @@ void main() {
     expect(runtime.stagedPayloads.single.materialCandidate?.candidateRef, 'de:awg31_lab');
     expect(runtime.stagedPayloads.single.warpPolicy.canEnableRuntime, isFalse);
     expect(runtime.connectCalls, 1);
+    final restarted = bootstrapper();
+    final migrated = await restarted.loadCachedManagedProfile(
+      ManagedProfileCacheInputs(hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+        preferredCountryCode: 'DE'),
+      runtimeFeatures: RuntimeTransportFeature.values.toSet(), coreRelease: '1.2.9');
+    expect(migrated?.cacheEntryId, cached?.cacheEntryId,
+        reason: 'the upgraded country binding survives another process restart without an API');
+    expect(await restarted.loadCachedManagedProfile(inputs), isNull);
   });
 
   test('API outage and failed node use an authorized cached other node through expiry grace', () async {
@@ -1902,7 +1926,7 @@ void main() {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() async {
       await server.close(force: true);
-      await directory.delete(recursive: true);
+      await _deleteTestDirectory(directory);
       FlutterSecureStoragePlatform.instance = originalStorage;
     });
     var apiUnavailable = false;
@@ -2493,6 +2517,9 @@ void main() {
     expect(report.timelineAttempts.last.http64kObservation,
         {'target': 'owned_reserve', 'status': 200, 'received_bytes': 32768, 'expected_bytes': 65536});
     expect(report.timelineAttempts.last.probeError, probeError);
+    expect(report.supportDiagnosticFields(), containsPair('attempt_number', report.timelineAttempts.last.generation));
+    expect(report.supportDiagnosticFields(), containsPair('probe_operation', probeError['operation']));
+    expect(report.supportDiagnosticFields(), containsPair('probe_cause', probeError['cause']));
     final terminal = events.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .singleWhere((event) => event['name'] == 'app.connection.attempt.finished');
     expect(terminal['error'], {'code': 'CONN-008', 'origin': 'core'});
@@ -2503,6 +2530,23 @@ void main() {
     expect(runtime.connectCalls, 0);
     expect(runtime.stagedPayloads, isEmpty,
         reason: 'pinning AWG after failure does not start or stage another attempt');
+  });
+
+  test('native Windows egress facts survive diagnostics and support summary', () {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+      snapshot: const RuntimeSnapshot(hostPlatform: HostPlatform.windows, lane: RuntimeLane.windowsService,
+        phase: RuntimePhase.configStaged, artifactDirectory: null, coreBinaryPath: null,
+        helperBinaryPath: null, stagedConfigPath: null, supportsLiveConnect: true,
+        canInitialize: true, canConnect: true, message: 'fixture',
+        lastFailureKind: 'core_egress_response_timeout',
+        egressProbeObservation: (stage: 'response', outcome: 'timeout', errorDomain: 'winhttp', errorCode: 12002, elapsedMs: 6000)),
+      statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: '4191', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false);
+    expect(report.copyWith().supportDiagnosticFields(), containsPair('egress_stage', 'response'));
+    expect(report.supportDiagnosticFields(), containsPair('egress_error_domain', 'winhttp'));
+    expect(report.supportDiagnosticFields(), containsPair('egress_error_code', 12002));
   });
 
   test('current diagnostic card separates rejected candidate material from native failure', () async {
@@ -2597,6 +2641,7 @@ void main() {
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
 
+    await manager.setWarpRuntimeConsent(true);
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
     final failureDeadline = DateTime.now().add(const Duration(seconds: 2));
@@ -2800,7 +2845,7 @@ void main() {
     expect(runtime.handoffCalls, 0);
   });
 
-  testWidgets('Locations adopts ready cached protocols after one failed cold metadata refresh', (tester) async {
+  testWidgets('Advanced Locations keeps cached transports internal and selects only a country', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final nativeMutations = <String>[];
     var nativeSnapshots = 0;
@@ -2832,10 +2877,11 @@ void main() {
         'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true,
         'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': features})};
     });
+    final experience = _CatalogPickerExperience();
     await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
       bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
-      clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+      clientExperienceStore: experience, themeMode: ThemeMode.light,
       onThemeModeChanged: (_) {},
     )));
     await tester.pumpAndSettle();
@@ -2862,6 +2908,16 @@ void main() {
         reason: 'normal Locations entry must adopt ready protocols without a warming Connect');
     expect((locations.transportCatalog as TransportCandidateCatalog).candidates.map((candidate) => candidate.protocol),
         ['vless', 'awg', 'hysteria2']);
+    expect(find.textContaining('VLESS'), findsNothing);
+    expect(find.textContaining('AWG'), findsNothing);
+    expect(find.textContaining('Hysteria'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('locations-country-DE')));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(experience.saved.preferredCountryCode, 'DE');
+    expect(experience.saved.preferredNodeCode, isEmpty);
+    expect(experience.saved.preferredCandidateRef, isEmpty);
+    expect(nativeMutations, isEmpty);
   });
 
   test('loaded Core refresh publishes the full catalog without replacing the running material', () async {
@@ -2930,6 +2986,14 @@ void main() {
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     await manager.connect();
+    expect(runtime.probedWarpModes, [''], reason: 'stored consent does not inject WARP into Auto');
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
+    expect((await manager.loadWarpPolicy())?.userConsented, isTrue,
+        reason: 'saved consent remains intact while runtime requires a manual choice');
+    await manager.disconnect();
+    runtime.probedWarpModes.clear();
+    await manager.setWarpRuntimeConsent(true);
+    await manager.connect();
     expect(manager.transportCatalog?.selectedCandidateRef, chain.candidateRef);
     expect(runtime.probedWarpModes, ['proxy_over_warp']);
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
@@ -2973,6 +3037,7 @@ void main() {
       ..heldProbeProfiles.addAll(chains.map((candidate) => candidate.candidateRef));
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
+    await manager.setWarpRuntimeConsent(true);
     final clock = Stopwatch()..start();
 
     await manager.connect();
@@ -2985,10 +3050,14 @@ void main() {
     expect(runtime.activeProbes, isEmpty);
   });
 
-  test('1.3 catalog still stages consented WARP without chain entries', () async {
+  test('legacy catalog needs a manual WARP choice even with saved consent', () async {
     final runtime = _Runtime()..supportsCandidates = true;
     final manager = _manager(runtime, _Bootstrapper(catalog: true, warpEnabled: true));
     addTearDown(manager.dispose);
+    await manager.connect();
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
+    await manager.disconnect();
+    await manager.setWarpRuntimeConsent(true);
     await manager.connect();
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
   });
@@ -3010,6 +3079,7 @@ void main() {
     manager.restoreConnectionPreferences(
       const PokrovClientExperienceState.empty().copyWith(preferredCountryCode: 'DE'), const {});
 
+    await manager.setWarpRuntimeConsent(true);
     await manager.connect();
     expect(runtime.probedProtocols, ['vless', 'warp']);
     expect(runtime.stagedPayloads.last.warpPolicy.mode, 'warp_direct');
@@ -3036,11 +3106,26 @@ void main() {
 
     final noConsentRuntime = _Runtime()..supportsCandidates = true
       ..failedProbeProtocols.add('vless');
-    final noConsent = _manager(noConsentRuntime,
-      _Bootstrapper(catalog: true, bundle: true)..candidates = [base, direct]);
+    final noConsentBootstrapper = _CachedBootstrapper(warpEnabled: true, bundle: true)
+      ..cacheAvailable = false
+      ..candidates = [base, direct]
+      ..cachedCatalog = TransportCandidateCatalog(revision: 'cached',
+          selectedCandidateRef: direct.candidateRef, candidates: [base, direct]);
+    final noConsent = _manager(noConsentRuntime, noConsentBootstrapper);
     addTearDown(noConsent.dispose);
+    noConsent.restoreConnectionPreferences(
+      const PokrovClientExperienceState.empty().copyWith(
+        interfaceMode: PokrovInterfaceMode.advanced, preferredCandidateRef: direct.candidateRef), const {});
     await noConsent.connect();
     expect(noConsentRuntime.probedProtocols, ['vless']);
+    expect(noConsentRuntime.connectCalls, 0);
+    noConsentBootstrapper
+      ..cacheAvailable = true
+      ..failure = TimeoutException('managed API unavailable');
+    noConsentRuntime.probedProtocols.clear();
+    await noConsent.connect();
+    expect(noConsentRuntime.probedProtocols, ['vless'],
+        reason: 'cached direct WARP is excluded without the current manual choice');
     expect(noConsentRuntime.connectCalls, 0);
   });
 
@@ -3073,6 +3158,7 @@ void main() {
     addTearDown(manager.dispose);
     manager.restoreConnectionPreferences(
       const PokrovClientExperienceState.empty().copyWith(preferredCountryCode: 'DE'), const {});
+    await manager.setWarpRuntimeConsent(true);
     await manager.connect();
     expect(manager.transportCatalog?.selected.nodeCode, 'de');
     expect(manager.transportCatalog?.selected.countryCode, 'ZZ');
@@ -3711,6 +3797,28 @@ void main() {
     expect(manager.presentation.isVerified, isFalse);
   });
 
+  test('manual app modes tolerate unavailable catalog but verified RU scope stays closed', () async {
+    final runtime = _Runtime()..supportsCandidates = true;
+    final bootstrapper = _CatalogFailureBootstrapper()
+      ..catalogFailure = const BootstrapFailure('Rules unavailable',
+          statusCode: HttpStatus.serviceUnavailable, code: 'routing_catalog_unavailable');
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    manager.addSelectedAppId('com.example.app');
+    for (final mode in [RouteMode.selectedApps, RouteMode.excludedApps]) {
+      manager.selectRouteMode(mode);
+      await manager.connect();
+      expect(manager.status.phase, ConnectionPhase.connected);
+      expect(runtime.stagedPayloads.last.routeMode, mode);
+      await manager.disconnect();
+    }
+    final connects = runtime.connectCalls;
+    manager.applyRuAppPreset(RouteMode.excludedApps, ['com.example.app'], true);
+    await manager.connect();
+    expect(runtime.connectCalls, connects);
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+  });
+
   test('ordinary VPN tolerates an absent optional catalog and retains RU rules',
       () async {
     final originalHttpOverrides = HttpOverrides.current;
@@ -4013,6 +4121,7 @@ void main() {
       ..warpEgressFailure = true;
     final manager = _manager(runtime, _Bootstrapper(warpEnabled: true));
     addTearDown(manager.dispose);
+    await manager.setWarpRuntimeConsent(true);
     await manager.connect();
     await runtime.operationEntered.future;
     final cancellation = manager.cancel();

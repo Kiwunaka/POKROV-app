@@ -20,6 +20,8 @@ import javax.net.ssl.HttpsURLConnection
 internal object AndroidNetworkDiagnostics {
     private val ownedHosts = setOf("app.pokrov.space", "api.pokrov.space")
     internal const val intervalMs = 60L * 60 * 1000
+    internal fun userAgent(appVersion: String): String =
+        "POKROV/android/${appVersion.take(32).filter { it.isLetterOrDigit() || it in ".+-_" }}"
     internal fun checkDue(now: Long, last: Long, batteryPercent: Int, powerSave: Boolean, roaming: Boolean): Boolean =
         batteryPercent in 21..100 && !powerSave && !roaming && (last == 0L || now - last >= intervalMs)
 
@@ -114,7 +116,7 @@ internal object AndroidNetworkDiagnostics {
             connection.useCaches = false
             connection.setRequestProperty("Authorization", "Bearer $sessionToken")
             connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("User-Agent", "POKROV-Android/${appVersion.take(32).filter { it.isLetterOrDigit() || it in ".+-" }}")
+            connection.setRequestProperty("User-Agent", userAgent(appVersion))
             val body = JSONObject().apply {
                 put("network_class", networkClass)
                 if (carrier != null) put("carrier", carrier)

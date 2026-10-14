@@ -1,5 +1,25 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
+import 'package:pokrov_core_domain/core_domain.dart';
+
+class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActionService {
+  int claims = 0;
+
+  @override
+  Future<DevicePairingClaimResult> claimDevicePairingCode({
+    required HostPlatform hostPlatform,
+    required String code,
+  }) async {
+    claims++;
+    throw const BootstrapFailure('Код истёк. Получите новый в кабинете.');
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
 
 class _MemoryFirstLaunchStore implements PokrovFirstLaunchStore {
   _MemoryFirstLaunchStore({this.completed = false, this.fail = false});
@@ -27,6 +47,56 @@ class _MemoryFirstLaunchStore implements PokrovFirstLaunchStore {
 }
 
 void main() {
+  testWidgets('cold and running pairing links wait for explicit code submission', (tester) async {
+    final actions = _PairingActions();
+    final links = StreamController<Uri>.broadcast();
+    final link = Uri.parse('pokrov://pair?code=ABCD-9XYZ');
+    await tester.pumpWidget(PokrovSeedApp(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.android),
+      bootstrapper: actions,
+      firstLaunchStore: _MemoryFirstLaunchStore(),
+      initialAcquisitionUri: link,
+      acquisitionUriStream: links.stream,
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    final field = find.byKey(const ValueKey('profile-redeem-code-field'));
+    expect(tester.widget<TextField>(field).controller?.text, 'ABCD-9XYZ');
+    expect(actions.claims, 0);
+    links.add(link);
+    await tester.pump();
+    expect(field, findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pump(const Duration(seconds: 1));
+    expect(actions.claims, 0);
+    links.add(link);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pump();
+    expect(actions.claims, 1);
+    expect(find.text('Код истёк. Получите новый в кабинете.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await links.close();
+  });
+
+  test('pairing continuation accepts only one bounded login code', () {
+    final pairing = PokrovDevicePairingHandoff.tryParse(
+      Uri.parse('pokrov://pair?code=ABCD-9XYZ'),
+    );
+    expect(pairing?.code, 'ABCD-9XYZ');
+    for (final link in [
+      'pokrov://pair?code=ABCD-9XYZ&code=EFGH-2345',
+      'pokrov://pair?code=ABCD-9XYZ&session=untrusted',
+      'pokrov://pair?code=invalid',
+      'https://pair?code=ABCD-9XYZ',
+      'pokrov://pair/another?code=ABCD-9XYZ',
+      'pokrov://pair?code=ABCD-9XYZ#extra',
+    ]) {
+      expect(PokrovDevicePairingHandoff.tryParse(Uri.parse(link)), isNull);
+    }
+  });
+
   test('persisted completion silently restores the ready state', () async {
     final coordinator = FirstSessionCoordinator(
       store: _MemoryFirstLaunchStore(completed: true),

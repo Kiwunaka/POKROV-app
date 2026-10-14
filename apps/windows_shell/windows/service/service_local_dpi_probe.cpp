@@ -220,16 +220,16 @@ bool Handshake(Tls* tls, SOCKET socket, const std::wstring& host, std::vector<ch
   return false;
 }
 
-bool Head(Tls* tls, SOCKET socket, const std::string& host, std::vector<char>* pending,
-          const CheckInterruption& interrupted, ULONGLONG deadline) {
+int HttpStatus(Tls* tls, SOCKET socket, const std::string& request, std::vector<char>* pending,
+               const CheckInterruption& interrupted, ULONGLONG deadline) {
   SecPkgContext_StreamSizes sizes{};
-  if (::QueryContextAttributesW(&tls->context, SECPKG_ATTR_STREAM_SIZES, &sizes) != SEC_E_OK) return false;
-  const auto head = "HEAD / HTTP/1.1\r\nHost: " + host + "\r\nConnection: close\r\n\r\n";
-  std::vector<char> encrypted(sizes.cbHeader + head.size() + sizes.cbTrailer);
-  std::memcpy(encrypted.data() + sizes.cbHeader, head.data(), head.size());
+  if (::QueryContextAttributesW(&tls->context, SECPKG_ATTR_STREAM_SIZES, &sizes) != SEC_E_OK ||
+      request.size() > sizes.cbMaximumMessage) return 0;
+  std::vector<char> encrypted(sizes.cbHeader + request.size() + sizes.cbTrailer);
+  std::memcpy(encrypted.data() + sizes.cbHeader, request.data(), request.size());
   SecBuffer outgoing[4]{{sizes.cbHeader, SECBUFFER_STREAM_HEADER, encrypted.data()},
-      {static_cast<ULONG>(head.size()), SECBUFFER_DATA, encrypted.data() + sizes.cbHeader},
-      {sizes.cbTrailer, SECBUFFER_STREAM_TRAILER, encrypted.data() + sizes.cbHeader + head.size()}, {0, SECBUFFER_EMPTY, nullptr}};
+      {static_cast<ULONG>(request.size()), SECBUFFER_DATA, encrypted.data() + sizes.cbHeader},
+      {sizes.cbTrailer, SECBUFFER_STREAM_TRAILER, encrypted.data() + sizes.cbHeader + request.size()}, {0, SECBUFFER_EMPTY, nullptr}};
   SecBufferDesc message{SECBUFFER_VERSION, 4, outgoing};
   if (::EncryptMessage(&tls->context, 0, &message, 0) != SEC_E_OK) return false;
   for (unsigned int i = 0; i < 3; ++i) {
@@ -259,21 +259,20 @@ bool Head(Tls* tls, SOCKET socket, const std::string& host, std::vector<char>* p
     pending->erase(pending->begin(), pending->end() - extra);
     if (response.find("\r\n\r\n") != std::string::npos) {
       const bool protocol = response.rfind("HTTP/1.1 ", 0) == 0 || response.rfind("HTTP/1.0 ", 0) == 0;
-      return Current(interrupted, deadline) && protocol && response.size() >= 13 && response[9] == '2' &&
-          response[10] >= '0' && response[10] <= '9' && response[11] >= '0' && response[11] <= '9' &&
-          (response[12] == ' ' || response[12] == '\r');
+      if (!Current(interrupted, deadline) || !protocol || response.size() < 13 ||
+          response[9] < '1' || response[9] > '5' || response[10] < '0' || response[10] > '9' ||
+          response[11] < '0' || response[11] > '9' || (response[12] != ' ' && response[12] != '\r')) return 0;
+      return (response[9] - '0') * 100 + (response[10] - '0') * 10 + response[11] - '0';
     }
   }
   return false;
 }
-}  // namespace
-
-std::string VerifyWindowsLocalDpiControlHost(const std::string& control_host,
-                                           const std::string& bind_interface,
-                                           const CheckInterruption& interrupted) {
+std::string BoundHttpExchange(const std::string& control_host, const std::string& bind_interface,
+                             const std::string& request, const CheckInterruption& interrupted,
+                             ULONGLONG timeout_ms, int* status) {
   const auto host = Wide(control_host), alias = Wide(bind_interface);
   if (host.empty() || alias.empty()) return "local_dpi_control_invalid";
-  const auto deadline = ::GetTickCount64() + 10000;
+  const auto deadline = ::GetTickCount64() + timeout_ms;
   Winsock winsock;
   PhysicalEndpoint endpoint;
   if (!winsock.ready || !Endpoint(alias, &endpoint) || !Current(interrupted, deadline)) return "local_dpi_physical_unavailable";
@@ -295,6 +294,31 @@ std::string VerifyWindowsLocalDpiControlHost(const std::string& control_host,
   Tls tls;
   std::vector<char> pending;
   if (!Handshake(&tls, socket.value, host, &pending, interrupted, deadline)) return "local_dpi_control_tls_failed";
-  return Head(&tls, socket.value, control_host, &pending, interrupted, deadline) ? "" : "local_dpi_control_http_failed";
+  *status = HttpStatus(&tls, socket.value, request, &pending, interrupted, deadline);
+  return *status != 0 ? "" : "local_dpi_control_http_failed";
+}
+}  // namespace
+
+std::string VerifyWindowsLocalDpiControlHost(const std::string& control_host,
+                                           const std::string& bind_interface,
+                                           const CheckInterruption& interrupted) {
+  int status = 0;
+  const auto failure = BoundHttpExchange(control_host, bind_interface,
+      "HEAD / HTTP/1.1\r\nHost: " + control_host + "\r\nConnection: close\r\n\r\n",
+      interrupted, 10000, &status);
+  if (!failure.empty()) return failure;
+  return status >= 200 && status < 300 ? "" : "local_dpi_control_http_failed";
+}
+
+std::string ObserveWindowsNetworkContext(const NetworkObservationRequest& request,
+                                        const std::string& network_class,
+                                        const std::string& bind_interface,
+                                        const CheckInterruption& interrupted) {
+  const auto http = NetworkObservationHttpRequest(request, network_class);
+  if (http.empty()) return "unavailable";
+  int status = 0;
+  if (!BoundHttpExchange(request.host, bind_interface, http, interrupted, 6000, &status).empty()) return "unavailable";
+  if (status >= 200 && status < 300) return "acknowledged";
+  return status == 401 || status == 403 ? "denied" : "unavailable";
 }
 }  // namespace pokrov::service
