@@ -2320,7 +2320,7 @@ void main() {
     ]);
   });
 
-  test('claims a one-time device code without starting or persisting a trial',
+  test('claims a one-time device code and reuses its current session on repeat login',
       () async {
     final tempDirectory = await Directory.systemTemp.createTemp(
       'pokrov-device-pairing-test-',
@@ -2333,14 +2333,52 @@ void main() {
 
     final requests = <String>[];
     Map<String, dynamic>? claimBody;
+    final claimBearers = <String?>[];
+    String? currentInstallId;
+    var requireRefresh = false;
+    var refreshStarted = Completer<void>();
+    var releaseRefresh = Completer<void>();
+    Map<String, Object?> receiptOverride = {};
+    Future<void> Function()? beforeClaimResponse;
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(server.close);
     unawaited(() async {
       await for (final request in server) {
         requests.add('${request.method} ${request.uri.path}');
         final body = await utf8.decoder.bind(request).join();
+        if (request.uri.path == '/api/client/session/refresh') {
+          refreshStarted.complete();
+          await releaseRefresh.future;
+          requireRefresh = false;
+          request.response.headers.contentType = ContentType.json;
+          request.response.write(jsonEncode({
+            'access_token': 'renewed-paired-access', 'refresh_token': 'renewed-paired-refresh',
+            'canonical_account_id': 'paired-account-id',
+          }));
+          await request.response.close();
+          continue;
+        }
         if (request.uri.path == '/api/client/device-pairing/claim') {
           claimBody = jsonDecode(body) as Map<String, dynamic>;
+          claimBearers.add(request.headers.value(HttpHeaders.authorizationHeader));
+          if (requireRefresh) {
+            request.response.statusCode = HttpStatus.unauthorized;
+            request.response.write('{"detail":"expired"}');
+            await request.response.close();
+            continue;
+          }
+          await beforeClaimResponse?.call();
+          if (currentInstallId != null) {
+            request.response.headers.contentType = ContentType.json;
+            request.response.write(jsonEncode({
+              'ok': true, 'existing_device': true,
+              'canonical_account_id': 'paired-account-id',
+              'install_id': currentInstallId,
+              ...receiptOverride,
+            }));
+            await request.response.close();
+            continue;
+          }
           request.response
             ..headers.contentType = ContentType.json
             ..write(
@@ -2398,6 +2436,127 @@ void main() {
       ),
       'paired-access-token',
     );
+    currentInstallId = result.installId;
+    final establishedState = jsonDecode(stateText) as Map<String, dynamic>;
+    establishedState['profile_revision'] = 'already-working-profile';
+    await stateFile.writeAsString(jsonEncode(establishedState));
+    final repeated = await bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'EFGH-2345',
+    );
+    expect(repeated.ok, isTrue);
+    expect(repeated.existingDevice, isTrue);
+    expect(repeated.installId, result.installId);
+    expect(claimBearers, [null, 'Bearer paired-access-token']);
+    expect(jsonDecode(await stateFile.readAsString()), establishedState);
+    final retained = await sessionSecretStore.readSessionPair(
+      hostPlatform: HostPlatform.windows, installId: result.installId,
+    );
+    expect(retained?.accessToken, 'paired-access-token');
+    expect(retained?.refreshToken, 'paired-refresh-token');
+
+    // A profile update during ordinary refresh survives the credential write.
+    requireRefresh = true;
+    final renewing = bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'JKLM-6789',
+    );
+    await refreshStarted.future;
+    establishedState['profile_revision'] = 'concurrent-profile-update';
+    await stateFile.writeAsString(jsonEncode(establishedState));
+    releaseRefresh.complete();
+    expect((await renewing).installId, result.installId);
+    expect(jsonDecode(await stateFile.readAsString()), establishedState);
+
+    // A replacement login during refresh must not restore its old credentials.
+    requireRefresh = true;
+    refreshStarted = Completer<void>();
+    releaseRefresh = Completer<void>();
+    final stale = bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'NPQR-2345',
+    );
+    await refreshStarted.future;
+    await sessionSecretStore.writeSessionPair(
+      hostPlatform: HostPlatform.windows, installId: result.installId,
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'replacement-login-access', refreshToken: 'replacement-login-refresh'),
+    );
+    final rejected = expectLater(stale, throwsA(isA<BootstrapFailure>()));
+    releaseRefresh.complete();
+    await rejected;
+    final replacement = await sessionSecretStore.readSessionPair(
+      hostPlatform: HostPlatform.windows, installId: result.installId,
+    );
+    expect(replacement?.accessToken, 'replacement-login-access');
+    expect(replacement?.refreshToken, 'replacement-login-refresh');
+    expect(jsonDecode(await stateFile.readAsString()), establishedState);
+    expect(requests.where((request) => request.endsWith('/refresh')), hasLength(2));
+    expect(claimBearers, [null, 'Bearer paired-access-token',
+      'Bearer paired-access-token', 'Bearer renewed-paired-access', 'Bearer renewed-paired-access']);
+
+    // The two receipt bindings must match this request, never another device.
+    for (final field in ['canonical_account_id', 'install_id']) {
+      receiptOverride = {field: 'another-binding'};
+      await expectLater(bootstrapper.claimDevicePairingCode(
+        hostPlatform: HostPlatform.windows, code: 'STUV-2345',
+      ), throwsA(isA<BootstrapFailure>()));
+      expect(jsonDecode(await stateFile.readAsString()), establishedState);
+    }
+    receiptOverride = {};
+
+    // Older persisted account IDs may be numeric; the bound request token
+    // already carries the canonical account which the server verifies.
+    String fixtureEnvelope(Map<String, Object?> claims) =>
+        '${base64Url.encode(utf8.encode(jsonEncode(claims)))}.fixture-signature';
+    establishedState['account_id'] = '42';
+    await stateFile.writeAsString(jsonEncode(establishedState));
+    await sessionSecretStore.writeSessionPair(hostPlatform: HostPlatform.windows, installId: result.installId,
+      pair: AppFirstSessionCredentials(accessToken: fixtureEnvelope({
+        'id': 42, 'account_id': 'paired-account-id', 'session_id': 'fixture-session', 'device_id': 'fixture-device',
+      }), refreshToken: 'canonical-fixture-refresh'));
+    final canonical = await bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'WXYZ-2345',
+    );
+    expect(canonical.accountId, 'paired-account-id');
+    expect(canonical.existingDevice, isTrue);
+    expect(jsonDecode(await stateFile.readAsString()), establishedState);
+
+    // A known stateless envelope follows the original fresh pairing path;
+    // an unparseable no-refresh credential is still sent and rejected.
+    await sessionSecretStore.writeSessionToken(hostPlatform: HostPlatform.windows,
+        installId: result.installId, sessionToken: 'malformed-device-proof');
+    requireRefresh = true;
+    final requestsBeforeInvalid = requests.length;
+    await expectLater(bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'ABCD-6789',
+    ), throwsA(isA<BootstrapFailure>()));
+    expect(requests.length, requestsBeforeInvalid + 1);
+    expect(claimBearers.last, 'Bearer malformed-device-proof');
+    requireRefresh = false;
+    await sessionSecretStore.writeSessionToken(hostPlatform: HostPlatform.windows, installId: result.installId,
+        sessionToken: fixtureEnvelope({'id': 42, 'exp': 2000000000, 'session_id': null, 'device_id': null}));
+    currentInstallId = null;
+    final migrated = await bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'EFGH-6789',
+    );
+    expect(migrated.existingDevice, isFalse);
+    expect(migrated.installId, isNot(result.installId));
+    expect(claimBearers.last, isNull);
+
+    // A successful new-device reply also cannot overwrite a different login
+    // which completed while that claim was in flight.
+    establishedState['install_id'] = 'concurrent-login-install';
+    establishedState['account_id'] = 'concurrent-login-account';
+    beforeClaimResponse = () async {
+      await stateFile.writeAsString(jsonEncode(establishedState));
+      await sessionSecretStore.writeSessionPair(hostPlatform: HostPlatform.windows,
+        installId: 'concurrent-login-install', pair: const AppFirstSessionCredentials(
+          accessToken: 'concurrent-login-access', refreshToken: 'concurrent-login-refresh'));
+    };
+    await expectLater(bootstrapper.claimDevicePairingCode(
+      hostPlatform: HostPlatform.windows, code: 'JKLM-2345',
+    ), throwsA(isA<BootstrapFailure>()));
+    expect(jsonDecode(await stateFile.readAsString()), establishedState);
+    expect((await sessionSecretStore.readSessionPair(hostPlatform: HostPlatform.windows,
+        installId: 'concurrent-login-install'))?.refreshToken, 'concurrent-login-refresh');
   });
 
   test('refreshes an expired access session without starting a second trial',

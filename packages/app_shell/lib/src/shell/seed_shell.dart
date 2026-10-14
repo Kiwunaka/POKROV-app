@@ -2022,9 +2022,13 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
           return paired.ok;
         }
         setState(() {
-          _connectionManager.markProfileDirty();
-          _subscriptionInfo = null;
-          _runtimeHeadline = 'Устройство привязано к вашему аккаунту.';
+          if (!paired.existingDevice) {
+            _connectionManager.markProfileDirty();
+            _subscriptionInfo = null;
+          }
+          _runtimeHeadline = paired.existingDevice
+              ? 'Вход подтверждён. Устройство уже связано с этим аккаунтом.'
+              : 'Устройство привязано к вашему аккаунту.';
         });
         unawaited(_loadBonusSummary(force: true));
         final profileUpdated = await _refreshSubscriptionInfo(
@@ -2037,7 +2041,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         }
         showPokrovSnack(
           context,
-          profileUpdated
+          paired.existingDevice
+              ? 'Вход подтверждён. Устройство уже связано с этим аккаунтом.'
+              : profileUpdated
               ? 'Устройство и профиль привязаны. Код больше не действует.'
               : 'Устройство привязано. Обновите профиль, когда сеть восстановится.',
           tone: profileUpdated ? PokrovSnackTone.success : PokrovSnackTone.info,

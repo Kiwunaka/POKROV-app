@@ -546,6 +546,18 @@ claim and completes onboarding after success. Opening or dismissing the link
 does not change the account. Duplicate, extra or malformed URI parameters are
 rejected, and codes stay in memory rather than logs or preferences.
 
+Repeated website login sends the current bound client session. If the code and
+that session belong to the same canonical account, the server consumes the code
+without issuing credentials or another device slot; the app preserves its
+install, profile and connection selection and shows “Вход подтверждён. Устройство
+уже связано с этим аккаунтом.” Account data still refreshes normally. A known
+legacy stateless envelope keeps the original fresh-pairing path; unknown or
+invalid device proof never falls back to anonymous claiming after a rejection.
+The receipt is checked against the request account/install and current local
+session under the existing state lock. Refresh persistence checks the original
+install/refresh credential under that lock and retains concurrent profile
+updates, so a late response cannot overwrite another login.
+
 Official Android and Windows links may carry an opaque `acq` continuation
 handle issued by the POKROV backend. The client accepts it only from the
 allowlisted POKROV deep-link/command-line surface and posts it once to

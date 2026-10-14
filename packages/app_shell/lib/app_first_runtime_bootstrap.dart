@@ -2077,11 +2077,13 @@ class DevicePairingClaimResult {
     required this.ok,
     required this.accountId,
     required this.installId,
+    this.existingDevice = false,
   });
 
   final bool ok;
   final String accountId;
   final String installId;
+  final bool existingDevice;
 }
 
 class CabinetHandoff {
@@ -3994,73 +3996,159 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required String code,
   }) async {
-    final normalized =
-        code.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    final normalized = code.trim().toUpperCase().replaceAll(
+      RegExp(r'[^A-Z0-9]'),
+      '',
+    );
     if (normalized.length != 8) {
       throw const BootstrapFailure(
         'Код входа должен содержать восемь символов.',
       );
     }
 
-    final state = await _loadOrCreateState(hostPlatform);
-    // A first launch may already have created a trial identity. Pairing uses a
-    // fresh install id so that an abandoned trial device cannot conflict with
-    // the account selected by the user. The old token is removed only after a
-    // successful claim; a failed code leaves the current session untouched.
+    var state = await _loadOrCreateState(hostPlatform);
+    final file = await _stateFile(hostPlatform);
+    // A different account still gets a fresh install. For the current account,
+    // the server can confirm the bound device without replacing its session.
     final pairedInstallId = _generateInstallId(hostPlatform);
     final client = _createHttpClient(hostPlatform);
-    try {
-      final response = await _requestJson(
-        method: 'POST',
-        path: '/api/client/device-pairing/claim',
-        client: client,
-        hostPlatform: hostPlatform,
-        body: <String, Object?>{
-          'code': normalized,
-          'install_id': pairedInstallId,
-          'device_name': await _deviceName(hostPlatform),
-          'platform': hostPlatform.name,
-          'os_version': _trim(Platform.operatingSystemVersion, 64),
-          'app_version': pokrovClientVersion,
-          'locale': _trim(Platform.localeName, 32),
-          'time_zone': _trim(DateTime.now().timeZoneName, 64),
-        },
-      );
-      final session = _readMap(response['session']);
-      final pair = _sessionPairFromResponse(response);
-      final accountId = _readText(
-        response['canonical_account_id'] ?? session['account_id'],
-      );
-      if (pair == null || accountId.isEmpty) {
+    void requireSameSession(_StoredBootstrapState? current) {
+      if (current?.installId != state.installId ||
+          current?.accountId != state.accountId ||
+          current?.sessionToken != state.sessionToken ||
+          current?.refreshToken != state.refreshToken) {
         throw const BootstrapFailure(
-          'POKROV не получил подтверждённую сессию устройства.',
+          'Сессия изменилась. Откройте ссылку ещё раз.',
+          code: 'pairing_session_changed',
         );
       }
+    }
 
-      final nextState = state.copyWith(
-        installId: pairedInstallId,
-        sessionToken: pair.accessToken,
-        refreshToken: pair.refreshToken,
-        accountId: accountId,
-        managedManifestPath: _defaultManagedManifestPath,
-        profileRevision: '',
-        expectsSecureSessionToken: true,
-      );
-      if (state.installId != pairedInstallId) {
-        // Pairing removes the old secret before _saveState. Fence selection
-        // before this first identity mutation as well as the later state write.
-        _notifyTransportSelectionSessionWrite(await _stateFile(hostPlatform), nextState);
-        await _sessionSecretStore.deleteSessionToken(
-          hostPlatform: hostPlatform,
-          installId: state.installId,
-        );
+    try {
+      Map<String, dynamic>? response;
+      var requestAccountId = state.accountId;
+      for (var attempt = 0; attempt < 2; attempt += 1) {
+        var legacySession = false;
+        requestAccountId = state.accountId;
+        // This only classifies the old stateless envelope and binds the reply
+        // to the request. The server remains responsible for authentication.
+        try {
+          final parts = state.sessionToken.split('.');
+          if (parts.length == 2) {
+            final claims = jsonDecode(
+              utf8.decode(base64Url.decode(base64Url.normalize(parts.first))),
+            );
+            if (claims is Map) {
+              legacySession =
+                  state.refreshToken.isEmpty &&
+                  claims['id'] is num &&
+                  claims['exp'] is num &&
+                  claims['session_id'] == null &&
+                  claims['device_id'] == null;
+              if (claims['session_id'] is String &&
+                  claims['device_id'] is String &&
+                  _readText(claims['account_id']).isNotEmpty) {
+                requestAccountId = _readText(claims['account_id']);
+              }
+            }
+          }
+        } on FormatException {
+          // Unknown/malformed credentials must be rejected as supplied proof.
+        }
+        try {
+          response = await _requestJson(
+            method: 'POST',
+            path: '/api/client/device-pairing/claim',
+            client: client,
+            bearerToken: legacySession ? '' : state.sessionToken,
+            hostPlatform: hostPlatform,
+            body: <String, Object?>{
+              'code': normalized,
+              'install_id': pairedInstallId,
+              'device_name': await _deviceName(hostPlatform),
+              'platform': hostPlatform.name,
+              'os_version': _trim(Platform.operatingSystemVersion, 64),
+              'app_version': pokrovClientVersion,
+              'locale': _trim(Platform.localeName, 32),
+              'time_zone': _trim(DateTime.now().timeZoneName, 64),
+            },
+          );
+          break;
+        } on BootstrapFailure catch (error) {
+          if (attempt != 0 ||
+              error.statusCode != HttpStatus.unauthorized ||
+              !state.hasSession ||
+              state.refreshToken.isEmpty)
+            rethrow;
+          requireSameSession(await _loadState(hostPlatform));
+          state = await _refreshSession(
+            state: state,
+            hostPlatform: hostPlatform,
+            client: client,
+          );
+        }
       }
-      await _saveState(hostPlatform, nextState);
-      return DevicePairingClaimResult(
-        ok: response['ok'] != false,
-        accountId: accountId,
-        installId: pairedInstallId,
-      );
+      final receipt = response!;
+      return await _withAppFirstStateFileLock(file, () async {
+        final current = await _loadStateFromFile(hostPlatform, file);
+        requireSameSession(current);
+        if (receipt['existing_device'] == true) {
+          if (receipt['ok'] != true ||
+              !state.hasSession ||
+              state.accountId.isEmpty ||
+              _readText(receipt['canonical_account_id']) != requestAccountId ||
+              _readText(receipt['install_id']) != state.installId) {
+            throw const BootstrapFailure(
+              'POKROV не подтвердил текущее устройство.',
+            );
+          }
+          return DevicePairingClaimResult(
+            ok: true,
+            accountId: requestAccountId,
+            installId: state.installId,
+            existingDevice: true,
+          );
+        }
+        final session = _readMap(receipt['session']);
+        final pair = _sessionPairFromResponse(receipt);
+        final accountId = _readText(
+          receipt['canonical_account_id'] ?? session['account_id'],
+        );
+        if (pair == null || accountId.isEmpty) {
+          throw const BootstrapFailure(
+            'POKROV не получил подтверждённую сессию устройства.',
+          );
+        }
+
+        final nextState = current!.copyWith(
+          installId: pairedInstallId,
+          sessionToken: pair.accessToken,
+          refreshToken: pair.refreshToken,
+          accountId: accountId,
+          managedManifestPath: _defaultManagedManifestPath,
+          profileRevision: '',
+          expectsSecureSessionToken: true,
+        );
+        if (state.installId != pairedInstallId) {
+          // Pairing removes the old secret before _saveState. Fence selection
+          // before this first identity mutation as well as the later state write.
+          _notifyTransportSelectionSessionWrite(file, nextState);
+          await _sessionSecretStore.deleteSessionToken(
+            hostPlatform: hostPlatform,
+            installId: state.installId,
+          );
+        }
+        await _persistStateToFile(
+          hostPlatform: hostPlatform,
+          file: file,
+          state: nextState,
+        );
+        return DevicePairingClaimResult(
+          ok: receipt['ok'] != false,
+          accountId: accountId,
+          installId: pairedInstallId,
+        );
+      });
     } finally {
       client.close(force: true);
     }
@@ -7006,24 +7094,48 @@ class AppFirstRuntimeBootstrapper
         );
       }
       final session = _readMap(response['session']);
-      final nextState = state.copyWith(
-        sessionToken: pair.accessToken,
-        refreshToken: pair.refreshToken,
-        accountId: _readText(
-          session['canonical_account_id'] ??
-              response['canonical_account_id'] ??
-              session['account_id'] ??
-              response['account_id'],
-          fallback: state.accountId,
-        ),
-        expectsSecureSessionToken: true,
-      );
-      await _runtimeStatsOutbox.rebindAccount(hostPlatform,
-        legacyAccountId: _readText(session['account_id'] ?? response['account_id']),
-        canonicalAccountId: _readText(session['canonical_account_id'] ?? response['canonical_account_id']),
-        installId: nextState.installId);
-      await _saveState(hostPlatform, nextState);
-      return nextState;
+      final file = await _stateFile(hostPlatform);
+      return await _withAppFirstStateFileLock(file, () async {
+        final current = await _loadStateFromFile(hostPlatform, file);
+        // A refresh response cannot resurrect credentials after logout/login.
+        // Keep concurrent profile updates while replacing only this pair.
+        if (current == null ||
+            current.installId != state.installId ||
+            current.refreshToken != refreshToken) {
+          throw const BootstrapFailure(
+            'Сессия изменилась. Повторите вход.',
+            code: 'session_changed',
+          );
+        }
+        final nextState = current.copyWith(
+          sessionToken: pair.accessToken,
+          refreshToken: pair.refreshToken,
+          accountId: _readText(
+            session['canonical_account_id'] ??
+                response['canonical_account_id'] ??
+                session['account_id'] ??
+                response['account_id'],
+            fallback: current.accountId,
+          ),
+          expectsSecureSessionToken: true,
+        );
+        await _runtimeStatsOutbox.rebindAccount(
+          hostPlatform,
+          legacyAccountId: _readText(
+            session['account_id'] ?? response['account_id'],
+          ),
+          canonicalAccountId: _readText(
+            session['canonical_account_id'] ?? response['canonical_account_id'],
+          ),
+          installId: nextState.installId,
+        );
+        await _persistStateToFile(
+          hostPlatform: hostPlatform,
+          file: file,
+          state: nextState,
+        );
+        return nextState;
+      });
     } on BootstrapFailure catch (error) {
       if (_isSessionFailure(error.statusCode)) {
         final latest = await _sessionSecretStore.readSessionPair(

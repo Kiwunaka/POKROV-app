@@ -7,6 +7,7 @@ import 'package:pokrov_core_domain/core_domain.dart';
 
 class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActionService {
   int claims = 0;
+  bool reuseCurrentDevice = false;
 
   @override
   Future<DevicePairingClaimResult> claimDevicePairingCode({
@@ -14,6 +15,10 @@ class _PairingActions implements ManagedProfileBootstrapper, AppFirstAccountActi
     required String code,
   }) async {
     claims++;
+    if (reuseCurrentDevice) {
+      return const DevicePairingClaimResult(ok: true, accountId: 'fixture-account',
+          installId: 'fixture-install', existingDevice: true);
+    }
     throw const BootstrapFailure('Код истёк. Получите новый в кабинете.');
   }
 
@@ -76,6 +81,16 @@ void main() {
     await tester.pump();
     expect(actions.claims, 1);
     expect(find.text('Код истёк. Получите новый в кабинете.'), findsOneWidget);
+    ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();
+    actions.reuseCurrentDevice = true;
+    links.add(link);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.byKey(const ValueKey('profile-redeem-submit')));
+    await tester.pump();
+    expect(actions.claims, 2);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Вход подтверждён. Устройство уже связано с этим аккаунтом.'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
     await links.close();
   });
