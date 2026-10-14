@@ -17,6 +17,11 @@ Stop restored config_staged, TUN/UI/tasks 0, routes 11, original IPv4 DNS, empty
 DNS and proxy OFF at guest 20:16:55 UTC; PoweredOff/Unlocked was then confirmed.
 Actual D8 delivery of these three fields was not separately read back. Android
 remains saved 4154 ARM64; no FullABI or public release.
+For this periodic case, `response` means SENDREQUEST_COMPLETE was observed, not
+that response headers or the 204 proof were accepted. The 1469 ms covers the whole
+HTTP phase after DNS, not only header waiting. The fixed reserve is the apex
+`/.well-known/pokrov/egress-probe`; the next server check belongs to its existing
+Brain Caddy handler, not portal-api. Do not infer a new timeout fix from this tuple.
 
 The two historical native stall cases and one full instrumented suite subsequently
 passed with WinHTTP 12002 at the expected response/TLS stages. The fixture recorded
