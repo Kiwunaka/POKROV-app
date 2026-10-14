@@ -8,6 +8,12 @@ full-ABI build. Both reuse the accepted Core 2df0fdd/1.2.14 artifacts (Windows
 4151 manifest and Android 4148 ARM64 manifest), including the existing Cronet.
 Runtime acceptance and public publication of 4154 remain pending.
 
+The stopped Home country label now reads the saved country choice rather than
+showing Auto when no individual node was selected. The existing country-selection
+widget regression failed before the fix and passed afterward; analyze passed.
+Running and failed-reconnect labels retain the last verified location. This small
+UI fix was made after the 4154 build and is not included in that installer.
+
 The included source `914cd4a5` fixes the cached
 manual-WARP priority, late operator replies in an already closed support chat,
 and stale Android uplink callbacks reaching Core after network replacement.

@@ -3488,6 +3488,10 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       );
       return activeLabel;
     }
+    final preferredCountry = _clientExperience.preferredCountryCode;
+    if (_connectionExperience is ConnectionIdle && preferredCountry.isNotEmpty) {
+      return _locationCountryDisplayName(preferredCountry, preferredCountry);
+    }
     // A confirmed running tunnel is the only event that promotes a pending
     // manual choice. If that reconnect fails, keep the last verified city
     // rather than implying that the newly staged location was ever active.

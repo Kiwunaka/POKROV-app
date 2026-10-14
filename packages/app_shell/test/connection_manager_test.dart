@@ -2931,6 +2931,10 @@ void main() {
     expect(experience.saved.preferredCountryCode, 'DE');
     expect(experience.saved.preferredNodeCode, isEmpty);
     expect(experience.saved.preferredCandidateRef, isEmpty);
+    await tester.tap(find.text('Защита'));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const ValueKey('home-location-chip')),
+        matching: find.text('Германия')), findsOneWidget);
     expect(nativeMutations, isEmpty);
   });
 
