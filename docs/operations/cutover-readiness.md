@@ -1,5 +1,33 @@
 # Client release status
 
+Private Windows **1.5.0+4162** (`f2f7d8df`) was built once: 28,623,212 bytes,
+unsigned, retaining Core 1.2.14/Cronet. It distinguishes cancellation before the
+native candidate request was dispatched, with honest zero native duration, from
+a started probe's budget expiry. The existing hanging-WARP regression passed;
+fallback, cleanup and neutral candidate ranking remain unchanged. Scoped analyze
+reported only two warnings in unchanged `runtime_engine.dart` (1733 and 4231).
+Platform `39e5098` is now live in the API contract and support worker. Installation
+returned 0 and the installed Core matched the retained artifact. One real CH
+Connect with WARP checked at 22:58:29 UTC on 14 October became validated at
++13.567 seconds and stayed validated throughout the 60.192-second observation.
+The exact current cabinet/device/run read stored terminal report 5: ordinary
+VLESS Reality bridge connect (12,484 ms) and 64 KiB probe (717 ms), received 2,
+stored 2, rejected 0. This proves ordinary fallback, not a WARP-chain connection;
+the new cancellation code was not exercised by that terminal report. No network
+fault or second Connect was used, and historical 4154's cause remains unknown.
+Android remains signed 4161 ARM64; no publication or phone acceptance.
+
+After normal Stop and WARP OFF, the 23:05:44 UTC readback showed stopped runtime,
+no retained protection/TUN/helpers/fault tasks, 11 routes, baseline Ethernet DNS,
+empty IPv6 DNS and proxy OFF. The cabinet's temporary subject element was removed
+and its browser window closed. Current-subject capture now checks the actual
+Explorer owner through ordinary Guest Control, matching the login helper; the
+previous GuestInfo expected-user flag was unreliable. Profile text's MSAA bounds
+remained at unscrolled coordinates after scrolling, so the cabinet was opened
+from its observed guest-window screenshot. Hiddify and host network/clock stayed
+untouched. Graceful shutdown confirmed PoweredOff/Unlocked, bridge attachment 2
+and GetHostTimeDisabled unchanged.
+
 Private Windows **1.5.0+4161** (`c8aff9cb`) passed the real browser-to-app pairing
 flow. Its single build produced a 28,622,404-byte unsigned installer; installation
 returned 0 and UI/service/Core 1.2.14 binding matched. The browser opened the code
