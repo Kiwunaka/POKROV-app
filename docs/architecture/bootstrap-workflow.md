@@ -365,8 +365,13 @@ outbox are separate from identity-free release health and encrypted support bund
 Managed profile requests include the version reported by the loaded Core.
 Core `probe_failed` and `unexpected_status` are also remembered; a local timer
 reports `probe_budget_expired` and never suppresses a candidate.
-The local journal and runtime stats retain the measured probe duration, including
-time spent settling cancelled native work, up to the API limit of one hour.
+Windows retains `cancelled_before_dispatch` when native IPC proves that cancellation
+was observed before the candidate request was dispatched, even after the local
+timer expires. Its native duration stays zero and no Core stage is invented;
+this neutral result does not quarantine a candidate or penalize UDP. Other
+cancellations keep the existing budget classification. The local journal and
+runtime stats retain the reported native probe duration, up to the API limit of
+one hour; zero here is not the selector's elapsed waiting time.
 
 The existing `app.connection.candidate_probe.finished` event also retains the
 Core's last fixed phase as nullable `probe_stage`. Unknown phases and replies

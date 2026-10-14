@@ -203,7 +203,7 @@ final class DiagnosticEventRecord {
   static const candidateFailureKinds = <String>{
     'invalid_request', 'invalid_profile', 'unavailable', 'start_failed',
     'probe_failed', 'probe_budget_expired', 'connect_failed', 'data_stalled',
-    'tls_failed', 'unexpected_status', 'timeout', 'cancelled', 'network_changed',
+    'tls_failed', 'unexpected_status', 'timeout', 'cancelled', 'cancelled_before_dispatch', 'network_changed',
     'duplicate_probe',
   };
 

@@ -289,7 +289,8 @@ class SmartConnectCandidateSelector {
       }
       if (ended.isCompleted) return;
       failures++;
-      final failureKind = timedOut ? 'probe_budget_expired' : outcome?.failureKind ?? 'unavailable';
+      final failureKind = timedOut && outcome?.failureKind != 'cancelled_before_dispatch'
+          ? 'probe_budget_expired' : outcome?.failureKind ?? 'unavailable';
       final failed = SmartConnectCandidateProbeResult.failure(failureKind,
           duration: outcome?.duration ?? probeClock.elapsed,
           probeStage: outcome?.probeStage,

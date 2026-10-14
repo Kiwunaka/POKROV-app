@@ -882,7 +882,7 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
     if (command == Command::kProbeCandidate && !exchange.request_dispatched &&
         control != nullptr && control->cancel_requested) {
       result.command_accepted = true;
-      result.candidate_probe_json = "{\"success\":false,\"failure_kind\":\"cancelled\",\"duration_ms\":0}";
+      result.candidate_probe_json = "{\"success\":false,\"failure_kind\":\"cancelled_before_dispatch\",\"duration_ms\":0}";
     }
     return result;
   }

@@ -57,6 +57,7 @@ abstract final class OperationalAttributePolicy {
     'unexpected_status',
     'timeout',
     'cancelled',
+    'cancelled_before_dispatch',
     'network_changed',
     'duplicate_probe',
   };

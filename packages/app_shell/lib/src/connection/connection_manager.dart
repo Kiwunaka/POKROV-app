@@ -2773,7 +2773,7 @@ class ConnectionManager extends ChangeNotifier {
     try {
       final receipt = await result;
       requireCurrent();
-      return stopped
+      return stopped && receipt.failureKind != 'cancelled_before_dispatch'
           ? RuntimeCandidateProbeResult(success: false,
               failureKind: 'cancelled', duration: receipt.duration,
               probeStage: receipt.probeStage, probeError: receipt.probeError)

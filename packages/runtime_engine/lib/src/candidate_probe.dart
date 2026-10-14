@@ -247,6 +247,7 @@ mixin _CandidateProbeChannel
       'unexpected_status',
       'timeout',
       'cancelled',
+      'cancelled_before_dispatch',
       'network_changed',
       'duplicate_probe'
     };

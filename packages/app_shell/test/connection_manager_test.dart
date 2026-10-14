@@ -16,7 +16,9 @@ import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
-import 'package:pokrov_observability_runtime/observability_runtime.dart' show OperationalFailureMapper;
+import 'package:pokrov_observability_contracts/observability_contracts.dart' show ObservabilityPrivacyClass;
+import 'package:pokrov_observability_runtime/observability_runtime.dart'
+    show OperationalAttributePolicy, OperationalFailureMapper;
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 Future<void> _deleteTestDirectory(Directory directory) async {
@@ -3078,9 +3080,10 @@ void main() {
       minimumClientRelease: '1.4.0', minimumCoreRelease: null,
       platforms: base.platforms, requiredFeatures: base.requiredFeatures,
       warpMode: 'proxy_over_warp'));
-    final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true)
+    final bootstrapper = _StatsBootstrapper(warpEnabled: true)
       ..candidates = [base, ...chains];
     final runtime = _Runtime()..supportsCandidates = true
+      ..probeFailureKinds[chains.first.candidateRef] = 'cancelled_before_dispatch'
       ..heldProbeProfiles.addAll(chains.map((candidate) => candidate.candidateRef));
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
@@ -3095,6 +3098,46 @@ void main() {
     expect(runtime.probedWarpModes, contains('proxy_over_warp'));
     expect(runtime.probedWarpModes.last, '');
     expect(runtime.activeProbes, isEmpty);
+    await Future<void>.delayed(Duration.zero);
+    final probes = (bootstrapper.reports.single['candidate_probes'] as List)
+        .cast<Map<String, Object?>>();
+    final notDispatched = probes.singleWhere((probe) => probe['candidate_ref'] == chains.first.candidateRef);
+    expect(notDispatched['failure_kind'], 'cancelled_before_dispatch');
+    expect(notDispatched['duration_ms'], 0);
+    expect(notDispatched.containsKey('probe_stage'), isFalse);
+    final started = probes.singleWhere((probe) => probe['candidate_ref'] == chains[1].candidateRef);
+    expect(started['failure_kind'], 'probe_budget_expired');
+
+    await manager.disconnect();
+    runtime.heldProbeProfiles.clear();
+    runtime.probedPayloads.clear();
+    await manager.connect();
+    expect(runtime.probedPayloads.first.profileName, chains.first.candidateRef,
+        reason: 'pre-dispatch cancellation must not quarantine a candidate on this network');
+    expect(manager.transportCatalog?.selectedCandidateRef, chains.first.candidateRef);
+    expect(runtime.activeProbes, isEmpty);
+
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'runtimeEngine.probeCandidate');
+      return '{"success":false,"failure_kind":"cancelled_before_dispatch","duration_ms":0}';
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final decoded = await MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.windows).probeCandidate(
+      probeId: 'not-dispatched',
+      payload: const ManagedProfilePayload(profileName: 'fixture', configPayload: '{}'),
+      timeout: const Duration(seconds: 4), expectedNetworkContext: 'context-fixture',
+    );
+    expect((decoded.success, decoded.failureKind, decoded.duration, decoded.probeStage),
+        (false, 'cancelled_before_dispatch', Duration.zero, null));
+    OperationalAttributePolicy.validate({
+      'failure_kind': decoded.failureKind, 'duration_ms': decoded.duration.inMilliseconds,
+    }, ObservabilityPrivacyClass.localOperational);
+    expect(DiagnosticEventRecord(
+      occurredAt: DateTime.now().toUtc(), subsystem: 'candidate_probe', stage: 'probe', outcome: 'failed',
+      durationMs: decoded.duration.inMilliseconds, candidateFailureKind: decoded.failureKind,
+    ).toJson()['candidate_failure_kind'], 'cancelled_before_dispatch');
   });
 
   test('legacy catalog needs a manual WARP choice even with saved consent', () async {
