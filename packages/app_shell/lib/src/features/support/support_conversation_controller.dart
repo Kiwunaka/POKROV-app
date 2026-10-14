@@ -190,6 +190,9 @@ class SupportConversationController extends ChangeNotifier {
         _refreshingThread) {
       return SupportPollingResult.unchanged;
     }
+    final requestedVersion = _threadVersion;
+    bool resultIsCurrent() => !_sending &&
+        _ticketId == activeTicketId && _threadVersion == requestedVersion;
     _change(() {
       _refreshingThread = true;
     });
@@ -201,6 +204,11 @@ class SupportConversationController extends ChangeNotifier {
       );
       if (!_active) {
         return SupportPollingResult.failed;
+      }
+      if (!resultIsCurrent()) {
+        _change(() => _refreshingThread = false);
+        _syncThreadPolling();
+        return SupportPollingResult.unchanged;
       }
       var changed = false;
       _change(() {
@@ -222,6 +230,11 @@ class SupportConversationController extends ChangeNotifier {
     } catch (_) {
       if (!_active) {
         return SupportPollingResult.failed;
+      }
+      if (!resultIsCurrent()) {
+        _change(() => _refreshingThread = false);
+        _syncThreadPolling();
+        return SupportPollingResult.unchanged;
       }
       _change(() {
         _refreshingThread = false;

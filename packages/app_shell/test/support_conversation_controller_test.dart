@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_app_shell/src/features/support/support_conversation_controller.dart';
@@ -53,9 +55,44 @@ void main() {
     expect(messageChanges, 2);
     controller.setForeground(false);
   });
+
+  testWidgets('late poll cannot replace the newer send response', (tester) async {
+    final service = _TicketService(_thread());
+    final controller = SupportConversationController(
+      service: service,
+      hostPlatform: HostPlatform.windows,
+      jitterSource: () => 0,
+    );
+    addTearDown(controller.dispose);
+    await controller.loadInitialThread();
+    final stalePoll = Completer<SupportTicketThread>();
+    service.pendingRead = stalePoll;
+    await tester.pump(const Duration(seconds: 8));
+    expect(service.requestedIds, [20, 20]);
+
+    service.thread = _thread(reply: true, followUp: true);
+    await controller.send(
+      text: 'Thanks, checking now',
+      routeMode: RouteMode.allExceptRu,
+      attachDiagnostics: false,
+      statusLabel: '',
+      diagnostics: const {},
+    );
+    expect(controller.messages.map((message) => message.body),
+        ['Initial message', 'Operator answer', 'Thanks, checking now']);
+    stalePoll.complete(_thread());
+    await tester.pump();
+    expect(controller.messages.map((message) => message.body),
+        ['Initial message', 'Operator answer', 'Thanks, checking now']);
+    expect(controller.lifecycle, SupportConversationLifecycle.operator);
+    service.pendingRead = null;
+    await tester.pump(const Duration(seconds: 8));
+    expect(service.requestedIds, [20, 20, 20]);
+    controller.setForeground(false);
+  });
 }
 
-SupportTicketThread _thread({int id = 20, bool closed = false, bool reply = false}) {
+SupportTicketThread _thread({int id = 20, bool closed = false, bool reply = false, bool followUp = false}) {
   SupportTicketMessage message(int messageId, String role, String body) =>
       SupportTicketMessage(
         id: messageId,
@@ -79,6 +116,7 @@ SupportTicketThread _thread({int id = 20, bool closed = false, bool reply = fals
     messages: [
       message(1, 'user', 'Initial message'),
       if (reply) message(2, 'admin', 'Operator answer'),
+      if (followUp) message(3, 'user', 'Thanks, checking now'),
     ],
   );
 }
@@ -89,6 +127,7 @@ class _TicketService implements SupportTicketService {
   SupportTicketThread thread;
   final requestedIds = <int>[];
   int listCalls = 0;
+  Completer<SupportTicketThread>? pendingRead;
 
   @override
   Future<SupportTicketThread> getTicket({
@@ -96,8 +135,20 @@ class _TicketService implements SupportTicketService {
     required int ticketId,
   }) async {
     requestedIds.add(ticketId);
+    final pending = pendingRead;
+    if (pending != null) return pending.future;
     return thread;
   }
+
+  @override
+  Future<SupportTicketThread> sendMessage({
+    required HostPlatform hostPlatform,
+    required int ticketId,
+    required String body,
+    RouteMode? routeMode,
+    String statusLabel = '',
+    Map<String, Object?> diagnostics = const {},
+  }) async => thread;
 
   @override
   Future<List<SupportTicketThread>> listTickets({
