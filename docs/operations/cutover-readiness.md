@@ -8,8 +8,10 @@ Core/dist over these inputs. Ordinary default build flags leave SmartDNS, ATS an
 catalog QA disabled while retaining the production support-signing public pin.
 Country-only Auto, legacy preference/cache migration, explicit manual WARP,
 pairing, support notifications and typed native diagnostics passed focused tests
-and app-shell analysis. The installer has not been installed or accepted on the
-VM. Android **4152 ARM64** was built once with production signing using the
+and app-shell analysis. The installer was installed on the owned VM on
+14 October: exit code 0, installed version 4152 and running service confirmed.
+The existing account opened with inactive access; protocol and Auto acceptance
+remain pending. Android **4152 ARM64** was built once with production signing using the
 preserved `android4148-arm64-runtime-artifacts.json` and matching 1.2.14 AAR;
 its 85,199,980-byte APK contains only `arm64-v8a`. The builder's generic and
 ARM64 output names contain identical bytes; this is not full-ABI acceptance.

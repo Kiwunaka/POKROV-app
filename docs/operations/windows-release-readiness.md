@@ -273,6 +273,17 @@ access returns. Finally uninstall and check network access again. Record any
 failed step against the exact installer and installed Core DLL.
 
 The VM is accessed through VirtualBox guest control and saved guest access.
+On 2026-10-14, the Clean VM logon screen confirmed that its Windows password
+had expired. The normal password-change flow using the previous password
+succeeded; no security-policy change was needed. Current access uses
+`E:/POKROV-tools/vm/control/Invoke-VBoxGuestOperation.ps1` with exact VM UUID
+`d09be66e-b063-4f86-aa8b-123c0e1e73ce` and the separate DPAPI credential at
+`E:/POKROV-tools/vm/secrets/pokrov-win11-clean-4100.dpapi`. The old Test credential
+is retained; wrappers hardcoded to `POKROV-Win11-Test` must not target Clean.
+Guest access and UUID matching passed without exposing the credential. PNG
+capture returned `E_FAIL`; `IDisplay.TakeScreenShotToArray` with RGBA through
+`win32com` and PIL captured the guest screen without controlling the host UI.
+
 Unsigned output may show SmartScreen; that is part of the beta handoff, not a
 claim of trusted signing. A local debug build does not prove installed-VM
 behavior.
