@@ -177,7 +177,7 @@ internal object AndroidDefaultNetworkMonitor {
         if (network != null) {
             val cachedInterface = synchronized(networkLock) {
                 if (currentNetwork == network && resolvedInterfaceName != null && resolvedInterfaceIndex != null) {
-                    resolvedInterfaceName to resolvedInterfaceIndex
+                    Triple(resolvedInterfaceName, resolvedInterfaceIndex, currentNetworkGeneration)
                 } else {
                     null
                 }
@@ -187,6 +187,7 @@ internal object AndroidDefaultNetworkMonitor {
                     interfaceName = cachedInterface.first,
                     interfaceIndex = cachedInterface.second,
                     dnsReady = true,
+                    expectedGeneration = cachedInterface.third,
                 )
             } else {
                 updateCurrentNetwork(network)
@@ -359,6 +360,7 @@ internal object AndroidDefaultNetworkMonitor {
                 interfaceName = update.interfaceName,
                 interfaceIndex = update.interfaceIndex,
                 dnsReady = true,
+                expectedGeneration = update.generation,
             )
             DefaultNetworkRefreshAction.NONE -> Unit
         }
@@ -453,6 +455,7 @@ internal object AndroidDefaultNetworkMonitor {
                     interfaceName = null,
                     interfaceIndex = null,
                     dnsReady = false,
+                    expectedGeneration = generation,
                 )
                 AndroidRuntimeState.markDegraded(
                     failureKind = "default_network_unavailable",
@@ -514,6 +517,7 @@ internal object AndroidDefaultNetworkMonitor {
                 interfaceIndex,
                 dnsReady,
                 resetRuntimeNetworkAfterUpdate = dnsReady,
+                expectedGeneration = generation,
             )
         }
     }
@@ -600,6 +604,7 @@ internal object AndroidDefaultNetworkMonitor {
         interfaceIndex: Int?,
         dnsReady: Boolean,
         resetRuntimeNetworkAfterUpdate: Boolean = false,
+        expectedGeneration: Long? = null,
     ) {
         val targetListener: InterfaceUpdateListener?
         val targetRuntimeReset: (() -> Unit)?
@@ -608,7 +613,10 @@ internal object AndroidDefaultNetworkMonitor {
         val isConstrained: Boolean
         val shouldResetRuntimeNetwork: Boolean
         val shouldResetCoreNetwork: Boolean
+        val publicationGeneration: Long
         synchronized(networkLock) {
+            if (expectedGeneration != null && expectedGeneration != currentNetworkGeneration) return
+            publicationGeneration = currentNetworkGeneration
             targetListener = listener
             targetRuntimeReset = resetRuntimeNetwork
             targetCoreReset = resetCoreNetwork
@@ -639,17 +647,25 @@ internal object AndroidDefaultNetworkMonitor {
             submitInterfaceListenerUpdate {
                 if (listener === targetListener) {
                     runCatching {
-                        targetListener.updateDefaultInterface(
-                            interfaceName.orEmpty(),
-                            interfaceIndex ?: -1,
-                            isExpensive,
-                            isConstrained,
+                        AndroidPlatformRuntimeBridge.deliverNetworkUpdate(
+                            requestGeneration = publicationGeneration,
+                            currentGeneration = { synchronized(networkLock) { currentNetworkGeneration } },
+                            updateInterface = {
+                                targetListener.updateDefaultInterface(
+                                    interfaceName.orEmpty(),
+                                    interfaceIndex ?: -1,
+                                    isExpensive,
+                                    isConstrained,
+                                )
+                            },
+                            resetNetwork = {
+                                if (shouldResetRuntimeNetwork && resetRuntimeNetwork === targetRuntimeReset) {
+                                    targetRuntimeReset?.invoke()
+                                } else if (shouldResetCoreNetwork && resetCoreNetwork === targetCoreReset) {
+                                    targetCoreReset?.invoke()
+                                }
+                            },
                         )
-                        if (shouldResetRuntimeNetwork && resetRuntimeNetwork === targetRuntimeReset) {
-                            targetRuntimeReset?.invoke()
-                        } else if (shouldResetCoreNetwork && resetCoreNetwork === targetCoreReset) {
-                            targetCoreReset?.invoke()
-                        }
                     }
                 }
             }

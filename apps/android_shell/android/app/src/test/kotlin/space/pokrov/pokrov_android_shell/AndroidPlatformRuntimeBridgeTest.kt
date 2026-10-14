@@ -9,6 +9,35 @@ import org.junit.Test
 
 class AndroidPlatformRuntimeBridgeTest {
     @Test
+    fun delayedNetworkUpdateCannotPublishOrResetAfterUplinkReplacement() {
+        var generation = 1L
+        val queued = java.util.ArrayDeque<() -> Unit>()
+        val delivered = mutableListOf<String>()
+        fun enqueue(name: String, onUpdate: () -> Unit = {}) {
+            val capturedGeneration = generation
+            queued.add {
+                AndroidPlatformRuntimeBridge.deliverNetworkUpdate(
+                    requestGeneration = capturedGeneration,
+                    currentGeneration = { generation },
+                    updateInterface = { delivered += name; onUpdate() },
+                    resetNetwork = { delivered += "reset:$name" },
+                )
+            }
+        }
+        enqueue("wifi")
+        generation++
+        enqueue("cellular")
+        while (queued.isNotEmpty()) queued.removeFirst().invoke()
+        assertEquals(listOf("cellular", "reset:cellular"), delivered)
+
+        delivered.clear()
+        // Core's interface callback can block while Android publishes another uplink.
+        enqueue("cellular") { generation++ }
+        queued.removeFirst().invoke()
+        assertEquals(listOf("cellular"), delivered)
+    }
+
+    @Test
     fun transientUplinkLossDoesNotPublishAfterReplacementArrives() {
         assertFalse(
             AndroidPlatformRuntimeBridge.shouldPublishMissingNetwork(

@@ -195,6 +195,10 @@ country Auto and recovery. Server priority orders candidates within each tier;
 the last successful route and UDP failure memory apply inside that tier. The
 finite cache prefers a bridge when reserving another node. Explicit pins, WARP
 and cached-authority guards still apply; the selected country names the exit.
+When the API is unavailable, the cache selector keeps the online WARP order and
+budgets: a currently enabled manual chain first, ordinary paths after its failure,
+then direct WARP. Cached or server consent alone does not admit either WARP group;
+account, expiry and proof checks remain unchanged.
 Recovery keeps at most three probes. If its first three eligible candidates all
 use TCP or all use UDP, the third slot takes the first eligible other network
 family. If none exists and all three share protocol/transport/protection, it

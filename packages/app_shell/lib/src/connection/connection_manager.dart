@@ -2842,9 +2842,14 @@ class ConnectionManager extends ChangeNotifier {
       try {
         final cachedCandidates = catalog.candidates.where((candidate) =>
             available.containsKey(candidate.candidateRef)).toList();
+        final warpCandidates = cachedCandidates.where((candidate) =>
+            candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
+        final directWarpCandidates = cachedCandidates.where((candidate) =>
+            candidate.warpMode == 'warp_direct').toList();
         final groups = [
-          cachedCandidates.where((candidate) => candidate.warpMode != 'warp_direct').toList(),
-          cachedCandidates.where((candidate) => candidate.warpMode == 'warp_direct').toList(),
+          warpCandidates,
+          cachedCandidates.where((candidate) => candidate.warpMode == null).toList(),
+          directWarpCandidates,
         ];
         var found = false;
         for (final group in groups) {
@@ -2858,6 +2863,13 @@ class ConnectionManager extends ChangeNotifier {
               ipv6Available: network.ipv6Available,
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
+              selectionTimeout: identical(group, directWarpCandidates)
+                  ? const Duration(seconds: 4)
+                  : identical(group, warpCandidates)
+                      ? const Duration(seconds: 5)
+                      : warpCandidates.isNotEmpty
+                          ? const Duration(seconds: 7)
+                          : const Duration(seconds: 12),
               probeTimeout: coldConnect && inputs.hostPlatform == HostPlatform.android &&
                       group.every((candidate) => candidate.warpMode == null)
                   ? const Duration(seconds: 12)
@@ -2889,7 +2901,7 @@ class ConnectionManager extends ChangeNotifier {
             found = true;
             break;
           } on SmartConnectSelectionExhausted {
-            // The external reserve is attempted only after cached node routes.
+            // Keep the online order: manual chain, ordinary paths, direct WARP.
           }
         }
         if (!found) throw const SmartConnectSelectionExhausted();

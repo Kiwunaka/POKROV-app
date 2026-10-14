@@ -172,7 +172,6 @@ class SupportConversationController extends ChangeNotifier {
     _threadPolling.configure(
       eligible: _active &&
           _ticketId != null &&
-          !_threadClosed &&
           !_loadingThread &&
           !_sending &&
           !_refreshingThread &&
@@ -186,7 +185,6 @@ class SupportConversationController extends ChangeNotifier {
   }) async {
     final activeTicketId = _ticketId;
     if (activeTicketId == null ||
-        _threadClosed ||
         _loadingThread ||
         _sending ||
         _refreshingThread) {

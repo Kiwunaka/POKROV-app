@@ -4,12 +4,13 @@ import 'package:pokrov_app_shell/src/features/support/support_conversation_contr
 import 'package:pokrov_core_domain/core_domain.dart';
 
 void main() {
-  test('support notice opens its exact closed ticket instead of the latest', () async {
+  testWidgets('closed notice conversation receives a later operator reply', (tester) async {
     final service = _TicketService(_thread(id: 21, closed: true));
     final controller = SupportConversationController(
       service: service,
       hostPlatform: HostPlatform.windows,
       initialTicketId: 21,
+      jitterSource: () => 0,
     );
     addTearDown(controller.dispose);
 
@@ -20,6 +21,13 @@ void main() {
     expect(controller.ticketId, 21);
     expect(controller.lifecycle, SupportConversationLifecycle.closed);
     expect(controller.messages.single.body, 'Initial message');
+
+    service.thread = _thread(id: 21, reply: true);
+    await tester.pump(const Duration(seconds: 8));
+    expect(controller.messages.last.body, 'Operator answer');
+    expect(controller.lifecycle, SupportConversationLifecycle.operator);
+    expect(service.requestedIds, [21, 21]);
+    controller.setForeground(false);
   });
 
   testWidgets('polled operator reply updates the chat and scroll callback once', (tester) async {

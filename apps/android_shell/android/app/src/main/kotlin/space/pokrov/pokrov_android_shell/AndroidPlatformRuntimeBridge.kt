@@ -54,6 +54,18 @@ internal object AndroidPlatformRuntimeBridge {
         isCurrentNetwork: Boolean,
     ): Boolean = isCurrentNetwork && requestGeneration == activeGeneration
 
+    fun deliverNetworkUpdate(
+        requestGeneration: Long,
+        currentGeneration: () -> Long,
+        updateInterface: () -> Unit,
+        resetNetwork: () -> Unit,
+    ) {
+        if (requestGeneration != currentGeneration()) return
+        updateInterface()
+        // The Core callback can block while Android replaces or loses the uplink.
+        if (requestGeneration == currentGeneration()) resetNetwork()
+    }
+
     fun <T> awaitValue(
         timeoutMillis: Long = DEFAULT_NETWORK_WAIT_TIMEOUT_MILLIS,
         waitStepMillis: Long = DEFAULT_NETWORK_WAIT_SLICE_MILLIS,

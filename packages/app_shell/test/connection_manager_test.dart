@@ -185,6 +185,7 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
     final selected = cachedCandidates.firstWhere((candidate) =>
         candidate.candidateRef == (selectedCandidateRef.isEmpty ? cachedCatalog?.selectedCandidateRef ?? 'de:profile_0' : selectedCandidateRef));
     return ManagedProfilePayload(profileName: selected.candidateRef, cacheEntryId: selected.candidateRef,
+      materialCandidateRef: selected.candidateRef,
       transportCatalog: cachedCatalog ?? TransportCandidateCatalog(revision: 'cached',
           selectedCandidateRef: selected.candidateRef, candidates: alternatives),
       source: RuntimeProfileSource(revision: 'cached', origin: RuntimeProfileSourceOrigin.managedManifest,
@@ -2993,7 +2994,8 @@ void main() {
       minimumClientRelease: '1.4.0', minimumCoreRelease: null,
       platforms: base.platforms, requiredFeatures: base.requiredFeatures,
       warpMode: 'proxy_over_warp');
-    final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true)
+    final bootstrapper = _CachedBootstrapper(warpEnabled: true)
+      ..cacheAvailable = false
       ..candidates = [base, chain];
     final runtime = _Runtime()..supportsCandidates = true;
     final manager = _manager(runtime, bootstrapper);
@@ -3032,6 +3034,29 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(manager.materialCandidate?.candidateRef, base.candidateRef);
     expect(runtime.activeProbes, isEmpty);
+
+    await manager.disconnect();
+    bootstrapper
+      ..cacheAvailable = true
+      ..cachedCatalog = TransportCandidateCatalog(revision: 'cached-warp',
+          selectedCandidateRef: base.candidateRef, candidates: [base, chain]);
+    runtime.failedProbeProfiles.clear();
+    runtime.probedWarpModes.clear();
+    await manager.setWarpRuntimeConsent(true);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(runtime.probedWarpModes, ['proxy_over_warp'],
+        reason: 'an API outage must preserve the current manual WARP choice');
+    expect(manager.materialCandidate?.candidateRef, chain.candidateRef);
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+
+    await manager.disconnect();
+    runtime.probedWarpModes.clear();
+    await manager.setWarpRuntimeConsent(false);
+    await manager.connect();
+    expect(runtime.probedWarpModes, ['']);
+    expect(manager.materialCandidate?.candidateRef, base.candidateRef);
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
   });
 
   test('hanging WARP candidates leave time for ordinary fallback', () async {

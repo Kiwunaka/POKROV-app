@@ -1964,6 +1964,13 @@ host/runtime proof yet; ordinary control/renewal retains its existing protocol.
 
 ### Android bound network and Core reload ownership (source, NOT_VERIFIED)
 
+Ordinary Android uplink publications retain the network generation through the
+interface-listener queue. A queued update for a replaced or lost uplink is dropped;
+if the generation changes while Core handles the interface callback, its old
+reload/reset request is dropped too. The callback still runs outside the monitor
+lock. A deterministic delayed-queue regression covers both handover boundaries;
+physical Wi-Fi/LTE acceptance remains pending.
+
 `AndroidConnectRequestOwner` retains a local uplink generation once its admitted
 service is ready to start Core. Admission of that binding checks exact service,
 request, deadline and current monitor generation. It cannot be rebound after a
