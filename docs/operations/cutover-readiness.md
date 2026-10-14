@@ -1,13 +1,21 @@
 # Client release status
 
-Source `914cd4a5` is newer than the tested 4153 binary. It fixes the cached
+Private **1.5.0+4154** was built on 14 October from `8de02b00`: the Windows
+installer is 28,619,788 bytes, unsigned, with PE version 1.5.0+4154. The
+production-signed Android APK is 85,199,980 bytes and contains only arm64-v8a;
+its generic and ARM64 output names refer to identical ARM64-only bytes, not a
+full-ABI build. Both reuse the accepted Core 2df0fdd/1.2.14 artifacts (Windows
+4151 manifest and Android 4148 ARM64 manifest), including the existing Cronet.
+Runtime acceptance and public publication of 4154 remain pending.
+
+The included source `914cd4a5` fixes the cached
 manual-WARP priority, late operator replies in an already closed support chat,
 and stale Android uplink callbacks reaching Core after network replacement.
 Each regression failed before its fix and passed afterward; focused Flutter
-checks/analyze and Android Direct/Store JVM checks passed. These changes have
-not yet been built or accepted on a physical Android device.
+checks/analyze and Android Direct/Store JVM checks passed. The phone has not yet
+received the new APK.
 
-Current Windows candidate (14 October): **1.5.0+4153**, source `b3a06e6d`,
+Last runtime-accepted Windows candidate (14 October): **1.5.0+4153**, source `b3a06e6d`,
 28,619,590-byte unsigned installer; built once and installed successfully in the
 owned VM. Core 1.2.14/Cronet reuse remains bound to the accepted 4151 manifest.
 The foreground-resume diagnostic fix passed its regression and actual VM use: a
