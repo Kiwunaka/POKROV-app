@@ -1,5 +1,12 @@
 # Client release status
 
+Source `914cd4a5` is newer than the tested 4153 binary. It fixes the cached
+manual-WARP priority, late operator replies in an already closed support chat,
+and stale Android uplink callbacks reaching Core after network replacement.
+Each regression failed before its fix and passed afterward; focused Flutter
+checks/analyze and Android Direct/Store JVM checks passed. These changes have
+not yet been built or accepted on a physical Android device.
+
 Current Windows candidate (14 October): **1.5.0+4153**, source `b3a06e6d`,
 28,619,590-byte unsigned installer; built once and installed successfully in the
 owned VM. Core 1.2.14/Cronet reuse remains bound to the accepted 4151 manifest.
@@ -17,7 +24,13 @@ TCP hostnames returning HostNotFound. The observer did not capture the HY2 label
 before its deadline: strict HY2-during-fault evidence is not claimed; actual HY2
 traffic was checked after cleanup. Both finite faults removed their objects,
 helper processes and watchdog tasks. Final Stop at 16:40:45 UTC restored TUN 0,
-11 IPv4 routes and proxy OFF. VM stays running only for the next Telegram test.
+11 IPv4 routes and proxy OFF. The subsequent logged-out Telegram WEB proxy check
+passed without the POKROV VPN: native transport-with-proxy status plus an owned
+authenticated relay session and increasing bytes. Its temporary proxy entry was
+deleted and disabled; the server canary was removed and WEB returned OFF. Final
+guest readback at 17:25:25 UTC retained the same routes, Ethernet DNS and empty
+IPv6 DNS, proxy OFF, TUN/helper/task 0. Graceful shutdown completed: PoweredOff and
+Unlocked at 17:28:27 UTC. Host Hiddify/network/clock were untouched.
 US is held until the owner replaces its IP; it was not accepted here. One earlier
 unexpected RUNNING observation has no established cause; a later stopped-country
 change remained stopped. Public release and Android acceptance remain pending.
