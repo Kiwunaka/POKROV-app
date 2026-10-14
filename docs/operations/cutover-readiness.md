@@ -4,10 +4,19 @@ Private Windows **1.5.0+4157** (`82bba408`, diagnostics `b4d83665`) was built
 once on 14 October: 28,620,905-byte unsigned installer. Core 1.2.14/Cronet were
 reused from the accepted 4151 artifact manifest. The new bounded target, entry
 budget and correlated DNS result passed the focused native/IPC, Dart and backend
-checks; they do not change timeout or routing behavior. Install/runtime acceptance
-has not run. Platform `76ffd21` must be delivered first so the strict API accepts
-the fields and support displays boolean/unknown values. Android remains the saved
-4154 ARM64 build; no FullABI or public release. The VM remains restored and off.
+checks; they do not change timeout or routing behavior. Platform `76ffd21` was
+selectively delivered first, then installer exit 0, service/UI 4157 and the retained
+Core were verified. One ordinary CH/WARP-OFF connect reached running, then failed
+with `core_egress_timeout`: `owned_reserve`, entry budget 1422 ms, correlated DNS A
+accepted, `response/deadline/none/0/1469ms`. Stability is still not accepted. These
+native durations use a monotonic clock. Guest W32Time stepped wall time back about
+70 seconds during the case, so its wall-clock duration is invalid; do not infer a
+causal connection from that step. Future cold-boot cases must wait for the existing
+time service to settle and use a monotonic watcher. No host clock change was made.
+Stop restored config_staged, TUN/UI/tasks 0, routes 11, original IPv4 DNS, empty IPv6
+DNS and proxy OFF at guest 20:16:55 UTC; PoweredOff/Unlocked was then confirmed.
+Actual D8 delivery of these three fields was not separately read back. Android
+remains saved 4154 ARM64; no FullABI or public release.
 
 The two historical native stall cases and one full instrumented suite subsequently
 passed with WinHTTP 12002 at the expected response/TLS stages. The fixture recorded
