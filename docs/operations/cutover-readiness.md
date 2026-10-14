@@ -1,14 +1,28 @@
 # Client release status
 
-The next Windows candidate is **1.5.0+4156**. A local regression confirmed that
+Windows candidate **1.5.0+4156** (`7bc66d6e`) was built once as a 28,619,862-byte
+private unsigned installer and installed with exit 0, exact version/Core binding
+and running service verified. A local regression confirmed that
 the 900 ms cross-target wait starved an otherwise working 600 ms reserve. Only
 periodic failover now skips that wait; the 3,000 ms owner deadline, original
 primary slice, startup and same-target retry delays are unchanged. The focused
 reserve regression passed, as did IPC/first-DNS compatibility. The full native
 target is not green: both before and after this change, older stall fixtures
 returned HTTP 12152 and TLS 12029 instead of the expected timeout codes. Those
-fixtures are unchanged. Build/runtime verification of 4156 is pending; this
-local scheduling defect does not establish the underlying cause of VM 4155.
+fixtures are unchanged. One new ordinary CH/WARP-OFF case started at 18:56:19 UTC,
+reached healthy running at 18:56:35 and captured its first periodic failure at
+18:56:53: `core_egress_timeout`, `tls/deadline/none/0/1438ms`, guard 0 and
+first-owned-DNS `reply_written`. The observation lasted 33.04 seconds. Target
+identity is not present in that tuple; the first DNS marker is not correlated
+with the periodic query. Stable connectivity is still not accepted, and this
+local scheduling fix does not establish or resolve the underlying network cause.
+No fault or second Connect was injected. The changing Home action name prevented
+the guarded cleanup click; the exact owned UI process was then closed and the
+ordinary service Disconnect command used. At 18:59:07 UTC the guest was restored:
+TUN/UI/helpers/tasks 0, routes 11, original IPv4 DNS, empty IPv6 DNS and proxy OFF.
+Graceful shutdown reached PoweredOff/Unlocked. Host Hiddify/network/clock stayed
+unchanged. Another unchanged runtime test or timeout adjustment is not warranted;
+the next diagnostic step needs target/budget/query correlation.
 
 Windows candidate **1.5.0+4155**, source `ffbf7f5e`, preserves the failed native IO
 observation when the retry wait reaches its deadline and includes the stopped
