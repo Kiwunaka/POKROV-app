@@ -443,11 +443,24 @@ int main(int argc, char** argv) {
     expect(server.connections == 2, "reserve payload did not retain its proven connection");
   }
   {
+    const auto delayed_proof = [](const std::string&) {
+      ::Sleep(600);
+      return ProofReply();
+    };
+    {
+      LoopbackServer standalone(delayed_proof);
+      auto probe = CreateLoopbackEgressProbeForTest(standalone.port);
+      const auto started = ::GetTickCount64();
+      expect(probe->Verify({}, true, started + 3000).empty() && standalone.requests == 1,
+             "600ms owned proof failed within its standalone three-second budget");
+      expect(::GetTickCount64() - started < 3000,
+             "standalone proof extended the three-second owner deadline");
+    }
     std::atomic<int> primary{0}, reserve{0};
     LoopbackServer server([&](const std::string& request) {
       if (request.find("GET /api/public/") == 0) { ++primary; return std::string{}; }
       ++reserve;
-      return ProofReply();
+      return delayed_proof(request);
     }, false, false, true);
     auto probe = CreateLoopbackEgressProbeForTest(server.port, false, nullptr, true);
     const auto started = ::GetTickCount64();
@@ -455,6 +468,10 @@ int main(int argc, char** argv) {
            "periodic reserve added a payload check or lost its remaining-budget slot");
     expect(::GetTickCount64() - started < 3000,
            "periodic fallback reset the three-second owner deadline");
+  }
+  if (argc == 2 && std::string(argv[1]) == "--periodic-reserve") {
+    ::WSACleanup();
+    return failures == 0 ? 0 : 1;
   }
   {
     LoopbackServer server([](const std::string& request) {

@@ -354,7 +354,8 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       if (periodic && deadline_tick != 0 && attempt == 0 && target_count_ > 1) {
         const auto now = ::GetTickCount64();
         const auto remaining = deadline_tick > now ? deadline_tick - now : 0;
-        // Keep the existing first retry wait inside the owner's three seconds.
+        // Retain the existing bounded primary slice. The skipped cross-target
+        // retry wait now remains available to the reserve.
         const auto available = remaining > 900 ? remaining - 900 : 0;
         target_deadline = now + available * 3 / 4;
       }
@@ -367,7 +368,9 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       const auto target_index = (std::min)(static_cast<std::size_t>(attempt), target_count_ - 1);
       failure = ProbeOnce(targets_[target_index], periodic, target_check);
       if (failure.empty() && !Interrupted(owner)) return "";
-      if (attempt < 2) {
+      // Periodic failover to a different target gets the remaining budget
+      // immediately. Startup and same-target retries retain their backoff.
+      if (attempt < 2 && (!periodic || target_index + 1 >= target_count_)) {
         const auto started = ::GetTickCount64();
         const auto until = started + (attempt == 0 ? 900 : 1500);
         while (::GetTickCount64() < until && !Interrupted(owner)) {

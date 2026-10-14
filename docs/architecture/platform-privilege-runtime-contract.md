@@ -461,8 +461,10 @@ disabled, each target uses the same TUN DNS path and default certificate trust,
 and 204/64K responses must report the same actual local/remote socket tuple;
 cross-session WinHTTP pooling is disabled. The pending body buffer lives until
 `HANDLE_CLOSING`. Periodic checks remain
-204/marker only under their original three-second deadline; the primary gets
-three quarters of remaining time after the unchanged next retry wait. The
+204/marker only under their original three-second deadline; the primary's
+existing bounded slice is unchanged. Periodic failover to the other owned target
+starts immediately, leaving the skipped wait's budget for the reserve. Startup
+and retries of the same target retain their existing delays. The
 loopback HTTP factory exists only in Debug test builds. See
 [WinHTTP cancellation and callback lifetime](https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpclosehandle).
 

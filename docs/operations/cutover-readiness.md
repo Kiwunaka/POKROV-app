@@ -1,5 +1,15 @@
 # Client release status
 
+The next Windows candidate is **1.5.0+4156**. A local regression confirmed that
+the 900 ms cross-target wait starved an otherwise working 600 ms reserve. Only
+periodic failover now skips that wait; the 3,000 ms owner deadline, original
+primary slice, startup and same-target retry delays are unchanged. The focused
+reserve regression passed, as did IPC/first-DNS compatibility. The full native
+target is not green: both before and after this change, older stall fixtures
+returned HTTP 12152 and TLS 12029 instead of the expected timeout codes. Those
+fixtures are unchanged. Build/runtime verification of 4156 is pending; this
+local scheduling defect does not establish the underlying cause of VM 4155.
+
 Windows candidate **1.5.0+4155**, source `ffbf7f5e`, preserves the failed native IO
 observation when the retry wait reaches its deadline and includes the stopped
 Home country-label fix. The existing loopback regression failed before the
