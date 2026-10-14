@@ -1,5 +1,12 @@
 # Client release status
 
+Private Windows **1.5.0+4158** (`ae762f88`, support fix `b23be8e9`) was built once:
+28,620,014-byte unsigned installer, with the same accepted Core 1.2.14/Cronet
+artifacts. An old in-flight support poll can no longer replace newer send history;
+the regression was reproduced before the fix, and 10 support tests plus scoped
+analysis passed. This candidate has not been installed or accepted in the VM;
+no new connection case is justified by this support-only change alone.
+
 Private Windows **1.5.0+4157** (`82bba408`, diagnostics `b4d83665`) was built
 once on 14 October: 28,620,905-byte unsigned installer. Core 1.2.14/Cronet were
 reused from the accepted 4151 artifact manifest. The new bounded target, entry
@@ -22,6 +29,12 @@ that response headers or the 204 proof were accepted. The 1469 ms covers the who
 HTTP phase after DNS, not only header waiting. The fixed reserve is the apex
 `/.well-known/pokrov/egress-probe`; the next server check belongs to its existing
 Brain Caddy handler, not portal-api. Do not infer a new timeout fix from this tuple.
+The subsequent Brain read found both effective handlers serving local static 204
+with the expected marker and no-store. One strict-TLS loopback reserve request
+received headers in 49.463 ms. Access logs are not configured; no receipt of the
+specific VM request was established. Source review also confirmed that a periodic
+deadline removes validation but retains Core, TUN and phase=running. It does not
+by itself prove that ordinary user traffic failed or that the VPN was torn down.
 
 The two historical native stall cases and one full instrumented suite subsequently
 passed with WinHTTP 12002 at the expected response/TLS stages. The fixture recorded
