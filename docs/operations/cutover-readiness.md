@@ -1,5 +1,19 @@
 # Client release status
 
+Current private candidate (14 October 2026): Windows **1.5.0+4152**, built from
+`228cd5a5`. The setup is 28,619,514 bytes, unsigned, and its application PE version
+is `1.5.0+4152`. It reuses the bound Core `2df0fdd` / 1.2.14 ABI2 and Cronet from
+`windows4151-runtime-artifacts.json`; do not sync the different DLL currently in
+Core/dist over these inputs. Ordinary default build flags leave SmartDNS, ATS and
+catalog QA disabled while retaining the production support-signing public pin.
+Country-only Auto, legacy preference/cache migration, explicit manual WARP,
+pairing, support notifications and typed native diagnostics passed focused tests
+and app-shell analysis. The installer has not been installed or accepted on the
+VM; Android 4152 has not been built. Deploy the compatible new telemetry receiver
+before testing delivery of its added fields. This private build is not a public
+release or a renewed SmartDNS case. The historical entries below retain their
+original outcomes; the owner's 14 October release scope controls priorities.
+
 Public version: **1.4.5+4086**, using the published POKROV Core 1.2.7 artifacts
 and desktop ABI 2. Windows and Android were built from client `5a6f268a`.
 The owner-approved quiet GitHub release `v1.4.5` contains four production-signed Android direct APKs,
