@@ -90,6 +90,14 @@ void TestRoundTrips() {
   const auto response_bytes = Encode(response);
   Expect(Decode(response_bytes.data(), response_bytes.size()) == response,
          "response did not round-trip");
+  auto bounded_response = response;
+  bounded_response.body.assign(kMaxControlBodySize + 1, 'a');
+  Expect(Encode(bounded_response).empty(),
+         "candidate response allowance enlarged ordinary control replies");
+  bounded_response.command = Command::kProbeCandidate;
+  bounded_response.body.assign(kMaxCandidateProbeResultBodySize + 1, 'a');
+  Expect(Encode(bounded_response).empty(),
+         "oversized candidate response crossed the IPC boundary");
 }
 
 void TestRejectsInvalidFrames() {

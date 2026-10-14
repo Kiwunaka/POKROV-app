@@ -889,7 +889,7 @@ ServiceRuntimeSnapshot InvokeService(Command command, const std::string& body,
   result.status = exchange.response->status;
   result.command_accepted = result.status == Status::kOk;
   if (command == Command::kProbeCandidate) {
-    if (result.command_accepted && !exchange.response->body.empty() && exchange.response->body.size() <= kMaxControlBodySize) {
+    if (result.command_accepted && !exchange.response->body.empty() && exchange.response->body.size() <= kMaxCandidateProbeResultBodySize) {
       result.candidate_probe_json = exchange.response->body;
     } else { result.command_accepted = false; }
     return result;

@@ -781,7 +781,7 @@ RuntimeResult RuntimeDispatcher::ProbeCandidate(const Frame& frame, HANDLE stop_
   };
   const auto result = core->ProbeCandidate(*request, network->bind_interface, interrupted);
   const bool network_changed = !candidate_current_(network->network.revision);
-  if (result.empty() || result.size() > kMaxControlBodySize ||
+  if (result.empty() || result.size() > kMaxCandidateProbeResultBodySize ||
       std::any_of(result.begin(), result.end(), [](unsigned char c) { return c < 32 || c > 126; })) {
     return failed(network_changed ? "network_changed" : operation->cancelled ? "cancelled" : "unavailable");
   }

@@ -43,7 +43,8 @@ class ProbeCore final : public CoreRuntime {
     // Model native Close/join: cancellation cannot settle before teardown.
     ::Sleep(15);
     --active;
-    return cancelled ? R"({"success":false,"failure_kind":"cancelled","duration_ms":15,"stage":"http_204","stage_started_ms":5,"probe_error":{"operation":"read_headers","cause":"closed","cancel_state":"cancelled","target":"owned_reserve","request":"egress_204","elapsed_ms":10,"stage_started_ms":5,"duration_ms":15,"primary_error":{"operation":"read_headers","cause":"timeout","cancel_state":"deadline","target":"owned_api","request":"egress_204","elapsed_ms":3,"stage_started_ms":1,"duration_ms":4}}})"
+    // Match the current Core DTO, including its always-emitted setup timings.
+    return cancelled ? R"({"success":false,"failure_kind":"cancelled","duration_ms":15,"stage":"http_204","stage_started_ms":5,"parse_duration_ms":0,"create_duration_ms":0,"certificate_duration_ms":0,"probe_error":{"operation":"read_headers","cause":"closed","cancel_state":"cancelled","target":"owned_reserve","request":"egress_204","elapsed_ms":10,"stage_started_ms":5,"duration_ms":15,"primary_error":{"operation":"read_headers","cause":"timeout","cancel_state":"deadline","target":"owned_api","request":"egress_204","elapsed_ms":3,"stage_started_ms":1,"duration_ms":4}}})"
                      : "{\"success\":true,\"failure_kind\":\"\",\"duration_ms\":15}";
   }
   std::atomic<int> active{0}, entered{0}, invalid{0};
@@ -318,7 +319,7 @@ void TestBoundSmartAccessStartupHandoff(const std::filesystem::path& root, HANDL
 }
 }
 
-int main() {
+int main(int argc, char** argv) {
   const auto root = std::filesystem::temp_directory_path() /
       ("pokrov-candidate-test-" + std::to_string(::GetCurrentProcessId()));
   auto core = std::make_unique<ProbeCore>();
@@ -373,6 +374,17 @@ int main() {
                results[0].body.find("\"elapsed_ms\":10") != std::string::npos &&
                results[0].body.find("\"primary_error\":") != std::string::npos,
            "candidate cancellation discarded the completed Core error and timing");
+    Frame reply{};
+    reply.kind = FrameKind::kResponse;
+    reply.command = Command::kProbeCandidate;
+    reply.status = results[0].status;
+    reply.correlation_id[0] = 1;
+    reply.session_token = frames[0].session_token;
+    reply.body = results[0].body;
+    const auto reply_bytes = Encode(reply);
+    Expect(reply.body.size() > kMaxControlBodySize &&
+               Decode(reply_bytes.data(), reply_bytes.size()) == reply,
+           "current Core candidate diagnostic did not survive the IPC response boundary");
     current = false;
     for (std::size_t i = 1; i < workers.size(); ++i) {
       workers[i].join();
@@ -392,9 +404,11 @@ int main() {
                network_mutations->mutations == 0 && runtime.Snapshot().body == before,
            "isolated probe changed TUN state or failed to close");
   }
-  TestPeriodicEgressLifecycle(root / "periodic", stop);
-  TestPeriodicEgressDeadlineRetainsTun(root / "periodic-deadline", stop);
-  TestBoundSmartAccessStartupHandoff(root / "bound-smart", stop);
+  if (argc != 2 || std::string(argv[1]) != "--candidate-response") {
+    TestPeriodicEgressLifecycle(root / "periodic", stop);
+    TestPeriodicEgressDeadlineRetainsTun(root / "periodic-deadline", stop);
+    TestBoundSmartAccessStartupHandoff(root / "bound-smart", stop);
+  }
   ::CloseHandle(stop);
   std::filesystem::remove_all(root);
   return failures == 0 ? 0 : 1;

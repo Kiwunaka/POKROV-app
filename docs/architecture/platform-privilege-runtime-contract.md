@@ -383,6 +383,14 @@ Diagnostics and support, never an address. It identifies the HTTP socket's
 local source, not the outbound subsequently chosen inside Core, and does not
 change proof acceptance, deadlines, retry, routing or TLS validation.
 
+Windows candidate-probe replies have a separate 2048-byte ASCII limit across
+the dispatcher, IPC frame and client. The current Core result with setup timings
+and a flat primary/reserve error exceeds the generic 512-byte control limit;
+it must retain its native duration, stage and cause instead of becoming
+`unavailable` with zero duration. Other control replies keep their existing
+limits, and oversized candidate replies remain rejected. This diagnostic fix
+does not change probe budgets, transport selection or proof acceptance.
+
 Debug builds expose bounded isolated handshake modes used by native tests.
 Release builds do not expose that entrypoint. The service and UI client are
 copied into the local release bundle and the Inno source installs a machine-wide

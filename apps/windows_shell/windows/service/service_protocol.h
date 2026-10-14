@@ -14,6 +14,7 @@ constexpr std::uint32_t kFrameMagic = 0x49534B50;
 constexpr std::uint16_t kProtocolVersion = 1;
 constexpr std::size_t kFrameHeaderSize = 80;
 constexpr std::size_t kMaxControlBodySize = 512;
+constexpr std::size_t kMaxCandidateProbeResultBodySize = 2048;
 constexpr std::size_t kMaxRuntimeSnapshotBodySize = 8192;
 constexpr std::size_t kMaxRestrictionSnapshotBodySize = 1024 * 1024;
 constexpr std::size_t kMaxSmartAccessLeasesBodySize = 65536;

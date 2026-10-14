@@ -257,6 +257,7 @@ bool IsValidFrame(const Frame& frame) {
       }
       return (frame.command == Command::kHello || frame.capabilities == 0) &&
              IsBoundedAsciiControl(frame.body,
+                 frame.command == Command::kProbeCandidate ? kMaxCandidateProbeResultBodySize :
                  frame.command == Command::kReadSmartAccessLeases ? kMaxSmartAccessLeasesBodySize :
                  frame.command == Command::kReadSmartAccessRestrictions ? kMaxRestrictionSnapshotBodySize :
                  frame.body.rfind("phase=", 0) == 0 ? kMaxRuntimeSnapshotBodySize : kMaxControlBodySize);
