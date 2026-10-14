@@ -372,6 +372,14 @@ int main(int argc, char** argv) {
                events.observations[1].stage == EgressProbeStage::kRetryWait &&
                server.expected_request_received,
            "deadline erased the observed HTTP stage or invented a native timeout error");
+    const auto retained = probe->LastObservation();
+    expect(retained && !events.observations.empty() &&
+               retained->stage == events.observations[0].stage &&
+               retained->outcome == events.observations[0].outcome &&
+               retained->error_domain == events.observations[0].domain &&
+               retained->error_code == events.observations[0].error &&
+               retained->elapsed_ms == events.observations[0].elapsed_ms,
+           "retry wait replaced the causal failure in the native snapshot");
     const auto close_deadline = ::GetTickCount64() + 1000;
     while (!server.peer_cancelled && ::GetTickCount64() < close_deadline) ::Sleep(10);
     expect(server.peer_cancelled, "cancelled WinHTTP request left its socket open");

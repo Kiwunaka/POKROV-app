@@ -2179,7 +2179,10 @@ the existing service status and runner snapshot: closed stage, outcome and error
 domain plus numeric error code and elapsed milliseconds. This tuple is retained
 in memory before rollback, resets for each new check and is absent for the
 alternate SmartAccess probe. A cancelled periodic recheck drops its new
-observation before returning the preceding failure status. The client accepts
+observation before returning the preceding failure status. If the owner deadline
+expires during retry waiting, that wait keeps its existing event but cannot overwrite
+the failure's stage, outcome, error or elapsed time in the native snapshot.
+The overall deadline result and retry/guard policy remain unchanged. The client accepts
 all five fields together; partial or unknown values reject the snapshot. No address, packet, profile or
 upstream error text is included, journal access does not change, and the UI keeps
 its existing generic failure message.

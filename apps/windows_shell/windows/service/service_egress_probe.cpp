@@ -374,9 +374,16 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
           ::Sleep(25);
         }
         if (Interrupted(owner)) {
+          const auto probe_observation = last_observation_;
           ProbeObservation observation;
           observation.stage = EgressProbeStage::kRetryWait;
           RecordObservation(observation, started, false, owner);
+          // Retry waiting is lifecycle evidence, not a new network failure.
+          // Keep its event, but expose the preceding failed IO in Snapshot.
+          if (probe_observation &&
+              probe_observation->outcome != EgressProbeOutcome::kSucceeded) {
+            last_observation_ = probe_observation;
+          }
         }
       }
     }

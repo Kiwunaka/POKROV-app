@@ -1,12 +1,32 @@
 # Client release status
 
+The next Windows candidate is **1.5.0+4155**: it preserves the failed native IO
+observation when the retry wait reaches its deadline and includes the stopped
+Home country-label fix. The existing loopback regression failed before the
+observation fix and passed afterward; the native egress suite and IPC/first-DNS
+compatibility case passed. Retry timings and guard behavior are unchanged.
+Its build/runtime acceptance are pending; Android 4154 ARM64 remains the saved APK.
+
 Private **1.5.0+4154** was built on 14 October from `8de02b00`: the Windows
 installer is 28,619,788 bytes, unsigned, with PE version 1.5.0+4154. The
 production-signed Android APK is 85,199,980 bytes and contains only arm64-v8a;
 its generic and ARM64 output names refer to identical ARM64-only bytes, not a
 full-ABI build. Both reuse the accepted Core 2df0fdd/1.2.14 artifacts (Windows
 4151 manifest and Android 4148 ARM64 manifest), including the existing Cronet.
-Runtime acceptance and public publication of 4154 remain pending.
+4154 was installed and exercised in the owned Windows VM. The manual-WARP
+case is not accepted: one Connect at 18:04:05 UTC used cached settings and
+selected an ordinary CH VLESS bridge (12,686 ms; its 64 KiB probe passed).
+Automatic recovery subsequently repeated; WARP-chain probe records were ignored
+with `probe_budget_expired`, not established network failures. The terminal
+native failure was `core_egress_dns_failed`: `dns_wait/timeout/none/0/3094ms`,
+with frozen `first_owned_dns_state=exchange_failed`. This identifies a failed
+owned DNS exchange, not its underlying network cause. Intermediate periodic
+observations had been overwritten by `retry_wait/deadline/none/0/0ms`.
+No deliberate API fault or further Connect was run. Stop removed protection;
+WARP was switched off. At 18:25:17 UTC the guest had TUN/helpers/tasks 0, 11 IPv4
+routes, baseline Ethernet DNS, empty IPv6 DNS and proxy OFF; graceful shutdown
+then reached PoweredOff/Unlocked. Host Hiddify/network/clock were untouched. Android acceptance,
+working WARP-chain acceptance and public publication remain pending.
 
 The stopped Home country label now reads the saved country choice rather than
 showing Auto when no individual node was selected. The existing country-selection
