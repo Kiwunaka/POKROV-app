@@ -1,5 +1,22 @@
 # Client release status
 
+Private Windows **1.5.0+4159** (`8664bf81`) was built once and installed with exit
+0: 28,622,962 bytes, unsigned, service/UI version and retained Core 1.2.14 binding
+verified. Its optional `http_local_is_tun` diagnostic passed focused native/IPC,
+Dart and Platform checks; it does not change routing or probe acceptance. The
+local pending-request test read true/false while still at `sending`; the exact
+4157 `response` case was not reproduced. Platform `9f1d3e9` was delivered first.
+After normal guest time synchronization (three NTP offsets below 7 ms), one
+ordinary CH/WARP-OFF Connect reached validated running at watcher +11.232 s and
+remained validated through +90.077 s, with TUN present and no egress failure.
+No fault or second Connect was used. This bounded success does not establish
+the cause of the earlier failures; no failure tuple or new-field D8 delivery was
+observed. Normal Stop restored config_staged at 21:10:58 UTC on 14 October;
+at 21:11:25 TUN/helpers/fault tasks were 0, routes 11, DNS baseline and proxy OFF.
+Graceful shutdown confirmed PoweredOff/Unlocked, bridge and GetHostTimeDisabled
+unchanged. Hiddify/host network/clock were untouched. Android remains saved 4154
+ARM64; no public release.
+
 Private Windows **1.5.0+4158** (`ae762f88`, support fix `b23be8e9`) was built once:
 28,620,014-byte unsigned installer, with the same accepted Core 1.2.14/Cronet
 artifacts. An old in-flight support poll can no longer replace newer send history;
