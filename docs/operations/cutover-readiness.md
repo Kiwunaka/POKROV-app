@@ -1,5 +1,25 @@
 # Client release status
 
+Private Windows **1.5.0+4161** (`c8aff9cb`) passed the real browser-to-app pairing
+flow. Its single build produced a 28,622,404-byte unsigned installer; installation
+returned 0 and UI/service/Core 1.2.14 binding matched. The browser opened the code
+form and one normal submit consumed the fresh code. At 22:09:39 UTC on 14 October,
+the existing cabinet's normal API confirmed claimed status, one device, that same
+current active Windows device, and a still-valid cabinet session. Month access,
+Switzerland and WARP OFF remained; no VPN Connect, extra grant or device was used.
+The fix accepts Windows' canonical single-root pairing path and retains a link
+arriving before startup subscribes. Native and Dart regression checks passed;
+the original browser-launched argv was not captured. At 22:10:59 UTC, the VM had
+initialized/stopped runtime, no retained protection/TUN/helpers/fault tasks,
+11 routes, baseline DNS and proxy OFF. Temporary browser state was removed and
+its window closed; graceful shutdown confirmed PoweredOff/Unlocked, bridge and
+GetHostTimeDisabled unchanged. Hiddify and host network/clock stayed untouched.
+Android 4161 was built once from the same source, production-signed ARM64 only
+(85,199,980 bytes), and saved as
+`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4161-arm64.apk`. The generic APK
+has the same ARM64 bytes and is not a FullABI build. No phone acceptance or
+publication is claimed.
+
 Private **1.5.0+4160** (`f6eed53e`) includes same-account website pairing reuse
 and the support polling fix. Windows was built once (28,623,254 bytes, unsigned),
 installed with exit 0, and its UI/service/Core binding checked. Android was built
@@ -14,7 +34,7 @@ matched. Direct launch of the installed EXE with the same raw URI opened the for
 Windows `UrlCanonicalizeW` adds the single root slash which the existing parsers
 reject. The expired form was dismissed without submitting. A narrow root-path
 compatibility fix and independent startup-link retention fix are under acceptance;
-the actual website claim has not yet passed. No new device or subscription grant.
+the actual website claim was accepted in 4161 above. No new device or subscription grant.
 
 Private Windows **1.5.0+4159** (`8664bf81`) was built once and installed with exit
 0: 28,622,962 bytes, unsigned, service/UI version and retained Core 1.2.14 binding
