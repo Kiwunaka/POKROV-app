@@ -1,5 +1,14 @@
 # Client release status
 
+Private Windows **1.5.0+4157** (`82bba408`, diagnostics `b4d83665`) was built
+once on 14 October: 28,620,905-byte unsigned installer. Core 1.2.14/Cronet were
+reused from the accepted 4151 artifact manifest. The new bounded target, entry
+budget and correlated DNS result passed the focused native/IPC, Dart and backend
+checks; they do not change timeout or routing behavior. Install/runtime acceptance
+has not run. Platform `76ffd21` must be delivered first so the strict API accepts
+the fields and support displays boolean/unknown values. Android remains the saved
+4154 ARM64 build; no FullABI or public release. The VM remains restored and off.
+
 Windows candidate **1.5.0+4156** (`7bc66d6e`) was built once as a 28,619,862-byte
 private unsigned installer and installed with exit 0, exact version/Core binding
 and running service verified. A local regression confirmed that
