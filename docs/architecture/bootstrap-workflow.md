@@ -383,9 +383,13 @@ this neutral result does not quarantine a candidate or penalize UDP. Other
 cancellations keep the existing budget classification. The local journal and
 runtime stats retain the reported native probe duration, up to the API limit of
 one hour; zero here is not the selector's elapsed waiting time.
-Candidate preparation failures use only `prepare_timeout`, `prepare_http`,
+Candidate preparation failures use `prepare_timeout`, `prepare_http`,
 `prepare_socket`, `prepare_tls` or `prepare_failed`; the API-kind mapping accepts
-only the corresponding four fixed `request_*` kinds. Dart materialization or
+only the corresponding four fixed `request_*` kinds. A locally expired managed
+deadline retains its frozen phase as `prepare_route_policy_timeout`,
+`prepare_managed_timeout`, `prepare_materialize_timeout` or `prepare_state_timeout`;
+an unknown phase stays `prepare_timeout`. These local timeouts do not enter the
+API-failure aggregate or penalize a candidate/network. Dart materialization or
 adapter exceptions use `probe_adapter_failed`, MethodChannel rejection uses
 `probe_channel_rejected`, and an invalid native reply uses `probe_reply_invalid`.
 These neutral failures retain zero native duration and no invented Core stage;

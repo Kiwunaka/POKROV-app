@@ -1115,6 +1115,12 @@ class BootstrapFailure implements Exception {
   String toString() => message;
 }
 
+class ManagedProfileTimeout extends TimeoutException {
+  ManagedProfileTimeout(this.operation) : super('Managed profile refresh');
+
+  final String? operation;
+}
+
 // Debug QA only: never include exception text, operations, or request material.
 void _traceBootstrap(String stage, String outcome, {
   String reason = 'none',
@@ -3664,16 +3670,21 @@ class AppFirstRuntimeBootstrapper
     final client = requests.attach(_createHttpClient(hostPlatform));
     var timedOut = false;
     var accessPreparing = false;
-    var timer = timeout == null ? null : Timer(timeout, () {
+    String? currentOperation;
+    String? deadlineOperation;
+    void expireProfile() {
+      if (!timedOut) deadlineOperation = currentOperation;
       timedOut = true;
       client.close(force: true);
-    });
+    }
+    var timer = timeout == null ? null : Timer(timeout, expireProfile);
 
     try {
       for (var attempt = 0; attempt < 2; attempt += 1) {
         requests.requireActive();
         accessPreparing = false;
         if (!state.hasSession) {
+          currentOperation = null;
           state = await _startTrial(
             state: state,
             hostPlatform: hostPlatform,
@@ -3683,15 +3694,13 @@ class AppFirstRuntimeBootstrapper
           // profile its normal deadline from that point, not from trial start.
           if (timeout != null) {
             timer?.cancel();
-            timer = Timer(timeout, () {
-              timedOut = true;
-              client.close(force: true);
-            });
+            timer = Timer(timeout, expireProfile);
           }
         }
 
         try {
           requests.requireActive();
+          currentOperation = 'route_policy';
           await _syncRoutePolicy(
             state: state,
             hostPlatform: hostPlatform,
@@ -3699,6 +3708,7 @@ class AppFirstRuntimeBootstrapper
             client: client,
           );
           requests.requireActive();
+          currentOperation = 'managed_fetch';
           var manifest = await _fetchManagedManifest(
             runtimeFeatures: runtimeFeatures,
             coreRelease: coreRelease,
@@ -3714,7 +3724,9 @@ class AppFirstRuntimeBootstrapper
             client: client,
             profileTimeout: timeout,
             onAccessPreparing: () => accessPreparing = true,
+            onMaterialize: () => currentOperation = 'materialize',
           );
+          currentOperation = null;
           accessPreparing = false;
           requests.requireActive();
           if (selectCandidate && manifest.payload.candidateMaterials.isEmpty &&
@@ -3749,6 +3761,7 @@ class AppFirstRuntimeBootstrapper
                   var waitingForManifest = true;
                   accessPreparing = false;
                   try {
+                    currentOperation = 'managed_fetch';
                     manifest = await _fetchManagedManifest(
                       runtimeFeatures: runtimeFeatures, coreRelease: coreRelease,
                       selectedCandidateRef: candidate.candidateRef,
@@ -3759,6 +3772,9 @@ class AppFirstRuntimeBootstrapper
                       onAccessPreparing: () {
                         if (waitingForManifest) accessPreparing = true;
                       },
+                      onMaterialize: () {
+                        if (waitingForManifest) currentOperation = 'materialize';
+                      },
                     ).timeout(_smartConnectProfileRefreshTimeout);
                     accessPreparing = false;
                   } on TimeoutException {
@@ -3767,6 +3783,7 @@ class AppFirstRuntimeBootstrapper
                     // The first catalog profile is already authorized and usable.
                   } finally {
                     waitingForManifest = false;
+                    currentOperation = null;
                     if (!timedOut) accessPreparing = false;
                   }
                 }
@@ -3781,6 +3798,7 @@ class AppFirstRuntimeBootstrapper
                   var waitingForManifest = true;
                   accessPreparing = false;
                   try {
+                    currentOperation = 'managed_fetch';
                     manifest = await _fetchManagedManifest(
                       tcpFallbackFromRevision: tcpFallbackFromRevision,
                       state: state,
@@ -3792,6 +3810,9 @@ class AppFirstRuntimeBootstrapper
                       client: client,
                       onAccessPreparing: () {
                         if (waitingForManifest) accessPreparing = true;
+                      },
+                      onMaterialize: () {
+                        if (waitingForManifest) currentOperation = 'materialize';
                       },
                     ).timeout(_smartConnectProfileRefreshTimeout);
                     accessPreparing = false;
@@ -3805,6 +3826,7 @@ class AppFirstRuntimeBootstrapper
                     // transient selection/refetch failure into a dead-end.
                   } finally {
                     waitingForManifest = false;
+                    currentOperation = null;
                     if (!timedOut) accessPreparing = false;
                   }
                 }
@@ -3825,9 +3847,11 @@ class AppFirstRuntimeBootstrapper
               );
             }
           }
-          if (timedOut) throw TimeoutException('Managed profile refresh');
+          if (timedOut) throw ManagedProfileTimeout(deadlineOperation);
           requests.requireActive();
+          currentOperation = 'state_read';
           final currentState = await _loadState(hostPlatform);
+          currentOperation = null;
           requests.requireActive();
           if (currentState == null || !currentState.hasSession ||
               currentState.accountId != state.accountId || currentState.installId != state.installId ||
@@ -3884,16 +3908,14 @@ class AppFirstRuntimeBootstrapper
           }
           requests.requireActive();
           if (attempt == 0 && error.statusCode == HttpStatus.unauthorized) {
-            if (timedOut) throw TimeoutException('Managed profile refresh');
+            if (timedOut) throw ManagedProfileTimeout(deadlineOperation);
             if (state.refreshToken.isNotEmpty && timeout != null && timeout < requestTimeout) {
               // The denied cache is gone. The single authorized session retry
               // now needs the normal online profile budget, not its cache wait.
               timer?.cancel();
-              timer = Timer(requestTimeout, () {
-                timedOut = true;
-                client.close(force: true);
-              });
+              timer = Timer(requestTimeout, expireProfile);
             }
+            currentOperation = null;
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
@@ -3922,7 +3944,7 @@ class AppFirstRuntimeBootstrapper
             operation: 'managed_profile',
           );
         }
-        throw TimeoutException('Managed profile refresh');
+        throw ManagedProfileTimeout(deadlineOperation);
       }
       rethrow;
     } finally {
@@ -7216,6 +7238,7 @@ class AppFirstRuntimeBootstrapper
     String preferredCountryCode = '',
     Duration? profileTimeout,
     void Function()? onAccessPreparing,
+    void Function()? onMaterialize,
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
     // The user preference remains in cache inputs; an exact candidate can use
@@ -7286,6 +7309,7 @@ class AppFirstRuntimeBootstrapper
       final seconds = retrySeconds is int ? retrySeconds.clamp(1, 5) : 2;
       await _delayScheduler(Duration(seconds: seconds));
     }
+    onMaterialize?.call();
     return _decodeManagedManifestResponse(response, state: state, hostPlatform: hostPlatform,
         routeMode: routeMode, selectedApps: selectedApps, normalizedPreferredNode: normalizedPreferredNode,
         preferredVariantId: preferredVariantId, path: path, verifiedAt: DateTime.now().toUtc(), client: client,

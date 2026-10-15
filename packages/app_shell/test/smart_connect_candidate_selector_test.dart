@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_first_runtime_bootstrap.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
+import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
+import 'package:pokrov_observability_contracts/observability_contracts.dart' show ObservabilityPrivacyClass;
+import 'package:pokrov_observability_runtime/observability_runtime.dart' show OperationalAttributePolicy;
 import 'package:pokrov_runtime_engine/runtime_engine.dart';
 
 TransportCandidate _candidate(int index, {bool udp = false, String node = 'de', String country = 'DE', String? bridge}) => TransportCandidate(
@@ -553,6 +556,11 @@ void main() {
     expect(selected.profileName, 'de:profile_0');
     expect(probed, isTrue);
     final preparationErrors = <Object>[
+      ManagedProfileTimeout('route_policy'),
+      ManagedProfileTimeout('managed_fetch'),
+      ManagedProfileTimeout('materialize'),
+      ManagedProfileTimeout('state_read'),
+      ManagedProfileTimeout(null),
       TimeoutException('fixture'),
       const BootstrapFailure('fixture', apiFailureKind: 'request_timeout'),
       const BootstrapFailure('fixture', apiFailureKind: 'request_http'),
@@ -570,11 +578,23 @@ void main() {
       prepare: (candidate, _) async => throw preparationErrors[candidate.priority],
       probe: (_, __, ___) async => throw StateError('native must not start'),
       onProbeResult: (candidate, result) => reports[candidate.priority] = result,
-    ), throwsA(isA<BootstrapFailure>()));
+    ), throwsA(isA<BootstrapFailure>().having((error) => error.apiFailureKind,
+        'only an API failure is aggregated', 'request_timeout')));
     expect(List.generate(preparationErrors.length, (index) => reports[index]!.failureKind),
-        ['prepare_timeout', 'prepare_timeout', 'prepare_http', 'prepare_socket',
+        ['prepare_route_policy_timeout', 'prepare_managed_timeout',
+          'prepare_materialize_timeout', 'prepare_state_timeout', 'prepare_timeout',
+          'prepare_timeout', 'prepare_timeout', 'prepare_http', 'prepare_socket',
           'prepare_tls', 'prepare_failed', 'prepare_failed']);
     expect(reports.values.every((result) => result.duration == Duration.zero && result.probeStage == null), isTrue);
+    for (var index = 0; index < 4; index++) {
+      final report = reports[index]!;
+      OperationalAttributePolicy.validate({'failure_kind': report.failureKind, 'duration_ms': 0},
+          ObservabilityPrivacyClass.localOperational);
+      final event = DiagnosticEventRecord(occurredAt: DateTime.now().toUtc(),
+          subsystem: 'candidate_probe', stage: 'probe', outcome: 'failed',
+          candidateFailureKind: report.failureKind, durationMs: 0).toJson();
+      expect(event['candidate_failure_kind'], report.failureKind);
+    }
     final retried = <String>[];
     await selector.select(
       catalog: _catalog([candidates.first, _candidate(99)]), network: 'network-a', platform: HostPlatform.windows,

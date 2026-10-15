@@ -286,7 +286,13 @@ class SmartConnectCandidateSelector {
         if (ended.isCompleted) return;
         outcome = SmartConnectCandidateProbeResult.failure(probeClock.isRunning
             ? 'probe_adapter_failed'
-            : error is TimeoutException ? 'prepare_timeout' : 'prepare_failed');
+            : error is ManagedProfileTimeout ? switch (error.operation) {
+                'route_policy' => 'prepare_route_policy_timeout',
+                'managed_fetch' => 'prepare_managed_timeout',
+                'materialize' => 'prepare_materialize_timeout',
+                'state_read' => 'prepare_state_timeout',
+                _ => 'prepare_timeout',
+              } : error is TimeoutException ? 'prepare_timeout' : 'prepare_failed');
       } finally {
         timeout?.cancel();
         if (probeClock.isRunning) {

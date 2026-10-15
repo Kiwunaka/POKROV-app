@@ -398,6 +398,14 @@ available. The selected reference and catalog validation are unchanged; this
 removes unrelated material generation without changing the preparation timeout
 or route-policy synchronization.
 
+The existing preparation deadline freezes its active local operation:
+`route_policy`, `managed_fetch`, `materialize` (including rules) or `state_read`.
+`ManagedProfileTimeout` extends `TimeoutException` and carries only that closed
+operation; it is not a `BootstrapFailure`, so existing exception handlers keep
+their prior selection and user-facing error behavior.
+The initial state load precedes this timer and remains unknown. This preserves
+cache fallback and authorization/cancellation precedence without new timers.
+
 Debug builds expose bounded isolated handshake modes used by native tests.
 Release builds do not expose that entrypoint. The service and UI client are
 copied into the local release bundle and the Inno source installs a machine-wide

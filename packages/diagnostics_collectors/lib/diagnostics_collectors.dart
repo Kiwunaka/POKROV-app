@@ -206,6 +206,8 @@ final class DiagnosticEventRecord {
     'tls_failed', 'unexpected_status', 'timeout', 'cancelled', 'cancelled_before_dispatch', 'network_changed',
     'duplicate_probe',
     'prepare_timeout', 'prepare_http', 'prepare_socket', 'prepare_tls', 'prepare_failed',
+    'prepare_route_policy_timeout', 'prepare_managed_timeout',
+    'prepare_materialize_timeout', 'prepare_state_timeout',
     'probe_adapter_failed', 'probe_channel_rejected', 'probe_reply_invalid',
   };
 

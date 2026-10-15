@@ -1272,6 +1272,7 @@ void main() {
     var denied = false;
     var subscriptionDenied = false;
     var stall = false;
+    var stallRoutePolicy = false;
     var accessTokenExpired = false;
     var delayRenewedProfile = false;
     var sessionRefreshes = 0;
@@ -1300,6 +1301,7 @@ void main() {
             'lane': subscriptionDenied ? 'expiredOrBlocked' : 'paidUnlimited',
           }));
         } else if (request.uri.path == '/api/client/route-policy') {
+          if (stallRoutePolicy) continue;
           request.response.statusCode = accessTokenExpired ? 401 : 200;
           request.response.write(accessTokenExpired ? '{"detail":"session expired"}' : '{"ok":true}');
         } else if (request.uri.path == '/api/client/profile/managed') {
@@ -1356,13 +1358,26 @@ void main() {
     expect(sessionRefreshes, 1);
     expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId,
         reason: 'authorized renewal stores fresh bytes, never resurrecting the denied cache');
+    Matcher deadlineAt(String operation) => allOf(
+      isA<TimeoutException>(),
+      isA<ManagedProfileTimeout>()
+        .having((error) => error.operation, 'deadline operation', operation),
+      isNot(isA<BootstrapFailure>()),
+    );
     stall = true;
     await expectLater(online.resolveManagedProfile(
       hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
       timeout: const Duration(milliseconds: 100),
-    ).timeout(const Duration(seconds: 2)), throwsA(isA<TimeoutException>()));
+    ).timeout(const Duration(seconds: 2)), throwsA(deadlineAt('managed_fetch')));
     expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId);
     stall = false;
+    stallRoutePolicy = true;
+    await expectLater(online.resolveManagedProfile(
+      hostPlatform: inputs.hostPlatform, routeMode: inputs.routeMode,
+      timeout: const Duration(milliseconds: 100),
+    ).timeout(const Duration(seconds: 2)), throwsA(deadlineAt('route_policy')));
+    expect((await restarted.loadCachedManagedProfile(inputs))?.cacheEntryId, renewed.cacheEntryId);
+    stallRoutePolicy = false;
     await online.fetchClientSubscription(hostPlatform: inputs.hostPlatform);
     expect(await restarted.loadCachedManagedProfile(inputs), isNotNull);
     subscriptionDenied = true;
