@@ -1,5 +1,25 @@
 # Client release status
 
+Windows **1.5.0+4169** passed the remaining cold-start cache check on 15 October.
+A temporary guest firewall rule blocked outbound traffic only from the GUI
+before it started; Core/service traffic stayed available. With CH selected and
+WARP off, one normal Connect at 20:52:30 UTC reached validated running by
+20:52:48. While that rule remained active, ordinary OS requests routed through
+the POKROV interface returned marked HTTP204 and all 65536 bytes of HTTP200
+(442/214 ms). The GUI had no established TCP connection and reported that
+subscription data was unavailable. This accepts cached connection with the
+client's API access unavailable, not a production API shutdown or total outage.
+
+The rule and its cleanup task were removed at 20:53:50 UTC. After an ordinary
+window minimize/restore, Home showed active access with 29 days remaining at
+20:54:53; the same tunnel stayed validated without another Connect. Normal Stop
+restored config_staged/running0/validated0/guard0/failure=none at 20:55:46 UTC,
+TUN0/routes11, baseline DNS/proxy, CH/WARPoff and no fault/helper/browser objects.
+Graceful shutdown reached PoweredOff/Unlocked, bridge2/GetHostTimeDisabled1.
+No server, host Hiddify/network/clock, runtime artifact or public release changed.
+Android physical acceptance and the separately requested fresh support reply
+remain open.
+
 Windows **1.5.0+4169** was installed once in the owned Clean VM on
 15 October (installer exit0, guest19:18:47UTC). Native service readback confirmed
 Core1.2.14; Home retained CH and WARPoff. No VPN Connect or accepted connection
