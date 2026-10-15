@@ -8,6 +8,7 @@ param(
   [string]$CoreRoot,
   [string]$RuntimeArtifactsPath,
   [string]$CoreArtifactDirectory,
+  [switch]$SyncRuntime,
   [switch]$Arm64Only
 )
 
@@ -67,7 +68,8 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $versionParityArguments = @{ Platforms = @("android") }
 if ($CoreRoot) { $versionParityArguments.CoreRoot = $CoreRoot }
 if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
-if ($RuntimeArtifactsPath -or $CoreArtifactDirectory) {
+# A manifest also validates an already installed runtime; copying is explicit.
+if ($SyncRuntime -or $CoreArtifactDirectory) {
   $syncArguments = @{ Platforms = @("android") }
   if ($CoreRoot) { $syncArguments.CoreRoot = $CoreRoot }
   if ($RuntimeArtifactsPath) { $syncArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }

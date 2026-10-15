@@ -1,5 +1,11 @@
 # Client release status
 
+Android production builds can reuse the already installed AAR with an explicit
+runtime manifest. The builder always checks its bytes against that manifest;
+copying from Core now requires `-SyncRuntime` or `-CoreArtifactDirectory`, as on
+Windows. A manifest alone no longer tries to copy from a newer Core checkout.
+This keeps the accepted 1.2.14 runtime while packaging later client changes.
+
 On 15 October, private Windows 4168 passed an ordinary US/WARP-OFF connection
 through the existing Mini bridge. One normal Connect at 15:02:54 UTC reached
 validated running in 12.2 seconds. Actual OS-TUN HTTPS requests returned 204 and
