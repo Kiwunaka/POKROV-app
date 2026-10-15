@@ -1,5 +1,17 @@
 # Client release status
 
+Private Android **1.5.0+4169** was built once on 15 October at 19:31 MSK
+from client `2ce0447b`, including the later manual-WARP, support and neutral
+wording changes. It is production-signed **directRelease, ARM64 only**,
+85,199,980 bytes, saved at
+`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4169-arm64.apk`.
+The existing builder verified package/version, production signer, non-debuggable
+manifest and the ARM64 ABI set. Its generic APK has the same ARM64 bytes and is
+not a FullABI package. The accepted Core1.2.14 AAR (`2df0fdd`) was reused without
+syncing from Core/dist; `3ded4a3` is still source only. No phone install, runtime
+acceptance or publication occurred. Windows remains private4168; public1.4.5
+is unchanged.
+
 Android production builds can reuse the already installed AAR with an explicit
 runtime manifest. The builder always checks its bytes against that manifest;
 copying from Core now requires `-SyncRuntime` or `-CoreArtifactDirectory`, as on
@@ -32,8 +44,8 @@ it is not built into this accepted Core 1.2.14 runtime. No new client build
 was required for this server-route acceptance.
 
 Public client wording was neutralized in `7abbb9e8` (five visible strings across
-WARP and diagnostics, scoped analysis passed). This is source only: the private
-Windows 4168 and signed Android 4161 ARM64 binaries have not been rebuilt for it.
+WARP and diagnostics, scoped analysis passed). It is now in private Android4169;
+Windows4168 still predates it.
 
 Private Windows **1.5.0+4168** (`56c24d6b`) passed the real manual-WARP chain
 check on 15 October. The single build produced a 28,625,319-byte unsigned installer;
