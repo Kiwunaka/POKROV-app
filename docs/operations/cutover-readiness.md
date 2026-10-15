@@ -1,5 +1,26 @@
 # Client release status
 
+On 15 October the replacement US remained open by the owner's explicit
+instruction, including after unsuccessful probes. One normal 4168 US/WARP-OFF
+Connect at 11:37 UTC exhausted five direct candidates before starting TUN;
+the exact current-device report stored all five attempts without rejection.
+A separate same-device check at 12:20 UTC fetched unchanged normal API VLESS
+material and called existing native IPC 29 once with its normal 4-second budget.
+It returned a completed `proxy_dial` timeout (4007 ms, primary 3002 ms and reserve
+988 ms). This excludes App concurrency for that isolated result, but is not an
+exact replay: raw API bootstrap DNS differs from App DNS materialization. Guest
+Cedar DNS resolved only the replacement IP. Public-cover HTTPS and the US's
+direct owned 204/64-KiB responders passed; authenticated US VPN acceptance remains
+open. No probe budget, Core, protocol or key was changed. Temporary browser
+material was removed. Guest baseline at 12:28 UTC had no TUN, guard, helpers,
+fault tasks or browser windows, 11 IPv4 routes and original DNS/proxy settings;
+graceful shutdown restored PoweredOff/Unlocked. Hiddify and host settings stayed
+unchanged. Platform deployment details remain in the platform owning doc.
+
+Public client wording was neutralized in `7abbb9e8` (five visible strings across
+WARP and diagnostics, scoped analysis passed). This is source only: the private
+Windows 4168 and signed Android 4161 ARM64 binaries have not been rebuilt for it.
+
 Private Windows **1.5.0+4168** (`56c24d6b`) passed the real manual-WARP chain
 check on 15 October. The single build produced a 28,625,319-byte unsigned installer;
 installation returned 0 and retained Core 1.2.14/Cronet matched. Manual ON was
