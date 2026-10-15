@@ -1,42 +1,45 @@
 # Client release status
 
-Private Windows **1.5.0+4167** (`fec1d588`) was built once: 28,626,802 bytes,
-unsigned, retaining Core 1.2.14/Cronet. Installation returned 0. On 15 October,
-manual WARP was checked and enabled before the single Connect at 01:15:00 UTC.
-Runtime became validated at +12.872 s and remained healthy through +60.199 s;
-staged/effective profile digests matched. The exact current cabinet/device/build/run
-report identifies all four CH WARP chains as **prepare_managed_timeout**, with
-zero native duration and no native stage. Route-policy POST completed, but the
-managed GET did not finish inside the shared three-second preparation budget.
-Ordinary CH VLESS Reality bridge then succeeded (11,748 ms; 64 KiB in 896 ms).
-Six attempts were stored without rejection. This proves the preparation boundary,
-not a WARP network failure or a working WARP chain. Brain-only read lease
-`bd6476f2-0c83-45c1-8d3d-3b26382be19b` closed with fresh health/SSH EOF/FREE
-at 01:17:29 UTC; it is not FULL ACK6.
+Private Windows **1.5.0+4168** (`56c24d6b`) passed the real manual-WARP chain
+check on 15 October. The single build produced a 28,625,319-byte unsigned installer;
+installation returned 0 and retained Core 1.2.14/Cronet matched. Manual ON was
+observed checked and enabled before Connect at 01:26:22 UTC. Exact current
+cabinet/device/build/run telemetry selected CH VLESS Reality **warp_over_proxy**:
+its native 64 KiB probe passed in 2,892 ms, and the same chain connected in
+14,135 ms. Both attempt records were stored without rejection; no ordinary
+fallback was selected. Native running/egress/DNS were healthy with no retained
+protection from watcher +15.186 s through +60.798 s, and staged/effective profile
+digests matched. This accepts one real WARP chain on Windows; it does not claim
+independent per-hop attestation, both chain orders, other networks or Android.
 
-The short cached-profile freshness deadline was also forwarded to each missing
-exact candidate. Native probing has a separate budget. The selected-profile
-material limit is now one (initial bundled selection remains six), but 4166/4167
-still timed out. One normal browser control GET with fewer capabilities returned
-the correct exact selection in 1.444 s; it is not a replica of the full client
-request. Full-capability server requests additionally validate unselected AWG/HY2
-material. Those checks also determine catalog eligibility; no unsafe lazy skip
-or server timing diagnosis was introduced. The caller budget correction and a
-real chain test remain in progress.
+The cause of the ordinary fallback was a cache-freshness budget applied to new
+candidate acquisition. In 4167, all four WARP candidates reached route-policy
+completion but expired during managed GET, before native probing. The initial
+cache refresh still gets three seconds; only missing exact candidate material
+now gets `min(actionTimeout, 6s)`, matching the existing selected-profile refresh
+budget. Native probe budgets, cancellation and fallback order are unchanged.
+An existing regression reproduced ordinary fallback with a 3.1 s exact response,
+then reached the chain probe after the fix. Three focused tests, scoped analysis,
+diff check and read-only review passed. No overall Connect wall-clock cap is
+claimed. Extra server AWG/HY2 validation work was found but retained because it
+also determines catalog eligibility; no server optimization was needed for this
+accepted chain.
 
-Source checks also fixed candidate IPC size (548-byte reply versus the old generic
-512-byte cap; candidate-only cap is now 2048), pending manual-ON Connect, and stale
-policy staging after a chain probe. Focused regression checks passed. Neither
-the IPC defect nor those policy races explain the observed settled-ON GET timeout.
-The new deadline diagnostics retain TimeoutException behavior and snapshot the
-operation at the existing deadline; they do not change timeouts or routing.
-Platform accepts their closed cause codes without treating them as network hints.
+The earlier candidate-only IPC cap fix, pending manual-ON/stale staging guards,
+exact-material limit of one and deadline-stage diagnostics remain included.
+These were separately checked; they are not substituted for the 4168 real result.
+Historical 4165's missing terminal report remains unexplained and does not affect
+the exact 4167/4168 comparison.
 
-Normal Stop at 01:16:13 UTC and WARP OFF completed. Temporary cabinet subject was
-removed and the owned browser closed. VM remains running under root for the
-cause/fix/chain test; final baseline restoration and PoweredOff/Unlocked are still
-required. Hiddify and host network/clock are untouched. Android remains signed
-4161 ARM64; no phone acceptance, FullABI build or publication.
+Normal Stop at 01:27:33 UTC and WARP OFF completed. The current subject transfer
+was removed and owned Edge closed. Brain-only read lease
+`0992246a-191d-4339-9901-cc5365e4d3a8` closed with fresh Brain health/SSH EOF/FREE
+at 01:28:43 UTC, not FULL ACK6. Guest baseline at 01:28:58 UTC had stopped runtime,
+no TUN/guard/helpers/fault tasks/browser windows, 11 IPv4 routes, baseline IPv4 DNS,
+empty IPv6 DNS and proxy OFF. Graceful shutdown confirmed PoweredOff/Unlocked,
+bridged attachment and GetHostTimeDisabled unchanged. Hiddify and host network/
+clock were untouched. Android remains signed 4161 ARM64; no physical Android
+acceptance, FullABI build or public release.
 
 Private Windows **1.5.0+4161** (`c8aff9cb`) passed the real browser-to-app pairing
 flow. Its single build produced a 28,622,404-byte unsigned installer; installation
