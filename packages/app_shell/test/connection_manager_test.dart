@@ -3084,6 +3084,9 @@ void main() {
       ..candidates = [base, ...chains];
     final runtime = _Runtime()..supportsCandidates = true
       ..probeFailureKinds[chains.first.candidateRef] = 'cancelled_before_dispatch'
+      ..probeFailureKinds[chains[1].candidateRef] = 'probe_channel_rejected'
+      ..probeFailureKinds[chains[2].candidateRef] = 'probe_reply_invalid'
+      ..probeFailureKinds[chains[3].candidateRef] = 'probe_adapter_failed'
       ..heldProbeProfiles.addAll(chains.map((candidate) => candidate.candidateRef));
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
@@ -3105,7 +3108,13 @@ void main() {
     expect(notDispatched['failure_kind'], 'cancelled_before_dispatch');
     expect(notDispatched['duration_ms'], 0);
     expect(notDispatched.containsKey('probe_stage'), isFalse);
-    final started = probes.singleWhere((probe) => probe['candidate_ref'] == chains[1].candidateRef);
+    for (final index in [1, 2, 3]) {
+      final adapter = probes.singleWhere((probe) => probe['candidate_ref'] == chains[index].candidateRef);
+      expect(adapter['failure_kind'], runtime.probeFailureKinds[chains[index].candidateRef]);
+      expect(adapter['duration_ms'], 0);
+      expect(adapter.containsKey('probe_stage'), isFalse);
+    }
+    final started = probes.singleWhere((probe) => probe['candidate_ref'] == chains[4].candidateRef);
     expect(started['failure_kind'], 'probe_budget_expired');
 
     await manager.disconnect();

@@ -205,6 +205,8 @@ final class DiagnosticEventRecord {
     'probe_failed', 'probe_budget_expired', 'connect_failed', 'data_stalled',
     'tls_failed', 'unexpected_status', 'timeout', 'cancelled', 'cancelled_before_dispatch', 'network_changed',
     'duplicate_probe',
+    'prepare_timeout', 'prepare_http', 'prepare_socket', 'prepare_tls', 'prepare_failed',
+    'probe_adapter_failed', 'probe_channel_rejected', 'probe_reply_invalid',
   };
 
   // The ordinary RuntimeSnapshot public taxonomy, never upstream error text.

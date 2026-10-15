@@ -58,6 +58,8 @@ abstract final class OperationalAttributePolicy {
     'timeout',
     'cancelled',
     'cancelled_before_dispatch',
+    'prepare_timeout', 'prepare_http', 'prepare_socket', 'prepare_tls', 'prepare_failed',
+    'probe_adapter_failed', 'probe_channel_rejected', 'probe_reply_invalid',
     'network_changed',
     'duplicate_probe',
   };

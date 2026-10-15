@@ -130,6 +130,9 @@ void main() {
 
   test('candidate bridge accepts only a safe result and nullable OS facts',
       () async {
+    Object? nativeReply = {'success': true, 'failure_kind': 'raw native detail', 'duration_ms': 3};
+    PlatformException? channelError;
+    var dispatched = 0;
     messenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'runtimeEngine.candidateNetwork') {
         return {
@@ -142,11 +145,9 @@ void main() {
           'captive_portal': null
         };
       }
-      return {
-        'success': true,
-        'failure_kind': 'raw native detail',
-        'duration_ms': 3
-      };
+      dispatched++;
+      if (channelError != null) throw channelError;
+      return nativeReply;
     });
     final runtime =
         MobileArtifactRuntimeEngine(hostPlatform: HostPlatform.windows);
@@ -157,13 +158,33 @@ void main() {
     expect(network.networkAvailable, true);
     expect(network.ipv6Available, false);
     expect(network.captivePortal, null);
-    final result = await runtime.probeCandidate(
+    Future<RuntimeCandidateProbeResult> probe() => runtime.probeCandidate(
         probeId: 'candidate-2',
         payload: const ManagedProfilePayload(
             profileName: 'candidate', configPayload: '{}'),
         timeout: const Duration(seconds: 3),
         expectedNetworkContext: 'context-new');
-    expect(result, RuntimeCandidateProbeResult.unavailable);
+    expect((await probe()).failureKind, 'probe_reply_invalid');
+    nativeReply = 'not-json';
+    expect((await probe()).failureKind, 'probe_reply_invalid');
+    nativeReply = {'success': false, 'failure_kind': 'unavailable', 'duration_ms': 0};
+    final unavailable = await probe();
+    expect((unavailable.failureKind, unavailable.duration, unavailable.probeStage),
+        ('unavailable', Duration.zero, null));
+    channelError = PlatformException(code: 'untrusted-code', message: 'untrusted-message');
+    final rejected = await probe();
+    expect((rejected.failureKind, rejected.duration, rejected.probeStage),
+        ('probe_channel_rejected', Duration.zero, null));
+    final callsBeforeMaterialization = dispatched;
+    final malformed = await runtime.probeCandidate(
+      probeId: 'malformed-chain',
+      payload: ManagedProfilePayload(profileName: 'candidate', configPayload: '{}',
+          warpPolicy: WarpRuntimePolicy.clientLocalDefault.withUserConsent(true)),
+      timeout: const Duration(seconds: 3), expectedNetworkContext: 'context-new',
+    );
+    expect((malformed.failureKind, malformed.duration, malformed.probeStage),
+        ('probe_adapter_failed', Duration.zero, null));
+    expect(dispatched, callsBeforeMaterialization, reason: 'invalid Dart material never reaches native');
   });
 
   test('candidate bridge retains closed native stages and accepts stage-less replies', () async {

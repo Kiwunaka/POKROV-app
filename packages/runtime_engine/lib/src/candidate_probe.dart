@@ -119,6 +119,20 @@ class RuntimeCandidateProbeResult {
     'http_64k',
   };
 
+  // These receipts identify a local boundary, even if cancellation was requested
+  // while it settled. They must not become a claimed Core probe timeout.
+  static const localFailureKinds = {
+    'cancelled_before_dispatch', 'probe_adapter_failed',
+    'probe_channel_rejected', 'probe_reply_invalid',
+  };
+
+  static const adapterFailed = RuntimeCandidateProbeResult(
+    success: false, failureKind: 'probe_adapter_failed', duration: Duration.zero);
+  static const channelRejected = RuntimeCandidateProbeResult(
+    success: false, failureKind: 'probe_channel_rejected', duration: Duration.zero);
+  static const replyInvalid = RuntimeCandidateProbeResult(
+    success: false, failureKind: 'probe_reply_invalid', duration: Duration.zero);
+
   static const unavailable = RuntimeCandidateProbeResult(
     success: false,
     failureKind: 'unavailable',
@@ -192,26 +206,31 @@ mixin _CandidateProbeChannel
         expectedNetworkContext.isEmpty) {
       throw ArgumentError('invalid_candidate_probe_request');
     }
-    var configContent = payload.warpPolicy.canEnableRuntime
-        ? _materializePokrovCoreConfig(
-            payload.configPayload, payload.warpPolicy)
-        : payload.configPayload;
-    if (hostPlatform == HostPlatform.windows &&
-        payload.routeMode == RouteMode.selectedApps) {
-      final config = jsonDecode(configContent) as Map<String, dynamic>;
-      final route = config['route'] as Map<String, dynamic>;
-      for (final rule in (route['rules'] as List).whereType<Map>()) {
-        final processNames = rule['process_name'];
-        final outbound = rule['outbound'];
-        if (processNames is List &&
-            processNames.isNotEmpty &&
-            outbound is String &&
-            outbound.isNotEmpty) {
-          route['final'] = outbound;
-          break;
+    String configContent;
+    try {
+      configContent = payload.warpPolicy.canEnableRuntime
+          ? _materializePokrovCoreConfig(
+              payload.configPayload, payload.warpPolicy)
+          : payload.configPayload;
+      if (hostPlatform == HostPlatform.windows &&
+          payload.routeMode == RouteMode.selectedApps) {
+        final config = jsonDecode(configContent) as Map<String, dynamic>;
+        final route = config['route'] as Map<String, dynamic>;
+        for (final rule in (route['rules'] as List).whereType<Map>()) {
+          final processNames = rule['process_name'];
+          final outbound = rule['outbound'];
+          if (processNames is List &&
+              processNames.isNotEmpty &&
+              outbound is String &&
+              outbound.isNotEmpty) {
+            route['final'] = outbound;
+            break;
+          }
         }
+        configContent = jsonEncode(config);
       }
-      configContent = jsonEncode(config);
+    } on Object {
+      return RuntimeCandidateProbeResult.adapterFailed;
     }
     Object? value;
     try {
@@ -223,15 +242,17 @@ mixin _CandidateProbeChannel
         'expectedNetworkContext': expectedNetworkContext,
       });
     } on MissingPluginException {
-      return RuntimeCandidateProbeResult.unavailable;
+      return RuntimeCandidateProbeResult.channelRejected;
     } on PlatformException {
-      return RuntimeCandidateProbeResult.unavailable;
+      return RuntimeCandidateProbeResult.channelRejected;
+    } on Object {
+      return RuntimeCandidateProbeResult.adapterFailed;
     }
     if (value is String) {
       try {
         value = jsonDecode(value);
       } on FormatException {
-        return RuntimeCandidateProbeResult.unavailable;
+        return RuntimeCandidateProbeResult.replyInvalid;
       }
     }
     const failureKinds = {
@@ -257,7 +278,7 @@ mixin _CandidateProbeChannel
         (value['duration_ms'] as int) < 0 ||
         !failureKinds.contains(value['failure_kind']) ||
         (value['success'] == true) != (value['failure_kind'] == '')) {
-      return RuntimeCandidateProbeResult.unavailable;
+      return RuntimeCandidateProbeResult.replyInvalid;
     }
     return RuntimeCandidateProbeResult(
         success: value['success'] as bool,

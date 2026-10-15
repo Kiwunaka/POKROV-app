@@ -552,5 +552,36 @@ void main() {
       });
     expect(selected.profileName, 'de:profile_0');
     expect(probed, isTrue);
+    final preparationErrors = <Object>[
+      TimeoutException('fixture'),
+      const BootstrapFailure('fixture', apiFailureKind: 'request_timeout'),
+      const BootstrapFailure('fixture', apiFailureKind: 'request_http'),
+      const BootstrapFailure('fixture', apiFailureKind: 'request_socket'),
+      const BootstrapFailure('fixture', apiFailureKind: 'request_tls'),
+      const BootstrapFailure('fixture', apiFailureKind: 'untrusted-kind'),
+      StateError('fixture'),
+    ];
+    final reports = <int, SmartConnectCandidateProbeResult>{};
+    final selector = SmartConnectCandidateSelector();
+    final candidates = List.generate(preparationErrors.length, (index) => _candidate(index, udp: index == 0));
+    await expectLater(selector.select(
+      catalog: _catalog(candidates), network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      prepare: (candidate, _) async => throw preparationErrors[candidate.priority],
+      probe: (_, __, ___) async => throw StateError('native must not start'),
+      onProbeResult: (candidate, result) => reports[candidate.priority] = result,
+    ), throwsA(isA<BootstrapFailure>()));
+    expect(List.generate(preparationErrors.length, (index) => reports[index]!.failureKind),
+        ['prepare_timeout', 'prepare_timeout', 'prepare_http', 'prepare_socket',
+          'prepare_tls', 'prepare_failed', 'prepare_failed']);
+    expect(reports.values.every((result) => result.duration == Duration.zero && result.probeStage == null), isTrue);
+    final retried = <String>[];
+    await selector.select(
+      catalog: _catalog([candidates.first, _candidate(99)]), network: 'network-a', platform: HostPlatform.windows,
+      cancelled: Completer<void>().future,
+      probe: (candidate, _, __) async { retried.add(candidate.candidateRef); return _success(candidate); },
+    );
+    expect(retried.first, candidates.first.candidateRef,
+        reason: 'preparation failure neither quarantines the candidate nor penalizes UDP');
   });
 }

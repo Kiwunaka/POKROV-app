@@ -372,6 +372,15 @@ this neutral result does not quarantine a candidate or penalize UDP. Other
 cancellations keep the existing budget classification. The local journal and
 runtime stats retain the reported native probe duration, up to the API limit of
 one hour; zero here is not the selector's elapsed waiting time.
+Candidate preparation failures use only `prepare_timeout`, `prepare_http`,
+`prepare_socket`, `prepare_tls` or `prepare_failed`; the API-kind mapping accepts
+only the corresponding four fixed `request_*` kinds. Dart materialization or
+adapter exceptions use `probe_adapter_failed`, MethodChannel rejection uses
+`probe_channel_rejected`, and an invalid native reply uses `probe_reply_invalid`.
+These neutral failures retain zero native duration and no invented Core stage;
+local cancellation does not erase the three adapter receipts. A valid native
+`unavailable` reply remains distinct. No exception text or channel error code is
+recorded, and selection budgets, ordering and failure memory are unchanged.
 
 The existing `app.connection.candidate_probe.finished` event also retains the
 Core's last fixed phase as nullable `probe_stage`. Unknown phases and replies

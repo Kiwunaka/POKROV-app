@@ -270,12 +270,23 @@ class SmartConnectCandidateSelector {
         }
         if (ended.isCompleted) return;
         if (error.apiFailureKind != null) apiFailure ??= error;
+        outcome = SmartConnectCandidateProbeResult.failure(probeClock.isRunning
+            ? 'probe_adapter_failed' : switch (error.apiFailureKind) {
+                'request_timeout' => 'prepare_timeout',
+                'request_http' => 'prepare_http',
+                'request_socket' => 'prepare_socket',
+                'request_tls' => 'prepare_tls',
+                _ => 'prepare_failed',
+              });
       } on TransportManifestFailure {
         if (ended.isCompleted) return;
         outcome = const SmartConnectCandidateProbeResult.failure('invalid_profile',
             probeStage: 'parse_profile');
-      } on Object {
+      } on Object catch (error) {
         if (ended.isCompleted) return;
+        outcome = SmartConnectCandidateProbeResult.failure(probeClock.isRunning
+            ? 'probe_adapter_failed'
+            : error is TimeoutException ? 'prepare_timeout' : 'prepare_failed');
       } finally {
         timeout?.cancel();
         if (probeClock.isRunning) {
@@ -289,7 +300,7 @@ class SmartConnectCandidateSelector {
       }
       if (ended.isCompleted) return;
       failures++;
-      final failureKind = timedOut && outcome?.failureKind != 'cancelled_before_dispatch'
+      final failureKind = timedOut && !RuntimeCandidateProbeResult.localFailureKinds.contains(outcome?.failureKind)
           ? 'probe_budget_expired' : outcome?.failureKind ?? 'unavailable';
       final failed = SmartConnectCandidateProbeResult.failure(failureKind,
           duration: outcome?.duration ?? probeClock.elapsed,
