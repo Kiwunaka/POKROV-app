@@ -1,5 +1,17 @@
 # Client release status
 
+Private Windows **1.5.0+4169** was built once on 15 October at 20:55 MSK
+from client `40abd333`. The x64 installer includes the neutral wording from
+`7abbb9e8` and is saved at
+`E:/POKROV-tools/temp/release-1.5.0/pokrov-windows-x64-1.5.0+4169-setup.exe`
+(28,625,332 bytes, Authenticode **NotSigned**). The existing builder checked
+packaging and runtime binding; PE text version is `1.5.0+4169`, with numeric
+revision4169. The accepted Core1.2.14/Cronet files were reused through the
+windows4151 manifest, without SyncRuntime or a new Core build. No ZIP was built.
+The temporary P: mapping was removed normally. This installer has not been
+installed in the VM or published; accepted connection cases remain on4168.
+Hiddify, host settings, VM and servers were not touched for this build.
+
 Private Android **1.5.0+4169** was built once on 15 October at 19:31 MSK
 from client `2ce0447b`, including the later manual-WARP, support and neutral
 wording changes. It is production-signed **directRelease, ARM64 only**,
@@ -9,8 +21,7 @@ The existing builder verified package/version, production signer, non-debuggable
 manifest and the ARM64 ABI set. Its generic APK has the same ARM64 bytes and is
 not a FullABI package. The accepted Core1.2.14 AAR (`2df0fdd`) was reused without
 syncing from Core/dist; `3ded4a3` is still source only. No phone install, runtime
-acceptance or publication occurred. Windows remains private4168; public1.4.5
-is unchanged.
+acceptance or publication occurred. Public1.4.5 is unchanged.
 
 Android production builds can reuse the already installed AAR with an explicit
 runtime manifest. The builder always checks its bytes against that manifest;
@@ -44,8 +55,8 @@ it is not built into this accepted Core 1.2.14 runtime. No new client build
 was required for this server-route acceptance.
 
 Public client wording was neutralized in `7abbb9e8` (five visible strings across
-WARP and diagnostics, scoped analysis passed). It is now in private Android4169;
-Windows4168 still predates it.
+WARP and diagnostics, scoped analysis passed). It is now in both private4169
+candidates; the installed Windows4168 still predates it.
 
 Private Windows **1.5.0+4168** (`56c24d6b`) passed the real manual-WARP chain
 check on 15 October. The single build produced a 28,625,319-byte unsigned installer;
