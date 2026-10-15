@@ -1,33 +1,42 @@
 # Client release status
 
-Private Windows **1.5.0+4164** (`2b6a8a0a`) was built once: 28,624,925 bytes,
+Private Windows **1.5.0+4167** (`fec1d588`) was built once: 28,626,802 bytes,
 unsigned, retaining Core 1.2.14/Cronet. Installation returned 0. On 15 October,
-manual WARP was observed checked and enabled after its consent request settled,
-before the single Connect at 00:13:47 UTC. Native core_ready was true from the
-initial state; runtime became validated at +13.807 s and stayed so through +60.181 s.
-The exact current cabinet/device/build/run report showed all four CH WARP chains
-(VLESS/XHTTP, both directions) failed with **prepare_timeout**, zero native duration
-and no native stage. Ordinary VLESS Reality bridge then connected in 12,703 ms
-and passed its 64 KiB transfer in 847 ms. All six attempts were stored. This
-locates the failure before native probing; it does not prove a WARP network fault
-or a working chain. The eight closed boundary causes are live on Platform 3feaa90.
+manual WARP was checked and enabled before the single Connect at 01:15:00 UTC.
+Runtime became validated at +12.872 s and remained healthy through +60.199 s;
+staged/effective profile digests matched. The exact current cabinet/device/build/run
+report identifies all four CH WARP chains as **prepare_managed_timeout**, with
+zero native duration and no native stage. Route-policy POST completed, but the
+managed GET did not finish inside the shared three-second preparation budget.
+Ordinary CH VLESS Reality bridge then succeeded (11,748 ms; 64 KiB in 896 ms).
+Six attempts were stored without rejection. This proves the preparation boundary,
+not a WARP network failure or a working WARP chain. Brain-only read lease
+`bd6476f2-0c83-45c1-8d3d-3b26382be19b` closed with fresh health/SSH EOF/FREE
+at 01:17:29 UTC; it is not FULL ACK6.
 
-An independent native IPC defect was fixed in 5b6b8c60: the Core's 548-byte
-candidate DTO exceeded the generic 512-byte response limit. Candidate responses
-now have their own 2048-byte limit; the generic limit stays unchanged. Focused
-regressions passed; an unrelated privileged boot-clock test did not pass.
-Actual 4163 still returned unavailable for the four chains, so that IPC defect
-does not explain the primary failure. The retained DLL's candidate export exists.
-Historical 4162's UI proved cached fallback; its generic message does not
-distinguish an API timeout from other transient bootstrap failures.
+The short cached-profile freshness deadline was also forwarded to each missing
+exact candidate. Native probing has a separate budget. The selected-profile
+material limit is now one (initial bundled selection remains six), but 4166/4167
+still timed out. One normal browser control GET with fewer capabilities returned
+the correct exact selection in 1.444 s; it is not a replica of the full client
+request. Full-capability server requests additionally validate unselected AWG/HY2
+material. Those checks also determine catalog eligibility; no unsafe lazy skip
+or server timing diagnosis was introduced. The caller budget correction and a
+real chain test remain in progress.
 
-Current case: normal Stop at 00:14:59 UTC, WARP OFF, temporary cabinet subject
-removed and owned browser closed. VM remains running under root for the remaining
-cause/fix/chain test, with no active server lease. Full network restoration and
-PoweredOff/Unlocked are still required when tests finish. Hiddify and host
-network/clock are untouched. Android remains signed 4161 ARM64; no phone
-acceptance, FullABI build or publication. The pending-ON/staging guards are only
-proposals; no observed race is claimed.
+Source checks also fixed candidate IPC size (548-byte reply versus the old generic
+512-byte cap; candidate-only cap is now 2048), pending manual-ON Connect, and stale
+policy staging after a chain probe. Focused regression checks passed. Neither
+the IPC defect nor those policy races explain the observed settled-ON GET timeout.
+The new deadline diagnostics retain TimeoutException behavior and snapshot the
+operation at the existing deadline; they do not change timeouts or routing.
+Platform accepts their closed cause codes without treating them as network hints.
+
+Normal Stop at 01:16:13 UTC and WARP OFF completed. Temporary cabinet subject was
+removed and the owned browser closed. VM remains running under root for the
+cause/fix/chain test; final baseline restoration and PoweredOff/Unlocked are still
+required. Hiddify and host network/clock are untouched. Android remains signed
+4161 ARM64; no phone acceptance, FullABI build or publication.
 
 Private Windows **1.5.0+4161** (`c8aff9cb`) passed the real browser-to-app pairing
 flow. Its single build produced a 28,622,404-byte unsigned installer; installation

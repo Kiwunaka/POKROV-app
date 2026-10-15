@@ -64,6 +64,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   StackTrace? failureStack;
   String? lastCoreRelease;
   Duration? lastProfileTimeout;
+  final profileTimeouts = <Duration?>[];
   final entered = Completer<void>();
   bool cancelled = false;
 
@@ -96,6 +97,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   }) async {
     lastCoreRelease = coreRelease;
     lastProfileTimeout = timeout;
+    profileTimeouts.add(timeout);
     requestedCountries.add(preferredCountryCode);
     resolutions.add((selected: selectedCandidateRef, select: selectCandidate, cache: cacheResult));
     if (!entered.isCompleted) entered.complete();
@@ -104,7 +106,8 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     if (selectedCandidateRef.isNotEmpty && exactProfileDelay > Duration.zero) {
       var stopped = false;
       unawaited(cancelled?.then((_) => stopped = true));
-      await Future<void>.delayed(exactProfileDelay);
+      final pending = Future<void>.delayed(exactProfileDelay);
+      await (timeout == null ? pending : pending.timeout(timeout));
       if (stopped) cancelledExactProfiles.add(selectedCandidateRef);
     }
     if (failure != null) Error.throwWithStackTrace(failure!, failureStack ?? StackTrace.current);
@@ -3087,10 +3090,20 @@ void main() {
     await manager.disconnect();
     runtime.probedWarpModes.clear();
     await manager.setWarpRuntimeConsent(true);
+    bootstrapper
+      ..cacheAvailable = true
+      ..exactProfileDelay = const Duration(milliseconds: 3100);
+    final requestOffset = bootstrapper.profileTimeouts.length;
     await manager.connect();
     expect(manager.transportCatalog?.selectedCandidateRef, chain.candidateRef);
     expect(runtime.probedWarpModes, ['proxy_over_warp']);
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+    expect(bootstrapper.profileTimeouts.skip(requestOffset),
+        [const Duration(seconds: 3), const Duration(seconds: 6)],
+        reason: 'cached freshness stays short while missing exact chain material has its own bounded acquisition');
+    bootstrapper
+      ..cacheAvailable = false
+      ..exactProfileDelay = Duration.zero;
     await manager.disconnect();
     final stagesBeforePolicyChange = runtime.stagedPayloads.length;
     final connectsBeforePolicyChange = runtime.connectCalls;

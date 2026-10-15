@@ -246,6 +246,11 @@ reuses supplied materials and resolves an omitted candidate through the existing
 exact managed-profile request before probing it. Country, manual pins and
 capability/authorization gates still apply; offline selection requires cached
 material.
+The initial cache-freshness refresh retains its three-second deadline. Acquiring
+missing exact material uses the existing six-second selected-profile refresh
+budget, capped by the action timeout; it does not inherit the shorter cache
+refresh wait. Cancellation, native group budgets and ordinary fallback order
+remain unchanged. These are per-request/probe limits, not an overall Connect cap.
 If the API is unreachable, recovery probes
 these cached profiles with the existing native selector and activates its winner.
 Failed activation advances to another candidate, with at most three activations

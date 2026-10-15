@@ -2498,8 +2498,8 @@ class ConnectionManager extends ChangeNotifier {
     final discoverCandidates = !signedTransport && engine is RuntimeCandidateProbing && features.isNotEmpty;
     final useCandidateProbes = discoverCandidates && _connectionCoordinator.actionInFlight;
     Future<ManagedProfilePayload> resolve({String candidateRef = '', bool select = true,
-        bool cache = true, Future<void>? stop}) => _bootstrapper.resolveManagedProfile(
-      timeout: deadline,
+        bool cache = true, Future<void>? stop, Duration? preparationTimeout}) => _bootstrapper.resolveManagedProfile(
+      timeout: preparationTimeout ?? deadline,
       cancelled: stop ?? cancelled,
       hostPlatform: inputs.hostPlatform,
       routeMode: inputs.routeMode,
@@ -2646,7 +2646,9 @@ class ConnectionManager extends ChangeNotifier {
               var stopped = false;
               unawaited(stop.then((_) => stopped = true));
               final exact = materialized[candidate.candidateRef] ??
-                  await resolve(candidateRef: candidate.candidateRef, select: false, cache: false, stop: stop);
+                  await resolve(candidateRef: candidate.candidateRef, select: false, cache: false, stop: stop,
+                      preparationTimeout: _actionTimeout < const Duration(seconds: 6)
+                          ? _actionTimeout : const Duration(seconds: 6));
               requireCurrent();
               if (!stopped) materialized[candidate.candidateRef] = exact;
             },
