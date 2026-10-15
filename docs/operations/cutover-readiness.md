@@ -1,5 +1,23 @@
 # Client release status
 
+Windows **1.5.0+4169** was installed once in the owned Clean VM on
+15 October (installer exit0, guest19:18:47UTC). Native service readback confirmed
+Core1.2.14; Home retained CH and WARPoff. No VPN Connect or accepted connection
+case was repeated. The ordinary Profile→Cabinet handoff authenticated the same
+current active Windows device; its normal GET /api/tickets returned zero tickets.
+The fresh operator-reply acceptance is therefore still open. Creating a ticket
+through the normal API sends an owner Telegram notification; permission for one
+test ticket and one operator reply was requested, and no message was sent.
+
+At guest19:28:13UTC the VM had initialized/running0/validated0/guard0,
+failure=none, TUN0/routes11, original IPv4DNS/empty IPv6DNS/proxyoff and no
+helper, fault task or owned browser window. Temporary DOM material was cleared
+and the browser/DevTools closed. Normal shutdown confirmed PoweredOff/Unlocked,
+bridge2 and GetHostTimeDisabled1. Hiddify and host network/clock were untouched.
+The first text-node clicks had no visible MSAA bounds; the actual viewport was
+used instead. Normal keyboard input with exact readback completed the cabinet
+read; no cache extraction or private session export was used.
+
 Private Windows **1.5.0+4169** was built once on 15 October at 20:55 MSK
 from client `40abd333`. The x64 installer includes the neutral wording from
 `7abbb9e8` and is saved at
@@ -8,9 +26,9 @@ from client `40abd333`. The x64 installer includes the neutral wording from
 packaging and runtime binding; PE text version is `1.5.0+4169`, with numeric
 revision4169. The accepted Core1.2.14/Cronet files were reused through the
 windows4151 manifest, without SyncRuntime or a new Core build. No ZIP was built.
-The temporary P: mapping was removed normally. This installer has not been
-installed in the VM or published; accepted connection cases remain on4168.
-Hiddify, host settings, VM and servers were not touched for this build.
+The temporary P: mapping was removed normally. The later VM installation is
+recorded above; accepted connection cases remain on4168 and publication is open.
+Hiddify, host settings, VM and servers were not touched during the build.
 
 Private Android **1.5.0+4169** was built once on 15 October at 19:31 MSK
 from client `2ce0447b`, including the later manual-WARP, support and neutral
@@ -56,7 +74,7 @@ was required for this server-route acceptance.
 
 Public client wording was neutralized in `7abbb9e8` (five visible strings across
 WARP and diagnostics, scoped analysis passed). It is now in both private4169
-candidates; the installed Windows4168 still predates it.
+candidates and the installed Windows4169.
 
 Private Windows **1.5.0+4168** (`56c24d6b`) passed the real manual-WARP chain
 check on 15 October. The single build produced a 28,625,319-byte unsigned installer;
