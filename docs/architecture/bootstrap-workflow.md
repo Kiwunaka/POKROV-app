@@ -364,6 +364,11 @@ bodies and IDs. Storage errors or exceeded queue limits leave the pending record
 for the next ordinary authenticated refresh or TTL and do not block authentication.
 
 Ordinary Diagnostics displays the current attempt's in-memory stats delivery receipt from the existing sender call: frozen version/build, report phase/sequence, nullable enqueue/ACK, observed HTTP status/closed API failure and capture time. ACK applies only to the exact current record; a coalesced flush or missing binding leaves unobserved fields unknown, and a late previous-attempt receipt cannot replace the current one. This receipt does not read the outbox or force delivery and is not VPN proof.
+An unacknowledged `running` or `failed` receipt remains visible over subsequent
+observation ACKs, including when its callback arrives after a higher-sequence
+observation. A newer terminal receipt can replace it; a new Connect clears the
+previous attempt as before. Enqueue failure or an unknown binding is never
+promoted to a terminal ACK by another report's HTTP 200.
 
 Starting a new attempt clears only the previous attempt's RAM probe view;
 durable records remain until their acknowledgement or TTL. This endpoint and

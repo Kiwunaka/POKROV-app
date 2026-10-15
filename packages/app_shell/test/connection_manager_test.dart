@@ -256,6 +256,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
   final reports = <Map<String, Object?>>[];
   final runtimeCalls = <Map<String, Object?>>[];
   bool failFirstRunningReport = false;
+  bool failRunningDelivery = false;
   final failedProbeReportCandidates = <String>{};
   int failedRunningReports = 0;
   Completer<void>? runningReportGate;
@@ -305,13 +306,15 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       'candidate_transport': candidateTransport,
       'candidate_probes': candidateProbes,
     });
+    final deliveryAccepted = runtimePhase != 'running' || !failRunningDelivery;
     onDeliveryReceipt?.call(RuntimeStatsDeliveryReceipt(
       appVersion: pokrovClientVersion, buildNumber: pokrovClientBuildNumber,
       runtimePhase: runtimePhase, reportSequence: sequence,
-      attemptNumber: attemptNumber, enqueued: true, acknowledged: true,
-      httpStatus: 200, capturedAt: DateTime.now().toUtc(),
+      attemptNumber: attemptNumber, enqueued: deliveryAccepted, acknowledged: deliveryAccepted,
+      httpStatus: deliveryAccepted ? 200 : null, capturedAt: DateTime.now().toUtc(),
     ));
-    return true;
+    if (!deliveryAccepted) failedRunningReports++;
+    return deliveryAccepted;
   }
 
   @override
@@ -857,6 +860,7 @@ ConnectionManager _manager(
   PokrovForegroundConnectPolicy? foregroundConnectPolicy,
   Future<bool> Function()? authorizeAndroid,
   PokrovClientObservability? observability,
+  FirstSessionCoordinator? firstSessionCoordinator,
 }) =>
     ConnectionManager(
       appContext: buildSeedAppContext(hostPlatform: runtime.hostPlatform),
@@ -866,7 +870,7 @@ ConnectionManager _manager(
       accountSessionCoordinator:
           AccountSessionCoordinator(accountActions: null),
       firstSessionCoordinator:
-          FirstSessionCoordinator(store: _FirstLaunchStore()),
+          firstSessionCoordinator ?? FirstSessionCoordinator(store: _FirstLaunchStore()),
       clientExperienceStore: experienceStore ?? _ExperienceStore(),
       connectHintStore: const PokrovFileConnectHintStore(),
       currentWifiProbe: currentWifiProbe,
@@ -2758,7 +2762,10 @@ void main() {
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
       ..supportsCandidates = true..coreVersion = '1.2.9'
       ..probeDuration = const Duration(milliseconds: 1018);
+    final firstSession = FirstSessionCoordinator(store: _FirstLaunchStore());
+    await firstSession.loadPersistedCompletion();
     final manager = _manager(runtime, bootstrapper, observability: observability,
+        firstSessionCoordinator: firstSession,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
 
@@ -2805,6 +2812,40 @@ void main() {
     expect(events.map((line) => jsonDecode(line) as Map<String, dynamic>)
         .where((event) => event['name'] == 'app.runtime.stats_delivery.finished'), isEmpty,
         reason: 'a late acknowledgement cannot fail delivery with RangeError');
+
+    final terminalGate = Completer<void>();
+    addTearDown(() { if (!terminalGate.isCompleted) terminalGate.complete(); });
+    bootstrapper
+      ..failRunningDelivery = true
+      ..runningReportGate = terminalGate;
+    await manager.refresh();
+    await manager.resume();
+    final observedReceipt = manager.status.runtimeStatsDelivery!;
+    expect(observedReceipt.runtimePhase, 'runtime_observed');
+    expect(observedReceipt.acknowledged, isTrue);
+    terminalGate.complete();
+    final terminalDeadline = DateTime.now().add(const Duration(seconds: 2));
+    while (bootstrapper.failedRunningReports == 0 && DateTime.now().isBefore(terminalDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    final terminalReceipt = manager.status.runtimeStatsDelivery!;
+    expect(terminalReceipt.runtimePhase, 'running',
+        reason: 'a late terminal receipt must not be hidden by a newer observation ACK');
+    expect(terminalReceipt.reportSequence, lessThan(observedReceipt.reportSequence));
+    expect((terminalReceipt.enqueued, terminalReceipt.acknowledged, terminalReceipt.httpStatus),
+        (false, false, null), reason: 'failed enqueue is not an ACK');
+    bootstrapper.runningReportGate = null;
+    await manager.refresh();
+    await manager.resume();
+    final newerTerminal = manager.status.runtimeStatsDelivery!;
+    expect(newerTerminal.runtimePhase, 'running');
+    expect(newerTerminal.reportSequence, greaterThan(terminalReceipt.reportSequence));
+    expect(newerTerminal.acknowledged, isFalse,
+        reason: 'a later observation ACK cannot erase the current terminal delivery failure');
+    bootstrapper.failRunningDelivery = false;
+    await manager.refresh();
+    expect(manager.status.runtimeStatsDelivery?.acknowledged, isTrue,
+        reason: 'a newer terminal receipt can settle delivery');
   });
 
   for (final platform in [HostPlatform.android, HostPlatform.windows]) {

@@ -1113,9 +1113,17 @@ class ConnectionManager extends ChangeNotifier {
   void _acceptRuntimeStatsDelivery(RuntimeStatsDeliveryReceipt receipt,
       {required int attempt, required String phase}) {
     if (_disposed || attempt <= 0 || attempt != _connectionAttemptNumber ||
-        receipt.attemptNumber != attempt || receipt.runtimePhase != phase.trim().toLowerCase() ||
-        (_runtimeStatsDelivery != null &&
-            receipt.reportSequence <= _runtimeStatsDelivery!.reportSequence)) return;
+        receipt.attemptNumber != attempt || receipt.runtimePhase != phase.trim().toLowerCase()) return;
+    final previous = _runtimeStatsDelivery;
+    if (previous != null) {
+      final terminal = const {'running', 'failed'}.contains(receipt.runtimePhase);
+      final previousTerminal = const {'running', 'failed'}.contains(previous.runtimePhase);
+      if (previousTerminal && previous.acknowledged != true && !terminal) return;
+      // A later observation ACK does not settle an earlier terminal packet.
+      // Its unacknowledged callback can arrive after that observation.
+      if (receipt.reportSequence <= previous.reportSequence &&
+          !(terminal && receipt.acknowledged != true && !previousTerminal)) return;
+    }
     _update(() => _runtimeStatsDelivery = receipt);
   }
 
