@@ -34,7 +34,7 @@ String _firstProviderQaAvailabilityLabel(PokrovFirstProviderQaAvailabilityReason
   PokrovFirstProviderQaAvailabilityReason.connectionPending => 'Подключение ещё выполняется',
   PokrovFirstProviderQaAvailabilityReason.appScope => 'Выбран режим отдельных приложений',
   PokrovFirstProviderQaAvailabilityReason.explicitRouting => 'Выбраны отдельные правила маршрутизации',
-  PokrovFirstProviderQaAvailabilityReason.localDpiEnabled => 'Включён локальный DPI-контроль',
+  PokrovFirstProviderQaAvailabilityReason.localDpiEnabled => 'Включён прямой доступ к сервисам',
   PokrovFirstProviderQaAvailabilityReason.warpEnabled => 'Включён WARP',
   PokrovFirstProviderQaAvailabilityReason.attemptConsumed => 'Попытка этого допуска уже начата',
 };

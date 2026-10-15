@@ -119,7 +119,7 @@ class _WarpConsentSheet extends StatelessWidget {
               const SizedBox(height: 24),
               Text(
                 ready
-                    ? 'Помогает со сложными сайтами'
+                    ? 'Дополнительный маршрут подключения'
                     : 'Недоступно на этом устройстве',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: active ? p.accent : foreground,
@@ -129,7 +129,7 @@ class _WarpConsentSheet extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Помогает, если сайт открывается нестабильно или обычного VPN недостаточно.',
+                'Добавляет Cloudflare WARP к маршруту подключения POKROV.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: secondary,
                       height: 1.34,
@@ -179,7 +179,7 @@ class _WarpConsentSheet extends StatelessWidget {
                 _WarpInfoRow(
                   icon: Icons.info_outline_rounded,
                   title:
-                      'Если сайт не откроется, POKROV вернется к обычному VPN.',
+                      'Если проверка соединения завершится ошибкой, POKROV попробует обычный VPN.',
                   value: '',
                   foreground: foreground,
                   muted: secondary,

@@ -107,7 +107,7 @@ class PokrovWarpLifecycle {
         PokrovWarpPhase.notReady =>
           'POKROV не показывает этот режим, пока он недоступен для устройства.',
         PokrovWarpPhase.readyToConsent =>
-          'Дополнительный слой помогает там, где обычного VPN недостаточно.',
+          'Дополнительный маршрут подключения через Cloudflare WARP.',
         PokrovWarpPhase.consented =>
           'Режим включится при следующем подключении и останется управляемым отсюда.',
         PokrovWarpPhase.active =>
