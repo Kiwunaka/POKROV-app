@@ -14,9 +14,6 @@ failure=none, TUN0/routes11, original IPv4DNS/empty IPv6DNS/proxyoff and no
 helper, fault task or owned browser window. Temporary DOM material was cleared
 and the browser/DevTools closed. Normal shutdown confirmed PoweredOff/Unlocked,
 bridge2 and GetHostTimeDisabled1. Hiddify and host network/clock were untouched.
-The first text-node clicks had no visible MSAA bounds; the actual viewport was
-used instead. Normal keyboard input with exact readback completed the cabinet
-read; no cache extraction or private session export was used.
 
 Private Windows **1.5.0+4169** was built once on 15 October at 20:55 MSK
 from client `40abd333`. The x64 installer includes the neutral wording from
