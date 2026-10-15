@@ -1,32 +1,33 @@
 # Client release status
 
-Private Windows **1.5.0+4162** (`f2f7d8df`) was built once: 28,623,212 bytes,
-unsigned, retaining Core 1.2.14/Cronet. It distinguishes cancellation before the
-native candidate request was dispatched, with honest zero native duration, from
-a started probe's budget expiry. The existing hanging-WARP regression passed;
-fallback, cleanup and neutral candidate ranking remain unchanged. Scoped analyze
-reported only two warnings in unchanged `runtime_engine.dart` (1733 and 4231).
-Platform `39e5098` is now live in the API contract and support worker. Installation
-returned 0 and the installed Core matched the retained artifact. One real CH
-Connect with WARP checked at 22:58:29 UTC on 14 October became validated at
-+13.567 seconds and stayed validated throughout the 60.192-second observation.
-The exact current cabinet/device/run read stored terminal report 5: ordinary
-VLESS Reality bridge connect (12,484 ms) and 64 KiB probe (717 ms), received 2,
-stored 2, rejected 0. This proves ordinary fallback, not a WARP-chain connection;
-the new cancellation code was not exercised by that terminal report. No network
-fault or second Connect was used, and historical 4154's cause remains unknown.
-Android remains signed 4161 ARM64; no publication or phone acceptance.
+Private Windows **1.5.0+4164** (`2b6a8a0a`) was built once: 28,624,925 bytes,
+unsigned, retaining Core 1.2.14/Cronet. Installation returned 0. On 15 October,
+manual WARP was observed checked and enabled after its consent request settled,
+before the single Connect at 00:13:47 UTC. Native core_ready was true from the
+initial state; runtime became validated at +13.807 s and stayed so through +60.181 s.
+The exact current cabinet/device/build/run report showed all four CH WARP chains
+(VLESS/XHTTP, both directions) failed with **prepare_timeout**, zero native duration
+and no native stage. Ordinary VLESS Reality bridge then connected in 12,703 ms
+and passed its 64 KiB transfer in 847 ms. All six attempts were stored. This
+locates the failure before native probing; it does not prove a WARP network fault
+or a working chain. The eight closed boundary causes are live on Platform 3feaa90.
 
-After normal Stop and WARP OFF, the 23:05:44 UTC readback showed stopped runtime,
-no retained protection/TUN/helpers/fault tasks, 11 routes, baseline Ethernet DNS,
-empty IPv6 DNS and proxy OFF. The cabinet's temporary subject element was removed
-and its browser window closed. Current-subject capture now checks the actual
-Explorer owner through ordinary Guest Control, matching the login helper; the
-previous GuestInfo expected-user flag was unreliable. Profile text's MSAA bounds
-remained at unscrolled coordinates after scrolling, so the cabinet was opened
-from its observed guest-window screenshot. Hiddify and host network/clock stayed
-untouched. Graceful shutdown confirmed PoweredOff/Unlocked, bridge attachment 2
-and GetHostTimeDisabled unchanged.
+An independent native IPC defect was fixed in 5b6b8c60: the Core's 548-byte
+candidate DTO exceeded the generic 512-byte response limit. Candidate responses
+now have their own 2048-byte limit; the generic limit stays unchanged. Focused
+regressions passed; an unrelated privileged boot-clock test did not pass.
+Actual 4163 still returned unavailable for the four chains, so that IPC defect
+does not explain the primary failure. The retained DLL's candidate export exists.
+Historical 4162's UI proved cached fallback; its generic message does not
+distinguish an API timeout from other transient bootstrap failures.
+
+Current case: normal Stop at 00:14:59 UTC, WARP OFF, temporary cabinet subject
+removed and owned browser closed. VM remains running under root for the remaining
+cause/fix/chain test, with no active server lease. Full network restoration and
+PoweredOff/Unlocked are still required when tests finish. Hiddify and host
+network/clock are untouched. Android remains signed 4161 ARM64; no phone
+acceptance, FullABI build or publication. The pending-ON/staging guards are only
+proposals; no observed race is claimed.
 
 Private Windows **1.5.0+4161** (`c8aff9cb`) passed the real browser-to-app pairing
 flow. Its single build produced a 28,622,404-byte unsigned installer; installation
