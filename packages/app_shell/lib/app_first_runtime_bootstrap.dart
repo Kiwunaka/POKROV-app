@@ -7237,7 +7237,7 @@ class AppFirstRuntimeBootstrapper
     if (!transportManifestEnabled && runtimeFeatures.isNotEmpty && preferredVariantId == 'direct') {
       final query = <String, String>{
         'catalog_version': '1', 'client_platform': hostPlatform.name,
-        'candidate_material_limit': '6',
+        'candidate_material_limit': selectedCandidateRef.isEmpty ? '6' : '1',
         'client_release': '$pokrovClientVersion+$pokrovClientBuildNumber',
         'runtime_features': (runtimeFeatures.map((feature) => feature.wireName).toList()..sort()).join(','),
         if (coreRelease != null && coreRelease.isNotEmpty) 'core_release': coreRelease,

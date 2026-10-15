@@ -391,6 +391,13 @@ it must retain its native duration, stage and cause instead of becoming
 limits, and oversized candidate replies remain rejected. This diagnostic fix
 does not change probe budgets, transport selection or proof acceptance.
 
+Managed-profile preparation requests one material when `selected_candidate_ref`
+already identifies the exact candidate, including a WARP chain. The initial
+catalog request still asks for six materials so ordinary alternatives remain
+available. The selected reference and catalog validation are unchanged; this
+removes unrelated material generation without changing the preparation timeout
+or route-policy synchronization.
+
 Debug builds expose bounded isolated handshake modes used by native tests.
 Release builds do not expose that entrypoint. The service and UI client are
 copied into the local release bundle and the Inno source installs a machine-wide

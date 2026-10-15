@@ -1201,6 +1201,7 @@ void main() {
           }));
         } else if (request.uri.path == '/api/client/profile/managed') {
           queries.add(request.uri.queryParameters);
+          final exact = request.uri.queryParameters['selected_candidate_ref'] == realityRef;
           request.response.write(jsonEncode({
             'profile_revision': 'transport-reserve', 'config_format': 'singbox-json',
             'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
@@ -1208,7 +1209,10 @@ void main() {
             'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
               'revision': 'transport-reserve', 'selected_candidate_ref': realityRef,
               'candidates': [candidate(false), candidate(true)]},
-            'candidate_materials': [for (final xhttp in [false, true]) {
+            'candidate_materials': exact ? [{
+              'candidate_ref': realityRef, 'transport_kind': 'reality',
+              'config_format': 'singbox-json', 'config_payload': config(false),
+            }] : [for (final xhttp in [false, true]) {
               'candidate_ref': xhttp ? xhttpRef : realityRef,
               'transport_kind': xhttp ? 'xhttp' : 'reality',
               'config_format': 'singbox-json', 'config_payload': config(xhttp),
@@ -1235,6 +1239,7 @@ void main() {
       routeMode: inputs.routeMode, preferredCountryCode: inputs.preferredCountryCode,
       runtimeFeatures: features, selectCandidate: false);
     expect(queries.single['selected_country_code'], 'DE');
+    expect(queries.single['candidate_material_limit'], '6');
     expect(selected.materialCandidate?.candidateRef, realityRef);
     await online.markManagedProfileProven(inputs, selected.cacheEntryId);
     final restarted = create(offline: true);
@@ -1246,6 +1251,14 @@ void main() {
     expect(reserve?.configPayload, selected.candidateMaterials[xhttpRef]?.configPayload);
     expect((await restarted.loadCachedManagedProfile(inputs, preferProven: true,
       runtimeFeatures: features))?.materialCandidate?.candidateRef, realityRef);
+    final exact = await online.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
+      routeMode: inputs.routeMode, preferredCountryCode: inputs.preferredCountryCode,
+      runtimeFeatures: features, selectCandidate: false, cacheResult: false,
+      selectedCandidateRef: realityRef);
+    expect(queries.last['candidate_material_limit'], '1');
+    expect(queries.last['selected_candidate_ref'], realityRef);
+    expect(exact.materialCandidate?.candidateRef, realityRef);
+    expect(exact.candidateMaterials.keys, [realityRef]);
   });
 
   test('protected managed cache restores exact profile after restart and respects server denial', () async {
