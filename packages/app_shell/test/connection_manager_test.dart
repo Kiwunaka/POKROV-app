@@ -223,6 +223,33 @@ class _CachedBootstrapper extends _Bootstrapper implements CachedManagedProfileB
       {bool? networkAvailable, bool? captivePortal}) async => ManagedProfileOfflineState.apiUnavailable;
 }
 
+class _ControlledWarpBootstrapper extends _CachedBootstrapper implements AppFirstWarpActionService {
+  _ControlledWarpBootstrapper() : super(warpEnabled: true) { cacheAvailable = false; }
+  WarpControlStatus warpStatus = WarpControlStatus.fromPolicy(
+      WarpRuntimePolicy.clientLocalDefault.withUserConsent(true));
+  final statusReplies = <WarpControlStatus>[];
+  final consentStarted = Completer<void>();
+  Future<void>? consentGate;
+
+  @override
+  Future<WarpControlStatus> fetchWarpStatus({required HostPlatform hostPlatform, Future<void>? cancelled}) async =>
+      statusReplies.isEmpty ? warpStatus : statusReplies.removeAt(0);
+  @override
+  Future<WarpControlStatus> setWarpConsent({required HostPlatform hostPlatform, required bool enabled,
+      String reasonCode = ''}) async {
+    if (!consentStarted.isCompleted) consentStarted.complete();
+    await consentGate;
+    return warpStatus = warpStatus.copyWith(consented: enabled, state: enabled ? 'consented' : 'revoked');
+  }
+  @override
+  Future<WarpControlStatus> requestWarpRotation({required HostPlatform hostPlatform,
+      String reasonCode = 'user_requested'}) async => warpStatus;
+  @override
+  Future<WarpControlStatus> reportWarpRuntimeEvent({required HostPlatform hostPlatform,
+      required String eventName, String state = '', String reasonCode = '', String message = '',
+      Map<String, Object?> meta = const {}}) async => warpStatus;
+}
+
 class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceService {
   _StatsBootstrapper({bool warpEnabled = false, bool bundle = false})
       : super(catalog: true, warpEnabled: warpEnabled, bundle: bundle);
@@ -3005,7 +3032,7 @@ void main() {
       minimumClientRelease: '1.4.0', minimumCoreRelease: null,
       platforms: base.platforms, requiredFeatures: base.requiredFeatures,
       warpMode: 'proxy_over_warp');
-    final bootstrapper = _CachedBootstrapper(warpEnabled: true)
+    final bootstrapper = _ControlledWarpBootstrapper()
       ..cacheAvailable = false
       ..candidates = [base, chain];
     final runtime = _Runtime()..supportsCandidates = true;
@@ -3023,6 +3050,19 @@ void main() {
     expect(manager.transportCatalog?.selectedCandidateRef, chain.candidateRef);
     expect(runtime.probedWarpModes, ['proxy_over_warp']);
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+    await manager.disconnect();
+    final stagesBeforePolicyChange = runtime.stagedPayloads.length;
+    final connectsBeforePolicyChange = runtime.connectCalls;
+    bootstrapper.statusReplies.addAll([
+      bootstrapper.warpStatus,
+      bootstrapper.warpStatus.copyWith(state: 'fallback'),
+    ]);
+    await manager.connect();
+    expect(runtime.probedWarpModes.last, 'proxy_over_warp', reason: 'the chain probe itself succeeded');
+    expect(runtime.stagedPayloads, hasLength(stagesBeforePolicyChange),
+        reason: 'a changed WARP policy must not stage ordinary config under the successful chain ref');
+    expect(runtime.connectCalls, connectsBeforePolicyChange);
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
     runtime.failedProbeProfiles.add(chain.candidateRef);
     await manager.reconnect();
     expect(manager.transportCatalog?.selectedCandidateRef, base.candidateRef);
@@ -3151,14 +3191,44 @@ void main() {
 
   test('legacy catalog needs a manual WARP choice even with saved consent', () async {
     final runtime = _Runtime()..supportsCandidates = true;
-    final manager = _manager(runtime, _Bootstrapper(catalog: true, warpEnabled: true));
+    final bootstrapper = _ControlledWarpBootstrapper();
+    final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     await manager.connect();
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
     await manager.disconnect();
-    await manager.setWarpRuntimeConsent(true);
+    final consentGate = Completer<void>();
+    bootstrapper.consentGate = consentGate.future;
+    final enabling = manager.setWarpRuntimeConsent(true);
+    await bootstrapper.consentStarted.future;
+    final enabledWhilePending = manager.presentation.primaryActionEnabled;
+    final connectsBeforeConsent = runtime.connectCalls;
+    final stagesBeforeConsent = runtime.stagedPayloads.length;
+    try {
+      await manager.connect();
+      expect(runtime.connectCalls, connectsBeforeConsent, reason: 'pending ON must not start a stopped connection');
+      expect(runtime.stagedPayloads, hasLength(stagesBeforeConsent));
+      expect(enabledWhilePending, isFalse);
+    } finally {
+      consentGate.complete();
+      await enabling;
+    }
     await manager.connect();
     expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isTrue);
+    expect(manager.presentation.primaryActionLabel, 'Отключить');
+    expect(manager.presentation.primaryActionEnabled, isTrue);
+    final handoffsBeforeRunningChange = runtime.handoffCalls;
+    final revokeGate = Completer<void>();
+    bootstrapper.consentGate = revokeGate.future;
+    final disabling = manager.setWarpRuntimeConsent(false);
+    expect(manager.presentation.primaryActionLabel, 'Отключить');
+    expect(manager.presentation.primaryActionEnabled, isTrue);
+    revokeGate.complete();
+    await disabling;
+    expect(runtime.handoffCalls, handoffsBeforeRunningChange + 1,
+        reason: 'the completed running-policy change keeps its existing internal reconnect');
+    expect(runtime.stagedPayloads.last.warpPolicy.canEnableRuntime, isFalse);
+    expect(manager.snapshot?.phase, RuntimePhase.running);
   });
 
   test('direct WARP is the consented last reserve and retries nodes next time', () async {

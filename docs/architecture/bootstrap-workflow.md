@@ -199,6 +199,12 @@ When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,
 then direct WARP. Cached or server consent alone does not admit either WARP group;
 account, expiry and proof checks remain unchanged.
+While a manual WARP consent change is pending, a stopped client cannot start a
+new Connect. Stop, cancellation and the existing internal reconnect after a
+running-policy change remain available. A selected WARP chain must still have
+WARP enabled at final preparation; otherwise `managed_profile_superseded`
+rejects it before staging, so its chain reference cannot identify ordinary
+runtime material. A request suppressing WARP also excludes its candidate group.
 Recovery keeps at most three probes. If its first three eligible candidates all
 use TCP or all use UDP, the third slot takes the first eligible other network
 family. If none exists and all three share protocol/transport/protection, it

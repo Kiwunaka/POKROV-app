@@ -2536,6 +2536,7 @@ class ConnectionManager extends ChangeNotifier {
       requireCurrent();
       final candidateWarpPolicy = warpStatus?.applyTo(baseWarpPolicy) ?? baseWarpPolicy;
       final useWarpCandidates =
+          !suppressWarpRuntime &&
           _explicitWarpRuntimeConsent == true &&
           candidateWarpPolicy.canOfferRuntime &&
           (_warpRuntimeRetryPending || _warpRuntimeAttemptAllowed(candidateWarpPolicy));
@@ -3014,6 +3015,14 @@ class ConnectionManager extends ChangeNotifier {
         warpConsentStillValid &&
         (explicitRetryRequested ||
             _warpRuntimeAttemptAllowed(displayWarpPolicy));
+    if (selectedWarpMode != null && !warpRuntimeAttemptEnabled) {
+      throw const BootstrapFailure(
+        'Настройки подключения изменились. Подключитесь ещё раз.',
+        code: 'managed_profile_superseded',
+        statusCode: 409,
+        operation: 'managed_profile',
+      );
+    }
     final connectionPreference = _managedProfileCacheInputs;
     final requestedPreferred = connectionPreference.preferredNodeCode.trim().toLowerCase();
     final requestedVariant = requestedPreferred.isEmpty
@@ -3721,6 +3730,12 @@ class ConnectionManager extends ChangeNotifier {
         await _cancelPrimaryConnect();
         return;
       }
+      _update(() {
+        _runtimeHeadline = 'POKROV уже обновляется. Подождите немного.';
+      });
+      return;
+    }
+    if (_warpPolicyBusy && _runtimeSnapshot?.phase != RuntimePhase.running) {
       _update(() {
         _runtimeHeadline = 'POKROV уже обновляется. Подождите немного.';
       });
@@ -5592,6 +5607,9 @@ class ConnectionManager extends ChangeNotifier {
     }
     if (snapshot.phase == RuntimePhase.running) {
       return true;
+    }
+    if (_warpPolicyBusy && !_connectionCoordinator.actionInFlight) {
+      return false;
     }
     if (!snapshot.supportsLiveConnect) {
       return false;
