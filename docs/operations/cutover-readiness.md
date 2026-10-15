@@ -1,21 +1,29 @@
 # Client release status
 
-On 15 October the replacement US remained open by the owner's explicit
-instruction, including after unsuccessful probes. One normal 4168 US/WARP-OFF
-Connect at 11:37 UTC exhausted five direct candidates before starting TUN;
-the exact current-device report stored all five attempts without rejection.
-A separate same-device check at 12:20 UTC fetched unchanged normal API VLESS
-material and called existing native IPC 29 once with its normal 4-second budget.
-It returned a completed `proxy_dial` timeout (4007 ms, primary 3002 ms and reserve
-988 ms). This excludes App concurrency for that isolated result, but is not an
-exact replay: raw API bootstrap DNS differs from App DNS materialization. Guest
-Cedar DNS resolved only the replacement IP. Public-cover HTTPS and the US's
-direct owned 204/64-KiB responders passed; authenticated US VPN acceptance remains
-open. No probe budget, Core, protocol or key was changed. Temporary browser
-material was removed. Guest baseline at 12:28 UTC had no TUN, guard, helpers,
-fault tasks or browser windows, 11 IPv4 routes and original DNS/proxy settings;
-graceful shutdown restored PoweredOff/Unlocked. Hiddify and host settings stayed
-unchanged. Platform deployment details remain in the platform owning doc.
+On 15 October, private Windows 4168 passed an ordinary US/WARP-OFF connection
+through the existing Mini bridge. One normal Connect at 15:02:54 UTC reached
+validated running in 12.2 seconds. Actual OS-TUN HTTPS requests returned 204 and
+all 65536 bytes of200 in 1007/523 ms. The app showed New York and confirmed
+tunnel/DNS/egress; at 15:06:43 the service retained two Mini TCP443 sockets and
+no direct-US TCP socket. No manual profile override, QA cohort or new grant
+was used. This accepts the working Mini→US path; direct protocols remain
+separately unaccepted. Platform changes are recorded in its owning doc.
+
+Earlier raw normal-API probes exposed bootstrap DNS without a direct detour;
+Platform 9beb9ef corrected that cycle. App materialization differs, so the raw
+probe is not an exact App replay. Direct US subsequently passed 204 and obtained
+64-KiB response headers but stalled in the body; diagnostic 8 s and MTU 1400 did
+not resolve it. MTU 1500 was restored. No timeout, key or client runtime changed.
+
+Cleanup restored CH/WARPoff, config_staged/running0/validated0/guard0,
+TUN0/routes11, Ethernet DNS 192.168.3.1/IPv6empty/proxy off and no helper, fault
+task or owned browser window. The cleanup status retained
+protected_handoff_unavailable; the accepted connection was healthy before
+cleanup. Normal shutdown confirmed PoweredOff/Unlocked, bridge2 and
+GetHostTimeDisabled1. Hiddify and host network/clock were untouched.
+Core 3ded4a3 contains only a tested internal partial-body observation fix;
+it is not built into this accepted Core 1.2.14 runtime. No new client build
+was required for this server-route acceptance.
 
 Public client wording was neutralized in `7abbb9e8` (five visible strings across
 WARP and diagnostics, scoped analysis passed). This is source only: the private
