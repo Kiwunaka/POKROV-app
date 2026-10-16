@@ -1,5 +1,19 @@
 # Client release status
 
+On16October DE RAW/XHTTP issuance and preferred SNI moved to
+Fjord after the owned loopback TLS site and current Node ACK passed. Android4175
+selected the normal Germany country after ordinary Refresh Countries; the
+changed candidate `de:legacy_reality_fallback:bridge_rf2` passed64KiB in1730ms
+and connected in6014ms at19:08:09.037679UTC with native egress and matching
+staged/effective revisions. Earlier attempts selected cached DE2 and are not
+DE acceptance. DE2's temporary new-connection hold was restored, all timers
+stopped, and FULLACK6/fresh health closed the lease at19:10:14.368299UTC.
+Phone Stop/Auto/TUN0/Wi-Fi1/data1/airplane0 was restored at19:10:37UTC.
+The new hostname is supported by current backend issuance plus the ordinary
+client receipt, not an endpoint string in that receipt. XHTTP publication has
+current Node ACK; no separate new XHTTP connection was run. HY2's existing
+hostname/certificate and AWG literal endpoints remain unchanged.
+
 On16October Android4175 accepted the live signed routing catalog26 through its
 ordinary Rules screen: signature verified20:38MSK, expiry15November, four zero
 rule counts and no cached fallback. After CH RAW/XHTTP publication moved to
