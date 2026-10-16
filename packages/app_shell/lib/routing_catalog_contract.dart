@@ -133,7 +133,7 @@ class RoutingCatalogVerifier {
         throw const RoutingCatalogFailure('catalog_not_current');
       }
       for (final (field, minimum, maximum) in const [
-        ('sources', 1, 128), ('evidence', 0, 512), ('services', 1, 256),
+        ('sources', 0, 128), ('evidence', 0, 512), ('services', 0, 256),
       ]) {
         final rows = payload[field];
         if (rows is! List || rows.length < minimum || rows.length > maximum ||

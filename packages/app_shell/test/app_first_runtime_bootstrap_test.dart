@@ -245,6 +245,40 @@ class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
 }
 
 void main() {
+  test('neutral signed catalog keeps VPN defaults and rejects Selective without services', () async {
+    final now = DateTime.now().toUtc();
+    String wire(DateTime time) => '${time.toIso8601String().substring(0, 19)}Z';
+    final key = await Ed25519().newKeyPairFromSeed(List.generate(32, (i) => i + 1));
+    final envelope = await _qaSigned({
+      'schema_version': 'pokrov-routing-catalog-v1', 'revision': 26,
+      'security_revision': 2, 'audience': 'production',
+      'issued_at': wire(now.subtract(const Duration(seconds: 1))),
+      'expires_at': wire(now.add(const Duration(hours: 1))),
+      'sources': <Object>[], 'evidence': <Object>[], 'services': <Object>[],
+    }, 'pokrov-routing-catalog-v1', key);
+    final verifier = RoutingCatalogVerifier(publicKeysById: {
+      'qa-test': base64Encode((await key.extractPublicKey()).bytes),
+    }, audience: 'production');
+    final catalog = await verifier.verify(envelope, now: now,
+      minimumRevision: 25, minimumSecurityRevision: 2, currentPayloadSha256: null);
+    final policy = RoutingCatalogPolicy.fromVerified(catalog);
+    expect(policy.services, isEmpty);
+    for (final mode in [CatalogRoutingMode.full, CatalogRoutingMode.smartSafe]) {
+      final compiled = compileCatalogDomainPolicy(policy: policy, mode: mode,
+        platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true, now: now);
+      expect(compiled.defaultAction, CatalogRouteAction.vpn);
+      expect(compiled.rules, isEmpty);
+      expect(compiled.localDpiControlHosts, isEmpty);
+    }
+    expect(() => compileCatalogDomainPolicy(policy: policy, mode: CatalogRoutingMode.selective,
+      platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true, now: now),
+      throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_service_selection_empty')));
+    expect(() => compileCatalogDomainPolicy(policy: policy, mode: CatalogRoutingMode.selective,
+      platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true, now: now,
+      selectedServiceIds: {'removed-service'}),
+      throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_selected_service_unsupported')));
+  });
+
   for (final (serviceId, controlFailure) in <(String, String?)>[
     for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
       ('gemini', failure),

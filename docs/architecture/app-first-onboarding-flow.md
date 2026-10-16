@@ -129,6 +129,13 @@ failures remain blocking. Ordinary RU domain/IP rules come from the managed
 profile and are retained independently. Fetching metadata alone does not mutate
 a native host, send app inventory or grant a provider lease.
 
+A signed neutral catalog with empty sources, evidence and services adds no
+service exceptions. Full and Smart Safe retain their ordinary VPN default and
+the separate managed RU rules; it does not verify RU apps or grant Smart Access.
+Selective rejects empty selections and previously selected services absent from
+the current catalog. Signature, audience, expiry and revision-floor checks still
+apply to the neutral catalog.
+
 Public 1.4.5+4086 was built from `5a6f268a`, whose connection preparation did not
 have the optional-catalog exception above. An enabled catalog could therefore
 block even ordinary VPN on that source. The exact public compile flag is not

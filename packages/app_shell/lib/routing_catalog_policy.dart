@@ -82,7 +82,7 @@ class RoutingCatalogPolicy {
 
   factory RoutingCatalogPolicy.fromVerified(VerifiedRoutingCatalog catalog) {
     final sourceIds = <String>{};
-    for (final source in _objects(catalog.payload['sources'], 1, 128)) {
+    for (final source in _objects(catalog.payload['sources'], 0, 128)) {
       final id = _id(source['source_id']);
       if (!sourceIds.add(id)) _fail('duplicate_source');
       _digest(source['sha256']);
@@ -113,7 +113,7 @@ class RoutingCatalogPolicy {
     }
     final services = <CatalogServicePolicy>[];
     final serviceIds = <String>{};
-    for (final value in _objects(catalog.payload['services'], 1, 256)) {
+    for (final value in _objects(catalog.payload['services'], 0, 256)) {
       final id = _id(value['service_id']);
       if (!serviceIds.add(id)) _fail('duplicate_service');
       final platforms = _strings(value['platforms'], 1, 5, allowed: _platforms);
