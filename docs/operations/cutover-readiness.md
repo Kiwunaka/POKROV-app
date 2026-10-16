@@ -14,6 +14,14 @@ normal reports were delivered after Stop. No terminal HTTP failure occurred,
 so the new HTTP-status field does not diagnose the older5xx event. This accepts
 the new binary's ordinary path and another Lampa destination, not AWG or WARP.
 Phone restored: Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0; host and VM untouched.
+Source review locates the four failures before native probe/normalization/WARP
+registration. The six-second preparation deadline includes completed route-policy,
+candidate network selection (up to two seconds), and managed HTTP fetch. The
+current device has no backend WarpMaterial rows; that path returns client-local
+policy without external provisioning. The failing HTTP/network substage remains
+unknown. Next observation belongs in the existing candidate report: preparation
+substage, elapsed time and any received status. No timeout/fallback change or
+unchanged repeat was made.
 
 After the approved Floating-IP move and Lampa egress repair, unchanged Android4169
 accepted the exact RF2→PL path on Wi-Fi at10:00:44 clientUTC (http_64k681ms,
