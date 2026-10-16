@@ -75,11 +75,19 @@ class RuntimeCandidateProbeResult {
   final Map<String, Object>? http64kObservation;
   final Map<String, Object>? probeError;
 
+  static Map<String, Object>? awgFromWire(Object? value) {
+    const counters = {'handshake_initiations', 'handshake_errors', 'handshake_responses', 'handshake_retries'};
+    if (value is! Map || value.length != 5 ||
+        !const {'not_started', 'lookup', 'resolved', 'failed', 'not_needed'}.contains(value['destination_dns']) ||
+        counters.any((key) => value[key] is! int || (value[key] as int) < 0 || (value[key] as int) > 4)) return null;
+    return Map<String, Object>.unmodifiable(value.cast<String, Object>());
+  }
+
   static Map<String, Object>? probeErrorFromWire(Object? value, {bool allowPrimary = true}) {
     const required = {'operation', 'cause', 'cancel_state', 'target', 'request',
       'elapsed_ms', 'stage_started_ms', 'duration_ms'};
     if (value is! Map || !value.keys.toSet().containsAll(required) ||
-        value.keys.any((key) => !required.contains(key) && key != 'status' && key != 'os_error_code' && !(allowPrimary && key == 'primary_error')) ||
+        value.keys.any((key) => !required.contains(key) && key != 'status' && key != 'os_error_code' && !(allowPrimary && (key == 'primary_error' || key == 'awg'))) ||
         !const {'dial', 'tls', 'write', 'read_headers', 'read_body', 'validate_response'}.contains(value['operation']) ||
         !const {'io', 'timeout', 'cancelled', 'eof', 'unexpected_eof', 'closed', 'dns', 'tls_certificate', 'invalid_response'}.contains(value['cause']) ||
         !const {'active', 'deadline', 'cancelled'}.contains(value['cancel_state']) ||
@@ -95,7 +103,10 @@ class RuntimeCandidateProbeResult {
         ? probeErrorFromWire(value['primary_error'], allowPrimary: false) : null;
     if (value.containsKey('primary_error') && (primary == null || value['target'] != 'owned_reserve' ||
         primary['target'] != 'owned_api' || (primary['duration_ms'] as int) > (value['duration_ms'] as int))) return null;
-    return Map<String, Object>.unmodifiable({...value.cast<String, Object>(), if (primary != null) 'primary_error': primary});
+    final awg = value.containsKey('awg') ? awgFromWire(value['awg']) : null;
+    if (value.containsKey('awg') && awg == null) return null;
+    return Map<String, Object>.unmodifiable({...value.cast<String, Object>(),
+      if (primary != null) 'primary_error': primary, if (awg != null) 'awg': awg});
   }
 
   static Map<String, Object>? http64kObservationFromWire(Object? value) {

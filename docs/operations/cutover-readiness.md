@@ -1,24 +1,39 @@
 # Client release status
 
-Private Android **1.5.0+4171** was built and installed over4170 on16October,
-preserving data. App e3dc4743 adds closed preparation stage/time/status to each
-failed candidate report; API3299344 is live. The production-signed ARM64 APK is
-85,199,980bytes at `E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4171-arm64.apk`.
-Core5ad6e62/private1.2.14 was reused from4170 and bundled native bytes match its
-ARM64 AAR. No Windows/FullABI build or public release was made; public1.4.5 stays.
+Private Android **1.5.0+4172**, production-signed ARM64, was installed over4171
+on16October without deleting data. APK85,199,976bytes is at
+`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4172-arm64.apk`.
+Core5ad6e62/private1.2.14 is reused from4170. No Windows/FullABI build or public
+release was made; public1.4.5 stays.
 
-One current manual CH/WARP-ON connection at11:27:46 clientUTC reached all four
-native probes, so the earlier4170 managed-preparation timeout did not recur.
-RAW warp_over_proxy reached http_64k; the group still exhausted its probe budget
-and ordinary Mini→CH won at11:28:06 (19,852ms total, http_64k878ms). This does not
-accept WARP. Android runs three workers for four WARP candidates; the5s worker
-budget left the fourth only975ms. Its ordinary failure report records primary
-dial deadline683ms and reserve cancellation219ms. Earlier RAW4994ms includes
-native cleanup, not a separate5s I/O timeout. The next narrow fix must preserve
-concurrency3/per-probe4s while avoiding starvation of the queued candidate.
-No unchanged Connect was repeated. Stop11:29:09; phone Auto/WARPoff/TUN0,
-Wi-Fi1/data1/airplane0; host/VM and the unrelated Android emulator untouched.
-Physical AWG DE2/RU, Android WARP and remaining protocol acceptance stay open.
+Manual Android WARP is accepted on Wi-Fi through CH VLESS warp_over_proxy.
+App484594c3 gives the queued fourth probe its full native I/O grant while keeping
+three workers and the4s per-probe limit; native cleanup is still joined. The first
+4172 attempt hit managed-profile HTTP500 before probing. Platform7051287 removed
+the reproduced User/Node lock wait for already prepared credentials (one live
+API module/restart); genuine issuance errors and issuance locking remain.
+The next ordinary Connect at12:02:13 clientUTC selected exactly
+`ch:legacy_reality_fallback:warp_over_proxy`: http_64k3959ms,
+Connect17881ms, Event12:02:31.408123. Native protection confirmed tunnel/DNS/
+VPN egress through12:04:25; Stop12:05:13. This does not accept every WARP variant
+or cellular WARP. The earlier4171 attempt exhausted all four probe budgets and
+fell back to Mini→CH; it was not a WARP success. Do not repeat the accepted case.
+
+Ordinary direct RU selection at12:09:22 on4172 failed VLESS and AWG proxy_dial
+around12s. The exact current AWG peer is present on RU, with handshake/rx/tx=0;
+this does not identify whether destination DNS, outer UDP or handshake is failing.
+Mini→RU remains accepted. New bounded AWG counters/DNS state are source-only
+pending a changed Core/App build; no unchanged RU Connect was repeated.
+Germany direct selection at12:21:50 accepted DE VLESS: http_64k549ms,
+Connect6739ms, normal Event12:21:57.659544 and native protection through12:24:12.
+AWG/DE2 probes were cancelled by that winner, so they are not accepted.
+
+Both temporary bridge-exclusion scopes were exactly restored and their rollback
+timers disarmed; no Node admission/key/service changes. Stop12:25:31 restored
+Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0. Lease91f27283 closed with FULLACK6 and
+fresh Brain health12:27:12.747971UTC, then SSH EOF/FREE. Host/VM and the unrelated
+Android emulator are untouched. Physical AWG DE2/RU and remaining protocol
+acceptance are open.
 
 After the approved Floating-IP move and Lampa egress repair, unchanged Android4169
 accepted the exact RF2→PL path on Wi-Fi at10:00:44 clientUTC (http_64k681ms,

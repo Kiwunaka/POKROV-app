@@ -547,7 +547,7 @@ final class PokrovClientObservability {
         if (RuntimeCandidateProbeResult.probeStages.contains(probeStage))
           'probe_stage': probeStage,
         if (RuntimeCandidateProbeResult.probeErrorFromWire(probeError) case final detail?)
-          'probe_error': detail,
+          'probe_error': Map<String, Object>.from(detail)..remove('awg'),
         if (failureKind == 'probe_failed' && probeStage == 'http_64k' &&
             RuntimeCandidateProbeResult.http64kFailures.contains(http64kFailure))
           'http_64k_failure': http64kFailure,

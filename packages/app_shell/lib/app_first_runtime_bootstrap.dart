@@ -4466,7 +4466,12 @@ class AppFirstRuntimeBootstrapper
         if (!outcome)
           'failure_kind': failure,
       };
-      final detail = !outcome ? RuntimeCandidateProbeResult.probeErrorFromWire(probe['probe_error']) : null;
+      final nativeDetail = !outcome ? RuntimeCandidateProbeResult.probeErrorFromWire(probe['probe_error']) : null;
+      final detail = nativeDetail == null ? null : (Map<String, Object>.from(nativeDetail)..remove('awg'));
+      if (transport == 'awg31' && nativeDetail?['awg'] != null) {
+        // Keep the small current-device snapshot even if a later fallback wins.
+        safeProbe['awg'] = nativeDetail!['awg'];
+      }
       if (detail != null) {
         // Keep every candidate outcome and the last failure's detail inside
         // the existing 8 KiB D8 record budget. Local events retain each detail.

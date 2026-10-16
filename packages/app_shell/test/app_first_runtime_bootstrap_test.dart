@@ -941,15 +941,21 @@ void main() {
         'target': 'owned_api', 'request': 'egress_204', 'elapsed_ms': 300,
         'stage_started_ms': 200, 'duration_ms': 500}};
     const preparation = {'stage': 'http_body', 'elapsed_ms': 6001, 'http_status': 200};
+    const awg = {'handshake_initiations': 4, 'handshake_errors': 0,
+      'handshake_responses': 0, 'handshake_retries': 2, 'destination_dns': 'resolved'};
     final probe = <String, Object?>{
-      'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
+      'candidate_ref': 'de:awg31_lab', 'candidate_transport': 'awg31',
       'stage': 'probe', 'connected': false, 'failure_kind': 'timeout',
       'duration_ms': 900, 'unrecognized_content': 'must-not-be-delivered',
-      'probe_error': probeError,
+      'probe_error': {...probeError, 'awg': awg},
       'preparation': preparation,
     };
     final report = bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
-        runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe],
+        runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe, {
+          'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
+          'stage': 'probe', 'connected': false, 'duration_ms': 900,
+          'failure_kind': 'timeout', 'probe_error': probeError,
+        }],
         failureKind: 'core_identity_connect_unacknowledged', failureOperation: 'core_connect',
         failureHttpStatus: 502,
         onDeliveryReceipt: (receipt) => receipts.add(receipt));
@@ -982,10 +988,14 @@ void main() {
     expect(received[0]['failure_operation'], 'core_connect');
     expect(received[0]['failure_http_status'], 502);
     expect(received[0]['candidate_probes'], [{
+      'candidate_ref': 'de:awg31_lab', 'candidate_transport': 'awg31',
+      'stage': 'probe', 'connected': false, 'duration_ms': 900, 'failure_kind': 'timeout',
+      'awg': awg,
+      'preparation': preparation,
+    }, {
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
       'stage': 'probe', 'connected': false, 'duration_ms': 900, 'failure_kind': 'timeout',
       'probe_error': probeError,
-      'preparation': preparation,
     }]);
     expect(jsonEncode(received), isNot(contains('must-not-be-delivered')));
     final outbox = File('${directory.path}/runtime-stats-outbox-windows.json');
@@ -1004,6 +1014,7 @@ void main() {
         connectivitySnapshot: egressSnapshot), isFalse);
     expect(pending(), hasLength(1));
     final frozenBody = Map<String, dynamic>.from(pending().single['body'] as Map);
+    expect((frozenBody['candidate_probes'] as List).single['awg'], awg);
     expect(frozenBody['egress_probe'], {'stage': 'tls', 'outcome': 'deadline', 'error_domain': 'none',
       'error_code': 0, 'elapsed_ms': 1438, 'target': 'owned_reserve',
       'owner_remaining_ms_at_entry': 1425, 'dns_a_accepted': true, 'http_local_is_tun': false});

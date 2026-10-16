@@ -240,7 +240,7 @@ internal data class AndroidCandidateProbeDiagnostic(
             )
             val timing = setOf("elapsed_ms", "stage_started_ms", "duration_ms")
             val required = enums.keys + timing
-            if (!fields.keys.containsAll(required) || fields.keys.any { it !in required && it !in setOf("status", "os_error_code") && !(allowPrimary && it == "primary_error") } ||
+            if (!fields.keys.containsAll(required) || fields.keys.any { it !in required && it !in setOf("status", "os_error_code") && !(allowPrimary && it in setOf("primary_error", "awg")) } ||
                 enums.any { (key, allowed) -> fields[key] !in allowed }) return null
             fun number(key: String): Long? = when (val number = fields[key]) {
                 is Int -> number.toLong()
@@ -254,7 +254,26 @@ internal data class AndroidCandidateProbeDiagnostic(
             val primary = if (fields.containsKey("primary_error")) safeProbeError(fields["primary_error"], false) else null
             if (fields.containsKey("primary_error") && (primary == null || fields["target"] != "owned_reserve" ||
                     primary["target"] != "owned_api" || (primary["duration_ms"] as Number).toLong() > number("duration_ms")!!)) return null
-            return fields.entries.associate { (key, field) -> key as String to (if (key == "primary_error") primary!! else field as Any) }
+            val awg = if (fields.containsKey("awg")) safeAWG(fields["awg"]) else null
+            if (fields.containsKey("awg") && awg == null) return null
+            return fields.entries.associate { (key, field) -> key as String to when (key) {
+                "primary_error" -> primary!!
+                "awg" -> awg!!
+                else -> field as Any
+            } }
+        }
+
+        // Reply-only data: toJsonLine deliberately does not serialize probeError.
+        private fun safeAWG(value: Any?): Map<String, Any>? {
+            val fields = value as? Map<*, *> ?: return null
+            val counters = setOf("handshake_initiations", "handshake_errors", "handshake_responses", "handshake_retries")
+            if (fields.size != 5 || fields["destination_dns"] !in setOf("not_started", "lookup", "resolved", "failed", "not_needed") ||
+                counters.any { key -> when (val count = fields[key]) {
+                    is Int -> count !in 0..4
+                    is Long -> count !in 0L..4L
+                    else -> true
+                } }) return null
+            return fields.entries.associate { (key, field) -> key as String to field as Any }
         }
     }
 }

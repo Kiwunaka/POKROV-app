@@ -20,9 +20,11 @@ class AndroidCandidateProbeJobsTest {
             val primary = mapOf("operation" to "read_headers", "cause" to "timeout", "cancel_state" to "deadline",
                 "target" to "owned_api", "request" to "egress_204", "elapsed_ms" to 5000L,
                 "stage_started_ms" to 2000L, "duration_ms" to 7000L)
+            val awg = mapOf("handshake_initiations" to 4, "handshake_errors" to 0,
+                "handshake_responses" to 0, "handshake_retries" to 2, "destination_dns" to "resolved")
             val probeError = mapOf("operation" to "read_headers", "cause" to "closed", "cancel_state" to "cancelled",
                 "target" to "owned_reserve", "request" to "egress_204", "elapsed_ms" to 100L,
-                "stage_started_ms" to 11_900L, "duration_ms" to 12_000L, "primary_error" to primary)
+                "stage_started_ms" to 11_900L, "duration_ms" to 12_000L, "primary_error" to primary, "awg" to awg)
             val nativeDiagnostic = AndroidCandidateProbeDiagnostic.fromNativeFields(
                 "proxy_dial", 7L, 12_000L,
                 probeError = probeError,
@@ -37,6 +39,13 @@ class AndroidCandidateProbeJobsTest {
             assertEquals("cancelled", published!!["failure_kind"])
             assertEquals(12_034L, published!!["duration_ms"])
             assertEquals(probeError, published!!["probe_error"])
+            assertFalse(AndroidCandidateProbeDiagnostic().cancelledResponse(1).containsKey("probe_error"))
+            assertFalse(AndroidCandidateProbeDiagnostic.fromNativeFields(
+                "proxy_dial", 7L, 12_000L, probeError = probeError + ("awg" to (awg + ("peer" to "private")))
+            ).cancelledResponse(12_034L).containsKey("probe_error"))
+            assertFalse(AndroidOperationalRecord("2026-10-16T12:00:00.000Z", 1,
+                AndroidOperationalEvent.CANDIDATE_PROBE, AndroidOperationalOutcome.FAILED,
+                probeSequence = 1, candidateProbe = nativeDiagnostic).toJsonLine().contains("handshake"))
             assertEquals(setOf("success", "failure_kind", "duration_ms", "stage", "probe_error"), published!!.keys)
             assertFalse(AndroidCandidateProbeDiagnostic.fromNativeFields(
                 "http_204", 7L, 12_000L, probeError = probeError + ("raw_error" to "sensitive-host")

@@ -1723,7 +1723,7 @@ class RuntimeHostBridge(
                         nativeResult.opt("certificate_duration_ms"),
                         nativeResult.optJSONObject("probe_error")?.let { detail ->
                             detail.keys().asSequence().associateWith { key ->
-                                if (key == "primary_error") detail.optJSONObject(key)?.let { primary ->
+                                if (key == "primary_error" || key == "awg") detail.optJSONObject(key)?.let { primary ->
                                     primary.keys().asSequence().associateWith { field -> primary.opt(field) }
                                 } else detail.opt(key)
                             }

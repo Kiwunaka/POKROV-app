@@ -3110,6 +3110,14 @@ same Event's `candidate_preparations`, including a successful ordinary fallback.
 No URLs, headers, bodies or exception text are included. This source diagnostic
 does not change timeouts or establish that a WARP connection was attempted.
 
+Failed isolated AWG probes carry `probe_error.awg` with four per-device saturated
+handshake counters (`0..4`) and a closed destination-DNS state. Android preserves
+this snapshot when cancellation replaces the reply, without writing it to the
+operational journal. Normal runtime stats extract it as `candidate_probes[].awg`;
+the existing outbox and Platform Event `candidate_awg` retain its candidate ref
+even after a later fallback. No peer, address, raw log or key is included. This
+source-only diagnostic does not establish the cause of a missing handshake.
+
 Windows bound Connect preserves the first interruption before rollback. A stale
 physical network returns network_context_unavailable; a lost client process
 returns connect_owner_changed. Explicit cancellation/service stop remains
