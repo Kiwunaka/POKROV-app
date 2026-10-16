@@ -1,5 +1,26 @@
 # Client release status
 
+On16October the Windows4174 VM accepted a new first-visit continuation through
+the live marketing install page. After the ordinary Windows Download click,
+F5 restored Continue in POKROV with a fresh handoff for the same browser visit.
+Edge's Open prompt invoked the registered URI; the normal authenticated app
+request consumed it at19:28:50.056433UTC. Server readback confirmed unchanged
+first source/campaign/touch, one browser session, two handoffs, one consumption
+and the same canonical account. This was an existing installation, not a fresh
+install or public release. No VPN Connect was performed. VM baseline
+running0/guard0/TUN0/routes11/defaultDNS/proxy0 was restored at19:30:59UTC;
+PoweredOff/Unlocked with bridge2 and host-time sync disabled was confirmed.
+
+CH/DE HY2 moved to Birch/Fjord at19:39:05UTC after both existing certificate
+lineages gained the old and new DNS SANs with their previous private keys.
+Ordinary Android4175 country selection and refreshed managed catalogs accepted
+`ch:hy2_lab` at19:41:43.565205UTC (64KiB570ms, Connect4152ms) and
+`de:hy2_lab` at19:42:54.803181UTC (64KiB449ms, Connect3910ms). Both reported
+fetched/effective hysteria2, native egress and matching staged/effective revisions.
+Temporary delivery flags and DE2's hold were restored; phone Stop/Auto/TUN0,
+Wi-Fi1/data1/airplane0 returned at19:44:27UTC. FULLACK6/fresh Brain health closed
+the lease at19:44:18.761309UTC. No app/Core build or public release was performed.
+
 On16October DE RAW/XHTTP issuance and preferred SNI moved to
 Fjord after the owned loopback TLS site and current Node ACK passed. Android4175
 selected the normal Germany country after ordinary Refresh Countries; the
