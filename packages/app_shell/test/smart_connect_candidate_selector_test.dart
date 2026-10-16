@@ -557,7 +557,8 @@ void main() {
     expect(probed, isTrue);
     final preparationErrors = <Object>[
       ManagedProfileTimeout('route_policy'),
-      ManagedProfileTimeout('managed_fetch'),
+      ManagedProfileTimeout('managed_fetch', preparation: const {
+        'stage': 'http_body', 'elapsed_ms': 6001, 'http_status': 200}),
       ManagedProfileTimeout('materialize'),
       ManagedProfileTimeout('state_read'),
       ManagedProfileTimeout(null),
@@ -586,6 +587,7 @@ void main() {
           'prepare_timeout', 'prepare_timeout', 'prepare_http', 'prepare_socket',
           'prepare_tls', 'prepare_failed', 'prepare_failed']);
     expect(reports.values.every((result) => result.duration == Duration.zero && result.probeStage == null), isTrue);
+    expect(reports[1]!.preparation, {'stage': 'http_body', 'elapsed_ms': 6001, 'http_status': 200});
     for (var index = 0; index < 4; index++) {
       final report = reports[index]!;
       OperationalAttributePolicy.validate({'failure_kind': report.failureKind, 'duration_ms': 0},

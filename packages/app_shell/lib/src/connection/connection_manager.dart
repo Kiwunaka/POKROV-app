@@ -2765,6 +2765,8 @@ class ConnectionManager extends ChangeNotifier {
       'duration_ms': result.duration.inMilliseconds,
       if (RuntimeCandidateProbeResult.probeErrorFromWire(result.probeError) case final detail?)
         'probe_error': detail,
+      if (result.preparation case final preparation?)
+        'preparation': preparation,
     });
   }
 

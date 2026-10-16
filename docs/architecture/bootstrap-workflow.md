@@ -3094,6 +3094,15 @@ request_http and request_timeout kinds reach the current attempt diagnostics and
 support output. Stats delivery receipts remain separate from the business error;
 these fields do not establish its network cause.
 
+Candidate preparation failures also carry optional `preparation` metadata in the
+existing runtime-stats report: a closed stage, monotonic `elapsed_ms` since the
+shared preparation timer started, and the last observed `http_status` when one
+arrived. The timeout freezes that snapshot before HTTP cancellation; native
+probe duration remains separate. Platform retains every such candidate in the
+same Event's `candidate_preparations`, including a successful ordinary fallback.
+No URLs, headers, bodies or exception text are included. This source diagnostic
+does not change timeouts or establish that a WARP connection was attempted.
+
 Windows bound Connect preserves the first interruption before rollback. A stale
 physical network returns network_context_unavailable; a lost client process
 returns connect_owner_changed. Explicit cancellation/service stop remains

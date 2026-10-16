@@ -1094,6 +1094,7 @@ class BootstrapFailure implements Exception {
     this.apiFailureKind,
     this.observedHttpStatus,
     this.osErrorCode,
+    this.preparation,
   });
 
   final String message;
@@ -1104,6 +1105,7 @@ class BootstrapFailure implements Exception {
   final String? apiFailureKind;
   final int? observedHttpStatus;
   final int? osErrorCode;
+  final Map<String, Object>? preparation;
 
   String get operationalErrorCode =>
       operationalCode ??
@@ -1117,9 +1119,26 @@ class BootstrapFailure implements Exception {
 }
 
 class ManagedProfileTimeout extends TimeoutException {
-  ManagedProfileTimeout(this.operation) : super('Managed profile refresh');
+  ManagedProfileTimeout(this.operation, {this.preparation}) : super('Managed profile refresh');
 
   final String? operation;
+  final Map<String, Object>? preparation;
+}
+
+// Closed preparation metadata travels in the existing candidate runtime report.
+Map<String, Object>? _safeCandidatePreparation(Object? value) {
+  if (value is! Map || value.keys.any((key) =>
+      !const {'stage', 'elapsed_ms', 'http_status'}.contains(key))) return null;
+  final stage = value['stage'];
+  final elapsed = value['elapsed_ms'];
+  final status = value['http_status'];
+  if (!const {'session', 'route_policy', 'candidate_network', 'api_origin',
+      'http_connect', 'http_headers', 'http_body', 'http_retry', 'materialize',
+      'state_read'}.contains(stage) || elapsed is! int || elapsed < 0 ||
+      elapsed > 3600000 || (status != null &&
+      (status is! int || status < 100 || status > 599))) return null;
+  return {'stage': stage as String, 'elapsed_ms': elapsed,
+    if (status != null) 'http_status': status as int};
 }
 
 // Debug QA only: never include exception text, operations, or request material.
@@ -3673,8 +3692,23 @@ class AppFirstRuntimeBootstrapper
     var accessPreparing = false;
     String? currentOperation;
     String? deadlineOperation;
+    final preparationClock = Stopwatch()..start();
+    var preparationStage = 'session';
+    int? preparationHttpStatus;
+    Map<String, Object> preparation() => {
+      'stage': preparationStage, 'elapsed_ms': preparationClock.elapsedMilliseconds,
+      if (preparationHttpStatus != null) 'http_status': preparationHttpStatus!,
+    };
+    void progress(String stage, int? status) {
+      preparationStage = stage;
+      if (status != null) preparationHttpStatus = status;
+    }
+    Map<String, Object>? deadlinePreparation;
     void expireProfile() {
-      if (!timedOut) deadlineOperation = currentOperation;
+      if (!timedOut) {
+        deadlineOperation = currentOperation;
+        deadlinePreparation = preparation();
+      }
       timedOut = true;
       client.close(force: true);
     }
@@ -3702,14 +3736,17 @@ class AppFirstRuntimeBootstrapper
         try {
           requests.requireActive();
           currentOperation = 'route_policy';
+          progress('route_policy', null);
           await _syncRoutePolicy(
             state: state,
             hostPlatform: hostPlatform,
             routeMode: routeMode,
             client: client,
+            onProgress: (_, status) => progress('route_policy', status),
           );
           requests.requireActive();
           currentOperation = 'managed_fetch';
+          preparationHttpStatus = null;
           var manifest = await _fetchManagedManifest(
             runtimeFeatures: runtimeFeatures,
             coreRelease: coreRelease,
@@ -3725,7 +3762,8 @@ class AppFirstRuntimeBootstrapper
             client: client,
             profileTimeout: timeout,
             onAccessPreparing: () => accessPreparing = true,
-            onMaterialize: () => currentOperation = 'materialize',
+            onProgress: progress,
+            onMaterialize: () { currentOperation = 'materialize'; progress('materialize', null); },
           );
           currentOperation = null;
           accessPreparing = false;
@@ -3848,9 +3886,10 @@ class AppFirstRuntimeBootstrapper
               );
             }
           }
-          if (timedOut) throw ManagedProfileTimeout(deadlineOperation);
+          if (timedOut) throw ManagedProfileTimeout(deadlineOperation, preparation: deadlinePreparation);
           requests.requireActive();
           currentOperation = 'state_read';
+          progress('state_read', null);
           final currentState = await _loadState(hostPlatform);
           currentOperation = null;
           requests.requireActive();
@@ -3909,7 +3948,7 @@ class AppFirstRuntimeBootstrapper
           }
           requests.requireActive();
           if (attempt == 0 && error.statusCode == HttpStatus.unauthorized) {
-            if (timedOut) throw ManagedProfileTimeout(deadlineOperation);
+            if (timedOut) throw ManagedProfileTimeout(deadlineOperation, preparation: deadlinePreparation);
             if (state.refreshToken.isNotEmpty && timeout != null && timeout < requestTimeout) {
               // The denied cache is gone. The single authorized session retry
               // now needs the normal online profile budget, not its cache wait.
@@ -3945,11 +3984,18 @@ class AppFirstRuntimeBootstrapper
             operation: 'managed_profile',
           );
         }
-        throw ManagedProfileTimeout(deadlineOperation);
+        throw ManagedProfileTimeout(deadlineOperation, preparation: deadlinePreparation);
+      }
+      if (error is BootstrapFailure) {
+        throw BootstrapFailure(error.message, statusCode: error.statusCode,
+          operation: error.operation, code: error.code, operationalCode: error.operationalCode,
+          apiFailureKind: error.apiFailureKind, observedHttpStatus: error.observedHttpStatus,
+          osErrorCode: error.osErrorCode, preparation: preparation());
       }
       rethrow;
     } finally {
       timer?.cancel();
+      preparationClock.stop();
       requests.close(client);
     }
   }
@@ -4428,6 +4474,8 @@ class AppFirstRuntimeBootstrapper
         safeProbe['probe_error'] = detail;
         latestDetailedProbe = safeProbe;
       }
+      final preparation = !outcome ? _safeCandidatePreparation(probe['preparation']) : null;
+      if (preparation != null) safeProbe['preparation'] = preparation;
       safeCandidateProbes.add(safeProbe);
     }
     final reportProbes = safeCandidateProbes.isNotEmpty &&
@@ -7213,11 +7261,13 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required RouteMode routeMode,
     required HttpClient client,
+    void Function(String, int?)? onProgress,
   }) async {
     await _requestJson(
       method: 'POST',
       path: '/api/client/route-policy',
       client: client,
+      onProgress: onProgress,
       bearerToken: state.sessionToken,
       hostPlatform: hostPlatform,
       body: <String, Object?>{
@@ -7244,6 +7294,7 @@ class AppFirstRuntimeBootstrapper
     Duration? profileTimeout,
     void Function()? onAccessPreparing,
     void Function()? onMaterialize,
+    void Function(String, int?)? onProgress,
   }) async {
     final path = _validatedManagedManifestPath(state.managedManifestPath);
     // The user preference remains in cache inputs; an exact candidate can use
@@ -7276,6 +7327,7 @@ class AppFirstRuntimeBootstrapper
     requestPath += '${requestPath.contains('?') ? '&' : '?'}report_run_id=$_runtimeReportRunId';
     String? carrierHeader;
     if (hostPlatform == HostPlatform.android) {
+      onProgress?.call('candidate_network', null);
       try {
         final network = await _appFirstRuntimeEngineChannel
             .invokeMapMethod<String, dynamic>('runtimeEngine.candidateNetwork')
@@ -7301,6 +7353,7 @@ class AppFirstRuntimeBootstrapper
         hostPlatform: hostPlatform,
         headers: {'X-POKROV-Access-Preparing': '1',
           if (carrierHeader != null) 'X-Portal-Carrier': carrierHeader},
+        onProgress: onProgress,
       );
       if (response['status'] != 'access_preparing') break;
       onAccessPreparing?.call();
@@ -10097,6 +10150,7 @@ class AppFirstRuntimeBootstrapper
     bool allowRetries = true,
     Map<String, dynamic> Function(String)? responseDecoder,
     bool requireHttps = false,
+    void Function(String, int?)? onProgress,
   }) async {
     if (_invitationReceiver != null) {
       await (_invitationDeferInitialization ??= _loadState(hostPlatform).then<void>((_) {}));
@@ -10124,6 +10178,7 @@ class AppFirstRuntimeBootstrapper
       var traceReason = 'request';
       if (traceStage != null) _traceBootstrap(traceStage, 'begin');
       try {
+        onProgress?.call('api_origin', null);
         final selectedBaseUrl = await _resolveApiBaseUrl(
           client: client,
           hostPlatform: hostPlatform,
@@ -10133,6 +10188,7 @@ class AppFirstRuntimeBootstrapper
           throw const BootstrapFailure('Для получения политики требуется защищённое соединение.',
             code: 'transport_https_required', operationalCode: 'API-008');
         }
+        onProgress?.call('http_connect', null);
         final request = await client.openUrl(
           method,
           requestUri,
@@ -10169,8 +10225,10 @@ class AppFirstRuntimeBootstrapper
 
         final effectiveRequestTimeout =
             requestTimeoutOverride ?? requestTimeout;
+        onProgress?.call('http_headers', null);
         final response = await request.close().timeout(effectiveRequestTimeout);
         traceStatus = response.statusCode;
+        onProgress?.call('http_body', traceStatus);
         if (traceStage != null) {
           _traceBootstrap(traceStage, 'response', status: traceStatus,
             reason: response.statusCode >= 200 && response.statusCode < 300
@@ -10204,6 +10262,7 @@ class AppFirstRuntimeBootstrapper
           lastFailure = failure;
           if (traceStage != null) _traceBootstrap(traceStage, 'fail',
             reason: traceReason, status: traceStatus, error: failure);
+          onProgress?.call('http_retry', null);
           await _delayScheduler(_retryDelayForAttempt(attempt));
           continue;
         }
@@ -10302,6 +10361,7 @@ class AppFirstRuntimeBootstrapper
         rethrow;
       }
 
+      onProgress?.call('http_retry', null);
       await _delayScheduler(_retryDelayForAttempt(attempt));
     }
 

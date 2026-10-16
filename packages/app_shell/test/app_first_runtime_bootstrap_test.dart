@@ -940,11 +940,13 @@ void main() {
       'primary_error': {'operation': 'read_headers', 'cause': 'timeout', 'cancel_state': 'deadline',
         'target': 'owned_api', 'request': 'egress_204', 'elapsed_ms': 300,
         'stage_started_ms': 200, 'duration_ms': 500}};
+    const preparation = {'stage': 'http_body', 'elapsed_ms': 6001, 'http_status': 200};
     final probe = <String, Object?>{
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
       'stage': 'probe', 'connected': false, 'failure_kind': 'timeout',
       'duration_ms': 900, 'unrecognized_content': 'must-not-be-delivered',
       'probe_error': probeError,
+      'preparation': preparation,
     };
     final report = bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe],
@@ -983,6 +985,7 @@ void main() {
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
       'stage': 'probe', 'connected': false, 'duration_ms': 900, 'failure_kind': 'timeout',
       'probe_error': probeError,
+      'preparation': preparation,
     }]);
     expect(jsonEncode(received), isNot(contains('must-not-be-delivered')));
     final outbox = File('${directory.path}/runtime-stats-outbox-windows.json');
@@ -1307,7 +1310,12 @@ void main() {
           request.response.statusCode = accessTokenExpired ? 401 : 200;
           request.response.write(accessTokenExpired ? '{"detail":"session expired"}' : '{"ok":true}');
         } else if (request.uri.path == '/api/client/profile/managed') {
-          if (stall) continue;
+          if (stall) {
+            // Headers arrived; the body never completed before the common deadline.
+            request.response.write('{');
+            await request.response.flush();
+            continue;
+          }
           if (delayRenewedProfile) {
             delayRenewedProfile = false;
             await Future<void>.delayed(const Duration(milliseconds: 3200));
@@ -1363,7 +1371,13 @@ void main() {
     Matcher deadlineAt(String operation) => allOf(
       isA<TimeoutException>(),
       isA<ManagedProfileTimeout>()
-        .having((error) => error.operation, 'deadline operation', operation),
+        .having((error) => error.operation, 'deadline operation', operation)
+        .having((error) => error.preparation?['stage'], 'preparation stage',
+            operation == 'managed_fetch' ? 'http_body' : 'route_policy')
+        .having((error) => error.preparation?['http_status'], 'observed HTTP status',
+            operation == 'managed_fetch' ? 200 : null)
+        .having((error) => error.preparation?['elapsed_ms'], 'monotonic elapsed',
+            greaterThanOrEqualTo(100)),
       isNot(isA<BootstrapFailure>()),
     );
     stall = true;

@@ -5,9 +5,9 @@ typedef SmartConnectCandidateProbe = Future<SmartConnectCandidateProbeResult> Fu
 
 class SmartConnectCandidateProbeResult {
   const SmartConnectCandidateProbeResult.success(this.profile,
-      {this.duration = Duration.zero, this.probeStage}) : failureKind = '', http64kFailure = null, http64kObservation = null, probeError = null;
+      {this.duration = Duration.zero, this.probeStage}) : failureKind = '', http64kFailure = null, http64kObservation = null, probeError = null, preparation = null;
   const SmartConnectCandidateProbeResult.failure(this.failureKind,
-      {this.duration = Duration.zero, this.probeStage, this.http64kFailure, this.http64kObservation, this.probeError}) : profile = null;
+      {this.duration = Duration.zero, this.probeStage, this.http64kFailure, this.http64kObservation, this.probeError, this.preparation}) : profile = null;
 
   final ManagedProfilePayload? profile;
   final String failureKind;
@@ -16,6 +16,7 @@ class SmartConnectCandidateProbeResult {
   final String? http64kFailure;
   final Map<String, Object>? http64kObservation;
   final Map<String, Object>? probeError;
+  final Map<String, Object>? preparation;
 }
 
 class SmartConnectSelectionExhausted implements Exception {
@@ -277,7 +278,7 @@ class SmartConnectCandidateSelector {
                 'request_socket' => 'prepare_socket',
                 'request_tls' => 'prepare_tls',
                 _ => 'prepare_failed',
-              });
+              }, preparation: probeClock.isRunning ? null : error.preparation);
       } on TransportManifestFailure {
         if (ended.isCompleted) return;
         outcome = const SmartConnectCandidateProbeResult.failure('invalid_profile',
@@ -292,7 +293,8 @@ class SmartConnectCandidateSelector {
                 'materialize' => 'prepare_materialize_timeout',
                 'state_read' => 'prepare_state_timeout',
                 _ => 'prepare_timeout',
-              } : error is TimeoutException ? 'prepare_timeout' : 'prepare_failed');
+              } : error is TimeoutException ? 'prepare_timeout' : 'prepare_failed',
+            preparation: !probeClock.isRunning && error is ManagedProfileTimeout ? error.preparation : null);
       } finally {
         timeout?.cancel();
         if (probeClock.isRunning) {
@@ -312,6 +314,7 @@ class SmartConnectCandidateSelector {
           duration: outcome?.duration ?? probeClock.elapsed,
           probeStage: outcome?.probeStage,
           probeError: outcome?.probeError,
+          preparation: outcome.preparation,
           http64kFailure: failureKind == 'probe_failed' ? outcome?.http64kFailure : null,
           http64kObservation: failureKind == 'probe_failed' ? outcome?.http64kObservation : null);
       onProbeResult?.call(candidate, failed);
