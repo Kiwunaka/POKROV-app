@@ -31,8 +31,14 @@ destination_dns=failed. Initiations count entry before message creation/sending;
 responses count only successfully authenticated responses. Two retries and no
 registered send error do not prove network delivery. The exact live server peer
 still has no handshake/rx/tx. DNS failure may follow the missing tunnel; it does
-not independently identify a DNS cause. The next step is read-only comparison of
-current ordinary client/server parameters, with no unchanged Connect.
+not independently identify a DNS cause. A subsequent RAM-only comparison bound
+to the exact4173 Event/device/current credential generation used the ordinary
+managed_protocol_payload and RU live showconf. All11 checks matched: endpoint,
+client/server public identities, unique peer, PSK, S/H, header key, padding,
+trailers and AllowedIP. This compares current authoritative issuance, not the
+phone cache. No prepare/provision/write or further Connect was performed.
+The precise failure location remains unknown. Read-only lease1de5e825 closed
+with FULLACK6/fresh health12:56:37.050903UTC and SSH EOF/FREE.
 
 Germany direct selection at12:21:50 accepted DE VLESS: http_64k549ms,
 Connect6739ms, normal Event12:21:57.659544 and native protection through12:24:12.
