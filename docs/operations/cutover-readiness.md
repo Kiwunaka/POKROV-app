@@ -1,7 +1,14 @@
 # Client release status
 
-Lampa work lease closed at07:22:51UTC with fresh FULLACK6/Brain health and SSH EOF.
-Temporary PL scopes were restored; no server operation remains active.
+Root work lease closed at09:12:25UTC with fresh FULLACK6/Brain health and SSH EOF.
+Temporary PL scopes and the unsuccessful Lampa→Mini VPN transit were restored.
+After the Lampa DNS repair, Android4169 still failed its ordinary bridge probe
+on Wi-Fi and cellular and connected through direct PL. The final cellular case
+at08:44:45UTC used direct XHTTP (http_64k1133ms, total19379ms); this does not
+accept Lampa. Native cleanup restored Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0.
+No private logs or raw client profiles were read. Apped1e7590 retains the optional
+observed preparation HTTP status in the ordinary report/outbox; its focused
+checks passed, but this change is source-only and is not in the installed4169.
 
 Android **1.5.0+4169**, production-signed ARM64 with the accepted Core runtime,
 was installed over 4147 on the returned physical phone on 16 October, preserving
