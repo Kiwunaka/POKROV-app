@@ -1,11 +1,14 @@
 # Client release status
 
-Root work lease closed at09:12:25UTC with fresh FULLACK6/Brain health and SSH EOF.
-Temporary PL scopes and the unsuccessful Lampa→Mini VPN transit were restored.
-After the Lampa DNS repair, Android4169 still failed its ordinary bridge probe
-on Wi-Fi and cellular and connected through direct PL. The final cellular case
-at08:44:45UTC used direct XHTTP (http_64k1133ms, total19379ms); this does not
-accept Lampa. Native cleanup restored Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0.
+After the approved Floating-IP move and Lampa egress repair, unchanged Android4169
+accepted the exact RF2→PL path on Wi-Fi at10:00:44 clientUTC (http_64k681ms,
+connect5773ms) and cellular at10:02:00 (1060ms,6902ms). Exact RF2-XHTTP→PL passed
+Wi-Fi at10:04:16 (693ms,5799ms). Both candidate_ref and variant identify the
+moved ingress; older Lampa failures/direct fallbacks do not supply this proof.
+Native protection confirmed tunnel/DNS/VPN egress. No claim covers every Lampa
+destination or current carrier restrictions. Temporary PL scopes are restored;
+native cleanup: Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0. Leasefe14d596 closed
+with fresh FULLACK6/Brain health after10:06:36.211542UTC and SSH EOF/FREE.
 No private logs or raw client profiles were read. Apped1e7590 retains the optional
 observed preparation HTTP status in the ordinary report/outbox; its focused
 checks passed, but this change is source-only and is not in the installed4169.
