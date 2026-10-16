@@ -1,5 +1,15 @@
 # Client release status
 
+Private1.5.0+4174 was built on16October from App2ec54982 with the owner's
+approved new routing-catalog public pin. Android is production-signed ARM64
+(85,412,972bytes), using the accepted4173 Core40356d4/runtime. Windows x64
+installer is28,680,873bytes with Core40356d4 built once and the existing Cronet.
+Builds passed; neither artifact has been installed or publicly released.
+The generic Android APK is the same ARM64 artifact, not FullABI. The production
+catalog26/security2 envelope is signed and verified on Brain but not published.
+The phone remains4173 and the restored powered-off VM remains4169. Public1.4.5
+is unchanged. Final installation, live catalog acceptance and release remain open.
+
 Private Android **1.5.0+4173**, production-signed ARM64, was installed over4172
 on16October without deleting data. APK85,199,980bytes is at
 `E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4173-arm64.apk`.
