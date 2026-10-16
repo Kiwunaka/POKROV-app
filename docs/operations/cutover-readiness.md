@@ -1,5 +1,19 @@
 # Client release status
 
+Final1.5.0+4175 packages were built from App9fc28bc4/Core40356d4 on16October:
+production-signed universal/arm64-v8a/armeabi-v7a/x86_64 APKs and unsigned Windows
+setup. Full Core AAR contains four native ABIs; ARM64 matches the previously
+accepted runtime. Final ARM64 installed without data removal; Windows setup
+exited0 and app/service/Core1.2.14 started in the Clean VM. No unchanged protocol
+QA was repeated. Seven measured assets (five binaries, release-index and
+SHA256SUMS) match the GitHub v1.5.0 draft. Public metadata remains1.4.5/schema0/
+min-supported1.3.0; strict-v2 is not required by the current owner plan.
+Mobile Telegram WEB acceptance awaits the phone's explicit return.
+VM cleanup21:02:35UTC restored running0/guard0/TUN0/routes11/DNS192.168.3.1,
+empty IPv6DNS and proxy0, followed by PoweredOff/Unlocked/bridge2 and disabled
+host-time sync. RU ingress is permanently accepted separately; the owner changed
+its DNS. Do not rebuild these packages for documentation-only changes.
+
 On16October the Windows4174 VM accepted a new first-visit continuation through
 the live marketing install page. After the ordinary Windows Download click,
 F5 restored Continue in POKROV with a fresh handoff for the same browser visit.
