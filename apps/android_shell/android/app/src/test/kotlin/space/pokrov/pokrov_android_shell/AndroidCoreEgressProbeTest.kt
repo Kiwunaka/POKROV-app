@@ -348,6 +348,18 @@ class AndroidCoreEgressProbeTest {
                 endpointTypes = emptyMap(),
             ),
         )
+        val hy2 = AndroidCoreEgressProbe.resolveFinalTarget(
+            finalTag = "pokrov-hy2-lab",
+            outboundTypes = mapOf("pokrov-hy2-lab" to "hysteria2"),
+            endpointTypes = emptyMap(),
+        )
+        assertEquals(AndroidCoreEgressProbeTarget("pokrov-hy2-lab", AndroidCoreEgressProbeTargetKind.GROUP), hy2)
+        val core = ReachableCore()
+        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.resultFromCore(core, hy2!!))
+        assertEquals("The exact HY2 leaf must use probeSelectedOutbound", "pokrov-hy2-lab", core.lastTag)
+        for (type in listOf("direct", "block", "dns")) {
+            assertNull(AndroidCoreEgressProbe.resolveFinalTarget("unprotected", mapOf("unprotected" to type), emptyMap()))
+        }
     }
 
     @Test

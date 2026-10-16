@@ -2175,6 +2175,12 @@ Android schedules the selected-egress probe only after Core's
 `startOrReloadService` returns successfully. Core opens the TUN while it is
 still starting, so probing from the TUN callback can report unavailable before
 the selected route exists. Reloads apply the same ordering to the new TUN.
+Ordinary managed HY2 profiles use a `hysteria2` leaf as the protected target,
+without a selector. Android resolves that leaf through the existing per-call
+`ProbeSelectedOutbound`, which Core already supports. Rejecting it as a missing
+group caused `core_egress_probe_unavailable` after a successful candidate probe.
+Direct/block/DNS targets remain rejected; probe deadlines and lifecycle fences
+are unchanged. This source fix still requires Android runtime acceptance.
 After that startup check, the Android service watches existing tunnel byte
 counters. It repeats the Core egress probe only when traffic advances and at
 least 60 seconds have passed; a suspected DNS or network failure can trigger a

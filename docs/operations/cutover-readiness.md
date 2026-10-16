@@ -4,11 +4,32 @@ Private1.5.0+4174 was built on16October from App2ec54982 with the owner's
 approved new routing-catalog public pin. Android is production-signed ARM64
 (85,412,972bytes), using the accepted4173 Core40356d4/runtime. Windows x64
 installer is28,680,873bytes with Core40356d4 built once and the existing Cronet.
-Builds passed; neither artifact has been installed or publicly released.
+Builds passed and both artifacts were installed without deleting user data.
 The generic Android APK is the same ARM64 artifact, not FullABI. The production
 catalog26/security2 envelope is signed and verified on Brain but not published.
-The phone remains4173 and the restored powered-off VM remains4169. Public1.4.5
-is unchanged. Final installation, live catalog acceptance and release remain open.
+The phone and restored powered-off VM are4174. Public1.4.5 is unchanged.
+Live catalog acceptance and release remain open. Windows setup exited0, the
+normal app window opened and POKROVService ran with Core1.2.14. No Windows VPN
+Connect was repeated. Guest NTP resync succeeded without changing its source;
+baseline16:46:49UTC was initialized/running0/guard0/TUN0/routes11, Ethernet DNS
+192.168.3.1, IPv6 DNS empty, proxyOFF, Edge/Telegram0. PoweredOff/Unlocked and
+bridge2/GetHostTimeDisabled1 were confirmed after ordinary shutdown.
+
+Android4174 accepted direct DE2 AWG on Wi-Fi through one ordinary Germany
+Connect at16:58:55clientUTC: exact `de2:awg31_lab`, http_64k731ms,
+Connect6570ms, effective `awg31`, native proof stage `egress`, TUN1.
+Stop17:01:47UTC returned TUN0. The temporary DE/DE2 delivery flags were restored
+exactly; Node desired configs, keys, users and admission remained unchanged.
+
+One CH HY2-only attempt at17:03:39clientUTC passed exact `ch:hy2_lab`
+http_64k664ms, then failed full activation at7484ms with
+`core_egress_probe_unavailable`/CONN-008. The Android final-target resolver rejected
+the managed `hysteria2` leaf before invoking the final egress probe; the candidate
+probe follows a separate path. This is a client activation defect, not evidence
+that the successful HY2 data path failed. No unchanged retry was made. CH flags
+were restored and both temporary timers disarmed. Phone Auto was restored,
+TUN0/Wi-Fi1/data1/airplane0 confirmed17:07UTC; the failed UI result remained.
+Lease5efdc202 closed with FULLACK6/fresh health17:07:57.356338UTC and SSH EOF/FREE.
 
 Private Android **1.5.0+4173**, production-signed ARM64, was installed over4172
 on16October without deleting data. APK85,199,980bytes is at

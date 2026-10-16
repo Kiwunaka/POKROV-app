@@ -349,7 +349,9 @@ internal object AndroidCoreEgressProbe {
         }
         val outboundType = outboundTypes[finalTag]
         if (outboundType != null) {
-            return if (isSelectableGroupType(outboundType)) {
+            // Core's selected-outbound probe also accepts the ordinary managed
+            // HY2 leaf; it does not require a synthetic selector around it.
+            return if (isSelectableGroupType(outboundType) || outboundType == "hysteria2") {
                 AndroidCoreEgressProbeTarget(
                     tag = finalTag,
                     kind = AndroidCoreEgressProbeTargetKind.GROUP,
