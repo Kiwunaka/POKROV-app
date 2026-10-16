@@ -1,5 +1,36 @@
 # Client release status
 
+Android **1.5.0+4169**, production-signed ARM64 with the accepted Core runtime,
+was installed over 4147 on the returned physical phone on 16 October, preserving
+its data. Ordinary country selection with WARP off was checked. Native Home and
+the protection sheet confirmed tunnel, DNS and VPN egress for CH, DE, PL, US and
+then DE2. The same device's normal server reports provide these outcomes:
+
+| Selection / node | Successful bridge probe | Connect duration |
+| --- | --- | --- |
+| Auto / CH | mini, VLESS, http_64k | 8873 ms |
+| Germany / DE | mini, VLESS, http_64k | 7082 ms |
+| Poland / PL | rf2, VLESS, http_64k | 5028 ms |
+| USA / US | mini, VLESS, http_64k | 8024 ms |
+| Germany / DE2 | rf2, VLESS, http_64k | 5635 ms |
+
+The first Auto and Germany attempts exhausted failing DE2 bridge candidates
+before selecting CH or DE; country selection itself did not force Switzerland.
+Platform fixed a missing current DE2 hostname in Mini's live allowlist, but the
+subsequent DE2 success used rf2, so it is not proof of that changed Mini path.
+Russia did not connect. After the ordinary country/catalog refresh, both VLESS
+and newly offered AWG exhausted a roughly four-second `proxy_dial` probe budget.
+RU's server had one provisioned AWG peer but no handshake or transferred bytes.
+No further unchanged retry was made. DE2/RU AWG server readiness does not count
+as client AWG acceptance; the country-only UI does not pin a protocol or DE2.
+
+At device 04:40:23 UTC, normal Stop restored zero tunnel interfaces and no app
+VPN services. Auto selection and WARP off were restored; Wi-Fi=1, mobile_data=1,
+airplane_mode=0 were unchanged. The VM stayed off. These checks did not test
+Wi-Fi/LTE transition, Android WARP, site handoff or independent OS HTTP traffic.
+The reports above were received normally; no private profile or journal was read.
+FullABI and public publication remain pending; public 1.4.5 is unchanged.
+
 Windows **1.5.0+4169** passed ordinary support delivery on 16 October. With the
 owner's explicit Telegram-notification permission, one message was submitted
 from the app at 02:52:45 UTC and created ticket85 on the existing VM account.
