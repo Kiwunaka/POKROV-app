@@ -13,21 +13,31 @@ then DE2. The same device's normal server reports provide these outcomes:
 | Poland / PL | rf2, VLESS, http_64k | 5028 ms |
 | USA / US | mini, VLESS, http_64k | 8024 ms |
 | Germany / DE2 | rf2, VLESS, http_64k | 5635 ms |
+| Russia / RU, later Wi-Fi check | mini, VLESS, http_64k | 7453 ms |
+| Germany / DE2, exact later Wi-Fi check | mini, VLESS, http_64k | 7789 ms |
 
 The first Auto and Germany attempts exhausted failing DE2 bridge candidates
 before selecting CH or DE; country selection itself did not force Switzerland.
-Platform fixed a missing current DE2 hostname in Mini's live allowlist, but the
-subsequent DE2 success used rf2, so it is not proof of that changed Mini path.
-Russia did not connect. After the ordinary country/catalog refresh, both VLESS
-and newly offered AWG exhausted a roughly four-second `proxy_dial` probe budget.
-RU's server had one provisioned AWG peer but no handshake or transferred bytes.
-No further unchanged retry was made. DE2/RU AWG server readiness does not count
-as client AWG acceptance; the country-only UI does not pin a protocol or DE2.
+Platform fixed a missing current DE2 hostname in Mini's live allowlist. Its exact
+Mini path was subsequently confirmed at 05:16:08 UTC with the ordinary client;
+temporary server-side DE/DE2 selection constraints were restored afterward.
+RU initially failed direct VLESS/AWG. Platform ebc25ba then removed its blanket
+bridge-country exclusion and allowed the issued literal RU IPv4 on Mini.
+The normal client accepted Mini→RU at 05:10:09 UTC with native protection and
+the delivered report above. This does not accept direct RU or DE2/RU AWG.
 
-At device 04:40:23 UTC, normal Stop restored zero tunnel interfaces and no app
+With the phone's default network explicitly confirmed CELLULAR under the
+owner-reported restrictions, the ordinary catalog refresh failed. A normal
+Wi-Fi fetch was followed by a cellular Connect: DE/Mini, DE2/Mini and DE/rf2
+failed `proxy_dial` around ten seconds. No tunnel was established. The queued
+ordinary reports arrived after Wi-Fi returned; their network class is cellular.
+The two successful new paths above were on Wi-Fi, not that mobile network.
+
+At device 05:18:13 UTC, normal Stop restored zero tunnel interfaces and no app
 VPN services. Auto selection and WARP off were restored; Wi-Fi=1, mobile_data=1,
-airplane_mode=0 were unchanged. The VM stayed off. These checks did not test
-Wi-Fi/LTE transition, Android WARP, site handoff or independent OS HTTP traffic.
+airplane_mode=0 match the initial state. Wi-Fi was temporarily disabled only on
+the phone for the cellular case. The VM stayed off. These checks did not accept
+live-tunnel Wi-Fi/LTE recovery, Android WARP, site handoff or independent OS HTTP traffic.
 The reports above were received normally; no private profile or journal was read.
 FullABI and public publication remain pending; public 1.4.5 is unchanged.
 
@@ -506,6 +516,17 @@ the owned Windows VM and Android 9 x86_64 emulator, including DNS and routes,
 owned HTTPS 204 and exact 64 KiB transfer. Physical phones and mobile networks
 were not part of this acceptance. These are client package results, separate
 from the earlier isolated Core selection comparison below.
+
+
+Android4169 manual WARP was attempted once at05:48:06UTC over the phone's Wi-Fi.
+The request failed before any tunnel: normal server Event reported
+`managed_profile`, `service_unavailable`, `API-007`, 4673ms. The UI text maps to
+HTTP5xx, but the exact status/reason is not stored in ordinary server telemetry;
+no private client journal was read and no repeated Connect was made. This is
+not WARP transport acceptance and does not establish a Germany/WARP restriction.
+WARP was switched off again. Final phone baseline at06:26:54UTC: Auto selected,
+TUN0, own VPN service absent, Wi-Fi1/mobile_data1/airplane0. Host network and VM
+were untouched.
 
 ## Client 1.4.1 quiet publication, 2026-10-02
 
