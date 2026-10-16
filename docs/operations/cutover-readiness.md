@@ -1,10 +1,12 @@
 # Client release status
 
-Private Android **1.5.0+4172**, production-signed ARM64, was installed over4171
-on16October without deleting data. APK85,199,976bytes is at
-`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4172-arm64.apk`.
-Core5ad6e62/private1.2.14 is reused from4170. No Windows/FullABI build or public
-release was made; public1.4.5 stays.
+Private Android **1.5.0+4173**, production-signed ARM64, was installed over4172
+on16October without deleting data. APK85,199,980bytes is at
+`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4173-arm64.apk`.
+App986bc600 and Core40356d4/private1.2.14 add the bounded AWG diagnostic; exact
+bundled native bytes match the new ARM64 AAR. Platformb0a8291 receiver is live
+(three modules, one API restart; other services/private configuration unchanged).
+No Windows/FullABI build or public release was made; public1.4.5 stays.
 
 Manual Android WARP is accepted on Wi-Fi through CH VLESS warp_over_proxy.
 App484594c3 gives the queued fourth probe its full native I/O grant while keeping
@@ -22,16 +24,24 @@ fell back to Mini→CH; it was not a WARP success. Do not repeat the accepted ca
 Ordinary direct RU selection at12:09:22 on4172 failed VLESS and AWG proxy_dial
 around12s. The exact current AWG peer is present on RU, with handshake/rx/tx=0;
 this does not identify whether destination DNS, outer UDP or handshake is failing.
-Mini→RU remains accepted. New bounded AWG counters/DNS state are source-only
-pending a changed Core/App build; no unchanged RU Connect was repeated.
+Mini→RU remains accepted. The changed4173 runtime was tried once at12:49:32 clientUTC:
+RU AWG proxy_dial11989ms, connection exhausted15551ms at12:49:47.991572.
+Normal Event candidate_awg records initiation3/error0/response0/retry2 and
+destination_dns=failed. Initiations count entry before message creation/sending;
+responses count only successfully authenticated responses. Two retries and no
+registered send error do not prove network delivery. The exact live server peer
+still has no handshake/rx/tx. DNS failure may follow the missing tunnel; it does
+not independently identify a DNS cause. The next step is read-only comparison of
+current ordinary client/server parameters, with no unchanged Connect.
+
 Germany direct selection at12:21:50 accepted DE VLESS: http_64k549ms,
 Connect6739ms, normal Event12:21:57.659544 and native protection through12:24:12.
 AWG/DE2 probes were cancelled by that winner, so they are not accepted.
 
 Both temporary bridge-exclusion scopes were exactly restored and their rollback
-timers disarmed; no Node admission/key/service changes. Stop12:25:31 restored
-Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0. Lease91f27283 closed with FULLACK6 and
-fresh Brain health12:27:12.747971UTC, then SSH EOF/FREE. Host/VM and the unrelated
+timers disarmed; no Node admission/key/service changes. Final4173 cleanup at12:50:48 clientUTC confirmed
+Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0. Leasecb355eb0 closed with FULLACK6 and
+fresh Brain health12:50:57.875799UTC, then SSH EOF/FREE. Host/VM and the unrelated
 Android emulator are untouched. Physical AWG DE2/RU and remaining protocol
 acceptance are open.
 

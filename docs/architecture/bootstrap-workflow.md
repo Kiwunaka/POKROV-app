@@ -3116,7 +3116,7 @@ this snapshot when cancellation replaces the reply, without writing it to the
 operational journal. Normal runtime stats extract it as `candidate_probes[].awg`;
 the existing outbox and Platform Event `candidate_awg` retain its candidate ref
 even after a later fallback. No peer, address, raw log or key is included. This
-source-only diagnostic does not establish the cause of a missing handshake.
+diagnostic is in private Android4173 and live Platformb0a8291; it does not by itself establish the cause of a missing handshake.
 
 Windows bound Connect preserves the first interruption before rollback. A stale
 physical network returns network_context_unavailable; a lost client process
