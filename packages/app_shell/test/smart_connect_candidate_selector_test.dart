@@ -539,6 +539,39 @@ void main() {
         return _success(candidate);
       }), throwsA(isA<SmartConnectSelectionExhausted>()));
     expect(settled, isTrue);
+
+    // Three mobile workers exhaust one IO grant, then spend longer joining
+    // native cleanup. The fourth candidate still gets the second full grant.
+    final candidates = List.generate(4, _candidate);
+    var active = 0;
+    var peak = 0;
+    var settledFirstWave = 0;
+    final selected = await SmartConnectCandidateSelector().select(
+      catalog: _catalog(candidates), network: 'network-b', platform: HostPlatform.android,
+      cancelled: Completer<void>().future, probeTimeout: const Duration(milliseconds: 40),
+      selectionTimeout: const Duration(milliseconds: 80), excludeProbeCleanupFromBudget: true,
+      probe: (candidate, cancelled, timeout) async {
+        active++;
+        if (active > peak) peak = active;
+        try {
+          if (candidate.priority < 3) {
+            await cancelled;
+            await Future<void>.delayed(const Duration(milliseconds: 60));
+            settledFirstWave++;
+            return const SmartConnectCandidateProbeResult.failure('cancelled');
+          }
+          expect(settledFirstWave, greaterThan(0));
+          expect(timeout, const Duration(milliseconds: 40));
+          var stopped = false;
+          unawaited(cancelled.then((_) => stopped = true));
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+          return stopped ? const SmartConnectCandidateProbeResult.failure('cancelled') : _success(candidate);
+        } finally {
+          active--;
+        }
+      });
+    expect(selected.profileName, candidates.last.candidateRef);
+    expect((active, peak, settledFirstWave), (0, 3, 3));
   });
 
   test('slow profile fetch does not consume the native probe budget', () async {

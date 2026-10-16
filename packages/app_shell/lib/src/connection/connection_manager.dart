@@ -2435,6 +2435,7 @@ class ConnectionManager extends ChangeNotifier {
   Future<ManagedProfilePayload> _resolveManagedProfile({
     Duration? deadline,
     bool initialProfilePreparation = false,
+    bool coldConnect = false,
     bool suppressWarpRuntime = false,
     int? ownerGeneration,
     String recoveryCandidateRef = '',
@@ -2612,10 +2613,12 @@ class ConnectionManager extends ChangeNotifier {
       BootstrapFailure? apiFailure;
       for (final group in groups) {
         if (group.isEmpty) continue;
+        final twoWaveWarp = coldConnect && _appContext.hostPlatform == HostPlatform.android &&
+            identical(group, warpCandidates) && group.length > 3;
         final selectionTimeout = identical(group, directWarpCandidates)
             ? const Duration(seconds: 4)
             : identical(group, warpCandidates)
-            ? const Duration(seconds: 5)
+            ? Duration(seconds: twoWaveWarp ? 8 : 5)
             : useWarpCandidates && warpCandidates.isNotEmpty
                 ? const Duration(seconds: 7)
                 : const Duration(seconds: 12);
@@ -2636,6 +2639,7 @@ class ConnectionManager extends ChangeNotifier {
                 ? const Duration(seconds: 12)
                 : const Duration(seconds: 4),
             selectionTimeout: selectionTimeout,
+            excludeProbeCleanupFromBudget: twoWaveWarp,
             onProbeResult: (candidate, result) {
               if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||
                   profileRevision != _managedProfileRevision) return;
@@ -2870,6 +2874,8 @@ class ConnectionManager extends ChangeNotifier {
         var found = false;
         for (final group in groups) {
           if (group.isEmpty) continue;
+          final twoWaveWarp = coldConnect && inputs.hostPlatform == HostPlatform.android &&
+              identical(group, warpCandidates) && group.length > 3;
           try {
             selected = await _candidateSelector.select(
               catalog: TransportCandidateCatalog(revision: catalog.revision,
@@ -2882,10 +2888,11 @@ class ConnectionManager extends ChangeNotifier {
               selectionTimeout: identical(group, directWarpCandidates)
                   ? const Duration(seconds: 4)
                   : identical(group, warpCandidates)
-                      ? const Duration(seconds: 5)
+                      ? Duration(seconds: twoWaveWarp ? 8 : 5)
                       : warpCandidates.isNotEmpty
                           ? const Duration(seconds: 7)
                           : const Duration(seconds: 12),
+              excludeProbeCleanupFromBudget: twoWaveWarp,
               probeTimeout: coldConnect && inputs.hostPlatform == HostPlatform.android &&
                       group.every((candidate) => candidate.warpMode == null)
                   ? const Duration(seconds: 12)
@@ -4091,6 +4098,7 @@ class ConnectionManager extends ChangeNotifier {
           managedProfile = await _resolveManagedProfile(
             ownerGeneration: generation,
             initialProfilePreparation: initialProfilePreparation,
+            coldConnect: actionIntent == ConnectionTransitionIntent.connect,
             smartAccessVpnFallback: smartAccessVpnFallback,
             deadline: cachedProfileFallbackAllowed
                 ? _cachedProfileRefreshDeadline

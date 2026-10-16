@@ -119,6 +119,7 @@ class SmartConnectCandidateSelector {
     Set<String> excludedCandidateRefs = const {},
     Duration probeTimeout = const Duration(seconds: 4),
     Duration selectionTimeout = const Duration(seconds: 12),
+    bool excludeProbeCleanupFromBudget = false,
   }) async {
     if (network.isEmpty) throw StateError('smart_connect_network_unavailable');
     final now = _now();
@@ -222,6 +223,7 @@ class SmartConnectCandidateSelector {
       SmartConnectCandidateProbeResult? outcome;
       Timer? timeout;
       final probeClock = Stopwatch();
+      late Duration nativeTimeout;
       try {
         await prepare?.call(candidate, cancellation.future);
         if (ended.isCompleted) return;
@@ -238,7 +240,7 @@ class SmartConnectCandidateSelector {
           }
           if (ended.isCompleted) return;
         }
-        final nativeTimeout = remainingProbeBudget < probeTimeout
+        nativeTimeout = remainingProbeBudget < probeTimeout
             ? remainingProbeBudget : probeTimeout;
         probeClock.start();
         final familyStart = familyStarted[candidate.candidateRef];
@@ -299,7 +301,10 @@ class SmartConnectCandidateSelector {
         timeout?.cancel();
         if (probeClock.isRunning) {
           probeClock.stop();
-          countProbeTime(probeClock.elapsed);
+          // Joining a cancelled native instance is mandatory, but this opt-in
+          // IO quota must not charge its settlement beyond the granted deadline.
+          countProbeTime(excludeProbeCleanupFromBudget && probeClock.elapsed > nativeTimeout
+              ? nativeTimeout : probeClock.elapsed);
         }
         probes.remove(cancellation);
         final familyFinish = familySettled[candidate.candidateRef];

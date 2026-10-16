@@ -315,6 +315,13 @@ candidate to use that existing 12-second worker budget; a cold Connect from an
 ordinary-only cache uses the same allowance because it starts a new native
 instance too. Recovery, Windows and cached WARP groups keep their four-second
 candidate bound. Profile HTTP still obeys the connect action deadline.
+On an Android cold Connect with current manual WARP consent, more than three
+chain candidates receive an eight-second IO quota per worker (two four-second
+grants), online or from verified cache. Concurrency remains three. Only this
+group caps budget debit at the granted native deadline: native cleanup is still
+awaited, but its overrun cannot consume the next candidate's IO grant. This does
+not extend an individual probe or change Windows, recovery, ordinary VPN or the
+direct-WARP reserve; a slow 64 KiB probe can still fail its four-second deadline.
 Cancellation settles profile and native work before releasing a worker.
 A profile revision supersession propagates through the candidate selector and
 cancels and joins its remaining workers. It is not converted into candidate

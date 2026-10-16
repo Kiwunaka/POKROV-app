@@ -1,27 +1,24 @@
 # Client release status
 
-Private Android **1.5.0+4170** was built and installed over4169 on16October,
-preserving app data. The production-signed ARM64 APK is85,199,980bytes at
-`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4170-arm64.apk`.
-It includes clienta43d08b5/ed1e7590 and newly built Core5ad6e62, still private
-Core1.2.14; the bundled native library matches the new ARM64 AAR. Windows,
-FullABI and public1.4.5 were not rebuilt or published.
-One current manual CH/WARP-ON connection at10:25:56 clientUTC did not accept WARP:
-all four WARP candidates reported ignored prepare_managed_timeout before probes.
-The client then connected through ordinary RF2→CH at10:26:18 (22,687ms total,
-http_64k2,052ms). Native tunnel/DNS/egress remained confirmed for over two minutes;
-normal reports were delivered after Stop. No terminal HTTP failure occurred,
-so the new HTTP-status field does not diagnose the older5xx event. This accepts
-the new binary's ordinary path and another Lampa destination, not AWG or WARP.
-Phone restored: Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0; host and VM untouched.
-Source review locates the four failures before native probe/normalization/WARP
-registration. The six-second preparation deadline includes completed route-policy,
-candidate network selection (up to two seconds), and managed HTTP fetch. The
-current device has no backend WarpMaterial rows; that path returns client-local
-policy without external provisioning. The failing HTTP/network substage remains
-unknown. Next observation belongs in the existing candidate report: preparation
-substage, elapsed time and any received status. No timeout/fallback change or
-unchanged repeat was made.
+Private Android **1.5.0+4171** was built and installed over4170 on16October,
+preserving data. App e3dc4743 adds closed preparation stage/time/status to each
+failed candidate report; API3299344 is live. The production-signed ARM64 APK is
+85,199,980bytes at `E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4171-arm64.apk`.
+Core5ad6e62/private1.2.14 was reused from4170 and bundled native bytes match its
+ARM64 AAR. No Windows/FullABI build or public release was made; public1.4.5 stays.
+
+One current manual CH/WARP-ON connection at11:27:46 clientUTC reached all four
+native probes, so the earlier4170 managed-preparation timeout did not recur.
+RAW warp_over_proxy reached http_64k; the group still exhausted its probe budget
+and ordinary Mini→CH won at11:28:06 (19,852ms total, http_64k878ms). This does not
+accept WARP. Android runs three workers for four WARP candidates; the5s worker
+budget left the fourth only975ms. Its ordinary failure report records primary
+dial deadline683ms and reserve cancellation219ms. Earlier RAW4994ms includes
+native cleanup, not a separate5s I/O timeout. The next narrow fix must preserve
+concurrency3/per-probe4s while avoiding starvation of the queued candidate.
+No unchanged Connect was repeated. Stop11:29:09; phone Auto/WARPoff/TUN0,
+Wi-Fi1/data1/airplane0; host/VM and the unrelated Android emulator untouched.
+Physical AWG DE2/RU, Android WARP and remaining protocol acceptance stay open.
 
 After the approved Floating-IP move and Lampa egress repair, unchanged Android4169
 accepted the exact RF2→PL path on Wi-Fi at10:00:44 clientUTC (http_64k681ms,
