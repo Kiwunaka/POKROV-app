@@ -1,5 +1,23 @@
 # Client release status
 
+Windows **1.5.0+4169** passed ordinary support delivery on 16 October. With the
+owner's explicit Telegram-notification permission, one message was submitted
+from the app at 02:52:45 UTC and created ticket85 on the existing VM account.
+One operator reply was saved through the normal admin action at 02:56:45.
+While Home stayed open, its unread badge was observed at 02:58:00; this sample
+does not establish an exact polling latency. The notification named ticket85,
+its Open Chat action showed the exact operator reply, and returning Home cleared
+the unread badge. The owner also confirmed the thread in the admin UI.
+The initial owner notification used the main bot; Platform b10d3a7 corrected
+App/API operator notifications to the support bot and verified one notification
+for this same ticket, without creating another ticket or operator reply.
+
+At 03:02:28 UTC the VM was initialized/running0/validated0/guard0/failure=none,
+Core1.2.14, TUN0/routes11, baseline DNS/proxy, CH/WARPoff and no helper, fault task
+or owned browser. The temporary app screenshot was removed; normal shutdown
+confirmed PoweredOff/Unlocked, bridge2/GetHostTimeDisabled1. No VPN Connect,
+new grant, build or host Hiddify/network/clock change was used for this case.
+
 Windows **1.5.0+4169** passed the remaining cold-start cache check on 15 October.
 A temporary guest firewall rule blocked outbound traffic only from the GUI
 before it started; Core/service traffic stayed available. With CH selected and
