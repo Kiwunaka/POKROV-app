@@ -1,5 +1,20 @@
 # Client release status
 
+Private Android **1.5.0+4170** was built and installed over4169 on16October,
+preserving app data. The production-signed ARM64 APK is85,199,980bytes at
+`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4170-arm64.apk`.
+It includes clienta43d08b5/ed1e7590 and newly built Core5ad6e62, still private
+Core1.2.14; the bundled native library matches the new ARM64 AAR. Windows,
+FullABI and public1.4.5 were not rebuilt or published.
+One current manual CH/WARP-ON connection at10:25:56 clientUTC did not accept WARP:
+all four WARP candidates reported ignored prepare_managed_timeout before probes.
+The client then connected through ordinary RF2→CH at10:26:18 (22,687ms total,
+http_64k2,052ms). Native tunnel/DNS/egress remained confirmed for over two minutes;
+normal reports were delivered after Stop. No terminal HTTP failure occurred,
+so the new HTTP-status field does not diagnose the older5xx event. This accepts
+the new binary's ordinary path and another Lampa destination, not AWG or WARP.
+Phone restored: Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0; host and VM untouched.
+
 After the approved Floating-IP move and Lampa egress repair, unchanged Android4169
 accepted the exact RF2→PL path on Wi-Fi at10:00:44 clientUTC (http_64k681ms,
 connect5773ms) and cellular at10:02:00 (1060ms,6902ms). Exact RF2-XHTTP→PL passed
@@ -11,7 +26,7 @@ native cleanup: Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0. Leasefe14d596 closed
 with fresh FULLACK6/Brain health after10:06:36.211542UTC and SSH EOF/FREE.
 No private logs or raw client profiles were read. Apped1e7590 retains the optional
 observed preparation HTTP status in the ordinary report/outbox; its focused
-checks passed, but this change is source-only and is not in the installed4169.
+checks passed, and the change is now in installed4170.
 
 Android **1.5.0+4169**, production-signed ARM64 with the accepted Core runtime,
 was installed over 4147 on the returned physical phone on 16 October, preserving
