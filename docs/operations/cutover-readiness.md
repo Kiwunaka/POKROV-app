@@ -51,6 +51,18 @@ fresh Brain health12:50:57.875799UTC, then SSH EOF/FREE. Host/VM and the unrelat
 Android emulator are untouched. Physical AWG DE2/RU and remaining protocol
 acceptance are open.
 
+After PL ordinary RAW/XHTTP issuance moved to Atlas, unchanged Android4173
+completed one Poland/WARP-off direct XHTTP connection at13:06:57clientUTC:
+`pl:xhttp_reality`, http_64k719ms, Connect7031ms, running13:07:05.014826.
+Native tunnel/DNS/egress were confirmed. Atlas DNS/certificate/neutral cover
+passed before publication; current catalog remains Atlas. The generic PL
+candidate/ref revision and Android late-proof UI do not independently distinguish
+new hostname use from old cached material. Account-scoped managed render200
+correlates with this case; hostname binding is an inference, not exact proof.
+Stop13:11:55; Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0 restored. Temporary bridge
+exclusions and timers were removed; lease796fce4e closed with FULLACK6/fresh Brain
+health13:12:03.475761UTC and SSH EOF/FREE. No rebuild or other accepted case repeated.
+
 After the approved Floating-IP move and Lampa egress repair, unchanged Android4169
 accepted the exact RF2→PL path on Wi-Fi at10:00:44 clientUTC (http_64k681ms,
 connect5773ms) and cellular at10:02:00 (1060ms,6902ms). Exact RF2-XHTTP→PL passed
