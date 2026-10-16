@@ -1,5 +1,8 @@
 # Client release status
 
+Lampa work lease closed at07:22:51UTC with fresh FULLACK6/Brain health and SSH EOF.
+Temporary PL scopes were restored; no server operation remains active.
+
 Android **1.5.0+4169**, production-signed ARM64 with the accepted Core runtime,
 was installed over 4147 on the returned physical phone on 16 October, preserving
 its data. Ordinary country selection with WARP off was checked. Native Home and
@@ -15,6 +18,13 @@ then DE2. The same device's normal server reports provide these outcomes:
 | Germany / DE2 | rf2, VLESS, http_64k | 5635 ms |
 | Russia / RU, later Wi-Fi check | mini, VLESS, http_64k | 7453 ms |
 | Germany / DE2, exact later Wi-Fi check | mini, VLESS, http_64k | 7789 ms |
+
+A later ordinary PL-only Lampa attempt at07:17:57UTC exhausted its proxy_dial
+budget12006ms. Auto then connected to direct PL (http_64k684ms, total17810ms).
+This does not accept Lampa; Platform restored all temporary PL exclusions and
+disabled that unaccepted bridge. At07:22:01UTC the phone had no tunnel/VPN service,
+Wi-Fi1/mobile_data1/airplane0. The owner then temporarily took the phone; further
+phone work waits for explicit return. Country remained Poland after this check.
 
 The first Auto and Germany attempts exhausted failing DE2 bridge candidates
 before selecting CH or DE; country selection itself did not force Switzerland.
