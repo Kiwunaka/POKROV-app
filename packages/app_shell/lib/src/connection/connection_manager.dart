@@ -1133,6 +1133,7 @@ class ConnectionManager extends ChangeNotifier {
     String errorCode = '',
     String failureKind = '',
     String? failureOperation,
+    int? failureHttpStatus,
     bool? retryable,
   }) async {
     final service = _experienceService;
@@ -1162,6 +1163,7 @@ class ConnectionManager extends ChangeNotifier {
         errorCode: errorCode,
         failureKind: failureKind,
         failureOperation: failureOperation,
+        failureHttpStatus: failureHttpStatus,
         selectedNodeCode: const {'warp_over_proxy', 'warp_direct'}.contains(materialCandidate?.warpMode)
             ? ''
             : candidate?.nodeCode ?? (snapshot == null ? '' : _activeNodeCode.isNotEmpty
@@ -1197,12 +1199,13 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> _reportClientRuntimeError(String errorCode, {String failureKind = '', String? failureOperation}) =>
+  Future<void> _reportClientRuntimeError(String errorCode, {String failureKind = '', String? failureOperation, int? failureHttpStatus}) =>
       _reportClientLifecycle(
         'failed',
         errorCode: errorCode,
         failureKind: failureKind,
         failureOperation: failureOperation,
+        failureHttpStatus: failureHttpStatus,
         retryable: errorCode != 'redeem_failed',
       );
 
@@ -4420,7 +4423,8 @@ class ConnectionManager extends ChangeNotifier {
       unawaited(_reportClientRuntimeError(error.operationalErrorCode,
           failureKind: _runtimeStatsSnapshotAttempt == _connectionAttemptNumber
               ? '' : error.apiFailureKind ?? error.code,
-          failureOperation: businessOperation));
+          failureOperation: businessOperation,
+          failureHttpStatus: error.apiFailureKind == null ? error.statusCode : error.observedHttpStatus));
       _notify(error.message, tone: PokrovSnackTone.danger);
     } on Object catch (error, stack) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;

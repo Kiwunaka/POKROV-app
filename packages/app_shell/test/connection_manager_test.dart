@@ -273,6 +273,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     required HostPlatform hostPlatform, required String runtimePhase,
     required bool connected, String errorCode = '', String failureKind = '',
     String? failureOperation,
+    int? failureHttpStatus,
     String selectedNodeCode = '', String routeMode = '', int? durationMs,
     int? attemptNumber, bool? retryable, String networkClass = '',
     String carrierMccMnc = '', String carrierName = '', String candidateTransport = '',
@@ -287,6 +288,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       'attempt_number': attemptNumber, 'error_code': errorCode, 'retryable': retryable,
       'failure_kind': failureKind, 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
       'failure_operation': failureOperation,
+      'failure_http_status': failureHttpStatus,
       'native_kind': connectivitySnapshot?.lastFailureKind,
       'candidate_ref': candidateRef, 'candidate_variant': candidateVariant,
       'selected_node_code': selectedNodeCode});
@@ -395,6 +397,7 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
   Future<bool> reportRuntimeStats({
     required HostPlatform hostPlatform, required String runtimePhase, required bool connected,
     String errorCode = '', String failureKind = '', String? failureOperation,
+    int? failureHttpStatus,
     String selectedNodeCode = '', String routeMode = '', int? durationMs, int? attemptNumber,
     bool? retryable, String networkClass = '', String carrierMccMnc = '', String carrierName = '',
     String candidateTransport = '', String candidateRef = '', String candidateVariant = '',
@@ -1668,6 +1671,7 @@ void main() {
       final report = business.actualReports.singleWhere((value) => value['runtime_phase'] == 'failed');
       expect(report['failure_operation'], operation.$2);
       expect(report['failure_kind'], 'request_socket');
+      expect(report['failure_http_status'], isNull);
       if (observability != null) {
         await observability.flush();
         final terminal = observability.connectionTimelineBreadcrumbs.lastWhere(
@@ -1687,6 +1691,21 @@ void main() {
       }
       expect(businessRuntime.connectCalls, 0);
     }
+
+    final unavailable = _StatsBootstrapper()..failure = const BootstrapFailure(
+      'synthetic-private-message', statusCode: 503,
+      operation: 'GET /api/client/profile/managed?private=synthetic');
+    final unavailableRuntime = _Runtime();
+    final unavailableManager = _manager(unavailableRuntime, unavailable);
+    addTearDown(unavailableManager.dispose);
+    await unavailableManager.connect();
+    final unavailableReport = unavailable.actualReports.singleWhere((value) => value['runtime_phase'] == 'failed');
+    expect(unavailableReport['error_code'], 'API-007');
+    expect(unavailableReport['failure_operation'], 'managed_profile');
+    expect(unavailableReport['failure_http_status'], 503);
+    expect(jsonEncode(unavailableReport), isNot(contains('synthetic-private-message')));
+    expect(jsonEncode(unavailableReport), isNot(contains('/api/client/')));
+    expect(unavailableRuntime.connectCalls, 0);
 
     final catalog = _CatalogFailureBootstrapper();
     final catalogRuntime = _Runtime();

@@ -1660,6 +1660,11 @@ Current blocking dependency:
   (100–599) as `http_status`; unknown reasons, messages, operation URLs and bodies
   are omitted. These attributes stay in the local failed-profile event and are
   excluded from both release-health and uploaded diagnostic projections.
+  The ordinary failed `runtime/stats` report separately retains the observed
+  response status as optional `failure_http_status` (100–599) in the existing
+  backend Event metadata, including delayed outbox delivery. It is the failed
+  preparation request's status, not the diagnostic upload's status; missing
+  responses and older clients remain unknown. No response body or URL is sent.
   Native IPC/Core event frames are unchanged.
 - Bootstrap and connection timeline events take their next sequence from the
   shared app dispatcher, including after restored Android routing counts or

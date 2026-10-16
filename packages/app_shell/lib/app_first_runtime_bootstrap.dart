@@ -774,6 +774,7 @@ abstract interface class AppFirstExperienceService {
     String errorCode = '',
     String failureKind = '',
     String? failureOperation,
+    int? failureHttpStatus,
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,
@@ -4349,6 +4350,7 @@ class AppFirstRuntimeBootstrapper
     String errorCode = '',
     String failureKind = '',
     String? failureOperation,
+    int? failureHttpStatus,
     String selectedNodeCode = '',
     String routeMode = '',
     int? durationMs,
@@ -4376,6 +4378,8 @@ class AppFirstRuntimeBootstrapper
             : failureKind)
         .trim()
         .toLowerCase();
+    final safeFailureHttpStatus = OperationalAttributePolicy.prepareFailureAttributes(
+      httpStatus: failureHttpStatus)['http_status'];
     final safeNodeCode = selectedNodeCode.trim().toLowerCase();
     final safeRouteMode = routeMode.trim().toLowerCase();
     final safeNetworkClass = networkClass.trim().toLowerCase();
@@ -4482,6 +4486,7 @@ class AppFirstRuntimeBootstrapper
         if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeFailureKind) || connectionClosedGuardCodes.contains(safeFailureKind))
           'failure_kind': safeFailureKind,
         if (connectionFailureOperations.contains(failureOperation)) 'failure_operation': failureOperation,
+        if (phase == 'failed' && safeFailureHttpStatus != null) 'failure_http_status': safeFailureHttpStatus,
         if (RegExp(r'^[a-z0-9_.-]{1,32}$').hasMatch(safeNodeCode))
           'selected_node_code': safeNodeCode,
         if (RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(safeRouteMode))

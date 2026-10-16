@@ -949,6 +949,7 @@ void main() {
     final report = bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'failed', connected: false, attemptNumber: 1, candidateProbes: [probe],
         failureKind: 'core_identity_connect_unacknowledged', failureOperation: 'core_connect',
+        failureHttpStatus: 502,
         onDeliveryReceipt: (receipt) => receipts.add(receipt));
     await sessionReadStarted.future;
     probe['duration_ms'] = 1234;
@@ -977,6 +978,7 @@ void main() {
     expect(receipts.last.reportRunId, received[0]['report_run_id']);
     expect(received[0]['failure_kind'], 'core_identity_connect_unacknowledged');
     expect(received[0]['failure_operation'], 'core_connect');
+    expect(received[0]['failure_http_status'], 502);
     expect(received[0]['candidate_probes'], [{
       'candidate_ref': 'de:profile_0', 'candidate_transport': 'vless_reality',
       'stage': 'probe', 'connected': false, 'duration_ms': 900, 'failure_kind': 'timeout',
