@@ -1,5 +1,22 @@
 # Client release status
 
+Private Android1.5.0+4175 (Appfb6638ea, production-signed ARM64,
+85,412,972bytes) is installed over4174 with data preserved. Only Android was
+rebuilt for the HY2 resolver fix; Core40356d4 and the accepted runtime artifacts
+are unchanged. One existing Kotlin test passed before packaging. The generic
+APK has the same ARM64 bytes and is not FullABI; Windows remains installed4174.
+
+The corrected ordinary CH HY2-only connection passed on Wi-Fi at
+17:18:59.590509clientUTC: exact `ch:hy2_lab`, http_64k638ms, Connect6305ms,
+running17:19:05.896438 with fetched/staged/effective `hysteria2`, native proof
+stage `egress` and TUN1. Stop17:20:12 returned TUN0. CH delivery flags were
+restored exactly and the bounded rollback timer disarmed; desired Node configs,
+keys and users stayed unchanged. Phone Auto was verified on its ordinary country
+card, WARPfalse/TUN0/Wi-Fi1/data1/airplane0 confirmed17:21:40UTC. The earlier
+4174 failure below is fixed by this changed-case acceptance, not a new server
+or Core change. Leasea85fec4c closed with FULLACK6/fresh health17:20:57.216508UTC,
+SSH EOF/FREE. The restored Windows4174 VM remains PoweredOff/Unlocked.
+
 Private1.5.0+4174 was built on16October from App2ec54982 with the owner's
 approved new routing-catalog public pin. Android is production-signed ARM64
 (85,412,972bytes), using the accepted4173 Core40356d4/runtime. Windows x64
