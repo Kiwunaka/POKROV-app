@@ -1,5 +1,15 @@
 # Client release status
 
+On16October Android4175 accepted the live signed routing catalog26 through its
+ordinary Rules screen: signature verified20:38MSK, expiry15November, four zero
+rule counts and no cached fallback. After CH RAW/XHTTP publication moved to
+Birch, one ordinary CH/Mini Connect reached native egress at17:54:40.306799UTC,
+passed64KiB658ms and connected in5369ms with TUN1; Stop returned TUN0 and Auto
+was restored. Backend issuance and normal client receipt support the new-host
+binding; the client event does not expose the endpoint hostname itself. CH's
+IPv6 pair and all native protocol material were preserved. The deployment lease
+closed FULLACK6/fresh health17:59:56UTC. Public1.4.5 remains unchanged.
+
 Private Android1.5.0+4175 (Appfb6638ea, production-signed ARM64,
 85,412,972bytes) is installed over4174 with data preserved. Only Android was
 rebuilt for the HY2 resolver fix; Core40356d4 and the accepted runtime artifacts
@@ -23,9 +33,9 @@ approved new routing-catalog public pin. Android is production-signed ARM64
 installer is28,680,873bytes with Core40356d4 built once and the existing Cronet.
 Builds passed and both artifacts were installed without deleting user data.
 The generic Android APK is the same ARM64 artifact, not FullABI. The production
-catalog26/security2 envelope is signed and verified on Brain but not published.
-The phone and restored powered-off VM are4174. Public1.4.5 is unchanged.
-Live catalog acceptance and release remain open. Windows setup exited0, the
+catalog26/security2 envelope was signed and later published and accepted as
+recorded above. At that installation checkpoint both devices were4174;
+Android is now4175. Public1.4.5 is unchanged. Release remains open. Windows setup exited0, the
 normal app window opened and POKROVService ran with Core1.2.14. No Windows VPN
 Connect was repeated. Guest NTP resync succeeded without changing its source;
 baseline16:46:49UTC was initialized/running0/guard0/TUN0/routes11, Ethernet DNS
