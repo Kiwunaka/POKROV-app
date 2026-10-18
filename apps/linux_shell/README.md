@@ -1,4 +1,8 @@
-# POKROV Linux conditional beta
+# POKROV Linux Engineering Host
+
+This non-public host and its daemon are engineering work. The [repository map](../../docs/architecture/folder-structure.md) owns platform roles; [cutover readiness](../../docs/operations/cutover-readiness.md) owns current release scope.
+
+The dated implementation/QA checkpoints below retain their original scope. Their pending gates and CI results are historical, not the current release queue. Removed evidence files remain in Git history; their receipt names below are historical references. Source privilege and recovery boundaries remain in force.
 
 Local POST12 source, 2026-09-22 (`NOT_VERIFIED`): primary Connect now supports
 same-socket cancellation through the daemon's existing request owner, including
@@ -7,7 +11,7 @@ The client waits for the old request and reads current state before reporting
 cancellation. No package/build/install proof is added. See the
 [cancellation contract](../../docs/architecture/platform-privilege-runtime-contract.md#linux-primary-connect-cancellation).
 
-[R12-L01 scope verification](../../docs/operations/evidence/2026-09-11-r12-android-abi-promotion/README.md#r12-l01--verified--i3--already_fixed)
+R12-L01 scope verification
 confirms the existing Ubuntu 24.04 amd64 boundary and current capability against
 main 57352ae source and CI. It closes the scope decision only; package and
 desktop-session acceptance below remain separate.
@@ -16,7 +20,7 @@ This lane is a non-public foundation for the conditional Linux beta. The
 Flutter UI always runs as the desktop user. Privileged VPN state belongs to the
 systemd-activated `pokrov-linuxd` service and is never performed by the UI.
 
-[Package10 acceptance](../../docs/operations/evidence/2026-09-14-r12-l04-package10/README.md)
+Package10 acceptance
 verifies R12-L04 at I4 for this declared Ubuntu scope: exact signed package,
 connected upgrade/purge, normal APT reinstall, permissions, non-root GUI,
 full/RU DNS/IPv6 and Core-failure GUI recovery. Failed automatic-path and
@@ -36,44 +40,44 @@ calling that unsupported startup API on Linux aborts before the first frame.
 The Linux shell does not initialize that API or claim its telemetry coverage.
 
 Public support status remains `IMPLEMENTED_PARTIAL`. The L02 live lifecycle is
-implemented and [verified in an isolated Ubuntu VM](../../docs/operations/evidence/2026-09-11-r12-l02-linux-runtime/README.md);
-durable recovery also has [L03 VM evidence](../../docs/operations/evidence/2026-09-11-r12-l03-linux-recovery/README.md).
-The later [installed criterion review](../../docs/operations/evidence/2026-09-11-r12-l03-installed-auth/README.md)
+implemented and verified in an isolated Ubuntu VM;
+durable recovery also has L03 VM evidence.
+The later installed criterion review
 verifies L02/L03 at I4 for the declared Ubuntu scope, including current-package
 polkit negatives and explicitly bounded reuse of identical recovery components.
-[Client source integration](../../docs/operations/evidence/2026-09-11-r12-linux-source-promotion/README.md)
+Client source integration
 has passed PR/main CI; coordinated Core promotion and signed desktop-package
 acceptance remain open.
-[Desktop fixes and packaging integration](../../docs/operations/evidence/2026-09-11-r12-linux-desktop-promotion/README.md)
+Desktop fixes and packaging integration
 subsequently passed signed PR/main CI at main `b7034e1`; native package results
 below keep their own artifact identities and Linux acceptance remains open.
 
 The [Ubuntu packaging source](packaging/README.md) supplies the GTK runner,
-deb assembler and lifecycle hooks. A [native package and detached-signature
-receipt](../../docs/operations/evidence/2026-09-11-r12-l04-linux-package/README.md)
-binds the first signed candidate. The later [package-7 desktop evidence](../../docs/operations/evidence/2026-09-11-r12-l04-linux-desktop/README.md)
+deb assembler and lifecycle hooks. A native package and detached-signature
+receipt
+binds the first signed candidate. The later package-7 desktop evidence
 proves clean installation, real non-root GUI/polkit, installed permissions,
 rollback, connected upgrade and uninstall/purge on Ubuntu 24.04.4 Xfce/X11.
 Observed RU/full routes and IPv6 rejection pass; intermittent full-mode TLS
 failures remain unresolved. The same package now passes crash, partial rollback,
 actual sleep/resume and native reboot recovery on that guest; final acceptance stays open.
-The later [package-8 DE-path investigation](../../docs/operations/evidence/2026-09-11-r12-l04-de-tcp/README.md)
+The later package-8 DE-path investigation
 reproduces curl35 alongside pending TCP handshakes: repeated SYNs appear at
 MINI egress but not in the simultaneous DE capture. The loss cause is unknown;
 successful no-VPN controls and other paths do not close this acceptance gate.
-The [September12 lifecycle attempt](../../docs/operations/evidence/2026-09-11-r12-l04-de-tcp/README.md#2026-09-12-package-8-lifecycle-stopped-before-purge)
+The September12 lifecycle attempt
 stops before purge because six traffic checks and system DNS fail. The exact
 302-file package, profile, network and non-root GUI were restored. At that
 September12 observation, the default DE delivery address was absent from DE
 interfaces while node delivery/DNS still advertised it; MINI and Brain timed out.
 The missing default address was restored by the separately authorized
-September12 production incident recovery. The [September13 same-package recheck](../../docs/operations/evidence/2026-09-13-r12-l04-recheck/README.md)
+September12 production incident recovery. The September13 same-package recheck
 now passes the default-DE path (six HTTPS) and bounded full/RU/DNS/IPv6 runtime
 fixtures; all302 installed entries and profile/network restoration pass.
 The alternate DE path still fails all six requests (one curl28/five curl35).
 Production repair is no longer awaiting approval for that default address;
 this does not close the separate alternate-path or final-package gates.
-The [subsequent existing-US-path check](../../docs/operations/evidence/2026-09-11-r12-l04-de-tcp/README.md#exact-package8-connected-purge-and-separate-restoration-through-us)
+The subsequent existing-US-path check
 passes exact package8 connected purge and network/state preservation. Automatic
 apt reinstallation fails with an internal pathname error; separate same-byte
 dpkg installation restores all302 files and the UID1000 GUI. The apt failure
@@ -154,7 +158,7 @@ and historical DE failures remain retained. Final Linux acceptance stays open.
   resolved has moved into TUN. Content DNS keeps the selected routing policy;
 - the shared desktop UI reads local daemon status every two seconds, without
   fetching a profile or repeating network probes. An external stop or recovery
-  clears the cached running state. [Package-8 installed proof](../../docs/operations/evidence/2026-09-11-r12-l04-ui-status/README.md)
+  clears the cached running state. Package-8 installed proof
   shows the same non-root GUI switching to Retry/error after external Core
   SIGKILL, without an app click or restart. This fixes the observed stale
   package-7 GUI after daemon disconnect;

@@ -1,9 +1,13 @@
-# iOS Shell Seed
+# iOS Readiness Host
+
+This host is outside the current public pair. Signing, native-artifact and
+device limits belong to [Apple readiness](../../docs/operations/apple-release-readiness.md);
+[cutover readiness](../../docs/operations/cutover-readiness.md) owns release scope.
 
 Current responsibility:
 
 - iOS-specific Flutter host entry point
-- wiring the seed `app_shell` package into an iOS-facing starter
+- wiring the shared `app_shell` package into the iOS host
 - carrying a seed `NETunnelProviderManager` connect/disconnect request lane from the Flutter runtime bridge into a real checked-in packet-tunnel target
 - staging managed profiles through a shared app-group runtime directory that both the host and packet-tunnel provider can read
 - carrying POKROV Core packet-tunnel provider source that boots `LibboxSetup`, starts raw materialized configs through `CommandServer.startOrReloadService`, and owns the `openTun` path

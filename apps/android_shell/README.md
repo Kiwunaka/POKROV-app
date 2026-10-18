@@ -1,9 +1,15 @@
-# Android Shell Seed
+# Android Shell
+
+Current delivery and device acceptance live in
+[cutover readiness](../../docs/operations/cutover-readiness.md) and the
+[Android audit](../../docs/operations/android-release-audit.md). Use the
+[packaging guide](../../scripts/README.md) for the Android runtime manifest;
+this README describes host responsibilities, not a separate release queue.
 
 Current responsibility:
 
 - Android-specific Flutter host entry point
-- wiring the shared `app_shell` package into an Android-facing starter
+- wiring the shared `app_shell` package into the Android application
 - hosting the runtime bridge at `space.pokrov/runtime_engine`
 - requesting `VpnService` permission and starting the foreground runtime lane
 - supporting one-tap `connect` from the shared shell by auto-initializing POKROV Core, syncing a live managed profile, and staging that profile before runtime start
@@ -36,14 +42,15 @@ An Android platform resolver callback error or timeout for a known single AAAA q
 
 The Quick Settings tile and home-screen widget share native start/stop actions and the existing `PokrovRuntimeVpnService`. They display pending, verified connection and retained protection separately; runtime notification changes refresh both surfaces. Native start reuses only a confirmed private ordinary profile with the required permissions. Missing permissions, bound transport profiles and catalog app identity open POKROV for the normal connection flow; this does not promise background catalog selection. The widget receiver is private and uses immutable pending intents. Physical-device checks of launcher refresh, permission denial, rapid toggles and retained protection are still required before release.
 
-- `flutter test` in `apps/android_shell/` covers shell boot plus the visible route-mode and runtime-diagnostics affordances
-- `android\\gradlew.bat :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest` covers both distribution identities, manifest guards, platform monitoring, the private journal/rotation/watchdog contract, runtime-state preservation, DNS planning, TUN route planning, and package allow/exclude planning
+- `flutter test` in `apps/android_shell/` covers manifest and secure-backup contracts; shared behavior and UI cases live in `packages/app_shell/test/` and `packages/app_ui/test/`
+- from `apps/android_shell/android/`, `./gradlew.bat :app:testDirectDebugUnitTest :app:testStoreDebugUnitTest` covers both distribution identities, manifest guards, platform monitoring, the private journal/rotation/watchdog contract, runtime-state preservation, DNS planning, TUN route planning, and package allow/exclude planning
 - `..\\..\\scripts\\run-tests.ps1` is the canonical wrapper that runs both the Android-shell Flutter lane and the Android Gradle unit lane alongside the shared workspace tests
 - the current repo-local lane covers Android `Full tunnel`, `All except RU`, and selected-app package routing, plus the matching shared Windows materialization contracts
 - this test lane is repo-local proof only; it does not replace the required physical-device release-build localhost/control-surface audit
 
+Route-mode selection and selected-app routing are implemented; exact physical
+acceptance limits belong to the Android audit linked above.
+
 Deferred responsibility:
 
-- Android route-mode picker integration
-- production-grade split-tunneling parity, including selected-apps Android parity beyond the current no-op future-lane state
 - signed public-store packaging and submission; the repo-local `store` flavor already excludes direct-install permission/code and delegates updates to Google Play

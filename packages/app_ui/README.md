@@ -17,11 +17,15 @@ flutter build apk --release --target-platform android-arm64,android-x64
 
 Map app state to the view data and pass the real actions:
 
+Feature filenames below belong to the existing
+[app_shell adapters](../app_shell/lib/src/features/); release status belongs to
+[cutover readiness](../../docs/operations/cutover-readiness.md).
+
 | Screen | Data | Comes from today |
 |---|---|---|
 | `HomeScreen` | `HomeViewData` | `home_surface.dart`, `protection_center.dart` |
 | `StatusSheet` | `StatusViewData` | protection center checks, mapped to three plain rows |
-| `FirstConnectSheet` | `FirstRouteChoice` | first-connect route question in `home_surface.dart` |
+| `FirstConnectSheet` | `FirstRouteChoice` | first-connect route question in [seed_shell.dart](../app_shell/lib/src/shell/seed_shell.dart) |
 | `LocationsScreen` | `LocationsViewData` | `locations_surface.dart` |
 | `RulesScreen` | `RulesViewData` | `rules_surface.dart`; expert settings stay behind «Для опытных» |
 | `ProfileScreen` | `ProfileViewData` | `profile_surface.dart`; interface mode switches inline |
@@ -33,5 +37,5 @@ Map app state to the view data and pass the real actions:
 Notes for the integration:
 
 - Font family is `packages/pokrov_app_ui/Golos Text`; this package owns the bundled font files used by the shell.
-- The connected state repeats soft waves around the button (reduced motion stops them). The same motion rule is documented in `DESIGN.md`.
+- The connected state repeats soft waves around the button (reduced motion stops them). The same motion rule is documented in [DESIGN.md](../../DESIGN.md).
 - The support code must already be masked when it reaches `DiagnosticsViewData`.

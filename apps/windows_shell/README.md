@@ -1,5 +1,13 @@
 # Windows Shell
 
+Current packaging and exact-candidate acceptance live in
+[cutover readiness](../../docs/operations/cutover-readiness.md) and
+[Windows readiness](../../docs/operations/windows-release-readiness.md).
+Runtime artifact selection belongs to the [packaging guide](../../scripts/README.md).
+
+Historical ATS-006 source checkpoint (its verification status is scoped to that
+checkpoint, not the current release):
+
 ATS-006 source adds service command 21 / capability bit 15 for expected Core,
 profile and original boot-relative deadline. The service validates the pinned
 module and staged request identity before startup, retains the exact cancellation
@@ -83,5 +91,9 @@ Deferred responsibility:
 - SCM install/upgrade/uninstall proof and clean-VM full-tunnel, DNS, live
   crash/reboot recovery, route/DNS restoration, selected-apps and sleep/resume
   verification for an exact candidate
-- trusted code signing, `MSIX` publication, and updater wiring
-- public download hosting, Microsoft Store submission, and product cutover
+- trusted code signing, `MSIX` publication and Microsoft Store submission
+
+Direct-update wiring and public download hosting already exist in their shared
+client and Platform owners. This host README does not authorize publication;
+accepted installation/recovery cases and remaining device limits are recorded
+in the owning readiness documents above.

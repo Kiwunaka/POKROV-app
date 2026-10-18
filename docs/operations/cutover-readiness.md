@@ -26,7 +26,7 @@ The private **1.5.0+4180** pass separates source, packages and live state:
 | Pushed source | App `50c31e1d` fixes assistive tap, keyboard selection and Profile text scaling; `fd4b40b5` sets 4180. Core `5364537` fixes Android inbound authentication. Node `64e2025` fixes bridge revocation. Platform `836bb5e`, `b844d49`, `c13ae99`, `869b15d` cover payment/routing-intent/support races, verify-only no-write behavior and admin lint. |
 | Android package | [4180 universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4180-android-universal.apk) built from App `fd4b40b5`; the standard builder passed production signature, version and ABI checks. Packaged armeabi-v7a/arm64-v8a/x86_64 libraries match the new Core `5364537` AAR byte for byte. The AAR contains all four ABIs. 4180 has not been checked on a device. |
 | Windows package | [4180 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4180-setup.exe) built from App `fd4b40b5`. Desktop Core 1.2.14 / `40356d4` and matching Cronet are retained; the DLL was not rebuilt. The tracked runtime seed is preserved. VM was not started for 4180. |
-| Live and public | This local pass has no server deployment or publication. Platform backend/UI and Node fixes still need a separate root rollout; the admin build and warning-free lint passed locally. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. |
+| Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor and explicit Xray-only activity labels are also live. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4180 device acceptance. |
 
 Android 4180 used the explicit builder override
 `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-mobile-auth/runtime-artifacts.android.json`
@@ -43,10 +43,12 @@ technical details. Phone checks for the new client and IS UDP wait for the
 owner's explicit return of the phone, expected in the evening.
 
 Naive has an accepted isolated transport canary with matching Cronet, but normal
-managed issuance is not implemented and Auto does not use it. A routing-domain
-editor is also a separate next stage; neither creates a new mandatory 1.5.0 gate.
+managed issuance is not implemented and Auto does not use it. The routing-domain
+editor is live in the operator admin; the neutral catalog 26 has no services and
+remains unchanged. Adding service lists requires approved source inputs. Neither
+this content stage nor managed Naive creates a new mandatory 1.5.0 gate.
 Personalised AWG/Hysteria2 bytes are absent from server traffic accounting:
-the [owning monitoring contract](C:/Users/kiwun/Documents/ai/VPN/docs/operations/monitoring-and-visibility.md:1070)
+the [owning monitoring contract](C:/Users/kiwun/Documents/ai/VPN/docs/operations/monitoring-and-visibility.md)
 covers Xray traffic only. This is an observability limit, not evidence of broken
 speed or expiry handling; current trial/paid access has unlimited traffic.
 

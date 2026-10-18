@@ -1,12 +1,16 @@
-# Platform Contracts Seed
+# Platform Contracts
 
-Planned ownership:
+Current responsibility:
 
 - engine selection contract
 - connect and disconnect lifecycle contracts
 - permissions and elevation contracts
-- platform adapter interfaces for Android, iOS, macOS, and Windows
+- platform adapter interfaces and host capability boundaries
 
-Current seed contents:
+The bootstrap contract describes the host, required permissions, runtime-core
+defaults and selected-app routing capability. See
+[lib/platform_contracts.dart](lib/platform_contracts.dart) and the
+[platform privilege/runtime contract](../../docs/architecture/platform-privilege-runtime-contract.md).
 
-- a bootstrap contract describing the host shell, required permissions, runtime-core defaults, and whether the host seed can expose selected-apps routing
+Host capabilities do not by themselves prove device acceptance or publication;
+those remain in [cutover readiness](../../docs/operations/cutover-readiness.md).
