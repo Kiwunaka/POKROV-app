@@ -691,26 +691,21 @@ Quick-connect rules:
 
 Consumer privacy rules:
 
-The interface defaults to «Просто»: Home keeps the connect button and Locations
-offers automatic selection or a country, with the transport selected by the
-existing connection manager. Profile → Interface enables «Продвинутый», which
-shows locations, available catalog protocols, the latest latency and node status,
-and low/medium/high load from node metrics. Manual protocol selection pins the
-existing opaque candidate reference. Missing or stale measurements stay labelled
-as such. Both modes hide endpoint addresses; neither exports connection profiles.
-The verified public transport catalog remains available in «Продвинутый» after
-the first connection exhausts its probes, so another advertised protocol can be
-selected. Showing or pinning that choice does not stage a profile, mark a
-candidate active or establish protection; the normal next connection still
-requires the existing profile admission and native proof.
+The interface defaults to «Просто»: Home keeps the connect button. Locations
+offers `Автоматически` or an exit country in both «Просто» and «Продвинутый».
+The existing connection manager selects the protocol and path automatically;
+Advanced mode does not add a manual protocol, node or path picker. Profile →
+Interface switches the interface mode. Both modes hide endpoint addresses and
+never export connection profiles. Refreshing the transport catalog alone does
+not stage a profile, mark a candidate active or establish protection; the next
+connection still requires the existing profile admission and native proof.
 Refreshing unproven choices preserves the catalog of a running or retained
 connection until its replacement passes the existing selection gates.
 WARP opt-in controls on Home and Profile are available only in «Продвинутый».
 Switching to «Просто» hides these controls and preserves saved consent and the
 current runtime connection.
-In «Просто», managed requests and runtime preparation ignore saved manual node,
-variant and protocol pins and retain only the selected country. A stale manual
-variant cannot block country Auto or label the server-selected route as manual.
+Legacy manual node, variant and protocol preferences follow the CountryAuto
+restore rules above in both modes; they do not create a manual protocol choice.
 
 - normal consumer screens must not expose public IP, raw connection links, raw JSON/profile editors, sniffing terms, or low-level topology
 - route labels and support diagnostics should stay safe and human-readable
