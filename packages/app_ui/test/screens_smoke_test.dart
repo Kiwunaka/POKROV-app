@@ -58,6 +58,54 @@ void main() {
     }
   });
 
+  testWidgets('home connect and status expose working accessibility actions', (tester) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      var connects = 0;
+      var statuses = 0;
+      await _pump(tester, HomeScreen(
+        data: PokrovSampleData.home(phase: ConnectionPhase.off, mode: InterfaceMode.simple),
+        onToggle: () => connects++, onOpenStatus: () => statuses++,
+        onOpenCountry: _noop, onOpenRoute: _noop, onOpenAccess: _noop,
+      ));
+      final connect = tester.getSemantics(find.bySemanticsLabel('Включить защиту'));
+      final status = tester.getSemantics(find.bySemanticsLabel(RegExp('^Состояние защиты:')));
+      expect(connect.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+      expect(status.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+      tester.binding.platformDispatcher.onSemanticsActionEvent!(SemanticsActionEvent(
+        type: SemanticsAction.tap, nodeId: connect.id, viewId: tester.view.viewId,
+      ));
+      tester.binding.platformDispatcher.onSemanticsActionEvent!(SemanticsActionEvent(
+        type: SemanticsAction.tap, nodeId: status.id, viewId: tester.view.viewId,
+      ));
+      expect(connects, 1);
+      expect(statuses, 1);
+
+      await _pump(tester, HomeScreen(
+        data: PokrovSampleData.home(phase: ConnectionPhase.off, mode: InterfaceMode.simple),
+        onToggle: null, onOpenStatus: _noop,
+        onOpenCountry: _noop, onOpenRoute: _noop, onOpenAccess: _noop,
+      ));
+      final disabled = tester.getSemantics(find.bySemanticsLabel('Включить защиту'));
+      expect(disabled.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets('segmented choices can be reached and activated by keyboard', (tester) async {
+    final selected = <int>[];
+    await _pump(tester, Center(child: SizedBox(width: 214, child: PokrovSegmented(
+      labels: const ['Просто', 'Продвинутый'], index: 0, onChanged: selected.add,
+    ))));
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    expect(selected, [0]);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    expect(selected, [0, 1]);
+  });
+
   testWidgets('first connect sheet', (tester) async {
     await _pump(tester, FirstConnectSheet(choice: FirstRouteChoice.wholePhone, onChanged: (_) {}, onContinue: _noop));
     expect(find.text('Продолжить и подключить'), findsOneWidget);
@@ -72,6 +120,16 @@ void main() {
       await _pump(tester, ProfileScreen(data: PokrovSampleData.profile(mode), onRenew: _noop, onModeChanged: (_) {}));
       expect(find.text('Продвинутый'), findsOneWidget);
     }
+    InterfaceMode? selectedMode;
+    await _pump(tester, ProfileScreen(data: PokrovSampleData.profile(InterfaceMode.simple),
+      onRenew: _noop, onModeChanged: (mode) => selectedMode = mode), textScale: 2);
+    expect(tester.takeException(), isNull);
+    final advanced = find.descendant(of: find.byType(PokrovSegmented), matching: find.text('Продвинутый'));
+    expect(tester.renderObject<RenderParagraph>(advanced).didExceedMaxLines, isFalse,
+      reason: 'the interface mode must remain readable at 200% text scale');
+    await tester.ensureVisible(advanced);
+    await tester.tap(advanced);
+    expect(selectedMode, InterfaceMode.advanced);
     await _pump(tester, RulesScreen(data: PokrovSampleData.rules(selected: 'all'), onSelect: (_) {}, onApply: _noop));
     expect(find.text('Применить'), findsOneWidget);
   });

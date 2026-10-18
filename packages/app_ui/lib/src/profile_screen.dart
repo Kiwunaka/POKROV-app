@@ -74,21 +74,37 @@ class ProfileScreen extends StatelessWidget {
             child: Column(
               children: [
                 Container(
-                  height: 60,
+                  constraints: BoxConstraints(minHeight: 60),
+                  padding: EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(border: Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line)))),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text('Вид', style: TextStyle(fontSize: 16))),
-                      SizedBox(
-                        width: 214,
-                        child: PokrovSegmented(
-                          labels: ['Просто', 'Продвинутый'],
-                          index: data.mode == InterfaceMode.simple ? 0 : 1,
-                          onChanged: (i) => onModeChanged(i == 0 ? InterfaceMode.simple : InterfaceMode.advanced),
+                  child: LayoutBuilder(builder: (context, constraints) {
+                    final scale = MediaQuery.textScalerOf(context).scale(13) / 13;
+                    final controlWidth = 214 * scale;
+                    return Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
+                        Text('Вид', style: TextStyle(fontSize: 16)),
+                        SizedBox(
+                          width: controlWidth < constraints.maxWidth ? controlWidth : constraints.maxWidth,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: controlWidth,
+                              child: PokrovSegmented(
+                                labels: ['Просто', 'Продвинутый'],
+                                index: data.mode == InterfaceMode.simple ? 0 : 1,
+                                onChanged: (i) => onModeChanged(i == 0 ? InterfaceMode.simple : InterfaceMode.advanced),
+                                height: 36 * scale,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    );
+                  }),
                 ),
                 if (onTheme != null) PokrovRow(title: 'Тема', value: data.theme, onTap: onTheme),
                 if (onNotifications != null) PokrovRow(title: 'Уведомления', onTap: onNotifications),

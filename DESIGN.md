@@ -73,6 +73,13 @@ The connect CTA and status action have separate semantics. Widget checks and
 emulator screenshots establish layout and callback behavior only; TalkBack,
 Narrator, physical devices and real VPN connectivity require their own checks.
 
+The connect CTA and status semantics expose their existing tap callbacks;
+an unavailable connect action stays disabled for assistive activation too.
+Profile's interface-mode control scales with text and wraps below its label,
+with horizontal scrolling when needed, so both choices remain readable and
+usable at 200% text scale without changing the saved mode handler. Segmented
+choices keep keyboard focus and activate the same callback with Tab/Enter.
+
 ## Boundaries
 
 The redesign must not change tunnel/WARP lifecycle, route policy, auth,

@@ -237,6 +237,7 @@ class _StatusPill extends StatelessWidget {
     return Semantics(
       button: true,
       label: 'Состояние защиты: ${data.statusLabel ?? text}',
+      onTap: onTap,
       excludeSemantics: true,
       child: AnimatedContainer(
         duration: PokrovMotion.state,

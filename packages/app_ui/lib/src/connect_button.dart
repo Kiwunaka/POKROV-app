@@ -104,6 +104,8 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
           Semantics(
             button: true,
             label: semantics,
+            enabled: widget.onPressed != null,
+            onTap: widget.onPressed,
             excludeSemantics: true,
             child: AnimatedContainer(
               duration: PokrovMotion.state,

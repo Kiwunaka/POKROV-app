@@ -311,18 +311,21 @@ class PokrovSegmented extends StatelessWidget {
                   child: Semantics(
                     selected: i == index,
                     button: true,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onChanged(i),
-                      child: Center(
-                        child: Text(
-                          labels[i],
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: i == index ? pokrovColor(context, PokrovColors.ink) : pokrovColor(context, PokrovColors.soft),
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () => onChanged(i),
+                        child: Center(
+                          child: Text(
+                            labels[i],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: i == index ? pokrovColor(context, PokrovColors.ink) : pokrovColor(context, PokrovColors.soft),
+                            ),
                           ),
                         ),
                       ),
