@@ -447,6 +447,13 @@ packages:
       relative: true
     source: path
     version: "1.5.0"
+  pokrov_app_ui:
+    dependency: transitive
+    description:
+      path: "../../packages/app_ui"
+      relative: true
+    source: path
+    version: "0.1.0"
   pokrov_core_domain:
     dependency: "direct main"
     description:
