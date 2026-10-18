@@ -1,5 +1,19 @@
 # Windows acceptance
 
+Updated 18 October 2026. Public version remains 1.4.5; the final 1.5.0+4175
+installer belongs to the seven-asset draft. Setup and app/service startup passed;
+unchanged protocol QA was not repeated. Load-aware bridge ordering in App
+45281e62 is pushed and newer than that draft. Version 1.5.0+4176 is prepared;
+its Windows build and runtime acceptance are pending. The 4175 draft is retained.
+See [cutover-readiness.md](cutover-readiness.md) for the current package status and
+[Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+for the release queue.
+
+Manual WARP through CH VLESS was accepted on Windows 4168 with a complete 64 KiB
+check and one-minute observation. Other accepted scenarios retain their recorded
+scope. The dated 4151 and earlier receipts below are historical; their pending
+labels do not reopen accepted later checks or create new device authorization.
+
 On 2026-10-13, private 4151 passed an actual automatic protocol failover in the
 owned Clean VM, without an application rebuild. Runtime readback confirmed
 sing-tun's two service AppID hard permits at ALE_AUTH_CONNECT_V4/V6, with

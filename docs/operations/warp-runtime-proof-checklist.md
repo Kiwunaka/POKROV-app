@@ -1,14 +1,16 @@
 # WARP Runtime Proof Checklist
 
-Last updated: 2026-09-02
+Status updated 18 October 2026. Manual CH VLESS WARP was accepted on Windows
+4168 with complete 64 KiB and a one-minute observation, and on Android 4172 over
+Wi-Fi with complete 64 KiB and native tunnel/DNS/egress before clean Stop.
+These cases do not accept every WARP variant or cellular WARP. WARP remains a
+manual choice. See [Android acceptance](android-release-audit.md),
+[release status](cutover-readiness.md) and the owner's
+[current queue](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md).
 
-Registry class: `ACTIVE_EXECUTION`.
-
-This checklist retains WARP evidence for signed
-`pokrov-1.2.0-candidate.10`, app `1.2.0+4046`. The current development runtime
-binding is owned by `config/runtime-artifacts.seed.json` (C05 Core `8dc57a8`).
-No WARP runtime proof was rerun for that binding. Older candidate/device results
-remain supporting evidence and cannot close its exact-candidate WARP gate.
+The checklist and candidate statuses below were recorded for the older 1.2.0
+line, including `1.2.0+4046`. They retain scenario criteria and historical limits;
+they are not a second release queue or an instruction to repeat unchanged QA.
 
 The client UI may use the owner-approved labels `WARP`,
 `Расширенная защита`, or `Расширенная приватность`. Public copy must not claim
@@ -56,7 +58,7 @@ passes for exact promoted bytes.
 6. Revoke consent, reconnect and prove the local enabled state is cleared.
 7. Inspect support diagnostics and retained media for the redaction rules.
 
-Current status:
+Historical 1.2.0 status:
 `PASS_EXACT_CANDIDATE_FALLBACK_PATH; ACTIVE_WARP_TRAFFIC_NOT_PROVEN` on one
 physical Android device. The defined fallback path, baseline usability,
 handoff/lifecycle, revoke and redaction steps passed; this is not an active
@@ -75,9 +77,9 @@ WARP-carriage claim or broad release approval.
 5. Revoke consent, reconnect and prove the local enabled state is cleared.
 6. Inspect support diagnostics and retained media for the redaction rules.
 
-Current status: `MANUAL_OWNER_TEST` for exact `1.2.0` candidate bytes.
+Historical 1.2.0 status: `MANUAL_OWNER_TEST` for those exact candidate bytes.
 
-## Current Local Status
+## Historical Local Status
 
 - Client lifecycle, consent cache, backend calls and diagnostics redaction:
   implemented and locally tested.

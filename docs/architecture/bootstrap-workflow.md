@@ -5,6 +5,13 @@ This workflow gives client workers a consistent way to validate the canonical
 materialize local-only config. The clean-room/Wave 7 wording below is retained
 only where it explains bootstrap provenance.
 
+This is a runtime and local-validation reference, not the release queue. Use
+[the client docs entry point](../README.md) for the owner's current queue and
+Execution section 0. Dated receipts and old candidate status labels below apply
+only to their recorded build and scenario; they do not reopen accepted checks
+or authorize device access. Current release acceptance is summarized in
+[cutover-readiness.md](../operations/cutover-readiness.md).
+
 Cold startup refreshes the account summary before sending app-open and
 first-session events. Delayed best-effort telemetry therefore cannot hold the
 subscription/authentication refresh or leave the access label unresolved.
@@ -189,11 +196,14 @@ Known candidate-material validation failures retain `invalid_profile`/`parse_pro
 in the current attempt; native failures retain their own closed reason and stage.
 Ordinary bridge candidates retain the exit Node/country and actual VLESS TCP/REALITY
 metadata. `bridge_id` selects the admitted existing graph without changing stored
-preferences and requires client 1.5.0+4116. Ordinary Auto settles eligible bridge
-candidates before direct probes within the existing selector budget, including
-country Auto and recovery. Server priority orders candidates within each tier;
-the last successful route and UDP failure memory apply inside that tier. The
-finite cache prefers a bridge when reserving another node. Explicit pins, WARP
+preferences and requires client 1.5.0+4116. Ordinary Auto follows server priority
+between consecutive bridge/direct groups, including country Auto and recovery.
+This lets the server rank bridges with headroom first, direct next, and loaded or
+unobserved bridges as fallback. Earlier groups settle before later groups probe;
+last-success and UDP failure memory stay inside their group. Cache reserves also
+follow server priority. This client behavior is in App 45281e62; version 4176 is
+prepared, with Windows build and runtime acceptance pending.
+Explicit pins, WARP
 and cached-authority guards still apply; the selected country names the exit.
 When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,

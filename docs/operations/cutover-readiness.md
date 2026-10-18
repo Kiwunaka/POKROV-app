@@ -1,235 +1,74 @@
 # Client release status
 
-Final1.5.0+4175 packages were built from App9fc28bc4/Core40356d4 on16October:
-production-signed universal/arm64-v8a/armeabi-v7a/x86_64 APKs and unsigned Windows
-setup. Full Core AAR contains four native ABIs; ARM64 matches the previously
-accepted runtime. Final ARM64 installed without data removal; Windows setup
-exited0 and app/service/Core1.2.14 started in the Clean VM. No unchanged protocol
-QA was repeated. Seven measured assets (five binaries, release-index and
-SHA256SUMS) match the GitHub v1.5.0 draft. Public metadata remains1.4.5/schema0/
-min-supported1.3.0; strict-v2 is not required by the current owner plan.
-Mobile Telegram WEB acceptance awaits the phone's explicit return.
-VM cleanup21:02:35UTC restored running0/guard0/TUN0/routes11/DNS192.168.3.1,
-empty IPv6DNS and proxy0, followed by PoweredOff/Unlocked/bridge2 and disabled
-host-time sync. RU ingress is permanently accepted separately; the owner changed
-its DNS. Do not rebuild these packages for documentation-only changes.
+Updated 18 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
+explains how to continue. Dated results below retain their original scope and do
+not create new tasks or permission to repeat accepted checks.
 
-On16October the Windows4174 VM accepted a new first-visit continuation through
-the live marketing install page. After the ordinary Windows Download click,
-F5 restored Continue in POKROV with a fresh handoff for the same browser visit.
-Edge's Open prompt invoked the registered URI; the normal authenticated app
-request consumed it at19:28:50.056433UTC. Server readback confirmed unchanged
-first source/campaign/touch, one browser session, two handoffs, one consumption
-and the same canonical account. This was an existing installation, not a fresh
-install or public release. No VPN Connect was performed. VM baseline
-running0/guard0/TUN0/routes11/defaultDNS/proxy0 was restored at19:30:59UTC;
-PoweredOff/Unlocked with bridge2 and host-time sync disabled was confirmed.
+Public metadata remains **1.4.5 / schema 0 / min-supported 1.3.0**.
+**1.5.0+4175 is a draft with seven assets**, not a public release. The final
+16 October packages contain production-signed universal, arm64-v8a,
+armeabi-v7a and x86_64 APKs plus the unsigned Windows setup, release-index and
+SHA256SUMS. They were built from App 9fc28bc4 / Core 40356d4; the full Core AAR
+contains four native ABIs. Final ARM64 installed with data preserved; Windows
+setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
+assets were checked against the draft; unchanged protocol QA was not repeated.
+Strict-v2 is not required by the current release plan.
 
-CH/DE HY2 moved to Birch/Fjord at19:39:05UTC after both existing certificate
-lineages gained the old and new DNS SANs with their previous private keys.
-Ordinary Android4175 country selection and refreshed managed catalogs accepted
-`ch:hy2_lab` at19:41:43.565205UTC (64KiB570ms, Connect4152ms) and
-`de:hy2_lab` at19:42:54.803181UTC (64KiB449ms, Connect3910ms). Both reported
-fetched/effective hysteria2, native egress and matching staged/effective revisions.
-Temporary delivery flags and DE2's hold were restored; phone Stop/Auto/TUN0,
-Wi-Fi1/data1/airplane0 returned at19:44:27UTC. FULLACK6/fresh Brain health closed
-the lease at19:44:18.761309UTC. No app/Core build or public release was performed.
+Load-aware bridge ordering is in pushed App 45281e62. Version **1.5.0+4176**
+is prepared; its Windows build and changed-path runtime acceptance are pending.
+The seven-asset 4175 draft remains intact and does not cover this client change.
+Documentation changes alone do not justify a rebuild.
 
-On16October DE RAW/XHTTP issuance and preferred SNI moved to
-Fjord after the owned loopback TLS site and current Node ACK passed. Android4175
-selected the normal Germany country after ordinary Refresh Countries; the
-changed candidate `de:legacy_reality_fallback:bridge_rf2` passed64KiB in1730ms
-and connected in6014ms at19:08:09.037679UTC with native egress and matching
-staged/effective revisions. Earlier attempts selected cached DE2 and are not
-DE acceptance. DE2's temporary new-connection hold was restored, all timers
-stopped, and FULLACK6/fresh health closed the lease at19:10:14.368299UTC.
-Phone Stop/Auto/TUN0/Wi-Fi1/data1/airplane0 was restored at19:10:37UTC.
-The new hostname is supported by current backend issuance plus the ordinary
-client receipt, not an endpoint string in that receipt. XHTTP publication has
-current Node ACK; no separate new XHTTP connection was run. HY2's existing
-hostname/certificate and AWG literal endpoints remain unchanged.
+Server route ranking and the physical bridge-metrics producer are live. Fresh
+Cinema/Lampa samples are healthy and feed priorities for new routes; this does
+not establish 4176 client runtime acceptance. DE2 HY2 and Lampa-to-US remain
+next work in the owner's queue.
 
-On16October Android4175 accepted the live signed routing catalog26 through its
-ordinary Rules screen: signature verified20:38MSK, expiry15November, four zero
-rule counts and no cached fallback. After CH RAW/XHTTP publication moved to
-Birch, one ordinary CH/Mini Connect reached native egress at17:54:40.306799UTC,
-passed64KiB658ms and connected in5369ms with TUN1; Stop returned TUN0 and Auto
-was restored. Backend issuance and normal client receipt support the new-host
-binding; the client event does not expose the endpoint hostname itself. CH's
-IPv6 pair and all native protocol material were preserved. The deployment lease
-closed FULLACK6/fresh health17:59:56UTC. Public1.4.5 remains unchanged.
+Telegram WEB on CH/Birch is accepted on desktop and, by the owner's own check,
+on mobile on 18 October. The phone remains unavailable until explicitly returned;
+that acceptance does not authorize ADB access. Current endpoints and server roles
+belong to the [Platform system map](C:/Users/kiwun/Documents/ai/VPN/docs/architecture/system-overview.md).
+Hostkey RU was withdrawn as an exit and 17 units were stopped on 18 October;
+SSH, configurations and keys were retained. The approved retirement replaces
+the old requirement to accept direct RU AWG before release. Direct RU AWG was
+not accepted. Further server work remains owned by the Platform queue.
 
-Private Android1.5.0+4175 (Appfb6638ea, production-signed ARM64,
-85,412,972bytes) is installed over4174 with data preserved. Only Android was
-rebuilt for the HY2 resolver fix; Core40356d4 and the accepted runtime artifacts
-are unchanged. One existing Kotlin test passed before packaging. The generic
-APK has the same ARM64 bytes and is not FullABI; Windows remains installed4174.
+## Accepted client checks and limits
 
-The corrected ordinary CH HY2-only connection passed on Wi-Fi at
-17:18:59.590509clientUTC: exact `ch:hy2_lab`, http_64k638ms, Connect6305ms,
-running17:19:05.896438 with fetched/staged/effective `hysteria2`, native proof
-stage `egress` and TUN1. Stop17:20:12 returned TUN0. CH delivery flags were
-restored exactly and the bounded rollback timer disarmed; desired Node configs,
-keys and users stayed unchanged. Phone Auto was verified on its ordinary country
-card, WARPfalse/TUN0/Wi-Fi1/data1/airplane0 confirmed17:21:40UTC. The earlier
-4174 failure below is fixed by this changed-case acceptance, not a new server
-or Core change. Leasea85fec4c closed with FULLACK6/fresh health17:20:57.216508UTC,
-SSH EOF/FREE. The restored Windows4174 VM remains PoweredOff/Unlocked.
-
-Private1.5.0+4174 was built on16October from App2ec54982 with the owner's
-approved new routing-catalog public pin. Android is production-signed ARM64
-(85,412,972bytes), using the accepted4173 Core40356d4/runtime. Windows x64
-installer is28,680,873bytes with Core40356d4 built once and the existing Cronet.
-Builds passed and both artifacts were installed without deleting user data.
-The generic Android APK is the same ARM64 artifact, not FullABI. The production
-catalog26/security2 envelope was signed and later published and accepted as
-recorded above. At that installation checkpoint both devices were4174;
-Android is now4175. Public1.4.5 is unchanged. Release remains open. Windows setup exited0, the
-normal app window opened and POKROVService ran with Core1.2.14. No Windows VPN
-Connect was repeated. Guest NTP resync succeeded without changing its source;
-baseline16:46:49UTC was initialized/running0/guard0/TUN0/routes11, Ethernet DNS
-192.168.3.1, IPv6 DNS empty, proxyOFF, Edge/Telegram0. PoweredOff/Unlocked and
-bridge2/GetHostTimeDisabled1 were confirmed after ordinary shutdown.
-
-Android4174 accepted direct DE2 AWG on Wi-Fi through one ordinary Germany
-Connect at16:58:55clientUTC: exact `de2:awg31_lab`, http_64k731ms,
-Connect6570ms, effective `awg31`, native proof stage `egress`, TUN1.
-Stop17:01:47UTC returned TUN0. The temporary DE/DE2 delivery flags were restored
-exactly; Node desired configs, keys, users and admission remained unchanged.
-
-One CH HY2-only attempt at17:03:39clientUTC passed exact `ch:hy2_lab`
-http_64k664ms, then failed full activation at7484ms with
-`core_egress_probe_unavailable`/CONN-008. The Android final-target resolver rejected
-the managed `hysteria2` leaf before invoking the final egress probe; the candidate
-probe follows a separate path. This is a client activation defect, not evidence
-that the successful HY2 data path failed. No unchanged retry was made. CH flags
-were restored and both temporary timers disarmed. Phone Auto was restored,
-TUN0/Wi-Fi1/data1/airplane0 confirmed17:07UTC; the failed UI result remained.
-Lease5efdc202 closed with FULLACK6/fresh health17:07:57.356338UTC and SSH EOF/FREE.
-
-Private Android **1.5.0+4173**, production-signed ARM64, was installed over4172
-on16October without deleting data. APK85,199,980bytes is at
-`E:/POKROV-tools/temp/release-1.5.0/pokrov-1.5.0+4173-arm64.apk`.
-App986bc600 and Core40356d4/private1.2.14 add the bounded AWG diagnostic; exact
-bundled native bytes match the new ARM64 AAR. Platformb0a8291 receiver is live
-(three modules, one API restart; other services/private configuration unchanged).
-No Windows/FullABI build or public release was made; public1.4.5 stays.
-
-Manual Android WARP is accepted on Wi-Fi through CH VLESS warp_over_proxy.
-App484594c3 gives the queued fourth probe its full native I/O grant while keeping
-three workers and the4s per-probe limit; native cleanup is still joined. The first
-4172 attempt hit managed-profile HTTP500 before probing. Platform7051287 removed
-the reproduced User/Node lock wait for already prepared credentials (one live
-API module/restart); genuine issuance errors and issuance locking remain.
-The next ordinary Connect at12:02:13 clientUTC selected exactly
-`ch:legacy_reality_fallback:warp_over_proxy`: http_64k3959ms,
-Connect17881ms, Event12:02:31.408123. Native protection confirmed tunnel/DNS/
-VPN egress through12:04:25; Stop12:05:13. This does not accept every WARP variant
-or cellular WARP. The earlier4171 attempt exhausted all four probe budgets and
-fell back to Mini→CH; it was not a WARP success. Do not repeat the accepted case.
-
-Ordinary direct RU selection at12:09:22 on4172 failed VLESS and AWG proxy_dial
-around12s. The exact current AWG peer is present on RU, with handshake/rx/tx=0;
-this does not identify whether destination DNS, outer UDP or handshake is failing.
-Mini→RU remains accepted. The changed4173 runtime was tried once at12:49:32 clientUTC:
-RU AWG proxy_dial11989ms, connection exhausted15551ms at12:49:47.991572.
-Normal Event candidate_awg records initiation3/error0/response0/retry2 and
-destination_dns=failed. Initiations count entry before message creation/sending;
-responses count only successfully authenticated responses. Two retries and no
-registered send error do not prove network delivery. The exact live server peer
-still has no handshake/rx/tx. DNS failure may follow the missing tunnel; it does
-not independently identify a DNS cause. A subsequent RAM-only comparison bound
-to the exact4173 Event/device/current credential generation used the ordinary
-managed_protocol_payload and RU live showconf. All11 checks matched: endpoint,
-client/server public identities, unique peer, PSK, S/H, header key, padding,
-trailers and AllowedIP. This compares current authoritative issuance, not the
-phone cache. No prepare/provision/write or further Connect was performed.
-The precise failure location remains unknown. Read-only lease1de5e825 closed
-with FULLACK6/fresh health12:56:37.050903UTC and SSH EOF/FREE.
-
-Germany direct selection at12:21:50 accepted DE VLESS: http_64k549ms,
-Connect6739ms, normal Event12:21:57.659544 and native protection through12:24:12.
-AWG/DE2 probes were cancelled by that winner, so they are not accepted.
-
-Both temporary bridge-exclusion scopes were exactly restored and their rollback
-timers disarmed; no Node admission/key/service changes. Final4173 cleanup at12:50:48 clientUTC confirmed
-Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0. Leasecb355eb0 closed with FULLACK6 and
-fresh Brain health12:50:57.875799UTC, then SSH EOF/FREE. Host/VM and the unrelated
-Android emulator are untouched. Physical AWG DE2/RU and remaining protocol
-acceptance are open.
-
-After PL ordinary RAW/XHTTP issuance moved to Atlas, unchanged Android4173
-completed one Poland/WARP-off direct XHTTP connection at13:06:57clientUTC:
-`pl:xhttp_reality`, http_64k719ms, Connect7031ms, running13:07:05.014826.
-Native tunnel/DNS/egress were confirmed. Atlas DNS/certificate/neutral cover
-passed before publication; current catalog remains Atlas. The generic PL
-candidate/ref revision and Android late-proof UI do not independently distinguish
-new hostname use from old cached material. Account-scoped managed render200
-correlates with this case; hostname binding is an inference, not exact proof.
-Stop13:11:55; Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0 restored. Temporary bridge
-exclusions and timers were removed; lease796fce4e closed with FULLACK6/fresh Brain
-health13:12:03.475761UTC and SSH EOF/FREE. No rebuild or other accepted case repeated.
-
-After the approved Floating-IP move and Lampa egress repair, unchanged Android4169
-accepted the exact RF2→PL path on Wi-Fi at10:00:44 clientUTC (http_64k681ms,
-connect5773ms) and cellular at10:02:00 (1060ms,6902ms). Exact RF2-XHTTP→PL passed
-Wi-Fi at10:04:16 (693ms,5799ms). Both candidate_ref and variant identify the
-moved ingress; older Lampa failures/direct fallbacks do not supply this proof.
-Native protection confirmed tunnel/DNS/VPN egress. No claim covers every Lampa
-destination or current carrier restrictions. Temporary PL scopes are restored;
-native cleanup: Auto/WARPoff/TUN0/Wi-Fi1/data1/airplane0. Leasefe14d596 closed
-with fresh FULLACK6/Brain health after10:06:36.211542UTC and SSH EOF/FREE.
-No private logs or raw client profiles were read. Apped1e7590 retains the optional
-observed preparation HTTP status in the ordinary report/outbox; its focused
-checks passed, and the change is now in installed4170.
-
-Android **1.5.0+4169**, production-signed ARM64 with the accepted Core runtime,
-was installed over 4147 on the returned physical phone on 16 October, preserving
-its data. Ordinary country selection with WARP off was checked. Native Home and
-the protection sheet confirmed tunnel, DNS and VPN egress for CH, DE, PL, US and
-then DE2. The same device's normal server reports provide these outcomes:
-
-| Selection / node | Successful bridge probe | Connect duration |
+| Check | Accepted result | Boundary |
 | --- | --- | --- |
-| Auto / CH | mini, VLESS, http_64k | 8873 ms |
-| Germany / DE | mini, VLESS, http_64k | 7082 ms |
-| Poland / PL | rf2, VLESS, http_64k | 5028 ms |
-| USA / US | mini, VLESS, http_64k | 8024 ms |
-| Germany / DE2 | rf2, VLESS, http_64k | 5635 ms |
-| Russia / RU, later Wi-Fi check | mini, VLESS, http_64k | 7453 ms |
-| Germany / DE2, exact later Wi-Fi check | mini, VLESS, http_64k | 7789 ms |
+| Routing catalog | Android 4175 accepted live signed catalog 26 / security 2 in Rules; expiry 15 November 2026, without cached fallback. | The old expired catalog 25 status is historical. |
+| Manual WARP | Android 4172, CH VLESS `warp_over_proxy`, Wi-Fi: complete 64 KiB and native tunnel/DNS/egress, followed by Stop. Windows 4168 also accepted manual CH VLESS WARP with 64 KiB and a one-minute observation. | Other WARP variants and cellular WARP are not accepted by these cases. |
+| AWG | Android 4174, direct DE2 `awg31_lab`, Wi-Fi: complete 64 KiB, native egress and clean Stop. | This does not accept US/RU AWG or LTE AWG. |
+| Hysteria2 | Android 4175, ordinary CH and DE selections after Birch/Fjord migration: complete 64 KiB, effective Hysteria2, native egress and matching staged/effective revisions. | The 4174 CH activation-resolver failure was fixed and checked; DE2 HY2 is still in the current queue. |
+| Updated ordinary bridge paths | Android 4175, CH/Mini and DE/RF2: complete 64 KiB and native egress after CH/DE endpoint migration. | New-host binding comes from backend issuance plus the ordinary receipt; the event does not itself expose the hostname. Separate new XHTTP connections were not run for CH/DE. |
+| Lampa ingress | Android 4169, RF2 to PL on Wi-Fi and cellular; RF2-XHTTP to PL on Wi-Fi: complete 64 KiB and native tunnel/DNS/egress after the Floating-IP repair. | Other destinations, current load and all carrier restrictions are not covered. |
+| PL direct XHTTP | Android 4173, ordinary PL selection: complete 64 KiB and native protection after Atlas publication. | New-host use was inferred from the managed render and receipt, not independently proven by the candidate revision. |
+| Windows install handoff | Windows 4174, ordinary marketing Download, F5 and Continue in POKROV: refreshed handoff consumed by the same existing account. | Existing installation only; no VPN Connect or fresh installation acceptance. |
 
-A later ordinary PL-only Lampa attempt at07:17:57UTC exhausted its proxy_dial
-budget12006ms. Auto then connected to direct PL (http_64k684ms, total17810ms).
-This does not accept Lampa; Platform restored all temporary PL exclusions and
-disabled that unaccepted bridge. At07:22:01UTC the phone had no tunnel/VPN service,
-Wi-Fi1/mobile_data1/airplane0. The owner then temporarily took the phone; further
-phone work waits for explicit return. Country remained Poland after this check.
+The Android [acceptance document](android-release-audit.md) records the remaining
+LTE/recovery limits. Earlier Android 4169 ordinary Mini/RF2 routes for CH, DE,
+DE2, PL and US, plus the historical Mini-to-RU path, retain their accepted native
+scope. The failed cellular catalog refresh and DE/Mini, DE2/Mini and DE/RF2
+`proxy_dial` attempts did not establish a tunnel; later PL cellular acceptance
+does not close those different cases. Direct RU VLESS/AWG failures remain
+historical failures with no established root cause. Earlier DE2 probes cancelled
+by a DE winner are not evidence; DE2 AWG was subsequently accepted on 4174.
 
-The first Auto and Germany attempts exhausted failing DE2 bridge candidates
-before selecting CH or DE; country selection itself did not force Switzerland.
-Platform fixed a missing current DE2 hostname in Mini's live allowlist. Its exact
-Mini path was subsequently confirmed at 05:16:08 UTC with the ordinary client;
-temporary server-side DE/DE2 selection constraints were restored afterward.
-RU initially failed direct VLESS/AWG. Platform ebc25ba then removed its blanket
-bridge-country exclusion and allowed the issued literal RU IPv4 on Mini.
-The normal client accepted Mini→RU at 05:10:09 UTC with native protection and
-the delivered report above. This does not accept direct RU or DE2/RU AWG.
+The last final-package VM cleanup restored no running VPN, guard, TUN or proxy,
+baseline DNS and routes, then PoweredOff/Unlocked with its physical bridge and
+host-time-sync policy preserved. Accepted phone cases restored their temporary
+delivery flags and network settings, used normal Stop and left no tunnel.
+No blanket acceptance of LTE handoff, all protocols, all WARP variants or a new
+load-aware client is inferred from these results.
 
-With the phone's default network explicitly confirmed CELLULAR under the
-owner-reported restrictions, the ordinary catalog refresh failed. A normal
-Wi-Fi fetch was followed by a cellular Connect: DE/Mini, DE2/Mini and DE/rf2
-failed `proxy_dial` around ten seconds. No tunnel was established. The queued
-ordinary reports arrived after Wi-Fi returned; their network class is cellular.
-The two successful new paths above were on Wi-Fi, not that mobile network.
+## Earlier dated results
 
-At device 05:18:13 UTC, normal Stop restored zero tunnel interfaces and no app
-VPN services. Auto selection and WARP off were restored; Wi-Fi=1, mobile_data=1,
-airplane_mode=0 match the initial state. Wi-Fi was temporarily disabled only on
-the phone for the cellular case. The VM stayed off. These checks did not accept
-live-tunnel Wi-Fi/LTE recovery, Android WARP, site handoff or independent OS HTTP traffic.
-The reports above were received normally; no private profile or journal was read.
-FullABI and public publication remain pending; public 1.4.5 is unchanged.
+The remaining receipts describe the build and scenario named in each paragraph.
+Their words “current”, “pending” and “remaining” refer to that checkpoint; they do
+not override the status above or the owner's current queue. Superseded detailed
+Android candidate receipts remain in Git history.
 
 Windows **1.5.0+4169** passed ordinary support delivery on 16 October. With the
 owner's explicit Telegram-notification permission, one message was submitted
