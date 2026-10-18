@@ -49,6 +49,9 @@ class HomeViewData {
     this.checks = const <HealthCheck>[],
     this.tip,
     this.showAdSlot = true,
+    this.notificationsUnread = 0,
+    this.statusLabel,
+    this.actionLabel,
   });
 
   final ConnectionPhase phase;
@@ -73,6 +76,9 @@ class HomeViewData {
   final List<HealthCheck> checks;
   final NextStepTip? tip;
   final bool showAdSlot;
+  final int notificationsUnread;
+  final String? statusLabel;
+  final String? actionLabel;
 }
 
 class StatusRow {

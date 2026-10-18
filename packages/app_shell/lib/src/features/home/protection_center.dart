@@ -102,6 +102,8 @@ class _ProtectionCenterSheet extends StatefulWidget {
     required this.onRemoveShortcut,
     required this.onOpenShortcut,
     required this.onOpenSupport,
+    required this.onDetails,
+    this.technical = false,
   });
 
   final _ProtectionCenterData initialData;
@@ -118,6 +120,8 @@ class _ProtectionCenterSheet extends StatefulWidget {
   final ValueChanged<String> onRemoveShortcut;
   final Future<bool> Function(PokrovPostConnectShortcut) onOpenShortcut;
   final VoidCallback onOpenSupport;
+  final VoidCallback onDetails;
+  final bool technical;
 
   @override
   State<_ProtectionCenterSheet> createState() => _ProtectionCenterSheetState();
@@ -441,6 +445,28 @@ class _ProtectionCenterSheetState extends State<_ProtectionCenterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.technical) return _buildTechnicalDetails(context);
+    final data = _controller.data;
+    final healthy = data.snapshot?.isCleanlyHealthy == true;
+    final checks = _protectionChecks(data);
+    return SingleChildScrollView(child: ui.StatusSheet(
+      data: ui.StatusViewData(
+        phase: healthy ? ui.ConnectionPhase.on : ui.ConnectionPhase.off,
+        title: healthy ? 'Ты под защитой' : 'Защита не подтверждена',
+        subtitle: healthy ? 'POKROV работает на этом устройстве' : 'Проверь соединение или попробуй подключиться',
+        rows: [for (final check in checks.take(3)) ui.StatusRow(
+          title: check.title,
+          detail: check.tone == _ProtectionCheckTone.success ? 'Работает' : 'Пока не подтверждено',
+          ok: check.tone == _ProtectionCheckTone.success,
+        )],
+      ),
+      onPrimary: _controller.refreshing || _controller.repairing ? null
+          : healthy ? _controller.refresh : _confirmRepair,
+      onDetails: widget.onDetails,
+      onDisconnect: widget.retainsProtection() && !_disconnecting ? _disconnect : null,
+    ));
+  }
+  Widget _buildTechnicalDetails(BuildContext context) {
     final p = PokrovPalette.of(context);
     final data = _controller.data;
     final checks = _protectionChecks(data);

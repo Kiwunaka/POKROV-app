@@ -46,12 +46,14 @@ abstract final class PokrovMotion {
   static const settle = Curves.easeOutCubic;
 }
 
-ThemeData pokrovUiTheme() {
+ThemeData pokrovUiTheme({Brightness brightness = Brightness.light}) {
   final base = ThemeData(
     useMaterial3: true,
+    brightness: brightness,
     fontFamily: pokrovFontFamily,
     scaffoldBackgroundColor: PokrovColors.canvas,
     colorScheme: ColorScheme.fromSeed(
+      brightness: brightness,
       seedColor: PokrovColors.accent,
       primary: PokrovColors.accent,
       surface: PokrovColors.surface,

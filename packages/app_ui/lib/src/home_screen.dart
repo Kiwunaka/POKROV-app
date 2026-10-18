@@ -22,10 +22,11 @@ class HomeScreen extends StatelessWidget {
     this.onWarpChanged,
     this.onTip,
     this.onHelp,
+    this.adSlot,
   });
 
   final HomeViewData data;
-  final VoidCallback onToggle;
+  final VoidCallback? onToggle;
   final VoidCallback onOpenStatus;
   final VoidCallback onOpenCountry;
   final VoidCallback onOpenRoute;
@@ -34,6 +35,7 @@ class HomeScreen extends StatelessWidget {
   final ValueChanged<bool>? onWarpChanged;
   final VoidCallback? onTip;
   final VoidCallback? onHelp;
+  final Widget? adSlot;
 
   bool get _advanced => data.mode == InterfaceMode.advanced;
 
@@ -45,11 +47,13 @@ class HomeScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 112),
         children: [
-          _Header(accessBadge: data.accessBadge, onAccess: onOpenAccess, onNotifications: onNotifications),
+          _Header(accessBadge: data.accessBadge, onAccess: onOpenAccess, onNotifications: onNotifications, unread: data.notificationsUnread),
           SizedBox(height: _advanced ? 8 : 14),
           Center(
             child: PokrovConnectButton(
+              key: const ValueKey('connect-action'),
               phase: data.phase,
+              label: data.actionLabel,
               diameter: _advanced ? 176 : 232,
               onPressed: onToggle,
             ),
@@ -86,7 +90,7 @@ class HomeScreen extends StatelessWidget {
               actions: [
                 Expanded(child: _SmallButton(label: 'Попробовать снова', primary: true, onTap: onToggle)),
                 const SizedBox(width: 8),
-                _SmallButton(label: 'Помощь', onTap: onHelp),
+                if (onHelp != null) _SmallButton(label: 'Помощь', onTap: onHelp),
               ],
             ),
             const SizedBox(height: 10),
@@ -99,18 +103,18 @@ class HomeScreen extends StatelessWidget {
 
   List<Widget> _simpleBlock(bool error) {
     return [
-      if (!error && data.tip != null) ...[
+      if (!error && data.tip != null && onTip != null) ...[
         _TipCard(tip: data.tip!, onTap: onTip),
         const SizedBox(height: 10),
       ],
-      if (!error && data.showAdSlot) const AdSlot(),
+      if (!error && data.showAdSlot && adSlot != null) adSlot!,
     ];
   }
 
   List<Widget> _advancedBlock() {
     final on = data.phase == ConnectionPhase.on;
     return [
-      PokrovCard(
+      if (onWarpChanged != null) PokrovCard(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         radius: PokrovRadii.tile,
         child: Row(
@@ -126,7 +130,7 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            PokrovToggle(value: data.warpEnabled, onChanged: onWarpChanged ?? (_) {}, semanticLabel: 'WARP'),
+            PokrovToggle(value: data.warpEnabled, onChanged: onWarpChanged!, semanticLabel: 'WARP'),
           ],
         ),
       ),
@@ -171,27 +175,29 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ),
-      if (data.showAdSlot) ...[const SizedBox(height: 10), const AdSlot(compact: true)],
+      if (data.showAdSlot && adSlot != null) ...[const SizedBox(height: 10), adSlot!],
     ];
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.accessBadge, required this.onAccess, this.onNotifications});
+  const _Header({required this.accessBadge, required this.onAccess, this.onNotifications, this.unread = 0});
 
   final String accessBadge;
   final VoidCallback onAccess;
   final VoidCallback? onNotifications;
+  final int unread;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         const Expanded(child: Align(alignment: Alignment.centerLeft, child: PokrovWordmark())),
-        IconButton(
+        if (onNotifications != null) IconButton(
+          key: const ValueKey('home-notifications-action'),
           onPressed: onNotifications,
           tooltip: 'Уведомления',
-          icon: const Icon(Icons.notifications_none_rounded, color: PokrovColors.ink),
+          icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: const Icon(Icons.notifications_none_rounded, color: PokrovColors.ink)),
         ),
         OutlinedButton(
           onPressed: onAccess,
@@ -229,7 +235,7 @@ class _StatusPill extends StatelessWidget {
     };
     return Semantics(
       button: true,
-      label: 'Состояние защиты: $text',
+      label: 'Состояние защиты: ${data.statusLabel ?? text}',
       excludeSemantics: true,
       child: AnimatedContainer(
         duration: PokrovMotion.state,
@@ -253,7 +259,7 @@ class _StatusPill extends StatelessWidget {
                   const SizedBox(width: 8),
                   AnimatedSwitcher(
                     duration: PokrovMotion.quick,
-                    child: Text(text, key: ValueKey(text), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg)),
+                    child: Text(data.statusLabel ?? text, key: ValueKey(data.statusLabel ?? text), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg)),
                   ),
                   Icon(Icons.chevron_right_rounded, size: 18, color: fg),
                 ],

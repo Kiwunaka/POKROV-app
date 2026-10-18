@@ -12,10 +12,11 @@ import 'tokens.dart';
 /// error: the ring turns amber and the label says «Повторить».
 /// With reduced motion the ring stays still.
 class PokrovConnectButton extends StatefulWidget {
-  const PokrovConnectButton({super.key, required this.phase, required this.onPressed, this.diameter = 232});
+  const PokrovConnectButton({super.key, required this.phase, required this.onPressed, this.diameter = 232, this.label});
 
   final ConnectionPhase phase;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final String? label;
 
   /// Diameter of the white circle; the ring area is 25% larger.
   final double diameter;
@@ -70,7 +71,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
     final on = phase == ConnectionPhase.on;
     final error = phase == ConnectionPhase.error;
     final ring = widget.diameter * 1.25;
-    final label = switch (phase) {
+    final label = widget.label ?? switch (phase) {
       ConnectionPhase.off => 'Подключить',
       ConnectionPhase.connecting => 'Подключаемся…',
       ConnectionPhase.on => 'Защищено',

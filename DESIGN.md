@@ -1,7 +1,7 @@
 ---
 name: POKROV Client Design System
 status: active
-updated: 2026-08-22
+updated: 2026-10-18
 ---
 
 # POKROV Client Design System
@@ -15,8 +15,8 @@ POKROV client UI should feel calm, premium, and operationally honest.
 - Diagnostics are available behind details, not first-layer UI.
 - Android and Windows availability labels must reflect gate status.
 - Motion should be quiet and respect reduced-motion settings.
-- Idle and connected actions settle after one finite animation; success does
-  not start a repeating pulse. Loading sweeps may repeat only while busy.
+- The connected circle emits soft, repeating waves; connecting uses a rotating
+  arc. Reduced motion stops both. Idle and error states remain still.
 - Widget animation tickers are muted whenever the app is not resumed, including
   modal routes. Returning to the foreground resumes them with widget state
   intact; inactive tabs keep their own `TickerMode` and repaint boundaries.
@@ -34,6 +34,15 @@ Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `
 
 ## Components
 
+- The approved screens, text, font and motion live in `packages/app_ui`.
+  Feature-local adapters in `app_shell` supply real view data and callbacks;
+  the package itself has no runtime, network or storage access. Sample data
+  belongs only to its example and tests. Both Android and Windows use the same
+  centered column, at most 480 logical pixels wide.
+- Protection, Locations and Profile are always in the tab bar; Rules appears
+  only in Advanced mode. Profile owns the persisted Simple/Advanced switch.
+  Status and the first connection choice use sheets; technical evidence stays
+  under Diagnostics. Empty promo slots and unavailable actions stay hidden.
 - Protection connect surface.
 - Location list with beta/fallback states.
 - Rules and route-mode picker.

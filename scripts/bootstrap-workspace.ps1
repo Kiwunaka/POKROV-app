@@ -125,6 +125,7 @@ $workspacePackages = @(
   "packages\\support_bundle",
   "packages\\support_context",
   "packages\\runtime_engine",
+  "packages\\app_ui",
   "packages\\app_shell",
   "apps\\android_shell",
   "apps\\ios_shell",

@@ -4,15 +4,11 @@ class _SeedContentList extends StatelessWidget {
   const _SeedContentList({
     required this.children,
     // One shared top gutter so the page rhythm does not jump between tabs.
-    this.top = 16,
-    this.maxContentWidth = 900,
     this.onRefresh,
     this.refreshIndicatorKey,
   });
 
   final List<Widget> children;
-  final double top;
-  final double maxContentWidth;
 
   /// When set, refresh follows host physics: Apple uses the signature sliver,
   /// while Android/Windows use Material pull-to-refresh.
@@ -24,9 +20,9 @@ class _SeedContentList extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final sidePadding = constraints.maxWidth >= 980
-            ? math.max(24.0, (constraints.maxWidth - maxContentWidth) / 2)
+            ? math.max(24.0, (constraints.maxWidth - 480) / 2)
             : 24.0;
-        final padding = EdgeInsets.fromLTRB(sidePadding, top, sidePadding, 160);
+        final padding = EdgeInsets.fromLTRB(sidePadding, 16, sidePadding, 160);
         final onRefresh = this.onRefresh;
         if (onRefresh == null) {
           return ListView(padding: padding, children: children);
@@ -227,286 +223,36 @@ class _PokrovRefreshArcPainter extends CustomPainter {
   }
 }
 
-class _DesktopShell extends StatelessWidget {
-  const _DesktopShell({
-    required this.advanced,
-    required this.selectedIndex,
-    required this.sectionBuilders,
-    required this.onSelected,
-  }) : super(key: const ValueKey('desktop-shell'));
-
-  final int selectedIndex;
-  final bool advanced;
-  final List<WidgetBuilder> sectionBuilders;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 900) {
-          return _DesktopDrawerShell(
-            advanced: advanced,
-            selectedIndex: selectedIndex,
-            sectionBuilders: sectionBuilders,
-            onSelected: onSelected,
-          );
-        }
-        final collapsed = constraints.maxWidth < 1180;
-        final p = PokrovPalette.of(context);
-        return Row(
-          children: [
-            RepaintBoundary(
-              child: _DesktopSidebar(
-                advanced: advanced,
-                selectedIndex: selectedIndex,
-                onSelected: onSelected,
-                collapsed: collapsed,
-              ),
-            ),
-            Expanded(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(color: p.line),
-                  ),
-                ),
-                child: _TabTransition(
-                  index: selectedIndex,
-                  axis: Axis.vertical,
-                  child: _LazyIndexedStack(
-                    index: selectedIndex,
-                    builders: sectionBuilders,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _DesktopDrawerShell extends StatelessWidget {
-  const _DesktopDrawerShell({
-    required this.advanced,
-    required this.selectedIndex,
-    required this.sectionBuilders,
-    required this.onSelected,
-  }) : super(key: const ValueKey('desktop-drawer-shell'));
-
-  final int selectedIndex;
-  final bool advanced;
-  final List<WidgetBuilder> sectionBuilders;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = PokrovPalette.of(context);
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      drawerScrimColor: p.ink.withValues(alpha: 0.18),
-      drawer: Drawer(
-        key: const ValueKey('desktop-sidebar-drawer'),
-        backgroundColor: p.canvas,
-        child: SafeArea(
-          child: RepaintBoundary(
-            child: _DesktopSidebar(
-              advanced: advanced,
-              selectedIndex: selectedIndex,
-              onSelected: (index) {
-                Navigator.of(context).maybePop();
-                onSelected(index);
-              },
-              collapsed: false,
-              drawer: true,
-            ),
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          SizedBox(
-            height: 58,
-            child: Row(
-              children: [
-                const SizedBox(width: 12),
-                Builder(
-                  builder: (buttonContext) {
-                    return IconButton(
-                      key: const ValueKey('desktop-sidebar-hamburger'),
-                      tooltip: 'Меню',
-                      icon: const Icon(Icons.menu_rounded),
-                      onPressed: () => Scaffold.of(buttonContext).openDrawer(),
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                const _BrandLockup(markSize: 28),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _TabTransition(
-              index: selectedIndex,
-              child: _LazyIndexedStack(
-                index: selectedIndex,
-                builders: sectionBuilders,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MobileShell extends StatelessWidget {
-  const _MobileShell({
-    required this.advanced,
-    required this.selectedIndex,
-    required this.sectionBuilders,
-    required this.onSelected,
-  }) : super(key: const ValueKey('mobile-shell'));
+  const _MobileShell({required this.advanced, required this.selectedIndex,
+    required this.sectionBuilders, required this.onSelected});
 
-  final int selectedIndex;
   final bool advanced;
+  final int selectedIndex;
   final List<WidgetBuilder> sectionBuilders;
   final ValueChanged<int> onSelected;
 
   @override
-  Widget build(BuildContext context) {
-    final p = PokrovPalette.of(context);
-    return Column(
-      children: [
-        Expanded(
-          child: _TabTransition(
-            index: selectedIndex,
-            child: _LazyIndexedStack(
-              index: selectedIndex,
-              builders: sectionBuilders,
-            ),
-          ),
-        ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: RepaintBoundary(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: p.surface.withValues(alpha: 0.98),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: p.line),
-                  boxShadow: [
-                    BoxShadow(
-                      // Shadows darken, they never emit: ink is near-white in
-                      // dark mode, so anchor the dark-mode shadow on black.
-                      color: (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.black
-                              : p.ink)
-                          .withValues(
-                        alpha: Theme.of(context).brightness == Brightness.dark
-                            ? 0.35
-                            : 0.06,
-                      ),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: NavigationBar(
-                  height: 64,
-                  selectedIndex: !advanced && selectedIndex == 3 ? 2 : selectedIndex,
-                  onDestinationSelected: (index) {
-                    // Selection tick for the thumb — pointer navigation on
-                    // desktop and same-tab taps stay silent.
-                    final targetIndex = !advanced && index == 2 ? 3 : index;
-                    if (targetIndex == selectedIndex) {
-                      return;
-                    }
-                    PokrovHaptics.tap();
-                    onSelected(targetIndex);
-                  },
-                  destinations: [
-                    const NavigationDestination(
-                      key: ValueKey('nav-protection'),
-                      icon: Icon(Icons.shield_outlined),
-                      selectedIcon: Icon(Icons.shield_rounded),
-                      label: 'Защита',
-                    ),
-                    const NavigationDestination(
-                      key: ValueKey('nav-locations'),
-                      icon: Icon(Icons.public_outlined),
-                      selectedIcon: Icon(Icons.public),
-                      label: 'Локации',
-                    ),
-                    if (advanced) const NavigationDestination(
-                      key: ValueKey('nav-rules'),
-                      icon: Icon(Icons.rule_folder_outlined),
-                      selectedIcon: Icon(Icons.rule_folder),
-                      label: 'Правила',
-                    ),
-                    const NavigationDestination(
-                      key: ValueKey('nav-profile'),
-                      icon: Icon(Icons.person_outline),
-                      selectedIcon: Icon(Icons.person),
-                      label: 'Профиль',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DesktopSidebar extends PokrovDesktopSidebar {
-  _DesktopSidebar({
-    required bool advanced,
-    required int selectedIndex,
-    required ValueChanged<int> onSelected,
-    required bool collapsed,
-    bool drawer = false,
-  }) : super(
-          selectedIndex: !advanced && selectedIndex == 3 ? 2 : selectedIndex,
-          onSelected: (index) => onSelected(!advanced && index == 2 ? 3 : index),
-          collapsed: collapsed,
-          drawer: drawer,
-          brandMarkAssetName: _pokrovBrandMarkAsset,
-          versionLabel: '',
-          betaLabel: '',
-          destinations: [
-            const PokrovSidebarDestination(
-              itemKey: ValueKey('nav-protection'),
-              icon: Icons.shield_outlined,
-              selectedIcon: Icons.shield_rounded,
-              label: 'Защита',
-            ),
-            const PokrovSidebarDestination(
-              itemKey: ValueKey('nav-locations'),
-              icon: Icons.public_outlined,
-              selectedIcon: Icons.public,
-              label: 'Локации',
-            ),
-            if (advanced) const PokrovSidebarDestination(
-              itemKey: ValueKey('nav-rules'),
-              icon: Icons.rule_folder_outlined,
-              selectedIcon: Icons.rule_folder,
-              label: 'Правила',
-            ),
-            const PokrovSidebarDestination(
-              itemKey: ValueKey('nav-profile'),
-              icon: Icons.person_outline,
-              selectedIcon: Icons.person,
-              label: 'Профиль',
-            ),
-          ],
-        );
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 480),
+      child: Stack(children: [
+        Positioned.fill(child: _TabTransition(
+          index: selectedIndex,
+          child: _LazyIndexedStack(index: selectedIndex, builders: sectionBuilders),
+        )),
+        Align(alignment: Alignment.bottomCenter, child: ui.PokrovTabBar(
+          mode: advanced ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
+          current: ui.PokrovTab.values[selectedIndex],
+          onSelect: (tab) {
+            if (tab.index == selectedIndex) return;
+            PokrovHaptics.tap();
+            onSelected(tab.index);
+          },
+        )),
+      ]),
+    ),
+  );
 }
 
 /// Calm cross-tab transition: fades 0.92 -> 1 over [_MotionTokens.short]
@@ -518,14 +264,11 @@ class _TabTransition extends StatefulWidget {
   const _TabTransition({
     required this.index,
     required this.child,
-    this.axis = Axis.horizontal,
   }) : super(key: const ValueKey('tab-transition-motion'));
 
   final int index;
   final Widget child;
 
-  /// Travel axis of the hosting navigation row or rail.
-  final Axis axis;
 
   @override
   State<_TabTransition> createState() => _TabTransitionState();
@@ -578,9 +321,7 @@ class _TabTransitionState extends State<_TabTransition>
         return Opacity(
           opacity: 0.92 + 0.08 * progress,
           child: Transform.translate(
-            offset: widget.axis == Axis.horizontal
-                ? Offset(drift, 0)
-                : Offset(0, drift),
+            offset: Offset(drift, 0),
             child: child,
           ),
         );

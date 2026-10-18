@@ -418,61 +418,19 @@ class SelectionCheck extends StatelessWidget {
 /// slots). Full width; 132 px tall in simple mode, 84 px in advanced.
 /// The real creative replaces the striped area; the «Реклама» mark stays.
 class AdSlot extends StatelessWidget {
-  const AdSlot({super.key, this.compact = false});
+  const AdSlot({super.key, required this.child, this.compact = false});
 
+  final Widget child;
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
-    final height = compact ? 84.0 : 132.0;
-    return Semantics(
-      label: 'Реклама',
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(compact ? 18 : 22),
-        child: SizedBox(
-          height: height,
-          width: double.infinity,
-          child: Stack(
-            children: [
-              const Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment(-0.92, -0.92),
-                      colors: [Color(0xFFEAF0EC), Color(0xFFEAF0EC), Color(0xFFDFE8E2), Color(0xFFDFE8E2)],
-                      stops: [0, 0.5, 0.5, 1],
-                      tileMode: TileMode.repeated,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 12,
-                top: 10,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(999)),
-                  child: const Text('Реклама', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: PokrovColors.muted)),
-                ),
-              ),
-              Positioned(
-                left: 14,
-                right: 14,
-                bottom: compact ? 10 : 14,
-                child: Text(
-                  compact ? '[Баннер партнёра · 358×84]' : '[Баннер партнёра · 358×132]',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: compact ? 14 : 17, fontWeight: FontWeight.w800, color: PokrovColors.ink),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Semantics(
+    label: 'Реклама',
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(compact ? 18 : 22),
+      child: SizedBox(height: compact ? 84 : 132, width: double.infinity, child: child),
+    ),
+  );
 }
 
 /// Amber notice card used for errors and «needs attention» states.

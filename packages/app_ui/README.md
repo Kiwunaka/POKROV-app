@@ -32,6 +32,6 @@ Map app state to the view data and pass the real actions:
 
 Notes for the integration:
 
-- Font family is `packages/pokrov_app_ui/Golos Text`; the fonts are a copy of the app shell ones until the shell moves to this package.
+- Font family is `packages/pokrov_app_ui/Golos Text`; this package owns the bundled font files used by the shell.
 - The connected state repeats soft waves around the button (reduced motion stops them). This replaces the `DESIGN.md` rule «success does not start a repeating pulse»; update that line when the screen ships.
 - The support code must already be masked when it reaches `DiagnosticsViewData`.

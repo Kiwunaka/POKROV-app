@@ -776,8 +776,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 1200));
     double homeOpacity() {
-      final label = find.descendant(of: find.byKey(const ValueKey('home-boot-reveal')),
-          matching: find.text('POKROV VPN'));
+      final label = find.text('POKROV VPN');
       expect(label, findsOneWidget);
       var opacity = 1.0;
       tester.element(label).visitAncestorElements((element) {

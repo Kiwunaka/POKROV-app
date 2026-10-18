@@ -37,6 +37,7 @@ class PokrovTabBar extends StatelessWidget {
             for (final (tab, label, icon, activeIcon) in tabs)
               Expanded(
                 child: Semantics(
+                  key: ValueKey('nav-${tab.name}'),
                   selected: tab == current,
                   button: true,
                   label: label,

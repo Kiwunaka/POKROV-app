@@ -408,6 +408,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  pokrov_app_ui:
+    dependency: "direct main"
+    description:
+      path: "../app_ui"
+      relative: true
+    source: path
+    version: "0.1.0"
   pokrov_core_domain:
     dependency: "direct main"
     description:

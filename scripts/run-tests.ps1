@@ -76,6 +76,7 @@ $flutterTestPackages = @(
   "packages\\diagnostics_collectors",
   "packages\\support_bundle",
   "packages\\support_context",
+  "packages\\app_ui",
   "packages\\app_shell",
   "packages\\runtime_engine",
   "apps\\android_shell",

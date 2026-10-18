@@ -191,8 +191,3 @@ int _availableTelegramBonusDays(AppFirstBonusSummary? bonus) {
   final days = bonus?.channelBonusPremiumDays ?? 0;
   return days > 0 ? days : 5;
 }
-
-int? _claimedTelegramBonusDays(AppFirstBonusSummary? bonus) {
-  final days = bonus?.channelBonusPremiumDays ?? 0;
-  return days > 0 ? days : null;
-}

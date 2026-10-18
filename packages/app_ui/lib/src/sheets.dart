@@ -18,11 +18,13 @@ enum FirstRouteChoice { wholePhone, someApps }
 
 /// Asked once before the first connection.
 class FirstConnectSheet extends StatelessWidget {
-  const FirstConnectSheet({super.key, required this.choice, required this.onChanged, required this.onContinue});
+  const FirstConnectSheet({super.key, required this.choice, required this.onChanged, required this.onContinue, this.canSelectApps = true, this.wholeDeviceLabel = 'Весь телефон'});
 
   final FirstRouteChoice choice;
   final ValueChanged<FirstRouteChoice> onChanged;
   final VoidCallback onContinue;
+  final bool canSelectApps;
+  final String wholeDeviceLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -42,13 +44,13 @@ class FirstConnectSheet extends StatelessWidget {
               selected: choice == FirstRouteChoice.wholePhone,
               icon: Icons.smartphone_rounded,
               iconFilled: true,
-              title: 'Весь телефон',
+              title: wholeDeviceLabel,
               badge: 'советуем',
               text: 'Российские сайты и банки — как обычно',
               onTap: () => onChanged(FirstRouteChoice.wholePhone),
             ),
             const SizedBox(height: 10),
-            _ChoiceCard(
+            if (canSelectApps) _ChoiceCard(
               selected: choice == FirstRouteChoice.someApps,
               icon: Icons.apps_rounded,
               title: 'Только некоторые приложения',
@@ -128,11 +130,12 @@ class _ChoiceCard extends StatelessWidget {
 /// «Состояние защиты» in plain words. Technical evidence lives behind
 /// [onDetails] (the diagnostics screen).
 class StatusSheet extends StatelessWidget {
-  const StatusSheet({super.key, required this.data, required this.onPrimary, required this.onDetails});
+  const StatusSheet({super.key, required this.data, required this.onPrimary, required this.onDetails, this.onDisconnect});
 
   final StatusViewData data;
-  final VoidCallback onPrimary;
+  final VoidCallback? onPrimary;
   final VoidCallback onDetails;
+  final VoidCallback? onDisconnect;
 
   @override
   Widget build(BuildContext context) {
@@ -207,6 +210,7 @@ class StatusSheet extends StatelessWidget {
                 ? SecondaryButton(label: 'Проверить ещё раз', onPressed: onPrimary, filled: true)
                 : PrimaryButton(label: 'Включить', onPressed: onPrimary, height: 54),
             LinkButton(label: 'Подробности для поддержки ›', onPressed: onDetails),
+            if (onDisconnect != null) LinkButton(label: 'Отключить', onPressed: onDisconnect!),
           ],
         ),
       ),

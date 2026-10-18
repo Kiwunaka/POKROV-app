@@ -137,315 +137,13 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
   }
 }
 
-/// Single source of truth for the POKROV Material theme so light and dark
-/// stay in lockstep. Builds an Apple-grade type ramp plus restrained,
-/// consistent component styling on top of the palette tokens.
 ThemeData _buildPokrovTheme({
   required PokrovPaletteTokens tokens,
   required Brightness brightness,
-}) {
-  final isDark = brightness == Brightness.dark;
-  // component.button text tokens: white on emerald, near-black on dark mint.
-  final onAccent = isDark ? const Color(0xFF101713) : Colors.white;
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: tokens.accent,
-    brightness: brightness,
-  ).copyWith(
-    primary: tokens.accent,
-    onPrimary: onAccent,
-    secondary: tokens.accentBright,
-    onSecondary: onAccent,
-    surface: tokens.surface,
-    onSurface: tokens.ink,
-    error: tokens.danger,
-    outlineVariant: tokens.line,
-  );
-  final textTheme = _buildPokrovTextTheme(tokens);
-
-  return ThemeData(
-    useMaterial3: true,
-    brightness: brightness,
-    colorScheme: colorScheme,
-    fontFamily: 'packages/pokrov_app_shell/Golos Text',
-    fontFamilyFallback: const [
-      'Segoe UI Variable Display',
-      'Segoe UI Variable Text',
-      'Segoe UI',
-      'Roboto',
-      'Inter',
-    ],
-    extensions: [isDark ? PokrovPalette.dark : PokrovPalette.light],
-    scaffoldBackgroundColor: Colors.transparent,
-    canvasColor: tokens.canvas,
-    // The shared press surface keeps brand feedback quiet. Native scroll,
-    // route, switch, pointer and keyboard behavior remain platform-adaptive.
-    splashColor: Colors.transparent,
-    highlightColor: tokens.ink.withValues(alpha: 0.05),
-    pageTransitionsTheme: pokrovAdaptivePageTransitionsTheme(),
-    textTheme: textTheme,
-    iconTheme: IconThemeData(color: tokens.ink, size: 22),
-    dividerTheme: DividerThemeData(color: tokens.line, thickness: 1, space: 1),
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.transparent,
-      foregroundColor: tokens.ink,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      surfaceTintColor: Colors.transparent,
-      centerTitle: false,
-      titleTextStyle: textTheme.headlineSmall,
-    ),
-    cardTheme: CardThemeData(
-      color: tokens.surface,
-      elevation: 0,
-      shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.card),
-      clipBehavior: Clip.antiAlias,
-    ),
-    navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      height: 64,
-      indicatorColor: Colors.transparent,
-      indicatorShape: const StadiumBorder(),
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      labelTextStyle: WidgetStateProperty.resolveWith(
-        (states) => TextStyle(
-          fontSize: 11.5,
-          letterSpacing: 0.1,
-          fontWeight: states.contains(WidgetState.selected)
-              ? FontWeight.w600
-              : FontWeight.w500,
-          color:
-              states.contains(WidgetState.selected) ? tokens.ink : tokens.muted,
-        ),
-      ),
-      iconTheme: WidgetStateProperty.resolveWith(
-        (states) => IconThemeData(
-          size: 24,
-          color: states.contains(WidgetState.selected)
-              ? tokens.accent
-              : tokens.muted,
-        ),
-      ),
-    ),
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        backgroundColor: tokens.accent,
-        foregroundColor: onAccent,
-        disabledBackgroundColor: tokens.muted.withValues(alpha: 0.18),
-        disabledForegroundColor: tokens.muted,
-        minimumSize: const Size(0, 50),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-        textStyle: textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0,
-        ),
-        shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.stadium),
-      ),
-    ),
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: tokens.ink,
-        side: BorderSide(color: tokens.line),
-        minimumSize: const Size(0, 50),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-        shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.stadium),
-      ),
-    ),
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: tokens.accent,
-        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-        shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.card),
-      ),
-    ),
-    switchTheme: SwitchThemeData(
-      // component.switch canon: iOS system-green on-track, translucent
-      // neutral off-track, always-white thumb.
-      thumbColor: WidgetStateProperty.all(Colors.white),
-      trackColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected)
-            ? tokens.connectedGreen
-            : const Color(0x78787880).withValues(alpha: isDark ? 0.32 : 0.16),
-      ),
-      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: tokens.surfaceMuted,
-      hintStyle: textTheme.bodyMedium?.copyWith(color: tokens.muted),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      border: const OutlineInputBorder(
-        borderRadius: PokrovRadii.cardSm,
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: PokrovRadii.cardSm,
-        borderSide: BorderSide(color: tokens.line),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: PokrovRadii.cardSm,
-        borderSide: BorderSide(color: tokens.accent, width: 1.6),
-      ),
-    ),
-    dialogTheme: DialogThemeData(
-      backgroundColor: tokens.surfaceElevated,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(PokrovRadii.xl),
-      ),
-      titleTextStyle: textTheme.titleLarge,
-      contentTextStyle: textTheme.bodyMedium?.copyWith(color: tokens.muted),
-    ),
-    bottomSheetTheme: BottomSheetThemeData(
-      backgroundColor: tokens.surfaceElevated,
-      surfaceTintColor: Colors.transparent,
-      modalBarrierColor: tokens.ink.withValues(alpha: isDark ? 0.6 : 0.32),
-      // The palette step surface→surfaceElevated is nearly invisible in dark,
-      // so the sheet lift comes from a real shadow, never a tint overlay.
-      elevation: 20,
-      shadowColor: Colors.black.withValues(alpha: isDark ? 0.55 : 0.16),
-      shape: const RoundedRectangleBorder(borderRadius: PokrovRadii.sheet),
-    ),
-    listTileTheme: ListTileThemeData(
-      iconColor: tokens.muted,
-      textColor: tokens.ink,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-    ),
-    snackBarTheme: SnackBarThemeData(
-      behavior: SnackBarBehavior.floating,
-      insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 84),
-      backgroundColor: isDark ? tokens.surfaceElevated : tokens.ink,
-      contentTextStyle: textTheme.bodyMedium?.copyWith(
-        color: isDark ? tokens.ink : tokens.canvasAlt,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(PokrovRadii.md),
-      ),
-    ),
-    tooltipTheme: TooltipThemeData(
-      decoration: BoxDecoration(
-        color: tokens.ink.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(PokrovRadii.xs),
-      ),
-      textStyle: textTheme.labelMedium?.copyWith(color: tokens.canvasAlt),
-    ),
-  );
-}
-
-TextTheme _buildPokrovTextTheme(PokrovPaletteTokens tokens) {
-  final ink = tokens.ink;
-  final muted = tokens.muted;
-  return TextTheme(
-    displayLarge: TextStyle(
-      fontSize: 34,
-      height: 1.1,
-      fontWeight: FontWeight.w700,
-      letterSpacing: -0.8,
-      color: ink,
-    ),
-    displayMedium: TextStyle(
-      fontSize: 28,
-      height: 1.12,
-      fontWeight: FontWeight.w700,
-      letterSpacing: -0.6,
-      color: ink,
-    ),
-    displaySmall: TextStyle(
-      fontSize: 24,
-      height: 1.16,
-      fontWeight: FontWeight.w700,
-      letterSpacing: -0.4,
-      color: ink,
-    ),
-    headlineLarge: TextStyle(
-      fontSize: 26,
-      height: 1.18,
-      fontWeight: FontWeight.w700,
-      letterSpacing: -0.5,
-      color: ink,
-    ),
-    headlineMedium: TextStyle(
-      fontSize: 22,
-      height: 1.2,
-      fontWeight: FontWeight.w700,
-      letterSpacing: -0.4,
-      color: ink,
-    ),
-    headlineSmall: TextStyle(
-      fontSize: 20,
-      height: 1.22,
-      fontWeight: FontWeight.w700,
-      letterSpacing: -0.3,
-      color: ink,
-    ),
-    titleLarge: TextStyle(
-      fontSize: 19,
-      height: 1.25,
-      fontWeight: FontWeight.w700,
-      letterSpacing: -0.2,
-      color: ink,
-    ),
-    titleMedium: TextStyle(
-      fontSize: 16,
-      height: 1.3,
-      fontWeight: FontWeight.w600,
-      letterSpacing: -0.1,
-      color: ink,
-    ),
-    titleSmall: TextStyle(
-      fontSize: 14,
-      height: 1.3,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0,
-      color: ink,
-    ),
-    bodyLarge: TextStyle(
-      fontSize: 16,
-      height: 1.38,
-      fontWeight: FontWeight.w400,
-      letterSpacing: 0,
-      color: ink,
-    ),
-    bodyMedium: TextStyle(
-      fontSize: 14,
-      height: 1.4,
-      fontWeight: FontWeight.w400,
-      letterSpacing: 0,
-      color: ink,
-    ),
-    bodySmall: TextStyle(
-      fontSize: 12,
-      height: 1.36,
-      fontWeight: FontWeight.w400,
-      letterSpacing: 0,
-      color: muted,
-    ),
-    labelLarge: TextStyle(
-      fontSize: 14,
-      height: 1.2,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0,
-      color: ink,
-      fontFeatures: [FontFeature.tabularFigures()],
-    ),
-    labelMedium: TextStyle(
-      fontSize: 12,
-      height: 1.2,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.1,
-      color: muted,
-    ),
-    labelSmall: TextStyle(
-      fontSize: 11,
-      height: 1.2,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.2,
-      color: muted,
-    ),
-  );
-}
+}) => ui.pokrovUiTheme(brightness: brightness).copyWith(
+  extensions: [tokens],
+  pageTransitionsTheme: pokrovAdaptivePageTransitionsTheme(),
+);
 
 class PokrovSeedShell extends StatefulWidget {
   const PokrovSeedShell({
@@ -2622,7 +2320,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     await _toggleRuntime();
   }
 
-  void _openProtectionCenter() {
+  void _openProtectionCenter({bool technical = false}) {
     PokrovHaptics.tap();
     showModalBottomSheet<void>(
       context: context,
@@ -2630,6 +2328,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       showDragHandle: true,
       sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
       builder: (context) => _ProtectionCenterSheet(
+        technical: technical,
+        onDetails: () {
+          Navigator.of(context).pop();
+          _openDiagnostics();
+        },
         runtimeSnapshot: _protectionRuntimeSnapshot,
         retainsProtection: () => _connectionManager.retainsProtection,
         confirmedLocationLabel: () =>
@@ -2834,7 +2537,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                 onReleaseHealthRefresh: _releaseHealthService == null
                     ? null
                     : _fetchReleaseHealthBaseline,
-                onOpenProtection: () => closeThen(_openProtectionCenter),
+                onOpenProtection: () => closeThen(() => _openProtectionCenter(technical: true)),
                 onOpenSupport: () => closeThen(() {
                   unawaited(_showSupportHub());
                 }),
@@ -3598,6 +3301,8 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final sectionBuilders = <WidgetBuilder>[
       (context) => _QuickConnectSection(
             advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
+            preferredCountryCode: _clientExperience.preferredCountryCode,
+            onHelp: _showSupportHub,
             appContext: widget.appContext,
             freeProfileAccess: _freeProfileAccess,
             protectionState: protectionState,
@@ -3762,23 +3467,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ??
         WidgetsBinding.instance.platformDispatcher.accessibilityFeatures
             .disableAnimations;
-    final shell = isDesktopShell
-        ? _DesktopShell(
-            advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
-            selectedIndex: _selectedIndex,
-            sectionBuilders: sectionBuilders,
-            onSelected: (index) {
-              _selectTab(SeedTab.values[index]);
-            },
-          )
-        : _MobileShell(
-            advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
-            selectedIndex: _selectedIndex,
-            sectionBuilders: sectionBuilders,
-            onSelected: (index) {
-              _selectTab(SeedTab.values[index]);
-            },
-          );
+    final shell = _MobileShell(
+      advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
+      selectedIndex: _selectedIndex,
+      sectionBuilders: sectionBuilders,
+      onSelected: (index) => _selectTab(SeedTab.values[index]),
+    );
     final supportModeView = _supportModeController.view;
     final shellWithSupportMode = supportModeView.active
         ? Column(
@@ -3901,95 +3595,29 @@ Future<RouteMode?> _showFirstConnectRouteScopeSheet(
   BuildContext context, {
   required bool canSelectApps,
 }) {
+  var choice = ui.FirstRouteChoice.wholePhone;
   return showModalBottomSheet<RouteMode>(
     context: context,
     isDismissible: false,
     enableDrag: false,
     isScrollControlled: true,
     sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-    builder: (sheetContext) {
-      final p = PokrovPalette.of(sheetContext);
-      return PopScope(
-        canPop: false,
-        child: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            key: const ValueKey('first-connect-route-scope-sheet'),
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Как должно работать устройство?',
-                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
-                        color: p.ink,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Выберите один раз перед первым подключением. Изменить режим можно позже в разделе «Правила».',
-                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
-                        color: p.muted,
-                        height: 1.35,
-                      ),
-                ),
-                const SizedBox(height: 18),
-                Semantics(
-                  button: true,
-                  label: 'Всё устройство, рекомендуемый режим',
-                  child: FilledButton.icon(
-                    key: const ValueKey('first-connect-scope-whole-device'),
-                    onPressed: () => Navigator.of(sheetContext).pop(
-                      RouteMode.allExceptRu,
-                    ),
-                    icon: const Icon(Icons.public_rounded),
-                    label: const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('Всё устройство'),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Рекомендуем: POKROV работает для всего устройства, а российские сервисы остаются на обычном подключении.',
-                  style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
-                        color: p.muted,
-                        height: 1.3,
-                      ),
-                ),
-                if (canSelectApps) ...[
-                  const SizedBox(height: 16),
-                  Semantics(
-                    button: true,
-                    label: 'Выбранные приложения',
-                    child: OutlinedButton.icon(
-                      key: const ValueKey('first-connect-scope-selected-apps'),
-                      onPressed: () => Navigator.of(sheetContext).pop(
-                        RouteMode.selectedApps,
-                      ),
-                      icon: const Icon(Icons.apps_rounded),
-                      label: const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('Выбранные приложения'),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Настроить список приложений можно в разделе «Правила».',
-                    style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
-                          color: p.muted,
-                          height: 1.3,
-                        ),
-                  ),
-                ],
-              ],
-            ),
+    builder: (sheetContext) => PopScope(
+      canPop: false,
+      child: SingleChildScrollView(
+        key: const ValueKey('first-connect-route-scope-sheet'),
+        child: StatefulBuilder(builder: (context, setState) => ui.FirstConnectSheet(
+          choice: choice,
+          canSelectApps: canSelectApps,
+          wholeDeviceLabel: Theme.of(context).platform == TargetPlatform.windows
+              ? 'Всё устройство' : 'Весь телефон',
+          onChanged: (value) => setState(() => choice = value),
+          onContinue: () => Navigator.of(sheetContext).pop(
+            choice == ui.FirstRouteChoice.wholePhone
+                ? RouteMode.allExceptRu : RouteMode.selectedApps,
           ),
-        ),
-      );
-    },
+        )),
+      ),
+    ),
   );
 }

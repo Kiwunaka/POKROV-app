@@ -37,6 +37,7 @@ void main() {
             onOpenCountry: _noop,
             onOpenRoute: _noop,
             onOpenAccess: _noop,
+            onWarpChanged: (_) {},
           ),
         );
         expect(find.text('POKROV VPN'), findsOneWidget);
