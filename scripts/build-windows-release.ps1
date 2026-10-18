@@ -39,7 +39,6 @@ if ($CoreRoot) {
   $versionParityArguments.CoreRoot = $CoreRoot
 }
 if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
-& (Join-Path $PSScriptRoot "check-client-version-parity.ps1") @versionParityArguments
 
 $SupportSigningKeyId = [string]$SupportSigningKeyId
 $SupportSigningPublicKey = [string]$SupportSigningPublicKey
@@ -513,6 +512,9 @@ if ($SyncRuntime -or $runtimeMissingFiles.Count -gt 0) {
     exit $LASTEXITCODE
   }
 }
+# Validate the destination after explicit sync or missing-runtime restoration;
+# otherwise an old/missing DLL prevents the requested staging from running.
+& (Join-Path $PSScriptRoot "check-client-version-parity.ps1") @versionParityArguments
 
 $appLocalMsvcRuntimeFiles = @($windowsReleaseConfig.app_local_msvc_runtime.required_files)
 if ($appLocalMsvcRuntimeFiles.Count -eq 0) {
@@ -647,6 +649,13 @@ $missingBuildFiles = @(
 if ($missingBuildFiles.Count -gt 0) {
   throw "Missing expected Windows release outputs: $($missingBuildFiles -join ', ')"
 }
+foreach ($runtimeFile in $runtimeRequiredFiles) {
+  $boundHash = (Get-FileHash -LiteralPath (Join-Path $runtimeDirectory $runtimeFile) -Algorithm SHA256).Hash
+  $builtHash = (Get-FileHash -LiteralPath (Join-Path $releaseOutputDirectory $runtimeFile) -Algorithm SHA256).Hash
+  if ($builtHash -ne $boundHash) {
+    throw "Built Windows runtime differs from the selected binding: $runtimeFile. Rebuild before packaging."
+  }
+}
 
 $exePath = Join-Path $releaseOutputDirectory $windowsReleaseConfig.binary_name
 $versionInfo = (Get-Item -LiteralPath $exePath).VersionInfo
@@ -662,6 +671,11 @@ if ($versionInfo.FileDescription -ne $windowsReleaseConfig.metadata.file_descrip
 
 if ($versionInfo.ProductName -ne $windowsReleaseConfig.metadata.product_name) {
   $metadataErrors += "ProductName must be '$($windowsReleaseConfig.metadata.product_name)' but was '$($versionInfo.ProductName)'"
+}
+foreach ($versionField in @("FileVersion", "ProductVersion")) {
+  if ($versionInfo.$versionField -ne $version) {
+    $metadataErrors += "$versionField must be '$version' but was '$($versionInfo.$versionField)'"
+  }
 }
 
 if ($metadataErrors.Count -gt 0) {

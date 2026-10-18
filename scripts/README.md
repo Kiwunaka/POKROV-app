@@ -18,8 +18,11 @@ binding and matching Cronet; do not pass the Android override to Windows.
 - [build-android-production.ps1](build-android-production.ps1) validates an
   already staged Android runtime with `RuntimeArtifactsPath`. Copying is
   explicit: `-SyncRuntime` or `-CoreArtifactDirectory` invokes Android-only sync.
-- [build-windows-release.ps1](build-windows-release.ps1) validates the retained
-  Windows runtime. Sync remains explicit; the optional
+- [build-windows-release.ps1](build-windows-release.ps1) validates the Windows
+  runtime after requested sync or restoration of missing files. Before staging,
+  it checks built Core/dependency bytes against that verified runtime and both
+  executable version fields against the client version. This also applies to
+  `-SkipBuild`: a stale bundle requires a rebuild. The optional
   [reproducible wrapper](build-windows-release-reproducible.ps1) forwards arguments
   and uses a temporary `P:` mapping.
 - [sync-pokrov-core-runtime.ps1](sync-pokrov-core-runtime.ps1) requires the clean
