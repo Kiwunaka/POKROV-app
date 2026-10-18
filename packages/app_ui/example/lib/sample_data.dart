@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'models.dart';
+import 'package:pokrov_app_ui/pokrov_app_ui.dart';
 
-/// Fake data for the preview app and tests. Prices are the current
-/// public tariffs; countries match the current node list.
+/// Fake data for the preview app and tests, never a production catalog.
 abstract final class PokrovSampleData {
   static const countries = <CountryOption>[
     CountryOption(code: 'CH', name: 'Швейцария', pingMs: 41),

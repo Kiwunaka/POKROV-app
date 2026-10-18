@@ -26,6 +26,7 @@ class ProfileScreen extends StatelessWidget {
     this.onShare,
     this.onWarp,
     this.onAppSettings,
+    this.adSlot,
   });
 
   final ProfileViewData data;
@@ -44,6 +45,7 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onWarp;
   final VoidCallback? onAppSettings;
+  final Widget? adSlot;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +57,7 @@ class ProfileScreen extends StatelessWidget {
           Text('Профиль', style: pokrovTextStyle(context, PokrovText.title)),
           SizedBox(height: 12),
           _AccessCard(data: data, onRenew: onRenew),
+          if (adSlot != null) Padding(padding: const EdgeInsets.only(top: 12), child: adSlot!),
           SectionLabel('Аккаунт'),
           PokrovCard(
             child: Column(

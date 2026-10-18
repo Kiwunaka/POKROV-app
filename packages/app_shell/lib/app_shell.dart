@@ -6,11 +6,7 @@ import 'dart:ffi' show Abi;
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:flutter/cupertino.dart'
-    show
-        CupertinoActivityIndicator,
-        CupertinoSliverRefreshControl,
-        RefreshIndicatorMode;
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/foundation.dart' show listEquals, setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -321,7 +317,6 @@ abstract final class _MotionTokens {
   static const short = PokrovMotionTokens.short;
   static const standard = PokrovMotionTokens.standard;
   static const sheet = PokrovMotionTokens.sheet;
-  static const homeReveal = PokrovMotionTokens.homeReveal;
   static const ease = PokrovMotionTokens.ease;
   static const emphasized = PokrovMotionTokens.emphasized;
 }

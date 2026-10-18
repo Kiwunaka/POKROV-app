@@ -2,7 +2,7 @@
 
 Screens of the redesign the owner approved on 2026-10-18. The frame was built from the 1.5.0 screens: same circle button, chips, tabs, emerald and Golos Text, with plain «ты» texts, technical detail moved to a second layer, and live motion.
 
-The package is presentation only. Screens take view data (`lib/src/models.dart`) and callbacks; they never read runtime, network or storage. `PokrovSampleData` holds the fake data used by the preview app and tests.
+The package is presentation only. Screens take view data (`lib/src/models.dart`) and callbacks; they never read runtime, network or storage. `example/lib/sample_data.dart` holds the fake data used only by the preview app and tests.
 
 ## Preview app
 
@@ -33,5 +33,5 @@ Map app state to the view data and pass the real actions:
 Notes for the integration:
 
 - Font family is `packages/pokrov_app_ui/Golos Text`; this package owns the bundled font files used by the shell.
-- The connected state repeats soft waves around the button (reduced motion stops them). This replaces the `DESIGN.md` rule «success does not start a repeating pulse»; update that line when the screen ships.
+- The connected state repeats soft waves around the button (reduced motion stops them). The same motion rule is documented in `DESIGN.md`.
 - The support code must already be masked when it reaches `DiagnosticsViewData`.

@@ -94,7 +94,9 @@ class _PokrovSeedAppState extends State<PokrovSeedApp> {
       title: 'POKROV',
       debugShowCheckedModeBanner: false,
       builder: (context, child) => PokrovAppMotionGate(
-        child: child ?? const SizedBox.shrink(),
+        child: ColoredBox(color: Theme.of(context).scaffoldBackgroundColor,
+          child: Center(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 480),
+            child: child ?? const SizedBox.shrink()))),
       ),
       scrollBehavior: const PokrovScrollBehavior(),
       themeMode: _themeMode,

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pokrov_app_ui/pokrov_app_ui.dart' as ui;
 import 'package:pokrov_core_domain/core_domain.dart';
 import 'package:pokrov_diagnostics_collectors/diagnostics_collectors.dart';
 import 'package:pokrov_observability_contracts/observability_contracts.dart';
@@ -1066,6 +1067,12 @@ String pokrovSupportDiagnosticCode({
   );
 }
 
+String _maskedSupportCode(String code) {
+  if (code.isEmpty) return '';
+  final prefix = RegExp(r'^PSD[123]-').firstMatch(code)?.group(0) ?? '';
+  return prefix + '••••-••••';
+}
+
 class PokrovDiagnosticsScreen extends StatefulWidget {
   const PokrovDiagnosticsScreen({
     required this.initialReport,
@@ -1111,6 +1118,7 @@ class PokrovDiagnosticsScreen extends StatefulWidget {
 
 class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
   late PokrovDiagnosticsReport _report;
+  bool _technicalDetails = false;
   bool _refreshing = false;
   bool _qaStarted = false;
   bool _qaStarting = false;
@@ -1389,6 +1397,52 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_technicalDetails) return _buildTechnicalDetails(context);
+    final healthy = _report.summaryKey == PokrovDiagnosticMessageKey.verified;
+    // A support code is copied only on explicit request; the presentation model
+    // never receives the full identifier, including in its technical branch.
+    final maskedCode = _maskedSupportCode(_report.supportCode);
+    return ui.DiagnosticsScreen(
+      key: const ValueKey('diagnostics-screen'),
+      data: ui.DiagnosticsViewData(
+        headline: healthy ? 'Всё работает' : 'Проверим подключение',
+        body: _deliveryError ?? _refreshError ?? (_sending ? 'Отправляем отчёт…'
+            : _delivery != null ? 'Отчёт передан в обработку. Подробности — ниже.'
+            : healthy ? 'Соединение подтверждено на этом устройстве.'
+            : 'Здесь можно обновить проверку и отправить отчёт в поддержку.'),
+        healthy: healthy,
+        rows: [for (final item in _report.evidence.where((item) =>
+            const {'tunnel', 'routes', 'dns', 'egress'}.contains(item.key)))
+          ui.DiagnosticRow(
+            title: switch (item.key) {
+              'tunnel' => 'Соединение', 'routes' => 'Сеть',
+              'dns' => 'Адреса сайтов', _ => 'Защита',
+            },
+            value: switch(item.state) {
+              PokrovDiagnosticEvidenceState.confirmed => 'Работает',
+              PokrovDiagnosticEvidenceState.attention => 'Нужно внимание',
+              _ => 'Не проверено',
+            },
+            tone: switch(item.state) {
+              PokrovDiagnosticEvidenceState.confirmed => ui.DiagnosticTone.ok,
+              PokrovDiagnosticEvidenceState.attention => ui.DiagnosticTone.attention,
+              _ => ui.DiagnosticTone.pending,
+            },
+          ),
+        ],
+        supportCode: maskedCode,
+      ),
+      onBack: () => Navigator.of(context).maybePop(),
+      onRefresh: _refreshing ? null : () => unawaited(_refresh()),
+      onTechnical: () => setState(() => _technicalDetails = true),
+      onCopyCode: _report.supportCode.isEmpty ? null
+          : () => unawaited(Clipboard.setData(ClipboardData(text: _report.supportCode))),
+      onSend: !_report.encryptedDeliveryAvailable || widget.onCreateCaseWithBundle == null || !_report.nativeDiagnosticsReady ||
+          _sending || _refreshing || _supportModeBusy ? null : () => unawaited(_createCase()),
+    );
+  }
+
+  Widget _buildTechnicalDetails(BuildContext context) {
     final theme = Theme.of(context);
     final qaAvailability = widget.onReadFirstProviderQaAvailability?.call();
     final colors = theme.colorScheme;
@@ -1401,7 +1455,8 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
       key: const ValueKey('diagnostics-screen'),
       backgroundColor: theme.canvasColor,
       appBar: AppBar(
-        title: const Text('Диагностика'),
+        title: const Text('Технические детали'),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => setState(() => _technicalDetails = false)),
         actions: [
           IconButton(
             key: const ValueKey('diagnostics-refresh-action'),
@@ -1576,7 +1631,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SelectableText(
-                    _report.supportCode,
+                    _maskedSupportCode(_report.supportCode),
                     key: const ValueKey('diagnostics-support-code'),
                     style: theme.textTheme.titleSmall,
                   ),

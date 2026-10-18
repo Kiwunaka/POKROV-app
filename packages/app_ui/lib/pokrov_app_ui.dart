@@ -12,7 +12,6 @@ export 'src/models.dart';
 export 'src/profile_screen.dart';
 export 'src/renew_screen.dart';
 export 'src/rules_screen.dart';
-export 'src/sample_data.dart';
 export 'src/sheets.dart';
 export 'src/start_screen.dart';
 export 'src/support_screen.dart';

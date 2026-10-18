@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_ui/pokrov_app_ui.dart';
+import '../example/lib/sample_data.dart';
 
 /// Loads the real Golos Text so layout checks match the device.
 Future<void> _loadGolos() async {
@@ -12,11 +13,11 @@ Future<void> _loadGolos() async {
   await loader.load();
 }
 
-Future<void> _pump(WidgetTester tester, Widget child) async {
+Future<void> _pump(WidgetTester tester, Widget child, {double textScale = 1}) async {
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
-  await tester.pumpWidget(MaterialApp(theme: pokrovUiTheme(), home: Scaffold(body: child)));
+  await tester.pumpWidget(MaterialApp(theme: pokrovUiTheme(), home: MediaQuery(data: MediaQueryData(textScaler: TextScaler.linear(textScale)), child: Scaffold(body: child))));
   await tester.pump(const Duration(seconds: 1));
 }
 
@@ -77,7 +78,8 @@ void main() {
   testWidgets('renew, support, bonuses, diagnostics', (tester) async {
     await _pump(tester, RenewScreen(data: PokrovSampleData.renew(), onSelect: (_) {}, onPay: _noop, onBack: _noop));
     expect(find.text('Перейти к оплате · 2 000 ₽'), findsOneWidget);
-    await _pump(tester, SupportScreen(data: PokrovSampleData.support, onSend: (_) {}, onBack: _noop));
+    await _pump(tester, RenewScreen(data: PokrovSampleData.renew(), onSelect: (_) {}, onPay: _noop, onBack: _noop), textScale: 2);
+    await _pump(tester, SupportScreen(data: PokrovSampleData.support, onSend: (_) {}, onBack: _noop, onHuman: _noop));
     expect(find.text('Позвать человека'), findsOneWidget);
     await _pump(tester, BonusesScreen(data: PokrovSampleData.bonuses, onBack: _noop));
     expect(find.text('+24'), findsOneWidget);
@@ -92,5 +94,26 @@ void main() {
     expect(find.text('Правила'), findsNothing);
     await _pump(tester, PokrovTabBar(mode: InterfaceMode.advanced, current: PokrovTab.rules, onSelect: (_) {}));
     expect(find.text('Правила'), findsOneWidget);
+  });
+
+  testWidgets('support keeps an externally owned draft until accepted and exposes the human action', (tester) async {
+    final composer = TextEditingController();
+    final sent = <String>[];
+    var human = false;
+    await _pump(tester, SupportScreen(
+      data: const SupportViewData(topics: [], messages: []),
+      composer: composer, onSend: sent.add, onBack: _noop,
+      onHuman: () => human = true,
+    ));
+    await tester.enterText(find.byKey(const ValueKey('support-composer')), 'Не открывается сайт');
+    await tester.tap(find.byKey(const ValueKey('support-send-action')));
+    await tester.pump();
+    expect(sent, ['Не открывается сайт']);
+    expect(composer.text, 'Не открывается сайт', reason: 'only the real send controller may clear an accepted draft');
+    await tester.tap(find.text('Позвать человека'));
+    expect(human, isTrue);
+    expect(find.text('Переподключить'), findsNothing, reason: 'no fabricated assistant action without a callback');
+    await tester.pumpWidget(const SizedBox.shrink());
+    composer.dispose();
   });
 }

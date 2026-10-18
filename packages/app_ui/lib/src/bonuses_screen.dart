@@ -7,11 +7,12 @@ import 'widgets.dart';
 /// «Бонусы»: what you already got in one number, then a short list where
 /// locked items say plainly when they open.
 class BonusesScreen extends StatelessWidget {
-  const BonusesScreen({super.key, required this.data, required this.onBack, this.onItem});
+  const BonusesScreen({super.key, required this.data, required this.onBack, this.onItem, this.onRefresh});
 
   final BonusesViewData data;
   final VoidCallback onBack;
   final ValueChanged<BonusItem>? onItem;
+  final VoidCallback? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -19,57 +20,59 @@ class BonusesScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             ScreenHeader(title: 'Бонусы', onBack: onBack),
-            const SizedBox(height: 14),
+            if (onRefresh != null) Align(alignment: Alignment.centerRight, child: IconButton(tooltip: 'Обновить бонусы', onPressed: onRefresh, icon: Icon(Icons.refresh_rounded))),
+            if (data.notice != null) Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Text(data.notice!, style: pokrovTextStyle(context, PokrovText.body))),
+            SizedBox(height: 14),
             PokrovCard(
-              color: PokrovColors.warnBg,
-              borderColor: PokrovColors.warnLine,
+              color: pokrovColor(context, PokrovColors.warnBg),
+              borderColor: pokrovColor(context, PokrovColors.warnLine),
               radius: 26,
-              padding: const EdgeInsets.all(18),
+              padding: EdgeInsets.all(18),
               child: Row(
                 children: [
                   TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.6, end: 1),
-                    duration: const Duration(milliseconds: 700),
+                    duration: Duration(milliseconds: 700),
                     curve: Curves.elasticOut,
                     builder: (context, s, child) => Transform.scale(scale: s, child: child),
-                    child: Text(data.total, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: Color(0xFF7A4B0B), height: 1)),
+                    child: Text(data.total, style: TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: pokrovColor(context, PokrovColors.warnStrong), height: 1)),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(data.totalCaption, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: PokrovColors.warnTitle)),
-                        Text(data.breakdown, style: const TextStyle(fontSize: 13, color: PokrovColors.warnBody)),
+                        Text(data.totalCaption, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: pokrovColor(context, PokrovColors.warnTitle))),
+                        Text(data.breakdown, style: TextStyle(fontSize: 13, color: pokrovColor(context, PokrovColors.warnBody))),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             PokrovCard(
               child: Column(
                 children: [
                   for (final (i, item) in data.items.indexed)
                     InkWell(
-                      onTap: onItem == null ? null : () => onItem!(item),
+                      onTap: onItem == null || !item.actionable ? null : () => onItem!(item),
                       child: Container(
-                        constraints: const BoxConstraints(minHeight: 64),
-                        decoration: BoxDecoration(border: i < data.items.length - 1 ? const Border(bottom: BorderSide(color: PokrovColors.line)) : null),
+                        constraints: BoxConstraints(minHeight: 64),
+                        decoration: BoxDecoration(border: i < data.items.length - 1 ? Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line))) : null),
                         child: Row(
                           children: [
                             _StateDot(state: item.state),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                                  Text(item.subtitle, style: PokrovText.caption),
+                                  Text(item.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                  Text(item.subtitle, style: pokrovTextStyle(context, PokrovText.caption)),
                                 ],
                               ),
                             ),
@@ -80,18 +83,18 @@ class BonusesScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            PokrovCard(
-              padding: const EdgeInsets.all(16),
+            SizedBox(height: 12),
+            if (data.achievements.isNotEmpty) PokrovCard(
+              padding: EdgeInsets.all(16),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      const Expanded(child: Text('Достижения', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
-                      Text('$earned из ${data.achievements.length}', style: PokrovText.value),
+                      Expanded(child: Text('Достижения', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
+                      Text('$earned из ${data.achievements.length}', style: pokrovTextStyle(context, PokrovText.value)),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -102,8 +105,8 @@ class BonusesScreen extends StatelessWidget {
                           child: Container(
                             width: 36,
                             height: 36,
-                            decoration: BoxDecoration(color: a.earned ? PokrovColors.accentSoft : PokrovColors.chip, shape: BoxShape.circle),
-                            child: Icon(a.earned ? Icons.star_rounded : Icons.lock_outline_rounded, size: 18, color: a.earned ? PokrovColors.accent : const Color(0xFFB4BBB8)),
+                            decoration: BoxDecoration(color: a.earned ? pokrovColor(context, PokrovColors.accentSoft) : pokrovColor(context, PokrovColors.chip), shape: BoxShape.circle),
+                            child: Icon(a.earned ? Icons.star_rounded : Icons.lock_outline_rounded, size: 18, color: a.earned ? pokrovColor(context, PokrovColors.accent) : Color(0xFFB4BBB8)),
                           ),
                         ),
                     ],
@@ -126,9 +129,9 @@ class _StateDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg, icon) = switch (state) {
-      BonusState.done => (PokrovColors.accent, Colors.white, Icons.check_rounded),
-      BonusState.available => (PokrovColors.accentSoft, PokrovColors.accent, Icons.card_giftcard_rounded),
-      BonusState.locked => (PokrovColors.chip, PokrovColors.muted, Icons.lock_outline_rounded),
+      BonusState.done => (pokrovColor(context, PokrovColors.accent), pokrovOnAccent(context), Icons.check_rounded),
+      BonusState.available => (pokrovColor(context, PokrovColors.accentSoft), pokrovColor(context, PokrovColors.accent), Icons.card_giftcard_rounded),
+      BonusState.locked => (pokrovColor(context, PokrovColors.chip), pokrovColor(context, PokrovColors.muted), Icons.lock_outline_rounded),
     };
     return Container(
       width: 36,

@@ -104,9 +104,8 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      width: double.infinity,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: height, minWidth: double.infinity),
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
@@ -119,7 +118,7 @@ class PrimaryButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[Icon(icon, size: 20), SizedBox(width: 8)],
-            Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+            Flexible(child: Text(label, textAlign: TextAlign.center)),
           ],
         ),
       ),
@@ -137,9 +136,8 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      width: double.infinity,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: height, minWidth: double.infinity),
       child: TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
@@ -414,9 +412,7 @@ class SelectionCheck extends StatelessWidget {
   }
 }
 
-/// Placeholder for the home ad banner (`home_banner` in shared promo
-/// slots). Full width; 132 px tall in simple mode, 84 px in advanced.
-/// The real creative replaces the striped area; the «Реклама» mark stays.
+/// Real creative supplied by the shell; 132 px in simple mode, 84 px in advanced.
 class AdSlot extends StatelessWidget {
   const AdSlot({super.key, required this.child, this.compact = false});
 
@@ -428,7 +424,17 @@ class AdSlot extends StatelessWidget {
     label: 'Реклама',
     child: ClipRRect(
       borderRadius: BorderRadius.circular(compact ? 18 : 22),
-      child: SizedBox(height: compact ? 84 : 132, width: double.infinity, child: child),
+      child: SizedBox(height: compact ? 84 : 132, width: double.infinity, child: Stack(
+        fit: StackFit.expand, children: [
+          child,
+          Positioned(left: 8, top: 6, child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(color: pokrovColor(context, PokrovColors.surface).withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(8)),
+            child: Text('Реклама', style: TextStyle(fontSize: 10, color: pokrovColor(context, PokrovColors.muted))),
+          )),
+        ],
+      )),
     ),
   );
 }

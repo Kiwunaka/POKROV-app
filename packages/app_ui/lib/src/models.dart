@@ -201,16 +201,17 @@ class RenewViewData {
   final String selectedId;
   final String introOffer;
 
-  PlanOption get selected => plans.firstWhere((p) => p.id == selectedId, orElse: () => plans.last);
+  PlanOption? get selected => plans.isEmpty ? null : plans.firstWhere((p) => p.id == selectedId, orElse: () => plans.last);
 }
 
 class ChatMessage {
   const ChatMessage.user(this.text)
       : fromUser = true,
         short = null,
-        steps = const <String>[];
+        steps = const <String>[],
+        author = '', actions = const [];
 
-  const ChatMessage.assistant({required String this.short, required this.steps})
+  const ChatMessage.assistant({required String this.short, required this.steps, this.author = 'ИИ-помощник', this.actions = const []})
       : fromUser = false,
         text = '';
 
@@ -218,23 +219,31 @@ class ChatMessage {
   final String text;
   final String? short;
   final List<String> steps;
+  final String author;
+  final List<({String id, String label})> actions;
 }
 
 class SupportViewData {
-  const SupportViewData({required this.topics, required this.messages});
+  const SupportViewData({required this.topics, required this.messages, this.busy = false, this.busyLabel = 'Готовим ответ…', this.notice, this.subtitle = 'Сначала ответит ИИ, потом человек'});
 
   final List<String> topics;
   final List<ChatMessage> messages;
+  final bool busy;
+  final String busyLabel;
+  final String? notice;
+  final String subtitle;
 }
 
 enum BonusState { done, locked, available }
 
 class BonusItem {
-  const BonusItem({required this.title, required this.subtitle, required this.state});
+  const BonusItem({required this.title, required this.subtitle, required this.state, this.id = '', this.actionable = true});
 
   final String title;
   final String subtitle;
   final BonusState state;
+  final String id;
+  final bool actionable;
 }
 
 class Achievement {
@@ -245,13 +254,14 @@ class Achievement {
 }
 
 class BonusesViewData {
-  const BonusesViewData({required this.total, required this.totalCaption, required this.breakdown, required this.items, required this.achievements});
+  const BonusesViewData({required this.total, required this.totalCaption, required this.breakdown, required this.items, required this.achievements, this.notice});
 
   final String total;
   final String totalCaption;
   final String breakdown;
   final List<BonusItem> items;
   final List<Achievement> achievements;
+  final String? notice;
 }
 
 enum DiagnosticTone { pending, attention, ok }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:pokrov_app_ui/pokrov_app_ui.dart';
+import 'sample_data.dart';
 
 /// Clickable dummy of the approved redesign. Everything here is fake:
 /// the «connection» is a timer and every list is sample data. The real
@@ -154,6 +155,9 @@ class _PreviewState extends State<_Preview> {
             warp: _warp,
             routeValue: switch (_appliedRoute) { 'ru' => 'напрямую', 'all' => 'через POKROV', _ => 'по выбору' },
           ),
+          adSlot: AdSlot(compact: _mode == InterfaceMode.advanced,
+            child: const ColoredBox(color: Color(0xFFEAF0EC), child: Center(child: Text('Пример рекламного места')))),
+          onNotifications: () => _toast(context, 'Уведомления (макет)'),
           onToggle: _toggle,
           onOpenStatus: _openStatus,
           onOpenCountry: () => setState(() => _tab = PokrovTab.locations),

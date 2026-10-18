@@ -187,6 +187,8 @@ class _ProfileSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = bonusSummary();
+    final accountPromo = (summary?.promoSlots.visibleForPlacement('account') ?? const <AppFirstPromoSlot>[])
+        .where(_isRenderableHomePromoSlot).firstOrNull;
     final linked = <String>[
       if (subscriptionInfo?.telegramLinked == true) 'Telegram',
       if (subscriptionInfo?.emailVerified == true) 'почта',
@@ -207,6 +209,8 @@ class _ProfileSection extends StatelessWidget {
           bonuses: _bonusHubValue(),
           version: pokrovClientVersion,
         ),
+        adSlot: accountPromo == null ? null : _HomeAdminPromoCard(slot: accountPromo, compact: false,
+          keyPrefix: 'profile-promo', onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
         onRenew: () => _showSubscriptionSheet(context, appContext: appContext,
           hasProvisionedAccess: hasProvisionedAccess, subscriptionInfo: subscriptionInfo,
           onOpenHandoff: onOpenHandoff),
@@ -230,6 +234,8 @@ class _ProfileSection extends StatelessWidget {
         onBonuses: () => _showRewardsHubSheet(context, summary: bonusSummary,
           rewardBusy: bonusRewardBusy, paidRequired: _bonusPaidRequired(summary),
           onRefreshBonusSummary: onRefreshBonusSummary, onSpinWheel: onSpinWheel,
+          onTelegramBonus: telegramBonusBusy ? null
+              : telegramBonusCanClaim ? onClaimTelegramBonus : onCheckTelegramBonus,
           onCheckInCalendar: onCheckInCalendar, onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
         onAbout: () => _about(context),
         onShare: appShareBusy ? null : () => unawaited(onShareApp()),
@@ -260,54 +266,6 @@ class _SettingsRowDivider extends StatelessWidget {
 /// its text every frame so RU plural forms track the interpolated value, and
 /// lands with one soft spring pulse. Static under reduced motion or when the
 /// target is zero — bad news is never dramatized.
-class _LivingDaysCount extends StatefulWidget {
-  const _LivingDaysCount({required this.days, required this.builder});
-
-  final int days;
-  final Widget Function(BuildContext context, int days) builder;
-
-  @override
-  State<_LivingDaysCount> createState() => _LivingDaysCountState();
-}
-
-class _LivingDaysCountState extends State<_LivingDaysCount> {
-  double _from = 0;
-  int _pulseTick = 0;
-
-  @override
-  void didUpdateWidget(covariant _LivingDaysCount oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.days != widget.days) {
-      _from = oldWidget.days.toDouble();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final motion = _MotionScope.of(context);
-    if (motion.disableAnimations || widget.days <= 0) {
-      return widget.builder(context, widget.days);
-    }
-    return TweenAnimationBuilder<double>(
-      key: ValueKey('living-days-${widget.days}'),
-      tween: Tween(begin: _from, end: widget.days.toDouble()),
-      duration: _MotionTokens.homeReveal,
-      curve: _MotionTokens.emphasized,
-      onEnd: () => setState(() => _pulseTick += 1),
-      builder: (context, value, _) => TweenAnimationBuilder<double>(
-        key: ValueKey('living-days-pulse-$_pulseTick'),
-        tween: Tween(begin: _pulseTick == 0 ? 1.0 : 1.04, end: 1),
-        duration: motion.duration(PokrovMotionTokens.quick),
-        curve: PokrovMotionTokens.spring,
-        builder: (context, scale, _) => Transform.scale(
-          scale: scale,
-          child: widget.builder(context, value.round()),
-        ),
-      ),
-    );
-  }
-}
-
 String _themeModeLabel(ThemeMode mode) {
   return switch (mode) {
     ThemeMode.system => 'Системная',
@@ -615,165 +573,31 @@ void _showSubscriptionSheet(
   required ClientSubscriptionInfo? subscriptionInfo,
   required void Function(String label, String value) onOpenHandoff,
 }) {
-  final info = subscriptionInfo;
-  final expires = info == null ? '' : _formatClientDate(info.expiresAt);
-  final renewUrl = info?.renewUrl;
+  final plans = subscriptionInfo?.plans ?? const <ClientSubscriptionPlan>[];
+  var selected = plans.isEmpty ? '' : plans.first.id;
+  final renewUrl = subscriptionInfo?.renewUrl;
   final renewTarget = renewUrl != null && renewUrl.toString().trim().isNotEmpty
-      ? renewUrl.toString()
-      : appContext.checkoutUrl;
-  showModalBottomSheet<void>(
-    context: context,
-    showDragHandle: true,
-    sheetAnimationStyle: _pokrovSheetAnimationStyle(context),
-    builder: (context) => SafeArea(
-      top: false,
-      child: SingleChildScrollView(
-        key: const ValueKey('profile-subscription-sheet'),
-        padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SheetReveal(
-              order: 0,
-              child: Text(
-                'Подписка',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _SheetReveal(
-              order: 1,
-              child: Text(
-                _effectiveAccessLane(appContext, info) == null
-                    ? 'Статус подписки пока неизвестен. Проверьте его в личном кабинете.'
-                    : hasProvisionedAccess
-                        ? 'Доступ активен. Продление открывается на защищенной странице оплаты.'
-                        : 'Сначала активируйте доступ на этом устройстве, затем продлите его на защищенной странице оплаты.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: PokrovPalette.of(context).muted,
-                      height: 1.35,
-                    ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _SheetReveal(
-              order: 2,
-              child: _KeyValueLine(
-                label: 'Текущий доступ',
-                value: _effectiveAccessLane(appContext, info)?.label ??
-                    'Нет данных',
-              ),
-            ),
-            if (info != null && info.daysLeft > 0)
-              _SheetReveal(
-                order: 3,
-                child: _KeyValueLine(
-                  label: 'Осталось дней',
-                  value: '${info.daysLeft}',
-                  valueWidget: _LivingDaysCount(
-                    days: info.daysLeft,
-                    builder: (context, days) => Text(
-                      '$days',
-                      textAlign: TextAlign.right,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: PokrovPalette.of(context).ink,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ),
-                ),
-              ),
-            if (expires.isNotEmpty)
-              _SheetReveal(
-                order: 4,
-                child: _KeyValueLine(label: 'Действует до', value: expires),
-              ),
-            if (info != null)
-              _SheetReveal(
-                order: 5,
-                child: _KeyValueLine(
-                  label: 'Автопродление',
-                  value: info.autoRenew ? 'Включено' : 'Выключено',
-                ),
-              ),
-            _SheetReveal(
-              order: 5,
-              child: _KeyValueLine(
-                label: 'Устройство',
-                value: appContext.hostPlatform.label,
-              ),
-            ),
-            if (info != null && info.plans.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              _SheetReveal(
-                order: 5,
-                child: Text(
-                  'Тарифы',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              const SizedBox(height: 8),
-              for (final plan in info.plans)
-                _SheetReveal(
-                  order: 5,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            plan.title,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ),
-                        Text(
-                          plan.price,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-            const SizedBox(height: 16),
-            _SheetReveal(
-              order: 5,
-              child: Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  PokrovPressable(
-                    child: FilledButton.icon(
-                      key: const ValueKey('subscription-checkout-primary'),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        onOpenHandoff('checkout', renewTarget);
-                      },
-                      icon: const Icon(Icons.shopping_bag_outlined),
-                      label: const Text('Перейти к оплате'),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    key: const ValueKey('subscription-cabinet-primary'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      onOpenHandoff('cabinet', appContext.cabinetUrl);
-                    },
-                    icon: const Icon(Icons.web_outlined),
-                    label: const Text('Открыть кабинет'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      ? renewUrl.toString() : appContext.checkoutUrl;
+  Navigator.of(context).push(MaterialPageRoute<void>(builder: (routeContext) =>
+    StatefulBuilder(builder: (context, setRouteState) => ui.RenewScreen(
+      data: ui.RenewViewData(
+        current: _accessMainLabel(appContext, null, null, subscriptionInfo),
+        plans: [for (final plan in plans) ui.PlanOption(
+          id: plan.id, short: plan.title, title: plan.title, price: plan.price,
+          perMonth: '', saving: '',
+        )],
+        selectedId: selected, introOffer: '',
       ),
-    ),
-  );
+      onSelect: (id) => setRouteState(() => selected = id),
+      onPay: () {
+        Navigator.of(routeContext).pop();
+        onOpenHandoff('checkout', renewTarget);
+      },
+      onBack: () => Navigator.of(routeContext).pop(),
+      onActivationCode: () => _showRedeemSheet(context, hintCode: appContext.redeemHint,
+        onRedeem: (code) => onOpenHandoff('redeem', code)),
+    )),
+  ));
 }
 
 void _showEmailRecoverySheet(

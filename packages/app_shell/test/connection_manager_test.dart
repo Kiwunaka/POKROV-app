@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
+import 'package:pokrov_app_ui/pokrov_app_ui.dart' as ui;
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/routing_catalog_policy.dart';
 import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
@@ -408,12 +409,13 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
 
 class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirstClientDataService {
   int subscriptionReads = 0;
+  ClientSubscriptionInfo? subscription;
 
   @override
   Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
     Duration? requestTimeout, Future<void>? cancelled}) async {
     subscriptionReads++;
-    return const ClientSubscriptionInfo(lane: 'trialPremium', accessState: 'trial_premium',
+    return subscription ?? const ClientSubscriptionInfo(lane: 'trialPremium', accessState: 'trial_premium',
       expiresAt: '', daysLeft: 1, autoRenew: false, renewUrl: null,
       plans: [], trafficPolicy: {});
   }
@@ -893,6 +895,21 @@ PokrovWifiNetworkStatus _foregroundWifi(_Runtime runtime, {String? name = 'Cafe'
     foreground: foreground, autoConnectEligible: eligible, manualStopSuppressed: suppressed,
     networkContextRef: runtime.candidateContext, networkSelectionKey: runtime.candidateKey, manualStopEpoch: 0);
 
+Future<void> _openTechnicalDiagnostics(WidgetTester tester) async {
+  final screen = find.byType(ui.DiagnosticsScreen);
+  expect(screen, findsOneWidget);
+  final display = tester.widget<ui.DiagnosticsScreen>(screen);
+  final raw = tester.widget<PokrovDiagnosticsScreen>(find.byType(PokrovDiagnosticsScreen)).initialReport.supportCode;
+  expect(display.data.supportCode, contains('••••'));
+  expect(display.data.supportCode, isNot(raw));
+  expect(find.text(raw), findsNothing);
+  final action = find.byKey(const ValueKey('diagnostics-technical-details'));
+  await tester.ensureVisible(action);
+  await tester.tap(action);
+  await tester.pumpAndSettle();
+  expect(find.text(raw), findsNothing);
+}
+
 void main() {
   testWidgets('Diagnostics separates current native receipt from platform failure and clears prior attempt', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
@@ -948,6 +965,7 @@ void main() {
         initialReport: report(), onRefresh: () async => report(), onOpenProtection: () {}, onOpenSupport: () {},
       )));
       await tester.pump();
+      await _openTechnicalDiagnostics(tester);
       final diagnosticsScroll = find.descendant(of: find.byKey(const ValueKey('diagnostics-scroll')),
         matching: find.byType(Scrollable)).first;
       await tester.scrollUntilVisible(find.byKey(const ValueKey('diagnostics-connect-failure')), 200,
@@ -1042,6 +1060,7 @@ void main() {
       onOpenProtection: () {}, onOpenSupport: () {},
     )));
     await tester.pump();
+    await _openTechnicalDiagnostics(tester);
     expect(find.text('Запрос доступа: не наблюдался в этом запуске.'), findsOneWidget);
 
     observability!.recordAuthRequestStarted();
@@ -1126,6 +1145,7 @@ void main() {
         onReadFirstProviderQaAvailability: () => manager.firstProviderQaAvailability,
       )));
       await tester.pump();
+      await _openTechnicalDiagnostics(tester);
       final card = find.byKey(const ValueKey('diagnostics-first-provider-qa'));
       expect(card, findsOneWidget);
       await tester.ensureVisible(card);
@@ -1159,7 +1179,15 @@ void main() {
 
   testWidgets('startup refreshes subscription while app-open telemetry is pending', (tester) async {
     final telemetry = Completer<void>();
-    final bootstrapper = _StartupAccountBootstrapper()..appOpenedReportGate = telemetry;
+    final opened = <Uri>[];
+    final checkout = Uri.parse('https://pay.pokrov.space/checkout?offer=fixture');
+    final bootstrapper = _StartupAccountBootstrapper()..appOpenedReportGate = telemetry
+      ..subscription = ClientSubscriptionInfo(lane: 'paidUnlimited', accessState: 'paid_unlimited',
+        expiresAt: '', daysLeft: 29, autoRenew: false, renewUrl: checkout, trafficPolicy: const {},
+        plans: const [
+          ClientSubscriptionPlan(id: 'monthly', title: '1 месяц', price: '379 ₽'),
+          ClientSubscriptionPlan(id: 'quarterly', title: '3 месяца', price: '999 ₽'),
+        ]);
     const channel = MethodChannel('space.pokrov/runtime_engine');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, (_) async =>
       {'phase': 'initialized', 'coreVersion': '1.2.13', 'supportsLiveConnect': true,
@@ -1177,6 +1205,7 @@ void main() {
       bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
       clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
       onThemeModeChanged: (_) {},
+      handoffLauncher: (uri) async { opened.add(uri); return true; },
     )));
     await tester.pumpAndSettle();
     expect(bootstrapper.subscriptionReads, 1,
@@ -1184,6 +1213,18 @@ void main() {
     expect(telemetry.isCompleted, isFalse);
     expect(bootstrapper.runtimeCalls.any((call) => call['runtime_phase'] == 'app_opened'), isTrue);
     expect(find.text('Статус доступа уточняется'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Продлить'));
+    await tester.pumpAndSettle();
+    expect(find.text('Первый месяц — 100 ₽, один раз'), findsNothing);
+    expect(find.text('379 ₽'), findsOneWidget);
+    await tester.tap(find.text('3 месяца'));
+    await tester.pumpAndSettle();
+    expect(find.text('999 ₽'), findsOneWidget);
+    await tester.tap(find.text('Перейти к оплате · 999 ₽'));
+    await tester.pumpAndSettle();
+    expect(opened, [checkout], reason: 'the catalog choice must not rewrite the authenticated checkout URL');
     telemetry.complete();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
@@ -1485,10 +1526,16 @@ void main() {
     final runtime = _Runtime()..supportsCandidates = true;
     final bridge = TransportCandidate(candidateRef: 'de:bridge', profileRef: 'bridge', nodeCode: 'de',
       countryCode: 'DE', protocol: 'vless', transport: 'tcp', protection: 'reality',
-      priority: 10, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
+      priority: 0, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
       minimumCoreRelease: null, platforms: {HostPlatform.android}, requiredFeatures: const {}, bridgeId: 'mini');
     final bootstrapper = _Bootstrapper(catalog: true, warpEnabled: true)
-      ..candidates = [..._candidates, bridge];
+      ..candidates = [bridge, for (final candidate in _candidates) TransportCandidate(
+        candidateRef: candidate.candidateRef, profileRef: candidate.profileRef,
+        nodeCode: candidate.nodeCode, countryCode: candidate.countryCode,
+        protocol: candidate.protocol, transport: candidate.transport, protection: candidate.protection,
+        priority: candidate.priority + 1, network: candidate.network, flow: candidate.flow,
+        minimumClientRelease: candidate.minimumClientRelease, minimumCoreRelease: candidate.minimumCoreRelease,
+        platforms: candidate.platforms, requiredFeatures: candidate.requiredFeatures)];
     final experience = _ExperienceStore();
     final manager = _manager(runtime, bootstrapper, experienceStore: experience);
     addTearDown(manager.dispose);
@@ -3218,7 +3265,8 @@ void main() {
 
     await manager.connect();
 
-    expect(clock.elapsed, lessThan(const Duration(seconds: 9)));
+    // Two 4s native waves + existing 1s backoff + settlement/scheduling.
+    expect(clock.elapsed, lessThan(const Duration(seconds: 10)));
     expect(manager.status.phase, ConnectionPhase.connected);
     expect(manager.transportCatalog?.selectedCandidateRef, base.candidateRef);
     expect(runtime.probedWarpModes, contains('proxy_over_warp'));
@@ -3620,6 +3668,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
       initialReport: report(), onRefresh: () async => report(), onOpenProtection: () {}, onOpenSupport: () {},
     )));
+    await tester.pump();
+    await _openTechnicalDiagnostics(tester);
     final diagnosticsScroll = find.descendant(of: find.byKey(const ValueKey('diagnostics-scroll')),
       matching: find.byType(Scrollable)).first;
     await tester.scrollUntilVisible(find.byKey(const ValueKey('diagnostics-connect-failure')), 200,

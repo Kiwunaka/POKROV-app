@@ -197,7 +197,7 @@ class _Header extends StatelessWidget {
         if (onNotifications != null) IconButton(
           key: ValueKey('home-notifications-action'),
           onPressed: onNotifications,
-          tooltip: 'Уведомления',
+          tooltip: unread > 0 ? 'Уведомления · $unread' : 'Уведомления',
           icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: Icon(Icons.notifications_none_rounded, color: pokrovColor(context, PokrovColors.ink))),
         ),
         OutlinedButton(

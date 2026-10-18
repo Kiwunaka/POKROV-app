@@ -328,15 +328,15 @@ class SmartConnectCandidateSelector {
       }
       if (ended.isCompleted) return;
       failures++;
-      final failureKind = timedOut && !RuntimeCandidateProbeResult.localFailureKinds.contains(outcome?.failureKind)
-          ? 'probe_budget_expired' : outcome?.failureKind ?? 'unavailable';
+      final failureKind = timedOut && !RuntimeCandidateProbeResult.localFailureKinds.contains(outcome.failureKind)
+          ? 'probe_budget_expired' : outcome.failureKind;
       final failed = SmartConnectCandidateProbeResult.failure(failureKind,
-          duration: outcome?.duration ?? probeClock.elapsed,
-          probeStage: outcome?.probeStage,
-          probeError: outcome?.probeError,
+          duration: outcome.duration,
+          probeStage: outcome.probeStage,
+          probeError: outcome.probeError,
           preparation: outcome.preparation,
-          http64kFailure: failureKind == 'probe_failed' ? outcome?.http64kFailure : null,
-          http64kObservation: failureKind == 'probe_failed' ? outcome?.http64kObservation : null);
+          http64kFailure: failureKind == 'probe_failed' ? outcome.http64kFailure : null,
+          http64kObservation: failureKind == 'probe_failed' ? outcome.http64kObservation : null);
       onProbeResult?.call(candidate, failed);
       recordFailure(network, candidate.candidateRef, failureKind);
       if (candidate.network == 'udp' && _networkFailureKinds.contains(failureKind)) {

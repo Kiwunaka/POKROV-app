@@ -404,7 +404,7 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
         child: Material(color: background, child: InkWell(onTap: open,
           child: Stack(children: [
             if (mediaOnly) Positioned.fill(child: remoteMedia(height: null, fit: BoxFit.cover))
-            else Padding(padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+            else Padding(padding: const EdgeInsets.fromLTRB(14, 24, 14, 8),
               child: Row(children: [
                 if (safeMedia != null) ...[
                   SizedBox(width: 64, child: remoteMedia(height: 64, fit: BoxFit.contain)),
@@ -412,7 +412,7 @@ class _HomeAdminPromoCardState extends State<_HomeAdminPromoCard> {
                 ],
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(badge.isEmpty ? 'Реклама' : badge, style: TextStyle(fontSize: 11, color: textColor)),
+                  if (badge.isNotEmpty) Text(badge, style: TextStyle(fontSize: 11, color: textColor)),
                   if (title.isNotEmpty) Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: textColor)),
                   if (body.isNotEmpty && !widget.compact!) Text(body, maxLines: 2,
@@ -980,5 +980,5 @@ Widget _fadeSlideTransition(Widget child, Animation<double> animation) {
 }
 
 class _MotionSkeletonList extends PokrovSkeletonList {
-  const _MotionSkeletonList({super.key, super.rows = 4});
+  const _MotionSkeletonList({super.rows = 4});
 }
