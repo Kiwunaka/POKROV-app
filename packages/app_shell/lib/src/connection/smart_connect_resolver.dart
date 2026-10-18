@@ -43,11 +43,7 @@ class SmartConnectCandidateSelector {
         candidate.candidateRef != selected.candidateRef &&
         (!countryOnly || candidate.nodeCountryCode(catalog.candidates) ==
             selected.nodeCountryCode(catalog.candidates))).toList()
-      ..sort((a, b) {
-        if (a.bridgeId != null && b.bridgeId == null) return -1;
-        if (b.bridgeId != null && a.bridgeId == null) return 1;
-        return a.priority.compareTo(b.priority);
-      });
+      ..sort((a, b) => a.priority.compareTo(b.priority));
     final alternatives = <TransportCandidate>[];
     final variants = {(selected.protocol, selected.transport, selected.protection, selected.bridgeId)};
     for (final candidate in ordered) {
@@ -127,7 +123,20 @@ class SmartConnectCandidateSelector {
     _udpFailedUntil.removeWhere((_, expires) => !expires.isAfter(now));
     final preferred = recoveryCandidateRef.isNotEmpty
         ? recoveryCandidateRef : _successful[network];
-    final eligible = catalog.candidates.where((candidate) =>
+    final ordered = List<TransportCandidate>.of(catalog.candidates)
+      ..sort((a, b) => a.priority.compareTo(b.priority));
+    // Server priority separates healthy bridges, direct routes and loaded
+    // bridges. Preserve these boundaries even when local failures remove a group.
+    final priorityGroups = <String, int>{};
+    var group = 0;
+    bool? previousBridge;
+    for (final candidate in ordered) {
+      final bridge = candidate.bridgeId != null;
+      if (previousBridge != null && previousBridge != bridge) group++;
+      priorityGroups[candidate.candidateRef] = group;
+      previousBridge = bridge;
+    }
+    final eligible = ordered.where((candidate) =>
       (ipv6Available != false || candidate.family != 'ipv6') &&
       !excludedCandidateRefs.contains(candidate.candidateRef) &&
       (preferredCountryCode.isEmpty ||
@@ -135,21 +144,22 @@ class SmartConnectCandidateSelector {
     final remembered = eligible.where((candidate) =>
       candidate.candidateRef == recoveryCandidateRef ||
       !_failedUntil.containsKey((network, candidate.candidateRef))).toList();
-    final candidates = (remembered.isEmpty ? eligible : remembered)
-      ..sort((a, b) {
-        if (a.bridgeId != null && b.bridgeId == null) return -1;
-        if (b.bridgeId != null && a.bridgeId == null) return 1;
-        if (a.candidateRef == preferred && b.candidateRef != preferred) return -1;
-        if (b.candidateRef == preferred && a.candidateRef != preferred) return 1;
-        if (_udpFailedUntil.containsKey(network) && a.network != b.network) {
-          return a.network == 'tcp' ? -1 : 1;
-        }
-        return a.priority.compareTo(b.priority);
-      });
+    final candidates = remembered.isEmpty ? eligible : remembered;
+    candidates.sort((a, b) {
+      final groupOrder = priorityGroups[a.candidateRef]!.compareTo(priorityGroups[b.candidateRef]!);
+      if (groupOrder != 0) return groupOrder;
+      if (a.candidateRef == preferred && b.candidateRef != preferred) return -1;
+      if (b.candidateRef == preferred && a.candidateRef != preferred) return 1;
+      if (_udpFailedUntil.containsKey(network) && a.network != b.network) {
+        return a.network == 'tcp' ? -1 : 1;
+      }
+      return a.priority.compareTo(b.priority);
+    });
     final ipv6Siblings = <String, TransportCandidate>{};
     for (final candidate in candidates.where((item) => item.family == 'ipv4')) {
       for (final sibling in candidates.where((item) => item.family == 'ipv6')) {
-        if (_familySiblings(candidate, sibling)) {
+        if (priorityGroups[candidate.candidateRef] == priorityGroups[sibling.candidateRef] &&
+            _familySiblings(candidate, sibling)) {
           ipv6Siblings[candidate.candidateRef] = sibling;
           break;
         }
@@ -203,9 +213,12 @@ class SmartConnectCandidateSelector {
     var startedCount = 0;
     var failures = 0;
     final maxAttempts = recoveryCandidateRef.isEmpty ? candidates.length : 3;
-    var bridgeRemaining = candidates.where((candidate) => candidate.bridgeId != null).length;
-    final bridgesSettled = Completer<void>();
-    if (bridgeRemaining == 0) bridgesSettled.complete();
+    final groupRemaining = <int, int>{};
+    for (final candidate in candidates) {
+      final group = priorityGroups[candidate.candidateRef]!;
+      groupRemaining[group] = (groupRemaining[group] ?? 0) + 1;
+    }
+    final groupsSettled = {for (final group in groupRemaining.keys) group: Completer<void>()};
     void stop() {
       if (!ended.isCompleted) ended.complete();
       for (final cancellation in probes) {
@@ -309,7 +322,9 @@ class SmartConnectCandidateSelector {
         probes.remove(cancellation);
         final familyFinish = familySettled[candidate.candidateRef];
         if (familyFinish != null && !familyFinish.isCompleted) familyFinish.complete();
-        if (candidate.bridgeId != null && --bridgeRemaining == 0) bridgesSettled.complete();
+        final group = priorityGroups[candidate.candidateRef]!;
+        groupRemaining[group] = groupRemaining[group]! - 1;
+        if (groupRemaining[group] == 0) groupsSettled[group]!.complete();
       }
       if (ended.isCompleted) return;
       failures++;
@@ -328,11 +343,11 @@ class SmartConnectCandidateSelector {
         _udpFailedUntil[network] = _now().add(failureMemory);
         final tcp = candidates.where((item) => item.network == 'tcp').toList();
         final udp = candidates.where((item) => item.network != 'tcp').toList();
-        candidates..clear()
-          ..addAll(tcp.where((candidate) => candidate.bridgeId != null))
-          ..addAll(udp.where((candidate) => candidate.bridgeId != null))
-          ..addAll(tcp.where((candidate) => candidate.bridgeId == null))
-          ..addAll(udp.where((candidate) => candidate.bridgeId == null));
+        candidates.clear();
+        for (final group in groupsSettled.keys) {
+          candidates.addAll(tcp.where((candidate) => priorityGroups[candidate.candidateRef] == group));
+          candidates.addAll(udp.where((candidate) => priorityGroups[candidate.candidateRef] == group));
+        }
       }
     }
     Duration preferredProbeTime = Duration.zero;
@@ -345,10 +360,14 @@ class SmartConnectCandidateSelector {
             Future<void>.delayed(Duration(milliseconds: (250 << (failures - 1).clamp(0, 2))))]);
         }
         if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
-        if (candidates.first.bridgeId == null && !bridgesSettled.isCompleted) {
-          await Future.any<void>([ended.future, bridgesSettled.future]);
-          if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
+        while (!ended.isCompleted && candidates.isNotEmpty) {
+          final group = priorityGroups[candidates.first.candidateRef]!;
+          final earlier = groupsSettled.entries.where((entry) =>
+              entry.key < group && !entry.value.isCompleted).firstOrNull;
+          if (earlier == null) break;
+          await Future.any<void>([ended.future, earlier.value.future]);
         }
+        if (ended.isCompleted || candidates.isEmpty || startedCount >= maxAttempts) return;
         await run(candidates.removeAt(0), selectionTimeout - probeTime,
             (elapsed) => probeTime += elapsed);
       }

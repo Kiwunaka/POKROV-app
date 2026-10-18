@@ -65,13 +65,13 @@ void main() {
         [otherNode.candidateRef, v4.candidateRef, awg.candidateRef]);
   });
 
-  test('cache prefers an admitted bridge on another node over a higher ranked direct route', () {
+  test('cache follows server priority when a direct route ranks above bridges', () {
     final selected = _candidate(0, bridge: 'mini');
     final direct = _candidate(1, node: 'ch', country: 'CH');
     final bridge = _candidate(2, node: 'us', country: 'US', bridge: 'ru-spb');
     final candidates = [selected, direct, bridge];
     expect(SmartConnectCandidateSelector.cacheAlternatives(selected,
-        candidates, countryOnly: false, catalog: _catalog(candidates)), [bridge, direct]);
+        candidates, countryOnly: false, catalog: _catalog(candidates)), [direct, bridge]);
   });
 
   test('ordinary cache reserves do not spend a slot on WARP', () {
@@ -90,7 +90,7 @@ void main() {
 
   test('country Auto reserves another admitted bridge then direct on the same exit node', () {
     final selected = _candidate(1, node: 'us', country: 'US', bridge: 'mini');
-    final direct = _candidate(0, node: 'us', country: 'US');
+    final direct = _candidate(3, node: 'us', country: 'US');
     final bridge = _candidate(2, node: 'us', country: 'US', bridge: 'ru-spb');
     final candidates = [direct, selected, bridge];
     expect(SmartConnectCandidateSelector.cacheAlternatives(selected,
@@ -99,7 +99,7 @@ void main() {
 
   test('Auto settles bridges in server priority order before trying a remembered direct route', () async {
     final selector = SmartConnectCandidateSelector();
-    final direct = _candidate(0, node: 'us', country: 'US');
+    final direct = _candidate(3, node: 'us', country: 'US');
     final firstBridge = _candidate(1, bridge: 'mini');
     final secondBridge = _candidate(2, node: 'ch', country: 'CH', bridge: 'ru-spb');
     selector.recordSuccess('network-a', direct.candidateRef);
@@ -127,6 +127,48 @@ void main() {
     releaseSecond.complete();
     expect((await selected).profileName, direct.candidateRef);
     expect(started, [firstBridge.candidateRef, secondBridge.candidateRef, direct.candidateRef]);
+  });
+
+  test('Auto tries the load-ranked direct route before a remembered bridge and retains bridge fallback', () async {
+    final direct = _candidate(0);
+    final bridge = _candidate(1, bridge: 'mini');
+    final outsideCountry = _candidate(2, node: 'ch', country: 'CH');
+    final selector = SmartConnectCandidateSelector()..recordSuccess('network-a', bridge.candidateRef);
+    final firstStarted = Completer<void>();
+    final releaseDirect = Completer<void>();
+    final started = <TransportCandidate>[];
+    final selected = selector.select(
+      catalog: _catalog([bridge, outsideCountry, direct]),
+      network: 'network-a', platform: HostPlatform.windows, preferredCountryCode: 'DE',
+      cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async {
+        started.add(candidate);
+        if (!firstStarted.isCompleted) firstStarted.complete();
+        if (candidate == direct) {
+          await releaseDirect.future;
+          return const SmartConnectCandidateProbeResult.failure('connect_failed');
+        }
+        return _success(candidate);
+      });
+    await firstStarted.future;
+    expect(started, [direct], reason: 'a remembered loaded bridge cannot override current server ranking');
+    releaseDirect.complete();
+    expect((await selected).profileName, bridge.candidateRef);
+    expect(started, [direct, bridge], reason: 'the lower-ranked bridge remains a country-scoped fallback');
+
+    final healthy = _candidate(3, bridge: 'healthy');
+    final excludedDirect = _candidate(4);
+    final loaded = _candidate(5, bridge: 'loaded');
+    selector.recordSuccess('network-a', loaded.candidateRef);
+    started.clear();
+    await selector.select(catalog: _catalog([healthy, excludedDirect, loaded]),
+      network: 'network-a', platform: HostPlatform.windows,
+      excludedCandidateRefs: {excludedDirect.candidateRef}, cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async {
+        started.add(candidate);
+        return _success(candidate);
+      });
+    expect(started, [healthy], reason: 'excluding direct must not merge healthy and loaded bridge groups');
   });
 
   for (final (platform, parallelism) in [(HostPlatform.android, 3), (HostPlatform.windows, 4)]) {

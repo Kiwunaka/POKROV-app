@@ -2315,7 +2315,7 @@ void main() {
             'transport_profile': profile, 'transport_kind': 'reality', 'config_payload': graph(baseTag),
             'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
               'revision': 'us-bridge-fixture', 'selected_candidate_ref': directRef,
-              'candidates': [candidate(directRef, 0), candidate(bridgeRef, 1, bridge: 'mini')]},
+              'candidates': [candidate(directRef, 1), candidate(bridgeRef, 0, bridge: 'mini')]},
             'candidate_materials': [for (final ref in [directRef, bridgeRef]) {
               'candidate_ref': ref, 'transport_kind': 'reality',
               'config_format': 'singbox-json', 'config_payload': graph(ref == directRef ? baseTag : bridgeTag),
