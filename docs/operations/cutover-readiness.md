@@ -15,15 +15,22 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Load-aware bridge ordering is in pushed App 45281e62. Version **1.5.0+4176**
-is prepared; its Windows build and changed-path runtime acceptance are pending.
-The seven-asset 4175 draft remains intact and does not cover this client change.
-Documentation changes alone do not justify a rebuild.
+Load-aware bridge ordering is in pushed App 45281e62. Windows **1.5.0+4176**
+was built and ordinary US paths through Mini and Lampa passed 204/64 KiB checks.
+The seven-asset 4175 draft remains intact.
+
+The approved redesign is integrated in `app_shell` through `pokrov_app_ui`.
+Android and Windows **1.5.0+4178** are built locally with accepted Core 1.2.14
+and production trust defines. Android UI navigation passed in api35gc; Windows
+4178 has package checks only and awaits VM acceptance. Prices, auth, payments,
+routing and tunnel/WARP authority remain with their existing owners. Support
+codes are masked and raw evidence is behind Diagnostics technical details.
+The 4178 artifacts are not published; documentation changes do not justify a rebuild.
 
 Server route ranking and the physical bridge-metrics producer are live. Fresh
 Cinema/Lampa samples are healthy and feed priorities for new routes; this does
-not establish 4176 client runtime acceptance. DE2 HY2 and Lampa-to-US remain
-next work in the owner's queue.
+not by itself prove behavior under load. Remaining server and route work follows
+the owner's current queue.
 
 Telegram WEB on CH/Birch is accepted on desktop and, by the owner's own check,
 on mobile on 18 October. The phone remains unavailable until explicitly returned;

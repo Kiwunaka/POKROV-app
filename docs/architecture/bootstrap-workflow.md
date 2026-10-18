@@ -201,10 +201,9 @@ between consecutive bridge/direct groups, including country Auto and recovery.
 This lets the server rank bridges with headroom first, direct next, and loaded or
 unobserved bridges as fallback. Earlier groups settle before later groups probe;
 last-success and UDP failure memory stay inside their group. Cache reserves also
-follow server priority. This client behavior is in App 45281e62; version 4176 is
-prepared, with Windows build and runtime acceptance pending.
-Explicit pins, WARP
-and cached-authority guards still apply; the selected country names the exit.
+follow server priority. Explicit pins, WARP and cached-authority guards still
+apply; the selected country names the exit. The UI adapters described in
+[DESIGN.md](../../DESIGN.md) retain this runtime authority unchanged.
 When the API is unavailable, the cache selector keeps the online WARP order and
 budgets: a currently enabled manual chain first, ordinary paths after its failure,
 then direct WARP. Cached or server consent alone does not admit either WARP group;

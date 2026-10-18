@@ -13,8 +13,11 @@
   `operations/windows-release-readiness.md`
 - WARP-specific checks: `operations/warp-runtime-proof-checklist.md`
 
-Public version is 1.4.5; the final 1.5.0+4175 package set is a seven-asset draft.
-Version 1.5.0+4176 is prepared for the new bridge-load client behavior; its
-Windows build and changed-path acceptance are pending. The 4175 draft is retained.
+Public version is 1.4.5; the seven-asset 1.5.0+4175 draft is retained.
+The integrated redesign is built locally as Android and Windows 1.5.0+4178
+with the existing Core 1.2.14. Android UI navigation passed in visible api35gc;
+Windows 4178 has build/package checks only and awaits runtime acceptance.
+Neither 4178 artifact has been published. See [DESIGN.md](../DESIGN.md) for
+screen ownership, real-data bindings and the Diagnostics boundary.
 Dated candidate receipts are history, not current blockers or permission to
 repeat accepted checks. Older detailed receipts remain in Git history.

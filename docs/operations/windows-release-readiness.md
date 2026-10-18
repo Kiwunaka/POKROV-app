@@ -2,9 +2,16 @@
 
 Updated 18 October 2026. Public version remains 1.4.5; the final 1.5.0+4175
 installer belongs to the seven-asset draft. Setup and app/service startup passed;
-unchanged protocol QA was not repeated. Load-aware bridge ordering in App
-45281e62 is pushed and newer than that draft. Version 1.5.0+4176 is prepared;
-its Windows build and runtime acceptance are pending. The 4175 draft is retained.
+unchanged protocol QA was not repeated. Load-aware ordering in App 45281e62
+was built in 4176; ordinary US paths through Mini and Lampa passed 204/64 KiB
+checks. The 4175 draft is retained.
+
+Redesign **1.5.0+4178** built from App 9a567f88 with the accepted Core 1.2.14
+artifacts and production trust defines. The standard builder checked runtime
+binding, bundle files and PE metadata, and produced the unsigned x64 installer;
+PE version is 1.5.0+4178. The same presentation package is used on Android, with
+a centered 480-pixel column. Windows 4178 has not been installed or run in the
+VM, and no release assets were published or replaced.
 See [cutover-readiness.md](cutover-readiness.md) for the current package status and
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 for the release queue.

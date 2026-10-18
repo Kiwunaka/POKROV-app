@@ -4,8 +4,14 @@ Updated 18 October 2026. Public version remains **1.4.5**. The final
 **1.5.0+4175** package set is a seven-asset draft: production-signed universal
 and three ABI-specific APKs, Windows setup and two metadata assets. Final ARM64
 installed without removing app data. Load-aware bridge ordering changed after
-4175. Version 4176 is prepared with Windows build/runtime acceptance pending;
-no Android acceptance of that new behavior is inferred.
+4175; no Android acceptance of the new load-aware behavior is inferred.
+
+Redesign build **1.5.0+4178** is production-signed and built with the accepted
+Core 1.2.14 artifacts. Visible api35gc accepted real-data screen navigation,
+Iceland/flag, promo rendering, AI-to-human navigation without sending, masked
+Diagnostics, Rules, Bonuses and complete catalog plan labels. Existing session
+data survived installation. This is UI acceptance, not physical VPN acceptance;
+no payment, support message or release publication occurred.
 
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the current release queue; [cutover-readiness.md](cutover-readiness.md)
