@@ -1756,11 +1756,13 @@ Current blocking dependency:
 
 ## POKROV Core 1.1.0 Binding
 
-POKROV Core is an independent repository and release line. The client now
-binds local Android and Windows artifacts from source commit
-`1aa713b37fa41491a92127cfb7a461608e3d96d7`. The version-derived
-`v1.1.0` label is not yet a published Core release. Device and installed-VM
-checks remain open.
+POKROV Core is an independent repository and release line. The existing
+`config/runtime-artifacts.seed.json` binds the accepted Core 1.2.14 AAR and DLL
+from source `40356d4c86692956181e008ce5a6d4adaa2ec34d`. Windows Cronet must match
+the current Core dependency (`cronet-go/lib/windows_amd64` revision c10c03c318db),
+not the retained 1.0.3 DLL: their callback ABIs differ. The existing size/hash
+checks reject the old dependency. Windows 4179 changes this packaging pin only;
+Core and Android APK 4178 are reused without a rebuild.
 
 - Android package namespace: `space.pokrov.core`.
 - Android artifact: `pokrov-core.aar`.
