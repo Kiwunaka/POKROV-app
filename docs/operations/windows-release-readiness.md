@@ -12,6 +12,15 @@ binding, bundle files and PE metadata, and produced the unsigned x64 installer;
 PE version is 1.5.0+4178. The same presentation package is used on Android, with
 a centered 480-pixel column. Windows 4178 has not been installed or run in the
 VM, and no release assets were published or replaced.
+Windows **1.5.0+4179** corrects the 4178 Cronet dependency: retained public
+1.0.3 bytes had an incompatible callback ABI and crashed on Naive dial. The
+current DLL is the pinned `cronet-go/lib/windows_amd64` c10c03c318db artifact
+(9,529,344 bytes). Core 1.2.14 itself was not rebuilt. Standard packaging and
+both release/staged runtime identity checks passed; the installer is unsigned.
+The owner’s isolated CH Naive h2 canary with the same Core and matching DLL
+passed 64 KiB. That canary does not replace installation/runtime acceptance of
+the final 4179 setup. Android APK 4178 is unchanged; no assets were published.
+
 See [cutover-readiness.md](cutover-readiness.md) for the current package status and
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 for the release queue.

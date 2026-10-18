@@ -1754,7 +1754,7 @@ Current blocking dependency:
 - host `build/` outputs and staged local bundles remain disposable local verification artifacts; they are not release truth for any public lane
 - treat future live connect, service ownership, and traffic-carrying runtime work as one shared contract owned by the lane, not four host-local improvisations
 
-## POKROV Core 1.1.0 Binding
+## POKROV Core Artifact Binding
 
 POKROV Core is an independent repository and release line. The existing
 `config/runtime-artifacts.seed.json` binds the accepted Core 1.2.14 AAR and DLL
@@ -1763,6 +1763,11 @@ the current Core dependency (`cronet-go/lib/windows_amd64` revision c10c03c318db
 not the retained 1.0.3 DLL: their callback ABIs differ. The existing size/hash
 checks reject the old dependency. Windows 4179 changes this packaging pin only;
 Core and Android APK 4178 are reused without a rebuild.
+The manifest describes caller-supplied local artifacts: sync copies from
+`CoreRoot/dist/<platform>` or `-CoreArtifactDirectory` and never downloads from
+`release_tag`. Its existing source guard still requires a clean Core checkout
+at the artifact source commit. Supply the matching Cronet DLL beside the reused
+Core DLL; its immutable upstream URL is in Core `config/release.json`.
 
 - Android package namespace: `space.pokrov.core`.
 - Android artifact: `pokrov-core.aar`.

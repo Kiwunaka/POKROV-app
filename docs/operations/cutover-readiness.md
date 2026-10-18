@@ -20,12 +20,14 @@ was built and ordinary US paths through Mini and Lampa passed 204/64 KiB checks.
 The seven-asset 4175 draft remains intact.
 
 The approved redesign is integrated in `app_shell` through `pokrov_app_ui`.
-Android and Windows **1.5.0+4178** are built locally with accepted Core 1.2.14
-and production trust defines. Android UI navigation passed in api35gc; Windows
-4178 has package checks only and awaits VM acceptance. Prices, auth, payments,
+Android **1.5.0+4178** and Windows **1.5.0+4179** are built locally with accepted
+Core 1.2.14 and production trust defines. Windows 4179 replaces the incompatible
+retained Cronet DLL with the dependency matching Core’s Go pin; Core and the
+Android APK were not rebuilt. Android UI navigation passed in api35gc; Windows
+4179 has package checks only and awaits VM acceptance. Prices, auth, payments,
 routing and tunnel/WARP authority remain with their existing owners. Support
 codes are masked and raw evidence is behind Diagnostics technical details.
-The 4178 artifacts are not published; documentation changes do not justify a rebuild.
+These artifacts are not published; documentation changes do not justify a rebuild.
 
 Server route ranking and the physical bridge-metrics producer are live. Fresh
 Cinema/Lampa samples are healthy and feed priorities for new routes; this does
