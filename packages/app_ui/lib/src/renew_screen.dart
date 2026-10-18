@@ -37,10 +37,21 @@ class RenewScreen extends StatelessWidget {
               SizedBox(height: 16),
               if (data.plans.isNotEmpty) LayoutBuilder(builder: (context, constraints) {
                 final scale = MediaQuery.textScalerOf(context);
+                var segmentWidth = 58.0;
+                for (final plan in data.plans) {
+                  final label = TextPainter(
+                    text: TextSpan(text: plan.short, style: const TextStyle(
+                      fontFamily: pokrovFontFamily, fontSize: 13, fontWeight: FontWeight.w700)),
+                    textDirection: Directionality.of(context), textScaler: scale,
+                    maxLines: 1,
+                  )..layout();
+                  if (label.width + 24 > segmentWidth) segmentWidth = label.width + 24;
+                  label.dispose();
+                }
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
-                    width: (data.plans.length * scale.scale(58)).clamp(constraints.maxWidth, double.infinity),
+                    width: (data.plans.length * segmentWidth).clamp(constraints.maxWidth, double.infinity),
                     child: PokrovSegmented(
                 labels: [for (final p in data.plans) p.short],
                 index: index < 0 ? data.plans.length - 1 : index,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_ui/pokrov_app_ui.dart';
@@ -78,7 +79,19 @@ void main() {
   testWidgets('renew, support, bonuses, diagnostics', (tester) async {
     await _pump(tester, RenewScreen(data: PokrovSampleData.renew(), onSelect: (_) {}, onPay: _noop, onBack: _noop));
     expect(find.text('Перейти к оплате · 2 000 ₽'), findsOneWidget);
-    await _pump(tester, RenewScreen(data: PokrovSampleData.renew(), onSelect: (_) {}, onPay: _noop, onBack: _noop), textScale: 2);
+    final catalog = RenewViewData(current: 'Доступ активен', selectedId: 'intro', introOffer: '', plans: [
+      const PlanOption(id: 'intro', short: 'Первый месяц', title: 'Первый месяц', price: '100 ₽', perMonth: '', saving: ''),
+      for (final plan in PokrovSampleData.plans) PlanOption(id: plan.id, short: plan.title,
+        title: plan.title, price: plan.price, perMonth: '', saving: ''),
+    ]);
+    for (final scale in [1.0, 2.0]) {
+      await _pump(tester, RenewScreen(data: catalog, onSelect: (_) {}, onPay: _noop, onBack: _noop), textScale: scale);
+      for (final plan in catalog.plans) {
+        final label = find.descendant(of: find.byType(PokrovSegmented), matching: find.text(plan.title));
+        expect(tester.renderObject<RenderParagraph>(label).didExceedMaxLines, isFalse,
+          reason: 'the full platform plan title must remain readable at $scale text scale');
+      }
+    }
     await _pump(tester, SupportScreen(data: PokrovSampleData.support, onSend: (_) {}, onBack: _noop, onHuman: _noop));
     expect(find.text('Позвать человека'), findsOneWidget);
     await _pump(tester, BonusesScreen(data: PokrovSampleData.bonuses, onBack: _noop));
