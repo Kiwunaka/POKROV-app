@@ -2,18 +2,19 @@
 
 Use [AGENTS.md](../AGENTS.md) for working/approval rules and
 [cutover readiness](../docs/operations/cutover-readiness.md) for current results.
-Public **1.4.5**, the seven-asset **1.5.0+4175 draft**, and private **4180**
+Public **1.4.5**, the seven-asset **1.5.0+4175 draft**, and private **4181**
 packages are separate; these scripts do not publish a release.
 
 ## Runtime selection
 
-**Android 4180 requires the new Core AAR from `5364537`.** Pass
-`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-mobile-auth/runtime-artifacts.android.json`
-to every repeat Android packaging command, retaining the approved signing and
-transport-trust arguments. The matching `pokrov-core.aar` is in that directory.
+**Both private 4181 packages use Core 1.2.14 from `0f159bb`.** Pass
+`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-urltest-history-0f159bb/runtime-artifacts.json`
+to repeat Android and Windows packaging commands, retaining the approved signing
+and transport-trust arguments. Set `CoreArtifactDirectory` to that folder's
+`android` or `windows` subdirectory respectively, with
+`-CoreRoot C:/Users/kiwun/Documents/ai/POKROV-core`; Windows also needs `-SyncRuntime`.
 The default [tracked manifest](../config/runtime-artifacts.seed.json) was not
-updated for Android. Windows still uses its default Core 1.2.14 / `40356d4`
-binding and matching Cronet; do not pass the Android override to Windows.
+updated and must not be used to restage older runtime artifacts for 4181.
 
 - [build-android-production.ps1](build-android-production.ps1) validates an
   already staged Android runtime with `RuntimeArtifactsPath`. Copying is

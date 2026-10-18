@@ -19,21 +19,23 @@ Load-aware bridge ordering is in pushed App 45281e62. Windows **1.5.0+4176**
 was built and ordinary US paths through Mini and Lampa passed 204/64 KiB checks.
 The seven-asset 4175 draft remains intact.
 
-The private **1.5.0+4180** pass separates source, packages and live state:
+The private **1.5.0+4181** pass separates source, packages and live state:
 
 | Layer | Current result |
 | --- | --- |
-| Pushed source | App `50c31e1d` fixes assistive tap, keyboard selection and Profile text scaling; `fd4b40b5` sets 4180. Core `5364537` fixes Android inbound authentication. Node `64e2025` fixes bridge revocation. Platform `836bb5e`, `b844d49`, `c13ae99`, `869b15d` cover payment/routing-intent/support races, verify-only no-write behavior and admin lint. |
-| Android package | [4180 universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4180-android-universal.apk) built from App `fd4b40b5`; the standard builder passed production signature, version and ABI checks. Packaged armeabi-v7a/arm64-v8a/x86_64 libraries match the new Core `5364537` AAR byte for byte. The AAR contains all four ABIs. 4180 has not been checked on a device. |
-| Windows package | [4180 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4180-setup.exe) built from App `fd4b40b5`. Desktop Core 1.2.14 / `40356d4` and matching Cronet are retained; the DLL was not rebuilt. The tracked runtime seed is preserved. VM was not started for 4180. |
-| Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor and explicit Xray-only activity labels are also live. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4180 device acceptance. |
+| Pushed source | App `d78aefc9` sets 4181 and includes `9ea67187` Windows packaging fixes plus the earlier UI/accessibility changes. Core `0f159bb` publishes immutable URLTest history snapshots and retains the Android inbound-authentication fix. |
+| Android package | [4181 universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4181-android-universal.apk), 244,695,973 bytes, built from App `d78aefc9`; the standard builder passed production signature, version and ABI checks. Packaged armeabi-v7a/arm64-v8a/x86_64 libraries match the selected Core 1.2.14 / `0f159bb` AAR byte for byte. Root's api35gc Atlas capture is pending; phone acceptance is not claimed. |
+| Windows package | [4181 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4181-setup.exe), 28,875,484 bytes, built from App `d78aefc9` with the ready Core 1.2.14 / `0f159bb` DLL and matching Cronet. Runtime binding, built-runtime equality and executable-version checks passed before installer packaging. VM was not started for 4181. |
+| Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor and explicit Xray-only activity labels are also live. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4181 device acceptance. |
 
-Android 4180 used the explicit builder override
-`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-mobile-auth/runtime-artifacts.android.json`
-with `pokrov-core.aar` in that directory. Repeat Android packaging must keep
-that override: the default tracked runtime manifest was not updated and retains
-the Windows binding. No further build or unchanged runtime recheck is required
-by this documentation update.
+Both 4181 builders used the shared private override
+`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-urltest-history-0f159bb/runtime-artifacts.json`
+and `CoreArtifactDirectory` pointing to its `android` or `windows` subdirectory;
+Windows used `-SyncRuntime`. Repeat packaging must retain that selection and the
+approved signing/trust arguments: the default tracked runtime manifest was not
+updated. Core artifacts were already built and were reused by client packaging.
+No further build or unchanged runtime recheck is required by this documentation
+update.
 
 Earlier UI evidence keeps its scope: all screens on Android 4178 api35gc,
 Windows 4178 main screen and centering only; 4179 passed package/manifest checks.
