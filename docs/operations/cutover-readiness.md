@@ -19,15 +19,36 @@ Load-aware bridge ordering is in pushed App 45281e62. Windows **1.5.0+4176**
 was built and ordinary US paths through Mini and Lampa passed 204/64 KiB checks.
 The seven-asset 4175 draft remains intact.
 
-The approved redesign is integrated in `app_shell` through `pokrov_app_ui`.
-Android **1.5.0+4178** and Windows **1.5.0+4179** are built locally with accepted
-Core 1.2.14 and production trust defines. Windows 4179 replaces the incompatible
-retained Cronet DLL with the dependency matching Core’s Go pin; Core and the
-Android APK were not rebuilt. Android UI navigation passed in api35gc; Windows
-4179 has package checks only and awaits VM acceptance. Prices, auth, payments,
-routing and tunnel/WARP authority remain with their existing owners. Support
-codes are masked and raw evidence is behind Diagnostics technical details.
-These artifacts are not published; documentation changes do not justify a rebuild.
+The private **1.5.0+4180** pass separates source, packages and live state:
+
+| Layer | Current result |
+| --- | --- |
+| Pushed source | App `50c31e1d` fixes assistive tap, keyboard selection and Profile text scaling; `fd4b40b5` sets 4180. Core `5364537` fixes Android inbound authentication. Node `64e2025` fixes bridge revocation. Platform `836bb5e`, `b844d49`, `c13ae99`, `869b15d` cover payment/routing-intent/support races, verify-only no-write behavior and admin lint. |
+| Android package | [4180 universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4180-android-universal.apk) built from App `fd4b40b5`; the standard builder passed production signature, version and ABI checks. Packaged armeabi-v7a/arm64-v8a/x86_64 libraries match the new Core `5364537` AAR byte for byte. The AAR contains all four ABIs. 4180 has not been checked on a device. |
+| Windows package | [4180 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4180-setup.exe) built from App `fd4b40b5`. Desktop Core 1.2.14 / `40356d4` and matching Cronet are retained; the DLL was not rebuilt. The tracked runtime seed is preserved. VM was not started for 4180. |
+| Live and public | This local pass has no server deployment or publication. Platform backend/UI and Node fixes still need a separate root rollout; the admin build and warning-free lint passed locally. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. |
+
+Android 4180 used the explicit builder override
+`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-mobile-auth/runtime-artifacts.android.json`
+with `pokrov-core.aar` in that directory. Repeat Android packaging must keep
+that override: the default tracked runtime manifest was not updated and retains
+the Windows binding. No further build or unchanged runtime recheck is required
+by this documentation update.
+
+Earlier UI evidence keeps its scope: all screens on Android 4178 api35gc,
+Windows 4178 main screen and centering only; 4179 passed package/manifest checks.
+New accessibility regressions passed widget checks and analyze, not device QA.
+Support codes stay masked before DiagnosticsViewData; raw evidence remains in
+technical details. Phone checks for the new client and IS UDP wait for the
+owner's explicit return of the phone, expected in the evening.
+
+Naive has an accepted isolated transport canary with matching Cronet, but normal
+managed issuance is not implemented and Auto does not use it. A routing-domain
+editor is also a separate next stage; neither creates a new mandatory 1.5.0 gate.
+Personalised AWG/Hysteria2 bytes are absent from server traffic accounting:
+the [owning monitoring contract](C:/Users/kiwun/Documents/ai/VPN/docs/operations/monitoring-and-visibility.md:1070)
+covers Xray traffic only. This is an observability limit, not evidence of broken
+speed or expiry handling; current trial/paid access has unlimited traffic.
 
 Server route ranking and the physical bridge-metrics producer are live. Fresh
 Cinema/Lampa samples are healthy and feed priorities for new routes; this does
@@ -38,10 +59,9 @@ Telegram WEB on CH/Birch is accepted on desktop and, by the owner's own check,
 on mobile on 18 October. The phone remains unavailable until explicitly returned;
 that acceptance does not authorize ADB access. Current endpoints and server roles
 belong to the [Platform system map](C:/Users/kiwun/Documents/ai/VPN/docs/architecture/system-overview.md).
-Hostkey RU was withdrawn as an exit and 17 units were stopped on 18 October;
-SSH, configurations and keys were retained. The approved retirement replaces
-the old requirement to accept direct RU AWG before release. Direct RU AWG was
-not accepted. Further server work remains owned by the Platform queue.
+The owner deleted Hostkey RU; its protected archive remains on Brain and old
+ru/delta DNS is empty. The approved retirement supersedes the old direct RU AWG
+acceptance requirement. Further server work belongs to the Platform queue.
 
 ## Accepted client checks and limits
 
@@ -50,7 +70,7 @@ not accepted. Further server work remains owned by the Platform queue.
 | Routing catalog | Android 4175 accepted live signed catalog 26 / security 2 in Rules; expiry 15 November 2026, without cached fallback. | The old expired catalog 25 status is historical. |
 | Manual WARP | Android 4172, CH VLESS `warp_over_proxy`, Wi-Fi: complete 64 KiB and native tunnel/DNS/egress, followed by Stop. Windows 4168 also accepted manual CH VLESS WARP with 64 KiB and a one-minute observation. | Other WARP variants and cellular WARP are not accepted by these cases. |
 | AWG | Android 4174, direct DE2 `awg31_lab`, Wi-Fi: complete 64 KiB, native egress and clean Stop. | This does not accept US/RU AWG or LTE AWG. |
-| Hysteria2 | Android 4175, ordinary CH and DE selections after Birch/Fjord migration: complete 64 KiB, effective Hysteria2, native egress and matching staged/effective revisions. | The 4174 CH activation-resolver failure was fixed and checked; DE2 HY2 is still in the current queue. |
+| Hysteria2 | Android 4175, ordinary CH and DE selections after Birch/Fjord migration: complete 64 KiB, effective Hysteria2, native egress and matching staged/effective revisions. DE2 HY2 separately passed native Core 1.2.14 / Windows 4176 with 204 and full 64 KiB. | The 4174 CH activation-resolver failure was fixed and checked; these cases do not accept direct IS UDP from the home route. |
 | Updated ordinary bridge paths | Android 4175, CH/Mini and DE/RF2: complete 64 KiB and native egress after CH/DE endpoint migration. | New-host binding comes from backend issuance plus the ordinary receipt; the event does not itself expose the hostname. Separate new XHTTP connections were not run for CH/DE. |
 | Lampa ingress | Android 4169, RF2 to PL on Wi-Fi and cellular; RF2-XHTTP to PL on Wi-Fi: complete 64 KiB and native tunnel/DNS/egress after the Floating-IP repair. | Other destinations, current load and all carrier restrictions are not covered. |
 | PL direct XHTTP | Android 4173, ordinary PL selection: complete 64 KiB and native protection after Atlas publication. | New-host use was inferred from the managed render and receipt, not independently proven by the candidate revision. |
