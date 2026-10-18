@@ -1,10 +1,14 @@
 # Packages
 
-This folder holds the shared starter modules for the new-base client lane.
+Shared client modules; see the [repository map](../docs/architecture/folder-structure.md)
+for source entrypoints and the [product contract](../docs/product/client-product-contract.md)
+for behavior.
 
-Current seed packages:
+Current packages:
 
+- `app_ui`: presentation widgets and view data; no network, storage or runtime authority
 - `app_shell`
+- `runtime_engine`: managed-profile materialization, native bindings and candidate probes
 - `core_domain`
 - `diagnostics_collectors`
 - `observability_contracts`
@@ -13,15 +17,14 @@ Current seed packages:
 - `support_bundle`
 - `support_context`
 
-Dependency direction:
+Dependency ownership follows the package `pubspec.yaml` files:
 
-`core_domain` -> `platform_contracts` -> `app_shell`
-
-`core_domain` -> `support_context` -> `app_shell`
-
-`observability_contracts` -> `observability_runtime` -> runtime/support consumers
-
-`observability_contracts` -> `diagnostics_collectors` -> `support_bundle` -> `app_shell`
+- `app_shell` composes `app_ui` and consumes the domain, runtime, platform,
+  observability and support packages.
+- `platform_contracts`, `runtime_engine` and `support_context` depend on
+  `core_domain`.
+- `observability_runtime` consumes `observability_contracts`; event identities
+  remain platform-owned rather than being redefined by their consumers.
 
 `observability_contracts` is a checked snapshot of platform-owned schema and
 catalog identities. It cannot redefine their contents; cross-repository hash
@@ -42,4 +45,8 @@ canonical manifest and per-file hashes from that set, then exposes only
 X25519/HKDF/AES-GCM encrypted output for a recipient from an Ed25519-verified
 platform contract. Neither package enumerates files or exports plaintext.
 
-The package graph stays intentionally small so either a `Karing`-adapted lane or a clean-room lane can reuse or replace pieces without unpicking production code.
+`app_shell` supplies real data and callbacks to `app_ui`, and uses the runtime
+and support packages through their existing contracts. A presentation widget
+cannot create authentication, entitlement or connection proof. Native artifact
+selection is documented in [runtime_engine](runtime_engine/README.md) and
+[scripts](../scripts/README.md).

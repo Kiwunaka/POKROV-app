@@ -1,19 +1,51 @@
 # Client scripts
 
-- `sync-pokrov-core-runtime.ps1`: copy the exact local Core AAR, DLL and
-  libcronet.dll after checking their sizes and SHA-256 values.
-- `check-client-version-parity.ps1`: compare Android, Windows, app shell,
-  Core and release-target versions and validate local Core binaries.
-- `run-tests.ps1`: run package Flutter checks and both Android unit-test
-  flavors.
-- `build-android-production.ps1`, `build-windows-release.ps1`: package
-  release candidates locally. They check only the produced binary (signer,
-  debuggable flag, version, ABI, required files, Authenticode when signing)
-  and print its size and SHA-256; they write no evidence or manifest files and
-  do not run tests. Outputs stay ignored until placed in GitHub Releases.
-- `check-release-source-logging.ps1`: optional manual scan for session or auth
-  values logged from release sources.
+Use [AGENTS.md](../AGENTS.md) for working/approval rules and
+[cutover readiness](../docs/operations/cutover-readiness.md) for current results.
+Public **1.4.5**, the seven-asset **1.5.0+4175 draft**, and private **4180**
+packages are separate; these scripts do not publish a release.
 
-The current public 1.1.6 client and its rollback assets are in GitHub Releases
-for `Kiwunaka/pokrov`. Core libraries are distributed through the Core
-release or from the local Core checkout.
+## Runtime selection
+
+**Android 4180 requires the new Core AAR from `5364537`.** Pass
+`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-mobile-auth/runtime-artifacts.android.json`
+to every repeat Android packaging command, retaining the approved signing and
+transport-trust arguments. The matching `pokrov-core.aar` is in that directory.
+The default [tracked manifest](../config/runtime-artifacts.seed.json) was not
+updated for Android. Windows still uses its default Core 1.2.14 / `40356d4`
+binding and matching Cronet; do not pass the Android override to Windows.
+
+- [build-android-production.ps1](build-android-production.ps1) validates an
+  already staged Android runtime with `RuntimeArtifactsPath`. Copying is
+  explicit: `-SyncRuntime` or `-CoreArtifactDirectory` invokes Android-only sync.
+- [build-windows-release.ps1](build-windows-release.ps1) validates the retained
+  Windows runtime. Sync remains explicit; the optional
+  [reproducible wrapper](build-windows-release-reproducible.ps1) forwards arguments
+  and uses a temporary `P:` mapping.
+- [sync-pokrov-core-runtime.ps1](sync-pokrov-core-runtime.ps1) requires the clean
+  Core checkout at the selected manifest's exact source commit, then validates
+  artifact and dependency sizes/hashes before copying. Use `-Platforms android`
+  or `-Platforms windows` for a single-platform change; it otherwise selects both.
+  `CoreArtifactDirectory` requires exactly one platform. Never replace exact
+  bindings with whichever files happen to be in Core `dist/`.
+- [check-client-version-parity.ps1](check-client-version-parity.ps1) checks
+  selected-platform versions and artifact identities. Pass the same
+  `RuntimeArtifactsPath` as packaging; use `-Platforms android` or
+  `-Platforms windows` when checking only that host.
+
+Signing, secure-storage and runtime pin rules are unchanged. Build from the
+reviewed source only when the task needs a changed binary. Packaging checks the
+produced signer/debuggable/version/ABI or required Windows files/signature;
+it does not replace tests, device acceptance or release approval. Outputs stay
+ignored and outside Git/LFS.
+
+## Development checks
+
+Run `flutter analyze` and focused `flutter test` cases from the changed package
+or host. [run-tests.ps1](run-tests.ps1) is the broader runner for its listed
+workspace packages and both Android unit-test flavors. Do not use it to repeat
+accepted unrelated checks or for documentation-only edits.
+
+[check-release-source-logging.ps1](check-release-source-logging.ps1) is an
+optional focused source scan. It does not justify printing session/auth values
+or copying private runtime material into reports.

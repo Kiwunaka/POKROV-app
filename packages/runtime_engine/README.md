@@ -1,6 +1,9 @@
 # POKROV Runtime Engine
 
-This package carries the non-UI runtime lane for the Wave 7 next-client program.
+This package owns non-UI runtime materialization, native bindings and candidate
+probes. [The repository map](../../docs/architecture/folder-structure.md) locates
+its callers and platform hosts; [cutover readiness](../../docs/operations/cutover-readiness.md)
+owns current binary and device acceptance.
 
 Current scope:
 
@@ -8,11 +11,9 @@ Current scope:
 - artifact discovery from local host folders or `POKROV_CORE_ROOT`
 - staging and starting a managed profile payload once a real config exists
 - native runtime bridges for `Windows`, `Android`, and the partial `iOS` lane
-- fail-closed capability/event ABI negotiation; the exact retained 1.0.3
-  identity remains an explicit legacy mode, while release 1.2.0 requires the
-  structured operational-event capability
-- Core `1.1.0` local AAR/DLL with the REALITY fix are bound to the
-  `1.2.0+4055` build; installed-device checks and publication remain open
+- fail-closed capability/event ABI negotiation; the exact retained Core 1.0.3
+  identity remains an explicit legacy mode, while current desktop Core requires
+  the structured operational-event capability
 - private, separate `awg2_lab` and `awg31_lab` boundaries for Android and
   Windows: an `awg` endpoint is accepted only with the exact contract ID/SHA,
   an enabled generation marker and `useIntegratedTun=false`; AWG 3.1 also
@@ -30,13 +31,19 @@ Current limits:
 
 ## Private candidate-probe builds
 
-Ordinary catalogue probes require the additive Core candidate-probe API. For a
-private build, build the changed Core with its existing Android/Windows scripts
-and copy the resulting AAR or DLL (plus its existing runtime dependency) into the
-ignored native runtime slots used by Gradle/CMake. Build the client directly;
-the release-pinned sync/packaging script and `runtime-artifacts.seed.json` still
-describe the published runtime and are not updated for this private build.
+Ordinary catalogue probes require the additive Core candidate-probe API. Stage
+the exact approved artifact and dependencies through the existing
+[sync/packaging scripts](../../scripts/README.md), selecting one platform and
+its manifest. Source commit, version, size and dependency checks remain required;
+copying a library into an ignored slot is not a substitute for those checks.
 Missing native probe APIs return unavailable, never a socket-only success.
+
+Android 4180 uses the new AAR from Core `5364537` with
+`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-mobile-auth/runtime-artifacts.android.json`.
+That override is required for repeat Android packaging. The default tracked
+manifest was not updated and still retains the Windows Core 1.2.14 / `40356d4`
+binding and matching Cronet. Do not apply the Android override to Windows or
+restage Android from the older default binding.
 
 The `warp_direct` policy requires local device registration, explicit consent
 and `id=warp-direct:<install_id>`; account, license and backend WireGuard
