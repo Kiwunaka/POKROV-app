@@ -47,36 +47,65 @@ abstract final class PokrovMotion {
 }
 
 ThemeData pokrovUiTheme({Brightness brightness = Brightness.light}) {
+  final dark = brightness == Brightness.dark;
   final base = ThemeData(
     useMaterial3: true,
     brightness: brightness,
     fontFamily: pokrovFontFamily,
-    scaffoldBackgroundColor: PokrovColors.canvas,
+    scaffoldBackgroundColor: dark ? const Color(0xFF111715) : PokrovColors.canvas,
     colorScheme: ColorScheme.fromSeed(
       brightness: brightness,
       seedColor: PokrovColors.accent,
-      primary: PokrovColors.accent,
-      surface: PokrovColors.surface,
+      primary: dark ? const Color(0xFF8AC4AB) : PokrovColors.accent,
+      surface: dark ? const Color(0xFF161D1A) : PokrovColors.surface,
     ),
     splashFactory: InkRipple.splashFactory,
   );
   return base.copyWith(
-    textTheme: base.textTheme.apply(
-      bodyColor: PokrovColors.ink,
-      displayColor: PokrovColors.ink,
-      fontFamily: pokrovFontFamily,
-    ),
-    bottomSheetTheme: const BottomSheetThemeData(
-      backgroundColor: PokrovColors.surface,
+    textTheme: base.textTheme.apply(fontFamily: pokrovFontFamily),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: base.colorScheme.surface,
       surfaceTintColor: Colors.transparent,
       showDragHandle: true,
-      dragHandleColor: Color(0xFFD5DBD8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
+      dragHandleColor: dark ? const Color(0xFF44524B) : const Color(0xFFD5DBD8),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
     ),
   );
 }
+
+/// Resolve the approved light tokens against the persisted system/light/dark choice.
+Color pokrovColor(BuildContext context, Color color) {
+  if (Theme.of(context).brightness != Brightness.dark) return color;
+  return <Color, Color>{
+    PokrovColors.canvas: Color(0xFF111715),
+    PokrovColors.surface: Color(0xFF161D1A),
+    PokrovColors.ink: Color(0xFFE8EEE9),
+    PokrovColors.soft: Color(0xFFB4C0B8),
+    PokrovColors.muted: Color(0xFF9CAEA2),
+    PokrovColors.faint: Color(0xFF83908A),
+    PokrovColors.line: Color(0xFF303C35),
+    PokrovColors.chip: Color(0xFF26322B),
+    PokrovColors.track: Color(0xFF38473E),
+    PokrovColors.accent: Color(0xFF8AC4AB),
+    PokrovColors.accentDeep: Color(0xFF8AC4AB),
+    PokrovColors.accentSoft: Color(0xFF243F32),
+    PokrovColors.accentWash: Color(0xFF1B2C23),
+    PokrovColors.accentText: Color(0xFFA9D8C0),
+    PokrovColors.accentBorder: Color(0xFF47725A),
+    PokrovColors.warnBg: Color(0xFF382C18),
+    PokrovColors.warnLine: Color(0xFF806136),
+    PokrovColors.warnTitle: Color(0xFFF0D4A6),
+    PokrovColors.warnBody: Color(0xFFE2C18C),
+    PokrovColors.warnStrong: Color(0xFFF0CE93),
+    PokrovColors.warnIcon: Color(0xFFE4B76A),
+  }[color] ?? color;
+}
+
+Color pokrovOnAccent(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark ? const Color(0xFF101713) : Colors.white;
+
+TextStyle pokrovTextStyle(BuildContext context, TextStyle style) =>
+    style.color == null ? style : style.copyWith(color: pokrovColor(context, style.color!));
 
 /// Text styles used across the frame.
 abstract final class PokrovText {

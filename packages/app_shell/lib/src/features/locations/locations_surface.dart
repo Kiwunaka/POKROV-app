@@ -85,191 +85,23 @@ class _LocationsSectionState extends State<_LocationsSection> {
     }
     final automatic = widget.preferredCountryCode.isEmpty &&
         widget.preferredNodeCode.isEmpty && widget.preferredCandidateRef.isEmpty;
-    return _SeedContentList(
-      children: [
-        Text('Страна', style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 14),
-        _AutoLocationCard(
-          key: const ValueKey('locations-auto-section'),
-          title: 'Автоматически',
-          subtitle: 'POKROV подберёт рабочее соединение.',
-          value: automatic ? 'Авто' : 'Выбрать',
-          status: !widget.hasProvisionedAccess
-              ? _AutoLocationStatus.unavailable
-              : automatic
-                  ? _AutoLocationStatus.active
-                  : _AutoLocationStatus.manual,
-          onTap: widget.nodePreferenceBusy
-              ? () {}
-              : widget.onAutomaticLocationSelected,
-        ),
-        const SizedBox(height: 14),
-        _SectionCard(
-          title: 'Выбор страны',
-          lines: const [
-            'Выберите страну выхода в интернет. Способ подключения POKROV выберет сам.',
-          ],
-          child: Column(
-            children: [
-              for (final country in countries.entries)
-                ListTile(
-                  key: ValueKey('locations-country-${country.key}'),
-                  leading: _LocationFlagBadge(
-                      code: country.key, country: country.value.$1),
-                  title: Text(country.value.$1),
-                  trailing: country.key == widget.preferredCountryCode
-                      ? const Icon(Icons.check_rounded)
-                      : null,
-                  enabled: !widget.nodePreferenceBusy && country.value.$2,
-                  onTap: () => widget.onPreferredCountrySelected(country.key),
-                ),
-              if (countries.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(widget.locationsCatalogBusy
-                      ? 'Загружаем страны…'
-                      : 'Пока доступен автоматический выбор.'),
-                ),
-              if ((widget.locationsCatalogError ?? '').isNotEmpty)
-                const Text(
-                    'Список стран не обновился. Показываем сохранённые данные.'),
-              TextButton.icon(
-                key: const ValueKey('locations-refresh-measurements'),
-                onPressed: widget.locationsCatalogBusy
-                    ? null
-                    : widget.onRefreshLocationsCatalog,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Обновить страны'),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-enum _AutoLocationStatus { active, manual, unavailable }
-
-class _AutoLocationCard extends StatelessWidget {
-  const _AutoLocationCard({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.status,
-    required this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final String value;
-  final _AutoLocationStatus status;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = PokrovPalette.of(context);
-    final isActive = status == _AutoLocationStatus.active;
-    final isUnavailable = status == _AutoLocationStatus.unavailable;
-    final statusTone = switch (status) {
-      _AutoLocationStatus.active => _SectionTone.accent,
-      _AutoLocationStatus.manual => _SectionTone.neutral,
-      _AutoLocationStatus.unavailable => _SectionTone.muted,
-    };
-    final statusIcon = switch (status) {
-      _AutoLocationStatus.active => Icons.check_circle_outline_rounded,
-      _AutoLocationStatus.manual => Icons.location_on_outlined,
-      _AutoLocationStatus.unavailable => Icons.lock_outline_rounded,
-    };
-    final content = Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: isActive ? p.accent.withValues(alpha: 0.06) : p.surfaceMuted,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isActive ? p.accent.withValues(alpha: 0.16) : p.line,
-        ),
+    return ui.LocationsScreen(
+      data: ui.LocationsViewData(
+        mode: widget.interfaceMode == PokrovInterfaceMode.advanced
+            ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
+        selectedCode: automatic ? null : widget.preferredCountryCode,
+        countries: [for (final country in countries.entries) ui.CountryOption(
+          code: country.key, name: country.value.$1,
+          available: !widget.nodePreferenceBusy && country.value.$2,
+        )],
+        notice: widget.locationsCatalogBusy ? 'Загружаем страны…'
+            : (widget.locationsCatalogError ?? '').isNotEmpty
+                ? 'Список не обновился. Показываем сохранённые страны.'
+                : countries.isEmpty ? 'Пока доступен автоматический выбор.' : null,
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 330;
-          final statusPill = _StatusPill(
-            label: value,
-            icon: statusIcon,
-            tone: statusTone,
-          );
-          final header = Row(
-            children: [
-              Container(
-                width: compact ? 48 : 54,
-                height: compact ? 48 : 54,
-                decoration: BoxDecoration(
-                  color:
-                      isActive ? p.accent.withValues(alpha: 0.12) : p.surface,
-                  borderRadius: BorderRadius.circular(compact ? 16 : 18),
-                ),
-                child: Icon(
-                  isUnavailable
-                      ? Icons.lock_outline_rounded
-                      : Icons.travel_explore_rounded,
-                  color: isActive ? p.accent : p.muted,
-                  size: compact ? 24 : 27,
-                ),
-              ),
-              SizedBox(width: compact ? 12 : 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: p.ink,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: p.muted,
-                            height: 1.25,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!compact) ...[
-                const SizedBox(width: 12),
-                statusPill,
-              ],
-            ],
-          );
-          if (!compact) {
-            return header;
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              header,
-              const SizedBox(height: 12),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [statusPill],
-              ),
-            ],
-          );
-        },
-      ),
-    );
-    return KeyedSubtree(
-      key: const ValueKey('locations-auto-help-action'),
-      child: PokrovSettingsRowPressSurface(onTap: onTap, child: content),
+      onAuto: widget.nodePreferenceBusy ? null : widget.onAutomaticLocationSelected,
+      onSelect: widget.onPreferredCountrySelected,
+      onRefresh: widget.locationsCatalogBusy ? null : widget.onRefreshLocationsCatalog,
     );
   }
 }

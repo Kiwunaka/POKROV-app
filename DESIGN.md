@@ -62,19 +62,18 @@ Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `
   while desktop roots retain visible focus and Ctrl+1..4 navigation.
 - Mobile tab selection emits one light selection tick; desktop pointer
   navigation stays silent.
-- The compact primary connect action owns the connection ritual: one success
-  confirmation at landing and a quiet release at rest. Its small state indicator
-  may use the shared connect-arc language, but the action itself stays a wide,
-  immediately readable CTA rather than a logo-led disc. Error haptics stay with the error
-  surface instead of firing twice.
+- The primary connection circle uses the approved package's arc and soft connected
+  waves. Connection actions and outcome haptics remain owned by the existing
+  coordinator; the view must not introduce a second connection state machine.
 - First launch hands over to Home through the shared reduced-motion-aware
   reveal; sheets and refresh indicators use the same motion scope.
-- Motion is finite or token-bound, and the connect arc is the signature progress
+- Motion is finite or token-bound, except for the connected waves; the connect arc is the signature progress
   language inside the primary action and pull-to-refresh rather than a generic
   spinner vocabulary.
 - Disabled rows dim, ignore input, and keep a non-click cursor so unavailable
   actions never look live.
-- Windows must keep the compact drawer reachable at 700 and 900 logical px.
+- Windows uses the same centered tab bar and screen column as Android, with
+  existing keyboard navigation retained.
 - Android system chrome may run edge-to-edge only with theme-matched icons and
   safe-area protection.
 - Location metadata keeps its honest country, quality, ping, load and freshness
@@ -114,10 +113,12 @@ Client tokens mirror the platform `shared/design-tokens.json` (`pokrov-clear`, `
   shell remains the composition root for metadata access, installer execution,
   external handoff and lifecycle/observability reporting; it must not retain a
   parallel prompt state machine or duplicate the update widgets.
-- Locations keeps one predictable order: automatic selection, a recovery-
-  framed reserve entry, favorites, recent locations, then the remaining
-  catalog. Ping is never shown as timeless truth: current, stale, invalid and
-  per-variant measurement ages remain explicit.
+- Locations shows Auto followed by API countries. Country selection keeps the
+  existing runtime policy, including admitted bridges and manual pins. Missing
+  measurements do not become fake ping or speed labels; refresh remains explicit.
+- Rules keeps its route choice as a local UI draft until Apply invokes the existing
+  route-mode handler. The expert settings retain their existing saved draft and
+  apply behavior. Profile persists Simple/Advanced and system/light/dark choices.
 - Rules keeps ordinary route scope and app selection in the first layer.
   DNS, custom routes, trusted Wi-Fi and Windows stack live behind one expert
   disclosure. Expert edits accumulate in one named change summary; an active

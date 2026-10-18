@@ -31,15 +31,15 @@ class FirstConnectSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Что пускать через POKROV?', style: PokrovText.heading),
-            const SizedBox(height: 6),
-            const Text('Выбери один раз. Поменять можно в Правилах.', style: PokrovText.body),
-            const SizedBox(height: 16),
+            Text('Что пускать через POKROV?', style: pokrovTextStyle(context, PokrovText.heading)),
+            SizedBox(height: 6),
+            Text('Выбери один раз. Поменять можно в Правилах.', style: pokrovTextStyle(context, PokrovText.body)),
+            SizedBox(height: 16),
             _ChoiceCard(
               selected: choice == FirstRouteChoice.wholePhone,
               icon: Icons.smartphone_rounded,
@@ -49,7 +49,7 @@ class FirstConnectSheet extends StatelessWidget {
               text: 'Российские сайты и банки — как обычно',
               onTap: () => onChanged(FirstRouteChoice.wholePhone),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             if (canSelectApps) _ChoiceCard(
               selected: choice == FirstRouteChoice.someApps,
               icon: Icons.apps_rounded,
@@ -57,7 +57,7 @@ class FirstConnectSheet extends StatelessWidget {
               text: 'Выберешь сам, какие',
               onTap: () => onChanged(FirstRouteChoice.someApps),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             PrimaryButton(label: 'Продолжить и подключить', onPressed: onContinue),
           ],
         ),
@@ -86,20 +86,20 @@ class _ChoiceCard extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: PokrovMotion.quick,
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: selected ? PokrovColors.accentWash : PokrovColors.surface,
+            color: selected ? pokrovColor(context, PokrovColors.accentWash) : pokrovColor(context, PokrovColors.surface),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: selected ? PokrovColors.accent : const Color(0x14111814), width: 2),
+            border: Border.all(color: selected ? pokrovColor(context, PokrovColors.accent) : Color(0x14111814), width: 2),
           ),
           child: Row(
             children: [
               IconSquare(
                 icon: icon,
-                background: iconFilled ? PokrovColors.accent : PokrovColors.chip,
-                color: iconFilled ? Colors.white : PokrovColors.ink,
+                background: iconFilled ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.chip),
+                color: iconFilled ? pokrovOnAccent(context) : pokrovColor(context, PokrovColors.ink),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,15 +107,15 @@ class _ChoiceCard extends StatelessWidget {
                     Text.rich(
                       TextSpan(
                         text: title,
-                        style: PokrovText.rowStrong,
+                        style: pokrovTextStyle(context, PokrovText.rowStrong),
                         children: [
                           if (badge != null)
-                            TextSpan(text: ' · $badge', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: PokrovColors.accent)),
+                            TextSpan(text: ' · $badge', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: pokrovColor(context, PokrovColors.accent))),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(text, style: PokrovText.caption),
+                    SizedBox(height: 2),
+                    Text(text, style: pokrovTextStyle(context, PokrovText.caption)),
                   ],
                 ),
               ),
@@ -143,59 +143,59 @@ class StatusSheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+        padding: EdgeInsets.fromLTRB(20, 0, 20, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.5, end: 1),
-              duration: const Duration(milliseconds: 650),
+              duration: Duration(milliseconds: 650),
               curve: Curves.elasticOut,
               builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
               child: Container(
                 width: 80,
                 height: 80,
-                decoration: BoxDecoration(color: on ? PokrovColors.accent : PokrovColors.chip, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: on ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.chip), shape: BoxShape.circle),
                 child: Icon(
                   on ? Icons.check_rounded : Icons.power_settings_new_rounded,
                   size: 44,
-                  color: on ? Colors.white : PokrovColors.faint,
+                  color: on ? pokrovOnAccent(context) : pokrovColor(context, PokrovColors.faint),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            Text(data.title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 4),
-            Text(data.subtitle, textAlign: TextAlign.center, style: PokrovText.body),
-            const SizedBox(height: 20),
+            SizedBox(height: 14),
+            Text(data.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+            SizedBox(height: 4),
+            Text(data.subtitle, textAlign: TextAlign.center, style: pokrovTextStyle(context, PokrovText.body)),
+            SizedBox(height: 20),
             PokrovCard(
-              color: PokrovColors.canvas,
+              color: pokrovColor(context, PokrovColors.canvas),
               borderColor: Colors.transparent,
               radius: 22,
               child: Column(
                 children: [
                   for (final (i, row) in data.rows.indexed)
                     Container(
-                      constraints: const BoxConstraints(minHeight: 58),
+                      constraints: BoxConstraints(minHeight: 58),
                       decoration: BoxDecoration(
-                        border: i == data.rows.length - 1 ? null : const Border(bottom: BorderSide(color: PokrovColors.line)),
+                        border: i == data.rows.length - 1 ? null : Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line))),
                       ),
                       child: Row(
                         children: [
                           Container(
                             width: 30,
                             height: 30,
-                            decoration: BoxDecoration(color: row.ok ? PokrovColors.accentSoft : PokrovColors.chip, shape: BoxShape.circle),
-                            child: Icon(row.ok ? Icons.check_rounded : Icons.remove_rounded, size: 18, color: row.ok ? PokrovColors.accent : PokrovColors.faint),
+                            decoration: BoxDecoration(color: row.ok ? pokrovColor(context, PokrovColors.accentSoft) : pokrovColor(context, PokrovColors.chip), shape: BoxShape.circle),
+                            child: Icon(row.ok ? Icons.check_rounded : Icons.remove_rounded, size: 18, color: row.ok ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.faint)),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(row.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                                Text(row.detail, style: PokrovText.caption),
+                                Text(row.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                Text(row.detail, style: pokrovTextStyle(context, PokrovText.caption)),
                               ],
                             ),
                           ),
@@ -205,7 +205,7 @@ class StatusSheet extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             on
                 ? SecondaryButton(label: 'Проверить ещё раз', onPressed: onPrimary, filled: true)
                 : PrimaryButton(label: 'Включить', onPressed: onPrimary, height: 54),

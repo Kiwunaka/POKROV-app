@@ -10,7 +10,7 @@ class LocationsScreen extends StatelessWidget {
   const LocationsScreen({super.key, required this.data, required this.onAuto, required this.onSelect, this.onRefresh});
 
   final LocationsViewData data;
-  final VoidCallback onAuto;
+  final VoidCallback? onAuto;
   final ValueChanged<String> onSelect;
   final VoidCallback? onRefresh;
 
@@ -21,43 +21,45 @@ class LocationsScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
+        padding: EdgeInsets.fromLTRB(16, 12, 16, 112),
         children: [
           Row(
             children: [
-              Expanded(child: Text(advanced ? 'Локации' : 'Страна', style: PokrovText.title)),
-              IconButton.filledTonal(
+              Expanded(child: Text(advanced ? 'Локации' : 'Страна', style: pokrovTextStyle(context, PokrovText.title))),
+              if (onRefresh != null) IconButton.filledTonal(
+                key: ValueKey('locations-refresh-measurements'),
                 onPressed: onRefresh,
                 tooltip: 'Обновить список',
-                style: IconButton.styleFrom(backgroundColor: PokrovColors.surface, foregroundColor: PokrovColors.accent),
-                icon: const Icon(Icons.refresh_rounded),
+                style: IconButton.styleFrom(backgroundColor: pokrovColor(context, PokrovColors.surface), foregroundColor: pokrovColor(context, PokrovColors.accent)),
+                icon: Icon(Icons.refresh_rounded),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Semantics(
+            key: ValueKey('locations-auto-section'),
             selected: auto,
             button: true,
             child: GestureDetector(
               onTap: onAuto,
               child: AnimatedContainer(
                 duration: PokrovMotion.quick,
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: auto ? PokrovColors.accentWash : PokrovColors.surface,
+                  color: auto ? pokrovColor(context, PokrovColors.accentWash) : pokrovColor(context, PokrovColors.surface),
                   borderRadius: BorderRadius.circular(PokrovRadii.card),
-                  border: Border.all(color: auto ? PokrovColors.accent : PokrovColors.line, width: 2),
+                  border: Border.all(color: auto ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.line), width: 2),
                 ),
                 child: Row(
                   children: [
-                    const IconSquare(icon: Icons.bolt_rounded, size: 48, background: PokrovColors.accent, color: Colors.white),
-                    const SizedBox(width: 14),
-                    const Expanded(
+                    IconSquare(icon: Icons.bolt_rounded, size: 48, background: pokrovColor(context, PokrovColors.accent), color: pokrovOnAccent(context)),
+                    SizedBox(width: 14),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Авто', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                          Text('Самая быстрая страна прямо сейчас', style: PokrovText.caption),
+                          Text('POKROV подберёт рабочее соединение', style: pokrovTextStyle(context, PokrovText.caption)),
                         ],
                       ),
                     ),
@@ -67,9 +69,10 @@ class LocationsScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SectionLabel('Или выбери страну'),
+          SectionLabel('Или выбери страну'),
+          if (data.notice != null) Padding(padding: EdgeInsets.only(bottom: 12), child: Text(data.notice!, style: pokrovTextStyle(context, PokrovText.caption))),
           PokrovCard(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 2),
             child: Column(
               children: [
                 for (final (i, c) in data.countries.indexed)
@@ -100,27 +103,29 @@ class _CountryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fast = country.pingMs < 60;
+    final ping = country.pingMs;
+    final fast = ping != null && ping < 60;
     return Semantics(
+      key: ValueKey('locations-country-${country.code}'),
       selected: selected,
       button: true,
       child: InkWell(
-        onTap: onTap,
+        onTap: country.available ? onTap : null,
         child: Container(
           height: 64,
-          decoration: BoxDecoration(border: divider ? const Border(bottom: BorderSide(color: PokrovColors.line)) : null),
+          decoration: BoxDecoration(border: divider ? Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line))) : null),
           child: Row(
             children: [
               FlagTile(code: country.code, size: 40),
-              const SizedBox(width: 14),
-              Expanded(child: Text(country.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600))),
-              Container(width: 8, height: 8, decoration: BoxDecoration(color: fast ? PokrovColors.connected : PokrovColors.warnDot, shape: BoxShape.circle)),
-              const SizedBox(width: 6),
-              Text(
-                advanced ? '${country.pingMs} мс' : (fast ? 'быстро' : 'далеко'),
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: PokrovColors.soft, fontFeatures: [FontFeature.tabularFigures()]),
+              SizedBox(width: 14),
+              Expanded(child: Text(country.name, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600))),
+              if (ping != null) Container(width: 8, height: 8, decoration: BoxDecoration(color: fast ? pokrovColor(context, PokrovColors.connected) : pokrovColor(context, PokrovColors.warnDot), shape: BoxShape.circle)),
+              if (ping != null) SizedBox(width: 6),
+              if (ping != null || !country.available) Text(
+                !country.available ? 'Недоступна' : advanced ? '$ping мс' : (fast ? 'быстро' : 'далеко'),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: pokrovColor(context, PokrovColors.soft), fontFeatures: [FontFeature.tabularFigures()]),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               SelectionCheck(visible: selected),
             ],
           ),

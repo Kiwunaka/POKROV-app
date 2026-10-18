@@ -6,7 +6,6 @@ import 'dart:ffi' show Abi;
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart'
     show
         CupertinoActivityIndicator,
@@ -101,7 +100,6 @@ part 'src/features/rules/rules_surface.dart';
 part 'src/features/rules/routing_catalog_preview.dart';
 part 'src/features/rules/catalog_service_selection.dart';
 part 'src/features/rules/routing_controls.dart';
-part 'src/features/rules/rules_helpers.dart';
 part 'src/features/rules/route_labels.dart';
 part 'src/features/warp/warp_sheet.dart';
 

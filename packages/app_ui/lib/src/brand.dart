@@ -18,8 +18,8 @@ class PokrovMark extends StatelessWidget {
       package: 'pokrov_app_ui',
       width: size,
       height: size,
-      color: color,
-      colorBlendMode: color == null ? null : BlendMode.srcIn,
+      color: color ?? (Theme.of(context).brightness == Brightness.dark ? pokrovColor(context, PokrovColors.accent) : null),
+      colorBlendMode: BlendMode.srcIn,
       semanticLabel: 'POKROV',
     );
   }
@@ -31,7 +31,7 @@ class PokrovWordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         PokrovMark(size: 34),
@@ -41,7 +41,7 @@ class PokrovWordmark extends StatelessWidget {
             'POKROV VPN',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: PokrovColors.ink),
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: pokrovColor(context, PokrovColors.ink)),
           ),
         ),
       ],

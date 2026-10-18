@@ -1,17 +1,5 @@
 part of pokrov_app_shell;
 
-String _accessPoolLabel(AccessLane? lane) {
-  return switch (lane) {
-    AccessLane.trialPremium ||
-    AccessLane.bonusPremium ||
-    AccessLane.paidUnlimited =>
-      'Премиум-доступ',
-    AccessLane.freeMonthly || AccessLane.freeSoftMode => 'Базовый доступ',
-    AccessLane.expiredOrBlocked => 'Доступ не активен',
-    null => 'Сведения о подписке',
-  };
-}
-
 String _accessMainLabel(
   SeedAppContext appContext,
   AppFirstBonusSummary? bonus, [
@@ -63,31 +51,6 @@ String _accessShortValue(
   };
 }
 
-/// Numeric twin of [_accessShortValue] for lanes whose value is a day count;
-/// null for the label-only lanes so callers fall back to static text.
-int? _accessShortDays(
-  SeedAppContext appContext,
-  AppFirstBonusSummary? bonus, [
-  FreeProfileAccess? freeProfileAccess,
-  ClientSubscriptionInfo? subscriptionInfo,
-]) {
-  if (_freeProfileAccessLabel(freeProfileAccess) != null) {
-    return null;
-  }
-  final lane = _effectiveAccessLane(appContext, subscriptionInfo);
-  final liveDays = subscriptionInfo?.daysLeft ?? 0;
-  return switch (lane) {
-    AccessLane.trialPremium ||
-    AccessLane.bonusPremium ||
-    AccessLane.paidUnlimited => liveDays > 0 ? liveDays : null,
-    AccessLane.freeMonthly ||
-    AccessLane.freeSoftMode ||
-    AccessLane.expiredOrBlocked ||
-    null =>
-      null,
-  };
-}
-
 AccessLane? _effectiveAccessLane(
   SeedAppContext appContext,
   ClientSubscriptionInfo? subscriptionInfo,
@@ -101,19 +64,6 @@ AccessLane? _effectiveAccessLane(
     'expiredOrBlocked' => AccessLane.expiredOrBlocked,
     _ => null,
   };
-}
-
-String _accessPoolLabelFor(
-  AccessLane? fallback, [
-  FreeProfileAccess? freeProfileAccess,
-]) {
-  if (freeProfileAccess?.needsConservativePresentation ?? false) {
-    return 'Статус доступа уточняется';
-  }
-  if (freeProfileAccess?.isFreeAccess ?? false) {
-    return 'Базовый доступ';
-  }
-  return _accessPoolLabel(fallback);
 }
 
 String? _freeProfileAccessLabel(FreeProfileAccess? access) {

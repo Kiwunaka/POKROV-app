@@ -45,36 +45,37 @@ class HomeScreen extends StatelessWidget {
     return SafeArea(
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 112),
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 112),
         children: [
           _Header(accessBadge: data.accessBadge, onAccess: onOpenAccess, onNotifications: onNotifications, unread: data.notificationsUnread),
           SizedBox(height: _advanced ? 8 : 14),
           Center(
             child: PokrovConnectButton(
-              key: const ValueKey('connect-action'),
+              key: ValueKey('connect-action'),
               phase: data.phase,
               label: data.actionLabel,
               diameter: _advanced ? 176 : 232,
               onPressed: onToggle,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Center(child: _StatusPill(data: data, onTap: onOpenStatus)),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: _ChipTile(
+                  key: const ValueKey('home-location-chip'),
                   leading: FlagTile(code: data.countryCode, size: 36),
                   label: data.countryCaption,
                   value: data.countryLabel,
                   onTap: onOpenCountry,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: _ChipTile(
-                  leading: const IconSquare(icon: Icons.alt_route_rounded, size: 36),
+                  leading: IconSquare(icon: Icons.alt_route_rounded, size: 36),
                   label: 'Российские сайты',
                   value: data.routeValue,
                   onTap: onOpenRoute,
@@ -82,20 +83,20 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           if (error) ...[
             WarnCard(
               title: 'Не получилось подключиться',
               body: 'Похоже, сеть мешает. Попробуем другой путь — это пара секунд.',
               actions: [
                 Expanded(child: _SmallButton(label: 'Попробовать снова', primary: true, onTap: onToggle)),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 if (onHelp != null) _SmallButton(label: 'Помощь', onTap: onHelp),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
           ],
-          if (_advanced) ..._advancedBlock() else ..._simpleBlock(error),
+          if (_advanced) ..._advancedBlock(context) else ..._simpleBlock(error),
         ],
       ),
     );
@@ -105,28 +106,28 @@ class HomeScreen extends StatelessWidget {
     return [
       if (!error && data.tip != null && onTip != null) ...[
         _TipCard(tip: data.tip!, onTap: onTip),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
       ],
       if (!error && data.showAdSlot && adSlot != null) adSlot!,
     ];
   }
 
-  List<Widget> _advancedBlock() {
+  List<Widget> _advancedBlock(BuildContext context) {
     final on = data.phase == ConnectionPhase.on;
     return [
       if (onWarpChanged != null) PokrovCard(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         radius: PokrovRadii.tile,
         child: Row(
           children: [
-            const IconSquare(icon: Icons.blur_on_rounded, size: 38),
-            const SizedBox(width: 12),
-            const Expanded(
+            IconSquare(icon: Icons.blur_on_rounded, size: 38),
+            SizedBox(width: 12),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('WARP', style: PokrovText.rowStrong),
-                  Text('Если сайты всё равно не открываются', style: PokrovText.caption),
+                  Text('WARP', style: pokrovTextStyle(context, PokrovText.rowStrong)),
+                  Text('Если сайты всё равно не открываются', style: pokrovTextStyle(context, PokrovText.caption)),
                 ],
               ),
             ),
@@ -134,7 +135,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      const SizedBox(height: 10),
+      SizedBox(height: 10),
       Row(
         children: [
           for (final (i, s) in [
@@ -143,39 +144,39 @@ class HomeScreen extends StatelessWidget {
             ('Загрузка', data.stats.download, 'Мбит/с'),
             ('Отдача', data.stats.upload, 'Мбит/с'),
           ].indexed) ...[
-            if (i > 0) const SizedBox(width: 8),
+            if (i > 0) SizedBox(width: 8),
             Expanded(child: _StatTile(label: s.$1, value: s.$2, unit: on ? s.$3 : '')),
           ],
         ],
       ),
-      const SizedBox(height: 10),
+      SizedBox(height: 10),
       Material(
-        color: PokrovColors.surface,
+        color: pokrovColor(context, PokrovColors.surface),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: PokrovColors.line),
+          side: BorderSide(color: pokrovColor(context, PokrovColors.line)),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onOpenStatus,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             child: Row(
               children: [
                 for (final check in data.checks) ...[
-                  Icon(Icons.check_rounded, size: 16, color: check.ok ? PokrovColors.accent : PokrovColors.faint),
-                  const SizedBox(width: 3),
-                  Text(check.label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: check.ok ? PokrovColors.accent : PokrovColors.faint)),
-                  const SizedBox(width: 10),
+                  Icon(Icons.check_rounded, size: 16, color: check.ok ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.faint)),
+                  SizedBox(width: 3),
+                  Text(check.label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: check.ok ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.faint))),
+                  SizedBox(width: 10),
                 ],
-                const Spacer(),
-                const Icon(Icons.chevron_right_rounded, size: 20, color: PokrovColors.faint),
+                Spacer(),
+                Icon(Icons.chevron_right_rounded, size: 20, color: pokrovColor(context, PokrovColors.faint)),
               ],
             ),
           ),
         ),
       ),
-      if (data.showAdSlot && adSlot != null) ...[const SizedBox(height: 10), adSlot!],
+      if (data.showAdSlot && adSlot != null) ...[SizedBox(height: 10), adSlot!],
     ];
   }
 }
@@ -192,26 +193,26 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: Align(alignment: Alignment.centerLeft, child: PokrovWordmark())),
+        Expanded(child: Align(alignment: Alignment.centerLeft, child: PokrovWordmark())),
         if (onNotifications != null) IconButton(
-          key: const ValueKey('home-notifications-action'),
+          key: ValueKey('home-notifications-action'),
           onPressed: onNotifications,
           tooltip: 'Уведомления',
-          icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: const Icon(Icons.notifications_none_rounded, color: PokrovColors.ink)),
+          icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: Icon(Icons.notifications_none_rounded, color: pokrovColor(context, PokrovColors.ink))),
         ),
         OutlinedButton(
           onPressed: onAccess,
           style: OutlinedButton.styleFrom(
-            foregroundColor: PokrovColors.accent,
-            side: const BorderSide(color: PokrovColors.accentBorder, width: 1.5),
-            shape: const StadiumBorder(),
-            padding: const EdgeInsets.only(left: 14, right: 8),
-            minimumSize: const Size(0, 38),
-            textStyle: const TextStyle(fontFamily: pokrovFontFamily, fontSize: 14, fontWeight: FontWeight.w700),
+            foregroundColor: pokrovColor(context, PokrovColors.accent),
+            side: BorderSide(color: pokrovColor(context, PokrovColors.accentBorder), width: 1.5),
+            shape: StadiumBorder(),
+            padding: EdgeInsets.only(left: 14, right: 8),
+            minimumSize: Size(0, 38),
+            textStyle: TextStyle(fontFamily: pokrovFontFamily, fontSize: 14, fontWeight: FontWeight.w700),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [Text(accessBadge), const Icon(Icons.chevron_right_rounded, size: 18)],
+            children: [Text(accessBadge), Icon(Icons.chevron_right_rounded, size: 18)],
           ),
         ),
       ],
@@ -228,10 +229,10 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (text, bg, fg, dot) = switch (data.phase) {
-      ConnectionPhase.off => ('Защита выключена', PokrovColors.chip, const Color(0xFF4A525B), PokrovColors.faint),
-      ConnectionPhase.connecting => ('Ищем быстрый путь', PokrovColors.accentSoft, PokrovColors.accentText, PokrovColors.accent),
-      ConnectionPhase.on => ('${data.connectedCountry} · ${data.uptime}', PokrovColors.accentSoft, PokrovColors.accentText, PokrovColors.connected),
-      ConnectionPhase.error => ('Не получилось', PokrovColors.warnBg, PokrovColors.warnStrong, PokrovColors.warnDot),
+      ConnectionPhase.off => ('Защита выключена', pokrovColor(context, PokrovColors.chip), Color(0xFF4A525B), pokrovColor(context, PokrovColors.faint)),
+      ConnectionPhase.connecting => ('Ищем быстрый путь', pokrovColor(context, PokrovColors.accentSoft), pokrovColor(context, PokrovColors.accentText), pokrovColor(context, PokrovColors.accent)),
+      ConnectionPhase.on => ('${data.connectedCountry} · ${data.uptime}', pokrovColor(context, PokrovColors.accentSoft), pokrovColor(context, PokrovColors.accentText), pokrovColor(context, PokrovColors.connected)),
+      ConnectionPhase.error => ('Не получилось', pokrovColor(context, PokrovColors.warnBg), pokrovColor(context, PokrovColors.warnStrong), pokrovColor(context, PokrovColors.warnDot)),
     };
     return Semantics(
       button: true,
@@ -246,7 +247,7 @@ class _StatusPill extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 9, 10, 9),
+              padding: EdgeInsets.fromLTRB(14, 9, 10, 9),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -256,7 +257,7 @@ class _StatusPill extends StatelessWidget {
                     height: 9,
                     decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   AnimatedSwitcher(
                     duration: PokrovMotion.quick,
                     child: Text(data.statusLabel ?? text, key: ValueKey(data.statusLabel ?? text), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: fg)),
@@ -273,7 +274,7 @@ class _StatusPill extends StatelessWidget {
 }
 
 class _ChipTile extends StatelessWidget {
-  const _ChipTile({required this.leading, required this.label, required this.value, required this.onTap});
+  const _ChipTile({super.key, required this.leading, required this.label, required this.value, required this.onTap});
 
   final Widget leading;
   final String label;
@@ -283,23 +284,23 @@ class _ChipTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: PokrovColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(PokrovRadii.tile), side: const BorderSide(color: PokrovColors.line)),
+      color: pokrovColor(context, PokrovColors.surface),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(PokrovRadii.tile), side: BorderSide(color: pokrovColor(context, PokrovColors.line))),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(12),
           child: Row(
             children: [
               leading,
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: PokrovColors.muted)),
-                    Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: pokrovColor(context, PokrovColors.muted))),
+                    Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
@@ -320,28 +321,28 @@ class _TipCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: PokrovColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: const BorderSide(color: PokrovColors.line)),
+      color: pokrovColor(context, PokrovColors.surface),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: BorderSide(color: pokrovColor(context, PokrovColors.line))),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(14),
           child: Row(
             children: [
               IconSquare(icon: tip.icon),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('СЛЕДУЮЩИЙ ШАГ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: PokrovColors.accent)),
-                    Text(tip.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                    Text(tip.text, style: const TextStyle(fontSize: 13, color: PokrovColors.soft)),
+                    Text('СЛЕДУЮЩИЙ ШАГ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: pokrovColor(context, PokrovColors.accent))),
+                    Text(tip.title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    Text(tip.text, style: TextStyle(fontSize: 13, color: pokrovColor(context, PokrovColors.soft))),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: PokrovColors.faint),
+              Icon(Icons.chevron_right_rounded, color: pokrovColor(context, PokrovColors.faint)),
             ],
           ),
         ),
@@ -361,17 +362,17 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return PokrovCard(
       radius: 16,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: PokrovColors.muted)),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, color: pokrovColor(context, PokrovColors.muted))),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(value, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()])),
+            child: Text(value, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, fontFeatures: [FontFeature.tabularFigures()])),
           ),
-          Text(unit, maxLines: 1, style: const TextStyle(fontSize: 10, color: PokrovColors.muted)),
+          Text(unit, maxLines: 1, style: TextStyle(fontSize: 10, color: pokrovColor(context, PokrovColors.muted))),
         ],
       ),
     );
@@ -392,11 +393,11 @@ class _SmallButton extends StatelessWidget {
       child: TextButton(
         onPressed: onTap,
         style: TextButton.styleFrom(
-          backgroundColor: primary ? PokrovColors.accent : Colors.white,
-          foregroundColor: primary ? Colors.white : PokrovColors.ink,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          backgroundColor: primary ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.surface),
+          foregroundColor: primary ? pokrovOnAccent(context) : pokrovColor(context, PokrovColors.ink),
+          padding: EdgeInsets.symmetric(horizontal: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontFamily: pokrovFontFamily, fontSize: 15, fontWeight: FontWeight.w700),
+          textStyle: TextStyle(fontFamily: pokrovFontFamily, fontSize: 15, fontWeight: FontWeight.w700),
         ),
         child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),

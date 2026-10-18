@@ -114,36 +114,6 @@ class _ProfileSection extends StatelessWidget {
   final Future<ClientDevicePairingCode> Function() onIssuePairingCode;
   final Future<bool> Function(String pairingId) onCancelPairingCode;
 
-  List<String> _bonusSummaryLines() {
-    final summary = bonusSummary();
-    if (summary == null && bonusSummaryBusy) {
-      return const ['Обновляем Telegram, рефералы и промокоды.'];
-    }
-    if (summary == null) {
-      if (_bonusPaidRequired(null)) {
-        return [_PlatformProductCopy.telegramRewardPaidGateSummary];
-      }
-      return const ['Рулетка · Telegram · приглашения'];
-    }
-    if (_bonusPaidRequired(summary)) {
-      final telegramLabel = summary.channelBonusClaimed
-          ? 'Telegram-бонус получен'
-          : summary.channelBonusEligible
-              ? 'Telegram +${ruDays(_availableTelegramBonusDays(summary))}'
-              : 'Telegram-бонус недоступен';
-      return ['$telegramLabel · рулетка и приглашения после оплаты'];
-    }
-    final claimed = summary.channelBonusClaimed;
-    final bonusDays = claimed
-        ? summary.channelBonusPremiumDays
-        : _availableTelegramBonusDays(summary);
-    final telegramLabel =
-        bonusDays > 0 ? 'Telegram +${ruDays(bonusDays)}' : 'Telegram';
-    return [
-      '$telegramLabel · рефералы ${summary.referralCount}',
-    ];
-  }
-
   String _bonusHubValue() {
     final summary = bonusSummary();
     if (bonusSummaryBusy) {
@@ -180,755 +150,101 @@ class _ProfileSection extends StatelessWidget {
         AccessLane.trialPremium;
   }
 
-  void _showInterfaceModeSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final mode in PokrovInterfaceMode.values)
-                ListTile(
-                  key: ValueKey('interface-mode-${mode.name}'),
-                  title: Text(mode == PokrovInterfaceMode.simple
-                      ? 'Просто'
-                      : 'Продвинутый'),
-                  subtitle: Text(mode == PokrovInterfaceMode.simple
-                      ? 'Выберите страну — POKROV подберёт соединение.'
-                      : 'Локации, протоколы и последние замеры.'),
-                  trailing: mode == interfaceMode
-                      ? const Icon(Icons.check_rounded)
-                      : null,
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    onInterfaceModeChanged(mode);
-                  },
-                ),
-            ],
-          ),
+  void _devices(BuildContext context) => _showDevicesSheet(
+    context, currentPlatformLabel: appContext.hostPlatform.label,
+    onFetchDevices: onFetchDevices, onRevokeDevice: onRevokeDevice,
+    onIssuePairingCode: onIssuePairingCode, onCancelPairingCode: onCancelPairingCode,
+  );
+
+  void _account(BuildContext context) {
+    final telegramLinked = subscriptionInfo?.telegramLinked == true;
+    final emailLinked = subscriptionInfo?.emailVerified == true;
+    ui.showPokrovSheet<void>(context, (context) => SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Telegram и почта', style: ui.pokrovTextStyle(context, ui.PokrovText.heading)),
+        ui.PokrovRow(title: 'Telegram', value: telegramLinked ? 'Привязан' : 'Привязать',
+          onTap: telegramLinked || telegramBonusBusy ? null : onCreateTelegramLink),
+        ui.PokrovRow(title: 'Почта', value: emailLinked ? 'Подтверждена' : 'Добавить',
+          onTap: emailLinked ? null : () => _showEmailRecoverySheet(context,
+            appContext: appContext, onOpenHandoff: onOpenHandoff)),
+        ui.PokrovRow(title: 'Личный кабинет', onTap: () => onOpenHandoff('cabinet', appContext.cabinetUrl)),
+      ]),
+    ));
+  }
+
+  void _about(BuildContext context) => ui.showPokrovSheet<void>(context, (context) => SingleChildScrollView(
+    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+    child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('POKROV ' + pokrovClientVersion, style: ui.pokrovTextStyle(context, ui.PokrovText.heading)),
+      Text('Обновления приходят в уведомления.', style: ui.pokrovTextStyle(context, ui.PokrovText.body)),
+      ui.PokrovRow(title: 'Публичная оферта', onTap: () => onOpenHandoff('legal', PlatformProductFacts.offerUrl)),
+      ui.PokrovRow(title: 'Конфиденциальность', onTap: () => onOpenHandoff('legal', PlatformProductFacts.privacyUrl)),
+      ui.PokrovRow(title: 'Официальные релизы', onTap: () => onOpenHandoff('release', PlatformProductFacts.githubReleasesUrl)),
+    ]),
+  ));
+
+  @override
+  Widget build(BuildContext context) {
+    final summary = bonusSummary();
+    final linked = <String>[
+      if (subscriptionInfo?.telegramLinked == true) 'Telegram',
+      if (subscriptionInfo?.emailVerified == true) 'почта',
+    ];
+    final expires = _formatClientDate(subscriptionInfo?.expiresAt ?? '');
+    return RefreshIndicator(
+      onRefresh: () async => Future.wait<void>([onRefreshBonusSummary(), onRefreshNotifications()]),
+      child: ui.ProfileScreen(
+        data: ui.ProfileViewData(
+          mode: interfaceMode == PokrovInterfaceMode.advanced ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
+          accessBadge: 'Доступ',
+          accessTitle: _accessMainLabel(appContext, summary, freeProfileAccess, subscriptionInfo),
+          accessDetail: _freeProfileAccessNotice(freeProfileAccess) ??
+              (expires.isEmpty ? '' : 'До ' + expires),
+          accountLinked: linked.isEmpty ? 'Добавить' : linked.join(' · '),
+          devices: 'Управлять',
+          theme: _themeModeLabel(themeMode),
+          bonuses: _bonusHubValue(),
+          version: pokrovClientVersion,
         ),
+        onRenew: () => _showSubscriptionSheet(context, appContext: appContext,
+          hasProvisionedAccess: hasProvisionedAccess, subscriptionInfo: subscriptionInfo,
+          onOpenHandoff: onOpenHandoff),
+        onModeChanged: (mode) => onInterfaceModeChanged(mode == ui.InterfaceMode.simple
+            ? PokrovInterfaceMode.simple : PokrovInterfaceMode.advanced),
+        onAccount: () => _account(context),
+        onDevices: () => _devices(context),
+        onLoginCode: () => _devices(context),
+        onActivate: () => _showRedeemSheet(context, hintCode: appContext.redeemHint,
+          onRedeem: (code) => onOpenHandoff('redeem', code)),
+        onTheme: () => _showThemeModeSheet(context, selected: themeMode, onChanged: onThemeModeChanged),
+        onNotifications: () {
+          onOpenNotifications();
+          _showNotificationsSheet(context, notifications: notifications,
+            usingCache: notificationsUsingCache, cachedAt: notificationsCachedAt,
+            onRefresh: onRefreshNotifications, onDismiss: onDismissNotifications,
+            onOpenHandoff: onOpenHandoff);
+        },
+        onHelp: onOpenSupportHub,
+        onDiagnostics: onOpenDiagnostics,
+        onBonuses: () => _showRewardsHubSheet(context, summary: bonusSummary,
+          rewardBusy: bonusRewardBusy, paidRequired: _bonusPaidRequired(summary),
+          onRefreshBonusSummary: onRefreshBonusSummary, onSpinWheel: onSpinWheel,
+          onCheckInCalendar: onCheckInCalendar, onOpenHandoff: onOpenHandoff, onPromoEvent: onPromoEvent),
+        onAbout: () => _about(context),
+        onShare: appShareBusy ? null : () => unawaited(onShareApp()),
+        onWarp: interfaceMode == PokrovInterfaceMode.advanced ? () => unawaited(onOpenWarp()) : null,
+        onAppSettings: appContext.hostPlatform == HostPlatform.windows
+            ? () => _showWindowsShellPreferencesSheet(context, preferences: windowsShellPreferences,
+                onChanged: onWindowsShellPreferencesChanged)
+            : appContext.hostPlatform == HostPlatform.android
+                ? () => _showSystemSurfacePreferencesSheet(context, onOpenNotificationSettings: onOpenNotificationSettings)
+                : null,
       ),
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final currentBonusSummary = bonusSummary();
-    AppFirstPromoSlot? accountPromo;
-    for (final slot
-        in currentBonusSummary?.promoSlots.visibleForPlacement('account') ??
-            const <AppFirstPromoSlot>[]) {
-      if (_isRenderableHomePromoSlot(slot)) {
-        accountPromo = slot;
-        break;
-      }
-    }
-    final bonusPaidRequired = _bonusPaidRequired(currentBonusSummary);
-    final telegramBonusClaimed =
-        currentBonusSummary?.channelBonusClaimed ?? false;
-    final telegramBonusBlocked = currentBonusSummary != null &&
-        !telegramBonusClaimed &&
-        !currentBonusSummary.channelBonusEligible;
-    final telegramLinked = subscriptionInfo?.telegramLinked ?? false;
-    final telegramUsername = subscriptionInfo?.telegramUsername.trim() ?? '';
-    final telegramValue = telegramLinked
-        ? (telegramUsername.isEmpty ? 'Привязан' : '@$telegramUsername')
-        : (telegramBonusBusy ? 'Проверяем' : 'Привязать');
-    final emailAddress = subscriptionInfo?.emailAddress.trim() ?? '';
-    final emailLinked =
-        (subscriptionInfo?.emailVerified ?? false) && emailAddress.isNotEmpty;
-    final statusLabel = connectionPresentation.title;
-    final warpLifecycle = PokrovWarpLifecycle.resolve(
-      policy: warpPolicy,
-      consented: warpRuntimeConsent,
-      busy: warpBusy,
-    );
-    // Signature-arc pull-to-refresh: the connect arc is the product's own
-    // refresh language; reuses the existing refresh callbacks — no new
-    // backend calls.
-    return _SeedContentList(
-      onRefresh: () async {
-        await Future.wait<void>([
-          onRefreshBonusSummary(),
-          onRefreshNotifications(),
-        ]);
-      },
-      refreshIndicatorKey: const ValueKey('profile-refresh-indicator'),
-      children: [
-        Text('Профиль', style: theme.textTheme.headlineSmall),
-        if (accountPromo != null) ...[
-          const SizedBox(height: 12),
-          _HomeAdminPromoCard(
-            slot: accountPromo,
-            keyPrefix: 'profile-promo',
-            onOpenHandoff: onOpenHandoff,
-            onPromoEvent: onPromoEvent,
-          ),
-        ],
-        const SizedBox(height: 12),
-        KeyedSubtree(
-          key: const ValueKey('profile-compact-account-layer'),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _SectionCard(
-                key: const ValueKey('profile-section-plan-access'),
-                title: 'Ваш доступ',
-                lines: const [],
-                child: _ProfileAccessOverview(
-                  accessLabel: _accessMainLabel(
-                    appContext,
-                    currentBonusSummary,
-                    freeProfileAccess,
-                    subscriptionInfo,
-                  ),
-                  accessValue: _accessShortValue(
-                    appContext,
-                    currentBonusSummary,
-                    freeProfileAccess,
-                    subscriptionInfo,
-                  ),
-                  accessDays: _accessShortDays(
-                    appContext,
-                    currentBonusSummary,
-                    freeProfileAccess,
-                    subscriptionInfo,
-                  ),
-                  poolLabel: _accessPoolLabelFor(
-                    _effectiveAccessLane(appContext, subscriptionInfo),
-                    freeProfileAccess,
-                  ),
-                  accessNotice: _freeProfileAccessNotice(freeProfileAccess),
-                  statusLabel: statusLabel,
-                  onPlanTap: () => _showSubscriptionSheet(
-                    context,
-                    appContext: appContext,
-                    hasProvisionedAccess: hasProvisionedAccess,
-                    subscriptionInfo: subscriptionInfo,
-                    onOpenHandoff: onOpenHandoff,
-                  ),
-                  onCheckoutTap: () =>
-                      onOpenHandoff('checkout', appContext.checkoutUrl),
-                ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-statistics'),
-                title: 'Статистика',
-                lines: const ['Только подтверждённые данные этого аккаунта.'],
-                child: Column(
-                  children: [
-                    _SettingsRow(
-                      key: const ValueKey('profile-statistics-traffic'),
-                      icon: Icons.data_usage_rounded,
-                      title: 'Трафик через POKROV',
-                      value: subscriptionInfo?.usageSource == 'panel_runtime'
-                          ? _formatTrafficVolume(
-                              subscriptionInfo?.trafficUsedBytes ?? 0,
-                            )
-                          : 'Нет свежих данных',
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-statistics-connections'),
-                      icon: Icons.link_rounded,
-                      title: 'Активные подключения',
-                      value: subscriptionInfo?.usageSource == 'panel_runtime'
-                          ? '${subscriptionInfo?.activeConnections ?? 0}'
-                          : '—',
-                    ),
-                  ],
-                ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-account'),
-                title: 'Аккаунт',
-                lines: const [
-                  'Telegram, email и кабинет помогают не потерять доступ.',
-                ],
-                child: Column(
-                  children: [
-                    _SettingsRow(
-                      key: const ValueKey('profile-telegram-link-action'),
-                      icon: Icons.send_outlined,
-                      title: 'Telegram',
-                      value: telegramValue,
-                      valueIsAction: !telegramLinked && !telegramBonusBusy,
-                      enabled: telegramLinked || !telegramBonusBusy,
-                      onTap: telegramLinked ? null : onCreateTelegramLink,
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-email-action'),
-                      icon: Icons.alternate_email_rounded,
-                      title: 'Email',
-                      value: emailLinked ? emailAddress : 'Добавить',
-                      valueIsAction: !emailLinked,
-                      onTap: emailLinked
-                          ? null
-                          : () => _showEmailRecoverySheet(
-                                context,
-                                appContext: appContext,
-                                onOpenHandoff: onOpenHandoff,
-                              ),
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-open-cabinet-action'),
-                      icon: Icons.web_outlined,
-                      title: 'Кабинет',
-                      value: 'Аккаунт',
-                      onTap: () =>
-                          onOpenHandoff('cabinet', appContext.cabinetUrl),
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-devices-action'),
-                      icon: Icons.devices_other_rounded,
-                      title: 'Устройства',
-                      value: 'Управлять',
-                      valueIsAction: true,
-                      onTap: () => _showDevicesSheet(
-                        context,
-                        currentPlatformLabel: appContext.hostPlatform.label,
-                        onFetchDevices: onFetchDevices,
-                        onRevokeDevice: onRevokeDevice,
-                        onIssuePairingCode: onIssuePairingCode,
-                        onCancelPairingCode: onCancelPairingCode,
-                      ),
-                    ),
-                    if ((telegramBonusError ?? '').isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          telegramBonusError!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.error,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-sync'),
-                title: 'Восстановить доступ',
-                lines: const [
-                  'Одноразовый вход с другого устройства или активация доступа.',
-                ],
-                child: _SettingsRow(
-                  key: const ValueKey('profile-redeem-code-action'),
-                  icon: Icons.key_rounded,
-                  title: 'Код входа или активации',
-                  value: 'Ввести',
-                  valueIsAction: true,
-                  onTap: () => _showRedeemSheet(
-                    context,
-                    hintCode: appContext.redeemHint,
-                    onRedeem: (code) => onOpenHandoff('redeem', code),
-                  ),
-                ),
-              ),
-              PokrovSettingsRowPressSurface(
-                key: const ValueKey('profile-section-support'),
-                onTap: onOpenSupportHub,
-                child: _SectionCard(
-                  key: const ValueKey('profile-section-support-group'),
-                  title: 'Поддержка',
-                  lines: const [
-                    'Чат и безопасная сводка состояния без ключей, ссылок и технических логов.',
-                  ],
-                  child: Column(
-                    children: [
-                      _SettingsRow(
-                        key: const ValueKey('profile-open-support-action'),
-                        icon: Icons.chat_bubble_outline_rounded,
-                        title: 'Написать в поддержку',
-                        value: 'Чат',
-                        onTap: onOpenSupportHub,
-                      ),
-                      const _SettingsRowDivider(),
-                      _SettingsRow(
-                        key: const ValueKey('profile-guides-action'),
-                        icon: Icons.menu_book_outlined,
-                        title: 'Атлас приложения',
-                        value: 'Реальные экраны',
-                        onTap: () => onOpenHandoff(
-                          'download',
-                          'https://pokrov.space/guides/pokrov-app/',
-                        ),
-                      ),
-                      const _SettingsRowDivider(),
-                      _SettingsRow(
-                        key: const ValueKey('profile-diagnostics-action'),
-                        icon: Icons.health_and_safety_outlined,
-                        title: 'Сведения для поддержки',
-                        value: 'Открыть',
-                        onTap: onOpenDiagnostics,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-app'),
-                title: interfaceMode == PokrovInterfaceMode.advanced
-                    ? 'Настройки' : 'Интерфейс',
-                lines: [
-                  '${appContext.hostPlatform.label} · ${_routeModeShortLabel(selectedRouteMode)}',
-                ],
-                child: Column(
-                  children: [
-                    _SettingsRow(
-                      key: const ValueKey('profile-interface-mode-action'),
-                      icon: Icons.tune_rounded,
-                      title: 'Интерфейс',
-                      value: interfaceMode == PokrovInterfaceMode.simple
-                          ? 'Просто'
-                          : 'Продвинутый',
-                      onTap: () => _showInterfaceModeSheet(context),
-                    ),
-                    if (interfaceMode == PokrovInterfaceMode.advanced) ...[
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      icon: Icons.alt_route_rounded,
-                      title: 'Режим работы',
-                      value: _routeModeShortLabel(selectedRouteMode),
-                      onTap: () => _showInfoSheet(
-                        context,
-                        title: 'Режим работы',
-                        lines: [
-                          _routeModeRowSummary(selectedRouteMode),
-                          'Изменить режим можно во вкладке «Правила».',
-                        ],
-                      ),
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-enhanced-protection-action'),
-                      icon: Icons.privacy_tip_outlined,
-                      title: 'WARP',
-                      value:
-                          warpLifecycle.phase == PokrovWarpPhase.readyToConsent
-                              ? 'Можно включить'
-                              : warpLifecycle.publicStatus,
-                      onTap: () {
-                        unawaited(onOpenWarp());
-                      },
-                    ),
-                    const _SettingsRowDivider(),
-                    if (appContext.hostPlatform == HostPlatform.android) ...[
-                      _SettingsRow(
-                        key: const ValueKey(
-                          'profile-system-surfaces-action',
-                        ),
-                        icon: Icons.notifications_active_outlined,
-                        title: 'Шторка и VPN-уведомление',
-                        value: systemSurfacePreferences.summary,
-                        onTap: () => _showSystemSurfacePreferencesSheet(
-                          context,
-                          onOpenNotificationSettings:
-                              onOpenNotificationSettings,
-                        ),
-                      ),
-                      const _SettingsRowDivider(),
-                    ],
-                    if (appContext.hostPlatform == HostPlatform.windows) ...[
-                      _SettingsRow(
-                        key: const ValueKey('profile-windows-shell-action'),
-                        icon: Icons.desktop_windows_outlined,
-                        title: 'Windows',
-                        value: windowsShellPreferences.summary,
-                        onTap: () => _showWindowsShellPreferencesSheet(
-                          context,
-                          preferences: windowsShellPreferences,
-                          onChanged: onWindowsShellPreferencesChanged,
-                        ),
-                      ),
-                      const _SettingsRowDivider(),
-                    ],
-                    _SettingsRow(
-                      key: const ValueKey('profile-notifications-action'),
-                      icon: notificationsUnread > 0
-                          ? Icons.notifications_active_rounded
-                          : Icons.notifications_none_rounded,
-                      title: 'Уведомления',
-                      value: notificationsBusy
-                          ? 'Обновляем'
-                          : notificationsUsingCache
-                              ? 'Сохранено'
-                              : notificationsUnread > 0
-                                  ? '$notificationsUnread'
-                                  : 'Открыть',
-                      onTap: () {
-                        onOpenNotifications();
-                        _showNotificationsSheet(
-                          context,
-                          notifications: notifications,
-                          usingCache: notificationsUsingCache,
-                          cachedAt: notificationsCachedAt,
-                          onRefresh: onRefreshNotifications,
-                          onDismiss: onDismissNotifications,
-                          onOpenHandoff: onOpenHandoff,
-                        );
-                      },
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-theme-action'),
-                      icon: Icons.brightness_6_outlined,
-                      title: 'Тема',
-                      value: _themeModeLabel(themeMode),
-                      onTap: () => _showThemeModeSheet(
-                        context,
-                        selected: themeMode,
-                        onChanged: onThemeModeChanged,
-                      ),
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-offer-action'),
-                      icon: Icons.description_outlined,
-                      title: 'Публичная оферта',
-                      value: 'Открыть',
-                      onTap: () => onOpenHandoff(
-                        'legal',
-                        PlatformProductFacts.offerUrl,
-                      ),
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-privacy-action'),
-                      icon: Icons.policy_outlined,
-                      title: 'Конфиденциальность',
-                      value: 'Открыть',
-                      onTap: () => onOpenHandoff(
-                        'legal',
-                        PlatformProductFacts.privacyUrl,
-                      ),
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-releases-action'),
-                      icon: Icons.new_releases_outlined,
-                      title: 'Официальные релизы',
-                      value: 'GitHub',
-                      onTap: () => onOpenHandoff(
-                        'release',
-                        PlatformProductFacts.githubReleasesUrl,
-                      ),
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-about-action'),
-                      icon: Icons.info_outline_rounded,
-                      title: 'О приложении',
-                      value: pokrovClientVersion,
-                      onTap: () => _showInfoSheet(
-                        context,
-                        title: 'О приложении',
-                        lines: [
-                          'POKROV $pokrovClientVersion',
-                          'Канал обновлений: стабильный',
-                          'Платформа: ${appContext.hostPlatform.label}',
-                          'Обновления проверяются автоматически и доступны в уведомлениях.',
-                        ],
-                      ),
-                    ),
-                    ],
-                    if (appContext.hostPlatform == HostPlatform.android ||
-                        appContext.hostPlatform == HostPlatform.windows) ...[
-                      const _SettingsRowDivider(),
-                      _SettingsRow(
-                        key: const ValueKey('profile-share-app-action'),
-                        icon: Icons.share_outlined,
-                        title: 'Поделиться приложением',
-                        value: appShareBusy
-                            ? 'Готовим файл'
-                            : appContext.hostPlatform == HostPlatform.android
-                                ? 'Файл APK'
-                                : 'Файл EXE',
-                        onTap: () => unawaited(onShareApp()),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              _SectionCard(
-                key: const ValueKey('profile-section-bonus-summary'),
-                title: 'Бонусы',
-                tone: _SectionTone.reward,
-                lines: _bonusSummaryLines(),
-                child: Column(
-                  children: [
-                    if (currentBonusSummary == null && bonusSummaryBusy)
-                      const _MotionSkeletonList(
-                        key: ValueKey('rewards-skeleton-summary'),
-                        rows: 3,
-                      ),
-                    _SettingsRow(
-                      key: const ValueKey('profile-telegram-claim-action'),
-                      icon: Icons.send_outlined,
-                      title: 'Telegram-бонус',
-                      value: telegramBonusClaimed
-                          ? 'Получен'
-                          : telegramBonusBlocked
-                              ? 'Недоступно'
-                              : telegramBonusCanClaim
-                                  ? 'Получить'
-                                  : 'Проверить',
-                      valueIsAction: !telegramBonusClaimed &&
-                          !telegramBonusBlocked &&
-                          !telegramBonusBusy,
-                      enabled: !telegramBonusClaimed &&
-                          !telegramBonusBlocked &&
-                          !telegramBonusBusy,
-                      onTap: telegramBonusClaimed || telegramBonusBlocked
-                          ? null
-                          : telegramBonusCanClaim
-                              ? onClaimTelegramBonus
-                              : onCheckTelegramBonus,
-                    ),
-                    const _SettingsRowDivider(),
-                    _SettingsRow(
-                      key: const ValueKey('profile-bonus-wheel-action'),
-                      icon: Icons.card_giftcard_outlined,
-                      title: 'Бонусы и история',
-                      value: _bonusHubValue(),
-                      onTap: () => _showRewardsHubSheet(
-                        context,
-                        summary: bonusSummary,
-                        rewardBusy: bonusRewardBusy,
-                        paidRequired: bonusPaidRequired,
-                        onRefreshBonusSummary: onRefreshBonusSummary,
-                        onSpinWheel: onSpinWheel,
-                        onCheckInCalendar: onCheckInCalendar,
-                        onOpenHandoff: onOpenHandoff,
-                        onPromoEvent: onPromoEvent,
-                      ),
-                    ),
-                    if ((bonusSummaryError ?? '').isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          bonusSummaryError!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.error,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-String _formatTrafficVolume(int bytes) {
-  final safeBytes = bytes < 0 ? 0 : bytes;
-  const kib = 1024.0;
-  const mib = 1024.0 * kib;
-  const gib = 1024.0 * mib;
-  if (safeBytes >= gib) {
-    final value = safeBytes / gib;
-    return '${value.toStringAsFixed(value >= 100 ? 0 : 1)} ГБ';
-  }
-  if (safeBytes >= mib) {
-    final value = safeBytes / mib;
-    return '${value.toStringAsFixed(value >= 100 ? 0 : 1)} МБ';
-  }
-  return '${(safeBytes / kib).toStringAsFixed(0)} КБ';
-}
-
-class _ProfileAccessOverview extends StatelessWidget {
-  const _ProfileAccessOverview({
-    required this.accessLabel,
-    required this.accessValue,
-    required this.accessDays,
-    required this.poolLabel,
-    required this.accessNotice,
-    required this.statusLabel,
-    required this.onPlanTap,
-    required this.onCheckoutTap,
-  });
-
-  final String accessLabel;
-  final String accessValue;
-
-  /// Day count behind [accessValue] when the lane is numeric; drives the
-  /// living count-up so the entitlement feels owned, not printed.
-  final int? accessDays;
-  final String poolLabel;
-  final String? accessNotice;
-  final String statusLabel;
-  final VoidCallback onPlanTap;
-  final VoidCallback onCheckoutTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final p = PokrovPalette.of(context);
-            final compact = constraints.maxWidth < 430;
-            final isProtected = statusLabel == 'Подключено';
-            final brand = Container(
-              width: compact ? 54 : 62,
-              height: compact ? 54 : 62,
-              decoration: BoxDecoration(
-                color: p.surface.withValues(alpha: 0.86),
-                shape: BoxShape.circle,
-                border: Border.all(color: p.line),
-              ),
-              child: Center(child: _BrandMark(size: compact ? 34 : 40)),
-            );
-            final headline = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  accessLabel,
-                  maxLines: compact ? 2 : 1,
-                  overflow: compact ? TextOverflow.clip : TextOverflow.ellipsis,
-                  style: (compact
-                          ? Theme.of(context).textTheme.titleMedium
-                          : Theme.of(context).textTheme.titleLarge)
-                      ?.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  poolLabel,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: p.muted),
-                ),
-              ],
-            );
-            final badges = Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (accessDays != null)
-                  _LivingDaysCount(
-                    days: accessDays!,
-                    builder: (context, days) => _StatusPill(
-                      label: ruDays(days),
-                      icon: Icons.calendar_today_outlined,
-                      tone: _SectionTone.reward,
-                    ),
-                  )
-                else
-                  _StatusPill(
-                    label: accessValue,
-                    icon: Icons.calendar_today_outlined,
-                    tone: _SectionTone.reward,
-                  ),
-                KeyedSubtree(
-                  key: const ValueKey('profile-connection-status-pill'),
-                  child: _StatusPill(
-                    label: statusLabel,
-                    icon: isProtected
-                        ? Icons.verified_user_outlined
-                        : Icons.shield_outlined,
-                    tone:
-                        isProtected ? _SectionTone.accent : _SectionTone.muted,
-                  ),
-                ),
-              ],
-            );
-            final header = compact
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          brand,
-                          const SizedBox(width: 14),
-                          Expanded(child: headline),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      badges,
-                    ],
-                  )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      brand,
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            headline,
-                            const SizedBox(height: 8),
-                            badges,
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                header,
-                if (accessNotice != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    accessNotice!,
-                    key: const ValueKey('profile-free-access-notice'),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: p.muted,
-                          height: 1.35,
-                        ),
-                  ),
-                ],
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        Column(
-          children: [
-            _SettingsRow(
-              key: const ValueKey('profile-plan-details-action'),
-              icon: Icons.workspace_premium_outlined,
-              title: 'Подписка',
-              value: accessValue,
-              onTap: onPlanTap,
-            ),
-            const _SettingsRowDivider(),
-            _SettingsRow(
-              key: const ValueKey('profile-checkout-action'),
-              icon: Icons.shopping_bag_outlined,
-              title: 'Продлить',
-              value: 'Выбрать срок',
-              valueIsAction: true,
-              onTap: onCheckoutTap,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Inset hairline between grouped settings rows, iOS grouped-table style:
-/// aligned to the text column (34px icon + 12px gap), never full-bleed.
 class _SettingsRowDivider extends StatelessWidget {
   const _SettingsRowDivider();
 

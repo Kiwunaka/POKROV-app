@@ -26,8 +26,8 @@ class PokrovConnectButton extends StatefulWidget {
 }
 
 class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerProviderStateMixin {
-  late final AnimationController _spin = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
-  late final AnimationController _waves = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800));
+  late final AnimationController _spin = AnimationController(vsync: this, duration: Duration(milliseconds: 1100));
+  late final AnimationController _waves = AnimationController(vsync: this, duration: Duration(milliseconds: 2800));
 
   bool get _reduceMotion => MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
@@ -83,7 +83,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
       ConnectionPhase.on => 'Выключить защиту',
       ConnectionPhase.error => 'Повторить подключение',
     };
-    final iconColor = on ? Colors.white : (error ? PokrovColors.warnIcon : PokrovColors.accent);
+    final iconColor = on ? pokrovOnAccent(context) : (error ? pokrovColor(context, PokrovColors.warnIcon) : pokrovColor(context, PokrovColors.accent));
 
     return SizedBox(
       width: ring,
@@ -112,18 +112,18 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
               height: widget.diameter,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: on ? PokrovColors.accent : PokrovColors.surface,
+                color: on ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.surface),
                 boxShadow: [
                   BoxShadow(
-                    color: on ? const Color(0x5912805A) : const Color(0x1F103D2E),
+                    color: on ? Color(0x5912805A) : Color(0x1F103D2E),
                     blurRadius: 44,
-                    offset: const Offset(0, 18),
+                    offset: Offset(0, 18),
                   ),
                 ],
               ),
               child: Material(
                 type: MaterialType.transparency,
-                shape: const CircleBorder(),
+                shape: CircleBorder(),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: widget.onPressed,
@@ -148,7 +148,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
                             fontFamily: pokrovFontFamily,
                             fontSize: widget.diameter * 0.09,
                             fontWeight: FontWeight.w800,
-                            color: on ? Colors.white : PokrovColors.ink,
+                            color: on ? pokrovOnAccent(context) : pokrovColor(context, PokrovColors.ink),
                           ),
                           child: Text(label),
                         ),

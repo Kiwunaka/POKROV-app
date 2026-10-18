@@ -20,6 +20,12 @@ class ProfileScreen extends StatelessWidget {
     this.onHelp,
     this.onBonuses,
     this.onAbout,
+    this.onAccount,
+    this.onActivate,
+    this.onDiagnostics,
+    this.onShare,
+    this.onWarp,
+    this.onAppSettings,
   });
 
   final ProfileViewData data;
@@ -32,41 +38,48 @@ class ProfileScreen extends StatelessWidget {
   final VoidCallback? onHelp;
   final VoidCallback? onBonuses;
   final VoidCallback? onAbout;
+  final VoidCallback? onAccount;
+  final VoidCallback? onActivate;
+  final VoidCallback? onDiagnostics;
+  final VoidCallback? onShare;
+  final VoidCallback? onWarp;
+  final VoidCallback? onAppSettings;
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 112),
+        padding: EdgeInsets.fromLTRB(16, 12, 16, 112),
         children: [
-          const Text('Профиль', style: PokrovText.title),
-          const SizedBox(height: 12),
+          Text('Профиль', style: pokrovTextStyle(context, PokrovText.title)),
+          SizedBox(height: 12),
           _AccessCard(data: data, onRenew: onRenew),
-          const SectionLabel('Аккаунт'),
+          SectionLabel('Аккаунт'),
           PokrovCard(
             child: Column(
               children: [
-                PokrovRow(title: 'Telegram и почта', value: data.accountLinked, valueColor: PokrovColors.accent, valueBold: true),
-                PokrovRow(title: 'Устройства', value: data.devices, onTap: onDevices ?? () {}),
-                PokrovRow(title: 'Код для входа на другом устройстве', onTap: onLoginCode ?? () {}, divider: false),
+                if (onAccount != null) PokrovRow(title: 'Telegram и почта', value: data.accountLinked, valueColor: pokrovColor(context, PokrovColors.accent), valueBold: true, onTap: onAccount),
+                if (onDevices != null) PokrovRow(title: 'Устройства', value: data.devices, onTap: onDevices),
+                if (onLoginCode != null) PokrovRow(title: 'Код для входа на другом устройстве', onTap: onLoginCode),
+                if (onActivate != null) PokrovRow(title: 'Ввести код входа или активации', onTap: onActivate, divider: false),
               ],
             ),
           ),
-          const SectionLabel('Настройки'),
+          SectionLabel('Настройки'),
           PokrovCard(
             child: Column(
               children: [
                 Container(
                   height: 60,
-                  decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: PokrovColors.line))),
+                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line)))),
                   child: Row(
                     children: [
-                      const Expanded(child: Text('Вид', style: TextStyle(fontSize: 16))),
+                      Expanded(child: Text('Вид', style: TextStyle(fontSize: 16))),
                       SizedBox(
                         width: 214,
                         child: PokrovSegmented(
-                          labels: const ['Просто', 'Продвинутый'],
+                          labels: ['Просто', 'Продвинутый'],
                           index: data.mode == InterfaceMode.simple ? 0 : 1,
                           onChanged: (i) => onModeChanged(i == 0 ? InterfaceMode.simple : InterfaceMode.advanced),
                         ),
@@ -74,18 +87,22 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                PokrovRow(title: 'Тема', value: data.theme, onTap: onTheme ?? () {}),
-                PokrovRow(title: 'Уведомления', onTap: onNotifications ?? () {}, divider: false),
+                if (onTheme != null) PokrovRow(title: 'Тема', value: data.theme, onTap: onTheme),
+                if (onNotifications != null) PokrovRow(title: 'Уведомления', onTap: onNotifications),
+                if (onWarp != null) PokrovRow(title: 'WARP', onTap: onWarp),
+                if (onAppSettings != null) PokrovRow(title: 'Работа приложения', onTap: onAppSettings, divider: false),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           PokrovCard(
             child: Column(
               children: [
-                PokrovRow(title: 'Помощь', value: 'чат', onTap: onHelp ?? () {}),
-                PokrovRow(title: 'Бонусы и друзья', value: data.bonuses, valueColor: PokrovColors.accent, valueBold: true, onTap: onBonuses ?? () {}),
-                PokrovRow(title: 'О приложении', value: data.version, onTap: onAbout ?? () {}, divider: false),
+                if (onHelp != null) PokrovRow(title: 'Помощь', value: 'чат', onTap: onHelp),
+                if (onDiagnostics != null) PokrovRow(title: 'Диагностика', onTap: onDiagnostics),
+                if (onBonuses != null) PokrovRow(title: 'Бонусы и друзья', value: data.bonuses, valueColor: pokrovColor(context, PokrovColors.accent), valueBold: true, onTap: onBonuses),
+                if (onShare != null) PokrovRow(title: 'Поделиться приложением', onTap: onShare),
+                if (onAbout != null) PokrovRow(title: 'О приложении', value: data.version, onTap: onAbout, divider: false),
               ],
             ),
           ),
@@ -104,25 +121,25 @@ class _AccessCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-      decoration: BoxDecoration(color: PokrovColors.accent, borderRadius: BorderRadius.circular(PokrovRadii.card)),
+      padding: EdgeInsets.fromLTRB(18, 16, 18, 16),
+      decoration: BoxDecoration(color: pokrovColor(context, PokrovColors.accent), borderRadius: BorderRadius.circular(PokrovRadii.card)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const PokrovMark(size: 28, color: Colors.white),
-              const SizedBox(width: 8),
+              PokrovMark(size: 28, color: pokrovOnAccent(context)),
+              SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(999)),
-                child: Text(data.accessBadge, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                padding: EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(color: pokrovOnAccent(context).withValues(alpha: 0.18), borderRadius: BorderRadius.circular(999)),
+                child: Text(data.accessBadge, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: pokrovOnAccent(context))),
               ),
-              const SizedBox(width: 8),
-              Expanded(child: Text(data.accessTitle, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white))),
+              SizedBox(width: 8),
+              Expanded(child: Text(data.accessTitle, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: pokrovOnAccent(context)))),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -130,36 +147,36 @@ class _AccessCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(data.accessDetail, style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.92))),
-                    const SizedBox(height: 8),
-                    ClipRRect(
+                    Text(data.accessDetail, style: TextStyle(fontSize: 14, color: pokrovOnAccent(context).withValues(alpha: 0.92))),
+                    SizedBox(height: 8),
+                    if (data.accessProgress != null) ClipRRect(
                       borderRadius: BorderRadius.circular(999),
                       child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0, end: data.accessProgress),
-                        duration: const Duration(milliseconds: 900),
+                        tween: Tween(begin: 0, end: data.accessProgress!),
+                        duration: Duration(milliseconds: 900),
                         curve: PokrovMotion.settle,
                         builder: (context, value, _) => LinearProgressIndicator(
                           value: value,
                           minHeight: 6,
-                          backgroundColor: Colors.white.withValues(alpha: 0.25),
-                          color: Colors.white,
+                          backgroundColor: pokrovOnAccent(context).withValues(alpha: 0.25),
+                          color: pokrovOnAccent(context),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               FilledButton(
                 onPressed: onRenew,
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: PokrovColors.accentDeep,
-                  minimumSize: const Size(0, 40),
-                  shape: const StadiumBorder(),
-                  textStyle: const TextStyle(fontFamily: pokrovFontFamily, fontSize: 14, fontWeight: FontWeight.w800),
+                  backgroundColor: pokrovOnAccent(context),
+                  foregroundColor: pokrovColor(context, PokrovColors.accentDeep),
+                  minimumSize: Size(0, 40),
+                  shape: StadiumBorder(),
+                  textStyle: TextStyle(fontFamily: pokrovFontFamily, fontSize: 14, fontWeight: FontWeight.w800),
                 ),
-                child: const Text('Продлить'),
+                child: Text('Продлить'),
               ),
             ],
           ),

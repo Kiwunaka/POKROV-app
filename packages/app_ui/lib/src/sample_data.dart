@@ -35,6 +35,8 @@ abstract final class PokrovSampleData {
     return HomeViewData(
       phase: phase,
       mode: mode,
+      accessBadge: 'Премиум',
+      showAdSlot: true,
       countryCaption: countryCode == null && on ? 'Страна · авто' : 'Страна',
       countryLabel: countryCode == null && !on ? 'Авто' : name,
       countryCode: countryCode ?? (on ? 'DE' : null),
@@ -86,7 +88,11 @@ abstract final class PokrovSampleData {
         warning: 'Список приложений не обновился',
       );
 
-  static ProfileViewData profile(InterfaceMode mode) => ProfileViewData(mode: mode);
+  static ProfileViewData profile(InterfaceMode mode) => ProfileViewData(
+    mode: mode, accessBadge: 'Премиум', accessTitle: 'Доступ активен',
+    accessDetail: 'Ещё 29 дней · до 5 устройств', accessProgress: 0.72,
+    accountLinked: 'привязаны ✓', devices: '2 из 5', bonuses: '+24 дня',
+  );
 
   static RenewViewData renew([String selected = 'm12']) => RenewViewData(
         current: 'Сейчас: Премиум, ещё 29 дней',

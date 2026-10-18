@@ -17,6 +17,8 @@ class RulesScreen extends StatelessWidget {
     this.onPresets,
     this.onExpert,
     this.onWarning,
+    this.onServices,
+    this.expertContent,
   });
 
   final RulesViewData data;
@@ -26,6 +28,8 @@ class RulesScreen extends StatelessWidget {
   final VoidCallback? onPresets;
   final VoidCallback? onExpert;
   final VoidCallback? onWarning;
+  final VoidCallback? onServices;
+  final Widget? expertContent;
 
   @override
   Widget build(BuildContext context) {
@@ -35,12 +39,12 @@ class RulesScreen extends StatelessWidget {
       child: Stack(
         children: [
           ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 190),
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 190),
             children: [
-              const Text('Правила', style: PokrovText.title),
-              const SectionLabel('Что пускать через POKROV'),
+              Text('Правила', style: pokrovTextStyle(context, PokrovText.title)),
+              SectionLabel('Что пускать через POKROV'),
               PokrovCard(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                 child: Column(
                   children: [
                     for (final (i, m) in data.modes.indexed)
@@ -50,10 +54,10 @@ class RulesScreen extends StatelessWidget {
                         child: InkWell(
                           onTap: () => onSelect(m.id),
                           child: Container(
-                            constraints: const BoxConstraints(minHeight: 54),
-                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            constraints: BoxConstraints(minHeight: 54),
+                            padding: EdgeInsets.symmetric(vertical: 6),
                             decoration: BoxDecoration(
-                              border: i < data.modes.length - 1 ? const Border(bottom: BorderSide(color: PokrovColors.line)) : null,
+                              border: i < data.modes.length - 1 ? Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line))) : null,
                             ),
                             child: Row(
                               children: [
@@ -61,8 +65,8 @@ class RulesScreen extends StatelessWidget {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(m.title, style: PokrovText.rowTitle),
-                                      if (m.recommended) const Text('советуем', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: PokrovColors.accent)),
+                                      Text(m.title, style: pokrovTextStyle(context, PokrovText.rowTitle)),
+                                      if (m.recommended) Text('советуем', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: pokrovColor(context, PokrovColors.accent))),
                                     ],
                                   ),
                                 ),
@@ -76,20 +80,21 @@ class RulesScreen extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+                padding: EdgeInsets.fromLTRB(8, 8, 8, 6),
                 child: AnimatedSwitcher(
                   duration: PokrovMotion.quick,
-                  child: Text(selected.description, key: ValueKey(selected.id), style: PokrovText.caption),
+                  child: Text(selected.description, key: ValueKey(selected.id), style: pokrovTextStyle(context, PokrovText.caption)),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               PokrovCard(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
-                    PokrovRow(title: 'Приложения', value: data.appsSummary, onTap: onApps ?? () {}),
-                    PokrovRow(title: 'Готовые наборы', value: data.presetsSummary, onTap: onPresets ?? () {}),
-                    PokrovRow(title: 'Для опытных', value: data.expertSummary, onTap: onExpert ?? () {}, divider: false),
+                    if (onApps != null) PokrovRow(title: 'Приложения', value: data.appsSummary, onTap: onApps),
+                    if (onPresets != null) PokrovRow(title: 'Готовые наборы', value: data.presetsSummary, onTap: onPresets),
+                    if (onServices != null) PokrovRow(title: 'Выбрать сервисы и режим', onTap: onServices),
+                    if (onExpert != null) PokrovRow(title: 'Для опытных', value: data.expertSummary, onTap: onExpert, divider: false),
                   ],
                 ),
               ),
@@ -98,16 +103,17 @@ class RulesScreen extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: TextButton.icon(
                     onPressed: onWarning,
-                    icon: Container(width: 7, height: 7, decoration: const BoxDecoration(color: PokrovColors.warnDot, shape: BoxShape.circle)),
+                    icon: Container(width: 7, height: 7, decoration: BoxDecoration(color: pokrovColor(context, PokrovColors.warnDot), shape: BoxShape.circle)),
                     label: Text.rich(
                       TextSpan(
                         text: '${data.warning} · ',
-                        style: const TextStyle(fontSize: 13, color: PokrovColors.warnStrong, fontWeight: FontWeight.w400),
-                        children: const [TextSpan(text: 'Обновить', style: TextStyle(color: PokrovColors.accent, fontWeight: FontWeight.w700))],
+                        style: TextStyle(fontSize: 13, color: pokrovColor(context, PokrovColors.warnStrong), fontWeight: FontWeight.w400),
+                        children: [TextSpan(text: 'Обновить', style: TextStyle(color: pokrovColor(context, PokrovColors.accent), fontWeight: FontWeight.w700))],
                       ),
                     ),
                   ),
                 ),
+              if (expertContent != null) expertContent!,
             ],
           ),
           Positioned(
@@ -115,8 +121,8 @@ class RulesScreen extends StatelessWidget {
             right: 16,
             bottom: 104,
             child: AnimatedSlide(
-              offset: data.hasPendingChange ? Offset.zero : const Offset(0, 1.6),
-              duration: const Duration(milliseconds: 450),
+              offset: data.hasPendingChange ? Offset.zero : Offset(0, 1.6),
+              duration: Duration(milliseconds: 450),
               curve: PokrovMotion.spring,
               child: AnimatedOpacity(
                 opacity: data.hasPendingChange ? 1 : 0,
@@ -126,7 +132,7 @@ class RulesScreen extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(PokrovRadii.button),
-                      boxShadow: const [BoxShadow(color: Color(0x4D12805A), blurRadius: 24, offset: Offset(0, 10))],
+                      boxShadow: [BoxShadow(color: Color(0x4D12805A), blurRadius: 24, offset: Offset(0, 10))],
                     ),
                     child: PrimaryButton(label: 'Применить', icon: Icons.check_rounded, onPressed: onApply),
                   ),

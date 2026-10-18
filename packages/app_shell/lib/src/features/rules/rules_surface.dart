@@ -1,6 +1,6 @@
 part of pokrov_app_shell;
 
-class _RulesSection extends StatelessWidget {
+class _RulesSection extends StatefulWidget {
   const _RulesSection({
     required this.appContext,
     required this.selectedRouteMode,
@@ -52,184 +52,86 @@ class _RulesSection extends StatelessWidget {
   final VoidCallback onRoutingLessonCompleted;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final p = PokrovPalette.of(context);
-    final routeChoices = appContext.runtimeProfile.supportedRouteModes;
-    final selectedAppsActive = routeChoices.contains(RouteMode.selectedApps);
-    final excludedAppsActive = routeChoices.contains(RouteMode.excludedApps);
-    final selectedAppsStaged =
-        appContext.bootstrapContract.supportsSelectedAppsMode &&
-            !selectedAppsActive;
-    final rulesContract = appContext.rulesPresetContract;
-    final isWindows = appContext.hostPlatform == HostPlatform.windows;
-    final directPresetIds = isWindows
-        ? const <String>{
-            'ru-region',
-            'local-network',
-          }
-        : const <String>{
-            'ru-region',
-            'local-network',
-            'ru-banks',
-            'gosuslugi',
-            'marketplaces',
-          };
-    final directPresets = rulesContract.presets
-        .where(
-          (preset) => directPresetIds.contains(preset.id),
-        )
-        .toList(growable: false);
+  State<_RulesSection> createState() => _RulesSectionState();
+}
 
-    return _SeedContentList(
-      children: [
-        Text('Правила подключения', style: theme.textTheme.headlineSmall),
-        const SizedBox(height: 12),
-        _SectionCard(
-          title: 'Режим работы',
-          tone: _SectionTone.accent,
-          lines: ['Сейчас: ${_routeModeShortLabel(selectedRouteMode, smartDnsActive: smartDnsActive)}'],
-          child: Column(
-            children: <Widget>[
-              _RouteModeSegmentedControl(
-                choices: routeChoices,
-                selectedRouteMode: selectedRouteMode,
-                smartDnsActive: smartDnsActive,
-                onRouteModeSelected: onRouteModeSelected,
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  _routeModeRowSummary(selectedRouteMode, smartDnsActive: smartDnsActive),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: p.muted,
-                    height: 1.32,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              _SettingsRow(
-                key: const ValueKey('rules-mode-help-action'),
-                icon: Icons.info_outline_rounded,
-                title: 'Как выбрать',
-                value: 'Коротко',
-                onTap: () => _showInfoSheet(
-                  context,
-                  title: 'Режим работы',
-                  lines: [
-                    '${_routeModeShortLabel(RouteMode.allExceptRu)}: ${_routeModeRowSummary(RouteMode.allExceptRu)}',
-                    '${_routeModeShortLabel(RouteMode.fullTunnel)}: ${_routeModeRowSummary(RouteMode.fullTunnel)}',
-                    selectedAppsActive
-                        ? '${_routeModeShortLabel(RouteMode.selectedApps)}: ${_routeModeRowSummary(RouteMode.selectedApps)}'
-                        : selectedAppsStaged
-                            ? '${_routeModeShortLabel(RouteMode.selectedApps)}: недоступно на этом устройстве.'
-                            : '${_routeModeShortLabel(RouteMode.selectedApps)}: недоступно на ${appContext.hostPlatform.label}.',
-                    if (excludedAppsActive)
-                      '${_routeModeShortLabel(RouteMode.excludedApps)}: ${_routeModeRowSummary(RouteMode.excludedApps)}',
-                  ],
-                ),
-              ),
-            ],
-          ),
+class _RulesSectionState extends State<_RulesSection> {
+  late RouteMode _draftMode = widget.selectedRouteMode;
+
+  @override
+  void didUpdateWidget(covariant _RulesSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedRouteMode != widget.selectedRouteMode) _draftMode = widget.selectedRouteMode;
+  }
+
+  void _apps() {
+    var selected = List<String>.of(widget.selectedAppIds);
+    ui.showPokrovSheet<void>(context, (context) => StatefulBuilder(
+      builder: (context, setSheetState) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: _SelectedAppsEditor(
+          hostPlatform: widget.appContext.hostPlatform, routeMode: _draftMode,
+          selectedAppIds: selected,
+          onAdd: (id) {
+            widget.onSelectedAppAdded(id);
+            setSheetState(() => selected = [...selected, if (!selected.contains(id)) id]);
+          },
+          onRemove: (id) {
+            widget.onSelectedAppRemoved(id);
+            setSheetState(() => selected = selected.where((value) => value != id).toList());
+          },
         ),
-        if (onEditCatalogServices != null || selectedRouteMode == RouteMode.selectiveServices)
-          _SectionCard(
-            key: const ValueKey('rules-selective-services'),
-            title: smartDnsActive ? 'Только DNS' : 'Выбранные сервисы',
-            lines: [
-              if (selectedRouteMode == RouteMode.selectiveServices)
-                'Выбран режим доступа к отдельным сервисам. Сохранено: ${routingPreferences.selectedCatalogServiceIds.length}.',
-              'Остальной трафик идёт напрямую. Режим не защищает всё устройство.',
-              if (selectedRouteMode == RouteMode.selectiveServices)
-                'Шлюз сервиса может видеть IP-адрес, домен, время и объём соединения, но не содержимое корректного HTTPS.',
-              if (onEditCatalogServices == null)
-                'Режим сейчас недоступен. Выбор сохранён; для подключения выберите другой режим.',
-              if (catalogServicesBusy) 'Дождитесь завершения текущего подключения.',
-            ],
-            child: TextButton.icon(
-              onPressed: catalogServicesBusy ? null : onEditCatalogServices,
-              icon: const Icon(Icons.checklist_rounded),
-              label: const Text('Выбрать сервисы и режим'),
-            ),
-          ),
-        if (loadCatalogPreview != null)
-          _RoutingCatalogPreviewCard(
-            key: ValueKey(catalogPreviewIdentity),
-            load: loadCatalogPreview!,
-            routeMode: selectedRouteMode,
-          ),
-        if (loadCatalogPreview == null && selectedRouteMode == RouteMode.allExceptRu &&
-            directPresets.isNotEmpty)
-          _SectionCard(
-            title: 'Напрямую без POKROV',
-            lines: const [
-              'Российские и локальные сервисы остаются на обычном подключении.'
-            ],
-            child: Column(
-              children: [
-                ...directPresets.map(
-                  (preset) => _PresetRow(
-                    key: ValueKey('rules-preset-${preset.id}'),
-                    icon: _rulesPresetIcon(preset.id),
-                    title: preset.title,
-                    subtitle: preset.subtitle,
-                    enabled: preset.enabled,
-                    statusLabel: _rulesPresetStatusLabel(preset.state),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        if (appContext.hostPlatform == HostPlatform.android &&
-            selectedAppsActive &&
-            excludedAppsActive)
-          _RuAppsPresetCard(
-            selectedRouteMode: selectedRouteMode,
-            selectedAppIds: selectedAppIds,
-            onApply: onRuAppPresetApplied,
-            loadVerifiedCatalogApps: loadVerifiedCatalogApps,
-          ),
-        if (selectedAppsActive || excludedAppsActive || selectedAppsStaged)
-          _SectionCard(
-            key: const ValueKey('rules-section-selected-apps'),
-            title: selectedRouteMode == RouteMode.excludedApps
-                ? 'Напрямую без POKROV'
-                : 'Только выбранные',
-            lines: [
-              selectedAppIds.isEmpty
-                  ? 'Выберите хотя бы одно приложение перед подключением.'
-                  : selectedRouteMode == RouteMode.excludedApps
-                      ? 'Напрямую: ${selectedAppIds.length} · остальное через VPN'
-                      : 'Через VPN: ${selectedAppIds.length}',
-              if (appContext.hostPlatform == HostPlatform.windows &&
-                  (selectedRouteMode == RouteMode.selectedApps ||
-                      selectedRouteMode == RouteMode.excludedApps))
-                'Системный DNS общий для всех приложений. По умолчанию он защищён VPN.',
-            ],
-            child: _SelectedAppsEditor(
-              hostPlatform: appContext.hostPlatform,
-              routeMode: selectedRouteMode,
-              selectedAppIds: selectedAppIds,
-              onAdd: onSelectedAppAdded,
-              onRemove: onSelectedAppRemoved,
-            ),
-          ),
-        _RulesAdvancedSection(
-          hostPlatform: appContext.hostPlatform,
-          loadSmartDnsProviders: loadSmartDnsProviders,
-          preferences: routingPreferences,
-          fallbackMode: selectedRouteMode,
-          onChanged: onRoutingPreferencesChanged,
-          onApply: onRoutingPreferencesApply,
-          connectionActive: connectionActive,
-          windowsLocalDpiReady: windowsLocalDpiReady,
-          onReadCurrentWifi: onReadCurrentWifi,
-          onRequestWifiPermission: onRequestWifiPermission,
-          onOpenVpnSettings: onOpenVpnSettings,
-          onRoutingLessonCompleted: onRoutingLessonCompleted,
-        ),
-      ],
+      ),
+    ));
+  }
+
+  void _presets() => ui.showPokrovSheet<void>(context, (context) => SingleChildScrollView(
+    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      if (widget.loadCatalogPreview != null) _RoutingCatalogPreviewCard(
+        key: ValueKey(widget.catalogPreviewIdentity), load: widget.loadCatalogPreview!, routeMode: widget.selectedRouteMode),
+      if (widget.appContext.hostPlatform == HostPlatform.android &&
+          widget.appContext.runtimeProfile.supportedRouteModes.contains(RouteMode.selectedApps) &&
+          widget.appContext.runtimeProfile.supportedRouteModes.contains(RouteMode.excludedApps))
+        _RuAppsPresetCard(selectedRouteMode: widget.selectedRouteMode, selectedAppIds: widget.selectedAppIds,
+          onApply: widget.onRuAppPresetApplied, loadVerifiedCatalogApps: widget.loadVerifiedCatalogApps),
+    ]),
+  ));
+
+  @override
+  Widget build(BuildContext context) {
+    final choices = widget.appContext.runtimeProfile.supportedRouteModes;
+    return ui.RulesScreen(
+      data: ui.RulesViewData(
+        modes: [for (final mode in choices) ui.RouteModeOption(
+          id: mode.name, title: switch(mode) {
+            RouteMode.allExceptRu => 'Россия напрямую',
+            RouteMode.fullTunnel => 'Всё через POKROV',
+            RouteMode.selectedApps => 'Только выбранные приложения',
+            RouteMode.excludedApps => 'Все, кроме выбранных приложений',
+            RouteMode.selectiveServices => 'Только выбранные сервисы',
+          },
+          description: _routeModeRowSummary(mode, smartDnsActive: widget.smartDnsActive),
+          recommended: mode == RouteMode.allExceptRu,
+        )],
+        selectedId: _draftMode.name,
+        appliedId: widget.selectedRouteMode.name,
+        appsSummary: widget.selectedAppIds.isEmpty ? 'не выбраны' : widget.selectedAppIds.length.toString(),
+        presetsSummary: 'Российские сервисы',
+      ),
+      onSelect: (id) => setState(() => _draftMode = choices.firstWhere((mode) => mode.name == id)),
+      onApply: () => widget.onRouteModeSelected(_draftMode),
+      onApps: choices.contains(RouteMode.selectedApps) || choices.contains(RouteMode.excludedApps) ? _apps : null,
+      onPresets: widget.loadCatalogPreview != null || widget.loadVerifiedCatalogApps != null ? _presets : null,
+      onServices: widget.catalogServicesBusy ? null : widget.onEditCatalogServices,
+      expertContent: _RulesAdvancedSection(
+        hostPlatform: widget.appContext.hostPlatform, loadSmartDnsProviders: widget.loadSmartDnsProviders,
+        preferences: widget.routingPreferences, fallbackMode: widget.selectedRouteMode,
+        onChanged: widget.onRoutingPreferencesChanged, onApply: widget.onRoutingPreferencesApply,
+        connectionActive: widget.connectionActive, windowsLocalDpiReady: widget.windowsLocalDpiReady,
+        onReadCurrentWifi: widget.onReadCurrentWifi, onRequestWifiPermission: widget.onRequestWifiPermission,
+        onOpenVpnSettings: widget.onOpenVpnSettings, onRoutingLessonCompleted: widget.onRoutingLessonCompleted,
+      ),
     );
   }
 }
@@ -328,42 +230,14 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
       _appliedPreferences,
       _draftPreferences,
     );
-    final configuredCount = _draftPreferences.purposeRoutes.length +
-        _draftPreferences.overrides.length +
-        _draftPreferences.trustedWifiNames.length +
-        (_draftPreferences.dnsPreset == PokrovDnsPreset.automatic ? 0 : 1) +
-        (_draftPreferences.dnsPreset != PokrovDnsPreset.automatic &&
-                _draftPreferences.dnsTransport == PokrovDnsTransport.direct
-            ? 1
-            : 0) +
-        (_draftPreferences.externalSmartDnsEnabled ? 1 : 0) +
-        (_draftPreferences.smartDnsProviderId.isNotEmpty ? 1 : 0) +
-        (_draftPreferences.allowLan ? 1 : 0) +
-        _draftPreferences.lanSubnets.length +
-        (widget.hostPlatform == HostPlatform.windows &&
-                _draftPreferences.tunStack != PokrovTunStack.system
-            ? 1
-            : 0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionCard(
-          key: const ValueKey('rules-advanced-disclosure'),
-          title: 'Дополнительно',
-          lines: const ['Подключение, DNS, свои маршруты и Wi-Fi.'],
-          child: _SettingsRow(
-            key: const ValueKey('rules-advanced-toggle'),
-            icon: Icons.tune_rounded,
-            title: 'Редкие настройки',
-            value: _expanded
-                ? 'Скрыть'
-                : configuredCount > 0
-                    ? 'Настроено: $configuredCount'
-                    : 'Открыть',
-            valueIsAction: true,
-            onTap: () => setState(() => _expanded = !_expanded),
-          ),
-        ),
+        ui.PokrovCard(child: ui.PokrovRow(
+          key: const ValueKey('rules-advanced-toggle'),
+          title: 'Для опытных', value: _expanded ? 'Скрыть' : 'DNS, сеть',
+          onTap: () => setState(() => _expanded = !_expanded), divider: false,
+        )),
         AnimatedSwitcher(
           duration: _MotionScope.of(context).duration(_MotionTokens.short),
           transitionBuilder: _fadeSlideTransition,
@@ -499,143 +373,6 @@ List<String> _routingPreferenceChangeLabels(
           applied.tunStack != draft.tunStack)
         'подключение Windows',
     ];
-
-class _RouteModeSegmentedControl extends StatelessWidget {
-  const _RouteModeSegmentedControl({
-    required this.choices,
-    required this.selectedRouteMode,
-    required this.onRouteModeSelected,
-    this.smartDnsActive = false,
-  });
-
-  final List<RouteMode> choices;
-  final RouteMode selectedRouteMode;
-  final ValueChanged<RouteMode> onRouteModeSelected;
-  final bool smartDnsActive;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = PokrovPalette.of(context);
-    return Column(
-      key: const ValueKey('rules-route-mode-segmented-control'),
-      children: [
-        for (var i = 0; i < choices.length; i += 1) ...[
-          if (i > 0) Divider(height: 1, thickness: 1, color: p.line),
-          _RouteModeSegment(
-            mode: choices[i],
-            selected: selectedRouteMode == choices[i],
-            smartDnsActive: smartDnsActive,
-            onTap: () => onRouteModeSelected(choices[i]),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _RouteModeSegment extends StatelessWidget {
-  const _RouteModeSegment({
-    required this.mode,
-    required this.selected,
-    required this.onTap,
-    this.smartDnsActive = false,
-  });
-
-  final RouteMode mode;
-  final bool selected;
-  final VoidCallback onTap;
-  final bool smartDnsActive;
-
-  @override
-  Widget build(BuildContext context) {
-    final motion = _MotionScope.of(context);
-    final p = PokrovPalette.of(context);
-    final icon = switch (mode) {
-      RouteMode.allExceptRu => Icons.public_rounded,
-      RouteMode.fullTunnel => Icons.shield_outlined,
-      RouteMode.selectiveServices => Icons.checklist_rounded,
-      RouteMode.selectedApps => Icons.apps_rounded,
-      RouteMode.excludedApps => Icons.mobile_off_rounded,
-    };
-    final label = _routeModeShortLabel(mode, smartDnsActive: smartDnsActive);
-    return Semantics(
-      key: ValueKey('rules-mode-row-${mode.name}'),
-      button: true,
-      selected: selected,
-      label: _routeModeRowTitle(mode, smartDnsActive: smartDnsActive),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: AnimatedContainer(
-            duration: motion.duration(_MotionTokens.short),
-            curve: _MotionTokens.ease,
-            constraints: const BoxConstraints(minHeight: 56),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-            decoration: BoxDecoration(
-              color: selected
-                  ? p.accent.withValues(alpha: 0.10)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? p.accent.withValues(alpha: 0.16)
-                        : p.surfaceMuted,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 19,
-                    color: selected ? p.accent : p.muted,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: p.ink,
-                          fontWeight:
-                              selected ? FontWeight.w700 : FontWeight.w600,
-                        ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Radio-style choice: a checkmark states the selection; a
-                // chevron would promise navigation. Same morph recipe as
-                // PokrovCheckRow, 22px reserved so rows never reflow.
-                AnimatedScale(
-                  scale: selected ? 1 : 0.4,
-                  duration: motion.duration(PokrovMotionTokens.short),
-                  curve: PokrovMotionTokens.spring,
-                  child: AnimatedOpacity(
-                    opacity: selected ? 1 : 0,
-                    duration: motion.duration(PokrovMotionTokens.quick),
-                    curve: Curves.easeOut,
-                    child: Icon(
-                      Icons.check_rounded,
-                      size: 22,
-                      color: p.accent,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _RuAppsPresetCard extends StatefulWidget {
   const _RuAppsPresetCard({
@@ -1214,76 +951,6 @@ class _SelectedAppIdRow extends StatelessWidget {
       ),
     );
   }
-}
-
-class _LocationFlagBadge extends StatelessWidget {
-  const _LocationFlagBadge({
-    required this.code,
-    required this.country,
-  });
-
-  final String code;
-  final String country;
-
-  @override
-  Widget build(BuildContext context) {
-    final normalizedCode = code.trim().toUpperCase();
-    final hasIsoCountryCode = RegExp(r'^[A-Z]{2}$').hasMatch(normalizedCode);
-    final p = PokrovPalette.of(context);
-    final fallback = Center(
-      child: Text(
-        _shortLocationCode(code, country),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: p.accent,
-              fontWeight: FontWeight.w700,
-            ),
-      ),
-    );
-    return Semantics(
-      label: country.trim().isEmpty ? normalizedCode : 'Флаг: $country',
-      image: true,
-      child: Container(
-        width: 46,
-        height: 46,
-        padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          color: p.surfaceMuted,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: p.line),
-        ),
-        child: hasIsoCountryCode
-            ? CountryFlag.fromCountryCode(
-                normalizedCode,
-                key: ValueKey('location-flag-$normalizedCode'),
-                theme: const ImageTheme(
-                  width: 36,
-                  height: 26,
-                  shape: RoundedRectangle(7),
-                ),
-              )
-            : fallback,
-      ),
-    );
-  }
-}
-
-String _shortLocationCode(String code, String country) {
-  final raw = code.trim().isNotEmpty ? code.trim() : country.trim();
-  if (raw.isEmpty) {
-    return 'PO';
-  }
-  final letters = raw
-      .replaceAll(RegExp('[^A-Za-zА-Яа-я]'), '')
-      .toUpperCase()
-      .characters
-      .take(2)
-      .toList()
-      .join();
-  return letters.isEmpty
-      ? raw.toUpperCase().characters.take(2).join()
-      : letters;
 }
 
 enum _SelectedAppCandidateSource {

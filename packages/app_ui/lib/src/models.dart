@@ -37,7 +37,7 @@ class HomeViewData {
   const HomeViewData({
     required this.phase,
     required this.mode,
-    this.accessBadge = 'Премиум',
+    this.accessBadge = 'Доступ',
     this.countryCaption = 'Страна',
     this.countryLabel = 'Авто',
     this.countryCode,
@@ -48,7 +48,7 @@ class HomeViewData {
     this.stats = const ConnectionStats(),
     this.checks = const <HealthCheck>[],
     this.tip,
-    this.showAdSlot = true,
+    this.showAdSlot = false,
     this.notificationsUnread = 0,
     this.statusLabel,
     this.actionLabel,
@@ -99,11 +99,12 @@ class StatusViewData {
 }
 
 class CountryOption {
-  const CountryOption({required this.code, required this.name, required this.pingMs});
+  const CountryOption({required this.code, required this.name, this.pingMs, this.available = true});
 
   final String code;
   final String name;
-  final int pingMs;
+  final int? pingMs;
+  final bool available;
 }
 
 class LocationsViewData {
@@ -111,6 +112,7 @@ class LocationsViewData {
     required this.mode,
     required this.countries,
     this.selectedCode,
+    this.notice,
   });
 
   final InterfaceMode mode;
@@ -118,6 +120,7 @@ class LocationsViewData {
 
   /// null means «Авто».
   final String? selectedCode;
+  final String? notice;
 }
 
 class RouteModeOption {
@@ -156,14 +159,14 @@ class RulesViewData {
 class ProfileViewData {
   const ProfileViewData({
     required this.mode,
-    this.accessBadge = 'Премиум',
-    this.accessTitle = 'Доступ активен',
-    this.accessDetail = 'Ещё 29 дней · до 5 устройств',
-    this.accessProgress = 0.72,
-    this.accountLinked = 'привязаны ✓',
-    this.devices = '2 из 5',
+    this.accessBadge = 'Доступ',
+    this.accessTitle = 'Нет сведений о доступе',
+    this.accessDetail = '',
+    this.accessProgress,
+    this.accountLinked = '',
+    this.devices = '',
     this.theme = 'как в системе',
-    this.bonuses = '+24 дня',
+    this.bonuses = '',
     this.version = '1.5.0',
   });
 
@@ -171,7 +174,7 @@ class ProfileViewData {
   final String accessBadge;
   final String accessTitle;
   final String accessDetail;
-  final double accessProgress;
+  final double? accessProgress;
   final String accountLinked;
   final String devices;
   final String theme;

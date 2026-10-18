@@ -11,9 +11,6 @@ abstract final class _PlatformProductCopy {
   static String get telegramRewardAvailableBeforePayment =>
       '$telegramRewardLabel доступен без оплаты';
 
-  static String get telegramRewardPaidGateSummary =>
-      '$telegramRewardLabel доступен сейчас · рулетка и приглашения после оплаты';
-
   static String get telegramRewardPaidGateMessage =>
       '$telegramRewardLabel доступен сейчас. Рулетка, календарь и приглашения откроются после первой оплаты.';
 

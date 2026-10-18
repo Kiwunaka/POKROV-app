@@ -22,15 +22,15 @@ class PokrovTabBar extends StatelessWidget {
     ];
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      minimum: EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Container(
         height: 72,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        padding: EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
-          color: PokrovColors.surface,
+          color: pokrovColor(context, PokrovColors.surface),
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: const Color(0x0D111814)),
-          boxShadow: const [BoxShadow(color: Color(0x1A101814), blurRadius: 30, offset: Offset(0, 10))],
+          border: Border.all(color: Color(0x0D111814)),
+          boxShadow: [BoxShadow(color: Color(0x1A101814), blurRadius: 30, offset: Offset(0, 10))],
         ),
         child: Row(
           children: [
@@ -52,16 +52,16 @@ class PokrovTabBar extends StatelessWidget {
                           scale: tab == current ? 1.08 : 1,
                           duration: PokrovMotion.quick,
                           curve: PokrovMotion.spring,
-                          child: Icon(tab == current ? activeIcon : icon, size: 24, color: tab == current ? PokrovColors.accent : PokrovColors.muted),
+                          child: Icon(tab == current ? activeIcon : icon, size: 24, color: tab == current ? pokrovColor(context, PokrovColors.accent) : pokrovColor(context, PokrovColors.muted)),
                         ),
-                        const SizedBox(height: 3),
+                        SizedBox(height: 3),
                         AnimatedDefaultTextStyle(
                           duration: PokrovMotion.quick,
                           style: TextStyle(
                             fontFamily: pokrovFontFamily,
                             fontSize: 12,
                             fontWeight: tab == current ? FontWeight.w800 : FontWeight.w600,
-                            color: tab == current ? PokrovColors.ink : PokrovColors.muted,
+                            color: tab == current ? pokrovColor(context, PokrovColors.ink) : pokrovColor(context, PokrovColors.muted),
                           ),
                           child: Text(label),
                         ),

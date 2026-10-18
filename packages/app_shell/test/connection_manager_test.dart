@@ -1220,6 +1220,16 @@ void main() {
     await tester.tap(find.text('Правила'));
     await tester.pumpAndSettle();
     final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
+    dynamic rules() => tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'));
+    final previousMode = rules().selectedRouteMode;
+    await tester.tap(find.text('Всё через POKROV'));
+    await tester.pumpAndSettle();
+    expect(rules().selectedRouteMode, previousMode, reason: 'the UI draft must wait for Apply');
+    await tester.tap(find.text('Применить'));
+    await tester.pumpAndSettle();
+    expect(rules().selectedRouteMode, RouteMode.fullTunnel);
+    expect(experienceStore.saved.firstRouteScopeMode, RouteMode.fullTunnel);
+    expect(nativeMutations, isEmpty, reason: 'changing a stopped connection must not start it');
     await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
       of: find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'),
       matching: find.byType(Scrollable),
@@ -1227,7 +1237,6 @@ void main() {
     await tester.tap(advanced);
     await tester.pumpAndSettle();
     final auto = find.byKey(const ValueKey('rules-untrusted-wifi-auto-connect'));
-    dynamic rules() => tester.widget(find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'));
     bool autoValue() => (tester.widget(auto) as dynamic).value as bool;
     void externalAuto(bool value) => rules().onRoutingPreferencesChanged(
       (rules().routingPreferences as PokrovRoutingPreferences).copyWith(autoConnectOnUntrustedWifi: value));
@@ -2965,8 +2974,8 @@ void main() {
       ..cacheAvailable = false
       ..nextCacheRefreshFailure = const SocketException('offline')
       ..locationsCatalog = ClientLocationsCatalog.fromJson({
-        'countries': [{'code': 'DE', 'country': 'Germany', 'cities': [
-          {'code': 'de', 'city': 'Frankfurt', 'variants': [
+        'countries': [{'code': 'IS', 'country': 'Iceland', 'cities': [
+          {'code': 'is', 'city': 'Reykjavik', 'variants': [
             {'id': 'direct', 'label': 'Обычный'},
           ]},
         ]}],
@@ -3022,16 +3031,17 @@ void main() {
     expect(find.textContaining('VLESS'), findsNothing);
     expect(find.textContaining('AWG'), findsNothing);
     expect(find.textContaining('Hysteria'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('locations-country-DE')));
+    expect(find.text('Исландия'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('locations-country-IS')));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsNothing);
-    expect(experience.saved.preferredCountryCode, 'DE');
+    expect(experience.saved.preferredCountryCode, 'IS');
     expect(experience.saved.preferredNodeCode, isEmpty);
     expect(experience.saved.preferredCandidateRef, isEmpty);
     await tester.tap(find.text('Защита'));
     await tester.pumpAndSettle();
     expect(find.descendant(of: find.byKey(const ValueKey('home-location-chip')),
-        matching: find.text('Германия')), findsOneWidget);
+        matching: find.text('Исландия')), findsOneWidget);
     expect(nativeMutations, isEmpty);
   });
 

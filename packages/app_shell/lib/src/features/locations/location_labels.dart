@@ -8,6 +8,7 @@ String _locationCountryDisplayName(String code, String fallback) {
     'FR': 'Франция',
     'GB': 'Великобритания',
     'IT': 'Италия',
+    'IS': 'Исландия',
     'NL': 'Нидерланды',
     'PL': 'Польша',
     'RU': 'Россия',

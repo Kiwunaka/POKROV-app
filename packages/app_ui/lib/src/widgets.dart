@@ -18,9 +18,9 @@ class PokrovCard extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color,
+        color: pokrovColor(context, color),
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: pokrovColor(context, borderColor)),
       ),
       child: child,
     );
@@ -35,8 +35,8 @@ class SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(6, 14, 6, 8),
-      child: Text(text.toUpperCase(), style: PokrovText.section),
+      padding: EdgeInsets.fromLTRB(6, 14, 6, 8),
+      child: Text(text.toUpperCase(), style: pokrovTextStyle(context, PokrovText.section)),
     );
   }
 }
@@ -59,15 +59,15 @@ class PokrovRow extends StatelessWidget {
     final row = Container(
       constraints: BoxConstraints(minHeight: height),
       decoration: BoxDecoration(
-        border: divider ? const Border(bottom: BorderSide(color: PokrovColors.line)) : null,
+        border: divider ? Border(bottom: BorderSide(color: pokrovColor(context, PokrovColors.line))) : null,
       ),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 16, color: PokrovColors.ink))),
+          Expanded(child: Text(title, style: TextStyle(fontSize: 16, color: pokrovColor(context, PokrovColors.ink)))),
           if (value != null) ...[
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 170),
+              constraints: BoxConstraints(maxWidth: 170),
               child: Text(
                 value!,
                 textAlign: TextAlign.right,
@@ -75,16 +75,16 @@ class PokrovRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 14,
-                  color: valueColor ?? PokrovColors.muted,
+                  color: valueColor ?? pokrovColor(context, PokrovColors.muted),
                   fontWeight: valueBold ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),
             ),
           ],
-          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+          if (trailing != null) ...[SizedBox(width: 8), trailing!],
           if (onTap != null && trailing == null) ...[
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded, size: 20, color: PokrovColors.faint),
+            SizedBox(width: 4),
+            Icon(Icons.chevron_right_rounded, size: 20, color: pokrovColor(context, PokrovColors.faint)),
           ],
         ],
       ),
@@ -110,15 +110,15 @@ class PrimaryButton extends StatelessWidget {
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: PokrovColors.accent,
-          foregroundColor: Colors.white,
+          backgroundColor: pokrovColor(context, PokrovColors.accent),
+          foregroundColor: pokrovOnAccent(context),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(PokrovRadii.button)),
-          textStyle: const TextStyle(fontFamily: pokrovFontFamily, fontSize: 17, fontWeight: FontWeight.w700),
+          textStyle: TextStyle(fontFamily: pokrovFontFamily, fontSize: 17, fontWeight: FontWeight.w700),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 8)],
+            if (icon != null) ...[Icon(icon, size: 20), SizedBox(width: 8)],
             Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
           ],
         ),
@@ -143,13 +143,13 @@ class SecondaryButton extends StatelessWidget {
       child: TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
-          backgroundColor: filled ? PokrovColors.chip : PokrovColors.surface,
-          foregroundColor: PokrovColors.ink,
+          backgroundColor: filled ? pokrovColor(context, PokrovColors.chip) : pokrovColor(context, PokrovColors.surface),
+          foregroundColor: pokrovColor(context, PokrovColors.ink),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(PokrovRadii.button),
-            side: filled ? BorderSide.none : const BorderSide(color: Color(0x1A111814)),
+            side: filled ? BorderSide.none : BorderSide(color: Color(0x1A111814)),
           ),
-          textStyle: const TextStyle(fontFamily: pokrovFontFamily, fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: TextStyle(fontFamily: pokrovFontFamily, fontSize: 16, fontWeight: FontWeight.w600),
         ),
         child: Text(label),
       ),
@@ -169,8 +169,8 @@ class LinkButton extends StatelessWidget {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
-        foregroundColor: color,
-        textStyle: const TextStyle(fontFamily: pokrovFontFamily, fontSize: 15, fontWeight: FontWeight.w600),
+        foregroundColor: pokrovColor(context, color),
+        textStyle: TextStyle(fontFamily: pokrovFontFamily, fontSize: 15, fontWeight: FontWeight.w600),
       ),
       child: Text(label),
     );
@@ -186,15 +186,15 @@ class BackCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: PokrovColors.surface,
-      shape: const CircleBorder(),
+      color: pokrovColor(context, PokrovColors.surface),
+      shape: CircleBorder(),
       child: InkWell(
-        customBorder: const CircleBorder(),
+        customBorder: CircleBorder(),
         onTap: onPressed,
-        child: const SizedBox(
+        child: SizedBox(
           width: 44,
           height: 44,
-          child: Icon(Icons.arrow_back_rounded, size: 22, color: PokrovColors.ink, semanticLabel: 'Назад'),
+          child: Icon(Icons.arrow_back_rounded, size: 22, color: pokrovColor(context, PokrovColors.ink), semanticLabel: 'Назад'),
         ),
       ),
     );
@@ -213,13 +213,13 @@ class ScreenHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (onBack != null) ...[BackCircle(onPressed: onBack!), const SizedBox(width: 10)],
+        if (onBack != null) ...[BackCircle(onPressed: onBack!), SizedBox(width: 10)],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: onBack != null ? PokrovText.heading : PokrovText.title),
-              if (subtitle != null) Text(subtitle!, style: PokrovText.caption),
+              Text(title, style: onBack != null ? pokrovTextStyle(context, PokrovText.heading) : pokrovTextStyle(context, PokrovText.title)),
+              if (subtitle != null) Text(subtitle!, style: pokrovTextStyle(context, PokrovText.caption)),
             ],
           ),
         ),
@@ -248,20 +248,20 @@ class PokrovToggle extends StatelessWidget {
           duration: PokrovMotion.quick,
           width: 52,
           height: 32,
-          padding: const EdgeInsets.all(3),
+          padding: EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: value ? PokrovColors.connected : const Color(0xFFD5DBD8),
+            color: value ? pokrovColor(context, PokrovColors.connected) : Color(0xFFD5DBD8),
             borderRadius: BorderRadius.circular(16),
           ),
           child: AnimatedAlign(
-            duration: const Duration(milliseconds: 350),
+            duration: Duration(milliseconds: 350),
             curve: PokrovMotion.spring,
             alignment: value ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
               width: 26,
               height: 26,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: pokrovOnAccent(context),
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(color: Color(0x2E000000), blurRadius: 6, offset: Offset(0, 2))],
               ),
@@ -286,12 +286,12 @@ class PokrovSegmented extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: PokrovColors.chip, borderRadius: BorderRadius.circular(12)),
+      padding: EdgeInsets.all(3),
+      decoration: BoxDecoration(color: pokrovColor(context, PokrovColors.chip), borderRadius: BorderRadius.circular(12)),
       child: Stack(
         children: [
           AnimatedAlign(
-            duration: const Duration(milliseconds: 400),
+            duration: Duration(milliseconds: 400),
             curve: PokrovMotion.spring,
             alignment: Alignment(labels.length == 1 ? 0 : -1 + 2 * index / (labels.length - 1), 0),
             child: FractionallySizedBox(
@@ -299,9 +299,9 @@ class PokrovSegmented extends StatelessWidget {
               heightFactor: 1,
               child: Container(
                 decoration: BoxDecoration(
-                  color: PokrovColors.surface,
+                  color: pokrovColor(context, PokrovColors.surface),
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [BoxShadow(color: Color(0x1F101814), blurRadius: 6, offset: Offset(0, 2))],
+                  boxShadow: [BoxShadow(color: Color(0x1F101814), blurRadius: 6, offset: Offset(0, 2))],
                 ),
               ),
             ),
@@ -324,7 +324,7 @@ class PokrovSegmented extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: i == index ? PokrovColors.ink : PokrovColors.soft,
+                            color: i == index ? pokrovColor(context, PokrovColors.ink) : pokrovColor(context, PokrovColors.soft),
                           ),
                         ),
                       ),
@@ -353,8 +353,8 @@ class FlagTile extends StatelessWidget {
       return Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(color: PokrovColors.accentSoft, borderRadius: BorderRadius.circular(radius)),
-        child: Icon(Icons.bolt_rounded, color: PokrovColors.accent, size: size * 0.55),
+        decoration: BoxDecoration(color: pokrovColor(context, PokrovColors.accentSoft), borderRadius: BorderRadius.circular(radius)),
+        child: Icon(Icons.bolt_rounded, color: pokrovColor(context, PokrovColors.accent), size: size * 0.55),
       );
     }
     return Container(
@@ -362,7 +362,7 @@ class FlagTile extends StatelessWidget {
       height: size,
       padding: EdgeInsets.all(size * 0.12),
       decoration: BoxDecoration(
-        color: PokrovColors.chip,
+        color: pokrovColor(context, PokrovColors.chip),
         borderRadius: BorderRadius.circular(radius),
       ),
       child: CountryFlag.fromCountryCode(
@@ -387,7 +387,7 @@ class IconSquare extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(size * 0.32)),
+      decoration: BoxDecoration(color: pokrovColor(context, background), borderRadius: BorderRadius.circular(size * 0.32)),
       child: Icon(icon, size: size * 0.5, color: color),
     );
   }
@@ -408,7 +408,7 @@ class SelectionCheck extends StatelessWidget {
       child: AnimatedOpacity(
         opacity: visible ? 1 : 0,
         duration: PokrovMotion.quick,
-        child: const Icon(Icons.check_rounded, color: PokrovColors.accent, size: 24),
+        child: Icon(Icons.check_rounded, color: pokrovColor(context, PokrovColors.accent), size: 24),
       ),
     );
   }
@@ -444,9 +444,9 @@ class WarnCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PokrovCard(
-      color: PokrovColors.warnBg,
-      borderColor: PokrovColors.warnLine,
-      padding: const EdgeInsets.all(16),
+      color: pokrovColor(context, PokrovColors.warnBg),
+      borderColor: pokrovColor(context, PokrovColors.warnLine),
+      padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -455,16 +455,16 @@ class WarnCard extends StatelessWidget {
               Container(
                 width: 36,
                 height: 36,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Icon(Icons.error_outline_rounded, size: 20, color: PokrovColors.warnIcon),
+                decoration: BoxDecoration(color: pokrovOnAccent(context), shape: BoxShape.circle),
+                child: Icon(Icons.error_outline_rounded, size: 20, color: pokrovColor(context, PokrovColors.warnIcon)),
               ),
-              const SizedBox(width: 10),
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: PokrovColors.warnTitle))),
+              SizedBox(width: 10),
+              Expanded(child: Text(title, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: pokrovColor(context, PokrovColors.warnTitle)))),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(body, style: const TextStyle(fontSize: 14, height: 1.45, color: PokrovColors.warnBody)),
-          if (actions.isNotEmpty) ...[const SizedBox(height: 12), Row(children: actions)],
+          SizedBox(height: 10),
+          Text(body, style: TextStyle(fontSize: 14, height: 1.45, color: pokrovColor(context, PokrovColors.warnBody))),
+          if (actions.isNotEmpty) ...[SizedBox(height: 12), Row(children: actions)],
         ],
       ),
     );

@@ -10,6 +10,7 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
+import 'package:pokrov_app_ui/pokrov_app_ui.dart' as ui;
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/routing_catalog_policy.dart';
 import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
@@ -230,12 +231,19 @@ class _RestoredFirstLaunch implements PokrovFirstLaunchStore {
 }
 
 class _HomeExperience implements PokrovClientExperienceStore {
+  var saved = const PokrovClientExperienceState.empty().copyWith(interfaceMode: PokrovInterfaceMode.advanced);
   @override
-  Future<PokrovClientExperienceState> read() async =>
-      const PokrovClientExperienceState.empty().copyWith(
-          interfaceMode: PokrovInterfaceMode.advanced);
+  Future<PokrovClientExperienceState> read() async => saved;
   @override
-  Future<void> write(PokrovClientExperienceState state) async {}
+  Future<void> write(PokrovClientExperienceState state) async { saved = state; }
+}
+
+class _HomeThemeStore extends PokrovFileThemeModeStore {
+  ThemeMode saved = ThemeMode.light;
+  @override
+  Future<ThemeMode> read() async => saved;
+  @override
+  Future<void> write(ThemeMode mode) async { saved = mode; }
 }
 
 class _NoConnectBootstrapper implements ManagedProfileBootstrapper {
@@ -750,6 +758,8 @@ void main() {
   }
   testWidgets('restored Windows Home remains painted while inactive and after returning', (tester) async {
     final firstLaunch = _RestoredFirstLaunch();
+    final experience = _HomeExperience();
+    final themeStore = _HomeThemeStore();
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     const channel = MethodChannel('space.pokrov/runtime_engine');
     tester.view.physicalSize = const Size(1280, 800);
@@ -770,7 +780,7 @@ void main() {
     await tester.pumpWidget(PokrovSeedApp(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
       bootstrapper: _NoConnectBootstrapper(), firstLaunchStore: firstLaunch,
-      clientExperienceStore: _HomeExperience(),
+      clientExperienceStore: experience, themeModeStore: themeStore,
     ));
     firstLaunch.completion.complete(true);
     await tester.pump();
@@ -799,6 +809,29 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1200));
     expect(homeOpacity(), greaterThan(0.9), reason: 'returning Home must stay painted');
     expect(initialOpacity, greaterThan(0.9), reason: 'an inactive first frame must not hide ready Home');
+    await tester.tap(find.byKey(const ValueKey('nav-profile')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Просто'));
+    await tester.tap(find.text('Просто'));
+    await tester.pumpAndSettle();
+    expect(experience.saved.interfaceMode, PokrovInterfaceMode.simple);
+    expect(find.byKey(const ValueKey('nav-rules')), findsNothing);
+    await tester.tap(find.text('Продвинутый'));
+    await tester.pumpAndSettle();
+    expect(experience.saved.interfaceMode, PokrovInterfaceMode.advanced);
+    expect(find.byKey(const ValueKey('nav-rules')), findsOneWidget);
+    await tester.ensureVisible(find.text('Тема'));
+    await tester.tap(find.text('Тема'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile-theme-dark')));
+    await tester.pumpAndSettle();
+    expect(themeStore.saved, ThemeMode.dark);
+    expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.dark);
+    tester.state<ScrollableState>(find.descendant(of: find.byType(ui.ProfileScreen), matching: find.byType(Scrollable)).first).position.jumpTo(0);
+    await tester.pumpAndSettle();
+    final profileTitle = find.descendant(of: find.byType(ui.ProfileScreen), matching: find.text('Профиль'));
+    expect(Theme.of(tester.element(profileTitle)).brightness, Brightness.dark);
+    expect((tester.widget(profileTitle) as Text).style!.color!.computeLuminance(), greaterThan(0.5));
   }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
   test('safe Home crash signature retains its owned frame without private messages or paths', () {
     final signature = pokrovSafeCrashSignature(StateError('private-message'),

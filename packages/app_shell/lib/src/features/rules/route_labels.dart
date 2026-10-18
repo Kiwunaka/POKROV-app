@@ -10,16 +10,6 @@ String _routeModeShortLabel(RouteMode mode, {bool smartDnsActive = false}) {
   };
 }
 
-String _routeModeRowTitle(RouteMode mode, {bool smartDnsActive = false}) {
-  return switch (mode) {
-    RouteMode.allExceptRu => 'Россия напрямую',
-    RouteMode.fullTunnel => 'Всё устройство',
-    RouteMode.selectiveServices => smartDnsActive ? 'Только DNS' : 'Выбранные сервисы',
-    RouteMode.selectedApps => 'Только выбранные',
-    RouteMode.excludedApps => 'Кроме выбранных',
-  };
-}
-
 String _routeModeRowSummary(RouteMode mode, {bool smartDnsActive = false}) {
   return switch (mode) {
     RouteMode.allExceptRu =>

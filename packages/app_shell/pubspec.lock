@@ -58,7 +58,7 @@ packages:
     source: hosted
     version: "3.1.2"
   country_flags:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: country_flags
       sha256: f022d18337f3861f1f4e319b936cb53920de9259f38cb09e169eace9942e2b79
