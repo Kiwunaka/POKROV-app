@@ -1,10 +1,20 @@
 # Android acceptance
 
-Updated 18 October 2026. Public version remains **1.4.5**. The final
-**1.5.0+4175** package set is a seven-asset draft: production-signed universal
-and three ABI-specific APKs, Windows setup and two metadata assets. Final ARM64
-installed without removing app data. Load-aware bridge ordering changed after
-4175; no Android acceptance of the new load-aware behavior is inferred.
+Updated 19 October 2026. Public version remains **1.4.5**; the seven-asset
+**1.5.0+4175** draft is unchanged. The current private candidate is
+**1.5.0+4181**, built from App `d78aefc9` with Core `0f159bb` / 1.2.14.
+The standard builder passed production signature, version and ABI checks.
+Installation over 4178 preserved the test account; 14 real screens were opened
+and captured on api35gc for the help Atlas. No VPN or checkout was started,
+and the emulator is off. Physical-phone acceptance of 4181 is still open;
+the screen walkthrough does not establish VPN or load-aware route behavior.
+
+## Earlier package checks
+
+The 4175 draft contains production-signed universal and three ABI-specific
+APKs, Windows setup and two metadata assets. Its ARM64 APK installed without
+removing app data. Load-aware bridge ordering changed after 4175; no Android
+acceptance of the new load-aware behavior is inferred.
 
 Redesign build **1.5.0+4178** is production-signed and built with the accepted
 Core 1.2.14 artifacts. Visible api35gc accepted real-data screen navigation,
@@ -44,9 +54,8 @@ not repeat unchanged protocol QA on all ABIs.
   catalog refresh and DE/Mini, DE2/Mini and DE/RF2 attempts on 4169 failed without
   a tunnel; the later PL cellular success does not close those distinct cases.
 - Direct RU VLESS/AWG failed on 4172/4173; the precise cause was not established.
-  RU was withdrawn as an exit and 17 units stopped on 18 October, with SSH,
-  configurations and keys retained. The approved retirement replaces the old
-  direct RU AWG acceptance requirement.
+  The owner subsequently deleted Hostkey RU; its protected archive remains on
+  Brain. The retirement replaces the old direct RU AWG acceptance requirement.
 - On 12 October, 4145 CH/Mini RAW on Beeline LTE passed native checks and fresh
   Chrome HTTPS 204 plus all 65536 bytes, remaining healthy for about 230 seconds.
   On 4144, US VLESS REALITY passed the same traffic checks and an independent US

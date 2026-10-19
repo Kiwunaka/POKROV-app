@@ -1,7 +1,21 @@
 # Windows acceptance
 
-Updated 18 October 2026. Public version remains 1.4.5; the final 1.5.0+4175
-installer belongs to the seven-asset draft. Setup and app/service startup passed;
+Updated 19 October 2026. Public version remains **1.4.5**; the seven-asset
+**1.5.0+4175** draft is unchanged. The current private candidate is
+**1.5.0+4181**, built from App `d78aefc9` with Core `0f159bb` / 1.2.14 and
+matching Cronet. Runtime binding, built-runtime equality and executable-version
+checks passed. The normal installer completed in the Clean VM, retaining the
+existing login. One ordinary connection to the selected Iceland location reached
+native running with validated egress and DNS. Stop restored baseline DNS,
+11 routes, no active TUN and proxy off; the VM is PoweredOff/Unlocked. This
+accepts the focused new-runtime smoke, not every Iceland transport or route.
+The installer remains unsigned and private; publication needs the owner's
+explicit approval.
+
+## Earlier package checks
+
+The 4175 installer belongs to the retained seven-asset draft.
+Setup and app/service startup passed;
 unchanged protocol QA was not repeated. Load-aware ordering in App 45281e62
 was built in 4176; ordinary US paths through Mini and Lampa passed 204/64 KiB
 checks. The 4175 draft is retained.
@@ -10,8 +24,9 @@ Redesign **1.5.0+4178** built from App 9a567f88 with the accepted Core 1.2.14
 artifacts and production trust defines. The standard builder checked runtime
 binding, bundle files and PE metadata, and produced the unsigned x64 installer;
 PE version is 1.5.0+4178. The same presentation package is used on Android, with
-a centered 480-pixel column. Windows 4178 has not been installed or run in the
-VM, and no release assets were published or replaced.
+a centered 480-pixel column. The Windows 4178 main screen and centering were
+checked in the VM; this was UI acceptance only. No release assets were published
+or replaced.
 Windows **1.5.0+4179** corrects the 4178 Cronet dependency: retained public
 1.0.3 bytes had an incompatible callback ABI and crashed on Naive dial. The
 current DLL is the pinned `cronet-go/lib/windows_amd64` c10c03c318db artifact
