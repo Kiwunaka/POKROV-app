@@ -1,0 +1,14 @@
+# POKROV curated web/video subset, not the complete upstream service list.
+# Source: https://github.com/v2fly/domain-list-community/blob/6ee52f2c36634aeabeb9c4ba486ca02cd84c3d4f/data/youtube
+# MIT; copyright (c) 2018-2019 V2Ray. See LICENSE in this directory.
+# Keep explicit host semantics. Shared Google/CDN roots and the whole .youtube TLD are excluded.
+youtube.com
+youtu.be
+yt.be
+youtube-nocookie.com
+googlevideo.com
+ytimg.com
+youtubei.googleapis.com
+youtube.googleapis.com
+youtubeembeddedplayer.googleapis.com
+full:yt3.googleusercontent.com
