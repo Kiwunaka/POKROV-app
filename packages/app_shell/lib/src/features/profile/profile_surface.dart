@@ -82,7 +82,7 @@ class _ProfileSection extends StatelessWidget {
   final bool Function() bonusRewardBusy;
   final Future<void> Function() onRefreshBonusSummary;
   final Future<AppFirstBonusRewardResult?> Function() onSpinWheel;
-  final VoidCallback onCheckInCalendar;
+  final Future<void> Function() onCheckInCalendar;
   final WarpRuntimePolicy warpPolicy;
   final bool warpRuntimeConsent;
   final bool warpBusy;

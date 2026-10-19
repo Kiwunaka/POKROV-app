@@ -7,7 +7,7 @@ void _showRewardsHubSheet(
   required bool paidRequired,
   required Future<void> Function() onRefreshBonusSummary,
   required Future<AppFirstBonusRewardResult?> Function() onSpinWheel,
-  required VoidCallback onCheckInCalendar,
+  required Future<void> Function() onCheckInCalendar,
   required VoidCallback? onTelegramBonus,
   required void Function(String label, String value) onOpenHandoff,
   required void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent,
@@ -40,7 +40,7 @@ class _RewardsHubSheet extends StatefulWidget {
   final bool paidRequired;
   final Future<void> Function() onRefreshBonusSummary;
   final Future<AppFirstBonusRewardResult?> Function() onSpinWheel;
-  final VoidCallback onCheckInCalendar;
+  final Future<void> Function() onCheckInCalendar;
   final VoidCallback? onTelegramBonus;
   final void Function(String label, String value) onOpenHandoff;
   final void Function(AppFirstPromoSlot slot, String eventName) onPromoEvent;
@@ -51,6 +51,7 @@ class _RewardsHubSheet extends StatefulWidget {
 
 class _RewardsHubSheetState extends State<_RewardsHubSheet> {
   bool _wheelBusy = false;
+  bool _calendarBusy = false;
   AppFirstBonusRewardResult? _wheelResult;
 
   /// Awaits the real backend refresh so the pull-to-refresh spinner stays
@@ -83,13 +84,23 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
     }
   }
 
+  Future<void> _checkInCalendar() async {
+    if (_calendarBusy || widget.rewardBusyGetter()) return;
+    setState(() => _calendarBusy = true);
+    try {
+      await widget.onCheckInCalendar();
+    } finally {
+      if (mounted) setState(() => _calendarBusy = false);
+    }
+  }
+
   void _details(Widget child) => ui.showPokrovSheet<void>(context,
     (context) => SingleChildScrollView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 24), child: child));
 
   @override
   Widget build(BuildContext context) {
     final summary = widget.summaryGetter();
-    final busy = widget.rewardBusyGetter() || _wheelBusy;
+    final busy = widget.rewardBusyGetter() || _wheelBusy || _calendarBusy;
     final paidRequired = widget.paidRequired || (summary?.rewardAccess.paidRequired ?? true);
     final wheel = summary?.wheelState ?? AppFirstBonusFeatureState.wheelDisabled;
     final calendar = summary?.calendarState ?? AppFirstBonusFeatureState.calendarDisabled;
@@ -132,7 +143,7 @@ class _RewardsHubSheetState extends State<_RewardsHubSheet> {
       onItem: (item) {
         switch(item.id) {
           case 'wheel': unawaited(_spinWheel());
-          case 'calendar': widget.onCheckInCalendar();
+          case 'calendar': unawaited(_checkInCalendar());
           case 'telegram': _details(_RewardsTelegramCard(summary: summary,
               onTelegramBonus: widget.onTelegramBonus, onOpenHandoff: widget.onOpenHandoff));
           case 'referral': _details(_RewardsReferralCard(referralCode: summary?.referralCode ?? '',

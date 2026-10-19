@@ -523,6 +523,9 @@ files are no longer read; no user data is deleted.
 - the paid roulette is visible from backend state, runs at most once per `336`
   hours and may execute only when `eligible && can_spin`; calendar remains an
   independent backend-controlled feature
+- Calendar check-in waits for the backend result and refreshes the open Rewards
+  Hub's balance, history and availability. Pending check-in disables repeat taps;
+  errors retain the shell's existing feedback and do not claim a reward.
 - achievements use real icons and restrained unlock motion; reduced-motion
   users receive the final state without the animation
 

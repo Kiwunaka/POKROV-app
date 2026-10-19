@@ -748,6 +748,41 @@ class _FirstLaunchStore implements PokrovFirstLaunchStore {
   Future<void> markCompleted() async {}
 }
 
+class _CalendarBootstrapper extends _Bootstrapper implements AppFirstBonusActionService {
+  final completed = Completer<void>();
+  bool claimed = false;
+  int checkIns = 0;
+
+  AppFirstBonusSummary get summary => AppFirstBonusSummary(
+    referralCount: 0, referralCode: '', referralBonusDays: 0, streakMonths: 0,
+    lastWheelSpin: '', channelBonusPremiumDays: 0, channelBonusClaimedAt: '',
+    openingBonusPremiumDays: 0, openingBonusClaimed: false, channelUsername: '',
+    tierKey: '', tierPercent: 0, paidReferrals: 0, nextTierKey: '', nextTierAt: null,
+    rewardAccess: const AppFirstRewardAccess(eligible: true, state: 'paid', reason: '', message: ''),
+    calendarState: AppFirstBonusFeatureState(ok: true, enabled: true,
+      state: claimed ? 'cooldown' : 'ready', featureFlag: 'BONUS_CALENDAR_ENABLED',
+      featureFlagEnabled: true, actionEndpoint: '/api/bonuses/calendar/checkin',
+      lastActionAt: '', streakMonths: 0, actionAllowed: !claimed),
+    historyItems: claimed ? const [AppFirstBonusHistoryItem(kind: 'days', source: 'calendar',
+      title: 'Календарь', occurredAt: '', days: 1, discountPct: 0, codePreview: '')] : const [],
+  );
+
+  @override
+  Future<AppFirstBonusSummary> fetchBonusSummary({required HostPlatform hostPlatform}) async => summary;
+
+  @override
+  Future<AppFirstBonusRewardResult> checkInBonusCalendar({required HostPlatform hostPlatform}) async {
+    checkIns++;
+    await completed.future;
+    claimed = true;
+    return AppFirstBonusRewardResult(ok: true, rewardDays: 1, rewardKey: 'calendar',
+      expiryAt: '', summary: summary);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _CatalogPickerBootstrapper extends _CachedBootstrapper implements
     AppFirstRoutingCatalogService, AppFirstClientDataService, AppFirstSmartAccessService {
   _CatalogPickerBootstrapper(this.result, {this.coldAccess = false});
@@ -1176,6 +1211,53 @@ void main() {
   final originalHttpOverrides = HttpOverrides.current;
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = originalHttpOverrides;
+
+  testWidgets('calendar check-in updates the open bonuses screen after completion', (tester) async {
+    final bootstrapper = _CalendarBootstrapper();
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async =>
+      {'phase': 'initialized', 'coreVersion': '1.2.14', 'supportsLiveConnect': true,
+       'canInitialize': false, 'canConnect': true});
+    addTearDown(() {
+      if (!bootstrapper.completed.isCompleted) bootstrapper.completed.complete();
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _ExperienceStore(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Профиль'));
+    await tester.pumpAndSettle();
+    await Scrollable.ensureVisible(tester.element(find.text('Бонусы и друзья')), alignment: 0.5);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Бонусы и друзья'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ui.BonusesScreen), findsOneWidget);
+    expect(find.text('История пока пуста'), findsOneWidget);
+    await tester.tap(find.text('Календарь'));
+    await tester.pump();
+    expect(bootstrapper.checkIns, 1);
+    expect(find.text('Обновляем бонусы…'), findsOneWidget);
+    bootstrapper.completed.complete();
+    await tester.pumpAndSettle();
+    expect(find.byType(ui.BonusesScreen), findsOneWidget);
+    expect(find.text('+1'), findsOneWidget);
+    expect(find.text('История пока пуста'), findsNothing);
+    final calendar = tester.widget<ui.BonusesScreen>(find.byType(ui.BonusesScreen))
+        .data.items.singleWhere((item) => item.id == 'calendar');
+    expect(calendar.actionable, isFalse);
+    expect(find.text('Обновляем бонусы…'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
 
   testWidgets('startup refreshes subscription while app-open telemetry is pending', (tester) async {
     final telemetry = Completer<void>();
