@@ -1,6 +1,6 @@
 # Client release status
 
-Updated 18 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+Updated 19 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
@@ -27,6 +27,16 @@ The private **1.5.0+4181** pass separates source, packages and live state:
 | Android package | [4181 universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4181-android-universal.apk), 244,695,973 bytes, built from App `d78aefc9`; the standard builder passed production signature, version and ABI checks. Packaged armeabi-v7a/arm64-v8a/x86_64 libraries match the selected Core 1.2.14 / `0f159bb` AAR byte for byte. 4181 was installed over 4178 with the test account preserved; 14 real screens were captured on api35gc for the help Atlas. Simple/Advanced navigation, profile, renewal, support, diagnostics, code entry, theme and notifications were opened. No VPN or checkout was started; phone acceptance is not claimed. The emulator is off again. |
 | Windows package | [4181 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4181-setup.exe), 28,875,484 bytes, built from App `d78aefc9` with the ready Core 1.2.14 / `0f159bb` DLL and matching Cronet. Runtime binding, built-runtime equality and executable-version checks passed before installer packaging. The normal installer completed in the Clean VM and retained the existing login. Core 1.2.14 initialized; one ordinary UI connection to the selected Iceland location reached running with native egress and DNS validated. Ordinary Stop restored the baseline DNS/routes (11 routes), no active TUN and proxy off; staging was removed and the VM is PoweredOff/Unlocked. This was a focused new-runtime smoke, not a repeat of the transport matrix. |
 | Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor and explicit Xray-only activity labels are also live. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4181 device acceptance. |
+
+Post-4181 source change: App `54ee4391` refreshes the open Rewards screen after
+calendar check-in. Its focused widget test and app_shell analyze passed; the
+existing 4181 packages do not contain it. Include it in the next final private
+build, without re-running unchanged transport acceptance. No new client release
+was published. Separately, the actual production catalog27/security2 envelope
+passed the existing pinned Dart verifier and both Android/Windows compilers
+offline: Smart Safe has five Direct and 29 VPN rules, Full has no Direct, and
+Selective accepts only the four VPN services. Catalog content does not require
+a new client binary or provider Smart DNS; this does not replace phone QA.
 
 Both 4181 builders used the shared private override
 `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-urltest-history-0f159bb/runtime-artifacts.json`
