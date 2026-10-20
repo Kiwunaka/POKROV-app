@@ -4,13 +4,17 @@
 #include <bcrypt.h>
 #include <iphlpapi.h>
 #include <windns.h>
-#include <winhttp.h>
+#define SECURITY_WIN32
+#include <security.h>
+#include <schannel.h>
 
 #include "service_runtime.h"
 
 #include <algorithm>
 #include <array>
-#include <atomic>
+#include <charconv>
+#include <cstring>
+#include <string_view>
 #include <memory>
 #include <vector>
 
@@ -56,35 +60,6 @@ struct ProbeObservation {
     error = code;
   }
 };
-
-bool SameSocketAddress(const SOCKADDR_STORAGE& left, const SOCKADDR_STORAGE& right) {
-  if (left.ss_family != right.ss_family) return false;
-  if (left.ss_family == AF_INET) {
-    const auto& a = reinterpret_cast<const sockaddr_in&>(left);
-    const auto& b = reinterpret_cast<const sockaddr_in&>(right);
-    return a.sin_addr.s_addr == b.sin_addr.s_addr && a.sin_port == b.sin_port;
-  }
-  if (left.ss_family == AF_INET6) {
-    const auto& a = reinterpret_cast<const sockaddr_in6&>(left);
-    const auto& b = reinterpret_cast<const sockaddr_in6&>(right);
-    return IN6_ADDR_EQUAL(&a.sin6_addr, &b.sin6_addr) &&
-        a.sin6_port == b.sin6_port && a.sin6_scope_id == b.sin6_scope_id;
-  }
-  return false;
-}
-
-std::optional<bool> ReadHttpLocalIsTun(
-    HINTERNET request, const std::optional<std::uint32_t>& expected_tun_ipv4) {
-  if (request == nullptr || !expected_tun_ipv4) return std::nullopt;
-  WINHTTP_CONNECTION_INFO connection{};
-  connection.cbSize = sizeof(connection);
-  DWORD size = sizeof(connection);
-  if (!::WinHttpQueryOption(request, WINHTTP_OPTION_CONNECTION_INFO, &connection, &size) ||
-      size != sizeof(connection) || connection.LocalAddress.ss_family != AF_INET) return std::nullopt;
-  const auto address = reinterpret_cast<const sockaddr_in&>(connection.LocalAddress).sin_addr.s_addr;
-  if (address == INADDR_ANY) return std::nullopt;
-  return address == *expected_tun_ipv4;
-}
 
 bool FindTunDns(TunDnsEndpoint* result, ProbeObservation* observation) {
   ULONG size = 15 * 1024;
@@ -257,103 +232,336 @@ std::wstring QueryProbeAddress(const TunDnsEndpoint& endpoint,
   return Interrupted(interrupted) ? std::wstring{} : result;
 }
 
-using ProbeStage = EgressProbeStage;
-
-const char* ObservedFailure(DWORD error, ProbeStage stage) {
-  switch (error) {
-    case ERROR_WINHTTP_NAME_NOT_RESOLVED:
-      return "core_egress_dns_failed";
-    case ERROR_WINHTTP_CANNOT_CONNECT:
-      return "core_egress_connect_failed";
-    case ERROR_WINHTTP_SECURE_FAILURE:
-    case ERROR_WINHTTP_CLIENT_AUTH_CERT_NEEDED:
-      return "core_egress_tls_failed";
-    case ERROR_WINHTTP_TIMEOUT:
-      if (stage == ProbeStage::kTls) return "core_egress_tls_timeout";
-      if (stage == ProbeStage::kResponse) return "core_egress_response_timeout";
-      return "core_egress_timeout";
-    default:
-      return "core_egress_probe_failed";
-  }
-}
-
-// WinHTTP can call back after CloseHandle returns. The request owns one
-// reference until HANDLE_CLOSING; the runtime owns the other while waiting.
-class Completion {
+// Like the physical-interface probe, own one nonblocking socket and Schannel
+// context. No WinHTTP pool or OS-version-dependent resolution override is used.
+class EgressConnection {
  public:
-  explicit Completion(bool secure)
-      : ready(::CreateEventW(nullptr, FALSE, FALSE, nullptr)), secure_(secure) {}
-  void Retain() { references.fetch_add(1); }
-  void Release() {
-    if (references.fetch_sub(1) == 1) delete this;
+  EgressConnection(ProbeObservation& observation, const CheckInterruption& interrupted)
+      : observation_(observation), interrupted_(interrupted) {
+    SecInvalidateHandle(&credentials_);
+    SecInvalidateHandle(&context_);
+    WSADATA data{};
+    const auto error = ::WSAStartup(MAKEWORD(2, 2), &data);
+    winsock_ready_ = error == 0;
+    if (error != 0) observation_.Error(EgressErrorDomain::kWinsock, error);
+  }
+  ~EgressConnection() {
+    if (socket_ != INVALID_SOCKET) ::closesocket(socket_);
+    if (SecIsValidHandle(&context_)) ::DeleteSecurityContext(&context_);
+    if (SecIsValidHandle(&credentials_)) ::FreeCredentialsHandle(&credentials_);
+    if (winsock_ready_) ::WSACleanup();
   }
 
-  bool Wait(DWORD expected, const CheckInterruption& interrupted) {
-    while (!Interrupted(interrupted)) {
-      const auto wait = ::WaitForSingleObject(ready, 50);
-      if (wait == WAIT_OBJECT_0) return status.load() == expected;
-      if (wait != WAIT_TIMEOUT) {
-        if (wait == WAIT_FAILED) wait_error.store(::GetLastError());
+  bool Connect(const std::wstring& numeric, std::uint16_t port,
+               const std::optional<std::uint32_t>& expected_tun_ipv4) {
+    if (!winsock_ready_ || Interrupted(interrupted_)) return false;
+    socket_ = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (socket_ == INVALID_SOCKET) return SocketError();
+    u_long nonblocking = 1;
+    if (::ioctlsocket(socket_, FIONBIO, &nonblocking)) return SocketError();
+    sockaddr_in remote{};
+    remote.sin_family = AF_INET;
+    remote.sin_port = htons(port);
+    if (::InetPtonW(AF_INET, numeric.c_str(), &remote.sin_addr) != 1) {
+      observation_.Error(EgressErrorDomain::kWin32, ERROR_INVALID_ADDRESS);
+      return false;
+    }
+    observation_.stage = EgressProbeStage::kConnect;
+    if (::connect(socket_, reinterpret_cast<const sockaddr*>(&remote), sizeof(remote))) {
+      const auto error = ::WSAGetLastError();
+      if (error != WSAEWOULDBLOCK) return SocketError(error);
+      if (!Wait(true, ::GetTickCount64() + 3000)) return false;
+      int pending_error = 0, length = sizeof(pending_error);
+      if (::getsockopt(socket_, SOL_SOCKET, SO_ERROR,
+              reinterpret_cast<char*>(&pending_error), &length)) return SocketError();
+      if (pending_error != 0) return SocketError(pending_error);
+    }
+    sockaddr_in local{};
+    int size = sizeof(local);
+    if (expected_tun_ipv4) {
+      if (::getsockname(socket_, reinterpret_cast<sockaddr*>(&local), &size)) return SocketError();
+      observation_.http_local_is_tun = local.sin_family == AF_INET &&
+          local.sin_addr.s_addr == *expected_tun_ipv4;
+      // HTTP must exercise the OS route, not force a broken route through TUN.
+      if (!*observation_.http_local_is_tun) {
+        observation_.Error(EgressErrorDomain::kWin32, ERROR_NETWORK_UNREACHABLE);
         return false;
       }
+    }
+    return !Interrupted(interrupted_);
+  }
+
+  bool Handshake(const std::wstring& host) {
+    observation_.stage = EgressProbeStage::kTls;
+    SCHANNEL_CRED credentials{};
+    credentials.dwVersion = SCHANNEL_CRED_VERSION;
+    credentials.grbitEnabledProtocols = SP_PROT_TLS1_2_CLIENT;
+    credentials.dwFlags = SCH_CRED_AUTO_CRED_VALIDATION | SCH_CRED_NO_DEFAULT_CREDS |
+        SCH_USE_STRONG_CRYPTO | SCH_CRED_CACHE_ONLY_URL_RETRIEVAL;
+    auto status = ::AcquireCredentialsHandleW(nullptr, const_cast<wchar_t*>(UNISP_NAME_W),
+        SECPKG_CRED_OUTBOUND, nullptr, &credentials, nullptr, nullptr, &credentials_, nullptr);
+    if (status != SEC_E_OK) return TlsError(status);
+    constexpr ULONG flags = ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT |
+        ISC_REQ_CONFIDENTIALITY | ISC_REQ_ALLOCATE_MEMORY | ISC_REQ_STREAM |
+        ISC_REQ_USE_SUPPLIED_CREDS;
+    const auto deadline = ::GetTickCount64() + 3000;
+    bool first = true;
+    while (Current(deadline)) {
+      SecBuffer inputs[2]{{static_cast<ULONG>(encrypted_.size()), SECBUFFER_TOKEN, encrypted_.data()},
+                          {0, SECBUFFER_EMPTY, nullptr}};
+      SecBufferDesc input{SECBUFFER_VERSION, 2, inputs};
+      SecBuffer token{0, SECBUFFER_TOKEN, nullptr};
+      SecBufferDesc output{SECBUFFER_VERSION, 1, &token};
+      ULONG attributes = 0;
+      // The DNS result controls only the TCP destination. The original owned
+      // hostname remains the SNI and automatic certificate-name validation target.
+      status = ::InitializeSecurityContextW(&credentials_, first ? nullptr : &context_,
+          const_cast<wchar_t*>(host.c_str()), flags, 0, SECURITY_NATIVE_DREP,
+          first ? nullptr : &input, 0, &context_, &output, &attributes, nullptr);
+      first = false;
+      bool sent = true;
+      if (token.pvBuffer != nullptr) {
+        if (status >= 0 && token.cbBuffer != 0)
+          sent = SendBytes(token.pvBuffer, token.cbBuffer, deadline);
+        ::FreeContextBuffer(token.pvBuffer);
+      }
+      if (!sent) return false;
+      if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED && status != SEC_E_INCOMPLETE_MESSAGE)
+        return TlsError(status);
+      if (status != SEC_E_INCOMPLETE_MESSAGE &&
+          !RetainExtra(inputs[1].BufferType == SECBUFFER_EXTRA ? inputs[1].cbBuffer : 0)) return false;
+      if (status == SEC_E_OK) {
+        status = ::QueryContextAttributesW(&context_, SECPKG_ATTR_STREAM_SIZES, &sizes_);
+        secure_ = status == SEC_E_OK;
+        return secure_ ? Current(deadline) : TlsError(status);
+      }
+      if ((status == SEC_E_INCOMPLETE_MESSAGE || encrypted_.empty()) &&
+          !ReceiveBytes(deadline)) return false;
     }
     return false;
   }
 
-  static void CALLBACK Callback(HINTERNET, DWORD_PTR context, DWORD status,
-                                void* information, DWORD information_size) {
-    auto* completion = reinterpret_cast<Completion*>(context);
-    if (completion == nullptr) return;
-    if (status == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING) {
-      completion->Release();
-    } else if (status == WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER) {
-      completion->stage.store(ProbeStage::kConnect);
-    } else if (status == WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER) {
-      completion->stage.store(completion->secure_ ? ProbeStage::kTls
-                                                 : ProbeStage::kConnect);
-    } else if (status == WINHTTP_CALLBACK_STATUS_SENDING_REQUEST) {
-      // With no proxy and no request body, TLS has completed by this point.
-      completion->stage.store(ProbeStage::kSending);
-    } else if (status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE ||
-               status == WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE ||
-               status == WINHTTP_CALLBACK_STATUS_READ_COMPLETE ||
-               status == WINHTTP_CALLBACK_STATUS_REQUEST_ERROR) {
-      if (status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE) {
-        completion->stage.store(ProbeStage::kResponse);
-      }
-      if (status == WINHTTP_CALLBACK_STATUS_REQUEST_ERROR &&
-          information != nullptr && information_size == sizeof(WINHTTP_ASYNC_RESULT)) {
-        completion->error.store(
-            static_cast<WINHTTP_ASYNC_RESULT*>(information)->dwError);
-      }
-      if (status == WINHTTP_CALLBACK_STATUS_READ_COMPLETE) {
-        completion->read_size.store(information_size);
-      }
-      completion->status.store(status);
-      ::SetEvent(completion->ready);
-    }
+  bool Write(const std::string& request) {
+    observation_.stage = EgressProbeStage::kSending;
+    const auto deadline = ::GetTickCount64() + 3000;
+    if (!secure_) return SendBytes(request.data(), request.size(), deadline);
+    if (request.size() > sizes_.cbMaximumMessage) return TlsError(SEC_E_BUFFER_TOO_SMALL);
+    std::vector<char> bytes(sizes_.cbHeader + request.size() + sizes_.cbTrailer);
+    std::memcpy(bytes.data() + sizes_.cbHeader, request.data(), request.size());
+    SecBuffer buffers[4]{{sizes_.cbHeader, SECBUFFER_STREAM_HEADER, bytes.data()},
+        {static_cast<ULONG>(request.size()), SECBUFFER_DATA, bytes.data() + sizes_.cbHeader},
+        {sizes_.cbTrailer, SECBUFFER_STREAM_TRAILER, bytes.data() + sizes_.cbHeader + request.size()},
+        {0, SECBUFFER_EMPTY, nullptr}};
+    SecBufferDesc message{SECBUFFER_VERSION, 4, buffers};
+    const auto status = ::EncryptMessage(&context_, 0, &message, 0);
+    if (status != SEC_E_OK) return TlsError(status);
+    for (unsigned int index = 0; index < 3; ++index)
+      if (!SendBytes(buffers[index].pvBuffer, buffers[index].cbBuffer, deadline)) return false;
+    return true;
   }
 
-  HANDLE ready;
-  std::atomic<DWORD> error{ERROR_SUCCESS};
-  std::atomic<DWORD> wait_error{ERROR_SUCCESS};
-  std::atomic<ProbeStage> stage{ProbeStage::kConnect};
-  // WinHTTP may still use this buffer after cancellation. The request keeps
-  // Completion alive until its final HANDLE_CLOSING callback.
-  std::array<unsigned char, 4096> read_buffer{};
-  std::atomic<DWORD> read_size{0};
+  bool Read(std::string* plain, ULONGLONG deadline) {
+    while (Current(deadline)) {
+      if (encrypted_.empty() && !ReceiveBytes(deadline)) return false;
+      if (!secure_) {
+        plain->append(encrypted_.data(), encrypted_.size());
+        encrypted_.clear();
+        return true;
+      }
+      SecBuffer buffers[4]{{static_cast<ULONG>(encrypted_.size()), SECBUFFER_DATA, encrypted_.data()},
+          {0, SECBUFFER_EMPTY, nullptr}, {0, SECBUFFER_EMPTY, nullptr}, {0, SECBUFFER_EMPTY, nullptr}};
+      SecBufferDesc message{SECBUFFER_VERSION, 4, buffers};
+      const auto status = ::DecryptMessage(&context_, &message, 0, nullptr);
+      if (status == SEC_E_INCOMPLETE_MESSAGE) {
+        if (!ReceiveBytes(deadline)) return false;
+        continue;
+      }
+      // No renegotiation, reconnect or replay may replace the proven TLS session.
+      if (status != SEC_E_OK) return TlsError(status);
+      ULONG extra = 0;
+      const auto before = plain->size();
+      for (const auto& buffer : buffers) {
+        if (buffer.BufferType == SECBUFFER_DATA)
+          plain->append(static_cast<const char*>(buffer.pvBuffer), buffer.cbBuffer);
+        if (buffer.BufferType == SECBUFFER_EXTRA) extra = buffer.cbBuffer;
+      }
+      if (!RetainExtra(extra)) return false;
+      if (plain->size() != before) return true;
+    }
+    return false;
+  }
 
  private:
-  ~Completion() { if (ready != nullptr) ::CloseHandle(ready); }
-  std::atomic<unsigned> references{1};
-  std::atomic<DWORD> status{0};
-  bool secure_;
+  bool Current(ULONGLONG deadline) {
+    if (Interrupted(interrupted_)) return false;
+    if (::GetTickCount64() < deadline) return true;
+    observation_.timed_out = true;
+    return SocketError(WSAETIMEDOUT);
+  }
+  bool SocketError(int error = ::WSAGetLastError()) {
+    observation_.Error(EgressErrorDomain::kWinsock, static_cast<DWORD>(error));
+    return false;
+  }
+  bool TlsError(SECURITY_STATUS error) {
+    observation_.Error(EgressErrorDomain::kNtStatus, static_cast<DWORD>(error));
+    return false;
+  }
+  bool Wait(bool write, ULONGLONG deadline) {
+    while (Current(deadline)) {
+      fd_set ready, failed;
+      FD_ZERO(&ready); FD_SET(socket_, &ready);
+      FD_ZERO(&failed); FD_SET(socket_, &failed);
+      timeval timeout{0, 50000};
+      const int status = ::select(0, write ? nullptr : &ready, write ? &ready : nullptr,
+                                  write ? &failed : nullptr, &timeout);
+      if (status > 0) return Current(deadline);
+      if (status < 0) return SocketError();
+    }
+    return false;
+  }
+  bool SendBytes(const void* data, std::size_t size, ULONGLONG deadline) {
+    const auto* bytes = static_cast<const char*>(data);
+    while (size != 0) {
+      if (!Wait(true, deadline)) return false;
+      const int sent = ::send(socket_, bytes, static_cast<int>(size), 0);
+      if (sent == SOCKET_ERROR && ::WSAGetLastError() == WSAEWOULDBLOCK) continue;
+      if (sent <= 0) return SocketError();
+      bytes += sent;
+      size -= static_cast<std::size_t>(sent);
+    }
+    return true;
+  }
+  bool ReceiveBytes(ULONGLONG deadline) {
+    while (Wait(false, deadline)) {
+      std::array<char, 16384> bytes{};
+      const int received = ::recv(socket_, bytes.data(), static_cast<int>(bytes.size()), 0);
+      if (received == SOCKET_ERROR && ::WSAGetLastError() == WSAEWOULDBLOCK) continue;
+      if (received <= 0) return SocketError(received == 0 ? WSAECONNRESET : ::WSAGetLastError());
+      if (encrypted_.size() + static_cast<std::size_t>(received) > 65536)
+        return TlsError(SEC_E_BUFFER_TOO_SMALL);
+      encrypted_.insert(encrypted_.end(), bytes.data(), bytes.data() + received);
+      return true;
+    }
+    return false;
+  }
+  bool RetainExtra(ULONG size) {
+    if (size > encrypted_.size()) return TlsError(SEC_E_INVALID_TOKEN);
+    encrypted_.erase(encrypted_.begin(), encrypted_.end() - size);
+    return true;
+  }
+
+  ProbeObservation& observation_;
+  const CheckInterruption& interrupted_;
+  bool winsock_ready_ = false;
+  bool secure_ = false;
+  SOCKET socket_ = INVALID_SOCKET;
+  CredHandle credentials_{};
+  CtxtHandle context_{};
+  SecPkgContext_StreamSizes sizes_{};
+  std::vector<char> encrypted_;
 };
+
+std::string Ascii(const wchar_t* text) {
+  std::string result;
+  for (; *text != L'\0'; ++text) result += static_cast<char>(*text);
+  return result;  // Only the fixed owned hostnames and paths reach this function.
+}
+
+std::string_view Trim(std::string_view value) {
+  const auto first = value.find_first_not_of(" \t");
+  if (first == std::string_view::npos) return {};
+  return value.substr(first, value.find_last_not_of(" \t") - first + 1);
+}
+
+bool ReadProof(EgressConnection& connection, bool data, bool periodic,
+               ProbeObservation& observation, const CheckInterruption& interrupted) {
+  observation.stage = EgressProbeStage::kResponse;
+  auto deadline = ::GetTickCount64() + 6000;
+  std::string bytes;
+  auto end = bytes.find("\r\n\r\n");
+  while (end == std::string::npos) {
+    if (bytes.size() >= 16384 || !connection.Read(&bytes, deadline)) return false;
+    end = bytes.find("\r\n\r\n");
+  }
+  if (end + 4 > 16384) return false;
+  observation.stage = EgressProbeStage::kProof;
+  const std::string_view headers(bytes.data(), end + 2);
+  const auto first_line = headers.find("\r\n");
+  if (first_line < 12 || (headers.substr(0, 9) != "HTTP/1.1 " &&
+                         headers.substr(0, 9) != "HTTP/1.0 ") ||
+      (first_line > 12 && headers[12] != ' ')) return false;
+  unsigned int status = 0;
+  const auto parsed = std::from_chars(headers.data() + 9, headers.data() + 12, status);
+  if (parsed.ec != std::errc{} || parsed.ptr != headers.data() + 12) return false;
+  if (status != (data ? 200U : 204U)) {
+    observation.Error(EgressErrorDomain::kHttpStatus, status);
+    return false;
+  }
+  bool marker = false, length_present = false, close = false;
+  std::uint32_t length = 0;
+  for (auto offset = first_line + 2; offset < headers.size();) {
+    const auto next = headers.find("\r\n", offset);
+    if (next == std::string_view::npos) return false;
+    const auto line = headers.substr(offset, next - offset);
+    const auto colon = line.find(':');
+    if (colon == std::string_view::npos || colon == 0) return false;
+    std::string name(line.substr(0, colon));
+    for (auto& character : name) {
+      if (character >= 'A' && character <= 'Z') character += 'a' - 'A';
+      else if (!((character >= 'a' && character <= 'z') ||
+                 (character >= '0' && character <= '9') || character == '-')) return false;
+    }
+    const auto value = Trim(line.substr(colon + 1));
+    if (name == "x-pokrov-egress-probe") {
+      if (marker || value != "pokrov-authenticated-egress-v1") return false;
+      marker = true;
+    } else if (name == "content-length") {
+      if (length_present || value.empty()) return false;
+      const auto number = std::from_chars(value.data(), value.data() + value.size(), length);
+      if (number.ec != std::errc{} || number.ptr != value.data() + value.size()) return false;
+      length_present = true;
+    } else if (name == "transfer-encoding" || (name == "content-encoding" && !value.empty())) {
+      return false;
+    } else if (name == "connection") {
+      std::string lower(value);
+      for (auto& character : lower)
+        if (character >= 'A' && character <= 'Z') character += 'a' - 'A';
+      close = lower.find("close") != std::string::npos;
+    }
+    offset = next + 2;
+  }
+  if (!marker || (data ? !length_present || length != 65536
+                       : (length_present && length != 0) || (!periodic && close))) return false;
+  bytes.erase(0, end + 4);
+  if (!data) return bytes.empty() && !Interrupted(interrupted);
+  observation.stage = EgressProbeStage::kResponse;
+  std::size_t received = bytes.size();
+  while (received < 65536 && !Interrupted(interrupted)) {
+    bytes.clear();
+    deadline = ::GetTickCount64() + 6000;
+    if (!connection.Read(&bytes, deadline)) return false;
+    received += bytes.size();
+  }
+  if (received != 65536 || Interrupted(interrupted)) return false;
+  observation.stage = EgressProbeStage::kProof;
+  return true;
+}
+
+const char* ObservedFailure(const ProbeObservation& observation) {
+  if (observation.timed_out) {
+    if (observation.stage == EgressProbeStage::kTls) return "core_egress_tls_timeout";
+    if (observation.stage == EgressProbeStage::kResponse) return "core_egress_response_timeout";
+    return "core_egress_timeout";
+  }
+  if (observation.stage == EgressProbeStage::kConnect) return "core_egress_connect_failed";
+  if (observation.stage == EgressProbeStage::kTls) return "core_egress_tls_failed";
+  return "core_egress_probe_failed";
+}
 
 class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
  public:
   AuthenticatedEgressProbe(const ProbeTarget* targets, std::size_t target_count,
-                           INTERNET_PORT port, bool secure,
+                           std::uint16_t port, bool secure,
                            bool tun_dns, ServiceEventSink* events,
                            std::optional<std::uint32_t> loopback_tun_ipv4 = std::nullopt)
       : targets_(targets), target_count_(target_count), port_(port), secure_(secure),
@@ -454,8 +662,8 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     }
     std::wstring numeric;
     auto expected_tun_ipv4 = loopback_tun_ipv4_;
+    TunDnsEndpoint endpoint;
     if (tun_dns_) {
-      TunDnsEndpoint endpoint;
       if (!FindTunDns(&endpoint, &observation) ||
           (numeric = QueryProbeAddress(endpoint, target.hostname, interrupted,
                                        &observation))
@@ -472,246 +680,29 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
       started = ::GetTickCount64();
     }
     observation.stage = EgressProbeStage::kHttpSetup;
-    const HINTERNET session = ::WinHttpOpen(
-        L"POKROVService/1.2", WINHTTP_ACCESS_TYPE_NO_PROXY,
-        WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, WINHTTP_FLAG_ASYNC);
-    if (session == nullptr) {
-      observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
+    EgressConnection connection(observation, interrupted);
+    bool valid = connection.Connect(tun_dns_ ? numeric : target.hostname, port_,
+                                    expected_tun_ipv4);
+    if (valid && secure_) valid = connection.Handshake(target.hostname);
+    if (!valid) {
       RecordObservation(observation, started, false, interrupted);
-      return "core_egress_probe_failed";
+      return ObservedFailure(observation);
     }
-    ::WinHttpSetTimeouts(session, 3000, 3000, 3000, 6000);
-    BOOL disable_global_pooling = TRUE;
-    if (!::WinHttpSetOption(session, WINHTTP_OPTION_DISABLE_GLOBAL_POOLING,
-                            &disable_global_pooling,
-                            sizeof(disable_global_pooling))) {
-      observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-      RecordObservation(observation, started, false, interrupted);
-      ::WinHttpCloseHandle(session);
-      return "core_egress_probe_failed";
-    }
-    const HINTERNET connection =
-        ::WinHttpConnect(session, target.hostname, port_, 0);
-    if (connection == nullptr) {
-      observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-    }
-    bool valid = false;
-    std::string failure = "core_egress_probe_failed";
-    WINHTTP_CONNECTION_INFO proof_connection{};
-    for (int proof_request = 0; proof_request < (periodic ? 1 : 2);
-         ++proof_request) {
-      const bool data = proof_request == 1;
-      const HINTERNET request =
-          connection == nullptr
-              ? nullptr
-              : ::WinHttpOpenRequest(
-                    connection, L"GET",
-                    data ? target.data_path : target.proof_path, nullptr,
-                    WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
-                    WINHTTP_FLAG_REFRESH | (secure_ ? WINHTTP_FLAG_SECURE : 0));
-      if (connection != nullptr && request == nullptr) {
-        observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-      }
-      auto* completion = new Completion(secure_);
-      if (completion->ready == nullptr) {
-        observation.Error(EgressErrorDomain::kWin32, ::GetLastError());
-      }
-      DWORD_PTR context = reinterpret_cast<DWORD_PTR>(completion);
-      bool callback_installed = false;
-      if (request != nullptr && completion->ready != nullptr) {
-        DWORD disabled = WINHTTP_DISABLE_REDIRECTS;
-        const bool options_set =
-            ::WinHttpSetOption(request, WINHTTP_OPTION_DISABLE_FEATURE,
-                               &disabled, sizeof(disabled)) &&
-            (!tun_dns_ ||
-             ::WinHttpSetOption(
-                 request, WINHTTP_OPTION_RESOLUTION_HOSTNAME, numeric.data(),
-                 static_cast<DWORD>((numeric.size() + 1) * sizeof(wchar_t)))) &&
-            ::WinHttpSetOption(request, WINHTTP_OPTION_CONTEXT_VALUE, &context,
-                               sizeof(context));
-        if (options_set) {
-          completion->Retain();
-          callback_installed = ::WinHttpSetStatusCallback(
-                                   request, Completion::Callback,
-                                   WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS |
-                                       WINHTTP_CALLBACK_FLAG_HANDLES |
-                                       WINHTTP_CALLBACK_FLAG_CONNECT_TO_SERVER |
-                                       WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
-                                   0) != WINHTTP_INVALID_STATUS_CALLBACK;
-          if (!callback_installed) {
-            observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-            completion->Release();
-          }
-        } else {
-          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-        }
-      }
-      valid = false;
-      DWORD error = ERROR_SUCCESS;
-      if (callback_installed && !Interrupted(interrupted)) {
-        observation.stage = EgressProbeStage::kConnect;
-        if (!::WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
-                                  WINHTTP_NO_REQUEST_DATA, 0, 0, context)) {
-          error = ::GetLastError();
-        } else if (completion->Wait(
-                       WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE,
-                       interrupted) &&
-                   !Interrupted(interrupted)) {
-          if (!::WinHttpReceiveResponse(request, nullptr)) {
-            error = ::GetLastError();
-          } else {
-            valid = completion->Wait(WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE,
-                                     interrupted) &&
-                    !Interrupted(interrupted);
-          }
-        }
-      }
-      if (error == ERROR_SUCCESS)
-        error = completion->error.load();
-      if (observation.stage == EgressProbeStage::kConnect) {
-        observation.stage = completion->stage.load();
-      }
-      if (error != ERROR_SUCCESS) {
-        observation.Error(EgressErrorDomain::kWinHttp, error);
-      } else if (completion->wait_error.load() != ERROR_SUCCESS) {
-        observation.Error(EgressErrorDomain::kWin32,
-                          completion->wait_error.load());
-      }
-      DWORD status = 0;
-      DWORD status_size = sizeof(status);
-      if (valid) {
-        observation.stage = EgressProbeStage::kProof;
-        const bool status_read =
-            ::WinHttpQueryHeaders(
-                request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-                WINHTTP_HEADER_NAME_BY_INDEX, &status, &status_size,
-                WINHTTP_NO_HEADER_INDEX) != FALSE;
-        valid = status_read &&
-                status == static_cast<DWORD>(data ? HTTP_STATUS_OK : HTTP_STATUS_NO_CONTENT);
-        if (!status_read)
-          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-        else if (!valid)
-          observation.Error(EgressErrorDomain::kHttpStatus, status);
-      }
-      std::array<wchar_t, 64> proof{};
-      DWORD proof_size = static_cast<DWORD>(proof.size() * sizeof(wchar_t));
-      if (valid) {
-        const bool proof_read =
-            ::WinHttpQueryHeaders(
-                request, WINHTTP_QUERY_CUSTOM, L"x-pokrov-egress-probe",
-                proof.data(), &proof_size, WINHTTP_NO_HEADER_INDEX) != FALSE;
-        valid = proof_read &&
-                std::wstring(proof.data()) == L"pokrov-authenticated-egress-v1";
-        if (!proof_read)
-          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-      }
-      if (valid && !periodic) {
-        WINHTTP_CONNECTION_INFO current{};
-        current.cbSize = sizeof(current);
-        DWORD connection_size = sizeof(current);
-        const bool connection_read =
-            ::WinHttpQueryOption(request, WINHTTP_OPTION_CONNECTION_INFO,
-                                 &current, &connection_size) != FALSE;
-        valid = connection_read &&
-                (!data || (SameSocketAddress(proof_connection.LocalAddress,
-                                             current.LocalAddress) &&
-                           SameSocketAddress(proof_connection.RemoteAddress,
-                                             current.RemoteAddress)));
-        if (!connection_read)
-          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-        if (valid && !data)
-          proof_connection = current;
-      }
-      if (valid && data) {
-        DWORD length = 0;
-        DWORD length_size = sizeof(length);
-        const bool length_read =
-            ::WinHttpQueryHeaders(
-                request,
-                WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
-                WINHTTP_HEADER_NAME_BY_INDEX, &length, &length_size,
-                WINHTTP_NO_HEADER_INDEX) != FALSE;
-        valid = length_read && length == 65536;
-        if (!length_read)
-          observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-        if (valid) {
-          std::array<wchar_t, 64> encoding{};
-          DWORD encoding_size =
-              static_cast<DWORD>(encoding.size() * sizeof(wchar_t));
-          const bool encoded =
-              ::WinHttpQueryHeaders(request, WINHTTP_QUERY_CONTENT_ENCODING,
-                                    WINHTTP_HEADER_NAME_BY_INDEX,
-                                    encoding.data(), &encoding_size,
-                                    WINHTTP_NO_HEADER_INDEX) != FALSE;
-          if (encoded)
-            valid = encoding[0] == L'\0';
-          else if (::GetLastError() != ERROR_WINHTTP_HEADER_NOT_FOUND) {
-            observation.Error(EgressErrorDomain::kWinHttp, ::GetLastError());
-            valid = false;
-          }
-        }
-        std::uint64_t received = 0;
-        if (valid)
-          observation.stage = EgressProbeStage::kResponse;
-        while (valid && !Interrupted(interrupted)) {
-          completion->stage.store(EgressProbeStage::kResponse);
-          completion->read_size.store(0);
-          if (!::WinHttpReadData(
-                  request, completion->read_buffer.data(),
-                  static_cast<DWORD>(completion->read_buffer.size()),
-                  nullptr)) {
-            error = ::GetLastError();
-            valid = false;
-            break;
-          }
-          if (!completion->Wait(WINHTTP_CALLBACK_STATUS_READ_COMPLETE,
-                                interrupted)) {
-            valid = false;
-            break;
-          }
-          const auto bytes = completion->read_size.load();
-          if (bytes == 0) {
-            valid = received == 65536;
-            break;
-          }
-          received += bytes;
-          valid = received <= 65536;
-        }
-        if (Interrupted(interrupted))
-          valid = false;
-        if (valid)
-          observation.stage = EgressProbeStage::kProof;
-      }
-      if (error == ERROR_SUCCESS)
-        error = completion->error.load();
-      if (error != ERROR_SUCCESS)
-        observation.Error(EgressErrorDomain::kWinHttp, error);
-      else if (completion->wait_error.load() != ERROR_SUCCESS) {
-        observation.Error(EgressErrorDomain::kWin32,
-                          completion->wait_error.load());
-      }
-      failure = ObservedFailure(error, completion->stage.load());
-      // The request owner reads metadata before CloseHandle; callbacks never
-      // query or close this handle. Missing metadata is unknown, not non-TUN.
-      observation.http_local_is_tun = ReadHttpLocalIsTun(request, expected_tun_ipv4);
+    for (int request = 0; request < (periodic ? 1 : 2); ++request) {
+      const bool data = request == 1;
+      const std::string http = "GET " + Ascii(data ? target.data_path : target.proof_path) +
+          " HTTP/1.1\r\nHost: " + Ascii(target.hostname) +
+          "\r\nConnection: " + (data || periodic ? "close" : "keep-alive") + "\r\n\r\n";
+      valid = connection.Write(http) && ReadProof(connection, data, periodic, observation, interrupted);
       RecordObservation(observation, started, valid, interrupted);
-      // All request API calls have returned. Closing an async request cancels
-      // pending I/O; no other thread calls WinHTTP with this request handle.
-      if (request != nullptr)
-        ::WinHttpCloseHandle(request);
-      completion->Release();
-      if (!valid || Interrupted(interrupted))
-        break;
+      if (!valid || Interrupted(interrupted)) return ObservedFailure(observation);
     }
-    if (connection != nullptr)
-      ::WinHttpCloseHandle(connection);
-    ::WinHttpCloseHandle(session);
-    return valid && !Interrupted(interrupted) ? "" : failure;
+    return "";
   }
 
   const ProbeTarget* targets_;
   std::size_t target_count_;
-  INTERNET_PORT port_;
+  std::uint16_t port_;
   bool secure_;
   bool tun_dns_;
   ServiceEventSink* events_;
@@ -724,7 +715,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
 std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe(ServiceEventSink* events) {
   return std::make_unique<AuthenticatedEgressProbe>(
       kProbeTargets, std::size(kProbeTargets),
-      static_cast<INTERNET_PORT>(INTERNET_DEFAULT_HTTPS_PORT), true, true,
+      std::uint16_t{443}, true, true,
       events);
 }
 

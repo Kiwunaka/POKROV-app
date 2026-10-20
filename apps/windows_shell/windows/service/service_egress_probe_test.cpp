@@ -147,8 +147,10 @@ class LoopbackServer {
             if (tls_stall_)
               break;
           }
-          if (request.empty())
+          if (request.empty()) {
+            peer_cancelled = true;
             break;
+          }
           expected_request_received =
               tls_stall_
                   ? request.size() >= 2 &&
@@ -303,7 +305,7 @@ int main(int argc, char** argv) {
     const auto observation = probe->LastObservation();
     expect(observation && observation->stage == EgressProbeStage::kConnect &&
                observation->outcome == EgressProbeOutcome::kFailed &&
-               observation->error_domain == EgressErrorDomain::kWinHttp && observation->error_code != 0,
+               observation->error_domain == EgressErrorDomain::kWinsock && observation->error_code != 0,
            "ordinary probe lost its terminal observation without an event sink");
     expect(observation && !observation->http_local_is_tun,
            "failed connection gained a local HTTP endpoint");
@@ -445,18 +447,17 @@ int main(int argc, char** argv) {
       std::cout << "pending_headers_stage=" << EgressProbeStageName(events.observations[0].stage)
                 << " observation_count=" << events.observations.size() << '\n';
     }
-    expect(!failure.empty() && elapsed < 1500 && server.requests == 1,
+    expect(!failure.empty() && elapsed < 1500 && server.requests == (local_matches ? 1 : 0),
            "deadline did not stop pending headers before timeout or retried");
     expect(events.observations.size() == 2 &&
-               (events.observations[0].stage == EgressProbeStage::kSending ||
-                events.observations[0].stage == EgressProbeStage::kResponse) &&
-               events.observations[0].outcome == EgressProbeOutcome::kDeadline &&
-               events.observations[0].domain == EgressErrorDomain::kNone &&
-               events.observations[0].error == 0 &&
-               events.observations[0].elapsed_ms >= 250 &&
+               events.observations[0].stage == (local_matches ? EgressProbeStage::kResponse : EgressProbeStage::kConnect) &&
+               events.observations[0].outcome == (local_matches ? EgressProbeOutcome::kDeadline : EgressProbeOutcome::kFailed) &&
+               events.observations[0].domain == (local_matches ? EgressErrorDomain::kNone : EgressErrorDomain::kWin32) &&
+               events.observations[0].error == (local_matches ? 0U : ERROR_NETWORK_UNREACHABLE) &&
+               (!local_matches || events.observations[0].elapsed_ms >= 250) &&
                events.observations[0].elapsed_ms < 1500 &&
                events.observations[1].stage == EgressProbeStage::kRetryWait &&
-               server.expected_request_received,
+               server.expected_request_received == local_matches,
            "deadline erased the observed HTTP stage or invented a native timeout error");
     const auto retained = probe->LastObservation();
     if (retained) {
@@ -474,7 +475,7 @@ int main(int argc, char** argv) {
            "retry wait replaced the causal failure in the native snapshot");
     const auto close_deadline = ::GetTickCount64() + 1000;
     while (!server.peer_cancelled && ::GetTickCount64() < close_deadline) ::Sleep(10);
-    expect(server.peer_cancelled, "cancelled WinHTTP request left its socket open");
+    expect(server.peer_cancelled, "cancelled or rejected egress left its socket open");
     std::cout << "pending_headers_deadline_ms=" << elapsed << '\n';
   }
   if (argc == 2 && std::string(argv[1]) == "--http-local-readback") {
@@ -489,9 +490,13 @@ int main(int argc, char** argv) {
     if (server.port == 0) return 1;
     auto probe = CreateLoopbackEgressProbeForTest(server.port);
     expect(probe->Verify().empty() == authenticated,
-           "async egress accepted invalid proof or rejected authenticated marker");
+           "egress accepted invalid proof or rejected authenticated marker");
     expect(server.requests == (authenticated ? 2 : 3), "egress retry count changed");
-    if (authenticated) expect(server.connections == 1, "startup proof reconnected between 204 and 64K");
+    if (authenticated) {
+      expect(server.connections == 1, "startup proof reconnected between 204 and 64K");
+      expect(probe->Verify().empty() && server.connections == 2 && server.requests == 4,
+             "next egress proof reused a socket from an earlier verification");
+    }
   }
   {
     LoopbackDnsServer server(LoopbackDnsServer::Reply::kValid);
@@ -506,6 +511,14 @@ int main(int argc, char** argv) {
     auto probe = CreateLoopbackEgressProbeForTest(server.port);
     expect(!probe->Verify().empty() && server.requests == 6,
            "startup accepted a partial or encoded 64K body, or added retry slots");
+  }
+  {
+    LoopbackServer server([](const std::string& request) {
+      return DataRequest(request) ? DataReply(65536, "Content-Length: 1\r\n") : ProofReply();
+    }, false, false, true);
+    auto probe = CreateLoopbackEgressProbeForTest(server.port);
+    expect(!probe->Verify().empty() && server.requests == 6,
+           "egress accepted ambiguous response framing");
   }
   {
     LoopbackServer server([](const std::string& request) {
@@ -584,7 +597,7 @@ int main(int argc, char** argv) {
       return reply;
     });
     auto probe = CreateLoopbackEgressProbeForTest(server.port);
-    expect(!probe->Verify().empty() && server.connections == 6,
+    expect(!probe->Verify().empty() && server.connections == 3 && server.requests == 3,
            "startup accepted a reconnect as the original proven connection");
   }
   {

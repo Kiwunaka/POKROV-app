@@ -71,8 +71,12 @@ that authenticated check every five seconds, with a five-second check budget.
 A failed check clears cached egress readiness while retaining the TUN for the
 manager's protected recovery. Disconnect, replacement and service shutdown cancel
 and join any pending check; DNS and HTTP waits observe cancellation every 50 ms.
-This resolution override requires Windows 10 21H1 or newer, as documented in the
-[WinHTTP option compatibility table](https://learn.microsoft.com/en-us/windows/win32/winhttp/option-flags#winhttp_option_resolution_hostname).
+The egress check uses a fresh Winsock connection and Schannel, including on
+Windows 10 versions that reject newer WinHTTP options. DNS stays bound to the
+owned TUN; HTTP uses the ordinary Windows route and rejects a local address
+outside that TUN. The original hostname is retained for SNI and certificate
+validation. The 204 proof and complete, unencoded 64 KiB response use the same
+TLS connection; no connection pool, reconnect or redirect can satisfy the check.
 
 - `flutter build windows --release` bundles `pokrov_windows.exe`,
   `pokrov_service.exe`, POKROV Core `pokrov-core.dll`, and pinned
