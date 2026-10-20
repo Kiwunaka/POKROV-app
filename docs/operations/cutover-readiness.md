@@ -151,13 +151,15 @@ owner's explicit return of the phone, expected in the evening.
 
 Naive has an accepted isolated transport canary with matching Cronet, but normal
 managed issuance is not implemented and Auto does not use it. The routing-domain
-editor is live in the operator admin; the neutral catalog 26 has no services and
-remains unchanged. Adding service lists requires approved source inputs. Neither
-this content stage nor managed Naive creates a new mandatory 1.5.0 gate.
-Personalised AWG/Hysteria2 bytes are absent from server traffic accounting:
-the [owning monitoring contract](C:/Users/kiwun/Documents/ai/VPN/docs/operations/monitoring-and-visibility.md)
-covers Xray traffic only. This is an observability limit, not evidence of broken
-speed or expiry handling; current trial/paid access has unlimited traffic.
+editor is live; production catalog 27 / security 2 was published on 19 October
+with six services and 34 domains. Its signature and Android/Windows compilation
+passed offline; that does not replace phone acceptance or enable provider Smart
+DNS. Managed Naive remains outside the mandatory 1.5.0 scope.
+Since 20 October, personalised AWG/Hysteria2 counters join Xray accounting on all
+six exit nodes; the previous native history is not reconstructed. The
+[owning monitoring contract](C:/Users/kiwun/Documents/ai/VPN/docs/operations/monitoring-and-visibility.md)
+defines per-source coverage and freshness, with Xray presence kept separate from
+measured traffic activity. Current trial/paid access has unlimited traffic.
 
 Server route ranking and the physical bridge-metrics producer are live. Fresh
 Cinema/Lampa samples are healthy and feed priorities for new routes; this does
