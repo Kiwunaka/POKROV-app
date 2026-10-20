@@ -1,16 +1,22 @@
 # Windows acceptance
 
-Updated 20 October 2026. Public version remains **1.4.5**; the seven-asset
+Updated 21 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The current private Windows candidate is
-**1.5.0+4183**, built from App `bb21d730` with the existing Core `0f159bb` /
-1.2.14 and matching Cronet. It also retains the bounded native egress observation
-in a failed Connect acknowledgement through cleanup and into terminal telemetry.
+**1.5.0+4184**, built from App `50081a23` with the existing Core `0f159bb` /
+1.2.14 and matching Cronet. It replaces incompatible WinHTTP probe options with
+a fresh Winsock/Schannel connection, retaining TUN DNS, hostname/certificate
+validation, OS-route readback and the two-request proof on one socket.
 The standard builder passed runtime binding,
 built-runtime equality, required-file and executable-version checks.
-The [4183 installer](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4183-setup.exe)
-is 28,882,025 bytes and unsigned. The [delivery ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4183.zip)
-contains the same installer as `POKROV-Setup.exe`. Installation and device smoke for 4183 have
-not been performed; no release or public update was published.
+The [4184 installer](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4184-setup.exe)
+is 28,883,048 bytes and unsigned. The [delivery ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4184.zip)
+contains the same installer as `POKROV-Setup.exe`. Native checks passed on Win10
+19044, including real owned TLS/204/64 KiB with the standard ISRG root temporarily
+supplied to the old offline image and then removed. Clean Win11 installation,
+ordinary Connect to IS, native DNS/egress and Stop passed; the original DNS,
+11 routes and proxy state were restored. Both VMs are off and test staging is
+removed. The customer's Win10 19045 connection remains unconfirmed; do not
+contact them or send 4184 while the owner's hold remains. No public release.
 
 The preceding **1.5.0+4181** installer, built from App `d78aefc9` with the same
 Core and Cronet, completed in the Clean VM, retaining the

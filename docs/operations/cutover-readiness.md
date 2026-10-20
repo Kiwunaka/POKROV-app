@@ -1,6 +1,6 @@
 # Client release status
 
-Updated 20 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+Updated 21 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
@@ -28,7 +28,35 @@ The private **1.5.0+4181** pass separates source, packages and live state:
 | Windows package | [4181 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4181-setup.exe), 28,875,484 bytes, built from App `d78aefc9` with the ready Core 1.2.14 / `0f159bb` DLL and matching Cronet. Runtime binding, built-runtime equality and executable-version checks passed before installer packaging. The normal installer completed in the Clean VM and retained the existing login. Core 1.2.14 initialized; one ordinary UI connection to the selected Iceland location reached running with native egress and DNS validated. Ordinary Stop restored the baseline DNS/routes (11 routes), no active TUN and proxy off; staging was removed and the VM is PoweredOff/Unlocked. This was a focused new-runtime smoke, not a repeat of the transport matrix. |
 | Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor is live; since 20 October, activity covers Xray/AWG/HY2 on all six exits with each source's start date and freshness shown. Historical native traffic is not reconstructed. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4181 device acceptance. |
 
-Private Windows **1.5.0+4183** from App `bb21d730` preserves the closed native
+Private Windows **1.5.0+4184** from App `50081a23` fixes the startup HTTP probe's
+WinHTTP incompatibility on Windows 10. Re-reading the existing customer events
+after Platform `41173c6` restored nullable diagnostics showed accepted TUN DNS,
+then `http_setup / winhttp / 12009` before any HTTP request. The saved customer OS
+is Windows 10 build 19045; the VM runs Windows 11. Both use `allexceptru` and the
+same assignment revision. Full customer route/DNS tables were not uploaded.
+The Win10 19044 lab reproduced 12009 for the two formerly required options.
+The replacement uses a fresh Winsock/Schannel connection, original TLS hostname
+validation, OS routing with TUN-address readback, and the same socket for 204 and
+64 KiB. Debug egress and runtime checks passed, including the egress fixture on
+Win10. The new TLS implementation also passed real owned HTTPS 204/64 KiB there;
+that old offline image lacked ISRG Root X1, so the standard public root was
+temporarily imported for the check and removed afterwards. No certificate check
+was bypassed. Win10 returned to PoweredOff with its original disabled NICs.
+
+The [4184 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4184-setup.exe)
+is 28,883,048 bytes and remains unsigned; the [single-installer ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4184.zip)
+contains identical bytes under `POKROV-Setup.exe`. The builder reused the already
+synced Core `0f159bb` without `-SyncRuntime` and verified its artifact binding.
+The server-only Core checkout was not reset to an older revision. Clean Win11 upgraded
+normally, retained the test login/owner and connected to IS with native DNS and
+egress validated; the server recorded success. Stop restored the captured DNS,
+11 routes and proxy state, with no active TUN/guard. Test staging was removed and
+the VM returned to PoweredOff.
+The customer remains on hold: 4184 was not sent, their successful connection is
+not yet confirmed, and public 1.4.5/draft 4175 remain unchanged. Android's latest
+built package is still 4182; no Android rebuild was needed for this Windows fix.
+
+Earlier private Windows **1.5.0+4183** from App `bb21d730` preserves the closed native
 egress observation in failed Connect acknowledgements through cleanup and into
 terminal reports. The standard builder passed runtime binding, required-file,
 built-runtime equality and PE version checks with the existing Core `0f159bb`.
