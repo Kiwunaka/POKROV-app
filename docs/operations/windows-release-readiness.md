@@ -2,12 +2,14 @@
 
 Updated 20 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The current private Windows candidate is
-**1.5.0+4182**, built from App `4061020a` with the existing Core `0f159bb` /
-1.2.14 and matching Cronet. It includes shared support/account session refresh
-and the Rewards check-in update. The standard builder passed runtime binding,
+**1.5.0+4183**, built from App `bb21d730` with the existing Core `0f159bb` /
+1.2.14 and matching Cronet. It also retains the bounded native egress observation
+in a failed Connect acknowledgement through cleanup and into terminal telemetry.
+The standard builder passed runtime binding,
 built-runtime equality, required-file and executable-version checks.
-The [4182 installer](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4182-setup.exe)
-is 28,878,766 bytes and unsigned. Installation and device smoke for 4182 have
+The [4183 installer](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4183-setup.exe)
+is 28,882,025 bytes and unsigned. The [delivery ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4183.zip)
+contains the same installer as `POKROV-Setup.exe`. Installation and device smoke for 4183 have
 not been performed; no release or public update was published.
 
 The preceding **1.5.0+4181** installer, built from App `d78aefc9` with the same

@@ -28,6 +28,15 @@ The private **1.5.0+4181** pass separates source, packages and live state:
 | Windows package | [4181 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4181-setup.exe), 28,875,484 bytes, built from App `d78aefc9` with the ready Core 1.2.14 / `0f159bb` DLL and matching Cronet. Runtime binding, built-runtime equality and executable-version checks passed before installer packaging. The normal installer completed in the Clean VM and retained the existing login. Core 1.2.14 initialized; one ordinary UI connection to the selected Iceland location reached running with native egress and DNS validated. Ordinary Stop restored the baseline DNS/routes (11 routes), no active TUN and proxy off; staging was removed and the VM is PoweredOff/Unlocked. This was a focused new-runtime smoke, not a repeat of the transport matrix. |
 | Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor is live; since 20 October, activity covers Xray/AWG/HY2 on all six exits with each source's start date and freshness shown. Historical native traffic is not reconstructed. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4181 device acceptance. |
 
+Private Windows **1.5.0+4183** from App `bb21d730` preserves the closed native
+egress observation in failed Connect acknowledgements through cleanup and into
+terminal reports. The standard builder passed runtime binding, required-file,
+built-runtime equality and PE version checks with the existing Core `0f159bb`.
+The [unsigned setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4183-setup.exe)
+is 28,882,025 bytes; the [delivery ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4183.zip)
+contains the identical `POKROV-Setup.exe`. No 4183 installation or publication has
+been performed; Android's latest built package remains 4182.
+
 Private Android **1.5.0+4182** from App `175cbc86` now also includes `a554135e`
 and `54ee4391`, using the existing Core `0f159bb` / 1.2.14 AAR without rebuilding
 Core. The standard builder verified production signing, package/version,
