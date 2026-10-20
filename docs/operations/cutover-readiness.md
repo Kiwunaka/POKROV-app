@@ -46,6 +46,21 @@ ACK acceptance result; the negative path is covered by the focused Dart/native
 regressions. The customer's failure was not reproduced. No 4183 delivery to the
 customer or public release occurred; Android's latest built package remains 4182.
 
+The owner's requested elevation/Radmin reproduction on 20 October also passed
+in the Clean VM on 4183. A fresh elevated UI under the installation owner's
+account connected to Iceland without replacing the LocalSystem service.
+Then official, signature-verified Radmin VPN 2.1.4951.1 was installed in the
+VM and brought Online. With its service and adapter active, ordinary POKROV
+connected to Iceland and Germany; the latter was confirmed as DE2 in server
+telemetry. Native DNS and egress validated in both cases. No Radmin peer network
+was joined. Its default route had combined metric 9257 versus 25 for the physical
+adapter, so a preferred Radmin route was not reproduced. These results do not
+establish the cause on the customer's PC. Stop removed the TUN; the VM snapshot
+was restored, retaining the latest encrypted login storage. Radmin, its adapter
+and test staging were absent, with 11 original IPv4 routes and proxy disabled.
+The VM is PoweredOff; the temporary snapshot and host test files were removed.
+No networking code or client package was changed for these checks.
+
 Private Android **1.5.0+4182** from App `175cbc86` now also includes `a554135e`
 and `54ee4391`, using the existing Core `0f159bb` / 1.2.14 AAR without rebuilding
 Core. The standard builder verified production signing, package/version,
@@ -71,10 +86,10 @@ in a ZIP containing `POKROV-Setup.exe`, with extraction and upgrade instructions
 Telegram delivery and installation are confirmed. Pre-TUN probes succeeded on
 several routes, but Windows Connect still failed after activation; disabling
 the reported Radmin VPN and restarting POKROV did not resolve it. No diagnostic
-bundle arrived. The customer asked to defer further checks; the operator
-acknowledged that no more requests would be sent that evening. Continue tests
-in the owned VM and offer a checked update later only when convenient for the
-customer. Successful connection on their PC remains unconfirmed.
+bundle arrived. The customer asked to defer further checks, and the owner
+subsequently instructed us not to contact them for now. Do not send questions
+or builds while that hold is in effect. Continue independent work in the owned
+VM; successful connection on the customer's PC remains unconfirmed.
 The account's earlier connection events do not accept
 Windows. Server-only Core `6cc372d` adds HY2 statistics and does not replace
 the client artifacts used by 4182.
