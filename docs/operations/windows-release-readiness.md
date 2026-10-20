@@ -1,10 +1,17 @@
 # Windows acceptance
 
-Updated 19 October 2026. Public version remains **1.4.5**; the seven-asset
-**1.5.0+4175** draft is unchanged. The current private candidate is
-**1.5.0+4181**, built from App `d78aefc9` with Core `0f159bb` / 1.2.14 and
-matching Cronet. Runtime binding, built-runtime equality and executable-version
-checks passed. The normal installer completed in the Clean VM, retaining the
+Updated 20 October 2026. Public version remains **1.4.5**; the seven-asset
+**1.5.0+4175** draft is unchanged. The current private Windows candidate is
+**1.5.0+4182**, built from App `4061020a` with the existing Core `0f159bb` /
+1.2.14 and matching Cronet. It includes shared support/account session refresh
+and the Rewards check-in update. The standard builder passed runtime binding,
+built-runtime equality, required-file and executable-version checks.
+The [4182 installer](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4182-setup.exe)
+is 28,878,766 bytes and unsigned. Installation and device smoke for 4182 have
+not been performed; no release or public update was published.
+
+The preceding **1.5.0+4181** installer, built from App `d78aefc9` with the same
+Core and Cronet, completed in the Clean VM, retaining the
 existing login. One ordinary connection to the selected Iceland location reached
 native running with validated egress and DNS. Stop restored baseline DNS,
 11 routes, no active TUN and proxy off; the VM is PoweredOff/Unlocked. This

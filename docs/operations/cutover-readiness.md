@@ -30,19 +30,23 @@ The private **1.5.0+4181** pass separates source, packages and live state:
 
 Post-4181 source change: App `54ee4391` refreshes the open Rewards screen after
 calendar check-in. Its focused widget test and app_shell analyze passed; the
-existing 4181 packages do not contain it. Include it in the next final private
-build, without re-running unchanged transport acceptance. No new client release
-was published. Separately, the actual production catalog27/security2 envelope
+existing 4181 packages do not contain it. Private Windows **1.5.0+4182** from
+App `4061020a` includes it and the session fix below; Android remains at the
+4181 package. The standard Windows builder passed Core binding, built-runtime
+equality, required-file and PE version checks using the same Core override.
+The [unsigned setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4182-setup.exe)
+is 28,878,766 bytes; 4182 installation/device smoke has not been performed.
+No new client release was published. Separately, the actual production catalog27/security2 envelope
 passed the existing pinned Dart verifier and both Android/Windows compilers
 offline: Smart Safe has five Direct and 29 VPN rules, Full has no Direct, and
 Selective accepts only the four VPN services. Catalog content does not require
 a new client binary or provider Smart DNS; this does not replace phone QA.
 
-App `a554135e` also needs the next private build: support and account requests
-now share one session refresher, preventing simultaneous use of the same refresh
+App `a554135e`, included in private Windows 4182, makes support and account requests
+share one session refresher, preventing simultaneous use of the same refresh
 token. Analyze, the concurrent-request regression, two existing refresh checks
 and seven support checks passed. Existing 4181 packages and public 1.4.5 do not
-contain this fix; no new package or client release was published.
+contain this fix; no new client release was published.
 
 Both 4181 builders used the shared private override
 `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-urltest-history-0f159bb/runtime-artifacts.json`
