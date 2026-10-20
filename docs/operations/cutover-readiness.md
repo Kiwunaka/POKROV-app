@@ -34,8 +34,17 @@ terminal reports. The standard builder passed runtime binding, required-file,
 built-runtime equality and PE version checks with the existing Core `0f159bb`.
 The [unsigned setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4183-setup.exe)
 is 28,882,025 bytes; the [delivery ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4183.zip)
-contains the identical `POKROV-Setup.exe`. No 4183 installation or publication has
-been performed; Android's latest built package remains 4182.
+contains the identical `POKROV-Setup.exe`. On 20 October the Clean Windows VM
+upgraded from 4181 through the normal installer (exit 0, install owner preserved,
+current automatic LocalSystem service). Ordinary UI Connect to the selected
+Iceland location reached running with native DNS and egress verified.
+Stop restored the captured DNS, IPv4 routes (11) and proxy state; TUN, retained
+guard, temporary firewall rules and auxiliary processes were absent. Staging
+was removed and the VM returned to PoweredOff. A temporary service-scoped
+block of the owned probe address did not force a failure and is not a negative
+ACK acceptance result; the negative path is covered by the focused Dart/native
+regressions. The customer's failure was not reproduced. No 4183 delivery to the
+customer or public release occurred; Android's latest built package remains 4182.
 
 Private Android **1.5.0+4182** from App `175cbc86` now also includes `a554135e`
 and `54ee4391`, using the existing Core `0f159bb` / 1.2.14 AAR without rebuilding
@@ -52,15 +61,20 @@ App `4061020a` includes it and the session fix below.
 The standard Windows builder passed Core binding, built-runtime
 equality, required-file and PE version checks using the same Core override.
 The [unsigned setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4182-setup.exe)
-is 28,878,766 bytes; 4182 installation/device smoke has not been performed.
+is 28,878,766 bytes; customer installation was confirmed by subsequent 4182 events.
 On 20 October the owner authorized sending this private installer to the
 customer in support case 89. Case 90 then reported Inno's
 `Cannot respawn self, not named .exe`: its startup check rejects a filename
 without the `.exe` extension. The original package has the correct extension;
 the customer's local filename is not known. The same installer bytes were sent
 in a ZIP containing `POKROV-Setup.exe`, with extraction and upgrade instructions.
-Telegram delivery and the case record are confirmed; installation and a
-successful Windows connection on that customer's PC await their reply.
+Telegram delivery and installation are confirmed. Pre-TUN probes succeeded on
+several routes, but Windows Connect still failed after activation; disabling
+the reported Radmin VPN and restarting POKROV did not resolve it. No diagnostic
+bundle arrived. The customer asked to defer further checks; the operator
+acknowledged that no more requests would be sent that evening. Continue tests
+in the owned VM and offer a checked update later only when convenient for the
+customer. Successful connection on their PC remains unconfirmed.
 The account's earlier connection events do not accept
 Windows. Server-only Core `6cc372d` adds HY2 statistics and does not replace
 the client artifacts used by 4182.
