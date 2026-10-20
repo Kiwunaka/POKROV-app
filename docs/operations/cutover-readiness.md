@@ -1,6 +1,6 @@
 # Client release status
 
-Updated 19 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+Updated 20 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
@@ -37,6 +37,12 @@ passed the existing pinned Dart verifier and both Android/Windows compilers
 offline: Smart Safe has five Direct and 29 VPN rules, Full has no Direct, and
 Selective accepts only the four VPN services. Catalog content does not require
 a new client binary or provider Smart DNS; this does not replace phone QA.
+
+App `a554135e` also needs the next private build: support and account requests
+now share one session refresher, preventing simultaneous use of the same refresh
+token. Analyze, the concurrent-request regression, two existing refresh checks
+and seven support checks passed. Existing 4181 packages and public 1.4.5 do not
+contain this fix; no new package or client release was published.
 
 Both 4181 builders used the shared private override
 `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-urltest-history-0f159bb/runtime-artifacts.json`
