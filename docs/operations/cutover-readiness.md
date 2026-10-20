@@ -26,20 +26,33 @@ The private **1.5.0+4181** pass separates source, packages and live state:
 | Pushed source | App `d78aefc9` sets 4181 and includes `9ea67187` Windows packaging fixes plus the earlier UI/accessibility changes. Core `0f159bb` publishes immutable URLTest history snapshots and retains the Android inbound-authentication fix. |
 | Android package | [4181 universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4181-android-universal.apk), 244,695,973 bytes, built from App `d78aefc9`; the standard builder passed production signature, version and ABI checks. Packaged armeabi-v7a/arm64-v8a/x86_64 libraries match the selected Core 1.2.14 / `0f159bb` AAR byte for byte. 4181 was installed over 4178 with the test account preserved; 14 real screens were captured on api35gc for the help Atlas. Simple/Advanced navigation, profile, renewal, support, diagnostics, code entry, theme and notifications were opened. No VPN or checkout was started; phone acceptance is not claimed. The emulator is off again. |
 | Windows package | [4181 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4181-setup.exe), 28,875,484 bytes, built from App `d78aefc9` with the ready Core 1.2.14 / `0f159bb` DLL and matching Cronet. Runtime binding, built-runtime equality and executable-version checks passed before installer packaging. The normal installer completed in the Clean VM and retained the existing login. Core 1.2.14 initialized; one ordinary UI connection to the selected Iceland location reached running with native egress and DNS validated. Ordinary Stop restored the baseline DNS/routes (11 routes), no active TUN and proxy off; staging was removed and the VM is PoweredOff/Unlocked. This was a focused new-runtime smoke, not a repeat of the transport matrix. |
-| Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor and explicit Xray-only activity labels are also live. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4181 device acceptance. |
+| Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor is live; since 20 October, activity covers Xray/AWG/HY2 on all six exits with each source's start date and freshness shown. Historical native traffic is not reconstructed. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4181 device acceptance. |
+
+Private Android **1.5.0+4182** from App `175cbc86` now also includes `a554135e`
+and `54ee4391`, using the existing Core `0f159bb` / 1.2.14 AAR without rebuilding
+Core. The standard builder verified production signing, package/version,
+non-debuggable manifests and ABI sets for universal, arm64-v8a, armeabi-v7a and
+x86_64 APKs; their embedded Core libraries match the selected AAR byte for byte.
+The [universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4182-android-universal.apk)
+is 244,712,357 bytes; no 4182 phone/emulator installation or publication occurred.
 
 Post-4181 source change: App `54ee4391` refreshes the open Rewards screen after
 calendar check-in. Its focused widget test and app_shell analyze passed; the
 existing 4181 packages do not contain it. Private Windows **1.5.0+4182** from
-App `4061020a` includes it and the session fix below; Android remains at the
-4181 package. The standard Windows builder passed Core binding, built-runtime
+App `4061020a` includes it and the session fix below.
+The standard Windows builder passed Core binding, built-runtime
 equality, required-file and PE version checks using the same Core override.
 The [unsigned setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4182-setup.exe)
 is 28,878,766 bytes; 4182 installation/device smoke has not been performed.
 On 20 October the owner authorized sending this private installer to the
-customer in support case 89. Telegram delivery and the case record are confirmed;
-installation and a successful Windows connection on that customer's PC await
-their reply. The account's earlier connection events do not accept
+customer in support case 89. Case 90 then reported Inno's
+`Cannot respawn self, not named .exe`: its startup check rejects a filename
+without the `.exe` extension. The original package has the correct extension;
+the customer's local filename is not known. The same installer bytes were sent
+in a ZIP containing `POKROV-Setup.exe`, with extraction and upgrade instructions.
+Telegram delivery and the case record are confirmed; installation and a
+successful Windows connection on that customer's PC await their reply.
+The account's earlier connection events do not accept
 Windows. Server-only Core `6cc372d` adds HY2 statistics and does not replace
 the client artifacts used by 4182.
 No new client release was published. Separately, the actual production catalog27/security2 envelope

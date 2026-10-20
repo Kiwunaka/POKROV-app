@@ -1,10 +1,18 @@
 # Android acceptance
 
-Updated 19 October 2026. Public version remains **1.4.5**; the seven-asset
+Updated 20 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The current private candidate is
-**1.5.0+4181**, built from App `d78aefc9` with Core `0f159bb` / 1.2.14.
-The standard builder passed production signature, version and ABI checks.
-Installation over 4178 preserved the test account; 14 real screens were opened
+**1.5.0+4182**, built from App `175cbc86` with the ready Core `0f159bb` / 1.2.14.
+It includes the shared support/account session refresh and Rewards check-in fixes.
+The standard builder verified production signing, package/version, non-debuggable
+manifests and ABI sets for the universal and three architecture APKs. Packaged
+Core libraries match the selected AAR byte for byte.
+The [universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4182-android-universal.apk)
+is 244,712,357 bytes. No 4182 installation, phone/emulator check or publication
+was performed.
+
+The preceding **1.5.0+4181**, built from App `d78aefc9` with the same Core,
+installed over 4178 and preserved the test account; 14 real screens were opened
 and captured on api35gc for the help Atlas. No VPN or checkout was started,
 and the emulator is off. Physical-phone acceptance of 4181 is still open;
 the screen walkthrough does not establish VPN or load-aware route behavior.
