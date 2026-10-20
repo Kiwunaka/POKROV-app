@@ -480,7 +480,12 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
         ? bootstrapper as AppFirstReleaseHealthService
         : null;
     _supportTicketService = widget.supportTicketService ??
-        AppFirstSupportTicketService(apiBaseUrl: widget.appContext.apiBaseUrl);
+        AppFirstSupportTicketService(
+          bootstrapper: bootstrapper is AppFirstRuntimeBootstrapper
+              ? bootstrapper
+              : null,
+          apiBaseUrl: widget.appContext.apiBaseUrl,
+        );
     _ownsSupportModeController = widget.supportModeController == null;
     _supportModeController = widget.supportModeController ??
         PokrovSupportModeController(

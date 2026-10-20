@@ -2786,6 +2786,103 @@ void main() {
         [trialInstallId, trialInstallId]);
   });
 
+  test('support and account requests share one session refresh', () async {
+    final httpOverrides = HttpOverrides.current;
+    HttpOverrides.global = null;
+    addTearDown(() => HttpOverrides.global = httpOverrides);
+    final directory = await Directory.systemTemp.createTemp(
+      'pokrov-support-account-refresh-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    const platform = HostPlatform.windows;
+    const installId = 'shared-refresh-install';
+    final stateFile = File(
+      '${directory.path}${Platform.pathSeparator}app-first-session-windows.json',
+    );
+    await stateFile.writeAsString(jsonEncode({
+      'schema_version': 1,
+      'install_id': installId,
+      'account_id': 'shared-refresh-account',
+      'session_token_storage': 'secure',
+      'managed_manifest_path': '/api/client/profile/managed',
+    }));
+    final secrets = MemoryAppFirstSessionSecretStore();
+    await secrets.writeSessionPair(
+      hostPlatform: platform,
+      installId: installId,
+      pair: const AppFirstSessionCredentials(
+        accessToken: 'expired-access', refreshToken: 'refresh-one'),
+    );
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bothDenied = Completer<void>();
+    final refreshStarted = Completer<void>();
+    final releaseRefresh = Completer<void>();
+    var denied = 0;
+    var refreshes = 0;
+    final authorizedPaths = <String>[];
+    addTearDown(() async {
+      if (!releaseRefresh.isCompleted) releaseRefresh.complete();
+      await server.close(force: true);
+    });
+    server.listen((request) async {
+      final body = await utf8.decoder.bind(request).join();
+      final path = request.uri.path;
+      request.response.headers.contentType = ContentType.json;
+      if (path == '/api/client/session/refresh') {
+        refreshes += 1;
+        expect(jsonDecode(body), {'refresh_token': 'refresh-one'});
+        if (!refreshStarted.isCompleted) refreshStarted.complete();
+        await releaseRefresh.future;
+        request.response.write(jsonEncode({
+          'session': {
+            'access_token': 'fresh-access',
+            'refresh_token': 'refresh-two',
+            'account_id': 'shared-refresh-account',
+          },
+        }));
+      } else if (request.headers.value(HttpHeaders.authorizationHeader) ==
+          'Bearer expired-access') {
+        denied += 1;
+        if (denied == 2) bothDenied.complete();
+        await bothDenied.future;
+        request.response
+          ..statusCode = HttpStatus.unauthorized
+          ..write('{"detail":"expired"}');
+      } else {
+        expect(request.headers.value(HttpHeaders.authorizationHeader),
+            'Bearer fresh-access');
+        authorizedPaths.add(path);
+        request.response.write(path == '/api/client/subscription'
+            ? '{"lane":"paid"}'
+            : '{"tickets":[{"id":88,"status":"open"}]}');
+      }
+      await request.response.close();
+    });
+    final bootstrapper = AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}/',
+      supportDirectoryResolver: () async => directory,
+      sessionSecretStore: secrets,
+      maxRequestAttempts: 1,
+    );
+    final support = AppFirstSupportTicketService(bootstrapper: bootstrapper);
+    final subscription = bootstrapper.fetchClientSubscription(
+      hostPlatform: platform,
+    );
+    final tickets = support.listTickets(hostPlatform: platform);
+    await refreshStarted.future;
+    await pumpEventQueue();
+    expect(refreshes, 1);
+    releaseRefresh.complete();
+    expect((await subscription).lane, 'paid');
+    expect((await tickets).single.id, 88);
+    expect(authorizedPaths,
+        unorderedEquals(['/api/client/subscription', '/api/tickets']));
+    expect(refreshes, 1);
+    expect((await secrets.readSessionPair(
+      hostPlatform: platform, installId: installId,
+    ))?.refreshToken, 'refresh-two');
+  });
+
   test('preserves account when concurrent refresh completes during profile denial',
       () async {
     final httpOverrides = HttpOverrides.current;

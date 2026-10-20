@@ -11377,6 +11377,7 @@ Map<String, String> _compiledSupportSigningKeys() {
 class AppFirstSupportTicketService
     implements SupportTicketService, SupportBundleTransferService {
   AppFirstSupportTicketService({
+    AppFirstRuntimeBootstrapper? bootstrapper,
     String apiBaseUrl = 'https://app.pokrov.space',
     Future<Directory> Function()? supportDirectoryResolver,
     HttpClient Function()? httpClientFactory,
@@ -11399,7 +11400,7 @@ class AppFirstSupportTicketService
         _supportKeySetCache = _SupportBundleSignedKeySetCache(
           supportDirectoryResolver ?? getApplicationSupportDirectory,
         ),
-        _bootstrapper = AppFirstRuntimeBootstrapper(
+        _bootstrapper = bootstrapper ?? AppFirstRuntimeBootstrapper(
           apiBaseUrl: apiBaseUrl,
           supportDirectoryResolver: supportDirectoryResolver,
           httpClientFactory: httpClientFactory,
