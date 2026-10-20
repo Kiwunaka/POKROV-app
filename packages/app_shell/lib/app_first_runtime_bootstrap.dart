@@ -789,6 +789,7 @@ abstract interface class AppFirstExperienceService {
     String accessNetworkAsn = '',
     List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
+    RuntimeEgressProbeObservation? egressProbeObservation,
     void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
   });
 
@@ -4411,6 +4412,7 @@ class AppFirstRuntimeBootstrapper
     String accessNetworkAsn = '',
     List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
+    RuntimeEgressProbeObservation? egressProbeObservation,
     void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
   }) async {
     final occurredAt = DateTime.now().toUtc();
@@ -4509,8 +4511,10 @@ class AppFirstRuntimeBootstrapper
     }
     final deviceModel = phase == 'app_opened'
         ? await _deviceModel(hostPlatform) : null;
-    final egressObservation = connectivitySnapshot?.lastFailureKind == safeFailureKind
-        ? connectivitySnapshot?.egressProbeObservation : null;
+    final egressObservation = phase == 'failed' && safeFailureKind.startsWith('core_egress_') &&
+        egressProbeObservation != null ? egressProbeObservation
+        : connectivitySnapshot?.lastFailureKind == safeFailureKind
+            ? connectivitySnapshot?.egressProbeObservation : null;
     final body = <String, Object?>{
         'runtime_phase': phase.length <= 32 ? phase : phase.substring(0, 32),
         'connected': connected,

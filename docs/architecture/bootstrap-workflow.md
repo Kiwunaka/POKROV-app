@@ -34,6 +34,11 @@ Diagnostics also distinguishes the current attempt's matched native negative
 receipt from a PlatformException. Native receipts expose only the already
 validated phase and module/profile/cleanup booleans; other failures do not gain
 native fields. A new attempt clears this in-memory summary.
+Windows negative Connect receipts also retain the existing bounded egress
+observation before cleanup. Dart validates its closed fields and forwards it
+with `failure_operation=core_connect` in the terminal report, even after Stop
+clears the live snapshot. Legacy receipts without that observation still work;
+raw native messages and identity values are not included.
 Android automatic candidate recovery retains the triggering snapshot's existing
 closed failure kind in that same summary before handoff replaces the snapshot.
 Diagnostics labels it as the cause of the last recovery, independently of current

@@ -281,6 +281,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
     String candidateRef = '', String candidateVariant = '',
     String accessNetworkAsn = '', List<Map<String, Object?>> candidateProbes = const [],
     RuntimeSnapshot? connectivitySnapshot,
+    RuntimeEgressProbeObservation? egressProbeObservation,
     void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
   }) async {
     final sequence = ++reportSequence;
@@ -290,6 +291,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
       'failure_kind': failureKind, 'connectivity': runtimeConnectivityReport(connectivitySnapshot),
       'failure_operation': failureOperation,
       'failure_http_status': failureHttpStatus,
+      'egress_probe': egressProbeObservation,
       'native_kind': connectivitySnapshot?.lastFailureKind,
       'candidate_ref': candidateRef, 'candidate_variant': candidateVariant,
       'selected_node_code': selectedNodeCode});
@@ -403,7 +405,8 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
     bool? retryable, String networkClass = '', String carrierMccMnc = '', String carrierName = '',
     String candidateTransport = '', String candidateRef = '', String candidateVariant = '',
     String accessNetworkAsn = '', List<Map<String, Object?>> candidateProbes = const [],
-    RuntimeSnapshot? connectivitySnapshot, void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
+    RuntimeSnapshot? connectivitySnapshot, RuntimeEgressProbeObservation? egressProbeObservation,
+    void Function(RuntimeStatsDeliveryReceipt)? onDeliveryReceipt,
   }) async => true;
 }
 
@@ -958,8 +961,10 @@ void main() {
       if (call.method == 'runtimeEngine.connectWithCoreIdentity') {
         throw PlatformException(code: 'core_identity_connect_failed', message: 'private-native-message',
           details: {'schema': 1, 'requestId': args['requestId'], 'operation': 'core_connect',
-            'nativePhase': 'config_staged', 'failureKind': 'operation_cancelled',
-            'moduleMatches': true, 'profileMatches': true});
+            'nativePhase': 'config_staged', 'failureKind': 'core_egress_probe_failed',
+            'moduleMatches': true, 'profileMatches': true,
+            'egressProbeObservation': {'stage': 'response', 'outcome': 'timeout',
+              'error_domain': 'winhttp', 'error_code': 12002, 'elapsed_ms': 6000}});
       }
       if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
         return {'schema': 1, 'requestId': args['requestId'], 'settled': true};
@@ -984,10 +989,18 @@ void main() {
     });
     expect(nativeFailure, isNotNull);
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)..connectFailure = nativeFailure;
-    final manager = _manager(runtime, _StatsBootstrapper(),
+    final bootstrapper = _StatsBootstrapper();
+    final manager = _manager(runtime, bootstrapper,
       authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     try {
       await tester.runAsync(manager.connect);
+      final terminal = bootstrapper.actualReports.singleWhere(
+        (report) => report['runtime_phase'] == 'failed');
+      expect(terminal['failure_operation'], 'core_connect');
+      expect(terminal['failure_kind'], 'core_egress_probe_failed');
+      expect(terminal['egress_probe'], nativeFailure!.egressProbeObservation);
+      expect(nativeFailure!.egressProbeObservation?.errorCode, 12002);
+      expect(terminal.toString(), isNot(contains('private-native-message')));
       PokrovDiagnosticsReport report() => PokrovDiagnosticsPresenter.fromRuntime(
         hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
         snapshot: manager.snapshot, statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
@@ -1020,6 +1033,8 @@ void main() {
       });
       runtime.connectFailure = PlatformException(code: 'operation_cancelled', message: 'private-platform-message');
       await tester.runAsync(manager.connect);
+      expect(bootstrapper.actualReports.lastWhere(
+        (report) => report['runtime_phase'] == 'failed')['egress_probe'], isNull);
       expect(clearedAtStart, isTrue);
       expect(manager.connectionFailureDiagnostic?.nativeFailure, isNull);
       await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));

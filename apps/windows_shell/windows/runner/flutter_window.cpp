@@ -233,6 +233,30 @@ std::string DartRuntimePhase(const std::string& phase) {
   return "artifactMissing";
 }
 
+flutter::EncodableValue EgressProbeObservationValue(
+    const pokrov::service::EgressProbeObservation& observation) {
+  flutter::EncodableMap values{
+    {flutter::EncodableValue("stage"), flutter::EncodableValue(pokrov::service::EgressProbeStageName(observation.stage))},
+    {flutter::EncodableValue("outcome"), flutter::EncodableValue(pokrov::service::EgressProbeOutcomeName(observation.outcome))},
+    {flutter::EncodableValue("error_domain"), flutter::EncodableValue(pokrov::service::EgressProbeErrorDomainName(observation.error_domain))},
+    {flutter::EncodableValue("error_code"), flutter::EncodableValue(static_cast<std::int64_t>(observation.error_code))},
+    {flutter::EncodableValue("elapsed_ms"), flutter::EncodableValue(static_cast<std::int64_t>(observation.elapsed_ms))},
+    {flutter::EncodableValue("http_local_is_tun"), observation.http_local_is_tun
+        ? flutter::EncodableValue(*observation.http_local_is_tun) : flutter::EncodableValue()},
+  };
+  if (observation.target) {
+    values[flutter::EncodableValue("target")] =
+        flutter::EncodableValue(pokrov::service::EgressProbeTargetName(*observation.target));
+    values[flutter::EncodableValue("owner_remaining_ms_at_entry")] =
+        observation.owner_remaining_ms_at_entry
+            ? flutter::EncodableValue(static_cast<std::int64_t>(*observation.owner_remaining_ms_at_entry))
+            : flutter::EncodableValue();
+    values[flutter::EncodableValue("dns_a_accepted")] = observation.dns_a_accepted
+        ? flutter::EncodableValue(*observation.dns_a_accepted) : flutter::EncodableValue();
+  }
+  return flutter::EncodableValue(values);
+}
+
 flutter::EncodableValue RuntimeSnapshotValue(
     pokrov::service::ServiceRuntimeSnapshot snapshot,
     const std::string& expected_profile_digest = "") {
@@ -339,27 +363,8 @@ flutter::EncodableValue RuntimeSnapshotValue(
     values[flutter::EncodableValue("lastFailureKind")] =
         flutter::EncodableValue(snapshot.failure);
     if (snapshot.egress_failure_observation && snapshot.failure.rfind("core_egress_", 0) == 0) {
-      const auto& observation = *snapshot.egress_failure_observation;
-      flutter::EncodableMap probe_values{
-        {flutter::EncodableValue("stage"), flutter::EncodableValue(pokrov::service::EgressProbeStageName(observation.stage))},
-        {flutter::EncodableValue("outcome"), flutter::EncodableValue(pokrov::service::EgressProbeOutcomeName(observation.outcome))},
-        {flutter::EncodableValue("error_domain"), flutter::EncodableValue(pokrov::service::EgressProbeErrorDomainName(observation.error_domain))},
-        {flutter::EncodableValue("error_code"), flutter::EncodableValue(static_cast<std::int64_t>(observation.error_code))},
-        {flutter::EncodableValue("elapsed_ms"), flutter::EncodableValue(static_cast<std::int64_t>(observation.elapsed_ms))},
-        {flutter::EncodableValue("http_local_is_tun"), observation.http_local_is_tun
-            ? flutter::EncodableValue(*observation.http_local_is_tun) : flutter::EncodableValue()},
-      };
-      if (observation.target) {
-        probe_values[flutter::EncodableValue("target")] =
-            flutter::EncodableValue(pokrov::service::EgressProbeTargetName(*observation.target));
-        probe_values[flutter::EncodableValue("owner_remaining_ms_at_entry")] =
-            observation.owner_remaining_ms_at_entry
-                ? flutter::EncodableValue(static_cast<std::int64_t>(*observation.owner_remaining_ms_at_entry))
-                : flutter::EncodableValue();
-        probe_values[flutter::EncodableValue("dns_a_accepted")] = observation.dns_a_accepted
-            ? flutter::EncodableValue(*observation.dns_a_accepted) : flutter::EncodableValue();
-      }
-      values[flutter::EncodableValue("egressProbeObservation")] = flutter::EncodableValue(probe_values);
+      values[flutter::EncodableValue("egressProbeObservation")] =
+          EgressProbeObservationValue(*snapshot.egress_failure_observation);
     }
   } else if (uplink == false) {
     values[flutter::EncodableValue("lastFailureKind")] =
@@ -1090,8 +1095,7 @@ bool FlutterWindow::OnCreate() {
                   // Preserve only the closed negative receipt before exact
                   // cancellation can replace the service's primary failure.
                   // Service parsing already allowlists phase/failure tokens.
-                  reply->Error("core_identity_connect_failed", "Service did not acknowledge this connection.",
-                      flutter::EncodableValue(flutter::EncodableMap{
+                  flutter::EncodableMap failure_details{
                           {flutter::EncodableValue("schema"), flutter::EncodableValue(1)},
                           {flutter::EncodableValue("requestId"), flutter::EncodableValue(id)},
                           {flutter::EncodableValue("operation"), flutter::EncodableValue("core_connect")},
@@ -1104,7 +1108,18 @@ bool FlutterWindow::OnCreate() {
                           {flutter::EncodableValue("profileMatches"), flutter::EncodableValue(
                               snapshot.staged_profile_digest == target.profile_digest ||
                               snapshot.effective_profile_digest == target.profile_digest)},
-                      }));
+                  };
+                  if (snapshot.trusted && snapshot.compatible &&
+                      snapshot.core_module_sha256 == target.core_module_sha256 &&
+                      (snapshot.staged_profile_digest == target.profile_digest ||
+                       snapshot.effective_profile_digest == target.profile_digest) &&
+                      snapshot.failure.rfind("core_egress_", 0) == 0 &&
+                      snapshot.egress_failure_observation) {
+                    failure_details[flutter::EncodableValue("egressProbeObservation")] =
+                        EgressProbeObservationValue(*snapshot.egress_failure_observation);
+                  }
+                  reply->Error("core_identity_connect_failed", "Service did not acknowledge this connection.",
+                      flutter::EncodableValue(failure_details));
                   return;
                 }
                 reply->Success(flutter::EncodableValue(flutter::EncodableMap{

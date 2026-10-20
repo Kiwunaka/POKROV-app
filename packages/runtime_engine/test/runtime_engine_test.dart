@@ -859,6 +859,10 @@ void main() {
     String? requestId;
     var stopConfirmed = false;
     var stops = 0;
+    var observationWire = <String, Object?>{
+      'stage': 'response', 'outcome': 'timeout', 'error_domain': 'winhttp',
+      'error_code': 12002, 'elapsed_ms': 6000,
+    };
     messenger.setMockMethodCallHandler(channel, (call) async {
       final args = call.arguments as Map? ?? {};
       if (call.method == 'runtimeEngine.snapshot') {
@@ -871,12 +875,15 @@ void main() {
         requestId = args['requestId'] as String;
         throw PlatformException(code: 'core_identity_connect_failed', message: _sensitiveRuntimeDetail,
           details: {'schema': 1, 'requestId': requestId, 'operation': 'core_connect',
-            'nativePhase': 'config_staged', 'failureKind': 'network_context_unavailable',
-            'moduleMatches': true, 'profileMatches': true});
+            'nativePhase': 'config_staged', 'failureKind': 'core_egress_probe_failed',
+            'moduleMatches': true, 'profileMatches': true,
+            if (observationWire.isNotEmpty)
+              'egressProbeObservation': Map<String, Object?>.of(observationWire)});
       }
       if (call.method == 'runtimeEngine.cancelAndConfirmConnectStopped') {
         expect(args['requestId'], requestId);
         stops++;
+        observationWire = {};
         return {'schema': 1, 'requestId': requestId, 'settled': stopConfirmed};
       }
       throw StateError('unexpected_test_runtime_call');
@@ -925,11 +932,14 @@ void main() {
       expect((engine as RuntimeConnectCancellation).activeConnectRequestId, requestId,
         reason: 'unconfirmed cleanup must retain the exact owner');
       expect(failure, isA<RuntimeBoundConnectFailure>()
-        .having((value) => value.failureKind, 'primary cause', 'network_context_unavailable')
+        .having((value) => value.failureKind, 'primary cause', 'core_egress_probe_failed')
         .having((value) => value.nativePhase, 'native phase', 'config_staged')
         .having((value) => value.moduleMatches && value.profileMatches, 'identity matched', isTrue)
-        .having((value) => value.cleanupConfirmed, 'cleanup', isFalse));
-      expect(failure.toString(), contains('network_context_unavailable'));
+        .having((value) => value.cleanupConfirmed, 'cleanup', isFalse)
+        .having((value) => value.egressProbeObservation?.errorCode, 'pre-stop error', 12002)
+        .having((value) => value.egressProbeObservation?.elapsedMs, 'pre-stop duration', 6000));
+      expect(observationWire, isEmpty, reason: 'cleanup cleared the native observation');
+      expect(failure.toString(), contains('core_egress_probe_failed'));
       expect(failure.toString(), contains('core_identity_connect_cancel_unconfirmed'));
       _expectNoSensitiveRuntimeDetail(failure.toString());
     } finally {
@@ -938,6 +948,25 @@ void main() {
         expect(await (engine as RuntimeConnectSettlement).cancelAndConfirmConnectStopped(requestId!), isTrue);
       }
     }
+    await expectLater((engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+      expectedCoreModuleSha256: core, expectedProfileDigest: profile,
+      expectedNetworkContextRef: 'network_0123456789abcdef0123456789abcdef',
+      budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+        {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+      budget: const Duration(seconds: 18), onRequestCreated: (_) {}),
+      throwsA(isA<RuntimeBoundConnectFailure>().having(
+        (value) => value.egressProbeObservation, 'legacy optional observation', isNull)));
+    observationWire = {'stage': 'response', 'outcome': 'timeout', 'error_domain': 'winhttp',
+      'error_code': 12002, 'elapsed_ms': 6000, 'raw_message': _sensitiveRuntimeDetail};
+    await expectLater((engine as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+      expectedCoreModuleSha256: core, expectedProfileDigest: profile,
+      expectedNetworkContextRef: 'network_0123456789abcdef0123456789abcdef',
+      budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+        {'schema': 1, 'boot_ref': boot, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+      budget: const Duration(seconds: 18), onRequestCreated: (_) {}),
+      throwsA(isA<PlatformException>()),
+      reason: 'unknown observation fields must not enter the closed negative receipt');
+    expect(stops, 4, reason: 'legacy and invalid diagnostics still settle the dispatched owner');
   });
 
   test('windows profile mismatch remains unprotected with explicit recovery',

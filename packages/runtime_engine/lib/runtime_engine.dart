@@ -1589,18 +1589,21 @@ abstract interface class RuntimeConnectProgress {
 /// Closed negative acknowledgement captured before stopping the exact owner.
 class RuntimeBoundConnectFailure implements Exception {
   const RuntimeBoundConnectFailure._(this.failureKind, this.nativePhase,
-    this.moduleMatches, this.profileMatches, this.cleanupConfirmed);
+    this.moduleMatches, this.profileMatches, this.cleanupConfirmed, this.egressProbeObservation);
   final String failureKind;
   final String nativePhase;
   final bool moduleMatches;
   final bool profileMatches;
   final bool? cleanupConfirmed;
+  final RuntimeEgressProbeObservation? egressProbeObservation;
   String get operation => 'core_connect';
 
   static RuntimeBoundConnectFailure? _fromAck(Object error, String requestId, bool current) {
     if (!current || error is! PlatformException || error.code != 'core_identity_connect_failed') return null;
     final details = error.details;
-    if (details is! Map || details.length != 7 || details['schema'] is! int || details['schema'] != 1 ||
+    if (details is! Map ||
+        details.length != (details.containsKey('egressProbeObservation') ? 8 : 7) ||
+        details['schema'] is! int || details['schema'] != 1 ||
         details['requestId'] != requestId || details['operation'] != 'core_connect' ||
         !const {'artifact_missing', 'artifact_ready', 'connecting', 'busy', 'initialized',
           'config_staged', 'running', 'recovery_required'}.contains(details['nativePhase']) ||
@@ -1608,8 +1611,12 @@ class RuntimeBoundConnectFailure implements Exception {
         !_nativeFailureKinds.contains(details['failureKind'])) return null;
     final moduleMatches = details['moduleMatches'] as bool;
     final profileMatches = details['profileMatches'] as bool;
+    final observation = runtimeEgressProbeObservationFromWire(details['egressProbeObservation']);
+    if (details.containsKey('egressProbeObservation') &&
+        (observation == null || !moduleMatches || !profileMatches ||
+         !(details['failureKind'] as String).startsWith('core_egress_'))) return null;
     return RuntimeBoundConnectFailure._(moduleMatches && profileMatches ? details['failureKind'] as String : 'runtime_failure',
-      details['nativePhase'] as String, moduleMatches, profileMatches, null);
+      details['nativePhase'] as String, moduleMatches, profileMatches, null, observation);
   }
 
   // Existing Windows service_client IsKnownFailure categories; no upstream text.
@@ -1630,7 +1637,7 @@ class RuntimeBoundConnectFailure implements Exception {
   };
 
   RuntimeBoundConnectFailure _settled(bool confirmed) =>
-    RuntimeBoundConnectFailure._(failureKind, nativePhase, moduleMatches, profileMatches, confirmed);
+    RuntimeBoundConnectFailure._(failureKind, nativePhase, moduleMatches, profileMatches, confirmed, egressProbeObservation);
 
   @override
   String toString() => '$operation: $failureKind; phase=$nativePhase; module=$moduleMatches; profile=$profileMatches'

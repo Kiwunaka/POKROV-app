@@ -1077,9 +1077,11 @@ void main() {
         elapsedMs: 1438, target: 'owned_reserve', ownerRemainingMsAtEntry: 1425, dnsAAccepted: true, httpLocalIsTun: false));
     expect(await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
         runtimePhase: 'failed', connected: false, attemptNumber: 2, candidateProbes: [probe],
-        connectivitySnapshot: egressSnapshot), isFalse);
+        failureKind: 'core_egress_timeout', failureOperation: 'core_connect',
+        egressProbeObservation: egressSnapshot.egressProbeObservation), isFalse);
     expect(pending(), hasLength(1));
     final frozenBody = Map<String, dynamic>.from(pending().single['body'] as Map);
+    expect(frozenBody['failure_operation'], 'core_connect');
     expect((frozenBody['candidate_probes'] as List).single['awg'], awg);
     expect(frozenBody['egress_probe'], {'stage': 'tls', 'outcome': 'deadline', 'error_domain': 'none',
       'error_code': 0, 'elapsed_ms': 1438, 'target': 'owned_reserve',
