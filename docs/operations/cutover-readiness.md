@@ -36,6 +36,12 @@ App `4061020a` includes it and the session fix below; Android remains at the
 equality, required-file and PE version checks using the same Core override.
 The [unsigned setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4182-setup.exe)
 is 28,878,766 bytes; 4182 installation/device smoke has not been performed.
+On 20 October the owner authorized sending this private installer to the
+customer in support case 89. Telegram delivery and the case record are confirmed;
+installation and a successful Windows connection on that customer's PC await
+their reply. The account's earlier connection events do not accept
+Windows. Server-only Core `6cc372d` adds HY2 statistics and does not replace
+the client artifacts used by 4182.
 No new client release was published. Separately, the actual production catalog27/security2 envelope
 passed the existing pinned Dart verifier and both Android/Windows compilers
 offline: Smart Safe has five Direct and 29 VPN rules, Full has no Direct, and
