@@ -160,7 +160,8 @@ class VerifiedSmartAccessProviderPolicy {
 
 class VerifiedSmartAccessLease {
   const VerifiedSmartAccessLease._(this.envelope, this.grant, this.lease,
-    this.issuedAt, this.newFlowsUntil, this.activeFlowsUntil, this.runtimeScopeSha256);
+    this.issuedAt, this.newFlowsUntil, this.activeFlowsUntil, this.runtimeScopeSha256,
+    this.externalECHOuterSNI);
   final Map<String, Object?> envelope;
   final Map<String, Object?> grant;
   final Map<String, Object?> lease;
@@ -168,6 +169,7 @@ class VerifiedSmartAccessLease {
   final DateTime newFlowsUntil;
   final DateTime activeFlowsUntil;
   final String runtimeScopeSha256;
+  final bool externalECHOuterSNI;
   bool admitsNewFlows(DateTime now) => !now.toUtc().isBefore(issuedAt) && now.toUtc().isBefore(newFlowsUntil);
 
   /// Non-secret recovery projection. The signed envelope stays memory-only.
@@ -183,7 +185,8 @@ class VerifiedSmartAccessLease {
   /// Both objects must come from signature verification. Revisions may advance,
   /// but renewal cannot change the configuration of the already running graph.
   bool hasSameRuntimeScope(VerifiedSmartAccessLease previous) {
-    if (runtimeScopeSha256 != previous.runtimeScopeSha256) return false;
+    if (runtimeScopeSha256 != previous.runtimeScopeSha256 ||
+        externalECHOuterSNI != previous.externalECHOuterSNI) return false;
     for (final field in const ['provider_revision', 'permission_revision',
       'provider_policy_revision', 'provider_security_revision', 'catalog_revision',
       'catalog_security_revision']) {
@@ -695,7 +698,12 @@ class SmartAccessVerifier {
         throw const RoutingCatalogFailure('smart_access_service_not_eligible');
       }
       final scopeSha256 = await _smartAccessRuntimeScopeSha256(grant, lease);
-      return VerifiedSmartAccessLease._(envelope, grant, lease, issued, newUntil, activeUntil, scopeSha256);
+      // The non-QA branch above already requires the signed catalog's approved
+      // gateway and exact provider capability. This never authenticates ECH's inner SNI.
+      final externalECHOuterSNI = qaScope == null && provider['kind'] == 'external' &&
+          domains.every((domain) => (domain as Map)['match'] == 'exact');
+      return VerifiedSmartAccessLease._(envelope, grant, lease, issued, newUntil, activeUntil,
+          scopeSha256, externalECHOuterSNI);
     } on RoutingCatalogFailure { rethrow; }
       on Object { throw const RoutingCatalogFailure('smart_access_verification_failed'); }
   }

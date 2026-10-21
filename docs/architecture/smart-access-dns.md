@@ -124,7 +124,15 @@ extra query types or a different strategy do not authorize a Smart probe.
 
 The TCP rule remains IPv4 TCP/443 with the signed exact-domain/suffix scope.
 DNS handling grants no IPv6 TCP or QUIC access and does not change the client or
-server ECH guards. Catalog and lease expiry, declared VPN fallback, the untimed
+server's owned-provider ECH guard. For a host-verified external provider, an
+approved catalog gateway and an all-exact lease domain set, App projects
+`external_ech_outer_sni: true`. Core checks the visible outer SNI against those
+exact domains and forwards the ClientHello unchanged; it does not authenticate
+an encrypted inner identity or claim to distinguish ECH from GREASE. Owned, QA
+and suffix scopes keep the existing rejection. Foreground renewal compares the
+derived mode; server publication makes provider kind immutable for an existing
+provider ID, which is already part of the unchanged runtime scope hash.
+Catalog and lease expiry, declared VPN fallback, the untimed
 domain rejection, disabled DNS cache and TTL zero retain their existing roles.
 The finite first-provider QA permit remains nonrenewable. A native A/TLS probe
 does not prove a browser feature request.

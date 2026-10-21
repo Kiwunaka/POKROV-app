@@ -96,8 +96,11 @@ class SmartAccessLeaseRenewal {
       throw const RoutingCatalogFailure('smart_access_renewal_binding_missing');
     }
     final previous = matches.single;
+    final verifiedPrevious = binding.verifiedGrants
+        .where((grant) => grant.lease['lease_id'] == previousLeaseId).firstOrNull;
     if (next.lease['lease_id'] == previousLeaseId || binding.leases.any((stored) => stored.leaseId == next.lease['lease_id']) ||
         !previous.acceptsRenewalScope(next) || !next.admitsNewFlows(now) ||
+        (verifiedPrevious != null && !next.hasSameRuntimeScope(verifiedPrevious)) ||
         now.toUtc().isBefore(binding.catalogIssuedAt!) || !now.toUtc().isBefore(binding.catalogExpiresAt!) ||
         next.issuedAt.isBefore(previous.issuedAt) || !next.newFlowsUntil.isAfter(previous.newFlowsUntil) ||
         next.newFlowsUntil.isAfter(binding.catalogExpiresAt!)) {
@@ -444,6 +447,7 @@ Map<String, Object?> smartAccessNativeOutbound(VerifiedSmartAccessLease grant) {
     'lease_id': lease['lease_id'], 'issued_at': lease['issued_at'],
     'new_flows_until': lease['new_flows_until'], 'active_flows_until': lease['active_flows_until'],
     'relay_addresses': relays, 'domains': lease['domains'],
+    if (grant.externalECHOuterSNI) 'external_ech_outer_sni': true,
     'relay_connect_policy': lease['relay_connect_policy'],
     'max_new_connections_per_minute': lease['max_new_connections_per_minute'],
     'max_concurrent_connections': lease['max_concurrent_connections'],

@@ -13,6 +13,7 @@ import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
 import 'package:pokrov_app_ui/pokrov_app_ui.dart' as ui;
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/routing_catalog_policy.dart';
+import 'package:pokrov_app_shell/smart_access_profile.dart';
 import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
 import 'package:pokrov_app_shell/src/features/rules/smart_access_policy_store.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
@@ -651,6 +652,10 @@ void main() {
         .singleWhere((server) => server['tag'] == 'pokrov-smart-access-dns-$leaseId');
     expect(providerDns['domain_resolver'], {'server': 'dns-direct', 'strategy': 'ipv4_only'},
       reason: 'an IPv4 lease must not wait for AAAA when bootstrapping its DoH hostname');
+    expect((staged!['outbounds'] as List).cast<Map>()
+        .singleWhere((outbound) => outbound['type'] == 'pokrov-smart-access')
+        .containsKey('external_ech_outer_sni'), isFalse,
+      reason: 'owned first-provider QA retains its ECH guard');
     final route = staged!['route'] as Map;
     for (final domainName in domainNames) {
     final domainRules = (route['rules'] as List).cast<Map>().where((row) => (row['domain'] as List?)?.contains(domainName) == true).toList();
@@ -697,6 +702,57 @@ void main() {
     expect(closedContext['proof_current'], isFalse);
     expect(closedContext['fallback_guard_closed'], isTrue);
     final verifier = SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab');
+    if (serviceId == 'gemini') {
+      final publicVerifier = SmartAccessVerifier(providerKeysById: {'qa-test': public},
+          leaseKeysById: {'qa-test': public}, audience: 'lab');
+      Future<VerifiedSmartAccessLease> publicLease(String kind,
+          {bool approved = true, String match = 'exact'}) async {
+        final publicDomains = [{'name': domainNames.single, 'match': match}];
+        final publicCatalogEnvelope = await _qaSigned({
+          ...(catalogEnvelope['payload'] as Map).cast<String, Object?>(),
+          'services': [{...service, 'enabled': true, 'evidence_status': 'verified',
+            'external_gateway_policy': approved ? 'approved' : 'forbidden',
+            'provider_capability_refs': ['$serviceId-qa'],
+            'route_intents': [{'mode': 'selective', 'action': 'approved_gateway'}],
+            'domains': [{...publicDomains.single, 'shared': false, 'role': 'web', 'source_ids': ['qa-source']}]}],
+        }, 'pokrov-routing-catalog-v1', key);
+        final publicCatalog = await catalogVerifier.verify(publicCatalogEnvelope, now: now,
+            minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
+        final publicPolicyEnvelope = await _qaSigned({
+          'schema_version': 'pokrov-smart-access-providers-v1', 'revision': 1,
+          'security_revision': 1, 'audience': 'lab', 'issued_at': start, 'expires_at': end,
+          'permissions': [permission], 'providers': [{...provider, 'kind': kind}],
+          'capabilities': [{...capability, 'enabled': true, 'verification': 'verified',
+            'checks': {for (final name in (capability['checks'] as Map).keys.cast<String>()) name: 'PASS'},
+            'domains': publicDomains}],
+        }, 'pokrov-smart-access-providers-v1', key);
+        final publicPolicy = await publicVerifier.verifyProvider(publicPolicyEnvelope, now: now,
+            minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
+        final originalGrant = ((permitEnvelope!['payload'] as Map)['grant_envelope'] as Map)['payload'] as Map;
+        final publicGrant = await _qaSigned({...originalGrant.cast<String, Object?>(),
+          'lease': {...(originalGrant['lease'] as Map).cast<String, Object?>(),
+            'provider_policy_sha256': publicPolicy.payloadSha256,
+            'catalog_sha256': publicCatalog.payloadSha256, 'domains': publicDomains},
+        }, 'pokrov-smart-access-grant-v1', key);
+        return publicVerifier.verifyLease(publicGrant, request: {...claimRequest!,
+          'catalog_sha256': publicCatalog.payloadSha256, 'provider_policy_sha256': publicPolicy.payloadSha256,
+          'capability_id': '$serviceId-qa', 'platform': 'windows', 'origin': 'current-origin',
+          'family': 'ipv4', 'feature': 'web_request'}, accountId: 'synthetic-qa-account', installId: installId!,
+          catalog: publicCatalog, providerPolicy: publicPolicy, now: DateTime.now().toUtc());
+      }
+      final external = await publicLease('external');
+      final owned = await publicLease('owned');
+      expect(smartAccessNativeOutbound(external)['external_ech_outer_sni'], isTrue);
+      expect(smartAccessNativeOutbound(owned).containsKey('external_ech_outer_sni'), isFalse);
+      expect(external.runtimeScopeSha256, owned.runtimeScopeSha256,
+        reason: 'the existing server/client wire hash remains unchanged');
+      expect(external.hasSameRuntimeScope(owned), isFalse,
+        reason: 'foreground renewal cannot change the verified outer-SNI mode');
+      expect(smartAccessNativeOutbound(await publicLease('external', match: 'suffix'))
+          .containsKey('external_ech_outer_sni'), isFalse);
+      await expectLater(publicLease('external', approved: false),
+        throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'smart_access_service_not_eligible')));
+    }
     if (serviceId == 'chatgpt') {
       for (final changes in <Map<String, Object?>>[
         {'domains': [{'name': 'chatgpt.com', 'match': 'suffix'}]},
