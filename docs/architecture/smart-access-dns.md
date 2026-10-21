@@ -112,12 +112,15 @@ behavior, request deadlines or TLS checks. The observed DNS-AI delay is compatib
 with that wait, but packet QTYPE evidence has not established its cause.
 
 `routing_catalog_materializer.dart` gives each leased service domain a timed DNS
-rule using that lease's owned DoH transport. For an IPv4 lease its exact query
-list is `A`, `AAAA`, `HTTPS`, `SVCB`: the resolver supplies the owned IPv4 relay
-answer for A and NOERROR/NODATA for the other browser queries. These requests
-must reach the same resolver instead of falling through to VPN DNS or reject.
-Windows and Android validate that exact list before selecting a Smart Access
-probe target; extra query types do not authorize it.
+rule using that lease's DoH transport. For an IPv4 lease its exact query list is
+`A`, `AAAA`, `HTTPS`, `SVCB`, with `strategy: ipv4_only`: Core returns local
+NOERROR/NODATA for AAAA rather than advertising the provider's unusable IPv6
+answer. A and service-binding queries keep the same resolver and lease window.
+This fixes the observed DNS-AI AAAA response under an IPv4-only route; it does
+not establish the cause of the separate browser reset over forced IPv4.
+Windows and Android retain the exact query list and accept only `ipv4_only`
+when this optional field is present. Older rules without it remain readable;
+extra query types or a different strategy do not authorize a Smart probe.
 
 The TCP rule remains IPv4 TCP/443 with the signed exact-domain/suffix scope.
 DNS handling grants no IPv6 TCP or QUIC access and does not change the client or

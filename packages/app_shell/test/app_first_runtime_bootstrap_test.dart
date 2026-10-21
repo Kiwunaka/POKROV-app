@@ -663,6 +663,8 @@ void main() {
         .where((row) => (row['domain'] as List?)?.contains(domainName) == true).toList();
     expect(domainDnsRules[0]['query_type'], ['A', 'AAAA', 'HTTPS', 'SVCB'],
       reason: 'browser address and service-binding queries must reach the owned IPv4 resolver');
+    expect(domainDnsRules[0]['strategy'], 'ipv4_only',
+      reason: 'a leased IPv4 service must return AAAA NODATA instead of advertising an unusable IPv6 route');
     expect(domainDnsRules[0]['server'], 'pokrov-smart-access-dns-$leaseId');
     expect(domainDnsRules[0]['pokrov_catalog_window'], domainRules[0]['pokrov_catalog_window']);
     expect(domainDnsRules[0]['disable_cache'], isTrue);

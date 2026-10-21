@@ -936,6 +936,14 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   const auto smart_target = ReadWindowsSmartAccessProbeTarget(smart_profile);
   Expect(smart_target && *smart_target == "pokrov-smart-access-00000000000000000000000000000000",
          "bound service graph did not select its Smart anchor");
+  auto ipv4_dns = smart_profile;
+  ipv4_dns.insert(ipv4_dns.find("\"rewrite_ttl\""), "\"strategy\":\"ipv4_only\",");
+  Expect(ReadWindowsSmartAccessProbeTarget(ipv4_dns) == smart_target,
+         "IPv4-scoped DNS did not preserve its Smart anchor");
+  ipv4_dns.replace(ipv4_dns.find("ipv4_only"), std::string("ipv4_only").size(), "ipv6_only");
+  const auto wrong_family_target = ReadWindowsSmartAccessProbeTarget(ipv4_dns);
+  Expect(wrong_family_target && wrong_family_target->empty(),
+         "incompatible DNS family acquired IPv4 SmartAccess authority");
   auto unsupported_dns = smart_profile;
   const std::string query_types = "\"query_type\":[\"A\",\"AAAA\",\"HTTPS\",\"SVCB\"]";
   unsupported_dns.replace(unsupported_dns.find(query_types), query_types.size(),

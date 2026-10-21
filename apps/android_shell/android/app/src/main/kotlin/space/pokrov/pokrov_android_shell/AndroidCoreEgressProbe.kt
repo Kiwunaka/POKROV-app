@@ -306,7 +306,9 @@ internal object AndroidCoreEgressProbe {
                     "match" to if (domainKey == "domain") "exact" else "suffix"))) continue
             val dnsTag = "pokrov-smart-access-dns-$lease"
             val matchingDns = dnsRules.any { dnsRule ->
-                dnsRule.keys == setOf(domainKey, "query_type", "pokrov_catalog_window", "action", "server", "disable_cache", "rewrite_ttl") &&
+                val dnsKeys = setOf(domainKey, "query_type", "pokrov_catalog_window", "action", "server", "disable_cache", "rewrite_ttl")
+                (dnsRule.keys == dnsKeys ||
+                    (dnsRule.keys == dnsKeys + "strategy" && dnsRule["strategy"] == "ipv4_only")) &&
                     dnsRule[domainKey] == names && dnsRule["query_type"] == listOf("A", "AAAA", "HTTPS", "SVCB") &&
                     dnsRule["pokrov_catalog_window"] == window && dnsRule["action"] == "route" &&
                     dnsRule["server"] == dnsTag && dnsRule["disable_cache"] == true && dnsRule["rewrite_ttl"] == 0

@@ -368,7 +368,9 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
       const auto dns_window = Object(dns_rule.Get(), L"pokrov_catalog_window");
       HString cache_name;
       boolean disabled = false;
-      if (Fields(dns_rule.Get(), 7) && Strings(Array(dns_rule.Get(), key).Get()) == names &&
+      if ((Fields(dns_rule.Get(), 7) ||
+           (Fields(dns_rule.Get(), 8) && String(dns_rule.Get(), L"strategy") == "ipv4_only")) &&
+          Strings(Array(dns_rule.Get(), key).Get()) == names &&
           Strings(Array(dns_rule.Get(), L"query_type").Get()) == std::optional<std::vector<std::string>>{{"A", "AAAA", "HTTPS", "SVCB"}} &&
           Fields(dns_window.Get(), 5) && Strings(Array(dns_window.Get(), L"lease_group").Get()) == group &&
           String(dns_window.Get(), L"lease_id") == lease && String(dns_window.Get(), L"service_id") == String(window.Get(), L"service_id") &&

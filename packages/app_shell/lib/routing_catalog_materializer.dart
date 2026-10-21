@@ -85,10 +85,11 @@ CatalogNativeRuleLayer materializeCatalogRuleLayer({
           'pokrov_catalog_window': leaseWindow, 'action': 'route', 'outbound': tag,
         }));
         dns.add(Map.unmodifiable({
-          // The IPv4 resolver returns NOERROR/NODATA for browser IPv6 and
-          // service-binding queries; they must retain the same owned DNS lane.
+          // Keep browser service-binding queries in the leased DNS lane, but
+          // answer AAAA locally with NODATA when the lease admits only IPv4.
           ...match, 'query_type': ipv4 ? const ['A', 'AAAA', 'HTTPS', 'SVCB'] : const ['AAAA'],
           'pokrov_catalog_window': leaseWindow, 'action': 'route', 'server': smartAccessDnsTag(grant),
+          if (ipv4) 'strategy': 'ipv4_only',
           'disable_cache': true, 'rewrite_ttl': 0,
         }));
       }

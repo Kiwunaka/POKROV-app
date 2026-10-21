@@ -299,6 +299,11 @@ class AndroidCoreEgressProbeTest {
         val target = AndroidCoreEgressProbe.resolveSmartAccessTarget(
             "direct", outbounds, listOf(routeRule), listOf(dnsRule), dnsServers)
         assertEquals(AndroidCoreEgressProbeTarget(tag, AndroidCoreEgressProbeTargetKind.SMART_ACCESS), target)
+        assertEquals(target, AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds, listOf(routeRule),
+            listOf(dnsRule + ("strategy" to "ipv4_only")), dnsServers))
+        assertNull("An incompatible DNS family must not acquire IPv4 SmartAccess authority",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds, listOf(routeRule),
+                listOf(dnsRule + ("strategy" to "ipv6_only")), dnsServers))
         assertNull("Unsupported DNS types must not acquire SmartAccess authority",
             AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds, listOf(routeRule),
                 listOf(dnsRule + ("query_type" to listOf("A", "AAAA", "HTTPS", "SVCB", "TXT"))), dnsServers))
