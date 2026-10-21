@@ -3,6 +3,7 @@
 # MIT; copyright (c) 2018-2019 V2Ray. See LICENSE in this directory.
 # Keep explicit host semantics. Shared Google/CDN roots and the whole .youtube TLD are excluded.
 youtube.com
+full:www.youtube.com
 youtu.be
 yt.be
 youtube-nocookie.com
