@@ -252,6 +252,17 @@ std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObserva
   return result;
 }
 
+void InvalidateWindowsLocalDpiStrategyHint(
+    std::pair<std::string, WindowsLocalDpiStrategy>& hint,
+    const WindowsLocalDpiHolderObservation& observation) {
+  if (observation.state == "failed" ||
+      (!observation.failure_reason.empty() && observation.failure_reason != "none")) {
+    // Keep the strategy ID for the current runtime journal, but stop preferring
+    // it on the next connection. A healthy normal withdrawal preserves success.
+    hint.first.clear();
+  }
+}
+
 
 bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config) {
   JsonApartment apartment;

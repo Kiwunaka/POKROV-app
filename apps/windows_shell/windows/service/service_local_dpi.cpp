@@ -167,7 +167,7 @@ struct WindowsLocalDpiExecutor::State {
   std::vector<WindowsLocalDpiService> prepared_services;
   std::string physical_bind_interface;
   NET_IFINDEX interface_index = 0;
-  WindowsLocalDpiStrategy first_strategy = WindowsLocalDpiStrategy::kFakeMultisplitAlt4;
+  WindowsLocalDpiStrategy first_strategy = WindowsLocalDpiStrategy::kMultidisorderMidsld;
   bool retry_attempted = false;
   bool admission_attempted = false;
 
@@ -250,7 +250,7 @@ WindowsLocalDpiExecutor::~WindowsLocalDpiExecutor() { Stop(); }
 std::array<WindowsLocalDpiStrategy, 2> WindowsLocalDpiStrategyOrder(
     WindowsLocalDpiStrategy preferred) {
   std::array<WindowsLocalDpiStrategy, 2> strategies{
-      WindowsLocalDpiStrategy::kFakeMultisplitAlt4, WindowsLocalDpiStrategy::kMultisplit681};
+      WindowsLocalDpiStrategy::kMultidisorderMidsld, WindowsLocalDpiStrategy::kFakeMultisplitAlt4};
   if (preferred == strategies[1]) std::swap(strategies[0], strategies[1]);
   return strategies;
 }
@@ -268,13 +268,13 @@ std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
   const auto scope = Quote(directory + L"winws.exe") + L" --wf-iface=" + std::to_wstring(interface_index) +
       L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=" +
       std::wstring(hostlist.begin(), hostlist.end()) + L" --ip-id=zero";
-  if (strategy == WindowsLocalDpiStrategy::kFakeMultisplitAlt4) {
-    // Flowseal 1.10.3 ALT4 Google TCP/443 branch; upstream's split position is 2.
-    return scope + L" --dpi-desync=fake,multisplit --dpi-desync-repeats=6"
-        L" --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1000 --dpi-desync-fake-tls=" + pattern;
+  if (strategy == WindowsLocalDpiStrategy::kMultidisorderMidsld) {
+    // Upstream zapret blockcheck TLS candidate; no fake bytes or sequence overlap.
+    return scope + L" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld";
   }
-  return scope + L" --dpi-desync=multisplit --dpi-desync-split-pos=1 --dpi-desync-split-seqovl=681"
-      L" --dpi-desync-split-seqovl-pattern=" + pattern;
+  // Flowseal 1.10.3/1.10.4 ALT4 Google TCP/443 branch; default split position is 2.
+  return scope + L" --dpi-desync=fake,multisplit --dpi-desync-repeats=6"
+      L" --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1000 --dpi-desync-fake-tls=" + pattern;
 }
 
 std::string WindowsLocalDpiHostList(const std::vector<WindowsLocalDpiService>& services) {
@@ -347,7 +347,7 @@ std::string WindowsLocalDpiExecutor::StartPrepared(
   // Never let an empty hostlist become upstream's allow-all mode. Bound the
   // Windows command line and make strategy selection a closed native enum.
   if (hostlist.empty() ||
-      (strategy != WindowsLocalDpiStrategy::kFakeMultisplitAlt4 && strategy != WindowsLocalDpiStrategy::kMultisplit681)) {
+      (strategy != WindowsLocalDpiStrategy::kMultidisorderMidsld && strategy != WindowsLocalDpiStrategy::kFakeMultisplitAlt4)) {
     return "local_dpi_scope_invalid";
   }
   const auto wide_interface = WideUtf8(physical_bind_interface);
@@ -388,7 +388,7 @@ std::string WindowsLocalDpiExecutor::RetryPrepared(
       state_->process == nullptr || state_->job == nullptr || state_->driver_guard == INVALID_HANDLE_VALUE ||
       services.size() != state_->prepared_services.size() || services.size() != state_->holders.size() ||
       physical_bind_interface != state_->physical_bind_interface || strategy == state_->first_strategy ||
-      (strategy != WindowsLocalDpiStrategy::kFakeMultisplitAlt4 && strategy != WindowsLocalDpiStrategy::kMultisplit681)) {
+      (strategy != WindowsLocalDpiStrategy::kMultidisorderMidsld && strategy != WindowsLocalDpiStrategy::kFakeMultisplitAlt4)) {
     return "local_dpi_retry_unavailable";
   }
   for (std::size_t i = 0; i < services.size(); ++i) {

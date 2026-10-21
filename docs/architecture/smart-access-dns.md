@@ -89,11 +89,13 @@ TLS and HTTP proof failures. DNS, physical-interface, WFP-permit, invalid-input,
 owner cancellation, child failure and unknown outcomes stop selection immediately.
 Ownership is rechecked after proof, before a transport failure can trigger retry.
 
-The current Windows source prefers Flowseal 1.10.3 ALT4's Google TCP branch
-(`fake,multisplit`, six fakes, `badseq` increment 1000, existing Google pattern)
-under distinct journal strategy ID 4. The existing two-attempt limit and
-same-network successful-strategy preference remain; 681 is the second strategy,
-and 568 is no longer attempted. WFP rule priority is compared semantically
+The current Windows source defaults to upstream zapret's `multidisorder` with
+`split-pos=1,midsld` first (journal strategy ID 101), then Flowseal 1.10.3/1.10.4
+ALT4's Google TCP branch (ID 4). The two-attempt limit remains; 568 and 681 are
+no longer attempted. The same-network success hint survives normal Stop, but
+a later observed runtime failure clears its network key before the next Connect;
+the original strategy ID stays available for the failure journal. WFP rule
+priority is compared semantically
 (`499dd3e6`), and ordinary protected VPN egress is verified before WinDivert
 starts (`c3ba46d0`). Core `b560f1a` adds an IPv4-only local rule immediately before
 the unchanged signed VPN rule, preserving IPv6 fallback. EOF from a speculative
@@ -116,6 +118,14 @@ ISP, DPI or middlebox is established, and no random strategy flags were added.
 The separate ALT4 `www.youtube.com` control returned verified HTTPS 200. Earlier
 zero curl connect timings were wrongly interpreted as TCP failure; later
 Schannel evidence confirms that TCP establishes.
+
+A subsequent single standalone control on that exact CDN IP/SNI and physical
+source passed with `multidisorder` / `1,midsld`: verified TLS in 411 ms, HTTP 404
+for `/`, curl exit 0, filter alive and owned child cleanup confirmed. The VM is
+bridged. Header-only capture lacked the full reply sequence, so it does not
+establish a specific DPI mechanism. This supports the new source candidate;
+integrated application/video acceptance is still pending. The candidate comes
+from [upstream blockcheck](https://github.com/bol-van/zapret/blob/master/blockcheck.sh#L1289).
 
 Root confirmed cleanup after 4199: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection

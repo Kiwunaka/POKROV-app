@@ -132,7 +132,7 @@ void TestClosedBoundedJournal() {
              "egress observation was not durable");
       Expect(journal->RecordLocalDpiObservation(LocalDpiStage::kProof, 568,
                  "local_dpi_control_tls_failed", true) &&
-             journal->RecordLocalDpiObservation(LocalDpiStage::kStart, 4,
+             journal->RecordLocalDpiObservation(LocalDpiStage::kStart, 101,
                  "", true) &&
               journal->RecordLocalDpiObservation(LocalDpiStage::kRuntime, 4,
                   "connect_timeout_ipv4", true) &&
@@ -191,7 +191,7 @@ void TestClosedBoundedJournal() {
          "egress observation lost the native cause, phase or elapsed time");
   Expect(combined.find("runtime_local_dpi_observation|failed|proof|local_dpi_control_tls_failed|568,1") !=
              std::string::npos &&
-         combined.find("runtime_local_dpi_observation|succeeded|start|none|4,1") !=
+         combined.find("runtime_local_dpi_observation|succeeded|start|none|101,1") !=
              std::string::npos &&
           combined.find("runtime_local_dpi_observation|failed|runtime|connect_timeout_ipv4|4,1") !=
               std::string::npos &&

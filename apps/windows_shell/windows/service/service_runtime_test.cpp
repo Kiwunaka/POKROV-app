@@ -227,13 +227,23 @@ void TestWindowsLocalDpiScopePreparation() {
 void TestWindowsLocalDpiStrategyArguments() {
   using namespace pokrov::service;
   const auto order = WindowsLocalDpiStrategyOrder();
-  Expect(order[0] == WindowsLocalDpiStrategy::kFakeMultisplitAlt4 &&
-         order[1] == WindowsLocalDpiStrategy::kMultisplit681 &&
-         static_cast<int>(order[0]) == 4,
-         "ALT4 must lead the existing bounded pair under a distinct journal ID");
-  const auto remembered = WindowsLocalDpiStrategyOrder(WindowsLocalDpiStrategy::kMultisplit681);
-  Expect(remembered[0] == order[1] && remembered[1] == order[0],
-         "same-network proven strategy preference was lost");
+  Expect(order[0] == WindowsLocalDpiStrategy::kMultidisorderMidsld &&
+         order[1] == WindowsLocalDpiStrategy::kFakeMultisplitAlt4 &&
+         static_cast<int>(order[0]) == 101,
+         "verified CDN strategy must lead the bounded pair under a distinct journal ID");
+  auto hint = std::make_pair(std::string("physical-network"), WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+  const auto next_order = [&] {
+    return WindowsLocalDpiStrategyOrder(hint.first == "physical-network"
+        ? hint.second : WindowsLocalDpiStrategy::kMultidisorderMidsld);
+  };
+  InvalidateWindowsLocalDpiStrategyHint(hint, {"ready", "none"});
+  InvalidateWindowsLocalDpiStrategyHint(hint, {"withdrawn", "none", true});
+  Expect(next_order()[0] == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
+         "healthy proof followed by normal Stop lost the same-network strategy hint");
+  InvalidateWindowsLocalDpiStrategyHint(hint, {"failed", "early_read"});
+  Expect(next_order()[0] == WindowsLocalDpiStrategy::kMultidisorderMidsld &&
+         hint.second == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
+         "runtime failure retained the stale preference or lost journal attribution");
   for (const char* failure : {"local_dpi_control_connect_failed", "local_dpi_control_tls_failed",
                              "local_dpi_control_http_failed"}) {
     Expect(WindowsLocalDpiRetryableProof(failure), "transport failure lost its bounded strategy retry");
@@ -249,13 +259,12 @@ void TestWindowsLocalDpiStrategyArguments() {
       L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=^www.youtube.com --ip-id=zero";
   const std::wstring pattern = L"\"C:\\Program Files\\POKROV\\local-dpi\\tls_clienthello_www_google_com.bin\"";
   Expect(WindowsLocalDpiCommand(directory, "^www.youtube.com", 12, order[0]) == scope +
+      L" --dpi-desync=multidisorder --dpi-desync-split-pos=1,midsld",
+      "CDN strategy changed the verified exact-host/interface scope or added fake bytes");
+  Expect(WindowsLocalDpiCommand(directory, "^www.youtube.com", 12, order[1]) == scope +
       L" --dpi-desync=fake,multisplit --dpi-desync-repeats=6 --dpi-desync-fooling=badseq"
       L" --dpi-desync-badseq-increment=1000 --dpi-desync-fake-tls=" + pattern,
       "ALT4 changed the verified exact-host/interface scope or upstream Google branch");
-  Expect(WindowsLocalDpiCommand(directory, "^www.youtube.com", 12, order[1]) == scope +
-      L" --dpi-desync=multisplit --dpi-desync-split-pos=1 --dpi-desync-split-seqovl=681"
-      L" --dpi-desync-split-seqovl-pattern=" + pattern,
-      "legacy 681 fallback silently changed its behavior");
 }
 
 BOOL __cdecl RefuseDriverClose(HANDLE) { return FALSE; }

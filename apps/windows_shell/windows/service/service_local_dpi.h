@@ -35,10 +35,10 @@ struct WindowsLocalDpiRuntimeObservation {
   std::uint64_t local_handoffs = 0;
   std::uint64_t vpn_handoffs = 0;
 };
-enum class WindowsLocalDpiStrategy { kFakeMultisplitAlt4 = 4, kMultisplit681 = 681 };
+enum class WindowsLocalDpiStrategy { kFakeMultisplitAlt4 = 4, kMultidisorderMidsld = 101 };
 
 std::array<WindowsLocalDpiStrategy, 2> WindowsLocalDpiStrategyOrder(
-    WindowsLocalDpiStrategy preferred = WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+    WindowsLocalDpiStrategy preferred = WindowsLocalDpiStrategy::kMultidisorderMidsld);
 bool WindowsLocalDpiRetryableProof(const std::string& failure);
 std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
     const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy);

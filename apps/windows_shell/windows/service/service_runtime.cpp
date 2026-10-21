@@ -1707,7 +1707,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     };
     const auto strategies = WindowsLocalDpiStrategyOrder(local_dpi_success_strategy_ &&
         local_dpi_success_strategy_->first == local_dpi_network->selection_key
-            ? local_dpi_success_strategy_->second : WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+            ? local_dpi_success_strategy_->second : WindowsLocalDpiStrategy::kMultidisorderMidsld);
     bool proved = false;
     WindowsLocalDpiStrategy successful_strategy = strategies[0];
     for (std::size_t attempt = 0; attempt < strategies.size(); ++attempt) {
@@ -2310,6 +2310,9 @@ std::string RuntimeHost::RecoverPendingRuntime() {
 }
 
 std::string RuntimeHost::RollbackRuntime() {
+  // Observe a late failure before our normal withdrawal replaces the holder's
+  // state. Healthy Stop keeps the same-network ordering hint.
+  ReadLocalDpiRuntimeObservation();
   WithdrawTelegramWS();
   if (local_dpi_executor_) local_dpi_executor_->Stop();
   if (recovery_ == nullptr) {
@@ -2456,6 +2459,9 @@ std::optional<WindowsLocalDpiRuntimeObservation> RuntimeHost::ReadLocalDpiRuntim
           LocalDpiStage::kRuntime,
           local_dpi_success_strategy_ ? static_cast<int>(local_dpi_success_strategy_->second) : 0,
           value->failure_reason, local_dpi_executor_->Alive());
+    }
+    if (local_dpi_success_strategy_) {
+      InvalidateWindowsLocalDpiStrategyHint(*local_dpi_success_strategy_, *value);
     }
   }
   return result;

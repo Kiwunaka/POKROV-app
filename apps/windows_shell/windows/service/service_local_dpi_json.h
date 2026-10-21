@@ -37,6 +37,9 @@ struct WindowsLocalDpiHolderObservation {
 };
 std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObservation(
     const std::string& encoded);
+void InvalidateWindowsLocalDpiStrategyHint(
+    std::pair<std::string, WindowsLocalDpiStrategy>& hint,
+    const WindowsLocalDpiHolderObservation& observation);
 std::optional<WindowsTelegramWSPreparation> ReadWindowsTelegramWSPreparation(
     const std::string& encoded);
 bool WindowsTelegramWSPreparationCurrent(const WindowsTelegramWSPreparation& value);
