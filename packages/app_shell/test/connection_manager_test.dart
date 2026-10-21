@@ -1524,6 +1524,17 @@ void main() {
     }
     expect(experienceStore.saved.routingPreferences.trustedWifiNames, [' Home', 'home', 'Home']);
     expect(nativeMutations, isEmpty);
+    rules().onRouteModeSelected(RouteMode.selectiveServices);
+    await tester.pumpAndSettle();
+    final displayedRules = tester.widget<ui.RulesScreen>(find.byType(ui.RulesScreen));
+    expect(displayedRules.data.selectedId, RouteMode.selectiveServices.name);
+    expect(displayedRules.data.appliedId, RouteMode.selectiveServices.name);
+    await tester.scrollUntilVisible(find.text('Только выбранные сервисы'), -400, scrollable: find.descendant(
+      of: find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'),
+      matching: find.byType(Scrollable)).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Защищённый маршрут только для выбранных сервисов. Остальное — напрямую.'), findsOneWidget);
+    expect(find.text('Российские сервисы работают напрямую, остальное через POKROV VPN.'), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   });

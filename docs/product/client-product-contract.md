@@ -136,6 +136,11 @@ Selective choice survives feature disable and directs the user to Rules instead
 of silently connecting in another mode. This is source implementation only;
 public seeds, rollout and provider support claims remain unchanged.
 
+Rules includes the Selective mode when catalog selection is available or that
+mode is already saved, so its selected marker and scope description remain
+accurate even when the static platform mode list omits it. This presentation
+does not grant runtime catalog capability or change the active connection.
+
 Ordinary Full tunnel and “Россия напрямую” continue with the managed VPN profile
 when the optional catalog returns `503 routing_catalog_disabled` or
 `503 routing_catalog_unavailable`, or when an already authorized cached VPN

@@ -102,7 +102,12 @@ class _RulesSectionState extends State<_RulesSection> {
 
   @override
   Widget build(BuildContext context) {
-    final choices = widget.appContext.runtimeProfile.supportedRouteModes;
+    final choices = [
+      ...widget.appContext.runtimeProfile.supportedRouteModes,
+      if (widget.onEditCatalogServices != null ||
+          widget.selectedRouteMode == RouteMode.selectiveServices)
+        RouteMode.selectiveServices,
+    ];
     return ui.RulesScreen(
       data: ui.RulesViewData(
         modes: [for (final mode in choices) ui.RouteModeOption(
