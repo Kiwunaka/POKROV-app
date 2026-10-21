@@ -2494,10 +2494,31 @@ class ConnectionManager extends ChangeNotifier {
         smartAccessVpnFallback = true;
       } else {
         try {
-          return await _prepareManagedProfile(
+          final engine = _runtimeEngine;
+          final probing = _appContext.hostPlatform == HostPlatform.windows &&
+              engine is RuntimeCandidateProbing ? engine as RuntimeCandidateProbing : null;
+          final network = probing == null ? null : await Future.any<RuntimeCandidateNetwork>([
+            probing.readCandidateNetwork(),
+            cancelled.then<RuntimeCandidateNetwork>((_) => throw const ConnectionOperationSuperseded()),
+          ]);
+          requireCurrent();
+          final profile = await _prepareManagedProfile(
               service.buildLocalSmartAccessBase(hostPlatform: _appContext.hostPlatform),
               ownerGeneration: generation,
-              localSmartAccessState: subscription.accessState);
+              localSmartAccessState: subscription.accessState,
+              physicalIpv6Available: network?.ipv6Available);
+          if (network?.ipv6Available == false) {
+            final currentNetwork = await Future.any<RuntimeCandidateNetwork>([
+              probing!.readCandidateNetwork(),
+              cancelled.then<RuntimeCandidateNetwork>((_) => throw const ConnectionOperationSuperseded()),
+            ]);
+            requireCurrent();
+            if (currentNetwork.contextRef != network!.contextRef ||
+                currentNetwork.ipv6Available != false) {
+              throw const BootstrapFailure('Сеть изменилась. Подключитесь ещё раз.', code: 'candidate_network_changed');
+            }
+          }
+          return profile;
         } on BootstrapFailure catch (error) {
           if (error.code != 'catalog_gateway_lease_missing') rethrow;
           requireCurrent();
@@ -2996,6 +3017,7 @@ class ConnectionManager extends ChangeNotifier {
     bool offline = false,
     int? ownerGeneration,
     String? localSmartAccessState,
+    bool? physicalIpv6Available,
     bool smartAccessVpnFallback = false,
   }) async {
     final generation =
@@ -3341,6 +3363,7 @@ class ConnectionManager extends ChangeNotifier {
         hostPlatform: _appContext.hostPlatform,
         catalogPolicy: catalogPolicy,
         catalogAccessState: localSmartAccessState,
+        physicalIpv6Available: physicalIpv6Available,
         nativeCatalogWindowVersion: nativeCatalogWindowVersion,
         nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion,
         defaultRuAppPackageIds: _appContext.hostPlatform == HostPlatform.android

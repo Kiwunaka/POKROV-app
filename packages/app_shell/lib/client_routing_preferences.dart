@@ -481,6 +481,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   required HostPlatform hostPlatform,
   CatalogDomainPolicy? catalogPolicy,
   String? catalogAccessState,
+  bool? physicalIpv6Available,
   int nativeCatalogWindowVersion = 0,
   int nativeSmartAccessLeaseVersion = 0,
   List<String> defaultRuAppPackageIds = const <String>[],
@@ -489,6 +490,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     final configured = _applyCatalogRoutingPreferences(payload, preferences,
       hostPlatform: hostPlatform, policy: catalogPolicy,
       catalogAccessState: catalogAccessState,
+      physicalIpv6Available: physicalIpv6Available,
       nativeWindowVersion: nativeCatalogWindowVersion,
       nativeSmartAccessLeaseVersion: nativeSmartAccessLeaseVersion);
     return _applyAllExceptRuDefaults(configured, hostPlatform,
@@ -838,6 +840,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   required HostPlatform hostPlatform,
   required CatalogDomainPolicy policy,
   String? catalogAccessState,
+  bool? physicalIpv6Available,
   required int nativeWindowVersion,
   required int nativeSmartAccessLeaseVersion,
 }) {
@@ -1059,6 +1062,10 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
     ...manualDns,
     ...layer.dnsRules,
     ...directDnsClassifications,
+    if (hostPlatform == HostPlatform.windows && !policy.vpnAvailable &&
+        physicalIpv6Available == false)
+      {'query_type': ['AAAA'], 'action': 'route', 'server': directDns,
+        'strategy': 'ipv4_only'},
   ];
   dns['final'] = selective || (dnsAddress != null && preferences.dnsTransport == PokrovDnsTransport.direct)
       ? directDns : vpnDns;

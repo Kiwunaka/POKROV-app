@@ -705,7 +705,8 @@ void main() {
     if (serviceId == 'gemini') {
       final publicVerifier = SmartAccessVerifier(providerKeysById: {'qa-test': public},
           leaseKeysById: {'qa-test': public}, audience: 'lab');
-      Future<VerifiedSmartAccessLease> publicLease(String kind,
+      final localProfileDigest = await smartAccessProfileSha256(localWindows.configPayload);
+      Future<({VerifiedSmartAccessLease grant, VerifiedRoutingCatalog catalog})> publicLease(String kind,
           {bool approved = true, String match = 'exact'}) async {
         final publicDomains = [{'name': domainNames.single, 'match': match}];
         final publicCatalogEnvelope = await _qaSigned({
@@ -730,28 +731,55 @@ void main() {
             minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
         final originalGrant = ((permitEnvelope!['payload'] as Map)['grant_envelope'] as Map)['payload'] as Map;
         final publicGrant = await _qaSigned({...originalGrant.cast<String, Object?>(),
+          'profile_sha256': localProfileDigest,
           'lease': {...(originalGrant['lease'] as Map).cast<String, Object?>(),
             'provider_policy_sha256': publicPolicy.payloadSha256,
             'catalog_sha256': publicCatalog.payloadSha256, 'domains': publicDomains},
         }, 'pokrov-smart-access-grant-v1', key);
-        return publicVerifier.verifyLease(publicGrant, request: {...claimRequest!,
+        final grant = await publicVerifier.verifyLease(publicGrant, request: {...claimRequest!,
+          'profile_sha256': localProfileDigest,
           'catalog_sha256': publicCatalog.payloadSha256, 'provider_policy_sha256': publicPolicy.payloadSha256,
           'capability_id': '$serviceId-qa', 'platform': 'windows', 'origin': 'current-origin',
           'family': 'ipv4', 'feature': 'web_request'}, accountId: 'synthetic-qa-account', installId: installId!,
           catalog: publicCatalog, providerPolicy: publicPolicy, now: DateTime.now().toUtc());
+        return (grant: grant, catalog: publicCatalog);
       }
-      final external = await publicLease('external');
-      final owned = await publicLease('owned');
+      final externalScope = await publicLease('external');
+      final external = externalScope.grant;
+      final owned = (await publicLease('owned')).grant;
       expect(smartAccessNativeOutbound(external)['external_ech_outer_sni'], isTrue);
       expect(smartAccessNativeOutbound(owned).containsKey('external_ech_outer_sni'), isFalse);
       expect(external.runtimeScopeSha256, owned.runtimeScopeSha256,
         reason: 'the existing server/client wire hash remains unchanged');
       expect(external.hasSameRuntimeScope(owned), isFalse,
         reason: 'foreground renewal cannot change the verified outer-SNI mode');
-      expect(smartAccessNativeOutbound(await publicLease('external', match: 'suffix'))
+      expect(smartAccessNativeOutbound((await publicLease('external', match: 'suffix')).grant)
           .containsKey('external_ech_outer_sni'), isFalse);
       await expectLater(publicLease('external', approved: false),
         throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'smart_access_service_not_eligible')));
+      final bound = await SmartAccessProfileLeases.bind(
+          baseProfile: localWindows.configPayload, leases: [external]);
+      final localPolicy = compileCatalogDomainPolicy(
+          policy: RoutingCatalogPolicy.fromVerified(externalScope.catalog),
+          mode: CatalogRoutingMode.selective, platform: 'windows',
+          accessState: 'paid_unlimited', vpnAvailable: false,
+          now: DateTime.now().toUtc(), selectedServiceIds: {serviceId},
+          smartAccessProfile: bound);
+      Map localConfig(bool ipv6Available) => jsonDecode(applyPokrovRoutingPreferences(
+          localWindows, const PokrovRoutingPreferences.defaults().copyWith(selectedCatalogServiceIds: {serviceId}),
+          hostPlatform: HostPlatform.windows, catalogPolicy: localPolicy,
+          catalogAccessState: 'paid_unlimited', physicalIpv6Available: ipv6Available,
+          nativeCatalogWindowVersion: 1, nativeSmartAccessLeaseVersion: 1).configPayload) as Map;
+      final withIpv6 = localConfig(true);
+      final withoutIpv6 = localConfig(false);
+      final scopedDns = (withIpv6['dns'] as Map)['rules'] as List;
+      final physicalIpv4Dns = (withoutIpv6['dns'] as Map)['rules'] as List;
+      expect(scopedDns.last, {'domain': domainNames, 'action': 'reject'});
+      expect(physicalIpv4Dns, [...scopedDns,
+        {'query_type': ['AAAA'], 'action': 'route', 'server': 'dns-direct', 'strategy': 'ipv4_only'}],
+        reason: 'only unmatched Direct AAAA receives NODATA when physical IPv6 is absent');
+      expect(withoutIpv6['route'], withIpv6['route'],
+        reason: 'physical IPv4 DNS adaptation cannot weaken the signed gateway or its rejection');
     }
     if (serviceId == 'chatgpt') {
       for (final changes in <Map<String, Object?>>[

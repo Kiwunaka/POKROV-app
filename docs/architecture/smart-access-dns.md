@@ -122,6 +122,14 @@ Windows and Android retain the exact query list and accept only `ipv4_only`
 when this optional field is present. Older rules without it remain readable;
 extra query types or a different strategy do not authorize a Smart probe.
 
+Windows local SmartAccess reads the existing physical-uplink IPv6 capability on
+each profile preparation. When it is explicitly false, an AAAA-only
+`ipv4_only` DNS rule follows the signed service rules and their rejection, so
+unmatched Direct domains receive NODATA instead of an unusable IPv6 destination
+behind the TUN. True or unknown capability leaves Direct IPv6 unchanged. A
+changed network during preparation rejects that profile; existing reconnect and
+restage paths read the capability again. No host IPv6 setting or signed scope changes.
+
 The TCP rule remains IPv4 TCP/443 with the signed exact-domain/suffix scope.
 DNS handling grants no IPv6 TCP or QUIC access and does not change the client or
 server's owned-provider ECH guard. For a host-verified external provider, an
