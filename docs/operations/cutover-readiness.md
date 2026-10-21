@@ -15,27 +15,45 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private packages are **Android and Windows 1.5.0+4185**, built from App
-`54a5e680` with the ready Core `0f159bb` / 1.2.14. They include removal of the
-unavailable built-in Xbox DNS preset (`ed2a982d`). Packaging is accepted: all four
-Android APKs are production-signed; the Windows installer remains `NotSigned`
-and the ZIP contains that installer. **4185 has not been installed or checked on
-the phone, emulator, Windows VM or network.** Accepted 4184 Windows checks below
-are historical and do not establish 4185 device acceptance.
+Current private packages are **Android 1.5.0+4187** with Core `0f159bb`, and
+**Windows 1.5.0+4189** from App `49302eea`, including native journal `c0ae4b38`,
+with Core `a4a0c01` / 1.2.14. All four Android APKs passed production signing and
+packaging checks; no 4187 device or native acceptance is claimed. Windows
+installer packaging is from `42982898`; the installer remains `NotSigned` and
+the delivery ZIP contains that installer. Earlier 4184 Windows acceptance below
+retains its original scope.
 
 | Private artifact | Path |
 | --- | --- |
-| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-universal.apk) |
-| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-arm64-v8a.apk) |
-| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-armeabi-v7a.apk) |
-| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4185-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4185.zip) |
+| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-universal.apk) |
+| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-arm64-v8a.apk) |
+| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-armeabi-v7a.apk) |
+| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-x86_64.apk) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4189-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4189.zip) |
 
-The external DNS browser comparison and the owner's permission for all active
-Premium access are recorded once in [Smart Access DNS](../architecture/smart-access-dns.md).
-They do not enable providers in POKROV or change ordinary Auto; provider fees and
-the server/runtime eligibility work remain pending. Flowseal was not executed.
+The corrected 4189 installer completed in the Clean Windows VM with exit 0 while
+the unchanged WinDivert driver remained loaded: no driver stop or reboot was
+needed. The earlier package failed on that locked driver. The fix is limited to
+WinDivert packaging, using `replacesameversion` and `restartreplace` instead of
+forcing an identical loaded driver to be overwritten; it does not establish DPI
+functionality or acceptance of a changed driver.
+
+Live signed catalog 28/security 2 and provider policy 1/security 1 enable WLrus,
+GeoHide EU/RU and DNS-AI for Windows Gemini under the existing pins. Server and
+App eligibility cover every active Premium access, including trial, manual and
+family; Free and expired/blocked access are excluded. App `38adc208` closes the
+legacy custom SmartDNS/direct bypass. GeoHide EU initially passed native leased
+A/TLS readiness, then failed periodic verification and fell back to VPN; the
+browser request is not accepted and ECH remains an unconfirmed hypothesis.
+WLrus failed native DNS/connect. Core `b508962` permits the verified bridge/ATS
+chain and winws starts, but Flowseal strategies 568 and 681 each timed out in the
+10-second native TLS control check and safely fell back to VPN. Neither
+functional DPI/video nor native SmartDNS browser acceptance is complete.
+The earlier external browser comparison and provider permissions are recorded
+in [Smart Access DNS](../architecture/smart-access-dns.md); provider fees remain
+under discussion and ordinary Auto is unchanged. Root's VM test is still running;
+restoration is due at the end, so the VM is not currently recorded as PoweredOff.
 Remaining release work is phone acceptance after explicit return, the paused
 customer Windows case, Lampa's provider response, IS direct on another network
 and final publication only after the owner's explicit yes. Public 1.4.5 and

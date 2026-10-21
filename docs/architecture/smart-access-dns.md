@@ -19,9 +19,9 @@ an answer is not PASS. This is external-provider/browser evidence, not POKROV
 integration, Android acceptance, an availability guarantee or an Auto change.
 At the end of that comparison root verified that VM DNS, routes and proxy were
 unchanged from the captured baseline and removed the temporary Edge
-profile/processes and QA directory. This does not describe the current VM state;
-the subsequent 4186 attempt is recorded below. The owner's host network was
-not changed.
+profile/processes and QA directory. This does not describe the current VM state:
+root is now running the native checks below and will restore the VM when they
+finish. The owner's host network was not changed.
 
 | Provider / endpoint | Gemini result in this comparison | Commercial permission recorded by owner |
 | --- | --- | --- |
@@ -54,19 +54,30 @@ four external providers are WLrus, GeoHide EU, GeoHide RU and DNS-AI; their
 published capabilities cover Windows Gemini only. This does not establish
 Android or POKROV functional acceptance and does not add a commercial COMSS offer.
 
-Private Windows 4186 was exercised through the ordinary UI with Gemini and
-WLrus selected: provider GET and lease POST both returned 200. Core then reported
-`core_egress_connect_failed` and recovered through the declared VPN fallback.
-The later healthy VPN state and empty lease inventory describe that fallback,
-not a successful SmartDNS connection. A real Gemini response through POKROV's
-native SmartDNS path is still unaccepted.
+Current private packages are Android 4187 with Core `0f159bb` and Windows 4189
+from App `49302eea`, including native journal `c0ae4b38`, with Core `a4a0c01`
+(1.2.14). Windows installer packaging was corrected in `42982898`; exact artifacts
+and installation acceptance belong to [client readiness](../operations/cutover-readiness.md).
+Android packaging passed; no Android native or phone acceptance is claimed.
+
+Earlier Windows 4186 obtained provider GET and lease POST 200 through the
+ordinary UI with WLrus, then reported `core_egress_connect_failed`. Subsequent
+WLrus attempts failed at native DNS/connect and used the declared VPN fallback.
+GeoHide EU initially held a native lease and passed A/TLS readiness, then failed
+the periodic check and fell back to VPN. The real browser request has not been
+accepted; ECH remains an unconfirmed hypothesis. Healthy VPN fallback and a
+later empty lease inventory do not establish SmartDNS functionality. A real
+Gemini response through POKROV's native SmartDNS path is still required.
 
 Catalog 28 also authorizes selective YouTube local DPI with the exact control
-host `www.youtube.com`. The service-owned Flowseal attempt reached a concrete
-Core validation blocker: the actual encrypted VLESS bridge used an encrypted
-VLESS detour, which the validator rejected. The Core fix is in progress; no DPI
-acceptance is claimed. Manager remains an OpenWrt-only reference whose ideas
-may be studied, but its own code without a LICENSE must not be copied.
+host `www.youtube.com`. Core `b508962` fixes admission of the verified encrypted
+bridge chain and ATS wrapper; service-owned winws now starts. Strategies 568 and
+681 each reached the native TLS control check and timed out after 10 seconds,
+then safely fell back to VPN. Functional DPI and video playback are not accepted.
+The earlier standalone UAC limitation is not the current blocker; UAC was not
+weakened. Ordinary Auto, customer contact, phone checks and public release remain
+unchanged. Manager remains an OpenWrt-only reference whose ideas may be studied,
+but its own code without a LICENSE must not be copied.
 
 Read-only Telegram research on 21 October: the four August/September messages
 in the [older whitelist thread](https://t.me/wlrforum/122620) are historical
