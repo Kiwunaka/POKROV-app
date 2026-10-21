@@ -768,6 +768,10 @@ SignedUninstallerDir=$signedUninstallerDirectory
   }
   $localDpiDirectoryPresent = Test-Path -LiteralPath (Join-Path $stagedBundleDirectory 'local-dpi') -PathType Container
   $localDpiDirectorySddl = 'D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FRFX;;;BU)'
+  $localDpiDriverEntry = ''
+  if ($localDpiDirectoryPresent) {
+    $localDpiDriverEntry = "Source: `"$stagedBundleDirectory\local-dpi\WinDivert64.sys`"; DestDir: `"{app}\local-dpi`"; Flags: replacesameversion restartreplace"
+  }
   $iss = @"
 #pragma code_page 65001
 [Setup]
@@ -806,7 +810,8 @@ Name: "desktopicon"; Description: "Создать ярлык на рабочем
 Type: files; Name: "{app}\pokrov_activation_protocol_test.exe"
 
 [Files]
-Source: "$stagedBundleDirectory\*"; Excludes: "\$($windowsReleaseConfig.runtime.service_binary)"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "$stagedBundleDirectory\*"; Excludes: "\$($windowsReleaseConfig.runtime.service_binary),\local-dpi\WinDivert64.sys"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+$localDpiDriverEntry
 Source: "$stagedBundleDirectory\$($windowsReleaseConfig.runtime.service_binary)"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall: InstallAndStartService
 
 [Icons]

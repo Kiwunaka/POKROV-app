@@ -26,6 +26,11 @@ updated and must not be used to restage older runtime artifacts for 4181.
   `-SkipBuild`: a stale bundle requires a rebuild. The optional
   [reproducible wrapper](build-windows-release-reproducible.ps1) forwards arguments
   and uses a temporary `P:` mapping.
+  WinDivert's driver has a separate installer entry: an identical installed
+  `local-dpi/WinDivert64.sys` is retained, even when loaded. A changed driver
+  that is locked uses Inno Setup's restart replacement and restart prompt;
+  DPI is not accepted with the new driver until that restart. The installer
+  does not stop another application's WinDivert service.
 - [sync-pokrov-core-runtime.ps1](sync-pokrov-core-runtime.ps1) requires the clean
   Core checkout at the selected manifest's exact source commit, then validates
   artifact and dependency sizes/hashes before copying. Use `-Platforms android`
