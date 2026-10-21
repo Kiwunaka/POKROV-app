@@ -1327,6 +1327,30 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  test('retired Xbox DNS preference returns to automatic without direct AI routing', () async {
+    final preferences = PokrovRoutingPreferences.fromJson({
+      'dnsPreset': 'xbox',
+      'dnsTransport': 'direct',
+      'customDnsUrl': 'https://dns.comss.one/dns-query',
+      'externalSmartDnsEnabled': true,
+      'purposeRoutes': ['ai'],
+    });
+    expect(preferences.dnsPreset, PokrovDnsPreset.automatic);
+    expect(preferences.effectiveDnsAddress, isNull);
+    expect(preferences.externalSmartDnsEnabled, isFalse);
+    final payload = await _Bootstrapper().resolveManagedProfile(
+      hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel,
+    );
+    final configured = applyPokrovRoutingPreferences(payload, preferences,
+        hostPlatform: HostPlatform.windows);
+    final config = jsonDecode(configured.configPayload) as Map;
+    final aiRule = (config['route']['rules'] as List).cast<Map>().singleWhere(
+      (rule) => (rule['domain_suffix'] as List? ?? []).contains('gemini.google.com'),
+    );
+    expect(aiRule['outbound'], 'proxy');
+  });
+
   testWidgets('Rules syncs immediate Wi-Fi policy without discarding pending routing edits', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final nativeMutations = <String>[];

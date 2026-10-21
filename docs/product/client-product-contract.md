@@ -868,14 +868,19 @@ candidate-network diagnostics. Missing or redacted SSIDs never admit automatic
 connection or a trusted-network pause.
 
 DNS settings keep Automatic as the POKROV default and save named external
-presets through the existing `dnsPreset` preference. Xbox and Comss use their
-published HTTPS endpoints ([Xbox DNS](https://xbox-dns.ru/),
-[Comss DNS](https://www.comss.ru/page.php?id=7315));
+presets through the existing `dnsPreset` preference. Comss uses its
+published HTTPS endpoint ([Comss DNS](https://www.comss.ru/page.php?id=7315));
 [AdGuard DNS](https://adguard-dns.io/en/public-dns.html) remains the filtering
 option. These presets change ordinary DNS resolution on the next application
 of routing settings; they do not replace the signed provider, permission or
 TLS relay of a SmartDNS service. The service's POKROV provider remains the
 default, and selecting an external preset is not evidence of service access.
+
+Xbox DNS is no longer offered: its service is unavailable and its
+[terms, section 2.5](https://xbox-dns.ru/terms.html) prohibit embedding it in
+third-party products. A saved `xbox` preset follows the existing unknown-preset
+migration to Automatic, with external Smart DNS disabled; it does not select
+another provider or send AI-service traffic directly.
 
 The separate SmartDNS provider picker saves only `smartDnsProviderId` from a
 verified provider policy with a current approved embedded-use permission and

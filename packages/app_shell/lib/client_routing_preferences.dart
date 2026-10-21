@@ -14,7 +14,7 @@ enum PokrovRouteAction { vpn, direct }
 
 enum PokrovRouteMatchType { domain, ip, subnet }
 
-enum PokrovDnsPreset { automatic, xbox, comss, adguard, cloudflare, google, custom }
+enum PokrovDnsPreset { automatic, comss, adguard, cloudflare, google, custom }
 
 enum PokrovDnsTransport { vpn, direct }
 
@@ -50,7 +50,6 @@ extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
 extension PokrovDnsPresetPresentation on PokrovDnsPreset {
   String get title => switch (this) {
         PokrovDnsPreset.automatic => 'Автоматически',
-        PokrovDnsPreset.xbox => 'Xbox DNS',
         PokrovDnsPreset.comss => 'Comss DNS',
         PokrovDnsPreset.cloudflare => 'Cloudflare',
         PokrovDnsPreset.google => 'Google',
@@ -60,7 +59,6 @@ extension PokrovDnsPresetPresentation on PokrovDnsPreset {
 
   String? get address => switch (this) {
         PokrovDnsPreset.automatic => null,
-        PokrovDnsPreset.xbox => 'https://xbox-dns.ru/dns-query',
         PokrovDnsPreset.comss => 'https://dns.comss.one/dns-query',
         PokrovDnsPreset.cloudflare => 'https://1.1.1.1/dns-query',
         PokrovDnsPreset.google => 'https://dns.google/dns-query',
