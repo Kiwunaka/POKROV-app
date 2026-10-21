@@ -5,20 +5,23 @@
 The owner approved commercial embedded use of Shecan, Astra/Astracat, GeoHide,
 Bezmezhau, WLrus, DNS-AI and Zapret DNS. For these agreements, an eligible paid
 user means **any active Premium access**: purchase, trial, gift, promotion,
-bonus, manual or family access. Reuse the existing trial/paid/bonus Premium
-projection, including its manual/family handling; exclude Free and
-expired/blocked access. Do not require a payment receipt, `provider_payment`
-origin or a new entitlement class. Provider fees (fixed or percentage) remain
-under discussion; this approval does not authorize purchases or ordinary rollout.
+bonus, manual or family access. The server uses the existing trial/paid/bonus
+Premium projection, including its manual/family handling, and excludes Free and
+expired/blocked access. No payment receipt, `provider_payment` origin or new
+entitlement class is required. Provider fees (fixed or percentage) remain under
+discussion; no spending is authorized. Customer contact, phone acceptance and
+public release remain paused.
 
-The table records one root-run comparison in the clean Windows 11 VM from the
-Russian home network. Only a temporary Edge profile used secure DoH. **PASS**
-means Gemini answered the test question about Paris; HTTP 200 or a page without
+The table records the earlier 21 October root-run comparison in the clean
+Windows 11 VM from the Russian home network. Only a temporary Edge profile used
+secure DoH. **PASS** means Gemini answered the test question about Paris; HTTP 200 or a page without
 an answer is not PASS. This is external-provider/browser evidence, not POKROV
 integration, Android acceptance, an availability guarantee or an Auto change.
-Root verified that VM DNS, routes and proxy were unchanged from the captured
-baseline, removed the temporary Edge profile/processes and QA directory, and
-powered off both VMs. The owner's host network was not changed.
+At the end of that comparison root verified that VM DNS, routes and proxy were
+unchanged from the captured baseline and removed the temporary Edge
+profile/processes and QA directory. This does not describe the current VM state;
+the subsequent 4186 attempt is recorded below. The owner's host network was
+not changed.
 
 | Provider / endpoint | Gemini result in this comparison | Commercial permission recorded by owner |
 | --- | --- | --- |
@@ -36,19 +39,34 @@ powered off both VMs. The owner's host network was not changed.
 | Mafioznik | Not tested: no freshly confirmed DoH endpoint | Not recorded in the current approved list |
 | Xbox DNS | Not tested in this comparison; built-in preset removed in `ed2a982d` | Not recorded in the current approved list |
 
-The next implementation stage must enforce that existing Premium projection on
-the server's provider/lease issuance and renewal/control paths, then expose the
-same eligibility to the UI. The signed provider permission, scoped lease and
-runtime expiry remain mandatory. Hiding a picker alone is insufficient:
-`client_routing_preferences.dart` still has a legacy custom SmartDNS/direct path
-outside catalog compilation that does not require a lease. Closing that path is
-an outstanding addon task. Ordinary VPN access for manual/family users stays
-intact. Public DNS endpoints themselves are not made private by a POKROV UI gate.
+Premium gates are implemented on server provider/lease issuance and
+renewal/control paths. App commit `38adc208` uses the server's
+`smart_access_eligible` projection in the picker and preparation and removes the
+legacy custom SmartDNS/direct bypass. A saved legacy custom SmartDNS selection
+returns to Automatic without expanding its former DNS scope; ordinary custom
+DoH and the existing COMSS preset remain separate. Signed provider permission,
+scoped leases and runtime expiry/revocation remain mandatory. Manual/family VPN
+access is unchanged, and public DNS endpoints remain public.
 
-The private 4185 packages contain the Xbox preset removal, not this provider
-integration. Flowseal/zapret canary was not executed: the guest token was UAC
-filtered. No new DPI acceptance is claimed. Manager is an OpenWrt-only reference;
-ideas may be studied, but its own code without a LICENSE must not be copied.
+The server now serves live signed catalog revision 28/security revision 2 and
+provider policy revision 1/security revision 1 through the existing pins. The
+four external providers are WLrus, GeoHide EU, GeoHide RU and DNS-AI; their
+published capabilities cover Windows Gemini only. This does not establish
+Android or POKROV functional acceptance and does not add a commercial COMSS offer.
+
+Private Windows 4186 was exercised through the ordinary UI with Gemini and
+WLrus selected: provider GET and lease POST both returned 200. Core then reported
+`core_egress_connect_failed` and recovered through the declared VPN fallback.
+The later healthy VPN state and empty lease inventory describe that fallback,
+not a successful SmartDNS connection. A real Gemini response through POKROV's
+native SmartDNS path is still unaccepted.
+
+Catalog 28 also authorizes selective YouTube local DPI with the exact control
+host `www.youtube.com`. The service-owned Flowseal attempt reached a concrete
+Core validation blocker: the actual encrypted VLESS bridge used an encrypted
+VLESS detour, which the validator rejected. The Core fix is in progress; no DPI
+acceptance is claimed. Manager remains an OpenWrt-only reference whose ideas
+may be studied, but its own code without a LICENSE must not be copied.
 
 Read-only Telegram research on 21 October: the four August/September messages
 in the [older whitelist thread](https://t.me/wlrforum/122620) are historical
