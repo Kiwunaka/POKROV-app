@@ -343,7 +343,7 @@ class DurableServiceEventJournal final : public ServiceEventSink {
       const std::string& failure, bool child_alive) override {
     return Append("runtime_local_dpi_observation", failure.empty() ? "succeeded" : "failed",
                   LocalDpiStageName(stage), LocalDpiFailureName(failure),
-                  std::to_string(strategy == 568 || strategy == 681 ? strategy : 0) +
+                  std::to_string(strategy == 4 || strategy == 568 || strategy == 681 ? strategy : 0) +
                       "," + (child_alive ? "1" : "0"));
   }
 

@@ -1640,19 +1640,15 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     const auto record_dpi = [&](LocalDpiStage stage, WindowsLocalDpiStrategy strategy,
                                 const std::string& failure) {
       if (events_) events_->RecordLocalDpiObservation(stage,
-          strategy == WindowsLocalDpiStrategy::kMultisplit681 ? 681 : 568,
+          static_cast<int>(strategy),
           failure, local_dpi_executor_->Alive());
     };
     const auto dpi_owner_failure = [&] {
       return local_dpi_owner_current() ? "local_dpi_child_failed" : "local_dpi_owner_changed";
     };
-    std::array<WindowsLocalDpiStrategy, 2> strategies{
-        WindowsLocalDpiStrategy::kMultisplit568, WindowsLocalDpiStrategy::kMultisplit681};
-    if (local_dpi_success_strategy_ &&
-        local_dpi_success_strategy_->first == local_dpi_network->selection_key &&
-        local_dpi_success_strategy_->second == strategies[1]) {
-      std::swap(strategies[0], strategies[1]);
-    }
+    const auto strategies = WindowsLocalDpiStrategyOrder(local_dpi_success_strategy_ &&
+        local_dpi_success_strategy_->first == local_dpi_network->selection_key
+            ? local_dpi_success_strategy_->second : WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
     bool proved = false;
     WindowsLocalDpiStrategy successful_strategy = strategies[0];
     for (std::size_t attempt = 0; attempt < strategies.size(); ++attempt) {

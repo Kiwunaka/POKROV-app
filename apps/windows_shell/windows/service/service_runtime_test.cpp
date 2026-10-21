@@ -196,6 +196,30 @@ void TestWindowsLocalDpiScopePreparation() {
   Expect(WindowsLocalDpiHostList({invalid}).empty(), "hostlist delimiter expanded winws scope");
 }
 
+void TestWindowsLocalDpiStrategyArguments() {
+  using namespace pokrov::service;
+  const auto order = WindowsLocalDpiStrategyOrder();
+  Expect(order[0] == WindowsLocalDpiStrategy::kFakeMultisplitAlt4 &&
+         order[1] == WindowsLocalDpiStrategy::kMultisplit681 &&
+         static_cast<int>(order[0]) == 4,
+         "ALT4 must lead the existing bounded pair under a distinct journal ID");
+  const auto remembered = WindowsLocalDpiStrategyOrder(WindowsLocalDpiStrategy::kMultisplit681);
+  Expect(remembered[0] == order[1] && remembered[1] == order[0],
+         "same-network proven strategy preference was lost");
+  const std::wstring directory = L"C:\\Program Files\\POKROV\\local-dpi\\";
+  const std::wstring scope = L"\"C:\\Program Files\\POKROV\\local-dpi\\winws.exe\" --wf-iface=12"
+      L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=^www.youtube.com --ip-id=zero";
+  const std::wstring pattern = L"\"C:\\Program Files\\POKROV\\local-dpi\\tls_clienthello_www_google_com.bin\"";
+  Expect(WindowsLocalDpiCommand(directory, "^www.youtube.com", 12, order[0]) == scope +
+      L" --dpi-desync=fake,multisplit --dpi-desync-repeats=6 --dpi-desync-fooling=badseq"
+      L" --dpi-desync-badseq-increment=1000 --dpi-desync-fake-tls=" + pattern,
+      "ALT4 changed the verified exact-host/interface scope or upstream Google branch");
+  Expect(WindowsLocalDpiCommand(directory, "^www.youtube.com", 12, order[1]) == scope +
+      L" --dpi-desync=multisplit --dpi-desync-split-pos=1 --dpi-desync-split-seqovl=681"
+      L" --dpi-desync-split-seqovl-pattern=" + pattern,
+      "legacy 681 fallback silently changed its behavior");
+}
+
 BOOL __cdecl RefuseDriverClose(HANDLE) { return FALSE; }
 BOOL __cdecl CloseTestDriverGuard(HANDLE handle) { return ::CloseHandle(handle); }
 
@@ -1772,6 +1796,11 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--local-dpi-strategy") {
+    TestWindowsLocalDpiScopePreparation();
+    TestWindowsLocalDpiStrategyArguments();
+    return failures == 0 ? 0 : 1;
+  }
   if (argc == 2 && std::string(argv[1]) == "--local-dpi-readiness") {
     TestWindowsLocalDpiFilterReadiness();
     return failures == 0 ? 0 : 1;
@@ -1809,6 +1838,7 @@ int main(int argc, char** argv) {
   TestReleasedCoreDescriptorCompatibility();
   TestWindowsTelegramMetadataComposition();
   TestWindowsLocalDpiScopePreparation();
+  TestWindowsLocalDpiStrategyArguments();
   TestWindowsLocalDpiTls13PostHandshake();
   TestWindowsLocalDpiFilterReadiness();
   TestWindowsLocalDpiOwnedCleanup();

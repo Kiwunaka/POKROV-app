@@ -167,7 +167,7 @@ struct WindowsLocalDpiExecutor::State {
   std::vector<WindowsLocalDpiService> prepared_services;
   std::string physical_bind_interface;
   NET_IFINDEX interface_index = 0;
-  WindowsLocalDpiStrategy first_strategy = WindowsLocalDpiStrategy::kMultisplit568;
+  WindowsLocalDpiStrategy first_strategy = WindowsLocalDpiStrategy::kFakeMultisplitAlt4;
   bool retry_attempted = false;
   bool admission_attempted = false;
 
@@ -247,6 +247,29 @@ WindowsLocalDpiExecutor::WindowsLocalDpiExecutor(CoreRuntime& core)
     : core_(core), state_(std::make_unique<State>()) {}
 WindowsLocalDpiExecutor::~WindowsLocalDpiExecutor() { Stop(); }
 
+std::array<WindowsLocalDpiStrategy, 2> WindowsLocalDpiStrategyOrder(
+    WindowsLocalDpiStrategy preferred) {
+  std::array<WindowsLocalDpiStrategy, 2> strategies{
+      WindowsLocalDpiStrategy::kFakeMultisplitAlt4, WindowsLocalDpiStrategy::kMultisplit681};
+  if (preferred == strategies[1]) std::swap(strategies[0], strategies[1]);
+  return strategies;
+}
+
+std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
+    const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy) {
+  const auto pattern = Quote(directory + L"tls_clienthello_www_google_com.bin");
+  const auto scope = Quote(directory + L"winws.exe") + L" --wf-iface=" + std::to_wstring(interface_index) +
+      L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=" +
+      std::wstring(hostlist.begin(), hostlist.end()) + L" --ip-id=zero";
+  if (strategy == WindowsLocalDpiStrategy::kFakeMultisplitAlt4) {
+    // Flowseal 1.10.3 ALT4 Google TCP/443 branch; upstream's split position is 2.
+    return scope + L" --dpi-desync=fake,multisplit --dpi-desync-repeats=6"
+        L" --dpi-desync-fooling=badseq --dpi-desync-badseq-increment=1000 --dpi-desync-fake-tls=" + pattern;
+  }
+  return scope + L" --dpi-desync=multisplit --dpi-desync-split-pos=1 --dpi-desync-split-seqovl=681"
+      L" --dpi-desync-split-seqovl-pattern=" + pattern;
+}
+
 std::string WindowsLocalDpiHostList(const std::vector<WindowsLocalDpiService>& services) {
   if (services.empty()) return "";
   std::string hostlist;
@@ -279,7 +302,7 @@ bool WindowsLocalDpiExecutor::AssetsReady() {
   if (directory_handle == INVALID_HANDLE_VALUE) return false;
   state_->files.push_back(directory_handle);
   for (const auto* name : {L"winws.exe", L"cygwin1.dll", L"WinDivert.dll", L"WinDivert64.sys",
-                         L"tls_clienthello_4pda_to.bin", L"tls_clienthello_www_google_com.bin"}) {
+                         L"tls_clienthello_www_google_com.bin"}) {
     const auto file = LockAsset(directory + name);
     if (file == INVALID_HANDLE_VALUE) { Stop(); return false; }
     state_->files.push_back(file);
@@ -317,7 +340,7 @@ std::string WindowsLocalDpiExecutor::StartPrepared(
   // Never let an empty hostlist become upstream's allow-all mode. Bound the
   // Windows command line and make strategy selection a closed native enum.
   if (hostlist.empty() ||
-      (strategy != WindowsLocalDpiStrategy::kMultisplit568 && strategy != WindowsLocalDpiStrategy::kMultisplit681)) {
+      (strategy != WindowsLocalDpiStrategy::kFakeMultisplitAlt4 && strategy != WindowsLocalDpiStrategy::kMultisplit681)) {
     return "local_dpi_scope_invalid";
   }
   const auto wide_interface = WideUtf8(physical_bind_interface);
@@ -358,7 +381,7 @@ std::string WindowsLocalDpiExecutor::RetryPrepared(
       state_->process == nullptr || state_->job == nullptr || state_->driver_guard == INVALID_HANDLE_VALUE ||
       services.size() != state_->prepared_services.size() || services.size() != state_->holders.size() ||
       physical_bind_interface != state_->physical_bind_interface || strategy == state_->first_strategy ||
-      (strategy != WindowsLocalDpiStrategy::kMultisplit568 && strategy != WindowsLocalDpiStrategy::kMultisplit681)) {
+      (strategy != WindowsLocalDpiStrategy::kFakeMultisplitAlt4 && strategy != WindowsLocalDpiStrategy::kMultisplit681)) {
     return "local_dpi_retry_unavailable";
   }
   for (std::size_t i = 0; i < services.size(); ++i) {
@@ -403,14 +426,7 @@ std::string WindowsLocalDpiExecutor::StartChild(
   limits.BasicLimitInformation.ActiveProcessLimit = 1;
   if (state_->job == nullptr || !::SetInformationJobObject(state_->job, JobObjectExtendedLimitInformation,
       &limits, sizeof(limits))) { Stop(); return "local_dpi_child_failed"; }
-  const bool variant681 = strategy == WindowsLocalDpiStrategy::kMultisplit681;
-  const auto pattern = directory + (variant681 ? L"tls_clienthello_www_google_com.bin" : L"tls_clienthello_4pda_to.bin");
-  std::wstring command = Quote(directory + L"winws.exe") + L" --wf-iface=" + std::to_wstring(interface_index) +
-      L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=" +
-      std::wstring(hostlist.begin(), hostlist.end()) +
-      (variant681 ? L" --ip-id=zero" : L"") +
-      L" --dpi-desync=multisplit --dpi-desync-split-pos=1 --dpi-desync-split-seqovl=" +
-      (variant681 ? L"681" : L"568") + L" --dpi-desync-split-seqovl-pattern=" + Quote(pattern);
+  auto command = WindowsLocalDpiCommand(directory, hostlist, interface_index, strategy);
   STARTUPINFOW startup{};
   startup.cb = sizeof(startup);
   PROCESS_INFORMATION process{};

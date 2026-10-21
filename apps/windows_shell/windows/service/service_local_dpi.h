@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <array>
 
 namespace pokrov::service {
 class CoreRuntime;
@@ -34,7 +35,12 @@ struct WindowsLocalDpiRuntimeObservation {
   std::uint64_t local_handoffs = 0;
   std::uint64_t vpn_handoffs = 0;
 };
-enum class WindowsLocalDpiStrategy { kMultisplit568, kMultisplit681 };
+enum class WindowsLocalDpiStrategy { kFakeMultisplitAlt4 = 4, kMultisplit681 = 681 };
+
+std::array<WindowsLocalDpiStrategy, 2> WindowsLocalDpiStrategyOrder(
+    WindowsLocalDpiStrategy preferred = WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
+    const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy);
 
 // Empty means refused, never upstream's allow-all empty host list.
 std::string WindowsLocalDpiHostList(const std::vector<WindowsLocalDpiService>& services);

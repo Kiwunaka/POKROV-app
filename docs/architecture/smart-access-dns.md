@@ -81,18 +81,30 @@ That QA guard is separate from gateway availability and does not itself force
 VPN fallback; its protections were not weakened. These results establish the
 two Windows Gemini paths above, not other services, platforms or network guarantees.
 
-Catalog 28 authorizes selective YouTube local DPI with exact control host
+The current Windows source prefers Flowseal 1.10.3 ALT4's Google TCP branch
+(`fake,multisplit`, six fakes, `badseq` increment 1000, existing Google pattern)
+under distinct journal strategy ID 4. The existing two-attempt limit and
+same-network successful-strategy preference remain; 681 is the second strategy,
+and 568 is no longer attempted. Exact host/interface scope, TLS verification,
+admission and owned Job cleanup are unchanged. Root's standalone ALT4 control
+received verified HTTPS 200 on the same pinned path where 681 stalled. This is
+not yet acceptance through the application or video playback. Earlier zero
+curl connect timings did not establish TCP failure: curl 8.21 can time out in
+TLS before publishing those timings, and the later Schannel trace confirms TCP.
+
+Historical 4194/4195 comparison: catalog 28 authorizes selective YouTube local DPI with exact control host
 `www.youtube.com`. Verified encrypted bridge/ATS admission, exact pre-connect
 guard permission and winws filter readiness are corrected. On 4194, strategies
 568 and 681 passed TCP but timed out in native TLS control after 10 seconds and
 used safe VPN fallback. The final controlled comparison pinned both plain curl
 and standalone 681 to `www.youtube.com:443` at `142.251.157.4`, bound to the
-physical interface with the same 10-second budget. Both timed out before TCP/TLS;
+physical interface with the same 10-second budget. Both timed out with zero
+published TCP/TLS timings; that did not locate the failure before TCP.
 681's filter stayed READY and its child cleanup was confirmed. POKROV was
 stopped, with no TUN, POKROV guard or service-owned winws; DNS/routes were not
-changed. This reference TCP path is unavailable, so neither TLS nor strategy/video
-is accepted; the strategy, ISP and specific cause are not established. No further
-strategy runs are scheduled. Root restored the saved allExceptRu/IS preferences,
+changed. That comparison did not establish the failing network stage or ISP;
+neither integrated local DPI nor video was accepted. At the end of that pass,
+root restored the saved allExceptRu/IS preferences,
 Automatic SmartDNS, local DPI off and empty service selection; DNS/routes/proxy
 match the baseline. Owned Edge/winws and TUN are absent, temporary profiles were
 removed, and CleanWin11 is verified PoweredOff. The host network, Hiddify and
