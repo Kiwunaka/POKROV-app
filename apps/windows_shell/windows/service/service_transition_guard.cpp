@@ -157,6 +157,20 @@ class LocalDpiControlFilter {
   UINT64 weight_ = 3;
 };
 
+bool ReadLocalDpiControlEndpoints(SOCKET socket, std::uint32_t remote_ipv4_network_order,
+                                  sockaddr_in* local, sockaddr_in* remote) {
+  int size = sizeof(*local), exclusive_size = sizeof(BOOL);
+  BOOL exclusive = FALSE;
+  if (::getsockname(socket, reinterpret_cast<sockaddr*>(local), &size) != 0 ||
+      local->sin_family != AF_INET || local->sin_port == 0 ||
+      ::getsockopt(socket, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+          reinterpret_cast<char*>(&exclusive), &exclusive_size) != 0 || !exclusive) return false;
+  remote->sin_family = AF_INET;
+  remote->sin_port = htons(443);
+  remote->sin_addr.s_addr = remote_ipv4_network_order;
+  return true;
+}
+
 bool Matches(const FWPM_FILTER0& actual, const FWPM_FILTER0& expected) {
   // BFE adds INDEXED to the service permits; it does not change their policy.
   // DISABLED, CLEAR_ACTION_RIGHT and every other unexpected flag still fail.
@@ -394,17 +408,13 @@ WindowsLocalDpiControlPermit::~WindowsLocalDpiControlPermit() {
   if (engine_) ::FwpmEngineClose0(engine_);
 }
 
-bool WindowsLocalDpiControlPermit::Open(std::uintptr_t connected_socket,
-                                      std::uint32_t physical_interface_index) {
+bool WindowsLocalDpiControlPermit::OpenBoundSocket(std::uintptr_t bound_socket,
+    std::uint32_t remote_ipv4_network_order, std::uint32_t physical_interface_index) {
   if (engine_ != nullptr) return false;
-  const auto socket = static_cast<SOCKET>(connected_socket);
   sockaddr_in local{}, remote{};
-  int local_size = sizeof(local), remote_size = sizeof(remote);
   NET_LUID luid{};
-  if (::getsockname(socket, reinterpret_cast<sockaddr*>(&local), &local_size) != 0 ||
-      ::getpeername(socket, reinterpret_cast<sockaddr*>(&remote), &remote_size) != 0 ||
-      local.sin_family != AF_INET || remote.sin_family != AF_INET ||
-      local.sin_port == 0 || remote.sin_port != htons(443) ||
+  if (!ReadLocalDpiControlEndpoints(static_cast<SOCKET>(bound_socket),
+          remote_ipv4_network_order, &local, &remote) ||
       ::ConvertInterfaceIndexToLuid(physical_interface_index, &luid) != NO_ERROR) return false;
   FWPM_SESSION0 session{};
   session.flags = FWPM_SESSION_FLAG_DYNAMIC;
@@ -445,18 +455,17 @@ bool TransitionGuardSubLayerMatchesForTesting(const FWPM_SUBLAYER0_& actual) {
   return MatchesSubLayer(actual);
 }
 
-void VisitLocalDpiControlPermitForTesting(
+bool VisitLocalDpiControlPermitForTesting(std::uintptr_t bound_socket,
+    std::uint32_t remote_ipv4_network_order,
     const std::function<void(const FWPM_FILTER0_&)>& visitor) {
   sockaddr_in local{}, remote{};
-  local.sin_family = remote.sin_family = AF_INET;
-  local.sin_addr.s_addr = htonl(0xc000020a);  // 192.0.2.10, fixture only.
-  local.sin_port = htons(57893);
-  remote.sin_addr.s_addr = htonl(0xcb007114);  // 203.0.113.20, fixture only.
-  remote.sin_port = htons(443);
+  if (!ReadLocalDpiControlEndpoints(static_cast<SOCKET>(bound_socket),
+          remote_ipv4_network_order, &local, &remote)) return false;
   NET_LUID luid{};
   luid.Value = 0x600000c000000;
   LocalDpiControlFilter definition(local, remote, luid);
   visitor(definition.Definition());
+  return true;
 }
 #endif
 

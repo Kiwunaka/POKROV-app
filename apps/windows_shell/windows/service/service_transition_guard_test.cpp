@@ -173,7 +173,26 @@ int main() {
   // Observed Flowseal failure: the guard blocked injected control packets at
   // ALE_AUTH_CONNECT_V4. Inspect the actual temporary exception without
   // changing host WFP policy; no app-wide or destination-wide permit is valid.
-  VisitLocalDpiControlPermitForTesting([&](const FWPM_FILTER0& f) {
+  WSADATA winsock{};
+  const bool winsock_ready = ::WSAStartup(MAKEWORD(2, 2), &winsock) == 0;
+  const SOCKET control = winsock_ready ? ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) : INVALID_SOCKET;
+  sockaddr_in bound{};
+  bound.sin_family = AF_INET;
+  bound.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  const BOOL exclusive = TRUE;
+  int bound_size = sizeof(bound);
+  const bool bound_ready = control != INVALID_SOCKET &&
+      ::setsockopt(control, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+          reinterpret_cast<const char*>(&exclusive), sizeof(exclusive)) == 0 &&
+      ::bind(control, reinterpret_cast<const sockaddr*>(&bound), sizeof(bound)) == 0 &&
+      ::getsockname(control, reinterpret_cast<sockaddr*>(&bound), &bound_size) == 0;
+  expect(bound_ready && bound.sin_port != 0, "control fixture could not reserve an exclusive ephemeral port");
+  sockaddr_in peer{};
+  int peer_size = sizeof(peer);
+  expect(!bound_ready || ::getpeername(control, reinterpret_cast<sockaddr*>(&peer), &peer_size) == SOCKET_ERROR,
+         "pre-connect fixture unexpectedly has a peer");
+  const bool inspected = bound_ready && VisitLocalDpiControlPermitForTesting(
+      control, htonl(0xcb007114), [&](const FWPM_FILTER0& f) {
     expect(f.layerKey == FWPM_LAYER_ALE_AUTH_CONNECT_V4 &&
                f.subLayerKey == GUID{0x541c71c5, 0x2ab4, 0x49b7,
                    {0xa1, 0xa3, 0x56, 0x4f, 0xc8, 0x5c, 0xef, 0x31}} &&
@@ -193,14 +212,17 @@ int main() {
     }
     const auto* c = f.filterCondition;
     expect(c[0].conditionValue.type == FWP_UINT8 && c[0].conditionValue.uint8 == IPPROTO_TCP &&
-               c[1].conditionValue.type == FWP_UINT32 && c[1].conditionValue.uint32 == 0xc000020a &&
+               c[1].conditionValue.type == FWP_UINT32 && c[1].conditionValue.uint32 == INADDR_LOOPBACK &&
                c[2].conditionValue.type == FWP_UINT32 && c[2].conditionValue.uint32 == 0xcb007114 &&
-               c[3].conditionValue.type == FWP_UINT16 && c[3].conditionValue.uint16 == 57893 &&
+               c[3].conditionValue.type == FWP_UINT16 && c[3].conditionValue.uint16 == ntohs(bound.sin_port) &&
                c[4].conditionValue.type == FWP_UINT16 && c[4].conditionValue.uint16 == 443 &&
                c[5].conditionValue.type == FWP_UINT64 && c[5].conditionValue.uint64 &&
                *c[5].conditionValue.uint64 == 0x600000c000000,
-           "only the connected TCP443 tuple on its physical interface may bypass our block");
+           "only the held pre-connect TCP443 tuple on its physical interface may bypass our block");
   });
+  expect(inspected, "exact permit must be constructible before SYN/getpeername succeeds");
+  if (control != INVALID_SOCKET) ::closesocket(control);
+  if (winsock_ready) ::WSACleanup();
 #endif
   return failures == 0 ? 0 : 1;
 }

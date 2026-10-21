@@ -305,7 +305,8 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   context with retained response/extra bytes and the original ten-second
   deadline. The HEAD request is sent once; TLS 1.2 renegotiation stays rejected.
   The transition guard remains armed during proof. After the control socket
-  connects, a dynamic soft WFP permit admits only its exact IPv4 TCP/443 tuple
+  binds an exclusive ephemeral port, before connect sends SYN, a dynamic soft
+  WFP permit admits only that bound IPv4 tuple to the resolved control IP:443
   on the captured physical interface: WinDivert reinjection has no service app
   identity. Scope exit or service termination removes this permit; the persisted
   block and normal verification/commit order remain unchanged.

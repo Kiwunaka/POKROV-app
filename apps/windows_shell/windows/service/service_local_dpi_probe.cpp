@@ -154,11 +154,15 @@ bool PublicIPv4(IN_ADDR address) {
       (value & 0xffff0000) != 0xc0a80000 && (value & 0xffc00000) != 0x64400000;
 }
 
-bool BoundSocket(Socket* socket, int type, int protocol, const PhysicalEndpoint& endpoint) {
+bool BoundSocket(Socket* socket, int type, int protocol, const PhysicalEndpoint& endpoint,
+                 bool exclusive = false) {
   socket->value = ::socket(AF_INET, type, protocol);
   const DWORD interface_index = htonl(endpoint.index);
+  const BOOL exclusive_address = TRUE;
   u_long nonblocking = 1;
   return socket->value != INVALID_SOCKET &&
+      (!exclusive || ::setsockopt(socket->value, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+          reinterpret_cast<const char*>(&exclusive_address), sizeof(exclusive_address)) == 0) &&
       ::setsockopt(socket->value, IPPROTO_IP, IP_UNICAST_IF,
           reinterpret_cast<const char*>(&interface_index), sizeof(interface_index)) == 0 &&
       ::bind(socket->value, reinterpret_cast<const sockaddr*>(&endpoint.local), sizeof(endpoint.local)) == 0 &&
@@ -304,9 +308,14 @@ std::string BoundHttpExchange(const std::string& control_host, const std::string
   IN_ADDR address{};
   if (!Resolve(endpoint, host, &address, interrupted, deadline)) return "local_dpi_control_dns_failed";
   Socket socket;
-  if (!BoundSocket(&socket, SOCK_STREAM, IPPROTO_TCP, endpoint)) return "local_dpi_control_connect_failed";
+  if (!BoundSocket(&socket, SOCK_STREAM, IPPROTO_TCP, endpoint, local_dpi_control)) return "local_dpi_control_connect_failed";
   sockaddr_in target{};
   target.sin_family = AF_INET; target.sin_port = htons(443); target.sin_addr = address;
+  // The ready WinDivert filter also reinjects SYN. Permit the exclusively held
+  // bound tuple before connect; waiting for getpeername would deadlock proof.
+  WindowsLocalDpiControlPermit permit;
+  if (local_dpi_control && !permit.OpenBoundSocket(socket.value, address.s_addr, endpoint.index))
+    return "local_dpi_control_permit_failed";
   if (::connect(socket.value, reinterpret_cast<const sockaddr*>(&target), sizeof(target)) == SOCKET_ERROR &&
       ::WSAGetLastError() != WSAEWOULDBLOCK) return "local_dpi_control_connect_failed";
   int error = 0, length = sizeof(error);
@@ -316,11 +325,6 @@ std::string BoundHttpExchange(const std::string& control_host, const std::string
   length = sizeof(actual);
   if (::getsockname(socket.value, reinterpret_cast<sockaddr*>(&actual), &length) ||
       actual.sin_addr.s_addr != endpoint.local.sin_addr.s_addr) return "local_dpi_physical_changed";
-  // The guard stays armed throughout verification. Only this already held
-  // control tuple may carry WinDivert-injected packets without an app identity.
-  WindowsLocalDpiControlPermit permit;
-  if (local_dpi_control && !permit.Open(socket.value, endpoint.index))
-    return "local_dpi_control_permit_failed";
   Tls tls;
   std::vector<char> pending;
   if (!Handshake(&tls, socket.value, host, &pending, interrupted, deadline)) return "local_dpi_control_tls_failed";
