@@ -1625,6 +1625,64 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     return Fail(Status::kNotReady, "core_start_failed");
   }
   if (const auto result = interruption(true)) return *result;
+  recovery_error = recovery_->Record(RecoveryStage::kNetworkApplied);
+  if (!recovery_error.empty()) {
+    RecordEvent(ServiceEvent::kRuntimeCoreStart,
+                ServiceEventOutcome::kSucceeded);
+    RecordEvent(ServiceEvent::kRuntimeWintunStart,
+                ServiceEventOutcome::kFailed);
+    RecordEvent(ServiceEvent::kRuntimeAdapterApply,
+                ServiceEventOutcome::kFailed);
+    RecordEvent(ServiceEvent::kRuntimeRouteApply,
+                ServiceEventOutcome::kFailed);
+    RecordEvent(ServiceEvent::kRuntimeDnsApply,
+                ServiceEventOutcome::kFailed);
+    const auto rollback_error = RollbackRuntime();
+    phase_ = rollback_error.empty() ? Phase::kConfigStaged
+                                    : Phase::kRecoveryRequired;
+    if (!rollback_error.empty()) {
+      RecordEvent(ServiceEvent::kRuntimeRecoveryRequired,
+                  ServiceEventOutcome::kFailed);
+      return Fail(Status::kNotReady, rollback_error.c_str());
+    }
+    return Fail(Status::kNotReady, recovery_error.c_str());
+  }
+  RecordEvent(ServiceEvent::kRuntimeCoreStart,
+              ServiceEventOutcome::kSucceeded);
+  RecordEvent(ServiceEvent::kRuntimeWintunStart,
+              ServiceEventOutcome::kSucceeded);
+  RecordEvent(ServiceEvent::kRuntimeAdapterApply,
+              ServiceEventOutcome::kSucceeded);
+  RecordEvent(ServiceEvent::kRuntimeRouteApply,
+              ServiceEventOutcome::kSucceeded);
+  RecordEvent(ServiceEvent::kRuntimeDnsApply,
+              ServiceEventOutcome::kSucceeded);
+  if (const auto result = interruption(true)) return *result;
+  if (!requires_bound_connect_) {
+    RecordEvent(ServiceEvent::kRuntimeEgressVerify,
+                ServiceEventOutcome::kAttempted);
+    const auto egress_failure = VerifyEgress(false, interrupted);
+    if (const auto result = interruption(true)) return *result;
+    if (!egress_failure.empty()) {
+      RecordEvent(ServiceEvent::kRuntimeEgressVerify,
+                  ServiceEventOutcome::kFailed);
+      const auto rollback_error = RollbackRuntime();
+      effective_profile_digest_.clear();
+      core_egress_validated_ = false;
+      phase_ = rollback_error.empty() ? Phase::kConfigStaged
+                                      : Phase::kRecoveryRequired;
+      if (!rollback_error.empty()) {
+        RecordEvent(ServiceEvent::kRuntimeRecoveryRequired,
+                    ServiceEventOutcome::kFailed);
+        return Fail(Status::kNotReady, rollback_error.c_str());
+      }
+      return Fail(Status::kNotReady, SafeEgressFailure(egress_failure));
+    }
+    RecordEvent(ServiceEvent::kRuntimeEgressVerify,
+                ServiceEventOutcome::kSucceeded);
+  }
+  // Prove the protected fallback before winws intercepts physical TCP/443.
+  // The transition guard remains armed through DPI proof and admission.
   std::optional<WindowsLocalDpiStrategy> proved_local_dpi_strategy;
   const auto local_dpi_owner_current = [&] {
     return local_dpi_preparation_ &&
@@ -1709,62 +1767,6 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
       phase_ = rollback_error.empty() ? Phase::kConfigStaged : Phase::kRecoveryRequired;
       return Fail(Status::kNotReady, rollback_error.empty() ? "local_dpi_catalog_expired" : rollback_error.c_str());
     }
-  }
-  recovery_error = recovery_->Record(RecoveryStage::kNetworkApplied);
-  if (!recovery_error.empty()) {
-    RecordEvent(ServiceEvent::kRuntimeCoreStart,
-                ServiceEventOutcome::kSucceeded);
-    RecordEvent(ServiceEvent::kRuntimeWintunStart,
-                ServiceEventOutcome::kFailed);
-    RecordEvent(ServiceEvent::kRuntimeAdapterApply,
-                ServiceEventOutcome::kFailed);
-    RecordEvent(ServiceEvent::kRuntimeRouteApply,
-                ServiceEventOutcome::kFailed);
-    RecordEvent(ServiceEvent::kRuntimeDnsApply,
-                ServiceEventOutcome::kFailed);
-    const auto rollback_error = RollbackRuntime();
-    phase_ = rollback_error.empty() ? Phase::kConfigStaged
-                                    : Phase::kRecoveryRequired;
-    if (!rollback_error.empty()) {
-      RecordEvent(ServiceEvent::kRuntimeRecoveryRequired,
-                  ServiceEventOutcome::kFailed);
-      return Fail(Status::kNotReady, rollback_error.c_str());
-    }
-    return Fail(Status::kNotReady, recovery_error.c_str());
-  }
-  RecordEvent(ServiceEvent::kRuntimeCoreStart,
-              ServiceEventOutcome::kSucceeded);
-  RecordEvent(ServiceEvent::kRuntimeWintunStart,
-              ServiceEventOutcome::kSucceeded);
-  RecordEvent(ServiceEvent::kRuntimeAdapterApply,
-              ServiceEventOutcome::kSucceeded);
-  RecordEvent(ServiceEvent::kRuntimeRouteApply,
-              ServiceEventOutcome::kSucceeded);
-  RecordEvent(ServiceEvent::kRuntimeDnsApply,
-              ServiceEventOutcome::kSucceeded);
-  if (const auto result = interruption(true)) return *result;
-  if (!requires_bound_connect_) {
-    RecordEvent(ServiceEvent::kRuntimeEgressVerify,
-                ServiceEventOutcome::kAttempted);
-    const auto egress_failure = VerifyEgress(false, interrupted);
-    if (const auto result = interruption(true)) return *result;
-    if (!egress_failure.empty()) {
-      RecordEvent(ServiceEvent::kRuntimeEgressVerify,
-                  ServiceEventOutcome::kFailed);
-      const auto rollback_error = RollbackRuntime();
-      effective_profile_digest_.clear();
-      core_egress_validated_ = false;
-      phase_ = rollback_error.empty() ? Phase::kConfigStaged
-                                      : Phase::kRecoveryRequired;
-      if (!rollback_error.empty()) {
-        RecordEvent(ServiceEvent::kRuntimeRecoveryRequired,
-                    ServiceEventOutcome::kFailed);
-        return Fail(Status::kNotReady, rollback_error.c_str());
-      }
-      return Fail(Status::kNotReady, SafeEgressFailure(egress_failure));
-    }
-    RecordEvent(ServiceEvent::kRuntimeEgressVerify,
-                ServiceEventOutcome::kSucceeded);
   }
   RecordEvent(ServiceEvent::kRuntimeCommit,
               ServiceEventOutcome::kAttempted);

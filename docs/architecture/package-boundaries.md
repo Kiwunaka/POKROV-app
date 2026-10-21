@@ -288,6 +288,12 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   scope/holder validation, the service opens the packaged WinDivert driver,
   allowing its ordinary first-use installation, and verifies version 2.2.
   Failure leaves VPN fallback. The private Core-prepared plan
+  verifies ordinary protected egress after Core start and before launching winws;
+  only then does the existing DPI proof/admission run under the transition guard,
+  ahead of runtime commit and guard release. This preserves both gates without
+  making fallback verification depend on an already intercepting DPI child. The
+  4197 same-profile comparison passed with DPI off and failed with it on; the
+  precise packet-loss point was not established by that comparison. The plan
   starts one suspended, Job-owned TCP/443 multisplit child on the captured
   physical interface. Before any admission, one retry with the other fixed
   strategy may replace only this child, retaining unchanged scope, interface,
