@@ -21,8 +21,8 @@ constexpr GUID kSubLayer = {0x541c71c5, 0x2ab4, 0x49b7,
 constexpr GUID kFilterBase = {0x0a06bf20, 0xc38a, 0x4e21,
                              {0x94, 0xc6, 0x30, 0x06, 0xa8, 0x92, 0x5d, 0x10}};
 constexpr size_t kFilterCount = 8;
-// The VM's BFE roundtrip normalized requested 65535 to 65534. Use the actual
-// supported priority explicitly, without accepting arbitrary lower priorities.
+// Request high priority. Observed BFE readback varies with installed sublayers;
+// verify actual arbitration against competing ALE permits instead of a number.
 constexpr UINT16 kSubLayerWeight = 0xfffe;
 const std::array<const GUID*, 4> kLayers = {
     &FWPM_LAYER_ALE_AUTH_CONNECT_V4, &FWPM_LAYER_ALE_AUTH_CONNECT_V6,
@@ -197,7 +197,63 @@ bool Matches(const FWPM_FILTER0& actual, const FWPM_FILTER0& expected) {
 
 bool MatchesSubLayer(const FWPM_SUBLAYER0& actual) {
   return actual.flags == FWPM_SUBLAYER_FLAG_PERSISTENT &&
-         actual.weight == kSubLayerWeight && actual.providerKey == nullptr;
+         actual.providerKey == nullptr;
+}
+
+bool IsPotentialGuardOverride(const FWPM_FILTER0& filter) {
+  if (filter.subLayerKey == kSubLayer ||
+      (filter.flags & FWPM_FILTER_FLAG_DISABLED) != 0) return false;
+  bool protected_layer = false;
+  for (const auto* layer : kLayers) protected_layer |= filter.layerKey == *layer;
+  if (!protected_layer) return false;
+  // Higher hard permits can suppress a lower static block. A terminating or
+  // unknown callout may also return a hard permit; inspection cannot do so.
+  return (filter.action.type == FWP_ACTION_PERMIT &&
+          (filter.flags & FWPM_FILTER_FLAG_CLEAR_ACTION_RIGHT) != 0) ||
+         filter.action.type == FWP_ACTION_CALLOUT_TERMINATING ||
+         filter.action.type == FWP_ACTION_CALLOUT_UNKNOWN;
+}
+
+bool CanOverrideGuard(const FWPM_FILTER0& filter, UINT16 sublayer_weight,
+                      UINT16 guard_weight) {
+  return sublayer_weight >= guard_weight && IsPotentialGuardOverride(filter);
+}
+
+DWORD VerifyGuardPriority(HANDLE engine, UINT16 guard_weight, bool* safe) {
+  *safe = false;
+  for (const auto* layer : kLayers) {
+    FWPM_FILTER_ENUM_TEMPLATE0 query{};
+    query.layerKey = *layer;
+    query.enumType = FWP_FILTER_ENUM_FULLY_CONTAINED;
+    query.actionMask = 0xffffffff;
+    HANDLE enumeration = nullptr;
+    DWORD result = ::FwpmFilterCreateEnumHandle0(engine, &query, &enumeration);
+    if (result != ERROR_SUCCESS) return result;
+    bool conflict = false;
+    while (result == ERROR_SUCCESS && !conflict) {
+      FWPM_FILTER0** filters = nullptr;
+      UINT32 count = 0;
+      result = ::FwpmFilterEnum0(engine, enumeration, 128, &filters, &count);
+      for (UINT32 i = 0; result == ERROR_SUCCESS && i < count && !conflict; ++i) {
+        const auto& filter = *filters[i];
+        if (!IsPotentialGuardOverride(filter)) continue;
+        FWPM_SUBLAYER0* sublayer = nullptr;
+        result = ::FwpmSubLayerGetByKey0(engine, &filter.subLayerKey, &sublayer);
+        if (result == ERROR_SUCCESS) {
+          conflict = CanOverrideGuard(filter, sublayer->weight, guard_weight);
+          ::FwpmFreeMemory0(reinterpret_cast<void**>(&sublayer));
+        }
+      }
+      if (filters) ::FwpmFreeMemory0(reinterpret_cast<void**>(&filters));
+      if (count == 0) break;
+    }
+    const DWORD close_result = ::FwpmFilterDestroyEnumHandle0(engine, enumeration);
+    if (result != ERROR_SUCCESS) return result;
+    if (close_result != ERROR_SUCCESS) return close_result;
+    if (conflict) return ERROR_SUCCESS;
+  }
+  *safe = true;
+  return ERROR_SUCCESS;
 }
 
 class WindowsGuardBackend final : public TransitionGuardBackend {
@@ -220,12 +276,14 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
       return Fail(TransitionGuardStage::kReadBegin, code, "transition_guard_read_failed");
     bool any = false;
     bool complete = true;
+    UINT16 guard_weight = 0;
     DWORD result = ERROR_SUCCESS;
     FWPM_SUBLAYER0* layer = nullptr;
     result = ::FwpmSubLayerGetByKey0(engine_, &kSubLayer, &layer);
     if (result == ERROR_SUCCESS) {
       any = true;
       complete = MatchesSubLayer(*layer);
+      guard_weight = layer->weight;
       ::FwpmFreeMemory0(reinterpret_cast<void**>(&layer));
     } else if (result == FWP_E_SUBLAYER_NOT_FOUND) {
       complete = false;
@@ -244,6 +302,8 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
         result = ERROR_SUCCESS;
       }
     }
+    if (result == ERROR_SUCCESS && complete)
+      result = VerifyGuardPriority(engine_, guard_weight, &complete);
     ::FwpmTransactionAbort0(engine_);
     if (result != ERROR_SUCCESS)
       return Fail(TransitionGuardStage::kReadQuery, result, "transition_guard_read_failed");
@@ -453,6 +513,11 @@ bool TransitionGuardFilterMatchesForTesting(
 
 bool TransitionGuardSubLayerMatchesForTesting(const FWPM_SUBLAYER0_& actual) {
   return MatchesSubLayer(actual);
+}
+
+bool TransitionGuardFilterCanOverrideForTesting(const FWPM_FILTER0_& filter,
+    std::uint16_t sublayer_weight, std::uint16_t guard_weight) {
+  return CanOverrideGuard(filter, sublayer_weight, guard_weight);
 }
 
 bool VisitLocalDpiControlPermitForTesting(std::uintptr_t bound_socket,

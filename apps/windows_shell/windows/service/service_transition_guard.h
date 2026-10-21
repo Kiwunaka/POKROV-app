@@ -78,6 +78,8 @@ std::string VisitTransitionGuardFiltersForTesting(
 bool TransitionGuardFilterMatchesForTesting(
     const FWPM_FILTER0_& actual, const FWPM_FILTER0_& expected);
 bool TransitionGuardSubLayerMatchesForTesting(const FWPM_SUBLAYER0_& actual);
+bool TransitionGuardFilterCanOverrideForTesting(const FWPM_FILTER0_& filter,
+    std::uint16_t sublayer_weight, std::uint16_t guard_weight);
 bool VisitLocalDpiControlPermitForTesting(std::uintptr_t bound_socket,
     std::uint32_t remote_ipv4_network_order,
     const std::function<void(const FWPM_FILTER0_&)>& visitor);

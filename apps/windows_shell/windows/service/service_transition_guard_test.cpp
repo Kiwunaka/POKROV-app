@@ -101,16 +101,44 @@ int main() {
   }
 
 #ifdef _DEBUG
-  // Actual SYSTEM-created objects read back on the Windows VM: BFE returned
-  // sublayer weight 65534 and added INDEXED to the four permit filters.
+  // Actual VM readback changed from 65534 to 65515 with twenty higher
+  // WinDivert sublayers, none containing filters at our protected ALE layers.
   FWPM_SUBLAYER0 persisted_layer{};
   persisted_layer.flags = FWPM_SUBLAYER_FLAG_PERSISTENT;
-  persisted_layer.weight = 65534;
+  persisted_layer.weight = 65515;
   expect(TransitionGuardSubLayerMatchesForTesting(persisted_layer),
-         "accept observed BFE sublayer priority");
-  persisted_layer.weight = 65533;
+         "normalized priority does not invalidate an intact persistent sublayer");
+  persisted_layer.flags = 0;
   expect(!TransitionGuardSubLayerMatchesForTesting(persisted_layer),
-         "reject a lower-priority sublayer");
+         "priority verification cannot accept a nonpersistent sublayer");
+  FWPM_FILTER0 competing{};
+  competing.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+  competing.action.type = FWP_ACTION_PERMIT;
+  expect(!TransitionGuardFilterCanOverrideForTesting(competing, 65535, 65515),
+         "higher soft permit remains overridable by the guard block");
+  competing.flags = FWPM_FILTER_FLAG_CLEAR_ACTION_RIGHT;
+  expect(TransitionGuardFilterCanOverrideForTesting(competing, 65535, 65515) &&
+             TransitionGuardFilterCanOverrideForTesting(competing, 65515, 65515),
+         "higher or equal hard permit must reject normalized priority");
+  expect(!TransitionGuardFilterCanOverrideForTesting(competing, 65514, 65515),
+         "lower hard permit cannot override the guard block");
+  competing.flags |= FWPM_FILTER_FLAG_DISABLED;
+  expect(!TransitionGuardFilterCanOverrideForTesting(competing, 65535, 65515),
+         "disabled hard permit is not an arbitration conflict");
+  competing.flags = 0;
+  for (const auto action : {FWP_ACTION_CALLOUT_TERMINATING, FWP_ACTION_CALLOUT_UNKNOWN}) {
+    competing.action.type = action;
+    expect(TransitionGuardFilterCanOverrideForTesting(competing, 65535, 65515) &&
+               TransitionGuardFilterCanOverrideForTesting(competing, 65515, 65515),
+           "higher or equal permitting callout must reject normalized priority");
+  }
+  competing.layerKey = FWPM_LAYER_OUTBOUND_IPPACKET_V4;
+  expect(!TransitionGuardFilterCanOverrideForTesting(competing, 65535, 65515),
+         "a WinDivert network-layer filter does not compete in protected ALE");
+  competing.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+  competing.action.type = FWP_ACTION_CALLOUT_INSPECTION;
+  expect(!TransitionGuardFilterCanOverrideForTesting(competing, 65535, 65515),
+         "inspection-only callout cannot return a permit");
   // Inspect actual policy definitions; this NEVER opens a WFP engine or calls
   // add/delete. Existing-flow enforcement itself is a separate opt-in VM gate.
   const std::array<const GUID*, 4> layers = {

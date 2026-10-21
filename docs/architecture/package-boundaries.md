@@ -310,6 +310,15 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   on the captured physical interface: WinDivert reinjection has no service app
   identity. Scope exit or service termination removes this permit; the persisted
   block and normal verification/commit order remain unchanged.
+  Guard readback checks arbitration in the same read-only WFP transaction as
+  its eight exact filters. The observed sublayer weight changed to 65515 after
+  WinDivert layers appeared, although none had filters at the protected ALE
+  layers; requiring the old numeric weight falsely rejected admission. The
+  persistent sublayer and exact filter identities/conditions remain mandatory.
+  Any active higher/equal hard permit or potentially permitting callout at those
+  four ALE layers fails closed, as does an enumeration/query error. This follows
+  [WFP arbitration](https://learn.microsoft.com/en-us/windows/win32/fwp/filter-arbitration),
+  with no weight range, vendor-name exception or modification of another policy.
   A live winws process is not filter readiness. Before opening a control socket,
   the service waits up to three seconds for its child's NETWORK REFLECT event,
   completion of upstream's WinDivert initialization mutex, and a fresh handle
