@@ -301,6 +301,9 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   disabled, retaining automatic CA/hostname validation and strong crypto.
   Windows 11 can negotiate TLS 1.3; Windows 10 1809+ retains TLS 1.2 without an
   unsupported forced TLS 1.3 mask. The strategy and packet scope stay unchanged.
+  TLS 1.3 post-handshake messages continue the same authenticated Schannel
+  context with retained response/extra bytes and the original ten-second
+  deadline. The HEAD request is sent once; TLS 1.2 renegotiation stays rejected.
   The existing service journal records `runtime_local_dpi_observation` for
   start, control-host proof and admission: closed failure code, strategy
   568/681 and child-alive flag only. Unknown error text is replaced by

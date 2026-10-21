@@ -16,6 +16,24 @@
 #include <vector>
 
 namespace pokrov::service {
+
+bool ConsumeWindowsLocalDpiTlsRecord(SECURITY_STATUS status, DWORD protocol,
+    const SecBuffer (&buffers)[4], std::vector<char>* pending, std::string* response) {
+  if (status != SEC_E_OK &&
+      !(status == SEC_I_RENEGOTIATE && protocol == SP_PROT_TLS1_3_CLIENT)) return false;
+  ULONG extra = 0;
+  for (const auto& buffer : buffers) {
+    if (buffer.BufferType == SECBUFFER_DATA) {
+      if (response->size() + buffer.cbBuffer > 16384) return false;
+      if (buffer.cbBuffer) response->append(static_cast<const char*>(buffer.pvBuffer), buffer.cbBuffer);
+    }
+    if (buffer.BufferType == SECBUFFER_EXTRA) extra = buffer.cbBuffer;
+  }
+  if (extra > pending->size()) return false;
+  pending->erase(pending->begin(), pending->end() - extra);
+  return true;
+}
+
 namespace {
 struct Socket {
   SOCKET value = INVALID_SOCKET;
@@ -183,23 +201,23 @@ bool Resolve(const PhysicalEndpoint& endpoint, const std::wstring& host, IN_ADDR
 
 bool Handshake(Tls* tls, SOCKET socket, const std::wstring& host, std::vector<char>* pending,
                const CheckInterruption& interrupted, ULONGLONG deadline) {
-  // SCH_CREDENTIALS uses the protocols supported by the OS, including TLS 1.3
-  // on Windows 11, while the explicit exclusions keep TLS 1.2 as the minimum.
-  // Windows 10 1809+ supports this API and can continue negotiating TLS 1.2.
-  TLS_PARAMETERS parameters{};
-  parameters.grbitDisabledProtocols = SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT |
-      SP_PROT_TLS1_0_CLIENT | SP_PROT_TLS1_1_CLIENT;
-  SCH_CREDENTIALS credentials{};
-  credentials.dwVersion = SCH_CREDENTIALS_VERSION;
-  credentials.cTlsParameters = 1;
-  credentials.pTlsParameters = &parameters;
-  credentials.dwFlags = SCH_CRED_AUTO_CRED_VALIDATION | SCH_CRED_NO_DEFAULT_CREDS |
-      SCH_USE_STRONG_CRYPTO | SCH_CRED_CACHE_ONLY_URL_RETRIEVAL;
-  if (::AcquireCredentialsHandleW(nullptr, const_cast<wchar_t*>(UNISP_NAME_W), SECPKG_CRED_OUTBOUND,
-      nullptr, &credentials, nullptr, nullptr, &tls->credentials, nullptr) != SEC_E_OK) return false;
+  if (!SecIsValidHandle(&tls->credentials)) {
+    // Use OS-supported TLS 1.2/1.3 without forcing unsupported Windows 10 flags.
+    TLS_PARAMETERS parameters{};
+    parameters.grbitDisabledProtocols = SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT |
+        SP_PROT_TLS1_0_CLIENT | SP_PROT_TLS1_1_CLIENT;
+    SCH_CREDENTIALS credentials{};
+    credentials.dwVersion = SCH_CREDENTIALS_VERSION;
+    credentials.cTlsParameters = 1;
+    credentials.pTlsParameters = &parameters;
+    credentials.dwFlags = SCH_CRED_AUTO_CRED_VALIDATION | SCH_CRED_NO_DEFAULT_CREDS |
+        SCH_USE_STRONG_CRYPTO | SCH_CRED_CACHE_ONLY_URL_RETRIEVAL;
+    if (::AcquireCredentialsHandleW(nullptr, const_cast<wchar_t*>(UNISP_NAME_W), SECPKG_CRED_OUTBOUND,
+        nullptr, &credentials, nullptr, nullptr, &tls->credentials, nullptr) != SEC_E_OK) return false;
+  }
   constexpr ULONG flags = ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONFIDENTIALITY |
       ISC_REQ_ALLOCATE_MEMORY | ISC_REQ_STREAM | ISC_REQ_USE_SUPPLIED_CREDS;
-  bool first = true;
+  bool first = !SecIsValidHandle(&tls->context);
   while (Current(interrupted, deadline)) {
     SecBuffer input_buffers[2]{{static_cast<ULONG>(pending->size()), SECBUFFER_TOKEN, pending->data()}, {0, SECBUFFER_EMPTY, nullptr}};
     SecBufferDesc input{SECBUFFER_VERSION, 2, input_buffers};
@@ -229,8 +247,10 @@ bool Handshake(Tls* tls, SOCKET socket, const std::wstring& host, std::vector<ch
   return false;
 }
 
-int HttpStatus(Tls* tls, SOCKET socket, const std::string& request, std::vector<char>* pending,
+int HttpStatus(Tls* tls, SOCKET socket, const std::wstring& host, const std::string& request, std::vector<char>* pending,
                const CheckInterruption& interrupted, ULONGLONG deadline) {
+  SecPkgContext_ConnectionInfo connection{};
+  if (::QueryContextAttributesW(&tls->context, SECPKG_ATTR_CONNECTION_INFO, &connection) != SEC_E_OK) return 0;
   SecPkgContext_StreamSizes sizes{};
   if (::QueryContextAttributesW(&tls->context, SECPKG_ATTR_STREAM_SIZES, &sizes) != SEC_E_OK ||
       request.size() > sizes.cbMaximumMessage) return 0;
@@ -255,17 +275,12 @@ int HttpStatus(Tls* tls, SOCKET socket, const std::string& request, std::vector<
       if (!Receive(socket, pending, interrupted, deadline)) return false;
       continue;
     }
-    if (status != SEC_E_OK) return false;  // No renegotiation or response replay.
-    ULONG extra = 0;
-    for (const auto& buffer : incoming) {
-      if (buffer.BufferType == SECBUFFER_DATA) {
-        if (response.size() + buffer.cbBuffer > 16384) return false;
-        response.append(static_cast<const char*>(buffer.pvBuffer), buffer.cbBuffer);
-      }
-      if (buffer.BufferType == SECBUFFER_EXTRA) extra = buffer.cbBuffer;
-    }
-    if (extra > pending->size()) return false;
-    pending->erase(pending->begin(), pending->end() - extra);
+    if (!ConsumeWindowsLocalDpiTlsRecord(status, connection.dwProtocol, incoming, pending, &response)) return 0;
+    // TLS 1.3 session tickets/key updates use Schannel's renegotiation signal.
+    // Continue the same authenticated context and deadline; never resend HEAD.
+    // TLS 1.2 renegotiation remains rejected by the record check above.
+    if (status == SEC_I_RENEGOTIATE &&
+        !Handshake(tls, socket, host, pending, interrupted, deadline)) return 0;
     if (response.find("\r\n\r\n") != std::string::npos) {
       const bool protocol = response.rfind("HTTP/1.1 ", 0) == 0 || response.rfind("HTTP/1.0 ", 0) == 0;
       if (!Current(interrupted, deadline) || !protocol || response.size() < 13 ||
@@ -303,7 +318,7 @@ std::string BoundHttpExchange(const std::string& control_host, const std::string
   Tls tls;
   std::vector<char> pending;
   if (!Handshake(&tls, socket.value, host, &pending, interrupted, deadline)) return "local_dpi_control_tls_failed";
-  *status = HttpStatus(&tls, socket.value, request, &pending, interrupted, deadline);
+  *status = HttpStatus(&tls, socket.value, host, request, &pending, interrupted, deadline);
   return *status != 0 ? "" : "local_dpi_control_http_failed";
 }
 }  // namespace

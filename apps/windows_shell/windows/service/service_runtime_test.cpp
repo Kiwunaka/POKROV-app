@@ -5,6 +5,9 @@
 #include "service_local_dpi_json.h"
 
 #include <windows.h>
+#define SECURITY_WIN32
+#include <security.h>
+#include <schannel.h>
 
 #include <iostream>
 #include <memory>
@@ -18,6 +21,8 @@ bool CoreDescriptorHasTelegramWS(const std::string& descriptor);
 bool CoreDescriptorHasSmartAccessProbe(const std::string& descriptor);
 bool StopWindowsLocalDpiChild(HANDLE& job, HANDLE& process);
 bool CloseWindowsLocalDpiDriver(HANDLE& guard, BOOL (__cdecl* close)(HANDLE));
+bool ConsumeWindowsLocalDpiTlsRecord(SECURITY_STATUS status, DWORD protocol,
+    const SecBuffer (&buffers)[4], std::vector<char>* pending, std::string* response);
 }
 
 namespace {
@@ -117,6 +122,29 @@ void TestWindowsTelegramMetadataComposition() {
     expired.expires_elapsed_ms = ::GetTickCount64();
     Expect(!WindowsTelegramWSPreparationCurrent(expired), "Telegram monotonic expiry did not retire admission");
   }
+}
+
+void TestWindowsLocalDpiTls13PostHandshake() {
+  using pokrov::service::ConsumeWindowsLocalDpiTlsRecord;
+  std::vector<char> pending{'t', 'i', 'c', 'k', 'e', 't', 'n', 'e', 'x', 't'};
+  std::string response;
+  char prefix[] = "HTTP/1.1 2";
+  SecBuffer buffers[4]{{0, SECBUFFER_EMPTY, nullptr},
+      {sizeof(prefix) - 1, SECBUFFER_DATA, prefix}, {0, SECBUFFER_EMPTY, nullptr},
+      {4, SECBUFFER_EXTRA, pending.data() + 6}};
+  Expect(!ConsumeWindowsLocalDpiTlsRecord(SEC_I_RENEGOTIATE, SP_PROT_TLS1_2_CLIENT,
+             buffers, &pending, &response) && pending.size() == 10 && response.empty(),
+         "TLS 1.2 renegotiation was enabled by the TLS 1.3 continuation path");
+  Expect(ConsumeWindowsLocalDpiTlsRecord(SEC_I_RENEGOTIATE, SP_PROT_TLS1_3_CLIENT,
+             buffers, &pending, &response) && response == "HTTP/1.1 2" &&
+             std::string(pending.begin(), pending.end()) == "next",
+         "TLS 1.3 post-handshake control lost HTTP data or the remaining token");
+  char suffix[] = "00 OK\r\n\r\n";
+  buffers[1] = {sizeof(suffix) - 1, SECBUFFER_DATA, suffix};
+  buffers[3] = {0, SECBUFFER_EMPTY, nullptr};
+  Expect(ConsumeWindowsLocalDpiTlsRecord(SEC_E_OK, SP_PROT_TLS1_3_CLIENT,
+             buffers, &pending, &response) && response == "HTTP/1.1 200 OK\r\n\r\n" && pending.empty(),
+         "HTTP headers could not continue after TLS 1.3 post-handshake control");
 }
 
 void TestWindowsLocalDpiScopePreparation() {
@@ -1706,6 +1734,10 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--local-dpi-tls") {
+    TestWindowsLocalDpiTls13PostHandshake();
+    return failures == 0 ? 0 : 1;
+  }
   if (argc == 2 && std::string(argv[1]) == "--local-dpi-test-child") {
     ::Sleep(10000);
     return 0;
@@ -1735,6 +1767,7 @@ int main(int argc, char** argv) {
   TestReleasedCoreDescriptorCompatibility();
   TestWindowsTelegramMetadataComposition();
   TestWindowsLocalDpiScopePreparation();
+  TestWindowsLocalDpiTls13PostHandshake();
   TestWindowsLocalDpiOwnedCleanup();
   TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff();
   TestInterruptedConnectNeverPublishesProtection();
