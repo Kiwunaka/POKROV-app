@@ -3386,10 +3386,11 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
             loadSmartDnsProviders: _bootstrapper is AppFirstSmartAccessService &&
                 (_bootstrapper as AppFirstSmartAccessService).smartAccessEnabled
                 ? _loadSmartDnsProviders : null,
+            smartDnsEligible: _connectionManager._smartAccessEligible,
             catalogPreviewIdentity: (
               _selectedRouteMode, _managedProfileRevision, _freeProfileAccess?.accessState,
               _runtimeSnapshot?.routingCatalogWindowVersion, identityHashCode(_bootstrapper),
-              _clientExperience.routingPreferences.externalSmartDnsEnabled,
+              _connectionManager._subscriptionInfo?.smartAccessEligible,
             ),
             onEditCatalogServices: _selectiveServicesAvailable ? _editCatalogServices : null,
             catalogServicesBusy: _runtimeBusy,

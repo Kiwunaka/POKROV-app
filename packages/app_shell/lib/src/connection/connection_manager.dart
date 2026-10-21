@@ -2157,6 +2157,8 @@ class ConnectionManager extends ChangeNotifier {
       _bootstrapper is AppFirstRuntimeBootstrapper &&
       (_bootstrapper as AppFirstRuntimeBootstrapper).smartAccessEnabled;
 
+  bool get _smartAccessEligible => _subscriptionInfo?.smartAccessEligible == true;
+
   String? get _catalogSelectionAccessState {
     final access = _freeProfileAccess;
     if (access != null && access.hasKnownAccessState && access.isConsistent) {
@@ -2170,6 +2172,9 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<VerifiedSmartAccessProviderPolicy> _loadSmartDnsProviders() async {
+    if (!_smartAccessEligible) {
+      throw const RoutingCatalogFailure('smart_access_access_denied');
+    }
     final service = _bootstrapper;
     final revision = _managedProfileRevision;
     final generation = _connectionCoordinator.operationGeneration;
@@ -2272,7 +2277,7 @@ class ConnectionManager extends ChangeNotifier {
           // prepared catalog or retained inventory when readback is unavailable.
         }
       }
-      final smartAccessEnabled = service is AppFirstSmartAccessService &&
+      final smartAccessEnabled = _smartAccessEligible && service is AppFirstSmartAccessService &&
           (service as AppFirstSmartAccessService).smartAccessEnabled;
       VerifiedSmartAccessProviderPolicy? providers;
       DateTime? providersObservedAt;
@@ -2388,8 +2393,6 @@ class ConnectionManager extends ChangeNotifier {
                 mode == RouteMode.excludedApps) &&
             _selectedAppIds.isEmpty)
           'Перед подключением выберите хотя бы одно приложение.',
-        if (_clientExperience.routingPreferences.externalSmartDnsEnabled)
-          'Для внешнего Smart DNS ещё не подготовлен маршрут сервиса.',
       ],
     );
   }
@@ -2487,15 +2490,19 @@ class ConnectionManager extends ChangeNotifier {
             code: 'managed_profile_access_denied', statusCode: 403);
       }
       _subscriptionInfo = subscription;
-      try {
-        return await _prepareManagedProfile(
-            service.buildLocalSmartAccessBase(hostPlatform: _appContext.hostPlatform),
-            ownerGeneration: generation,
-            localSmartAccessState: subscription.accessState);
-      } on BootstrapFailure catch (error) {
-        if (error.code != 'catalog_gateway_lease_missing') rethrow;
-        requireCurrent();
+      if (!subscription.smartAccessEligible) {
         smartAccessVpnFallback = true;
+      } else {
+        try {
+          return await _prepareManagedProfile(
+              service.buildLocalSmartAccessBase(hostPlatform: _appContext.hostPlatform),
+              ownerGeneration: generation,
+              localSmartAccessState: subscription.accessState);
+        } on BootstrapFailure catch (error) {
+          if (error.code != 'catalog_gateway_lease_missing') rethrow;
+          requireCurrent();
+          smartAccessVpnFallback = true;
+        }
       }
     }
     final signedTransport = _bootstrapper is AppFirstTransportManifestService &&
@@ -3209,7 +3216,7 @@ class ConnectionManager extends ChangeNotifier {
           } else {
             catalogPolicy = compile(null);
           }
-          if (qaAdmissionId == null && !offline && !smartAccessVpnFallback &&
+          if (qaAdmissionId == null && !offline && !smartAccessVpnFallback && _smartAccessEligible &&
               !result.usingCache &&
               const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(catalogMode) &&
               nativeSmartAccessLeaseVersion == 1 &&
@@ -3241,6 +3248,7 @@ class ConnectionManager extends ChangeNotifier {
 
               bool authorityUnavailable(BootstrapFailure error) =>
                   error.code == 'smart_access_admission_paused' ||
+                  error.code == 'smart_access_access_denied' ||
                   (error.statusCode == null &&
                       error.operationalCode == 'API-002') ||
                   const {

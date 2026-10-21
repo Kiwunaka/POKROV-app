@@ -81,7 +81,6 @@ class _PurposeRoutingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final externalSmartDnsEnabled = preferences.externalSmartDnsEnabled;
     return _SectionCard(
       key: const ValueKey('rules-purpose-routes'),
       title: 'Готовые маршруты',
@@ -99,11 +98,7 @@ class _PurposeRoutingCard extends StatelessWidget {
                 'rules-purpose-${PokrovPurposeRoute.values[index].name}',
               ),
               title: PokrovPurposeRoute.values[index].title,
-              subtitle: preferences.routesPurposeThroughExternalSmartDns(
-                PokrovPurposeRoute.values[index],
-              )
-                  ? '${PokrovPurposeRoute.values[index].title} идёт напрямую через внешний Smart DNS. IP-адрес не скрывается.'
-                  : PokrovPurposeRoute.values[index].summary,
+              subtitle: PokrovPurposeRoute.values[index].summary,
               value: preferences.purposeRoutes.contains(
                 PokrovPurposeRoute.values[index],
               ),
@@ -119,10 +114,6 @@ class _PurposeRoutingCard extends StatelessWidget {
                 onChanged(
                   preferences.copyWith(
                     purposeRoutes: next,
-                    externalSmartDnsEnabled: externalSmartDnsEnabled &&
-                        next.any(
-                          (purpose) => purpose.supportsExternalSmartDns,
-                        ),
                   ),
                 );
               },
@@ -235,6 +226,7 @@ class _DnsAndLanCard extends StatelessWidget {
   const _DnsAndLanCard({
     required this.hostPlatform,
     this.loadSmartDnsProviders,
+    this.smartDnsEligible = false,
     required this.preferences,
     required this.onChanged,
     required this.onLanSubnetsChanged,
@@ -242,25 +234,18 @@ class _DnsAndLanCard extends StatelessWidget {
 
   final HostPlatform hostPlatform;
   final Future<VerifiedSmartAccessProviderPolicy> Function()? loadSmartDnsProviders;
+  final bool smartDnsEligible;
   final PokrovRoutingPreferences preferences;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
   final ValueChanged<List<String>> onLanSubnetsChanged;
 
   @override
   Widget build(BuildContext context) {
-    final hasSmartDnsPurpose = preferences.purposeRoutes.any(
-      (purpose) => purpose.supportsExternalSmartDns,
-    );
-    final canToggleExternalSmartDns =
-        preferences.dnsTransport == PokrovDnsTransport.direct &&
-            hasSmartDnsPurpose;
     return _SectionCard(
       key: const ValueKey('rules-dns-lan'),
       title: 'Блокировка и DNS',
       lines: [
-        preferences.externalSmartDnsEnabled
-            ? 'Smart DNS меняет DNS только для выбранных AI/игровых сервисов и направляет их напрямую. IP-адрес не скрывается.'
-            : preferences.dnsTransport == PokrovDnsTransport.direct
+        preferences.dnsTransport == PokrovDnsTransport.direct
                 ? 'DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'
                 : 'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
       ],
@@ -283,12 +268,12 @@ class _DnsAndLanCard extends StatelessWidget {
             key: const ValueKey('rules-smart-dns-provider-picker'),
             icon: Icons.dns_outlined,
             title: 'SmartDNS-провайдер',
-            value: preferences.smartDnsProviderId.isEmpty
+            value: !smartDnsEligible ? 'Доступно с Premium' : preferences.smartDnsProviderId.isEmpty
                 ? 'Автоматически' : 'Выбран вручную',
-            valueIsAction: true,
-            onTap: () => _showSmartDnsProviderSheet(context,
+            valueIsAction: smartDnsEligible,
+            onTap: smartDnsEligible ? () => _showSmartDnsProviderSheet(context,
               preferences: preferences, hostPlatform: hostPlatform,
-              load: loadSmartDnsProviders, onChanged: onChanged),
+              load: loadSmartDnsProviders, onChanged: onChanged) : null,
           ),
           if (preferences.dnsPreset != PokrovDnsPreset.automatic) ...[
             const _SettingsRowDivider(),
@@ -304,28 +289,7 @@ class _DnsAndLanCard extends StatelessWidget {
                   dnsTransport: value
                       ? PokrovDnsTransport.direct
                       : PokrovDnsTransport.vpn,
-                  externalSmartDnsEnabled:
-                      value && preferences.externalSmartDnsEnabled,
                 ),
-              ),
-            ),
-          ],
-          if (preferences.dnsPreset == PokrovDnsPreset.custom) ...[
-            const _SettingsRowDivider(),
-            _RoutingToggleRow(
-              key: const ValueKey('rules-external-smart-dns-toggle'),
-              title: 'Внешний Smart DNS · лаборатория',
-              subtitle: preferences.dnsTransport != PokrovDnsTransport.direct
-                  ? 'Сначала включите «DNS напрямую».'
-                  : !hasSmartDnsPurpose
-                      ? 'Сначала включите маршрут «AI-сервисы» или «Игровые сервисы».'
-                      : preferences.externalSmartDnsEnabled
-                          ? 'Только DNS выбранных AI/игровых сервисов идёт в custom DoH; сами сервисы — напрямую. Нужен совместимый сервер, IP не скрывается.'
-                          : 'Использовать custom DoH только для выбранных AI/игровых сервисов. URL должен оканчиваться на /dns-query и не содержать токен.',
-              value: preferences.externalSmartDnsEnabled,
-              enabled: canToggleExternalSmartDns,
-              onChanged: (value) => onChanged(
-                preferences.copyWith(externalSmartDnsEnabled: value),
               ),
             ),
           ],
@@ -1247,7 +1211,6 @@ Future<void> _showDnsPresetSheet(
                         preferences.copyWith(
                           dnsPreset: preset,
                           customDnsUrl: '',
-                          externalSmartDnsEnabled: false,
                         ),
                       );
                     },

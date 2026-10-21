@@ -427,6 +427,12 @@ class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirst
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _SmartDnsAccountBootstrapper extends _StartupAccountBootstrapper
+    implements AppFirstSmartAccessService {
+  @override
+  bool get smartAccessEnabled => true;
+}
+
 class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, RuntimeCandidateProbing, RuntimeProtectedHandoff, RuntimeNetworkAvailability {
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
@@ -1337,7 +1343,7 @@ void main() {
     });
     expect(preferences.dnsPreset, PokrovDnsPreset.automatic);
     expect(preferences.effectiveDnsAddress, isNull);
-    expect(preferences.externalSmartDnsEnabled, isFalse);
+    expect(preferences.toJson(), isNot(contains('externalSmartDnsEnabled')));
     final payload = await _Bootstrapper().resolveManagedProfile(
       hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel,
@@ -1349,6 +1355,86 @@ void main() {
       (rule) => (rule['domain_suffix'] as List? ?? []).contains('gemini.google.com'),
     );
     expect(aiRule['outbound'], 'proxy');
+  });
+
+  test('legacy custom SmartDNS flag cannot move AI and games outside VPN', () async {
+    final stored = {
+      'dnsPreset': 'custom',
+      'dnsTransport': 'direct',
+      'customDnsUrl': 'https://dns.example/dns-query',
+      'externalSmartDnsEnabled': true,
+      'purposeRoutes': ['ai', 'games'],
+    };
+    final preferences = PokrovRoutingPreferences.fromJson(stored);
+    expect(preferences.dnsPreset, PokrovDnsPreset.automatic);
+    final base = await _Bootstrapper().resolveManagedProfile(
+      hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel);
+    final payload = base.copyWith(configPayload: jsonEncode({
+      ...jsonDecode(base.configPayload) as Map,
+      'dns': {'servers': [{'tag': 'local', 'address': 'local'}]},
+    }));
+    final configured = applyPokrovRoutingPreferences(payload, preferences,
+        hostPlatform: HostPlatform.windows);
+    final config = jsonDecode(configured.configPayload) as Map;
+    final rules = (config['route']['rules'] as List).cast<Map>();
+    expect(rules.where((rule) => (rule['domain_suffix'] as List? ?? []).any(
+      (domain) => domain == 'gemini.google.com' || domain == 'xbox.com'))
+      .map((rule) => rule['outbound']), ['proxy', 'proxy']);
+    expect((config['dns']['servers'] as List).cast<Map>()
+        .where((server) => server['tag'] == 'pokrov-user-dns'), isEmpty);
+    final ordinary = applyPokrovRoutingPreferences(payload,
+      PokrovRoutingPreferences.fromJson({...stored, 'externalSmartDnsEnabled': false}),
+      hostPlatform: HostPlatform.windows);
+    final ordinaryConfig = jsonDecode(ordinary.configPayload) as Map;
+    final ordinaryDns = (ordinaryConfig['dns']['servers'] as List).cast<Map>()
+        .singleWhere((server) => server['tag'] == 'pokrov-user-dns');
+    expect(ordinaryDns['type'], 'https');
+    expect(ordinaryDns['server'], 'dns.example');
+    expect(ordinaryDns['detour'], isNull);
+    expect(ordinaryDns['domain_resolver'], 'local');
+    expect(preferences.toJson(), isNot(contains('externalSmartDnsEnabled')));
+  });
+
+  testWidgets('SmartDNS picker follows authenticated Premium eligibility', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(channel, (_) async => {'phase': 'initialized',
+      'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true});
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    expect(ClientSubscriptionInfo.fromJson({'lane': 'paidUnlimited',
+      'access_state': 'paid_unlimited'}).smartAccessEligible, isFalse);
+    for (final eligible in [false, true]) {
+      final bootstrapper = _SmartDnsAccountBootstrapper()
+        ..subscription = ClientSubscriptionInfo.fromJson({'lane': eligible ? 'trialPremium' : 'freeMonthly',
+          'access_state': eligible ? 'trial_premium' : 'free_monthly',
+          'smart_access_eligible': eligible});
+      await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+        key: ValueKey(eligible), appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+        bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+        clientExperienceStore: _CatalogPickerExperience(), themeMode: ThemeMode.light,
+        onThemeModeChanged: (_) {},
+      )));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Правила'));
+      await tester.pumpAndSettle();
+      final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
+      await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
+        of: find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'),
+        matching: find.byType(Scrollable)).first);
+      await tester.tap(advanced);
+      await tester.pumpAndSettle();
+      final dynamic picker = tester.widget(find.byKey(const ValueKey('rules-smart-dns-provider-picker')));
+      expect(picker.onTap, eligible ? isNotNull : isNull);
+      expect(find.byKey(const ValueKey('rules-external-smart-dns-toggle')), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    }
   });
 
   testWidgets('Rules syncs immediate Wi-Fi policy without discarding pending routing edits', (tester) async {

@@ -13,6 +13,7 @@ class _RulesSection extends StatefulWidget {
     this.loadVerifiedCatalogApps,
     this.loadCatalogPreview,
     this.loadSmartDnsProviders,
+    this.smartDnsEligible = false,
     this.catalogPreviewIdentity,
     this.onEditCatalogServices,
     this.catalogServicesBusy = false,
@@ -38,6 +39,7 @@ class _RulesSection extends StatefulWidget {
   final Future<Set<String>> Function(bool fresh)? loadVerifiedCatalogApps;
   final Future<_RoutingCatalogPreview?> Function()? loadCatalogPreview;
   final Future<VerifiedSmartAccessProviderPolicy> Function()? loadSmartDnsProviders;
+  final bool smartDnsEligible;
   final Object? catalogPreviewIdentity;
   final VoidCallback? onEditCatalogServices;
   final bool catalogServicesBusy;
@@ -126,6 +128,7 @@ class _RulesSectionState extends State<_RulesSection> {
       onServices: widget.catalogServicesBusy ? null : widget.onEditCatalogServices,
       expertContent: _RulesAdvancedSection(
         hostPlatform: widget.appContext.hostPlatform, loadSmartDnsProviders: widget.loadSmartDnsProviders,
+        smartDnsEligible: widget.smartDnsEligible,
         preferences: widget.routingPreferences, fallbackMode: widget.selectedRouteMode,
         onChanged: widget.onRoutingPreferencesChanged, onApply: widget.onRoutingPreferencesApply,
         connectionActive: widget.connectionActive, windowsLocalDpiReady: widget.windowsLocalDpiReady,
@@ -140,6 +143,7 @@ class _RulesAdvancedSection extends StatefulWidget {
   const _RulesAdvancedSection({
     required this.hostPlatform,
     this.loadSmartDnsProviders,
+    this.smartDnsEligible = false,
     required this.preferences,
     required this.fallbackMode,
     required this.onChanged,
@@ -154,6 +158,7 @@ class _RulesAdvancedSection extends StatefulWidget {
 
   final HostPlatform hostPlatform;
   final Future<VerifiedSmartAccessProviderPolicy> Function()? loadSmartDnsProviders;
+  final bool smartDnsEligible;
   final PokrovRoutingPreferences preferences;
   final RouteMode fallbackMode;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
@@ -259,6 +264,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                     _DnsAndLanCard(
                       hostPlatform: widget.hostPlatform,
                       loadSmartDnsProviders: widget.loadSmartDnsProviders,
+                      smartDnsEligible: widget.smartDnsEligible,
                       preferences: _draftPreferences,
                       onChanged: _stage,
                       onLanSubnetsChanged: (subnets) => _stage(_draftPreferences.copyWith(
@@ -333,7 +339,6 @@ bool _sameRoutingPreferences(
     left.dnsPreset == right.dnsPreset &&
     left.dnsTransport == right.dnsTransport &&
     left.customDnsUrl == right.customDnsUrl &&
-    left.externalSmartDnsEnabled == right.externalSmartDnsEnabled &&
     left.smartDnsProviderId == right.smartDnsProviderId &&
     left.localDpiEnabled == right.localDpiEnabled &&
     left.allowLan == right.allowLan &&
@@ -354,7 +359,6 @@ List<String> _routingPreferenceChangeLabels(
       if (applied.dnsPreset != draft.dnsPreset ||
           applied.dnsTransport != draft.dnsTransport ||
           applied.customDnsUrl != draft.customDnsUrl ||
-          applied.externalSmartDnsEnabled != draft.externalSmartDnsEnabled ||
           applied.smartDnsProviderId != draft.smartDnsProviderId ||
           applied.allowLan != draft.allowLan ||
           !listEquals(applied.lanSubnets, draft.lanSubnets))

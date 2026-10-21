@@ -1510,6 +1510,7 @@ class ClientSubscriptionInfo {
   const ClientSubscriptionInfo({
     required this.lane,
     this.accessState = '',
+    this.smartAccessEligible = false,
     required this.expiresAt,
     required this.daysLeft,
     required this.autoRenew,
@@ -1529,6 +1530,8 @@ class ClientSubscriptionInfo {
 
   final String lane;
   final String accessState;
+  /// Server projection for presentation and preparation, never route authority.
+  final bool smartAccessEligible;
   final String expiresAt;
   final int daysLeft;
   final bool autoRenew;
@@ -1556,6 +1559,7 @@ class ClientSubscriptionInfo {
     return ClientSubscriptionInfo(
       lane: _clientText(json['lane']),
       accessState: _clientText(json['accessState'] ?? json['access_state']),
+      smartAccessEligible: json['smart_access_eligible'] == true,
       expiresAt: _clientText(json['expiresAt'] ?? json['expires_at']),
       daysLeft: _clientInt(json['daysLeft'] ?? json['days_left']),
       autoRenew: _clientBool(json['autoRenew'] ?? json['auto_renew']),

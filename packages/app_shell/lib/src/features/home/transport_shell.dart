@@ -158,7 +158,7 @@ extension _TransportShellOperations on ConnectionManager {
             accessState: accessState, vpnAvailable: true, now: observed.latest,
             selectedServiceIds: selectedServices);
           catalogPolicy = baseline;
-            if (!smartAccessVpnFallback &&
+            if (!smartAccessVpnFallback && _smartAccessEligible &&
                 const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(catalogMode) && !catalog.usingCache &&
                runtime.smartAccessLeaseVersion == 1 && service is AppFirstSmartAccessService &&
                (service as AppFirstSmartAccessService).smartAccessEnabled) {
@@ -176,6 +176,7 @@ extension _TransportShellOperations on ConnectionManager {
                 if (providerUnavailable) return baseline;
                 bool authorityUnavailable(BootstrapFailure error) =>
                   error.code == 'smart_access_admission_paused' ||
+                  error.code == 'smart_access_access_denied' ||
                   (error.statusCode == null && error.operationalCode == 'API-002') ||
                   const {HttpStatus.requestTimeout, HttpStatus.tooManyRequests, HttpStatus.badGateway,
                     HttpStatus.serviceUnavailable, HttpStatus.gatewayTimeout}.contains(error.statusCode);

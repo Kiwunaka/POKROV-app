@@ -41,10 +41,6 @@ extension PokrovPurposeRoutePresentation on PokrovPurposeRoute {
         PokrovPurposeRoute.ruDirect => 'Российские домены и сервисы без VPN.',
       };
 
-  bool get supportsExternalSmartDns => switch (this) {
-        PokrovPurposeRoute.ai || PokrovPurposeRoute.games => true,
-        _ => false,
-      };
 }
 
 extension PokrovDnsPresetPresentation on PokrovDnsPreset {
@@ -143,7 +139,6 @@ class PokrovRoutingPreferences {
     required this.dnsPreset,
     required this.dnsTransport,
     required this.customDnsUrl,
-    this.externalSmartDnsEnabled = false,
     this.smartDnsProviderId = '',
     this.selectedCatalogServiceIds = const <String>{},
     required this.allowLan,
@@ -162,7 +157,6 @@ class PokrovRoutingPreferences {
         dnsPreset = PokrovDnsPreset.automatic,
         dnsTransport = PokrovDnsTransport.vpn,
         customDnsUrl = '',
-        externalSmartDnsEnabled = false,
         smartDnsProviderId = '',
         selectedCatalogServiceIds = const <String>{},
         allowLan = false,
@@ -179,7 +173,6 @@ class PokrovRoutingPreferences {
   final PokrovDnsPreset dnsPreset;
   final PokrovDnsTransport dnsTransport;
   final String customDnsUrl;
-  final bool externalSmartDnsEnabled;
   final String smartDnsProviderId;
   final Set<String> selectedCatalogServiceIds;
   final bool allowLan;
@@ -197,7 +190,6 @@ class PokrovRoutingPreferences {
     PokrovDnsPreset? dnsPreset,
     PokrovDnsTransport? dnsTransport,
     String? customDnsUrl,
-    bool? externalSmartDnsEnabled,
     String? smartDnsProviderId,
     Set<String>? selectedCatalogServiceIds,
     bool? allowLan,
@@ -215,8 +207,6 @@ class PokrovRoutingPreferences {
       dnsPreset: dnsPreset ?? this.dnsPreset,
       dnsTransport: dnsTransport ?? this.dnsTransport,
       customDnsUrl: customDnsUrl ?? this.customDnsUrl,
-      externalSmartDnsEnabled:
-          externalSmartDnsEnabled ?? this.externalSmartDnsEnabled,
       smartDnsProviderId: smartDnsProviderId ?? this.smartDnsProviderId,
       selectedCatalogServiceIds: Set.unmodifiable(
           selectedCatalogServiceIds ?? this.selectedCatalogServiceIds),
@@ -272,14 +262,12 @@ class PokrovRoutingPreferences {
       orElse: () => PokrovTunStack.system,
     );
     final normalizedDnsPreset =
-        dnsPreset == PokrovDnsPreset.custom && customDns.isEmpty
+        // Retired SmartDNS used this resolver only for AI/Games. Do not turn
+        // that saved consent into ordinary custom DNS for every domain.
+        dnsPreset == PokrovDnsPreset.custom &&
+                (customDns.isEmpty || json['externalSmartDnsEnabled'] == true)
             ? PokrovDnsPreset.automatic
             : dnsPreset;
-    final externalSmartDnsEnabled = json['externalSmartDnsEnabled'] == true &&
-        normalizedDnsPreset == PokrovDnsPreset.custom &&
-        _isExternalSmartDnsUrl(customDns) &&
-        dnsTransport == PokrovDnsTransport.direct &&
-        purposes.any((purpose) => purpose.supportsExternalSmartDns);
     final lanSubnets = _readLanSubnets(json['lanSubnets']);
     final providerId = _routingText(json['smartDnsProviderId']);
     return PokrovRoutingPreferences(
@@ -288,7 +276,6 @@ class PokrovRoutingPreferences {
       dnsPreset: normalizedDnsPreset,
       dnsTransport: dnsTransport,
       customDnsUrl: customDns,
-      externalSmartDnsEnabled: externalSmartDnsEnabled,
       smartDnsProviderId: RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$').hasMatch(providerId)
           ? providerId : '',
       selectedCatalogServiceIds: _readCatalogServiceSelection(json['selectedCatalogServiceIds']),
@@ -310,7 +297,6 @@ class PokrovRoutingPreferences {
         'dnsPreset': dnsPreset.name,
         'dnsTransport': dnsTransport.name,
         'customDnsUrl': customDnsUrl,
-        'externalSmartDnsEnabled': externalSmartDnsEnabled,
         if (smartDnsProviderId.isNotEmpty) 'smartDnsProviderId': smartDnsProviderId,
         'selectedCatalogServiceIds': selectedCatalogServiceIds.toList()..sort(),
         // Older clients interpret allowLan as a blanket private-IP bypass.
@@ -331,16 +317,6 @@ class PokrovRoutingPreferences {
         _ => dnsPreset.address,
       };
 
-  bool get canEnableExternalSmartDns =>
-      dnsPreset == PokrovDnsPreset.custom &&
-      _isExternalSmartDnsUrl(effectiveDnsAddress) &&
-      dnsTransport == PokrovDnsTransport.direct &&
-      purposeRoutes.any((purpose) => purpose.supportsExternalSmartDns);
-
-  bool routesPurposeThroughExternalSmartDns(PokrovPurposeRoute purpose) =>
-      externalSmartDnsEnabled &&
-      canEnableExternalSmartDns &&
-      purpose.supportsExternalSmartDns;
 }
 
 class PokrovRouteDecision {
@@ -460,13 +436,10 @@ PokrovRouteDecision explainPokrovRouteDecision({
         if (_purposeDomains[purpose]!.any(
           (suffix) => _domainMatches(normalized.$1, suffix),
         )) {
-          final direct = purpose == PokrovPurposeRoute.ruDirect ||
-              preferences.routesPurposeThroughExternalSmartDns(purpose);
+          final direct = purpose == PokrovPurposeRoute.ruDirect;
           return PokrovRouteDecision(
             action: direct ? PokrovRouteAction.direct : PokrovRouteAction.vpn,
-            reason: preferences.routesPurposeThroughExternalSmartDns(purpose)
-                ? 'Лабораторный Smart DNS оставляет профиль «${purpose.title}» напрямую; внешний IP не скрывается.'
-                : 'Сработал профиль «${purpose.title}».',
+            reason: 'Сработал профиль «${purpose.title}».',
             matchedValue: purpose.name,
           );
         }
@@ -546,12 +519,6 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
   if (proxyTag.isEmpty) {
     throw const FormatException('Managed profile has no VPN route target');
   }
-  if (preferences.externalSmartDnsEnabled &&
-      !preferences.canEnableExternalSmartDns) {
-    throw const FormatException(
-      'External Smart DNS prerequisites are invalid',
-    );
-  }
 
   final rules = _routingListOfMaps(route['rules']);
   final lanSubnets = _enabledLanSubnets(preferences);
@@ -610,10 +577,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     }
     _appendUniqueRule(injected, <String, dynamic>{
       'domain_suffix': _purposeDomains[purpose],
-      'outbound': purpose == PokrovPurposeRoute.ruDirect ||
-              preferences.routesPurposeThroughExternalSmartDns(purpose)
-          ? directTag
-          : proxyTag,
+      'outbound': purpose == PokrovPurposeRoute.ruDirect ? directTag : proxyTag,
     });
   }
   rules.insertAll(0, protectedRules);
@@ -669,25 +633,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
           : proxyTag,
     });
     dns['servers'] = servers;
-    if (preferences.externalSmartDnsEnabled) {
-      final selectedDomains = <String>{
-        for (final purpose in preferences.purposeRoutes)
-          if (purpose.supportsExternalSmartDns) ..._purposeDomains[purpose]!,
-      }.toList()
-        ..sort();
-      final dnsRules = _routingListOfMaps(dns['rules'])
-        ..removeWhere(
-          (rule) => _routingText(rule['server']) == 'pokrov-user-dns',
-        );
-      dnsRules.insert(0, <String, dynamic>{
-        'domain_suffix': selectedDomains,
-        'action': 'route',
-        'server': 'pokrov-user-dns',
-      });
-      dns['rules'] = dnsRules;
-    } else {
-      dns['final'] = 'pokrov-user-dns';
-    }
+    dns['final'] = 'pokrov-user-dns';
     dns['independent_cache'] = true;
     config['dns'] = dns;
   }
@@ -926,9 +872,6 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   }
   final windowsAppScope = hostPlatform == HostPlatform.windows &&
       (payload.routeMode == RouteMode.selectedApps || payload.routeMode == RouteMode.excludedApps);
-  if (preferences.externalSmartDnsEnabled) {
-    throw const RoutingCatalogFailure('catalog_gateway_lease_missing');
-  }
   final decoded = jsonDecode(payload.configPayload);
   if (decoded is! Map) throw const RoutingCatalogFailure('catalog_profile_invalid');
   final config = _routingMap(decoded);
@@ -1366,17 +1309,6 @@ String? _normalizeDnsUrl(String raw) {
     return null;
   }
   return uri.toString();
-}
-
-bool _isExternalSmartDnsUrl(String? raw) {
-  if (raw == null) return false;
-  final normalized = _normalizeDnsUrl(raw);
-  if (normalized == null) return false;
-  final uri = Uri.parse(normalized);
-  return uri.path == '/dns-query' &&
-      uri.query.isEmpty &&
-      uri.fragment.isEmpty &&
-      (!uri.hasPort || uri.port == 443);
 }
 
 bool _routeOverrideMatches(

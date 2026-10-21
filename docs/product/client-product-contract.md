@@ -813,7 +813,7 @@ staged. They include:
   native staging; a direct-only profile cannot be reported as an applied
   AI/Games VPN policy;
 - explicit domain, IP, and subnet overrides to VPN or direct;
-- Automatic, Xbox DNS, Comss DNS, Cloudflare, Google, AdGuard, and validated custom DoH.
+- Automatic, Comss DNS, Cloudflare, Google, AdGuard, and validated custom DoH.
   AdGuard remains selectable in the DNS picker. Rules has no separate ad-blocking
   switch: DNS selection does not enable or disable POKROV's shared ad-blocking
   policy. AdGuard filters domains on its own list; it does not promise removal
@@ -826,24 +826,10 @@ staged. They include:
   makes no promise to bypass IP-, TLS-, account-, or region-based restrictions.
   With `Автоматически`, the stored preference is dormant and the signed server
   profile remains DNS authority;
-- an additional `Внешний Smart DNS · лаборатория` path is available only for
-  a validated custom HTTPS DoH resolver with direct DNS selected and at least
-  one enabled AI or Games purpose group. The URL must use HTTPS on port `443`,
-  have the exact `/dns-query` path and contain neither query parameters nor a
-  fragment; persisted bearer tokens are forbidden. When explicitly enabled,
-  only DNS questions for the selected AI/Games suffixes are routed to that DoH
-  server. The profile's existing final resolver remains unchanged for every
-  other name. Connections to the selected purpose domains use the existing
-  direct outbound; all other purpose groups keep their normal VPN target, and
-  an explicit user rule still wins. The client does not terminate TLS, inject
-  certificates, add a second core, or claim that an arbitrary DoH resolver can
-  unblock a service. The user's ISP-visible IP is not hidden, an Android VPN
-  system surface may remain because sing-box still owns policy routing, and
-  successful service access requires a compatible external or POKROV-owned
-  selective resolver plus opaque TLS relay and separate live evidence. The
-  POKROV policy is allowlist-only and non-recursive: outside names are refused,
-  so it is not a general DNS service. Invalid, incomplete, downgraded, or future
-  persisted state disables the lab mode;
+- a saved custom resolver with the retired `externalSmartDnsEnabled` flag
+  returns to Automatic instead of expanding its former AI/Games DNS scope to
+  all names. The flag is no longer written; ordinary custom DoH remains available
+  and cannot move AI/Games application traffic to Direct;
 - LAN access to explicitly entered RFC1918 / IPv6 ULA subnets (up to 16), disabled
   by default. The editor normalizes CIDRs and refuses public or whole-Internet
   ranges; an empty list disables access. Old blanket LAN permission requires
@@ -891,6 +877,15 @@ fallback. The choice is independent of ordinary DNS and AdGuard, takes effect
 on the next connection, and grants no authority without a signed catalog and
 lease. External choices disclose the provider's IP/domain and opaque HTTPS
 relay handling before selection.
+
+Provider selection and new SmartDNS preparation require the authenticated
+subscription's `smart_access_eligible` flag, absent/false on older responses.
+The server projects any active Premium access, including trial, bonus, gift,
+promotion, manual and family access; Free and expired/blocked access are excluded.
+An access-denied provider/lease response keeps the declared VPN fallback.
+External providers continue through the same signed permission, catalog scope,
+lease and runtime expiry/revocation checks as the owned provider. No local DNS
+setting grants that authority, and the existing Smart Access build gate remains.
 If local DNS-only preparation has no eligible lease, it resolves and starts
 the existing VPN profile in the same connection operation before staging; it
 also retains this protected fallback for automatic recovery.
