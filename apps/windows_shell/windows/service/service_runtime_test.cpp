@@ -206,6 +206,16 @@ void TestWindowsLocalDpiStrategyArguments() {
   const auto remembered = WindowsLocalDpiStrategyOrder(WindowsLocalDpiStrategy::kMultisplit681);
   Expect(remembered[0] == order[1] && remembered[1] == order[0],
          "same-network proven strategy preference was lost");
+  for (const char* failure : {"local_dpi_control_connect_failed", "local_dpi_control_tls_failed",
+                             "local_dpi_control_http_failed"}) {
+    Expect(WindowsLocalDpiRetryableProof(failure), "transport failure lost its bounded strategy retry");
+  }
+  for (const char* failure : {"", "local_dpi_control_dns_failed", "local_dpi_physical_unavailable",
+                             "local_dpi_physical_changed", "local_dpi_control_permit_failed",
+                             "local_dpi_control_invalid", "local_dpi_owner_changed",
+                             "local_dpi_child_failed", "unknown_failure"}) {
+    Expect(!WindowsLocalDpiRetryableProof(failure), "non-transport failure retried another strategy");
+  }
   const std::wstring directory = L"C:\\Program Files\\POKROV\\local-dpi\\";
   const std::wstring scope = L"\"C:\\Program Files\\POKROV\\local-dpi\\winws.exe\" --wf-iface=12"
       L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=^www.youtube.com --ip-id=zero";

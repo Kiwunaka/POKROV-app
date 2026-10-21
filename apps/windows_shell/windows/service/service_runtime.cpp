@@ -1666,11 +1666,12 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
         }
       }
       proved = true;
+      std::string proof_failure;
       for (const auto& service : local_dpi_preparation_->services) {
-        std::string proof_failure = !local_dpi_current() ? dpi_owner_failure() :
+        proof_failure = !local_dpi_current() ? dpi_owner_failure() :
             VerifyWindowsLocalDpiControlHost(service.control_host,
                 local_dpi_network->bind_interface, interrupted);
-        if (proof_failure.empty() && !local_dpi_current()) proof_failure = dpi_owner_failure();
+        if (!local_dpi_current()) proof_failure = dpi_owner_failure();
         record_dpi(LocalDpiStage::kProof, strategies[attempt], proof_failure);
         if (!proof_failure.empty()) {
           proved = false;
@@ -1678,6 +1679,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
         }
       }
       if (proved) { successful_strategy = strategies[attempt]; break; }
+      if (!WindowsLocalDpiRetryableProof(proof_failure)) break;
     }
     // Both trials retain unpublished holders. Publish only after every proof
     // succeeds; admission failure must never reopen a terminal holder.

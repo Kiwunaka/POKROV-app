@@ -39,6 +39,7 @@ enum class WindowsLocalDpiStrategy { kFakeMultisplitAlt4 = 4, kMultisplit681 = 6
 
 std::array<WindowsLocalDpiStrategy, 2> WindowsLocalDpiStrategyOrder(
     WindowsLocalDpiStrategy preferred = WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+bool WindowsLocalDpiRetryableProof(const std::string& failure);
 std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
     const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy);
 

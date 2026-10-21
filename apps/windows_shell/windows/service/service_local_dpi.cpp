@@ -255,6 +255,13 @@ std::array<WindowsLocalDpiStrategy, 2> WindowsLocalDpiStrategyOrder(
   return strategies;
 }
 
+bool WindowsLocalDpiRetryableProof(const std::string& failure) {
+  // Only the intercepted TCP path can benefit from another desync strategy.
+  // DNS, interface/permit setup, cancelled ownership and unknown errors cannot.
+  return failure == "local_dpi_control_connect_failed" ||
+      failure == "local_dpi_control_tls_failed" || failure == "local_dpi_control_http_failed";
+}
+
 std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
     const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy) {
   const auto pattern = Quote(directory + L"tls_clienthello_www_google_com.bin");

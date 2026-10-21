@@ -81,6 +81,11 @@ That QA guard is separate from gateway availability and does not itself force
 VPN fallback; its protections were not weakened. These results establish the
 two Windows Gemini paths above, not other services, platforms or network guarantees.
 
+The bounded Windows strategy retry applies only to the existing TCP connect,
+TLS and HTTP proof failures. DNS, physical-interface, WFP-permit, invalid-input,
+owner cancellation, child failure and unknown outcomes stop selection immediately.
+Ownership is rechecked after proof, before a transport failure can trigger retry.
+
 The current Windows source prefers Flowseal 1.10.3 ALT4's Google TCP branch
 (`fake,multisplit`, six fakes, `badseq` increment 1000, existing Google pattern)
 under distinct journal strategy ID 4. The existing two-attempt limit and
