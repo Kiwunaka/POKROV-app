@@ -48,6 +48,12 @@ DoH and the existing COMSS preset remain separate. Signed provider permission,
 scoped leases and runtime expiry/revocation remain mandatory. Manual/family VPN
 access is unchanged, and public DNS endpoints remain public.
 
+Windows local SmartDNS profiles use the same memory policy as ordinary managed
+Windows profiles: `disableMemoryLimit=true`, retained through routing copies.
+They must not enable Core's mobile 45 MiB connection killer, which can close all
+sockets during a later relay dial and appear as a connection failure after a
+successful startup. Android keeps its existing memory limit.
+
 The server now serves live signed catalog revision 28/security revision 2 and
 provider policy revision 1/security revision 1 through the existing pins. The
 four external providers are WLrus, GeoHide EU, GeoHide RU and DNS-AI; their

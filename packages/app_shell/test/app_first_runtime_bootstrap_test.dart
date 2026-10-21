@@ -467,6 +467,11 @@ void main() {
       routingCatalogStore: RoutingCatalogStore(enabled: true, verifier: catalogVerifier),
       smartAccessPolicyStore: SmartAccessPolicyStore(enabled: false,
         verifier: SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab')));
+    final localWindows = bootstrapper.buildLocalSmartAccessBase(hostPlatform: HostPlatform.windows);
+    expect(localWindows.disableMemoryLimit, isTrue);
+    expect(localWindows.copyWith(configPayload: localWindows.configPayload).disableMemoryLimit, isTrue,
+      reason: 'routing preparation must retain the Windows memory policy');
+    expect(bootstrapper.buildLocalSmartAccessBase(hostPlatform: HostPlatform.android).disableMemoryLimit, isFalse);
     await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
       runtimeFeatures: {RuntimeTransportFeature.reality, RuntimeTransportFeature.tls, RuntimeTransportFeature.utls, RuntimeTransportFeature.vless}, coreRelease: '1.2.10');
     final account = AccountSessionCoordinator(accountActions: bootstrapper)

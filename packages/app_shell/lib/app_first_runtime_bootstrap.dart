@@ -3636,6 +3636,7 @@ class AppFirstRuntimeBootstrapper
             finalOutboundTag: 'direct', hostPlatform: hostPlatform, routeMode: mode,
             selectedApps: const [], clientRuleSetCatalog: _ClientRuleSetCatalog.empty);
     return ManagedProfilePayload(profileName: 'pokrov-smart-dns',
+      disableMemoryLimit: hostPlatform == HostPlatform.windows,
       configPayload: jsonEncode({
         'log': _buildLogBlock(null), 'dns': dns,
         'inbounds': _buildInbounds(hostPlatform: hostPlatform, routeMode: mode,
