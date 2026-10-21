@@ -12,7 +12,8 @@ entitlement class is required. Provider fees (fixed or percentage) remain under
 discussion; no spending is authorized. Customer contact, phone acceptance and
 public release remain paused. The owner also accepted WhiteDNS and SlipNet for
 all active Premium access; their separate DNS-tunnel addon is not a SmartDNS
-endpoint and is not integrated. Rates remain pending. See the platform-owned
+endpoint. SlipNet source readiness is recorded below; no live DNS-tunnel
+endpoint or App provisioning is enabled. Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
 The table records the earlier 21 October root-run comparison in the clean
@@ -60,14 +61,16 @@ Live signed catalog 28/security 2 is unchanged; provider policy **2/security 1**
 now admits only **WLrus and DNS-AI**, for Windows Gemini and all eligible active
 Premium access. Publication used the existing key and Action Intent, with exact
 readback, admission open, API health at 09:07:39 UTC and operation lease FREE.
-Those are last-observed server facts; the 4199 pass changed neither catalog nor
+Those are last-observed server facts; the 4200 pass changed neither catalog nor
 provider policy and did not repeat the server checks. Server `8018d52` enforces immutable provider kind for an
 existing provider ID. No commercial COMSS offer was added.
 
-Current private packages are **Windows 4199 / App `c7c8c55f` / Core `b560f1a`
-(1.2.14)** and unchanged Android 4187 / Core `0f159bb`. The 4199 unsigned installer
-completed in the Clean Windows VM with exit 0; targeted Core/App checks and 48
-desktop ABI exports passed. The already accepted 4195 Gemini checks were not
+Current private packages are **Windows 4200 / App `c9b6087b` (including `b8644537`) / Core `b560f1a`
+(1.2.14)** and unchanged Android 4187 / Core `0f159bb`. The 4200 unsigned installer
+(28,913,726 bytes) completed in the Clean Windows VM with exit 0; the ZIP contains
+one `POKROV-Setup.exe`. Earlier targeted Core/App and 48 desktop ABI checks retain
+their scope. This binary does not contain DNSTT Core `7a62031`.
+The already accepted 4195 Gemini checks were not
 repeated: in ordinary Edge with default settings, POKROV
 returned real Gemini answers about Paris through WLrus `191.217.212.16` and
 DNS-AI `103.137.248.145`: secure HTTP/2, phase running and gateway available after
@@ -106,8 +109,8 @@ addresses or raw errors. Exact host/interface scope and TLS verification remain.
 On 4198 and 4199, ordinary Connect reached running, DNS/egress validated and
 `protection_retained=0`; YouTube played about 13 seconds/400 frames. On 4199,
 local DPI subsequently failed with `early_read` (16 local / 7 VPN handoffs,
-admitted 0 / failed 1). The VPN fallback works; video entirely over local DPI
-remains unaccepted. Edge SSL_CONNECT -100 (connection closed) to
+admitted 0 / failed 1). That pass confirmed VPN fallback, not video entirely over
+local DPI. Edge SSL_CONNECT -100 (connection closed) to
 `rr3---sn-vcpu-axql.googlevideo.com` / `85.114.28.78` at 14:40:07.179 precedes
 the first native `early_read` at 14:40:07.261 by 82 ms. The same CDN IP/SNI and
 physical source were then tested outside POKROV with a 10-second bound: plain,
@@ -124,15 +127,40 @@ source passed with `multidisorder` / `1,midsld`: verified TLS in 411 ms, HTTP 40
 for `/`, curl exit 0, filter alive and owned child cleanup confirmed. The VM is
 bridged. Header-only capture lacked the full reply sequence, so it does not
 establish a specific DPI mechanism. This supports the new source candidate;
-integrated application/video acceptance is still pending. The candidate comes
+that standalone control alone did not establish integrated playback. The candidate comes
 from [upstream blockcheck](https://github.com/bol-van/zapret/blob/master/blockcheck.sh#L1289).
 
-Root confirmed cleanup after 4199: ordinary Stop left running/guard/TUN/winws 0;
+The subsequent **4200** ordinary Connect reached running, DNS/egress valid and
+guard 0. Ordinary default Edge, after rejecting optional cookies, played
+YouTube to **84.0167 seconds / 2,537 frames at 480p**, readyState 4, error 0 and
+playing. Local TCP handoffs were 21, VPN TCP handoffs 0, admitted 1 / failed 0.
+HTTP/3/UDP also traversed ordinary VPN and is absent from these TCP counters;
+do not claim all video traffic bypassed VPN. An initial playback stopped with
+an unexplained player error around 21 seconds. Later pauses were the cookie
+dialog, followed by the accepted 84-second run. No global QUIC/DNS or host
+network changes were made.
+
+SlipNet's first VLESS-over-DNSTT source slice is pushed in Core `7a62031`,
+Platform `85ea9a2` and Node `3d9f3ce`. The existing CC0 engine passed a real local
+UDP DNS/KCP/Noise/smux 10 KiB echo plus race/lifecycle/registry checks; one
+Platform and three Node focused checks passed. The optional backend accepts
+only existing active Premium account keys (including trial/manual/gift/promo/
+bonus/family); Free, expiry, block and revoked keys are excluded. It is a
+loopback TCP VLESS backend at `127.0.0.1:12543`, not a live DNS service or a
+per-device key. No DNS endpoint/App provisioning is enabled. Remaining work is
+an owned CH UDP/53 endpoint, owned NS delegation and App capability gating on
+`dnstt_vless_v1`. Root observed public UDP/53 and TCP/12543 free on CH; only
+systemd-resolved listens on `127.0.0.53/54:53`. No owner DNS change is requested
+yet. Windows 4200 still packages the earlier Core binary; WhiteDNS remains
+research. Commercial permission already covers active Premium; fees are pending.
+
+Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection
 were restored. DNS/routes/proxy exactly match the baseline; owned Edge/app/winws
-and TUN are absent. Temporary guest Edge profiles, raw NetLog and superseded
-installers were removed within the verified QA directory; CleanWin11 is confirmed
-PoweredOff. The host network, Hiddify and clocks were untouched.
+and TUN are absent. Display `1372×943` was restored and read back; 12 owned guest
+QA items and the temporary host build were removed. Root confirmed CleanWin11
+PoweredOff and its separate window closed. Final setup/ZIP and selected earlier
+Core DLL/manifest remain. The host network, Hiddify and clocks were untouched.
 
 Historical 4194/4195 comparison: catalog 28 authorizes selective YouTube local DPI with exact control host
 `www.youtube.com`. Verified encrypted bridge/ATS admission, exact pre-connect

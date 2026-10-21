@@ -16,13 +16,14 @@ assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
 Current private packages are **Android 1.5.0+4187** with Core `0f159bb`, and
-**Windows 1.5.0+4199** from App `c7c8c55f` with Core `b560f1a` / 1.2.14.
+**Windows 1.5.0+4200** from App `c9b6087b` (including `b8644537`) with Core `b560f1a` / 1.2.14.
 All four Android APKs passed production signing and packaging checks; no new
 4187 device or native acceptance is claimed. The Windows installer remains
-`NotSigned` (28,913,133 bytes); its delivery ZIP contains the single
-`POKROV-Setup.exe`. Windows 4199 installed in the Clean VM with exit 0.
-Targeted Core/App checks and all 48 desktop ABI exports passed. Android 4187 was
-not rebuilt; earlier package checks below retain their scope.
+`NotSigned` (28,913,726 bytes); its delivery ZIP contains the single
+`POKROV-Setup.exe`. Windows 4200 installed in the Clean VM with exit 0.
+This package retains the earlier Core binary; it does not contain the new DNSTT
+Core source `7a62031`. Android 4187 was not rebuilt; earlier targeted Core/App,
+48 desktop ABI export and package checks retain their original scope.
 
 | Private artifact | Path |
 | --- | --- |
@@ -30,8 +31,8 @@ not rebuilt; earlier package checks below retain their scope.
 | Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-arm64-v8a.apk) |
 | Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-armeabi-v7a.apk) |
 | Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4199-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4199.zip) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4200-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4200.zip) |
 
 Earlier, the corrected 4189 installer completed in the Clean Windows VM with exit 0 while
 the unchanged WinDivert driver remained loaded: no driver stop or reboot was
@@ -48,7 +49,7 @@ traffic; GeoHide RU used VPN with empty inventory, exact cause unestablished.
 Live provider policy **2/security 1** now admits only WLrus and DNS-AI for
 Windows Gemini; catalog **28/security 2** is unchanged. Existing-key publication
 and exact readback passed; admission open, operation lease FREE and API health at
-09:07:39 UTC are the last observed server state, not a new check in the 4199 pass.
+09:07:39 UTC are the last observed server state, not a new check in the 4200 pass.
 Server `8018d52` enforces immutable provider kind. The accepted 4195 Gemini
 requests were not repeated.
 Eligibility includes all active Premium (trial, gifts, promotions, bonuses,
@@ -56,7 +57,21 @@ manual and family), excluding Free and expired/blocked. App `38adc208` closes
 the legacy custom SmartDNS/direct bypass. A sticky QA guard denial is separate
 from gateway availability; no guard was weakened for this acceptance.
 
-Windows 4199 contains bounded Flowseal selection (ALT4, then 681; at most two
+Windows 4200 tries strategy 101 (`multidisorder`, `split-pos=1,midsld`) first,
+then ALT4, at most twice and only for transport proof failure. Normal Stop keeps
+the successful network hint; an observed runtime failure clears it. Standalone
+verification of the previously failing CDN IP/SNI returned verified TLS in
+411 ms and HTTP 404 for `/`. Ordinary App Connect then reached running with
+DNS/egress valid and guard 0. In ordinary default Edge, after rejecting optional
+cookies, YouTube reached **84.0167 seconds / 2,537 frames / 480p**, readyState 4,
+error 0 and playing. Local TCP handoffs were 21, VPN TCP handoffs 0, admitted 1
+/ failed 0. HTTP/3/UDP also used the ordinary VPN and is not counted by those
+TCP counters: this establishes working playback with local TCP DPI, not that
+the entire video bypassed VPN. The initial playback had an unexplained player
+error at about 21 seconds; later pauses were the cookie dialog. Global QUIC,
+DNS and the owner's host network were unchanged.
+
+Earlier Windows 4199 contained bounded Flowseal selection (ALT4, then 681; at most two
 attempts, only TCP/TLS/HTTP proof failures retry), WFP semantic-priority fix
 `499dd3e6` and protected VPN egress verification before WinDivert (`c3ba46d0`).
 Core confines local DPI to IPv4 while retaining the original protected IPv6 VPN
@@ -66,8 +81,8 @@ failure reason through the existing observation/journal.
 Ordinary Connect on 4198 and 4199 reached running with DNS/egress validated and
 `protection_retained=0`. Real YouTube playback reached about 13 seconds/400 frames.
 However, 4199 subsequently reported `early_read`: 16 local handoffs, 7 VPN
-handoffs, admitted 0 / failed 1. Playback with working VPN fallback is confirmed;
-video carried entirely by local DPI is **not accepted**.
+handoffs, admitted 0 / failed 1. That pass confirmed playback with VPN fallback;
+it did not establish video carried entirely by local DPI.
 Edge recorded SSL_CONNECT -100 (connection closed) to
 `rr3---sn-vcpu-axql.googlevideo.com` / `85.114.28.78` at 14:40:07.179; native first
 `early_read` followed 82 ms later. A standalone control on that same pinned CDN
@@ -80,15 +95,22 @@ TCP works, and ALT4's separate `www.youtube.com` control returned verified HTTP 
 No random strategy flags were added.
 
 Provider fees remain pending. WhiteDNS and SlipNet are separately authorized
-for active Premium as DNS-tunnel addon work and are not integrated.
+for all active Premium. SlipNet's first VLESS-over-DNSTT source slice is pushed:
+Core `7a62031`, Platform `85ea9a2`, Node `3d9f3ce`. The existing engine passed a
+real local UDP DNS/KCP/Noise/smux 10 KiB echo and race/lifecycle/registry checks;
+one Platform and three Node focused checks passed. The Premium-only loopback
+backend is source-ready, **not live**. No DNS endpoint or App provisioning is
+enabled. Next are an owned CH UDP/53 endpoint, domain NS delegation and the App
+`dnstt_vless_v1` capability gate. Root observed CH public UDP/53 and TCP/12543
+free; DNS changes are not yet requested from the owner. WhiteDNS remains research.
 See [Smart Access DNS](../architecture/smart-access-dns.md) and platform
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
-Root confirmed cleanup after 4199: ordinary Stop left running/guard/TUN/winws 0;
+Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection
 were restored. DNS/routes/proxy exactly match the baseline; owned Edge/app/winws
-and TUN are absent. Temporary guest Edge profiles, raw NetLog and superseded
-installers were removed within the verified QA directory; CleanWin11 is confirmed
-PoweredOff. The host network, Hiddify and clocks were untouched. The 4199
+and TUN are absent. Display `1372×943` was restored and read back; 12 owned guest
+QA items and the temporary host build were removed. Root confirmed CleanWin11
+PoweredOff and its separate window closed. The host network, Hiddify and clocks were untouched. The 4200
 setup/ZIP above and selected Core manifest/DLL are the current Windows artifacts.
 Ordinary Auto is unchanged.
 Remaining release work is phone acceptance after explicit return, the paused
