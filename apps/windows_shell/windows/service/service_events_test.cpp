@@ -134,6 +134,8 @@ void TestClosedBoundedJournal() {
                  "local_dpi_control_tls_failed", true) &&
              journal->RecordLocalDpiObservation(LocalDpiStage::kStart, 4,
                  "", true) &&
+              journal->RecordLocalDpiObservation(LocalDpiStage::kRuntime, 4,
+                  "connect_timeout_ipv4", true) &&
              journal->RecordLocalDpiObservation(LocalDpiStage::kAdmit, 999,
                  "https://secret.example/session_token|raw\n", false),
              "local DPI observation was not durable");
@@ -191,6 +193,8 @@ void TestClosedBoundedJournal() {
              std::string::npos &&
          combined.find("runtime_local_dpi_observation|succeeded|start|none|4,1") !=
              std::string::npos &&
+          combined.find("runtime_local_dpi_observation|failed|runtime|connect_timeout_ipv4|4,1") !=
+              std::string::npos &&
          combined.find("runtime_local_dpi_observation|failed|admit|local_dpi_unavailable|0,0") !=
              std::string::npos && combined.find("secret.example") == std::string::npos,
          "local DPI observation lost its bounded cause or exposed unknown details");

@@ -235,6 +235,7 @@ class RuntimeHost {
   bool local_dpi_requested_ = false;
   bool local_dpi_ready_ = false;
   bool local_dpi_disabled_ = false;
+  mutable bool local_dpi_runtime_failure_reported_ = false;
   std::unique_ptr<WindowsTelegramWSPreparation> telegram_ws_preparation_;
   std::vector<std::pair<std::string, std::string>> telegram_ws_holders_;
   std::string telegram_ws_original_digest_;

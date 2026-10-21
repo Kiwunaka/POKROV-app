@@ -30,6 +30,7 @@ std::optional<WindowsLocalDpiPreparation> ReadWindowsLocalDpiPreparation(
 bool WindowsLocalDpiPreparationCurrent(const WindowsLocalDpiPreparation& value);
 struct WindowsLocalDpiHolderObservation {
   std::string state;
+  std::string failure_reason;  // Empty means the older Core did not report it.
   bool withdraw_completed = false;
   std::uint64_t local_handoffs = 0;
   std::uint64_t vpn_handoffs = 0;

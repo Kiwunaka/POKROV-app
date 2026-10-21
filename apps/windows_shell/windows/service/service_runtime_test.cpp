@@ -180,6 +180,7 @@ void TestWindowsLocalDpiFilterReadiness() {
 void TestWindowsLocalDpiScopePreparation() {
   using pokrov::service::WindowsLocalDpiService;
   using pokrov::service::WindowsLocalDpiHostList;
+  using pokrov::service::ReadWindowsLocalDpiHolderObservation;
   const WindowsLocalDpiService service{"media", "pokrov-local-dpi-media", "control.example.com",
       {{"control.example.com", true}, {"media.example.com", false}}};
   Expect(WindowsLocalDpiHostList({service}) == "^control.example.com,media.example.com",
@@ -194,6 +195,33 @@ void TestWindowsLocalDpiScopePreparation() {
   invalid = service;
   invalid.domains[1].name = "media.example.com,foreign.example.com";
   Expect(WindowsLocalDpiHostList({invalid}).empty(), "hostlist delimiter expanded winws scope");
+  const std::string legacy_observation =
+      R"({"state":"failed","withdraw_completed":false,"local_handoffs":15,"vpn_handoffs":7})";
+  const auto legacy = ReadWindowsLocalDpiHolderObservation(legacy_observation);
+  Expect(legacy && legacy->failure_reason.empty() && legacy->local_handoffs == 15,
+         "old Core observation must remain readable with unknown cause");
+  const auto reason_observation = [&](const std::string& reason) {
+    auto encoded = legacy_observation;
+    encoded.insert(encoded.size() - 1, ",\"failure_reason\":\"" + reason + "\"");
+    return encoded;
+  };
+  const auto observed = ReadWindowsLocalDpiHolderObservation(reason_observation("early_read"));
+  Expect(observed && observed->failure_reason == "early_read" && observed->vpn_handoffs == 7,
+         "closed first failure did not survive native observation parsing");
+  Expect(!ReadWindowsLocalDpiHolderObservation(reason_observation("none")) &&
+         !ReadWindowsLocalDpiHolderObservation(reason_observation("private upstream error")),
+         "failed observation accepted missing cause or raw error text");
+  auto withdrawn_observation = reason_observation("connect_timeout_ipv4");
+  withdrawn_observation.replace(withdrawn_observation.find("failed"), 6, "withdrawn");
+  Expect(ReadWindowsLocalDpiHolderObservation(withdrawn_observation).has_value(),
+         "withdrawal discarded a retained first failure");
+  auto ready_observation = reason_observation("early_write");
+  ready_observation.replace(ready_observation.find("failed"), 6, "ready");
+  Expect(!ReadWindowsLocalDpiHolderObservation(ready_observation),
+         "ready holder accepted an inconsistent failure cause");
+  ready_observation.replace(ready_observation.find("early_write"), 11, "none");
+  Expect(ReadWindowsLocalDpiHolderObservation(ready_observation).has_value(),
+         "current Core ready observation lost its explicit no-failure state");
 }
 
 void TestWindowsLocalDpiStrategyArguments() {

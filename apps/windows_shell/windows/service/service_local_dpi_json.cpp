@@ -215,11 +215,23 @@ std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObserva
   const auto object = ParseObject(encoded);
   ComPtr<JsonMap> map;
   UINT32 size = 0;
-  if (!object || FAILED(object.As(&map)) || FAILED(map->get_Size(&size)) || size != 4) return std::nullopt;
+  if (!object || FAILED(object.As(&map)) || FAILED(map->get_Size(&size)) ||
+      (size != 4 && size != 5)) return std::nullopt;
   WindowsLocalDpiHolderObservation result;
   result.state = String(object.Get(), L"state");
   if (result.state != "unpublished" && result.state != "ready" &&
       result.state != "failed" && result.state != "withdrawn") return std::nullopt;
+  if (size == 5) {
+    result.failure_reason = String(object.Get(), L"failure_reason");
+    bool known = false;
+    for (const auto* reason : {"none", "connect_timeout_ipv4", "connect_timeout_ipv6",
+        "connect_error_ipv4", "connect_error_ipv6", "early_read", "early_write"}) {
+      known |= result.failure_reason == reason;
+    }
+    if (!known || (result.state == "failed" && result.failure_reason == "none") ||
+        ((result.state == "unpublished" || result.state == "ready") &&
+         result.failure_reason != "none")) return std::nullopt;
+  }
   HString completed_name;
   boolean completed = false;
   if (!completed_name.Set(L"withdraw_completed") ||

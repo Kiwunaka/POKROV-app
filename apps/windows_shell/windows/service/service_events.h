@@ -84,7 +84,7 @@ enum class FirstOwnedDnsState {
 
 enum class EgressProbeTarget { kOwnedApi, kOwnedReserve };
 
-enum class LocalDpiStage { kStart, kProof, kAdmit };
+enum class LocalDpiStage { kStart, kProof, kAdmit, kRuntime };
 
 struct EgressProbeObservation {
   EgressProbeStage stage;

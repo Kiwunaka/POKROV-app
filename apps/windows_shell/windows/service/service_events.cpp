@@ -112,6 +112,7 @@ const char* LocalDpiStageName(LocalDpiStage stage) {
     case LocalDpiStage::kStart: return "start";
     case LocalDpiStage::kProof: return "proof";
     case LocalDpiStage::kAdmit: return "admit";
+    case LocalDpiStage::kRuntime: return "runtime";
   }
   return "unknown";
 }
@@ -125,7 +126,9 @@ const char* LocalDpiFailureName(const std::string& failure) {
       "local_dpi_control_invalid", "local_dpi_physical_unavailable", "local_dpi_control_dns_failed",
       "local_dpi_control_connect_failed", "local_dpi_control_permit_failed",
       "local_dpi_physical_changed", "local_dpi_control_tls_failed",
-      "local_dpi_control_http_failed", "local_dpi_owner_changed", "local_dpi_admission_failed"}) {
+      "local_dpi_control_http_failed", "local_dpi_owner_changed", "local_dpi_admission_failed",
+      "connect_timeout_ipv4", "connect_timeout_ipv6", "connect_error_ipv4",
+      "connect_error_ipv6", "early_read", "early_write"}) {
     if (failure == code) return code;
   }
   return "local_dpi_unavailable";

@@ -1514,6 +1514,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   }
   egress_failure_observation_.reset();
   local_dpi_preparation_.reset();
+  local_dpi_runtime_failure_reported_ = false;
   first_provider_qa_control_config_.clear();
   first_provider_qa_admission_result_.reset();
   const auto staged_write_error = WriteProfileAtomically(staged_runtime_config_);
@@ -2448,6 +2449,14 @@ std::optional<WindowsLocalDpiRuntimeObservation> RuntimeHost::ReadLocalDpiRuntim
         value->vpn_handoffs > maximum - result.vpn_handoffs) return std::nullopt;
     result.local_handoffs += value->local_handoffs;
     result.vpn_handoffs += value->vpn_handoffs;
+    if (local_dpi_preparation_->services.size() == 1 && events_ &&
+        !local_dpi_runtime_failure_reported_ && !value->failure_reason.empty() &&
+        value->failure_reason != "none") {
+      local_dpi_runtime_failure_reported_ = events_->RecordLocalDpiObservation(
+          LocalDpiStage::kRuntime,
+          local_dpi_success_strategy_ ? static_cast<int>(local_dpi_success_strategy_->second) : 0,
+          value->failure_reason, local_dpi_executor_->Alive());
+    }
   }
   return result;
 }

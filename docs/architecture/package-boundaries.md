@@ -335,6 +335,12 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   start, control-host proof and admission: closed failure code, strategy
   568/681 and child-alive flag only. Unknown error text is replaced by
   `local_dpi_unavailable`; no addresses, headers or profile data are retained.
+  Core may append a closed `failure_reason` to its holder observation; older
+  four-field observations remain readable with an unknown cause. The native
+  reader checks the reason against the holder state. For one selected service,
+  its first known failure is recorded once in the existing service journal at
+  stage `runtime`, including after withdrawal; no holder identity or raw error
+  is logged. The IPC status, runner and Dart/UI contracts are unchanged.
   The existing dispatcher fences profile/Core/operation/network/TTL and child
   liveness. Cancellation/child failure withdraws captured IDs before closing
   the child; expiry or catalog revocation uses protected runtime rollback,
