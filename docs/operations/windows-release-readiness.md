@@ -2,7 +2,23 @@
 
 Updated 21 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The current private Windows candidate is
-**1.5.0+4184**, built from App `50081a23` with the existing Core `0f159bb` /
+**1.5.0+4185**, built from App `54a5e680` with the existing Core `0f159bb` /
+1.2.14 and matching Cronet. The built-in Xbox DNS preset removal (`ed2a982d`) is
+included. Packaging is accepted: the [installer](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4185-setup.exe)
+remains `NotSigned`, and the [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4185.zip)
+contains the same installer. **4185 installation and network behavior have not
+been checked.** The 4184 native/Connect/Stop results below remain historical.
+Customer cases 89–90 are paused: do not contact the customer or send a package
+until the owner lifts the hold. Public release requires a separate explicit yes.
+
+The separate clean-Win11 Edge secure-DoH comparison is recorded in
+[Smart Access DNS](../architecture/smart-access-dns.md). It does not test POKROV
+4185 or change Auto. The Flowseal canary was not executed because the guest
+token was UAC filtered; no new DPI result is accepted.
+
+## Earlier 4184 acceptance
+
+Private **1.5.0+4184**, built from App `50081a23` with the existing Core `0f159bb` /
 1.2.14 and matching Cronet. It replaces incompatible WinHTTP probe options with
 a fresh Winsock/Schannel connection, retaining TUN DNS, hostname/certificate
 validation, OS-route readback and the two-request proof on one socket.

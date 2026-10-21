@@ -1,5 +1,73 @@
 # Smart Access DNS routing
 
+## Current external-provider work — 21 October 2026
+
+The owner approved commercial embedded use of Shecan, Astra/Astracat, GeoHide,
+Bezmezhau, WLrus, DNS-AI and Zapret DNS. For these agreements, an eligible paid
+user means **any active Premium access**: purchase, trial, gift, promotion,
+bonus, manual or family access. Reuse the existing trial/paid/bonus Premium
+projection, including its manual/family handling; exclude Free and
+expired/blocked access. Do not require a payment receipt, `provider_payment`
+origin or a new entitlement class. Provider fees (fixed or percentage) remain
+under discussion; this approval does not authorize purchases or ordinary rollout.
+
+The table records one root-run comparison in the clean Windows 11 VM from the
+Russian home network. Only a temporary Edge profile used secure DoH. **PASS**
+means Gemini answered the test question about Paris; HTTP 200 or a page without
+an answer is not PASS. This is external-provider/browser evidence, not POKROV
+integration, Android acceptance, an availability guarantee or an Auto change.
+Root verified that VM DNS, routes and proxy were unchanged from the captured
+baseline, removed the temporary Edge profile/processes and QA directory, and
+powered off both VMs. The owner's host network was not changed.
+
+| Provider / endpoint | Gemini result in this comparison | Commercial permission recorded by owner |
+| --- | --- | --- |
+| COMSS — `https://dns.comss.one/dns-query` | PASS: real answer | Not recorded in the current approved list |
+| GeoHide EU — `https://eu.geohide.ru/dns-query` | PASS: real answer | Approved for active Premium |
+| GeoHide RU — `https://geohide.ru/dns-query` | PASS: real answer | Approved for active Premium |
+| GeoHide US — `https://us.geohide.ru/dns-query` | HTTP 200, blank page; not accepted | Approved for active Premium |
+| DNS-AI — `https://dns.dns-ai.ru/dns-query` | PASS: real answer | Approved for active Premium |
+| WLrus — `https://dns.wlrus.cfd/dns-query` | PASS: real answer | Approved for active Premium |
+| Zapret DNS — `https://dns.zapret.moe/dns-query` | Page and prompt HTTP 200, no answer; not accepted | Approved for active Premium |
+| Astra / Astracat — `https://dns.commonnet.work/dns-query` | Google unusual-traffic response; not accepted | Approved for active Premium |
+| Bezmezhau — `https://dns.bezmezhau.com/dns-query` | Name resolution failed; not accepted | Approved for active Premium |
+| Malw — `https://dns.malw.link/dns-query` | Connection reset; not accepted | Not recorded in the current approved list |
+| Shecan | Not tested: no freshly confirmed DoH endpoint | Approved for active Premium |
+| Mafioznik | Not tested: no freshly confirmed DoH endpoint | Not recorded in the current approved list |
+| Xbox DNS | Not tested in this comparison; built-in preset removed in `ed2a982d` | Not recorded in the current approved list |
+
+The next implementation stage must enforce that existing Premium projection on
+the server's provider/lease issuance and renewal/control paths, then expose the
+same eligibility to the UI. The signed provider permission, scoped lease and
+runtime expiry remain mandatory. Hiding a picker alone is insufficient:
+`client_routing_preferences.dart` still has a legacy custom SmartDNS/direct path
+outside catalog compilation that does not require a lease. Closing that path is
+an outstanding addon task. Ordinary VPN access for manual/family users stays
+intact. Public DNS endpoints themselves are not made private by a POKROV UI gate.
+
+The private 4185 packages contain the Xbox preset removal, not this provider
+integration. Flowseal/zapret canary was not executed: the guest token was UAC
+filtered. No new DPI acceptance is claimed. Manager is an OpenWrt-only reference;
+ideas may be studied, but its own code without a LICENSE must not be copied.
+
+Read-only Telegram research on 21 October: the four August/September messages
+in the [older whitelist thread](https://t.me/wlrforum/122620) are historical
+community suggestions, not current acceptance. The [DNS thread](https://t.me/wlrforum/141652)
+confirms the WLrus endpoint above; Gemini/app reports conflict, and the owner
+notes that source-IP changes may trigger Google restrictions. Keep DNS scoped to
+the selected service and a stable existing route, rather than replacing all DNS.
+The [OpenFlux thread](https://t.me/wlrforum/130437) has 20 October community reports
+of one-way MTS traffic and a failing Yandex path; these are not our diagnosis or
+evidence for production promotion. SmartDNS is not accepted as a whitelist bypass.
+The linked [olcrtc project](https://github.com/openlibrecommunity/olcrtc) is archived
+and marked end-of-life on 5 October 2026; its configuration notes are historical.
+The separate whitelist-bypass setup requires its own client, authentication
+cookies and an SFU session with one creator and one joiner. These remain addon
+research only, not a POKROV fallback or a production integration.
+No Telegram messages, subscriptions, joins or installations were performed.
+
+## Existing scoped runtime and historical QA
+
 `routing_catalog_materializer.dart` gives each leased service domain a timed DNS
 rule using that lease's owned DoH transport. For an IPv4 lease its exact query
 list is `A`, `AAAA`, `HTTPS`, `SVCB`: the resolver supplies the owned IPv4 relay

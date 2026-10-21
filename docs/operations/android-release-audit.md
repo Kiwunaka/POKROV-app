@@ -1,23 +1,29 @@
 # Android acceptance
 
-Updated 20 October 2026. Public version remains **1.4.5**; the seven-asset
+Updated 21 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The current private candidate is
-**1.5.0+4182**, built from App `175cbc86` with the ready Core `0f159bb` / 1.2.14.
-It includes the shared support/account session refresh and Rewards check-in fixes.
-The standard builder verified production signing, package/version, non-debuggable
-manifests and ABI sets for the universal and three architecture APKs. Packaged
-Core libraries match the selected AAR byte for byte.
-The [universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4182-android-universal.apk)
-is 244,712,357 bytes. No 4182 installation, phone/emulator check or publication
-was performed.
+**1.5.0+4185**, built from App `54a5e680` with the ready Core `0f159bb` / 1.2.14.
+The built-in Xbox DNS preset was removed in `ed2a982d`. Packaging is accepted:
+universal, arm64-v8a, armeabi-v7a and x86_64 APKs are production-signed.
+The [universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-universal.apk)
+and the other artifact paths are listed in [cutover readiness](cutover-readiness.md).
+No 4185 installation, phone/emulator or network check was performed. The phone
+requires a new explicit return; public release still requires the owner's yes.
+The [external DNS browser comparison](../architecture/smart-access-dns.md) is
+Windows-only research, not Android or POKROV provider acceptance.
 
 The preceding **1.5.0+4181**, built from App `d78aefc9` with the same Core,
 installed over 4178 and preserved the test account; 14 real screens were opened
 and captured on api35gc for the help Atlas. No VPN or checkout was started,
-and the emulator is off. Physical-phone acceptance of 4181 is still open;
-the screen walkthrough does not establish VPN or load-aware route behavior.
+and the emulator was turned off. That screen walkthrough does not establish
+physical VPN or load-aware route behavior for the current candidate.
 
 ## Earlier package checks
+
+Private 4182 from App `175cbc86` included the shared support/account refresh and
+Rewards fixes. Its four APKs passed production signature, package/version,
+non-debuggable manifest, ABI and selected-Core-library checks; it was not installed
+or accepted on a phone/emulator. This remains packaging history.
 
 The 4175 draft contains production-signed universal and three ABI-specific
 APKs, Windows setup and two metadata assets. Its ARM64 APK installed without

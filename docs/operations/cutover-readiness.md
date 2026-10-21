@@ -15,20 +15,48 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
+Current private packages are **Android and Windows 1.5.0+4185**, built from App
+`54a5e680` with the ready Core `0f159bb` / 1.2.14. They include removal of the
+unavailable built-in Xbox DNS preset (`ed2a982d`). Packaging is accepted: all four
+Android APKs are production-signed; the Windows installer remains `NotSigned`
+and the ZIP contains that installer. **4185 has not been installed or checked on
+the phone, emulator, Windows VM or network.** Accepted 4184 Windows checks below
+are historical and do not establish 4185 device acceptance.
+
+| Private artifact | Path |
+| --- | --- |
+| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-universal.apk) |
+| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-arm64-v8a.apk) |
+| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-armeabi-v7a.apk) |
+| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-x86_64.apk) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4185-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4185.zip) |
+
+The external DNS browser comparison and the owner's permission for all active
+Premium access are recorded once in [Smart Access DNS](../architecture/smart-access-dns.md).
+They do not enable providers in POKROV or change ordinary Auto; provider fees and
+the server/runtime eligibility work remain pending. Flowseal was not executed.
+Remaining release work is phone acceptance after explicit return, the paused
+customer Windows case, Lampa's provider response, IS direct on another network
+and final publication only after the owner's explicit yes. Public 1.4.5 and
+draft 4175 are unchanged.
+
+## Earlier private packages and accepted checks
+
 Load-aware bridge ordering is in pushed App 45281e62. Windows **1.5.0+4176**
 was built and ordinary US paths through Mini and Lampa passed 204/64 KiB checks.
 The seven-asset 4175 draft remains intact.
 
-The private **1.5.0+4181** pass separates source, packages and live state:
+The earlier private **1.5.0+4181** pass separates source, packages and live state:
 
-| Layer | Current result |
+| Layer | Result recorded for 4181 |
 | --- | --- |
 | Pushed source | App `d78aefc9` sets 4181 and includes `9ea67187` Windows packaging fixes plus the earlier UI/accessibility changes. Core `0f159bb` publishes immutable URLTest history snapshots and retains the Android inbound-authentication fix. |
 | Android package | [4181 universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4181-android-universal.apk), 244,695,973 bytes, built from App `d78aefc9`; the standard builder passed production signature, version and ABI checks. Packaged armeabi-v7a/arm64-v8a/x86_64 libraries match the selected Core 1.2.14 / `0f159bb` AAR byte for byte. 4181 was installed over 4178 with the test account preserved; 14 real screens were captured on api35gc for the help Atlas. Simple/Advanced navigation, profile, renewal, support, diagnostics, code entry, theme and notifications were opened. No VPN or checkout was started; phone acceptance is not claimed. The emulator is off again. |
 | Windows package | [4181 setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4181-setup.exe), 28,875,484 bytes, built from App `d78aefc9` with the ready Core 1.2.14 / `0f159bb` DLL and matching Cronet. Runtime binding, built-runtime equality and executable-version checks passed before installer packaging. The normal installer completed in the Clean VM and retained the existing login. Core 1.2.14 initialized; one ordinary UI connection to the selected Iceland location reached running with native egress and DNS validated. Ordinary Stop restored the baseline DNS/routes (11 routes), no active TUN and proxy off; staging was removed and the VM is PoweredOff/Unlocked. This was a focused new-runtime smoke, not a repeat of the transport matrix. |
 | Live and public | Platform payment/admin/support fixes and bridge-sync revocation are deployed. Cinema/Lampa retained their configs and Xray processes; all five bridge entries report fresh sync and both physical channels report metrics. The routing-domain editor is live; since 20 October, activity covers Xray/AWG/HY2 on all six exits with each source's start date and freshness shown. Historical native traffic is not reconstructed. Public 1.4.5 and the seven-asset 4175 draft remain unchanged. Server deployment does not establish 4181 device acceptance. |
 
-Private Windows **1.5.0+4184** from App `50081a23` fixes the startup HTTP probe's
+Earlier private Windows **1.5.0+4184** from App `50081a23` fixes the startup HTTP probe's
 WinHTTP incompatibility on Windows 10. Re-reading the existing customer events
 after Platform `41173c6` restored nullable diagnostics showed accepted TUN DNS,
 then `http_setup / winhttp / 12009` before any HTTP request. The saved customer OS
@@ -53,8 +81,8 @@ egress validated; the server recorded success. Stop restored the captured DNS,
 11 routes and proxy state, with no active TUN/guard. Test staging was removed and
 the VM returned to PoweredOff.
 The customer remains on hold: 4184 was not sent, their successful connection is
-not yet confirmed, and public 1.4.5/draft 4175 remain unchanged. Android's latest
-built package is still 4182; no Android rebuild was needed for this Windows fix.
+not yet confirmed, and public 1.4.5/draft 4175 remain unchanged. At that point,
+Android's latest built package was 4182; this Windows fix required no Android rebuild.
 
 Earlier private Windows **1.5.0+4183** from App `bb21d730` preserves the closed native
 egress observation in failed Connect acknowledgements through cleanup and into
@@ -72,7 +100,7 @@ was removed and the VM returned to PoweredOff. A temporary service-scoped
 block of the owned probe address did not force a failure and is not a negative
 ACK acceptance result; the negative path is covered by the focused Dart/native
 regressions. The customer's failure was not reproduced. No 4183 delivery to the
-customer or public release occurred; Android's latest built package remains 4182.
+customer or public release occurred; Android's latest package at that point was 4182.
 
 The owner's requested elevation/Radmin reproduction on 20 October also passed
 in the Clean VM on 4183. A fresh elevated UI under the installation owner's
