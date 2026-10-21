@@ -309,6 +309,12 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   on the captured physical interface: WinDivert reinjection has no service app
   identity. Scope exit or service termination removes this permit; the persisted
   block and normal verification/commit order remain unchanged.
+  A live winws process is not filter readiness. Before opening a control socket,
+  the service waits up to three seconds for its child's NETWORK REFLECT event,
+  completion of upstream's WinDivert initialization mutex, and a fresh handle
+  snapshot. This ordering also rejects an OPEN followed by failed callout setup.
+  Cancellation or timeout drains pending observation I/O and closes the owned
+  child/filter through normal cleanup, leaving the protected VPN fallback.
   The existing service journal records `runtime_local_dpi_observation` for
   start, control-host proof and admission: closed failure code, strategy
   568/681 and child-alive flag only. Unknown error text is replaced by

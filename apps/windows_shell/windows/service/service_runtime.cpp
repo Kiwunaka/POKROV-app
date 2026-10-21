@@ -1659,9 +1659,9 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
       if (!local_dpi_owner_current()) break;
       const auto dpi_start_error = attempt == 0
           ? local_dpi_executor_->StartPrepared(local_dpi_preparation_->services,
-                local_dpi_network->bind_interface, strategies[attempt])
+                local_dpi_network->bind_interface, strategies[attempt], local_dpi_owner_current)
           : local_dpi_executor_->RetryPrepared(local_dpi_preparation_->services,
-                local_dpi_network->bind_interface, strategies[attempt]);
+                local_dpi_network->bind_interface, strategies[attempt], local_dpi_owner_current);
       record_dpi(LocalDpiStage::kStart, strategies[attempt], dpi_start_error);
       if (!dpi_start_error.empty()) break;
       if (attempt == 0) {

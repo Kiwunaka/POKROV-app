@@ -120,7 +120,8 @@ const char* LocalDpiFailureName(const std::string& failure) {
   if (failure.empty()) return "none";
   for (const auto* code : {"local_dpi_executor_running", "local_dpi_executor_unavailable",
       "local_dpi_scope_invalid", "local_dpi_interface_unavailable", "local_dpi_assets_unavailable",
-      "local_dpi_holder_unavailable", "local_dpi_child_failed", "local_dpi_retry_unavailable",
+      "local_dpi_holder_unavailable", "local_dpi_child_failed", "local_dpi_filter_unavailable",
+      "local_dpi_retry_unavailable",
       "local_dpi_control_invalid", "local_dpi_physical_unavailable", "local_dpi_control_dns_failed",
       "local_dpi_control_connect_failed", "local_dpi_control_permit_failed",
       "local_dpi_physical_changed", "local_dpi_control_tls_failed",

@@ -21,6 +21,8 @@ bool CoreDescriptorHasTelegramWS(const std::string& descriptor);
 bool CoreDescriptorHasSmartAccessProbe(const std::string& descriptor);
 bool StopWindowsLocalDpiChild(HANDLE& job, HANDLE& process);
 bool CloseWindowsLocalDpiDriver(HANDLE& guard, BOOL (__cdecl* close)(HANDLE));
+DWORD WaitWindowsLocalDpiSignal(HANDLE child, HANDLE signal,
+                               const std::function<bool()>& current, ULONGLONG deadline);
 bool ConsumeWindowsLocalDpiTlsRecord(SECURITY_STATUS status, DWORD protocol,
     const SecBuffer (&buffers)[4], std::vector<char>* pending, std::string* response);
 }
@@ -145,6 +147,34 @@ void TestWindowsLocalDpiTls13PostHandshake() {
   Expect(ConsumeWindowsLocalDpiTlsRecord(SEC_E_OK, SP_PROT_TLS1_3_CLIENT,
              buffers, &pending, &response) && response == "HTTP/1.1 200 OK\r\n\r\n" && pending.empty(),
          "HTTP headers could not continue after TLS 1.3 post-handshake control");
+}
+
+void TestWindowsLocalDpiFilterReadiness() {
+  using pokrov::service::WaitWindowsLocalDpiSignal;
+  HANDLE child = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  HANDLE ready = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  Expect(child != nullptr && ready != nullptr, "readiness fixture handles unavailable");
+  if (child && ready) {
+    unsigned checks = 0;
+    const auto result = WaitWindowsLocalDpiSignal(child, ready, [&] {
+      if (++checks == 2) ::SetEvent(ready);  // A live child alone is not ready.
+      return true;
+    }, ::GetTickCount64() + 1000);
+    Expect(result == WAIT_OBJECT_0 + 1 && checks == 2,
+           "probe started before the delayed filter-ready signal");
+    Expect(WaitWindowsLocalDpiSignal(child, ready, [] { return false; },
+               ::GetTickCount64() + 1000) == WAIT_FAILED,
+           "cancelled owner was admitted by a ready filter");
+    Expect(WaitWindowsLocalDpiSignal(child, ready, [] { return true; },
+               ::GetTickCount64()) == WAIT_TIMEOUT,
+           "expired readiness window accepted a late filter");
+    ::SetEvent(child);
+    Expect(WaitWindowsLocalDpiSignal(child, ready, [] { return true; },
+               ::GetTickCount64() + 1000) == WAIT_OBJECT_0,
+           "dead child was accepted because its old ready signal survived");
+  }
+  if (ready) ::CloseHandle(ready);
+  if (child) ::CloseHandle(child);
 }
 
 void TestWindowsLocalDpiScopePreparation() {
@@ -1742,6 +1772,10 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--local-dpi-readiness") {
+    TestWindowsLocalDpiFilterReadiness();
+    return failures == 0 ? 0 : 1;
+  }
   if (argc == 2 && std::string(argv[1]) == "--local-dpi-tls") {
     TestWindowsLocalDpiTls13PostHandshake();
     return failures == 0 ? 0 : 1;
@@ -1776,6 +1810,7 @@ int main(int argc, char** argv) {
   TestWindowsTelegramMetadataComposition();
   TestWindowsLocalDpiScopePreparation();
   TestWindowsLocalDpiTls13PostHandshake();
+  TestWindowsLocalDpiFilterReadiness();
   TestWindowsLocalDpiOwnedCleanup();
   TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff();
   TestInterruptedConnectNeverPublishesProtection();

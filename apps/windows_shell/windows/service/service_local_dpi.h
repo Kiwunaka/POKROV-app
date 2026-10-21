@@ -50,11 +50,13 @@ class WindowsLocalDpiExecutor final {
 
   std::string StartPrepared(const std::vector<WindowsLocalDpiService>& services,
                             const std::string& physical_bind_interface,
-                            WindowsLocalDpiStrategy strategy);
+                            WindowsLocalDpiStrategy strategy,
+                            const std::function<bool()>& current);
   // One other strategy before any admission; retain exact captures/assets.
   std::string RetryPrepared(const std::vector<WindowsLocalDpiService>& services,
                             const std::string& physical_bind_interface,
-                            WindowsLocalDpiStrategy strategy);
+                            WindowsLocalDpiStrategy strategy,
+                            const std::function<bool()>& current);
   bool Alive() const;
   bool AssetsReady();  // Fixed trusted assets and API exports; no driver or child.
   bool AdmitCaptured(const std::string& tag, const std::function<bool()>& current_after_proof);
@@ -64,7 +66,8 @@ class WindowsLocalDpiExecutor final {
 
  private:
   std::string StartChild(const std::string& hostlist, DWORD interface_index,
-                         WindowsLocalDpiStrategy strategy);
+                         WindowsLocalDpiStrategy strategy,
+                         const std::function<bool()>& current);
   struct State;
   CoreRuntime& core_;
   std::unique_ptr<State> state_;

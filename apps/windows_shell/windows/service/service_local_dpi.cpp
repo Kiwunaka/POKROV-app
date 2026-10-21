@@ -133,10 +133,26 @@ bool CloseWindowsLocalDpiDriver(HANDLE& guard, BOOL (__cdecl* close)(HANDLE)) {
   return true;
 }
 
+DWORD WaitWindowsLocalDpiSignal(HANDLE child, HANDLE signal,
+                               const std::function<bool()>& current, ULONGLONG deadline) {
+  const HANDLE handles[]{child, signal};
+  for (;;) {
+    if (!current || !current()) return WAIT_FAILED;
+    const auto now = ::GetTickCount64();
+    if (now >= deadline) return WAIT_TIMEOUT;
+    const auto result = ::WaitForMultipleObjects(2, handles, FALSE,
+        static_cast<DWORD>(std::min<ULONGLONG>(50, deadline - now)));
+    if (result != WAIT_TIMEOUT) return result;
+  }
+}
+
 struct WindowsLocalDpiExecutor::State {
   using Open = HANDLE (__cdecl*)(const char*, int, std::int16_t, std::uint64_t);
   using Close = BOOL (__cdecl*)(HANDLE);
   using GetParam = BOOL (__cdecl*)(HANDLE, int, std::uint64_t*);
+  using RecvEx = BOOL (__cdecl*)(HANDLE, void*, UINT, UINT*, std::uint64_t,
+                                void*, UINT*, OVERLAPPED*);
+  using Shutdown = BOOL (__cdecl*)(HANDLE, int);
   HANDLE job = nullptr;
   HANDLE process = nullptr;
   HANDLE driver_guard = INVALID_HANDLE_VALUE;
@@ -144,6 +160,8 @@ struct WindowsLocalDpiExecutor::State {
   Open open_driver = nullptr;
   Close close_driver = nullptr;
   GetParam get_driver_param = nullptr;
+  RecvEx recv_driver = nullptr;
+  Shutdown shutdown_driver = nullptr;
   std::vector<HANDLE> files;
   std::vector<std::pair<std::string, std::string>> holders;
   std::vector<WindowsLocalDpiService> prepared_services;
@@ -152,6 +170,77 @@ struct WindowsLocalDpiExecutor::State {
   WindowsLocalDpiStrategy first_strategy = WindowsLocalDpiStrategy::kMultisplit568;
   bool retry_attempted = false;
   bool admission_attempted = false;
+
+  // WinDivert 2.2 WINDIVERT_ADDRESS layout, using only its REFLECT member.
+  // The public ABI reserves 64 bytes for layer data (include/windivert.h).
+  struct ReflectAddress {
+    std::int64_t timestamp;
+    std::uint32_t layer : 8, event : 8, flags : 16;
+    std::uint32_t reserved;
+    struct {
+      std::int64_t timestamp;
+      std::uint32_t process_id;
+      std::int32_t layer;
+      std::uint64_t flags;
+      std::int16_t priority;
+    } reflect;
+    std::array<unsigned char, 32> padding;
+  };
+  static_assert(sizeof(ReflectAddress) == 80);
+
+  bool ReadNetworkOpen(HANDLE observer, DWORD pid, const std::function<bool()>& current,
+                       ULONGLONG deadline) {
+    OVERLAPPED io{};
+    io.hEvent = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+    if (io.hEvent == nullptr) return false;
+    const bool ready = [&] {
+      while (current && current() && ::GetTickCount64() < deadline) {
+        std::array<unsigned char, 16384> filter{};  // Never logged or interpreted.
+        ReflectAddress address{};
+        UINT address_size = sizeof(address), received = 0;
+        ::ResetEvent(io.hEvent);
+        bool completed = recv_driver(observer, filter.data(), static_cast<UINT>(filter.size()),
+            &received, 0, &address, &address_size, &io) != FALSE;
+        if (!completed && ::GetLastError() == ERROR_IO_PENDING) {
+          const auto result = WaitWindowsLocalDpiSignal(process, io.hEvent, current, deadline);
+          DWORD transferred = 0;
+          if (result != WAIT_OBJECT_0 + 1) {
+            ::CancelIoEx(observer, &io);
+            // Drain cancelled I/O before releasing its stack buffers/event.
+            ::GetOverlappedResult(observer, &io, &transferred, TRUE);
+            return false;
+          }
+          completed = ::GetOverlappedResult(observer, &io, &transferred, FALSE) != FALSE;
+        }
+        if (!completed) return false;
+        if (address_size == sizeof(address) && address.layer == 4 && address.event == 8 &&
+            address.reflect.process_id == pid && address.reflect.layer == 0 &&
+            address.reflect.flags == 0) return current() && ::WaitForSingleObject(process, 0) == WAIT_TIMEOUT;
+      }
+      return false;
+    }();
+    ::CloseHandle(io.hEvent);
+    return ready;
+  }
+
+  bool WaitNetworkReady(DWORD pid, HANDLE init_mutex, const std::function<bool()>& current) {
+    const auto deadline = ::GetTickCount64() + 3000;
+    if (!ReadNetworkOpen(driver_guard, pid, current, deadline)) return false;
+    // Upstream queues REFLECT_OPEN before installing callouts. Its named mutex
+    // surrounds the complete WinDivertOpen call, so wait for that to return.
+    const auto result = WaitWindowsLocalDpiSignal(process, init_mutex, current, deadline);
+    if (result == WAIT_OBJECT_0 + 1 || result == WAIT_ABANDONED_0 + 1) ::ReleaseMutex(init_mutex);
+    if (result != WAIT_OBJECT_0 + 1 || !current() || ::GetTickCount64() >= deadline) return false;
+    // A failed Open closes its handle before releasing the mutex. A fresh
+    // REFLECT snapshot is ordered after that CLOSE and rejects the stale OPEN.
+    const auto filter = "processId == " + std::to_string(pid) + " and layer == 0";
+    HANDLE snapshot = open_driver(filter.c_str(), 4, 0, 0x0001 | 0x0004);
+    if (snapshot == INVALID_HANDLE_VALUE) return false;
+    // Shutdown waits for the initial snapshot to be queued, then returns EOF.
+    const bool ready = shutdown_driver(snapshot, 1) && ReadNetworkOpen(snapshot, pid, current, deadline);
+    const bool closed = close_driver(snapshot) != FALSE;
+    return ready && closed;
+  }
 };
 
 WindowsLocalDpiExecutor::WindowsLocalDpiExecutor(CoreRuntime& core)
@@ -181,7 +270,8 @@ bool WindowsLocalDpiExecutor::AssetsReady() {
   if (core_.WindowsLocalDpiAdmissionVersion() != 1) return false;
   if (state_->driver_module != nullptr) {
     return state_->open_driver != nullptr && state_->close_driver != nullptr &&
-        state_->get_driver_param != nullptr;
+        state_->get_driver_param != nullptr && state_->recv_driver != nullptr &&
+        state_->shutdown_driver != nullptr;
   }
   const auto directory = AssetDirectory();
   if (directory.empty()) return false;
@@ -202,7 +292,12 @@ bool WindowsLocalDpiExecutor::AssetsReady() {
       ::GetProcAddress(state_->driver_module, "WinDivertClose"));
   state_->get_driver_param = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::GetParam>(
       ::GetProcAddress(state_->driver_module, "WinDivertGetParam"));
-  if (state_->open_driver == nullptr || state_->close_driver == nullptr || state_->get_driver_param == nullptr) {
+  state_->recv_driver = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::RecvEx>(
+      ::GetProcAddress(state_->driver_module, "WinDivertRecvEx"));
+  state_->shutdown_driver = state_->driver_module == nullptr ? nullptr : reinterpret_cast<State::Shutdown>(
+      ::GetProcAddress(state_->driver_module, "WinDivertShutdown"));
+  if (state_->open_driver == nullptr || state_->close_driver == nullptr || state_->get_driver_param == nullptr ||
+      state_->recv_driver == nullptr || state_->shutdown_driver == nullptr) {
     Stop(); return false;
   }
   return true;
@@ -210,7 +305,9 @@ bool WindowsLocalDpiExecutor::AssetsReady() {
 
 std::string WindowsLocalDpiExecutor::StartPrepared(
     const std::vector<WindowsLocalDpiService>& services,
-    const std::string& physical_bind_interface, WindowsLocalDpiStrategy strategy) {
+    const std::string& physical_bind_interface, WindowsLocalDpiStrategy strategy,
+    const std::function<bool()>& current) {
+  if (!current || !current()) return "local_dpi_owner_changed";
   if (state_->process != nullptr || state_->job != nullptr ||
       state_->driver_guard != INVALID_HANDLE_VALUE || !state_->holders.empty()) {
     return "local_dpi_executor_running";
@@ -249,12 +346,14 @@ std::string WindowsLocalDpiExecutor::StartPrepared(
   state_->physical_bind_interface = physical_bind_interface;
   state_->interface_index = index;
   state_->first_strategy = strategy;
-  return StartChild(hostlist, index, strategy);
+  return StartChild(hostlist, index, strategy, current);
 }
 
 std::string WindowsLocalDpiExecutor::RetryPrepared(
     const std::vector<WindowsLocalDpiService>& services,
-    const std::string& physical_bind_interface, WindowsLocalDpiStrategy strategy) {
+    const std::string& physical_bind_interface, WindowsLocalDpiStrategy strategy,
+    const std::function<bool()>& current) {
+  if (!current || !current()) return "local_dpi_owner_changed";
   if (state_->admission_attempted || state_->retry_attempted || state_->holders.empty() ||
       state_->process == nullptr || state_->job == nullptr || state_->driver_guard == INVALID_HANDLE_VALUE ||
       services.size() != state_->prepared_services.size() || services.size() != state_->holders.size() ||
@@ -291,11 +390,12 @@ std::string WindowsLocalDpiExecutor::RetryPrepared(
   for (const auto& holder : state_->holders) {
     if (core_.ReadLocalDpiAdmissionID(holder.first) != holder.second) return "local_dpi_retry_unavailable";
   }
-  return StartChild(WindowsLocalDpiHostList(services), index, strategy);
+  return StartChild(WindowsLocalDpiHostList(services), index, strategy, current);
 }
 
 std::string WindowsLocalDpiExecutor::StartChild(
-    const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy) {
+    const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy,
+    const std::function<bool()>& current) {
   const auto directory = AssetDirectory();
   state_->job = ::CreateJobObjectW(nullptr, nullptr);
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
@@ -324,9 +424,23 @@ std::string WindowsLocalDpiExecutor::StartChild(
     ::CloseHandle(process.hThread);
     Stop(); return "local_dpi_child_failed";
   }
+  // Retain (without owning) upstream's mutex before the child runs. Otherwise
+  // its fast release/CloseHandle can destroy the object before our wait opens it.
+  HANDLE init_mutex = ::CreateMutexW(nullptr, FALSE, L"Global\\winws_windivert_mutex");
+  if (init_mutex == nullptr) {
+    ::CloseHandle(process.hThread);
+    Stop(); return "local_dpi_filter_unavailable";
+  }
   const auto resumed = ::ResumeThread(process.hThread);
   ::CloseHandle(process.hThread);
-  if (resumed == static_cast<DWORD>(-1) || !Alive()) { Stop(); return "local_dpi_child_failed"; }
+  const bool ready = resumed != static_cast<DWORD>(-1) && Alive() &&
+      state_->WaitNetworkReady(process.dwProcessId, init_mutex, current);
+  ::CloseHandle(init_mutex);
+  if (!ready) {
+    const bool owner_current = current && current();
+    if (!Stop()) return "local_dpi_child_failed";
+    return owner_current ? "local_dpi_filter_unavailable" : "local_dpi_owner_changed";
+  }
   return "";  // Holder remains unpublished until separate exact TLS proof.
 }
 
@@ -377,6 +491,8 @@ bool WindowsLocalDpiExecutor::StopAfterCoreStopped() {
   state_->open_driver = nullptr;
   state_->close_driver = nullptr;
   state_->get_driver_param = nullptr;
+  state_->recv_driver = nullptr;
+  state_->shutdown_driver = nullptr;
   for (const auto file : state_->files) ::CloseHandle(file);
   state_->files.clear();
   return true;
