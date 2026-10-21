@@ -297,6 +297,10 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   DNS/TCP and Schannel certificate/hostname
   validation plus HEAD 2xx prove each exact signed control host before fresh-ID
   admission; IPv6-only proof is unavailable and leaves the VPN fallback.
+  The physical control probe uses `SCH_CREDENTIALS` with SSL and TLS below 1.2
+  disabled, retaining automatic CA/hostname validation and strong crypto.
+  Windows 11 can negotiate TLS 1.3; Windows 10 1809+ retains TLS 1.2 without an
+  unsupported forced TLS 1.3 mask. The strategy and packet scope stay unchanged.
   The existing service journal records `runtime_local_dpi_observation` for
   start, control-host proof and admission: closed failure code, strategy
   568/681 and child-alive flag only. Unknown error text is replaced by

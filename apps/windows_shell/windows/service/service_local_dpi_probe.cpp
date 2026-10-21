@@ -1,7 +1,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <winternl.h>
 #define SECURITY_WIN32
 #include <security.h>
+#define SCHANNEL_USE_BLACKLISTS
 #include <schannel.h>
 #include <iphlpapi.h>
 #include <windns.h>
@@ -181,9 +183,16 @@ bool Resolve(const PhysicalEndpoint& endpoint, const std::wstring& host, IN_ADDR
 
 bool Handshake(Tls* tls, SOCKET socket, const std::wstring& host, std::vector<char>* pending,
                const CheckInterruption& interrupted, ULONGLONG deadline) {
-  SCHANNEL_CRED credentials{};
-  credentials.dwVersion = SCHANNEL_CRED_VERSION;
-  credentials.grbitEnabledProtocols = SP_PROT_TLS1_2_CLIENT;
+  // SCH_CREDENTIALS uses the protocols supported by the OS, including TLS 1.3
+  // on Windows 11, while the explicit exclusions keep TLS 1.2 as the minimum.
+  // Windows 10 1809+ supports this API and can continue negotiating TLS 1.2.
+  TLS_PARAMETERS parameters{};
+  parameters.grbitDisabledProtocols = SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT |
+      SP_PROT_TLS1_0_CLIENT | SP_PROT_TLS1_1_CLIENT;
+  SCH_CREDENTIALS credentials{};
+  credentials.dwVersion = SCH_CREDENTIALS_VERSION;
+  credentials.cTlsParameters = 1;
+  credentials.pTlsParameters = &parameters;
   credentials.dwFlags = SCH_CRED_AUTO_CRED_VALIDATION | SCH_CRED_NO_DEFAULT_CREDS |
       SCH_USE_STRONG_CRYPTO | SCH_CRED_CACHE_ONLY_URL_RETRIEVAL;
   if (::AcquireCredentialsHandleW(nullptr, const_cast<wchar_t*>(UNISP_NAME_W), SECPKG_CRED_OUTBOUND,
