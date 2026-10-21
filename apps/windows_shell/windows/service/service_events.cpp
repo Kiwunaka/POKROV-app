@@ -122,7 +122,8 @@ const char* LocalDpiFailureName(const std::string& failure) {
       "local_dpi_scope_invalid", "local_dpi_interface_unavailable", "local_dpi_assets_unavailable",
       "local_dpi_holder_unavailable", "local_dpi_child_failed", "local_dpi_retry_unavailable",
       "local_dpi_control_invalid", "local_dpi_physical_unavailable", "local_dpi_control_dns_failed",
-      "local_dpi_control_connect_failed", "local_dpi_physical_changed", "local_dpi_control_tls_failed",
+      "local_dpi_control_connect_failed", "local_dpi_control_permit_failed",
+      "local_dpi_physical_changed", "local_dpi_control_tls_failed",
       "local_dpi_control_http_failed", "local_dpi_owner_changed", "local_dpi_admission_failed"}) {
     if (failure == code) return code;
   }

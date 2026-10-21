@@ -9,6 +9,7 @@
 #include <windns.h>
 #include <bcrypt.h>
 #include "service_local_dpi_probe.h"
+#include "service_transition_guard.h"
 
 #include <array>
 #include <climits>
@@ -293,7 +294,7 @@ int HttpStatus(Tls* tls, SOCKET socket, const std::wstring& host, const std::str
 }
 std::string BoundHttpExchange(const std::string& control_host, const std::string& bind_interface,
                              const std::string& request, const CheckInterruption& interrupted,
-                             ULONGLONG timeout_ms, int* status) {
+                             ULONGLONG timeout_ms, bool local_dpi_control, int* status) {
   const auto host = Wide(control_host), alias = Wide(bind_interface);
   if (host.empty() || alias.empty()) return "local_dpi_control_invalid";
   const auto deadline = ::GetTickCount64() + timeout_ms;
@@ -315,6 +316,11 @@ std::string BoundHttpExchange(const std::string& control_host, const std::string
   length = sizeof(actual);
   if (::getsockname(socket.value, reinterpret_cast<sockaddr*>(&actual), &length) ||
       actual.sin_addr.s_addr != endpoint.local.sin_addr.s_addr) return "local_dpi_physical_changed";
+  // The guard stays armed throughout verification. Only this already held
+  // control tuple may carry WinDivert-injected packets without an app identity.
+  WindowsLocalDpiControlPermit permit;
+  if (local_dpi_control && !permit.Open(socket.value, endpoint.index))
+    return "local_dpi_control_permit_failed";
   Tls tls;
   std::vector<char> pending;
   if (!Handshake(&tls, socket.value, host, &pending, interrupted, deadline)) return "local_dpi_control_tls_failed";
@@ -329,7 +335,7 @@ std::string VerifyWindowsLocalDpiControlHost(const std::string& control_host,
   int status = 0;
   const auto failure = BoundHttpExchange(control_host, bind_interface,
       "HEAD / HTTP/1.1\r\nHost: " + control_host + "\r\nConnection: close\r\n\r\n",
-      interrupted, 10000, &status);
+      interrupted, 10000, true, &status);
   if (!failure.empty()) return failure;
   return status >= 200 && status < 300 ? "" : "local_dpi_control_http_failed";
 }
@@ -341,7 +347,7 @@ std::string ObserveWindowsNetworkContext(const NetworkObservationRequest& reques
   const auto http = NetworkObservationHttpRequest(request, network_class);
   if (http.empty()) return "unavailable";
   int status = 0;
-  if (!BoundHttpExchange(request.host, bind_interface, http, interrupted, 6000, &status).empty()) return "unavailable";
+  if (!BoundHttpExchange(request.host, bind_interface, http, interrupted, 6000, false, &status).empty()) return "unavailable";
   if (status >= 200 && status < 300) return "acknowledged";
   return status == 401 || status == 403 ? "denied" : "unavailable";
 }

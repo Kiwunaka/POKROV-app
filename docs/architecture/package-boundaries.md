@@ -304,6 +304,11 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   TLS 1.3 post-handshake messages continue the same authenticated Schannel
   context with retained response/extra bytes and the original ten-second
   deadline. The HEAD request is sent once; TLS 1.2 renegotiation stays rejected.
+  The transition guard remains armed during proof. After the control socket
+  connects, a dynamic soft WFP permit admits only its exact IPv4 TCP/443 tuple
+  on the captured physical interface: WinDivert reinjection has no service app
+  identity. Scope exit or service termination removes this permit; the persisted
+  block and normal verification/commit order remain unchanged.
   The existing service journal records `runtime_local_dpi_observation` for
   start, control-host proof and admission: closed failure code, strategy
   568/681 and child-alive flag only. Unknown error text is replaced by

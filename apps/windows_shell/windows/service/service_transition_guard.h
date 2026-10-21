@@ -2,6 +2,7 @@
 #define POKROV_SERVICE_SERVICE_TRANSITION_GUARD_H_
 
 #include <memory>
+#include <cstdint>
 #include <string>
 
 #include "service_events.h"
@@ -30,6 +31,22 @@ class RuntimeTransitionGuard {
 
 std::unique_ptr<RuntimeTransitionGuard> CreateWindowsTransitionGuard(
     ServiceEventSink* events = nullptr);
+
+// WinDivert's injected control packets lose the service executable identity.
+// Keep the connected socket alive longer than this exact-tuple exception.
+// The dynamic session removes the permit on scope exit or service termination;
+// the persisted transition block is never released here.
+class WindowsLocalDpiControlPermit final {
+ public:
+  WindowsLocalDpiControlPermit() = default;
+  ~WindowsLocalDpiControlPermit();
+  WindowsLocalDpiControlPermit(const WindowsLocalDpiControlPermit&) = delete;
+  WindowsLocalDpiControlPermit& operator=(const WindowsLocalDpiControlPermit&) = delete;
+  bool Open(std::uintptr_t connected_socket, std::uint32_t physical_interface_index);
+
+ private:
+  void* engine_ = nullptr;
+};
 
 enum class TransitionGuardState { kOff, kArmed, kIncomplete };
 
@@ -60,6 +77,8 @@ std::string VisitTransitionGuardFiltersForTesting(
 bool TransitionGuardFilterMatchesForTesting(
     const FWPM_FILTER0_& actual, const FWPM_FILTER0_& expected);
 bool TransitionGuardSubLayerMatchesForTesting(const FWPM_SUBLAYER0_& actual);
+void VisitLocalDpiControlPermitForTesting(
+    const std::function<void(const FWPM_FILTER0_&)>& visitor);
 #endif
 
 }  // namespace pokrov::service

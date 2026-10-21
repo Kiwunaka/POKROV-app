@@ -1,6 +1,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <fwpmu.h>
+#include <iphlpapi.h>
 #include <sddl.h>
 
 #include "service_transition_guard.h"
@@ -107,6 +108,53 @@ class FilterDefinitions {
   std::array<FWPM_FILTER_CONDITION0, 2> conditions_{};
   UINT64 permit_weight_ = 2;
   UINT64 block_weight_ = 1;
+};
+
+class LocalDpiControlFilter {
+ public:
+  LocalDpiControlFilter(const sockaddr_in& local, const sockaddr_in& remote,
+                       NET_LUID interface_luid) : interface_luid_(interface_luid) {
+    const std::array<const GUID*, 6> keys = {
+        &FWPM_CONDITION_IP_PROTOCOL, &FWPM_CONDITION_IP_LOCAL_ADDRESS,
+        &FWPM_CONDITION_IP_REMOTE_ADDRESS, &FWPM_CONDITION_IP_LOCAL_PORT,
+        &FWPM_CONDITION_IP_REMOTE_PORT, &FWPM_CONDITION_IP_LOCAL_INTERFACE};
+    for (size_t i = 0; i < keys.size(); ++i) {
+      conditions_[i].fieldKey = *keys[i];
+      conditions_[i].matchType = FWP_MATCH_EQUAL;
+    }
+    conditions_[0].conditionValue.type = FWP_UINT8;
+    conditions_[0].conditionValue.uint8 = IPPROTO_TCP;
+    conditions_[1].conditionValue.type = FWP_UINT32;
+    conditions_[1].conditionValue.uint32 = ntohl(local.sin_addr.s_addr);
+    conditions_[2].conditionValue.type = FWP_UINT32;
+    conditions_[2].conditionValue.uint32 = ntohl(remote.sin_addr.s_addr);
+    conditions_[3].conditionValue.type = FWP_UINT16;
+    conditions_[3].conditionValue.uint16 = ntohs(local.sin_port);
+    conditions_[4].conditionValue.type = FWP_UINT16;
+    conditions_[4].conditionValue.uint16 = ntohs(remote.sin_port);
+    conditions_[5].conditionValue.type = FWP_UINT64;
+    conditions_[5].conditionValue.uint64 = &interface_luid_.Value;
+  }
+
+  FWPM_FILTER0 Definition() {
+    FWPM_FILTER0 filter{};
+    filter.displayData.name = const_cast<wchar_t*>(L"POKROV local DPI control socket");
+    filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
+    filter.subLayerKey = kSubLayer;
+    filter.weight.type = FWP_UINT64;
+    filter.weight.uint64 = &weight_;
+    filter.action.type = FWP_ACTION_PERMIT;
+    filter.numFilterConditions = static_cast<UINT32>(conditions_.size());
+    filter.filterCondition = conditions_.data();
+    // Soft permit overrides only our block for this held socket and physical
+    // interface. Other applications, destinations and firewall blocks remain.
+    return filter;
+  }
+
+ private:
+  NET_LUID interface_luid_{};
+  std::array<FWPM_FILTER_CONDITION0, 6> conditions_{};
+  UINT64 weight_ = 3;
 };
 
 bool Matches(const FWPM_FILTER0& actual, const FWPM_FILTER0& expected) {
@@ -342,6 +390,32 @@ class Guard final : public RuntimeTransitionGuard {
 
 }  // namespace
 
+WindowsLocalDpiControlPermit::~WindowsLocalDpiControlPermit() {
+  if (engine_) ::FwpmEngineClose0(engine_);
+}
+
+bool WindowsLocalDpiControlPermit::Open(std::uintptr_t connected_socket,
+                                      std::uint32_t physical_interface_index) {
+  if (engine_ != nullptr) return false;
+  const auto socket = static_cast<SOCKET>(connected_socket);
+  sockaddr_in local{}, remote{};
+  int local_size = sizeof(local), remote_size = sizeof(remote);
+  NET_LUID luid{};
+  if (::getsockname(socket, reinterpret_cast<sockaddr*>(&local), &local_size) != 0 ||
+      ::getpeername(socket, reinterpret_cast<sockaddr*>(&remote), &remote_size) != 0 ||
+      local.sin_family != AF_INET || remote.sin_family != AF_INET ||
+      local.sin_port == 0 || remote.sin_port != htons(443) ||
+      ::ConvertInterfaceIndexToLuid(physical_interface_index, &luid) != NO_ERROR) return false;
+  FWPM_SESSION0 session{};
+  session.flags = FWPM_SESSION_FLAG_DYNAMIC;
+  session.displayData.name = const_cast<wchar_t*>(L"POKROV local DPI control socket");
+  if (::FwpmEngineOpen0(nullptr, RPC_C_AUTHN_WINNT, nullptr, &session, &engine_) != ERROR_SUCCESS)
+    return false;
+  LocalDpiControlFilter definition(local, remote, luid);
+  const auto filter = definition.Definition();
+  return ::FwpmFilterAdd0(engine_, &filter, nullptr, nullptr) == ERROR_SUCCESS;
+}
+
 std::unique_ptr<RuntimeTransitionGuard> CreateWindowsTransitionGuard(
     ServiceEventSink* events) {
   return std::make_unique<Guard>(std::make_unique<WindowsGuardBackend>(), events);
@@ -369,6 +443,20 @@ bool TransitionGuardFilterMatchesForTesting(
 
 bool TransitionGuardSubLayerMatchesForTesting(const FWPM_SUBLAYER0_& actual) {
   return MatchesSubLayer(actual);
+}
+
+void VisitLocalDpiControlPermitForTesting(
+    const std::function<void(const FWPM_FILTER0_&)>& visitor) {
+  sockaddr_in local{}, remote{};
+  local.sin_family = remote.sin_family = AF_INET;
+  local.sin_addr.s_addr = htonl(0xc000020a);  // 192.0.2.10, fixture only.
+  local.sin_port = htons(57893);
+  remote.sin_addr.s_addr = htonl(0xcb007114);  // 203.0.113.20, fixture only.
+  remote.sin_port = htons(443);
+  NET_LUID luid{};
+  luid.Value = 0x600000c000000;
+  LocalDpiControlFilter definition(local, remote, luid);
+  visitor(definition.Definition());
 }
 #endif
 

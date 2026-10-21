@@ -169,6 +169,38 @@ int main() {
     ++index;
   });
   expect(error.empty() && index == 8, "actual policy builds read-only");
+
+  // Observed Flowseal failure: the guard blocked injected control packets at
+  // ALE_AUTH_CONNECT_V4. Inspect the actual temporary exception without
+  // changing host WFP policy; no app-wide or destination-wide permit is valid.
+  VisitLocalDpiControlPermitForTesting([&](const FWPM_FILTER0& f) {
+    expect(f.layerKey == FWPM_LAYER_ALE_AUTH_CONNECT_V4 &&
+               f.subLayerKey == GUID{0x541c71c5, 0x2ab4, 0x49b7,
+                   {0xa1, 0xa3, 0x56, 0x4f, 0xc8, 0x5c, 0xef, 0x31}} &&
+               f.flags == 0 && f.action.type == FWP_ACTION_PERMIT &&
+               f.weight.type == FWP_UINT64 && f.weight.uint64 && *f.weight.uint64 == 3,
+           "control socket permit must be nonpersistent and soft in the guard sublayer");
+    expect(f.numFilterConditions == 6, "control permit must retain exact tuple and physical interface");
+    if (f.numFilterConditions != 6) return;
+    const std::array<const GUID*, 6> keys = {
+        &FWPM_CONDITION_IP_PROTOCOL, &FWPM_CONDITION_IP_LOCAL_ADDRESS,
+        &FWPM_CONDITION_IP_REMOTE_ADDRESS, &FWPM_CONDITION_IP_LOCAL_PORT,
+        &FWPM_CONDITION_IP_REMOTE_PORT, &FWPM_CONDITION_IP_LOCAL_INTERFACE};
+    for (size_t i = 0; i < keys.size(); ++i) {
+      expect(f.filterCondition[i].fieldKey == *keys[i] &&
+                 f.filterCondition[i].matchType == FWP_MATCH_EQUAL,
+             "control permit cannot omit a tuple field or allow an address range");
+    }
+    const auto* c = f.filterCondition;
+    expect(c[0].conditionValue.type == FWP_UINT8 && c[0].conditionValue.uint8 == IPPROTO_TCP &&
+               c[1].conditionValue.type == FWP_UINT32 && c[1].conditionValue.uint32 == 0xc000020a &&
+               c[2].conditionValue.type == FWP_UINT32 && c[2].conditionValue.uint32 == 0xcb007114 &&
+               c[3].conditionValue.type == FWP_UINT16 && c[3].conditionValue.uint16 == 57893 &&
+               c[4].conditionValue.type == FWP_UINT16 && c[4].conditionValue.uint16 == 443 &&
+               c[5].conditionValue.type == FWP_UINT64 && c[5].conditionValue.uint64 &&
+               *c[5].conditionValue.uint64 == 0x600000c000000,
+           "only the connected TCP443 tuple on its physical interface may bypass our block");
+  });
 #endif
   return failures == 0 ? 0 : 1;
 }
