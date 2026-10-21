@@ -10,7 +10,10 @@ Premium projection, including its manual/family handling, and excludes Free and
 expired/blocked access. No payment receipt, `provider_payment` origin or new
 entitlement class is required. Provider fees (fixed or percentage) remain under
 discussion; no spending is authorized. Customer contact, phone acceptance and
-public release remain paused.
+public release remain paused. The owner also accepted WhiteDNS for all active
+Premium access; it is a separate DNS tunnel, not a SmartDNS endpoint, and is not
+integrated. Its rates remain pending. See the platform-owned
+[whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
 The table records the earlier 21 October root-run comparison in the clean
 Windows 11 VM from the Russian home network. Only a temporary Edge profile used
@@ -19,9 +22,8 @@ an answer is not PASS. This is external-provider/browser evidence, not POKROV
 integration, Android acceptance, an availability guarantee or an Auto change.
 At the end of that comparison root verified that VM DNS, routes and proxy were
 unchanged from the captured baseline and removed the temporary Edge
-profile/processes and QA directory. This does not describe the current VM state:
-root is now running the native checks below and will restore the VM when they
-finish. The owner's host network was not changed.
+profile/processes and QA directory. The later native pass and its separate cleanup
+are recorded below. The owner's host network was not changed.
 
 | Provider / endpoint | Gemini result in this comparison | Commercial permission recorded by owner |
 | --- | --- | --- |
@@ -54,36 +56,50 @@ They must not enable Core's mobile 45 MiB connection killer, which can close all
 sockets during a later relay dial and appear as a connection failure after a
 successful startup. Android keeps its existing memory limit.
 
-The server now serves live signed catalog revision 28/security revision 2 and
-provider policy revision 1/security revision 1 through the existing pins. The
-four external providers are WLrus, GeoHide EU, GeoHide RU and DNS-AI; their
-published capabilities cover Windows Gemini only. This does not establish
-Android or POKROV functional acceptance and does not add a commercial COMSS offer.
+Live signed catalog 28/security 2 is unchanged; provider policy **2/security 1**
+now admits only **WLrus and DNS-AI**, for Windows Gemini and all eligible active
+Premium access. Publication used the existing key and Action Intent, with exact
+readback, admission open and fresh API health at 09:07:39 UTC; the operation
+lease is FREE. Server `8018d52` already enforces immutable provider kind for an
+existing provider ID. No commercial COMSS offer was added.
 
-Current private packages are Android 4187 with Core `0f159bb` and Windows 4189
-from App `49302eea`, including native journal `c0ae4b38`, with Core `a4a0c01`
-(1.2.14). Windows installer packaging was corrected in `42982898`; exact artifacts
-and installation acceptance belong to [client readiness](../operations/cutover-readiness.md).
-Android packaging passed; no Android native or phone acceptance is claimed.
+Current private packages are **Windows 4195 / App `2754778e` / Core `bec4517`
+(1.2.14)** and Android 4187 / Core `0f159bb`. The 4195 installer completed in the
+Clean Windows VM with exit 0. In ordinary Edge with default settings, POKROV
+returned real Gemini answers about Paris through WLrus `191.217.212.16` and
+DNS-AI `103.137.248.145`: secure HTTP/2, phase running and gateway available after
+both requests, without VPN. Direct gstatic dependencies loaded over IPv4 after
+the physical-IPv6 DNS fix `fcfe46c4`; no additional catalog domains were needed.
+GeoHide EU returned Google's unusual-traffic response; GeoHide RU used VPN with
+an empty lease inventory, and its exact cause was not established. Neither is
+in policy 2. Android packaging remains accepted without new device/native proof.
+Artifacts are in [client readiness](../operations/cutover-readiness.md).
 
-Earlier Windows 4186 obtained provider GET and lease POST 200 through the
-ordinary UI with WLrus, then reported `core_egress_connect_failed`. Subsequent
-WLrus attempts failed at native DNS/connect and used the declared VPN fallback.
-GeoHide EU initially held a native lease and passed A/TLS readiness, then failed
-the periodic check and fell back to VPN. The real browser request has not been
-accepted; ECH remains an unconfirmed hypothesis. Healthy VPN fallback and a
-later empty lease inventory do not establish SmartDNS functionality. A real
-Gemini response through POKROV's native SmartDNS path is still required.
+A browser's denied scoped request can leave `readiness.status=failure` and the
+sticky `fallback_guard_closed=true` alongside three successful probe stages.
+That QA guard is separate from gateway availability and does not itself force
+VPN fallback; its protections were not weakened. These results establish the
+two Windows Gemini paths above, not other services, platforms or network guarantees.
 
-Catalog 28 also authorizes selective YouTube local DPI with the exact control
-host `www.youtube.com`. Core `b508962` fixes admission of the verified encrypted
-bridge chain and ATS wrapper; service-owned winws now starts. Strategies 568 and
-681 each reached the native TLS control check and timed out after 10 seconds,
-then safely fell back to VPN. Functional DPI and video playback are not accepted.
-The earlier standalone UAC limitation is not the current blocker; UAC was not
-weakened. Ordinary Auto, customer contact, phone checks and public release remain
-unchanged. Manager remains an OpenWrt-only reference whose ideas may be studied,
-but its own code without a LICENSE must not be copied.
+Catalog 28 authorizes selective YouTube local DPI with exact control host
+`www.youtube.com`. Verified encrypted bridge/ATS admission, exact pre-connect
+guard permission and winws filter readiness are corrected. On 4194, strategies
+568 and 681 passed TCP but timed out in native TLS control after 10 seconds and
+used safe VPN fallback. The final controlled comparison pinned both plain curl
+and standalone 681 to `www.youtube.com:443` at `142.251.157.4`, bound to the
+physical interface with the same 10-second budget. Both timed out before TCP/TLS;
+681's filter stayed READY and its child cleanup was confirmed. POKROV was
+stopped, with no TUN, POKROV guard or service-owned winws; DNS/routes were not
+changed. This reference TCP path is unavailable, so neither TLS nor strategy/video
+is accepted; the strategy, ISP and specific cause are not established. No further
+strategy runs are scheduled. Root restored the saved allExceptRu/IS preferences,
+Automatic SmartDNS, local DPI off and empty service selection; DNS/routes/proxy
+match the baseline. Owned Edge/winws and TUN are absent, temporary profiles were
+removed, and CleanWin11 is verified PoweredOff. The host network, Hiddify and
+clocks were untouched.
+Auto, customer contact, phone checks and public release remain unchanged.
+Manager remains an OpenWrt-only reference; its code without a LICENSE must not
+be copied.
 
 Read-only Telegram research on 21 October: the four August/September messages
 in the [older whitelist thread](https://t.me/wlrforum/122620) are historical
@@ -99,7 +115,8 @@ and marked end-of-life on 5 October 2026; its configuration notes are historical
 The separate whitelist-bypass setup requires its own client, authentication
 cookies and an SFU session with one creator and one joiner. These remain addon
 research only, not a POKROV fallback or a production integration.
-No Telegram messages, subscriptions, joins or installations were performed.
+That read-only review sent no Telegram messages and performed no subscriptions,
+joins or installations.
 
 ## Existing scoped runtime and historical QA
 
@@ -116,8 +133,7 @@ rule using that lease's DoH transport. For an IPv4 lease its exact query list is
 `A`, `AAAA`, `HTTPS`, `SVCB`, with `strategy: ipv4_only`: Core returns local
 NOERROR/NODATA for AAAA rather than advertising the provider's unusable IPv6
 answer. A and service-binding queries keep the same resolver and lease window.
-This fixes the observed DNS-AI AAAA response under an IPv4-only route; it does
-not establish the cause of the separate browser reset over forced IPv4.
+This suppresses the observed unusable DNS-AI AAAA response under an IPv4-only route.
 Windows and Android retain the exact query list and accept only `ipv4_only`
 when this optional field is present. Older rules without it remain readable;
 extra query types or a different strategy do not authorize a Smart probe.
@@ -145,13 +161,13 @@ domain rejection, disabled DNS cache and TTL zero retain their existing roles.
 The finite first-provider QA permit remains nonrenewable. A native A/TLS probe
 does not prove a browser feature request.
 
-Private Windows QA accepts Gemini or ChatGPT only. The verified permit and grant
+The separate historical private Windows QA path accepts Gemini or ChatGPT only. The verified permit and grant
 select the service and exact hosts for compilation, earlier-rule checks and native
 proof; browser input cannot choose this scope. Gemini keeps its single exact host.
 ChatGPT requires `chatgpt.com` and may include individually admitted exact hosts
 under the existing ChatGPT/OpenAI/static/content roots, each matched to a
 nonshared domain in the same disabled catalog service. Unknown services and
-suffix scopes fail closed. Public selection stays disabled, and the one attempt
+suffix scopes fail closed. Its owned QA projection stays outside public selection, and the one attempt
 remains nonrenewable and limited to 600 seconds. Source tests do not establish a
 real ChatGPT response through the owned relay.
 

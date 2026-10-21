@@ -16,12 +16,11 @@ assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
 Current private packages are **Android 1.5.0+4187** with Core `0f159bb`, and
-**Windows 1.5.0+4189** from App `49302eea`, including native journal `c0ae4b38`,
-with Core `a4a0c01` / 1.2.14. All four Android APKs passed production signing and
-packaging checks; no 4187 device or native acceptance is claimed. Windows
-installer packaging is from `42982898`; the installer remains `NotSigned` and
-the delivery ZIP contains that installer. Earlier 4184 Windows acceptance below
-retains its original scope.
+**Windows 1.5.0+4195** from App `2754778e` with Core `bec4517` / 1.2.14.
+All four Android APKs passed production signing and packaging checks; no new
+4187 device or native acceptance is claimed. The Windows installer remains
+`NotSigned`, its delivery ZIP contains that installer, and 4195 installed in the
+Clean Windows VM with exit 0. Earlier package checks below retain their scope.
 
 | Private artifact | Path |
 | --- | --- |
@@ -29,31 +28,49 @@ retains its original scope.
 | Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-arm64-v8a.apk) |
 | Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-armeabi-v7a.apk) |
 | Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4189-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4189.zip) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4195-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4195.zip) |
 
-The corrected 4189 installer completed in the Clean Windows VM with exit 0 while
+Earlier, the corrected 4189 installer completed in the Clean Windows VM with exit 0 while
 the unchanged WinDivert driver remained loaded: no driver stop or reboot was
 needed. The earlier package failed on that locked driver. The fix is limited to
 WinDivert packaging, using `replacesameversion` and `restartreplace` instead of
 forcing an identical loaded driver to be overwritten; it does not establish DPI
 functionality or acceptance of a changed driver.
 
-Live signed catalog 28/security 2 and provider policy 1/security 1 enable WLrus,
-GeoHide EU/RU and DNS-AI for Windows Gemini under the existing pins. Server and
-App eligibility cover every active Premium access, including trial, manual and
-family; Free and expired/blocked access are excluded. App `38adc208` closes the
-legacy custom SmartDNS/direct bypass. GeoHide EU initially passed native leased
-A/TLS readiness, then failed periodic verification and fell back to VPN; the
-browser request is not accepted and ECH remains an unconfirmed hypothesis.
-WLrus failed native DNS/connect. Core `b508962` permits the verified bridge/ATS
-chain and winws starts, but Flowseal strategies 568 and 681 each timed out in the
-10-second native TLS control check and safely fell back to VPN. Neither
-functional DPI/video nor native SmartDNS browser acceptance is complete.
-The earlier external browser comparison and provider permissions are recorded
-in [Smart Access DNS](../architecture/smart-access-dns.md); provider fees remain
-under discussion and ordinary Auto is unchanged. Root's VM test is still running;
-restoration is due at the end, so the VM is not currently recorded as PoweredOff.
+Windows 4195 returned real Gemini answers about Paris through WLrus
+`191.217.212.16` and DNS-AI `103.137.248.145` in ordinary default Edge: secure
+HTTP/2, gateway available and phase running after both requests, without VPN.
+Direct gstatic dependencies loaded over IPv4. GeoHide EU returned unusual
+traffic; GeoHide RU used VPN with empty inventory, exact cause unestablished.
+Live provider policy **2/security 1** now admits only WLrus and DNS-AI for
+Windows Gemini; catalog **28/security 2** is unchanged. Existing-key publication
+and exact readback passed, admission is open, operation lease FREE, fresh API
+health 09:07:39 UTC. Server `8018d52` enforces immutable provider kind.
+Eligibility includes all active Premium (trial, gifts, promotions, bonuses,
+manual and family), excluding Free and expired/blocked. App `38adc208` closes
+the legacy custom SmartDNS/direct bypass. A sticky QA guard denial is separate
+from gateway availability; no guard was weakened for this acceptance.
+
+Flowseal 4194 strategies 568/681 passed TCP but timed out at native TLS after
+10 seconds, then used safe VPN fallback. Exact pre-connect guard permission and
+winws readiness are corrected. The final plain/standalone-681 comparison used
+the same pinned `www.youtube.com:443` IP `142.251.157.4`, physical-interface bind
+and 10-second budget. Both timed out before TCP/TLS despite filter READY; child
+cleanup was confirmed. POKROV/TUN/guard/service-owned winws were absent and
+DNS/routes unchanged. The reference TCP path is unavailable; neither a faulty
+strategy nor an ISP cause is established. Functional DPI/video is not accepted,
+and no further strategy runs are scheduled. Provider fees remain pending; WhiteDNS is
+separately authorized for all active Premium as a DNS tunnel and is not integrated.
+See [Smart Access DNS](../architecture/smart-access-dns.md) and platform
+[whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
+VM cleanup is verified: allExceptRu/IS, Automatic SmartDNS, local DPI off and
+empty service selection are restored; DNS/routes/proxy exactly match baseline,
+owned Edge/winws and TUN are absent, temporary profiles removed, CleanWin11
+PoweredOff. The host network, Hiddify and clocks were untouched. Superseded
+4190–4194 packages and repository release bundles were removed; the 4195 setup/ZIP
+above and reusable Core manifest/DLL remain in `E:/POKROV-tools/temp`.
+Ordinary Auto is unchanged.
 Remaining release work is phone acceptance after explicit return, the paused
 customer Windows case, Lampa's provider response, IS direct on another network
 and final publication only after the owner's explicit yes. Public 1.4.5 and
