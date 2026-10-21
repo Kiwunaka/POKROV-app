@@ -10,9 +10,9 @@ Premium projection, including its manual/family handling, and excludes Free and
 expired/blocked access. No payment receipt, `provider_payment` origin or new
 entitlement class is required. Provider fees (fixed or percentage) remain under
 discussion; no spending is authorized. Customer contact, phone acceptance and
-public release remain paused. The owner also accepted WhiteDNS for all active
-Premium access; it is a separate DNS tunnel, not a SmartDNS endpoint, and is not
-integrated. Its rates remain pending. See the platform-owned
+public release remain paused. The owner also accepted WhiteDNS and SlipNet for
+all active Premium access; their separate DNS-tunnel addon is not a SmartDNS
+endpoint and is not integrated. Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
 The table records the earlier 21 October root-run comparison in the clean
@@ -59,13 +59,16 @@ successful startup. Android keeps its existing memory limit.
 Live signed catalog 28/security 2 is unchanged; provider policy **2/security 1**
 now admits only **WLrus and DNS-AI**, for Windows Gemini and all eligible active
 Premium access. Publication used the existing key and Action Intent, with exact
-readback, admission open and fresh API health at 09:07:39 UTC; the operation
-lease is FREE. Server `8018d52` already enforces immutable provider kind for an
+readback, admission open, API health at 09:07:39 UTC and operation lease FREE.
+Those are last-observed server facts; the 4199 pass changed neither catalog nor
+provider policy and did not repeat the server checks. Server `8018d52` enforces immutable provider kind for an
 existing provider ID. No commercial COMSS offer was added.
 
-Current private packages are **Windows 4195 / App `2754778e` / Core `bec4517`
-(1.2.14)** and Android 4187 / Core `0f159bb`. The 4195 installer completed in the
-Clean Windows VM with exit 0. In ordinary Edge with default settings, POKROV
+Current private packages are **Windows 4199 / App `c7c8c55f` / Core `b560f1a`
+(1.2.14)** and unchanged Android 4187 / Core `0f159bb`. The 4199 unsigned installer
+completed in the Clean Windows VM with exit 0; targeted Core/App checks and 48
+desktop ABI exports passed. The already accepted 4195 Gemini checks were not
+repeated: in ordinary Edge with default settings, POKROV
 returned real Gemini answers about Paris through WLrus `191.217.212.16` and
 DNS-AI `103.137.248.145`: secure HTTP/2, phase running and gateway available after
 both requests, without VPN. Direct gstatic dependencies loaded over IPv4 after
@@ -90,12 +93,36 @@ The current Windows source prefers Flowseal 1.10.3 ALT4's Google TCP branch
 (`fake,multisplit`, six fakes, `badseq` increment 1000, existing Google pattern)
 under distinct journal strategy ID 4. The existing two-attempt limit and
 same-network successful-strategy preference remain; 681 is the second strategy,
-and 568 is no longer attempted. Exact host/interface scope, TLS verification,
-admission and owned Job cleanup are unchanged. Root's standalone ALT4 control
-received verified HTTPS 200 on the same pinned path where 681 stalled. This is
-not yet acceptance through the application or video playback. Earlier zero
-curl connect timings did not establish TCP failure: curl 8.21 can time out in
-TLS before publishing those timings, and the later Schannel trace confirms TCP.
+and 568 is no longer attempted. WFP rule priority is compared semantically
+(`499dd3e6`), and ordinary protected VPN egress is verified before WinDivert
+starts (`c3ba46d0`). Core `b560f1a` adds an IPv4-only local rule immediately before
+the unchanged signed VPN rule, preserving IPv6 fallback. EOF from a speculative
+socket with no client write no longer retires admission. The existing holder
+observation and native journal retain the first closed failure reason without
+addresses or raw errors. Exact host/interface scope and TLS verification remain.
+
+On 4198 and 4199, ordinary Connect reached running, DNS/egress validated and
+`protection_retained=0`; YouTube played about 13 seconds/400 frames. On 4199,
+local DPI subsequently failed with `early_read` (16 local / 7 VPN handoffs,
+admitted 0 / failed 1). The VPN fallback works; video entirely over local DPI
+remains unaccepted. Edge SSL_CONNECT -100 (connection closed) to
+`rr3---sn-vcpu-axql.googlevideo.com` / `85.114.28.78` at 14:40:07.179 precedes
+the first native `early_read` at 14:40:07.261 by 82 ms. The same CDN IP/SNI and
+physical source were then tested outside POKROV with a 10-second bound: plain,
+ALT4 and 681 all established TCP but timed out in TLS; the plain-process exit
+code was not captured. The remaining TLS failure is reproducible on that
+path/endpoint independently of POKROV and these two candidates. No particular
+ISP, DPI or middlebox is established, and no random strategy flags were added.
+The separate ALT4 `www.youtube.com` control returned verified HTTPS 200. Earlier
+zero curl connect timings were wrongly interpreted as TCP failure; later
+Schannel evidence confirms that TCP establishes.
+
+Root confirmed cleanup after 4199: ordinary Stop left running/guard/TUN/winws 0;
+allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection
+were restored. DNS/routes/proxy exactly match the baseline; owned Edge/app/winws
+and TUN are absent. Temporary guest Edge profiles, raw NetLog and superseded
+installers were removed within the verified QA directory; CleanWin11 is confirmed
+PoweredOff. The host network, Hiddify and clocks were untouched.
 
 Historical 4194/4195 comparison: catalog 28 authorizes selective YouTube local DPI with exact control host
 `www.youtube.com`. Verified encrypted bridge/ATS admission, exact pre-connect
