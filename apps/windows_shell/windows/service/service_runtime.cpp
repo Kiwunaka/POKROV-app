@@ -1637,6 +1637,15 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     return local_dpi_owner_current() && local_dpi_executor_->Alive();
   };
   if (local_dpi_preparation_) {
+    const auto record_dpi = [&](LocalDpiStage stage, WindowsLocalDpiStrategy strategy,
+                                const std::string& failure) {
+      if (events_) events_->RecordLocalDpiObservation(stage,
+          strategy == WindowsLocalDpiStrategy::kMultisplit681 ? 681 : 568,
+          failure, local_dpi_executor_->Alive());
+    };
+    const auto dpi_owner_failure = [&] {
+      return local_dpi_owner_current() ? "local_dpi_child_failed" : "local_dpi_owner_changed";
+    };
     std::array<WindowsLocalDpiStrategy, 2> strategies{
         WindowsLocalDpiStrategy::kMultisplit568, WindowsLocalDpiStrategy::kMultisplit681};
     if (local_dpi_success_strategy_ &&
@@ -1653,6 +1662,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
                 local_dpi_network->bind_interface, strategies[attempt])
           : local_dpi_executor_->RetryPrepared(local_dpi_preparation_->services,
                 local_dpi_network->bind_interface, strategies[attempt]);
+      record_dpi(LocalDpiStage::kStart, strategies[attempt], dpi_start_error);
       if (!dpi_start_error.empty()) break;
       if (attempt == 0) {
         for (auto& service : local_dpi_preparation_->services) {
@@ -1661,9 +1671,12 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
       }
       proved = true;
       for (const auto& service : local_dpi_preparation_->services) {
-        if (!local_dpi_current() ||
-            !VerifyWindowsLocalDpiControlHost(service.control_host,
-                local_dpi_network->bind_interface, interrupted).empty() || !local_dpi_current()) {
+        std::string proof_failure = !local_dpi_current() ? dpi_owner_failure() :
+            VerifyWindowsLocalDpiControlHost(service.control_host,
+                local_dpi_network->bind_interface, interrupted);
+        if (proof_failure.empty() && !local_dpi_current()) proof_failure = dpi_owner_failure();
+        record_dpi(LocalDpiStage::kProof, strategies[attempt], proof_failure);
+        if (!proof_failure.empty()) {
           proved = false;
           break;
         }
@@ -1674,8 +1687,11 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     // succeeds; admission failure must never reopen a terminal holder.
     if (proved) {
       for (const auto& service : local_dpi_preparation_->services) {
-        if (!local_dpi_current() ||
-            !local_dpi_executor_->AdmitCaptured(service.outbound_tag, local_dpi_current)) {
+        const std::string admission_failure = !local_dpi_current() ? dpi_owner_failure() :
+            local_dpi_executor_->AdmitCaptured(service.outbound_tag, local_dpi_current)
+                ? "" : "local_dpi_admission_failed";
+        record_dpi(LocalDpiStage::kAdmit, successful_strategy, admission_failure);
+        if (!admission_failure.empty()) {
           proved = false;
           break;
         }

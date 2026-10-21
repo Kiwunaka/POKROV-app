@@ -297,6 +297,10 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   DNS/TCP and Schannel certificate/hostname
   validation plus HEAD 2xx prove each exact signed control host before fresh-ID
   admission; IPv6-only proof is unavailable and leaves the VPN fallback.
+  The existing service journal records `runtime_local_dpi_observation` for
+  start, control-host proof and admission: closed failure code, strategy
+  568/681 and child-alive flag only. Unknown error text is replaced by
+  `local_dpi_unavailable`; no addresses, headers or profile data are retained.
   The existing dispatcher fences profile/Core/operation/network/TTL and child
   liveness. Cancellation/child failure withdraws captured IDs before closing
   the child; expiry or catalog revocation uses protected runtime rollback,

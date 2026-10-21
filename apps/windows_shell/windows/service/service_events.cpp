@@ -107,6 +107,28 @@ const char* GuardOperationName(TransitionGuardOperation operation) {
   return operation == TransitionGuardOperation::kStart ? "start" : "finish";
 }
 
+const char* LocalDpiStageName(LocalDpiStage stage) {
+  switch (stage) {
+    case LocalDpiStage::kStart: return "start";
+    case LocalDpiStage::kProof: return "proof";
+    case LocalDpiStage::kAdmit: return "admit";
+  }
+  return "unknown";
+}
+
+const char* LocalDpiFailureName(const std::string& failure) {
+  if (failure.empty()) return "none";
+  for (const auto* code : {"local_dpi_executor_running", "local_dpi_executor_unavailable",
+      "local_dpi_scope_invalid", "local_dpi_interface_unavailable", "local_dpi_assets_unavailable",
+      "local_dpi_holder_unavailable", "local_dpi_child_failed", "local_dpi_retry_unavailable",
+      "local_dpi_control_invalid", "local_dpi_physical_unavailable", "local_dpi_control_dns_failed",
+      "local_dpi_control_connect_failed", "local_dpi_physical_changed", "local_dpi_control_tls_failed",
+      "local_dpi_control_http_failed", "local_dpi_owner_changed", "local_dpi_admission_failed"}) {
+    if (failure == code) return code;
+  }
+  return "local_dpi_unavailable";
+}
+
 const char* GuardStageName(TransitionGuardStage stage) {
   switch (stage) {
     case TransitionGuardStage::kEngineOpen: return "engine_open";
@@ -313,6 +335,14 @@ class DurableServiceEventJournal final : public ServiceEventSink {
     return Append("runtime_egress_observation", EgressProbeOutcomeName(outcome),
                   EgressProbeStageName(stage), EgressProbeErrorDomainName(domain),
                   std::to_string(error) + "," + std::to_string(elapsed_ms));
+  }
+
+  bool RecordLocalDpiObservation(LocalDpiStage stage, int strategy,
+      const std::string& failure, bool child_alive) override {
+    return Append("runtime_local_dpi_observation", failure.empty() ? "succeeded" : "failed",
+                  LocalDpiStageName(stage), LocalDpiFailureName(failure),
+                  std::to_string(strategy == 568 || strategy == 681 ? strategy : 0) +
+                      "," + (child_alive ? "1" : "0"));
   }
 
  private:

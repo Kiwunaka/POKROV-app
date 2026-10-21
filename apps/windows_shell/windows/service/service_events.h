@@ -84,6 +84,8 @@ enum class FirstOwnedDnsState {
 
 enum class EgressProbeTarget { kOwnedApi, kOwnedReserve };
 
+enum class LocalDpiStage { kStart, kProof, kAdmit };
+
 struct EgressProbeObservation {
   EgressProbeStage stage;
   EgressProbeOutcome outcome;
@@ -159,6 +161,10 @@ class ServiceEventSink {
   virtual bool RecordEgressProbeObservation(
       EgressProbeStage stage, EgressProbeOutcome outcome, EgressErrorDomain domain,
       std::uint32_t error, std::uint64_t elapsed_ms) {
+    return false;
+  }
+  virtual bool RecordLocalDpiObservation(LocalDpiStage stage, int strategy,
+      const std::string& failure, bool child_alive) {
     return false;
   }
 };

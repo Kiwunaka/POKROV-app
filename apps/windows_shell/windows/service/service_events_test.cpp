@@ -86,7 +86,8 @@ void ValidateClosedLines(const std::string& content) {
                line.find("operation_nonce") == std::string::npos &&
                line.find("api.pokrov") == std::string::npos,
            "event journal retained forbidden runtime material");
-    if (line.find("|runtime_egress_observation|") != std::string::npos) {
+    if (line.find("|runtime_egress_observation|") != std::string::npos ||
+        line.find("|runtime_local_dpi_observation|") != std::string::npos) {
       const auto numeric = line.substr(line.rfind('|') + 1);
       Expect(numeric.find_first_not_of("0123456789,") == std::string::npos &&
                  std::count(numeric.begin(), numeric.end(), ',') == 1,
@@ -129,6 +130,13 @@ void TestClosedBoundedJournal() {
       Expect(journal->RecordEgressProbeObservation(EgressProbeStage::kResponse,
                  EgressProbeOutcome::kDeadline, EgressErrorDomain::kWinHttp, 12002, 3030),
              "egress observation was not durable");
+      Expect(journal->RecordLocalDpiObservation(LocalDpiStage::kProof, 568,
+                 "local_dpi_control_tls_failed", true) &&
+             journal->RecordLocalDpiObservation(LocalDpiStage::kStart, 681,
+                 "local_dpi_child_failed", false) &&
+             journal->RecordLocalDpiObservation(LocalDpiStage::kAdmit, 999,
+                 "https://secret.example/session_token|raw\n", false),
+             "local DPI observation was not durable");
       Expect(journal->RecordCoreOperationalEvent(CoreOperationalEventRecord{
                  1,
                  1,
@@ -179,6 +187,13 @@ void TestClosedBoundedJournal() {
   Expect(combined.find("runtime_egress_observation|deadline|response|winhttp|12002,3030") !=
              std::string::npos,
          "egress observation lost the native cause, phase or elapsed time");
+  Expect(combined.find("runtime_local_dpi_observation|failed|proof|local_dpi_control_tls_failed|568,1") !=
+             std::string::npos &&
+         combined.find("runtime_local_dpi_observation|failed|start|local_dpi_child_failed|681,0") !=
+             std::string::npos &&
+         combined.find("runtime_local_dpi_observation|failed|admit|local_dpi_unavailable|0,0") !=
+             std::string::npos && combined.find("secret.example") == std::string::npos,
+         "local DPI observation lost its bounded cause or exposed unknown details");
   Expect(combined.find(
              "POKROV_CORE_EVENT_V1|1|1|2026-08-21T12:00:00Z|"
              "018f4f2a-6d58-4c11-8c27-4fb77bd28c15|"
