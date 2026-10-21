@@ -458,6 +458,7 @@ Map<String, Object?> smartAccessNativeDns(VerifiedSmartAccessLease grant, {
   return Map.unmodifiable({
     'tag': smartAccessDnsTag(grant), 'address': grant.lease['resolver_url'],
     'address_resolver': bootstrapDnsServer, 'detour': directOutbound,
+    if (grant.lease['family'] == 'ipv4') 'address_strategy': 'ipv4_only',
   });
 }
 

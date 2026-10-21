@@ -97,6 +97,14 @@ No Telegram messages, subscriptions, joins or installations were performed.
 
 ## Existing scoped runtime and historical QA
 
+An IPv4 lease explicitly sets `address_strategy: ipv4_only` when bootstrapping
+its provider's DoH hostname through `dns-direct`. App's existing DNS normalization
+carries this into `domain_resolver.strategy` before staging; the global DNS
+strategy does not override an explicit resolver's default AsIs. This prevents an
+unnecessary AAAA bootstrap wait without changing the service query types, IPv6 lease
+behavior, request deadlines or TLS checks. The observed DNS-AI delay is compatible
+with that wait, but packet QTYPE evidence has not established its cause.
+
 `routing_catalog_materializer.dart` gives each leased service domain a timed DNS
 rule using that lease's owned DoH transport. For an IPv4 lease its exact query
 list is `A`, `AAAA`, `HTTPS`, `SVCB`: the resolver supplies the owned IPv4 relay

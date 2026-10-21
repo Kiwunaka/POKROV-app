@@ -642,6 +642,10 @@ void main() {
     expect(nativeCalls.where((method) => method == 'runtimeEngine.configureBoundSmartAccessRuntimeControl'), hasLength(1));
     expect(claimRequest!.containsKey('candidate_ref'), isFalse);
     expect(claimRequest!['core_module_sha256'], coreHash);
+    final providerDns = ((staged!['dns'] as Map)['servers'] as List).cast<Map>()
+        .singleWhere((server) => server['tag'] == 'pokrov-smart-access-dns-$leaseId');
+    expect(providerDns['domain_resolver'], {'server': 'dns-direct', 'strategy': 'ipv4_only'},
+      reason: 'an IPv4 lease must not wait for AAAA when bootstrapping its DoH hostname');
     final route = staged!['route'] as Map;
     for (final domainName in domainNames) {
     final domainRules = (route['rules'] as List).cast<Map>().where((row) => (row['domain'] as List?)?.contains(domainName) == true).toList();
