@@ -21,7 +21,7 @@ jobs:
           set -euo pipefail
           git clone --depth 1 --branch 3.38.7 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
           test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = 3b62efc2a3da49882f43c372e0bc53daef7295a6
-          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATHATH"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/flutter/bin/flutter" config --no-analytics
       - name: Resolve existing lockfile
         working-directory: packages/app_shell
@@ -34,6 +34,7 @@ jobs:
           flutter test --no-pub --reporter json test/session_response_fencing_test.dart > "$RUNNER_TEMP/session-baseline.jsonl" 2>&1
           result=$?
           set -e
+          tail -n 30 "$RUNNER_TEMP/session-baseline.jsonl"
           test "$result" -ne 0
           python3 - <<'PY'
           import json, os
