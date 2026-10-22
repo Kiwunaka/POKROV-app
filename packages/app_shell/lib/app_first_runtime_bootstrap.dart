@@ -4049,7 +4049,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -4279,7 +4278,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -4912,7 +4910,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -5744,6 +5741,16 @@ class AppFirstRuntimeBootstrapper
             requestTimeoutOverride: requestTimeoutOverride,
           );
           requests.requireActive();
+          final current = await _loadState(hostPlatform);
+          requests.requireActive();
+          if (current == null || !current.hasSession ||
+              current.installId != state.installId ||
+              current.accountId != state.accountId ||
+              current.refreshToken != state.refreshToken ||
+              current.sessionToken != state.sessionToken) {
+            throw const BootstrapFailure(
+              'Сессия изменилась. Повторите вход.', code: 'session_changed');
+          }
           return response;
         } on BootstrapFailure catch (error) {
           requests.requireActive();
@@ -5751,7 +5758,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -5813,7 +5819,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -5893,7 +5898,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -5952,7 +5956,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -6121,7 +6124,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -6285,7 +6287,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -6371,7 +6372,6 @@ class AppFirstRuntimeBootstrapper
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -6873,21 +6873,6 @@ class AppFirstRuntimeBootstrapper
     }
   }
 
-  Future<void> _saveState(
-    HostPlatform hostPlatform,
-    _StoredBootstrapState state,
-  ) async {
-    final file = await _stateFile(hostPlatform);
-    await _withAppFirstStateFileLock(
-      file,
-      () => _persistStateToFile(
-        hostPlatform: hostPlatform,
-        file: file,
-        state: state,
-      ),
-    );
-  }
-
   Future<void> _persistStateToFile({
     required HostPlatform hostPlatform,
     required File file,
@@ -7071,19 +7056,38 @@ class AppFirstRuntimeBootstrapper
     final managedManifestPath = _readText(managedManifest['url']);
     _traceBootstrap('trial_response', 'ok');
 
-    final nextState = effectiveState.copyWith(
-      sessionToken: pair.accessToken,
-      refreshToken: pair.refreshToken,
-      accountId: accountId,
-      managedManifestPath: _validatedManagedManifestPath(managedManifestPath),
-      expectsSecureSessionToken: true,
-    );
-    await _runtimeStatsOutbox.rebindAccount(hostPlatform,
-      legacyAccountId: _readText(session['account_id'] ?? response['account_id']),
-      canonicalAccountId: _readText(session['canonical_account_id'] ?? response['canonical_account_id']),
-      installId: nextState.installId);
-    await _saveState(hostPlatform, nextState);
-    return await _loadState(hostPlatform) ?? nextState;
+    final file = await _stateFile(hostPlatform);
+    return _withAppFirstStateFileLock(file, () async {
+      final current = await _loadStateFromFile(hostPlatform, file);
+      if (current != null && current.installId == effectiveState.installId &&
+          current.hasSession && accountId.isNotEmpty &&
+          current.accountId == accountId) {
+        // Another initial request or login already won for this same account.
+        // Keep its complete state and credentials; never overwrite them.
+        return current;
+      }
+      if (current == null || current.installId != effectiveState.installId ||
+          current.accountId != effectiveState.accountId ||
+          current.sessionToken != effectiveState.sessionToken ||
+          current.refreshToken != effectiveState.refreshToken ||
+          current.expectsSecureSessionToken != effectiveState.expectsSecureSessionToken) {
+        throw const BootstrapFailure(
+          'Сессия изменилась. Повторите вход.', code: 'session_changed');
+      }
+      final nextState = current.copyWith(
+        sessionToken: pair.accessToken,
+        refreshToken: pair.refreshToken,
+        accountId: accountId,
+        managedManifestPath: _validatedManagedManifestPath(managedManifestPath),
+        expectsSecureSessionToken: true,
+      );
+      await _runtimeStatsOutbox.rebindAccount(hostPlatform,
+        legacyAccountId: _readText(session['account_id'] ?? response['account_id']),
+        canonicalAccountId: _readText(session['canonical_account_id'] ?? response['canonical_account_id']),
+        installId: nextState.installId);
+      await _persistStateToFile(hostPlatform: hostPlatform, file: file, state: nextState);
+      return nextState;
+    });
   }
 
   void _removeInitialTrialFlight(
@@ -7121,7 +7125,7 @@ class AppFirstRuntimeBootstrapper
     required HostPlatform hostPlatform,
     required HttpClient client,
   }) {
-    final key = '${hostPlatform.name}:${state.installId.trim()}';
+    final key = '${hostPlatform.name}:${state.installId.trim()}:${state.accountId}';
     final inFlight = _refreshFlights[key];
     if (inFlight != null) {
       return inFlight;
@@ -7165,7 +7169,7 @@ class AppFirstRuntimeBootstrapper
       installId: state.installId,
     );
     if (_credentialsHaveAdvanced(latest, state)) {
-      return _stateWithCredentials(state, latest!);
+      return _loadRefreshSuccessor(hostPlatform, state);
     }
     try {
       final response = await _requestJson(
@@ -7232,7 +7236,7 @@ class AppFirstRuntimeBootstrapper
           installId: state.installId,
         );
         if (_credentialsHaveAdvanced(latest, state)) {
-          return _stateWithCredentials(state, latest!);
+          return _loadRefreshSuccessor(hostPlatform, state);
         }
         throw BootstrapFailure(
           'Сессия устройства истекла. Используйте почту или код, чтобы восстановить доступ.',
@@ -7259,15 +7263,23 @@ class AppFirstRuntimeBootstrapper
         credentials.accessToken.trim() != state.sessionToken.trim();
   }
 
-  _StoredBootstrapState _stateWithCredentials(
-    _StoredBootstrapState state,
-    AppFirstSessionCredentials credentials,
-  ) {
-    return state.copyWith(
-      sessionToken: credentials.accessToken,
-      refreshToken: credentials.refreshToken,
-      expectsSecureSessionToken: true,
-    );
+  Future<_StoredBootstrapState> _loadRefreshSuccessor(
+    HostPlatform hostPlatform,
+    _StoredBootstrapState previous,
+  ) async {
+    final file = await _stateFile(hostPlatform);
+    return _withAppFirstStateFileLock(file, () async {
+      final current = await _loadStateFromFile(hostPlatform, file);
+      if (current == null || !current.hasSession ||
+          current.installId != previous.installId ||
+          previous.accountId.isEmpty || current.accountId != previous.accountId) {
+        throw const BootstrapFailure(
+          'Сессия изменилась. Повторите вход.', code: 'session_changed');
+      }
+      // A concurrent rotation may win, but its tokens must travel with its
+      // own account and profile state, not a copy of the previous identity.
+      return current;
+    });
   }
 
   Future<void> _syncRoutePolicy({
@@ -11766,7 +11778,6 @@ class AppFirstSupportTicketService
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,
@@ -11867,7 +11878,6 @@ class AppFirstSupportTicketService
             state = await _startTrial(
               state: state.copyWith(
                 sessionToken: '',
-                accountId: '',
               ),
               hostPlatform: hostPlatform,
               client: client,

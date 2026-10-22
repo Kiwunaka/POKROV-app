@@ -5,13 +5,14 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/app_shell.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
-import 'package:pokrov_runtime_engine/runtime_engine.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 
 class _CountingCache extends ManagedProfileCache {
   int clears = 0;
   @override
-  Future<void> clear(String platform) async { clears += 1; }
+  Future<void> clear(String platform) async {
+    clears += 1;
+  }
 }
 
 class _Fixture {
@@ -42,10 +43,13 @@ class _Fixture {
   );
 
   static Future<_Fixture> create() async {
-    final directory = await Directory.systemTemp.createTemp('pokrov-session-fence-');
+    final directory =
+        await Directory.systemTemp.createTemp('pokrov-session-fence-');
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final fixture = _Fixture(directory, server);
-    server.listen((request) { unawaited(fixture.handle(request)); });
+    server.listen((request) {
+      unawaited(fixture.handle(request));
+    });
     addTearDown(() async {
       if (!fixture.release.isCompleted) fixture.release.complete();
       await server.close(force: true);
@@ -58,14 +62,19 @@ class _Fixture {
   Future<void> state(String account, String access,
       {String? refresh, bool loggedOut = false}) async {
     if (access.isEmpty) {
-      await secrets.deleteSessionToken(hostPlatform: HostPlatform.windows, installId: install);
+      await secrets.deleteSessionToken(
+          hostPlatform: HostPlatform.windows, installId: install);
     } else {
       await secrets.writeSessionPair(
-        hostPlatform: HostPlatform.windows, installId: install,
-        pair: AppFirstSessionCredentials(accessToken: access, refreshToken: refresh ?? '$access-refresh'));
+          hostPlatform: HostPlatform.windows,
+          installId: install,
+          pair: AppFirstSessionCredentials(
+              accessToken: access, refreshToken: refresh ?? '$access-refresh'));
     }
     await file.writeAsString(jsonEncode({
-      'version': 1, 'install_id': install, 'account_id': account,
+      'version': 1,
+      'install_id': install,
+      'account_id': account,
       if (access.isNotEmpty || loggedOut) 'session_token_storage': 'secure',
       'managed_manifest_path': '/api/client/profile/managed',
       'profile_revision': 'profile-$account',
@@ -75,7 +84,8 @@ class _Fixture {
   Future<void> handle(HttpRequest request) async {
     await utf8.decoder.bind(request).join();
     final path = request.uri.path;
-    final authorization = request.headers.value(HttpHeaders.authorizationHeader) ?? '';
+    final authorization =
+        request.headers.value(HttpHeaders.authorizationHeader) ?? '';
     if (path == '/api/client/subscription') authorized.add(authorization);
     if (path == pausedPath && !entered.isCompleted) {
       entered.complete();
@@ -84,17 +94,27 @@ class _Fixture {
     request.response.headers.contentType = ContentType.json;
     if (path == '/api/client/session/start-trial') {
       starts += 1;
-      request.response.write(jsonEncode({'session': {
-        'access_token': 'trial-access', 'refresh_token': 'trial-refresh', 'account_id': 'A'},
-        'provisioning': {'status': 'ready', 'sync_ok': true}}));
+      request.response.write(jsonEncode({
+        'session': {
+          'access_token': 'trial-access',
+          'refresh_token': 'trial-refresh',
+          'account_id': 'A'
+        },
+        'provisioning': {'status': 'ready', 'sync_ok': true}
+      }));
     } else if (path == '/api/client/session/refresh') {
       refreshes += 1;
       if (rejectRefresh) {
         request.response.statusCode = HttpStatus.unauthorized;
         request.response.write('{"detail":"synthetic_expired"}');
       } else {
-        request.response.write(jsonEncode({'session': {
-          'access_token': 'renewed-access', 'refresh_token': 'renewed-refresh', 'account_id': 'A'}}));
+        request.response.write(jsonEncode({
+          'session': {
+            'access_token': 'renewed-access',
+            'refresh_token': 'renewed-refresh',
+            'account_id': 'A'
+          }
+        }));
       }
     } else if (path == '/api/client/subscription') {
       if (rejectInitialAccess && authorization == 'Bearer old-access') {
@@ -117,12 +137,14 @@ class _Fixture {
   Future<void> expectState(String account, String access) async {
     final state = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
     expect(state['account_id'], account);
-    final pair = await secrets.readSessionPair(hostPlatform: HostPlatform.windows, installId: install);
+    final pair = await secrets.readSessionPair(
+        hostPlatform: HostPlatform.windows, installId: install);
     expect(pair?.accessToken ?? '', access);
   }
 
   Future<void> wait() => entered.future.timeout(const Duration(seconds: 5));
-  Future<ClientSubscriptionInfo> fetch() => bootstrapper.fetchClientSubscription(hostPlatform: HostPlatform.windows);
+  Future<ClientSubscriptionInfo> fetch() =>
+      bootstrapper.fetchClientSubscription(hostPlatform: HostPlatform.windows);
 }
 
 void main() {
@@ -132,7 +154,8 @@ void main() {
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = overrides);
   });
-  final changed = isA<BootstrapFailure>().having((e) => e.code, 'code', 'session_changed');
+  final changed =
+      isA<BootstrapFailure>().having((e) => e.code, 'code', 'session_changed');
 
   test('late trial cannot replace a newer account', () async {
     final f = await _Fixture.create();
@@ -146,7 +169,8 @@ void main() {
     expect(f.authorized, isEmpty);
   });
 
-  test('late trial retains the same-account winner without replacing its pair', () async {
+  test('late trial retains the same-account winner without replacing its pair',
+      () async {
     final f = await _Fixture.create();
     final pending = f.fetch();
     await f.wait();
@@ -157,7 +181,8 @@ void main() {
     expect(f.authorized, ['Bearer winning-access']);
   });
 
-  test('late subscription denial does not clear the new account cache', () async {
+  test('late subscription denial does not clear the new account cache',
+      () async {
     final f = await _Fixture.create();
     f.pausedPath = '/api/client/subscription';
     f.expiredReply = true;
@@ -172,7 +197,9 @@ void main() {
     expect(f.cache.clears, 0);
   });
 
-  test('failed old refresh cannot retry an account request with a new account token', () async {
+  test(
+      'failed old refresh cannot retry an account request with a new account token',
+      () async {
     final f = await _Fixture.create();
     f.pausedPath = '/api/client/session/refresh';
     f.rejectInitialAccess = true;
@@ -188,7 +215,8 @@ void main() {
     expect(f.authorized, ['Bearer old-access']);
   });
 
-  test('concurrent refresh rotation retains complete same-account state', () async {
+  test('concurrent refresh rotation retains complete same-account state',
+      () async {
     final f = await _Fixture.create();
     f.pausedPath = '/api/client/session/refresh';
     f.rejectInitialAccess = true;
@@ -225,7 +253,8 @@ void main() {
     expect(f.starts, 1);
   });
 
-  test('ordinary expired session refresh does not create a second trial', () async {
+  test('ordinary expired session refresh does not create a second trial',
+      () async {
     final f = await _Fixture.create();
     f.pausedPath = '/api/client/session/refresh';
     f.rejectInitialAccess = true;
