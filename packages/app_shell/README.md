@@ -41,6 +41,13 @@ Android foreground network handling uses the native context reference and the ex
 
 Rules saves the untrusted Wi-Fi toggle immediately and reflects external changes while keeping pending routing edits. The toggle alone does not create an Apply or reconnect action.
 
+Custom DoH accepts bounded HTTPS resolver URLs without user information, query
+parameters or fragments. The DNS sheet rejects unsupported input explicitly.
+A previously saved URL with a query or fragment stays editable but cannot
+replace the profile DNS; Rules explains that fallback until the user corrects
+the URL or chooses another preset. Host, port and resolver paths remain
+supported. Managed SmartDNS policy and its signed resolver scope are unchanged.
+
 Android access-network diagnostics uses the existing authenticated flow and an hourly app-lifecycle timer, sharing a persisted 60-minute due check with open/connect/resume. Roaming, low or unknown battery, power-save and missing/expired sessions skip it; analytics neither renews auth nor wakes a force-quit app. One owned, physically bound POST has a body up to 1 KiB, 2.5-second connect/read timeouts and a six-second disconnect timer; response bodies are not read. These are configured limits, not a measured hard DNS-settlement or total-wire-byte guarantee. A failed check queues a small unknown-network observation for ordinary D8 delivery without changing VPN state; resource skips queue nothing. No new UI, Android permission or service is introduced. Windows physical geography remains unknown, and the profile cache keeps its six-hour interval.
 
 Cold Android Connect keeps the ordinary probe policy for both initial profile preparation and cached candidates; a cached profile does not imply a warm Core instance. Recovery and Windows retain their separate budgets, as described in the [bootstrap workflow](../../docs/architecture/bootstrap-workflow.md). Cancellation still joins native work before staging or connecting. Diagnostics keeps an initialized Core in the Core phase until a profile is staged, so initialization cannot appear as a completed system tunnel.

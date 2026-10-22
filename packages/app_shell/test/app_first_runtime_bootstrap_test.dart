@@ -765,13 +765,22 @@ void main() {
           accessState: 'paid_unlimited', vpnAvailable: false,
           now: DateTime.now().toUtc(), selectedServiceIds: {serviceId},
           smartAccessProfile: bound);
-      Map localConfig(bool ipv6Available) => jsonDecode(applyPokrovRoutingPreferences(
-          localWindows, const PokrovRoutingPreferences.defaults().copyWith(selectedCatalogServiceIds: {serviceId}),
+      Map localConfig(bool ipv6Available, {String? customDnsUrl}) => jsonDecode(applyPokrovRoutingPreferences(
+          localWindows, const PokrovRoutingPreferences.defaults().copyWith(
+            selectedCatalogServiceIds: {serviceId}, customDnsUrl: customDnsUrl,
+            dnsPreset: customDnsUrl == null ? PokrovDnsPreset.automatic : PokrovDnsPreset.custom),
           hostPlatform: HostPlatform.windows, catalogPolicy: localPolicy,
           catalogAccessState: 'paid_unlimited', physicalIpv6Available: ipv6Available,
           nativeCatalogWindowVersion: 1, nativeSmartAccessLeaseVersion: 1).configPayload) as Map;
       final withIpv6 = localConfig(true);
       final withoutIpv6 = localConfig(false);
+      for (final url in ['https://dns.example/dns-query?profile=test',
+                        'https://dns.example/dns-query#profile']) {
+        final fallback = localConfig(true, customDnsUrl: url);
+        expect(fallback['dns'], withIpv6['dns'],
+          reason: 'unsupported custom DNS must retain the signed SmartDNS resolver scope');
+        expect(fallback['route'], withIpv6['route']);
+      }
       final scopedDns = (withIpv6['dns'] as Map)['rules'] as List;
       final physicalIpv4Dns = (withoutIpv6['dns'] as Map)['rules'] as List;
       expect(scopedDns.last, {'domain': domainNames, 'action': 'reject'});

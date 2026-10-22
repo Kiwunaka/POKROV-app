@@ -2386,7 +2386,7 @@ class ConnectionManager extends ChangeNotifier {
           'В Windows общий системный DNS идёт через VPN. При восстановлении защита временно блокирует трафик всего устройства.',
         if (_appContext.hostPlatform == HostPlatform.windows &&
             (mode == RouteMode.selectedApps || mode == RouteMode.excludedApps) &&
-            _clientExperience.routingPreferences.dnsTransport ==
+            _clientExperience.routingPreferences.effectiveDnsTransport ==
                 PokrovDnsTransport.direct)
           'Для выбора приложений в Windows включите DNS через VPN.',
         if ((mode == RouteMode.selectedApps ||

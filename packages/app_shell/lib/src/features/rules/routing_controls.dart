@@ -241,11 +241,14 @@ class _DnsAndLanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customDnsError = preferences.customDnsError;
     return _SectionCard(
       key: const ValueKey('rules-dns-lan'),
       title: 'Блокировка и DNS',
       lines: [
-        preferences.dnsTransport == PokrovDnsTransport.direct
+        customDnsError != null
+            ? 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправьте адрес в настройке DNS.'
+            : preferences.effectiveDnsTransport == PokrovDnsTransport.direct
                 ? 'DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'
                 : 'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
       ],
@@ -255,7 +258,7 @@ class _DnsAndLanCard extends StatelessWidget {
             key: const ValueKey('rules-dns-picker'),
             icon: Icons.dns_outlined,
             title: 'DNS',
-            value: preferences.dnsPreset.title,
+            value: customDnsError == null ? preferences.dnsPreset.title : 'Нужен другой адрес',
             valueIsAction: true,
             onTap: () => _showDnsPresetSheet(
               context,
@@ -275,7 +278,7 @@ class _DnsAndLanCard extends StatelessWidget {
               preferences: preferences, hostPlatform: hostPlatform,
               load: loadSmartDnsProviders, onChanged: onChanged) : null,
           ),
-          if (preferences.dnsPreset != PokrovDnsPreset.automatic) ...[
+          if (preferences.dnsPreset != PokrovDnsPreset.automatic && customDnsError == null) ...[
             const _SettingsRowDivider(),
             _RoutingToggleRow(
               key: const ValueKey('rules-dns-direct-toggle'),
@@ -1152,7 +1155,7 @@ Future<void> _showDnsPresetSheet(
   required ValueChanged<PokrovRoutingPreferences> onChanged,
 }) async {
   var customDnsUrl = preferences.customDnsUrl;
-  String? error;
+  String? error = preferences.customDnsError;
   final result = await showModalBottomSheet<PokrovRoutingPreferences>(
     context: context,
     isScrollControlled: true,
@@ -1225,6 +1228,7 @@ Future<void> _showDnsPresetSheet(
                     labelText: 'Свой HTTPS DoH-адрес',
                     hintText: 'https://dns.example/dns-query',
                     errorText: error,
+                    errorMaxLines: 3,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -1232,14 +1236,10 @@ Future<void> _showDnsPresetSheet(
                   key: const ValueKey('rules-dns-custom-save'),
                   onPressed: () {
                     final value = customDnsUrl.trim();
-                    final uri = Uri.tryParse(value);
-                    if (uri == null ||
-                        uri.scheme.toLowerCase() != 'https' ||
-                        uri.host.isEmpty ||
-                        uri.userInfo.isNotEmpty ||
-                        value.length > 240) {
+                    final validationError = pokrovDnsUrlValidationError(value);
+                    if (validationError != null) {
                       setSheetState(() {
-                        error = 'Нужен полный безопасный адрес https://…';
+                        error = validationError;
                       });
                       return;
                     }
