@@ -31,6 +31,13 @@ Current limits:
 
 ## Private candidate-probe builds
 
+The loaded Core inventory recognizes `dnstt_vless_v1` so Core source `7a62031`
+does not invalidate the existing transport features. Core's `1.2.14` version
+alone does not imply this feature: older artifacts remain usable without it.
+Recognition does not authorize a DNSTT managed candidate, enable provisioning
+or establish network reachability. Unknown features and malformed inventories
+still fail closed; the existing candidate/profile admission rules are unchanged.
+
 Ordinary catalogue probes require the additive Core candidate-probe API. Stage
 the exact approved artifact and dependencies through the existing
 [sync/packaging scripts](../../scripts/README.md), selecting one platform and
