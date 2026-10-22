@@ -120,5 +120,27 @@ s = s[:start] + block + s[end:]
 # Preserve the account only in expired-access retries, never logout writes.
 s, count = re.subn(r"(state: state\.copyWith\(\n\s*sessionToken: '',\n)\s*accountId: '',\n(\s*\),)", r'\1\2', s)
 assert count >= 1
+replace_once('''  Future<void> _saveState(
+    HostPlatform hostPlatform,
+    _StoredBootstrapState state,
+  ) async {
+    final file = await _stateFile(hostPlatform);
+    await _withAppFirstStateFileLock(
+      file,
+      () => _persistStateToFile(
+        hostPlatform: hostPlatform,
+        file: file,
+        state: state,
+      ),
+    );
+  }
+
+''', '')
+assert '_saveState(' not in s
 path.write_text(s, encoding='utf-8')
+test_path = Path('packages/app_shell/test/session_response_fencing_test.dart')
+test_source = test_path.read_text(encoding='utf-8')
+unused_import = "import 'package:pokrov_runtime_engine/runtime_engine.dart';\n"
+assert test_source.count(unused_import) == 1
+test_path.write_text(test_source.replace(unused_import, ''), encoding='utf-8')
 print('Patched session response boundaries; preserved retry identity at', count + 1, 'call sites')
