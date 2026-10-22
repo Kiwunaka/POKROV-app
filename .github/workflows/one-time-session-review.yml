@@ -1,0 +1,75 @@
+name: One-time session regression review
+on:
+  push:
+    branches: [fix/account-response-fencing]
+    paths: [scripts/audit_session_fix_once.py, packages/app_shell/test/session_response_fencing_test.dart]
+permissions:
+  contents: write
+jobs:
+  review:
+    if: github.repository == 'Kiwunaka/POKROV-app' && github.event.repository.private == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.ref_name }}
+          lfs: false
+      - name: Exact Flutter toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 3.38.7 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = 3b62efc2a3da49882f43c372e0bc53daef7295a6
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATHATH"
+          "$RUNNER_TEMP/flutter/bin/flutter" config --no-analytics
+      - name: Resolve existing lockfile
+        working-directory: packages/app_shell
+        run: flutter pub get --enforce-lockfile
+      - name: Reproduce baseline assertions
+        working-directory: packages/app_shell
+        shell: bash
+        run: |
+          set +e
+          flutter test --no-pub --reporter json test/session_response_fencing_test.dart > "$RUNNER_TEMP/session-baseline.jsonl" 2>&1
+          result=$?
+          set -e
+          test "$result" -ne 0
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          names, results = {}, {}
+          for line in Path(os.environ['RUNNER_TEMP'], 'session-baseline.jsonl').read_text().splitlines():
+              try: row = json.loads(line)
+              except ValueError: continue
+              if row.get('type') == 'testStart': names[row['test']['id']] = row['test']['name']
+              if row.get('type') == 'testDone': results[row['testID']] = row.get('result')
+          failures = [names.get(i, '') for i, result in results.items() if result != 'success']
+          expected = ['late trial cannot replace a newer account', 'late subscription denial does not clear the new account cache', 'failed old refresh cannot retry an account request with a new account token']
+          assert all(any(name in failure for failure in failures) for name in expected), 'Expected behavioral regressions did not run'
+          assert sum(result == 'success' and not names.get(i, '').startswith('loading ') for i, result in results.items()) >= 2, 'Control tests did not pass'
+          print('Baseline reproduced:', len(failures), 'failed tests; controls passed')
+          PY
+      - name: Apply exact reviewed patch
+        run: python3 scripts/audit_session_fix_once.py
+      - name: Test changed behavior and existing session regressions
+        working-directory: packages/app_shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format test/session_response_fencing_test.dart
+          flutter test --no-pub --reporter expanded test/session_response_fencing_test.dart
+          flutter test --no-pub --reporter expanded test/app_first_runtime_bootstrap_test.dart --name 'serializes overlapping|refresh|expired.*session|second trial'
+          flutter analyze --no-pub lib/app_first_runtime_bootstrap.dart test/session_response_fencing_test.dart
+      - name: Commit verified source only to the same branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --exit-code -- '**/pubspec.lock'
+          test "$(git ls-remote origin "refs/heads/$GITHUB_REF_NAME" | cut -f1)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add packages/app_shell/lib/app_first_runtime_bootstrap.dart packages/app_shell/test/session_response_fencing_test.dart
+          git commit -m 'fix(auth): fence delayed trial, refresh and client responses by session'
+          git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
