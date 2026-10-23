@@ -1,6 +1,6 @@
 # Client release status
 
-Updated 21 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+Updated 23 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
@@ -16,14 +16,15 @@ assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
 Current private packages are **Android 1.5.0+4187** with Core `0f159bb`, and
-**Windows 1.5.0+4200** from App `c9b6087b` (including `b8644537`) with Core `b560f1a` / 1.2.14.
+**Windows 1.5.0+4201** from App `db8eaf7c` (including `fb59e1c5`) with Core `b628439` / 1.2.14.
 All four Android APKs passed production signing and packaging checks; no new
 4187 device or native acceptance is claimed. The Windows installer remains
-`NotSigned` (28,913,726 bytes); its delivery ZIP contains the single
-`POKROV-Setup.exe`. Windows 4200 installed in the Clean VM with exit 0.
-This package retains the earlier Core binary; it does not contain the new DNSTT
-Core source `7a62031`. Android 4187 was not rebuilt; earlier targeted Core/App,
-48 desktop ABI export and package checks retain their original scope.
+`NotSigned` (29,236,445 bytes); its delivery ZIP contains the single
+`POKROV-Setup.exe`. Packaging and 48 desktop ABI exports passed; the built DLL
+reports `dnstt_vless_v1`. This package contains the DNSTT source and reviewed
+App PRs 139–141 / Core PRs 18–21. New VM acceptance has not run while DNS
+delegation is pending. Android 4187 was not rebuilt and lacks this DNSTT path.
+The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
@@ -31,8 +32,8 @@ Core source `7a62031`. Android 4187 was not rebuilt; earlier targeted Core/App,
 | Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-arm64-v8a.apk) |
 | Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-armeabi-v7a.apk) |
 | Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4200-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4200.zip) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4201-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4201.zip) |
 
 Earlier, the corrected 4189 installer completed in the Clean Windows VM with exit 0 while
 the unchanged WinDivert driver remained loaded: no driver stop or reboot was
@@ -95,14 +96,18 @@ TCP works, and ALT4's separate `www.youtube.com` control returned verified HTTP 
 No random strategy flags were added.
 
 Provider fees remain pending. WhiteDNS and SlipNet are separately authorized
-for all active Premium. SlipNet's first VLESS-over-DNSTT source slice is pushed:
-Core `7a62031`, Platform `85ea9a2`, Node `3d9f3ce`. The existing engine passed a
-real local UDP DNS/KCP/Noise/smux 10 KiB echo and race/lifecycle/registry checks;
-one Platform and three Node focused checks passed. The Premium-only loopback
-backend is source-ready, **not live**. No DNS endpoint or App provisioning is
-enabled. Next are an owned CH UDP/53 endpoint, domain NS delegation and the App
-`dnstt_vless_v1` capability gate. Root observed CH public UDP/53 and TCP/12543
-free; DNS changes are not yet requested from the owner. WhiteDNS remains research.
+for all active Premium. On 23 October the CH UDP/53 endpoint and Premium-only
+VLESS loopback backend became live. A real Core direct-authoritative probe passed
+TLS, owned 204 and 64 KiB in 696 ms; an invalid personal UUID was denied.
+Platform `cfcd3fb` is live, but the catalog entry remains disabled pending
+NS delegation of `t.portal-privacy.online` to `birch.portal-privacy.online.`
+(TTL 600), recursive WLrus acceptance and the new App VM pass. Source checks
+cover Premium/trial/manual, Free/expiry/revoke rejection, capability admission,
+exact VLESS→DNSTT graph and cached fallback. Auto retains one authorized DNS
+reserve, with a separate 30-second attempt after ordinary candidates and before
+WARP. No recursive DNS or whitelist-bypass acceptance is claimed yet; individual
+device revoke is not added. Fresh six-node ACK/health passed and the server lease
+was released. WhiteDNS remains research.
 See [Smart Access DNS](../architecture/smart-access-dns.md) and platform
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
@@ -111,7 +116,8 @@ were restored. DNS/routes/proxy exactly match the baseline; owned Edge/app/winws
 and TUN are absent. Display `1372×943` was restored and read back; 12 owned guest
 QA items and the temporary host build were removed. Root confirmed CleanWin11
 PoweredOff and its separate window closed. The host network, Hiddify and clocks were untouched. The 4200
-setup/ZIP above and selected Core manifest/DLL are the current Windows artifacts.
+setup/ZIP and selected Core manifest/DLL remain the earlier accepted artifacts;
+4201 is the current unaccepted candidate. The VM was not started in this pass.
 Ordinary Auto is unchanged.
 Remaining release work is phone acceptance after explicit return, the paused
 customer Windows case, Lampa's provider response, IS direct on another network

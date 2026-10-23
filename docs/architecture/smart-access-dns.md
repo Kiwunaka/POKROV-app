@@ -1,6 +1,6 @@
 # Smart Access DNS routing
 
-## Current external-provider work — 21 October 2026
+## Current external-provider work — 23 October 2026
 
 The owner approved commercial embedded use of Shecan, Astra/Astracat, GeoHide,
 Bezmezhau, WLrus, DNS-AI and Zapret DNS. For these agreements, an eligible paid
@@ -12,8 +12,8 @@ entitlement class is required. Provider fees (fixed or percentage) remain under
 discussion; no spending is authorized. Customer contact, phone acceptance and
 public release remain paused. The owner also accepted WhiteDNS and SlipNet for
 all active Premium access; their separate DNS-tunnel addon is not a SmartDNS
-endpoint. SlipNet source readiness is recorded below; no live DNS-tunnel
-endpoint or App provisioning is enabled. Rates remain pending. See the platform-owned
+endpoint. SlipNet's CH endpoint is live and accepted directly; managed delivery
+is disabled pending NS delegation and recursive acceptance. Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
 The table records the earlier 21 October root-run comparison in the clean
@@ -65,11 +65,11 @@ Those are last-observed server facts; the 4200 pass changed neither catalog nor
 provider policy and did not repeat the server checks. Server `8018d52` enforces immutable provider kind for an
 existing provider ID. No commercial COMSS offer was added.
 
-Current private packages are **Windows 4200 / App `c9b6087b` (including `b8644537`) / Core `b560f1a`
-(1.2.14)** and unchanged Android 4187 / Core `0f159bb`. The 4200 unsigned installer
-(28,913,726 bytes) completed in the Clean Windows VM with exit 0; the ZIP contains
-one `POKROV-Setup.exe`. Earlier targeted Core/App and 48 desktop ABI checks retain
-their scope. This binary does not contain DNSTT Core `7a62031`.
+Current private packages are **Windows 4201 / App `db8eaf7c` / Core `b628439`
+(1.2.14)** and unchanged Android 4187 / Core `0f159bb`. The 4201 unsigned installer
+(29,236,445 bytes) and single-entry delivery ZIP passed packaging checks; its DLL
+reports `dnstt_vless_v1`. New VM acceptance is pending, and the Android binary
+does not contain this path. Previous successful checks retain their original scope.
 The already accepted 4195 Gemini checks were not
 repeated: in ordinary Edge with default settings, POKROV
 returned real Gemini answers about Paris through WLrus `191.217.212.16` and
@@ -140,14 +140,15 @@ an unexplained player error around 21 seconds. Later pauses were the cookie
 dialog, followed by the accepted 84-second run. No global QUIC/DNS or host
 network changes were made.
 
-SlipNet's first VLESS-over-DNSTT source slice is pushed in Core `7a62031`,
-Platform `85ea9a2` and Node `3d9f3ce`. The existing CC0 engine passed a real local
-UDP DNS/KCP/Noise/smux 10 KiB echo plus race/lifecycle/registry checks; one
-Platform and three Node focused checks passed. The optional backend accepts
+SlipNet's VLESS-over-DNSTT source is integrated in Core `b628439`,
+Platform `cfcd3fb` and App `fb59e1c5`. Platform and Node's DNSTT backend are live
+on Brain/CH respectively; CH also runs the CC0 DNSTT authoritative server.
+Direct authoritative QA passed TLS, owned 204 and 64 KiB in 696 ms; an invalid
+personal UUID was denied. The optional backend accepts
 only existing active Premium account keys (including trial/manual/gift/promo/
 bonus/family); Free, expiry, block and revoked keys are excluded. It is a
-loopback TCP VLESS backend at `127.0.0.1:12543`, not a live DNS service or a
-per-device key. App source now admits the authenticated `vless/dnstt/noise`
+loopback TCP VLESS backend at `127.0.0.1:12543`, behind the owned UDP53 service,
+using account keys rather than separate device keys. App admits the authenticated `vless/dnstt/noise`
 reserve for active Premium with loaded `dnstt_vless_v1` and VLESS capabilities.
 It validates the fixed loopback VLESS leaf, Noise pin and one numeric recursive
 UDP/53 resolver, excludes the carrier from selectable proxy paths, and repeats
@@ -157,12 +158,12 @@ Auto gives one DNS reserve a separate 30-second attempt after ordinary routes
 and before direct WARP, preserving the complete TLS/204/64 KiB proof. The cache
 retains one authorized DNS reserve alongside its existing alternatives, so a
 blocked API does not require fetching that material again.
-This is source support, not integrated App/network acceptance. Remaining work is
-an owned CH UDP/53 endpoint, owned NS delegation and the packaged Core/App check.
-Root observed public UDP/53 and TCP/12543 free on CH; only
-systemd-resolved listens on `127.0.0.53/54:53`. No owner DNS change is requested
-yet. Windows 4200 still packages the earlier Core binary; WhiteDNS remains
-research. Commercial permission already covers active Premium; fees are pending.
+Managed delivery remains disabled. The owner was asked for NS
+`t.portal-privacy.online` → `birch.portal-privacy.online.` with TTL 600;
+the existing birch A record already targets CH. Next are one recursive WLrus
+probe and the packaged Core/App VM check. Direct authoritative QA is not
+recursive-path or whitelist-bypass acceptance. WhiteDNS remains research.
+Commercial permission already covers active Premium; fees are pending.
 
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection
