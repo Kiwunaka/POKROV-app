@@ -51,6 +51,12 @@ Naive participates in ordinary country/Auto selection and reports `naive` in
 technical diagnostics. This source support does not establish packaged or
 owned-server acceptance; those results belong in cutover readiness.
 
+Cold selection tries one eligible Naive candidate after the first TCP candidate
+and its IPv6/IPv4 sibling within the same direct-route group, before repeating
+other TCP variants. Existing country, preferred primary, bridge-load ordering
+and probe budgets remain in force. Earlier bridge attempts can still exhaust
+the shared budget before the direct group is reached.
+
 Ordinary catalogue probes require the additive Core candidate-probe API. Stage
 the exact approved artifact and dependencies through the existing
 [sync/packaging scripts](../../scripts/README.md), selecting one platform and

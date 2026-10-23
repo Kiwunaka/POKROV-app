@@ -171,6 +171,55 @@ void main() {
     expect(started, [healthy], reason: 'excluding direct must not merge healthy and loaded bridge groups');
   });
 
+  test('cold Auto admits Naive early inside its direct group after the preferred TCP family', () async {
+    final healthy = _candidate(0, bridge: 'healthy');
+    final outsideCountry = _candidate(1, node: 'ch', country: 'CH');
+    final v4 = _familyCandidate('ipv4', priority: 10);
+    final v6 = _familyCandidate('ipv6', priority: 11);
+    final naive = TransportCandidate(candidateRef: 'de:naive_h2', profileRef: 'naive_h2',
+      nodeCode: 'de', countryCode: 'DE', protocol: 'naive', transport: 'h2',
+      protection: 'tls', priority: 20, network: 'tcp', flow: '',
+      minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      platforms: v4.platforms, requiredFeatures: const {});
+    final loaded = _candidate(21, bridge: 'loaded');
+    final selector = SmartConnectCandidateSelector()..recordSuccess('network-a', v4.candidateRef);
+    final bridgeStarted = Completer<void>();
+    final releaseBridge = Completer<void>();
+    final naiveStarted = Completer<void>();
+    final releaseNaive = Completer<void>();
+    final prepared = <TransportCandidate>[];
+    final selected = selector.select(
+      catalog: _catalog([healthy, outsideCountry, ...List.generate(8, (i) => _candidate(i + 2)),
+        v4, v6, naive, loaded]),
+      network: 'network-a', platform: HostPlatform.windows, preferredCountryCode: 'DE',
+      cancelled: Completer<void>().future,
+      prepare: (candidate, _) async => prepared.add(candidate),
+      probe: (candidate, cancelled, timeout) async {
+        if (candidate == healthy) {
+          bridgeStarted.complete();
+          await releaseBridge.future;
+          return const SmartConnectCandidateProbeResult.failure('connect_failed');
+        }
+        if (candidate == naive) {
+          naiveStarted.complete();
+          await releaseNaive.future;
+          return _success(candidate);
+        }
+        await cancelled;
+        return const SmartConnectCandidateProbeResult.failure('cancelled');
+      });
+    await bridgeStarted.future;
+    expect(prepared, [healthy], reason: 'Naive cannot cross a healthy bridge boundary');
+    releaseBridge.complete();
+    await naiveStarted.future;
+    expect(prepared.take(4), [healthy, v6, v4, naive],
+        reason: 'blackholed TCP variants must not consume every slot before Naive');
+    releaseNaive.complete();
+    expect((await selected).profileName, naive.candidateRef);
+    expect(prepared, isNot(contains(outsideCountry)));
+    expect(prepared, isNot(contains(loaded)));
+  });
+
   for (final (platform, parallelism) in [(HostPlatform.android, 3), (HostPlatform.windows, 4)]) {
     test('$platform first successful probe cancels and joins the bounded workers', () async {
       final selector = SmartConnectCandidateSelector();

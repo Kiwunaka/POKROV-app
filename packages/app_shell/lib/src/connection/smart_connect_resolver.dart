@@ -180,6 +180,22 @@ class SmartConnectCandidateSelector {
         candidates.insert(index, candidates.removeAt(siblingIndex));
       }
     }
+    // Try the distinct HTTPS transport before spending this direct group's
+    // budget on repeated TCP variants. Retain its primary and family pair;
+    // healthy/loaded bridge boundaries and recovery ordering stay unchanged.
+    if (recoveryCandidateRef.isEmpty) {
+      final naiveIndex = candidates.indexWhere((candidate) => candidate.protocol == 'naive');
+      if (naiveIndex >= 0) {
+        final naiveGroup = priorityGroups[candidates[naiveIndex].candidateRef];
+        final primaryIndex = candidates.indexWhere((candidate) => candidate.network == 'tcp' &&
+            priorityGroups[candidate.candidateRef] == naiveGroup);
+        var insertAt = primaryIndex + 1;
+        if (insertAt < naiveIndex && _familySiblings(candidates[primaryIndex], candidates[insertAt])) {
+          insertAt++;
+        }
+        if (insertAt < naiveIndex) candidates.insert(insertAt, candidates.removeAt(naiveIndex));
+      }
+    }
     // Reserve a different network family before spending every recovery slot
     // on TCP or UDP. Otherwise retain diversity between protocol variants.
     if (recoveryCandidateRef.isNotEmpty && candidates.length > 3) {
