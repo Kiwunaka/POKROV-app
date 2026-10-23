@@ -1,6 +1,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <fwpmu.h>
+#include <sddl.h>
 
 #include "service_transition_guard.h"
 
@@ -8,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace {
 using pokrov::service::TransitionGuardState;
@@ -190,6 +192,45 @@ int main() {
         expect(ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE && ace->Mask == 1 &&
                    ::IsWellKnownSid(const_cast<DWORD*>(&ace->SidStart), WinLocalSystemSid),
                "System SID is sole exception");
+      }
+      if (index == 0) {
+        auto core_permit = f;
+        core_permit.subLayerKey = {};
+        core_permit.flags = FWPM_FILTER_FLAG_CLEAR_ACTION_RIGHT;
+        std::array<FWPM_FILTER_CONDITION0, 2> conditions{user, app};
+        core_permit.filterCondition = conditions.data();
+        expect(!TransitionGuardFilterCanOverrideForTesting(core_permit, 65535, 65534),
+               "higher hard permit for the same service and System identity is already allowed");
+        core_permit.numFilterConditions = 1;
+        core_permit.filterCondition = &conditions[1];
+        expect(TransitionGuardFilterCanOverrideForTesting(core_permit, 65535, 65534),
+               "APP_ID-only Core permit still overrides the guard");
+        core_permit.numFilterConditions = 2;
+        core_permit.filterCondition = conditions.data();
+        std::vector<UINT8> other_app(app.conditionValue.byteBlob->data,
+                                    app.conditionValue.byteBlob->data + app.conditionValue.byteBlob->size);
+        other_app[0] ^= 1;
+        FWP_BYTE_BLOB other_app_blob{static_cast<UINT32>(other_app.size()), other_app.data()};
+        conditions[1].conditionValue.byteBlob = &other_app_blob;
+        expect(TransitionGuardFilterCanOverrideForTesting(core_permit, 65535, 65534),
+               "another executable cannot use the System exception");
+        conditions[1] = app;
+        PSECURITY_DESCRIPTOR other_sd = nullptr;
+        ULONG other_sd_size = 0;
+        const bool other_sd_ready = ::ConvertStringSecurityDescriptorToSecurityDescriptorW(
+            L"D:(A;;CC;;;WD)", SDDL_REVISION_1, &other_sd, &other_sd_size) != FALSE;
+        expect(other_sd_ready, "different SID fixture builds");
+        if (other_sd_ready) {
+          FWP_BYTE_BLOB other_user_blob{other_sd_size, static_cast<UINT8*>(other_sd)};
+          conditions[0].conditionValue.sd = &other_user_blob;
+          expect(TransitionGuardFilterCanOverrideForTesting(core_permit, 65535, 65534),
+                 "the same executable under another identity is not already allowed");
+          conditions[0] = user;
+          ::LocalFree(other_sd);
+        }
+        core_permit.action.type = FWP_ACTION_CALLOUT_TERMINATING;
+        expect(TransitionGuardFilterCanOverrideForTesting(core_permit, 65535, 65534),
+               "matching identities cannot authorize an unknown callout permit");
       }
     } else {
       expect(f.numFilterConditions == 0, "block covers existing/new TCP/UDP, including DNS");

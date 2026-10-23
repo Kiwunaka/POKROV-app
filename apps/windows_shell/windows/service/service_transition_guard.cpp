@@ -214,12 +214,38 @@ bool IsPotentialGuardOverride(const FWPM_FILTER0& filter) {
          filter.action.type == FWP_ACTION_CALLOUT_UNKNOWN;
 }
 
-bool CanOverrideGuard(const FWPM_FILTER0& filter, UINT16 sublayer_weight,
-                      UINT16 guard_weight) {
-  return sublayer_weight >= guard_weight && IsPotentialGuardOverride(filter);
+bool IsGuardServicePermit(const FWPM_FILTER0& filter, const FWPM_FILTER0& permit) {
+  // Core runs inside this service. Its hard permit is harmless only when it
+  // matches the guard's exact executable AND LocalSystem exception.
+  if (filter.action.type != FWP_ACTION_PERMIT ||
+      filter.numFilterConditions != permit.numFilterConditions ||
+      !filter.filterCondition) return false;
+  for (UINT32 i = 0; i < permit.numFilterConditions; ++i) {
+    const auto& expected = permit.filterCondition[i];
+    bool matched = false;
+    for (UINT32 j = 0; j < filter.numFilterConditions; ++j) {
+      const auto& actual = filter.filterCondition[j];
+      if (actual.fieldKey != expected.fieldKey ||
+          actual.matchType != expected.matchType ||
+          actual.conditionValue.type != expected.conditionValue.type) continue;
+      matched = expected.conditionValue.type == FWP_BYTE_BLOB_TYPE
+          ? SameBlob(actual.conditionValue.byteBlob, expected.conditionValue.byteBlob)
+          : SameBlob(actual.conditionValue.sd, expected.conditionValue.sd);
+      if (matched) break;
+    }
+    if (!matched) return false;
+  }
+  return true;
 }
 
-DWORD VerifyGuardPriority(HANDLE engine, UINT16 guard_weight, bool* safe) {
+bool CanOverrideGuard(const FWPM_FILTER0& filter, UINT16 sublayer_weight,
+                      UINT16 guard_weight, const FWPM_FILTER0& service_permit) {
+  return sublayer_weight >= guard_weight && IsPotentialGuardOverride(filter) &&
+         !IsGuardServicePermit(filter, service_permit);
+}
+
+DWORD VerifyGuardPriority(HANDLE engine, UINT16 guard_weight,
+                          const FWPM_FILTER0& service_permit, bool* safe) {
   *safe = false;
   for (const auto* layer : kLayers) {
     FWPM_FILTER_ENUM_TEMPLATE0 query{};
@@ -240,7 +266,7 @@ DWORD VerifyGuardPriority(HANDLE engine, UINT16 guard_weight, bool* safe) {
         FWPM_SUBLAYER0* sublayer = nullptr;
         result = ::FwpmSubLayerGetByKey0(engine, &filter.subLayerKey, &sublayer);
         if (result == ERROR_SUCCESS) {
-          conflict = CanOverrideGuard(filter, sublayer->weight, guard_weight);
+          conflict = CanOverrideGuard(filter, sublayer->weight, guard_weight, service_permit);
           ::FwpmFreeMemory0(reinterpret_cast<void**>(&sublayer));
         }
       }
@@ -303,7 +329,7 @@ class WindowsGuardBackend final : public TransitionGuardBackend {
       }
     }
     if (result == ERROR_SUCCESS && complete)
-      result = VerifyGuardPriority(engine_, guard_weight, &complete);
+      result = VerifyGuardPriority(engine_, guard_weight, definitions.At(0), &complete);
     ::FwpmTransactionAbort0(engine_);
     if (result != ERROR_SUCCESS)
       return Fail(TransitionGuardStage::kReadQuery, result, "transition_guard_read_failed");
@@ -517,7 +543,9 @@ bool TransitionGuardSubLayerMatchesForTesting(const FWPM_SUBLAYER0_& actual) {
 
 bool TransitionGuardFilterCanOverrideForTesting(const FWPM_FILTER0_& filter,
     std::uint16_t sublayer_weight, std::uint16_t guard_weight) {
-  return CanOverrideGuard(filter, sublayer_weight, guard_weight);
+  FilterDefinitions definitions;
+  if (!definitions.Initialize().empty()) return true;
+  return CanOverrideGuard(filter, sublayer_weight, guard_weight, definitions.At(0));
 }
 
 bool VisitLocalDpiControlPermitForTesting(std::uintptr_t bound_socket,

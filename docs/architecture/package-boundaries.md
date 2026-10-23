@@ -321,8 +321,11 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   WinDivert layers appeared, although none had filters at the protected ALE
   layers; requiring the old numeric weight falsely rejected admission. The
   persistent sublayer and exact filter identities/conditions remain mandatory.
-  Any active higher/equal hard permit or potentially permitting callout at those
-  four ALE layers fails closed, as does an enumeration/query error. This follows
+  An active higher/equal hard permit at those four ALE layers is accepted only
+  when its two equality conditions exactly match the guard's executable and
+  LocalSystem identity. This permits Core's strict-route filter in the same
+  service; APP_ID-only, another identity and potentially permitting callouts
+  still fail closed, as does an enumeration/query error. This follows
   [WFP arbitration](https://learn.microsoft.com/en-us/windows/win32/fwp/filter-arbitration),
   with no weight range, vendor-name exception or modification of another policy.
   A live winws process is not filter readiness. Before opening a control socket,
