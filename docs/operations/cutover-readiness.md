@@ -43,7 +43,9 @@ but ordinary Stop showed CONN-005 in the UI even though native was
 baseline returned. A matching source defect was found: an explicit clean Stop
 could be compared to the previous profile intent after its digests were cleared.
 The Stop-only intent cleanup preserves strict Start/Apply and retained/staged
-profile checks. Its relation to the VM symptom is probable; that run did not
+profile checks. The existing service-client native test reproduced the defect
+and passed after the fix; the full Windows runner was not rebuilt.
+Its relation to the VM symptom is probable; that run did not
 capture the UI failure kind. This source fix also awaits the next private build
 and one focused Stop acceptance; it does not reopen accepted transport checks.
 
