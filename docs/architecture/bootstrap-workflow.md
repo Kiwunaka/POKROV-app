@@ -1555,6 +1555,10 @@ Current blocking dependency:
   chains retain only paths to managed transport outbounds or AWG endpoints;
   their default cannot select direct. Explicit direct route/DNS rules, LAN
   preferences and platform per-app exclusions remain separate route decisions
+- When an outbounds-only profile needs a synthesized Auto group, its `urltest`
+  preserves working streams across probe winner changes. The accompanying manual
+  selector keeps `interrupt_exist_connections: true`; explicit selection, tunnel
+  stop/mode lifecycle and server-side credential revocation remain unchanged.
 - an explicit manual location variant is materialized from the exact managed
   profile only: `direct` requires the verified canonical base outbound to be a
   member of the final selector, while a bridge id requires one unique safe

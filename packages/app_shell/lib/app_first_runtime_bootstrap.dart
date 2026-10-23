@@ -9951,7 +9951,7 @@ class AppFirstRuntimeBootstrapper
       'url': 'http://cp.cloudflare.com',
       'interval': '10m0s',
       'tolerance': 1,
-      'interrupt_exist_connections': true,
+      'interrupt_exist_connections': false,
     });
     existingTags.add(urlTestTag);
 

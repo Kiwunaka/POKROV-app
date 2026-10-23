@@ -3641,7 +3641,14 @@ void main() {
       outbounds.where((outbound) => outbound['type'] == 'dns'),
       isEmpty,
     );
-    expect(config['outbounds'].toString(), contains('urltest'));
+    expect(
+      outbounds.singleWhere((outbound) => outbound['type'] == 'urltest'),
+      containsPair('interrupt_exist_connections', false),
+    );
+    expect(
+      outbounds.singleWhere((outbound) => outbound['tag'] == route['final']),
+      containsPair('interrupt_exist_connections', true),
+    );
     expect(realityTls['fragment'], true);
     expect(realityTls['record_fragment'], true);
     expect(realityTls['fragment_fallback_delay'], '250ms');
