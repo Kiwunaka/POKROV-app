@@ -32,6 +32,21 @@ changed running-profile transition, not a repeat of Gemini/Naive/Flowseal QA.
 CleanWin11 is powered off.
 Public 1.4.5 and draft 4175 remain unchanged; no customer contact.
 
+Source change after these packages: `58140491` preserves working streams when
+the synthesized fallback `urltest` changes its probe winner. The manual selector
+still interrupts on explicit selection. The existing focused bootstrap test and
+app_shell analyze passed; private 4204/4205 were not rebuilt for this change.
+
+The 24 October Twitch check on 4205 reached the owned IS exit and played video,
+but ordinary Stop showed CONN-005 in the UI even though native was
+`initialized / failure=none / protection_retained=0` and the exact network
+baseline returned. A matching source defect was found: an explicit clean Stop
+could be compared to the previous profile intent after its digests were cleared.
+The Stop-only intent cleanup preserves strict Start/Apply and retained/staged
+profile checks. Its relation to the VM symptom is probable; that run did not
+capture the UI failure kind. This source fix also awaits the next private build
+and one focused Stop acceptance; it does not reopen accepted transport checks.
+
 The earlier **Android and Windows 1.5.0+4204** packages came from App
 `7ac73cf3` with Core `d80a992` / 1.2.14. All four Android APKs passed production
 signing, non-debuggable, package/version and ABI checks; device/native acceptance

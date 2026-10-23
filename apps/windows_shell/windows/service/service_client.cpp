@@ -853,6 +853,17 @@ ServiceRuntimeSnapshot BindSnapshotToProfileIntent(
   return snapshot;
 }
 
+bool ClearStoppedProfileIntent(const ServiceRuntimeSnapshot& snapshot,
+                              std::string& expected_profile_digest) {
+  if (snapshot.phase != "initialized" || snapshot.running || snapshot.can_connect ||
+      snapshot.protection_retained || !snapshot.staged_profile_digest.empty() ||
+      !snapshot.effective_profile_digest.empty() || snapshot.failure != "none") {
+    return false;
+  }
+  expected_profile_digest.clear();
+  return true;
+}
+
 ClientProbe ProbeInstalledService() {
   const auto snapshot = InvokeInstalledService(Command::kStatus, "");
   ClientProbe result;

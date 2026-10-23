@@ -119,6 +119,29 @@ int main() {
       "core_module_sha256=" + digest + ";core_version=1.1.1;protection_retained=0";
   expect(ParseServiceRuntimeSnapshot(versioned_body, &versioned) &&
              versioned.core_version == "1.1.1", "loaded Core version was lost");
+  expect(BindSnapshotToProfileIntent(versioned, digest).failure == "profile_identity_mismatch",
+         "unconfirmed Start/Apply accepted a missing profile");
+  auto stopped_intent = digest;
+  expect(ClearStoppedProfileIntent(versioned, stopped_intent) && stopped_intent.empty(),
+         "completed clean Stop kept its previous profile intent");
+  const auto stopped = BindSnapshotToProfileIntent(versioned, stopped_intent);
+  expect(stopped.phase == "initialized" && stopped.failure == "none" &&
+             !stopped.running && !stopped.can_connect && !stopped.protection_retained,
+         "clean stopped runtime inherited the previous profile identity failure");
+  auto staged = versioned;
+  staged.phase = "config_staged";
+  staged.staged_profile_digest = std::string(64, '0');
+  staged.can_connect = true;
+  auto preserved_intent = digest;
+  expect(!ClearStoppedProfileIntent(staged, preserved_intent) && preserved_intent == digest &&
+             !ClearStoppedProfileIntent(attached, preserved_intent) && preserved_intent == digest &&
+             !ClearStoppedProfileIntent(parsed, preserved_intent) && preserved_intent == digest,
+         "Stop discarded an active, staged or retained profile intent");
+  expect(BindSnapshotToProfileIntent(staged, digest).failure == "profile_identity_mismatch",
+         "another staged profile bypassed the expected identity");
+  expect(BindSnapshotToProfileIntent(attached, std::string(64, '0')).failure ==
+             "profile_identity_mismatch",
+         "retained protection bypassed the expected identity");
   auto invalid_version = versioned_body;
   invalid_version.replace(invalid_version.find("core_version=1.1.1"),
                           std::string("core_version=1.1.1").size(), "core_version=1..1");

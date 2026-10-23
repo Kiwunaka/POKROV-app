@@ -576,7 +576,13 @@ bool FlutterWindow::OnCreate() {
         const auto snapshot_call = [this, reply](Command command, std::string body,
                                                 std::string expected) {
           if (QueueRuntime(command, std::move(body),
-              [reply, expected = std::move(expected)](auto snapshot) {
+              [this, reply, command, expected = std::move(expected)](auto snapshot) mutable {
+                const auto completed_intent = expected;
+                if (command == Command::kDisconnect &&
+                    pokrov::service::ClearStoppedProfileIntent(snapshot, expected) &&
+                    expected_profile_digest_ == completed_intent) {
+                  expected_profile_digest_.clear();
+                }
                 reply->Success(RuntimeSnapshotValue(std::move(snapshot), expected));
               })) return true;
           reply->Error("runtime_busy", "Runtime request queue is full or shutting down.");
@@ -1272,6 +1278,7 @@ bool FlutterWindow::OnCreate() {
                   return;
                 }
                 if (snapshot.connect_stopped && pending_connect_ == owner) {
+                  pokrov::service::ClearStoppedProfileIntent(snapshot, expected_profile_digest_);
                   stopped_connect_request_id_ = id;
                   pending_connect_.reset();
                   pending_connect_request_id_.clear();

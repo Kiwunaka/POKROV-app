@@ -17,6 +17,15 @@ first-session events. Delayed best-effort telemetry therefore cannot hold the
 subscription/authentication refresh or leave the access label unresolved.
 The existing session refresh, identity and entitlement rules remain unchanged.
 
+Windows clears the previous profile intent only after a completed explicit Stop
+or the current bound owner's confirmed cancellation, when the native result is
+clean `initialized` with no staged/effective profile, retained protection or
+failure. That non-connectable state must not become `profile_identity_mismatch`.
+Ordinary snapshot binding, Start/Apply, active, staged and retained profile checks
+remain strict. A focused native regression reproduced and fixed this source defect;
+its connection to the observed 4205 Stop/CONN-005 UI error is probable, not proven
+without that attempt's failure kind. No new packaged-client acceptance is implied.
+
 The ordinary Diagnostics screen shows the current run's last access request:
 not observed, started without an observed completion, or finished. Failures show
 only the existing allowlisted operational code, API failure kind and HTTP/IO

@@ -84,6 +84,9 @@ bool ParseServiceRuntimeSnapshot(const std::string& body,
                                  ServiceRuntimeSnapshot* output);
 ServiceRuntimeSnapshot BindSnapshotToProfileIntent(
     ServiceRuntimeSnapshot snapshot, const std::string& expected_profile_digest);
+// Call only for a completed Stop, never while confirming Start/Apply or polling.
+bool ClearStoppedProfileIntent(const ServiceRuntimeSnapshot& snapshot,
+                              std::string& expected_profile_digest);
 ClientProbe ProbeInstalledService();
 struct ServiceCallControl {
   std::atomic<bool> cancel_requested{false};
