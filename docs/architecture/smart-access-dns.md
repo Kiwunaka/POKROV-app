@@ -12,8 +12,10 @@ entitlement class is required. Provider fees (fixed or percentage) remain under
 discussion; no spending is authorized. Customer contact, phone acceptance and
 public release remain paused. The owner also accepted WhiteDNS and SlipNet for
 all active Premium access; their separate DNS-tunnel addon is not a SmartDNS
-endpoint. SlipNet's CH endpoint is live and accepted directly; managed delivery
-is disabled pending NS delegation and recursive acceptance. Rates remain pending. See the platform-owned
+endpoint. SlipNet's CH endpoint is live and accepted directly; the owner has
+saved the NS records, but the last authoritative Timeweb read at 03:03 UTC still
+lacked the delegation. Managed delivery stays disabled pending recursive and Auto/TUN
+acceptance. Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
 The table records the earlier 21 October root-run comparison in the clean
@@ -65,12 +67,14 @@ Those are last-observed server facts; the 4200 pass changed neither catalog nor
 provider policy and did not repeat the server checks. Server `8018d52` enforces immutable provider kind for an
 existing provider ID. No commercial COMSS offer was added.
 
-Current private packages are **Windows 4201 / App `db8eaf7c` / Core `b628439`
-(1.2.14)** and **Android 4201 / App `5a01d384` / Core `b628439`**. The 4201 unsigned installer
-(29,236,445 bytes) and single-entry delivery ZIP passed packaging checks; its DLL
-reports `dnstt_vless_v1` and installed in CleanWin11 with exit 0. Android's four
-APKs passed production signing/version/ABI checks. DNS Auto/TUN acceptance is
-pending; the phone was not used. Previous checks retain their original scope.
+Current private packages are **Windows and Android 4203 / App `68bf8084` / Core
+`d80a992` (1.2.14)**. The unsigned installer (29,248,923 bytes) and single-entry
+delivery ZIP (28,751,208 bytes) passed packaging checks; the actual Core DLL
+reports `dnstt_vless_v1` and `singbox_naive_h2_v1`. Android's four APKs passed
+production signing/package/version/ABI checks with the same four-ABI Core AAR.
+The latest VM installation and Naive Service probe belong to 4202; 4203 has not
+been installed in the VM. DNS Auto/TUN acceptance is pending; the phone was not
+used. Previous checks retain their original scope.
 The already accepted 4195 Gemini checks were not
 repeated: in ordinary Edge with default settings, POKROV
 returned real Gemini answers about Paris through WLrus `191.217.212.16` and
@@ -81,6 +85,29 @@ GeoHide EU returned Google's unusual-traffic response; GeoHide RU used VPN with
 an empty lease inventory, and its exact cause was not established. Neither is
 in policy 2. Android packaging remains accepted without new device/native proof.
 Artifacts are in [client readiness](../operations/cutover-readiness.md).
+
+Managed Naive is a separate authenticated VPN transport, not provider SmartDNS.
+CH `ch.pokrov.space:443` is live on Platform `cec29de` / Node `3e23441`, with the
+exact 34-identity set acknowledged. All active Premium access, including trial
+and manual, is eligible. App requires loaded Naive H2 and TLS capabilities and
+accepts only `naive/h2/tls` with certificate verification, explicit SNI, QUIC
+and UoT disabled, and no detour. Native Cronet supplies H2 without a custom ALPN
+list. DPI/Telegram fallback checks retain the same authenticated TLS boundary.
+Cold selection in 4203 tries Naive earlier within the same direct-route group;
+country, bridge-load order and existing budgets still apply. Targeted selector
+tests cover this ordering change; they do not extend the 4202 transport proof
+to a full 4203 UI/TUN connection.
+
+On 4202 existing native Service commands 28→29→28, using a QA profile produced
+by the actual server helper, passed TLS, owned 204 and the full 64 KiB in
+1,189 ms without changing the runtime context. A separate normal device-bound
+API check selected `ch:naive_h2` and returned the authenticated TLS leaf; that
+response was not the profile passed to the native probe. This accepts the
+transport, not a full UI/Auto/TUN connection. The initial unavailable result
+preceded App initialization, rather than proving a network failure. The fresh
+six-node ACK/API health gate passed at 02:54:19 UTC with server lease FREE and
+temporary timers inactive. Public metadata, draft release, customer contact and
+paused automations were unchanged. No network acceptance was repeated for 4203.
 
 A browser's denied scoped request can leave `readiness.status=failure` and the
 sticky `fallback_guard_closed=true` alongside three successful probe stages.
@@ -141,7 +168,7 @@ an unexplained player error around 21 seconds. Later pauses were the cookie
 dialog, followed by the accepted 84-second run. No global QUIC/DNS or host
 network changes were made.
 
-SlipNet's VLESS-over-DNSTT source is integrated in Core `b628439`,
+SlipNet's VLESS-over-DNSTT source was integrated in Core `b628439`,
 Platform `cfcd3fb` and App `fb59e1c5`. Platform and Node's DNSTT backend are live
 on Brain/CH respectively; CH also runs the CC0 DNSTT authoritative server.
 Direct authoritative QA passed TLS, owned 204 and 64 KiB in 696 ms; an invalid
@@ -163,9 +190,9 @@ Managed delivery remains disabled. Timeweb required two different NS IPs;
 PL now forwards UDP53 through its existing sing-box to the single CH backend,
 without DNS cache or a second Noise/KCP session owner. This path passed
 TLS/204/64 KiB in 1249 ms. The owner saved atlas (82.38.65.47) and birch
-(151.243.191.143) as `t` nameservers; authoritative ns1/ns3 still lacked the
-delegation at the last read. Next are one recursive WLrus probe and the packaged
-Core/App Auto/TUN VM check. Direct authoritative QA is not
+(151.243.191.143) as `t` nameservers; the last authoritative Timeweb reads at
+03:03 UTC returned only SOA without the delegation. Next are one recursive WLrus
+probe and the packaged Core/App Auto/TUN VM check. Direct authoritative QA is not
 recursive-path or whitelist-bypass acceptance. WhiteDNS remains research.
 Commercial permission already covers active Premium; fees are pending.
 
@@ -176,6 +203,11 @@ and TUN are absent. Display `1372×943` was restored and read back; 12 owned gue
 QA items and the temporary host build were removed. Root confirmed CleanWin11
 PoweredOff and its separate window closed. Final setup/ZIP and selected earlier
 Core DLL/manifest remain. The host network, Hiddify and clocks were untouched.
+After the later 4202 install/Naive Service pass, root again restored the exact
+preferences, DNS/routes/proxy baseline and display 1372×943; app/winws/TUN were
+absent, its QA directory was removed and CleanWin11 was confirmed PoweredOff.
+The current 4203 artifacts have packaging acceptance and a passing targeted
+selector regression; no new device or UI/TUN proof is claimed.
 
 Historical 4194/4195 comparison: catalog 28 authorizes selective YouTube local DPI with exact control host
 `www.youtube.com`. Verified encrypted bridge/ATS admission, exact pre-connect

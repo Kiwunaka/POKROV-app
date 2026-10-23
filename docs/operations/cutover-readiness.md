@@ -15,27 +15,42 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private packages are **Android 1.5.0+4201** from App `5a01d384`, and
-**Windows 1.5.0+4201** from App `db8eaf7c` (including `fb59e1c5`) with Core `b628439` / 1.2.14.
-Both contain Core `b628439`. All four Android APKs passed production signing,
-non-debuggable, version and ABI packaging checks; device/native acceptance has
-not run. The Windows installer remains
-`NotSigned` (29,236,445 bytes); its delivery ZIP contains the single
-`POKROV-Setup.exe`. Packaging and 48 desktop ABI exports passed; the built DLL
-reports `dnstt_vless_v1`. This package contains the DNSTT source and reviewed
-App PRs 139–141 / Core PRs 18–21. Windows 4201 installed on CleanWin11 with
-exit 0 and started its service/UI; the new DNS tunnel has not been connected
-while DNS delegation is pending. Android 4187 remains an older artifact.
+Current private packages are **Android and Windows 1.5.0+4203**, from App
+`68bf8084` with Core `d80a992` / 1.2.14. All four Android APKs passed production
+signing, non-debuggable, package/version and ABI checks; device/native acceptance
+has not run. The Windows installer remains `NotSigned` (29,248,923 bytes);
+its 28,751,208-byte delivery ZIP contains the single `POKROV-Setup.exe`.
+Windows packaging and the Core's 48 desktop ABI exports passed. The actual DLL
+reports `dnstt_vless_v1` and `singbox_naive_h2_v1`; Android reuses the same accepted
+four-ABI Core AAR. The latest VM install and Naive transport proof below belong
+to **4202**, which installed with exit 0 and a running service; 4203 was not
+installed again. Its source change tries Naive earlier within the existing
+direct-route group without changing country, bridge-load ordering or budgets;
+the changed ordering passed targeted selector tests, not a new UI/TUN run.
+The DNS tunnel remains gated on recursive DNS and Auto/TUN acceptance.
 The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
-| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4201-android-universal.apk) |
-| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4201-android-arm64-v8a.apk) |
-| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4201-android-armeabi-v7a.apk) |
-| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4201-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4201-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4201.zip) |
+| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4203-android-universal.apk) |
+| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4203-android-arm64-v8a.apk) |
+| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4203-android-armeabi-v7a.apk) |
+| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4203-android-x86_64.apk) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4203-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4203.zip) |
+
+Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `cec29de`
+and Node `3e23441`. Eligibility covers all active Premium, including trial and
+manual access; the CH runtime acknowledged the exact 34-identity set. A normal
+device-bound VM API request separately selected `ch:naive_h2` and returned an
+authenticated, certificate-verified TLS leaf. On **Windows 4202**, the existing
+native Service candidate path (commands 28→29→28), using a QA profile produced
+by the actual server helper, passed TLS, owned 204 and the full 64 KiB in
+1,189 ms, with the runtime context unchanged. This is transport proof, **not a
+full UI/Auto/TUN connection**. The first unavailable result happened before App
+initialization and was not a network defect. The subsequent six-node ACK/API
+health gate passed at 02:54:19 UTC; the server lease was FREE and temporary
+timers inactive. No unchanged network tests were repeated for 4203.
 
 Earlier, the corrected 4189 installer completed in the Clean Windows VM with exit 0 while
 the unchanged WinDivert driver remained loaded: no driver stop or reboot was
@@ -101,20 +116,22 @@ Provider fees remain pending. WhiteDNS and SlipNet are separately authorized
 for all active Premium. On 23 October the CH UDP/53 endpoint and Premium-only
 VLESS loopback backend became live. A real Core direct-authoritative probe passed
 TLS, owned 204 and 64 KiB in 696 ms; an invalid personal UUID was denied.
-Platform `cfcd3fb` is live. Timeweb requires two distinct NS addresses, so PL's
+The DNSTT rollout from Platform `cfcd3fb` remains in the current platform.
+Timeweb requires two distinct NS addresses, so PL's
 existing server sing-box forwards UDP53 to the same CH DNSTT backend without
 DNS parsing/cache or a second Noise key. TLS/204/64 KiB through PL passed in
 1249 ms, with its existing Node/Xray/HY2 processes unchanged. The owner saved
 NS `atlas.portal-privacy.online` and `birch.portal-privacy.online` for `t`;
-last authoritative reads from Timeweb ns1/ns3 still lacked the delegation.
+the last authoritative Timeweb reads at 03:03 UTC still returned only SOA,
+without the delegation.
 The catalog entry remains disabled pending recursive WLrus acceptance and
 the new App Auto/TUN VM pass. Source checks
 cover Premium/trial/manual, Free/expiry/revoke rejection, capability admission,
 exact VLESS→DNSTT graph and cached fallback. Auto retains one authorized DNS
 reserve, with a separate 30-second attempt after ordinary candidates and before
 WARP. No recursive DNS or whitelist-bypass acceptance is claimed yet; individual
-device revoke is not added. Fresh six-node ACK/health passed and the server lease
-was released. WhiteDNS remains research.
+device revoke is not added. The latest six-node ACK/health result is the Naive
+gate above. WhiteDNS remains research.
 See [Smart Access DNS](../architecture/smart-access-dns.md) and platform
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
@@ -123,11 +140,12 @@ were restored. DNS/routes/proxy exactly match the baseline; owned Edge/app/winws
 and TUN are absent. Display `1372×943` was restored and read back; 12 owned guest
 QA items and the temporary host build were removed. Root confirmed CleanWin11
 PoweredOff and its separate window closed. The host network, Hiddify and clocks were untouched. The 4200
-setup/ZIP and selected Core manifest/DLL remain the earlier accepted artifacts;
-4201 is the current candidate. Its installation/UI pass restored the exact
-preferences and DNS/routes/proxy baseline, display 1372×943, with app/TUN/winws/
-guard all zero. Temporary guest files were removed; the VM was shut down.
-Ordinary Auto is unchanged.
+setup/ZIP and selected Core manifest/DLL remain the earlier accepted artifacts.
+The later **4202** install/Naive Service pass restored the exact preferences and
+DNS/routes/proxy baseline, display 1372×943, with app/TUN/winws absent. Root
+removed its QA directory and confirmed CleanWin11 PoweredOff. The 4203 packages
+were not installed again. Paused customer work and automations were not resumed.
+Existing budgets, country and bridge-load groups remain in force.
 Remaining release work is phone acceptance after explicit return, the paused
 customer Windows case, Lampa's provider response, IS direct on another network
 and final publication only after the owner's explicit yes. Public 1.4.5 and
@@ -269,12 +287,13 @@ Support codes stay masked before DiagnosticsViewData; raw evidence remains in
 technical details. Phone checks for the new client and IS UDP wait for the
 owner's explicit return of the phone, expected in the evening.
 
-Naive has an accepted isolated transport canary with matching Cronet, but normal
-managed issuance is not implemented and Auto does not use it. The routing-domain
+The earlier isolated Naive transport canary used matching Cronet; managed
+issuance and the newer Windows Service proof are now recorded at the top of
+this document, with UI/TUN acceptance still pending. The routing-domain
 editor is live; production catalog 27 / security 2 was published on 19 October
 with six services and 34 domains. Its signature and Android/Windows compilation
 passed offline; that does not replace phone acceptance or enable provider Smart
-DNS. Managed Naive remains outside the mandatory 1.5.0 scope.
+DNS. Naive remains outside the mandatory 1.5.0 scope.
 Since 20 October, personalised AWG/Hysteria2 counters join Xray accounting on all
 six exit nodes; the previous native history is not reconstructed. The
 [owning monitoring contract](C:/Users/kiwun/Documents/ai/VPN/docs/operations/monitoring-and-visibility.md)
