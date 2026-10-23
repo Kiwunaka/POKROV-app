@@ -15,23 +15,25 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private packages are **Android 1.5.0+4187** with Core `0f159bb`, and
+Current private packages are **Android 1.5.0+4201** from App `5a01d384`, and
 **Windows 1.5.0+4201** from App `db8eaf7c` (including `fb59e1c5`) with Core `b628439` / 1.2.14.
-All four Android APKs passed production signing and packaging checks; no new
-4187 device or native acceptance is claimed. The Windows installer remains
+Both contain Core `b628439`. All four Android APKs passed production signing,
+non-debuggable, version and ABI packaging checks; device/native acceptance has
+not run. The Windows installer remains
 `NotSigned` (29,236,445 bytes); its delivery ZIP contains the single
 `POKROV-Setup.exe`. Packaging and 48 desktop ABI exports passed; the built DLL
 reports `dnstt_vless_v1`. This package contains the DNSTT source and reviewed
-App PRs 139–141 / Core PRs 18–21. New VM acceptance has not run while DNS
-delegation is pending. Android 4187 was not rebuilt and lacks this DNSTT path.
+App PRs 139–141 / Core PRs 18–21. Windows 4201 installed on CleanWin11 with
+exit 0 and started its service/UI; the new DNS tunnel has not been connected
+while DNS delegation is pending. Android 4187 remains an older artifact.
 The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
-| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-universal.apk) |
-| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-arm64-v8a.apk) |
-| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-armeabi-v7a.apk) |
-| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4187-android-x86_64.apk) |
+| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4201-android-universal.apk) |
+| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4201-android-arm64-v8a.apk) |
+| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4201-android-armeabi-v7a.apk) |
+| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4201-android-x86_64.apk) |
 | Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4201-setup.exe) |
 | Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4201.zip) |
 
@@ -99,9 +101,14 @@ Provider fees remain pending. WhiteDNS and SlipNet are separately authorized
 for all active Premium. On 23 October the CH UDP/53 endpoint and Premium-only
 VLESS loopback backend became live. A real Core direct-authoritative probe passed
 TLS, owned 204 and 64 KiB in 696 ms; an invalid personal UUID was denied.
-Platform `cfcd3fb` is live, but the catalog entry remains disabled pending
-NS delegation of `t.portal-privacy.online` to `birch.portal-privacy.online.`
-(TTL 600), recursive WLrus acceptance and the new App VM pass. Source checks
+Platform `cfcd3fb` is live. Timeweb requires two distinct NS addresses, so PL's
+existing server sing-box forwards UDP53 to the same CH DNSTT backend without
+DNS parsing/cache or a second Noise key. TLS/204/64 KiB through PL passed in
+1249 ms, with its existing Node/Xray/HY2 processes unchanged. The owner saved
+NS `atlas.portal-privacy.online` and `birch.portal-privacy.online` for `t`;
+last authoritative reads from Timeweb ns1/ns3 still lacked the delegation.
+The catalog entry remains disabled pending recursive WLrus acceptance and
+the new App Auto/TUN VM pass. Source checks
 cover Premium/trial/manual, Free/expiry/revoke rejection, capability admission,
 exact VLESS→DNSTT graph and cached fallback. Auto retains one authorized DNS
 reserve, with a separate 30-second attempt after ordinary candidates and before
@@ -117,7 +124,9 @@ and TUN are absent. Display `1372×943` was restored and read back; 12 owned gue
 QA items and the temporary host build were removed. Root confirmed CleanWin11
 PoweredOff and its separate window closed. The host network, Hiddify and clocks were untouched. The 4200
 setup/ZIP and selected Core manifest/DLL remain the earlier accepted artifacts;
-4201 is the current unaccepted candidate. The VM was not started in this pass.
+4201 is the current candidate. Its installation/UI pass restored the exact
+preferences and DNS/routes/proxy baseline, display 1372×943, with app/TUN/winws/
+guard all zero. Temporary guest files were removed; the VM was shut down.
 Ordinary Auto is unchanged.
 Remaining release work is phone acceptance after explicit return, the paused
 customer Windows case, Lampa's provider response, IS direct on another network

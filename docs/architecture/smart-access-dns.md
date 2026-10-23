@@ -66,10 +66,11 @@ provider policy and did not repeat the server checks. Server `8018d52` enforces 
 existing provider ID. No commercial COMSS offer was added.
 
 Current private packages are **Windows 4201 / App `db8eaf7c` / Core `b628439`
-(1.2.14)** and unchanged Android 4187 / Core `0f159bb`. The 4201 unsigned installer
+(1.2.14)** and **Android 4201 / App `5a01d384` / Core `b628439`**. The 4201 unsigned installer
 (29,236,445 bytes) and single-entry delivery ZIP passed packaging checks; its DLL
-reports `dnstt_vless_v1`. New VM acceptance is pending, and the Android binary
-does not contain this path. Previous successful checks retain their original scope.
+reports `dnstt_vless_v1` and installed in CleanWin11 with exit 0. Android's four
+APKs passed production signing/version/ABI checks. DNS Auto/TUN acceptance is
+pending; the phone was not used. Previous checks retain their original scope.
 The already accepted 4195 Gemini checks were not
 repeated: in ordinary Edge with default settings, POKROV
 returned real Gemini answers about Paris through WLrus `191.217.212.16` and
@@ -158,10 +159,13 @@ Auto gives one DNS reserve a separate 30-second attempt after ordinary routes
 and before direct WARP, preserving the complete TLS/204/64 KiB proof. The cache
 retains one authorized DNS reserve alongside its existing alternatives, so a
 blocked API does not require fetching that material again.
-Managed delivery remains disabled. The owner was asked for NS
-`t.portal-privacy.online` → `birch.portal-privacy.online.` with TTL 600;
-the existing birch A record already targets CH. Next are one recursive WLrus
-probe and the packaged Core/App VM check. Direct authoritative QA is not
+Managed delivery remains disabled. Timeweb required two different NS IPs;
+PL now forwards UDP53 through its existing sing-box to the single CH backend,
+without DNS cache or a second Noise/KCP session owner. This path passed
+TLS/204/64 KiB in 1249 ms. The owner saved atlas (82.38.65.47) and birch
+(151.243.191.143) as `t` nameservers; authoritative ns1/ns3 still lacked the
+delegation at the last read. Next are one recursive WLrus probe and the packaged
+Core/App Auto/TUN VM check. Direct authoritative QA is not
 recursive-path or whitelist-bypass acceptance. WhiteDNS remains research.
 Commercial permission already covers active Premium; fees are pending.
 
