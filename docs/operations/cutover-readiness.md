@@ -15,33 +15,34 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private packages are **Android and Windows 1.5.0+4203**, from App
-`68bf8084` with Core `d80a992` / 1.2.14. All four Android APKs passed production
+Current private packages are **Android and Windows 1.5.0+4204**, from App
+`7ac73cf3` with Core `d80a992` / 1.2.14. All four Android APKs passed production
 signing, non-debuggable, package/version and ABI checks; device/native acceptance
-has not run. The Windows installer remains `NotSigned` (29,248,923 bytes);
-its 28,751,208-byte delivery ZIP contains the single `POKROV-Setup.exe`.
+on Android has not run. The Windows installer remains `NotSigned` (29,248,874 bytes);
+its 28,751,166-byte delivery ZIP contains the single `POKROV-Setup.exe`.
 Windows packaging and the Core's 48 desktop ABI exports passed. The actual DLL
 reports `dnstt_vless_v1` and `singbox_naive_h2_v1`; Android reuses the same accepted
-four-ABI Core AAR. The latest VM install and Naive transport proof below belong
-to **4202**, which installed with exit 0 and a running service; 4203 was not
-installed again. Its source change tries Naive earlier within the existing
-direct-route group without changing country, bridge-load ordering or budgets;
-the changed ordering passed targeted selector tests, not a new UI/TUN run.
+four-ABI Core AAR. Windows **4204** installed in CleanWin11 with exit 0 and passed
+the scoped ordinary UI/TUN Naive run below. The earlier 4203 selection change
+tries Naive within its existing direct-route group; 4204 retains a real Naive
+reserve in the saved cache. Targeted regressions passed. Country, bridge-load
+ordering and budgets remain in force.
 The DNS tunnel remains gated on recursive DNS and Auto/TUN acceptance.
 The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
-| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4203-android-universal.apk) |
-| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4203-android-arm64-v8a.apk) |
-| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4203-android-armeabi-v7a.apk) |
-| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4203-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4203-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4203.zip) |
+| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-universal.apk) |
+| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-arm64-v8a.apk) |
+| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-armeabi-v7a.apk) |
+| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-x86_64.apk) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4204-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4204.zip) |
 
-Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `cec29de`
+Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `f019efe`
 and Node `3e23441`. Eligibility covers all active Premium, including trial and
-manual access; the CH runtime acknowledged the exact 34-identity set. A normal
+manual access; the earlier 02:54 UTC pass acknowledged CH's exact 34-identity
+set. That identity check was not repeated in the latest API-only deployment. A normal
 device-bound VM API request separately selected `ch:naive_h2` and returned an
 authenticated, certificate-verified TLS leaf. On **Windows 4202**, the existing
 native Service candidate path (commands 28→29→28), using a QA profile produced
@@ -50,7 +51,29 @@ by the actual server helper, passed TLS, owned 204 and the full 64 KiB in
 full UI/Auto/TUN connection**. The first unavailable result happened before App
 initialization and was not a network defect. The subsequent six-node ACK/API
 health gate passed at 02:54:19 UTC; the server lease was FREE and temporary
-timers inactive. No unchanged network tests were repeated for 4203.
+timers inactive. This remains the earlier full-fleet result.
+
+Platform `f019efe` fixes inherited UDP content DNS for the TCP-only Naive path:
+content queries use `tcp://8.8.8.8` through the selected tunnel, while explicit
+direct UDP `8.8.8.8` and local bootstrap are preserved. Only `node_naive.py` was
+deployed with an API restart; the backup is
+`/root/portal_bot.deploy-backups/20261023T044724Z-51996`. The fresh **Brain-only**
+health gate passed at 04:47:50 UTC and the lease was FREE; this was not another
+six-node gate.
+
+On **4204**, normal UI Refresh for CH saved a genuine Naive candidate containing
+TUN and the corrected DNS. For this QA only, with App stopped, the DPAPI cache's
+downloaded/candidate entries were restricted to that existing `ch:naive_h2`
+entry and the old proven entry removed. Binding, config, catalog, expiry and
+inventory were unchanged. An App.exe-only TCP/443 rule made the API unavailable,
+with a 180-second SYSTEM cleanup watchdog; Service traffic stayed unblocked.
+Ordinary **«Включить защиту»** reached running, failure none,
+`core_egress_validated=1`, `dns_ready=1`, guard 0 and TUN 1. App itself created
+proven material `ch:naive_h2` / `naive,h2,tls`; the profile contained only
+Naive/selector/direct/block outbounds. UI showed **«Выключить защиту»** and
+**«Состояние защиты: Швейцария»**. This accepts the real UI/TUN connection through
+one existing cached Naive path with API unavailable. It does not establish an
+all-route Auto run or exhaustion of blackholed alternatives.
 
 Earlier, the corrected 4189 installer completed in the Clean Windows VM with exit 0 while
 the unchanged WinDivert driver remained loaded: no driver stop or reboot was
@@ -122,7 +145,7 @@ existing server sing-box forwards UDP53 to the same CH DNSTT backend without
 DNS parsing/cache or a second Noise key. TLS/204/64 KiB through PL passed in
 1249 ms, with its existing Node/Xray/HY2 processes unchanged. The owner saved
 NS `atlas.portal-privacy.online` and `birch.portal-privacy.online` for `t`;
-the last authoritative Timeweb reads at 03:03 UTC still returned only SOA,
+the last authoritative Timeweb ns1/ns3 reads at 04:53 UTC still returned the parent SOA,
 without the delegation.
 The catalog entry remains disabled pending recursive WLrus acceptance and
 the new App Auto/TUN VM pass. Source checks
@@ -130,8 +153,9 @@ cover Premium/trial/manual, Free/expiry/revoke rejection, capability admission,
 exact VLESS→DNSTT graph and cached fallback. Auto retains one authorized DNS
 reserve, with a separate 30-second attempt after ordinary candidates and before
 WARP. No recursive DNS or whitelist-bypass acceptance is claimed yet; individual
-device revoke is not added. The latest six-node ACK/health result is the Naive
-gate above. WhiteDNS remains research.
+device revoke is not added. The last six-node ACK/health result remains the
+earlier 02:54 UTC Naive gate; the 04:47:50 UTC check covered Brain only.
+WhiteDNS remains research.
 See [Smart Access DNS](../architecture/smart-access-dns.md) and platform
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
@@ -141,10 +165,12 @@ and TUN are absent. Display `1372×943` was restored and read back; 12 owned gue
 QA items and the temporary host build were removed. Root confirmed CleanWin11
 PoweredOff and its separate window closed. The host network, Hiddify and clocks were untouched. The 4200
 setup/ZIP and selected Core manifest/DLL remain the earlier accepted artifacts.
-The later **4202** install/Naive Service pass restored the exact preferences and
-DNS/routes/proxy baseline, display 1372×943, with app/TUN/winws absent. Root
-removed its QA directory and confirmed CleanWin11 PoweredOff. The 4203 packages
-were not installed again. Paused customer work and automations were not resumed.
+The later **4204** ordinary UI Stop reached `config_staged`, guard 0 and TUN 0.
+Root removed the exact temporary rule/task, restored only the cache key and
+original preferences, preserving the remaining secure store and session tokens.
+DNS/routes/proxy matched the baseline; display 1372×943 was restored, app/winws/
+TUN were absent and the owned QA directory was removed. Root confirmed the VM
+PoweredOff. Paused customer work and automations were not resumed.
 Existing budgets, country and bridge-load groups remain in force.
 Remaining release work is phone acceptance after explicit return, the paused
 customer Windows case, Lampa's provider response, IS direct on another network
@@ -288,8 +314,8 @@ technical details. Phone checks for the new client and IS UDP wait for the
 owner's explicit return of the phone, expected in the evening.
 
 The earlier isolated Naive transport canary used matching Cronet; managed
-issuance and the newer Windows Service proof are now recorded at the top of
-this document, with UI/TUN acceptance still pending. The routing-domain
+issuance, the Windows Service proof and scoped 4204 UI/TUN acceptance are now
+recorded at the top of this document. The routing-domain
 editor is live; production catalog 27 / security 2 was published on 19 October
 with six services and 34 domains. Its signature and Android/Windows compilation
 passed offline; that does not replace phone acceptance or enable provider Smart
