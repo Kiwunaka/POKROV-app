@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_core_domain/core_domain.dart';
@@ -27,6 +29,34 @@ TransportCandidateCatalog parse(Map<String, Object?> value, {String node = '', S
       requestedNodeCode: node);
 
 void main() {
+  test('DNSTT-capable Core still admits ordinary managed candidates', () {
+    final capabilities = RuntimeTransportCapabilities.fromWire(jsonEncode({
+      'schema': 1,
+      'features': [
+        'dnstt_vless_v1', 'singbox_reality_v1', 'singbox_tls_v1',
+        'singbox_utls_v1', 'singbox_vless_v1',
+      ],
+    }));
+    expect(capabilities, isNotNull);
+    final value = decodeManagedTransportCatalog(
+      catalog([candidate('de', 'legacy_reality_fallback')]),
+      platform: HostPlatform.windows,
+      clientRelease: '1.5.0+4200',
+      coreRelease: '1.2.14',
+      runtimeFeatures: capabilities!.features,
+    );
+    expect(value.selected.transport, 'tcp');
+    expect(value.selected.protection, 'reality');
+  });
+
+  test('compiled DNSTT capability does not authorize a DNSTT catalog entry', () {
+    final row = candidate('de', 'dnstt_vless', transport: 'dnstt',
+      protection: 'noise', features: ['dnstt_vless_v1', 'singbox_vless_v1']);
+    expect(() => parse(catalog([row]), clientRelease: '1.5.0+4200'),
+      throwsA(isA<TransportManifestFailure>().having((failure) => failure.code,
+        'code', 'transport_catalog_invalid')));
+  });
+
   test('direct WARP has no node and requires the client that understands it', () {
     final direct = candidate('', 'warp_free', protocol: 'warp', transport: 'udp',
         protection: 'warp', features: [])

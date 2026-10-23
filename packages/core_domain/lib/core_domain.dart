@@ -2,6 +2,7 @@ library pokrov_core_domain;
 
 /// Compiled Core ingredients, not profile permission or connectivity proof.
 enum RuntimeTransportFeature {
+  dnsttVless('dnstt_vless_v1'),
   atsLease('pokrov_ats_lease_v1'),
   awg31('pokrov_awg31_endpoint_v1'),
   telegramWs('pokrov_telegram_ws_v1'),
