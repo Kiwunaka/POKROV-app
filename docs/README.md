@@ -17,10 +17,11 @@
 - WARP-specific checks: [runtime proof checklist](operations/warp-runtime-proof-checklist.md).
 
 Public **1.4.5**, seven-asset draft **1.5.0+4175**, and private Android/Windows
-**1.5.0+4181** remain separate. Cutover readiness owns their acceptance limits.
-Both 4181 platforms require the shared private `RuntimeArtifactsPath` documented
-in the [root README](../README.md#local-work-and-packaging); the default manifest
-still selects older artifacts. See [DESIGN.md](../DESIGN.md) for screen ownership,
+**1.5.0+4204 / Core 1.2.14 `d80a992`** remain separate. Current artifacts,
+manifest selection and acceptance limits belong to
+[cutover readiness](operations/cutover-readiness.md), with packaging mechanics
+in [scripts](../scripts/README.md#runtime-selection).
+See [DESIGN.md](../DESIGN.md) for screen ownership,
 real-data bindings and the Diagnostics boundary.
 Dated candidate receipts are history, not current blockers or permission to
 repeat accepted checks. Older detailed receipts remain in Git history.

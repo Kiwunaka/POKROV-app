@@ -1,8 +1,8 @@
 # POKROV client
 
 Android and Windows are the public client platforms. Public **1.4.5**, draft
-**1.5.0+4175 / seven assets**, and private **Android/Windows 1.5.0+4181** are
-separate states. Current package results, device limits and release decisions
+**1.5.0+4175 / seven assets**, and private **Android/Windows 1.5.0+4204** with
+Core **1.2.14 / `d80a992`** are separate states. Current package results, device limits and release decisions
 live in [cutover readiness](docs/operations/cutover-readiness.md).
 
 Start with [AGENTS.md](AGENTS.md), the [document index](docs/README.md), and the
@@ -19,13 +19,10 @@ change. Tests cover behavior such as lifecycle, candidate selection, secure
 state, UI actions and accessibility. Build only when the task requires a changed
 binary, using the existing [packaging scripts](scripts/README.md).
 
-**Both private 4181 packages use Core 1.2.14 from `0f159bb`.** Any repeat
-Android or Windows packaging must pass
-`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-urltest-history-0f159bb/runtime-artifacts.json`.
-The default [tracked manifest](config/runtime-artifacts.seed.json) was not
-updated and still selects older artifacts. Use the matching `android` or
-`windows` artifact directory and the platform's sync options described in
-[scripts](scripts/README.md#runtime-selection). Existing source pins,
+For the current artifacts, manifest selection and acceptance limits, follow
+[cutover readiness](docs/operations/cutover-readiness.md) and the existing
+[runtime-selection scripts](scripts/README.md#runtime-selection). A historical
+candidate's manifest is not an instruction for the current package. Source pins,
 binary/dependency checks, signing, trust defines and secure-storage rules remain
 required.
 
