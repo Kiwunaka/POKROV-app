@@ -18,6 +18,7 @@ Map<String, Object?> runtimeConnectivityReport(RuntimeSnapshot? snapshot) {
       'awg2',
       'awg31',
       'hysteria2',
+      'naive',
     }.contains(source?.protocol)
         ? source!.protocol
         : 'unknown';

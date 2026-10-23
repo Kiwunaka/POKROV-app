@@ -1,7 +1,7 @@
 part of '../../app_first_runtime_bootstrap.dart';
 
 extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
-  void _requireDnsttPremium(Object? access) {
+  void _requirePremiumTransportAccess(Object? access) {
     final entitlement = _readMap(access);
     final rawExpiry = entitlement['expiry_at'];
     final expiry = rawExpiry is String ? DateTime.tryParse(
@@ -22,7 +22,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
       final outbounds = (config['outbounds'] as List? ?? const []).map(_readMap).toList();
       final carriers = outbounds.where((outbound) => outbound['type'] == 'dnstt').toList();
       if (carriers.isEmpty && candidate?.transport != 'dnstt' && kind != 'dnstt') return;
-      _requireDnsttPremium(access);
+      _requirePremiumTransportAccess(access);
       if (candidate?.transport != 'dnstt' ||
           !runtimeFeatures.containsAll({RuntimeTransportFeature.vless, RuntimeTransportFeature.dnsttVless}) ||
           carriers.length != 1 ||
@@ -83,6 +83,47 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     }
   }
 
+  void _validateNaiveMaterial(Object raw, TransportCandidate? candidate,
+      Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
+    try {
+      final config = _readMap(raw is String ? jsonDecode(raw) : raw);
+      final outbounds = (config['outbounds'] as List? ?? const []).map(_readMap).toList();
+      final proxies = outbounds.where((outbound) => outbound['type'] == 'naive').toList();
+      if (proxies.isEmpty && candidate?.protocol != 'naive' && kind != 'naive') return;
+      _requirePremiumTransportAccess(access);
+      if (candidate?.protocol != 'naive' ||
+          !runtimeFeatures.containsAll({RuntimeTransportFeature.naiveH2, RuntimeTransportFeature.tls}) ||
+          proxies.length != 1 ||
+          (config['endpoints'] is List && (config['endpoints'] as List).isNotEmpty)) throw const FormatException();
+      final proxy = proxies.single;
+      const leafKeys = {'type', 'tag', 'server', 'server_port', 'username', 'password',
+        'quic', 'udp_over_tcp', 'tls', 'domain_resolver'};
+      final tls = _readMap(proxy['tls']);
+      final uot = _readMap(proxy['udp_over_tcp']);
+      bool hostname(String value) => value.length <= 253 && value.contains('.') && value.split('.').every(
+          (label) => RegExp(r'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$').hasMatch(label));
+      final server = _readText(proxy['server']);
+      if (proxy.keys.any((key) => !leafKeys.contains(key)) ||
+          proxy['tag'] != 'proxy' || proxy['server_port'] != 443 ||
+          (InternetAddress.tryParse(server) == null && !hostname(server)) ||
+          proxy['username'] is! String || (proxy['username'] as String).isEmpty ||
+          proxy['password'] is! String || (proxy['password'] as String).isEmpty ||
+          proxy['quic'] != false || uot.length != 1 || uot['enabled'] != false ||
+          tls.length != 2 || tls['enabled'] != true || !hostname(_readText(tls['server_name']))) {
+        throw const FormatException();
+      }
+      final tags = <String>{};
+      for (final outbound in outbounds) {
+        if (!tags.add(_readText(outbound['tag'])) || outbound.containsKey('detour') ||
+            !const {'naive', 'selector', 'urltest', 'direct', 'block', 'dns'}.contains(outbound['type'])) {
+          throw const FormatException();
+        }
+      }
+    } on Object {
+      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+    }
+  }
+
   Future<_ManagedManifestEnvelope> _decodeManagedManifestResponse(Map<String, dynamic> response, {
     required _StoredBootstrapState state, required HostPlatform hostPlatform, required RouteMode routeMode,
     required List<String> selectedApps, required String normalizedPreferredNode, required String preferredVariantId,
@@ -96,8 +137,9 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
             coreRelease: coreRelease, requestedNodeCode: normalizedPreferredNode,
             requestedCandidateRef: selectedCandidateRef)
         : null;
-    if (transportCatalog?.candidates.any((candidate) => candidate.transport == 'dnstt') == true) {
-      _requireDnsttPremium(response['access']);
+    if (transportCatalog?.candidates.any((candidate) =>
+        candidate.transport == 'dnstt' || candidate.protocol == 'naive') == true) {
+      _requirePremiumTransportAccess(response['access']);
     }
     if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
       throw const TransportManifestFailure('transport_catalog_selection_mismatch');
@@ -149,6 +191,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         'grpc' => ('vless', 'grpc', 'tls'),
         'xhttp' => ('vless', 'xhttp', candidate.protection),
         'dnstt' => ('vless', 'dnstt', 'noise'),
+        'naive' => ('naive', 'h2', 'tls'),
         'awg31' => ('awg', 'udp', 'awg31'),
         'hysteria2' => ('hysteria2', 'udp', 'tls'),
         'warp_direct' => ('warp', 'udp', 'warp'),
@@ -157,6 +200,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         throw const TransportManifestFailure('transport_catalog_profile_mismatch');
       }
       _validateDnsttMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
+      _validateNaiveMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       if (candidate?.warpMode == 'warp_direct') {
         try {
           validatePokrovDirectWarpProfile(raw);
@@ -253,6 +297,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         protocol: switch (kind) {
           'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
           'warp_direct' => 'warp',
+          'naive' => 'naive',
           'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' => 'vless',
           _ => 'unknown',
         },

@@ -1564,6 +1564,119 @@ void main() {
     await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
   });
 
+  test('managed Naive H2 preserves authenticated TLS material and rejects incompatible cache or delivery', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-naive-managed-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    const ordinaryRef = 'ch:legacy_reality_fallback';
+    const naiveRef = 'ch:naive_h2';
+    var accessState = 'trial_premium';
+    final naive = <String, Object?>{'type': 'naive', 'tag': 'proxy',
+      'server': 'naive.fixture.invalid', 'server_port': 443,
+      'username': 'synthetic@example.invalid', 'password': 'synthetic-node-key',
+      'quic': false, 'udp_over_tcp': {'enabled': false},
+      'tls': <String, Object?>{'enabled': true, 'server_name': 'naive.fixture.invalid'}};
+    Map<String, Object?> config(bool useNaive) => {
+      'outbounds': [useNaive ? naive : {'type': 'vless', 'tag': 'proxy',
+        'server': 'fixture.invalid', 'server_port': 443, 'uuid': '11111111-1111-4111-8111-111111111111',
+        'tls': {'enabled': true, 'server_name': 'fixture.invalid'}}],
+      'route': {'final': 'proxy'},
+    };
+    Map<String, Object?> candidate(bool useNaive) => {
+      'candidate_ref': useNaive ? naiveRef : ordinaryRef,
+      'profile_ref': useNaive ? 'naive_h2' : 'legacy_reality_fallback',
+      'node_code': 'ch', 'country_code': 'CH', 'protocol': useNaive ? 'naive' : 'vless',
+      'transport': useNaive ? 'h2' : 'tcp', 'protection': useNaive ? 'tls' : 'reality',
+      'priority': useNaive ? 1 : 0, 'parameters': {'network': 'tcp', 'flow': ''},
+      'requirements': {'minimum_client_release': '1.5.0', 'minimum_core_release': null,
+        'platforms': ['windows', 'android'], 'required_features': useNaive
+          ? ['singbox_naive_h2_v1', 'singbox_tls_v1'] : ['singbox_vless_v1', 'singbox_reality_v1']},
+    };
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({'session': {
+            'session_token': 'synthetic-session', 'account_id': 'synthetic-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true}}));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          final exact = request.uri.queryParameters['selected_candidate_ref'] == naiveRef;
+          request.response.write(jsonEncode({
+            'profile_revision': 'naive-managed', 'config_format': 'singbox-json',
+            'transport_profile': exact ? 'naive_h2' : 'legacy_reality_fallback',
+            'transport_kind': exact ? 'naive' : 'reality', 'config_payload': config(exact),
+            'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
+              'revision': 'naive-managed', 'selected_candidate_ref': exact ? naiveRef : ordinaryRef,
+              'candidates': [candidate(false), candidate(true)]},
+            'candidate_materials': [for (final useNaive in exact ? [true] : [false, true]) {
+              'candidate_ref': useNaive ? naiveRef : ordinaryRef,
+              'transport_kind': useNaive ? 'naive' : 'reality',
+              'config_format': 'singbox-json', 'config_payload': config(useNaive)}],
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+            'access': {'access_state': accessState,
+              'expiry_at': DateTime.now().toUtc().add(const Duration(days: 2)).toIso8601String()},
+          }));
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    final inventory = RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
+      'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()}));
+    expect(inventory?.features, contains(RuntimeTransportFeature.naiveH2));
+    final features = inventory!.features;
+    final online = AppFirstRuntimeBootstrapper(apiBaseUrl: 'http://127.0.0.1:${server.port}',
+      supportDirectoryResolver: () async => directory, maxRequestAttempts: 1);
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'CH');
+    Future<ManagedProfilePayload> resolve({HostPlatform platform = HostPlatform.windows, String selected = ''}) =>
+      online.resolveManagedProfile(hostPlatform: platform, routeMode: inputs.routeMode,
+        preferredCountryCode: 'CH', selectedCandidateRef: selected, runtimeFeatures: features, selectCandidate: false);
+    final selected = await resolve();
+    final reserve = selected.candidateMaterials[naiveRef]!;
+    expect(reserve.source?.protocol, 'naive');
+    expect(reserve.materialCandidate?.transport, 'h2');
+    final restored = await online.loadCachedManagedProfile(inputs,
+      selectedCandidateRef: naiveRef, runtimeFeatures: features);
+    expect(restored?.configPayload, reserve.configPayload);
+    expect(await online.loadCachedManagedProfile(inputs, selectedCandidateRef: naiveRef,
+      runtimeFeatures: features.difference({RuntimeTransportFeature.naiveH2})), isNull);
+    const storage = FlutterSecureStorage();
+    const cacheKey = 'pokrov-managed-profile-windows-v1';
+    final stored = jsonDecode((await storage.read(key: cacheKey))!) as Map<String, dynamic>;
+    final cachedMaterial = stored['candidates'][naiveRef]['payload'] as Map;
+    final altered = jsonDecode(cachedMaterial['config_payload'] as String) as Map;
+    (altered['outbounds'] as List).cast<Map>().singleWhere((row) => row['type'] == 'naive')['tls']['insecure'] = true;
+    cachedMaterial['config_payload'] = jsonEncode(altered);
+    await storage.write(key: cacheKey, value: jsonEncode(stored));
+    expect(await online.loadCachedManagedProfile(inputs, selectedCandidateRef: naiveRef,
+      runtimeFeatures: features), isNull);
+    final android = await resolve(platform: HostPlatform.android, selected: naiveRef);
+    final androidLeaf = (jsonDecode(android.configPayload)['outbounds'] as List)
+        .cast<Map>().singleWhere((row) => row['type'] == 'naive');
+    expect(androidLeaf['tls'], naive['tls']);
+    expect(androidLeaf['udp_over_tcp'], {'enabled': false});
+    expect(androidLeaf['quic'], false);
+    expect(android.materialCandidate?.candidateRef, naiveRef);
+    naive['quic'] = true;
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    naive['quic'] = false;
+    naive['udp_over_tcp'] = {'enabled': true};
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    naive['udp_over_tcp'] = {'enabled': false};
+    final tls = naive['tls'] as Map<String, Object?>;
+    tls.remove('server_name');
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    tls['server_name'] = 'naive.fixture.invalid';
+    accessState = 'free_monthly';
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+  });
+
   test('protected managed cache restores exact profile after restart and respects server denial', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-managed-cache-');
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);

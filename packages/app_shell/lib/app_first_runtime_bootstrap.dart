@@ -3354,6 +3354,7 @@ class AppFirstRuntimeBootstrapper
       final materialCandidate = materialRef.isEmpty ? catalog?.selected
           : catalog?.candidates.firstWhere((candidate) => candidate.candidateRef == materialRef);
       _validateDnsttMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
+      _validateNaiveMaterial(config, materialCandidate, value['access'], runtimeFeatures ?? const {});
       final warpPolicy = WarpRuntimePolicy.tryParse(value['warp_policy']);
       return ManagedProfilePayload(
         cacheEntryId: _readText(value['cache_entry_id']),
@@ -4455,7 +4456,7 @@ class AppFirstRuntimeBootstrapper
       if (ref is! String || transport is! String || stage != 'probe' || outcome is! bool ||
           duration is! int || !RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(ref) ||
           !const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-            'xhttp_tls', 'vless_dnstt_noise', 'hysteria2', 'awg31', 'warp'}.contains(transport)) continue;
+            'xhttp_tls', 'vless_dnstt_noise', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(transport)) continue;
       if (!outcome && (failure is! String ||
           !RegExp(r'^[a-z][a-z0-9_]{0,31}$').hasMatch(failure))) continue;
       final safeProbe = <String, Object?>{
@@ -4565,7 +4566,7 @@ class AppFirstRuntimeBootstrapper
             !RegExp(r'[\x00-\x1f\x7f]').hasMatch(safeCarrierName))
           'carrier_name': safeCarrierName,
         if (const {'vless_reality', 'vless_grpc_tls', 'xhttp_reality',
-          'xhttp_tls', 'vless_dnstt_noise', 'hysteria2', 'awg31', 'warp'}.contains(safeCandidateTransport))
+          'xhttp_tls', 'vless_dnstt_noise', 'naive', 'hysteria2', 'awg31', 'warp'}.contains(safeCandidateTransport))
           'candidate_transport': safeCandidateTransport,
         if (RegExp(r'^[a-z0-9][a-z0-9_.:-]{0,127}$').hasMatch(safeCandidateRef))
           'candidate_ref': safeCandidateRef,

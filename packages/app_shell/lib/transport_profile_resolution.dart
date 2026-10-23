@@ -102,6 +102,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
             (transport == 'dnstt' && protection == 'noise'),
         'awg' => transport == 'udp' && protection == 'awg31',
         'hysteria2' => transport == 'udp' && protection == 'tls',
+        'naive' => transport == 'h2' && protection == 'tls',
         'warp' => warpDirect && transport == 'udp' && protection == 'warp',
         _ => false,
       };
@@ -116,6 +117,8 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
           parameters['flow'] != '' || warpMode != null || deliveryId != null)) {
         throw const FormatException();
       }
+      if (protocol == 'naive' && (parameters['network'] != 'tcp' ||
+          parameters['flow'] != '' || deliveryId != null)) throw const FormatException();
       final requirements = _transportMap(item['requirements']);
       _keys(requirements, const {'minimum_client_release', 'minimum_core_release', 'platforms', 'required_features'});
       final minimumClient = requirements['minimum_client_release'];
@@ -134,7 +137,8 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       if (deliveryId != null && _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
         throw const FormatException();
       }
-      if (transport == 'dnstt' && _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
+      if ((transport == 'dnstt' || protocol == 'naive') &&
+          _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
         throw const FormatException();
       }
       if (bridgeId != null && releaseCompare(minimumClient, '1.5.0+4116') < 0) throw const FormatException();
@@ -156,6 +160,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       final candidateFeatures = switch (protocol) {
         'awg' => {RuntimeTransportFeature.awg31},
         'hysteria2' => {RuntimeTransportFeature.hysteria2},
+        'naive' => {RuntimeTransportFeature.naiveH2, RuntimeTransportFeature.tls},
         'warp' => <RuntimeTransportFeature>{},
         _ => {RuntimeTransportFeature.vless, switch (transport) {
           'grpc' => RuntimeTransportFeature.grpc,

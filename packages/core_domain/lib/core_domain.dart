@@ -8,6 +8,7 @@ enum RuntimeTransportFeature {
   telegramWs('pokrov_telegram_ws_v1'),
   grpc('singbox_grpc_v1'),
   hysteria2('singbox_hysteria2_v1'),
+  naiveH2('singbox_naive_h2_v1'),
   reality('singbox_reality_v1'),
   tls('singbox_tls_v1'),
   utls('singbox_utls_v1'),

@@ -831,6 +831,7 @@ String _publicRuntimeProtocol(Object? value) {
     'shadowsocks' ||
     'wireguard' ||
     'hysteria2' ||
+    'naive' ||
     'tuic' =>
       normalized!,
     _ => '',

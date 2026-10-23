@@ -42,6 +42,15 @@ and protected cached material; ordinary country/Auto selection is unchanged.
 This source support does not prove a packaged binary or network reachability.
 Unknown features and malformed inventories still fail closed.
 
+Managed Naive uses the loaded `singbox_naive_h2_v1` and TLS capabilities plus
+the same active Premium gate. Online and cached material require authenticated
+Naive on HTTPS 443 with certificate verification and an explicit TLS server name;
+QUIC, UDP-over-TCP, detours and custom TLS options are rejected. Native Naive
+has no `network` field, and Cronet negotiates H2 without a supplied ALPN list.
+Naive participates in ordinary country/Auto selection and reports `naive` in
+technical diagnostics. This source support does not establish packaged or
+owned-server acceptance; those results belong in cutover readiness.
+
 Ordinary catalogue probes require the additive Core candidate-probe API. Stage
 the exact approved artifact and dependencies through the existing
 [sync/packaging scripts](../../scripts/README.md), selecting one platform and
