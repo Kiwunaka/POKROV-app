@@ -827,9 +827,46 @@ class _CatalogPickerBootstrapper extends _CachedBootstrapper implements
 }
 
 class _CatalogPickerExperience extends _ExperienceStore {
+  _CatalogPickerExperience({this.preferences = const PokrovRoutingPreferences.defaults()});
+  final PokrovRoutingPreferences preferences;
+
   @override
   Future<PokrovClientExperienceState> read() async =>
-      const PokrovClientExperienceState.empty().copyWith(interfaceMode: PokrovInterfaceMode.advanced);
+      const PokrovClientExperienceState.empty().copyWith(
+        interfaceMode: PokrovInterfaceMode.advanced, routingPreferences: preferences);
+}
+
+Future<_CatalogPickerExperience> _openDnsSettings(WidgetTester tester, {
+  PokrovRoutingPreferences preferences = const PokrovRoutingPreferences.defaults(),
+}) async {
+  const channel = MethodChannel('space.pokrov/runtime_engine');
+  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  messenger.setMockMethodCallHandler(channel, (_) async => {'phase': 'initialized',
+    'supportsLiveConnect': true, 'canInitialize': false, 'canConnect': true});
+  tester.view.physicalSize = const Size(1280, 1200);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(() {
+    messenger.setMockMethodCallHandler(channel, null);
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
+  });
+  final store = _CatalogPickerExperience(preferences: preferences);
+  await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+    appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+    bootstrapper: _Bootstrapper(), firstLaunchStore: _FirstLaunchStore(),
+    clientExperienceStore: store, themeMode: ThemeMode.light,
+    onThemeModeChanged: (_) {},
+  )));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Правила'));
+  await tester.pumpAndSettle();
+  final advanced = find.byKey(const ValueKey('rules-advanced-toggle'));
+  await tester.scrollUntilVisible(advanced, 400, scrollable: find.descendant(
+    of: find.byWidgetPredicate((widget) => widget.runtimeType.toString() == '_RulesSection'),
+    matching: find.byType(Scrollable)).first);
+  await tester.tap(advanced);
+  await tester.pumpAndSettle();
+  return store;
 }
 
 Future<RoutingCatalogFetchResult> _pickerCatalog() async {
@@ -1393,6 +1430,67 @@ void main() {
     expect(ordinaryDns['detour'], isNull);
     expect(ordinaryDns['domain_resolver'], 'local');
     expect(preferences.toJson(), isNot(contains('externalSmartDnsEnabled')));
+  });
+
+  testWidgets('custom DoH sheet rejects query and fragment before saving', (tester) async {
+    final store = await _openDnsSettings(tester);
+    final picker = find.byKey(const ValueKey('rules-dns-picker'));
+    await Scrollable.ensureVisible(tester.element(picker), alignment: 0.5);
+    await tester.pumpAndSettle();
+    await tester.tap(picker);
+    await tester.pumpAndSettle();
+    final input = find.byKey(const ValueKey('rules-dns-custom-input'));
+    final save = find.byKey(const ValueKey('rules-dns-custom-save'));
+    for (final url in [
+      'https://dns.example/dns-query?profile=test',
+      'https://dns.example/dns-query#profile',
+    ]) {
+      await tester.enterText(input, url);
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+      expect(input, findsOneWidget);
+      expect(find.text('Параметры после ? и фрагменты после # в DoH-адресе пока не поддерживаются.'), findsOneWidget);
+      expect(store.saved.routingPreferences.dnsPreset, PokrovDnsPreset.automatic);
+    }
+    const valid = 'https://dns.example:8443/account/path';
+    await tester.enterText(input, valid);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    expect(input, findsNothing);
+    expect(store.saved.routingPreferences.effectiveDnsAddress, valid);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('saved unsupported custom DoH explicitly shows profile DNS fallback', (tester) async {
+    const saved = 'https://dns.example/dns-query?profile=test';
+    final store = await _openDnsSettings(tester,
+      preferences: PokrovRoutingPreferences.fromJson({
+        'dnsPreset': 'custom', 'dnsTransport': 'direct', 'customDnsUrl': saved,
+      }));
+    const warning = 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправьте адрес в настройке DNS.';
+    expect(find.text(warning), findsOneWidget);
+    expect(find.byKey(const ValueKey('rules-dns-direct-toggle')), findsNothing);
+    final picker = find.byKey(const ValueKey('rules-dns-picker'));
+    await Scrollable.ensureVisible(tester.element(picker), alignment: 0.5);
+    await tester.pumpAndSettle();
+    await tester.tap(picker);
+    await tester.pumpAndSettle();
+    final input = find.byKey(const ValueKey('rules-dns-custom-input'));
+    expect(tester.widget<TextFormField>(input).initialValue, saved);
+    expect(find.text('Параметры после ? и фрагменты после # в DoH-адресе пока не поддерживаются.'), findsOneWidget);
+    final automatic = find.byKey(const ValueKey('rules-dns-automatic'));
+    await tester.ensureVisible(automatic);
+    await tester.tap(automatic);
+    await tester.pumpAndSettle();
+    expect(store.saved.routingPreferences.dnsPreset, PokrovDnsPreset.automatic);
+    expect(store.saved.routingPreferences.customDnsUrl, isEmpty);
+    expect(store.saved.routingPreferences.effectiveDnsTransport, PokrovDnsTransport.vpn);
+    expect(find.text(warning), findsNothing);
+    expect(find.text('DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets('SmartDNS picker follows authenticated Premium eligibility', (tester) async {

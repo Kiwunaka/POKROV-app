@@ -245,8 +245,10 @@ class PokrovRoutingPreferences {
       (item) => item.name == _routingText(json['dnsTransport']),
       orElse: () => PokrovDnsTransport.vpn,
     );
+    // Keep a previously accepted query/fragment for correction in the DNS
+    // sheet. Runtime validation rejects it and the UI explains profile DNS.
     final customDns =
-        _normalizeDnsUrl(_routingText(json['customDnsUrl'])) ?? '';
+        _parseDnsUrl(_routingText(json['customDnsUrl']))?.toString() ?? '';
     final trustedWifi = _routingList(json['trustedWifiNames'])
         .whereType<String>()
         .where((item) => item.isNotEmpty && item.length <= 64)
@@ -316,6 +318,12 @@ class PokrovRoutingPreferences {
         PokrovDnsPreset.custom => _normalizeDnsUrl(customDnsUrl),
         _ => dnsPreset.address,
       };
+
+  String? get customDnsError => dnsPreset == PokrovDnsPreset.custom
+      ? pokrovDnsUrlValidationError(customDnsUrl) : null;
+
+  PokrovDnsTransport get effectiveDnsTransport =>
+      effectiveDnsAddress == null ? PokrovDnsTransport.vpn : dnsTransport;
 
 }
 
@@ -1171,7 +1179,7 @@ List<Map<String, dynamic>> _windowsCatalogAppScopeRules(
 void _protectWindowsAppDns(Map<String, dynamic> config,
     PokrovRoutingPreferences preferences, {required String vpn,
       required String vpnDns, required String directDns}) {
-  if (preferences.dnsTransport == PokrovDnsTransport.direct) {
+  if (preferences.effectiveDnsTransport == PokrovDnsTransport.direct) {
     throw const RoutingCatalogFailure('catalog_process_dns_transport_unsupported');
   }
   final dns = _routingMap(config['dns']);
@@ -1306,7 +1314,7 @@ List<String> pokrovPurposeDomains(PokrovPurposeRoute purpose) =>
       : null;
 }
 
-String? _normalizeDnsUrl(String raw) {
+Uri? _parseDnsUrl(String raw) {
   final uri = Uri.tryParse(raw.trim());
   if (uri == null ||
       uri.scheme.toLowerCase() != 'https' ||
@@ -1315,8 +1323,20 @@ String? _normalizeDnsUrl(String raw) {
       uri.toString().length > 240) {
     return null;
   }
-  return uri.toString();
+  return uri;
 }
+
+String? pokrovDnsUrlValidationError(String raw) {
+  final uri = _parseDnsUrl(raw);
+  if (uri == null) return 'Нужен полный безопасный адрес https://…';
+  if (uri.hasQuery || uri.hasFragment) {
+    return 'Параметры после ? и фрагменты после # в DoH-адресе пока не поддерживаются.';
+  }
+  return null;
+}
+
+String? _normalizeDnsUrl(String raw) =>
+    pokrovDnsUrlValidationError(raw) == null ? Uri.parse(raw.trim()).toString() : null;
 
 bool _routeOverrideMatches(
   PokrovRouteOverride rule,
