@@ -1060,6 +1060,7 @@ class ConnectionManager extends ChangeNotifier {
       if (candidate.transport == 'grpc' && candidate.protection == 'tls') return 'vless_grpc_tls';
       if (candidate.transport == 'xhttp' && candidate.protection == 'reality') return 'xhttp_reality';
       if (candidate.transport == 'xhttp' && candidate.protection == 'tls') return 'xhttp_tls';
+      if (candidate.transport == 'dnstt' && candidate.protection == 'noise') return 'vless_dnstt_noise';
     }
     if (candidate.protocol == 'hysteria2' && candidate.transport == 'udp') return 'hysteria2';
     if (candidate.protocol == 'awg' && candidate.protection == 'awg31') return 'awg31';
@@ -2633,12 +2634,14 @@ class ConnectionManager extends ChangeNotifier {
       final warpCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
       final ordinaryCandidates = eligibleCandidates.where((candidate) =>
-          candidate.warpMode == null).toList();
+          candidate.warpMode == null && candidate.transport != 'dnstt').toList();
+      final dnsCandidates = eligibleCandidates.where((candidate) => candidate.transport == 'dnstt').take(1).toList();
       final directWarpCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode == 'warp_direct').toList();
       final groups = [
         if (useWarpCandidates && warpCandidates.isNotEmpty) warpCandidates,
         ordinaryCandidates,
+        dnsCandidates,
         if (useWarpCandidates) directWarpCandidates,
       ];
       var selectedCandidate = false;
@@ -2647,7 +2650,10 @@ class ConnectionManager extends ChangeNotifier {
         if (group.isEmpty) continue;
         final twoWaveWarp = coldConnect && _appContext.hostPlatform == HostPlatform.android &&
             identical(group, warpCandidates) && group.length > 3;
-        final selectionTimeout = identical(group, directWarpCandidates)
+        // DNS handshakes plus the unchanged 64 KiB proof need their own budget.
+        final selectionTimeout = identical(group, dnsCandidates)
+            ? const Duration(seconds: 30)
+            : identical(group, directWarpCandidates)
             ? const Duration(seconds: 4)
             : identical(group, warpCandidates)
             ? Duration(seconds: twoWaveWarp ? 8 : 5)
@@ -2665,7 +2671,9 @@ class ConnectionManager extends ChangeNotifier {
             cancelled: cancelled,
             recoveryCandidateRef: recoveryCandidateRef,
             excludedCandidateRefs: excludedCandidateRefs,
-            probeTimeout: initialProfilePreparation &&
+            probeTimeout: identical(group, dnsCandidates)
+                ? const Duration(seconds: 30)
+                : initialProfilePreparation &&
                     _appContext.hostPlatform == HostPlatform.android &&
                     identical(group, ordinaryCandidates)
                 ? const Duration(seconds: 12)
@@ -2898,9 +2906,11 @@ class ConnectionManager extends ChangeNotifier {
             candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
         final directWarpCandidates = cachedCandidates.where((candidate) =>
             candidate.warpMode == 'warp_direct').toList();
+        final dnsCandidates = cachedCandidates.where((candidate) => candidate.transport == 'dnstt').take(1).toList();
         final groups = [
           warpCandidates,
-          cachedCandidates.where((candidate) => candidate.warpMode == null).toList(),
+          cachedCandidates.where((candidate) => candidate.warpMode == null && candidate.transport != 'dnstt').toList(),
+          dnsCandidates,
           directWarpCandidates,
         ];
         var found = false;
@@ -2917,7 +2927,9 @@ class ConnectionManager extends ChangeNotifier {
               ipv6Available: network.ipv6Available,
               cancelled: _connectionCoordinator.whenOperationEnds(generation),
               recoveryCandidateRef: recoveryCandidateRef, excludedCandidateRefs: excludedCandidateRefs,
-              selectionTimeout: identical(group, directWarpCandidates)
+              selectionTimeout: identical(group, dnsCandidates)
+                  ? const Duration(seconds: 30)
+                  : identical(group, directWarpCandidates)
                   ? const Duration(seconds: 4)
                   : identical(group, warpCandidates)
                       ? Duration(seconds: twoWaveWarp ? 8 : 5)
@@ -2925,7 +2937,9 @@ class ConnectionManager extends ChangeNotifier {
                           ? const Duration(seconds: 7)
                           : const Duration(seconds: 12),
               excludeProbeCleanupFromBudget: twoWaveWarp,
-              probeTimeout: coldConnect && inputs.hostPlatform == HostPlatform.android &&
+              probeTimeout: identical(group, dnsCandidates)
+                  ? const Duration(seconds: 30)
+                  : coldConnect && inputs.hostPlatform == HostPlatform.android &&
                       group.every((candidate) => candidate.warpMode == null)
                   ? const Duration(seconds: 12)
                   : const Duration(seconds: 4),
@@ -2956,7 +2970,7 @@ class ConnectionManager extends ChangeNotifier {
             found = true;
             break;
           } on SmartConnectSelectionExhausted {
-            // Keep the online order: manual chain, ordinary paths, direct WARP.
+            // Keep the online order: manual chain, ordinary paths, DNS reserve, direct WARP.
           }
         }
         if (!found) throw const SmartConnectSelectionExhausted();

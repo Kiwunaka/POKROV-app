@@ -98,7 +98,8 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       final supported = switch (protocol) {
         'vless' => (transport == 'tcp' && protection == 'reality') ||
             (const {'grpc', 'xhttp'}.contains(transport) && protection == 'tls') ||
-            (transport == 'xhttp' && protection == 'reality'),
+            (transport == 'xhttp' && protection == 'reality') ||
+            (transport == 'dnstt' && protection == 'noise'),
         'awg' => transport == 'udp' && protection == 'awg31',
         'hysteria2' => transport == 'udp' && protection == 'tls',
         'warp' => warpDirect && transport == 'udp' && protection == 'warp',
@@ -111,6 +112,10 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       if (!const {'tcp', 'udp'}.contains(parameters['network']) ||
           !const {'', 'xtls-rprx-vision'}.contains(parameters['flow'])) throw const FormatException();
       if (transport == 'xhttp' && parameters['flow'] != '') throw const FormatException();
+      if (transport == 'dnstt' && (parameters['network'] != 'tcp' ||
+          parameters['flow'] != '' || warpMode != null || deliveryId != null)) {
+        throw const FormatException();
+      }
       final requirements = _transportMap(item['requirements']);
       _keys(requirements, const {'minimum_client_release', 'minimum_core_release', 'platforms', 'required_features'});
       final minimumClient = requirements['minimum_client_release'];
@@ -127,6 +132,9 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         throw const FormatException();
       }
       if (deliveryId != null && _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
+        throw const FormatException();
+      }
+      if (transport == 'dnstt' && _transportReleaseCompare(minimumClientVersion, '1.5.0') < 0) {
         throw const FormatException();
       }
       if (bridgeId != null && releaseCompare(minimumClient, '1.5.0+4116') < 0) throw const FormatException();
@@ -152,6 +160,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         _ => {RuntimeTransportFeature.vless, switch (transport) {
           'grpc' => RuntimeTransportFeature.grpc,
           'xhttp' => RuntimeTransportFeature.xhttp,
+          'dnstt' => RuntimeTransportFeature.dnsttVless,
           _ => RuntimeTransportFeature.reality,
         }},
       };

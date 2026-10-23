@@ -1,6 +1,88 @@
 part of '../../app_first_runtime_bootstrap.dart';
 
 extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
+  void _requireDnsttPremium(Object? access) {
+    final entitlement = _readMap(access);
+    final rawExpiry = entitlement['expiry_at'];
+    final expiry = rawExpiry is String ? DateTime.tryParse(
+        RegExp(r'(Z|[+-]\d\d:\d\d)$').hasMatch(rawExpiry) ? rawExpiry : '${rawExpiry}Z') : null;
+    if (!const {'trial_premium', 'bonus_premium', 'paid_unlimited'}.contains(entitlement['access_state']) ||
+        !entitlement.containsKey('expiry_at') ||
+        (rawExpiry != null && (expiry == null || !expiry.isAfter(DateTime.now().toUtc())))) {
+      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+    }
+  }
+
+  // The DNS carrier is not a standalone proxy. Only this personal VLESS leaf
+  // may use it; the Noise pin protects the otherwise plaintext loopback hop.
+  void _validateDnsttMaterial(Object raw, TransportCandidate? candidate,
+      Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
+    try {
+      final config = _readMap(raw is String ? jsonDecode(raw) : raw);
+      final outbounds = (config['outbounds'] as List? ?? const []).map(_readMap).toList();
+      final carriers = outbounds.where((outbound) => outbound['type'] == 'dnstt').toList();
+      if (carriers.isEmpty && candidate?.transport != 'dnstt' && kind != 'dnstt') return;
+      _requireDnsttPremium(access);
+      if (candidate?.transport != 'dnstt' ||
+          !runtimeFeatures.containsAll({RuntimeTransportFeature.vless, RuntimeTransportFeature.dnsttVless}) ||
+          carriers.length != 1 ||
+          (config['endpoints'] is List && (config['endpoints'] as List).isNotEmpty)) {
+        throw const FormatException();
+      }
+      final leaf = outbounds.where((outbound) => outbound['type'] == 'vless').single;
+      final carrier = carriers.single;
+      bool exactKeys(Map<String, dynamic> value, Set<String> keys) =>
+          value.length == keys.length && value.keys.every(keys.contains);
+      if (!exactKeys(leaf, const {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour'}) ||
+          leaf['tag'] != 'proxy' || leaf['server'] != '127.0.0.1' || leaf['server_port'] != 12543 ||
+          !RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+              .hasMatch(_readText(leaf['uuid'])) ||
+          leaf['flow'] != '' || leaf['network'] != 'tcp' || leaf['detour'] != 'dns-tunnel' ||
+          !exactKeys(carrier, const {'type', 'tag', 'domain', 'publicKey', 'resolvers', 'network', 'tunnel_per_resolver'}) ||
+          carrier['tag'] != 'dns-tunnel' || carrier['network'] != 'tcp' || carrier['tunnel_per_resolver'] != 1 ||
+          !RegExp(r'^[0-9a-f]{64}$').hasMatch(_readText(carrier['publicKey']))) {
+        throw const FormatException();
+      }
+      final domain = _readText(carrier['domain']);
+      if (domain.length > 253 || !domain.contains('.') || domain.split('.').any((label) =>
+          !RegExp(r'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$').hasMatch(label))) {
+        throw const FormatException();
+      }
+      final resolver = (carrier['resolvers'] as List).single as String;
+      if (!resolver.endsWith(':53') ||
+          InternetAddress.tryParse(resolver.substring(0, resolver.length - 3))?.type != InternetAddressType.IPv4) {
+        throw const FormatException();
+      }
+      final tags = <String>{};
+      for (final outbound in outbounds) {
+        if (!tags.add(_readText(outbound['tag'])) ||
+            !const {'vless', 'dnstt', 'selector', 'urltest', 'direct', 'block', 'dns'}.contains(outbound['type']) ||
+            (outbound['type'] != 'vless' && outbound.containsKey('detour')) ||
+            outbound['default'] == 'dns-tunnel' ||
+            ((outbound['outbounds'] as List? ?? const []).contains('dns-tunnel'))) {
+          throw const FormatException();
+        }
+      }
+      // Also cover route/DNS rules in already materialized cached profiles.
+      void rejectCarrierRoute(Object? value) {
+        if (value is Map) {
+          for (final entry in value.entries) {
+            if (const {'outbound', 'final', 'detour'}.contains(entry.key) && entry.value == 'dns-tunnel') {
+              throw const FormatException();
+            }
+            rejectCarrierRoute(entry.value);
+          }
+        } else if (value is List) {
+          value.forEach(rejectCarrierRoute);
+        }
+      }
+      rejectCarrierRoute(config['route']);
+      rejectCarrierRoute(config['dns']);
+    } on Object {
+      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+    }
+  }
+
   Future<_ManagedManifestEnvelope> _decodeManagedManifestResponse(Map<String, dynamic> response, {
     required _StoredBootstrapState state, required HostPlatform hostPlatform, required RouteMode routeMode,
     required List<String> selectedApps, required String normalizedPreferredNode, required String preferredVariantId,
@@ -14,6 +96,9 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
             coreRelease: coreRelease, requestedNodeCode: normalizedPreferredNode,
             requestedCandidateRef: selectedCandidateRef)
         : null;
+    if (transportCatalog?.candidates.any((candidate) => candidate.transport == 'dnstt') == true) {
+      _requireDnsttPremium(response['access']);
+    }
     if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
       throw const TransportManifestFailure('transport_catalog_selection_mismatch');
     }
@@ -63,6 +148,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         'reality' => ('vless', 'tcp', 'reality'),
         'grpc' => ('vless', 'grpc', 'tls'),
         'xhttp' => ('vless', 'xhttp', candidate.protection),
+        'dnstt' => ('vless', 'dnstt', 'noise'),
         'awg31' => ('awg', 'udp', 'awg31'),
         'hysteria2' => ('hysteria2', 'udp', 'tls'),
         'warp_direct' => ('warp', 'udp', 'warp'),
@@ -70,6 +156,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
       }) {
         throw const TransportManifestFailure('transport_catalog_profile_mismatch');
       }
+      _validateDnsttMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       if (candidate?.warpMode == 'warp_direct') {
         try {
           validatePokrovDirectWarpProfile(raw);
@@ -166,7 +253,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         protocol: switch (kind) {
           'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
           'warp_direct' => 'warp',
-          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' => 'vless',
+          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' => 'vless',
           _ => 'unknown',
         },
       ),

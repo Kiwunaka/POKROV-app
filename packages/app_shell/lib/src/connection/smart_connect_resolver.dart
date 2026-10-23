@@ -69,6 +69,11 @@ class SmartConnectCandidateSelector {
       final reserve = ordered.where((candidate) => candidate.network != selected.network).firstOrNull;
       if (reserve != null) alternatives.add(reserve);
     }
+    // Keep the downloaded DNS escape path while ordinary API access still works.
+    if (selected.transport != 'dnstt' && alternatives.every((candidate) => candidate.transport != 'dnstt')) {
+      final reserve = ordered.where((candidate) => candidate.transport == 'dnstt').firstOrNull;
+      if (reserve != null) alternatives.add(reserve);
+    }
     return alternatives;
   }
 

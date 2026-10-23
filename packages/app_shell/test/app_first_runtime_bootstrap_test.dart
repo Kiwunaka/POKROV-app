@@ -1449,6 +1449,121 @@ void main() {
     expect(exact.candidateMaterials.keys, [realityRef]);
   });
 
+  test('Premium DNSTT reserve retains its VLESS boundary online and in the protected cache', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-dnstt-reserve-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    const ordinaryRef = 'ch:legacy_reality_fallback';
+    const reserveRef = 'ch:dnstt_vless';
+    var accessState = 'trial_premium';
+    String? expiry = DateTime.now().toUtc().add(const Duration(days: 2)).toIso8601String();
+    var bypassCarrier = false;
+    Map<String, Object?> config(bool reserve) => {
+      'outbounds': [
+        {'type': 'vless', 'tag': 'proxy', 'server': reserve ? '127.0.0.1' : 'fixture.invalid',
+          'server_port': reserve ? 12543 : 443, 'uuid': '11111111-1111-4111-8111-111111111111',
+          if (reserve) ...{'network': 'tcp', 'flow': '', 'detour': 'dns-tunnel'}
+          else 'tls': {'enabled': true, 'server_name': 'fixture.invalid'}},
+        if (reserve) {'type': 'dnstt', 'tag': 'dns-tunnel', 'domain': 't.fixture.invalid',
+          'publicKey': 'a' * 64, 'resolvers': ['192.0.2.53:53'], 'network': 'tcp', 'tunnel_per_resolver': 1},
+      ],
+      'route': {'final': reserve && bypassCarrier ? 'dns-tunnel' : 'proxy'},
+    };
+    Map<String, Object?> candidate(bool reserve) => {
+      'candidate_ref': reserve ? reserveRef : ordinaryRef,
+      'profile_ref': reserve ? 'dnstt_vless' : 'legacy_reality_fallback',
+      'node_code': 'ch', 'country_code': 'CH', 'protocol': 'vless',
+      'transport': reserve ? 'dnstt' : 'tcp', 'protection': reserve ? 'noise' : 'reality',
+      'priority': reserve ? 100 : 0, 'parameters': {'network': 'tcp', 'flow': ''},
+      'requirements': {'minimum_client_release': '1.5.0', 'minimum_core_release': null,
+        'platforms': ['windows', 'android'], 'required_features': [
+          'singbox_vless_v1', reserve ? 'dnstt_vless_v1' : 'singbox_reality_v1']},
+    };
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'synthetic-session', 'account_id': 'synthetic-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          request.response.write(jsonEncode({
+            'profile_revision': 'dnstt-reserve', 'config_format': 'singbox-json',
+            'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
+            'config_payload': config(false),
+            'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
+              'revision': 'dnstt-reserve', 'selected_candidate_ref': ordinaryRef,
+              'candidates': [candidate(false), candidate(true)]},
+            'candidate_materials': [for (final reserve in [false, true]) {
+              'candidate_ref': reserve ? reserveRef : ordinaryRef,
+              'transport_kind': reserve ? 'dnstt' : 'reality',
+              'config_format': 'singbox-json', 'config_payload': config(reserve),
+            }],
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+            'access': {'access_state': accessState, 'expiry_at': expiry},
+          }));
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    AppFirstRuntimeBootstrapper create({bool offline = false}) => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}', supportDirectoryResolver: () async => directory,
+      maxRequestAttempts: 1,
+      httpClientFactory: offline ? () => throw StateError('offline restore used HTTP') : null);
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'CH');
+    final features = RuntimeTransportFeature.values.toSet();
+    final online = create();
+    Future<ManagedProfilePayload> resolve({HostPlatform platform = HostPlatform.windows}) =>
+        online.resolveManagedProfile(hostPlatform: platform, routeMode: inputs.routeMode,
+          preferredCountryCode: 'CH', runtimeFeatures: features, selectCandidate: false);
+    final selected = await resolve();
+    final reserve = selected.candidateMaterials[reserveRef]!;
+    expect(reserve.source?.protocol, 'vless');
+    expect(reserve.materialCandidate?.transport, 'dnstt');
+    final decoded = jsonDecode(reserve.configPayload) as Map;
+    final outbounds = (decoded['outbounds'] as List).cast<Map>();
+    expect(outbounds.singleWhere((row) => row['type'] == 'vless')['detour'], 'dns-tunnel');
+    expect(outbounds.singleWhere((row) => row['type'] == 'dnstt'),
+      (config(true)['outbounds'] as List).last);
+    expect(outbounds.where((row) => row['outbounds'] is List)
+      .expand((row) => row['outbounds'] as List), isNot(contains('dns-tunnel')));
+    final restarted = create(offline: true);
+    expect((await restarted.loadCachedManagedProfile(inputs, selectedCandidateRef: reserveRef,
+      runtimeFeatures: features))?.configPayload, reserve.configPayload);
+    expect(await restarted.loadCachedManagedProfile(inputs, selectedCandidateRef: reserveRef,
+      runtimeFeatures: features.difference({RuntimeTransportFeature.dnsttVless})), isNull);
+    const storage = FlutterSecureStorage();
+    const cacheKey = 'pokrov-managed-profile-windows-v1';
+    final stored = jsonDecode((await storage.read(key: cacheKey))!) as Map<String, dynamic>;
+    final cachedMaterial = stored['candidates'][reserveRef]['payload'] as Map;
+    final altered = jsonDecode(cachedMaterial['config_payload'] as String) as Map;
+    (altered['outbounds'] as List).cast<Map>().singleWhere((row) => row['type'] == 'vless').remove('detour');
+    cachedMaterial['config_payload'] = jsonEncode(altered);
+    await storage.write(key: cacheKey, value: jsonEncode(stored));
+    expect(await restarted.loadCachedManagedProfile(inputs, selectedCandidateRef: reserveRef,
+      runtimeFeatures: features), isNull, reason: 'cached plaintext VLESS cannot bypass the Noise carrier');
+    accessState = 'paid_unlimited';
+    expiry = null; // Existing manual/admin lifetime Premium.
+    final android = await resolve(platform: HostPlatform.android);
+    expect(android.candidateMaterials[reserveRef]?.materialCandidate?.transport, 'dnstt');
+    accessState = 'free_monthly';
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    accessState = 'bonus_premium';
+    expiry = '2000-01-01T00:00:00Z';
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    expiry = null;
+    bypassCarrier = true;
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+  });
+
   test('protected managed cache restores exact profile after restart and respects server denial', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-managed-cache-');
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);

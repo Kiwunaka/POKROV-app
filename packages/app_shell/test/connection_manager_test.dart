@@ -2592,6 +2592,41 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 
+  test('Auto retains a DNS reserve and probes it only after ordinary candidates settle', () async {
+    final ordinary = [_candidates.first, _CachedBootstrapper.alternatives[1]];
+    final dns = TransportCandidate(candidateRef: 'de:dnstt_vless', profileRef: 'dnstt_vless',
+      nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'dnstt', protection: 'noise',
+      priority: 100, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: {RuntimeTransportFeature.dnsttVless});
+    final otherNode = TransportCandidate(candidateRef: 'ch:reality', profileRef: 'reality',
+      nodeCode: 'ch', countryCode: 'CH', protocol: 'vless', transport: 'tcp', protection: 'reality',
+      priority: 3, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {});
+    final pool = [...ordinary, otherNode, dns];
+    expect(SmartConnectCandidateSelector.cacheAlternatives(ordinary.first, pool, countryOnly: false,
+      catalog: TransportCandidateCatalog(revision: 'test', selectedCandidateRef: ordinary.first.candidateRef,
+        candidates: pool)), [otherNode, ordinary.last, dns]);
+    final bootstrapper = _Bootstrapper(catalog: true, bundle: true)..candidates = [...ordinary, dns];
+    final runtime = _Runtime()..supportsCandidates = true
+      ..heldProbeCandidates.addAll(ordinary.map((row) => row.candidateRef))
+      ..failedProbeCandidates.addAll(ordinary.map((row) => row.candidateRef));
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    final connection = manager.connect();
+    await runtime.alternateProbeStarted.future;
+    await Future<void>.delayed(Duration.zero);
+    expect(runtime.probedPayloads.map((row) => row.materialCandidate?.candidateRef),
+      ordinary.map((row) => row.candidateRef), reason: 'DNS must not compete with still-running ordinary probes');
+    runtime.probeRelease.complete();
+    await connection;
+    expect(runtime.activeProbes, isEmpty);
+    expect(runtime.stagedProfile, dns.candidateRef);
+    expect(runtime.probeTimeouts.last.inMilliseconds, inInclusiveRange(29000, 30000),
+      reason: 'the unchanged TLS/204/64KiB proof receives a separate bounded DNS budget');
+    expect(bootstrapper.resolutions, hasLength(1), reason: 'the authorized bundled reserve needs no extra fetch');
+    expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
   test('country Auto resolves an admitted AWG missing from a partial bundle', () async {
     final vless = _candidates.first;
     final awg = _CachedBootstrapper.alternatives[1];

@@ -554,6 +554,7 @@ abstract final class PokrovDiagnosticsPresenter {
       'vless_grpc_tls' => 'VLESS gRPC / TLS',
       'xhttp_reality' => 'XHTTP REALITY',
       'xhttp_tls' => 'XHTTP TLS',
+      'vless_dnstt_noise' => 'VLESS / DNS / Noise',
       'hysteria2' => 'Hysteria2',
       'awg31' => 'AWG3.1',
       _ => null,

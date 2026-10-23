@@ -34,9 +34,13 @@ Current limits:
 The loaded Core inventory recognizes `dnstt_vless_v1` so Core source `7a62031`
 does not invalidate the existing transport features. Core's `1.2.14` version
 alone does not imply this feature: older artifacts remain usable without it.
-Recognition does not authorize a DNSTT managed candidate, enable provisioning
-or establish network reachability. Unknown features and malformed inventories
-still fail closed; the existing candidate/profile admission rules are unchanged.
+The App admits a DNSTT managed reserve only with this loaded capability plus
+VLESS, an active Premium access window (including trial and lifetime manual
+access), and the exact personal VLESS-to-pinned-DNSTT graph. A carrier cannot be
+selected as a proxy on its own. The same checks apply to downloaded reserves
+and protected cached material; ordinary country/Auto selection is unchanged.
+This source support does not prove a packaged binary or network reachability.
+Unknown features and malformed inventories still fail closed.
 
 Ordinary catalogue probes require the additive Core candidate-probe API. Stage
 the exact approved artifact and dependencies through the existing

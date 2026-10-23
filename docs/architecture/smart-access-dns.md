@@ -147,9 +147,19 @@ Platform and three Node focused checks passed. The optional backend accepts
 only existing active Premium account keys (including trial/manual/gift/promo/
 bonus/family); Free, expiry, block and revoked keys are excluded. It is a
 loopback TCP VLESS backend at `127.0.0.1:12543`, not a live DNS service or a
-per-device key. No DNS endpoint/App provisioning is enabled. Remaining work is
-an owned CH UDP/53 endpoint, owned NS delegation and App capability gating on
-`dnstt_vless_v1`. Root observed public UDP/53 and TCP/12543 free on CH; only
+per-device key. App source now admits the authenticated `vless/dnstt/noise`
+reserve for active Premium with loaded `dnstt_vless_v1` and VLESS capabilities.
+It validates the fixed loopback VLESS leaf, Noise pin and one numeric recursive
+UDP/53 resolver, excludes the carrier from selectable proxy paths, and repeats
+that boundary when restoring cached material. WARP/bridge wrapping is excluded;
+country selection and the existing maximum of six bundled materials are unchanged.
+Auto gives one DNS reserve a separate 30-second attempt after ordinary routes
+and before direct WARP, preserving the complete TLS/204/64 KiB proof. The cache
+retains one authorized DNS reserve alongside its existing alternatives, so a
+blocked API does not require fetching that material again.
+This is source support, not integrated App/network acceptance. Remaining work is
+an owned CH UDP/53 endpoint, owned NS delegation and the packaged Core/App check.
+Root observed public UDP/53 and TCP/12543 free on CH; only
 systemd-resolved listens on `127.0.0.53/54:53`. No owner DNS change is requested
 yet. Windows 4200 still packages the earlier Core binary; WhiteDNS remains
 research. Commercial permission already covers active Premium; fees are pending.

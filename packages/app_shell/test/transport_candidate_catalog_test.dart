@@ -49,9 +49,17 @@ void main() {
     expect(value.selected.protection, 'reality');
   });
 
-  test('compiled DNSTT capability does not authorize a DNSTT catalog entry', () {
+  test('DNSTT catalog requires compiled VLESS and DNS transport with the supported chain', () {
     final row = candidate('de', 'dnstt_vless', transport: 'dnstt',
       protection: 'noise', features: ['dnstt_vless_v1', 'singbox_vless_v1']);
+    (row['requirements'] as Map)['minimum_client_release'] = '1.5.0';
+    expect(parse(catalog([row]), clientRelease: '1.5.0').selected.transport, 'dnstt');
+    expect(() => decodeManagedTransportCatalog(catalog([row]), platform: HostPlatform.windows,
+      clientRelease: '1.5.0', runtimeFeatures: {RuntimeTransportFeature.vless}),
+      throwsA(isA<TransportManifestFailure>().having((failure) => failure.code,
+        'code', 'transport_catalog_incompatible')));
+    row['warp_mode'] = 'proxy_over_warp';
+    row['candidate_ref'] = 'de:dnstt_vless:proxy_over_warp';
     expect(() => parse(catalog([row]), clientRelease: '1.5.0+4200'),
       throwsA(isA<TransportManifestFailure>().having((failure) => failure.code,
         'code', 'transport_catalog_invalid')));
