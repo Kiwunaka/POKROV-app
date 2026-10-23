@@ -74,6 +74,10 @@ class SmartConnectCandidateSelector {
       final reserve = ordered.where((candidate) => candidate.transport == 'dnstt').firstOrNull;
       if (reserve != null) alternatives.add(reserve);
     }
+    if (selected.protocol != 'naive' && alternatives.every((candidate) => candidate.protocol != 'naive')) {
+      final reserve = ordered.where((candidate) => candidate.protocol == 'naive').firstOrNull;
+      if (reserve != null) alternatives.add(reserve);
+    }
     return alternatives;
   }
 

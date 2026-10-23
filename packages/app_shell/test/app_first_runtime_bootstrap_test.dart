@@ -1579,10 +1579,13 @@ void main() {
       'username': 'synthetic@example.invalid', 'password': 'synthetic-node-key',
       'quic': false, 'udp_over_tcp': {'enabled': false},
       'tls': <String, Object?>{'enabled': true, 'server_name': 'naive.fixture.invalid'}};
-    Map<String, Object?> config(bool useNaive) => {
+    Map<String, Object?> config(bool useNaive, {String transport = ''}) => {
       'outbounds': [useNaive ? naive : {'type': 'vless', 'tag': 'proxy',
         'server': 'fixture.invalid', 'server_port': 443, 'uuid': '11111111-1111-4111-8111-111111111111',
-        'tls': {'enabled': true, 'server_name': 'fixture.invalid'}}],
+        'tls': {'enabled': true, 'server_name': 'fixture.invalid'},
+        if (transport.isNotEmpty) 'transport': {'type': transport,
+          if (transport == 'grpc') 'service_name': 'fixture',
+          if (transport == 'xhttp') ...{'mode': 'stream-one', 'path': '/fixture'}}}],
       'route': {'final': 'proxy'},
     };
     Map<String, Object?> candidate(bool useNaive) => {
@@ -1590,10 +1593,17 @@ void main() {
       'profile_ref': useNaive ? 'naive_h2' : 'legacy_reality_fallback',
       'node_code': 'ch', 'country_code': 'CH', 'protocol': useNaive ? 'naive' : 'vless',
       'transport': useNaive ? 'h2' : 'tcp', 'protection': useNaive ? 'tls' : 'reality',
-      'priority': useNaive ? 1 : 0, 'parameters': {'network': 'tcp', 'flow': ''},
+      'priority': useNaive ? 3 : 0, 'parameters': {'network': 'tcp', 'flow': ''},
       'requirements': {'minimum_client_release': '1.5.0', 'minimum_core_release': null,
         'platforms': ['windows', 'android'], 'required_features': useNaive
           ? ['singbox_naive_h2_v1', 'singbox_tls_v1'] : ['singbox_vless_v1', 'singbox_reality_v1']},
+    };
+    Map<String, Object?> alternative(String transport, int priority) => {
+      ...candidate(false), 'candidate_ref': 'ch:$transport', 'profile_ref': transport,
+      'transport': transport, 'protection': 'tls', 'priority': priority,
+      'requirements': {'minimum_client_release': '1.5.0', 'minimum_core_release': null,
+        'platforms': ['windows', 'android'],
+        'required_features': ['singbox_vless_v1', 'singbox_${transport}_v1', 'singbox_tls_v1']},
     };
     unawaited(() async {
       await for (final request in server) {
@@ -1611,11 +1621,14 @@ void main() {
             'transport_kind': exact ? 'naive' : 'reality', 'config_payload': config(exact),
             'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
               'revision': 'naive-managed', 'selected_candidate_ref': exact ? naiveRef : ordinaryRef,
-              'candidates': [candidate(false), candidate(true)]},
+              'candidates': [candidate(false), alternative('grpc', 1), alternative('xhttp', 2), candidate(true)]},
             'candidate_materials': [for (final useNaive in exact ? [true] : [false, true]) {
               'candidate_ref': useNaive ? naiveRef : ordinaryRef,
               'transport_kind': useNaive ? 'naive' : 'reality',
-              'config_format': 'singbox-json', 'config_payload': config(useNaive)}],
+              'config_format': 'singbox-json', 'config_payload': config(useNaive)},
+              if (!exact) for (final transport in ['grpc', 'xhttp']) {
+                'candidate_ref': 'ch:$transport', 'transport_kind': transport,
+                'config_format': 'singbox-json', 'config_payload': config(false, transport: transport)}],
             'provisioning': {'status': 'ready', 'sync_ok': true},
             'access': {'access_state': accessState,
               'expiry_at': DateTime.now().toUtc().add(const Duration(days: 2)).toIso8601String()},
@@ -1641,14 +1654,23 @@ void main() {
     final reserve = selected.candidateMaterials[naiveRef]!;
     expect(reserve.source?.protocol, 'naive');
     expect(reserve.materialCandidate?.transport, 'h2');
-    final restored = await online.loadCachedManagedProfile(inputs,
+    final offline = AppFirstRuntimeBootstrapper(apiBaseUrl: 'http://127.0.0.1:1',
+      supportDirectoryResolver: () async => directory, maxRequestAttempts: 1);
+    await expectLater(offline.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
+      routeMode: inputs.routeMode, preferredCountryCode: 'CH', runtimeFeatures: features),
+      throwsA(isA<BootstrapFailure>()));
+    final restored = await offline.loadCachedManagedProfile(inputs,
       selectedCandidateRef: naiveRef, runtimeFeatures: features);
     expect(restored?.configPayload, reserve.configPayload);
+    expect(restored?.materializedForRuntime, isTrue);
+    expect((jsonDecode(restored!.configPayload)['inbounds'] as List)
+        .where((row) => row['type'] == 'tun'), hasLength(1));
     expect(await online.loadCachedManagedProfile(inputs, selectedCandidateRef: naiveRef,
       runtimeFeatures: features.difference({RuntimeTransportFeature.naiveH2})), isNull);
     const storage = FlutterSecureStorage();
     const cacheKey = 'pokrov-managed-profile-windows-v1';
     final stored = jsonDecode((await storage.read(key: cacheKey))!) as Map<String, dynamic>;
+    expect((stored['candidates'] as Map).keys, containsAll(['ch:grpc', 'ch:xhttp', naiveRef]));
     final cachedMaterial = stored['candidates'][naiveRef]['payload'] as Map;
     final altered = jsonDecode(cachedMaterial['config_payload'] as String) as Map;
     (altered['outbounds'] as List).cast<Map>().singleWhere((row) => row['type'] == 'naive')['tls']['insecure'] = true;

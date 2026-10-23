@@ -57,6 +57,12 @@ other TCP variants. Existing country, preferred primary, bridge-load ordering
 and probe budgets remain in force. Earlier bridge attempts can still exhaust
 the shared budget before the direct group is reached.
 
+The protected cache retains one downloaded Naive reserve alongside the ordinary
+alternatives and DNSTT, within the selected country. It keeps the App-materialized
+TUN/DNS configuration and existing access window; offline recovery still checks
+the current Core capabilities, account binding and exact TLS/auth graph before
+probing and staging it. No extra API fetch is needed for a bundled Naive reserve.
+
 Ordinary catalogue probes require the additive Core candidate-probe API. Stage
 the exact approved artifact and dependencies through the existing
 [sync/packaging scripts](../../scripts/README.md), selecting one platform and
