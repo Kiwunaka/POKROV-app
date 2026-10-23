@@ -18,8 +18,11 @@ Strict-v2 is not required by the current release plan.
 Current private Windows is **1.5.0+4206**, App `addf1bc5`, with the unchanged
 Core `b3a021b` / 1.2.14 selected through the retained core-windows-4205 manifest.
 It includes the synthesized Auto stream-continuity fix and Stop-only cleanup
-of the previous profile intent. Android packages remain **4204**; the shared
-development target is 4206, not a claim that new Android APKs were built.
+of the previous profile intent. Current private Android is also **4206**, App
+`175eeb1c` (the same code plus documentation), using the accepted Core
+`d80a992` / 1.2.14 AAR. Universal, arm64-v8a, armeabi-v7a and x86_64 APKs passed
+production signing, package/version, ABI, non-debuggable and runtime-binding
+checks. Core was not rebuilt; phone acceptance still awaits its explicit return.
 The Windows build and runtime binding passed. Setup is 29,239,658 bytes;
 the delivery ZIP is 28,742,133 bytes with one `POKROV-Setup.exe`.
 CleanWin11 installation exited 0. Ordinary IS Connect reached running with
@@ -56,7 +59,7 @@ Public 1.4.5 and draft 4175 remain unchanged; no customer contact.
 Included in 4206, `58140491` preserves working streams when
 the synthesized fallback `urltest` changes its probe winner. The manual selector
 still interrupts on explicit selection. The existing focused bootstrap test and
-app_shell analyze passed. Android 4204 does not yet contain this shared-source fix.
+app_shell analyze passed. Both private platform packages now contain this fix.
 
 The 24 October Twitch check on 4205 reached the owned IS exit and played video,
 but ordinary Stop showed CONN-005 in the UI even though native was
@@ -87,10 +90,10 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
-| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-universal.apk) |
-| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-arm64-v8a.apk) |
-| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-armeabi-v7a.apk) |
-| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-x86_64.apk) |
+| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4206-android-universal.apk) |
+| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4206-android-arm64-v8a.apk) |
+| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4206-android-armeabi-v7a.apk) |
+| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4206-android-x86_64.apk) |
 | Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4206-setup.exe) |
 | Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4206.zip) |
 

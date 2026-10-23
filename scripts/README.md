@@ -13,8 +13,9 @@ and `-CoreArtifactDirectory E:/POKROV-tools/temp/core-windows-4205/windows`, wit
 `-CoreRoot C:/Users/kiwun/Documents/ai/POKROV-core -SyncRuntime`. Retain the approved
 signing arguments and production transport-trust file
 `E:/POKROV-tools/temp/release-1.5.0/client-transport-trust-defines.smartdns-4186.production.json`.
-Android packages remain **4204**; their next build must include the shared Auto
-fix, while the native Stop fix applies only to Windows. See cutover readiness
+Android **4206** includes the shared Auto fix and reuses the accepted staged AAR
+with `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-4202/runtime-artifacts.json`,
+without `SyncRuntime` or a Core rebuild. The native Stop fix applies only to Windows. See cutover readiness
 for the accepted source/package scope. The default
 [tracked manifest](../config/runtime-artifacts.seed.json) is not the private
 selected binding and must not be used to restage this private build.
