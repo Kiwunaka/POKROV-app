@@ -7,15 +7,17 @@ are separate; these scripts do not publish a release.
 
 ## Runtime selection
 
-Windows **4205** uses the changed Windows Core/guard pair. Its explicit selection
+Windows **4206** reuses the accepted Windows Core/guard pair from 4205. Its selection
 is `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-windows-4205/runtime-artifacts.json`
 and `-CoreArtifactDirectory E:/POKROV-tools/temp/core-windows-4205/windows`, with
 `-CoreRoot C:/Users/kiwun/Documents/ai/POKROV-core -SyncRuntime`. Retain the approved
-signing and transport-trust arguments. Android packages remain **4204**; a
-Windows-only change does not require an Android rebuild. See cutover readiness
+signing arguments and production transport-trust file
+`E:/POKROV-tools/temp/release-1.5.0/client-transport-trust-defines.smartdns-4186.production.json`.
+Android packages remain **4204**; their next build must include the shared Auto
+fix, while the native Stop fix applies only to Windows. See cutover readiness
 for the accepted source/package scope. The default
 [tracked manifest](../config/runtime-artifacts.seed.json) is not the private
-4205 binding and must not be used to restage that build.
+selected binding and must not be used to restage this private build.
 
 - [build-android-production.ps1](build-android-production.ps1) validates an
   already staged Android runtime with `RuntimeArtifactsPath`. Copying is

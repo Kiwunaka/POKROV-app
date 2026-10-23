@@ -15,7 +15,28 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private Windows is **1.5.0+4205**, App `831a400d` including `5dd958c2`,
+Current private Windows is **1.5.0+4206**, App `addf1bc5`, with the unchanged
+Core `b3a021b` / 1.2.14 selected through the retained core-windows-4205 manifest.
+It includes the synthesized Auto stream-continuity fix and Stop-only cleanup
+of the previous profile intent. Android packages remain **4204**; the shared
+development target is 4206, not a claim that new Android APKs were built.
+The Windows build and runtime binding passed. Setup is 29,239,658 bytes;
+the delivery ZIP is 28,742,133 bytes with one `POKROV-Setup.exe`.
+CleanWin11 installation exited 0. Ordinary IS Connect reached running with
+DNS/egress valid. The first ordinary Stop kept a reusable staged profile and
+returned to the idle UI without an error. To exercise the changed branch,
+one normal minimize/resume caused an authenticated foreground refresh: native
+remained running with its staged digest cleared. The following ordinary UI Stop
+returned `initialized / failure=none / protection_retained=0`, both digests empty,
+TUN 0, idle button visible and no CONN-005/failure warning. The Stop event had
+`outcome=cancelled`, with no error. Exact DNS/routes/proxy baseline and preferences
+were restored; the temporary guest folder and generated host build/staging
+outputs were removed, final setup/ZIP retained, and the VM powered off.
+This accepts both the reusable-profile and clean-idle Stop paths. Existing
+Twitch/Naive/Flowseal/Gemini tests were not repeated. No public release or
+customer contact; SlipNet still awaits NS and its separate Auto/TUN acceptance.
+
+Previous private Windows **1.5.0+4205**, App `831a400d` including `5dd958c2`,
 with Core `b3a021b` / 1.2.14. Android packages remain **4204**; the changed Core
 and guard code is Windows-only. Core's strict-route permit now includes the
 process user, and the guard accepts only its exact service/LocalSystem identity.
@@ -32,10 +53,10 @@ changed running-profile transition, not a repeat of Gemini/Naive/Flowseal QA.
 CleanWin11 is powered off.
 Public 1.4.5 and draft 4175 remain unchanged; no customer contact.
 
-Source change after these packages: `58140491` preserves working streams when
+Included in 4206, `58140491` preserves working streams when
 the synthesized fallback `urltest` changes its probe winner. The manual selector
 still interrupts on explicit selection. The existing focused bootstrap test and
-app_shell analyze passed; private 4204/4205 were not rebuilt for this change.
+app_shell analyze passed. Android 4204 does not yet contain this shared-source fix.
 
 The 24 October Twitch check on 4205 reached the owned IS exit and played video,
 but ordinary Stop showed CONN-005 in the UI even though native was
@@ -44,10 +65,10 @@ baseline returned. A matching source defect was found: an explicit clean Stop
 could be compared to the previous profile intent after its digests were cleared.
 The Stop-only intent cleanup preserves strict Start/Apply and retained/staged
 profile checks. The existing service-client native test reproduced the defect
-and passed after the fix; the full Windows runner was not rebuilt.
+and passed after the fix; the full Windows runner is now built in 4206.
 Its relation to the VM symptom is probable; that run did not
-capture the UI failure kind. This source fix also awaits the next private build
-and one focused Stop acceptance; it does not reopen accepted transport checks.
+capture the UI failure kind. The matching clean-idle branch passed on 4206 as
+described above; it does not reopen accepted transport checks.
 
 The earlier **Android and Windows 1.5.0+4204** packages came from App
 `7ac73cf3` with Core `d80a992` / 1.2.14. All four Android APKs passed production
@@ -70,8 +91,8 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 | Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-arm64-v8a.apk) |
 | Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-armeabi-v7a.apk) |
 | Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4205-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4205.zip) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4206-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4206.zip) |
 
 Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `f019efe`
 and Node `3e23441`. Eligibility covers all active Premium, including trial and
