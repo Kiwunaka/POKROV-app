@@ -1,6 +1,6 @@
 # Client release status
 
-Updated 23 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+Updated 24 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
@@ -15,7 +15,24 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private packages are **Android and Windows 1.5.0+4204**, from App
+Current private Windows is **1.5.0+4205**, App `831a400d` including `5dd958c2`,
+with Core `b3a021b` / 1.2.14. Android packages remain **4204**; the changed Core
+and guard code is Windows-only. Core's strict-route permit now includes the
+process user, and the guard accepts only its exact service/LocalSystem identity.
+Broad or foreign higher-priority permits remain rejected; priorities and ABI
+are unchanged. The focused Core identity and native guard tests passed.
+The Windows builder verified runtime binding and 48 ABI exports; setup is
+29,238,288 bytes, with a 28,740,762-byte ZIP containing `POKROV-Setup.exe`.
+On CleanWin11 the installer exited 0. Ordinary PL Connect followed by changing
+Full Tunnel to Russia Direct through Rules/Apply returned to `running`, with
+DNS and egress verified, guard 0 and TUN 1. Ordinary Stop reached `initialized`;
+guard/TUN/app/owned browsers were 0, preferences and exact DNS/routes/proxy
+baseline restored, and the temporary QA directory removed. This accepts the
+changed running-profile transition, not a repeat of Gemini/Naive/Flowseal QA.
+CleanWin11 is powered off.
+Public 1.4.5 and draft 4175 remain unchanged; no customer contact.
+
+The earlier **Android and Windows 1.5.0+4204** packages came from App
 `7ac73cf3` with Core `d80a992` / 1.2.14. All four Android APKs passed production
 signing, non-debuggable, package/version and ABI checks; device/native acceptance
 on Android has not run. The Windows installer remains `NotSigned` (29,248,874 bytes);
@@ -36,8 +53,8 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 | Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-arm64-v8a.apk) |
 | Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-armeabi-v7a.apk) |
 | Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4204-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4204-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4204.zip) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4205-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4205.zip) |
 
 Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `f019efe`
 and Node `3e23441`. Eligibility covers all active Premium, including trial and

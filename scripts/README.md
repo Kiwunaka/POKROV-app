@@ -2,19 +2,20 @@
 
 Use [AGENTS.md](../AGENTS.md) for working/approval rules and
 [cutover readiness](../docs/operations/cutover-readiness.md) for current results.
-Public **1.4.5**, the seven-asset **1.5.0+4175 draft**, and private **4181**
-packages are separate; these scripts do not publish a release.
+Public **1.4.5**, the seven-asset **1.5.0+4175 draft**, and private packages
+are separate; these scripts do not publish a release.
 
 ## Runtime selection
 
-**Both private 4181 packages use Core 1.2.14 from `0f159bb`.** Pass
-`-RuntimeArtifactsPath E:/POKROV-tools/temp/core-urltest-history-0f159bb/runtime-artifacts.json`
-to repeat Android and Windows packaging commands, retaining the approved signing
-and transport-trust arguments. Set `CoreArtifactDirectory` to that folder's
-`android` or `windows` subdirectory respectively, with
-`-CoreRoot C:/Users/kiwun/Documents/ai/POKROV-core`; Windows also needs `-SyncRuntime`.
-The default [tracked manifest](../config/runtime-artifacts.seed.json) was not
-updated and must not be used to restage older runtime artifacts for 4181.
+Windows **4205** uses the changed Windows Core/guard pair. Its explicit selection
+is `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-windows-4205/runtime-artifacts.json`
+and `-CoreArtifactDirectory E:/POKROV-tools/temp/core-windows-4205/windows`, with
+`-CoreRoot C:/Users/kiwun/Documents/ai/POKROV-core -SyncRuntime`. Retain the approved
+signing and transport-trust arguments. Android packages remain **4204**; a
+Windows-only change does not require an Android rebuild. See cutover readiness
+for the accepted source/package scope. The default
+[tracked manifest](../config/runtime-artifacts.seed.json) is not the private
+4205 binding and must not be used to restage that build.
 
 - [build-android-production.ps1](build-android-production.ps1) validates an
   already staged Android runtime with `RuntimeArtifactsPath`. Copying is
