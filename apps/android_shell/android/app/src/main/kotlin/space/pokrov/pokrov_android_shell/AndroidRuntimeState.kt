@@ -656,7 +656,10 @@ internal object AndroidRuntimeState {
     @Synchronized
     fun updateCoreEgressValidation(validated: Boolean?) {
         coreEgressValidated = if (validated == true) {
-            activeProfileDigest != null && activeProfileDigest == stagedProfileDigest
+            // Withdrawing profile reuse leaves the service's owned profile running.
+            // A different staged profile still requires its own successful start.
+            activeProfileDigest != null && (activeProfileDigest == stagedProfileDigest ||
+                (phase == AndroidRuntimePhase.RUNNING && stagedProfileDigest == null && stagedConfigPath == null))
         } else validated
         if (validated == true && coreEgressValidated != true) {
             lastFailureKind = "profile_identity_mismatch"

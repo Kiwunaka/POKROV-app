@@ -723,6 +723,14 @@ class AndroidRuntimeStateTest {
         AndroidRuntimeState.updateCoreEgressValidation(true)
         assertEquals(first, AndroidRuntimeState.snapshot()["effectiveProfileDigest"])
 
+        // Account refresh withdraws reuse, not the profile already owned by the live service.
+        AndroidRuntimeState.invalidateStagedProfile()
+        AndroidRuntimeState.updateCoreEgressValidation(true)
+        assertTrue(AndroidRuntimeState.snapshot()["core_egress_validated"] as Boolean)
+        assertEquals(first, AndroidRuntimeState.snapshot()["effectiveProfileDigest"])
+        assertNull(AndroidRuntimeState.snapshot()["stagedProfileDigest"])
+        assertNull(AndroidRuntimeState.snapshot()["last_failure_kind"])
+
         // The same path is now owned by B. A delayed success from A proves nothing about B.
         AndroidRuntimeState.markProfileStaged("/synthetic/profile.json", profileDigest = second)
         AndroidRuntimeState.updateCoreEgressValidation(true)

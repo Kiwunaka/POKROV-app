@@ -626,6 +626,14 @@ the first snapshot, without Core setup or TUN changes. Native candidate completi
 and protected handoff failure log only fixed result categories and elapsed time;
 they never include identifiers, profiles or exception text.
 
+Withdrawing Android's reusable staged profile during an account refresh does not
+withdraw the profile already owned by a running VPN service. A fresh egress
+success remains valid for that active profile when both staged fields are empty;
+a different or unbound staged file still cannot borrow the old profile's proof.
+Start/Apply binding remains strict, and reconnect still requires a staged profile.
+This fixes the observed 4206 foreground-return `profile_identity_mismatch` with a
+healthy live tunnel; physical acceptance belongs to the next Android package.
+
 The foreground notification and its public lockscreen version use
 `VISIBILITY_PRIVATE` and a generic protection state. Country, route, selected
 applications, endpoint and speed are available only inside the authenticated
