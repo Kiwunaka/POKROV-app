@@ -362,6 +362,8 @@ native startup attempts now emit only closed stage/code/error-type, attempt
 number and elapsed milliseconds to the existing bounded journal and the
 `POKROV-Egress` Logcat tag, readable without `run-as`. A bare Core deadline has
 stage `unknown`; no profile, destination or exception text is emitted.
+The same tag marks each actual startup probe call with only its attempt number
+and fixed target kind, distinguishing it from an unfinished Core start.
 
 Android and Windows recognize the selective producer's exact `api.pokrov.space` /
 `app.pokrov.space` pair in matching TCP/443 and VPN DNS rules. Ordinary connect
