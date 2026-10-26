@@ -140,6 +140,26 @@ internal data class AndroidCoreEgressProbeTarget(
     val protocol: String = "unknown",
 )
 
+/** A nonrenewable QA Connect owner dispatches service proof only once. */
+internal class AndroidFirstProviderQaProbe {
+    private var dispatchedRequest: String? = null
+
+    @Synchronized
+    fun clear() { dispatchedRequest = null }
+
+    @Synchronized
+    fun dispatch(request: String, configured: Boolean, target: AndroidCoreEgressProbeTarget?,
+        server: Any?, current: () -> Boolean, execute: (() -> Unit) -> Boolean,
+    ): Boolean {
+        if (!configured || target?.kind != AndroidCoreEgressProbeTargetKind.SMART_ACCESS || server == null || !current()) return false
+        if (dispatchedRequest == request) return true
+        val queued = execute { if (current()) AndroidCoreEgressProbe.probe(target, server) }
+        if (!queued || !current()) return false
+        dispatchedRequest = request
+        return true
+    }
+}
+
 /** One completed native call; a deadline alone does not identify an IO stage. */
 internal data class AndroidCoreEgressProbeDiagnostic(
     val code: String,
@@ -275,12 +295,15 @@ internal object AndroidCoreEgressProbe {
         return target.takeIf { resolver["detour"] == target }
     }
 
-    private fun smartAccessTarget(config: JSONObject): AndroidCoreEgressProbeTarget? {
+    fun firstProviderQaTarget(configContent: String): AndroidCoreEgressProbeTarget? =
+        runCatching { smartAccessTarget(JSONObject(configContent), firstProviderQa = true) }.getOrNull()
+
+    private fun smartAccessTarget(config: JSONObject, firstProviderQa: Boolean = false): AndroidCoreEgressProbeTarget? {
         val route = config.optJSONObject("route") ?: return null
         val dns = config.optJSONObject("dns") ?: return null
         return resolveSmartAccessTarget(route.optString("final"),
             smartAccessRows(config.optJSONArray("outbounds")), smartAccessRows(route.optJSONArray("rules")),
-            smartAccessRows(dns.optJSONArray("rules")), smartAccessRows(dns.optJSONArray("servers")))
+            smartAccessRows(dns.optJSONArray("rules")), smartAccessRows(dns.optJSONArray("servers")), firstProviderQa)
     }
 
     private fun smartAccessRows(array: JSONArray?): List<Map<String, Any?>> =
@@ -303,10 +326,14 @@ internal object AndroidCoreEgressProbe {
     internal fun resolveSmartAccessTarget(
         finalTag: String, outbounds: List<Map<String, Any?>>, routeRules: List<Map<String, Any?>>,
         dnsRules: List<Map<String, Any?>>, dnsServers: List<Map<String, Any?>>,
+        firstProviderQa: Boolean = false,
     ): AndroidCoreEgressProbeTarget? {
         // The established owned VPN proof keeps precedence, including a
         // malformed partial boundary: it must not become a Smart proof.
-        if ((routeRules + dnsRules).any { rule ->
+        if (firstProviderQa) {
+            if (outbounds.count { it["type"] == "pokrov-smart-access" } != 1 ||
+                resolveProtectedTarget(finalTag, routeRules, dnsRules, dnsServers) == null) return null
+        } else if ((routeRules + dnsRules).any { rule ->
                 listOf("domain", "domain_suffix").any { key ->
                     (rule[key] as? List<*>)?.contains("api.pokrov.space") == true
                 }

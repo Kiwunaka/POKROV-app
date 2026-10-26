@@ -56,6 +56,7 @@ import java.util.concurrent.Executors
 class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHandler {
     private var commandServer: CommandServer? = null
     @Volatile private var activeLocalDpi: AndroidLocalDpiAdmission? = null
+    private val firstProviderQaProbe = AndroidFirstProviderQaProbe()
     private var activeConfigContent: String? = null
     private var activeVariantConfigContent: String? = null
     @Volatile private var activeCatalogAppBinding: AndroidCatalogAppBinding? = null
@@ -476,6 +477,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         }
         scope?.close()
         activeLocalDpi = null
+        firstProviderQaProbe.clear()
         if (scope != null) {
             AndroidRuntimeState.endTunnelTrafficSession(scope.generation)
         }
@@ -2301,19 +2303,47 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         fun configureSmartAccessRuntimeControl(profileDigest: String, configJson: String, renewal: Boolean = false,
             connectRequestId: String? = null, reply: (Boolean?) -> Unit) {
             // This sensitive command never enters the saved profile or logs.
+            var firstProviderQa = false
             val bound = try {
                 if (configJson.toByteArray(Charsets.UTF_8).size > 16384) false else {
                     val config = JSONObject(configJson)
+                    firstProviderQa = !renewal && connectRequestId != null && config.optString("capability").startsWith("saqa1.")
                     val platform = if (renewal) config.optJSONObject("lease")?.optString("platform") else config.optString("platform")
                     config.optString("profile_digest") == profileDigest && platform == "android"
                 }
             } catch (_: org.json.JSONException) { false }
             if (!bound) { reply(null); return }
-            restrictRuntimeProfile(profileDigest, reply, invalidateBefore = true, connectRequestId = connectRequestId) { server ->
-                val method = if (renewal) "configureSmartAccessRenewal" else "configureSmartAccessRuntimeControl"
-                CommandServer::class.java.getMethod(method, String::class.java, String::class.java)
-                    .invoke(server, profileDigest, configJson) as? Boolean
+            var configuredServer: CommandServer? = null
+            val configuredReply: (Boolean?) -> Unit = { configured ->
+                if (configured == true && firstProviderQa) {
+                    val queued = queueFirstProviderQaProbe(profileDigest, connectRequestId!!, configuredServer)
+                    reply(if (queued) true else null)
+                } else reply(configured)
             }
+            restrictRuntimeProfile(profileDigest, configuredReply, invalidateBefore = true, connectRequestId = connectRequestId) { server ->
+                val method = if (renewal) "configureSmartAccessRenewal" else "configureSmartAccessRuntimeControl"
+                val configured = CommandServer::class.java.getMethod(method, String::class.java, String::class.java)
+                    .invoke(server, profileDigest, configJson) as? Boolean
+                if (configured == true) configuredServer = server
+                configured
+            }
+        }
+
+        private fun queueFirstProviderQaProbe(profileDigest: String, request: String, server: CommandServer?): Boolean {
+            val owner = runtimeOwner ?: return false
+            val session = owner.activeRuntimeSession ?: return false
+            val content = owner.activeConfigContent ?: return false
+            fun current(): Boolean = runtimeOwner === owner && owner.activeRuntimeSession === session &&
+                owner.commandServer === server && owner.activeTun != null &&
+                owner.hasCompletedBoundStart(request, profileDigest) &&
+                AndroidConnectRequestOwner.serviceFor(request) === owner && AndroidConnectRequestOwner.owns(request) &&
+                AndroidRuntimeState.snapshot()["core_egress_validated"] == true
+            if (!current()) return false
+            val target = AndroidCoreEgressProbe.firstProviderQaTarget(content)
+            // Configure ACK confirms installation and dispatch, not service
+            // readiness. Core publishes its captured lease receipt separately.
+            val queued = owner.firstProviderQaProbe.dispatch(request, true, target, server, ::current, session::execute)
+            return queued && current()
         }
 
         fun renewSmartAccessLease(profileDigest: String, expectedLeaseId: String, nextLeaseId: String,

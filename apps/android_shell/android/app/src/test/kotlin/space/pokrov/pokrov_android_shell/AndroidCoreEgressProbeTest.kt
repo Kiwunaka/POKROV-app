@@ -332,6 +332,40 @@ class AndroidCoreEgressProbeTest {
         assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.resultFromCore(core,
             AndroidCoreEgressProbe.resolveFinalTarget(pairedTarget!!, mapOf("vpn" to "selector"), emptyMap())!!))
         assertEquals("vpn", core.lastTag)
+        val qaOutbounds = outbounds + mapOf("type" to "selector", "tag" to "vpn")
+        val qaTarget = AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", qaOutbounds,
+            listOf(routeRule, pairedRoute), listOf(dnsRule, pairedDns), mixedDns, firstProviderQa = true)
+        assertEquals(target, qaTarget)
+        assertNull("An ordinary start still proves VPN before any QA service",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", qaOutbounds,
+                listOf(routeRule, pairedRoute), listOf(dnsRule, pairedDns), mixedDns))
+        assertNull("QA must not choose one of several anchors",
+            AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", qaOutbounds +
+                (outbounds.last() + ("tag" to "extra-anchor")),
+                listOf(routeRule, pairedRoute), listOf(dnsRule, pairedDns), mixedDns, firstProviderQa = true))
+        var currentOwner = true
+        var pending: (() -> Unit)? = null
+        var dispatches = 0
+        val qaProbe = AndroidFirstProviderQaProbe()
+        fun dispatch(task: () -> Unit): Boolean { pending = task; dispatches++; return true }
+        assertFalse(qaProbe.dispatch("owner-a", false, qaTarget, core,
+            { currentOwner }, ::dispatch))
+        assertNull(pending)
+        assertTrue(qaProbe.dispatch("owner-a", true, qaTarget, core,
+            { currentOwner }, ::dispatch))
+        assertTrue(qaProbe.dispatch("owner-a", true, qaTarget, core, { currentOwner }, ::dispatch))
+        assertEquals("A control refresh must not rerun the same QA attempt", 1, dispatches)
+        assertEquals("Configure must queue the service proof, not block its serial owner", "vpn", core.lastTag)
+        currentOwner = false // Stop invalidates this session before its queued work runs.
+        qaProbe.clear()
+        pending!!.invoke()
+        assertEquals("A cancelled owner cannot start service proof", "vpn", core.lastTag)
+        currentOwner = true
+        assertTrue(qaProbe.dispatch("owner-a", true, qaTarget, core,
+            { currentOwner }, ::dispatch))
+        assertEquals("Stop cleanup must release the old dispatch marker", 2, dispatches)
+        pending!!.invoke()
+        assertEquals("The configured current owner proves only its QA service", tag, core.lastTag)
         assertNull("Route and DNS must cover the same owned origins", protectedProbe(dns = vpnDnsRule))
         assertNull("An extra domain must not acquire owned VPN authority",
             protectedProbe(route = pairedRoute + ("domain" to (apiDomains + "foreign.example"))))

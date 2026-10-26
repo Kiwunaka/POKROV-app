@@ -374,6 +374,15 @@ number and elapsed milliseconds to the existing bounded journal and the
 stage `unknown`; no profile, destination or exception text is emitted.
 The same tag marks each actual startup probe call with only its attempt number
 and fixed target kind, distinguishing it from an unfinished Core start.
+After successful bound QA control configuration, Android queues one existing
+SmartAccess readiness probe for the sole active QA anchor, behind the already
+verified VPN/API boundary. It uses the current session worker and captured
+request/profile/Core server ownership; Stop and replacement retain their
+existing cancellation. The ACK confirms configuration and dispatch, while
+`readSmartAccessLeases` separately reports pending/pass/failure stages. Neither
+browser traffic nor receipt reads start this probe, and its result does not
+change global VPN health.
+Repeated control refresh for the same Connect owner does not rerun the probe.
 
 Android and Windows recognize the selective producer's exact `api.pokrov.space` /
 `app.pokrov.space` pair in matching TCP/443 and VPN DNS rules. Ordinary connect
