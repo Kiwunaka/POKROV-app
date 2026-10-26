@@ -1686,14 +1686,20 @@ void main() {
     await tester.pump();
   });
 
-  test('Android foreground network context changes reuse protected handoff without rejecting current', () async {
+  test('Android foreground network context changes use authorized cache before a hanging API', () async {
     final runtime = _Runtime()..supportsCandidates = true..captivePortal = false;
-    final manager = _manager(runtime, _Bootstrapper(catalog: true),
+    final bootstrapper = _CachedBootstrapper();
+    final manager = _manager(runtime, bootstrapper,
         currentWifiProbe: () async => _foregroundWifi(runtime));
     addTearDown(manager.dispose);
     await manager.connect();
+    final resolutionsBefore = bootstrapper.resolutions.length;
+    bootstrapper.gate = Completer<void>();
+    addTearDown(() => bootstrapper.gate!.complete());
     runtime.candidateContext = 'context-b'; // Same selection/cache key, new native epoch.
-    await manager.refresh();
+    await manager.refresh().timeout(const Duration(seconds: 1));
+    expect(bootstrapper.resolutions, hasLength(resolutionsBefore),
+        reason: 'an uplink change must not wait for the API before trying an authorized saved route');
     expect(runtime.handoffCalls, 1);
     expect(runtime.handoffProfiles.single, _candidates.first.candidateRef);
     expect(runtime.connectCalls, 1);

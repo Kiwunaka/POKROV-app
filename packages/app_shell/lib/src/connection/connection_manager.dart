@@ -1357,7 +1357,7 @@ class ConnectionManager extends ChangeNotifier {
         _activePhysicalNetwork = network;
         final reference = _activeCandidateRef!;
         await _replaceCommand(() => _recoverCandidateConnection(latest, reference,
-            confirmedFailure: false), automatic: true);
+            confirmedFailure: false, preferCachedProfile: true), automatic: true);
         return true;
       }
       if (!preferences.autoConnectOnUntrustedWifi || !_clientExperienceLoaded ||
@@ -5145,7 +5145,7 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   Future<void> _recoverCandidateConnection(RuntimeSnapshot? failed, String currentRef,
-      {int? ownerGeneration, bool confirmedFailure = false,
+      {int? ownerGeneration, bool confirmedFailure = false, bool preferCachedProfile = false,
       ({CatalogDomainPolicy policy, String digest})? smartAccessFallback}) async {
     final engine = _runtimeEngine;
     _cancelPostConnectHostHealthPolling();
@@ -5253,10 +5253,10 @@ class ConnectionManager extends ChangeNotifier {
       for (var activation = 0; activation < 3; activation++) {
       var usedCachedProfile = false;
       ManagedProfilePayload? payload;
-      if (confirmedFailure) {
+      if (confirmedFailure || preferCachedProfile) {
         try {
-          // The monitor already disproved current. Race ready alternatives
-          // before waiting for the control API or probing current a second time.
+          // Network movement can make the API unreachable. Probe authorized saved
+          // material first; only a confirmed failure excludes the current route.
           payload = await recoverCached();
           usedCachedProfile = payload != null;
         } on BootstrapFailure catch (error) {

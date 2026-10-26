@@ -634,6 +634,13 @@ Start/Apply binding remains strict, and reconnect still requires a staged profil
 This fixes the observed 4206 foreground-return `profile_identity_mismatch` with a
 healthy live tunnel; physical acceptance belongs to the next Android package.
 
+On an Android physical-network change, protected handoff first probes the saved
+material admitted by the existing account/install/preferences/expiry cache reader.
+The current route remains eligible unless a transport failure actually disproved
+it. A missing or exhausted cache proceeds to the ordinary API path; user Apply and
+manual repair retain their previous order. API availability no longer delays this
+handoff's first cached probe, and neither probing nor handoff extends cache expiry.
+
 The foreground notification and its public lockscreen version use
 `VISIBILITY_PRIVATE` and a generic protection state. Country, route, selected
 applications, endpoint and speed are available only inside the authenticated
