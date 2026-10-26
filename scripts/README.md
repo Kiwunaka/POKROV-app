@@ -7,15 +7,16 @@ are separate; these scripts do not publish a release.
 
 ## Runtime selection
 
-Windows **4206** reuses the accepted Windows Core/guard pair from 4205. Its selection
+Windows **4209** reuses the accepted Windows Core/guard pair from 4205. Its selection
 is `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-windows-4205/runtime-artifacts.json`
 and `-CoreArtifactDirectory E:/POKROV-tools/temp/core-windows-4205/windows`, with
 `-CoreRoot C:/Users/kiwun/Documents/ai/POKROV-core -SyncRuntime`. Retain the approved
 signing arguments and production transport-trust file
 `E:/POKROV-tools/temp/release-1.5.0/client-transport-trust-defines.smartdns-4186.production.json`.
-Android **4206** includes the shared Auto fix and reuses the accepted staged AAR
+Android **4209** includes the active-profile and uplink recovery fixes; both
+platform packages contain the independent-bridge cache selection. Android reuses the accepted staged AAR
 with `-RuntimeArtifactsPath E:/POKROV-tools/temp/core-android-4202/runtime-artifacts.json`,
-without `SyncRuntime` or a Core rebuild. The native Stop fix applies only to Windows. See cutover readiness
+without `SyncRuntime` or a Core rebuild. See cutover readiness
 for the accepted source/package scope. The default
 [tracked manifest](../config/runtime-artifacts.seed.json) is not the private
 selected binding and must not be used to restage this private build.

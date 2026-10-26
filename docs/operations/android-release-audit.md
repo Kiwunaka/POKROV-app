@@ -1,14 +1,23 @@
 # Android acceptance
 
-Updated 21 October 2026. Public version remains **1.4.5**; the seven-asset
+Updated 26 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The current private candidate is
-**1.5.0+4185**, built from App `54a5e680` with the ready Core `0f159bb` / 1.2.14.
-The built-in Xbox DNS preset was removed in `ed2a982d`. Packaging is accepted:
-universal, arm64-v8a, armeabi-v7a and x86_64 APKs are production-signed.
-The [universal APK](E:/POKROV-tools/temp/pokrov-1.5.0-4185-android-universal.apk)
-and the other artifact paths are listed in [cutover readiness](cutover-readiness.md).
-No 4185 installation, phone/emulator or network check was performed. The phone
-requires a new explicit return; public release still requires the owner's yes.
+**1.5.0+4209**, built from App `41b47215` with the unchanged Core `d80a992` / 1.2.14.
+All four APKs passed production signature, package/version, ABI, non-debuggable
+and runtime-binding checks. The returned phone runs ARM64 4209 with account data
+preserved. [Artifacts and exact scope](cutover-readiness.md).
+
+The phone exposed a false identity failure after staging withdrawal; `03fe046d`
+fixes it, with the existing test RED→PASS in Direct and Store. Physical 4207
+foreground refresh and subsequent periodic health remained valid. `39bfe6bf`
+tries valid saved material first on uplink change; `5555a6ad` keeps an independent
+known bridge alongside the useful protocol reserve. Targeted tests/analyze passed.
+On 4209, ordinary RF2→IS LTE Connect and both live LTE/Wi-Fi transitions passed
+fresh full 64 KiB candidate receipts. UI Stop returned idle and removed the VPN
+service/network. The zero-balance LTE attempts before the owner's top-up are not
+transport failures for acceptance. No customer contact or public release occurred.
+The final ARM64 package is installed; Auto/Russia Direct/WARP off, the prior
+advanced view and original Wi-Fi/mobile/system-DNS settings are restored.
 The [external DNS browser comparison](../architecture/smart-access-dns.md) is
 Windows-only research, not Android or POKROV provider acceptance.
 
@@ -39,14 +48,16 @@ no payment, support message or release publication occurred.
 
 [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the current release queue; [cutover-readiness.md](cutover-readiness.md)
-records the package status and accepted checks. The phone is unavailable until
-the owner explicitly returns it. The owner's mobile Telegram WEB acceptance on
-CH/Birch on 18 October does not authorize a new device session.
+records the package status and accepted checks. The owner returned the phone on
+26 October. The older mobile Telegram WEB acceptance on CH/Birch remains separate.
 
 ## Accepted physical checks
 
 | Build / scenario | Result and scope |
 | --- | --- |
+| 4209 Auto and IS on funded Beeline LTE | Ordinary Connect selected RF2→IS and completed `http_64k` in 1,984 ms; overall connect 9,585 ms. This is bridge VLESS, not IS direct or UDP. |
+| 4209 live network movement | RF2→IS retained the selected country across LTE→Wi-Fi→LTE; fresh `http_64k` success on Wi-Fi (1,431 ms) and LTE (1,637 ms). Wi-Fi was disabled at device UTC 00:48:45; the new LTE receipt at 00:48:50.59 supports about six seconds for that case, not a universal deadline. |
+| 4209 Stop | Ordinary UI Stop produced idle, no VPN service and no OS VPN network within the five-second observation. |
 | 4175 routing catalog | Rules accepted live signed catalog 26 / security 2, expiry 15 November 2026, without cached fallback. |
 | 4175 CH and DE Hysteria2 on Wi-Fi | Ordinary country selection after Birch/Fjord migration completed 64 KiB with effective Hysteria2, native egress and matching staged/effective revisions. The earlier 4174 CH activation-resolver failure was fixed and checked. |
 | 4174 DE2 AWG on Wi-Fi | Ordinary Germany Connect selected `de2:awg31_lab`, completed 64 KiB and reached native egress; Stop removed the tunnel. |
@@ -63,10 +74,14 @@ not repeat unchanged protocol QA on all ABIs.
 
 ## Limits retained from earlier checks
 
-- Recent acceptance does not establish live-tunnel Wi-Fi/LTE recovery deadlines,
-  long-running stability, all cellular protocols or every WARP variant. A cellular
+- The 4209 case accepts the described live Wi-Fi/LTE movement, not universal
+  recovery deadlines, long-running stability, all cellular protocols or every WARP variant. A cellular
   catalog refresh and DE/Mini, DE2/Mini and DE/RF2 attempts on 4169 failed without
   a tunnel; the later PL cellular success does not close those distinct cases.
+- After the 26 October top-up, direct IS HTTPS in Chrome still returned
+  `ERR_TIMED_OUT`; RF2 works. IS direct VLESS/HY2/AWG and Android Naive were not
+  forced through a new QA path: the current Android UI has no exclusive per-device
+  transport selector. These results also do not accept Android SmartDNS/LocalDPI.
 - Direct RU VLESS/AWG failed on 4172/4173; the precise cause was not established.
   The owner subsequently deleted Hostkey RU; its protected archive remains on
   Brain. The retirement replaces the old direct RU AWG acceptance requirement.

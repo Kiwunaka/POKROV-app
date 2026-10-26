@@ -1,6 +1,6 @@
 # Client release status
 
-Updated 24 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
+Updated 26 October 2026. The owner's [Known Problems](C:/Users/kiwun/Downloads/POKROV_KNOWN_PROBLEMS_2026-10-13.md)
 is the only current release queue; [Execution section 0](C:/Users/kiwun/Downloads/POKROV_EXECUTION_PLAN_2026-09-24.md)
 explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
@@ -15,14 +15,46 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private Windows is **1.5.0+4206**, App `addf1bc5`, with the unchanged
+Current private Android and Windows are **1.5.0+4209**, App `41b47215`.
+Android reuses Core `d80a992` through the core-android-4202 manifest; Windows
+reuses Core `b3a021b` through the core-windows-4205 manifest. Both are Core 1.2.14;
+neither Core was rebuilt. All four Android APKs passed production signing,
+package/version/ABI/non-debuggable/runtime binding. The Windows bundle passed
+version and runtime binding; setup is 29,242,184 bytes and the delivery ZIP is
+28,744,663 bytes with the single entry `POKROV-Setup.exe`.
+
+The returned physical Android phone exposed a false `profile_identity_mismatch`
+after account refresh withdrew reusable staging while the active profile remained
+running. `03fe046d` fixes that exact state without relaxing Start/Apply identity;
+the existing regression failed before the fix and passed in both Android flavors.
+`39bfe6bf` tries authorized cached material before waiting for the API on a physical
+network change. `5555a6ad` preserves an independent known bridge in that cache;
+Mini/its XHTTP alias cannot consume both ingress choices. Related existing tests
+and app-shell analyze passed; access/expiry binding and probe budgets are unchanged.
+
+On 4209, ordinary Iceland Connect on funded Beeline LTE selected RF2 and completed
+the full 64 KiB probe. Live LTE→Wi-Fi→LTE recovered automatically, with fresh
+`http_64k` success receipts for both new networks and no profile-identity failure.
+The measured Wi-Fi→LTE case completed in about six seconds. Ordinary UI Stop
+returned to idle and removed both the Android VPN service and OS VPN network.
+The final packaged ARM64 APK was installed with data preserved. Auto country,
+Russia Direct, WARP off, the prior advanced view, Wi-Fi/mobile data enabled and
+the original system DNS/always-on settings were restored; VPN remains stopped.
+Earlier LTE failures with zero SIM balance are not VPN defects. Direct Iceland
+HTTPS still timed out on funded LTE; bridge success does not accept IS direct
+VLESS/HY2/AWG. Android Naive, SmartDNS and LocalDPI-specific acceptance remains
+separate; the current client has no per-device exclusive transport QA selector.
+No accepted Windows transport/VM checks were repeated for this shared cache change.
+Public release, customer contact and paused automations remain unchanged.
+
+Previously accepted private Windows **1.5.0+4206**, App `addf1bc5`, used the unchanged
 Core `b3a021b` / 1.2.14 selected through the retained core-windows-4205 manifest.
 It includes the synthesized Auto stream-continuity fix and Stop-only cleanup
-of the previous profile intent. Current private Android is also **4206**, App
+of the previous profile intent. Android at that point was **4206**, App
 `175eeb1c` (the same code plus documentation), using the accepted Core
 `d80a992` / 1.2.14 AAR. Universal, arm64-v8a, armeabi-v7a and x86_64 APKs passed
 production signing, package/version, ABI, non-debuggable and runtime-binding
-checks. Core was not rebuilt; phone acceptance still awaits its explicit return.
+checks. Core was not rebuilt; phone acceptance had not yet resumed at that date.
 The Windows build and runtime binding passed. Setup is 29,239,658 bytes;
 the delivery ZIP is 28,742,133 bytes with one `POKROV-Setup.exe`.
 CleanWin11 installation exited 0. Ordinary IS Connect reached running with
@@ -90,12 +122,12 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
-| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4206-android-universal.apk) |
-| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4206-android-arm64-v8a.apk) |
-| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4206-android-armeabi-v7a.apk) |
-| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4206-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4206-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4206.zip) |
+| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-universal.apk) |
+| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-arm64-v8a.apk) |
+| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-armeabi-v7a.apk) |
+| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-x86_64.apk) |
+| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4209-setup.exe) |
+| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4209.zip) |
 
 Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `f019efe`
 and Node `3e23441`. Eligibility covers all active Premium, including trial and

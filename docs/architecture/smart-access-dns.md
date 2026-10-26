@@ -1,6 +1,6 @@
 # Smart Access DNS routing
 
-## Current external-provider work — 23 October 2026
+## Current external-provider work — 26 October 2026
 
 The owner approved commercial embedded use of Shecan, Astra/Astracat, GeoHide,
 Bezmezhau, WLrus, DNS-AI and Zapret DNS. For these agreements, an eligible paid
@@ -9,12 +9,14 @@ bonus, manual or family access. The server uses the existing trial/paid/bonus
 Premium projection, including its manual/family handling, and excludes Free and
 expired/blocked access. No payment receipt, `provider_payment` origin or new
 entitlement class is required. Provider fees (fixed or percentage) remain under
-discussion; no spending is authorized. Customer contact, phone acceptance and
-public release remain paused. The owner also accepted WhiteDNS and SlipNet for
+discussion; no spending is authorized. Customer contact and public release remain
+paused; the phone returned on 26 October, while provider/DPI-specific Android
+acceptance is still separate. The owner also accepted WhiteDNS and SlipNet for
 all active Premium access; their separate DNS-tunnel addon is not a SmartDNS
 endpoint. SlipNet's CH endpoint is live and accepted directly; the owner has
-saved the NS records, but the last authoritative Timeweb read at 04:53 UTC still
-lacked the delegation. Managed delivery stays disabled pending recursive and Auto/TUN
+saved the NS records, but all four Timeweb servers still lacked delegation on
+26 October. The provider's 24-hour publication window has elapsed; the owner has
+a prepared support request. Managed delivery stays disabled pending recursive and Auto/TUN
 acceptance. Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
@@ -67,14 +69,13 @@ Those are last-observed server facts; the 4200 pass changed neither catalog nor
 provider policy and did not repeat the server checks. Server `8018d52` enforces immutable provider kind for an
 existing provider ID. No commercial COMSS offer was added.
 
-Current private packages are **Windows and Android 4204 / App `7ac73cf3` / Core
-`d80a992` (1.2.14)**. The unsigned installer (29,248,874 bytes) and single-entry
-delivery ZIP (28,751,166 bytes) passed packaging checks; the actual Core DLL
-reports `dnstt_vless_v1` and `singbox_naive_h2_v1`. Android's four APKs passed
-production signing/package/version/ABI checks with the same four-ABI Core AAR.
-Windows 4204 installed with exit 0 and passed the scoped UI/TUN Naive run below.
-SlipNet recursive DNS/Auto/TUN acceptance remains pending; the phone was not
-used. Previous checks retain their original scope.
+Current private packages are **Windows and Android 4209 / App `41b47215`**, using
+the unchanged Windows `b3a021b` and Android `d80a992` Core 1.2.14 artifacts.
+Packaging and the new Android RF2→IS/network-movement checks are recorded in
+[cutover readiness](../operations/cutover-readiness.md); they do not accept
+Android provider SmartDNS, LocalDPI or Naive. Windows 4204's scoped UI/TUN Naive
+run below remains accepted. SlipNet recursive DNS/Auto/TUN still waits for NS.
+Previous checks retain their original scope.
 The already accepted 4195 Gemini checks were not
 repeated: in ordinary Edge with default settings, POKROV
 returned real Gemini answers about Paris through WLrus `191.217.212.16` and
