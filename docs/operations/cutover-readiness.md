@@ -15,15 +15,29 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Latest accepted private Android is **1.5.0+4211**, App `eaf5d0d1` / Core
-`58b11d4`; Windows remains **4209**, App `41b47215` / Core `b3a021b`
-(core-windows-4205 manifest). The Windows Core `58b11d4` was built, but no
-installer using it has been built. App `088a9240` fixes the Locations refresh
-race and passed its focused regression; it is not in these accepted APKs.
-Private Android **4212** (`a8fee26d`, including parser fix `6e8cb4da`) is being
-prepared; it is not physically accepted. The owner has taken the phone again,
-so remaining device acceptance waits for its return. The preceding 4209 four-ABI
-Android set and Windows setup/ZIP passed packaging and runtime binding.
+Private **Android ARM64 and Windows 1.5.0+4212**, App `570af7ff` / Core
+`58b11d4`, are built. Android's 86,145,493-byte APK passed production signing,
+version/ABI/runtime binding; it is not installed because the owner has the phone,
+which remains on accepted 4211. Windows setup is 29,248,619 bytes; its 28,750,929-byte
+ZIP has one `POKROV-Setup.exe`. Packaging passed and CleanWin11 installation exited 0.
+The Locations and Android parser fixes are included but not physically accepted
+on Android. **4212 is not a final candidate** because of the Windows findings below.
+The preceding 4209 four-ABI Android set and Windows bundle retain their accepted scope.
+
+On Windows4212, ordinary IS Auto Connect with Selective YouTube/LocalDPI reached
+native running with DNS/egress flags valid. Real Edge playback advanced 93.357674 s
+at 480p: 2,809 frames, 58 dropped, readyState4, no video error; 31 CDN requests used
+HTTP/1.1. Local TCP21/VPN TCP0, admitted1/failed0. This accepts the video/TCP case,
+not permanent absence of ads, IPv6 or the general VPN-proof boundary.
+At 04:32 UTC the periodic native three-second probe returned `core_egress_timeout`
+and triggered RF2 recovery. After fresh healthy native state the UI still retained
+failure/Retry semantics while visually showing Disconnect. Source review also
+found the static `pokrov.space` reserve outside protected routing in Selective.
+Both corrections are in progress; probe timeouts have not been changed.
+Ordinary tray Disconnect reached initialized/running0/guard0, then Exit left app0/
+winws0. Russia Direct, DPI off, empty service selection and IS were restored;
+DNS/routes/proxy exactly matched baseline, owned Edge/TUN were absent and VM
+PoweredOff was confirmed. No fresh server-health or fleet result is implied.
 
 Android **4210**, App `08222a80` / Core `58b11d4`, passed ordinary UI/TUN
 Naive CH: exact 64 KiB in 1,019 ms, Connect 10,257 ms, then normal Stop with
@@ -140,13 +154,14 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
+| Android arm64-v8a, built 4212; device check pending | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4212-android-arm64-v8a.apk) |
 | Android arm64-v8a, accepted 4211 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4211-android-arm64-v8a.apk) |
 | Android universal, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-universal.apk) |
 | Android arm64-v8a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-arm64-v8a.apk) |
 | Android armeabi-v7a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-armeabi-v7a.apk) |
 | Android x86_64, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-x86_64.apk) |
-| Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4209-setup.exe) |
-| Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4209.zip) |
+| Windows x64 installer, 4212; open findings above | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4212-setup.exe) |
+| Windows delivery ZIP, 4212 | [ZIP](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4212-setup.zip) |
 
 Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `f019efe`
 and Node `3e23441`. Eligibility covers all active Premium, including trial and

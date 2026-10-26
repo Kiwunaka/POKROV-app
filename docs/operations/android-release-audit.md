@@ -1,11 +1,13 @@
 # Android acceptance
 
 Updated 26 October 2026. Public version remains **1.4.5**; the seven-asset
-**1.5.0+4175** draft is unchanged. Latest accepted private Android is
-**1.5.0+4211**, App `eaf5d0d1` / Core `58b11d4`. Android4212 (`a8fee26d`) is being
-prepared with Locations fix `088a9240` and parser fix `6e8cb4da`; targeted source
-checks passed, but these fixes are not physically accepted. The owner has taken
-the phone again; the remaining device check waits for its return.
+**1.5.0+4175** draft is unchanged. Android ARM64 **1.5.0+4212**, App `570af7ff` /
+Core `58b11d4`, is built: 86,145,493 bytes, production signing, version/ABI/runtime
+binding passed. It is not installed; the owner has the phone, still on accepted
+**4211**, App `eaf5d0d1` / the same Core. The included Locations and parser fixes
+are not physically accepted. Android SmartDNS remains public OFF; SmartDNS and
+LocalDPI/YouTube device acceptance waits for return. Windows4212 video/TCP success
+does not close these Android cases or its own remaining proof/UI findings.
 [Artifacts and exact scope](cutover-readiness.md).
 
 The phone exposed a false identity failure after staging withdrawal; `03fe046d`
