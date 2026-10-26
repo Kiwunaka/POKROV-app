@@ -2308,6 +2308,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         fun configureSmartAccessRuntimeControl(profileDigest: String, configJson: String, renewal: Boolean = false,
             connectRequestId: String? = null, reply: (Boolean?) -> Unit) {
             // This sensitive command never enters the saved profile or logs.
+            val boundControl = !renewal && connectRequestId != null
             var firstProviderQa = false
             val bound = try {
                 if (configJson.toByteArray(Charsets.UTF_8).size > 16384) false else {
@@ -2317,7 +2318,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     config.optString("profile_digest") == profileDigest && platform == "android"
                 }
             } catch (_: org.json.JSONException) { false }
-            if (!bound) { reply(null); return }
+            if (!bound) {
+                if (boundControl) logFirstProviderQaControl("config_invalid")
+                reply(null)
+                return
+            }
             var configuredServer: CommandServer? = null
             val configuredReply: (Boolean?) -> Unit = { configured ->
                 if (configured == true && firstProviderQa) {
@@ -2325,7 +2330,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     reply(if (queued) true else null)
                 } else reply(configured)
             }
-            restrictRuntimeProfile(profileDigest, configuredReply, invalidateBefore = true, connectRequestId = connectRequestId) { server ->
+            restrictRuntimeProfile(profileDigest, configuredReply, invalidateBefore = true, connectRequestId = connectRequestId,
+                onUnconfirmed = if (firstProviderQa) ::logFirstProviderQaControl else null) { server ->
                 val method = if (renewal) "configureSmartAccessRenewal" else "configureSmartAccessRuntimeControl"
                 val configured = CommandServer::class.java.getMethod(method, String::class.java, String::class.java)
                     .invoke(server, profileDigest, configJson) as? Boolean
@@ -2334,21 +2340,28 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             }
         }
 
+        private fun logFirstProviderQaControl(reason: String) {
+            android.util.Log.i("POKROV-SmartDNS", "qa_control=$reason")
+        }
+
         private fun queueFirstProviderQaProbe(profileDigest: String, request: String, server: CommandServer?): Boolean {
-            val owner = runtimeOwner ?: return false
-            val session = owner.activeRuntimeSession ?: return false
-            val content = owner.activeConfigContent ?: return false
+            val owner = runtimeOwner ?: run { logFirstProviderQaControl("probe_owner_missing"); return false }
+            val session = owner.activeRuntimeSession ?: run { logFirstProviderQaControl("probe_session_missing"); return false }
+            val content = owner.activeConfigContent ?: run { logFirstProviderQaControl("probe_profile_missing"); return false }
             fun current(): Boolean = runtimeOwner === owner && owner.activeRuntimeSession === session &&
                 owner.commandServer === server && owner.activeTun != null &&
                 owner.hasCompletedBoundStart(request, profileDigest) &&
                 AndroidConnectRequestOwner.serviceFor(request) === owner && AndroidConnectRequestOwner.owns(request) &&
                 AndroidRuntimeState.snapshot()["core_egress_validated"] == true
-            if (!current()) return false
+            if (!current()) { logFirstProviderQaControl("probe_owner_changed"); return false }
             val target = AndroidCoreEgressProbe.firstProviderQaTarget(content)
+                ?: run { logFirstProviderQaControl("probe_target_missing"); return false }
             // Configure ACK confirms installation and dispatch, not service
             // readiness. Core publishes its captured lease receipt separately.
             val queued = owner.firstProviderQaProbe.dispatch(request, true, target, server, ::current, session::execute)
-            return queued && current()
+            if (!queued) { logFirstProviderQaControl("probe_dispatch_failed"); return false }
+            if (!current()) { logFirstProviderQaControl("probe_owner_changed"); return false }
+            return true
         }
 
         fun renewSmartAccessLease(profileDigest: String, expectedLeaseId: String, nextLeaseId: String,
@@ -2406,10 +2419,11 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
         private fun restrictRuntimeProfile(profileDigest: String, reply: (Boolean?) -> Unit,
                                            invalidateBefore: Boolean = false,
                                            connectRequestId: String? = null,
+                                           onUnconfirmed: ((String) -> Unit)? = null,
                                            revoke: (CommandServer) -> Boolean?) {
-            if (!Regex("^[a-f0-9]{64}$").matches(profileDigest)) { reply(null); return }
-            val owner = runtimeOwner ?: run { reply(null); return }
-            val session = owner.activeRuntimeSession ?: run { reply(null); return }
+            if (!Regex("^[a-f0-9]{64}$").matches(profileDigest)) { onUnconfirmed?.invoke("profile_invalid"); reply(null); return }
+            val owner = runtimeOwner ?: run { onUnconfirmed?.invoke("owner_missing"); reply(null); return }
+            val session = owner.activeRuntimeSession ?: run { onUnconfirmed?.invoke("session_missing"); reply(null); return }
             val generation = owner.serviceCommandGeneration.get()
             fun ownsConnect(): Boolean = connectRequestId == null ||
                 (owner.activeConnectRequestId == connectRequestId &&
@@ -2426,10 +2440,30 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                     // invalidation before enabling either native operation.
                     val reuseInvalidated = current && server != null && (!invalidateBefore ||
                         AndroidRuntimeProfileStore.invalidateMatchingProfile(owner, profileDigest))
-                    val revoked = if (!reuseInvalidated || server == null || !ownsConnect()) null else try {
-                        revoke(server)
-                    } catch (_: ReflectiveOperationException) { null }
-                      catch (_: LinkageError) { null }
+                    val revoked = if (!reuseInvalidated || server == null || !ownsConnect()) {
+                        onUnconfirmed?.invoke(when {
+                            !current -> "owner_changed_before_control"
+                            server == null -> "core_missing"
+                            !reuseInvalidated -> "reuse_invalidation_failed"
+                            else -> "owner_changed_before_core"
+                        })
+                        null
+                    } else try {
+                        revoke(server).also {
+                            if (it == null) onUnconfirmed?.invoke("core_reply_missing")
+                            else if (!it) onUnconfirmed?.invoke("core_declined")
+                        }
+                    } catch (error: InvocationTargetException) {
+                        val code = error.targetException?.message
+                        val known = setOf("smart_access_runtime_control_invalid", "smart_access_runtime_control_conflict",
+                            "smart_access_runtime_control_expired", "smart_access_runtime_control_transport_unavailable",
+                            "smart_access_runtime_unavailable", "smart_access_restriction_storage_unavailable",
+                            "smart_access_restriction_storage_invalid", "smart_access_restriction_binding_invalid",
+                            "smart_access_restriction_recovery_required")
+                        onUnconfirmed?.invoke(if (code in known) code!! else "core_exception")
+                        null
+                    } catch (_: ReflectiveOperationException) { onUnconfirmed?.invoke("core_reflection_unavailable"); null }
+                      catch (_: LinkageError) { onUnconfirmed?.invoke("core_linkage_unavailable"); null }
                     val result = if (revoked == true && !invalidateBefore) {
                         // The live Core already tightened admission. Prevent a
                         // later tile/service restart from recreating withdrawn rules
@@ -2437,12 +2471,14 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                         if (AndroidRuntimeProfileStore.invalidateMatchingProfile(owner, profileDigest)) true else null
                     } else revoked
                     owner.mainHandler.post {
-                        reply(if (runtimeOwner === owner && owner.ownsRuntimeSession(session) &&
+                        val currentReply = runtimeOwner === owner && owner.ownsRuntimeSession(session) &&
                             owner.serviceCommandGeneration.get() == generation &&
-                            owner.activeStartupProfileDigest == profileDigest && owner.activeStartupCommitted && ownsConnect()) result else null)
+                            owner.activeStartupProfileDigest == profileDigest && owner.activeStartupCommitted && ownsConnect()
+                        if (!currentReply) onUnconfirmed?.invoke("owner_changed_after_control")
+                        reply(if (currentReply) result else null)
                     }
                 }
-            } catch (_: java.util.concurrent.RejectedExecutionException) { reply(null) }
+            } catch (_: java.util.concurrent.RejectedExecutionException) { onUnconfirmed?.invoke("executor_unavailable"); reply(null) }
         }
 
         private const val NOTIFICATION_CHANNEL_ID = "pokrov-runtime-private-v2"

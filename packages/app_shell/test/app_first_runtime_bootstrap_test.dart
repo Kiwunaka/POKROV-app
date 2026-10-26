@@ -293,6 +293,8 @@ void main() {
       ('gemini', failure, HostPlatform.windows),
     ('chatgpt', null, HostPlatform.windows),
     ('gemini', null, HostPlatform.android),
+    ('gemini', 'smart_access_runtime_control_unconfirmed', HostPlatform.android),
+    ('gemini', 'unknown_private_control_code', HostPlatform.android),
   ]) {
   test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${controlFailure == null ? '' : ' with $controlFailure'}', () async {
     final httpOverrides = HttpOverrides.current;
@@ -678,6 +680,9 @@ void main() {
       await manager.disconnect();
       expect(context?['control_delivery'], 'failed');
       expect(context?['control_reason'], controlFailure == 'unknown_private_control_code' ? 'unclassified' : controlFailure);
+      if (hostPlatform == HostPlatform.android) {
+        expect(context?['start_error'], contains('qa_start: PlatformException'));
+      }
       expect(jsonEncode(context), isNot(contains('private')));
       expect(context?['proof_current'], isNot(true));
       expect(connected, ConnectionPhase.connected,
