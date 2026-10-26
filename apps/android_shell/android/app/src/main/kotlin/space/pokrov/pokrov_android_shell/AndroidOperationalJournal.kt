@@ -287,6 +287,7 @@ internal data class AndroidOperationalRecord(
     val droppedBefore: Long = 0L,
     val probeSequence: Long? = null,
     val candidateProbe: AndroidCandidateProbeDiagnostic? = null,
+    val coreProbe: AndroidCoreEgressProbeDiagnostic? = null,
 ) {
     init {
         require(ANDROID_OPERATIONAL_TIMESTAMP.matches(occurredAtUtc))
@@ -296,6 +297,7 @@ internal data class AndroidOperationalRecord(
         require(outcome in ANDROID_OPERATIONAL_OUTCOMES.getValue(event))
         require(probeSequence == null || probeSequence > 0L)
         require((probeSequence == null && candidateProbe == null) || event == AndroidOperationalEvent.CANDIDATE_PROBE)
+        require(coreProbe == null || event == AndroidOperationalEvent.CORE_EGRESS_PROBE)
     }
 
     fun toJsonLine(): String = buildString {
@@ -337,6 +339,18 @@ internal data class AndroidOperationalRecord(
                 append(",\"certificate_duration_ms\":")
                 append(diagnostic.certificateDurationMs)
             }
+        }
+        coreProbe?.let { diagnostic ->
+            append(",\"attempt\":")
+            append(diagnostic.attempt)
+            append(",\"stage\":\"")
+            append(diagnostic.stage)
+            append("\",\"code\":\"")
+            append(diagnostic.code)
+            append("\",\"error_type\":\"")
+            append(diagnostic.errorType)
+            append("\",\"elapsed_ms\":")
+            append(diagnostic.elapsedMs)
         }
         append('}')
     }
@@ -505,6 +519,7 @@ internal object AndroidOperationalJournal {
         generation: Long? = null,
         probeSequence: Long? = null,
         candidateProbe: AndroidCandidateProbeDiagnostic? = null,
+        coreProbe: AndroidCoreEgressProbeDiagnostic? = null,
     ) {
         val target = store ?: return
         val record = AndroidOperationalRecord(
@@ -516,6 +531,7 @@ internal object AndroidOperationalJournal {
             droppedBefore = dropped.getAndSet(0L),
             probeSequence = probeSequence,
             candidateProbe = candidateProbe,
+            coreProbe = coreProbe,
         )
         try {
             writer.execute {

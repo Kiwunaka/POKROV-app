@@ -140,6 +140,35 @@ internal data class AndroidCoreEgressProbeTarget(
     val protocol: String = "unknown",
 )
 
+/** One completed native call; a deadline alone does not identify an IO stage. */
+internal data class AndroidCoreEgressProbeDiagnostic(
+    val code: String,
+    val errorType: String,
+    val elapsedMs: Long,
+    val attempt: Int,
+) {
+    init {
+        require(code in setOf("deadline", "cancelled", "runtime_unavailable", "target_unavailable",
+            "connect_failed", "dns_failed", "tls_failed", "response_failed", "reflection_unavailable", "other"))
+        require(errorType in setOf("none", "no_such_method", "illegal_access", "security", "linkage",
+            "illegal_state", "interrupted", "exception", "other"))
+        require(elapsedMs >= 0L && attempt in 1..3)
+    }
+
+    val stage: String get() = when (code) {
+        "dns_failed" -> "dns"
+        "connect_failed" -> "connect"
+        "tls_failed" -> "tls"
+        "response_failed" -> "response"
+        "target_unavailable" -> "select"
+        "runtime_unavailable", "reflection_unavailable" -> "runtime"
+        else -> "unknown"
+    }
+
+    fun toLogLine(): String = "post_start_probe attempt=$attempt stage=$stage code=$code " +
+        "error_type=$errorType elapsed_ms=$elapsedMs"
+}
+
 internal data class AndroidCoreEgressProbeSample(
     val time: Long,
     val delay: Int,

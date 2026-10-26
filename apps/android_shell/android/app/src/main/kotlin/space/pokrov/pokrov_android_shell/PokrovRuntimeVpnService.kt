@@ -1733,7 +1733,16 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 var completedAttempts = 0
                 fun probe(): AndroidCoreEgressProbeResult {
                     completedAttempts += 1
-                    return AndroidCoreEgressProbe.probe(target, probeServer, periodicCancellation)
+                    val started = android.os.SystemClock.elapsedRealtime()
+                    return AndroidCoreEgressProbe.probe(target, probeServer, periodicCancellation) { code, errorType ->
+                        if (!periodic && monitor.owns(token)) {
+                            val diagnostic = AndroidCoreEgressProbeDiagnostic(code, errorType,
+                                android.os.SystemClock.elapsedRealtime() - started, completedAttempts)
+                            android.util.Log.i("POKROV-Egress", diagnostic.toLogLine())
+                            AndroidOperationalJournal.record(AndroidOperationalEvent.CORE_EGRESS_PROBE,
+                                AndroidOperationalOutcome.FAILED, generation, coreProbe = diagnostic)
+                        }
+                    }
                 }
                 var result = probe()
                 while (

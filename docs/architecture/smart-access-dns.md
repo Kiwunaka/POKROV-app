@@ -355,6 +355,14 @@ pass. Public Android SmartDNS stays off: a private QA success must first be
 followed by an agreed rollout of the compatible app or an older compatible
 catalog for old clients before public enablement.
 
+Android QA waits for the existing native post-start egress proof before sending
+QA control; TUN-ready alone no longer ends the QA action as
+`connection_unavailable`. The native connection deadline is unchanged. Failed
+native startup attempts now emit only closed stage/code/error-type, attempt
+number and elapsed milliseconds to the existing bounded journal and the
+`POKROV-Egress` Logcat tag, readable without `run-as`. A bare Core deadline has
+stage `unknown`; no profile, destination or exception text is emitted.
+
 Android and Windows recognize the selective producer's exact `api.pokrov.space` /
 `app.pokrov.space` pair in matching TCP/443 and VPN DNS rules. Ordinary connect
 keeps the protected VPN verifier; explicit QA selects the leased service only

@@ -503,6 +503,17 @@ class AndroidCoreEgressProbeTest {
                     onFailure = { cause, type -> diagnostics.add(cause to type) }))
             assertEquals(listOf(code to "exception"), diagnostics)
             assertFalse(diagnostics.toString().contains("private"))
+            val diagnostic = AndroidCoreEgressProbeDiagnostic(diagnostics.single().first,
+                diagnostics.single().second, 15_000L, 1)
+            val record = AndroidOperationalRecord("2026-10-26T04:56:49.000Z", 1,
+                AndroidOperationalEvent.CORE_EGRESS_PROBE, AndroidOperationalOutcome.FAILED, generation = 1,
+                coreProbe = diagnostic).toJsonLine()
+            assertTrue(record.contains("\"elapsed_ms\":15000") && record.contains("\"attempt\":1"))
+            assertFalse(record.contains("private"))
+            assertTrue(diagnostic.toLogLine().contains("code=$code") && diagnostic.toLogLine().contains("elapsed_ms=15000"))
+            assertFalse(diagnostic.toLogLine().contains("private"))
+            if (code == "deadline") assertTrue("A deadline does not establish TLS failure",
+                record.contains("\"stage\":\"unknown\""))
         }
         val diagnostics = mutableListOf<Pair<String, String>>()
         AndroidCoreEgressProbe.resultFromCore(Any(), target,
