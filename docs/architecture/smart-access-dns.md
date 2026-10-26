@@ -363,6 +363,13 @@ valid, while extra, duplicate, suffix, mismatched DNS and Direct DNS scopes fail
 closed. The native regression failed with the paired producer input before the
 parser fix and passed afterwards; this does not identify the exact branch of a
 historical device failure or establish browser functionality.
+Windows native egress preserves the independent `pokrov.space` static reserve
+for Full VPN. A validated Selective API pair uses `app.pokrov.space` with the
+same API proof/data endpoints instead; legacy API-only and process-scoped
+API-only profiles use no reserve outside that protected scope. Ordinary
+Selective profiles without a SmartDNS outbound undergo the same boundary
+validation. Entering TUN alone does not prove that Core routed the reserve
+through VPN. Probe deadlines, retry timing and failure policy are unchanged.
 Malformed protected boundaries return the existing `profile_payload_invalid`
 code through the native snapshot, UI timeline and D8 closed taxonomy (CONN-005).
 An unsupported probe ABI still returns `core_egress_probe_unavailable`; unknown

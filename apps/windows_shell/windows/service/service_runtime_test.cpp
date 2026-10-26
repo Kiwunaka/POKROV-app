@@ -426,9 +426,11 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
 class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
  public:
   std::string Verify(const pokrov::service::CheckInterruption& = {}, bool periodic = false,
-                     std::uint64_t deadline_tick = 0) override {
+                     std::uint64_t deadline_tick = 0,
+                     pokrov::service::EgressProbeReserve reserve = pokrov::service::EgressProbeReserve::kStatic) override {
     last_periodic = periodic;
     last_deadline_tick = deadline_tick;
+    last_reserve = reserve;
     ++verify_calls;
     if (on_verify) on_verify();
     return verify_error;
@@ -443,6 +445,7 @@ class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
   std::optional<pokrov::service::EgressProbeObservation> observation;
   bool last_periodic = false;
   std::uint64_t last_deadline_tick = 0;
+  pokrov::service::EgressProbeReserve last_reserve = pokrov::service::EgressProbeReserve::kStatic;
 };
 
 class FakeTransitionGuard final : public pokrov::service::RuntimeTransitionGuard {
@@ -1102,7 +1105,9 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   mixed.insert(mixed.find("\"servers\":[", dns_start) + std::string("\"servers\":[").size(), "{\"tag\":\"dns-vpn\",\"detour\":\"vpn\"},");
   mixed.insert(mixed.find("\"rules\":[", dns_start) + std::string("\"rules\":[").size(),
       "{\"domain\":[\"api.pokrov.space\"],\"action\":\"route\",\"server\":\"dns-vpn\",\"disable_cache\":true,\"rewrite_ttl\":0},");
-  Expect(!ReadWindowsSmartAccessProbeTarget(mixed), "normal selective VPN proof lost precedence to Smart");
+  EgressProbeReserve reserve = EgressProbeReserve::kStatic;
+  Expect(!ReadWindowsSmartAccessProbeTarget(mixed, false, &reserve) && reserve == EgressProbeReserve::kNone,
+         "legacy single-origin Selective acquired an unprotected reserve");
   Expect(ReadWindowsSmartAccessProbeTarget(mixed, true) == smart_target,
          "explicit QA did not select the service behind the valid mixed VPN boundary");
   const std::string single_api_domain = "\"domain\":[\"api.pokrov.space\"]";
@@ -1113,10 +1118,30 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   }
   // The selective Dart producer protects both API origins in its matching
   // TCP/443 and DNS rules. Ordinary VPN proof must still run before QA proof.
-  Expect(!ReadWindowsSmartAccessProbeTarget(mixed),
+  Expect(!ReadWindowsSmartAccessProbeTarget(mixed, false, &reserve) && reserve == EgressProbeReserve::kApi,
          "current paired API origins lost ordinary protected VPN verification");
   Expect(ReadWindowsSmartAccessProbeTarget(mixed, true) == smart_target,
          "current paired API origins rejected the explicit QA service target");
+  const std::string ordinary_selective = R"({"outbounds":[{"type":"direct","tag":"direct"},{"type":"selector","tag":"vpn"}],
+    "route":{"final":"direct","rules":[{"domain":["api.pokrov.space","app.pokrov.space"],"network":"tcp","port":[443],"action":"route","outbound":"vpn"}]},
+    "dns":{"servers":[{"tag":"dns-vpn","detour":"vpn"}],"rules":[{"domain":["api.pokrov.space","app.pokrov.space"],"action":"route","server":"dns-vpn","disable_cache":true,"rewrite_ttl":0}]}})";
+  Expect(!ReadWindowsSmartAccessProbeTarget(ordinary_selective, false, &reserve) && reserve == EgressProbeReserve::kApi,
+         "Selective without SmartDNS lost the paired API reserve binding");
+  auto full_vpn = ordinary_selective;
+  full_vpn.replace(full_vpn.find("\"final\":\"direct\""), std::string("\"final\":\"direct\"").size(), "\"final\":\"vpn\"");
+  Expect(!ReadWindowsSmartAccessProbeTarget(full_vpn, false, &reserve) && reserve == EgressProbeReserve::kStatic,
+         "Full VPN lost its API-independent static reserve");
+  const std::string app_scoped = R"({"outbounds":[{"type":"selector","tag":"vpn"},{"type":"direct","tag":"direct"}],
+    "route":{"final":"vpn","rules":[{"domain":["api.pokrov.space"],"network":"tcp","port":[443],"process_name":["pokrov_service.exe"],"action":"route","outbound":"vpn"},
+      {"process_name":["pokrov_service.exe"],"action":"route","outbound":"direct"}]},
+    "dns":{"final":"dns-vpn","servers":[{"tag":"dns-vpn","detour":"vpn"}]}})";
+  Expect(!ReadWindowsSmartAccessProbeTarget(app_scoped, false, &reserve) && reserve == EgressProbeReserve::kNone,
+         "process-scoped API-only proof acquired an unprotected service reserve");
+  auto unprotected_selective = ordinary_selective;
+  unprotected_selective.replace(unprotected_selective.find("\"detour\":\"vpn\""), std::string("\"detour\":\"vpn\"").size(), "\"detour\":\"direct\"");
+  const auto rejected_selective = ReadWindowsSmartAccessProbeTarget(unprotected_selective, false, &reserve);
+  Expect(rejected_selective && rejected_selective->empty() && reserve == EgressProbeReserve::kNone,
+         "Direct DNS authorized an ordinary Selective reserve");
   auto qa_core = std::make_unique<FakeCoreRuntime>();
   auto* qa_native = qa_core.get();
   qa_native->smart_probe_version = 1;
@@ -1126,7 +1151,7 @@ void TestEgressFailureStopsCoreAndIsSanitized() {
   RuntimeHost qa(std::move(qa_core), std::move(qa_api), std::make_unique<FakeRecovery>(), root, false);
   qa.Initialize(); qa.StageProfile("0\n" + mixed);
   const auto qa_digest = StagedDigest(qa);
-  Expect(qa.Connect(qa_digest).status == Status::kOk && qa_vpn->verify_calls == 1 &&
+  Expect(qa.Connect(qa_digest).status == Status::kOk && qa_vpn->verify_calls == 1 && qa_vpn->last_reserve == EgressProbeReserve::kApi &&
          qa_native->smart_probe_calls == 0 && Contains(qa.Snapshot(), "core_egress_validated=1"),
          "mixed QA Connect replaced ordinary protected VPN verification");
   const std::string qa_config = "{\"schema_version\":\"pokrov-smart-access-runtime-worker-v1\",\"profile_digest\":\"" + qa_digest +

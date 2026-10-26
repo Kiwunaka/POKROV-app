@@ -1,4 +1,5 @@
 #include "service_local_dpi_json.h"
+#include "service_runtime.h"
 
 #include <roapi.h>
 #include <windows.data.json.h>
@@ -294,7 +295,8 @@ std::string CancelWindowsCandidateProbeResult(const std::string& encoded,
 }
 
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& encoded,
-    bool first_provider_qa) {
+    bool first_provider_qa, EgressProbeReserve* egress_reserve) {
+  if (egress_reserve) *egress_reserve = EgressProbeReserve::kStatic;
   JsonApartment apartment;
   if (!apartment.Ready()) return std::string{};
   const auto profile = ParseObject(encoded);
@@ -304,10 +306,27 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
   const auto final_tag = route ? String(route.Get(), L"final") : "";
   if (final_tag.empty()) return std::nullopt;
   const auto direct = Tagged(outbounds, final_tag);
-  if (!direct || String(direct.Get(), L"type") != "direct") return std::nullopt;
-  if (std::none_of(outbounds.begin(), outbounds.end(), [](const auto& row) {
+  if (!direct || String(direct.Get(), L"type") != "direct") {
+    // The app-scoped producer pins only this service's API request. Its
+    // other requests can match a process Direct rule before the VPN final.
+    if (egress_reserve && route) {
+      const auto routes = Rows(Array(route.Get(), L"rules").Get());
+      const bool service_api_only = std::any_of(routes.begin(), routes.end(), [](const auto& rule) {
+        return Fields(rule.Get(), 6) &&
+            Strings(Array(rule.Get(), L"domain").Get()) == std::optional<std::vector<std::string>>{{"api.pokrov.space"}} &&
+            Strings(Array(rule.Get(), L"process_name").Get()) == std::optional<std::vector<std::string>>{{"pokrov_service.exe"}} &&
+            String(rule.Get(), L"network") == "tcp" && SingleNumber(rule.Get(), L"port", 443) &&
+            String(rule.Get(), L"action") == "route" && !String(rule.Get(), L"outbound").empty();
+      });
+      if (service_api_only) *egress_reserve = EgressProbeReserve::kNone;
+    }
+    return std::nullopt;
+  }
+  // A Direct final cannot prove an unpinned reserve merely by entering TUN.
+  if (egress_reserve) *egress_reserve = EgressProbeReserve::kNone;
+  const bool has_smart_access = std::any_of(outbounds.begin(), outbounds.end(), [](const auto& row) {
         return String(row.Get(), L"type") == "pokrov-smart-access";
-      })) return std::nullopt;
+      });
   if (!String(direct.Get(), L"detour").empty()) return std::string{};
   const auto dns = Object(profile.Get(), L"dns");
   if (!dns) return std::string{};
@@ -353,10 +372,14 @@ std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& 
             Strings(Array(rr.Get(), L"domain").Get()) && String(dr.Get(), L"action") == "route" &&
         cache_name.Set(L"disable_cache") && SUCCEEDED(dr->GetNamedBoolean(cache_name.value, &disabled)) && disabled &&
         Number(dr.Get(), L"rewrite_ttl", 0) && resolver && String(resolver.Get(), L"detour") == tag)) return std::string{};
+    if (egress_reserve && Strings(Array(rr.Get(), L"domain").Get())->size() == 2) {
+      *egress_reserve = EgressProbeReserve::kApi;
+    }
     if (!first_provider_qa) return std::nullopt;
   } else if (first_provider_qa) {
     return std::string{};
   }
+  if (!has_smart_access) return std::string{};
   auto lease_id = [](const std::string& value) {
     return value.size() == 32 && std::all_of(value.begin(), value.end(), [](char c) {
       return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');

@@ -2032,14 +2032,15 @@ bool RuntimeHost::CanRecheckEgress() const {
 std::string RuntimeHost::VerifyEgress(bool periodic, const CheckInterruption& interrupted,
                                     std::uint64_t deadline_tick) {
   egress_failure_observation_.reset();
-  const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_);
+  EgressProbeReserve reserve = EgressProbeReserve::kStatic;
+  const auto target = ReadWindowsSmartAccessProbeTarget(staged_runtime_config_, false, &reserve);
   if (target) {
     if (target->empty()) return "profile_payload_invalid";
     if (core_->SmartAccessProbeVersion() != 1) return "core_egress_probe_unavailable";
     return core_->ProbeSmartAccess(*target, periodic, interrupted);
   }
   if (!egress_probe_) return "core_egress_probe_failed";
-  const auto failure = egress_probe_->Verify(interrupted, periodic, deadline_tick);
+  const auto failure = egress_probe_->Verify(interrupted, periodic, deadline_tick, reserve);
   if (!failure.empty()) {
     egress_failure_observation_ = egress_probe_->LastObservation();
     if (egress_failure_observation_) {

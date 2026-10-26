@@ -38,6 +38,9 @@ constexpr ProbeTarget kProbeTargets[] = {
     {L"pokrov.space", L"/.well-known/pokrov/egress-probe", L"/.well-known/pokrov/egress-probe-64k.bin"},
 };
 
+constexpr ProbeTarget kApiReserve = {
+    L"app.pokrov.space", L"/api/public/authenticated-egress-probe", L"/api/public/egress-probe-64k"};
+
 struct TunDnsEndpoint {
   ULONG interface_index = 0;
   sockaddr_in local{};
@@ -560,16 +563,17 @@ const char* ObservedFailure(const ProbeObservation& observation) {
 
 class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
  public:
-  AuthenticatedEgressProbe(const ProbeTarget* targets, std::size_t target_count,
+  AuthenticatedEgressProbe(const ProbeTarget* targets, std::size_t target_count, const ProbeTarget& api_reserve,
                            std::uint16_t port, bool secure,
                            bool tun_dns, ServiceEventSink* events,
                            std::optional<std::uint32_t> loopback_tun_ipv4 = std::nullopt)
-      : targets_(targets), target_count_(target_count), port_(port), secure_(secure),
+      : targets_(targets), target_count_(target_count), api_reserve_(api_reserve), port_(port), secure_(secure),
         tun_dns_(tun_dns), events_(events), loopback_tun_ipv4_(loopback_tun_ipv4) {}
 
   std::string Verify(const CheckInterruption& interrupted, bool periodic,
-                     std::uint64_t deadline_tick) override {
+                     std::uint64_t deadline_tick, EgressProbeReserve reserve) override {
     last_observation_.reset();
+    const auto target_count = reserve == EgressProbeReserve::kNone ? std::size_t{1} : target_count_;
     const CheckInterruption owner = [&] {
       const auto reason = interrupted ? interrupted() : OperationInterruption::kNone;
       if (reason != OperationInterruption::kNone) return reason;
@@ -579,7 +583,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
     std::string failure = "core_egress_probe_failed";
     for (int attempt = 0; attempt < 3 && !Interrupted(owner); ++attempt) {
       std::uint64_t target_deadline = deadline_tick;
-      if (periodic && deadline_tick != 0 && attempt == 0 && target_count_ > 1) {
+      if (periodic && deadline_tick != 0 && attempt == 0 && target_count > 1) {
         const auto now = ::GetTickCount64();
         const auto remaining = deadline_tick > now ? deadline_tick - now : 0;
         // Retain the existing bounded primary slice. The skipped cross-target
@@ -593,14 +597,16 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
         return periodic && target_deadline != 0 && ::GetTickCount64() >= target_deadline
             ? OperationInterruption::kDeadlineExceeded : OperationInterruption::kNone;
       };
-      const auto target_index = (std::min)(static_cast<std::size_t>(attempt), target_count_ - 1);
-      failure = ProbeOnce(targets_[target_index], periodic, target_check,
+      const auto target_index = (std::min)(static_cast<std::size_t>(attempt), target_count - 1);
+      const auto& target = target_index != 0 && reserve == EgressProbeReserve::kApi
+          ? api_reserve_ : targets_[target_index];
+      failure = ProbeOnce(target, periodic, target_check,
           target_index == 0 ? EgressProbeTarget::kOwnedApi : EgressProbeTarget::kOwnedReserve,
           deadline_tick);
       if (failure.empty() && !Interrupted(owner)) return "";
       // Periodic failover to a different target gets the remaining budget
       // immediately. Startup and same-target retries retain their backoff.
-      if (attempt < 2 && (!periodic || target_index + 1 >= target_count_)) {
+      if (attempt < 2 && (!periodic || target_index + 1 >= target_count)) {
         const auto started = ::GetTickCount64();
         const auto until = started + (attempt == 0 ? 900 : 1500);
         while (::GetTickCount64() < until && !Interrupted(owner)) {
@@ -702,6 +708,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
 
   const ProbeTarget* targets_;
   std::size_t target_count_;
+  const ProbeTarget& api_reserve_;
   std::uint16_t port_;
   bool secure_;
   bool tun_dns_;
@@ -714,7 +721,7 @@ class AuthenticatedEgressProbe final : public RuntimeEgressProbe {
 
 std::unique_ptr<RuntimeEgressProbe> CreateAuthenticatedEgressProbe(ServiceEventSink* events) {
   return std::make_unique<AuthenticatedEgressProbe>(
-      kProbeTargets, std::size(kProbeTargets),
+      kProbeTargets, std::size(kProbeTargets), kApiReserve,
       std::uint16_t{443}, true, true,
       events);
 }
@@ -727,8 +734,9 @@ std::unique_ptr<RuntimeEgressProbe> CreateLoopbackEgressProbeForTest(
       {L"127.0.0.1", kProbeTargets[0].proof_path, kProbeTargets[0].data_path},
       {L"127.0.0.1", kProbeTargets[1].proof_path, kProbeTargets[1].data_path},
   };
+  static constexpr ProbeTarget api_reserve{L"127.0.0.1", kApiReserve.proof_path, kApiReserve.data_path};
   return std::make_unique<AuthenticatedEgressProbe>(
-      targets, reserve ? 2 : 1, port, secure, false, events, expected_tun_ipv4);
+      targets, reserve ? 2 : 1, api_reserve, port, secure, false, events, expected_tun_ipv4);
 }
 
 std::wstring QueryLoopbackProbeAddressForTest(std::uint16_t port,

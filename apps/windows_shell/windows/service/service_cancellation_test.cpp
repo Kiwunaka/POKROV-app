@@ -104,7 +104,7 @@ class FakeCore final : public CoreRuntime {
 class BlockingProbe final : public RuntimeEgressProbe {
  public:
   std::string Verify(const CheckInterruption& interrupted, bool = false,
-                     std::uint64_t = 0) override {
+                     std::uint64_t = 0, EgressProbeReserve = EgressProbeReserve::kStatic) override {
     const auto generation = ++entered;
     const auto deadline = ::GetTickCount64() + hold_ms.load();
     while (released < generation && ::GetTickCount64() < deadline) {

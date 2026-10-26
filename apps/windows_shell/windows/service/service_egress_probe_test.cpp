@@ -585,6 +585,30 @@ int main(int argc, char** argv) {
                !observation->dns_a_accepted,
            "periodic reserve lost its entry budget or fabricated loopback DNS proof");
   }
+  {
+    std::atomic<int> api_requests{0}, static_requests{0};
+    LoopbackServer server([&](const std::string& request) {
+      if (request.find("GET /api/public/") != 0) ++static_requests;
+      if (++api_requests == 1) return std::string("HTTP/1.1 503 Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+      return DataRequest(request) ? DataReply() : ProofReply();
+    }, false, false, true);
+    auto probe = CreateLoopbackEgressProbeForTest(server.port, false, nullptr, true);
+    expect(probe->Verify({}, false, 0, EgressProbeReserve::kApi).empty() &&
+               api_requests == 3 && static_requests == 0 && server.connections == 2,
+           "paired Selective reserve used an unpinned static target or lost its same-connection API payload proof");
+  }
+  {
+    std::atomic<int> static_requests{0};
+    LoopbackServer server([&](const std::string& request) {
+      if (request.find("GET /api/public/") != 0) ++static_requests;
+      return std::string("HTTP/1.1 503 Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+    });
+    auto probe = CreateLoopbackEgressProbeForTest(server.port, false, nullptr, true);
+    const auto started = ::GetTickCount64();
+    expect(!probe->Verify({}, true, started + 3000, EgressProbeReserve::kNone).empty() &&
+               static_requests == 0 && server.requests <= 3,
+           "legacy single-origin Selective accepted an unprotected reserve");
+  }
   if (argc == 2 && std::string(argv[1]) == "--periodic-reserve") {
     ::WSACleanup();
     return failures == 0 ? 0 : 1;

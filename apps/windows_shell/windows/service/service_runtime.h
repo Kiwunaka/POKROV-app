@@ -116,11 +116,14 @@ class CoreOperationalEventFence {
   std::int64_t last_sequence_ = 0;
 };
 
+enum class EgressProbeReserve { kStatic, kApi, kNone };
+
 class RuntimeEgressProbe {
  public:
   virtual ~RuntimeEgressProbe() = default;
   virtual std::string Verify(const CheckInterruption& interrupted = {},
-                             bool periodic = false, std::uint64_t deadline_tick = 0) = 0;
+                             bool periodic = false, std::uint64_t deadline_tick = 0,
+                             EgressProbeReserve reserve = EgressProbeReserve::kStatic) = 0;
   virtual std::optional<EgressProbeObservation> LastObservation() const {
     return std::nullopt;
   }

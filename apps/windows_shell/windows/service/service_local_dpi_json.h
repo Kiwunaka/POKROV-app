@@ -7,6 +7,7 @@
 #include <utility>
 
 namespace pokrov::service {
+enum class EgressProbeReserve;
 struct WindowsLocalDpiPreparation {
   std::string profile;
   std::vector<WindowsLocalDpiService> services;
@@ -47,8 +48,10 @@ bool WindowsTelegramWSPreparationCurrent(const WindowsTelegramWSPreparation& val
 // No value means the ordinary VPN verifier. An empty target is a local
 // SmartAccess intent without a valid bound anchor and must fail closed.
 // First-provider QA selects the service only behind a valid owned VPN boundary.
+// Optional reserve selection follows the same native profile: Full VPN keeps
+// the static target, exact API pairs use app, and API-only scopes use no reserve.
 std::optional<std::string> ReadWindowsSmartAccessProbeTarget(const std::string& profile,
-    bool first_provider_qa = false);
+    bool first_provider_qa = false, EgressProbeReserve* egress_reserve = nullptr);
 // Purpose check only; Core validates the complete worker config before admission.
 bool IsWindowsFirstProviderQaRuntimeControl(const std::string& config);
 // Override only cancellation status; retain the trusted Core's completed stages.
