@@ -34,10 +34,20 @@ out. 4224 tries TLSREC 1+s first and the unchanged disorder strategy second with
 five seconds; both reached `tls_handshake` deadlines at 01:14:51–01:14:57 Moscow.
 Direct ByeDPI routing is not accepted; YouTube 1080p has not been tested.
 
+On Pi4 wlan, a same-IP comparison gave a five-second direct timeout, verified
+TLS in 0.0842 s and HTTP 200 in 0.2867 s with TLSREC 1+s, and a five-second
+timeout with disorder 1 plus TLSREC 3+s. A separate paired comparison on a
+new IP, with the same curl, preset and route, passed both AF_INET (TLS 0.0667 s;
+HTTP 200 in 0.2513 s) and AF_INET6 mapped/default bind (TLS 0.0675 s; HTTP 200
+in 0.2677 s). This does not establish socket family, DPI or DNS as the Android
+failure cause, or accept Android playback. The owned temporary CLI/processes
+were removed; global routes and services were unchanged.
+
 The owner has the phone with 4224; the last ordinary Connect was started before
 handoff and its current VPN state is unconfirmed. Settings remain manual DE2 direct /
 Selective YouTube / LocalDPI on / ComssDNS / SmartDNS auto / WARP off; the owner's
-app filter 3 was untouched. No ADB work until return. Windows4216 and DNSTT retain
+app filter 3 was untouched. No ADB work until return; Chrome must be foregrounded
+again for the browser check. Windows4216 and DNSTT retain
 their accepted scope; final Windows/all-ABI packaging waits for Android acceptance.
 Public 1.4.5, draft 4175 and paused automations are unchanged.
 
