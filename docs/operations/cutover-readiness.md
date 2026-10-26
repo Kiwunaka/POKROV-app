@@ -15,12 +15,24 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Private **Android ARM64 and Windows 1.5.0+4216**, App `ddc7c384` / Core
-`58b11d4`, are built. Windows 4216 is installed and accepted in the bounded case
-below. The owner has the phone with 4215 installed; Android4216 is not installed.
-It includes closed QA-start error retention and recovered-owner reconciliation
-fixes. Android SmartDNS remains public OFF; its 4215 pre-native failure and direct
-ByeDPI routing still need the changed build on the phone. QA leases are released.
+Private Android ARM64 **1.5.0+4218**, App `fdbcd36d`, is built: the production APK
+is 86,145,493 bytes and its actual package version 4218 was confirmed. It is not
+installed. Android4217 ordinary Connect was confirmed, but SmartDNS QA failed
+with `connection_unavailable` and LocalDPI observations were unavailable. 4218
+includes exact bound-start waiting, a separate identity-only/ATS lifecycle and
+LocalDPI admission through the protected ATS wrapper with lease fallback retained.
+Focused Dart tests/analyze, three Kotlin identity tests and one LocalDPI regression
+passed. Device acceptance is pending; Android SmartDNS remains public OFF.
+
+The owner has the phone with 4217; VPN was stopped normally before handoff. Its
+current settings remain manual DE2 / Selective YouTube / LocalDPI on. No ADB work
+is permitted until return. Windows4216 retains its accepted scope below; final
+Windows/all-ABI packaging waits for the Android result.
+
+Correction to earlier Android QA evidence: a service-absence predicate searched
+for `PokrovVpnService`, but the actual class is `PokrovRuntimeVpnService`.
+Those earlier service0 observations did not prove service absence. The sticky
+ATS lifecycle cause is established by source and targeted tests, not that predicate.
 
 Windows 4216 had one ordinary Connect from 07:57:30 to 08:02:24.756 UTC. Two natural
 periodic timeouts recovered through connecting to healthy state with a green UI,
@@ -198,7 +210,7 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
-| Android arm64-v8a, built 4216; phone installation pending | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4216-android-arm64-v8a.apk) |
+| Android arm64-v8a, built 4218; phone acceptance pending | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4218-android-arm64-v8a.apk) |
 | Android arm64-v8a, accepted 4211 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4211-android-arm64-v8a.apk) |
 | Android universal, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-universal.apk) |
 | Android arm64-v8a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-arm64-v8a.apk) |
@@ -336,8 +348,9 @@ DNS/routes/proxy matched the baseline; display 1372×943 was restored, app/winws
 TUN were absent and the owned QA directory was removed. Root confirmed the VM
 PoweredOff. Paused customer work and automations were not resumed.
 Existing budgets, country and bridge-load groups remain in force.
-Remaining work follows the owner's current queue: Android4216 installation and
-targeted SmartDNS/direct-LocalDPI acceptance when the phone returns. DNSTT is
+Remaining work follows the owner's current queue: Android4218 installation and
+targeted SmartDNS/direct-LocalDPI acceptance when the phone returns, then final
+Windows/all-ABI packaging after that result. DNSTT is
 enabled with recursive transport and Windows 4216 Auto/TUN accepted. Pi4 IS direct/UDP acceptance
 does not establish Android/Windows UI behavior. The customer Windows case remains
 paused. Lampa and Android Naive retain their accepted scope. Public1.4.5/draft4175
