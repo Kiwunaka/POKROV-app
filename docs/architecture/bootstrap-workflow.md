@@ -279,6 +279,13 @@ these cached profiles with the existing native selector and activates its winner
 Failed activation advances to another candidate, with at most three activations
 per recovery. A retained native guard is shown as blocked traffic, including
 after UI restart; Home, tray and protection details offer explicit Disconnect.
+After a Windows replacement times out but keeps its native owner, a later healthy
+proof may retire App retention only for that acknowledged candidate, command,
+profile-input revision and staged/effective digest/source. The proof must follow
+the failure, with no native guard, pending bound proof or denied access. It then
+promotes the replacement through the ordinary success path; stale or mismatched
+observations cannot mark it proven. Home accessibility uses the displayed action,
+so a degraded connection's Disconnect is not announced as Retry.
 The Windows tray retains the action rendered in each menu item. A displayed
 Disconnect dispatches the existing explicit disconnect even if runtime state
 changes before the click; it cannot reinterpret that intent as a new Connect.

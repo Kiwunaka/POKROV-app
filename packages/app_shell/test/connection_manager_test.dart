@@ -445,6 +445,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool holdProbes = false;
   bool failProbeCancellation = false;
   bool failHandoff = false;
+  bool failedHandoffKeepsRunning = false;
   final failedProbeProtocols = <String>{};
   final failedProbeProfiles = <String>{};
   final failedProbeCandidates = <String>{};
@@ -579,7 +580,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
     await handoffRelease?.future;
     warpEgressFailure = failHandoff || failedHandoffProfile == payload.profileName || cancelled.contains(_request);
     if (!warpEgressFailure) restoredHandoffGuard = false;
-    phase = hostPlatform == HostPlatform.windows && warpEgressFailure
+    phase = hostPlatform == HostPlatform.windows && warpEgressFailure && !failedHandoffKeepsRunning
         ? RuntimePhase.configStaged : RuntimePhase.running;
     return value(phase);
   }
@@ -4203,6 +4204,44 @@ void main() {
     expect(runtime.stagedPayloads, hasLength(1));
     expect(runtime.connectCalls, 1);
     expect(runtime.handoffCalls, 0);
+    expect(runtime.calls, isNot(contains('disconnect')));
+
+    final rf2 = TransportCandidate(candidateRef: 'de:rf2', profileRef: 'rf2', nodeCode: 'de',
+      countryCode: 'DE', protocol: 'vless', transport: 'tcp', protection: 'reality',
+      priority: 1, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
+      minimumCoreRelease: null, platforms: {HostPlatform.windows}, requiredFeatures: const {}, bridgeId: 'rf2');
+    bootstrapper.candidates = [_candidates.first, rf2];
+    runtime.failedProbeProfiles..clear()..add(_candidates.first.candidateRef);
+    runtime.failedHandoffKeepsRunning = true;
+    runtime.failedHandoffProfile = rf2.candidateRef;
+    runtime.profileDigest = 'b' * 64;
+    runtime.profileSource = const RuntimeProfileSource(revision: 'rf2-owner',
+      origin: RuntimeProfileSourceOrigin.managedManifest, protocol: 'vless');
+    runtime.warpEgressFailure = true;
+    final handoffDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while ((runtime.handoffCalls == 0 || manager.busy || manager.status.phase != ConnectionPhase.actionRequired) &&
+        DateTime.now().isBefore(handoffDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(runtime.handoffProfiles, [rf2.candidateRef]);
+    expect(manager.retainsProtection, isTrue);
+    runtime.warpEgressFailure = false;
+    await manager.refresh();
+    expect(manager.retainsProtection, isTrue, reason: 'the old proof cannot acknowledge the new handoff');
+    runtime.profileDigest = 'c' * 64;
+    runtime.proofObservedAt = DateTime.now().toUtc();
+    await manager.refresh();
+    expect(manager.retainsProtection, isTrue, reason: 'a different native owner cannot release retained protection');
+    runtime.profileDigest = 'b' * 64;
+    runtime.proofObservedAt = DateTime.now().toUtc();
+    await manager.refresh();
+    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.status.routes.profileDirty, isFalse);
+    expect(manager.presentation.isVerified, isTrue);
+    expect(manager.retainsProtection, isFalse);
+    expect(manager.materialCandidate?.candidateRef, rf2.candidateRef);
+    expect(runtime.connectCalls, 1);
+    expect(runtime.handoffCalls, 1);
     expect(runtime.calls, isNot(contains('disconnect')));
   });
 

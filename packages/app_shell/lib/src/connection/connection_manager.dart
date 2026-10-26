@@ -394,12 +394,13 @@ class ConnectionManager extends ChangeNotifier {
     if (value != null && _runtimeStopConfirmed(value)) {
       _protectedHandoffActive = false;
       _activeCandidateRef = null;
+      _failedNativeHandoff = null;
     } else if (value?.lastFailureKind == 'protected_handoff_failed' ||
         (value?.lastFailureKind == 'connect_cancelled' && value?.phase == RuntimePhase.running)) {
       _protectedHandoffActive = true;
       _activePhase = ConnectionPhase.actionRequired;
     }
-    if (value != null) _reconcileHealthyNativeRecovery(previous, value);
+    final recoveredHandoff = value != null && _reconcileHealthyNativeRecovery(previous, value);
     final displayNodeCode = value?.activeDisplayNodeCode;
     if (_appContext.hostPlatform == HostPlatform.android &&
         value?.isCleanlyHealthy == true && displayNodeCode != null) {
@@ -407,6 +408,7 @@ class ConnectionManager extends ChangeNotifier {
     }
     _connectionCoordinator.updateSnapshot(value);
     _protectionRuntimeSnapshot.value = value;
+    if (recoveredHandoff) _finalizeProvenConnection(value);
     if (_clientExperienceLoaded && _transportCatalog == null && !hadCapabilities &&
         value?.transportCapabilities?.features.isNotEmpty == true) {
       // Run after the native observation finishes its action ownership.
@@ -414,27 +416,41 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  void _reconcileHealthyNativeRecovery(RuntimeSnapshot? previous, RuntimeSnapshot current) {
-    // Failed preparation can outlive the unchanged Core owner's self-recovery.
+  bool _reconcileHealthyNativeRecovery(RuntimeSnapshot? previous, RuntimeSnapshot current) {
     if (_appContext.hostPlatform != HostPlatform.windows || _disposed ||
         _activePhase != ConnectionPhase.actionRequired || !_protectedHandoffActive ||
         _runtimeIntent != ConnectionTransitionIntent.none || _runtimeActionsInFlight.isNotEmpty ||
-        _managedProfileDirty || _accessDenialPending || _cachedProfileFallbackGate.authorizationDenied ||
-        _activeCandidateRef == null || _activeCandidateRef != _candidateRef ||
-        previous == null || previous.phase != RuntimePhase.running || previous.protectionRetained ||
-        !previous.hasCoreEgressProbeFailure || previous.proofObservedAt != null ||
-        previous.transportProofPending == true || previous.transportLeaseActive == true || current.transportLeaseActive == true ||
-        !_isConnectionProven(current) || current.lastFailureKind != null || current.proofObservedAt == null) return;
-    final digest = previous.effectiveProfileDigest;
-    final source = previous.stagedProfileSource;
+        _accessDenialPending || _cachedProfileFallbackGate.authorizationDenied || current.transportLeaseActive == true ||
+        !_isConnectionProven(current) || current.lastFailureKind != null || current.proofObservedAt == null) return false;
+    final handoff = _failedNativeHandoff;
+    final acknowledgedHandoff = handoff != null &&
+        handoff.command == _commandNumber &&
+        handoff.profileRevision == _managedProfileRevision && handoff.candidateRef == _candidateRef &&
+        current.proofObservedAt!.isAfter(handoff.failedAt);
+    if (!acknowledgedHandoff && (_managedProfileDirty ||
+        _activeCandidateRef == null || _activeCandidateRef != _candidateRef)) return false;
+    // Preparation keeps the old owner; a failed native replacement instead
+    // binds recovery to the acknowledged target and unchanged profile inputs.
+    final failed = acknowledgedHandoff ? handoff.snapshot : previous;
+    if (failed == null || failed.phase != RuntimePhase.running ||
+        (!acknowledgedHandoff && failed.protectionRetained) ||
+        !failed.hasCoreEgressProbeFailure || failed.proofObservedAt != null ||
+        failed.transportProofPending == true || failed.transportLeaseActive == true) return false;
+    final digest = failed.effectiveProfileDigest;
+    final source = failed.stagedProfileSource;
     final currentSource = current.effectiveProfileSource;
-    if (digest == null || digest != previous.stagedProfileDigest ||
+    if (digest == null || digest != failed.stagedProfileDigest ||
         digest != current.stagedProfileDigest || digest != current.effectiveProfileDigest ||
         source == null || source.revision.isEmpty || currentSource == null || source.revision != currentSource.revision ||
-        source.origin != currentSource.origin || source.protocol != currentSource.protocol) return;
+        source.origin != currentSource.origin || source.protocol != currentSource.protocol) return false;
     _protectedHandoffActive = false;
     _activePhase = null;
     _runtimeHeadline = null;
+    if (acknowledgedHandoff) {
+      _managedProfileDirty = false;
+      _failedNativeHandoff = null;
+    }
+    return acknowledgedHandoff;
   }
 
   bool get _runtimeBusy => _connectionCoordinator.actionInFlight;
@@ -506,6 +522,8 @@ class ConnectionManager extends ChangeNotifier {
   bool _candidateProbeReportInFlight = false;
   bool _candidateRecoveryPending = false;
   bool _protectedHandoffActive = false;
+  ({int command, int profileRevision, String candidateRef, DateTime failedAt,
+    RuntimeSnapshot snapshot})? _failedNativeHandoff;
   ManagedProfileOfflineState? _offlineState;
   ManagedProfileOfflineState? get offlineState => _offlineState;
   Timer? _cacheRefreshTimer;
@@ -1980,7 +1998,7 @@ class ConnectionManager extends ChangeNotifier {
     }
     if (await _observeAndroidNetwork(snapshot)) return;
     if (snapshot.phase == RuntimePhase.running) {
-      if (_isConnectionProven(snapshot)) {
+      if (_isConnectionProven(snapshot) && !_protectedHandoffActive) {
         _finalizeProvenConnection(snapshot);
       } else if (snapshot.transportProofPending != true &&
           _appContext.hostPlatform == HostPlatform.android &&
@@ -5355,6 +5373,11 @@ class ConnectionManager extends ChangeNotifier {
         _stagedNodeCode = _resolvedProfileNodeCode;
         _stagedVariantId = _resolvedProfileVariantId;
         _rememberStagedCandidateVariant(prepared, generation);
+        _failedNativeHandoff = _appContext.hostPlatform == HostPlatform.windows && !retryInitialActivation &&
+                current.phase == RuntimePhase.running && current.hasCoreEgressProbeFailure &&
+                _candidateRef != null && prepared.materialCandidate?.candidateRef == _candidateRef
+            ? (command: _commandNumber, profileRevision: profileRevision, candidateRef: _candidateRef!,
+                failedAt: DateTime.now().toUtc(), snapshot: current) : null;
         _stagedProfileUsesWarp = prepared.warpPolicy.canEnableRuntime;
         _activeConnectUsedWarp = _stagedProfileUsesWarp;
         _managedProfileDirty = !current.isCleanlyHealthy;

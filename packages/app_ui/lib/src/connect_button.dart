@@ -77,7 +77,7 @@ class _PokrovConnectButtonState extends State<PokrovConnectButton> with TickerPr
       ConnectionPhase.on => 'Защищено',
       ConnectionPhase.error => 'Повторить',
     };
-    final semantics = switch (phase) {
+    final semantics = widget.label ?? switch (phase) {
       ConnectionPhase.off => 'Включить защиту',
       ConnectionPhase.connecting => 'Отменить подключение',
       ConnectionPhase.on => 'Выключить защиту',

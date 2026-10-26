@@ -88,6 +88,14 @@ void main() {
       ));
       final disabled = tester.getSemantics(find.bySemanticsLabel('Включить защиту'));
       expect(disabled.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+      await _pump(tester, PokrovConnectButton(phase: ConnectionPhase.error,
+        label: 'Отключить', onPressed: () => connects++));
+      final disconnect = tester.getSemantics(find.bySemanticsLabel('Отключить'));
+      expect(find.bySemanticsLabel('Повторить подключение'), findsNothing);
+      tester.binding.platformDispatcher.onSemanticsActionEvent!(SemanticsActionEvent(
+        type: SemanticsAction.tap, nodeId: disconnect.id, viewId: tester.view.viewId,
+      ));
+      expect(connects, 2);
     } finally {
       semantics.dispose();
     }
