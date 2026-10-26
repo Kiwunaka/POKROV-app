@@ -4176,8 +4176,24 @@ void main() {
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
     runtime.failedProbeProfiles.addAll(_candidates.map((candidate) => candidate.candidateRef));
+    final preparationGate = Completer<void>();
+    bootstrapper.gate = preparationGate;
+    bootstrapper.failure = const BootstrapFailure('fixture preparation unavailable', code: 'managed_profile_unavailable');
+    final requestsBeforeRecovery = bootstrapper.resolutions.length;
     runtime.warpEgressFailure = true;
     final deadline = DateTime.now().add(const Duration(seconds: 3));
+    while ((!manager.busy || bootstrapper.resolutions.length == requestsBeforeRecovery) &&
+        DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(manager.busy, isTrue);
+    // Protection/Diagnostics may observe Core recovery before preparation ends.
+    runtime.warpEgressFailure = false;
+    runtime.proofObservedAt = DateTime.now().toUtc();
+    await manager.readSnapshot();
+    expect(manager.snapshot?.isCleanlyHealthy, isTrue);
+    expect(manager.retainsProtection, isTrue, reason: 'an in-flight recovery cannot yet release its owner');
+    preparationGate.complete();
     while ((manager.status.phase != ConnectionPhase.actionRequired || manager.busy) &&
         DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 10));
@@ -4189,11 +4205,11 @@ void main() {
     expect(runtime.handoffCalls, 0, reason: 'recovery exhausted before native replacement');
     expect(manager.snapshot?.phase, RuntimePhase.running);
     expect(manager.snapshot?.protectionRetained, isFalse);
-    expect(manager.snapshot?.proofObservedAt, isNull);
+    expect(manager.snapshot?.proofObservedAt, runtime.proofObservedAt);
     expect(manager.retainsProtection, isTrue, reason: 'App protects traffic while preparation fails');
 
-    runtime.warpEgressFailure = false; // The same unbound owner passed its periodic verifier.
-    runtime.proofObservedAt = DateTime.utc(2026, 10, 8, 0, 0, 1);
+    bootstrapper.gate = null;
+    bootstrapper.failure = null;
     await manager.refresh();
     expect(manager.snapshot?.isCleanlyHealthy, isTrue);
     expect(manager.snapshot?.lastFailureKind, isNull);

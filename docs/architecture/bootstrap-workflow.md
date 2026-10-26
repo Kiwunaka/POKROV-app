@@ -279,8 +279,10 @@ these cached profiles with the existing native selector and activates its winner
 Failed activation advances to another candidate, with at most three activations
 per recovery. A retained native guard is shown as blocked traffic, including
 after UI restart; Home, tray and protection details offer explicit Disconnect.
-After a Windows replacement times out but keeps its native owner, a later healthy
-proof may retire App retention only for that acknowledged candidate, command,
+Windows recovery retains the failed owner's binding before asynchronous profile
+preparation; a healthy diagnostic read during preparation cannot erase it. After
+preparation or a native replacement fails, a later healthy proof may retire App
+retention only for that acknowledged candidate, command,
 profile-input revision and staged/effective digest/source. The proof must follow
 the failure, with no native guard, pending bound proof or denied access. It then
 promotes the replacement through the ordinary success path; stale or mismatched
