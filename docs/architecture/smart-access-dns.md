@@ -247,7 +247,8 @@ TUN 0. Root removed the exact rule/task and restored only the cache key plus
 original preferences, leaving the remaining secure store/session tokens intact.
 DNS/routes/proxy matched the baseline and display 1372×943 was restored;
 app/winws/TUN were absent and the owned QA directory was removed. Root confirmed
-the VM PoweredOff. Android device acceptance remains pending.
+the VM PoweredOff. Android Naive was not checked in that Windows pass;
+its subsequent 4210 acceptance is recorded above.
 
 Historical 4194/4195 comparison: catalog 28 authorizes selective YouTube local DPI with exact control host
 `www.youtube.com`. Verified encrypted bridge/ATS admission, exact pre-connect
