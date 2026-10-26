@@ -15,16 +15,38 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Private **Android ARM64 and Windows 1.5.0+4212**, App `570af7ff` / Core
-`58b11d4`, are built. Android's 86,145,493-byte APK passed production signing,
-version/ABI/runtime binding; it is not installed because the owner has the phone,
-which remains on accepted 4211. Windows setup is 29,248,619 bytes; its 28,750,929-byte
-ZIP has one `POKROV-Setup.exe`. Packaging passed and CleanWin11 installation exited 0.
-The Locations and Android parser fixes are included but not physically accepted
-on Android. **4212 is not a final candidate** because of the Windows findings below.
-The preceding 4209 four-ABI Android set and Windows bundle retain their accepted scope.
+Private **Android ARM64 and Windows 1.5.0+4214**, App `69e594a9` / Core
+`58b11d4`, are built and installed on the returned phone and CleanWin11.
+**4214 is not a final candidate.** Windows4213/4214 still retained a failed UI
+after periodic `core_egress_timeout` and later healthy native state. Android Home
+also retained failure. Windows4214's visible Stop sometimes did nothing; tray
+Stop reached `config_staged / running=0 / guard=0`. Recovery reconciliation
+diagnostics and the typed UI Stop correction are in main after 4214.
+The next 4215 package has not been built. Probe timeouts were not changed.
 
-On Windows4212, ordinary IS Auto Connect with Selective YouTube/LocalDPI reached
+Android4213 QA reached RF2→DE2, full 64 KiB in 1,297 ms and TUN/DNS ready, then
+failed on the post-start connect deadline; the early control-delivery fix is in
+4214. Android4214 reached Mini→DE2, 64 KiB in 815 ms, but rejected the signed QA
+as `smart_access_qa_not_current` before Core: device validation was 294 ms before
+its signed issue time. The bounded strict wait of at most one second is in main,
+not yet physically accepted. QA leases are released; Android SmartDNS public OFF
+is unchanged.
+
+Ordinary Android4214 Selective YouTube with LocalDPI enabled and ComssDNS connected
+through RF2→DE2 in 26.723 s (64 KiB in 10,045 ms). Chrome played Big Buck Bunny to
+1:52 of 10:34. This accepts playback, not direct ByeDPI routing: counters were lost
+at bridge decoding; the diagnostics fix is in main but not built. Normal Stop
+removed the VPN service/network. Auto/Russia Direct/Advanced, LocalDPI off and
+WARP off were restored, retaining ComssDNS. YouTube remains an inert Selective
+service choice; the initially empty service list was not restored. The owned
+browser tab and ADB forward were removed.
+
+After the latest Windows pass, original preferences were restored byte for byte;
+DNS/routes/proxy matched baseline and app/winws/TUN were absent. VBoxManage
+confirmed PoweredOff. No new NS, fleet-health, customer or release action is
+implied. Earlier accepted checks below were not repeated.
+
+Previously, on Windows4212, ordinary IS Auto Connect with Selective YouTube/LocalDPI reached
 native running with DNS/egress flags valid. Real Edge playback advanced 93.357674 s
 at 480p: 2,809 frames, 58 dropped, readyState4, no video error; 31 CDN requests used
 HTTP/1.1. Local TCP21/VPN TCP0, admitted1/failed0. This accepts the video/TCP case,
@@ -33,7 +55,8 @@ At 04:32 UTC the periodic native three-second probe returned `core_egress_timeou
 and triggered RF2 recovery. After fresh healthy native state the UI still retained
 failure/Retry semantics while visually showing Disconnect. Source review also
 found the static `pokrov.space` reserve outside protected routing in Selective.
-Both corrections are in progress; probe timeouts have not been changed.
+The reserve routing correction entered subsequent builds; the UI failure remains
+open in the current findings above. This accepted TCP/video check was not repeated.
 Ordinary tray Disconnect reached initialized/running0/guard0, then Exit left app0/
 winws0. Russia Direct, DPI off, empty service selection and IS were restored;
 DNS/routes/proxy exactly matched baseline, owned Edge/TUN were absent and VM
@@ -75,7 +98,8 @@ the original system DNS/always-on settings were restored; VPN remains stopped.
 Earlier LTE failures with zero SIM balance are not VPN defects. Direct Iceland
 HTTPS still timed out on funded LTE; bridge success does not accept IS direct
 VLESS/HY2/AWG. Android Naive was subsequently accepted on 4210 as described above;
-Android SmartDNS and LocalDPI/YouTube remain separate and unaccepted.
+Android SmartDNS and direct LocalDPI routing remain separate and unaccepted;
+the later 4214 browser playback result has only the scope stated above.
 No accepted Windows transport/VM checks were repeated for this shared cache change.
 Public release, customer contact and paused automations remain unchanged.
 
@@ -154,14 +178,14 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
-| Android arm64-v8a, built 4212; device check pending | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4212-android-arm64-v8a.apk) |
+| Android arm64-v8a, installed 4214; open findings above | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4214-android-arm64-v8a.apk) |
 | Android arm64-v8a, accepted 4211 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4211-android-arm64-v8a.apk) |
 | Android universal, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-universal.apk) |
 | Android arm64-v8a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-arm64-v8a.apk) |
 | Android armeabi-v7a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-armeabi-v7a.apk) |
 | Android x86_64, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-x86_64.apk) |
-| Windows x64 installer, 4212; open findings above | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4212-setup.exe) |
-| Windows delivery ZIP, 4212 | [ZIP](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4212-setup.zip) |
+| Windows x64 installer, installed 4214; open findings above | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4214-setup.exe) |
+| Windows delivery ZIP, 4214 | [ZIP](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4214-setup.zip) |
 
 Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `f019efe`
 and Node `3e23441`. Eligibility covers all active Premium, including trial and
@@ -296,9 +320,10 @@ DNS/routes/proxy matched the baseline; display 1372×943 was restored, app/winws
 TUN were absent and the owned QA directory was removed. Root confirmed the VM
 PoweredOff. Paused customer work and automations were not resumed.
 Existing budgets, country and bridge-load groups remain in force.
-Remaining work follows the owner's current queue: final Android packaging and
-targeted acceptance, DNSTT after Timeweb publishes the delegation, and unresolved
-IS direct/UDP and Android SmartDNS/YouTube. The customer Windows case remains
+Remaining work follows the owner's current queue: correct the retained UI failure
+and unreliable Stop action, then package and accept only those corrections plus the
+Android QA timing/counter fixes. DNSTT waits for Timeweb delegation; IS direct/UDP,
+Android SmartDNS and direct LocalDPI routing remain unaccepted. The customer Windows case remains
 paused. Lampa's new direct path and Android Naive are accepted above. Public
 1.4.5/draft 4175 and paused automations are unchanged; publication requires the owner's yes.
 
