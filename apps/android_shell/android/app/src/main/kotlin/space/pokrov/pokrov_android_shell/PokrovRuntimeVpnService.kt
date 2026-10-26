@@ -501,11 +501,16 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
                 activeConnectRequestId.let { it == null || AndroidConnectRequestOwner.owns(it) }))
 
     private fun startTunnelTrafficMonitor(scope: AndroidLifecycleTaskScope) {
+        val reportedLocalDpiStatus = AtomicBoolean(false)
         val monitor = AndroidTunnelTrafficClient(
             scope = scope,
             onSnapshot = { snapshot ->
                 if (ownsRuntimeSession(scope)) {
                     val localDpiSummary = activeLocalDpi?.observationSummary()
+                    if (reportedLocalDpiStatus.compareAndSet(false, true)) {
+                        logLocalDpiDiagnostic(if (localDpiSummary?.startsWith("Локальный DPI: готово ") == true)
+                            "status_seen localDpiStatsPresent=true" else "status_seen localDpiStatsPresent=false")
+                    }
                     AndroidRuntimeState.updateLocalDpiObservation(scope.generation, localDpiSummary)
                     AndroidRuntimeState.updateTunnelTraffic(scope.generation, snapshot)
                     coreEgressMonitor?.onTraffic(snapshot.uplinkTotalBytes, snapshot.downlinkTotalBytes)
