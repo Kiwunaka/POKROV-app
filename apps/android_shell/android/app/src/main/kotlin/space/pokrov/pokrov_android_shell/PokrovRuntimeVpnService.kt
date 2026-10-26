@@ -503,6 +503,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             scope = scope,
             onSnapshot = { snapshot ->
                 if (ownsRuntimeSession(scope)) {
+                    val localDpiSummary = activeLocalDpi?.observationSummary()
+                    AndroidRuntimeState.updateLocalDpiObservation(scope.generation, localDpiSummary)
                     AndroidRuntimeState.updateTunnelTraffic(scope.generation, snapshot)
                     coreEgressMonitor?.onTraffic(snapshot.uplinkTotalBytes, snapshot.downlinkTotalBytes)
                 }

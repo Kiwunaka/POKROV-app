@@ -108,6 +108,7 @@ internal object AndroidRuntimeState {
     private var lastStopReason: String? = null
     private var awgSafeDiagnosticCode: String? = null
     private var awgSafeDiagnosticOccurrence: Int? = null
+    private var localDpiObservationSummary: String? = null
     private var ipv4RouteCount: Int = 0
     private var ipv6RouteCount: Int = 0
     private var includePackageCount: Int = 0
@@ -727,7 +728,13 @@ internal object AndroidRuntimeState {
         clearTunnelTrafficValues()
     }
 
+    @Synchronized
+    fun updateLocalDpiObservation(generation: Long, summary: String?) {
+        if (generation == tunnelTrafficGeneration) localDpiObservationSummary = summary
+    }
+
     private fun clearTunnelTrafficValues() {
+        localDpiObservationSummary = null
         tunnelTrafficState = AndroidTunnelTrafficSampleState.UNAVAILABLE
         tunnelUplinkBps = null
         tunnelDownlinkBps = null
@@ -995,6 +1002,7 @@ internal object AndroidRuntimeState {
             details += "Выход в интернет не подтвержден"
         }
         details += "Правила v4=$ipv4RouteCount v6=$ipv6RouteCount"
+        localDpiObservationSummary?.let { details += it }
 
         if (includePackageCount > 0 || excludePackageCount > 0) {
             details += "Приложения include=$includePackageCount exclude=$excludePackageCount"

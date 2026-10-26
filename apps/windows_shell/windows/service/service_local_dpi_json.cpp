@@ -216,12 +216,12 @@ std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObserva
   ComPtr<JsonMap> map;
   UINT32 size = 0;
   if (!object || FAILED(object.As(&map)) || FAILED(map->get_Size(&size)) ||
-      (size != 4 && size != 5)) return std::nullopt;
+      (size != 4 && size != 5 && size != 6)) return std::nullopt;
   WindowsLocalDpiHolderObservation result;
   result.state = String(object.Get(), L"state");
   if (result.state != "unpublished" && result.state != "ready" &&
       result.state != "failed" && result.state != "withdrawn") return std::nullopt;
-  if (size == 5) {
+  if (size >= 5) {
     result.failure_reason = String(object.Get(), L"failure_reason");
     bool known = false;
     for (const auto* reason : {"none", "connect_timeout_ipv4", "connect_timeout_ipv6",
@@ -249,6 +249,7 @@ std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObserva
   };
   if (!count(L"local_handoffs", &result.local_handoffs) ||
       !count(L"vpn_handoffs", &result.vpn_handoffs)) return std::nullopt;
+  if (size == 6 && !count(L"quic_rejected", &result.quic_rejected)) return std::nullopt;
   return result;
 }
 

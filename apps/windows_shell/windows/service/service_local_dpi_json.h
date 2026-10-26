@@ -34,6 +34,7 @@ struct WindowsLocalDpiHolderObservation {
   bool withdraw_completed = false;
   std::uint64_t local_handoffs = 0;
   std::uint64_t vpn_handoffs = 0;
+  std::uint64_t quic_rejected = 0;
 };
 std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObservation(
     const std::string& encoded);

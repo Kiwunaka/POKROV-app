@@ -222,6 +222,10 @@ void TestWindowsLocalDpiScopePreparation() {
   ready_observation.replace(ready_observation.find("early_write"), 11, "none");
   Expect(ReadWindowsLocalDpiHolderObservation(ready_observation).has_value(),
          "current Core ready observation lost its explicit no-failure state");
+  ready_observation.insert(ready_observation.size() - 1, ",\"quic_rejected\":3");
+  const auto quic_observation = ReadWindowsLocalDpiHolderObservation(ready_observation);
+  Expect(quic_observation && quic_observation->quic_rejected == 3 && quic_observation->local_handoffs == 15,
+         "QUIC attempts changed TCP handoffs or made current Core unreadable");
 }
 
 void TestWindowsLocalDpiStrategyArguments() {

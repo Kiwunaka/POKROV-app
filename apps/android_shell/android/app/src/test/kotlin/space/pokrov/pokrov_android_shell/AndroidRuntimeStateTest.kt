@@ -749,6 +749,20 @@ class AndroidRuntimeStateTest {
         assertNull(AndroidRuntimeState.snapshot()["stagedProfileDigest"])
     }
 
+    @Test
+    fun localDpiObservationBelongsToTheCurrentTrafficSession() {
+        AndroidRuntimeState.markRunning("synthetic running")
+        AndroidRuntimeState.beginTunnelTrafficSession(41L)
+        AndroidRuntimeState.updateLocalDpiObservation(41L, "Локальный DPI: TCP напрямую 3")
+        assertTrue((AndroidRuntimeState.snapshot()["hostDiagnosticsSummary"] as String).contains("TCP напрямую 3"))
+        AndroidRuntimeState.beginTunnelTrafficSession(42L)
+        AndroidRuntimeState.updateLocalDpiObservation(41L, "Локальный DPI: устаревшее")
+        assertFalse((AndroidRuntimeState.snapshot()["hostDiagnosticsSummary"] as String).contains("Локальный DPI"))
+        AndroidRuntimeState.updateLocalDpiObservation(42L, "Локальный DPI: TCP через VPN 1")
+        AndroidRuntimeState.endTunnelTrafficSession(42L)
+        assertFalse((AndroidRuntimeState.snapshot()["hostDiagnosticsSummary"] as String).contains("Локальный DPI"))
+    }
+
     private fun resetState() {
         setPrivateField("environment", null)
         setPrivateField("transportCapabilitiesJson", null)
@@ -774,6 +788,7 @@ class AndroidRuntimeStateTest {
         setPrivateField("lastStopReason", null)
         setPrivateField("awgSafeDiagnosticCode", null)
         setPrivateField("awgSafeDiagnosticOccurrence", null)
+        setPrivateField("localDpiObservationSummary", null)
         setPrivateField("ipv4RouteCount", 0)
         setPrivateField("ipv6RouteCount", 0)
         setPrivateField("includePackageCount", 0)

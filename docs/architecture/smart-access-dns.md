@@ -191,6 +191,17 @@ an unexplained player error around 21 seconds. Later pauses were the cookie
 dialog, followed by the accepted 84-second run. No global QUIC/DNS or host
 network changes were made.
 
+YouTube API and CDN domains use the same signed
+Selective local-DPI holder and enables `prefer_tcp` only for that service. A
+ready holder rejects routed QUIC/UDP443 attempts and closes its pre-proof QUIC
+sessions; unavailable, failed or withdrawn holders retain VPN fallback. Windows
+IPv6 TCP still stays on VPN. Android's existing diagnostic summary now reports
+admission states, actual local/VPN TCP handoffs and rejected QUIC connections
+from the captured Core holder, using the existing traffic sampling callback.
+These counters contain no domains or connection material and do not establish
+video playback, a uniformly Russian exit or removal of advertising. Device
+acceptance of this change is separate from the retained 4200 result above.
+
 SlipNet's VLESS-over-DNSTT source was integrated in Core `b628439`,
 Platform `cfcd3fb` and App `fb59e1c5`. Platform and Node's DNSTT backend are live
 on Brain/CH respectively; CH also runs the CC0 DNSTT authoritative server.
@@ -305,8 +316,10 @@ server's owned-provider ECH guard. For a host-verified external provider, an
 approved catalog gateway and an all-exact lease domain set, App projects
 `external_ech_outer_sni: true`. Core checks the visible outer SNI against those
 exact domains and forwards the ClientHello unchanged; it does not authenticate
-an encrypted inner identity or claim to distinguish ECH from GREASE. Owned, QA
-and suffix scopes keep the existing rejection. Foreground renewal compares the
+an encrypted inner identity or claim to distinguish ECH from GREASE. The same
+exact-domain external mode applies to an explicitly signed QA grant; owned QA
+retains its ECH guard. Owned and suffix scopes keep the existing rejection.
+Foreground renewal compares the
 derived mode; server publication makes provider kind immutable for an existing
 provider ID, which is already part of the unchanged runtime scope hash.
 Catalog and lease expiry, declared VPN fallback, the untimed
@@ -314,15 +327,18 @@ domain rejection, disabled DNS cache and TTL zero retain their existing roles.
 The finite first-provider QA permit remains nonrenewable. A native A/TLS probe
 does not prove a browser feature request.
 
-The separate historical private Windows QA path accepts Gemini or ChatGPT only. The verified permit and grant
-select the service and exact hosts for compilation, earlier-rule checks and native
-proof; browser input cannot choose this scope. Gemini keeps its single exact host.
-ChatGPT requires `chatgpt.com` and may include individually admitted exact hosts
-under the existing ChatGPT/OpenAI/static/content roots, each matched to a
-nonshared domain in the same disabled catalog service. Unknown services and
-suffix scopes fail closed. Its owned QA projection stays outside public selection, and the one attempt
-remains nonrenewable and limited to 600 seconds. Source tests do not establish a
-real ChatGPT response through the owned relay.
+The private first-provider QA path supports Windows and Android for Gemini or
+ChatGPT. A signed, disabled/source-only capability binds the active device
+platform, session, build, Core module and profile. Approved embedded external
+providers use their existing identity and permission; no provider kind is
+relabelled. Exact Gemini/ChatGPT domains remain limited to nonshared domains in
+the current catalog. A Windows-enabled service may be tested privately on
+Android without adding Android to its public platforms. The server rejects QA
+when the same service/platform already has an enabled verified capability. One
+attempt lasts at most 600 seconds, is nonrenewable, and native/browser proof is
+still required before public promotion. Android exposes the existing diagnostics
+action only for a pending device admission and uses the existing identity-bound
+Connect/control APIs.
 
 Windows recognizes the selective producer's exact `api.pokrov.space` /
 `app.pokrov.space` pair in matching TCP/443 and VPN DNS rules. Ordinary connect

@@ -56,6 +56,7 @@ internal class AndroidLocalDpiAdmission private constructor(
             { current() && serverCurrent() },
             server::readLocalDpiAdmissionID, server::admitLocalDpiAdmission,
             { server.withdrawLocalDpiAdmission(it) },
+            server::readLocalDpiObservation,
         )
         holders = captured
         child.onCancel(captured::close)
@@ -102,6 +103,8 @@ internal class AndroidLocalDpiAdmission private constructor(
     }
 
     fun withdrawService(service: String) { holders?.withdrawService(service) }
+
+    fun observationSummary(): String? = holders?.observationSummary()
 
     private fun resolve(host: String, remaining: () -> Int): InetAddress? {
         if (!current() || remaining() <= 0) return null
@@ -228,7 +231,8 @@ internal class AndroidLocalDpiAdmission private constructor(
                 if (!admission.current()) { admission.close(); return null }
                 for ((service, tag) in tags) outbounds.put(JSONObject().put("type", "pokrov-local-dpi")
                     .put("tag", tag).put("server", "127.0.0.1").put("server_port", port)
-                    .put("vpn_outbound", fallbacks.getValue(service)).put("service_id", service))
+                    .put("vpn_outbound", fallbacks.getValue(service)).put("service_id", service)
+                    .put("prefer_tcp", service == "youtube"))
                 replacements.forEach { (rule, tag) -> rule.put("outbound", tag) }
                 return result
             } catch (_: Exception) { result?.close(); return null }
