@@ -12,10 +12,12 @@ import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
 import android.system.StructTimeval
+import android.util.Log
 import java.io.File
 import java.io.EOFException
 import java.io.IOException
 import java.net.ConnectException
+import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NoRouteToHostException
@@ -26,6 +28,7 @@ import java.security.SecureRandom
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
@@ -69,20 +72,44 @@ internal class AndroidByeDpiRuntime private constructor(
     val unprovenSocksPort: Int
         get() = synchronized(protectLock) { check(isCurrent()); rawPort() }
 
-    fun proveService(host: String, address: InetAddress, remainingMillis: () -> Int): Boolean {
+    fun proveService(host: String, address: InetAddress, remainingMillis: () -> Int,
+        youtubeControl: Boolean): Boolean {
+        val trace = youtubeControl && address is Inet4Address &&
+            Log.isLoggable("POKROV-DPIProof", Log.DEBUG)
+        val token = AtomicLong(0)
         val attempt = AndroidByeDpiServiceProof(::isCurrent, { socket ->
             synchronized(protectLock) {
                 isCurrent() && ParcelFileDescriptor.fromSocket(socket).use {
                     protectSocket(it.fd)
                 } && isCurrent()
             }
-        }, remainingMillis, ::logLocalDpiDiagnostic)
+        }, remainingMillis, { port ->
+            if (trace && isCurrent()) token.set(runCatching {
+                nativeProofBegin(nativeHandle, port)
+            }.getOrDefault(0))
+        }, ::logLocalDpiDiagnostic)
         synchronized(protectLock) {
             if (!isCurrent()) return false
             proof = attempt
         }
         return try { attempt.run(rawPort(), SNIHostName(host).asciiName, address) }
-        finally { attempt.close() }
+        finally {
+            attempt.close()
+            if (trace && isCurrent()) runCatching {
+                val stats = nativeProofFinish(nativeHandle, token.get())
+                val seen = stats?.getOrNull(0) == 1L
+                fun count(index: Int) = if (seen) stats!![index].toString() else "unknown"
+                fun flag(index: Int) = when (stats?.getOrNull(index)) {
+                    0L -> "false"
+                    1L -> "true"
+                    else -> "unknown"
+                }
+                if (isCurrent()) Log.d("POKROV-DPIProof",
+                    "target_ipv4=${publicProofIpv4(address) ?: "unknown"} client_rx=${count(1)} " +
+                    "upstream_tx=${count(2)} remote_rx=${count(3)} " +
+                    "hello_sni_first_chunk=${flag(4)} tlsrec_applied=${flag(5)}")
+            }
+        }
     }
 
     fun markAdmitted(): Boolean = synchronized(protectLock) {
@@ -196,6 +223,8 @@ internal class AndroidByeDpiRuntime private constructor(
     private external fun nativeStart(protectPath: String, strategy: Int, requestedPort: Int): Long
     private external fun nativePort(handle: Long): Int
     private external fun nativeStop(handle: Long)
+    private external fun nativeProofBegin(handle: Long, port: Int): Long
+    private external fun nativeProofFinish(handle: Long, token: Long): LongArray?
 
     companion object {
         private var lastStrategy: Pair<String, AndroidByeDpiStrategy>? = null
@@ -252,11 +281,23 @@ internal class AndroidByeDpiRuntime private constructor(
     }
 }
 
+private fun publicProofIpv4(address: InetAddress): String? {
+    if (address !is Inet4Address) return null
+    val bytes = address.address.map { it.toInt() and 255 }
+    val (a, b, c) = bytes
+    if (a == 0 || a == 10 || a == 127 || a >= 224 ||
+        a == 100 && b in 64..127 || a == 169 && b == 254 ||
+        a == 172 && b in 16..31 || a == 192 && (b == 0 || b == 168 || b == 88 && c == 99) ||
+        a == 198 && (b in 18..19 || b == 51 && c == 100) || a == 203 && b == 0 && c == 113) return null
+    return address.hostAddress
+}
+
 /** One cancellable, bounded SOCKS/TLS/HEAD exchange; no Android or JNI calls. */
 internal class AndroidByeDpiServiceProof(
     private val isCurrent: () -> Boolean,
     private val protectSocket: (Socket) -> Boolean,
     private val remainingMillis: () -> Int,
+    private val onBound: (Int) -> Unit = {},
     private val diagnostic: (String) -> Unit,
 ) : AutoCloseable {
     private val lock = Any()
@@ -345,6 +386,7 @@ internal class AndroidByeDpiServiceProof(
         // Core. An included host UID must not send this proof back into its TUN.
         stage = "socket_bind"
         socket.bind(InetSocketAddress("127.0.0.1", 0))
+        onBound(socket.localPort)
         stage = "protect"
         if (!protectSocket(socket)) {
             report("refused")

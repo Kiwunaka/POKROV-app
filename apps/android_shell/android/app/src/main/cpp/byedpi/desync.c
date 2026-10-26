@@ -28,6 +28,9 @@
 
 #include "packets.h"
 #include "error.h"
+#ifdef POKROV_EMBEDDED
+#include "../android_proof_stats.h"
+#endif
 
 #define DEFAULT_TTL 8
 #define ERR_WAIT -12
@@ -544,7 +547,13 @@ ssize_t desync(struct poolhd *pool,
         }
     }
     if (!skip) {
+#ifdef POKROV_EMBEDDED
+        ssize_t before_tamp = *np;
+#endif
         tamp(buffer, bfsize, np, &dp, &info);
+#ifdef POKROV_EMBEDDED
+        if (dp.tlsrec_n) pokrov_byedpi_proof_tlsrec(val->pokrov_proof_token, *np > before_tamp);
+#endif
     }
     ssize_t n = *np;
     
@@ -616,8 +625,12 @@ ssize_t desync(struct poolhd *pool,
                 if (part.m == DESYNC_DISOOB) 
                     s = send_oob(sfd, 
                         buffer + lp, bfsize - lp, pos - lp, dp.oob_char);
-                else 
+                else {
                     s = send(sfd, buffer + lp, pos - lp, 0);
+#ifdef POKROV_EMBEDDED
+                    if (s > 0) pokrov_byedpi_proof_sent(val->pokrov_proof_token, s);
+#endif
+                }
                 
                 if (s < 0) {
                     uniperror("send");
@@ -628,6 +641,9 @@ ssize_t desync(struct poolhd *pool,
             case DESYNC_NONE:
             default:
                 s = send(sfd, buffer + lp, pos - lp, 0);
+#ifdef POKROV_EMBEDDED
+                if (s > 0) pokrov_byedpi_proof_sent(val->pokrov_proof_token, s);
+#endif
                 break;
         }
         LOG(LOG_S, "split: pos=%ld-%ld (%zd), m: %s\n", lp, pos, s, demode_str[part.m]);
@@ -665,7 +681,11 @@ ssize_t desync(struct poolhd *pool,
     // send all/rest
     if (lp < n) {
         LOG((lp ? LOG_S : LOG_L), "send: pos=%ld-%zd\n", lp, n);
-        if (send(sfd, buffer + lp, n - lp, 0) < 0) {
+        ssize_t sent = send(sfd, buffer + lp, n - lp, 0);
+#ifdef POKROV_EMBEDDED
+        if (sent > 0) pokrov_byedpi_proof_sent(val->pokrov_proof_token, sent);
+#endif
+        if (sent < 0) {
             if (get_e() == EAGAIN) {
                 return lp - offset;
             }

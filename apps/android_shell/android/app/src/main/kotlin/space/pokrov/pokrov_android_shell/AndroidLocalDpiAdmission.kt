@@ -163,7 +163,8 @@ internal class AndroidLocalDpiAdmission private constructor(
                                         logLocalDpiDiagnostic("proof=address_unavailable")
                                         false
                                     } else {
-                                        val proved = runtime!!.proveService(host, address, ::attemptRemaining)
+                                        val proved = runtime!!.proveService(host, address, ::attemptRemaining,
+                                            service == "youtube" && host == "www.youtube.com")
                                         if (!proved) logLocalDpiDiagnostic("proof=transport_failed")
                                         proved
                                     }

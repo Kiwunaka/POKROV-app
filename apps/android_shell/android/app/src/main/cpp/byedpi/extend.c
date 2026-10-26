@@ -22,6 +22,9 @@
 
 #include "desync.h"
 #include "packets.h"
+#ifdef POKROV_EMBEDDED
+#include "../android_proof_stats.h"
+#endif
 
 
 static int set_timeout(int fd, unsigned int s)
@@ -706,6 +709,10 @@ ssize_t tcp_send_hook(struct poolhd *pool,
     }
     if (skip) {
         sn = send(remote->fd, buff->data + off, *n - off, 0);
+#ifdef POKROV_EMBEDDED
+        if (remote->flag == FLAG_CONN && sn > 0)
+            pokrov_byedpi_proof_sent(remote->pokrov_proof_token, sn);
+#endif
         if (sn < 0 && get_e() == EAGAIN) {
             return 0;
         }
@@ -733,6 +740,16 @@ ssize_t tcp_recv_hook(struct poolhd *pool,
         uniperror("recv");
         return handle_err(pool, val, get_e());
     }
+#ifdef POKROV_EMBEDDED
+    if (val->pokrov_proof_token) {
+        int hello = -1;
+        if (val->flag != FLAG_CONN && val->recv_count == 0) {
+            char *host = NULL;
+            hello = parse_tls(buff->data, n, &host) > 0;
+        }
+        pokrov_byedpi_proof_recv(val->pokrov_proof_token, val->flag == FLAG_CONN, n, hello);
+    }
+#endif
     val->recv_count += n;
     
     if (val->round_sent == 0) {

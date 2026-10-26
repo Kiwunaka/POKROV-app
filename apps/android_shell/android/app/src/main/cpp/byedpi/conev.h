@@ -75,6 +75,9 @@ struct eval {
     int conn_state;
     
     struct eval *pair;
+#ifdef POKROV_EMBEDDED
+    uint64_t pokrov_proof_token;
+#endif
     struct buffer *buff, *sq_buff;
     int flag;
     union sockaddr_u addr;

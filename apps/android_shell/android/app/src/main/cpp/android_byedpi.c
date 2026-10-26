@@ -12,6 +12,7 @@
 #include "params.h"
 #include "proxy.h"
 #include "android_socket_owner.h"
+#include "android_proof_stats.h"
 
 int parse_args(int argc, char **argv);
 int init(void);
@@ -31,6 +32,8 @@ struct runtime {
     jobject owner;
     jmethodID allow_client;
     JNIEnv *thread_env;
+    uint64_t proof_sequence;
+    struct pokrov_proof_stats proof_stats;
 };
 
 static JavaVM *vm;
@@ -40,6 +43,46 @@ static jlong next_id;
 static struct params defaults;
 static int defaults_saved;
 int pokrov_byedpi_stop_fd;
+
+uint64_t pokrov_byedpi_proof_claim(uint16_t port)
+{
+    pthread_mutex_lock(&lock);
+    uint64_t token = current ? pokrov_proof_claim(&current->proof_stats, port) : 0;
+    pthread_mutex_unlock(&lock);
+    return token;
+}
+
+void pokrov_byedpi_proof_ready(uint64_t token)
+{
+    if (!token) return;
+    pthread_mutex_lock(&lock);
+    if (current) pokrov_proof_ready(&current->proof_stats, token);
+    pthread_mutex_unlock(&lock);
+}
+
+void pokrov_byedpi_proof_recv(uint64_t token, int remote, int64_t bytes, int hello)
+{
+    if (!token) return;
+    pthread_mutex_lock(&lock);
+    if (current) pokrov_proof_recv(&current->proof_stats, token, remote, bytes, hello);
+    pthread_mutex_unlock(&lock);
+}
+
+void pokrov_byedpi_proof_sent(uint64_t token, int64_t bytes)
+{
+    if (!token || bytes <= 0) return;
+    pthread_mutex_lock(&lock);
+    if (current) pokrov_proof_sent(&current->proof_stats, token, bytes);
+    pthread_mutex_unlock(&lock);
+}
+
+void pokrov_byedpi_proof_tlsrec(uint64_t token, int applied)
+{
+    if (!token) return;
+    pthread_mutex_lock(&lock);
+    if (current) pokrov_proof_tlsrec(&current->proof_stats, token, applied);
+    pthread_mutex_unlock(&lock);
+}
 
 int pokrov_byedpi_is_stopping(void)
 {
@@ -200,6 +243,41 @@ Java_space_pokrov_pokrov_1android_1shell_AndroidByeDpiRuntime_nativePort(
     int port = current && current->id == id && current->running ? current->port : 0;
     pthread_mutex_unlock(&lock);
     return port;
+}
+
+JNIEXPORT jlong JNICALL
+Java_space_pokrov_pokrov_1android_1shell_AndroidByeDpiRuntime_nativeProofBegin(
+        JNIEnv *env, jobject owner, jlong id, jint port)
+{
+    (void)env;
+    (void)owner;
+    uint64_t token = 0;
+    pthread_mutex_lock(&lock);
+    if (current && current->id == id && current->running &&
+            !current->proof_stats.token && port > 0 && port <= 65535) {
+        token = ++current->proof_sequence;
+        pokrov_proof_begin(&current->proof_stats, token, (uint16_t)port);
+    }
+    pthread_mutex_unlock(&lock);
+    return (jlong)token;
+}
+
+JNIEXPORT jlongArray JNICALL
+Java_space_pokrov_pokrov_1android_1shell_AndroidByeDpiRuntime_nativeProofFinish(
+        JNIEnv *env, jobject owner, jlong id, jlong token)
+{
+    (void)owner;
+    struct pokrov_proof_stats stats;
+    pthread_mutex_lock(&lock);
+    int found = current && current->id == id &&
+        pokrov_proof_finish(&current->proof_stats, (uint64_t)token, &stats);
+    pthread_mutex_unlock(&lock);
+    if (!found) return NULL;
+    jlong values[] = {stats.tunnel, (jlong)stats.client_rx, (jlong)stats.upstream_tx,
+        (jlong)stats.remote_rx, stats.hello, stats.tlsrec};
+    jlongArray result = (*env)->NewLongArray(env, 6);
+    if (result) (*env)->SetLongArrayRegion(env, result, 0, 6, values);
+    return result;
 }
 
 JNIEXPORT void JNICALL

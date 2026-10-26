@@ -12,6 +12,9 @@
 #include "extend.h"
 #include "error.h"
 #include "packets.h"
+#ifdef POKROV_EMBEDDED
+#include "../android_proof_stats.h"
+#endif
 
 #ifdef _WIN32
     #include <winsock2.h>
@@ -494,6 +497,9 @@ int create_conn(struct poolhd *pool,
     }
     val->pair = pair;
     pair->pair = val;
+#ifdef POKROV_EMBEDDED
+    pair->pokrov_proof_token = val->pokrov_proof_token;
+#endif
     #ifdef __NetBSD__
     pair->addr = addr;
     #else
@@ -675,6 +681,9 @@ static int on_accept(struct poolhd *pool, struct eval *val, int et)
             continue;
         }
         rval->addr = client;
+#ifdef POKROV_EMBEDDED
+        rval->pokrov_proof_token = pokrov_byedpi_proof_claim(ntohs(client.in.sin_port));
+#endif
         #ifdef __linux__
         if ((params.mode & MODE_TRANSPARENT) && transp_conn(pool, rval) < 0) {
             if (!(params.mode & ~MODE_TRANSPARENT))
@@ -1020,6 +1029,9 @@ int on_connect(struct poolhd *pool, struct eval *val, int et)
         }
         val->cb = &on_tunnel;
         val->pair->cb = &on_tunnel;
+#ifdef POKROV_EMBEDDED
+        pokrov_byedpi_proof_ready(val->pokrov_proof_token);
+#endif
     }
     if (!error && val->pair->buff) {
         return on_tunnel(pool, val, et);

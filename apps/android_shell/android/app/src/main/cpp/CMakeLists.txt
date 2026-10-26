@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22.1)
 project(pokrov_byedpi LANGUAGES C)
 
 # hufrea/byedpi (MIT), main ba532298de7b28cfe854aea83d061369d13ca290.
-# The embedded proxy.c patch adds session stop and admission callbacks only.
+# The embedded patches add session stop, admission and opt-in control-proof diagnostics.
 add_library(pokrov_byedpi SHARED
     android_byedpi.c
     byedpi/main.c
