@@ -491,6 +491,8 @@ void main() {
     var guardClosed = false;
     var failBoundConnect = false;
     var stopConfirmed = true;
+    var postStartProofPending = false;
+    var postStartProofObserved = false;
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(channel, (call) async {
@@ -499,6 +501,12 @@ void main() {
       switch (call.method) {
         case 'runtimeEngine.clockSnapshot':
           return {'schema': 1, 'boot_ref': bootRef, 'elapsed_ms': 1000, 'quantum_ms': 1};
+        case 'runtimeEngine.snapshot':
+          if (postStartProofPending) {
+            postStartProofPending = false;
+            postStartProofObserved = true;
+            phase.addAll({'hostHealth': 'healthy', 'coreEgressValidated': true});
+          }
         case 'runtimeEngine.transportNetworkContext':
           return {'schema': 1, 'network_context_ref': networkRef};
         case 'runtimeEngine.candidateNetwork':
@@ -537,6 +545,10 @@ void main() {
           phase.addAll({'phase': 'running', 'effectiveProfileDigest': phase['stagedProfileDigest'],
             'hostHealth': 'healthy', 'dnsState': 'healthy', 'uplinkState': 'healthy', 'dnsReady': true,
             'coreEgressValidated': true, 'tunInterfacePresent': true, 'vpnRoutesPresent': true});
+          if (hostPlatform == HostPlatform.android && nativeBoundRequestId != null) {
+            postStartProofPending = true;
+            phase.addAll({'hostHealth': 'needsAttention', 'coreEgressValidated': null});
+          }
           if (nativeBoundRequestId != null) {
             return {'schema': 1, 'requestId': nativeBoundRequestId, 'snapshot': {...phase}};
           }
@@ -550,6 +562,7 @@ void main() {
                 'stages': [for (var i = 0; i < 3; i++) {'stage': ['resolver', 'dns', 'tls'][i], 'result': 'pass',
                   'observed_at_ms': startedAt + i + 1, 'duration_ms': 1}]}}]})};
         case 'runtimeEngine.configureBoundSmartAccessRuntimeControl':
+          if (hostPlatform == HostPlatform.android) expect(postStartProofObserved, isTrue);
           if (nativeBoundRequestId == null || args['requestId'] != nativeBoundRequestId) {
             throw PlatformException(code: 'connect_owner_changed');
           }

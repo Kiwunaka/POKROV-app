@@ -4332,6 +4332,7 @@ class ConnectionManager extends ChangeNotifier {
         current = await _settleRuntimeTransition(
           current,
           ownerGeneration: generation,
+          waitForEgressProof: qa != null,
         );
         if (_disposed || !_connectionCoordinator.ownsOperation(generation)) {
           return;
