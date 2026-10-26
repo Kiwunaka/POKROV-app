@@ -16,7 +16,8 @@ all active Premium access; their separate DNS-tunnel addon is not a SmartDNS
 endpoint. SlipNet's CH endpoint is live and accepted directly; the owner has
 saved the NS records, but all four Timeweb servers still lacked delegation on
 26 October. The provider's 24-hour publication window has elapsed; the owner has
-a prepared support request. Managed delivery stays disabled pending recursive and Auto/TUN
+already sent the support request and is awaiting Timeweb's reply; NS was not
+checked again in the later phone work. Managed delivery stays disabled pending recursive and Auto/TUN
 acceptance. Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
@@ -69,12 +70,16 @@ Those are last-observed server facts; the 4200 pass changed neither catalog nor
 provider policy and did not repeat the server checks. Server `8018d52` enforces immutable provider kind for an
 existing provider ID. No commercial COMSS offer was added.
 
-Current private packages are **Windows and Android 4209 / App `41b47215`**, using
-the unchanged Windows `b3a021b` and Android `d80a992` Core 1.2.14 artifacts.
-Packaging and the new Android RF2→IS/network-movement checks are recorded in
-[cutover readiness](../operations/cutover-readiness.md); they do not accept
-Android provider SmartDNS, LocalDPI or Naive. Windows 4204's scoped UI/TUN Naive
-run below remains accepted. SlipNet recursive DNS/Auto/TUN still waits for NS.
+Latest accepted Android is **4211 / App `eaf5d0d1` / Core `58b11d4`**; Windows
+remains **4209 / Core `b3a021b`**. Android Naive CH was accepted on 4210, followed
+by the new direct Lampa→PL path on 4211; see
+[cutover readiness](../operations/cutover-readiness.md). Android provider SmartDNS
+remains public OFF: Platform `1bbe856` fixed the QA legacy-alias/lifetime 500;
+the next actual attempt reached TUN ready but rejected the protected API/app-domain
+pair. Parser correction `6e8cb4da` passed its focused test and is being packaged
+in 4212; device acceptance waits for the phone's return. Android SmartDNS
+and LocalDPI/YouTube are not accepted by those VPN or external-client results.
+DNSTT recursive DNS/Auto/TUN still waits for NS; Slipstream is a separate deferred transport.
 Previous checks retain their original scope.
 The already accepted 4195 Gemini checks were not
 repeated: in ordinary Edge with default settings, POKROV
@@ -340,7 +345,7 @@ still required before public promotion. Android exposes the existing diagnostics
 action only for a pending device admission and uses the existing identity-bound
 Connect/control APIs.
 
-Windows recognizes the selective producer's exact `api.pokrov.space` /
+Android and Windows recognize the selective producer's exact `api.pokrov.space` /
 `app.pokrov.space` pair in matching TCP/443 and VPN DNS rules. Ordinary connect
 keeps the protected VPN verifier; explicit QA selects the leased service only
 after that boundary passes. The previously supported single API rule remains

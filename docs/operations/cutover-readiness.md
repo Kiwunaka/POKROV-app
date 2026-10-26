@@ -15,13 +15,31 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Current private Android and Windows are **1.5.0+4209**, App `41b47215`.
-Android reuses Core `d80a992` through the core-android-4202 manifest; Windows
-reuses Core `b3a021b` through the core-windows-4205 manifest. Both are Core 1.2.14;
-neither Core was rebuilt. All four Android APKs passed production signing,
-package/version/ABI/non-debuggable/runtime binding. The Windows bundle passed
-version and runtime binding; setup is 29,242,184 bytes and the delivery ZIP is
-28,744,663 bytes with the single entry `POKROV-Setup.exe`.
+Latest accepted private Android is **1.5.0+4211**, App `eaf5d0d1` / Core
+`58b11d4`; Windows remains **4209**, App `41b47215` / Core `b3a021b`
+(core-windows-4205 manifest). The Windows Core `58b11d4` was built, but no
+installer using it has been built. App `088a9240` fixes the Locations refresh
+race and passed its focused regression; it is not in these accepted APKs.
+Private Android **4212** (`a8fee26d`, including parser fix `6e8cb4da`) is being
+prepared; it is not physically accepted. The owner has taken the phone again,
+so remaining device acceptance waits for its return. The preceding 4209 four-ABI
+Android set and Windows setup/ZIP passed packaging and runtime binding.
+
+Android **4210**, App `08222a80` / Core `58b11d4`, passed ordinary UI/TUN
+Naive CH: exact 64 KiB in 1,019 ms, Connect 10,257 ms, then normal Stop with
+VPN service/network absent. Platform `690658b` fixed the Naive telemetry 422;
+the original queued report was delivered without another Connect. On **4211**,
+the new Lampa direct address `37.18.102.90` to PL (`lampa`, bridge 8) passed
+64 KiB in 818 ms, Connect 9,910 ms and clean Stop. The old address is detached
+but retained for rollback; Floating/RF2 is unchanged and no owner DNS edit is needed.
+Manual connection choices now exist; the earlier absence of a selector is closed.
+
+On the phone, refreshed existing subscriptions in Hiddify 4.1.1 and Happ 4.4.1
+showed the new bridge/Iceland labels. Germany Auto produced real Gemini answers
+`2+2 → 4` and `2+3 → 5`, respectively. Settings were preserved and both VPNs
+were stopped. Hiddify rewrites routing itself; POKROV-app SmartDNS rules are not
+promised there. Happ's POKROV Russia Direct routing/geofiles import was accepted.
+These external-client results do not accept Android app SmartDNS or YouTube.
 
 The returned physical Android phone exposed a false `profile_identity_mismatch`
 after account refresh withdrew reusable staging while the active profile remained
@@ -42,8 +60,8 @@ Russia Direct, WARP off, the prior advanced view, Wi-Fi/mobile data enabled and
 the original system DNS/always-on settings were restored; VPN remains stopped.
 Earlier LTE failures with zero SIM balance are not VPN defects. Direct Iceland
 HTTPS still timed out on funded LTE; bridge success does not accept IS direct
-VLESS/HY2/AWG. Android Naive, SmartDNS and LocalDPI-specific acceptance remains
-separate; the current client has no per-device exclusive transport QA selector.
+VLESS/HY2/AWG. Android Naive was subsequently accepted on 4210 as described above;
+Android SmartDNS and LocalDPI/YouTube remain separate and unaccepted.
 No accepted Windows transport/VM checks were repeated for this shared cache change.
 Public release, customer contact and paused automations remain unchanged.
 
@@ -122,10 +140,11 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
-| Android universal | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-universal.apk) |
-| Android arm64-v8a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-arm64-v8a.apk) |
-| Android armeabi-v7a | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-armeabi-v7a.apk) |
-| Android x86_64 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-x86_64.apk) |
+| Android arm64-v8a, accepted 4211 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4211-android-arm64-v8a.apk) |
+| Android universal, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-universal.apk) |
+| Android arm64-v8a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-arm64-v8a.apk) |
+| Android armeabi-v7a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-armeabi-v7a.apk) |
+| Android x86_64, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-x86_64.apk) |
 | Windows x64 installer | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4209-setup.exe) |
 | Windows delivery ZIP | [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4209.zip) |
 
@@ -262,10 +281,11 @@ DNS/routes/proxy matched the baseline; display 1372×943 was restored, app/winws
 TUN were absent and the owned QA directory was removed. Root confirmed the VM
 PoweredOff. Paused customer work and automations were not resumed.
 Existing budgets, country and bridge-load groups remain in force.
-Remaining release work is phone acceptance after explicit return, the paused
-customer Windows case, Lampa's provider response, IS direct on another network
-and final publication only after the owner's explicit yes. Public 1.4.5 and
-draft 4175 are unchanged.
+Remaining work follows the owner's current queue: final Android packaging and
+targeted acceptance, DNSTT after Timeweb publishes the delegation, and unresolved
+IS direct/UDP and Android SmartDNS/YouTube. The customer Windows case remains
+paused. Lampa's new direct path and Android Naive are accepted above. Public
+1.4.5/draft 4175 and paused automations are unchanged; publication requires the owner's yes.
 
 ## Earlier private packages and accepted checks
 
@@ -422,8 +442,8 @@ not by itself prove behavior under load. Remaining server and route work follows
 the owner's current queue.
 
 Telegram WEB on CH/Birch is accepted on desktop and, by the owner's own check,
-on mobile on 18 October. The phone remains unavailable until explicitly returned;
-that acceptance does not authorize ADB access. Current endpoints and server roles
+on mobile on 18 October. The phone returned on 26 October; its newer accepted
+cases are listed above. Current endpoints and server roles
 belong to the [Platform system map](C:/Users/kiwun/Documents/ai/VPN/docs/architecture/system-overview.md).
 The owner deleted Hostkey RU; its protected archive remains on Brain and old
 ru/delta DNS is empty. The approved retirement supersedes the old direct RU AWG

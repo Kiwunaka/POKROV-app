@@ -1,11 +1,12 @@
 # Android acceptance
 
 Updated 26 October 2026. Public version remains **1.4.5**; the seven-asset
-**1.5.0+4175** draft is unchanged. The current private candidate is
-**1.5.0+4209**, built from App `41b47215` with the unchanged Core `d80a992` / 1.2.14.
-All four APKs passed production signature, package/version, ABI, non-debuggable
-and runtime-binding checks. The returned phone runs ARM64 4209 with account data
-preserved. [Artifacts and exact scope](cutover-readiness.md).
+**1.5.0+4175** draft is unchanged. Latest accepted private Android is
+**1.5.0+4211**, App `eaf5d0d1` / Core `58b11d4`. Android4212 (`a8fee26d`) is being
+prepared with Locations fix `088a9240` and parser fix `6e8cb4da`; targeted source
+checks passed, but these fixes are not physically accepted. The owner has taken
+the phone again; the remaining device check waits for its return.
+[Artifacts and exact scope](cutover-readiness.md).
 
 The phone exposed a false identity failure after staging withdrawal; `03fe046d`
 fixes it, with the existing test RED→PASS in Direct and Store. Physical 4207
@@ -16,18 +17,21 @@ On 4209, ordinary RF2→IS LTE Connect and both live LTE/Wi-Fi transitions passe
 fresh full 64 KiB candidate receipts. UI Stop returned idle and removed the VPN
 service/network. The zero-balance LTE attempts before the owner's top-up are not
 transport failures for acceptance. No customer contact or public release occurred.
-The final ARM64 package is installed; Auto/Russia Direct/WARP off, the prior
-advanced view and original Wi-Fi/mobile/system-DNS settings are restored.
+At the end of that 4209 pass, Auto/Russia Direct/WARP off, the prior advanced
+view and original Wi-Fi/mobile/system-DNS settings were restored.
 The [external DNS browser comparison](../architecture/smart-access-dns.md) is
 Windows-only research, not Android or POKROV provider acceptance.
 
-The preceding **1.5.0+4181**, built from App `d78aefc9` with the same Core,
+The preceding **1.5.0+4181**, built from App `d78aefc9` with its then-selected Core,
 installed over 4178 and preserved the test account; 14 real screens were opened
 and captured on api35gc for the help Atlas. No VPN or checkout was started,
 and the emulator was turned off. That screen walkthrough does not establish
 physical VPN or load-aware route behavior for the current candidate.
 
 ## Earlier package checks
+
+The 4209 universal and three ABI-specific APKs passed production signature,
+package/version, ABI, non-debuggable and selected-runtime checks.
 
 Private 4182 from App `175cbc86` included the shared support/account refresh and
 Rewards fixes. Its four APKs passed production signature, package/version,
@@ -55,6 +59,9 @@ records the package status and accepted checks. The owner returned the phone on
 
 | Build / scenario | Result and scope |
 | --- | --- |
+| 4210 Naive CH | Ordinary UI/TUN, exact 64 KiB in 1,019 ms; Connect 10,257 ms; Stop removed VPN service/network. Platform `690658b` fixed telemetry 422 and delivered the original queued report without repeating Connect. |
+| 4211 Lampa direct to PL | Ordinary `lampa` / bridge 8 through new `37.18.102.90`, exact 64 KiB in 818 ms; Connect 9,910 ms; clean Stop. Floating/RF2 remained unchanged. |
+| External clients on the returned phone | Existing subscriptions refreshed in Hiddify 4.1.1 and Happ 4.4.1; Germany Auto gave real Gemini answers 4 and 5, respectively. Happ Russia Direct/geofiles import accepted; settings preserved and both VPNs stopped. Hiddify owns its routing, so these results do not accept POKROV-app SmartDNS or YouTube. |
 | 4209 Auto and IS on funded Beeline LTE | Ordinary Connect selected RF2→IS and completed `http_64k` in 1,984 ms; overall connect 9,585 ms. This is bridge VLESS, not IS direct or UDP. |
 | 4209 live network movement | RF2→IS retained the selected country across LTE→Wi-Fi→LTE; fresh `http_64k` success on Wi-Fi (1,431 ms) and LTE (1,637 ms). Wi-Fi was disabled at device UTC 00:48:45; the new LTE receipt at 00:48:50.59 supports about six seconds for that case, not a universal deadline. |
 | 4209 Stop | Ordinary UI Stop produced idle, no VPN service and no OS VPN network within the five-second observation. |
@@ -79,9 +86,11 @@ not repeat unchanged protocol QA on all ABIs.
   catalog refresh and DE/Mini, DE2/Mini and DE/RF2 attempts on 4169 failed without
   a tunnel; the later PL cellular success does not close those distinct cases.
 - After the 26 October top-up, direct IS HTTPS in Chrome still returned
-  `ERR_TIMED_OUT`; RF2 works. IS direct VLESS/HY2/AWG and Android Naive were not
-  forced through a new QA path: the current Android UI has no exclusive per-device
-  transport selector. These results also do not accept Android SmartDNS/LocalDPI.
+  `ERR_TIMED_OUT`; RF2 works. IS direct VLESS/HY2/AWG remain unaccepted. Android
+  now has manual choices and Naive was accepted on 4210. Android provider SmartDNS
+  is still public OFF: the first QA backend 500 was fixed, but the subsequent
+  TUN-ready attempt hit the exact API/app-domain parser boundary. Its correction
+  still needs packaged acceptance; Android SmartDNS/LocalDPI/YouTube is not accepted.
 - Direct RU VLESS/AWG failed on 4172/4173; the precise cause was not established.
   The owner subsequently deleted Hostkey RU; its protected archive remains on
   Brain. The retirement replaces the old direct RU AWG acceptance requirement.
