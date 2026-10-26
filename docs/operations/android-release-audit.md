@@ -1,20 +1,18 @@
 # Android acceptance
 
 Updated 26 October 2026. Public version remains **1.4.5**; the seven-asset
-**1.5.0+4175** draft is unchanged. Android ARM64 **1.5.0+4214**, App `69e594a9` /
-Core `58b11d4`, is built and installed; the phone is present. It is not a final
-candidate: Home retained a failure despite later healthy native state. Ordinary
-Stop removed the service/network. SmartDNS remains public OFF. The bounded QA
-issue-time wait and local-DPI counter decoding fixes are in main after 4214,
-not yet physically accepted; 4215 has not been built.
+**1.5.0+4175** draft is unchanged. Android ARM64 **1.5.0+4216**, App `ddc7c384` /
+Core `58b11d4`, is built but not installed. The owner has the phone with 4215.
+SmartDNS remains public OFF. Its latest 4215 QA failed before native with an
+unknown retained cause; 4216 includes closed QA-start error retention and refreshed
+diagnostic context (`bee2138e`) plus recovered-owner reconciliation (`3019e600`).
+The changed mobile case and direct ByeDPI routing remain unaccepted; they wait for
+the phone. Previous QA-time and counter fixes are included, not new build tasks.
 [Artifacts and exact scope](cutover-readiness.md).
 
-Android4213 QA reached RF2→DE2 with 64 KiB in 1,297 ms and TUN/DNS ready, then
-failed on the post-start connect deadline; 4214 includes the control-delivery correction.
-Android4214 reached Mini→DE2 with 64 KiB in 815 ms, then rejected
-`smart_access_qa_not_current` before Core, 294 ms before the signed issue time.
-The correction waits at most one second without relaxing signed validity; its
-physical acceptance is pending. All QA leases are released.
+Android4213/4214 QA failures led to the control-delivery and strict issue-time
+wait corrections. The later 4215 failure does not prove those failures recurred.
+All QA leases are released; customer contact and public release remain paused.
 
 The phone exposed a false identity failure after staging withdrawal; `03fe046d`
 fixes it, with the existing test RED→PASS in Direct and Store. Physical 4207
@@ -67,7 +65,7 @@ records the package status and accepted checks. The owner returned the phone on
 
 | Build / scenario | Result and scope |
 | --- | --- |
-| 4214 ordinary Selective YouTube | With LocalDPI enabled and ComssDNS, RF2→DE2 Connect took 26.723 s, full 64 KiB 10,045 ms. Chrome played Big Buck Bunny to 1:52/10:34. This accepts playback only: direct ByeDPI routing was not proven because local-DPI counters were lost at bridge decoding. The counter fix is in main, not built. |
+| 4214 ordinary Selective YouTube | With LocalDPI enabled and ComssDNS, RF2→DE2 Connect took 26.723 s, full 64 KiB 10,045 ms. Chrome played Big Buck Bunny to 1:52/10:34. This accepts playback only: direct ByeDPI routing was not proven because local-DPI counters were lost at bridge decoding. The counter fix is included in 4215/4216; direct-routing acceptance remains pending. |
 | 4210 Naive CH | Ordinary UI/TUN, exact 64 KiB in 1,019 ms; Connect 10,257 ms; Stop removed VPN service/network. Platform `690658b` fixed telemetry 422 and delivered the original queued report without repeating Connect. |
 | 4211 Lampa direct to PL | Ordinary `lampa` / bridge 8 through new `37.18.102.90`, exact 64 KiB in 818 ms; Connect 9,910 ms; clean Stop. Floating/RF2 remained unchanged. |
 | External clients on the returned phone | Existing subscriptions refreshed in Hiddify 4.1.1 and Happ 4.4.1; Germany Auto gave real Gemini answers 4 and 5, respectively. Happ Russia Direct/geofiles import accepted; settings preserved and both VPNs stopped. Hiddify owns its routing, so these results do not accept POKROV-app SmartDNS or YouTube. |
@@ -98,10 +96,11 @@ not repeat unchanged protocol QA on all ABIs.
   catalog refresh and DE/Mini, DE2/Mini and DE/RF2 attempts on 4169 failed without
   a tunnel; the later PL cellular success does not close those distinct cases.
 - After the 26 October top-up, direct IS HTTPS in Chrome still returned
-  `ERR_TIMED_OUT`; RF2 works. IS direct VLESS/HY2/AWG remain unaccepted. Android
+  `ERR_TIMED_OUT`; RF2 works. Later native Pi4 wlan0 checks accepted direct IS
+  VLESS/HY2/AWG after the private-DNS firewall repair, not Android UI. Android
   now has manual choices and Naive was accepted on 4210. Android provider SmartDNS
-  is still public OFF; the latest QA issue-time failure and unaccepted source fix
-  are described above. Ordinary YouTube playback on 4214 does not accept provider
+  is still public OFF; the latest pre-native QA failure and unaccepted mobile
+  corrections are described above. Ordinary YouTube playback on 4214 does not accept provider
   SmartDNS, direct ByeDPI routing or permanent absence of ads.
 - Direct RU VLESS/AWG failed on 4172/4173; the precise cause was not established.
   The owner subsequently deleted Hostkey RU; its protected archive remains on
