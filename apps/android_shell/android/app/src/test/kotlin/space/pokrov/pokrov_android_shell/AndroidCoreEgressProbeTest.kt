@@ -315,6 +315,32 @@ class AndroidCoreEgressProbeTest {
         val vpnDnsRule = mapOf("domain" to listOf("api.pokrov.space"), "action" to "route",
             "server" to "dns-vpn", "disable_cache" to true, "rewrite_ttl" to 0)
         val mixedDns = dnsServers + mapOf("tag" to "dns-vpn", "detour" to "vpn")
+        assertEquals("vpn", AndroidCoreEgressProbe.resolveProtectedTarget("direct",
+            listOf(routeRule, vpnProbeRule), listOf(dnsRule, vpnDnsRule), mixedDns))
+        // Current Selective QA output pins both bootstrap and control origins,
+        // alongside the leased service, before asking Core to prove VPN egress.
+        val apiDomains = listOf("api.pokrov.space", "app.pokrov.space")
+        val pairedRoute = vpnProbeRule + ("domain" to apiDomains)
+        val pairedDns = vpnDnsRule + ("domain" to apiDomains.reversed())
+        fun protectedProbe(route: Map<String, Any?> = pairedRoute,
+            dns: Map<String, Any?> = pairedDns,
+            servers: List<Map<String, Any?>> = mixedDns,
+        ) = AndroidCoreEgressProbe.resolveProtectedTarget("direct",
+            listOf(routeRule, route), listOf(dnsRule, dns), servers)
+        val pairedTarget = protectedProbe()
+        assertEquals("The producer's exact API pair must reach the protected VPN probe", "vpn", pairedTarget)
+        assertEquals(AndroidCoreEgressProbeResult.HEALTHY, AndroidCoreEgressProbe.resultFromCore(core,
+            AndroidCoreEgressProbe.resolveFinalTarget(pairedTarget!!, mapOf("vpn" to "selector"), emptyMap())!!))
+        assertEquals("vpn", core.lastTag)
+        assertNull("Route and DNS must cover the same owned origins", protectedProbe(dns = vpnDnsRule))
+        assertNull("An extra domain must not acquire owned VPN authority",
+            protectedProbe(route = pairedRoute + ("domain" to (apiDomains + "foreign.example"))))
+        assertNull("Duplicate names are not the producer's exact pair",
+            protectedProbe(dns = pairedDns + ("domain" to (apiDomains + "api.pokrov.space"))))
+        assertNull("A suffix cannot stand in for the exact owned boundary",
+            protectedProbe(route = (pairedRoute - "domain") + ("domain_suffix" to apiDomains)))
+        assertNull("Direct DNS does not prove the protected VPN boundary",
+            protectedProbe(servers = dnsServers + mapOf("tag" to "dns-vpn", "detour" to "direct")))
         assertNull("Existing owned VPN proof must keep precedence over Smart anchors",
             AndroidCoreEgressProbe.resolveSmartAccessTarget("direct", outbounds + mapOf("type" to "selector", "tag" to "vpn"),
                 listOf(routeRule, vpnProbeRule), listOf(dnsRule, vpnDnsRule), mixedDns))

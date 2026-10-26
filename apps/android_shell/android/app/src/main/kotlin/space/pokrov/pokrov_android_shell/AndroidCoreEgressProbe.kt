@@ -212,44 +212,50 @@ internal object AndroidCoreEgressProbe {
         // Selective has a Direct default. Bind both startup and Core proof to
         // the exact owned HTTPS rule emitted by the catalog assembler, never
         // to an arbitrary unused VPN group. This survives _meta stripping.
-        val rules = route.optJSONArray("rules") ?: return null
-        val probeRules = (0 until rules.length()).mapNotNull { rules.optJSONObject(it) }
-            .filter { rule ->
-                rule.keys().asSequence().toSet() ==
-                    setOf("domain", "network", "port", "action", "outbound") &&
-                    isOwnedProbeDomain(rule) && rule.optString("network") == "tcp" &&
-                    rule.optJSONArray("port")?.let { it.length() == 1 && it.opt(0) == 443 } == true &&
-                    rule.optString("action") == "route"
-            }
-        val target = probeRules.singleOrNull()?.optString("outbound") ?: return null
-        if (!isSafeTag(target) || target == finalTag) return null
         val dns = config.optJSONObject("dns") ?: return null
-        val dnsRules = dns.optJSONArray("rules") ?: return null
-        val probeDns = (0 until dnsRules.length()).mapNotNull { dnsRules.optJSONObject(it) }
-            .filter { rule ->
-                rule.keys().asSequence().toSet() ==
-                    setOf("domain", "action", "server", "disable_cache", "rewrite_ttl") &&
-                    isOwnedProbeDomain(rule) && rule.optString("action") == "route" &&
-                    rule.opt("disable_cache") == true && rule.opt("rewrite_ttl") == 0
-            }.singleOrNull() ?: return null
-        val dnsTag = probeDns.optString("server")
+        return resolveProtectedTarget(finalTag, smartAccessRows(route.optJSONArray("rules")),
+            smartAccessRows(dns.optJSONArray("rules")), smartAccessRows(dns.optJSONArray("servers")))
+    }
+
+    internal fun resolveProtectedTarget(finalTag: String, routeRules: List<Map<String, Any?>>,
+        dnsRules: List<Map<String, Any?>>, dnsServers: List<Map<String, Any?>>,
+    ): String? {
+        val ownedDomains = setOf("api.pokrov.space", "app.pokrov.space")
+        fun ownsBoundary(rule: Map<String, Any?>): Boolean = listOf("domain", "domain_suffix").any { key ->
+            (rule[key] as? List<*>)?.any { it is String && it in ownedDomains } == true
+        }
+        fun exactDomains(rule: Map<String, Any?>): Set<*>? {
+            val names = rule["domain"] as? List<*> ?: return null
+            val unique = names.toSet()
+            return unique.takeIf { names.size == unique.size &&
+                (unique == setOf("api.pokrov.space") || unique == ownedDomains) }
+        }
+        val probeRule = routeRules.filter(::ownsBoundary).singleOrNull() ?: return null
+        val routeDomains = exactDomains(probeRule) ?: return null
+        if (probeRule.keys != setOf("domain", "network", "port", "action", "outbound") ||
+            probeRule["network"] != "tcp" || probeRule["port"] != listOf(443) || probeRule["action"] != "route") return null
+        val target = probeRule["outbound"] as? String ?: return null
+        if (!isSafeTag(target) || target == finalTag) return null
+        val probeDns = dnsRules.filter(::ownsBoundary).singleOrNull() ?: return null
+        if (probeDns.keys != setOf("domain", "action", "server", "disable_cache", "rewrite_ttl") ||
+            exactDomains(probeDns) != routeDomains || probeDns["action"] != "route" ||
+            probeDns["disable_cache"] != true || probeDns["rewrite_ttl"] != 0) return null
+        val dnsTag = probeDns["server"] as? String ?: return null
         if (!isSafeTag(dnsTag)) return null
-        val servers = dns.optJSONArray("servers") ?: return null
-        val resolver = (0 until servers.length()).mapNotNull { servers.optJSONObject(it) }
-            .filter { it.optString("tag") == dnsTag }.singleOrNull() ?: return null
-        return target.takeIf { resolver.optString("detour") == target }
+        val resolver = dnsServers.singleOrNull { it["tag"] == dnsTag } ?: return null
+        return target.takeIf { resolver["detour"] == target }
     }
 
     private fun smartAccessTarget(config: JSONObject): AndroidCoreEgressProbeTarget? {
-        fun rows(array: JSONArray?): List<Map<String, Any?>> =
-            (0 until (array?.length() ?: 0)).mapNotNull { array?.optJSONObject(it) }
-                .map(::smartAccessFields)
         val route = config.optJSONObject("route") ?: return null
         val dns = config.optJSONObject("dns") ?: return null
         return resolveSmartAccessTarget(route.optString("final"),
-            rows(config.optJSONArray("outbounds")), rows(route.optJSONArray("rules")),
-            rows(dns.optJSONArray("rules")), rows(dns.optJSONArray("servers")))
+            smartAccessRows(config.optJSONArray("outbounds")), smartAccessRows(route.optJSONArray("rules")),
+            smartAccessRows(dns.optJSONArray("rules")), smartAccessRows(dns.optJSONArray("servers")))
     }
+
+    private fun smartAccessRows(array: JSONArray?): List<Map<String, Any?>> =
+        (0 until (array?.length() ?: 0)).mapNotNull { array?.optJSONObject(it) }.map(::smartAccessFields)
 
     // Project only the existing native rule/lease shapes. Matching stays pure
     // so the same graph binding is exercised without Android's JSON stubs.
@@ -335,11 +341,6 @@ internal object AndroidCoreEgressProbe {
             uri.port in listOf(-1, 443) && uri.path == "/dns-query" &&
             uri.rawUserInfo == null && uri.rawQuery == null && uri.rawFragment == null
     }
-
-    private fun isOwnedProbeDomain(rule: JSONObject): Boolean =
-        rule.optJSONArray("domain")?.let {
-            it.length() == 1 && it.opt(0) == "api.pokrov.space"
-        } == true
 
     internal fun resolveFinalTarget(
         finalTag: String,
