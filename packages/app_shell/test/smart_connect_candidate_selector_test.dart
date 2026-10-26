@@ -88,13 +88,38 @@ void main() {
         candidates, countryOnly: false, catalog: _catalog(candidates)), [bridge, udp]);
   });
 
-  test('country Auto reserves another admitted bridge then direct on the same exit node', () {
-    final selected = _candidate(1, node: 'us', country: 'US', bridge: 'mini');
-    final direct = _candidate(3, node: 'us', country: 'US');
-    final bridge = _candidate(2, node: 'us', country: 'US', bridge: 'ru-spb');
-    final candidates = [direct, selected, bridge];
+  test('country Auto caches an independent bridge that survives recovery selection', () async {
+    final selected = _candidate(0, node: 'de2', bridge: 'mini-xhttp');
+    final otherCountry = _candidate(1, node: 'ch', country: 'CH', bridge: 'mini-xhttp');
+    final otherNode = _candidate(2, bridge: 'mini-xhttp');
+    final sameBridge = _candidate(3, node: 'de2', bridge: 'mini');
+    final otherCountryBridge = _candidate(4, node: 'ch', country: 'CH', bridge: 'rf2-xhttp');
+    final bridge = _candidate(5, bridge: 'rf2-xhttp');
+    final udp = _candidate(6, node: 'de2', udp: true);
+    final naive = TransportCandidate(candidateRef: 'ch:naive_h2', profileRef: 'naive_h2',
+      nodeCode: 'ch', countryCode: 'CH', protocol: 'naive', transport: 'h2', protection: 'tls',
+      priority: 7, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      platforms: selected.platforms, requiredFeatures: {RuntimeTransportFeature.naiveH2});
+    final candidates = [selected, otherCountry, otherNode, sameBridge, otherCountryBridge, bridge, udp, naive];
+    final saved = SmartConnectCandidateSelector.cacheAlternatives(selected,
+        candidates, countryOnly: true, catalog: _catalog(candidates));
+    expect(saved, [bridge, udp]);
     expect(SmartConnectCandidateSelector.cacheAlternatives(selected,
-        candidates, countryOnly: true, catalog: _catalog(candidates)), [bridge, direct]);
+        candidates, countryOnly: false, catalog: _catalog(candidates)), [otherCountryBridge, udp, naive]);
+
+    final probed = <String>[];
+    final recovered = await SmartConnectCandidateSelector().select(
+      catalog: _catalog([selected, ...saved]), network: 'cellular', platform: HostPlatform.android,
+      recoveryCandidateRef: selected.candidateRef, cancelled: Completer<void>().future,
+      probe: (candidate, cancelled, timeout) async {
+        probed.add(candidate.candidateRef);
+        return candidate == bridge ? _success(candidate)
+            : const SmartConnectCandidateProbeResult.failure('connect_failed');
+      },
+    );
+    expect(recovered.profileName, bridge.candidateRef);
+    expect(probed, contains(bridge.candidateRef),
+        reason: 'the three-probe recovery cap must retain RF2 beside current Mini and UDP');
   });
 
   test('Auto settles bridges in server priority order before trying a remembered direct route', () async {

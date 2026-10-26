@@ -28,6 +28,12 @@ class SmartConnectSelectionExhausted implements Exception {
 /// Ordinary catalog selection. A successful probe means an authenticated 204
 /// was received through that exact candidate, never just an open TCP port.
 class SmartConnectCandidateSelector {
+  static String? _bridgeHost(TransportCandidate candidate) => switch (candidate.bridgeId) {
+    'mini' || 'mini-xhttp' => 'cinema',
+    'rf2' || 'rf2-xhttp' || 'ru_spb' || 'ru_spb-xhttp' => 'lampa',
+    _ => null,
+  };
+
   static bool _familySiblings(TransportCandidate a, TransportCandidate b) =>
       a.warpMode == null && b.warpMode == null &&
       (a.deliveryEndpointId != null || b.deliveryEndpointId != null) &&
@@ -46,11 +52,27 @@ class SmartConnectCandidateSelector {
       ..sort((a, b) => a.priority.compareTo(b.priority));
     final alternatives = <TransportCandidate>[];
     final variants = {(selected.protocol, selected.transport, selected.protection, selected.bridgeId)};
-    for (final candidate in ordered) {
-      if (candidate.nodeCode == selected.nodeCode) continue;
-      alternatives.add(candidate);
-      variants.add((candidate.protocol, candidate.transport, candidate.protection, candidate.bridgeId));
-      break;
+    final selectedHost = _bridgeHost(selected);
+    bool independentBridge(TransportCandidate candidate) => selectedHost != null &&
+        _bridgeHost(candidate) != null && _bridgeHost(candidate) != selectedHost;
+    final first = ordered.where((candidate) => candidate.nodeCode != selected.nodeCode &&
+        independentBridge(candidate)).firstOrNull ??
+        ordered.where(independentBridge).firstOrNull ??
+        ordered.where((candidate) => candidate.nodeCode != selected.nodeCode).firstOrNull;
+    if (first != null) {
+      alternatives.add(first);
+      variants.add((first.protocol, first.transport, first.protection, first.bridgeId));
+      if (independentBridge(first)) {
+        // RAW/XHTTP aliases share an ingress. Keep a protocol reserve beside
+        // the independent bridge so recovery's UDP slot does not evict it.
+        final protocol = ordered.where((candidate) =>
+            (candidate.protocol, candidate.transport, candidate.protection) !=
+                (selected.protocol, selected.transport, selected.protection)).firstOrNull;
+        if (protocol != null) {
+          alternatives.add(protocol);
+          variants.add((protocol.protocol, protocol.transport, protocol.protection, protocol.bridgeId));
+        }
+      }
     }
     for (final candidate in ordered) {
       if (alternatives.length == 2) break;

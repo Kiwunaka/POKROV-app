@@ -641,6 +641,14 @@ it. A missing or exhausted cache proceeds to the ordinary API path; user Apply a
 manual repair retain their previous order. API availability no longer delays this
 handoff's first cached probe, and neither probing nor handoff extends cache expiry.
 
+The ordinary cache reserves a different admitted bridge host before another
+RAW/XHTTP alias of the same ingress, preferring a different exit node when both
+are available. Current Mini aliases share Cinema; RF2 and ru_spb aliases share
+Lampa. Unknown bridge IDs do not prove host independence. A protocol reserve then
+keeps that alternate ingress inside recovery's existing three-probe limit;
+the existing UDP, Naive and DNS reserves and country/access filters are retained.
+This changes cache choice, not bridge admission, reachability or probe budgets.
+
 The foreground notification and its public lockscreen version use
 `VISIBILITY_PRIVATE` and a generic protection state. Country, route, selected
 applications, endpoint and speed are available only inside the authenticated
