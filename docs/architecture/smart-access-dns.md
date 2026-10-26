@@ -13,12 +13,12 @@ discussion; no spending is authorized. Customer contact and public release remai
 paused; the phone returned on 26 October, while provider/DPI-specific Android
 acceptance is still separate. The owner also accepted WhiteDNS and SlipNet for
 all active Premium access; their separate DNS-tunnel addon is not a SmartDNS
-endpoint. SlipNet's CH endpoint is live and accepted directly; the owner has
-saved the NS records, but all four Timeweb servers still lacked delegation on
-26 October. The provider's 24-hour publication window has elapsed; the owner has
-already sent the support request and is awaiting Timeweb's reply; NS was not
-checked again in the later phone work. Managed delivery stays disabled pending recursive and Auto/TUN
-acceptance. Rates remain pending. See the platform-owned
+endpoint. On 26 October the owner published the delegation of `t.portal-privacy.online`
+to `ns1.kiwunaka.space` (CH) and `ns2.kiwunaka.space` (PL). All four Timeweb
+servers returned it; recursive native Core through WLrus passed TLS, owned 204
+and 65536 bytes in 11,732 ms. CH managed DNSTT delivery is enabled for all current
+eligible Premium access. Ordinary Windows 4216 Auto/TUN and cleanup passed.
+Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
 The table records the earlier 21 October root-run comparison in the clean
@@ -79,7 +79,7 @@ the next actual attempt reached TUN ready but rejected the protected API/app-dom
 pair. Parser correction `6e8cb4da` passed its focused test and is being packaged
 in 4212; device acceptance waits for the phone's return. Android SmartDNS
 and LocalDPI/YouTube are not accepted by those VPN or external-client results.
-DNSTT recursive DNS/Auto/TUN still waits for NS; Slipstream is a separate deferred transport.
+DNSTT delegation, recursive transport and Windows 4216 Auto/TUN passed. Slipstream remains separate and deferred.
 Previous checks retain their original scope.
 The already accepted 4195 Gemini checks were not
 repeated: in ordinary Edge with default settings, POKROV
@@ -229,15 +229,24 @@ Auto gives one DNS reserve a separate 30-second attempt after ordinary routes
 and before direct WARP, preserving the complete TLS/204/64 KiB proof. The cache
 retains one authorized DNS reserve alongside its existing alternatives, so a
 blocked API does not require fetching that material again.
-Managed delivery remains disabled. Timeweb required two different NS IPs;
-PL now forwards UDP53 through its existing sing-box to the single CH backend,
-without DNS cache or a second Noise/KCP session owner. This path passed
-TLS/204/64 KiB in 1249 ms. The owner saved atlas (82.38.65.47) and birch
-(151.243.191.143) as `t` nameservers; the last authoritative Timeweb reads at
-04:53 UTC on ns1/ns3 returned the parent SOA without NS delegation. Next are one
-recursive WLrus probe and the packaged Core/App Auto/TUN VM check. Direct authoritative QA is not
-recursive-path or whitelist-bypass acceptance. WhiteDNS remains research.
-Commercial permission already covers active Premium; fees are pending.
+Managed delivery was enabled on 26 October at 17:04:47.227 UTC for CH only. The
+33 desired identities matched the current paid/admin projection; active trial,
+manual/gift/promo/bonus/family qualify, while Free/renewal do not. Backend 12543
+and Naive were preserved with no service restart. PL forwards UDP53 through its
+existing sing-box to the single CH backend, without DNS cache or a second Noise/KCP
+session owner. The owner replaced unpublished atlas/birch names with
+`ns1.kiwunaka.space`/`ns2.kiwunaka.space`; all four Timeweb servers returned the
+new delegation. Recursive WLrus completed actual TLS/204/65536 bytes in 11,732 ms.
+The diagnostic CLI now accepts an optional explicit 30-second budget matching the App's
+existing DNS-reserve budget, with 12 seconds still the default. Runtime AAR/DLL and VERSION
+were unchanged. Ordinary CH Auto/TUN on Windows 4216 selected `vless_dnstt_noise`
+and reached running in 42.721 s; separate http_64k passed in 12.329 s and native
+DNS/egress/TUN were valid. Two scoped temporary rules blocked ordinary transports
+without replacing API or TUN. Stop removed the running tunnel; preferences and
+the recorded nonempty DNS/default-route/proxy baseline matched. Owned rules/task/
+QA files were removed and PoweredOff confirmed. This does not prove behavior on
+a live whitelist network. WhiteDNS remains research. Commercial permission
+already covers active Premium; fees are pending.
 
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection

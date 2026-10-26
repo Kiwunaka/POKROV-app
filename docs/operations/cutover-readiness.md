@@ -16,13 +16,13 @@ assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
 Private **Android ARM64 and Windows 1.5.0+4216**, App `ddc7c384` / Core
-`58b11d4`, are built. Windows4216 is installed and accepted in the bounded case
+`58b11d4`, are built. Windows 4216 is installed and accepted in the bounded case
 below. The owner has the phone with 4215 installed; Android4216 is not installed.
 It includes closed QA-start error retention and recovered-owner reconciliation
 fixes. Android SmartDNS remains public OFF; its 4215 pre-native failure and direct
 ByeDPI routing still need the changed build on the phone. QA leases are released.
 
-Windows4216 had one ordinary Connect from 07:57:30 to 08:02:24.756 UTC. Two natural
+Windows 4216 had one ordinary Connect from 07:57:30 to 08:02:24.756 UTC. Two natural
 periodic timeouts recovered through connecting to healthy state with a green UI,
 without candidate mismatch. The exact preparation-only failure did not recur;
 that branch's `3019e600` correction has regression RED→PASS, not exact physical
@@ -36,9 +36,24 @@ On 26 October, Pi4's physical wlan0 accepted direct IS VLESS in 2,568 ms, HY2 in
 are native protocol results, not Android/Windows UI acceptance. The temporary
 Core58 CLI/profile files were removed without replacing the scheduled binary.
 See Platform's [firewall repair](C:/Users/kiwun/Documents/ai/VPN/docs/operations/deployment-and-access.md).
-NS delegation for `t` was still absent in the latest parent check at 08:04:42 UTC
-(NOERROR/AA, ANSWER0, SOA2026102302). DNSTT issuance waits for Timeweb and recursive
-Auto/TUN acceptance. No customer contact, public release or automation change occurred.
+The owner published `ns1.kiwunaka.space` (CH) and `ns2.kiwunaka.space` (PL) as the
+NS of `t`; all four Timeweb servers now return the delegation. Recursive native
+Core through WLrus completed TLS, owned 204 and 65536 bytes in 11,732 ms. DNSTT
+issuance was enabled on CH at 17:04:47.227 UTC for the current 33 eligible
+paid/admin identities, including active trial/manual/gift/promo/bonus/family;
+Free/renewal remain excluded. Ordinary CH Auto/TUN on Windows 4216 passed:
+actual `vless_dnstt_noise`, Connect 42.721 s, separate http_64k 12.329 s, native
+running/DNS1/egress1/guard0. Two temporary process/interface firewall rules
+blocked ordinary transports while retaining real API and TUN. Normal Stop at
+17:13:08–17:13:17 UTC left config_staged/running0/DNS0/egress0/guard0 with no
+failure; App/TUN/TUN routes were absent. Bytewise preferences and the recorded
+nonempty DNS/default-route/proxy baseline matched. Owned rules/task/QA files were
+removed and PoweredOff confirmed. This is DNS-reserve acceptance, not proof on
+a real whitelist network. Brain lease released at 17:12:26.835 UTC with fresh API health.
+Temporary diagnostic binaries/profile were removed. The CLI-only diagnostic change
+`5435b03` allows an explicit 30-second budget matching the existing App DNS
+reserve; its default remains 12 seconds. Runtime AAR/DLL and VERSION did not change:
+4216 still contains Core 58b11d4. No customer contact, release or automation changed.
 
 Ordinary Android4214 Selective YouTube with LocalDPI enabled and ComssDNS connected
 through RF2→DE2 in 26.723 s (64 KiB in 10,045 ms). Chrome played Big Buck Bunny to
@@ -296,18 +311,14 @@ The DNSTT rollout from Platform `cfcd3fb` remains in the current platform.
 Timeweb requires two distinct NS addresses, so PL's
 existing server sing-box forwards UDP53 to the same CH DNSTT backend without
 DNS parsing/cache or a second Noise key. TLS/204/64 KiB through PL passed in
-1249 ms, with its existing Node/Xray/HY2 processes unchanged. The owner saved
-NS `atlas.portal-privacy.online` and `birch.portal-privacy.online` for `t`;
-the last authoritative Timeweb ns1/ns3 reads at 04:53 UTC still returned the parent SOA,
-without the delegation.
-The catalog entry remains disabled pending recursive WLrus acceptance and
-the new App Auto/TUN VM pass. Source checks
+1249 ms, with its existing Node/Xray/HY2 processes unchanged. The owner's replacement NS names under `kiwunaka.space` published successfully
+on 26 October. Recursive WLrus transport passed and CH delivery is enabled;
+ordinary Windows 4216 Auto/TUN and cleanup passed as described above. Source checks
 cover Premium/trial/manual, Free/expiry/revoke rejection, capability admission,
 exact VLESS→DNSTT graph and cached fallback. Auto retains one authorized DNS
 reserve, with a separate 30-second attempt after ordinary candidates and before
-WARP. No recursive DNS or whitelist-bypass acceptance is claimed yet; individual
-device revoke is not added. The last six-node ACK/health result remains the
-earlier 02:54 UTC Naive gate; the 04:47:50 UTC check covered Brain only.
+WARP. Recursive transport acceptance does not prove live whitelist bypass;
+individual device revoke is not added.
 WhiteDNS remains research.
 See [Smart Access DNS](../architecture/smart-access-dns.md) and platform
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
@@ -326,8 +337,8 @@ TUN were absent and the owned QA directory was removed. Root confirmed the VM
 PoweredOff. Paused customer work and automations were not resumed.
 Existing budgets, country and bridge-load groups remain in force.
 Remaining work follows the owner's current queue: Android4216 installation and
-targeted SmartDNS/direct-LocalDPI acceptance when the phone returns; DNSTT after
-Timeweb delegation and recursive Auto/TUN acceptance. Pi4 IS direct/UDP acceptance
+targeted SmartDNS/direct-LocalDPI acceptance when the phone returns. DNSTT is
+enabled with recursive transport and Windows 4216 Auto/TUN accepted. Pi4 IS direct/UDP acceptance
 does not establish Android/Windows UI behavior. The customer Windows case remains
 paused. Lampa and Android Naive retain their accepted scope. Public1.4.5/draft4175
 and paused automations are unchanged; publication requires the owner's yes.
