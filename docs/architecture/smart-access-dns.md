@@ -206,6 +206,10 @@ from the captured Core holder, using the existing traffic sampling callback.
 These counters contain no domains or connection material and do not establish
 video playback, a uniformly Russian exit or removal of advertising. Device
 acceptance of this change is separate from the retained 4200 result above.
+Android runtime decoding preserves only the exact closed local-DPI aggregate
+from the native summary; other native text stays redacted. Expanded Technical
+details show its admission/failure counts, local/VPN TCP handoffs and rejected
+QUIC connections. Missing data is shown as unavailable, never as zero success.
 
 SlipNet's VLESS-over-DNSTT source was integrated in Core `b628439`,
 Platform `cfcd3fb` and App `fb59e1c5`. Platform and Node's DNSTT backend are live

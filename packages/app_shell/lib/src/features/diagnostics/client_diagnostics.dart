@@ -381,6 +381,7 @@ final class PokrovDiagnosticsReport {
     this.connectionFailure,
     this.showWindowsLocalDpiRuntime = false,
     this.windowsLocalDpiRuntime,
+    this.androidLocalDpiSummary,
     required this.encryptedDeliveryAvailable,
     this.crashDiagnosticsReady = true,
     this.candidateDiagnosticsReady = true,
@@ -413,6 +414,7 @@ final class PokrovDiagnosticsReport {
   final PokrovConnectionFailureDiagnostic? connectionFailure;
   final bool showWindowsLocalDpiRuntime;
   final WindowsLocalDpiRuntime? windowsLocalDpiRuntime;
+  final String? androidLocalDpiSummary;
   final bool encryptedDeliveryAvailable;
   final bool crashDiagnosticsReady;
   final bool candidateDiagnosticsReady;
@@ -479,6 +481,7 @@ final class PokrovDiagnosticsReport {
         connectionFailure: connectionFailure,
         showWindowsLocalDpiRuntime: showWindowsLocalDpiRuntime,
         windowsLocalDpiRuntime: windowsLocalDpiRuntime,
+        androidLocalDpiSummary: androidLocalDpiSummary,
         encryptedDeliveryAvailable: encryptedDeliveryAvailable,
         crashDiagnosticsReady: crashDiagnosticsReady,
         candidateDiagnosticsReady: candidateDiagnosticsReady,
@@ -691,6 +694,11 @@ abstract final class PokrovDiagnosticsPresenter {
       showWindowsLocalDpiRuntime: hostPlatform == HostPlatform.windows &&
           routeMode == RouteMode.selectiveServices,
       windowsLocalDpiRuntime: snapshot?.windowsLocalDpiRuntime,
+      androidLocalDpiSummary: hostPlatform == HostPlatform.android && routeMode == RouteMode.selectiveServices
+          ? snapshot?.hostDiagnosticsSummary?.split(' | ')
+                  .where((part) => part.startsWith('Локальный DPI:')).singleOrNull ??
+              'Локальный DPI: текущие данные не получены.'
+          : null,
       encryptedDeliveryAvailable: encryptedDeliveryAvailable,
       crashDiagnosticsReady: crashDiagnosticsReady,
       candidateDiagnosticsReady: candidateDiagnosticsReady,
@@ -1621,6 +1629,18 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 child: Text(
                   _windowsLocalDpiRuntimeRu(_report.windowsLocalDpiRuntime),
                   key: const ValueKey('diagnostics-windows-local-dpi-runtime'),
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ],
+            if (_report.androidLocalDpiSummary != null) ...[
+              const SizedBox(height: 12),
+              Text('Пути выбранных сервисов', style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+              _DiagnosticsCard(
+                child: Text(
+                  _report.androidLocalDpiSummary!,
+                  key: const ValueKey('diagnostics-android-local-dpi-runtime'),
                   style: theme.textTheme.bodyMedium,
                 ),
               ),

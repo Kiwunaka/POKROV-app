@@ -4656,7 +4656,7 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
             lastFailureKind: lastFailureKind,
           )
         : hostHealth;
-    final hostDiagnosticsSummary = _deriveDiagnosticsSummary(
+    final derivedDiagnosticsSummary = _deriveDiagnosticsSummary(
       phase: phase,
       hostHealth: resolvedHostHealth,
       dnsState: resolvedDnsState,
@@ -4669,6 +4669,10 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       includePackageCount: includePackageCount,
       excludePackageCount: excludePackageCount,
     );
+    final localDpiSummary = hostPlatform == HostPlatform.android && phase == RuntimePhase.running
+        ? _androidLocalDpiAggregate(response['hostDiagnosticsSummary']) : null;
+    final hostDiagnosticsSummary = localDpiSummary == null ? derivedDiagnosticsSummary
+        : '${derivedDiagnosticsSummary == null ? '' : '$derivedDiagnosticsSummary | '}$localDpiSummary';
     final stagedDigest =
         _profileDigestFromWire(response['stagedProfileDigest']);
     final effectiveDigest =
@@ -5037,6 +5041,19 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
   bool _isUplinkFailureKind(String? value) {
     final normalized = value?.trim().toLowerCase() ?? '';
     return normalized.startsWith('default_network_');
+  }
+
+  String? _androidLocalDpiAggregate(Object? value) {
+    if (value is! String) return null;
+    final parts = value.split(' | ').where((part) => part.startsWith('Локальный DPI:')).toList();
+    if (parts.length != 1 || parts.single.length > 512) return null;
+    final summary = parts.single;
+    if (summary == 'Локальный DPI: наблюдение недоступно') return summary;
+    const reason = r'(?:connect_timeout_ipv4|connect_timeout_ipv6|connect_error_ipv4|connect_error_ipv6|early_read|early_write)';
+    final shape = RegExp(r'^Локальный DPI: готово \d{1,20}, ожидание \d{1,20}, сбой \d{1,20}, отключено \d{1,20}; '
+        r'TCP напрямую \d{1,20}, через VPN \d{1,20}; отклонено соединений QUIC \d{1,20}'
+        '(?:; причина $reason(?:, $reason)*)?\$');
+    return shape.hasMatch(summary) ? summary : null;
   }
 
   String? _deriveDiagnosticsSummary({

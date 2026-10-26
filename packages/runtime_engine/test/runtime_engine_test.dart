@@ -616,6 +616,7 @@ void main() {
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     var nativeFailure = _sensitiveRuntimeDetail;
+    var nativeSummary = _sensitiveRuntimeDetail;
     messenger.setMockMethodCallHandler(channel, (call) async {
       if (call.method == 'runtimeEngine.snapshot') {
         return <String, Object?>{
@@ -627,6 +628,7 @@ void main() {
           'default_network_interface': _sensitiveRuntimeDetail,
           'last_failure_kind': nativeFailure,
           'last_stop_reason': _sensitiveRuntimeDetail,
+          'hostDiagnosticsSummary': nativeSummary,
           'hostDiagnostics': <String, Object?>{
             'summary': _sensitiveRuntimeDetail,
           },
@@ -664,6 +666,16 @@ void main() {
     ]) {
       _expectNoSensitiveRuntimeDetail(value);
     }
+    const localDpi = 'Локальный DPI: готово 1, ожидание 0, сбой 0, отключено 0; '
+        'TCP напрямую 21, через VPN 0; отклонено соединений QUIC 3';
+    nativeSummary = '$_sensitiveRuntimeDetail | $localDpi';
+    final accepted = await createRuntimeEngine(hostPlatform: HostPlatform.android).snapshot();
+    expect(accepted.hostDiagnosticsSummary, contains(localDpi));
+    _expectNoSensitiveRuntimeDetail(accepted.hostDiagnosticsSummary!);
+    nativeSummary = '$localDpi; причина $_sensitiveRuntimeDetail';
+    final rejected = await createRuntimeEngine(hostPlatform: HostPlatform.android).snapshot();
+    expect(rejected.hostDiagnosticsSummary, isNot(contains('Локальный DPI:')));
+    _expectNoSensitiveRuntimeDetail(rejected.hostDiagnosticsSummary!);
     final closed = <String, String?>{};
     for (final kind in ['core_start_failed', 'local_dpi_withdraw_failed',
         'recovery_network_restore_failed', 'profile_payload_invalid']) {

@@ -4093,6 +4093,39 @@ void main() {
     });
   });
 
+  testWidgets('Android local DPI counts appear only inside technical diagnostics', (tester) async {
+    const aggregate = 'Локальный DPI: готово 1, ожидание 0, сбой 0, отключено 0; '
+        'TCP напрямую 21, через VPN 0; отклонено соединений QUIC 3';
+    const snapshot = RuntimeSnapshot(
+      hostPlatform: HostPlatform.android, lane: RuntimeLane.mobileArtifact,
+      phase: RuntimePhase.running, supportsLiveConnect: true,
+      artifactDirectory: null, coreBinaryPath: null, helperBinaryPath: null, stagedConfigPath: null,
+      canInitialize: false, canConnect: false, message: 'fixture',
+      hostDiagnosticsSummary: 'Сеть готова | $aggregate',
+    );
+    PokrovDiagnosticsReport report(HostPlatform platform) => PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: platform, routeMode: RouteMode.selectiveServices, snapshot: snapshot,
+      statusLabel: 'connected', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false,
+    );
+    final android = report(HostPlatform.android);
+    expect(android.copyWith().androidLocalDpiSummary, aggregate);
+    final windows = report(HostPlatform.windows);
+    expect(windows.showWindowsLocalDpiRuntime, isTrue);
+    expect(windows.androidLocalDpiSummary, isNull);
+    await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
+      initialReport: android, onRefresh: () async => android, onOpenProtection: () {}, onOpenSupport: () {},
+    )));
+    expect(find.byKey(const ValueKey('diagnostics-android-local-dpi-runtime')), findsNothing);
+    await _openTechnicalDiagnostics(tester);
+    final scroll = find.descendant(of: find.byKey(const ValueKey('diagnostics-scroll')),
+      matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('diagnostics-android-local-dpi-runtime')),
+      200, scrollable: scroll);
+    expect(find.text(aggregate), findsOneWidget);
+  });
+
   for (final interrupt in ['cancel', 'deny']) {
     test('$interrupt during cached recovery cannot activate a late winner', () async {
       final runtime = _Runtime()..supportsCandidates = true;
