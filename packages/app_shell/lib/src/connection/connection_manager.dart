@@ -171,8 +171,20 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshTransportCatalog({bool force = false}) async {
-    if (force || _transportCatalog == null) await _refreshManagedProfileCache();
+  Future<void> refreshTransportCatalog({bool force = false}) {
+    if (!force) return _transportCatalog == null ? _refreshManagedProfileCache() : Future<void>.value();
+    return _explicitCatalogRefresh ??= () async {
+      try {
+        await _cacheRefreshCompletion?.future;
+        final revision = _managedProfileRevision;
+        await _refreshManagedProfileCache();
+        // A country change discards the old result. Finish the explicit action
+        // with one refresh for the latest choice, coalescing repeated taps.
+        if (revision != _managedProfileRevision) await _refreshManagedProfileCache();
+      } finally {
+        _explicitCatalogRefresh = null;
+      }
+    }();
   }
 
   Future<void> _refreshManagedProfileCache({bool alternativesOnly = false}) async {
@@ -500,6 +512,7 @@ class ConnectionManager extends ChangeNotifier {
   Timer? _networkContextTimer;
   bool _cacheRefreshInFlight = false;
   Completer<void>? _cacheRefreshCompletion;
+  Future<void>? _explicitCatalogRefresh;
   String? get headline => _runtimeHeadline;
   bool get canCancel => _connectionCoordinator.canCancelPrimaryConnect;
   ConnectionStatus get status {

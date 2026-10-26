@@ -3327,7 +3327,7 @@ void main() {
   });
   }
 
-  test('explicit Locations catalog refresh adopts a newly admitted bridge before Connect', () async {
+  test('explicit Locations refresh follows the latest country after an in-flight refresh', () async {
     const directRef = 'us:legacy_reality_fallback';
     Map<String, Object?> candidate({bool bridge = false}) => {
       'candidate_ref': bridge ? '$directRef:bridge_mini' : directRef,
@@ -3347,7 +3347,7 @@ void main() {
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     manager.restoreConnectionPreferences(const PokrovClientExperienceState.empty().copyWith(
-      interfaceMode: PokrovInterfaceMode.advanced, preferredCountryCode: 'US', preferredCandidateRef: directRef,
+      interfaceMode: PokrovInterfaceMode.advanced,
       preferredVariantId: 'direct', firstRouteScopeConfirmed: true, firstRouteScopeMode: RouteMode.fullTunnel), const {});
     await manager.refresh();
     manager.markExperienceLoaded();
@@ -3358,11 +3358,20 @@ void main() {
     bootstrapper.refreshedCatalog = catalog(bridge: true);
     await manager.refreshTransportCatalog();
     expect(manager.transportCatalog?.revision, 'before-admission', reason: 'navigation reuses the catalog');
-    await manager.refreshTransportCatalog(force: true);
+    final gate = Completer<void>();
+    bootstrapper.cacheRefreshGate = gate.future;
+    final refresh = manager.refreshTransportCatalog(force: true);
+    await Future<void>.delayed(Duration.zero);
+    expect(bootstrapper.refreshedInputs, hasLength(2));
+    await manager.setPreferredCountry('US');
+    final repeatedRefresh = manager.refreshTransportCatalog(force: true);
+    gate.complete();
+    await Future.wait([refresh, repeatedRefresh]);
     expect(manager.transportCatalog?.revision, 'ready-mini');
     expect(manager.transportCatalog?.candidates.last.bridgeId, 'mini');
     expect(manager.transportCatalog?.candidates.last.countryCode, 'US');
-    expect(bootstrapper.refreshedInputs, hasLength(2));
+    expect(bootstrapper.refreshedInputs, hasLength(3), reason: 'country change queues one latest refresh, not one per tap');
+    expect(bootstrapper.refreshedInputs.last.preferredCountryCode, 'US');
     expect(bootstrapper.nodePreferences, isEmpty, reason: 'metadata refresh does not rewrite the preference pin');
     expect(manager.materialCandidate?.candidateRef, directRef);
     expect(runtime.stagedPayloads, isEmpty);

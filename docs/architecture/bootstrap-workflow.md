@@ -299,6 +299,9 @@ the public Node, stable bridge/input distinction, address family/port and WARP
 direction without endpoint addresses. Older cached catalogs keep the existing
 protocol label until their ordinary refresh; display text never changes the
 selected candidate reference or encrypted profile binding.
+Explicit Locations refresh waits for an in-flight metadata request and combines
+repeated taps. If a country change invalidates that request, it fetches the latest
+choice once more; this refresh never stages a profile or starts a tunnel.
 Simple keeps the authorized country Auto graph, including direct destinations
 and ready bridge detours; transport selection and fallback stay in that graph.
 Rules and connection settings are available in Advanced, reached from Profile.
