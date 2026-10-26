@@ -16,6 +16,32 @@ import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
+internal data class LocalDpiVpnOutbound(
+    val tag: String,
+    val type: String,
+    val detour: String = "",
+    val upstreamTag: String = "",
+    val children: List<String> = emptyList(),
+)
+
+/** Inspect the transport behind a lease, but keep the lease as the fallback. */
+internal fun localDpiVpnFallback(outbounds: List<LocalDpiVpnOutbound>, tag: String): String? {
+    fun protected(candidate: String, visiting: Set<String>): Boolean {
+        if (candidate in visiting) return false
+        val outbound = outbounds.singleOrNull { it.tag == candidate } ?: return false
+        if (outbound.detour.isNotEmpty()) return false
+        val visited = visiting + candidate
+        return when (outbound.type) {
+            "vless", "hysteria2", "wireguard", "awg" -> true
+            "pokrov-ats-lease" -> protected(outbound.upstreamTag, visited)
+            "selector", "urltest" -> outbound.children.isNotEmpty() &&
+                outbound.children.all { protected(it, visited) }
+            else -> false
+        }
+    }
+    return tag.takeIf { protected(it, emptySet()) }
+}
+
 /** One global ByeDPI child, restricted to signed service routes of one profile. */
 internal class AndroidLocalDpiAdmission private constructor(
     private val context: Context,
@@ -142,21 +168,6 @@ internal class AndroidLocalDpiAdmission private constructor(
                 !address.isSiteLocalAddress && !address.isMulticastAddress &&
                 !(address.address.size == 16 && (address.address[0].toInt() and 0xfe) == 0xfc)
 
-        private fun protectedDirectVpn(config: JSONObject, tag: String, visiting: MutableSet<String> = mutableSetOf()): Boolean {
-            if (!visiting.add(tag)) return false
-            val rows = config.optJSONArray("outbounds") ?: return false
-            val outbound = (0 until rows.length()).mapNotNull(rows::optJSONObject).singleOrNull { it.optString("tag") == tag } ?: return false
-            if (outbound.optString("detour").isNotEmpty()) return false
-            return when (outbound.optString("type")) {
-                "vless", "hysteria2", "wireguard", "awg" -> true
-                "selector", "urltest" -> {
-                    val group = outbound.optJSONArray("outbounds") ?: return false
-                    group.length() > 0 && (0 until group.length()).all { protectedDirectVpn(config, group.getString(it), visiting.toMutableSet()) }
-                }
-                else -> false
-            }
-        }
-
         fun prepare(context: Context, config: JSONObject, metadata: JSONObject?, parent: AndroidLifecycleTaskScope,
                     ownsProfile: () -> Boolean, protect: (Int) -> Boolean, handler: Handler,
                     proofBudgetMillis: () -> Int): AndroidLocalDpiAdmission? {
@@ -170,6 +181,12 @@ internal class AndroidLocalDpiAdmission private constructor(
                     metadata.getString("platform") != "android" || !ownsProfile()) return null
                 val route = config.getJSONObject("route")
                 val outbounds = config.getJSONArray("outbounds")
+                val vpnOutbounds = (0 until outbounds.length()).mapNotNull(outbounds::optJSONObject).map { outbound ->
+                    val children = outbound.optJSONArray("outbounds")
+                    LocalDpiVpnOutbound(outbound.optString("tag"), outbound.optString("type"),
+                        outbound.optString("detour"), outbound.optString("upstream_tag"),
+                        if (children == null) emptyList() else (0 until children.length()).map(children::getString))
+                }
                 val direct = (0 until outbounds.length()).mapNotNull(outbounds::optJSONObject)
                     .singleOrNull { it.optString("tag") == route.optString("final") && it.optString("type") == "direct" } ?: return null
                 if (direct.optString("detour").isNotEmpty() || (config.optJSONArray("endpoints")?.length() ?: 0) != 0) return null
@@ -202,8 +219,8 @@ internal class AndroidLocalDpiAdmission private constructor(
                             domain.getString("name") == names.getString(0) && !domain.getBoolean("shared") &&
                                 domain.getString("match") == if (suffix) "suffix" else "exact"
                         }) continue
-                        val vpn = rule.optString("outbound")
-                        if (!protectedDirectVpn(config, vpn) || (fallbacks[service] != null && fallbacks[service] != vpn)) return null
+                        val vpn = localDpiVpnFallback(vpnOutbounds, rule.optString("outbound")) ?: return null
+                        if (fallbacks[service] != null && fallbacks[service] != vpn) return null
                         fallbacks[service] = vpn
                         replacements.add(rule to tag)
                     }
