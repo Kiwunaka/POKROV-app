@@ -3151,7 +3151,7 @@ class AppFirstRuntimeBootstrapper
   final RoutingCatalogStore _routingCatalogStore;
   final TransportManifestStore? _transportManifestStore;
   final SmartAccessPolicyStore _smartAccessPolicyStore;
-  ({VerifiedFirstProviderQaPermit permit, _StoredBootstrapState state})? _firstProviderQaClaim;
+  ({VerifiedFirstProviderQaPermit permit, _StoredBootstrapState state, HostPlatform hostPlatform})? _firstProviderQaClaim;
   final Map<HostPlatform, _RoutingCatalogFlight> _routingCatalogFlights = {};
   final String _runtimeReportRunId = OperationalIdFactory().uuidV4();
   int _runtimeReportSequence = 0;
@@ -5134,17 +5134,18 @@ class AppFirstRuntimeBootstrapper
 
   Future<VerifiedFirstProviderQaPermit> claimFirstProviderQa({
     required String admissionId, required String baseProfile, required VerifiedRoutingCatalog catalog,
+    required HostPlatform hostPlatform,
     required String coreVersion, required String coreModuleSha256,
     required bool Function() operationIsCurrent, required Duration remainingBudget, required Future<void> cancelled,
   }) async {
     if (!firstProviderQaConfigured) throw const RoutingCatalogFailure('smart_access_qa_unconfigured');
-    final state = await _loadState(HostPlatform.windows);
+    final state = await _loadState(hostPlatform);
     if (state == null || !state.hasSession) throw const BootstrapFailure('Для проверки нужен вход.', statusCode: HttpStatus.unauthorized);
     final policyGeneration = _smartAccessPolicyStore.generation;
     final catalogGeneration = _routingCatalogStore.invalidationGeneration;
     final elapsed = Stopwatch()..start();
     Future<void> requireCurrent() async {
-      final current = await _loadState(HostPlatform.windows);
+      final current = await _loadState(hostPlatform);
       if (!operationIsCurrent() || elapsed.elapsed >= remainingBudget || current == null ||
           current.accountId != state.accountId || current.installId != state.installId ||
           current.sessionToken != state.sessionToken || policyGeneration != _smartAccessPolicyStore.generation ||
@@ -5161,22 +5162,22 @@ class AppFirstRuntimeBootstrapper
       'core_module_sha256': coreModuleSha256,
     };
     await requireCurrent();
-    final client = _createHttpClient(HostPlatform.windows);
+    final client = _createHttpClient(hostPlatform);
     final timer = Timer(remainingBudget - elapsed.elapsed, () => client.close(force: true));
     var finished = false;
     unawaited(cancelled.then((_) { if (!finished) client.close(force: true); }));
     try {
       final response = await _requestJson(method: 'POST', path: '/api/client/smart-access/first-provider-qa/claim',
-        hostPlatform: HostPlatform.windows, client: client, bearerToken: state.sessionToken, body: request,
+        hostPlatform: hostPlatform, client: client, bearerToken: state.sessionToken, body: request,
         maximumResponseBytes: smartAccessLeaseMaximumBytes + 1024, allowRetries: false);
       await requireCurrent();
       if (response.length != 2 || response['schema'] != 'smart-access-first-provider-qa-response-v1') {
         throw const RoutingCatalogFailure('smart_access_qa_response_invalid');
       }
       final permit = await _smartAccessPolicyStore.verifier.verifyFirstProviderQa(response['envelope'],
-        request: request, accountId: state.accountId, installId: state.installId, catalog: catalog, now: DateTime.now().toUtc());
+        request: request, accountId: state.accountId, installId: state.installId, catalog: catalog, platform: hostPlatform.name, now: DateTime.now().toUtc());
       await requireCurrent();
-      _firstProviderQaClaim = (permit: permit, state: state);
+      _firstProviderQaClaim = (permit: permit, state: state, hostPlatform: hostPlatform);
       return permit;
     } finally { finished = true; timer.cancel(); client.close(force: true); }
   }
@@ -5188,9 +5189,10 @@ class AppFirstRuntimeBootstrapper
     final captured = _firstProviderQaClaim;
     if (captured == null || !identical(captured.permit, permit)) throw const RoutingCatalogFailure('smart_access_qa_superseded');
     final state = captured.state;
+    final hostPlatform = captured.hostPlatform;
     final elapsed = Stopwatch()..start();
     Future<void> requireCurrent() async {
-      final current = await _loadState(HostPlatform.windows);
+      final current = await _loadState(hostPlatform);
       if (!operationIsCurrent() || elapsed.elapsed >= remainingBudget || current == null ||
           current.accountId != state.accountId || current.installId != state.installId || current.sessionToken != state.sessionToken) {
         _firstProviderQaClaim = null;
@@ -5202,7 +5204,7 @@ class AppFirstRuntimeBootstrapper
     final request = <String, Object?>{'schema_version': 'pokrov-smart-access-first-provider-qa-control-v1',
       'permit_id': permit.permitId, 'request_nonce': List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join(),
       'profile_digest': profileDigest};
-    final client = _createHttpClient(HostPlatform.windows);
+    final client = _createHttpClient(hostPlatform);
     final deadline = Completer<Map<String, dynamic>>();
     final timer = Timer(remainingBudget - elapsed.elapsed, () {
       // Closing an in-flight TLS handshake can surface a later SocketException.
@@ -5217,7 +5219,7 @@ class AppFirstRuntimeBootstrapper
     try {
       final response = await Future.any([
         _requestJson(method: 'POST', path: '/api/client/smart-access/first-provider-qa/control',
-          hostPlatform: HostPlatform.windows, client: client, bearerToken: state.sessionToken, body: request,
+          hostPlatform: hostPlatform, client: client, bearerToken: state.sessionToken, body: request,
           maximumResponseBytes: smartAccessControlMaximumBytes + 8192, allowRetries: false),
         deadline.future,
       ]);

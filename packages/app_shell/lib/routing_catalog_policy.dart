@@ -412,8 +412,7 @@ CatalogDomainPolicy compileFirstProviderQaDomainPolicy({
       profile.byService.length != 1 || profile.byService[serviceId]?.length != 1 ||
       !identical(profile.byService[serviceId]!.single, permit.grant)) _fail('qa_scope_changed');
   final services = policy.services.where((service) => service.id == serviceId).toList();
-  if (services.length != 1 || services.single.enabled ||
-      !services.single.platforms.contains('windows') || !services.single.accessStates.contains(accessState)) {
+  if (services.length != 1 || !services.single.accessStates.contains(accessState)) {
     _fail('qa_scope_changed');
   }
   final admittedDomains = permit.domainNames.toSet();
@@ -425,7 +424,7 @@ CatalogDomainPolicy compileFirstProviderQaDomainPolicy({
     securityRevision: catalog.securityRevision, payloadSha256: catalog.payloadSha256,
     audience: catalog.payload['audience']! as String, issuedAt: catalog.issuedAt,
     // Member expiry closes the gateway, not its independently authorized VPN fallback.
-    expiresAt: catalog.expiresAt, mode: CatalogRoutingMode.selective, platform: 'windows', accessState: accessState,
+    expiresAt: catalog.expiresAt, mode: CatalogRoutingMode.selective, platform: permit.platform, accessState: accessState,
     defaultAction: CatalogRouteAction.direct, selectedServiceIds: {serviceId},
     rules: [for (final domain in domains) CatalogDomainDecision._(serviceId, domain, CatalogRouteAction.approvedGateway,
       null, profile.byService[serviceId]!, CatalogRouteAction.approvedGateway)],

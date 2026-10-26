@@ -288,12 +288,13 @@ void main() {
       throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_selected_service_unsupported')));
   });
 
-  for (final (serviceId, controlFailure) in <(String, String?)>[
+  for (final (serviceId, controlFailure, hostPlatform) in <(String, String?, HostPlatform)>[
     for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
-      ('gemini', failure),
-    ('chatgpt', null),
+      ('gemini', failure, HostPlatform.windows),
+    ('chatgpt', null, HostPlatform.windows),
+    ('gemini', null, HostPlatform.android),
   ]) {
-  test('explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${controlFailure == null ? '' : ' with $controlFailure'}', () async {
+  test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${controlFailure == null ? '' : ' with $controlFailure'}', () async {
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = httpOverrides);
@@ -311,7 +312,7 @@ void main() {
     const leaseId = 'abcdef0123456789abcdef0123456789';
     final domainNames = serviceId == 'gemini' ? ['gemini.google.com'] : ['chatgpt.com', 'ws.chatgpt.com'];
     final service = <String, Object?>{'service_id': serviceId, 'display_name': serviceId, 'categories': ['ai'],
-      'enabled': false, 'classification': 'geo_restricted', 'reason': 'test domain metadata', 'evidence_status': 'source_only',
+      'enabled': hostPlatform == HostPlatform.android, 'classification': 'geo_restricted', 'reason': 'test domain metadata', 'evidence_status': 'source_only',
       'source_ids': ['qa-source'], 'evidence_ids': ['domain-review'], 'platforms': ['windows'],
       'access_states': ['paid_unlimited'], 'route_intents': <Object>[], 'android': <Object>[], 'windows': <Object>[],
       'domains': [for (final name in domainNames) {'name': name, 'match': 'exact', 'shared': false, 'role': 'web', 'source_ids': ['qa-source']}],
@@ -335,13 +336,13 @@ void main() {
       'status': 'approved', 'embedded_use_allowed': true, 'review_ref': 'permission-review',
       'review_sha256': await _qaDigest('permission'), 'issued_at': start, 'expires_at': end,
       'max_new_connections_per_minute': 1, 'max_concurrent_connections_per_lease': 1, 'relay_connect_policy': null};
-    final provider = <String, Object?>{'provider_id': 'owned-provider', 'revision': 1, 'kind': 'owned', 'enabled': true,
+    final provider = <String, Object?>{'provider_id': 'owned-provider', 'revision': 1, 'kind': hostPlatform == HostPlatform.android ? 'external' : 'owned', 'enabled': true,
       'permission_id': 'owned-permission', 'resolver_url': 'https://dns.example.test/dns-query',
       'relay_addresses': ['1.1.1.1'], 'privacy_review_ref': 'privacy-review', 'privacy_review_sha256': await _qaDigest('privacy')};
     final capability = <String, Object?>{'capability_id': '$serviceId-qa', 'provider_id': 'owned-provider', 'provider_revision': 1,
       'service_id': serviceId, 'enabled': false, 'verification': 'source_only',
       'checks': {for (final name in const ['resolver_transport', 'dns_answer', 'tls_certificate', 'feature_request']) name: 'NOT_VERIFIED'},
-      'platform': 'windows', 'origin': 'current-origin', 'family': 'ipv4', 'feature': 'web_request',
+      'platform': hostPlatform.name, 'origin': 'current-origin', 'family': 'ipv4', 'feature': 'web_request',
       'transport': 'tls_tcp_443_visible_sni', 'domains': [for (final name in domainNames) {'name': name, 'match': 'exact'}],
       'proof_ref': 'unverified-proof', 'proof_sha256': await _qaDigest('unverified proof'), 'observed_at': start, 'expires_at': end};
     final providerHash = await _qaDigest(jsonEncode(_qaSorted({'schema_version': 'pokrov-smart-access-providers-v1',
@@ -394,7 +395,7 @@ void main() {
                 'selected_candidate_ref': 'de:qa_vless', 'candidates': [{'candidate_ref': 'de:qa_vless', 'profile_ref': 'qa_vless',
                   'node_code': 'de', 'country_code': 'DE', 'protocol': 'vless', 'transport': 'tcp', 'protection': 'reality',
                   'priority': 0, 'parameters': {'network': 'tcp', 'flow': ''}, 'requirements': {'minimum_client_release': '1.2.0',
-                    'minimum_core_release': null, 'platforms': ['windows'], 'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']}}]},
+                    'minimum_core_release': null, 'platforms': [hostPlatform.name], 'required_features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']}}]},
               'config_payload': {'outbounds': [{'type': 'selector', 'tag': 'proxy', 'outbounds': ['qa-vpn'], 'default': 'qa-vpn'},
                 {'type': 'vless', 'tag': 'qa-vpn', 'server': 'vpn.example.invalid', 'server_port': 443,
                   'uuid': '11111111-1111-4111-8111-111111111111', 'tls': {'enabled': true, 'server_name': 'vpn.example.invalid',
@@ -411,7 +412,7 @@ void main() {
               'audience': 'lab', 'provider_id': 'owned-provider', 'provider_revision': 1, 'permission_id': 'owned-permission',
               'permission_revision': 1, 'capability_id': '$serviceId-qa', 'provider_policy_revision': 1, 'provider_security_revision': 1,
               'provider_policy_sha256': providerHash, 'catalog_revision': 1, 'catalog_security_revision': 1,
-              'catalog_sha256': catalog.payloadSha256, 'service_id': serviceId, 'platform': 'windows', 'origin': 'current-origin',
+              'catalog_sha256': catalog.payloadSha256, 'service_id': serviceId, 'platform': hostPlatform.name, 'origin': 'current-origin',
               'family': 'ipv4', 'feature': 'web_request', 'transport': 'tls_tcp_443_visible_sni', 'issued_at': issued,
               'new_flows_until': qaEnd, 'active_flows_until': qaEnd, 'resolver_url': provider['resolver_url'],
               'relay_addresses': provider['relay_addresses'], 'domains': capability['domains'],
@@ -435,7 +436,7 @@ void main() {
               'envelope': await _qaSigned({'schema_version': 'pokrov-smart-access-control-v1',
                 'request_nonce': body['request_nonce'],
                 'device_binding': await _qaDigest('pokrov-smart-access-device-v1\u0000${body['request_nonce']}\u0000synthetic-qa-account\u0000$installId'),
-                'profile_digest': body['profile_digest'], 'platform': 'windows', 'audience': 'lab',
+                'profile_digest': body['profile_digest'], 'platform': hostPlatform.name, 'audience': 'lab',
                 'action': terminateQa ? 'terminate' : 'none', 'reason': terminateQa ? 'access_denied' : 'current',
                 'issued_at': wire(issued), 'expires_at': wire(issued.add(const Duration(seconds: 60)))},
                 'pokrov-smart-access-control-v1', key)};
@@ -468,22 +469,22 @@ void main() {
       routingCatalogStore: RoutingCatalogStore(enabled: true, verifier: catalogVerifier),
       smartAccessPolicyStore: SmartAccessPolicyStore(enabled: false,
         verifier: SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab')));
-    final localWindows = bootstrapper.buildLocalSmartAccessBase(hostPlatform: HostPlatform.windows);
-    expect(localWindows.disableMemoryLimit, isTrue);
-    expect(localWindows.copyWith(configPayload: localWindows.configPayload).disableMemoryLimit, isTrue,
+    final localWindows = bootstrapper.buildLocalSmartAccessBase(hostPlatform: hostPlatform);
+    expect(localWindows.disableMemoryLimit, hostPlatform == HostPlatform.windows);
+    expect(localWindows.copyWith(configPayload: localWindows.configPayload).disableMemoryLimit, hostPlatform == HostPlatform.windows,
       reason: 'routing preparation must retain the Windows memory policy');
     expect(bootstrapper.buildLocalSmartAccessBase(hostPlatform: HostPlatform.android).disableMemoryLimit, isFalse);
-    await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
+    await bootstrapper.resolveManagedProfile(hostPlatform: hostPlatform, routeMode: RouteMode.fullTunnel,
       runtimeFeatures: {RuntimeTransportFeature.reality, RuntimeTransportFeature.tls, RuntimeTransportFeature.utls, RuntimeTransportFeature.vless}, coreRelease: '1.2.10');
     final account = AccountSessionCoordinator(accountActions: bootstrapper)
-      ..updateSubscriptionInfo(await bootstrapper.fetchClientSubscription(hostPlatform: HostPlatform.windows));
+      ..updateSubscriptionInfo(await bootstrapper.fetchClientSubscription(hostPlatform: hostPlatform));
     final phase = <String, Object?>{'phase': 'initialized', 'supportsLiveConnect': true, 'canConnect': true,
       'canInitialize': false, 'coreVersion': '1.2.10', 'coreModuleSha256': coreHash,
       'routingCatalogWindowVersion': 1, 'routingCatalogControlVersion': 4, 'smartAccessLeaseVersion': 1,
       'smartAccessRuntimeControlVersion': 1, 'coreEgressValidationRequired': true,
       'transportCapabilitiesJson': jsonEncode({'schema': 1, 'features': ['singbox_reality_v1', 'singbox_tls_v1', 'singbox_utls_v1', 'singbox_vless_v1']})};
     final nativeCalls = <String>[];
-    const bootRef = 'windows:0123456789abcdef0123456789abcdef';
+    final bootRef = hostPlatform == HostPlatform.android ? 'android:1' : 'windows:0123456789abcdef0123456789abcdef';
     const networkRef = 'network_0123456789abcdef0123456789abcdef';
     String? nativeBoundRequestId;
     var probeId = 1;
@@ -511,7 +512,7 @@ void main() {
         case 'runtimeEngine.stageManagedProfile':
           staged = jsonDecode(args['configPayload'] as String) as Map;
           phase.addAll({'phase': 'configStaged', 'stagedProfileDigest': args['expectedProfileDigest'],
-            'stagedConfigPath': '/synthetic/managed.json', 'profileIdentityOrigin': 'windows_service_stage_request_sha256'});
+            'stagedConfigPath': '/synthetic/managed.json', 'profileIdentityOrigin': hostPlatform == HostPlatform.android ? 'android_service_stage_request_sha256' : 'windows_service_stage_request_sha256'});
         case 'runtimeEngine.connect':
         case 'runtimeEngine.connectWithCoreIdentity':
           nativeBoundRequestId = null;
@@ -583,8 +584,8 @@ void main() {
     addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
     final firstLaunch = _RestoredFirstLaunch()..completion.complete(true);
     final first = FirstSessionCoordinator(store: firstLaunch)..complete(animated: false);
-    final runtime = createRuntimeEngine(hostPlatform: HostPlatform.windows);
-    final manager = ConnectionManager(appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+    final runtime = createRuntimeEngine(hostPlatform: hostPlatform);
+    final manager = ConnectionManager(appContext: buildSeedAppContext(hostPlatform: hostPlatform),
       runtimeEngine: runtime, bootstrapper: bootstrapper, actionTimeout: actionTimeout,
       accountSessionCoordinator: account, firstSessionCoordinator: first, clientExperienceStore: _HomeExperience(),
       connectHintStore: const PokrovFileConnectHintStore(), windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
@@ -592,7 +593,7 @@ void main() {
     addTearDown(() async {
       manager.dispose();
       // Join background lifecycle delivery before removing its temporary outbox.
-      await bootstrapper.reportRuntimeStats(hostPlatform: HostPlatform.windows,
+      await bootstrapper.reportRuntimeStats(hostPlatform: hostPlatform,
         runtimePhase: 'disconnected', connected: false);
     });
     expect(requests.where((path) => path.endsWith('/claim')), isEmpty, reason: 'availability cannot issue a permit');
@@ -654,7 +655,7 @@ void main() {
       reason: 'an IPv4 lease must not wait for AAAA when bootstrapping its DoH hostname');
     expect((staged!['outbounds'] as List).cast<Map>()
         .singleWhere((outbound) => outbound['type'] == 'pokrov-smart-access')
-        .containsKey('external_ech_outer_sni'), isFalse,
+        .containsKey('external_ech_outer_sni'), hostPlatform == HostPlatform.android,
       reason: 'owned first-provider QA retains its ECH guard');
     final route = staged!['route'] as Map;
     for (final domainName in domainNames) {
@@ -702,7 +703,7 @@ void main() {
     expect(closedContext['proof_current'], isFalse);
     expect(closedContext['fallback_guard_closed'], isTrue);
     final verifier = SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab');
-    if (serviceId == 'gemini') {
+    if (serviceId == 'gemini' && hostPlatform == HostPlatform.windows) {
       final publicVerifier = SmartAccessVerifier(providerKeysById: {'qa-test': public},
           leaseKeysById: {'qa-test': public}, audience: 'lab');
       final localProfileDigest = await smartAccessProfileSha256(localWindows.configPayload);
@@ -739,7 +740,7 @@ void main() {
         final grant = await publicVerifier.verifyLease(publicGrant, request: {...claimRequest!,
           'profile_sha256': localProfileDigest,
           'catalog_sha256': publicCatalog.payloadSha256, 'provider_policy_sha256': publicPolicy.payloadSha256,
-          'capability_id': '$serviceId-qa', 'platform': 'windows', 'origin': 'current-origin',
+          'capability_id': '$serviceId-qa', 'platform': hostPlatform.name, 'origin': 'current-origin',
           'family': 'ipv4', 'feature': 'web_request'}, accountId: 'synthetic-qa-account', installId: installId!,
           catalog: publicCatalog, providerPolicy: publicPolicy, now: DateTime.now().toUtc());
         return (grant: grant, catalog: publicCatalog);
@@ -769,7 +770,7 @@ void main() {
           localWindows, const PokrovRoutingPreferences.defaults().copyWith(
             selectedCatalogServiceIds: {serviceId}, customDnsUrl: customDnsUrl,
             dnsPreset: customDnsUrl == null ? PokrovDnsPreset.automatic : PokrovDnsPreset.custom),
-          hostPlatform: HostPlatform.windows, catalogPolicy: localPolicy,
+          hostPlatform: hostPlatform, catalogPolicy: localPolicy,
           catalogAccessState: 'paid_unlimited', physicalIpv6Available: ipv6Available,
           nativeCatalogWindowVersion: 1, nativeSmartAccessLeaseVersion: 1).configPayload) as Map;
       final withIpv6 = localConfig(true);
@@ -799,13 +800,17 @@ void main() {
         ((rejected['qa_projection'] as Map)['capability'] as Map).addAll(changes);
         final signed = await _qaSigned(rejected, 'pokrov-smart-access-first-provider-qa-v1', key);
         await expectLater(verifier.verifyFirstProviderQa(signed, request: claimRequest!,
-          accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, now: DateTime.now().toUtc()),
+          accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, platform: hostPlatform.name, now: DateTime.now().toUtc()),
           throwsA(isA<RoutingCatalogFailure>().having((failure) => failure.code, 'code', 'smart_access_qa_projection_invalid')));
       }
     }
     await expectLater(verifier.verifyFirstProviderQa(permitEnvelope, request: {...claimRequest!, 'core_module_sha256': await _qaDigest('other core')},
-      accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, now: DateTime.now().toUtc()),
+      accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, platform: hostPlatform.name, now: DateTime.now().toUtc()),
       throwsA(isA<RoutingCatalogFailure>()));
+    await expectLater(verifier.verifyFirstProviderQa(permitEnvelope, request: claimRequest!,
+      accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog,
+      platform: hostPlatform == HostPlatform.android ? 'windows' : 'android', now: DateTime.now().toUtc()),
+      throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'smart_access_qa_projection_invalid')));
     expect(manager.firstProviderQaAdmissionId, isNull, reason: 'one explicit attempt cannot be renewed');
     terminateQa = true;
     await manager.refresh();
@@ -827,7 +832,7 @@ void main() {
       expectedCoreModuleSha256: coreHash, expectedProfileDigest: failedProfile,
       expectedNetworkContextRef: networkRef,
       budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
-        {'schema': 1, 'boot_ref': bootRef, 'elapsed_ms': 1000, 'quantum_ms': 1}, HostPlatform.windows),
+        {'schema': 1, 'boot_ref': bootRef, 'elapsed_ms': 1000, 'quantum_ms': 1}, hostPlatform),
       budget: const Duration(seconds: 18), onRequestCreated: (_) {}),
       throwsA(isA<RuntimeBoundConnectFailure>().having((error) => error.cleanupConfirmed, 'cleanup', isFalse)));
     expect(manager.snapshot?.phase, RuntimePhase.configStaged);

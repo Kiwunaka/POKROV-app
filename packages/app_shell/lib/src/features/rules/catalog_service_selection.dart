@@ -104,7 +104,9 @@ class _CatalogServiceSelectionData {
 
   String? unavailableReason(CatalogServicePolicy service) {
     if (!service.enabled || !service.verified) return 'Нет действующих подтверждённых правил';
-    if (!service.platforms.contains(platform)) return 'Не поддерживается на этой платформе';
+    if (!service.platforms.contains(platform)) {
+      return platform == 'android' ? 'Маршрут для Android пока не включён' : 'Маршрут для этой платформы пока не включён';
+    }
     if (!service.accessStates.contains(accessState)) return 'Недоступен при текущем доступе';
     if (service.domains.isEmpty || service.domains.any((domain) => domain.shared)) {
       return 'Нет отдельного поддерживаемого доменного маршрута';

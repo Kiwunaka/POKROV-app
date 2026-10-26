@@ -25,7 +25,7 @@ enum PokrovFirstProviderQaAvailabilityReason {
 String _firstProviderQaAvailabilityLabel(PokrovFirstProviderQaAvailabilityReason reason) => switch (reason) {
   PokrovFirstProviderQaAvailabilityReason.ready => 'Условия кнопки проверки соблюдены',
   PokrovFirstProviderQaAvailabilityReason.pendingAbsent => 'Нет принятого ожидающего допуска',
-  PokrovFirstProviderQaAvailabilityReason.unsupportedPlatform => 'Проверка доступна только в Windows',
+  PokrovFirstProviderQaAvailabilityReason.unsupportedPlatform => 'Проверка доступна в Windows и Android',
   PokrovFirstProviderQaAvailabilityReason.unsupportedBootstrapper => 'Этот источник профиля не поддерживает проверку',
   PokrovFirstProviderQaAvailabilityReason.unconfigured => 'Ключи проверки или каталог не настроены',
   PokrovFirstProviderQaAvailabilityReason.disposed => 'Текущий экран подключения закрыт',

@@ -2538,7 +2538,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
                   await _connectionManager.startFirstProviderQa(id);
                 },
                 onReadFirstProviderQaContext: _connectionManager.readFirstProviderQaContext,
-                onReadFirstProviderQaAvailability: widget.appContext.hostPlatform == HostPlatform.windows
+                onReadFirstProviderQaAvailability: const {HostPlatform.android, HostPlatform.windows}.contains(widget.appContext.hostPlatform)
                     ? () => _connectionManager.firstProviderQaAvailability : null,
                 onRefresh: _refreshDiagnosticsReport,
                 onReleaseHealthRefresh: _releaseHealthService == null

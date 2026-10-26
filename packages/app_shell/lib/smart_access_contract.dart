@@ -220,6 +220,7 @@ class VerifiedFirstProviderQaPermit {
   final VerifiedSmartAccessLease grant;
   String get permitId => payload['permit_id']! as String;
   String get serviceId => grant.lease['service_id']! as String;
+  String get platform => grant.lease['platform']! as String;
   Iterable<String> get domainNames => (grant.lease['domains']! as List)
       .cast<Map<String, Object?>>().map((domain) => domain['name']! as String);
   Map<String, Object?> get projection => payload['qa_projection']! as Map<String, Object?>;
@@ -456,7 +457,7 @@ class SmartAccessVerifier {
     // The signature and subject format are unchanged; only the HTTP authority is QA-specific.
     final control = await verifyControl(response['envelope'], request: {
       'schema_version': 'pokrov-smart-access-control-request-v1',
-      'request_nonce': request['request_nonce'], 'profile_digest': request['profile_digest'], 'platform': 'windows',
+      'request_nonce': request['request_nonce'], 'profile_digest': request['profile_digest'], 'platform': permit.platform,
     }, accountId: accountId, installId: installId, now: now);
     final capability = response['runtime_capability'];
     if (!const {'current', 'access_denied'}.contains(control.reason) ||
@@ -480,13 +481,14 @@ class SmartAccessVerifier {
     }
     return jsonEncode({'schema_version': 'pokrov-smart-access-runtime-worker-v1',
       'catalog_sha256': permit.payload['catalog_sha256'], 'profile_digest': profileDigest,
-      'platform': 'windows', 'audience': audience, 'api_base_url': apiBaseUrl, 'dns_resolver': 'dns-direct',
+      'platform': permit.platform, 'audience': audience, 'api_base_url': apiBaseUrl, 'dns_resolver': 'dns-direct',
       'capability': capability, 'issued_at': permit.payload['issued_at'],
       'expires_at': permit.payload['expires_at'], 'lease_keys_by_id': _leaseKeys});
   }
 
   Future<VerifiedFirstProviderQaPermit> verifyFirstProviderQa(Object? input, {
     required Map<String, Object?> request, required String accountId, required String installId,
+    required String platform,
     required VerifiedRoutingCatalog catalog, required DateTime now,
   }) async {
     try {
@@ -494,6 +496,7 @@ class SmartAccessVerifier {
         'route_mode', 'client_release', 'core_version', 'core_module_sha256'});
       if (request['schema_version'] != 'pokrov-smart-access-first-provider-qa-claim-v1' ||
           request['route_mode'] != 'selective' || accountId.isEmpty || installId.isEmpty ||
+          !const {'android', 'windows'}.contains(platform) ||
           !RegExp(r'^[a-f0-9]{32}$').hasMatch(request['admission_id']?.toString() ?? '') ||
           !RegExp(r'^[a-f0-9]{32}$').hasMatch(request['request_nonce']?.toString() ?? '') ||
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(request['profile_sha256']?.toString() ?? '') ||
@@ -544,13 +547,13 @@ class SmartAccessVerifier {
               const ['chatgpt.com', 'openai.com', 'oaistatic.com', 'oaiusercontent.com'].any((root) =>
                 domain['name'] == root || (domain['name']! as String).endsWith('.$root')));
       if (projection['action'] != 'approved_gateway' || projection['route_mode'] != 'selective' ||
-          !const {'gemini', 'chatgpt'}.contains(service['service_id']) || service['enabled'] != false ||
+          !const {'gemini', 'chatgpt'}.contains(service['service_id']) ||
           original.length != 1 || _canonical(original.single) != _canonical(service) ||
-          provider['kind'] != 'owned' || provider['enabled'] != true ||
+          provider['enabled'] != true ||
           permission['status'] != 'approved' || permission['embedded_use_allowed'] != true ||
           capability['capability_id'] != payload['candidate_ref'] || capability['enabled'] != false ||
           capability['service_id'] != service['service_id'] || capability['origin'] != 'current-origin' ||
-          capability['verification'] != 'source_only' || capability['platform'] != 'windows' ||
+          capability['verification'] != 'source_only' || capability['platform'] != platform ||
           capability['family'] != 'ipv4' || capability['feature'] != 'web_request' ||
           (capability['checks']! as Map).values.any((value) => value != 'NOT_VERIFIED') ||
           !domainScopeAllowed) {
@@ -690,7 +693,7 @@ class SmartAccessVerifier {
           service['external_gateway_policy'] != 'approved' || capabilityRefs is! List ||
           !capabilityRefs.contains(lease['capability_id']) || intents is! List ||
           !intents.any((item) => item is Map && item['mode'] == grant['route_mode'] && item['action'] == 'approved_gateway'))) || platforms is! List ||
-          !platforms.contains(lease['platform']) ||
+          (qaScope == null && !platforms.contains(lease['platform'])) ||
           serviceDomains is! List || domains.any((domain) => domain is! Map ||
             domain.length != 2 || domain['name'] is! String || !const {'exact', 'suffix'}.contains(domain['match']) ||
             !serviceDomains.any((candidate) => candidate is Map && candidate['shared'] == false &&
@@ -700,7 +703,7 @@ class SmartAccessVerifier {
       final scopeSha256 = await _smartAccessRuntimeScopeSha256(grant, lease);
       // The non-QA branch above already requires the signed catalog's approved
       // gateway and exact provider capability. This never authenticates ECH's inner SNI.
-      final externalECHOuterSNI = qaScope == null && provider['kind'] == 'external' &&
+      final externalECHOuterSNI = provider['kind'] == 'external' &&
           domains.every((domain) => (domain as Map)['match'] == 'exact');
       return VerifiedSmartAccessLease._(envelope, grant, lease, issued, newUntil, activeUntil,
           scopeSha256, externalECHOuterSNI);

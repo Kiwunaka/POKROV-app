@@ -597,7 +597,7 @@ class ConnectionManager extends ChangeNotifier {
   ({String? admissionId, bool pendingPresent, PokrovFirstProviderQaAvailabilityReason reason}) _firstProviderQaEligibility() {
     final id = _subscriptionInfo?.firstProviderQaAdmissionId;
     final preferences = _clientExperience.routingPreferences;
-    final reason = _appContext.hostPlatform != HostPlatform.windows ? PokrovFirstProviderQaAvailabilityReason.unsupportedPlatform
+    final reason = !const {HostPlatform.android, HostPlatform.windows}.contains(_appContext.hostPlatform) ? PokrovFirstProviderQaAvailabilityReason.unsupportedPlatform
         : _bootstrapper is! AppFirstRuntimeBootstrapper ? PokrovFirstProviderQaAvailabilityReason.unsupportedBootstrapper
         : !(_bootstrapper as AppFirstRuntimeBootstrapper).firstProviderQaConfigured ? PokrovFirstProviderQaAvailabilityReason.unconfigured
         : _disposed ? PokrovFirstProviderQaAvailabilityReason.disposed
@@ -3241,6 +3241,7 @@ class ConnectionManager extends ChangeNotifier {
                 profileRevision == _managedProfileRevision && _pendingFirstProviderQaAdmissionId == qaAdmissionId &&
                 preparationClock.elapsed < _actionTimeout;
             final permit = await qaService.claimFirstProviderQa(admissionId: qaAdmissionId,
+              hostPlatform: _appContext.hostPlatform,
               baseProfile: runtimePayload.configPayload, catalog: result.catalog,
               coreVersion: native.coreVersion!, coreModuleSha256: actualCore, operationIsCurrent: qaCurrent,
               remainingBudget: _actionTimeout - preparationClock.elapsed, cancelled: cancelled);
@@ -4263,7 +4264,7 @@ class ConnectionManager extends ChangeNotifier {
         _setPhase(ConnectionPhase.activating, generation);
         Future<RuntimeSnapshot> Function() connectAction = _runtimeEngine.connect;
         final qa = _activeFirstProviderQa;
-        if (qa != null && _appContext.hostPlatform == HostPlatform.windows) {
+        if (qa != null) {
           final engine = _runtimeEngine;
           if (engine is! RuntimeCoreIdentityConnect || engine is! RuntimeBootClock ||
               engine is! RuntimeTransportNetworkContext) {
