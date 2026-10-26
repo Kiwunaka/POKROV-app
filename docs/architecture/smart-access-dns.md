@@ -346,6 +346,15 @@ still required before public promotion. Android exposes the existing diagnostics
 action only for a pending device admission and uses the existing identity-bound
 Connect/control APIs.
 
+The Android paired-API parser fix starts with private build 4212. Earlier
+Selective clients, including 4209, reject that profile even after a denied
+SmartDNS lease falls back to VPN. Ordinary provider leases do not bind a client
+build; the unchanged Core version alone cannot distinguish the Kotlin host fix.
+Do not apply the prepared provider4/catalog29 Android promotion patches in this
+pass. Public Android SmartDNS stays off: a private QA success must first be
+followed by an agreed rollout of the compatible app or an older compatible
+catalog for old clients before public enablement.
+
 Android and Windows recognize the selective producer's exact `api.pokrov.space` /
 `app.pokrov.space` pair in matching TCP/443 and VPN DNS rules. Ordinary connect
 keeps the protected VPN verifier; explicit QA selects the leased service only
