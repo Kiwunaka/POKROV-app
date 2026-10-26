@@ -364,6 +364,10 @@ allowlisted code and up to two local Dart source locations in the QA summary and
 bounded protection history. Diagnostics refreshes that summary after the error
 and retains its error card when the pending admission disappears. Raw exception
 messages, stack paths and connection material are not displayed or retained.
+The connection observer keeps `ConnectionConnectedUnverified` pending even when
+all four native flags are already ready. It does not send that complete set to
+the incomplete-proof event or mark the attempt verified; only the confirmed
+`ConnectionExperience` state can complete verification.
 
 The Android paired-API parser fix starts with private build 4212. Earlier
 Selective clients, including 4209, reject that profile even after a denied

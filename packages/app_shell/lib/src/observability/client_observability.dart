@@ -443,7 +443,10 @@ final class PokrovClientObservability {
         attempt.enter(_timelinePhase(experience.stage));
       case ConnectionConnectedUnverified():
         attempt.enter(_timelinePhase(experience.stage));
-        attempt.observeProof(_proofs(experience.snapshot!));
+        final proofs = _proofs(experience.snapshot!);
+        // Complete native flags can precede the connection owner's confirmation.
+        // Only ConnectionConnectedVerified may mark the attempt verified.
+        if (!proofs.isVerified) attempt.observeProof(proofs);
       case ConnectionConnectedVerified():
         _recordVerified(attempt, experience.snapshot!);
       case ConnectionDisconnecting():

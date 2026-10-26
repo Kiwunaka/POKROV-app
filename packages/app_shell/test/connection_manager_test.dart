@@ -1096,6 +1096,29 @@ void main() {
     }
   });
 
+  test('observability keeps complete native flags unverified until the connection owner confirms', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-unverified-proof-');
+    addTearDown(() => directory.delete(recursive: true));
+    final observability = await PokrovClientObservability.start(
+      hostPlatform: HostPlatform.android, directoryResolver: () async => directory);
+    addTearDown(observability.flush);
+    final runtime = _Runtime(hostPlatform: HostPlatform.android)
+      ..phase = RuntimePhase.running..transportProofPending = true;
+    await observability.runConnectionAction(() async {
+      observability.observeConnection(ConnectionConnectedUnverified(
+        stage: ConnectionStage.egress, snapshot: await runtime.snapshot()));
+      expect(observability.connectionTimelineBreadcrumbs.any((entry) =>
+        entry.name == 'app.connection.verified.finished' || entry.name == 'app.connection.attempt.finished' ||
+        entry.name == 'app.connection.proof.observed'), isFalse);
+      runtime.transportProofPending = false;
+      observability.observeConnection(ConnectionConnectedVerified(snapshot: await runtime.snapshot()));
+      expect(observability.connectionTimelineBreadcrumbs.where((entry) =>
+        entry.name == 'app.connection.verified.finished'), hasLength(1));
+      expect(observability.connectionTimelineBreadcrumbs.last.name, 'app.connection.attempt.finished');
+      expect(observability.connectionTimelineBreadcrumbs.last.outcome.name, 'succeeded');
+    }, beginsWithDisconnect: false);
+  });
+
   test('pending QA preserves fresh profile deadline and primary failure instead of offline catalog fallback', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-qa-profile-failure-');
     addTearDown(() => directory.delete(recursive: true));
