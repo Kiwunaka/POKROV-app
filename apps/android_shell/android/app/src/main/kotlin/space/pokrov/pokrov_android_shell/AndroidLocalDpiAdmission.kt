@@ -27,7 +27,11 @@ internal data class LocalDpiVpnOutbound(
     val detour: String = "",
     val upstreamTag: String = "",
     val children: List<String> = emptyList(),
+    val tlsSecure: Boolean = false,
 )
+
+internal fun localDpiSecureTls(enabled: Any?, insecure: Any?): Boolean =
+    enabled == true && (insecure == null || insecure == false)
 
 /** Inspect the transport behind a lease, but keep the lease as the fallback. */
 internal fun localDpiVpnFallback(
@@ -38,16 +42,17 @@ internal fun localDpiVpnFallback(
         if (candidate in visiting) return rejected("fallback=cycle")
         val outbound = outbounds.singleOrNull { it.tag == candidate }
             ?: return rejected(if (outbounds.any { it.tag == candidate }) "fallback=duplicate_target" else missing)
+        val visited = visiting + candidate
+        if (outbound.type == "vless" && !outbound.tlsSecure) return rejected("fallback=tls_unverified")
         if (outbound.detour.isNotEmpty()) {
             val targets = outbounds.filter { it.tag == outbound.detour }
-            return rejected(when {
-                targets.isEmpty() -> "fallback=detour_target_missing"
-                targets.size != 1 -> "fallback=detour_target_duplicate"
-                targets.single().type == "direct" -> "fallback=detour_direct"
-                else -> "fallback=detour_other"
-            })
+            if (targets.isEmpty()) return rejected("fallback=detour_target_missing")
+            if (targets.size != 1) return rejected("fallback=detour_target_duplicate")
+            val target = targets.single()
+            if (target.type == "direct") return rejected("fallback=detour_direct")
+            if (outbound.type != "vless" || target.type != "vless") return rejected("fallback=detour_other")
+            if (!protected(outbound.detour, visited, "fallback=detour_target_missing")) return false
         }
-        val visited = visiting + candidate
         return when (outbound.type) {
             "vless", "hysteria2", "wireguard", "awg" -> true
             "pokrov-ats-lease" -> protected(outbound.upstreamTag, visited, "fallback=lease_target_missing")
@@ -256,9 +261,12 @@ internal class AndroidLocalDpiAdmission private constructor(
                 val outbounds = config.getJSONArray("outbounds")
                 val vpnOutbounds = (0 until outbounds.length()).mapNotNull(outbounds::optJSONObject).map { outbound ->
                     val children = outbound.optJSONArray("outbounds")
+                    val tls = outbound.optJSONObject("tls")
+                    val insecure = if (tls == null || tls.isNull("insecure")) null else tls.opt("insecure")
                     LocalDpiVpnOutbound(outbound.optString("tag"), outbound.optString("type"),
                         outbound.optString("detour"), outbound.optString("upstream_tag"),
-                        if (children == null) emptyList() else (0 until children.length()).map(children::getString))
+                        if (children == null) emptyList() else (0 until children.length()).map(children::getString),
+                        localDpiSecureTls(tls?.opt("enabled"), insecure))
                 }
                 val direct = (0 until outbounds.length()).mapNotNull(outbounds::optJSONObject)
                     .singleOrNull { it.optString("tag") == route.optString("final") && it.optString("type") == "direct" }

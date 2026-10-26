@@ -210,6 +210,10 @@ Android runtime decoding preserves only the exact closed local-DPI aggregate
 from the native summary; other native text stays redacted. Expanded Technical
 details show its admission/failure counts, local/VPN TCP handoffs and rejected
 QUIC connections. Missing data is shown as unavailable, never as zero success.
+Android accepts a VLESS bridge fallback only when every VLESS hop has TLS enabled
+without insecure verification; it keeps the original selector or ATS lease as
+the fallback and rejects direct, unsupported or cyclic detours. Device acceptance
+of this source change remains separate.
 
 SlipNet's VLESS-over-DNSTT source was integrated in Core `b628439`,
 Platform `cfcd3fb` and App `fb59e1c5`. Platform and Node's DNSTT backend are live
