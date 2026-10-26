@@ -905,7 +905,26 @@ class RuntimeHostBridge(
             rejectBeforeAdmission("network_context_changed", "Network context changed.")
             return
         }
-        if (!AndroidConnectRequestOwner.beginBound(request, core, profile, deadline, network, networkRef)) {
+        // Identity-only QA has no ATS lease to promote. Classify the exact
+        // staged bytes before emitting any bound snapshot, not a caller flag.
+        val transportProofRequired = runCatching {
+            val staged = AndroidRuntimeProfileStore.load(activity) ?: error("missing staged profile")
+            val content = File(staged.configPath).readText()
+            check(AndroidRuntimeState.isStagedProfileCurrent(profile) && runtimeProfileMatchesIntent(
+                staged, profile, staged.configPath, staged.routeMode, content))
+            val outbounds = JSONObject(content.removePrefix("\uFEFF")).getJSONArray("outbounds")
+            runtimeProfileRequiresTransportProof((0 until outbounds.length()).map {
+                outbounds.getJSONObject(it).let { outbound ->
+                    outbound.optString("type") to outbound.optString("tag")
+                }
+            })
+        }.getOrNull()
+        if (transportProofRequired == null) {
+            rejectBeforeAdmission("profile_identity_mismatch", "Staged profile identity changed.")
+            return
+        }
+        if (!AndroidConnectRequestOwner.beginBound(request, core, profile, deadline, network, networkRef,
+                transportProofRequired)) {
             rejectBeforeAdmission("conflicting_connect_identity", "Connection request identity changed.")
             return
         }

@@ -58,7 +58,7 @@ internal object AndroidConnectRequestOwner {
     @Synchronized
     fun beginBound(request: String, expectedCore: String, expectedProfile: String,
         expectedDeadline: AndroidConnectDeadline, network: AndroidTransportNetworkContext,
-        networkRef: String): Boolean {
+        networkRef: String, transportProofRequired: Boolean = true): Boolean {
         require(valid(request))
         if (!network.matches(networkRef)) return false
         if (request == lastStopped) return false
@@ -81,7 +81,7 @@ internal object AndroidConnectRequestOwner {
         networkDetachedFromBridge = false
         service = null
         stopped = false
-        proofPending = true
+        proofPending = transportProofRequired
         leaseActive = false
         return true
     }

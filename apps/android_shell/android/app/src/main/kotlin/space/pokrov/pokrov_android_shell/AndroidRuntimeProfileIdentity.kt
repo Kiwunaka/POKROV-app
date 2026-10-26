@@ -5,6 +5,12 @@ import java.security.MessageDigest
 internal fun isRuntimeProfileDigest(value: String?): Boolean =
     value != null && Regex("^[0-9a-f]{64}$").matches(value)
 
+/** Only identities from the verified staged bytes may select the bound lifecycle. */
+internal fun runtimeProfileRequiresTransportProof(outbounds: List<Pair<String, String>>): Boolean =
+    outbounds.isEmpty() || outbounds.any { (type, tag) ->
+        type == "pokrov-ats-lease" || tag == "pokrov-ats" || tag == "pokrov-ats-upstream"
+    }
+
 /** Content and execution options, not a server assignment revision. */
 internal fun runtimeProfileDigest(
     content: String,

@@ -9,6 +9,18 @@ import org.junit.Test
 
 class AndroidRuntimeProfileIdentityTest {
     @Test
+    fun identityOnlyQaDoesNotClaimAnAtsLeaseButReservedProfilesStayPending() {
+        val qaOutbounds = listOf(
+            "direct" to "direct", "vless" to "proxy", "pokrov-smart-access" to "smart-gemini",
+        )
+        assertFalse(runtimeProfileRequiresTransportProof(qaOutbounds))
+        assertTrue(runtimeProfileRequiresTransportProof(qaOutbounds + ("pokrov-ats-lease" to "lease")))
+        assertTrue(runtimeProfileRequiresTransportProof(qaOutbounds + ("vless" to "pokrov-ats")))
+        assertTrue(runtimeProfileRequiresTransportProof(qaOutbounds + ("vless" to "pokrov-ats-upstream")))
+        assertTrue(runtimeProfileRequiresTransportProof(emptyList()))
+    }
+
+    @Test
     fun restoredDisplayNodeBelongsOnlyToTheHealthyEffectiveProfile() {
         val digest = "a".repeat(64)
         val stored = runtimeProfileStorageValues(PersistedRuntimeProfile(
