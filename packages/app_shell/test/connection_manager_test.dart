@@ -4163,6 +4163,7 @@ void main() {
   });
 
   test('fresh native proof retires a preparation-only recovery failure', () async {
+    final recoveryExperience = _ExperienceStore();
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
       ..supportsCandidates = true
       ..profileDigest = 'a' * 64
@@ -4171,6 +4172,7 @@ void main() {
           origin: RuntimeProfileSourceOrigin.values.first, protocol: 'vless');
     final bootstrapper = _StatsBootstrapper();
     final manager = _manager(runtime, bootstrapper,
+        experienceStore: recoveryExperience,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
     await manager.connect();
@@ -4248,6 +4250,14 @@ void main() {
     runtime.proofObservedAt = DateTime.now().toUtc();
     await manager.refresh();
     expect(manager.retainsProtection, isTrue, reason: 'a different native owner cannot release retained protection');
+    await manager.readSnapshot();
+    await Future<void>.delayed(Duration.zero);
+    final decisions = recoveryExperience.saved.protectionEvents.where((event) => event.kind == 'native_recovery_blocked');
+    final mismatch = decisions.where((event) => event.detail == 'Причина: digestMismatch.');
+    expect(mismatch, hasLength(1), reason: 'the same command/reason is recorded once across repeated observations');
+    expect(mismatch.single.title, 'Подтверждение восстановления ожидается');
+    expect(decisions.map((event) => event.detail).join(), isNot(anyOf(
+      contains(rf2.candidateRef), contains(runtime.profileDigest!), contains(runtime.profileSource!.revision))));
     runtime.profileDigest = 'b' * 64;
     runtime.proofObservedAt = DateTime.now().toUtc();
     await manager.refresh();

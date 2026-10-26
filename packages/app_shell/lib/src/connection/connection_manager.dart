@@ -13,6 +13,13 @@ enum ConnectionPhase {
   disconnected
 }
 
+enum _NativeRecoveryBlockReason {
+  phaseMismatch, actionInFlight, accessDenied, boundTransport, proofUnavailable,
+  pendingOwnerMissing, commandChanged, profileInputsChanged, candidateMismatch,
+  proofNotFresh, profileDirty, activeCandidateMismatch, failedSnapshotInvalid,
+  failedGuardRetained, failedBoundTransport, digestMismatch, sourceMissing, sourceMismatch,
+}
+
 /// Independent native observations; missing route counts remain unknown.
 class ConnectionStatus {
   const ConnectionStatus(
@@ -416,35 +423,64 @@ class ConnectionManager extends ChangeNotifier {
   }
 
   bool _reconcileHealthyNativeRecovery(RuntimeSnapshot current) {
-    if (_appContext.hostPlatform != HostPlatform.windows || _disposed ||
-        _activePhase != ConnectionPhase.actionRequired || !_protectedHandoffActive ||
-        _runtimeIntent != ConnectionTransitionIntent.none || _runtimeActionsInFlight.isNotEmpty ||
-        _accessDenialPending || _cachedProfileFallbackGate.authorizationDenied || current.transportLeaseActive == true ||
-        !_isConnectionProven(current) || current.lastFailureKind != null || current.proofObservedAt == null) return false;
+    if (_appContext.hostPlatform != HostPlatform.windows || _disposed || !_protectedHandoffActive) return false;
+    bool blocked(_NativeRecoveryBlockReason reason) => _recordNativeRecoveryBlock(current, reason);
+    if (_activePhase != ConnectionPhase.actionRequired) return blocked(_NativeRecoveryBlockReason.phaseMismatch);
+    if (_runtimeIntent != ConnectionTransitionIntent.none || _runtimeActionsInFlight.isNotEmpty)
+      return blocked(_NativeRecoveryBlockReason.actionInFlight);
+    if (_accessDenialPending || _cachedProfileFallbackGate.authorizationDenied)
+      return blocked(_NativeRecoveryBlockReason.accessDenied);
+    if (current.transportLeaseActive == true) return blocked(_NativeRecoveryBlockReason.boundTransport);
+    if (!_isConnectionProven(current) || current.lastFailureKind != null || current.proofObservedAt == null)
+      return blocked(_NativeRecoveryBlockReason.proofUnavailable);
     final pending = _pendingNativeRecovery;
-    if (pending == null || pending.command != _commandNumber ||
-        pending.profileRevision != _managedProfileRevision || pending.candidateRef != _candidateRef ||
-        !current.proofObservedAt!.isAfter(pending.failedAt)) return false;
-    if (!pending.replaced && (_managedProfileDirty || _activeCandidateRef != pending.candidateRef)) return false;
+    if (pending == null) return blocked(_NativeRecoveryBlockReason.pendingOwnerMissing);
+    if (pending.command != _commandNumber) return blocked(_NativeRecoveryBlockReason.commandChanged);
+    if (pending.profileRevision != _managedProfileRevision) return blocked(_NativeRecoveryBlockReason.profileInputsChanged);
+    if (pending.candidateRef != _candidateRef) return blocked(_NativeRecoveryBlockReason.candidateMismatch);
+    if (!current.proofObservedAt!.isAfter(pending.failedAt)) return blocked(_NativeRecoveryBlockReason.proofNotFresh);
+    if (!pending.replaced && _managedProfileDirty) return blocked(_NativeRecoveryBlockReason.profileDirty);
+    if (!pending.replaced && _activeCandidateRef != pending.candidateRef)
+      return blocked(_NativeRecoveryBlockReason.activeCandidateMismatch);
     // Preparation keeps the old owner; a failed native replacement instead
     // binds recovery to the acknowledged target and unchanged profile inputs.
     final failed = pending.snapshot;
-    if (failed.phase != RuntimePhase.running || (!pending.replaced && failed.protectionRetained) ||
-        !failed.hasCoreEgressProbeFailure || failed.proofObservedAt != null ||
-        failed.transportProofPending == true || failed.transportLeaseActive == true) return false;
+    if (failed.phase != RuntimePhase.running || !failed.hasCoreEgressProbeFailure || failed.proofObservedAt != null)
+      return blocked(_NativeRecoveryBlockReason.failedSnapshotInvalid);
+    if (!pending.replaced && failed.protectionRetained) return blocked(_NativeRecoveryBlockReason.failedGuardRetained);
+    if (failed.transportProofPending == true || failed.transportLeaseActive == true)
+      return blocked(_NativeRecoveryBlockReason.failedBoundTransport);
     final digest = failed.effectiveProfileDigest;
     final source = failed.stagedProfileSource;
     final currentSource = current.effectiveProfileSource;
     if (digest == null || digest != failed.stagedProfileDigest ||
-        digest != current.stagedProfileDigest || digest != current.effectiveProfileDigest ||
-        source == null || source.revision.isEmpty || currentSource == null || source.revision != currentSource.revision ||
-        source.origin != currentSource.origin || source.protocol != currentSource.protocol) return false;
+        digest != current.stagedProfileDigest || digest != current.effectiveProfileDigest)
+      return blocked(_NativeRecoveryBlockReason.digestMismatch);
+    if (source == null || source.revision.isEmpty || currentSource == null)
+      return blocked(_NativeRecoveryBlockReason.sourceMissing);
+    if (source.revision != currentSource.revision || source.origin != currentSource.origin || source.protocol != currentSource.protocol)
+      return blocked(_NativeRecoveryBlockReason.sourceMismatch);
     _protectedHandoffActive = false;
     _activePhase = null;
     _runtimeHeadline = null;
     if (pending.replaced) _managedProfileDirty = false;
     _pendingNativeRecovery = null;
     return true;
+  }
+
+  bool _recordNativeRecoveryBlock(RuntimeSnapshot current, _NativeRecoveryBlockReason reason) {
+    if (current.isCleanlyHealthy) {
+      if (_nativeRecoveryDiagnosticCommand != _commandNumber) {
+        _nativeRecoveryDiagnosticCommand = _commandNumber;
+        _nativeRecoveryDiagnosticReasons.clear();
+      }
+      if (_nativeRecoveryDiagnosticReasons.add(reason)) {
+        _recordProtectionEvent(kind: 'native_recovery_blocked',
+          title: 'Подтверждение восстановления ожидается', detail: 'Причина: ${reason.name}.',
+          tone: PokrovProtectionEventTone.neutral);
+      }
+    }
+    return false;
   }
 
   bool get _runtimeBusy => _connectionCoordinator.actionInFlight;
@@ -518,6 +554,8 @@ class ConnectionManager extends ChangeNotifier {
   bool _protectedHandoffActive = false;
   ({int command, int profileRevision, String candidateRef, DateTime failedAt,
     bool replaced, RuntimeSnapshot snapshot})? _pendingNativeRecovery;
+  int? _nativeRecoveryDiagnosticCommand;
+  final _nativeRecoveryDiagnosticReasons = <_NativeRecoveryBlockReason>{};
   ManagedProfileOfflineState? _offlineState;
   ManagedProfileOfflineState? get offlineState => _offlineState;
   Timer? _cacheRefreshTimer;

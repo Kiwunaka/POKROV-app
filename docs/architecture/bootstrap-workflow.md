@@ -288,6 +288,11 @@ the failure, with no native guard, pending bound proof or denied access. It then
 promotes the replacement through the ordinary success path; stale or mismatched
 observations cannot mark it proven. Home accessibility uses the displayed action,
 so a degraded connection's Disconnect is not announced as Retry.
+When native health has recovered but App retention remains, the existing local
+protection history records `native_recovery_blocked` with a closed reason such as
+`candidateMismatch` or `sourceMissing`, once per command/reason. The record contains
+no identity, digest, address or exception text; it is readable in Protection's
+history and `protectionEvents` in the existing `pokrov-client-experience-v1.json`.
 The Windows tray retains the action rendered in each menu item. A displayed
 Disconnect dispatches the existing explicit disconnect even if runtime state
 changes before the click; it cannot reinterpret that intent as a new Connect.
