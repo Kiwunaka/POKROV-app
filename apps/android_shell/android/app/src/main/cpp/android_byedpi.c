@@ -152,7 +152,7 @@ Java_space_pokrov_pokrov_1android_1shell_AndroidByeDpiRuntime_nativeStart(
 
     char *argv[] = {"byedpi", "--ip", "127.0.0.1", "--no-domain", "--no-udp",
         "--debug", "0", "--protect-path", runtime->protect_path,
-        strategy == 0 ? "--split" : "--disorder", strategy == 0 ? "1+s" : "1", NULL};
+        strategy == 0 ? "--tlsrec" : "--disorder", strategy == 0 ? "1+s" : "1", NULL};
     optind = 1;
     optreset = 1;
     opterr = 0;

@@ -34,7 +34,7 @@ import javax.net.ssl.SSLProtocolException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
-internal enum class AndroidByeDpiStrategy { SPLIT, DISORDER }
+internal enum class AndroidByeDpiStrategy { TLS_RECORD, DISORDER }
 
 /** One embedded SOCKS loop and protect listener, owned by the existing VPN session. */
 internal class AndroidByeDpiRuntime private constructor(
@@ -220,7 +220,7 @@ internal class AndroidByeDpiRuntime private constructor(
             withdrawAdmission: (Boolean) -> Unit,
         ): AndroidByeDpiRuntime {
             check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                "byedpi: Android 10 connection-owner admission is required"
+                "byedpi: Android 10 is required"
             }
             check(session.isActive() && ownsSession()) { "byedpi: inactive VPN session" }
             System.loadLibrary("pokrov_byedpi")
@@ -235,6 +235,8 @@ internal class AndroidByeDpiRuntime private constructor(
                     OsConstants.SO_RCVTIMEO, StructTimeval.fromMillis(1000))
                 runtime.server = LocalServerSocket(runtime.bound.fileDescriptor)
                 runtime.nativeHandle = runtime.nativeStart(runtime.path.absolutePath, strategy.ordinal, requestedPort)
+                logLocalDpiDiagnostic(if (strategy == AndroidByeDpiStrategy.TLS_RECORD)
+                    "strategy=tls_record" else "strategy=disorder")
                 runtime.listener = Thread(runtime::listenForProtection, "pokrov-byedpi-protect").apply {
                     isDaemon = true
                     start()

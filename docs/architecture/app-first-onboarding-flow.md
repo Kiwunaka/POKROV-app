@@ -84,15 +84,15 @@ Android Selective has a default-off local DPI opt-in. Only an explicit signed
 `local_dpi_control_host` on a Selective VPN intent can authorize it; the control
 host must be an exact nonshared domain of the service. The Android host retains
 the complete original signed envelope, repeats signature/pin/hash/revision/TTL
-verification in Core, starts one UID-restricted ByeDPI SOCKS child, captures each
+verification in Core, starts one process-restricted ByeDPI SOCKS child, captures each
 fresh Core holder ID, and then runs SOCKS/TLS/HEAD proof before admission. The JNI
 `allowClient(II)Z` callback is retained through release shrinking so the SOCKS
-listener can check Android connection ownership before opening an uplink. Failed
+listener can check process-held TCP socket ownership before opening an uplink. Failed
 proof or runtime failure retains the VPN fallback. Cancellation, network/profile
 replacement and received signed restrictions withdraw only captured holder IDs;
 tighter catalog authority retains the existing fail-closed service gate until a
 new profile is staged. ATS profiles are checked through their transport lease
-wrapper: its upstream must meet the same direct-transport requirement, while
+wrapper: its upstream must meet the same protected-transport requirement, while
 the fallback retains the lease tag and its expiry gate. Full mode creates no DPI child. Device acceptance and a
 Core AAR containing these native APIs are required before enabling the feature.
 
