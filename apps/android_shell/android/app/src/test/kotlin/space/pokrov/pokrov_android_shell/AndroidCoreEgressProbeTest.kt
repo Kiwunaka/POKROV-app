@@ -273,6 +273,29 @@ class AndroidCoreEgressProbeTest {
     }
 
     @Test
+    fun smartAccessControlUsesCommonMaterializedDnsBootstrap() {
+        val first = "0".repeat(32)
+        val second = "1".repeat(32)
+        val resolver = "pokrov-catalog-user-dns-direct"
+        val outbounds = listOf(mapOf("type" to "direct", "tag" to "direct"),
+            mapOf("type" to "pokrov-smart-access", "lease_id" to first),
+            mapOf("type" to "pokrov-smart-access", "lease_id" to second))
+        val servers = listOf(mapOf("tag" to resolver, "type" to "https"),
+            mapOf("tag" to "pokrov-smart-access-dns-$first", "domain_resolver" to mapOf("server" to resolver, "strategy" to "ipv4_only")),
+            mapOf("tag" to "pokrov-smart-access-dns-$second", "domain_resolver" to resolver))
+        assertEquals(resolver, AndroidCoreEgressProbe.resolveSmartAccessControlResolver(outbounds, servers, "dns-direct"))
+        assertNull(AndroidCoreEgressProbe.resolveSmartAccessControlResolver(outbounds, servers.dropLast(1), "dns-direct"))
+        assertNull(AndroidCoreEgressProbe.resolveSmartAccessControlResolver(outbounds,
+            servers.dropLast(1) + (servers.last() + ("domain_resolver" to "dns-remote")), "dns-direct"))
+        assertNull(AndroidCoreEgressProbe.resolveSmartAccessControlResolver(outbounds,
+            servers.map { if (it["tag"] == resolver) it + ("detour" to "vpn") else it }, "dns-direct"))
+        assertNull(AndroidCoreEgressProbe.resolveSmartAccessControlResolver(outbounds,
+            servers.map { if ((it["tag"] as String).startsWith("pokrov-smart-access-dns-"))
+                it + ("domain_resolver" to "pokrov-smart-access-dns-$first") else it }, "dns-direct"))
+        assertEquals("dns-direct", AndroidCoreEgressProbe.resolveSmartAccessControlResolver(outbounds.take(1), servers, "dns-direct"))
+    }
+
+    @Test
     fun directFinalRequiresBoundSmartServiceForProbe() {
         assertNull(AndroidCoreEgressProbe.finalGroupTag("{\"route\":{}}"))
         assertNull(AndroidCoreEgressProbe.finalGroupTag("{}"))

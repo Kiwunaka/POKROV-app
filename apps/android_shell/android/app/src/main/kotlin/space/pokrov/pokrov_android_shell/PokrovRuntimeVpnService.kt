@@ -2333,8 +2333,20 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             restrictRuntimeProfile(profileDigest, configuredReply, invalidateBefore = true, connectRequestId = connectRequestId,
                 onUnconfirmed = if (firstProviderQa) ::logFirstProviderQaControl else null) { server ->
                 val method = if (renewal) "configureSmartAccessRenewal" else "configureSmartAccessRuntimeControl"
+                val effectiveConfig = if (renewal) configJson else {
+                    val owner = runtimeOwner
+                    val content = owner?.takeIf { it.commandServer === server && it.activeStartupProfileDigest == profileDigest }
+                        ?.activeConfigContent
+                    val config = JSONObject(configJson)
+                    val resolver = content?.let { AndroidCoreEgressProbe.smartAccessControlResolver(it, config.optString("dns_resolver")) }
+                    if (resolver == null) {
+                        if (firstProviderQa) logFirstProviderQaControl("control_resolver_unavailable")
+                        return@restrictRuntimeProfile null
+                    }
+                    config.put("dns_resolver", resolver).toString()
+                }
                 val configured = CommandServer::class.java.getMethod(method, String::class.java, String::class.java)
-                    .invoke(server, profileDigest, configJson) as? Boolean
+                    .invoke(server, profileDigest, effectiveConfig) as? Boolean
                 if (configured == true) configuredServer = server
                 configured
             }

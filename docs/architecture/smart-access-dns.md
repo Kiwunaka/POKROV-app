@@ -367,6 +367,9 @@ Android keeps the bounded Start deadline until Dart verifies the signed QA permi
 and foreground control and the bound native worker is installed. The current
 identity-only owner then stays under a watchdog capped by the matching permit and
 lease expiry. Core verifies its own runtime-control polls asynchronously.
+For Android QA and ordinary SmartDNS, native control uses the common direct
+bootstrap resolver already bound into the active leased profile. Missing or
+conflicting bootstrap bindings reject control instead of choosing another DNS.
 
 An exception escaping QA start retains only the existing closed exception type,
 allowlisted code and up to two local Dart source locations in the QA summary and

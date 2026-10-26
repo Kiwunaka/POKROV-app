@@ -288,16 +288,17 @@ void main() {
       throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_selected_service_unsupported')));
   });
 
-  for (final (serviceId, controlFailure, hostPlatform) in <(String, String?, HostPlatform)>[
+  for (final (serviceId, controlFailure, hostPlatform, comssDns) in <(String, String?, HostPlatform, bool)>[
     for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
-      ('gemini', failure, HostPlatform.windows),
-    ('chatgpt', null, HostPlatform.windows),
-    ('gemini', null, HostPlatform.android),
-    ('gemini', 'smart_access_signature_invalid', HostPlatform.android),
-    ('gemini', 'smart_access_runtime_control_unconfirmed', HostPlatform.android),
-    ('gemini', 'unknown_private_control_code', HostPlatform.android),
+      ('gemini', failure, HostPlatform.windows, false),
+    ('chatgpt', null, HostPlatform.windows, false),
+    ('gemini', null, HostPlatform.android, false),
+    ('gemini', null, HostPlatform.android, true),
+    ('gemini', 'smart_access_signature_invalid', HostPlatform.android, false),
+    ('gemini', 'smart_access_runtime_control_unconfirmed', HostPlatform.android, false),
+    ('gemini', 'unknown_private_control_code', HostPlatform.android, false),
   ]) {
-  test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${controlFailure == null ? '' : ' with $controlFailure'}', () async {
+  test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}', () async {
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = httpOverrides);
@@ -406,6 +407,8 @@ void main() {
                   'uuid': '11111111-1111-4111-8111-111111111111', 'tls': {'enabled': true, 'server_name': 'vpn.example.invalid',
                     'utls': {'enabled': true, 'fingerprint': 'chrome'},
                     'reality': {'enabled': true, 'public_key': base64UrlEncode(List.filled(32, 1)).replaceAll('=', ''), 'short_id': '0123456789abcdef'}}}],
+                if (comssDns) 'dns': {'servers': [{'tag': 'profile-dns', 'address': '8.8.8.8', 'detour': 'proxy'}],
+                  'final': 'profile-dns'},
                 'route': {'final': 'proxy'}}};
           case '/api/client/routing-catalog':
             reply = {'schema': 'routing-catalog-response-v1', 'envelope': catalogEnvelope};
@@ -637,11 +640,17 @@ void main() {
     final firstLaunch = _RestoredFirstLaunch()..completion.complete(true);
     final first = FirstSessionCoordinator(store: firstLaunch)..complete(animated: false);
     final runtime = createRuntimeEngine(hostPlatform: hostPlatform);
+    final experience = _HomeExperience();
+    if (comssDns) {
+      experience.saved = experience.saved.copyWith(routingPreferences:
+        const PokrovRoutingPreferences.defaults().copyWith(dnsPreset: PokrovDnsPreset.comss));
+    }
     final manager = ConnectionManager(appContext: buildSeedAppContext(hostPlatform: hostPlatform),
       runtimeEngine: runtime, bootstrapper: bootstrapper, actionTimeout: actionTimeout,
-      accountSessionCoordinator: account, firstSessionCoordinator: first, clientExperienceStore: _HomeExperience(),
+      accountSessionCoordinator: account, firstSessionCoordinator: first, clientExperienceStore: experience,
       connectHintStore: const PokrovFileConnectHintStore(), windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
       authorizeAndroidConnect: () async => true, refreshSubscription: () async => true, onNotice: (_, __) {});
+    if (comssDns) manager.updateExperience(experience.saved);
     addTearDown(() async {
       manager.dispose();
       // Join background lifecycle delivery before removing its temporary outbox.
@@ -712,8 +721,13 @@ void main() {
     expect(claimRequest!['core_module_sha256'], coreHash);
     final providerDns = ((staged!['dns'] as Map)['servers'] as List).cast<Map>()
         .singleWhere((server) => server['tag'] == 'pokrov-smart-access-dns-$leaseId');
-    expect(providerDns['domain_resolver'], {'server': 'dns-direct', 'strategy': 'ipv4_only'},
+    expect(providerDns['domain_resolver'], {'server': comssDns ? 'pokrov-catalog-user-dns-direct' : 'dns-direct', 'strategy': 'ipv4_only'},
       reason: 'an IPv4 lease must not wait for AAAA when bootstrapping its DoH hostname');
+    if (comssDns) {
+      final serverTags = ((staged!['dns'] as Map)['servers'] as List).cast<Map>().map((row) => row['tag']).toSet();
+      expect(serverTags, contains('pokrov-catalog-user-dns-direct'));
+      expect(serverTags, isNot(contains('dns-direct')));
+    }
     expect((staged!['outbounds'] as List).cast<Map>()
         .singleWhere((outbound) => outbound['type'] == 'pokrov-smart-access')
         .containsKey('external_ech_outer_sni'), hostPlatform == HostPlatform.android,

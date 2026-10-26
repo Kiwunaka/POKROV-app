@@ -298,6 +298,39 @@ internal object AndroidCoreEgressProbe {
     fun firstProviderQaTarget(configContent: String): AndroidCoreEgressProbeTarget? =
         runCatching { smartAccessTarget(JSONObject(configContent), firstProviderQa = true) }.getOrNull()
 
+    fun smartAccessControlResolver(configContent: String, configuredResolver: String): String? =
+        runCatching {
+            val config = JSONObject(configContent)
+            resolveSmartAccessControlResolver(smartAccessRows(config.optJSONArray("outbounds")),
+                smartAccessRows(config.optJSONObject("dns")?.optJSONArray("servers")), configuredResolver)
+        }.getOrNull()
+
+    // A leased profile already chose the direct bootstrap DNS for every
+    // SmartAccess resolver. The control worker must use that same DNS lane.
+    internal fun resolveSmartAccessControlResolver(outbounds: List<Map<String, Any?>>,
+        servers: List<Map<String, Any?>>, configuredResolver: String): String? {
+        val leases = outbounds.filter { it["type"] == "pokrov-smart-access" }
+        if (leases.isEmpty()) return configuredResolver
+        val ids = leases.map { it["lease_id"] as? String ?: return null }
+        if (ids.toSet().size != ids.size || ids.any { !it.matches(Regex("[a-f0-9]{32}")) }) return null
+        val leaseDnsTags = ids.map { "pokrov-smart-access-dns-$it" }.toSet()
+        val resolvers = leaseDnsTags.map { tag ->
+            val server = servers.singleOrNull { it["tag"] == tag } ?: return null
+            when (val resolver = server["domain_resolver"]) {
+                is String -> resolver
+                is Map<*, *> -> resolver["server"] as? String ?: return null
+                else -> return null
+            }
+        }.toSet()
+        val resolver = resolvers.singleOrNull() ?: return null
+        val bootstrap = servers.singleOrNull { it["tag"] == resolver } ?: return null
+        val detour = (bootstrap["detour"] as? String).orEmpty()
+        if (!resolver.matches(Regex("[a-z0-9][a-z0-9._-]{0,63}")) ||
+            resolver.startsWith("pokrov-smart-access-dns-") ||
+            (detour.isNotEmpty() && outbounds.none { it["type"] == "direct" && it["tag"] == detour })) return null
+        return resolver
+    }
+
     private fun smartAccessTarget(config: JSONObject, firstProviderQa: Boolean = false): AndroidCoreEgressProbeTarget? {
         val route = config.optJSONObject("route") ?: return null
         val dns = config.optJSONObject("dns") ?: return null
@@ -318,7 +351,7 @@ internal object AndroidCoreEgressProbe {
                     val item = value.opt(index)
                     if (key == "domains" && item is JSONObject) smartAccessFields(item) else item
                 }
-                is JSONObject -> if (key == "pokrov_catalog_window" || key == "tls") smartAccessFields(value) else value
+                is JSONObject -> if (key == "pokrov_catalog_window" || key == "tls" || key == "domain_resolver") smartAccessFields(value) else value
                 else -> value
             }
         }
