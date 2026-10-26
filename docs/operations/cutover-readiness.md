@@ -16,6 +16,11 @@ assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
 Private Android ARM64 **1.5.0+4224**, App `d30df1ce`, is built and installed.
+Private **4225**, App `21c5b2ca`, is built but not installed; it adds opt-in
+YouTube control-only diagnostics from `55ab2e28`. The production builder
+verified versionCode 4225, signer, non-debuggable manifest and ARM64. Its APK
+is 86,148,677 bytes; Core is unchanged. Local Kotlin/ARM64 native compilation
+and one C test passed. Device use awaits the phone.
 On 4222, NativeQA 4 confirmed SmartDNS control, resolver/DNS and TLS; Chrome
 received the real Gemini answer `7+5 → 12`. After refresh the same probe/profile
 remained current with guard false. Normal Stop in that run left the native VPN
@@ -232,6 +237,7 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 | Private artifact | Path |
 | --- | --- |
+| Android arm64-v8a, private 4225, not installed | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4225-android-arm64-v8a.apk) |
 | Android arm64-v8a, previous private 4218 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4218-android-arm64-v8a.apk) |
 | Android arm64-v8a, accepted 4211 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4211-android-arm64-v8a.apk) |
 | Android universal, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-universal.apk) |
