@@ -355,6 +355,12 @@ pass. Public Android SmartDNS stays off: a private QA success must first be
 followed by an agreed rollout of the compatible app or an older compatible
 catalog for old clients before public enablement.
 
+QA claim and fresh QA control tolerate sub-second issuer clock skew by waiting
+until the signed `issued_at`, at most one second within the existing cancellation
+and request budget, then strictly verifying that same response once more. This
+is not clock leeway: future or expired grants remain rejected, no HTTP request
+is repeated, and expiry, subject binding and native verification are unchanged.
+
 Android QA waits for the existing native post-start egress proof before sending
 QA control; TUN-ready alone no longer ends the QA action as
 `connection_unavailable`. The native connection deadline is unchanged. Failed

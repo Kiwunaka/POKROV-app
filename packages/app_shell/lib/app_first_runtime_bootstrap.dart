@@ -5174,8 +5174,35 @@ class AppFirstRuntimeBootstrapper
       if (response.length != 2 || response['schema'] != 'smart-access-first-provider-qa-response-v1') {
         throw const RoutingCatalogFailure('smart_access_qa_response_invalid');
       }
-      final permit = await _smartAccessPolicyStore.verifier.verifyFirstProviderQa(response['envelope'],
-        request: request, accountId: state.accountId, installId: state.installId, catalog: catalog, platform: hostPlatform.name, now: DateTime.now().toUtc());
+      Future<VerifiedFirstProviderQaPermit> verify(DateTime now) =>
+          _smartAccessPolicyStore.verifier.verifyFirstProviderQa(response['envelope'],
+            request: request, accountId: state.accountId, installId: state.installId,
+            catalog: catalog, platform: hostPlatform.name, now: now);
+      final observedNow = DateTime.now().toUtc();
+      VerifiedFirstProviderQaPermit permit;
+      try {
+        permit = await verify(observedNow);
+      } on RoutingCatalogFailure catch (error) {
+        if (error.code != 'smart_access_qa_not_current') rethrow;
+        // This error follows signature and subject checks. Wait only for a
+        // sub-second issuer skew; keep every verifier and expiry check strict.
+        final payload = (response['envelope'] as Map)['payload'] as Map;
+        final issued = DateTime.parse(payload['issued_at'] as String).toUtc();
+        final expires = DateTime.parse(payload['expires_at'] as String).toUtc();
+        final ahead = issued.difference(observedNow);
+        if (ahead <= Duration.zero || ahead > const Duration(seconds: 1) ||
+            !expires.isAfter(issued) || expires.difference(issued) > const Duration(minutes: 10) ||
+            issued.isBefore(catalog.issuedAt) || expires.isAfter(catalog.expiresAt)) rethrow;
+        final micros = issued.difference(DateTime.now().toUtc()).inMicroseconds;
+        final wait = Duration(milliseconds: micros > 0 ? (micros + 999) ~/ 1000 : 0);
+        if (wait > const Duration(seconds: 1) || wait >= remainingBudget - elapsed.elapsed) rethrow;
+        if (wait > Duration.zero) {
+          await Future.any<void>([_delayScheduler(wait), cancelled.then<void>((_) =>
+              throw const RoutingCatalogFailure('smart_access_qa_superseded'))]);
+        }
+        await requireCurrent();
+        permit = await verify(DateTime.now().toUtc());
+      }
       await requireCurrent();
       _firstProviderQaClaim = (permit: permit, state: state, hostPlatform: hostPlatform);
       return permit;
@@ -5224,8 +5251,31 @@ class AppFirstRuntimeBootstrapper
         deadline.future,
       ]);
       await requireCurrent();
-      final result = await _smartAccessPolicyStore.verifier.verifyFirstProviderQaControl(response,
-        request: request, permit: permit, accountId: state.accountId, installId: state.installId, now: DateTime.now().toUtc());
+      Future<({VerifiedSmartAccessControl control, String? runtimeCapability})> verify(DateTime now) =>
+          _smartAccessPolicyStore.verifier.verifyFirstProviderQaControl(response,
+            request: request, permit: permit, accountId: state.accountId, installId: state.installId, now: now);
+      final observedNow = DateTime.now().toUtc();
+      ({VerifiedSmartAccessControl control, String? runtimeCapability}) result;
+      try {
+        result = await verify(observedNow);
+      } on RoutingCatalogFailure catch (error) {
+        if (error.code != 'smart_access_control_not_current') rethrow;
+        final payload = (response['envelope'] as Map)['payload'] as Map;
+        final issued = DateTime.parse(payload['issued_at'] as String).toUtc();
+        final expires = DateTime.parse(payload['expires_at'] as String).toUtc();
+        final ahead = issued.difference(observedNow);
+        if (ahead <= Duration.zero || ahead > const Duration(seconds: 1) ||
+            !expires.isAfter(issued) || expires.difference(issued) > const Duration(seconds: 60)) rethrow;
+        final micros = issued.difference(DateTime.now().toUtc()).inMicroseconds;
+        final wait = Duration(milliseconds: micros > 0 ? (micros + 999) ~/ 1000 : 0);
+        if (wait > const Duration(seconds: 1) || wait >= remainingBudget - elapsed.elapsed) rethrow;
+        if (wait > Duration.zero) {
+          await Future.any<void>([_delayScheduler(wait), cancelled.then<void>((_) =>
+              throw const RoutingCatalogFailure('smart_access_qa_superseded'))]);
+        }
+        await requireCurrent();
+        result = await verify(DateTime.now().toUtc());
+      }
       await requireCurrent();
       return result;
     } finally { finished = true; timer.cancel(); client.close(force: true); }

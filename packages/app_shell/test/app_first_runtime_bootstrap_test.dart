@@ -351,6 +351,8 @@ void main() {
     String? installId;
     Map<String, Object?>? permitEnvelope;
     Map<String, dynamic>? claimRequest;
+    var claimPosts = 0;
+    var controlPosts = 0;
     var terminateQa = false;
     final requests = <String>[];
     final controlDeadline = controlFailure == 'control_deadline';
@@ -405,9 +407,11 @@ void main() {
           case '/api/client/routing-catalog':
             reply = {'schema': 'routing-catalog-response-v1', 'envelope': catalogEnvelope};
           case '/api/client/smart-access/first-provider-qa/claim':
+            claimPosts++;
             claimRequest = body;
             final binding = await _qaDigest('pokrov-smart-access-device-v1\u0000${body['request_nonce']}\u0000synthetic-qa-account\u0000$installId');
-            final issued = wire(DateTime.now().toUtc());
+            final issued = wire(DateTime.now().toUtc().add(hostPlatform == HostPlatform.android
+                ? const Duration(seconds: 2) : Duration.zero));
             final lease = <String, Object?>{'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': leaseId,
               'audience': 'lab', 'provider_id': 'owned-provider', 'provider_revision': 1, 'permission_id': 'owned-permission',
               'permission_revision': 1, 'capability_id': '$serviceId-qa', 'provider_policy_revision': 1, 'provider_security_revision': 1,
@@ -430,7 +434,9 @@ void main() {
               'pokrov-smart-access-first-provider-qa-v1', key);
             reply = {'schema': 'smart-access-first-provider-qa-response-v1', 'envelope': permitEnvelope};
           case '/api/client/smart-access/first-provider-qa/control':
-            final issued = DateTime.now().toUtc();
+            controlPosts++;
+            final issued = DateTime.now().toUtc().add(hostPlatform == HostPlatform.android
+                ? const Duration(seconds: 2) : Duration.zero);
             reply = {'schema': 'smart-access-first-provider-qa-control-response-v1',
               if (!terminateQa) 'runtime_capability': 'saqa1.c3ludGhldGlj.${await _qaDigest('synthetic hmac')}',
               'envelope': await _qaSigned({'schema_version': 'pokrov-smart-access-control-v1',
@@ -443,6 +449,12 @@ void main() {
             if (controlFailure == 'smart_access_signature_invalid') {
               ((reply as Map)['envelope'] as Map)['signature_b64'] = base64UrlEncode(List.filled(64, 0)).replaceAll('=', '');
             }
+        }
+        if (hostPlatform == HostPlatform.android &&
+            request.uri.path.startsWith('/api/client/smart-access/first-provider-qa/')) {
+          final issued = DateTime.parse(((reply as Map)['envelope'] as Map)['payload']['issued_at'] as String);
+          final untilReply = issued.subtract(const Duration(milliseconds: 350)).difference(DateTime.now().toUtc());
+          if (untilReply > Duration.zero) await Future<void>.delayed(untilReply);
         }
         request.response.write(jsonEncode(reply));
         await request.response.close();
@@ -461,7 +473,9 @@ void main() {
         server['tag'] == (dnsRule?['server'] ?? dns['final']));
       return (routeRule?['outbound'] ?? route['final']) == 'proxy' && dnsServer['detour'] == 'proxy';
     }
+    final issuedTimeWaits = <Duration>[];
     final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'https://app.pokrov.space', apiFallbackBaseUrls: const [],
+      delayScheduler: (delay) async { issuedTimeWaits.add(delay); await Future<void>.delayed(delay); },
       httpClientFactory: () => _QaLocalHttpClient(server.port, controlTlsPort: controlServer?.port, controlError: controlError,
         controlRouteAvailable: controlRouteAvailable),
       supportDirectoryResolver: () async => directory, sessionSecretStore: MemoryAppFirstSessionSecretStore(), maxRequestAttempts: 1,
@@ -660,6 +674,12 @@ void main() {
     expect(nativeCalls, isNot(contains('runtimeEngine.connect')));
     expect(nativeCalls.where((method) => method == 'runtimeEngine.connectWithCoreIdentity'), hasLength(1));
     expect(nativeCalls.where((method) => method == 'runtimeEngine.configureBoundSmartAccessRuntimeControl'), hasLength(1));
+    if (hostPlatform == HostPlatform.android) {
+      expect(issuedTimeWaits, hasLength(2));
+      expect(issuedTimeWaits.every((delay) => delay > Duration.zero && delay <= const Duration(seconds: 1)), isTrue);
+      expect(claimPosts, 1);
+      expect(controlPosts, 1);
+    }
     expect(claimRequest!.containsKey('candidate_ref'), isFalse);
     expect(claimRequest!['core_module_sha256'], coreHash);
     final providerDns = ((staged!['dns'] as Map)['servers'] as List).cast<Map>()
@@ -716,6 +736,18 @@ void main() {
     expect(closedContext['proof_current'], isFalse);
     expect(closedContext['fallback_guard_closed'], isTrue);
     final verifier = SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab');
+    if (hostPlatform == HostPlatform.android) {
+      final payload = permitEnvelope!['payload'] as Map;
+      for (final checkedAt in [
+        DateTime.parse(payload['issued_at'] as String).subtract(const Duration(milliseconds: 350)),
+        DateTime.parse(payload['expires_at'] as String),
+      ]) {
+        await expectLater(verifier.verifyFirstProviderQa(permitEnvelope, request: claimRequest!,
+          accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog,
+          platform: hostPlatform.name, now: checkedAt), throwsA(isA<RoutingCatalogFailure>().having(
+            (error) => error.code, 'code', 'smart_access_qa_not_current')));
+      }
+    }
     if (serviceId == 'gemini' && hostPlatform == HostPlatform.windows) {
       final publicVerifier = SmartAccessVerifier(providerKeysById: {'qa-test': public},
           leaseKeysById: {'qa-test': public}, audience: 'lab');
