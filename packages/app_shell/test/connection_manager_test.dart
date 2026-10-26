@@ -1844,7 +1844,7 @@ void main() {
     expect(policies, [true, false]);
   });
 
-  test('restore migrates legacy pins to country Auto while current diagnostic pins remain exact', () async {
+  test('restore migrates legacy node pins while Advanced candidate pins survive restart', () async {
     final runtime = _Runtime()..supportsCandidates = true;
     final bridge = TransportCandidate(candidateRef: 'de:bridge', profileRef: 'bridge', nodeCode: 'de',
       countryCode: 'DE', protocol: 'vless', transport: 'tcp', protection: 'reality',
@@ -1882,6 +1882,7 @@ void main() {
     await manager.disconnect();
     await manager.setInterfaceMode(PokrovInterfaceMode.advanced);
     await manager.setPreferredCandidate(_candidates[2].candidateRef);
+    manager.restoreConnectionPreferences(experience.saved, const {});
     final before = bootstrapper.resolutions.length;
     await manager.connect();
     expect(runtime.stagedProfile, _candidates[2].candidateRef);
@@ -3369,19 +3370,28 @@ void main() {
     expect(runtime.handoffCalls, 0);
   });
 
-  testWidgets('Advanced Locations keeps cached transports internal and selects only a country', (tester) async {
+  testWidgets('Advanced Locations keeps country Auto and offers admitted manual connections', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final nativeMutations = <String>[];
     var nativeSnapshots = 0;
     final features = RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort();
+    final naive = TransportCandidate(candidateRef: 'ch:naive_h2', profileRef: 'naive_h2', nodeCode: 'ch',
+      countryCode: 'CH', protocol: 'naive', transport: 'http2', protection: 'tls',
+      priority: 3, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
+      minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {});
     final bootstrapper = _CatalogPickerBootstrapper((await tester.runAsync(_pickerCatalog))!)
       ..cacheAvailable = false
       ..nextCacheRefreshFailure = const SocketException('offline')
+      ..cachedCatalog = TransportCandidateCatalog(revision: 'manual-picker',
+        selectedCandidateRef: _CachedBootstrapper.alternatives.first.candidateRef,
+        candidates: [..._CachedBootstrapper.alternatives, naive])
       ..locationsCatalog = ClientLocationsCatalog.fromJson({
         'countries': [{'code': 'IS', 'country': 'Iceland', 'cities': [
           {'code': 'is', 'city': 'Reykjavik', 'variants': [
             {'id': 'direct', 'label': 'Обычный'},
           ]},
+        ]}, {'code': 'CH', 'country': 'Switzerland', 'cities': [
+          {'code': 'ch', 'city': 'Switzerland', 'variants': [{'id': 'direct', 'label': 'Обычный'}]},
         ]}],
       });
     addTearDown(() async {
@@ -3431,7 +3441,7 @@ void main() {
     expect(locations.hasOrdinaryTransportCatalog, isTrue,
         reason: 'normal Locations entry must adopt ready protocols without a warming Connect');
     expect((locations.transportCatalog as TransportCandidateCatalog).candidates.map((candidate) => candidate.protocol),
-        ['vless', 'awg', 'hysteria2']);
+        ['vless', 'awg', 'hysteria2', 'naive']);
     expect(find.textContaining('VLESS'), findsNothing);
     expect(find.textContaining('AWG'), findsNothing);
     expect(find.textContaining('Hysteria'), findsNothing);
@@ -3442,6 +3452,37 @@ void main() {
     expect(experience.saved.preferredCountryCode, 'IS');
     expect(experience.saved.preferredNodeCode, isEmpty);
     expect(experience.saved.preferredCandidateRef, isEmpty);
+    await tester.tap(find.byKey(const ValueKey('locations-country-CH')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('locations-select-connection')));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(find.text('Naive HTTPS / H2'), findsOneWidget);
+    expect(find.textContaining('AWG'), findsNothing, reason: 'manual choices follow the selected country');
+    expect(find.text(naive.candidateRef), findsNothing, reason: 'connection references are not user-facing labels');
+    await tester.tap(find.byKey(ValueKey('location-candidate-${naive.candidateRef}')));
+    await tester.pumpAndSettle();
+    expect(experience.saved.preferredCandidateRef, naive.candidateRef);
+    expect(experience.saved.preferredCountryCode, isEmpty);
+    expect(nativeMutations, isEmpty, reason: 'choosing a connection while stopped does not start a tunnel');
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Защита'));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: find.byKey(const ValueKey('home-location-chip')),
+        matching: find.text('Швейцария')), findsOneWidget);
+    await tester.tap(find.text('Локации'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('locations-select-connection')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('location-candidate-auto')));
+    await tester.pumpAndSettle();
+    expect(experience.saved.preferredCandidateRef, isEmpty);
+    expect(experience.saved.preferredCountryCode, isEmpty);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('locations-country-IS')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Защита'));
     await tester.pumpAndSettle();
     expect(find.descendant(of: find.byKey(const ValueKey('home-location-chip')),

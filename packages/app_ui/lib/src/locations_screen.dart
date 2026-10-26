@@ -7,12 +7,15 @@ import 'widgets.dart';
 /// «Страна» (simple) / «Локации» (advanced): Auto first, then the list.
 /// Simple mode shows «быстро / далеко», advanced shows milliseconds.
 class LocationsScreen extends StatelessWidget {
-  const LocationsScreen({super.key, required this.data, required this.onAuto, required this.onSelect, this.onRefresh});
+  const LocationsScreen({super.key, required this.data, required this.onAuto, required this.onSelect,
+    this.onRefresh, this.onSelectConnection, this.selectedConnectionLabel});
 
   final LocationsViewData data;
   final VoidCallback? onAuto;
   final ValueChanged<String> onSelect;
   final VoidCallback? onRefresh;
+  final VoidCallback? onSelectConnection;
+  final String? selectedConnectionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +89,17 @@ class LocationsScreen extends StatelessWidget {
               ],
             ),
           ),
+          if (advanced && onSelectConnection != null) ...[
+            SizedBox(height: 12),
+            TextButton.icon(
+              key: ValueKey('locations-select-connection'),
+              onPressed: onSelectConnection,
+              icon: Icon(Icons.tune_rounded),
+              label: Text('Выбрать соединение вручную'),
+            ),
+            if (selectedConnectionLabel != null) Text('Выбрано: $selectedConnectionLabel',
+              textAlign: TextAlign.center, style: pokrovTextStyle(context, PokrovText.caption)),
+          ],
         ],
       ),
     );

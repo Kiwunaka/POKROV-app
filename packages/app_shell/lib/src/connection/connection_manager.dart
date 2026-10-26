@@ -257,7 +257,8 @@ class ConnectionManager extends ChangeNotifier {
             _appContext.runtimeProfile.supportedRouteModes.contains(mode))) {
       _selectedRouteMode = mode;
     }
-    if (value.preferredNodeCode.isNotEmpty || value.preferredCandidateRef.isNotEmpty) {
+    if (value.preferredNodeCode.isNotEmpty ||
+        (value.interfaceMode == PokrovInterfaceMode.simple && value.preferredCandidateRef.isNotEmpty)) {
       final previous = _managedProfileCacheInputs;
       final node = value.preferredCandidateRef.isNotEmpty
           ? value.preferredCandidateRef.split(':').first : value.preferredNodeCode;

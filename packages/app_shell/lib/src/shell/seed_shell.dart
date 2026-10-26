@@ -3305,10 +3305,15 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       openLocations: () => _selectTab(SeedTab.locations),
       openRules: () => _selectTab(SeedTab.rules),
     );
+    final transportCatalog = _connectionManager.transportCatalog;
+    final preferredCandidate = transportCatalog?.candidates.where((candidate) =>
+        candidate.candidateRef == _clientExperience.preferredCandidateRef).firstOrNull;
+    final selectedCountry = preferredCandidate?.nodeCountryCode(transportCatalog!.candidates)
+        ?? _clientExperience.preferredCountryCode;
     final sectionBuilders = <WidgetBuilder>[
       (context) => _QuickConnectSection(
             advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
-            preferredCountryCode: _clientExperience.preferredCountryCode,
+            preferredCountryCode: selectedCountry,
             onHelp: _showSupportHub,
             appContext: widget.appContext,
             freeProfileAccess: _freeProfileAccess,

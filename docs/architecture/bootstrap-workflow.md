@@ -289,6 +289,11 @@ candidate or node; failure never silently activates a different pinned path.
 Country and candidate preferences are part of the encrypted cache binding.
 Switching a known manual pin to Simple keeps its country and restores automatic
 protocol choice; Auto clears country, node and candidate preferences together.
+Advanced Locations keeps a country tap as country Auto. Its separate manual
+connection action lists the current admitted candidates for that country (or
+groups all countries in Auto), using protocol and location labels without raw
+references or endpoint addresses. Exact Advanced choices survive UI restart;
+legacy node preferences and Simple mode still migrate to country Auto.
 Simple keeps the authorized country Auto graph, including direct destinations
 and ready bridge detours; transport selection and fallback stay in that graph.
 Rules and connection settings are available in Advanced, reached from Profile.

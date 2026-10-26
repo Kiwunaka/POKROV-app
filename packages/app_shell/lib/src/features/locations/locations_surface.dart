@@ -61,6 +61,82 @@ class _LocationsSection extends StatefulWidget {
 }
 
 class _LocationsSectionState extends State<_LocationsSection> {
+  domain.TransportCandidate? get _preferredCandidate => widget.transportCatalog?.candidates
+      .where((candidate) => candidate.candidateRef == widget.preferredCandidateRef).firstOrNull;
+
+  String get _selectedCountryCode => _preferredCandidate?.nodeCountryCode(widget.transportCatalog!.candidates)
+      ?? widget.preferredCountryCode;
+
+  String _candidateLocation(domain.TransportCandidate candidate) {
+    for (final country in widget.locationsCatalog?.countries ?? const <ClientLocationCountry>[]) {
+      for (final city in country.cities) {
+        if (city.code == candidate.nodeCode) return _locationCityDisplayName(city, country);
+      }
+    }
+    return _locationCountryDisplayName(candidate.countryCode, candidate.countryCode);
+  }
+
+  Future<void> _selectConnection() async {
+    if (widget.nodePreferenceBusy) return;
+    final catalog = widget.transportCatalog!;
+    final countryCode = _selectedCountryCode;
+    final countries = <String, List<domain.TransportCandidate>>{};
+    for (final candidate in catalog.candidates) {
+      final code = candidate.nodeCountryCode(catalog.candidates);
+      if (countryCode.isEmpty || code == countryCode) {
+        (countries[code] ??= []).add(candidate);
+      }
+    }
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Выбрать соединение', style: Theme.of(context).textTheme.titleLarge),
+                ListTile(
+                  key: const ValueKey('location-candidate-auto'),
+                  leading: const Icon(Icons.bolt_rounded),
+                  title: const Text('Авто'),
+                  subtitle: const Text('POKROV подберёт рабочее соединение'),
+                  onTap: () => Navigator.of(context).pop(''),
+                ),
+                for (final country in countries.entries) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12, bottom: 4),
+                    child: Text(_locationCountryDisplayName(country.key, country.key),
+                      style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                  for (final candidate in country.value) ListTile(
+                    key: ValueKey('location-candidate-${candidate.candidateRef}'),
+                    title: Text(_locationCandidateLabel(candidate)),
+                    subtitle: Text(_candidateLocation(candidate)),
+                    trailing: candidate.candidateRef == widget.preferredCandidateRef
+                        ? const Icon(Icons.check_rounded) : null,
+                    onTap: () => Navigator.of(context).pop(candidate.candidateRef),
+                  ),
+                ],
+                if (countries.isEmpty) const Text('Для этой страны пока нет доступных соединений в каталоге.'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+    if (selected.isEmpty) {
+      widget.onAutomaticLocationSelected();
+    } else {
+      widget.onPreferredCandidateSelected(selected);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final countries = <String, (String, bool)>{};
@@ -89,7 +165,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
       data: ui.LocationsViewData(
         mode: widget.interfaceMode == PokrovInterfaceMode.advanced
             ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
-        selectedCode: automatic ? null : widget.preferredCountryCode,
+        selectedCode: automatic ? null : _selectedCountryCode,
         countries: [for (final country in countries.entries) ui.CountryOption(
           code: country.key, name: country.value.$1,
           available: !widget.nodePreferenceBusy && country.value.$2,
@@ -102,6 +178,9 @@ class _LocationsSectionState extends State<_LocationsSection> {
       onAuto: widget.nodePreferenceBusy ? null : widget.onAutomaticLocationSelected,
       onSelect: widget.onPreferredCountrySelected,
       onRefresh: widget.locationsCatalogBusy ? null : widget.onRefreshLocationsCatalog,
+      onSelectConnection: widget.interfaceMode == PokrovInterfaceMode.advanced &&
+              (widget.transportCatalog?.candidates.isNotEmpty ?? false) ? _selectConnection : null,
+      selectedConnectionLabel: _preferredCandidate == null ? null : _locationCandidateLabel(_preferredCandidate!),
     );
   }
 }

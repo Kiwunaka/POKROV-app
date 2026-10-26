@@ -144,3 +144,22 @@ String _locationCacheLabel(String rawIso, {DateTime? now}) {
   }
   return 'Сохранено ${age.inDays} дн назад.';
 }
+
+String _locationCandidateLabel(domain.TransportCandidate candidate) {
+  final protocol = switch (candidate.protocol) {
+    'vless' => switch (candidate.transport) {
+        'dnstt' => 'SlipNet',
+        'xhttp' => 'VLESS XHTTP',
+        'grpc' => 'VLESS gRPC',
+        _ => candidate.protection == 'reality' ? 'VLESS REALITY' : 'VLESS TLS',
+      },
+    'hysteria2' => 'HY2',
+    'awg' => 'AWG 3.1',
+    'naive' => 'Naive HTTPS / H2',
+    _ => 'Соединение',
+  };
+  final bridge = candidate.bridgeId;
+  final path = bridge == null ? '' : bridge.endsWith('-xhttp') ? ' · Через мост · XHTTP' : ' · Через мост';
+  final warp = candidate.warpMode == null ? '' : ' · WARP';
+  return '$protocol$path$warp';
+}
