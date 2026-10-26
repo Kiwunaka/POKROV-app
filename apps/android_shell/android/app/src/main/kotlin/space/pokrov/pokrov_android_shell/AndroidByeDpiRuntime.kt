@@ -2,7 +2,6 @@ package space.pokrov.pokrov_android_shell
 
 import android.content.Context
 import androidx.annotation.Keep
-import android.net.ConnectivityManager
 import android.net.LocalServerSocket
 import android.net.LocalSocket
 import android.net.LocalSocketAddress
@@ -45,7 +44,6 @@ internal class AndroidByeDpiRuntime private constructor(
     private val protectSocket: (Int) -> Boolean,
     private val withdrawAdmission: (Boolean) -> Unit,
 ) : AutoCloseable {
-    private val network = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val uid = Process.myUid()
     private val closed = AtomicBoolean(false)
     private val closeSettled = CountDownLatch(1)
@@ -97,24 +95,15 @@ internal class AndroidByeDpiRuntime private constructor(
 
     private fun isCurrent(): Boolean = !closed.get() && session.isActive() && ownsSession()
 
-    // Called by JNI before a SOCKS client can create a protected uplink. A
-    // loopback listener alone would otherwise be a Direct proxy for other apps.
+    // JNI checked a live TCP client socket held by this process; keep its
+    // admission bound to the current VPN session as well.
     @Keep
     @Suppress("unused")
-    private fun allowClient(clientPort: Int, serverPort: Int): Boolean = synchronized(protectLock) {
+    private fun allowClient(clientPort: Int, ownership: Int): Boolean = synchronized(protectLock) {
         if (!isCurrent()) return@synchronized false
-        val owner = try {
-            network.getConnectionOwnerUid(
-                OsConstants.IPPROTO_TCP,
-                InetSocketAddress("127.0.0.1", clientPort),
-                InetSocketAddress("127.0.0.1", serverPort),
-            )
-        } catch (failure: Exception) {
-            proof?.reportClientFailure(clientPort, if (failure is SecurityException) "lookup_security" else "lookup_error")
-            throw failure
-        }
-        if (owner != uid) proof?.reportClientFailure(clientPort, "uid_mismatch")
-        owner == uid && isCurrent()
+        if (ownership != 1) proof?.reportClientFailure(clientPort,
+            if (ownership < 0) "fd_unavailable" else "not_in_process")
+        ownership == 1 && isCurrent()
     }
 
     private fun listenForProtection() {

@@ -11,6 +11,7 @@
 
 #include "params.h"
 #include "proxy.h"
+#include "android_socket_owner.h"
 
 int parse_args(int argc, char **argv);
 int init(void);
@@ -57,10 +58,12 @@ int pokrov_byedpi_allow_client(int fd, const union sockaddr_u *client)
     socklen_t size = sizeof(local);
     if (client->sa.sa_family != AF_INET ||
             client->in.sin_addr.s_addr != htonl(INADDR_LOOPBACK) ||
-            getsockname(fd, &local.sa, &size)) return 0;
+            getsockname(fd, &local.sa, &size) || local.sa.sa_family != AF_INET ||
+            local.in.sin_addr.s_addr != htonl(INADDR_LOOPBACK)) return 0;
+    int ownership = process_owns_client(fd, client->in.sin_port, local.in.sin_port);
     JNIEnv *env = current->thread_env;
     jboolean allowed = (*env)->CallBooleanMethod(env, current->owner,
-        current->allow_client, ntohs(client->in.sin_port), ntohs(local.in.sin_port));
+        current->allow_client, ntohs(client->in.sin_port), ownership);
     if ((*env)->ExceptionCheck(env)) {
         (*env)->ExceptionClear(env);
         return 0;
