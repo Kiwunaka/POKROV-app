@@ -146,6 +146,7 @@ String _locationCacheLabel(String rawIso, {DateTime? now}) {
 }
 
 String _locationCandidateLabel(domain.TransportCandidate candidate) {
+  if (candidate.displayName != null) return candidate.displayName!;
   final protocol = switch (candidate.protocol) {
     'vless' => switch (candidate.transport) {
         'dnstt' => 'SlipNet',

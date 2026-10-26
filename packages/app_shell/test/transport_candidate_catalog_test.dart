@@ -137,8 +137,9 @@ void main() {
   });
 
   test('one egress catalog retains every authorized protocol and payload identity', () {
+    const label = 'Германия · VLESS REALITY · мост 2';
     final value = parse(catalog([
-      candidate('de', 'legacy_reality_fallback'),
+      candidate('de', 'legacy_reality_fallback')..['display_name'] = label,
       candidate('de', 'grpc_443_primary', transport: 'grpc', protection: 'tls',
         features: ['singbox_vless_v1', 'singbox_grpc_v1']),
       candidate('de', 'awg31_lab', protocol: 'awg', transport: 'udp', protection: 'awg31',
@@ -148,6 +149,8 @@ void main() {
     ]), node: 'de');
     expect(value.candidates.map((item) => item.protocol), ['vless', 'vless', 'awg', 'hysteria2']);
     expect(value.selected.candidateRef, 'de:legacy_reality_fallback');
+    expect(value.selected.displayName, label);
+    expect(value.candidates[1].displayName, isNull, reason: 'older encrypted cached catalogs remain readable');
     final payload = ManagedProfilePayload(profileName: 'test', configPayload: '{}', transportCatalog: value);
     expect(payload.copyWith(configPayload: '{"route":{}}').transportCatalog, same(value));
     expect(() => value.candidates.clear(), throwsUnsupportedError);

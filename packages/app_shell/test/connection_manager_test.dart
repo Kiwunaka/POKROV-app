@@ -3376,6 +3376,7 @@ void main() {
     var nativeSnapshots = 0;
     final features = RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort();
     final naive = TransportCandidate(candidateRef: 'ch:naive_h2', profileRef: 'naive_h2', nodeCode: 'ch',
+      displayName: 'Швейцария · Naive HTTPS / H2 · порт 443',
       countryCode: 'CH', protocol: 'naive', transport: 'http2', protection: 'tls',
       priority: 3, network: 'tcp', flow: '', minimumClientRelease: '1.5.0',
       minimumCoreRelease: null, platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {});
@@ -3457,7 +3458,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('locations-select-connection')));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsOneWidget);
-    expect(find.text('Naive HTTPS / H2'), findsOneWidget);
+    expect(find.text('Швейцария · Naive HTTPS / H2 · порт 443'), findsOneWidget);
     expect(find.textContaining('AWG'), findsNothing, reason: 'manual choices follow the selected country');
     expect(find.text(naive.candidateRef), findsNothing, reason: 'connection references are not user-facing labels');
     await tester.tap(find.byKey(ValueKey('location-candidate-${naive.candidateRef}')));

@@ -116,7 +116,7 @@ class _LocationsSectionState extends State<_LocationsSection> {
                   for (final candidate in country.value) ListTile(
                     key: ValueKey('location-candidate-${candidate.candidateRef}'),
                     title: Text(_locationCandidateLabel(candidate)),
-                    subtitle: Text(_candidateLocation(candidate)),
+                    subtitle: candidate.displayName == null ? Text(_candidateLocation(candidate)) : null,
                     trailing: candidate.candidateRef == widget.preferredCandidateRef
                         ? const Icon(Icons.check_rounded) : null,
                     onTap: () => Navigator.of(context).pop(candidate.candidateRef),

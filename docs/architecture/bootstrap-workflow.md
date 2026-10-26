@@ -294,6 +294,11 @@ connection action lists the current admitted candidates for that country (or
 groups all countries in Auto), using protocol and location labels without raw
 references or endpoint addresses. Exact Advanced choices survive UI restart;
 legacy node preferences and Simple mode still migrate to country Auto.
+Catalog `display_name` is used for manual rows when present: the server supplies
+the public Node, stable bridge/input distinction, address family/port and WARP
+direction without endpoint addresses. Older cached catalogs keep the existing
+protocol label until their ordinary refresh; display text never changes the
+selected candidate reference or encrypted profile binding.
 Simple keeps the authorized country Auto graph, including direct destinations
 and ready bridge detours; transport selection and fallback stay in that graph.
 Rules and connection settings are available in Advanced, reached from Profile.

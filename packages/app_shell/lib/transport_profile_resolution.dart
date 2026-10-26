@@ -51,11 +51,11 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
       final item = _transportMap(raw);
       final warpMode = item['warp_mode'];
       final warpDirect = warpMode == 'warp_direct';
-      _keys(item, warpMode == null
-          ? const {'candidate_ref', 'profile_ref', 'node_code', 'country_code',
-              'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements'}
-          : const {'candidate_ref', 'profile_ref', 'node_code', 'country_code',
-              'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements', 'warp_mode'});
+      _keys(item, {'candidate_ref', 'profile_ref', 'node_code', 'country_code',
+        'protocol', 'transport', 'protection', 'priority', 'parameters', 'requirements',
+        if (warpMode != null) 'warp_mode', if (item.containsKey('display_name')) 'display_name'});
+      final displayName = item.containsKey('display_name')
+          ? text(item['display_name'], RegExp(r'^[^\x00-\x1f\x7f]+$'), 256) : null;
       final ref = text(item['candidate_ref'], refPattern, 128);
       final profile = text(item['profile_ref'], refPattern, 64);
       final node = warpDirect && item['node_code'] == ''
@@ -186,7 +186,7 @@ TransportCandidateCatalog decodeManagedTransportCatalog(Object? input, {
         network: parameters['network'] as String, flow: parameters['flow'] as String,
         minimumClientRelease: minimumClient, minimumCoreRelease: minimumCore as String?,
         platforms: platforms, requiredFeatures: features, warpMode: warpMode as String?,
-        bridgeId: bridgeId as String?,
+        bridgeId: bridgeId as String?, displayName: displayName,
         family: family as String, deliveryEndpointId: deliveryId as String?,
         endpointGeneration: generation as int?));
     }
