@@ -293,6 +293,7 @@ void main() {
       ('gemini', failure, HostPlatform.windows),
     ('chatgpt', null, HostPlatform.windows),
     ('gemini', null, HostPlatform.android),
+    ('gemini', 'smart_access_signature_invalid', HostPlatform.android),
     ('gemini', 'smart_access_runtime_control_unconfirmed', HostPlatform.android),
     ('gemini', 'unknown_private_control_code', HostPlatform.android),
   ]) {
@@ -606,6 +607,11 @@ void main() {
           final config = jsonDecode(args['configJson'] as String) as Map;
           expect(config['capability'], startsWith('saqa1.'));
           expect(config['profile_digest'], phase['stagedProfileDigest']);
+          final lease = (staged!['outbounds'] as List).cast<Map>()
+              .singleWhere((outbound) => outbound['type'] == 'pokrov-smart-access');
+          expect(config['issued_at'], lease['issued_at']);
+          expect(config['expires_at'], lease['new_flows_until']);
+          expect(config['expires_at'], lease['active_flows_until']);
           phase.remove('stagedProfileDigest');
           return {'schema': 1, 'requestId': args['requestId'], 'profileDigest': args['profileDigest'], 'configured': true};
         case 'runtimeEngine.revokeSmartAccessLease':
@@ -680,7 +686,7 @@ void main() {
       await manager.disconnect();
       expect(context?['control_delivery'], 'failed');
       expect(context?['control_reason'], controlFailure == 'unknown_private_control_code' ? 'unclassified' : controlFailure);
-      if (hostPlatform == HostPlatform.android) {
+      if (hostPlatform == HostPlatform.android && controlFailure != 'smart_access_signature_invalid') {
         expect(context?['start_error'], contains('qa_start: PlatformException'));
       }
       expect(jsonEncode(context), isNot(contains('private')));

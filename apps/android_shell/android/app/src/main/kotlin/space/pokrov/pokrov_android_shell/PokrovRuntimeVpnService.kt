@@ -2326,7 +2326,7 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             var configuredServer: CommandServer? = null
             val configuredReply: (Boolean?) -> Unit = { configured ->
                 if (configured == true && firstProviderQa) {
-                    val queued = queueFirstProviderQaProbe(profileDigest, connectRequestId!!, configuredServer)
+                    val queued = queueFirstProviderQaProbe(profileDigest, connectRequestId!!, configuredServer, configJson)
                     reply(if (queued) true else null)
                 } else reply(configured)
             }
@@ -2344,7 +2344,8 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             android.util.Log.i("POKROV-SmartDNS", "qa_control=$reason")
         }
 
-        private fun queueFirstProviderQaProbe(profileDigest: String, request: String, server: CommandServer?): Boolean {
+        private fun queueFirstProviderQaProbe(profileDigest: String, request: String, server: CommandServer?,
+            configJson: String): Boolean {
             val owner = runtimeOwner ?: run { logFirstProviderQaControl("probe_owner_missing"); return false }
             val session = owner.activeRuntimeSession ?: run { logFirstProviderQaControl("probe_session_missing"); return false }
             val content = owner.activeConfigContent ?: run { logFirstProviderQaControl("probe_profile_missing"); return false }
@@ -2361,7 +2362,30 @@ class PokrovRuntimeVpnService : VpnService(), PlatformInterface, CommandServerHa
             val queued = owner.firstProviderQaProbe.dispatch(request, true, target, server, ::current, session::execute)
             if (!queued) { logFirstProviderQaControl("probe_dispatch_failed"); return false }
             if (!current()) { logFirstProviderQaControl("probe_owner_changed"); return false }
-            return true
+            val start = owner.activeConnectDeadline
+                ?: run { logFirstProviderQaControl("qa_deadline_missing"); return false }
+            val proposed = runCatching {
+                val config = JSONObject(configJson)
+                val outbounds = JSONObject(content).getJSONArray("outbounds")
+                val lease = (0 until outbounds.length()).map { outbounds.getJSONObject(it) }
+                    .single { it.optString("type") == "pokrov-smart-access" }
+                // Sample elapsed first so the monotonic deadline cannot exceed
+                // the signed wall-clock expiry by time spent converting it.
+                val elapsed = android.os.SystemClock.elapsedRealtime()
+                AndroidConnectDeadline.firstProviderQa(start, elapsed, Instant.now(),
+                    config.getString("issued_at"), config.getString("expires_at"),
+                    lease.getString("issued_at"), lease.getString("new_flows_until"),
+                    lease.getString("active_flows_until"))
+            }.getOrNull() ?: run { logFirstProviderQaControl("qa_deadline_invalid"); return false }
+            val generation = owner.activeServiceCommandGeneration
+            val retained = synchronized(owner.serviceCommandLock) {
+                if (!current() || owner.activeConnectDeadline !== start) null else {
+                    AndroidConnectRequestOwner.retainFirstProviderQa(request, owner, profileDigest, start, proposed)
+                        ?.also { owner.activeConnectDeadline = it }
+                }
+            } ?: run { logFirstProviderQaControl("qa_deadline_owner_changed"); return false }
+            owner.watchConnectDeadline(session, generation, retained)
+            return current()
         }
 
         fun renewSmartAccessLease(profileDigest: String, expectedLeaseId: String, nextLeaseId: String,

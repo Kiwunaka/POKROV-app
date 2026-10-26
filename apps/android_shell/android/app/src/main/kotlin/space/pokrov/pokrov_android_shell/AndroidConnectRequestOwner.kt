@@ -10,6 +10,7 @@ internal object AndroidConnectRequestOwner {
     private var profileDigest: String? = null
     private var deadline: AndroidConnectDeadline? = null
     private var promotedUntilElapsed: Long? = null
+    private var firstProviderQaControlActive = false
     private var networkGeneration: Long? = null
     private var preparedNetwork: AndroidTransportNetworkContext? = null
     private var preparedNetworkRef: String? = null
@@ -43,6 +44,7 @@ internal object AndroidConnectRequestOwner {
         profileDigest = null
         deadline = null
         promotedUntilElapsed = null
+        firstProviderQaControlActive = false
         networkGeneration = null
         preparedNetwork = null
         preparedNetworkRef = null
@@ -74,6 +76,7 @@ internal object AndroidConnectRequestOwner {
         profileDigest = expectedProfile
         deadline = expectedDeadline
         promotedUntilElapsed = null
+        firstProviderQaControlActive = false
         networkGeneration = null
         preparedNetwork = network
         preparedNetworkRef = networkRef
@@ -202,6 +205,21 @@ internal object AndroidConnectRequestOwner {
         proofPending = false
         leaseActive = true
         return true
+    }
+
+    @Synchronized
+    fun retainFirstProviderQa(request: String, owner: PokrovRuntimeVpnService, expectedProfile: String,
+        expectedDeadline: AndroidConnectDeadline, proposed: AndroidConnectDeadline): AndroidConnectDeadline? {
+        if (current != request || service !== owner || cancelled || stopped || coreDigest == null ||
+            profileDigest != expectedProfile || deadline != expectedDeadline || !expectedDeadline.isCurrent() ||
+            !proposed.isCurrent() || proofPending || leaseActive || promotedUntilElapsed != null ||
+            !networkIsCurrent()) return null
+        // A later control refresh may shorten, but never renew, this one attempt.
+        val retained = if (firstProviderQaControlActive && proposed.expiresElapsedMs > expectedDeadline.expiresElapsedMs)
+            expectedDeadline.copy() else proposed
+        deadline = retained
+        firstProviderQaControlActive = true
+        return retained
     }
 
     @Synchronized

@@ -359,6 +359,11 @@ still required before public promotion. Android exposes the existing diagnostics
 action only for a pending device admission and uses the existing identity-bound
 Connect/control APIs.
 
+Android keeps the bounded Start deadline until Dart verifies the signed QA permit
+and foreground control and the bound native worker is installed. The current
+identity-only owner then stays under a watchdog capped by the matching permit and
+lease expiry. Core verifies its own runtime-control polls asynchronously.
+
 An exception escaping QA start retains only the existing closed exception type,
 allowlisted code and up to two local Dart source locations in the QA summary and
 bounded protection history. The summary preserves a classified control failure
