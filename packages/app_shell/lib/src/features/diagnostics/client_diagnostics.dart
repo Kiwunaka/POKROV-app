@@ -1233,6 +1233,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
     } on Object {
       if (mounted) {
         setState(() => _qaStartError = 'Проверка сейчас недоступна. Обновите сведения для поддержки.');
+        await _refresh(includeReleaseHealth: false);
       }
     } finally {
       if (mounted) setState(() => _qaStarting = false);
@@ -1565,7 +1566,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
                 ],
               ),
             ),
-            if (widget.onStartFirstProviderQa != null || _qaContext != null) ...[
+            if (widget.onStartFirstProviderQa != null || _qaContext != null || _qaStartError != null) ...[
               const SizedBox(height: 12),
               _DiagnosticsCard(
                 key: const ValueKey('diagnostics-first-provider-qa'),

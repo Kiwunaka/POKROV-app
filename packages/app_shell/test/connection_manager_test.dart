@@ -1108,20 +1108,22 @@ void main() {
       }));
     final runtime = _Runtime(hostPlatform: HostPlatform.windows)
       ..supportsCandidates = true..phase = RuntimePhase.initialized..coreVersion = '1.2.13';
+    final experience = _ExperienceStore();
     final manager = ConnectionManager(
       appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows), runtimeEngine: runtime,
       bootstrapper: bootstrapper, accountSessionCoordinator: account,
       firstSessionCoordinator: FirstSessionCoordinator(store: _FirstLaunchStore()),
-      clientExperienceStore: _ExperienceStore(), connectHintStore: const PokrovFileConnectHintStore(),
+      clientExperienceStore: experience, connectHintStore: const PokrovFileConnectHintStore(),
       actionTimeout: const Duration(seconds: 20),
       authorizeAndroidConnect: () async => true,
       windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
-      refreshSubscription: () async => true, onNotice: (_, __) {}, observability: observability,
+      refreshSubscription: () async => true,
+      onNotice: (_, __) => throw StateError('private fixture message must stay hidden'), observability: observability,
     );
     addTearDown(manager.dispose);
     await manager.refresh();
     expect(manager.firstProviderQaAdmissionId, admission);
-    await manager.startFirstProviderQa(admission);
+    await expectLater(manager.startFirstProviderQa(admission), throwsStateError);
     final terminal = observability.connectionTimelineBreadcrumbs.lastWhere(
       (entry) => entry.name == 'app.connection.attempt.finished');
     expect((terminal.errorCode, terminal.failureOperation, terminal.failureKind,
@@ -1129,8 +1131,12 @@ void main() {
       ('API-002', 'managed_profile', 'request_socket', const Duration(seconds: 20), 0));
     expect(runtime.stagedPayloads, isEmpty);
     final controlDiagnostic = await manager.readFirstProviderQaContext();
-    expect(controlDiagnostic,
-      {'control_delivery': 'skipped', 'control_reason': 'connection_unavailable'});
+    expect(controlDiagnostic?['control_delivery'], 'failed');
+    expect(controlDiagnostic?['control_reason'], 'start_exception');
+    expect(controlDiagnostic?['start_error'], contains('StateError'));
+    expect(controlDiagnostic?['start_error'], isNot(contains('private fixture')));
+    expect(experience.saved.protectionEvents.first.kind, 'qa_start_failed');
+    expect(experience.saved.protectionEvents.first.detail, controlDiagnostic?['start_error']);
     expect(() => controlDiagnostic!['untrusted'] = 'value', throwsUnsupportedError);
     await observability.flush();
   });
@@ -1186,6 +1192,44 @@ void main() {
     expect(find.text('Запрос доступа: завершён успешно.'), findsOneWidget);
     expect(find.textContaining('HTTP 401'), findsNothing);
     await tester.runAsync(observability.flush);
+  });
+
+  testWidgets('QA start exception refreshes closed context and stays visible after admission disappears', (tester) async {
+    final report = PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: HostPlatform.android, routeMode: RouteMode.fullTunnel,
+      snapshot: null, statusLabel: 'idle', warpState: 'disabled', now: DateTime.now().toUtc(),
+      appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
+      encryptedDeliveryAvailable: false,
+    );
+    Map<String, Object?>? closedContext;
+    var refreshes = 0;
+    Widget screen({required bool admitted}) => MaterialApp(home: PokrovDiagnosticsScreen(
+      initialReport: report, onRefresh: () async { refreshes++; return report; },
+      onOpenProtection: () {}, onOpenSupport: () {},
+      onStartFirstProviderQa: !admitted ? null : () async {
+        closedContext = const {'control_reason': 'start_exception', 'start_error': 'qa_start: StateError'};
+        throw StateError('private fixture message must stay hidden');
+      },
+      onReadFirstProviderQaContext: () async => closedContext,
+    ));
+    await tester.pumpWidget(screen(admitted: true));
+    await tester.pump();
+    await _openTechnicalDiagnostics(tester);
+    final button = find.byKey(const ValueKey('diagnostics-first-provider-qa-start'));
+    await tester.ensureVisible(button);
+    final refreshesBeforeStart = refreshes;
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(refreshes, refreshesBeforeStart + 1);
+    expect(find.textContaining('qa_start: StateError'), findsOneWidget);
+    expect(find.textContaining('private fixture message'), findsNothing);
+    closedContext = null;
+    await tester.pumpWidget(screen(admitted: false));
+    await tester.tap(find.byKey(const ValueKey('diagnostics-refresh-action')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('diagnostics-first-provider-qa')), findsOneWidget);
+    expect(find.textContaining('Проверка сейчас недоступна.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('diagnostics-first-provider-qa-start')), findsNothing);
   });
 
   testWidgets('production pinned pending QA admission exposes the Diagnostics card without starting', (tester) async {

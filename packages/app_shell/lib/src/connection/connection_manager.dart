@@ -718,6 +718,16 @@ class ConnectionManager extends ChangeNotifier {
           _firstProviderQaControlDiagnostic = const {'control_delivery': 'skipped', 'control_reason': 'connection_unavailable'};
         }
       }
+    } on Object catch (error, stack) {
+      final detail = _unexpectedConnectionDiagnostic('qa_start', error, stack);
+      if (!_disposed && _startedFirstProviderQaAdmissionId == admissionId) {
+        _firstProviderQaControlDiagnostic = Map.unmodifiable({
+          'control_delivery': 'failed', 'control_reason': 'start_exception', 'start_error': detail,
+        });
+        _recordProtectionEvent(kind: 'qa_start_failed', title: 'Проверка SmartDNS прервана',
+          detail: detail, tone: PokrovProtectionEventTone.error);
+      }
+      rethrow;
     } finally {
       _pendingFirstProviderQaAdmissionId = null;
       if (_runtimeSnapshot?.phase != RuntimePhase.running) _activeFirstProviderQa = null;

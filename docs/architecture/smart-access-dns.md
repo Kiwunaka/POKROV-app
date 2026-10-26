@@ -350,6 +350,12 @@ still required before public promotion. Android exposes the existing diagnostics
 action only for a pending device admission and uses the existing identity-bound
 Connect/control APIs.
 
+An exception escaping QA start retains only the existing closed exception type,
+allowlisted code and up to two local Dart source locations in the QA summary and
+bounded protection history. Diagnostics refreshes that summary after the error
+and retains its error card when the pending admission disappears. Raw exception
+messages, stack paths and connection material are not displayed or retained.
+
 The Android paired-API parser fix starts with private build 4212. Earlier
 Selective clients, including 4209, reject that profile even after a denied
 SmartDNS lease falls back to VPN. Ordinary provider leases do not bind a client
