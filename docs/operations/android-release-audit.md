@@ -1,23 +1,33 @@
 # Android acceptance
 
-Updated 26 October 2026. Public **1.4.5** and the seven-asset **1.5.0+4175** draft
-are unchanged. Production Android ARM64 **1.5.0+4218**, App `fdbcd36d`, is built:
-86,145,493 bytes, actual package version 4218 confirmed. It is not installed;
-the owner has the phone with 4217, whose ordinary Connect was confirmed. SmartDNS
-QA on 4217 failed with `connection_unavailable`; LocalDPI observations were unavailable.
-4218 includes exact bound-start waiting, separate identity-only/ATS lifecycle and
-protected-ATS LocalDPI admission while retaining lease fallback. Focused Dart
-tests/analyze, three Kotlin identity tests and one LocalDPI regression passed.
-SmartDNS remains public OFF; these changes and direct ByeDPI still need device
-acceptance. Final Windows/all-ABI packaging waits for that Android result.
-[Artifacts and exact scope](cutover-readiness.md).
+Updated 27 October 2026. Public **1.4.5** and draft **1.5.0+4175 / seven assets**
+are unchanged. Private Android ARM64 **4224**, App `d30df1ce`, is built and
+installed. The owner has the phone; its last ordinary Connect was started before
+handoff and current VPN state is unconfirmed. The current settings are manual DE2
+direct, Selective YouTube, LocalDPI on, ComssDNS, SmartDNS auto and WARP off; the
+owner's app filter 3 was untouched. Do not use ADB until the phone returns.
 
-Before the owner took the phone, VPN was stopped normally; current preferences
-remain manual DE2 / Selective YouTube / LocalDPI on. Do not use ADB until return.
-Earlier QA service0 observations used `PokrovVpnService` instead of the actual
-`PokrovRuntimeVpnService`; they did not prove absence of the running service.
-The sticky ATS lifecycle cause is confirmed by source/tests, independently of that
-incorrect predicate. No customer contact, release or automation change occurred.
+NativeQA 4 on 4222 confirmed SmartDNS control, resolver/DNS and TLS, and Chrome
+received Gemini's real `7+5 → 12` answer. After refresh, the same probe/profile
+remained current with guard false; normal Stop in that run left the native VPN
+service absent. Provider policy 4/state 3 and catalog 29/state 29 were later
+published for Android and Windows Gemini, with eligible Premium states and Free
+excluded. The normal Android UI read after promotion remains pending.
+
+LocalDPI 4221 accepted bridge prepare/capture/stats. The 4222 UID mismatch before
+SOCKS was corrected in `fea45ed7` by binding the owned process FD and session;
+Pi4 owned TCP was accepted and a foreign process with the same UID denied.
+NDK for all three Android ABIs and Kotlin checks passed. On 4223 ownership,
+SOCKS and protected uplink passed, but TLS timed out. On 4224 the first TLSREC
+1+s strategy and unchanged second disorder strategy both reached TLS handshake
+deadlines within the five-second budget. Direct ByeDPI and YouTube 1080p are
+not accepted; 1080p has not been tested. Final Windows/all-ABI packaging waits
+for the Android result. [Artifacts and exact scope](cutover-readiness.md).
+
+Earlier service0 observations searched for `PokrovVpnService` rather than the
+actual `PokrovRuntimeVpnService`; they did not prove service absence. The 4222
+Stop observation above uses the actual native service. Customer contact and the
+public release are unchanged; automations remain paused.
 
 The phone exposed a false identity failure after staging withdrawal; `03fe046d`
 fixes it, with the existing test RED→PASS in Direct and Store. Physical 4207
@@ -103,10 +113,9 @@ not repeat unchanged protocol QA on all ABIs.
 - After the 26 October top-up, direct IS HTTPS in Chrome still returned
   `ERR_TIMED_OUT`; RF2 works. Later native Pi4 wlan0 checks accepted direct IS
   VLESS/HY2/AWG after the private-DNS firewall repair, not Android UI. Android
-  now has manual choices and Naive was accepted on 4210. Android provider SmartDNS
-  is still public OFF; the latest bound-start QA failure and unaccepted mobile
-  corrections are described above. Ordinary YouTube playback on 4214 does not accept provider
-  SmartDNS, direct ByeDPI routing or permanent absence of ads.
+  now has manual choices and Naive was accepted on 4210. The later Android SmartDNS
+  QA and the pending normal UI read are described above. Ordinary YouTube playback
+  on 4214 does not accept direct ByeDPI routing or permanent absence of ads.
 - Direct RU VLESS/AWG failed on 4172/4173; the precise cause was not established.
   The owner subsequently deleted Hostkey RU; its protected archive remains on
   Brain. The retirement replaces the old direct RU AWG acceptance requirement.
