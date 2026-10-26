@@ -385,8 +385,14 @@ is not clock leeway: future or expired grants remain rejected, no HTTP request
 is repeated, and expiry, subject binding and native verification are unchanged.
 
 Android QA waits for the existing native post-start egress proof before sending
-QA control; TUN-ready alone no longer ends the QA action as
-`connection_unavailable`. The native connection deadline is unchanged. Failed
+QA control. It reads pending Start through `snapshotForConnectRequest` for the
+same request; a `running` snapshot with `connection_pending` still waits for
+that Start to complete before accepting egress proof. Identity-only QA does not
+set the ATS `transportProofPending` latch: Android derives that requirement from
+the digest-verified staged profile, while actual ATS profiles retain their
+existing proof and promotion requirement. TUN-ready alone no longer
+ends the QA action as `connection_unavailable`. The native connection deadline
+is unchanged. Failed
 native startup attempts now emit only closed stage/code/error-type, attempt
 number and elapsed milliseconds to the existing bounded journal and the
 `POKROV-Egress` Logcat tag, readable without `run-as`. A bare Core deadline has

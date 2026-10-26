@@ -507,6 +507,7 @@ void main() {
     var stopConfirmed = true;
     var postStartProofPending = false;
     var postStartProofObserved = false;
+    var boundProgressReads = 0;
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(channel, (call) async {
@@ -517,10 +518,21 @@ void main() {
           return {'schema': 1, 'boot_ref': bootRef, 'elapsed_ms': 1000, 'quantum_ms': 1};
         case 'runtimeEngine.snapshot':
           if (postStartProofPending) {
+            fail('Android QA must observe its exact pending Start, not an unbound snapshot');
+          }
+        case 'runtimeEngine.snapshotForConnectRequest':
+          expect(args['requestId'], nativeBoundRequestId);
+          boundProgressReads++;
+          phase.addAll({'phase': 'running', 'connection_pending': boundProgressReads == 1,
+            'transportProofPending': false,
+            'hostHealth': boundProgressReads == 2 ? 'needsAttention' : 'healthy',
+            'coreEgressValidated': boundProgressReads == 2 ? null : true,
+            'effectiveProfileDigest': boundProgressReads == 1 ? null : phase['stagedProfileDigest']});
+          if (boundProgressReads == 3) {
             postStartProofPending = false;
             postStartProofObserved = true;
-            phase.addAll({'hostHealth': 'healthy', 'coreEgressValidated': true});
           }
+          return {'schema': 1, 'requestId': nativeBoundRequestId, 'snapshot': {...phase}};
         case 'runtimeEngine.transportNetworkContext':
           return {'schema': 1, 'network_context_ref': networkRef};
         case 'runtimeEngine.candidateNetwork':
@@ -561,7 +573,9 @@ void main() {
             'coreEgressValidated': true, 'tunInterfacePresent': true, 'vpnRoutesPresent': true});
           if (hostPlatform == HostPlatform.android && nativeBoundRequestId != null) {
             postStartProofPending = true;
-            phase.addAll({'hostHealth': 'needsAttention', 'coreEgressValidated': null});
+            phase.addAll({'phase': 'initialized', 'connection_pending': true,
+              'effectiveProfileDigest': null, 'transportProofPending': false,
+              'hostHealth': 'needsAttention', 'coreEgressValidated': null});
           }
           if (nativeBoundRequestId != null) {
             return {'schema': 1, 'requestId': nativeBoundRequestId, 'snapshot': {...phase}};
@@ -576,7 +590,10 @@ void main() {
                 'stages': [for (var i = 0; i < 3; i++) {'stage': ['resolver', 'dns', 'tls'][i], 'result': 'pass',
                   'observed_at_ms': startedAt + i + 1, 'duration_ms': 1}]}}]})};
         case 'runtimeEngine.configureBoundSmartAccessRuntimeControl':
-          if (hostPlatform == HostPlatform.android) expect(postStartProofObserved, isTrue);
+          if (hostPlatform == HostPlatform.android) {
+            expect(postStartProofObserved, isTrue);
+            expect(boundProgressReads, 3);
+          }
           if (nativeBoundRequestId == null || args['requestId'] != nativeBoundRequestId) {
             throw PlatformException(code: 'connect_owner_changed');
           }

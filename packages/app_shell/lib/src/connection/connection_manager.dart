@@ -4344,7 +4344,8 @@ class ConnectionManager extends ChangeNotifier {
         if (qa != null) {
           final engine = _runtimeEngine;
           if (engine is! RuntimeCoreIdentityConnect || engine is! RuntimeBootClock ||
-              engine is! RuntimeTransportNetworkContext) {
+              engine is! RuntimeTransportNetworkContext ||
+              (_appContext.hostPlatform == HostPlatform.android && engine is! RuntimeConnectProgress)) {
             throw const RoutingCatalogFailure('smart_access_qa_connect_unsupported');
           }
           final startedAt = await (engine as RuntimeBootClock).readBootClock();
@@ -5633,6 +5634,7 @@ class ConnectionManager extends ChangeNotifier {
     try {
       return await _settleOwnedRuntimeTransition(snapshot,
           ownerGeneration: ownerGeneration,
+          requestId: requestId,
           waitForEgressProof: waitForEgressProof,
           deadline: requestId == null
               ? null
@@ -5648,6 +5650,7 @@ class ConnectionManager extends ChangeNotifier {
 
   Future<RuntimeSnapshot> _settleOwnedRuntimeTransition(
     RuntimeSnapshot snapshot, {
+    required String? requestId,
     int? ownerGeneration,
     Duration? deadline,
     bool waitForEgressProof = false,
@@ -5657,8 +5660,13 @@ class ConnectionManager extends ChangeNotifier {
     if (!_connectionCoordinator.ownsOperation(generation)) {
       throw const ConnectionOperationSuperseded();
     }
+    final boundAndroidQa = waitForEgressProof && _appContext.hostPlatform == HostPlatform.android;
+    if (boundAndroidQa && (requestId == null || _runtimeEngine is! RuntimeConnectProgress)) {
+      throw const RoutingCatalogFailure('smart_access_qa_connect_unsupported');
+    }
     bool proofPending(RuntimeSnapshot value) => waitForEgressProof &&
-        value.phase == RuntimePhase.running && value.isCoreEgressValidationPending;
+        (value.connectionPending ||
+            value.phase == RuntimePhase.running && value.isCoreEgressValidationPending);
     if (snapshot.phase == RuntimePhase.running && !proofPending(snapshot) ||
         !snapshot.supportsLiveConnect ||
         _isTerminalConnectMessage(snapshot.message)) {
@@ -5683,7 +5691,9 @@ class ConnectionManager extends ChangeNotifier {
       if (snapshotBudget != null && snapshotBudget <= Duration.zero) break;
       final pending = _withRuntimeActionTimeout(
         'settleSnapshot',
-        _runtimeEngine.snapshot,
+        boundAndroidQa
+            ? () => (_runtimeEngine as RuntimeConnectProgress).snapshotForConnectRequest(requestId!)
+            : _runtimeEngine.snapshot,
         ownerGeneration: generation,
       );
       current = await (snapshotBudget == null
