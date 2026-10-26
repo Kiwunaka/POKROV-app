@@ -288,6 +288,10 @@ the failure, with no native guard, pending bound proof or denied access. It then
 promotes the replacement through the ordinary success path; stale or mismatched
 observations cannot mark it proven. Home accessibility uses the displayed action,
 so a degraded connection's Disconnect is not announced as Retry.
+If selection advances but preparation fails before native replacement, recovery
+still belongs to the unchanged active candidate. After the same owner and fresh
+native proof checks pass, its candidate attribution is restored; a successful
+alternate probe alone cannot become the active connection.
 Home captures the presentation's typed Disconnect action and dispatches the
 existing explicit stop even if background recovery becomes busy before the tap.
 An explicit Connect/replacement's Cancel retains the original cancellation path;

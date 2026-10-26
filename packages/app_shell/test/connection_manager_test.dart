@@ -330,7 +330,7 @@ class _StatsBootstrapper extends _Bootstrapper implements AppFirstExperienceServ
 }
 
 class _CatalogFailureBootstrapper extends _StatsBootstrapper implements AppFirstRoutingCatalogService {
-  Object catalogFailure = const RoutingCatalogFailure('catalog_response_invalid');
+  Object? catalogFailure = const RoutingCatalogFailure('catalog_response_invalid');
 
   @override
   bool get routingCatalogEnabled => true;
@@ -341,7 +341,10 @@ class _CatalogFailureBootstrapper extends _StatsBootstrapper implements AppFirst
   @override
   Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({
     required HostPlatform hostPlatform, bool cacheOnly = false, Future<void>? cancelled,
-  }) async => throw catalogFailure;
+  }) async {
+    if (catalogFailure != null) throw catalogFailure!;
+    return null;
+  }
 }
 
 class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
@@ -4270,7 +4273,7 @@ void main() {
       ..proofObservedAt = DateTime.utc(2026, 10, 8)
       ..profileSource = RuntimeProfileSource(revision: 'current-owner',
           origin: RuntimeProfileSourceOrigin.values.first, protocol: 'vless');
-    final bootstrapper = _StatsBootstrapper();
+    final bootstrapper = _CatalogFailureBootstrapper()..catalogFailure = null;
     final manager = _manager(runtime, bootstrapper,
         experienceStore: recoveryExperience,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
@@ -4317,7 +4320,9 @@ void main() {
     expect(manager.snapshot?.lastFailureKind, isNull);
     expect(manager.snapshot?.proofObservedAt, runtime.proofObservedAt);
     expect(manager.snapshot?.stagedProfileSource, runtime.profileSource);
-    expect(manager.status.phase, ConnectionPhase.connected);
+    expect(manager.status.phase, ConnectionPhase.connected,
+        reason: recoveryExperience.saved.protectionEvents.where((event) => event.kind == 'native_recovery_blocked')
+            .map((event) => event.detail).join(' '));
     expect(manager.retainsProtection, isFalse);
     expect(runtime.stagedPayloads, hasLength(1));
     expect(runtime.connectCalls, 1);
@@ -4330,6 +4335,30 @@ void main() {
       minimumCoreRelease: null, platforms: {HostPlatform.windows}, requiredFeatures: const {}, bridgeId: 'rf2');
     bootstrapper.candidates = [_candidates.first, rf2];
     runtime.failedProbeProfiles..clear()..add(_candidates.first.candidateRef);
+    bootstrapper.catalogFailure = const RoutingCatalogFailure('catalog_response_invalid');
+    final failuresBeforeSelection = bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed').length;
+    runtime.warpEgressFailure = true;
+    final selectionDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while ((manager.busy || bootstrapper.actualReports.where((report) => report['runtime_phase'] == 'failed').length == failuresBeforeSelection) &&
+        DateTime.now().isBefore(selectionDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(runtime.probedPayloads.last.materialCandidate?.candidateRef, rf2.candidateRef);
+    expect(runtime.handoffCalls, 0, reason: 'the selected alternate failed preparation before native replacement');
+    expect(manager.retainsProtection, isTrue);
+    runtime.warpEgressFailure = false;
+    runtime.proofObservedAt = DateTime.now().toUtc();
+    await manager.refresh();
+    expect(manager.status.phase, ConnectionPhase.connected,
+        reason: recoveryExperience.saved.protectionEvents.where((event) => event.kind == 'native_recovery_blocked')
+            .map((event) => event.detail).join(' '));
+    expect(manager.presentation.isVerified, isTrue);
+    expect(manager.materialCandidate?.candidateRef, _candidates.first.candidateRef,
+        reason: 'fresh native proof belongs to the unchanged active owner, not the prepared alternate');
+    expect(manager.retainsProtection, isFalse);
+    expect(runtime.handoffCalls, 0);
+    bootstrapper.catalogFailure = null;
+
     runtime.failedHandoffKeepsRunning = true;
     runtime.failedHandoffProfile = rf2.candidateRef;
     runtime.profileDigest = 'b' * 64;

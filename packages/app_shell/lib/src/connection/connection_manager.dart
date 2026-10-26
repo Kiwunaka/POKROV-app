@@ -437,7 +437,8 @@ class ConnectionManager extends ChangeNotifier {
     if (pending == null) return blocked(_NativeRecoveryBlockReason.pendingOwnerMissing);
     if (pending.command != _commandNumber) return blocked(_NativeRecoveryBlockReason.commandChanged);
     if (pending.profileRevision != _managedProfileRevision) return blocked(_NativeRecoveryBlockReason.profileInputsChanged);
-    if (pending.candidateRef != _candidateRef) return blocked(_NativeRecoveryBlockReason.candidateMismatch);
+    if (pending.replaced && pending.candidateRef != _candidateRef)
+      return blocked(_NativeRecoveryBlockReason.candidateMismatch);
     if (!current.proofObservedAt!.isAfter(pending.failedAt)) return blocked(_NativeRecoveryBlockReason.proofNotFresh);
     if (!pending.replaced && _managedProfileDirty) return blocked(_NativeRecoveryBlockReason.profileDirty);
     if (!pending.replaced && _activeCandidateRef != pending.candidateRef)
@@ -460,6 +461,9 @@ class ConnectionManager extends ChangeNotifier {
       return blocked(_NativeRecoveryBlockReason.sourceMissing);
     if (source.revision != currentSource.revision || source.origin != currentSource.origin || source.protocol != currentSource.protocol)
       return blocked(_NativeRecoveryBlockReason.sourceMismatch);
+    // Selection can advance before preparation fails without changing Core's
+    // active owner. Attribute its fresh proof to that owner, not the proposal.
+    _candidateRef = pending.candidateRef;
     _protectedHandoffActive = false;
     _activePhase = null;
     _runtimeHeadline = null;
