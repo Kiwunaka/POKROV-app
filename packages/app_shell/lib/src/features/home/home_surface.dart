@@ -90,7 +90,7 @@ class _QuickConnectSection extends StatelessWidget {
         showAdSlot: slots.isNotEmpty,
       ),
       onToggle: presentation.primaryActionEnabled
-          ? () => unawaited(protectionIntents.toggleConnection()) : null,
+          ? () => unawaited(protectionIntents.activatePrimaryAction(presentation)) : null,
       onOpenStatus: protectionIntents.openConnectionDetails,
       onOpenCountry: protectionIntents.openLocations,
       onOpenRoute: protectionIntents.openRules,

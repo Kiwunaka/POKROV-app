@@ -288,6 +288,10 @@ the failure, with no native guard, pending bound proof or denied access. It then
 promotes the replacement through the ordinary success path; stale or mismatched
 observations cannot mark it proven. Home accessibility uses the displayed action,
 so a degraded connection's Disconnect is not announced as Retry.
+Home captures the presentation's typed Disconnect action and dispatches the
+existing explicit stop even if background recovery becomes busy before the tap.
+An explicit Connect/replacement's Cancel retains the original cancellation path;
+ordinary Connect eligibility is unchanged.
 When native health has recovered but App retention remains, the existing local
 protection history records `native_recovery_blocked` with a closed reason such as
 `candidateMismatch` or `sourceMissing`, once per command/reason. The record contains

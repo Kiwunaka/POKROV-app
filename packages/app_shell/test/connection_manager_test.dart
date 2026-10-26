@@ -4190,7 +4190,30 @@ void main() {
     expect(runtime.calls, isNot(contains('disconnect')));
     expect(manager.presentation.primaryActionLabel, 'Отключить');
     expect(manager.presentation.primaryActionEnabled, isTrue);
-    await manager.toggle();
+    final shownStop = manager.presentation;
+    var disconnectIntents = 0;
+    var toggleIntents = 0;
+    final intents = ProtectionIntents(
+      toggleConnection: () async { toggleIntents++; },
+      disconnectConnection: () async { disconnectIntents++; await manager.disconnect(); },
+      openConnectionDetails: () {}, openLocations: () {}, openRules: () {},
+    );
+    final heldHandoff = Completer<void>();
+    runtime.handoffRelease = heldHandoff;
+    final handoffsBefore = runtime.handoffCalls;
+    final retry = manager.repair();
+    final superseded = expectLater(retry, throwsA(isA<ConnectionOperationSuperseded>()));
+    while (runtime.handoffCalls == handoffsBefore) { await Future<void>.delayed(Duration.zero); }
+    expect(manager.busy, isTrue);
+    expect(manager.retainsProtection, isTrue);
+    expect(manager.presentation.primaryActionLabel, 'Отменить');
+    await intents.activatePrimaryAction(manager.presentation);
+    expect((toggleIntents, disconnectIntents), (1, 0), reason: 'Cancel keeps the original toggle/cancel callback');
+    final stop = intents.activatePrimaryAction(shownStop);
+    heldHandoff.complete();
+    await superseded;
+    await stop;
+    expect(disconnectIntents, 1, reason: 'the rendered Stop remains explicit while recovery becomes busy');
     expect(runtime.calls.where((call) => call == 'disconnect'), hasLength(1));
     expect(manager.retainsProtection, isFalse);
   });

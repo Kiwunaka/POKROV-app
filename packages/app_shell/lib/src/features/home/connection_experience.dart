@@ -264,6 +264,7 @@ class ConnectionPresentation {
     required this.subtitle,
     required this.primaryActionLabel,
     required this.primaryActionEnabled,
+    required this.primaryActionIsDisconnect,
     required this.discPhase,
     required this.tone,
     required this.semanticLabel,
@@ -401,6 +402,8 @@ class ConnectionPresentation {
       subtitle: subtitle,
       primaryActionLabel: actionLabel,
       primaryActionEnabled: actionEnabled,
+      primaryActionIsDisconnect: !canCancelConnect && (retainedFailure ||
+          phase == ConnectionExperiencePhase.connectedUnverified || phase == ConnectionExperiencePhase.connectedVerified),
       discPhase: retainedFailure ? ConnectionDiscPhase.error : discPhase,
       tone: tone,
       // The action owns only its action name. Connection state is announced
@@ -420,6 +423,7 @@ class ConnectionPresentation {
   final String subtitle;
   final String primaryActionLabel;
   final bool primaryActionEnabled;
+  final bool primaryActionIsDisconnect;
   final ConnectionDiscPhase discPhase;
   final ConnectionTone tone;
   final String semanticLabel;
@@ -492,12 +496,16 @@ class ProtectionViewState {
 class ProtectionIntents {
   const ProtectionIntents({
     required this.toggleConnection,
+    required this.disconnectConnection,
     required this.openConnectionDetails,
     required this.openLocations,
     required this.openRules,
   });
 
   final Future<void> Function() toggleConnection;
+  final Future<void> Function() disconnectConnection;
+  Future<void> activatePrimaryAction(ConnectionPresentation presentation) =>
+      presentation.primaryActionIsDisconnect ? disconnectConnection() : toggleConnection();
   final VoidCallback openConnectionDetails;
   final VoidCallback openLocations;
   final VoidCallback openRules;

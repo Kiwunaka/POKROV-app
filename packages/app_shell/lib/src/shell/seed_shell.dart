@@ -3301,6 +3301,7 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
     );
     final protectionIntents = ProtectionIntents(
       toggleConnection: _toggleRuntimeFromHome,
+      disconnectConnection: _connectionManager.disconnect,
       openConnectionDetails: _openProtectionCenter,
       openLocations: () => _selectTab(SeedTab.locations),
       openRules: () => _selectTab(SeedTab.rules),
