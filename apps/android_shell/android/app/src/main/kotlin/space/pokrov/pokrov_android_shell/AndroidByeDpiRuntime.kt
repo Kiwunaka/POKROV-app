@@ -16,14 +16,22 @@ import android.system.StructTimeval
 import java.io.File
 import java.io.EOFException
 import java.io.IOException
+import java.net.ConnectException
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.NoRouteToHostException
 import java.net.Socket
+import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.security.SecureRandom
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SNIHostName
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.SSLProtocolException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
@@ -70,7 +78,7 @@ internal class AndroidByeDpiRuntime private constructor(
                     protectSocket(it.fd)
                 } && isCurrent()
             }
-        }, remainingMillis)
+        }, remainingMillis, ::logLocalDpiDiagnostic)
         synchronized(protectLock) {
             if (!isCurrent()) return false
             proof = attempt
@@ -94,11 +102,19 @@ internal class AndroidByeDpiRuntime private constructor(
     @Keep
     @Suppress("unused")
     private fun allowClient(clientPort: Int, serverPort: Int): Boolean = synchronized(protectLock) {
-        isCurrent() && network.getConnectionOwnerUid(
-            OsConstants.IPPROTO_TCP,
-            InetSocketAddress("127.0.0.1", clientPort),
-            InetSocketAddress("127.0.0.1", serverPort),
-        ) == uid && isCurrent()
+        if (!isCurrent()) return@synchronized false
+        val owner = try {
+            network.getConnectionOwnerUid(
+                OsConstants.IPPROTO_TCP,
+                InetSocketAddress("127.0.0.1", clientPort),
+                InetSocketAddress("127.0.0.1", serverPort),
+            )
+        } catch (failure: Exception) {
+            proof?.reportClientFailure(clientPort, if (failure is SecurityException) "lookup_security" else "lookup_error")
+            throw failure
+        }
+        if (owner != uid) proof?.reportClientFailure(clientPort, "uid_mismatch")
+        owner == uid && isCurrent()
     }
 
     private fun listenForProtection() {
@@ -114,19 +130,26 @@ internal class AndroidByeDpiRuntime private constructor(
                 }
                 synchronized(protectLock) { accepted = socket }
                 socket.use {
+                    var ownerPeer = false
                     try {
                         it.soTimeout = 1000
                         if (it.peerCredentials.uid != uid || !isCurrent()) return@use
+                        ownerPeer = true
                         val marker = it.inputStream.read()
                         val descriptors = it.ancillaryFileDescriptors ?: emptyArray()
                         try {
-                            if (marker != '1'.code || descriptors.size != 1) return@use
+                            if (marker != '1'.code || descriptors.size != 1) {
+                                proof?.reportUplinkProtection("invalid_request")
+                                return@use
+                            }
                             ParcelFileDescriptor.dup(descriptors[0]).use { descriptor ->
                                 synchronized(protectLock) {
                                     acknowledgeByeDpiProtection(
                                         it.peerCredentials.uid, uid, ::isCurrent,
-                                        { protectSocket(descriptor.fd) },
-                                        { it.outputStream.write('1'.code) },
+                                        { protectSocket(descriptor.fd).also { protected ->
+                                            if (!protected) proof?.reportUplinkProtection("refused")
+                                        } },
+                                        { it.outputStream.write('1'.code); proof?.reportUplinkProtection("ok") },
                                     )
                                 }
                             }
@@ -134,6 +157,7 @@ internal class AndroidByeDpiRuntime private constructor(
                             descriptors.forEach { descriptor -> Os.close(descriptor) }
                         }
                     } catch (_: Exception) {
+                        if (ownerPeer) proof?.reportUplinkProtection("exception")
                         // Upstream treats any byte as success. On denial, malformed
                         // FD transfer, or revoked session, close without an ACK.
                     }
@@ -242,6 +266,7 @@ internal class AndroidByeDpiServiceProof(
     private val isCurrent: () -> Boolean,
     private val protectSocket: (Socket) -> Boolean,
     private val remainingMillis: () -> Int,
+    private val diagnostic: (String) -> Unit,
 ) : AutoCloseable {
     private val lock = Any()
     private var closed = false
@@ -249,19 +274,30 @@ internal class AndroidByeDpiServiceProof(
     private var tls: SSLSocket? = null
     private var worker: Thread? = null
     private val settled = CountDownLatch(1)
+    private val reported = AtomicBoolean(false)
+    private val clientReported = AtomicBoolean(false)
+    private val uplinkReported = AtomicBoolean(false)
     @Volatile private var passed = false
+    @Volatile private var stage = "start"
+    private var family = "unknown"
 
     fun run(socksPort: Int, host: String, address: InetAddress): Boolean {
+        family = if (address.address.size == 4) "ipv4" else "ipv6"
         val waitMillis = synchronized(lock) {
             check(worker == null) { "byedpi: proof already started" }
-            if (closed || !isCurrent() || remainingMillis() <= 0) return false
+            if (closed || !isCurrent() || remainingMillis() <= 0) {
+                report("inactive_or_deadline")
+                return false
+            }
             val limit = remainingMillis()
             worker = Thread({
                 try {
                     exchange(socksPort, host, address)
                     passed = current()
-                } catch (_: Exception) {
+                    if (!passed) report("inactive")
+                } catch (failure: Exception) {
                     // A failed handshake/status never admits a service or retries ciphertext.
+                    report(localDpiProofException(failure))
                 } finally {
                     closeSockets()
                     settled.countDown()
@@ -273,10 +309,12 @@ internal class AndroidByeDpiServiceProof(
             // SO_TIMEOUT bounds individual reads; this deadline bounds the entire
             // exchange, including a peer dripping TLS handshake records.
             if (!settled.await(waitMillis.toLong().coerceAtLeast(0), TimeUnit.MILLISECONDS)) {
+                report("deadline")
                 close()
                 return false
             }
         } catch (_: InterruptedException) {
+            report("interrupted")
             close()
             Thread.currentThread().interrupt()
             return false
@@ -285,6 +323,22 @@ internal class AndroidByeDpiServiceProof(
     }
 
     private fun current(): Boolean = synchronized(lock) { !closed && isCurrent() }
+    fun reportClientFailure(port: Int, error: String) {
+        val isProofClient = synchronized(lock) { !closed && raw?.localPort == port }
+        if (isProofClient && clientReported.compareAndSet(false, true)) diagnostic("proof_client=$error")
+    }
+
+    fun reportUplinkProtection(result: String) {
+        if ((stage == "socks_connect_write" || stage == "socks_connect_reply") && current() &&
+            uplinkReported.compareAndSet(false, true)) diagnostic("proof_uplink=$result")
+    }
+
+    private fun report(error: String, detail: String = "") {
+        if (reported.compareAndSet(false, true)) {
+            diagnostic("proof_detail stage=$stage family=$family error=$error$detail")
+        }
+    }
+
     private fun budget(): Int {
         if (!current()) throw IOException("byedpi: proof superseded")
         return remainingMillis().also { if (it <= 0) throw IOException("byedpi: proof deadline") }
@@ -298,29 +352,48 @@ internal class AndroidByeDpiServiceProof(
         }
         // Create the FD before protecting the same loopback transport used by
         // Core. An included host UID must not send this proof back into its TUN.
+        stage = "socket_bind"
         socket.bind(InetSocketAddress("127.0.0.1", 0))
-        if (!protectSocket(socket)) throw IOException("byedpi: proof protection refused")
+        stage = "protect"
+        if (!protectSocket(socket)) {
+            report("refused")
+            throw IOException("byedpi: proof protection refused")
+        }
+        stage = "loopback_connect"
         socket.connect(InetSocketAddress("127.0.0.1", port), budget())
         socket.soTimeout = budget()
         val output = socket.getOutputStream()
+        stage = "socks_auth_write"
         output.write(byteArrayOf(5, 1, 0))
-        if (!readExactly(socket, 2).contentEquals(byteArrayOf(5, 0))) throw IOException("byedpi: SOCKS auth")
+        stage = "socks_auth_reply"
+        if (!readExactly(socket, 2).contentEquals(byteArrayOf(5, 0))) {
+            report("invalid_reply")
+            throw IOException("byedpi: SOCKS auth")
+        }
         val bytes = address.address
         budget()
+        stage = "socks_connect_write"
         output.write(byteArrayOf(5, 1, 0, (if (bytes.size == 4) 1 else 4).toByte()) +
             bytes + byteArrayOf(1, 0xbb.toByte()))
         socket.soTimeout = budget()
+        stage = "socks_connect_reply"
         val reply = readExactly(socket, 4)
         if (reply[0] != 5.toByte() || reply[1] != 0.toByte() || reply[2] != 0.toByte()) {
+            if (reply[0] == 5.toByte() && reply[2] == 0.toByte()) {
+                report("rejected", " socks_reply=${reply[1].toInt() and 255}")
+            } else {
+                report("invalid_reply")
+            }
             throw IOException("byedpi: SOCKS connect")
         }
         readExactly(socket, when (reply[3].toInt()) {
             1 -> 4
             4 -> 16
             3 -> readExactly(socket, 1)[0].toInt() and 255
-            else -> throw IOException("byedpi: SOCKS address")
+            else -> { report("invalid_address_type"); throw IOException("byedpi: SOCKS address") }
         } + 2)
         budget()
+        stage = "tls_setup"
         val secure = (SSLSocketFactory.getDefault() as SSLSocketFactory)
             .createSocket(socket, host, 443, true) as SSLSocket
         synchronized(lock) {
@@ -332,8 +405,10 @@ internal class AndroidByeDpiServiceProof(
             serverNames = listOf(SNIHostName(host))
         }
         secure.soTimeout = budget()
+        stage = "tls_handshake"
         secure.startHandshake()
         secure.soTimeout = budget()
+        stage = "http_write"
         secure.outputStream.write("HEAD / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n"
             .toByteArray(Charsets.US_ASCII))
         val response = secure.inputStream
@@ -348,8 +423,14 @@ internal class AndroidByeDpiServiceProof(
             }
             throw IOException("byedpi: HTTP header limit")
         }
+        stage = "http_status"
         val status = line()
-        if (!Regex("HTTP/1\\.[01] 2[0-9]{2}(?: .*)?").matches(status)) throw IOException("byedpi: HTTP status")
+        if (!Regex("HTTP/1\\.[01] 2[0-9]{2}(?: .*)?").matches(status)) {
+            val code = Regex("HTTP/1\\.[01] ([0-9]{3})(?: .*)?").matchEntire(status)?.groupValues?.get(1)
+            if (code == null) report("invalid_status") else report("rejected", " http_status=$code")
+            throw IOException("byedpi: HTTP status")
+        }
+        stage = "http_headers"
         var headerBytes = status.length
         while (true) {
             val header = line()
@@ -384,6 +465,23 @@ internal class AndroidByeDpiServiceProof(
         closeSockets()
         if (thread != null) joinByeDpiWorker(thread)
     }
+}
+
+// Do not report exception messages, hosts, addresses, or any other peer data.
+internal fun localDpiProofException(failure: Exception): String = when (failure) {
+    is SSLHandshakeException -> "ssl_handshake"
+    is SSLPeerUnverifiedException -> "ssl_peer_unverified"
+    is SSLProtocolException -> "ssl_protocol"
+    is SSLException -> "ssl"
+    is SocketTimeoutException -> "socket_timeout"
+    is ConnectException -> "connect"
+    is NoRouteToHostException -> "no_route"
+    is SocketException -> "socket"
+    is EOFException -> "eof"
+    is IOException -> "io"
+    is SecurityException -> "security"
+    is IllegalArgumentException -> "illegal_argument"
+    else -> "other"
 }
 
 // Scope cancellation interrupts its JVM worker before running close hooks.
