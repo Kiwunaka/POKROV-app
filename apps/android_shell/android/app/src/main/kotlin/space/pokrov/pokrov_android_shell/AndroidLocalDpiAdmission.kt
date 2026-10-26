@@ -30,21 +30,39 @@ internal data class LocalDpiVpnOutbound(
 )
 
 /** Inspect the transport behind a lease, but keep the lease as the fallback. */
-internal fun localDpiVpnFallback(outbounds: List<LocalDpiVpnOutbound>, tag: String): String? {
-    fun protected(candidate: String, visiting: Set<String>): Boolean {
-        if (candidate in visiting) return false
-        val outbound = outbounds.singleOrNull { it.tag == candidate } ?: return false
-        if (outbound.detour.isNotEmpty()) return false
+internal fun localDpiVpnFallback(
+    outbounds: List<LocalDpiVpnOutbound>, tag: String, onFailure: (String) -> Unit = {},
+): String? {
+    fun rejected(reason: String): Boolean { onFailure(reason); return false }
+    fun protected(candidate: String, visiting: Set<String>, missing: String): Boolean {
+        if (candidate in visiting) return rejected("fallback=cycle")
+        val outbound = outbounds.singleOrNull { it.tag == candidate }
+            ?: return rejected(if (outbounds.any { it.tag == candidate }) "fallback=duplicate_target" else missing)
+        if (outbound.detour.isNotEmpty()) {
+            val targets = outbounds.filter { it.tag == outbound.detour }
+            return rejected(when {
+                targets.isEmpty() -> "fallback=detour_target_missing"
+                targets.size != 1 -> "fallback=detour_target_duplicate"
+                targets.single().type == "direct" -> "fallback=detour_direct"
+                else -> "fallback=detour_other"
+            })
+        }
         val visited = visiting + candidate
         return when (outbound.type) {
             "vless", "hysteria2", "wireguard", "awg" -> true
-            "pokrov-ats-lease" -> protected(outbound.upstreamTag, visited)
-            "selector", "urltest" -> outbound.children.isNotEmpty() &&
-                outbound.children.all { protected(it, visited) }
-            else -> false
+            "pokrov-ats-lease" -> protected(outbound.upstreamTag, visited, "fallback=lease_target_missing")
+            "selector", "urltest" -> if (outbound.children.isEmpty()) rejected("fallback=empty_group") else
+                outbound.children.all { protected(it, visited, "fallback=group_target_missing") }
+            "direct" -> rejected("fallback=type_direct")
+            "block" -> rejected("fallback=type_block")
+            "dns" -> rejected("fallback=type_dns")
+            "naive" -> rejected("fallback=type_naive")
+            "pokrov-smart-access" -> rejected("fallback=type_smart_access")
+            "" -> rejected("fallback=type_empty")
+            else -> rejected("fallback=type_other")
         }
     }
-    return tag.takeIf { protected(it, emptySet()) }
+    return tag.takeIf { protected(it, emptySet(), "fallback=root_target_missing") }
 }
 
 /** One global ByeDPI child, restricted to signed service routes of one profile. */
@@ -283,7 +301,7 @@ internal class AndroidLocalDpiAdmission private constructor(
                             domain.getString("name") == names.getString(0) && !domain.getBoolean("shared") &&
                                 domain.getString("match") == if (suffix) "suffix" else "exact"
                         }) continue
-                        val vpn = localDpiVpnFallback(vpnOutbounds, rule.optString("outbound"))
+                        val vpn = localDpiVpnFallback(vpnOutbounds, rule.optString("outbound"), ::logLocalDpiDiagnostic)
                             ?: return unavailable("prepare=fallback_unprotected")
                         if (fallbacks[service] != null && fallbacks[service] != vpn)
                             return unavailable("prepare=fallback_conflict")
