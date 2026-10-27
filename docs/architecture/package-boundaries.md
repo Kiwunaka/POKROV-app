@@ -354,6 +354,10 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   proof and each new holder is admitted. An exhausted pair or a failed proof
   leaves VPN fallback. Stop cancels an in-progress proof before joining it, and
   a withdrawn holder, changed owner/network or expired catalog cannot retry.
+  After the transition guard has finished, the retry control socket's exact
+  soft permit uses its own temporary WFP sublayer in the same dynamic session;
+  closing or cancelling the proof removes both objects. An armed or unknown
+  guard continues to require its existing sublayer.
   Failed withdrawal retains the child until confirmed Core Stop. Child exit
   and driver-guard closure must also be confirmed before cleanup
   reports success; failed cleanup retains the exact handles for retry and

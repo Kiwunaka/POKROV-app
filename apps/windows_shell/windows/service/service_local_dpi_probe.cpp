@@ -298,7 +298,8 @@ int HttpStatus(Tls* tls, SOCKET socket, const std::wstring& host, const std::str
 }
 std::string BoundHttpExchange(const std::string& control_host, const std::string& bind_interface,
                              const std::string& request, const CheckInterruption& interrupted,
-                             ULONGLONG timeout_ms, bool local_dpi_control, int* status) {
+                             ULONGLONG timeout_ms, bool local_dpi_control,
+                             bool standalone_permit, int* status) {
   const auto host = Wide(control_host), alias = Wide(bind_interface);
   if (host.empty() || alias.empty()) return "local_dpi_control_invalid";
   const auto deadline = ::GetTickCount64() + timeout_ms;
@@ -314,7 +315,7 @@ std::string BoundHttpExchange(const std::string& control_host, const std::string
   // The ready WinDivert filter also reinjects SYN. Permit the exclusively held
   // bound tuple before connect; waiting for getpeername would deadlock proof.
   WindowsLocalDpiControlPermit permit;
-  if (local_dpi_control && !permit.OpenBoundSocket(socket.value, address.s_addr, endpoint.index))
+  if (local_dpi_control && !permit.OpenBoundSocket(socket.value, address.s_addr, endpoint.index, standalone_permit))
     return "local_dpi_control_permit_failed";
   if (::connect(socket.value, reinterpret_cast<const sockaddr*>(&target), sizeof(target)) == SOCKET_ERROR &&
       ::WSAGetLastError() != WSAEWOULDBLOCK) return "local_dpi_control_connect_failed";
@@ -335,11 +336,12 @@ std::string BoundHttpExchange(const std::string& control_host, const std::string
 
 std::string VerifyWindowsLocalDpiControlHost(const std::string& control_host,
                                            const std::string& bind_interface,
-                                           const CheckInterruption& interrupted) {
+                                           const CheckInterruption& interrupted,
+                                           bool standalone_permit) {
   int status = 0;
   const auto failure = BoundHttpExchange(control_host, bind_interface,
       "HEAD / HTTP/1.1\r\nHost: " + control_host + "\r\nConnection: close\r\n\r\n",
-      interrupted, 10000, true, &status);
+      interrupted, 10000, true, standalone_permit, &status);
   if (!failure.empty()) return failure;
   return status >= 200 && status < 300 ? "" : "local_dpi_control_http_failed";
 }
@@ -351,7 +353,7 @@ std::string ObserveWindowsNetworkContext(const NetworkObservationRequest& reques
   const auto http = NetworkObservationHttpRequest(request, network_class);
   if (http.empty()) return "unavailable";
   int status = 0;
-  if (!BoundHttpExchange(request.host, bind_interface, http, interrupted, 6000, false, &status).empty()) return "unavailable";
+  if (!BoundHttpExchange(request.host, bind_interface, http, interrupted, 6000, false, false, &status).empty()) return "unavailable";
   if (status >= 200 && status < 300) return "acknowledged";
   return status == 401 || status == 403 ? "denied" : "unavailable";
 }

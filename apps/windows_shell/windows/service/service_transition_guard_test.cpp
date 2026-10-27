@@ -1,6 +1,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <fwpmu.h>
+#include <iphlpapi.h>
 #include <sddl.h>
 
 #include "service_transition_guard.h"
@@ -290,6 +291,98 @@ int main() {
            "only the held pre-connect TCP443 tuple on its physical interface may bypass our block");
   });
   expect(inspected, "exact permit must be constructible before SYN/getpeername succeeds");
+  // The runtime proof follows Finish, which removes the persistent guard
+  // sublayer. Exercise the same session lifecycle without touching host WFP.
+  StoredPolicy permit_policy;
+  auto permit_guard = create(permit_policy);
+  expect(permit_guard->Start().empty(), "permit fixture could not arm guard");
+  DWORD loopback_index = 0;
+  const bool have_interface = ::GetBestInterface(htonl(INADDR_LOOPBACK), &loopback_index) == NO_ERROR;
+  expect(have_interface, "permit fixture could not identify loopback interface");
+  bool session_active = false, temporary_layer = false, filter_active = false, reject_filter = false;
+  int closes = 0;
+  GUID temporary_key{};
+  WindowsLocalDpiControlPermitTestOps ops;
+  ops.open = [&](const FWPM_SESSION0& session, void** engine) -> std::uint32_t {
+    expect(session.flags == FWPM_SESSION_FLAG_DYNAMIC, "permit session must be dynamic");
+    session_active = true;
+    *engine = &session_active;
+    return ERROR_SUCCESS;
+  };
+  ops.add_sublayer = [&](void*, const FWPM_SUBLAYER0& layer) -> std::uint32_t {
+    expect(layer.flags == 0 && layer.providerKey == nullptr,
+           "runtime sublayer must belong only to the dynamic session");
+    temporary_key = layer.subLayerKey;
+    temporary_layer = true;
+    return ERROR_SUCCESS;
+  };
+  ops.add_filter = [&](void*, const FWPM_FILTER0& filter) -> std::uint32_t {
+    const GUID guard_key{0x541c71c5, 0x2ab4, 0x49b7,
+        {0xa1, 0xa3, 0x56, 0x4f, 0xc8, 0x5c, 0xef, 0x31}};
+    expect(filter.flags == 0 && filter.action.type == FWP_ACTION_PERMIT &&
+           filter.numFilterConditions == 6, "runtime permit widened the exact soft filter");
+    if (reject_filter) return ERROR_ACCESS_DENIED;
+    if (filter.subLayerKey == guard_key) {
+      if (permit_policy.state != TransitionGuardState::kArmed)
+        return static_cast<std::uint32_t>(FWP_E_SUBLAYER_NOT_FOUND);
+      expect(!temporary_layer, "guarded proof created a temporary sublayer");
+    } else {
+      if (!temporary_layer || filter.subLayerKey != temporary_key)
+        return static_cast<std::uint32_t>(FWP_E_SUBLAYER_NOT_FOUND);
+      expect(!permit_guard->IsArmed(), "temporary permit bypassed an armed or unknown guard");
+    }
+    filter_active = true;
+    return ERROR_SUCCESS;
+  };
+  ops.close = [&](void*) {
+    session_active = false;
+    temporary_layer = false;
+    filter_active = false;
+    ++closes;
+  };
+  if (bound_ready && have_interface) {
+    {
+      WindowsLocalDpiControlPermit permit(&ops);
+      expect(permit.OpenBoundSocket(control, htonl(0xcb007114), loopback_index,
+                                    !permit_guard->IsArmed()) && filter_active,
+             "guarded proof must keep using the persistent guard sublayer");
+    }
+    expect(closes == 1 && !session_active && !filter_active && permit_guard->IsArmed(),
+           "guarded proof cleanup removed the persistent guard");
+    expect(permit_guard->Finish().empty() && !permit_guard->IsArmed(),
+           "permit fixture did not finish the guard");
+    {
+      WindowsLocalDpiControlPermit permit(&ops);
+      expect(permit.OpenBoundSocket(control, htonl(0xcb007114), loopback_index,
+                                    !permit_guard->IsArmed()) &&
+                 session_active && temporary_layer && filter_active,
+             "runtime proof after guard Finish needs its own scoped dynamic sublayer");
+      // Cancellation/Stop exits this scope before joining the owner.
+    }
+    expect(closes == 2 && !session_active && !temporary_layer && !filter_active &&
+               !permit_guard->IsArmed(), "cancelled runtime proof retained WFP objects");
+    reject_filter = true;
+    {
+      WindowsLocalDpiControlPermit permit(&ops);
+      expect(!permit.OpenBoundSocket(control, htonl(0xcb007114), loopback_index,
+                                     !permit_guard->IsArmed()) && temporary_layer,
+             "failed filter insertion was not reported");
+    }
+    expect(closes == 3 && !session_active && !temporary_layer && !filter_active,
+           "failed filter insertion retained the dynamic sublayer");
+    reject_filter = false;
+    permit_policy.state = TransitionGuardState::kIncomplete;
+    permit_guard = create(permit_policy);
+    {
+      WindowsLocalDpiControlPermit permit(&ops);
+      expect(permit_guard->IsArmed() &&
+             !permit.OpenBoundSocket(control, htonl(0xcb007114), loopback_index,
+                                     !permit_guard->IsArmed()) && !temporary_layer,
+             "incomplete guard opened an independent permit");
+    }
+    expect(closes == 4 && !session_active && !temporary_layer && !filter_active,
+           "incomplete guard attempt retained WFP objects");
+  }
   if (control != INVALID_SOCKET) ::closesocket(control);
   if (winsock_ready) ::WSACleanup();
 #endif

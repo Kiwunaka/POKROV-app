@@ -11,6 +11,7 @@
 #include <functional>
 struct FWPM_FILTER0_;
 struct FWPM_SUBLAYER0_;
+struct FWPM_SESSION0_;
 #endif
 
 namespace pokrov::service {
@@ -32,6 +33,15 @@ class RuntimeTransitionGuard {
 std::unique_ptr<RuntimeTransitionGuard> CreateWindowsTransitionGuard(
     ServiceEventSink* events = nullptr);
 
+#ifdef _DEBUG
+struct WindowsLocalDpiControlPermitTestOps {
+  std::function<std::uint32_t(const FWPM_SESSION0_&, void**)> open;
+  std::function<std::uint32_t(void*, const FWPM_SUBLAYER0_&)> add_sublayer;
+  std::function<std::uint32_t(void*, const FWPM_FILTER0_&)> add_filter;
+  std::function<void(void*)> close;
+};
+#endif
+
 // WinDivert's injected control packets lose the service executable identity.
 // Keep the exclusively bound socket alive longer than this exact-tuple exception.
 // The dynamic session removes the permit on scope exit or service termination;
@@ -39,14 +49,20 @@ std::unique_ptr<RuntimeTransitionGuard> CreateWindowsTransitionGuard(
 class WindowsLocalDpiControlPermit final {
  public:
   WindowsLocalDpiControlPermit() = default;
+#ifdef _DEBUG
+  explicit WindowsLocalDpiControlPermit(const WindowsLocalDpiControlPermitTestOps* ops) : test_ops_(ops) {}
+#endif
   ~WindowsLocalDpiControlPermit();
   WindowsLocalDpiControlPermit(const WindowsLocalDpiControlPermit&) = delete;
   WindowsLocalDpiControlPermit& operator=(const WindowsLocalDpiControlPermit&) = delete;
   bool OpenBoundSocket(std::uintptr_t bound_socket, std::uint32_t remote_ipv4_network_order,
-                       std::uint32_t physical_interface_index);
+                       std::uint32_t physical_interface_index, bool standalone = false);
 
  private:
   void* engine_ = nullptr;
+#ifdef _DEBUG
+  const WindowsLocalDpiControlPermitTestOps* test_ops_ = nullptr;
+#endif
 };
 
 enum class TransitionGuardState { kOff, kArmed, kIncomplete };

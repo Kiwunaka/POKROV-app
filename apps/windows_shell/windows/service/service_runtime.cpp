@@ -2288,7 +2288,8 @@ RuntimeResult RuntimeHost::MaintainWindowsLocalDpi(const CheckInterruption& inte
       if (proved) {
         for (const auto& service : local_dpi_preparation_->services) {
           auto proof_failure = !current() ? owner_failure() :
-              VerifyWindowsLocalDpiControlHost(service.control_host, local_dpi_bind_interface_, proof_interrupted);
+              VerifyWindowsLocalDpiControlHost(service.control_host, local_dpi_bind_interface_, proof_interrupted,
+                  transition_guard_ && !transition_guard_->IsArmed());
           if (!current()) proof_failure = owner_failure();
           record(LocalDpiStage::kProof, proof_failure);
           if (!proof_failure.empty()) {

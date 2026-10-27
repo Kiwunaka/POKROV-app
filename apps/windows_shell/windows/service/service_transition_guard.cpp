@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <fwpmu.h>
 #include <iphlpapi.h>
+#include <objbase.h>
 #include <sddl.h>
 
 #include "service_transition_guard.h"
@@ -113,7 +114,8 @@ class FilterDefinitions {
 class LocalDpiControlFilter {
  public:
   LocalDpiControlFilter(const sockaddr_in& local, const sockaddr_in& remote,
-                       NET_LUID interface_luid) : interface_luid_(interface_luid) {
+                       NET_LUID interface_luid, const GUID& sublayer = kSubLayer)
+      : interface_luid_(interface_luid), sublayer_(sublayer) {
     const std::array<const GUID*, 6> keys = {
         &FWPM_CONDITION_IP_PROTOCOL, &FWPM_CONDITION_IP_LOCAL_ADDRESS,
         &FWPM_CONDITION_IP_REMOTE_ADDRESS, &FWPM_CONDITION_IP_LOCAL_PORT,
@@ -140,7 +142,7 @@ class LocalDpiControlFilter {
     FWPM_FILTER0 filter{};
     filter.displayData.name = const_cast<wchar_t*>(L"POKROV local DPI control socket");
     filter.layerKey = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
-    filter.subLayerKey = kSubLayer;
+    filter.subLayerKey = sublayer_;
     filter.weight.type = FWP_UINT64;
     filter.weight.uint64 = &weight_;
     filter.action.type = FWP_ACTION_PERMIT;
@@ -153,6 +155,7 @@ class LocalDpiControlFilter {
 
  private:
   NET_LUID interface_luid_{};
+  GUID sublayer_{};
   std::array<FWPM_FILTER_CONDITION0, 6> conditions_{};
   UINT64 weight_ = 3;
 };
@@ -491,11 +494,14 @@ class Guard final : public RuntimeTransitionGuard {
 }  // namespace
 
 WindowsLocalDpiControlPermit::~WindowsLocalDpiControlPermit() {
+#ifdef _DEBUG
+  if (engine_ && test_ops_) { test_ops_->close(engine_); return; }
+#endif
   if (engine_) ::FwpmEngineClose0(engine_);
 }
 
 bool WindowsLocalDpiControlPermit::OpenBoundSocket(std::uintptr_t bound_socket,
-    std::uint32_t remote_ipv4_network_order, std::uint32_t physical_interface_index) {
+    std::uint32_t remote_ipv4_network_order, std::uint32_t physical_interface_index, bool standalone) {
   if (engine_ != nullptr) return false;
   sockaddr_in local{}, remote{};
   NET_LUID luid{};
@@ -505,10 +511,36 @@ bool WindowsLocalDpiControlPermit::OpenBoundSocket(std::uintptr_t bound_socket,
   FWPM_SESSION0 session{};
   session.flags = FWPM_SESSION_FLAG_DYNAMIC;
   session.displayData.name = const_cast<wchar_t*>(L"POKROV local DPI control socket");
-  if (::FwpmEngineOpen0(nullptr, RPC_C_AUTHN_WINNT, nullptr, &session, &engine_) != ERROR_SUCCESS)
+  DWORD opened = ERROR_SUCCESS;
+#ifdef _DEBUG
+  if (test_ops_) opened = test_ops_->open(session, &engine_);
+  else
+#endif
+  opened = ::FwpmEngineOpen0(nullptr, RPC_C_AUTHN_WINNT, nullptr, &session, &engine_);
+  if (opened != ERROR_SUCCESS)
     return false;
-  LocalDpiControlFilter definition(local, remote, luid);
+  GUID sublayer = kSubLayer;
+  if (standalone) {
+    // Guard Finish removes its persistent sublayer. A running connection's
+    // fresh proof owns a separate dynamic sublayer for this exact permit only.
+    if (FAILED(::CoCreateGuid(&sublayer))) return false;
+    FWPM_SUBLAYER0 layer{};
+    layer.subLayerKey = sublayer;
+    layer.displayData.name = const_cast<wchar_t*>(L"POKROV local DPI control socket");
+    layer.weight = kSubLayerWeight;
+    DWORD added = ERROR_SUCCESS;
+#ifdef _DEBUG
+    if (test_ops_) added = test_ops_->add_sublayer(engine_, layer);
+    else
+#endif
+    added = ::FwpmSubLayerAdd0(engine_, &layer, nullptr);
+    if (added != ERROR_SUCCESS) return false;
+  }
+  LocalDpiControlFilter definition(local, remote, luid, sublayer);
   const auto filter = definition.Definition();
+#ifdef _DEBUG
+  if (test_ops_) return test_ops_->add_filter(engine_, filter) == ERROR_SUCCESS;
+#endif
   return ::FwpmFilterAdd0(engine_, &filter, nullptr, nullptr) == ERROR_SUCCESS;
 }
 
