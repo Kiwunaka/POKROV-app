@@ -321,12 +321,12 @@ void main() {
       throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_selected_service_unsupported')));
   });
 
-  test('Android profile DNS retains protected lanes through Automatic catalog compilation', () async {
+  test('Android supplied DNS compiles from fresh profiles and authorized cache', () async {
     final directory = await Directory.systemTemp.createTemp('pokrov-android-catalog-dns-');
     addTearDown(() => directory.delete(recursive: true));
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     addTearDown(() => server.close(force: true));
-    final profileDns = {'tag': 'profile-dns', 'address': 'https://1.1.1.1/dns-query', 'detour': 'proxy'};
+    final profileDns = {'tag': 'google', 'address': '8.8.8.8', 'detour': 'proxy'};
     unawaited(() async {
       await for (final request in server) {
         await request.drain<void>();
@@ -340,7 +340,9 @@ void main() {
                 {'type': 'vless', 'tag': 'vpn', 'server': 'vpn.example.invalid', 'server_port': 443,
                   'uuid': '11111111-1111-4111-8111-111111111111'}],
               'route': {'final': 'proxy'},
-              'dns': {'servers': [profileDns], 'final': 'profile-dns'},
+              'dns': {'servers': [
+                {'tag': 'bootstrap', 'address': 'local', 'detour': 'direct'}, profileDns,
+              ], 'final': 'google'},
             }},
           _ => {'ok': true},
         }));
@@ -351,6 +353,12 @@ void main() {
       supportDirectoryResolver: () async => directory, sessionSecretStore: MemoryAppFirstSessionSecretStore());
     final payload = await bootstrapper.resolveManagedProfile(hostPlatform: HostPlatform.android,
       routeMode: RouteMode.allExceptRu);
+    final cached = await bootstrapper.loadCachedManagedProfile(const ManagedProfileCacheInputs(
+      hostPlatform: HostPlatform.android, routeMode: RouteMode.allExceptRu));
+    expect(cached, isNotNull);
+    expect(cached!.configPayload, payload.configPayload);
+    expect((jsonDecode(cached.configPayload)['dns']['servers'] as List).cast<Map>()
+      .map((resolver) => resolver['tag']), isNot(contains('dns-remote')));
     final now = DateTime.now().toUtc();
     String wire(DateTime time) => '${time.toIso8601String().substring(0, 19)}Z';
     final key = await Ed25519().newKeyPairFromSeed(List.generate(32, (i) => i + 1));
@@ -366,24 +374,24 @@ void main() {
       minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
     final policy = compileCatalogDomainPolicy(policy: RoutingCatalogPolicy.fromVerified(catalog),
       mode: CatalogRoutingMode.smartSafe, platform: 'android', accessState: 'paid_unlimited', vpnAvailable: true, now: now);
-    final configuredPayload = applyPokrovRoutingPreferences(payload, const PokrovRoutingPreferences.defaults(),
-      hostPlatform: HostPlatform.android, catalogPolicy: policy, catalogAccessState: 'paid_unlimited',
-      nativeCatalogWindowVersion: 1);
-    final configured = jsonDecode(configuredPayload.configPayload) as Map;
-    final dns = configured['dns'] as Map;
-    final servers = (dns['servers'] as List).cast<Map>();
-    expect(servers.singleWhere((resolver) => resolver['tag'] == 'profile-dns'),
-      {'tag': 'profile-dns', 'type': 'https', 'server': '1.1.1.1', 'detour': 'proxy'});
-    expect(servers.singleWhere((resolver) => resolver['tag'] == dns['final'])['detour'], configured['route']['final']);
-    expect(servers.singleWhere((resolver) => resolver['tag'] == 'dns-direct')['type'], 'local');
-    final materialized = jsonDecode(payload.configPayload) as Map;
-    expect((materialized['dns']['servers'] as List).cast<Map>()
-      .singleWhere((resolver) => resolver['tag'] == 'dns-direct')['detour'], 'direct');
-    servers.singleWhere((resolver) => resolver['tag'] == 'dns-remote')['detour'] = 'direct';
-    expect(() => applyPokrovRoutingPreferences(configuredPayload.copyWith(configPayload: jsonEncode(configured)),
-      const PokrovRoutingPreferences.defaults(), hostPlatform: HostPlatform.android, catalogPolicy: policy,
-      catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1),
-      throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_dns_lane_invalid')));
+    for (final material in [payload, cached]) {
+      final configuredPayload = applyPokrovRoutingPreferences(material, const PokrovRoutingPreferences.defaults(),
+        hostPlatform: HostPlatform.android, catalogPolicy: policy, catalogAccessState: 'paid_unlimited',
+        nativeCatalogWindowVersion: 1);
+      final configured = jsonDecode(configuredPayload.configPayload) as Map;
+      final dns = configured['dns'] as Map;
+      final servers = (dns['servers'] as List).cast<Map>();
+      expect(servers.singleWhere((resolver) => resolver['tag'] == 'google'),
+        {'tag': 'google', 'type': 'udp', 'server': '8.8.8.8', 'detour': 'proxy'});
+      expect(servers.singleWhere((resolver) => resolver['tag'] == dns['final'])['detour'], configured['route']['final']);
+      expect(servers.singleWhere((resolver) => resolver['tag'] == 'dns-direct')['type'], 'local');
+      final invalid = jsonDecode(material.configPayload) as Map;
+      (invalid['dns']['servers'] as List).add({...profileDns, 'tag': 'dns-remote', 'detour': 'direct'});
+      expect(() => applyPokrovRoutingPreferences(material.copyWith(configPayload: jsonEncode(invalid)),
+        const PokrovRoutingPreferences.defaults(), hostPlatform: HostPlatform.android, catalogPolicy: policy,
+        catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1),
+        throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_dns_lane_invalid')));
+    }
   });
 
   test('signed YouTube DPI is mode-bound and withdraws with its authority', () async {
@@ -915,6 +923,7 @@ void main() {
     if (comssDns) {
       final serverTags = ((staged!['dns'] as Map)['servers'] as List).cast<Map>().map((row) => row['tag']).toSet();
       expect(serverTags, contains('pokrov-catalog-user-dns-direct'));
+      expect(serverTags, isNot(contains('dns-direct')));
     }
     expect((staged!['outbounds'] as List).cast<Map>()
         .singleWhere((outbound) => outbound['type'] == 'pokrov-smart-access')

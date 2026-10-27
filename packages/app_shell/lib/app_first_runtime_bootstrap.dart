@@ -8429,25 +8429,6 @@ class AppFirstRuntimeBootstrapper
         });
         resolvedFinal = remoteServerTag;
       }
-      // Catalog compilation requires these lane tags even when the managed
-      // profile already supplied DNS under its own names. Retain those names
-      // and their references; copy only the resolvers selected above.
-      _ensureDnsServerDefinition(
-        servers: baseServers,
-        tag: 'dns-remote',
-        definition: <String, dynamic>{
-          ...baseServers.firstWhere((server) => _readText(server['tag']) == resolvedFinal),
-          'tag': 'dns-remote',
-        },
-      );
-      _ensureDnsServerDefinition(
-        servers: baseServers,
-        tag: 'dns-direct',
-        definition: <String, dynamic>{
-          ...baseServers.firstWhere((server) => _readText(server['tag']) == localBootstrapServerTag),
-          'tag': 'dns-direct',
-        },
-      );
       dns['final'] = resolvedFinal;
       dns['independent_cache'] = true;
       return dns;

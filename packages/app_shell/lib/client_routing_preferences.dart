@@ -951,6 +951,20 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
       {'tag': directDns, 'address': dnsAddress,
         if (directBootstrap != null) 'address_resolver': directBootstrap, 'detour': direct},
     ]);
+  } else if (hostPlatform == HostPlatform.android) {
+    // Android's supplied DNS keeps its own tags, including in older authorized
+    // cache entries. Expose catalog lanes only from correctly bound resolvers.
+    final protectedResolver = servers.where((server) => server['tag'] == previousDnsFinal &&
+      server['detour'] == vpn && server['type'] != 'local' && server['address'] != 'local' &&
+      !_routingText(server['address']).startsWith('rcode://')).firstOrNull;
+    final directResolver = servers.where((server) => server['detour'] == direct &&
+      (server['type'] == 'local' || server['address'] == 'local')).firstOrNull;
+    if (!servers.any((server) => server['tag'] == vpnDns) && protectedResolver != null) {
+      servers.add({...protectedResolver, 'tag': vpnDns});
+    }
+    if (!servers.any((server) => server['tag'] == directDns) && directResolver != null) {
+      servers.add({...directResolver, 'tag': directDns});
+    }
   }
   for (final (tag, target) in [if (policy.vpnAvailable) (vpnDns, vpn), (directDns, direct)]) {
     final resolver = servers.where((server) => server['tag'] == tag).firstOrNull;
