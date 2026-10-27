@@ -1,6 +1,6 @@
 # Smart Access DNS routing
 
-## Current external-provider work — 26 October 2026
+## Current external-provider work — 27 October 2026
 
 The owner approved commercial embedded use of Shecan, Astra/Astracat, GeoHide,
 Bezmezhau, WLrus, DNS-AI and Zapret DNS. For these agreements, an eligible paid
@@ -9,9 +9,13 @@ bonus, manual or family access. The server uses the existing trial/paid/bonus
 Premium projection, including its manual/family handling, and excludes Free and
 expired/blocked access. No payment receipt, `provider_payment` origin or new
 entitlement class is required. Provider fees (fixed or percentage) remain under
-discussion; no spending is authorized. Customer contact and public release remain
-paused; the phone returned on 26 October, while provider/DPI-specific Android
-acceptance is still separate. The owner also accepted WhiteDNS and SlipNet for
+discussion; no spending is authorized. Public release remains paused. Live catalog
+29/state 29 and provider policy 4/state 3 enable Gemini on Android and Windows
+for eligible Premium access. Android 4222 NativeQA produced a real Gemini answer;
+on 4225 the ordinary UI showed Gemini enabled and selectable. Android 4227 also
+accepted direct ByeDPI YouTube playback at 1080p on the owned Wi-Fi. These are
+scoped results, not a guarantee for other networks or providers. The owner also
+accepted WhiteDNS and SlipNet for
 all active Premium access; their separate DNS-tunnel addon is not a SmartDNS
 endpoint. On 26 October the owner published the delegation of `t.portal-privacy.online`
 to `ns1.kiwunaka.space` (CH) and `ns2.kiwunaka.space` (PL). All four Timeweb
@@ -62,23 +66,23 @@ They must not enable Core's mobile 45 MiB connection killer, which can close all
 sockets during a later relay dial and appear as a connection failure after a
 successful startup. Android keeps its existing memory limit.
 
-Live signed catalog 28/security 2 is unchanged; provider policy **2/security 1**
-now admits only **WLrus and DNS-AI**, for Windows Gemini and all eligible active
-Premium access. Publication used the existing key and Action Intent, with exact
+At the earlier 21 October checkpoint, signed catalog 28/security 2 and provider
+policy **2/security 1** admitted only **WLrus and DNS-AI**, for Windows Gemini
+and all eligible active Premium access. Publication used the existing key and Action Intent, with exact
 readback, admission open, API health at 09:07:39 UTC and operation lease FREE.
-Those are last-observed server facts; the 4200 pass changed neither catalog nor
+Those were the server facts at that checkpoint; the 4200 pass changed neither catalog nor
 provider policy and did not repeat the server checks. Server `8018d52` enforces immutable provider kind for an
 existing provider ID. No commercial COMSS offer was added.
 
-Latest accepted Android is **4211 / App `eaf5d0d1` / Core `58b11d4`**; Windows
-remains **4209 / Core `b3a021b`**. Android Naive CH was accepted on 4210, followed
-by the new direct Lampa→PL path on 4211; see
+At the 26 October checkpoint, Android **4211 / App `eaf5d0d1` / Core `58b11d4`**
+and Windows **4209 / Core `b3a021b`** were the accepted candidates. Android
+Naive CH was accepted on 4210, followed by the direct Lampa→PL path on 4211; see
 [cutover readiness](../operations/cutover-readiness.md). Android provider SmartDNS
-remains public OFF: Platform `1bbe856` fixed the QA legacy-alias/lifetime 500;
-the next actual attempt reached TUN ready but rejected the protected API/app-domain
-pair. Parser correction `6e8cb4da` passed its focused test and is being packaged
-in 4212; device acceptance waits for the phone's return. Android SmartDNS
-and LocalDPI/YouTube are not accepted by those VPN or external-client results.
+was then off: Platform `1bbe856` fixed the QA legacy-alias/lifetime 500, but
+the next attempt reached TUN ready and rejected the protected API/app-domain
+pair. Parser correction `6e8cb4da` passed its focused test for 4212. Those VPN
+and external-client results did not themselves accept Android SmartDNS or
+LocalDPI/YouTube; subsequent scoped acceptance is stated above.
 DNSTT delegation, recursive transport and Windows 4216 Auto/TUN passed. Slipstream remains separate and deferred.
 Previous checks retain their original scope.
 The already accepted 4195 Gemini checks were not
@@ -89,7 +93,7 @@ both requests, without VPN. Direct gstatic dependencies loaded over IPv4 after
 the physical-IPv6 DNS fix `fcfe46c4`; no additional catalog domains were needed.
 GeoHide EU returned Google's unusual-traffic response; GeoHide RU used VPN with
 an empty lease inventory, and its exact cause was not established. Neither is
-in policy 2. Android packaging remains accepted without new device/native proof.
+in policy 2. At that checkpoint Android packaging did not establish new device/native proof.
 Artifacts are in [client readiness](../operations/cutover-readiness.md).
 
 Managed Naive is a separate authenticated VPN transport, not provider SmartDNS.
@@ -384,14 +388,15 @@ all four native flags are already ready. It does not send that complete set to
 the incomplete-proof event or mark the attempt verified; only the confirmed
 `ConnectionExperience` state can complete verification.
 
-The Android paired-API parser fix starts with private build 4212. Earlier
-Selective clients, including 4209, reject that profile even after a denied
-SmartDNS lease falls back to VPN. Ordinary provider leases do not bind a client
-build; the unchanged Core version alone cannot distinguish the Kotlin host fix.
-Do not apply the prepared provider4/catalog29 Android promotion patches in this
-pass. Public Android SmartDNS stays off: a private QA success must first be
-followed by an agreed rollout of the compatible app or an older compatible
-catalog for old clients before public enablement.
+The Android paired-API parser fix starts with private build 4212. Private
+1.5.0+4144–4211 Selective clients with the signed catalog form a paired API
+route locally, which the old parser rejects even when SmartDNS lease denial
+falls back to VPN. Ordinary provider leases do not bind a client build, and the
+Core version alone cannot distinguish the Kotlin host fix. Public 1.4.5+4086
+forms a single API route accepted by its parser and is not affected by this
+paired-route mismatch. That source comparison does not establish complete 4086
+runtime compatibility with the current catalog or provider policy. The later
+policy 4/catalog 29 publication and scoped Android acceptance are stated above.
 
 QA claim and fresh QA control tolerate sub-second issuer clock skew by waiting
 until the signed `issued_at`, at most one second within the existing cancellation

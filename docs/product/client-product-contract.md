@@ -1,6 +1,6 @@
 # POKROV Client Product Contract
 
-Last updated: 2026-09-07
+Last updated: 2026-10-27
 
 ## Document Status
 
@@ -106,8 +106,9 @@ Browser continuation currently starts from app handoff, Telegram, and the eviden
   first payment. Wheel, calendar, and referral rewards remain paid-only. Already-issued
   `+10 days` grants remain grandfathered and must render with their
   backend-returned value
-- public user-facing version line: `1.1.6` stable and runtime-synchronized; beta/prerelease candidates
-  are an explicit opt-in lane and never replace stable metadata implicitly
+- public user-facing version line: `1.4.5`; private Android/Windows `1.5.0+4227`
+  and the `1.5.0+4175` draft remain separate. Beta/prerelease candidates never
+  replace stable metadata implicitly
 - recommended public routing mode: `All except RU`
 - public routing mode set: `All except RU` and `Full tunnel`
 - public recovery order: `POKROV app -> web cabinet -> Telegram fallback`
@@ -237,14 +238,15 @@ the owner's separate verification stage.
 - `Android + Windows` remain the only public release pair for this wave
 - the published `1.0.0-beta` handoff and `2026-05-15` decision pack are retained
   historical exact-candidate evidence; neither is reusable approval for a rebuild
-- `v1.1.6` is the current public stable direct release and its production
-  runtime sync is complete. Every later promotion still requires fresh
-  exact-candidate signing and release proof; a local build or old public URL is
-  not signing proof
+- Public stable remains `1.4.5`; the private Android/Windows `1.5.0+4227`
+  pair and retained Windows 4216 acceptance are documented in
+  [cutover readiness](../operations/cutover-readiness.md). Publication requires
+  the owner's explicit approval
 - Android release builds require the operator-provided production signing
   inputs by default; debug signing is an explicit non-public smoke path only
-- Windows unsigned packaging remains useful for gated engineering smoke, but
-  it does not satisfy the current public-promotion signing gate
+- An unsigned Windows installer is accepted for the outside-store beta lane
+  with an unknown-publisher warning; trusted signing and store distribution are
+  deferred
 - the retained Android owner attestation is not raw physical-device evidence
   and does not prove signing for a later candidate
 - the current green repo/static gate snapshot is necessary but not sufficient for future candidates; the `2026-05-15` beta pack includes runtime handoff validation, paid/email evidence, and separate `current-origin`, `brain-origin`, and accepted-skip `RU-origin` handling
@@ -983,25 +985,19 @@ Release continuity rules:
 - live subscription state overrides the packaged trial seed. An
   `expiredOrBlocked` response is inactive access and must never retain the seed
   trial label or trial day count
-- stable candidates use a strictly newer semantic version. Android and Windows
-  `1.1.6+29` are the current public stable-direct release under
-  `Kiwunaka/pokrov` tag `v1.1.6`. Both production build scripts fail before
-  packaging when their package versions differ. The four Android APKs are
-  production-signed and every published asset matches its retained size and
-  SHA-256; the production catalog requires `1.1.6` for older clients. Exact
-  Huawei and clean Windows network proof remain manual.
-- the active source target is separately recorded in the same canonical
-  release-handoff seed as `1.2.0+4053`, state `PRE_CANDIDATE_LOCAL`, with
-  `candidate_created=false`. Android, Windows and app-shell source versions
-  must match that target, while the historical `1.1.6` public record remains
-  immutable and has `reuse_for_new_promotion=false`. This target is not a
-  release candidate, public update or promotion claim.
+- stable candidates use a strictly newer semantic version. Public Android and
+  Windows remain `1.4.5+4086`; `1.5.0+4175` is a seven-asset draft. The private
+  `1.5.0+4227` pair has four production-checked Android APKs and a Windows setup
+  and single-entry ZIP. The setup is unsigned; Windows 4216 VM acceptance is
+  retained and 4227 was not reinstalled. Exact scope and paths are in
+  [cutover readiness](../operations/cutover-readiness.md). Public release needs
+  the owner's explicit approval.
 - the `2026-05-15` Android handoff explains the retained beta publication but
   does not approve a replacement artifact; new public APK promotion requires
   exact-candidate production-signing evidence and the applicable device gates
-- the owner explicitly accepts the unsigned Windows installer for the current
-  outside-store stable-direct lane with a SmartScreen/unknown-publisher warning;
-  this is not a trusted-signing or reputation claim
+- the owner accepts the unsigned Windows installer for outside-store beta with
+  a SmartScreen/unknown-publisher warning. Trusted Windows signing and store
+  distribution remain deferred; no trusted-signing or reputation claim is made
 - signed release builds inject updater and source metadata through the documented `PORTAL_RELEASE_*` environment variables
 - `config/support-signing.seed.json` is the sole client source owner for the
   active Ed25519 support-mode verification pin. Production Android/Windows
@@ -1013,10 +1009,9 @@ Release continuity rules:
 - the shared runtime identity is `pokrovClientVersion`; release builds pass
   `--dart-define=POKROV_APP_VERSION=<host pubspec version without +build>` so
   provisioning, update checks, diagnostics, and visible version text match the
-  package. Local 1.2.0 development builds use the target package base-version
-  fallback `1.2.0`; the published catalog remains authoritative for current
-  public `1.1.6` clients;
-  production packaging passes that value explicitly through `POKROV_APP_VERSION`.
+  package. Production packaging passes the package base version explicitly
+  through `POKROV_APP_VERSION`; public update metadata remains authoritative for
+  `1.4.5`, separate from the private `1.5.0+4227` pair.
 - a new strict-v2 candidate requires `release.release_notes.summary` and a
   canonical version-matched GitHub release URL. The same manifest version is
   checked against Android, Windows and app-shell package versions before the
