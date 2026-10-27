@@ -348,6 +348,12 @@ reason and error origin on the same attempt; later attempts do not inherit them.
   liveness. Cancellation/child failure withdraws captured IDs before closing
   the child; expiry or catalog revocation uses protected runtime rollback,
   because inactive catalog rules would otherwise reach `route.final`.
+  A known runtime TCP/IPv4 failure may try the unused strategy once within the
+  same Core connection. Core atomically replaces the captured Windows holders;
+  new flows use VPN immediately until every signed control host has a fresh
+  proof and each new holder is admitted. An exhausted pair or a failed proof
+  leaves VPN fallback. Stop cancels an in-progress proof before joining it, and
+  a withdrawn holder, changed owner/network or expired catalog cannot retry.
   Failed withdrawal retains the child until confirmed Core Stop. Child exit
   and driver-guard closure must also be confirmed before cleanup
   reports success; failed cleanup retains the exact handles for retry and

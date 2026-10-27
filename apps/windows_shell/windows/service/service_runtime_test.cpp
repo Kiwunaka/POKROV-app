@@ -67,12 +67,30 @@ void TestReleasedCoreDescriptorCompatibility() {
   Expect(pokrov::service::CoreDescriptorHasRuntimeControl(windows_observation) &&
          pokrov::service::CoreDescriptorHasWindowsLocalDpi(windows_observation),
          "ordinary Windows observation descriptor was rejected");
+  auto windows_retry = windows_observation;
+  const std::string retry_version = "\"windows_local_dpi_runtime_retry_version\":1,";
+  windows_retry.insert(windows_retry.find("\"capabilities\""), retry_version);
+  Expect(pokrov::service::CoreDescriptorHasRuntimeControl(windows_retry) &&
+         pokrov::service::CoreDescriptorHasWindowsLocalDpi(windows_retry),
+         "additive Windows runtime retry descriptor was rejected");
+  auto retry_without_observation = windows_next;
+  retry_without_observation.insert(retry_without_observation.find("\"capabilities\""), retry_version);
+  Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(retry_without_observation),
+         "runtime retry metadata bypassed holder observation");
   auto observation_without_owner = core122;
   observation_without_owner.insert(observation_without_owner.find("\"capabilities\""), observation_version);
   Expect(!pokrov::service::CoreDescriptorHasRuntimeControl(observation_without_owner),
          "observation metadata bypassed the Windows admission descriptor");
   std::string telegram_next(windows_next);
   const std::string telegram_admission = "\"telegram_ws_admission_version\":1,";
+  auto retry_with_telegram = windows_retry;
+  retry_with_telegram.insert(retry_with_telegram.find("\"local_dpi_admission_version\""),
+                             "\"smart_access_probe_version\":1,");
+  retry_with_telegram.insert(retry_with_telegram.find("\"capabilities\""), telegram_admission);
+  Expect(pokrov::service::CoreDescriptorHasRuntimeControl(retry_with_telegram) &&
+         pokrov::service::CoreDescriptorHasWindowsLocalDpi(retry_with_telegram) &&
+         pokrov::service::CoreDescriptorHasTelegramWS(retry_with_telegram),
+         "combined Windows retry, probe and Telegram descriptor was rejected");
   telegram_next.insert(telegram_next.find("\"capabilities\""), telegram_admission);
   Expect(pokrov::service::CoreDescriptorHasRuntimeControl(telegram_next) &&
          pokrov::service::CoreDescriptorHasTelegramWS(telegram_next),
@@ -285,6 +303,18 @@ void TestWindowsLocalDpiStrategyArguments() {
                              "local_dpi_child_failed", "unknown_failure"}) {
     Expect(!WindowsLocalDpiRetryableProof(failure), "non-transport failure retried another strategy");
   }
+  for (const char* failure : {"early_read", "early_write", "connect_timeout_ipv4", "connect_error_ipv4"}) {
+    Expect(WindowsLocalDpiRetryableRuntime({"failed", failure}),
+           "runtime transport failure did not allow the remaining strategy");
+  }
+  for (const WindowsLocalDpiHolderObservation& value : {
+           WindowsLocalDpiHolderObservation{"withdrawn", "early_read", true},
+           WindowsLocalDpiHolderObservation{"ready", "none"},
+           WindowsLocalDpiHolderObservation{"failed", ""},
+           WindowsLocalDpiHolderObservation{"failed", "connect_timeout_ipv6"}}) {
+    Expect(!WindowsLocalDpiRetryableRuntime(value),
+           "terminal withdrawal or unsupported failure scheduled a strategy retry");
+  }
   const std::wstring directory = L"C:\\Program Files\\POKROV\\local-dpi\\";
   const std::wstring scope = L"\"C:\\Program Files\\POKROV\\local-dpi\\winws.exe\" --wf-iface=12"
       L" --wf-tcp=443 --filter-tcp=443 --filter-l7=tls --hostlist-domains=^www.youtube.com --ip-id=zero";
@@ -419,6 +449,17 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
     return smart_probe_error;
   }
   int SmartAccessRuntimeControlVersion() const override { return smart_control_version; }
+  int WindowsLocalDpiRuntimeRetryVersion() const override { return retry_version; }
+  std::string ReadLocalDpiAdmissionID(const std::string& tag) override {
+    const auto found = retry_ids.find(tag);
+    return found == retry_ids.end() ? "" : found->second;
+  }
+  std::string PrepareWindowsLocalDpiRetry(const std::string& ids) override {
+    ++retry_calls;
+    retry_request = ids;
+    if (on_retry) on_retry();
+    return retry_response;
+  }
   int ConfigureSmartAccessRuntimeControl(const std::string&, const std::string&) override {
     ++smart_control_calls;
     return smart_control_result;
@@ -448,7 +489,33 @@ class FakeCoreRuntime final : public pokrov::service::CoreRuntime {
   int smart_control_version = 0;
   int smart_control_result = 1;
   int smart_control_calls = 0;
+  int retry_version = 1;
+  int retry_calls = 0;
+  std::map<std::string, std::string> retry_ids;
+  std::string retry_request;
+  std::string retry_response;
+  std::function<void()> on_retry;
 };
+
+void TestWindowsLocalDpiRetryIDs() {
+  using pokrov::service::RefreshWindowsLocalDpiRetryIDs;
+  FakeCoreRuntime core;
+  const std::string old_a(32, 'a'), old_b(32, 'b'), new_a(32, 'c'), new_b(32, 'd');
+  core.retry_ids = {{"youtube", old_a}, {"discord", old_b}};
+  std::vector<std::pair<std::string, std::string>> holders = {{"youtube", old_a}, {"discord", old_b}};
+  core.retry_response = new_a + "," + new_b;
+  core.on_retry = [&] { core.retry_ids = {{"youtube", new_a}, {"discord", new_b}}; };
+  Expect(RefreshWindowsLocalDpiRetryIDs(core, holders, true, false) &&
+         holders[0].second == new_a && holders[1].second == new_b &&
+         core.retry_request == old_a + "," + old_b && core.retry_calls == 1 &&
+         core.start_calls == 0 && core.stop_calls == 0,
+         "runtime retry did not replace the exact holder batch without restarting Core");
+  auto stale = std::vector<std::pair<std::string, std::string>>{{"youtube", old_a}, {"discord", old_b}};
+  Expect(!RefreshWindowsLocalDpiRetryIDs(core, stale, true, false) && core.retry_calls == 1,
+         "stale owner prepared a successor's holders");
+  Expect(!RefreshWindowsLocalDpiRetryIDs(core, holders, true, true) && core.retry_calls == 1,
+         "exhausted strategy pair attempted another Core retry");
+}
 
 class FakeEgressProbe final : public pokrov::service::RuntimeEgressProbe {
  public:
@@ -1904,8 +1971,10 @@ int main(int argc, char** argv) {
     return failures == 0 ? 0 : 1;
   }
   if (argc == 2 && std::string(argv[1]) == "--local-dpi-strategy") {
+    TestReleasedCoreDescriptorCompatibility();
     TestWindowsLocalDpiScopePreparation();
     TestWindowsLocalDpiStrategyArguments();
+    TestWindowsLocalDpiRetryIDs();
     return failures == 0 ? 0 : 1;
   }
   if (argc == 2 && std::string(argv[1]) == "--local-dpi-readiness") {
@@ -1946,6 +2015,7 @@ int main(int argc, char** argv) {
   TestWindowsTelegramMetadataComposition();
   TestWindowsLocalDpiScopePreparation();
   TestWindowsLocalDpiStrategyArguments();
+  TestWindowsLocalDpiRetryIDs();
   TestWindowsLocalDpiTls13PostHandshake();
   TestWindowsLocalDpiFilterReadiness();
   TestWindowsLocalDpiOwnedCleanup();

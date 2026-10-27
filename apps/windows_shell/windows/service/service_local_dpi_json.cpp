@@ -254,6 +254,12 @@ std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObserva
   return result;
 }
 
+bool WindowsLocalDpiRetryableRuntime(const WindowsLocalDpiHolderObservation& observation) {
+  return observation.state == "failed" &&
+      (observation.failure_reason == "early_read" || observation.failure_reason == "early_write" ||
+       observation.failure_reason == "connect_timeout_ipv4" || observation.failure_reason == "connect_error_ipv4");
+}
+
 void InvalidateWindowsLocalDpiStrategyHint(
     WindowsLocalDpiStrategyHints& hints, const std::string& network,
     const std::string& service, WindowsLocalDpiStrategy strategy,

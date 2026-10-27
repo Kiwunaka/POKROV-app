@@ -486,6 +486,15 @@ class InstalledCoreRuntime final : public CoreRuntime {
         ? StringResult(read_local_dpi_observation_(id.c_str())) : "";
   }
 
+  int WindowsLocalDpiRuntimeRetryVersion() const override {
+    return initialized_ && prepare_windows_local_dpi_retry_ != nullptr ? 1 : 0;
+  }
+
+  std::string PrepareWindowsLocalDpiRetry(const std::string& ids) override {
+    return WindowsLocalDpiRuntimeRetryVersion() == 1
+        ? StringResult(prepare_windows_local_dpi_retry_(ids.c_str())) : "";
+  }
+
   int TelegramWSAdmissionVersion() const override {
     return initialized_ && telegram_ws_version_ != nullptr ? 1 : 0;
   }
@@ -616,6 +625,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
     admit_local_dpi_admission_ = nullptr;
     withdraw_local_dpi_admission_ = nullptr;
     read_local_dpi_observation_ = nullptr;
+    prepare_windows_local_dpi_retry_ = nullptr;
     telegram_ws_version_ = nullptr;
     prepare_telegram_ws_ = nullptr;
     read_telegram_ws_ = nullptr;
@@ -726,6 +736,11 @@ class InstalledCoreRuntime final : public CoreRuntime {
           read_local_dpi_observation_ = reinterpret_cast<ReadLocalDpiAdmissionFunction>(
               ::GetProcAddress(module_, "pokrovCoreReadLocalDpiObservation"));
           if (read_local_dpi_observation_ == nullptr) return "core_abi_incompatible";
+        }
+        if (descriptor.find("\"windows_local_dpi_runtime_retry_version\":1,") != std::string::npos) {
+          prepare_windows_local_dpi_retry_ = reinterpret_cast<ReadLocalDpiAdmissionFunction>(
+              ::GetProcAddress(module_, "pokrovCorePrepareWindowsLocalDpiRetry"));
+          if (prepare_windows_local_dpi_retry_ == nullptr) return "core_abi_incompatible";
         }
       }
       const bool has_renewal = descriptor == renewal_descriptor || has_runtime_control;
@@ -1058,6 +1073,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
   LocalDpiAdmissionFunction admit_local_dpi_admission_ = nullptr;
   LocalDpiAdmissionFunction withdraw_local_dpi_admission_ = nullptr;
   ReadLocalDpiAdmissionFunction read_local_dpi_observation_ = nullptr;
+  ReadLocalDpiAdmissionFunction prepare_windows_local_dpi_retry_ = nullptr;
   AbiFunction telegram_ws_version_ = nullptr;
   PrepareWindowsLocalDpiFunction prepare_telegram_ws_ = nullptr;
   ReadLocalDpiAdmissionFunction read_telegram_ws_ = nullptr;
@@ -1114,9 +1130,14 @@ bool CoreDescriptorHasRuntimeControl(const std::string& descriptor) {
   std::string compatible(descriptor);
   const std::string observation_field = "\"windows_local_dpi_observation_version\":1,";
   const auto observation_position = compatible.find(observation_field);
+  const std::string retry_field = "\"windows_local_dpi_runtime_retry_version\":1,";
+  const auto retry_position = compatible.find(retry_field);
+  if (retry_position != std::string::npos && observation_position == std::string::npos) return false;
   if (observation_position != std::string::npos &&
       compatible.find("\"windows_local_dpi_admission_version\":1,") == std::string::npos) return false;
-  if (observation_position != std::string::npos) compatible.erase(observation_position, observation_field.size());
+  if (retry_position != std::string::npos) compatible.erase(retry_position, retry_field.size());
+  const auto current_observation_position = compatible.find(observation_field);
+  if (current_observation_position != std::string::npos) compatible.erase(current_observation_position, observation_field.size());
   const std::string probe_field = "\"smart_access_probe_version\":1,";
   const auto probe_position = compatible.find(probe_field);
   if (probe_position != std::string::npos) compatible.erase(probe_position, probe_field.size());
@@ -1835,6 +1856,7 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
   }
   if (proved_local_dpi_strategy && local_dpi_network && local_dpi_current()) {
     local_dpi_active_strategy_ = std::make_pair(local_dpi_network->selection_key, *proved_local_dpi_strategy);
+    local_dpi_bind_interface_ = local_dpi_network->bind_interface;
     local_dpi_strategy_hints_.RecordSuccess(local_dpi_network->selection_key,
         local_dpi_preparation_->services, *proved_local_dpi_strategy);
   }
@@ -2212,6 +2234,106 @@ RuntimeResult RuntimeHost::MaintainWindowsLocalDpi(const CheckInterruption& inte
     }
     local_dpi_disabled_ = true;
   }
+  if (!local_dpi_disabled_ && local_dpi_active_strategy_) {
+    bool failed = false;
+    bool current_holders = true;
+    for (const auto& service : local_dpi_preparation_->services) {
+      if (service.captured_admission_id.empty() ||
+          core_->ReadLocalDpiAdmissionID(service.outbound_tag) != service.captured_admission_id) {
+        current_holders = false;
+        break;
+      }
+      const auto observation = ReadWindowsLocalDpiHolderObservation(
+          core_->ReadLocalDpiObservation(service.captured_admission_id));
+      if (!observation || (observation->state != "ready" &&
+                           !WindowsLocalDpiRetryableRuntime(*observation))) {
+        current_holders = false;
+        break;
+      }
+      failed |= WindowsLocalDpiRetryableRuntime(*observation);
+    }
+    if (failed && current_holders) {
+      // Preserve the failed generation's existing closed journal and hint
+      // before Core replaces it with fresh unpublished holders.
+      ReadLocalDpiRuntimeObservation();
+      const auto owner_current = [&] {
+        return phase_ == Phase::kRunning &&
+            (!interrupted || interrupted() == OperationInterruption::kNone) &&
+            effective_profile_digest_ == local_dpi_profile_digest_ &&
+            core_->CoreModuleSHA256() == local_dpi_core_digest_ &&
+            WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_);
+      };
+      const auto current = [&] { return owner_current() && local_dpi_executor_->Alive(); };
+      const auto owner_failure = [&] {
+        return owner_current() ? "local_dpi_child_failed" : "local_dpi_owner_changed";
+      };
+      const auto strategy = WindowsLocalDpiStrategyOrder(local_dpi_active_strategy_->second)[1];
+      const auto record = [&](LocalDpiStage stage, const std::string& failure) {
+        if (events_) events_->RecordLocalDpiObservation(stage, static_cast<int>(strategy),
+            failure, local_dpi_executor_->Alive());
+      };
+      // Failure, cancellation or an exhausted pair leaves this connection on
+      // VPN; do not try the same strategy again on the next watcher tick.
+      local_dpi_disabled_ = true;
+      const auto start_failure = local_dpi_executor_->RetryAfterRuntimeFailure(
+          local_dpi_preparation_->services, local_dpi_bind_interface_, strategy, owner_current);
+      record(LocalDpiStage::kStart, start_failure);
+      for (auto& service : local_dpi_preparation_->services) {
+        service.captured_admission_id = local_dpi_executor_->CapturedAdmissionID(service.outbound_tag);
+      }
+      bool proved = start_failure.empty();
+      const CheckInterruption proof_interrupted = [&] {
+        return current() ? OperationInterruption::kNone : OperationInterruption::kCancelled;
+      };
+      if (proved) {
+        for (const auto& service : local_dpi_preparation_->services) {
+          auto proof_failure = !current() ? owner_failure() :
+              VerifyWindowsLocalDpiControlHost(service.control_host, local_dpi_bind_interface_, proof_interrupted);
+          if (!current()) proof_failure = owner_failure();
+          record(LocalDpiStage::kProof, proof_failure);
+          if (!proof_failure.empty()) {
+            if (WindowsLocalDpiRetryableProof(proof_failure) && current()) {
+              local_dpi_strategy_hints_.RecordFailure(local_dpi_active_strategy_->first,
+                  service.service_id, strategy);
+            }
+            proved = false;
+            break;
+          }
+        }
+      }
+      if (proved) {
+        for (const auto& service : local_dpi_preparation_->services) {
+          const std::string admission_failure = !current() ? owner_failure() :
+              local_dpi_executor_->AdmitCaptured(service.outbound_tag, current)
+                  ? "" : "local_dpi_admission_failed";
+          record(LocalDpiStage::kAdmit, admission_failure);
+          if (!admission_failure.empty()) { proved = false; break; }
+        }
+      }
+      if (proved && current()) {
+        local_dpi_active_strategy_->second = strategy;
+        local_dpi_strategy_hints_.RecordSuccess(local_dpi_active_strategy_->first,
+            local_dpi_preparation_->services, strategy);
+        local_dpi_runtime_failure_reported_ = false;
+        local_dpi_disabled_ = false;
+      } else if (!local_dpi_executor_->Stop()) {
+        const auto stopped = CancelProtectedHandoff();
+        return stopped.status == Status::kOk
+            ? Fail(Status::kNotReady, "local_dpi_withdraw_failed") : stopped;
+      }
+      // A signed window can expire during the fresh control-host proof.
+      if (!WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_) ||
+          effective_profile_digest_ != local_dpi_profile_digest_ ||
+          core_->CoreModuleSHA256() != local_dpi_core_digest_) {
+        const bool now_expired = !WindowsLocalDpiPreparationCurrent(*local_dpi_preparation_);
+        const auto stopped = CancelProtectedHandoff();
+        if (stopped.status != Status::kOk) return stopped;
+        profile_staged_ = false;
+        staged_profile_digest_.clear();
+        return Fail(Status::kNotReady, now_expired ? "local_dpi_catalog_expired" : "local_dpi_owner_changed");
+      }
+    }
+  }
   return Snapshot();
 }
 
@@ -2250,6 +2372,7 @@ bool RuntimeHost::ClearWindowsLocalDpiAfterCoreStopped() {
   if (local_dpi_executor_ && !local_dpi_executor_->StopAfterCoreStopped()) return false;
   local_dpi_preparation_.reset();
   local_dpi_active_strategy_.reset();
+  local_dpi_bind_interface_.clear();
   telegram_ws_preparation_.reset();
   telegram_ws_holders_.clear();
   telegram_ws_original_digest_.clear();

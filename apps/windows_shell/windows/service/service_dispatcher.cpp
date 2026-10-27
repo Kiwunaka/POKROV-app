@@ -150,22 +150,46 @@ void RuntimeDispatcher::WatchBoundConnect() {
     }
     if (watch_dpi || watch_telegram) {
         RefreshBoundNetwork(operation);
-        std::unique_lock<std::mutex> execution(execution_lock_, std::try_to_lock);
-        if (!execution.owns_lock()) continue;
         {
           std::lock_guard<std::mutex> state(state_lock_);
           if (active_connect_ != operation || closing_) continue;
+          operation->local_dpi_maintenance_active = watch_dpi;
+        }
+        std::unique_lock<std::mutex> execution(execution_lock_, std::try_to_lock);
+        if (!execution.owns_lock()) {
+          std::lock_guard<std::mutex> state(state_lock_);
+          operation->local_dpi_maintenance_active = false;
+          continue;
+        }
+        {
+          std::lock_guard<std::mutex> state(state_lock_);
+          if (active_connect_ != operation || closing_) {
+            operation->local_dpi_maintenance_active = false;
+            continue;
+          }
         }
         const bool had_dpi = runtime_->HasWindowsLocalDpi();
         if (watch_telegram) runtime_->MaintainTelegramWS([operation] {
           return operation->cancelled || operation->telegram_ws_cancelled
               ? OperationInterruption::kCancelled : OperationInterruption::kNone;
         });
-        runtime_->MaintainWindowsLocalDpi([operation] {
+        runtime_->MaintainWindowsLocalDpi([this, operation] {
+          RefreshBoundNetwork(operation);
+          {
+            std::lock_guard<std::mutex> state(state_lock_);
+            if (active_connect_ != operation || closing_) operation->local_dpi_cancelled = true;
+          }
+          const auto promoted = operation->promoted_until_elapsed_ms.load();
+          if (operation->bound && !operation->ordinary_control_handoff &&
+              (promoted ? !IsActiveTransportLeaseCurrent(*operation->bound, promoted)
+                        : !IsConnectDeadlineCurrent(*operation->bound))) {
+            operation->Interrupt(ActiveConnect::Interruption::kDeadline);
+          }
           return operation->cancelled || operation->local_dpi_cancelled
               ? OperationInterruption::kCancelled : OperationInterruption::kNone;
         });
         std::lock_guard<std::mutex> state(state_lock_);
+        operation->local_dpi_maintenance_active = false;
         snapshot_ = runtime_->Snapshot();
         if (active_connect_ == operation && snapshot_.body.rfind("phase=recovery_required;", 0) == 0) {
           operation->cleanup_attempted = true;
@@ -364,14 +388,20 @@ RuntimeResult RuntimeDispatcher::Execute(const Frame& request, HANDLE stop_event
       request.command != Command::kReadSmartAccessRestrictions &&
       request.command != Command::kReadSmartAccessLeases) {
     bool checking_egress = false;
+    bool stopping_dpi_maintenance = false;
     {
       std::lock_guard<std::mutex> state(state_lock_);
       checking_egress = egress_check_cancelled_ != nullptr;
       if (checking_egress) *egress_check_cancelled_ = true;
+      if (request.command == Command::kDisconnect && active_connect_ &&
+          active_connect_->local_dpi_maintenance_active) {
+        active_connect_->local_dpi_cancelled = true;
+        stopping_dpi_maintenance = true;
+      }
     }
     // DNS/WinHTTP waits observe cancellation at most every 50ms. Join that
     // check, without holding state_lock_, before Stop/Stage/Start can proceed.
-    if (checking_egress) execution.lock();
+    if (checking_egress || stopping_dpi_maintenance) execution.lock();
   }
   if (!execution.owns_lock()) {
     std::lock_guard<std::mutex> state(state_lock_);

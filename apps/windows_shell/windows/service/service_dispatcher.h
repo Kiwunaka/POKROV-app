@@ -28,6 +28,7 @@ class RuntimeDispatcher {
                         ULONGLONG monotonic_deadline, HANDLE client_pipe);
 
  private:
+  friend class RuntimeDispatcherRetryTestAccess;
   struct ActiveConnect {
     enum class Interruption { kNone, kCancelled, kOwnerChanged, kNetworkChanged, kDeadline };
     void Interrupt(Interruption cause) {
@@ -65,6 +66,7 @@ class RuntimeDispatcher {
     bool protected_handoff = false;
     bool local_dpi_owner = false;  // Private captured physical-network owner.
     std::atomic<bool> local_dpi_cancelled{false};
+    bool local_dpi_maintenance_active = false;  // protected by state_lock_
     bool telegram_ws_owner = false;
     std::optional<std::uint64_t> telegram_ws_network_revision;
     std::atomic<bool> telegram_ws_cancelled{false};

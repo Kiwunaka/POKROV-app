@@ -7,6 +7,7 @@
 #include <optional>
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 #include <cstdint>
 #include <array>
@@ -63,6 +64,10 @@ class WindowsLocalDpiStrategyHints final {
 };
 
 bool WindowsLocalDpiRetryableProof(const std::string& failure);
+// Replace only the exact captured generation, once the unused strategy remains.
+bool RefreshWindowsLocalDpiRetryIDs(CoreRuntime& core,
+    std::vector<std::pair<std::string, std::string>>& holders,
+    bool admission_attempted, bool retry_attempted);
 std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
     const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy);
 
@@ -87,6 +92,10 @@ class WindowsLocalDpiExecutor final {
                             const std::string& physical_bind_interface,
                             WindowsLocalDpiStrategy strategy,
                             const std::function<bool()>& current);
+  std::string RetryAfterRuntimeFailure(const std::vector<WindowsLocalDpiService>& services,
+                            const std::string& physical_bind_interface,
+                            WindowsLocalDpiStrategy strategy,
+                            const std::function<bool()>& current);
   bool Alive() const;
   bool AssetsReady();  // Fixed trusted assets and API exports; no driver or child.
   bool AdmitCaptured(const std::string& tag, const std::function<bool()>& current_after_proof);
@@ -95,6 +104,8 @@ class WindowsLocalDpiExecutor final {
   bool StopAfterCoreStopped();  // Only after the native owner confirmed Core Stop.
 
  private:
+  bool MatchesPrepared(const std::vector<WindowsLocalDpiService>& services,
+                       const std::string& physical_bind_interface) const;
   std::string StartChild(const std::string& hostlist, DWORD interface_index,
                          WindowsLocalDpiStrategy strategy,
                          const std::function<bool()>& current);

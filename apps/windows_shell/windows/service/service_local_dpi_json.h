@@ -39,6 +39,7 @@ struct WindowsLocalDpiHolderObservation {
 };
 std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObservation(
     const std::string& encoded);
+bool WindowsLocalDpiRetryableRuntime(const WindowsLocalDpiHolderObservation& observation);
 void InvalidateWindowsLocalDpiStrategyHint(
     WindowsLocalDpiStrategyHints& hints, const std::string& network,
     const std::string& service, WindowsLocalDpiStrategy strategy,

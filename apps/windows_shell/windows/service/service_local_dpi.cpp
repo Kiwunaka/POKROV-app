@@ -309,6 +309,40 @@ bool WindowsLocalDpiRetryableProof(const std::string& failure) {
       failure == "local_dpi_control_tls_failed" || failure == "local_dpi_control_http_failed";
 }
 
+bool RefreshWindowsLocalDpiRetryIDs(CoreRuntime& core,
+    std::vector<std::pair<std::string, std::string>>& holders,
+    bool admission_attempted, bool retry_attempted) {
+  if (!admission_attempted || retry_attempted || holders.empty() ||
+      core.WindowsLocalDpiRuntimeRetryVersion() != 1) return false;
+  std::string expected;
+  std::set<std::string> previous;
+  for (const auto& holder : holders) {
+    if (!IsHolderID(holder.second) || !previous.insert(holder.second).second ||
+        core.ReadLocalDpiAdmissionID(holder.first) != holder.second) return false;
+    expected += (expected.empty() ? "" : ",") + holder.second;
+  }
+  const auto encoded = core.PrepareWindowsLocalDpiRetry(expected);
+  if (encoded.empty()) return false;
+  std::vector<std::string> fresh;
+  std::set<std::string> unique;
+  std::size_t start = 0;
+  for (;;) {
+    const auto end = encoded.find(',', start);
+    const auto id = encoded.substr(start, end == std::string::npos ? end : end - start);
+    if (!IsHolderID(id) || previous.count(id) || !unique.insert(id).second) return false;
+    fresh.push_back(id);
+    if (fresh.size() > holders.size()) return false;
+    if (end == std::string::npos) break;
+    start = end + 1;
+  }
+  if (fresh.size() != holders.size()) return false;
+  for (std::size_t i = 0; i < holders.size(); ++i) {
+    if (core.ReadLocalDpiAdmissionID(holders[i].first) != fresh[i]) return false;
+  }
+  for (std::size_t i = 0; i < holders.size(); ++i) holders[i].second = fresh[i];
+  return true;
+}
+
 std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
     const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy) {
   const auto pattern = Quote(directory + L"tls_clienthello_www_google_com.bin");
@@ -433,29 +467,15 @@ std::string WindowsLocalDpiExecutor::RetryPrepared(
   if (!current || !current()) return "local_dpi_owner_changed";
   if (state_->admission_attempted || state_->retry_attempted || state_->holders.empty() ||
       state_->process == nullptr || state_->job == nullptr || state_->driver_guard == INVALID_HANDLE_VALUE ||
-      services.size() != state_->prepared_services.size() || services.size() != state_->holders.size() ||
-      physical_bind_interface != state_->physical_bind_interface || strategy == state_->first_strategy ||
+      !MatchesPrepared(services, physical_bind_interface) || strategy == state_->first_strategy ||
       (strategy != WindowsLocalDpiStrategy::kMultidisorderMidsld && strategy != WindowsLocalDpiStrategy::kFakeMultisplitAlt4)) {
     return "local_dpi_retry_unavailable";
-  }
-  for (std::size_t i = 0; i < services.size(); ++i) {
-    const auto& original = state_->prepared_services[i];
-    const auto& service = services[i];
-    if (service.service_id != original.service_id || service.outbound_tag != original.outbound_tag ||
-        service.control_host != original.control_host || service.domains.size() != original.domains.size() ||
-        core_.ReadLocalDpiAdmissionID(state_->holders[i].first) != state_->holders[i].second) {
-      return "local_dpi_retry_unavailable";
-    }
-    for (std::size_t j = 0; j < service.domains.size(); ++j) {
-      if (service.domains[j].name != original.domains[j].name ||
-          service.domains[j].exact != original.domains[j].exact ||
-          service.domains[j].shared != original.domains[j].shared) return "local_dpi_retry_unavailable";
-    }
   }
   state_->retry_attempted = true;
   // Close only our Job and wait for its child; keep unpublished holders and
   // the driver/assets. A cleanup failure forbids a replacement child.
   if (!StopWindowsLocalDpiChild(state_->job, state_->process)) return "local_dpi_child_failed";
+  if (!current()) return "local_dpi_owner_changed";
   const auto wide_interface = WideUtf8(physical_bind_interface);
   NET_LUID luid{};
   NET_IFINDEX index = 0;
@@ -467,7 +487,46 @@ std::string WindowsLocalDpiExecutor::RetryPrepared(
   for (const auto& holder : state_->holders) {
     if (core_.ReadLocalDpiAdmissionID(holder.first) != holder.second) return "local_dpi_retry_unavailable";
   }
+  if (!current()) return "local_dpi_owner_changed";
   return StartChild(WindowsLocalDpiHostList(services), index, strategy, current);
+}
+
+bool WindowsLocalDpiExecutor::MatchesPrepared(
+    const std::vector<WindowsLocalDpiService>& services,
+    const std::string& physical_bind_interface) const {
+  if (services.size() != state_->prepared_services.size() || services.size() != state_->holders.size() ||
+      physical_bind_interface != state_->physical_bind_interface) return false;
+  for (std::size_t i = 0; i < services.size(); ++i) {
+    const auto& original = state_->prepared_services[i];
+    const auto& service = services[i];
+    if (service.service_id != original.service_id || service.outbound_tag != original.outbound_tag ||
+        service.control_host != original.control_host || service.domains.size() != original.domains.size() ||
+        core_.ReadLocalDpiAdmissionID(state_->holders[i].first) != state_->holders[i].second) {
+      return false;
+    }
+    for (std::size_t j = 0; j < service.domains.size(); ++j) {
+      if (service.domains[j].name != original.domains[j].name ||
+          service.domains[j].exact != original.domains[j].exact ||
+          service.domains[j].shared != original.domains[j].shared) return false;
+    }
+  }
+  return true;
+}
+
+std::string WindowsLocalDpiExecutor::RetryAfterRuntimeFailure(
+    const std::vector<WindowsLocalDpiService>& services,
+    const std::string& physical_bind_interface, WindowsLocalDpiStrategy strategy,
+    const std::function<bool()>& current) {
+  if (!current || !current()) return "local_dpi_owner_changed";
+  if (state_->holders.empty() ||
+      state_->process == nullptr || state_->job == nullptr || state_->driver_guard == INVALID_HANDLE_VALUE ||
+      strategy == state_->first_strategy ||
+      (strategy != WindowsLocalDpiStrategy::kMultidisorderMidsld && strategy != WindowsLocalDpiStrategy::kFakeMultisplitAlt4) ||
+      !MatchesPrepared(services, physical_bind_interface)) return "local_dpi_retry_unavailable";
+  if (!RefreshWindowsLocalDpiRetryIDs(core_, state_->holders,
+          state_->admission_attempted, state_->retry_attempted)) return "local_dpi_retry_unavailable";
+  state_->admission_attempted = false;
+  return RetryPrepared(services, physical_bind_interface, strategy, current);
 }
 
 std::string WindowsLocalDpiExecutor::StartChild(

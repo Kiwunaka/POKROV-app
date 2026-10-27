@@ -80,6 +80,8 @@ class CoreRuntime {
   virtual int AdmitLocalDpiAdmission(const std::string& id) { return -1; }
   virtual int WithdrawLocalDpiAdmission(const std::string& id) { return -1; }
   virtual std::string ReadLocalDpiObservation(const std::string& id) { return ""; }
+  virtual int WindowsLocalDpiRuntimeRetryVersion() const { return 0; }
+  virtual std::string PrepareWindowsLocalDpiRetry(const std::string& ids) { return ""; }
   virtual int TelegramWSAdmissionVersion() const { return 0; }
   virtual std::string PrepareTelegramWSProfile(
       const std::string& config, const std::string& compiled_public_keys,
@@ -234,6 +236,7 @@ class RuntimeHost {
   // Ordering hints only; each connection still requires fresh holder proof.
   mutable WindowsLocalDpiStrategyHints local_dpi_strategy_hints_;
   std::optional<std::pair<std::string, WindowsLocalDpiStrategy>> local_dpi_active_strategy_;
+  std::string local_dpi_bind_interface_;
   std::string original_staged_config_;
   std::string staged_runtime_config_;
   bool local_dpi_requested_ = false;

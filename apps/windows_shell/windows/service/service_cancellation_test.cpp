@@ -10,12 +10,42 @@
 
 #include "service_pipe_client.h"
 #include "service_client.h"
+#include "service_dispatcher.h"
 #include "service_profile_identity.h"
 #include "service_runtime.h"
 #include "service_security.h"
 #include "service_server.h"
 
 #ifdef _DEBUG
+namespace pokrov::service {
+bool StopWindowsLocalDpiChild(HANDLE& job, HANDLE& process);
+
+class RuntimeDispatcherRetryTestAccess {
+ public:
+  static void HoldProof(RuntimeDispatcher& dispatcher, HANDLE entered, HANDLE job, HANDLE child,
+                        std::atomic<bool>& cancelled, std::atomic<bool>& child_stopped) {
+    auto owner = std::make_shared<RuntimeDispatcher::ActiveConnect>();
+    owner->local_dpi_owner = true;
+    owner->cleanup_attempted = true;  // This fixture owns the controlled proof.
+    std::unique_lock<std::mutex> execution(dispatcher.execution_lock_);
+    {
+      std::lock_guard<std::mutex> state(dispatcher.state_lock_);
+      owner->local_dpi_maintenance_active = true;
+      dispatcher.active_connect_ = owner;
+    }
+    ::SetEvent(entered);
+    const auto deadline = ::GetTickCount64() + 3000;
+    while (!owner->local_dpi_cancelled && ::GetTickCount64() < deadline) ::Sleep(1);
+    cancelled = owner->local_dpi_cancelled.load();
+    child_stopped = StopWindowsLocalDpiChild(job, child);
+    {
+      std::lock_guard<std::mutex> state(dispatcher.state_lock_);
+      owner->local_dpi_maintenance_active = false;
+    }
+  }
+};
+}  // namespace pokrov::service
+
 namespace {
 using namespace pokrov::service;
 int failures = 0;
@@ -149,11 +179,79 @@ class CommitBarrier final : public ServiceEventSink {
   bool RecordIpcResponse(Command, Status, const Identifier&) override { return true; }
   std::atomic<bool> pause{false}, entered{false}, resume{false};
 };
+
+void TestStopDuringLocalDpiProof(const std::wstring& root) {
+  auto core = std::make_unique<FakeCore>();
+  auto* core_state = core.get();
+  auto probe = std::make_unique<BlockingProbe>();
+  probe->released = 1;
+  RuntimeHost runtime(std::move(core), std::move(probe), std::make_unique<FakeRecovery>(), root, false);
+  const std::string profile = "0\n{\"inbounds\":[{\"type\":\"tun\"}]}";
+  Expect(runtime.Initialize().status == Status::kOk && runtime.StageProfile(profile).status == Status::kOk &&
+         runtime.Connect(ProfileDigest(profile)).status == Status::kOk, "retry Stop fixture did not connect");
+  wchar_t executable[MAX_PATH]{};
+  const auto size = ::GetModuleFileNameW(nullptr, executable, MAX_PATH);
+  HANDLE job = ::CreateJobObjectW(nullptr, nullptr);
+  JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
+  limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+  const bool configured = job != nullptr && ::SetInformationJobObject(job, JobObjectExtendedLimitInformation,
+      &limits, sizeof(limits));
+  std::wstring command = L"\"" + std::wstring(executable, size) + L"\" --local-dpi-test-child";
+  STARTUPINFOW startup{};
+  startup.cb = sizeof(startup);
+  PROCESS_INFORMATION process{};
+  const bool created = configured && size > 0 && size < MAX_PATH &&
+      ::CreateProcessW(executable, command.data(), nullptr, nullptr, FALSE,
+                       CREATE_SUSPENDED | CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process);
+  if (!created) {
+    Expect(false, "retry Stop fixture child was not created");
+    if (job) ::CloseHandle(job);
+    return;
+  }
+  const bool assigned = ::AssignProcessToJobObject(job, process.hProcess);
+  HANDLE witness = nullptr;
+  const bool duplicated = ::DuplicateHandle(::GetCurrentProcess(), process.hProcess, ::GetCurrentProcess(),
+      &witness, SYNCHRONIZE, FALSE, 0);
+  const bool resumed = ::ResumeThread(process.hThread) != static_cast<DWORD>(-1);
+  ::CloseHandle(process.hThread);
+  if (!assigned || !duplicated || !resumed) {
+    Expect(false, "retry Stop fixture could not own its child");
+    ::TerminateProcess(process.hProcess, 1);
+    ::CloseHandle(process.hProcess);
+    if (witness) ::CloseHandle(witness);
+    ::CloseHandle(job);
+    return;
+  }
+  const HANDLE entered = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  const HANDLE stop = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  std::atomic<bool> cancelled{false}, child_stopped{false};
+  {
+    RuntimeDispatcher dispatcher(&runtime);
+    std::thread proof([&] { RuntimeDispatcherRetryTestAccess::HoldProof(
+        dispatcher, entered, job, process.hProcess, cancelled, child_stopped); });
+    Expect(::WaitForSingleObject(entered, 3000) == WAIT_OBJECT_0, "retry proof fixture did not start");
+    const Frame request{FrameKind::kRequest, Command::kDisconnect, Status::kNone,
+                        NewId(), NewId(), NewId(), Now() + 10000, 0, ""};
+    const auto result = dispatcher.Execute(request, stop, ::GetTickCount64() + 3000, nullptr);
+    proof.join();
+    Expect(result.status == Status::kOk && result.body.find("phase=config_staged") != std::string::npos &&
+           cancelled && child_stopped && ::WaitForSingleObject(witness, 0) == WAIT_OBJECT_0 &&
+           core_state->stops == 1,
+           "Stop during local DPI proof returned busy or left its owned child running");
+  }
+  ::CloseHandle(entered);
+  ::CloseHandle(stop);
+  ::CloseHandle(witness);
+}
 }  // namespace
 #endif
 
-int main() {
+int main(int argc, char** argv) {
 #ifdef _DEBUG
+  if (argc == 2 && std::string(argv[1]) == "--local-dpi-test-child") {
+    ::Sleep(10000);
+    return 0;
+  }
   using namespace pokrov::service;
   wchar_t temporary[MAX_PATH]{}, root_path[MAX_PATH]{};
   if (!::GetTempPathW(MAX_PATH, temporary) ||
@@ -167,6 +265,14 @@ int main() {
     return 1;
   }
   const std::wstring root(root_path);
+  if (argc == 2 && std::string(argv[1]) == "--local-dpi-stop") {
+    TestStopDuringLocalDpiProof(root);
+    ::DeleteFileW((root + L"\\working\\configs\\managed-profile.json").c_str());
+    for (const auto* suffix : {L"\\working\\configs", L"\\working\\data", L"\\working", L"\\data", L"\\temp", L""}) {
+      ::RemoveDirectoryW((root + suffix).c_str());
+    }
+    return failures == 0 ? 0 : 1;
+  }
   const auto pipe = std::wstring(kTestPipePrefix) + L"Cancellation." + std::to_wstring(::GetCurrentProcessId());
   const HANDLE stop = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
   auto core = std::make_unique<FakeCore>();
