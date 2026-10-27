@@ -3517,6 +3517,8 @@ class ConnectionManager extends ChangeNotifier {
               'Для этих правил нужно обновить модуль подключения.',
             'smart_access_budget_exhausted' =>
               'Подготовка маршрута сервиса заняла слишком долго. Повторите подключение.',
+            'catalog_clock_rollback' =>
+              'Не удалось подтвердить время устройства. Проверьте дату и время, затем повторите подключение.',
             'catalog_process_scope_invalid' =>
               'Не удалось применить выбор EXE. Повторно выберите приложения.',
             'catalog_process_dns_transport_unsupported' =>

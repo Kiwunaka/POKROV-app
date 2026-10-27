@@ -5030,6 +5030,23 @@ void main() {
     expect(runtime.connectCalls, 2, reason: 'signature failure cannot fall through to the VPN cache');
   });
 
+  test('catalog clock rollback asks to check device time', () async {
+    final runtime = _Runtime();
+    final bootstrapper = _CatalogFailureBootstrapper()
+      ..catalogFailure = const RoutingCatalogFailure('catalog_clock_rollback');
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(manager.headline,
+        'Не удалось подтвердить время устройства. Проверьте дату и время, затем повторите подключение.');
+    expect(runtime.connectCalls, 0);
+    final report = bootstrapper.actualReports.singleWhere((value) => value['runtime_phase'] == 'failed');
+    expect(report['error_code'], 'API-008');
+    expect(report['failure_operation'], 'routing_catalog');
+    expect(report['failure_kind'], 'catalog_clock_rollback');
+  });
+
   test('new command cancels profile work and ignores its late result',
       () async {
     final runtime = _Runtime()..supportsCandidates = true;

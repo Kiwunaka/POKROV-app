@@ -2372,6 +2372,8 @@ Cached refresh stays at three seconds; manual node, candidate and bridge choices
 keep the 18-second profile budget, and native deadlines stay unchanged.
 
 Home keeps the observed connection failure visible after the transient notice.
+Catalog clock rollback asks the user to check the device date and time; the
+catalog's retained time and revision checks remain unchanged.
 Pending `API-011` says the server has not prepared the connection; unknown errors
 do not assume a network cause. A retained protection state keeps its disconnect
 action. In Full Tunnel, saved direct DNS and manual direct routes are labelled as
