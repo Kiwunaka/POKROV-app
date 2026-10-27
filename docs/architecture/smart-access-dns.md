@@ -155,9 +155,12 @@ Ownership is rechecked after proof, before a transport failure can trigger retry
 The current Windows source defaults to upstream zapret's `multidisorder` with
 `split-pos=1,midsld` first (journal strategy ID 101), then Flowseal 1.10.3/1.10.4
 ALT4's Google TCP branch (ID 4). The two-attempt limit remains; 568 and 681 are
-no longer attempted. The same-network success hint survives normal Stop, but
-a later observed runtime failure clears its network key before the next Connect;
-the original strategy ID stays available for the failure journal. WFP rule
+no longer attempted. Windows keeps strategy hints per physical network and signed
+service across normal Stop. Every Connect repeats proof. A retryable proof or
+runtime failure marks the failing strategy for that service; the other candidate
+is preferred unless selected services have conflicting failure hints. Without
+failure hints, incomplete or conflicting success hints use 101. The original
+strategy ID stays available for the failure journal. WFP rule
 priority is compared semantically
 (`499dd3e6`), and ordinary protected VPN egress is verified before WinDivert
 starts (`c3ba46d0`). Core `b560f1a` adds an IPv4-only local rule immediately before
