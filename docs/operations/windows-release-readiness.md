@@ -2,23 +2,33 @@
 
 Updated 27 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The latest Windows-only private build is
-**1.5.0+4230**, App `08f17394` / Core `8897fd8`, with the normal Stop fix.
+**1.5.0+4230**, App `08f17394` (includes `b0f686fd`) / Core `8897fd8` / 1.2.14.
 Its setup and installer-only ZIP passed build and package checks and are in
-`E:/POKROV-tools/temp/release-1.5.0-4230`; Windows runtime acceptance is pending.
-The latest Android APKs remain **1.5.0+4229**; Android was not rebuilt for 4230.
+`E:/POKROV-tools/temp/release-1.5.0-4230`. Installation exited 0 and registry showed
+1.5.0+4230. Ordinary UI Connect reached running with DNS/egress=1; Stop reached
+config_staged/running=0/failure=none with Protection off/Connect. Reconnect in the
+same process reached running/DNS/egress=1 and the second Stop again had no mismatch.
+ATS production was false; runtime-bound acceptance was not checked.
 
-The previous private **1.5.0+4229**, App `15684b17` / Core `8897fd8`, includes
-the settlement/recovery and idle-socket fixes below.
-Four Android APKs and Windows setup/ZIP passed standard build checks and remain
-in `E:/POKROV-tools/temp/release-1.5.0-4229`; both devices have 4229 installed.
-Acceptance is still in progress. On the active VM, ordinary Selective YouTube /
-LocalDPI Auto Connect reached healthy native state and admitted=1, but the video
-remained time=0/readyState=0 with 53 direct handoffs/vpn=0. This is not a playback
-pass; the cause is being investigated. The mojibake IS city label came from cachedLocations
-dated 18 October; the live DB has the correct «Исландия» value. Current VM restoration
-is pending. The owner's phone was taken back and ADB is unavailable; mobile
-YouTube/DNSTT 4229 remain unchecked. The fresh Beeline example.com HTTPS 200/h3
-baseline without VPN does not establish a full whitelist-network result.
+The 4229 YouTube time≈0 case was an active cookie-consent dialog; ordinary Reject
+all unblocked playback. A brief controlled `--disable-quic` observation played direct 1080p
+for 22.06 s, local=22/VPN=0/admitted=1; it is not a full direct acceptance pass.
+After removing that flag, ordinary Edge played 1080p for 31.34 s/1885 frames with
+10 HTTP 200 responses/24,053,437 bytes, but strategy 101 runtime `early_read`
+withdrew admission: local 35→41, VPN 0→9, admitted=0/failed=1.
+This is mixed local/VPN fallback playback. Individual CDN 403
+responses are not established as the cause. ALT4 is selected on the next Connect
+using the in-memory network-failure hint; the active Connect does not iterate ALT4.
+
+Normal Refresh replaced the damaged 18 October cached IS label at 27 October 14:04 UTC;
+4230 UI showed «Исландия». Restore changed only routingPreferences/firstRouteScopeMode,
+retaining new protection events/cache/notifications. Saved IPv4 DNS settings,
+the default route, proxy and Edge policy matched baseline; app/TUN/winws/ownedEdge=0.
+Guest QA and the owned host SSH forward/logs/via-US config were removed; the Windows
+intermediate build was removed and final setup/ZIP retained. VM state=1/PoweredOff
+is confirmed. Android remains 4229 with the owner: mobile YouTube/DNSTT and cleanup
+after Wi-Fi-off await its return. The Beeline HTTPS 200/h3 baseline was not a full
+whitelist-network check.
 
 ## Earlier 4228 acceptance
 
