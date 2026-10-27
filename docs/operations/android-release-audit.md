@@ -1,33 +1,24 @@
 # Android acceptance
 
-Updated 27 October 2026. Public **1.4.5** and draft **1.5.0+4175 / seven assets**
-are unchanged. Private Android ARM64 **4224**, App `d30df1ce`, is built and
-installed. The owner has the phone; its last ordinary Connect was started before
-handoff and current VPN state is unconfirmed. The current settings are manual DE2
-direct, Selective YouTube, LocalDPI on, ComssDNS, SmartDNS auto and WARP off; the
-owner's app filter 3 was untouched. Do not use ADB until the phone returns.
+Updated 27 October 2026. Private Android ARM64 **4227**, App `c416369c` with
+the ByeDPI fix `ba611b6a` and Core `58b11d4` / 1.2.14, is installed. The four
+final APKs passed production checks. Windows 4227 setup and single-entry ZIP
+were built; the setup is unsigned and the VM was not reinstalled. Public 1.4.5
+and draft 4175 are unchanged. [Artifacts and exact scope](cutover-readiness.md).
 
-NativeQA 4 on 4222 confirmed SmartDNS control, resolver/DNS and TLS, and Chrome
-received Gemini's real `7+5 → 12` answer. After refresh, the same probe/profile
-remained current with guard false; normal Stop in that run left the native VPN
-service absent. Provider policy 4/state 3 and catalog 29/state 29 were later
-published for Android and Windows Gemini, with eligible Premium states and Free
-excluded. The normal Android UI read after promotion remains pending.
+On the owned Wi-Fi, the actual app admitted `OOB_TLS_RECORD`; Chrome played Big
+Buck Bunny at UI-selected 1920×1080 for 85.94 seconds with 5,157 decoded frames
+and 70 dropped. Nine fresh Googlevideo HTTP/1.1 responses returned 200 and
+39,132,679 bytes. After refresh, direct TCP was 7, VPN TCP 0 and rejected QUIC 6;
+the signed catalog covers `googlevideo.com`. This accepts direct ByeDPI 1080p
+for this Wi-Fi, not cellular or every destination.
 
-LocalDPI 4221 accepted bridge prepare/capture/stats. The 4222 UID mismatch before
-SOCKS was corrected in `fea45ed7` by binding the owned process FD and session;
-Pi4 owned TCP was accepted and a foreign process with the same UID denied.
-NDK for all three Android ABIs and Kotlin checks passed. On 4223 ownership,
-SOCKS and protected uplink passed, but TLS timed out. On 4224 the first TLSREC
-1+s strategy and unchanged second disorder strategy both reached TLS handshake
-deadlines within the five-second budget. Direct ByeDPI and YouTube 1080p are
-not accepted; 1080p has not been tested. Final Windows/all-ABI packaging waits
-for the Android result. [Artifacts and exact scope](cutover-readiness.md).
-
-Earlier service0 observations searched for `PokrovVpnService` rather than the
-actual `PokrovRuntimeVpnService`; they did not prove service absence. The 4222
-Stop observation above uses the actual native service. Customer contact and the
-public release are unchanged; automations remain paused.
+The 4225 Android UI showed Gemini enabled and selectable after policy publication.
+The 4222 NativeQA and real Gemini answer remain accepted without repetition.
+After 4227, ordinary Stop left the actual `PokrovRuntimeVpnService` absent.
+Auto/Russia Direct, LocalDPI off, ComssDNS, SmartDNS auto and WARP off were
+restored with the three-app filter preserved. The owned browser tab, ADB forward,
+log overrides and temporary Pi/helper processes were removed; automations remain paused.
 
 The phone exposed a false identity failure after staging withdrawal; `03fe046d`
 fixes it, with the existing test RED→PASS in Direct and Store. Physical 4207
@@ -80,7 +71,7 @@ records the package status and accepted checks. The owner returned the phone on
 
 | Build / scenario | Result and scope |
 | --- | --- |
-| 4214 ordinary Selective YouTube | With LocalDPI enabled and ComssDNS, RF2→DE2 Connect took 26.723 s, full 64 KiB 10,045 ms. Chrome played Big Buck Bunny to 1:52/10:34. This accepts playback only: direct ByeDPI routing was not proven because local-DPI counters were lost at bridge decoding. The counter fix is included in 4215/4216; direct-routing acceptance remains pending. |
+| 4214 ordinary Selective YouTube | With LocalDPI enabled and ComssDNS, RF2→DE2 Connect took 26.723 s, full 64 KiB 10,045 ms. Chrome played Big Buck Bunny to 1:52/10:34. This accepted playback only: direct ByeDPI routing was not proven because local-DPI counters were lost at bridge decoding. The later 4227 acceptance is described above. |
 | 4210 Naive CH | Ordinary UI/TUN, exact 64 KiB in 1,019 ms; Connect 10,257 ms; Stop removed VPN service/network. Platform `690658b` fixed telemetry 422 and delivered the original queued report without repeating Connect. |
 | 4211 Lampa direct to PL | Ordinary `lampa` / bridge 8 through new `37.18.102.90`, exact 64 KiB in 818 ms; Connect 9,910 ms; clean Stop. Floating/RF2 remained unchanged. |
 | External clients on the returned phone | Existing subscriptions refreshed in Hiddify 4.1.1 and Happ 4.4.1; Germany Auto gave real Gemini answers 4 and 5, respectively. Happ Russia Direct/geofiles import accepted; settings preserved and both VPNs stopped. Hiddify owns its routing, so these results do not accept POKROV-app SmartDNS or YouTube. |

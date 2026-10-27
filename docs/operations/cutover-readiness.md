@@ -6,55 +6,39 @@ explains how to continue. Dated results below retain their original scope and do
 not create new tasks or permission to repeat accepted checks.
 
 Public metadata remains **1.4.5 / schema 0 / min-supported 1.3.0**.
-**1.5.0+4175 is a draft with seven assets**, not a public release. The final
-16 October packages contain production-signed universal, arm64-v8a,
+**1.5.0+4175 is a draft with seven assets**, not a public release. The
+16 October draft packages contain production-signed universal, arm64-v8a,
 armeabi-v7a and x86_64 APKs plus the unsigned Windows setup, release-index and
 SHA256SUMS. They were built from App 9fc28bc4 / Core 40356d4; the full Core AAR
-contains four native ABIs. Final ARM64 installed with data preserved; Windows
+contains four native ABIs. Its ARM64 APK installed with data preserved; Windows
 setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Private Android ARM64 **1.5.0+4224**, App `d30df1ce`, is built and installed.
-Private **4225**, App `21c5b2ca`, is built but not installed; it adds opt-in
-YouTube control-only diagnostics from `55ab2e28`. The production builder
-verified versionCode 4225, signer, non-debuggable manifest and ARM64. Its APK
-is 86,148,677 bytes; Core is unchanged. Local Kotlin/ARM64 native compilation
-and one C test passed. Device use awaits the phone.
-On 4222, NativeQA 4 confirmed SmartDNS control, resolver/DNS and TLS; Chrome
-received the real Gemini answer `7+5 → 12`. After refresh the same probe/profile
-remained current with guard false. Normal Stop in that run left the native VPN
-service absent. Provider policy 4/state 3 and catalog 29/state 29 were subsequently
-published through normal Action Intents for Android and Windows Gemini: active
-`bonus_premium`, `paid_unlimited` and `trial_premium` are eligible, including
-manual access through the existing projection; Free is excluded. A normal Android
-UI read after publication remains to be checked.
+Private **1.5.0+4227**, App `c416369c` including the ByeDPI fix `ba611b6a`,
+uses Core `58b11d4` / 1.2.14. The phone is updated to 4227. All four Android APKs
+passed production checks; Windows setup and single-entry ZIP were built, with
+the setup unsigned. Windows 4216's accepted VM checks were not repeated.
+The [final private packages](#private-artifacts) are ready; publishing still
+requires the owner. Public 1.4.5, draft 4175 and paused automations are unchanged.
 
-LocalDPI 4221 accepted the TLS bridge prepare/capture/stats path; 4222 then exposed
-an actual UID mismatch before SOCKS. App `fea45ed7` uses the owned process FD and
-session instead of the connection-manager UID hidden for the VPN-excluded app.
-The Pi4 owned-TCP/foreign-process-same-UID check, three Android NDK ABIs and Kotlin
-tests passed. On 4223 ownership, SOCKS and protected uplink passed, but TLS timed
-out. 4224 tries TLSREC 1+s first and the unchanged disorder strategy second within
-five seconds; both reached `tls_handshake` deadlines at 01:14:51–01:14:57 Moscow.
-Direct ByeDPI routing is not accepted; YouTube 1080p has not been tested.
+On owned Wi-Fi, ordinary 4227 Selective YouTube admitted `OOB_TLS_RECORD`: the
+control observed 664 client bytes, 670 bytes accepted by send including the urgent
+byte, 17,095 remote bytes and zero TCP retransmissions. Baseline was ready 1,
+pending/failed/withdrawn 0, direct/VPN/QUIC 0. Chrome played Big Buck Bunny in
+UI-selected 1920×1080 from 159.350 s to 245.293 s: 5,157 frames decoded and 70
+dropped. Nine fresh uncached HTTP/1.1 Googlevideo 200 responses totalled 39,132,679
+bytes; after refresh the app reported ready 1, pending/failed/withdrawn 0,
+direct TCP 7, VPN TCP 0 and six rejected QUIC attempts. The `googlevideo.com`
+suffix is in signed catalog 29. This accepts direct ByeDPI 1080p on this Wi-Fi,
+not cellular or every destination.
 
-On Pi4 wlan, a same-IP comparison gave a five-second direct timeout, verified
-TLS in 0.0842 s and HTTP 200 in 0.2867 s with TLSREC 1+s, and a five-second
-timeout with disorder 1 plus TLSREC 3+s. A separate paired comparison on a
-new IP, with the same curl, preset and route, passed both AF_INET (TLS 0.0667 s;
-HTTP 200 in 0.2513 s) and AF_INET6 mapped/default bind (TLS 0.0675 s; HTTP 200
-in 0.2677 s). This does not establish socket family, DPI or DNS as the Android
-failure cause, or accept Android playback. The owned temporary CLI/processes
-were removed; global routes and services were unchanged.
-
-The owner has the phone with 4224; the last ordinary Connect was started before
-handoff and its current VPN state is unconfirmed. Settings remain manual DE2 direct /
-Selective YouTube / LocalDPI on / ComssDNS / SmartDNS auto / WARP off; the owner's
-app filter 3 was untouched. No ADB work until return; Chrome must be foregrounded
-again for the browser check. Windows4216 and DNSTT retain
-their accepted scope; final Windows/all-ABI packaging waits for Android acceptance.
-Public 1.4.5, draft 4175 and paused automations are unchanged.
+On 4225, the ordinary Android Gemini UI showed Gemini enabled and selectable.
+The 4222 NativeQA and real Gemini answer remain accepted and were not repeated.
+After the 4227 check, ordinary Stop left `PokrovRuntimeVpnService` absent. Auto,
+Russia Direct, LocalDPI off, ComssDNS, SmartDNS auto and WARP off were restored;
+the owner's three-app filter was preserved. The owned Chrome tab, ADB forward,
+log-tag overrides, Pi proxies and temporary helpers were cleaned up.
 
 Correction to earlier Android QA evidence: a service-absence predicate searched
 for `PokrovVpnService`, but the actual class is `PokrovRuntimeVpnService`.
@@ -97,8 +81,7 @@ reserve; its default remains 12 seconds. Runtime AAR/DLL and VERSION did not cha
 Ordinary Android4214 Selective YouTube with LocalDPI enabled and ComssDNS connected
 through RF2→DE2 in 26.723 s (64 KiB in 10,045 ms). Chrome played Big Buck Bunny to
 1:52 of 10:34. This accepts playback, not direct ByeDPI routing: counters were lost
-at bridge decoding; the diagnostics fix is included in 4215/4216, but direct
-routing has not been accepted. Normal Stop
+at bridge decoding; direct routing was subsequently accepted on 4227 above. Normal Stop
 removed the VPN service/network. Auto/Russia Direct/Advanced, LocalDPI off and
 WARP off were restored, retaining ComssDNS. YouTube remains an inert Selective
 service choice; the initially empty service list was not restored. The owned
@@ -157,8 +140,8 @@ Earlier LTE failures with zero SIM balance are not VPN defects. Direct Iceland
 HTTPS still timed out on funded LTE; bridge success does not accept IS direct
 VLESS/HY2/AWG on Android. The later Pi4 direct acceptance is stated above.
 Android Naive was subsequently accepted on 4210 as described above;
-The later SmartDNS QA and the still-unaccepted direct LocalDPI routing have separate scopes;
-the later 4214 browser playback result has only the scope stated above.
+The later SmartDNS QA and the 4214 browser playback result have separate scopes;
+the 4227 direct LocalDPI acceptance is described above.
 No accepted Windows transport/VM checks were repeated for this shared cache change.
 Public release, customer contact and paused automations remain unchanged.
 
@@ -235,17 +218,16 @@ ordering and budgets remain in force.
 The DNS tunnel remains gated on recursive DNS and Auto/TUN acceptance.
 The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
+## Private artifacts
+
 | Private artifact | Path |
 | --- | --- |
-| Android arm64-v8a, private 4225, not installed | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4225-android-arm64-v8a.apk) |
-| Android arm64-v8a, previous private 4218 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4218-android-arm64-v8a.apk) |
-| Android arm64-v8a, accepted 4211 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4211-android-arm64-v8a.apk) |
-| Android universal, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-universal.apk) |
-| Android arm64-v8a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-arm64-v8a.apk) |
-| Android armeabi-v7a, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-armeabi-v7a.apk) |
-| Android x86_64, preceding 4209 | [APK](E:/POKROV-tools/temp/pokrov-1.5.0-4209-android-x86_64.apk) |
-| Windows x64 installer, installed 4216; bounded acceptance above | [Setup](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4216-setup.exe) |
-| Windows delivery ZIP, 4216 | [ZIP](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4216-setup.zip) |
+| Android 4227 universal | [APK](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-android-1.5.0+4227-universal.apk) |
+| Android 4227 arm64-v8a, installed | [APK](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-android-1.5.0+4227-arm64-v8a.apk) |
+| Android 4227 armeabi-v7a | [APK](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-android-1.5.0+4227-armeabi-v7a.apk) |
+| Android 4227 x86_64 | [APK](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-android-1.5.0+4227-x86_64.apk) |
+| Windows 4227 unsigned installer | [Setup](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-windows-x64-1.5.0+4227-setup.exe) |
+| Windows 4227 single-entry delivery ZIP | [ZIP](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-windows-x64-1.5.0+4227.zip) |
 
 Managed Naive H2 is live on CH at `ch.pokrov.space:443`, with Platform `f019efe`
 and Node `3e23441`. Eligibility covers all active Premium, including trial and
@@ -376,11 +358,9 @@ DNS/routes/proxy matched the baseline; display 1372×943 was restored, app/winws
 TUN were absent and the owned QA directory was removed. Root confirmed the VM
 PoweredOff. Paused customer work and automations were not resumed.
 Existing budgets, country and bridge-load groups remain in force.
-Remaining work follows the owner's current queue: normal Android Gemini UI read
-after promotion and YouTube 1080p over direct ByeDPI when the phone returns, then
-final Windows/all-ABI packaging after Android acceptance. DNSTT recursive transport
-and Windows 4216 Auto/TUN remain accepted. The customer Windows case remains
-paused; publication requires the owner's yes.
+Remaining work follows the owner's current queue. DNSTT recursive transport and
+Windows 4216 Auto/TUN remain accepted; customer cases 89–90 remain paused and
+publication requires the owner's yes.
 
 ## Earlier private packages and accepted checks
 
