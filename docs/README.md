@@ -17,7 +17,7 @@
 - WARP-specific checks: [runtime proof checklist](operations/warp-runtime-proof-checklist.md).
 
 Public **1.4.5**, seven-asset draft **1.5.0+4175**, and private Android/Windows
-**1.5.0+4227** remain separate. Current artifacts,
+**1.5.0+4228** remain separate. Current artifacts,
 manifest selection and acceptance limits belong to
 [cutover readiness](operations/cutover-readiness.md), with packaging mechanics
 in [scripts](../scripts/README.md#runtime-selection).

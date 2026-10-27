@@ -15,12 +15,24 @@ setup exited 0 and app/service/Core 1.2.14 started in the Clean VM. The seven
 assets were checked against the draft; unchanged protocol QA was not repeated.
 Strict-v2 is not required by the current release plan.
 
-Private **1.5.0+4227**, App `c416369c` including the ByeDPI fix `ba611b6a`,
-uses Core `58b11d4` / 1.2.14. The phone is updated to 4227. All four Android APKs
+Current private **1.5.0+4228**, App `ee9c7fc0` / Core `698662e`, is built.
+The included `0f28428b` repair normalizes canonical DNS lanes for both fresh and
+cached profiles in Android Automatic. Android 4228 has not been checked on the
+physical phone; the owner has taken the phone and it is unavailable. Windows 4228
+is installed in the owned VM, but the new functional run is incomplete. Targeted
+APK delivery for case 86 is being prepared; sending, installation and successful
+connection on 4228 are not confirmed. Public 1.4.5 and draft 4175 remain unchanged.
+
+Before 4228, mobile YouTube 1080p opened and fresh media bytes arrived. Final native
+DPI counters and a bounded fixed 1080p pass were not captured; mobile DNSTT has
+not been checked. The earlier accepted Wi-Fi scenario below retains its scope.
+
+Earlier private **1.5.0+4227**, App `c416369c` including the ByeDPI fix `ba611b6a`,
+uses Core `58b11d4` / 1.2.14. The phone was updated to 4227. All four Android APKs
 passed production checks; Windows setup and single-entry ZIP were built, with
 the setup unsigned. Windows 4216's accepted VM checks were not repeated.
-The [final private packages](#private-artifacts) are ready; publishing still
-requires the owner. Public 1.4.5, draft 4175 and paused automations are unchanged.
+The [earlier private packages](#private-artifacts) do not establish 4228 acceptance.
+Publishing still requires the owner; paused automations are unchanged.
 
 On owned Wi-Fi, ordinary 4227 Selective YouTube admitted `OOB_TLS_RECORD`: the
 control observed 664 client bytes, 670 bytes accepted by send including the urgent
@@ -219,6 +231,8 @@ The DNS tunnel remains gated on recursive DNS and Auto/TUN acceptance.
 The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 ## Private artifacts
+
+This table retains the earlier 4227 set; current 4228 acceptance is stated above.
 
 | Private artifact | Path |
 | --- | --- |
