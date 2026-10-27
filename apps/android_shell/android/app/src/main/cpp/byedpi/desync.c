@@ -398,7 +398,7 @@ static void restore_state(struct eval *val)
 }
 
 
-static ssize_t send_oob(int sfd, char *buffer,
+static ssize_t send_oob(struct eval *val, char *buffer,
         ssize_t n, long pos, const char *c)
 {
     if (n <= pos) {
@@ -407,7 +407,10 @@ static ssize_t send_oob(int sfd, char *buffer,
     char rchar = buffer[pos];
     buffer[pos] = c[1] ? c[0] : 'a';
     
-    ssize_t len = send(sfd, buffer, pos + 1, MSG_OOB);
+    ssize_t len = send(val->fd, buffer, pos + 1, MSG_OOB);
+#ifdef POKROV_EMBEDDED
+    if (len > 0) pokrov_byedpi_proof_sent(val->pokrov_proof_token, len);
+#endif
     buffer[pos] = rchar;
     
     if (len < 0) {
@@ -609,7 +612,7 @@ ssize_t desync(struct poolhd *pool,
                 break;
             #endif
             case DESYNC_OOB:
-                s = send_oob(sfd, 
+                s = send_oob(val,
                     buffer + lp, bfsize - lp, pos - lp, dp.oob_char);
                 break;
                 
@@ -623,7 +626,7 @@ ssize_t desync(struct poolhd *pool,
                 val->restore_ttl = 1;
                 
                 if (part.m == DESYNC_DISOOB) 
-                    s = send_oob(sfd, 
+                    s = send_oob(val,
                         buffer + lp, bfsize - lp, pos - lp, dp.oob_char);
                 else {
                     s = send(sfd, buffer + lp, pos - lp, 0);

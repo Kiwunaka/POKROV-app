@@ -37,7 +37,7 @@ import javax.net.ssl.SSLProtocolException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
-internal enum class AndroidByeDpiStrategy { TLS_RECORD, DISORDER }
+internal enum class AndroidByeDpiStrategy { OOB_TLS_RECORD, DISORDER }
 
 /** One embedded SOCKS loop and protect listener, owned by the existing VPN session. */
 internal class AndroidByeDpiRuntime private constructor(
@@ -267,8 +267,8 @@ internal class AndroidByeDpiRuntime private constructor(
                     OsConstants.SO_RCVTIMEO, StructTimeval.fromMillis(1000))
                 runtime.server = LocalServerSocket(runtime.bound.fileDescriptor)
                 runtime.nativeHandle = runtime.nativeStart(runtime.path.absolutePath, strategy.ordinal, requestedPort)
-                logLocalDpiDiagnostic(if (strategy == AndroidByeDpiStrategy.TLS_RECORD)
-                    "strategy=tls_record" else "strategy=disorder")
+                logLocalDpiDiagnostic(if (strategy == AndroidByeDpiStrategy.OOB_TLS_RECORD)
+                    "strategy=oob_tls_record" else "strategy=disorder")
                 runtime.listener = Thread(runtime::listenForProtection, "pokrov-byedpi-protect").apply {
                     isDaemon = true
                     start()
@@ -448,32 +448,19 @@ internal class AndroidByeDpiServiceProof(
         secure.outputStream.write("HEAD / HTTP/1.1\r\nHost: $host\r\nConnection: close\r\n\r\n"
             .toByteArray(Charsets.US_ASCII))
         val response = secure.inputStream
-        fun line(): String {
-            val text = StringBuilder()
-            while (text.length < 1024) {
-                secure.soTimeout = budget()
-                val value = response.read()
-                if (value < 0) throw EOFException()
-                if (value == 10) return text.toString().removeSuffix("\r")
-                text.append(value.toChar())
-            }
-            throw IOException("byedpi: HTTP header limit")
+        fun readByte(): Int {
+            secure.soTimeout = budget()
+            return response.read()
         }
         stage = "http_status"
-        val status = line()
+        val status = readLocalDpiHttpLine(1024, ::readByte)
         if (!Regex("HTTP/1\\.[01] 2[0-9]{2}(?: .*)?").matches(status)) {
             val code = Regex("HTTP/1\\.[01] ([0-9]{3})(?: .*)?").matchEntire(status)?.groupValues?.get(1)
             if (code == null) report("invalid_status") else report("rejected", " http_status=$code")
             throw IOException("byedpi: HTTP status")
         }
         stage = "http_headers"
-        var headerBytes = status.length
-        while (true) {
-            val header = line()
-            headerBytes += header.length + 2
-            if (headerBytes > 8192) throw IOException("byedpi: HTTP header limit")
-            if (header.isEmpty()) break
-        }
+        readLocalDpiHttpHeaders(status.length, ::readByte)
         // HEAD ends here: no redirects, body, content capture or downloads.
         budget()
     }
@@ -500,6 +487,29 @@ internal class AndroidByeDpiServiceProof(
         val thread = synchronized(lock) { closed = true; worker }
         closeSockets()
         if (thread != null) joinByeDpiWorker(thread)
+    }
+}
+
+internal fun readLocalDpiHttpLine(limit: Int, readByte: () -> Int): String {
+    val text = StringBuilder()
+    repeat(limit) {
+        val value = readByte()
+        if (value < 0) throw EOFException()
+        if (value == 10) return text.toString().removeSuffix("\r")
+        text.append(value.toChar())
+    }
+    throw IOException("byedpi: HTTP header limit")
+}
+
+internal fun readLocalDpiHttpHeaders(statusLength: Int, readByte: () -> Int) {
+    var headerBytes = statusLength + 2
+    while (true) {
+        val header = readLocalDpiHttpLine(8192) {
+            if (headerBytes >= 16384) throw IOException("byedpi: HTTP header limit")
+            headerBytes++
+            readByte()
+        }
+        if (header.isEmpty()) return
     }
 }
 

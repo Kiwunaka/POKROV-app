@@ -1,6 +1,8 @@
 package space.pokrov.pokrov_android_shell
 
+import java.io.ByteArrayInputStream
 import java.io.DataInputStream
+import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.CopyOnWriteArrayList
@@ -9,9 +11,23 @@ import javax.net.ssl.SSLHandshakeException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class AndroidByeDpiServiceProofTest {
+    @Test fun acceptsLongHeadersButRejectsResponsesOverTheTotalLimit() {
+        val longHeader = "Content-Security-Policy: " + "x".repeat(7900)
+        val extraHeader = "X-Test: " + "x".repeat(400)
+        val response = ByteArrayInputStream("$longHeader\r\n$extraHeader\r\n\r\n".toByteArray())
+        readLocalDpiHttpHeaders("HTTP/1.1 200 OK".length, response::read)
+        assertEquals(-1, response.read())
+
+        val oversized = ByteArrayInputStream((("X-Test: " + "x".repeat(6000) + "\r\n").repeat(3) + "\r\n").toByteArray())
+        assertThrows(IOException::class.java) {
+            readLocalDpiHttpHeaders("HTTP/1.1 200 OK".length, oversized::read)
+        }
+    }
+
     @Test fun reportsSocksFailureWithoutPeerData() {
         val loopback = InetAddress.getByName("127.0.0.1")
         val peerFailure = AtomicReference<Throwable?>()
