@@ -1,8 +1,35 @@
 # Windows acceptance
 
 Updated 27 October 2026. Public version remains **1.4.5**; the seven-asset
-**1.5.0+4175** draft is unchanged. The latest Windows-only private build is
-**1.5.0+4230**, App `08f17394` (includes `b0f686fd`) / Core `8897fd8` / 1.2.14.
+**1.5.0+4175** draft is unchanged. Windows **4232**, App `376cd9c9` /
+Core `2b2354f` / 1.2.14, passed the scoped runtime retry case after the App
+`aec7268a` WFP-proof permit correction. On healthy 101, one curl to an owned unused
+IP with SNI www.youtube.com caused real `connect_timeout_ipv4`; the journal then
+showed auto start4/proof4/admit4. Final state was running/DNS/egress=1,
+admitted=1/failed=0; PID/TUN/effectiveDigest stayed stable with zero extra Core
+starts and six error-free observations. Curl returned HTTP 200/exit 0 in 6.37 s.
+This is a scoped end-to-end runtime retry pass, not 1080p video or an independently
+measured long-running VPN flow. Cleanup completed: recorded IPv4/IPv6 DNS, routes,
+user/WinHTTP proxy and Edge policies matched baseline; App/observer/TUN/winws=0,
+QA removed, other cache/events retained. VM state=1/PoweredOff is confirmed. No
+WFP helper was started; its unused host temporary folder was removed and the
+original helper retained.
+
+Windows **4233**, App `938b0d0b` / Core `2b2354f` / 1.2.14 / ABI2, passed package
+checks with production trust and ATS=false. Since 4232, source changes are
+clock-rollback copy `b97609f7` and version/seed only; native sources are unchanged.
+Runtime acceptance belongs to 4232; 4233 was not installed or functionally retested
+on the VM. The unsigned
+[setup](E:/POKROV-tools/temp/release-1.5.0-4233/pokrov-windows-x64-1.5.0+4233-setup.exe)
+and adjacent ZIP are retained; the ZIP contains only the byte-identical
+POKROV-Setup.exe. Intermediate Windows/Android build trees
+and the unused TCP-only helper temporary folder were removed; final release
+folders and selected Core libraries were retained, older helpers/wrappers unchanged.
+Android remains 4229 with the owner; mobile checks/cleanup await its return.
+
+## Earlier 4230 and 4229 acceptance
+
+Windows **1.5.0+4230**, App `08f17394` (includes `b0f686fd`) / Core `8897fd8` / 1.2.14.
 Its setup and installer-only ZIP passed build and package checks and are in
 `E:/POKROV-tools/temp/release-1.5.0-4230`. Installation exited 0 and registry showed
 1.5.0+4230. Ordinary UI Connect reached running with DNS/egress=1; Stop reached
