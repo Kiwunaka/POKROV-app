@@ -52,6 +52,8 @@ class HomeViewData {
     this.notificationsUnread = 0,
     this.statusLabel,
     this.actionLabel,
+    this.errorTitle = 'Не получилось подключиться',
+    this.errorMessage,
   });
 
   final ConnectionPhase phase;
@@ -79,6 +81,8 @@ class HomeViewData {
   final int notificationsUnread;
   final String? statusLabel;
   final String? actionLabel;
+  final String errorTitle;
+  final String? errorMessage;
 }
 
 class StatusRow {

@@ -3315,6 +3315,9 @@ class _PokrovSeedShellState extends State<PokrovSeedShell>
       (context) => _QuickConnectSection(
             advanced: _clientExperience.interfaceMode == PokrovInterfaceMode.advanced,
             preferredCountryCode: selectedCountry,
+            actionRequired: _connectionManager._activePhase == ConnectionPhase.actionRequired,
+            connectionFailureMessage: _connectionManager._connectionFailureMessage,
+            retainsProtection: _connectionManager.retainsProtection,
             onHelp: _showSupportHub,
             appContext: widget.appContext,
             freeProfileAccess: _freeProfileAccess,

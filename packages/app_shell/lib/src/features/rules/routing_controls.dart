@@ -73,10 +73,12 @@ class _WindowsConnectionCard extends StatelessWidget {
 class _PurposeRoutingCard extends StatelessWidget {
   const _PurposeRoutingCard({
     required this.preferences,
+    required this.fallbackMode,
     required this.onChanged,
   });
 
   final PokrovRoutingPreferences preferences;
+  final RouteMode fallbackMode;
   final ValueChanged<PokrovRoutingPreferences> onChanged;
 
   @override
@@ -98,7 +100,10 @@ class _PurposeRoutingCard extends StatelessWidget {
                 'rules-purpose-${PokrovPurposeRoute.values[index].name}',
               ),
               title: PokrovPurposeRoute.values[index].title,
-              subtitle: PokrovPurposeRoute.values[index].summary,
+              subtitle: fallbackMode == RouteMode.fullTunnel &&
+                      PokrovPurposeRoute.values[index] == PokrovPurposeRoute.ruDirect
+                  ? 'Не применяется в режиме «Всё через POKROV».'
+                  : PokrovPurposeRoute.values[index].summary,
               value: preferences.purposeRoutes.contains(
                 PokrovPurposeRoute.values[index],
               ),
@@ -144,8 +149,10 @@ class _CustomRoutingCard extends StatelessWidget {
     return _SectionCard(
       key: const ValueKey('rules-custom-routes'),
       title: 'Свои правила',
-      lines: const [
-        'Домен, IP или подсеть можно отправить через VPN либо оставить напрямую. Первым срабатывает ваше точное правило.',
+      lines: [
+        fallbackMode == RouteMode.fullTunnel
+            ? 'В режиме «Всё через POKROV» правила «напрямую» не применяются.'
+            : 'Домен, IP или подсеть можно отправить через VPN либо оставить напрямую. Первым срабатывает ваше точное правило.',
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -172,6 +179,7 @@ class _CustomRoutingCard extends StatelessWidget {
               if (index > 0) const _SettingsRowDivider(),
               _RouteOverrideRow(
                 rule: preferences.overrides[index],
+                directPaused: fallbackMode == RouteMode.fullTunnel,
                 onRemove: () {
                   onChanged(
                     preferences.copyWith(
@@ -225,6 +233,7 @@ class _CustomRoutingCard extends StatelessWidget {
 class _DnsAndLanCard extends StatelessWidget {
   const _DnsAndLanCard({
     required this.hostPlatform,
+    required this.fallbackMode,
     this.loadSmartDnsProviders,
     this.smartDnsEligible = false,
     required this.preferences,
@@ -233,6 +242,7 @@ class _DnsAndLanCard extends StatelessWidget {
   });
 
   final HostPlatform hostPlatform;
+  final RouteMode fallbackMode;
   final Future<VerifiedSmartAccessProviderPolicy> Function()? loadSmartDnsProviders;
   final bool smartDnsEligible;
   final PokrovRoutingPreferences preferences;
@@ -248,6 +258,9 @@ class _DnsAndLanCard extends StatelessWidget {
       lines: [
         customDnsError != null
             ? 'Сохранённый адрес DNS не поддерживается. Используется DNS профиля POKROV; исправьте адрес в настройке DNS.'
+            : preferences.effectiveDnsTransport == PokrovDnsTransport.direct &&
+                    fallbackMode == RouteMode.fullTunnel
+                ? 'DNS напрямую сохранён, но в режиме «Всё через POKROV» DNS идёт через VPN.'
             : preferences.effectiveDnsTransport == PokrovDnsTransport.direct
                 ? 'DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'
                 : 'Защитный DNS блокирует известные рекламные и трекинговые домены внутри VPN.',
@@ -283,7 +296,10 @@ class _DnsAndLanCard extends StatelessWidget {
             _RoutingToggleRow(
               key: const ValueKey('rules-dns-direct-toggle'),
               title: 'DNS напрямую · лаборатория',
-              subtitle: preferences.dnsTransport == PokrovDnsTransport.direct
+              subtitle: preferences.dnsTransport == PokrovDnsTransport.direct &&
+                      fallbackMode == RouteMode.fullTunnel
+                  ? 'Настройка сохранена. В режиме «Всё через POKROV» DoH идёт через VPN.'
+                  : preferences.dnsTransport == PokrovDnsTransport.direct
                   ? 'Только зашифрованный DoH идёт без VPN. IP-адрес не меняется.'
                   : 'DoH идёт через VPN.',
               value: preferences.dnsTransport == PokrovDnsTransport.direct,
@@ -764,9 +780,10 @@ class _RoutingToggleRow extends StatelessWidget {
 }
 
 class _RouteOverrideRow extends StatelessWidget {
-  const _RouteOverrideRow({required this.rule, required this.onRemove});
+  const _RouteOverrideRow({required this.rule, required this.directPaused, required this.onRemove});
 
   final PokrovRouteOverride rule;
+  final bool directPaused;
   final VoidCallback onRemove;
 
   @override
@@ -797,7 +814,7 @@ class _RouteOverrideRow extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  '${_routeMatchTypeLabel(rule.matchType)} · ${direct ? 'Напрямую' : 'Через VPN'}',
+                  '${_routeMatchTypeLabel(rule.matchType)} · ${direct ? (directPaused ? 'Напрямую · не применяется' : 'Напрямую') : 'Через VPN'}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: p.muted,
                       ),

@@ -789,7 +789,7 @@ class ConnectionManager extends ChangeNotifier {
     } on Object {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       _activePhase = ConnectionPhase.actionRequired;
-      _runtimeHeadline = 'Отключение не подтверждено. Повторите попытку.';
+      _runtimeHeadline = _connectionFailureMessage = 'Отключение не подтверждено. Повторите попытку.';
     } finally {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _connectionCoordinator.finishAction();
@@ -880,8 +880,8 @@ class ConnectionManager extends ChangeNotifier {
     } on Object catch (error) {
       if (!_disposed && _connectionCoordinator.ownsOperation(generation)) {
         _activePhase = ConnectionPhase.actionRequired;
-        _runtimeHeadline = error is BootstrapFailure
-            ? error.message
+        _runtimeHeadline = _connectionFailureMessage = error is BootstrapFailure
+            ? _bootstrapFailureMessage(error)
             : _runtimeUnexpectedErrorMessage(error);
       }
       rethrow;
@@ -971,6 +971,7 @@ class ConnectionManager extends ChangeNotifier {
   String _stagedProfileCacheEntryId = '';
   bool _connectHintDismissed = true;
   String? _runtimeHeadline;
+  String? _connectionFailureMessage;
   final List<String> _selectedAppIds = <String>[];
   WarpRuntimePolicy _managedWarpPolicy = WarpRuntimePolicy.clientLocalDefault;
   bool _warpRuntimeConsent = false;
@@ -3918,6 +3919,7 @@ class ConnectionManager extends ChangeNotifier {
             : ConnectionTransitionIntent.disconnect
         : ConnectionTransitionIntent.connect;
     _update(() {
+      _connectionFailureMessage = null;
       _activePhase = actionIntent == ConnectionTransitionIntent.reconnect
           ? ConnectionPhase.recovering
           : actionIntent == ConnectionTransitionIntent.disconnect
@@ -4559,27 +4561,30 @@ class ConnectionManager extends ChangeNotifier {
         return;
       }
       final offlineMessage = failureOperation == 'managed_profile_refresh' &&
-          error.code != 'access_preparing' && _isTransientProfileFailure(error)
+          error.operationalErrorCode != 'API-011' && _isTransientProfileFailure(error)
           ? await _classifyOfflineFailure(generation) : null;
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
+      final message = offlineMessage ?? _bootstrapFailureMessage(error);
       _update(() {
         _activePhase = ConnectionPhase.actionRequired;
-        _runtimeHeadline = offlineMessage ?? error.message;
+        _runtimeHeadline = _connectionFailureMessage = message;
       });
       unawaited(_reportClientRuntimeError(error.operationalErrorCode,
           failureKind: _runtimeStatsSnapshotAttempt == _connectionAttemptNumber
               ? '' : error.apiFailureKind ?? error.code,
           failureOperation: businessOperation,
           failureHttpStatus: error.apiFailureKind == null ? error.statusCode : error.observedHttpStatus));
-      _notify(error.message, tone: PokrovSnackTone.danger);
+      _notify(message, tone: PokrovSnackTone.danger);
     } on Object catch (error, stack) {
       if (!_connectionCoordinator.ownsOperation(generation)) return;
       final closedFailure = _connectionPlatformFailureCode(error);
+      final errorCode = OperationalFailureMapper.connection(closedFailure,
+          timedOut: error is TimeoutException);
       final closedOperation = error is RuntimeBoundConnectFailure ? error.operation
           : connectionFailureOperations.contains(failureOperation) ? failureOperation : null;
       _observability?.recordConnectionFailure(
         stage: failureStage,
-        errorCode: 'CONN-005',
+        errorCode: errorCode,
         failureKind: closedFailure,
         failureOperation: closedOperation,
       );
@@ -4592,7 +4597,7 @@ class ConnectionManager extends ChangeNotifier {
       final message = offlineMessage ?? _runtimeUnexpectedErrorMessage(error);
       _update(() {
         _activePhase = ConnectionPhase.actionRequired;
-        _runtimeHeadline = message;
+        _runtimeHeadline = _connectionFailureMessage = message;
         _connectionFailureDiagnostic = PokrovConnectionFailureDiagnostic.fromError(error);
       });
       _recordProtectionEvent(
@@ -4601,7 +4606,7 @@ class ConnectionManager extends ChangeNotifier {
         detail: _unexpectedConnectionDiagnostic(failureOperation, error, stack),
         tone: PokrovProtectionEventTone.error,
       );
-      unawaited(_reportClientRuntimeError('connect_unexpected',
+      unawaited(_reportClientRuntimeError(errorCode,
           failureKind: closedFailure ?? 'connect_unexpected', failureOperation: closedOperation,
           egressProbeObservation: error is RuntimeBoundConnectFailure ? error.egressProbeObservation : null));
       _notify(message, tone: PokrovSnackTone.danger);
@@ -5464,14 +5469,15 @@ class ConnectionManager extends ChangeNotifier {
       return;
     } on Object catch (error) {
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
-      final offlineMessage = error is TimeoutException || error is BootstrapFailure && _isTransientProfileFailure(error)
+      final offlineMessage = error is TimeoutException || error is BootstrapFailure &&
+          error.operationalErrorCode != 'API-011' && _isTransientProfileFailure(error)
           ? await _classifyOfflineFailure(generation) : null;
       if (_disposed || !_connectionCoordinator.ownsOperation(generation)) return;
       terminalCode = error is BootstrapFailure ? error.operationalErrorCode
           : _runtimeSnapshot?.lastFailureKind ?? 'connect_unexpected';
       _update(() {
         _activePhase = ConnectionPhase.actionRequired;
-        _runtimeHeadline = offlineMessage ?? (error is BootstrapFailure ? error.message
+        _runtimeHeadline = _connectionFailureMessage = offlineMessage ?? (error is BootstrapFailure ? _bootstrapFailureMessage(error)
             : 'Не удалось восстановить подключение. Попробуйте ещё раз или отключите POKROV.');
       });
     } finally {
@@ -5572,8 +5578,31 @@ class ConnectionManager extends ChangeNotifier {
     }
   }
 
+  String _bootstrapFailureMessage(BootstrapFailure error) =>
+      error.operationalErrorCode == 'API-011'
+          ? 'Сервер ещё не подготовил подключение. Повторите попытку позже.'
+          : error.message;
+
   String _runtimeUnexpectedErrorMessage(Object error) {
     return switch (error) {
+      RuntimeBoundConnectFailure(failureKind: 'core_egress_probe_failed') =>
+        'Не удалось подтвердить выход через VPN.',
+      RuntimeBoundConnectFailure(failureKind: 'core_egress_probe_unavailable') =>
+        'Проверка выхода через VPN недоступна.',
+      RuntimeBoundConnectFailure(failureKind: 'core_egress_dns_failed') =>
+        'Не удалось определить адрес сервера проверки через VPN.',
+      RuntimeBoundConnectFailure(failureKind: 'core_egress_connect_failed') =>
+        'Не удалось соединиться с сервером проверки через VPN.',
+      RuntimeBoundConnectFailure(failureKind: 'core_egress_tls_failed') =>
+        'Не удалось согласовать TLS с сервером проверки через VPN.',
+      RuntimeBoundConnectFailure(failureKind: 'core_egress_tls_timeout') =>
+        'Согласование TLS с сервером проверки не завершилось вовремя.',
+      RuntimeBoundConnectFailure(failureKind: 'core_egress_response_timeout') =>
+        'Сервер проверки не ответил вовремя после установки соединения.',
+      RuntimeBoundConnectFailure(failureKind: 'core_egress_timeout' || 'connect_deadline' || 'deadline_exceeded') =>
+        'Проверка подключения не завершилась вовремя.',
+      RuntimeBoundConnectFailure(failureKind: 'profile_payload_invalid') =>
+        'POKROV отклонил некорректные настройки подключения.',
       TimeoutException() =>
         'POKROV не дождался ответа. Попробуйте еще раз, а если не поможет — напишите в поддержку.',
       _ =>

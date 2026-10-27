@@ -831,17 +831,20 @@ class _CatalogPickerBootstrapper extends _CachedBootstrapper implements
 }
 
 class _CatalogPickerExperience extends _ExperienceStore {
-  _CatalogPickerExperience({this.preferences = const PokrovRoutingPreferences.defaults()});
+  _CatalogPickerExperience({this.preferences = const PokrovRoutingPreferences.defaults(), this.routeMode});
   final PokrovRoutingPreferences preferences;
+  final RouteMode? routeMode;
 
   @override
   Future<PokrovClientExperienceState> read() async =>
       const PokrovClientExperienceState.empty().copyWith(
-        interfaceMode: PokrovInterfaceMode.advanced, routingPreferences: preferences);
+        interfaceMode: PokrovInterfaceMode.advanced, routingPreferences: preferences,
+        firstRouteScopeConfirmed: routeMode != null, firstRouteScopeMode: routeMode);
 }
 
 Future<_CatalogPickerExperience> _openDnsSettings(WidgetTester tester, {
   PokrovRoutingPreferences preferences = const PokrovRoutingPreferences.defaults(),
+  RouteMode? routeMode,
 }) async {
   const channel = MethodChannel('space.pokrov/runtime_engine');
   final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -854,7 +857,7 @@ Future<_CatalogPickerExperience> _openDnsSettings(WidgetTester tester, {
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
-  final store = _CatalogPickerExperience(preferences: preferences);
+  final store = _CatalogPickerExperience(preferences: preferences, routeMode: routeMode);
   await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
     appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
     bootstrapper: _Bootstrapper(), firstLaunchStore: _FirstLaunchStore(),
@@ -1045,6 +1048,8 @@ void main() {
         (report) => report['runtime_phase'] == 'failed');
       expect(terminal['failure_operation'], 'core_connect');
       expect(terminal['failure_kind'], 'core_egress_probe_failed');
+      expect(terminal['error_code'], 'EGRESS-001');
+      expect(manager.headline, 'Не удалось подтвердить выход через VPN.');
       expect(terminal['egress_probe'], nativeFailure!.egressProbeObservation);
       expect(nativeFailure!.egressProbeObservation?.errorCode, 12002);
       expect(terminal.toString(), isNot(contains('private-native-message')));
@@ -1562,6 +1567,19 @@ void main() {
     expect(find.text('DoH идёт напрямую. Внешний IP не меняется, доступ к сервисам не гарантируется.'), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('full tunnel explains that saved direct DNS and routes are not applied', (tester) async {
+    final store = await _openDnsSettings(tester, routeMode: RouteMode.fullTunnel,
+      preferences: const PokrovRoutingPreferences.defaults().copyWith(
+        dnsPreset: PokrovDnsPreset.cloudflare, dnsTransport: PokrovDnsTransport.direct,
+        purposeRoutes: {PokrovPurposeRoute.ruDirect},
+      ));
+    expect(find.text('DNS напрямую сохранён, но в режиме «Всё через POKROV» DNS идёт через VPN.'), findsOneWidget);
+    expect(find.text('Настройка сохранена. В режиме «Всё через POKROV» DoH идёт через VPN.'), findsOneWidget);
+    expect(find.text('Не применяется в режиме «Всё через POKROV».'), findsOneWidget);
+    expect(find.text('В режиме «Всё через POKROV» правила «напрямую» не применяются.'), findsOneWidget);
+    expect(store.preferences.dnsTransport, PokrovDnsTransport.direct);
   });
 
   testWidgets('SmartDNS picker follows authenticated Premium eligibility', (tester) async {
@@ -2202,11 +2220,13 @@ void main() {
       expect(platformEvent.detail.length, lessThanOrEqualTo(180));
       expect(failedReport['failure_kind'], permitted ? code : 'connect_unexpected');
       expect(failedReport['failure_operation'], 'core_connect');
+      expect(failedReport['error_code'], OperationalFailureMapper.connection(permitted ? code : null));
       if (observability != null) {
         await observability.flush();
         final terminal = observability.connectionTimelineBreadcrumbs.lastWhere(
           (entry) => entry.name == 'app.connection.attempt.finished');
         expect((terminal.failureKind, terminal.failureOperation), (permitted ? code : null, 'core_connect'));
+        expect(terminal.errorCode, OperationalFailureMapper.connection(permitted ? code : null));
         final report = PokrovDiagnosticsPresenter.fromRuntime(
           hostPlatform: HostPlatform.windows, routeMode: RouteMode.fullTunnel,
           snapshot: platformManager.snapshot, statusLabel: 'failed', warpState: 'disabled', now: DateTime.now().toUtc(),
@@ -3450,6 +3470,84 @@ void main() {
     expect(runtime.handoffCalls, 0);
   });
 
+  testWidgets('Home keeps the pending profile reason and retry action visible', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final bootstrapper = _StartupAccountBootstrapper()
+      ..failure = const BootstrapFailure('pending', operationalCode: 'API-011');
+    var nativeConnects = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.connect') nativeConnects++;
+      return {'phase': 'initialized', 'supportsLiveConnect': true,
+        'canInitialize': false, 'canConnect': true};
+    });
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: bootstrapper, firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _ExperienceStore(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+      windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('connect-action')));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 6));
+    final card = find.byType(ui.WarnCard);
+    expect(find.descendant(of: card,
+      matching: find.text('Сервер ещё не подготовил подключение. Повторите попытку позже.')), findsOneWidget);
+    expect(find.textContaining('Похоже, сеть мешает'), findsNothing);
+    expect(nativeConnects, 0);
+    final previousAttempts = bootstrapper.resolutions.length;
+    await tester.tap(find.descendant(of: card, matching: find.text('Подключить')));
+    await tester.pumpAndSettle();
+    expect(bootstrapper.resolutions.length, previousAttempts + 1);
+    expect(nativeConnects, 0);
+  });
+
+  testWidgets('Home preserves disconnect while protection is retained', (tester) async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    var disconnects = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'runtimeEngine.disconnect') {
+        disconnects++;
+        return {'phase': 'initialized', 'canConnect': true};
+      }
+      return {'phase': 'running', 'supportsLiveConnect': true, 'canConnect': true,
+        'protectionRetained': true, 'lastFailureKind': 'protected_handoff_failed'};
+    });
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      messenger.setMockMethodCallHandler(channel, null);
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(MaterialApp(home: PokrovSeedShell(
+      appContext: buildSeedAppContext(hostPlatform: HostPlatform.windows),
+      bootstrapper: _StartupAccountBootstrapper(), firstLaunchStore: _FirstLaunchStore(),
+      clientExperienceStore: _ExperienceStore(), themeMode: ThemeMode.light,
+      onThemeModeChanged: (_) {},
+    )));
+    await tester.pumpAndSettle();
+    final home = tester.widget<ui.HomeScreen>(find.byType(ui.HomeScreen));
+    expect(home.data.phase, ui.ConnectionPhase.error);
+    expect(home.data.actionLabel, 'Отключить');
+    expect(find.text('Трафик заблокирован'), findsOneWidget);
+    await tester.tap(find.descendant(of: find.byType(ui.WarnCard), matching: find.text('Отключить')));
+    await tester.pumpAndSettle();
+    expect(disconnects, 1);
+  });
+
   testWidgets('Advanced Locations keeps country Auto and offers admitted manual connections', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final nativeMutations = <String>[];
@@ -3556,9 +3654,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('locations-select-connection')));
     await tester.pumpAndSettle();
+    expect(find.text('Авто · Швейцария'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('location-candidate-auto')));
     await tester.pumpAndSettle();
     expect(experience.saved.preferredCandidateRef, isEmpty);
+    expect(experience.saved.preferredCountryCode, 'CH');
+    await tester.tap(find.byKey(const ValueKey('locations-auto-section')));
+    await tester.pumpAndSettle();
     expect(experience.saved.preferredCountryCode, isEmpty);
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
@@ -4932,9 +5034,12 @@ void main() {
     bootstrapper.failure = const BootstrapFailure(pendingMessage,
         code: 'access_preparing', operationalCode: 'API-011');
     await manager.connect();
-    expect(manager.headline, pendingMessage);
+    expect(manager.headline, 'Сервер ещё не подготовил подключение. Повторите попытку позже.');
     expect(runtime.calls, isNot(contains('stage')));
     expect(runtime.connectCalls, 0);
+    bootstrapper.failure = const BootstrapFailure('not yet ready', operationalCode: 'API-011');
+    await manager.connect();
+    expect(manager.headline, 'Сервер ещё не подготовил подключение. Повторите попытку позже.');
     bootstrapper.cacheAvailable = true;
     await manager.connect();
     expect(bootstrapper.lastProfileTimeout, const Duration(seconds: 3));

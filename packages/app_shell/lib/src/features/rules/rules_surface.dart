@@ -268,6 +268,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                           hostPlatform: widget.hostPlatform),
                     _DnsAndLanCard(
                       hostPlatform: widget.hostPlatform,
+                      fallbackMode: widget.fallbackMode,
                       loadSmartDnsProviders: widget.loadSmartDnsProviders,
                       smartDnsEligible: widget.smartDnsEligible,
                       preferences: _draftPreferences,
@@ -279,6 +280,7 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                     ),
                     _PurposeRoutingCard(
                       preferences: _draftPreferences,
+                      fallbackMode: widget.fallbackMode,
                       onChanged: _stage,
                     ),
                     _CustomRoutingCard(

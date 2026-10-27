@@ -2367,6 +2367,14 @@ retains `API-011` and asks the user to press Connect again with the same session
 Cached refresh stays at three seconds; manual node, candidate and bridge choices
 keep the 18-second profile budget, and native deadlines stay unchanged.
 
+Home keeps the observed connection failure visible after the transient notice.
+Pending `API-011` says the server has not prepared the connection; unknown errors
+do not assume a network cause. A retained protection state keeps its disconnect
+action. In Full Tunnel, saved direct DNS and manual direct routes are labelled as
+inactive while the mode applies; LAN exceptions remain explicitly configurable.
+Auto in a country's manual connection picker clears the transport choice while
+retaining that country; global Auto clears the country constraint.
+
 After a transient failure, real OS observations distinguish no network and a
 captive portal from an unavailable API; expiry beyond the local grace is shown
 as ended access. Unknown OS status is not treated as a disconnected network.

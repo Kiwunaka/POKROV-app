@@ -103,8 +103,11 @@ class _LocationsSectionState extends State<_LocationsSection> {
                 ListTile(
                   key: const ValueKey('location-candidate-auto'),
                   leading: const Icon(Icons.bolt_rounded),
-                  title: const Text('Авто'),
-                  subtitle: const Text('POKROV подберёт рабочее соединение'),
+                  title: Text(countryCode.isEmpty
+                      ? 'Авто · все страны' : 'Авто · ${_locationCountryDisplayName(countryCode, countryCode)}'),
+                  subtitle: Text(countryCode.isEmpty
+                      ? 'POKROV выберет страну и соединение'
+                      : 'POKROV подберёт соединение в выбранной стране'),
                   onTap: () => Navigator.of(context).pop(''),
                 ),
                 for (final country in countries.entries) ...[
@@ -131,7 +134,11 @@ class _LocationsSectionState extends State<_LocationsSection> {
     );
     if (selected == null || !mounted) return;
     if (selected.isEmpty) {
-      widget.onAutomaticLocationSelected();
+      if (countryCode.isEmpty) {
+        widget.onAutomaticLocationSelected();
+      } else {
+        widget.onPreferredCountrySelected(countryCode);
+      }
     } else {
       widget.onPreferredCandidateSelected(selected);
     }

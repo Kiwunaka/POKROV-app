@@ -86,10 +86,10 @@ class HomeScreen extends StatelessWidget {
           SizedBox(height: 16),
           if (error) ...[
             WarnCard(
-              title: 'Не получилось подключиться',
-              body: 'Похоже, сеть мешает. Попробуем другой путь — это пара секунд.',
+              title: data.errorTitle,
+              body: data.errorMessage ?? 'Причину установить не удалось. Попробуйте ещё раз или обратитесь в поддержку.',
               actions: [
-                Expanded(child: _SmallButton(label: 'Попробовать снова', primary: true, onTap: onToggle)),
+                Expanded(child: _SmallButton(label: data.actionLabel ?? 'Попробовать снова', primary: true, onTap: onToggle)),
                 SizedBox(width: 8),
                 if (onHelp != null) _SmallButton(label: 'Помощь', onTap: onHelp),
               ],

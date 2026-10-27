@@ -4,6 +4,9 @@ class _QuickConnectSection extends StatelessWidget {
   const _QuickConnectSection({
     required this.advanced,
     required this.preferredCountryCode,
+    required this.actionRequired,
+    required this.connectionFailureMessage,
+    required this.retainsProtection,
     required this.onHelp,
     required this.appContext,
     required this.freeProfileAccess,
@@ -30,6 +33,9 @@ class _QuickConnectSection extends StatelessWidget {
   final SeedAppContext appContext;
   final bool advanced;
   final String preferredCountryCode;
+  final bool actionRequired;
+  final String? connectionFailureMessage;
+  final bool retainsProtection;
   final Future<void> Function() onHelp;
   final FreeProfileAccess? freeProfileAccess;
   final ProtectionViewState protectionState;
@@ -58,13 +64,21 @@ class _QuickConnectSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final presentation = protectionState.connection;
     final snapshot = presentation.experience.snapshot;
+    final stoppedFailure = actionRequired && !presentation.discMotionBusy &&
+        !presentation.showsTunnelActive;
+    final snapshotFailure = snapshot?.lastFailureKind?.trim().isNotEmpty == true
+        ? snapshot!.message : null;
+    final failure = actionRequired ? connectionFailureMessage ?? snapshotFailure : snapshotFailure;
+    final errorMessage = retainsProtection
+        ? [if (failure != null && failure.isNotEmpty) failure, presentation.subtitle].join(' ')
+        : failure ?? (presentation.isDegraded ? presentation.subtitle : null);
     final slots = _homeAdminPromoSlots(bonusSummary);
     final country = preferredCountryCode.trim();
     final showTip = bonusSummary?.channelBonusEligible == true &&
         bonusSummary?.channelBonusClaimed != true && onTelegramBonus != null;
     return ui.HomeScreen(
       data: ui.HomeViewData(
-        phase: _homeUiPhase(presentation),
+        phase: stoppedFailure ? ui.ConnectionPhase.error : _homeUiPhase(presentation),
         mode: advanced ? ui.InterfaceMode.advanced : ui.InterfaceMode.simple,
         accessBadge: _accessShortValue(appContext, bonusSummary, freeProfileAccess, subscriptionInfo),
         countryCaption: country.isEmpty ? 'Страна · авто' : 'Страна',
@@ -77,6 +91,8 @@ class _QuickConnectSection extends StatelessWidget {
             : presentation.experience.phase == ConnectionExperiencePhase.disconnecting
                 ? 'Отключаем защиту' : null,
         actionLabel: presentation.isVerified ? null : presentation.primaryActionLabel,
+        errorTitle: presentation.isDegraded ? presentation.title : 'Не получилось подключиться',
+        errorMessage: errorMessage?.isNotEmpty == true ? errorMessage : null,
         routeValue: protectionState.routeMode == RouteMode.allExceptRu ? 'напрямую' : 'по правилам',
         warpEnabled: warpRuntimeConsent,
         notificationsUnread: notificationsUnread,

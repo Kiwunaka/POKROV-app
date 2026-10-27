@@ -61,8 +61,8 @@ class LocationsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Авто', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                          Text('POKROV подберёт рабочее соединение', style: pokrovTextStyle(context, PokrovText.caption)),
+                          Text('Авто · все страны', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                          Text('POKROV выберет страну и соединение', style: pokrovTextStyle(context, PokrovText.caption)),
                         ],
                       ),
                     ),

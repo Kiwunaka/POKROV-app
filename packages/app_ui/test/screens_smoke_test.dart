@@ -50,6 +50,21 @@ void main() {
     }
   }
 
+  testWidgets('home shows the observed failure and the available action', (tester) async {
+    var actions = 0;
+    await _pump(tester, HomeScreen(
+      data: const HomeViewData(phase: ConnectionPhase.error, mode: InterfaceMode.simple,
+        errorTitle: 'Трафик заблокирован',
+        errorMessage: 'Сервер ещё не подготовил подключение.', actionLabel: 'Отключить'),
+      onToggle: () => actions++, onOpenStatus: _noop,
+      onOpenCountry: _noop, onOpenRoute: _noop, onOpenAccess: _noop,
+    ));
+    expect(find.text('Сервер ещё не подготовил подключение.'), findsOneWidget);
+    expect(find.textContaining('Похоже, сеть мешает'), findsNothing);
+    await tester.tap(find.descendant(of: find.byType(WarnCard), matching: find.text('Отключить')));
+    expect(actions, 1);
+  });
+
   testWidgets('status sheet on and off', (tester) async {
     for (final phase in [ConnectionPhase.on, ConnectionPhase.off]) {
       await _pump(tester, StatusSheet(data: PokrovSampleData.status(phase: phase), onPrimary: _noop, onDetails: _noop));
