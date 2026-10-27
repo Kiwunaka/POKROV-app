@@ -57,6 +57,7 @@ struct ServiceRuntimeSnapshot {
   bool running = false;
   bool core_egress_validated = false;
   bool protection_retained = false;
+  bool protection_retained_state_available = false;
   bool dns_ready = false;
   bool transport_proof_state_available = false;
   bool transport_proof_pending = false;
@@ -87,6 +88,10 @@ ServiceRuntimeSnapshot BindSnapshotToProfileIntent(
 // Call only for a completed Stop, never while confirming Start/Apply or polling.
 bool ClearStoppedProfileIntent(const ServiceRuntimeSnapshot& snapshot,
                               std::string& expected_profile_digest);
+// Only an acknowledged explicit Stop can retire the captured running intent.
+bool ClearExplicitStopProfileIntent(const ServiceRuntimeSnapshot& snapshot,
+                                    const std::string& captured_profile_digest,
+                                    std::string& current_profile_digest);
 ClientProbe ProbeInstalledService();
 struct ServiceCallControl {
   std::atomic<bool> cancel_requested{false};

@@ -577,11 +577,10 @@ bool FlutterWindow::OnCreate() {
                                                 std::string expected) {
           if (QueueRuntime(command, std::move(body),
               [this, reply, command, expected = std::move(expected)](auto snapshot) mutable {
-                const auto completed_intent = expected;
                 if (command == Command::kDisconnect &&
-                    pokrov::service::ClearStoppedProfileIntent(snapshot, expected) &&
-                    expected_profile_digest_ == completed_intent) {
-                  expected_profile_digest_.clear();
+                    pokrov::service::ClearExplicitStopProfileIntent(
+                        snapshot, expected, expected_profile_digest_)) {
+                  expected.clear();
                 }
                 reply->Success(RuntimeSnapshotValue(std::move(snapshot), expected));
               })) return true;

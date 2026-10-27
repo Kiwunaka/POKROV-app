@@ -210,6 +210,10 @@ int main() {
                  !ClearStoppedProfileIntent(staged_stop, expected) &&
                  BindSnapshotToProfileIntent(staged_stop, expected).failure == "profile_identity_mismatch",
              "settled Stop cleared intent or suppressed a staged profile mismatch");
+      const auto unbound_connect = InvokeServiceForTest(pipe, Command::kConnect, "");
+      Expect(!unbound_connect.command_accepted && !unbound_connect.running &&
+                 core_state->starts == 0,
+             "Connect without a new intended profile reused staged state");
       const auto connect = first.Request(Command::kConnect, ProfileDigest(profile));
       Expect(first.Send(connect), "first connect was not sent");
       probe_state->WaitFor(1);

@@ -17,18 +17,16 @@ first-session events. Delayed best-effort telemetry therefore cannot hold the
 subscription/authentication refresh or leave the access label unresolved.
 The existing session refresh, identity and entitlement rules remain unchanged.
 
-Windows clears the previous profile intent only after a completed explicit Stop
-or the current bound owner's confirmed cancellation, when the native result is
-clean `initialized` with no staged/effective profile, retained protection or
-failure. That non-connectable state must not become `profile_identity_mismatch`.
-Ordinary snapshot binding, Start/Apply, active, staged and retained profile checks
-remain strict. A focused native regression reproduced and fixed this source defect;
-its connection to the observed 4205 Stop/CONN-005 UI error is probable, not proven
-without that attempt's failure kind. No new packaged-client acceptance is implied.
-After a bound cancellation settles, the runner now checks a separate trusted
-service Status before clearing that owner's unchanged intent; the settlement
-receipt itself is not runtime state. A staged profile still keeps the strict
-identity check. This does not establish the cause of the observed 4228 mismatch.
+An acknowledged, trusted explicit Windows Stop retires its unchanged profile
+intent only for clean `initialized` or `config_staged` without a running or
+effective profile, retained guard or failure. It does not adopt staged identity:
+a later Connect still requires its own matching profile. Ordinary Status with an
+intent, Start/Apply and failed Stop retain strict identity checks.
+For a bound owner's confirmed cancellation, a separate trusted service Status
+must instead be clean `initialized` with no staged or effective profile; the
+settlement receipt itself is not runtime state. These source regressions do not
+establish why the observed 4228/4229 profile intents diverged or provide new
+packaged-client acceptance.
 
 The ordinary Diagnostics screen shows the current run's last access request:
 not observed, started without an observed completion, or finished. Failures show

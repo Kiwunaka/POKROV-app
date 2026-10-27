@@ -23,7 +23,7 @@ int main() {
   ServiceRuntimeSnapshot parsed;
   expect(ParseServiceRuntimeSnapshot(snapshot(digest), &parsed) &&
              parsed.running && parsed.effective_profile_digest == digest &&
-             !parsed.protection_retained,
+             !parsed.protection_retained && !parsed.protection_retained_state_available,
          "matching service proof rejected");
   for (const auto& effective : {std::string("none"), std::string(64, '0'),
                                 std::string(64, 'g')}) {
@@ -118,7 +118,8 @@ int main() {
       "smart_access_runtime_control_version=0;transport_capabilities=none;" +
       "core_module_sha256=" + digest + ";core_version=1.1.1;protection_retained=0";
   expect(ParseServiceRuntimeSnapshot(versioned_body, &versioned) &&
-             versioned.core_version == "1.1.1", "loaded Core version was lost");
+             versioned.core_version == "1.1.1" && versioned.protection_retained_state_available,
+         "loaded Core version or guard observation was lost");
   expect(BindSnapshotToProfileIntent(versioned, digest).failure == "profile_identity_mismatch",
          "unconfirmed Start/Apply accepted a missing profile");
   auto stopped_intent = digest;
@@ -139,6 +140,47 @@ int main() {
          "Stop discarded an active, staged or retained profile intent");
   expect(BindSnapshotToProfileIntent(staged, digest).failure == "profile_identity_mismatch",
          "another staged profile bypassed the expected identity");
+  auto explicit_stop = staged;
+  explicit_stop.command_accepted = true;
+  explicit_stop.trusted = true;
+  explicit_stop.compatible = true;
+  auto explicit_intent = digest;
+  expect(ClearExplicitStopProfileIntent(explicit_stop, digest, explicit_intent) &&
+             explicit_intent.empty() &&
+             BindSnapshotToProfileIntent(explicit_stop, explicit_intent).failure == "none" &&
+             !IsProfileDigest(explicit_intent),
+         "clean explicit Stop retained an obsolete profile intent or authorised reuse");
+  auto changed_intent = std::string(64, '1');
+  expect(!ClearExplicitStopProfileIntent(explicit_stop, digest, changed_intent) &&
+             changed_intent == std::string(64, '1'),
+         "completed Stop cleared a newer profile intent");
+  auto unconfirmed_stop = explicit_stop;
+  unconfirmed_stop.command_accepted = false;
+  auto retained_intent = digest;
+  expect(!ClearExplicitStopProfileIntent(unconfirmed_stop, digest, retained_intent) &&
+             retained_intent == digest,
+         "unconfirmed Stop cleared the profile intent");
+  auto untrusted_stop = explicit_stop;
+  untrusted_stop.trusted = false;
+  expect(!ClearExplicitStopProfileIntent(untrusted_stop, digest, retained_intent) &&
+             retained_intent == digest,
+         "untrusted Stop cleared the profile intent");
+  auto guarded_stop = explicit_stop;
+  guarded_stop.protection_retained = true;
+  expect(!ClearExplicitStopProfileIntent(guarded_stop, digest, retained_intent) &&
+             retained_intent == digest,
+         "retained protection cleared the profile intent");
+  auto running_stop = explicit_stop;
+  running_stop.phase = "running";
+  running_stop.running = true;
+  expect(!ClearExplicitStopProfileIntent(running_stop, digest, retained_intent) &&
+             retained_intent == digest,
+         "a running connection lost its profile intent");
+  auto unknown_guard = explicit_stop;
+  unknown_guard.protection_retained_state_available = false;
+  expect(!ClearExplicitStopProfileIntent(unknown_guard, digest, retained_intent) &&
+             retained_intent == digest,
+         "Stop without a retained-protection observation cleared the profile intent");
   expect(BindSnapshotToProfileIntent(attached, std::string(64, '0')).failure ==
              "profile_identity_mismatch",
          "retained protection bypassed the expected identity");

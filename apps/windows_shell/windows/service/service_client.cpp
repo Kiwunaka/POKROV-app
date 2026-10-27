@@ -713,6 +713,7 @@ bool ParseSnapshotBodyInternal(const std::string& body,
       ? transport_capabilities : "";
   output->core_module_sha256 = output->core_ready && module_digest != "none" ? module_digest : "";
   output->core_version = output->core_ready && core_version != "none" ? core_version : "";
+  output->protection_retained_state_available = has_retained_protection;
   output->transport_proof_state_available = has_proof_state;
   output->transport_lease_state_available = has_lease_state;
   return true;
@@ -861,6 +862,21 @@ bool ClearStoppedProfileIntent(const ServiceRuntimeSnapshot& snapshot,
     return false;
   }
   expected_profile_digest.clear();
+  return true;
+}
+
+bool ClearExplicitStopProfileIntent(const ServiceRuntimeSnapshot& snapshot,
+                                    const std::string& captured_profile_digest,
+                                    std::string& current_profile_digest) {
+  if (!snapshot.command_accepted || !snapshot.trusted || !snapshot.compatible ||
+      current_profile_digest != captured_profile_digest ||
+      (snapshot.phase != "initialized" && snapshot.phase != "config_staged") ||
+      snapshot.running || !snapshot.protection_retained_state_available ||
+      snapshot.protection_retained || !snapshot.effective_profile_digest.empty() ||
+      snapshot.failure != "none") {
+    return false;
+  }
+  current_profile_digest.clear();
   return true;
 }
 
