@@ -19,9 +19,11 @@ Current private **1.5.0+4228**, App `ee9c7fc0` / Core `698662e`, is built.
 The included `0f28428b` repair normalizes canonical DNS lanes for both fresh and
 cached profiles in Android Automatic. Android 4228 has not been checked on the
 physical phone; the owner has taken the phone and it is unavailable. Windows 4228
-is installed in the owned VM, but the new functional run is incomplete. Targeted
-APK delivery for case 86 is being prepared; sending, installation and successful
-connection on 4228 are not confirmed. Public 1.4.5 and draft 4175 remain unchanged.
+is installed in the owned VM with the service running and UI open; the new functional
+run is still in progress. The targeted universal APK 4228 link was sent in reply 291
+for case 86, with an in-place update offered when convenient. Customer installation
+and successful connection on 4228 are not confirmed. Public 1.4.5 and draft 4175
+remain unchanged.
 
 Before 4228, mobile YouTube 1080p opened and fresh media bytes arrived. Final native
 DPI counters and a bounded fixed 1080p pass were not captured; mobile DNSTT has
