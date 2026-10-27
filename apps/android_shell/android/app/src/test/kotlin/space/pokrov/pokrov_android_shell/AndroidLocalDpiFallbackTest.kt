@@ -2,9 +2,24 @@ package space.pokrov.pokrov_android_shell
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AndroidLocalDpiFallbackTest {
+    @Test fun smartSafeRequiresOnlyYouTubeAndProtectedFinal() {
+        val direct = LocalDpiVpnOutbound("direct", "direct")
+        val vpn = LocalDpiVpnOutbound("vpn", "vless", tlsSecure = true)
+        val outbounds = listOf(direct, vpn)
+        assertTrue(localDpiModeAllows("smart_safe", setOf("youtube"), "vpn", outbounds))
+        assertFalse(localDpiModeAllows("smart_safe", setOf("youtube", "other"), "vpn", outbounds))
+        assertFalse(localDpiModeAllows("smart_safe", setOf("youtube"), "direct", outbounds))
+        assertFalse(localDpiModeAllows("smart_safe", setOf("youtube"), "vpn", listOf(vpn.copy(tlsSecure = false))))
+        assertTrue(localDpiModeAllows("selective", setOf("other"), "direct", outbounds))
+        assertFalse(localDpiModeAllows("selective", setOf("other"), "vpn", outbounds))
+        assertFalse(localDpiModeAllows("full", setOf("youtube"), "vpn", outbounds))
+    }
+
     @Test fun atsFallbackKeepsLeaseAndRequiresDirectUpstream() {
         val lease = LocalDpiVpnOutbound("pokrov-ats", "pokrov-ats-lease",
             upstreamTag = "pokrov-ats-upstream")

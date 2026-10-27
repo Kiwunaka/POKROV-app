@@ -70,6 +70,15 @@ internal fun localDpiVpnFallback(
     return tag.takeIf { protected(it, emptySet(), "fallback=root_target_missing") }
 }
 
+internal fun localDpiModeAllows(mode: String, services: Set<String>, finalTag: String,
+                                outbounds: List<LocalDpiVpnOutbound>): Boolean = when (mode) {
+    "selective" -> outbounds.singleOrNull { it.tag == finalTag }?.let {
+        it.type == "direct" && it.detour.isEmpty()
+    } == true
+    "smart_safe" -> services == setOf("youtube") && localDpiVpnFallback(outbounds, finalTag) != null
+    else -> false
+}
+
 /** One global ByeDPI child, restricted to signed service routes of one profile. */
 internal class AndroidLocalDpiAdmission private constructor(
     private val context: Context,
@@ -243,13 +252,31 @@ internal class AndroidLocalDpiAdmission private constructor(
             return null
         }
 
-        private fun verifyAuthority(metadata: JSONObject, service: String, host: String): Boolean =
-            Libbox.verifyLocalDpiCatalog(metadata.getString("catalog_envelope"),
-                JSONObject().put(BuildConfig.POKROV_ROUTING_CATALOG_KEY_ID,
-                    BuildConfig.POKROV_ROUTING_CATALOG_PUBLIC_KEY_B64).toString(),
-                BuildConfig.POKROV_ROUTING_CATALOG_AUDIENCE, metadata.getString("catalog_sha256"),
-                metadata.getLong("revision"), metadata.getLong("security_revision"),
-                service, host, metadata.getString("access_state"))
+        private val modeVerifier by lazy {
+            try {
+                Libbox::class.java.getMethod("verifyLocalDpiCatalogMode",
+                    String::class.java, String::class.java, String::class.java, String::class.java,
+                    java.lang.Long.TYPE, java.lang.Long.TYPE, String::class.java, String::class.java,
+                    String::class.java, String::class.java)
+            } catch (_: NoSuchMethodException) { null }
+        }
+
+        private fun verifyAuthority(metadata: JSONObject, service: String, host: String): Boolean {
+            val envelope = metadata.getString("catalog_envelope")
+            val keys = JSONObject().put(BuildConfig.POKROV_ROUTING_CATALOG_KEY_ID,
+                BuildConfig.POKROV_ROUTING_CATALOG_PUBLIC_KEY_B64).toString()
+            val audience = BuildConfig.POKROV_ROUTING_CATALOG_AUDIENCE
+            val digest = metadata.getString("catalog_sha256")
+            val revision = metadata.getLong("revision")
+            val securityRevision = metadata.getLong("security_revision")
+            val accessState = metadata.getString("access_state")
+            val mode = metadata.getString("mode")
+            val verifier = modeVerifier
+            if (verifier == null) return mode == "selective" && Libbox.verifyLocalDpiCatalog(
+                envelope, keys, audience, digest, revision, securityRevision, service, host, accessState)
+            return verifier.invoke(null, envelope, keys, audience, digest, revision, securityRevision,
+                service, host, accessState, mode) == true
+        }
 
         private fun publicAddress(address: InetAddress): Boolean =
             !address.isAnyLocalAddress && !address.isLoopbackAddress && !address.isLinkLocalAddress &&
@@ -268,7 +295,8 @@ internal class AndroidLocalDpiAdmission private constructor(
             var failureCode = "prepare=core_exception"
             try {
                 if (Libbox.localDpiAdmissionVersion() != 1) return unavailable("prepare=core_unsupported")
-                if (metadata.getString("mode") != "selective" || metadata.getString("platform") != "android")
+                val mode = metadata.getString("mode")
+                if (mode !in setOf("selective", "smart_safe") || metadata.getString("platform") != "android")
                     return unavailable("prepare=metadata_scope")
                 if (!ownsProfile()) return unavailable("prepare=owner_changed")
                 failureCode = "prepare=config_exception"
@@ -283,15 +311,15 @@ internal class AndroidLocalDpiAdmission private constructor(
                         if (children == null) emptyList() else (0 until children.length()).map(children::getString),
                         localDpiSecureTls(tls?.opt("enabled"), insecure))
                 }
-                val direct = (0 until outbounds.length()).mapNotNull(outbounds::optJSONObject)
-                    .singleOrNull { it.optString("tag") == route.optString("final") && it.optString("type") == "direct" }
-                    ?: return unavailable("prepare=direct_missing")
-                if (direct.optString("detour").isNotEmpty()) return unavailable("prepare=direct_detour")
+                val wanted = metadata.getJSONObject("services")
+                val serviceIDs = wanted.keys().asSequence().toSet()
+                val finalTag = route.optString("final")
+                if (!localDpiModeAllows(mode, serviceIDs, finalTag, vpnOutbounds))
+                    return unavailable("prepare=mode_scope")
                 if ((config.optJSONArray("endpoints")?.length() ?: 0) != 0) return unavailable("prepare=endpoints_present")
                 failureCode = "prepare=envelope_exception"
                 val source = JSONObject(metadata.getString("catalog_envelope")).getJSONObject("payload")
                 val sourceServices = source.getJSONArray("services")
-                val wanted = metadata.getJSONObject("services")
                 val controls = linkedMapOf<String, String>()
                 val tags = linkedMapOf<String, String>()
                 val replacements = mutableListOf<Pair<JSONObject, String>>()
@@ -311,6 +339,7 @@ internal class AndroidLocalDpiAdmission private constructor(
                     val tag = "pokrov-local-dpi-$service"
                     if ((0 until outbounds.length()).any { outbounds.optJSONObject(it)?.optString("tag") == tag })
                         return unavailable("prepare=outbound_collision")
+                    var controlInScope = false
                     for (index in 0 until rules.length()) {
                         val rule = rules.optJSONObject(index) ?: continue
                         val window = rule.optJSONObject("pokrov_catalog_window") ?: continue
@@ -318,6 +347,11 @@ internal class AndroidLocalDpiAdmission private constructor(
                             window.optString("issued_at") != source.getString("issued_at") ||
                             window.optString("expires_at") != source.getString("expires_at") || window.has("lease_id")) continue
                         val suffix = rule.has("domain_suffix")
+                        if (mode == "smart_safe" && (window.has("lease_group") ||
+                            rule.has("invert") && rule.opt("invert") != false ||
+                            rule.has(if (suffix) "domain" else "domain_suffix") ||
+                            rule.has("domain_regex") || rule.has("domain_keyword") || rule.has("ip_cidr") ||
+                            rule.has("ip_is_private") || rule.has("rule_set"))) continue
                         val names = rule.optJSONArray(if (suffix) "domain_suffix" else "domain") ?: continue
                         if (names.length() != 1 || !(0 until domains.length()).any {
                             val domain = domains.getJSONObject(it)
@@ -328,9 +362,13 @@ internal class AndroidLocalDpiAdmission private constructor(
                             ?: return unavailable("prepare=fallback_unprotected")
                         if (fallbacks[service] != null && fallbacks[service] != vpn)
                             return unavailable("prepare=fallback_conflict")
+                        if (mode == "smart_safe" && vpn != finalTag)
+                            return unavailable("prepare=fallback_mismatch")
                         fallbacks[service] = vpn
+                        controlInScope = controlInScope || !suffix && names.getString(0) == host
                         replacements.add(rule to tag)
                     }
+                    if (mode == "smart_safe" && !controlInScope) return unavailable("prepare=control_scope")
                     if (fallbacks.containsKey(service)) { controls[service] = host; tags[service] = tag }
                 }
                 if (controls.isEmpty()) return unavailable("prepare=no_matching_rules")
