@@ -15,6 +15,31 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class AndroidByeDpiServiceProofTest {
+    @Test fun keepsNetworkWinnersAndForgetsOnlyTheFailedOwner() {
+        val cache = AndroidByeDpiStrategyCache()
+        val wifi = 11L
+        val cell = 22L
+        val previousOwner = Any()
+        val currentOwner = Any()
+        val cellOwner = Any()
+        cache.remember(wifi, AndroidByeDpiStrategy.DISORDER, previousOwner)
+        cache.remember(cell, AndroidByeDpiStrategy.DISORDER, cellOwner)
+        assertEquals(AndroidByeDpiStrategy.DISORDER, cache.order(wifi).first())
+        assertEquals(AndroidByeDpiStrategy.DISORDER, cache.order(cell).first())
+
+        cache.remember(wifi, AndroidByeDpiStrategy.DISORDER, currentOwner)
+        cache.forget(wifi, previousOwner)
+        assertEquals(AndroidByeDpiStrategy.DISORDER, cache.order(wifi).first())
+        cache.forget(wifi, currentOwner)
+        assertEquals(AndroidByeDpiStrategy.OOB_TLS_RECORD, cache.order(wifi).first())
+        assertEquals(AndroidByeDpiStrategy.DISORDER, cache.order(cell).first())
+
+        cache.remember(wifi, AndroidByeDpiStrategy.DISORDER, currentOwner)
+        cache.remember(33L, AndroidByeDpiStrategy.DISORDER, Any())
+        assertEquals(AndroidByeDpiStrategy.OOB_TLS_RECORD, cache.order(cell).first())
+        assertEquals(AndroidByeDpiStrategy.DISORDER, cache.order(wifi).first())
+    }
+
     @Test fun acceptsLongHeadersButRejectsResponsesOverTheTotalLimit() {
         val longHeader = "Content-Security-Policy: " + "x".repeat(7900)
         val extraHeader = "X-Test: " + "x".repeat(400)

@@ -80,14 +80,17 @@ internal class AndroidLocalDpiAdmission private constructor(
     private val metadata: JSONObject,
     private val services: Map<String, String>,
     private val tags: Map<String, String>,
+    private val networkHandle: Long,
     private val networkGeneration: Long,
     private val issued: Instant,
     private val expires: Instant,
     private val ttlDeadline: Long,
     private val proofBudgetMillis: () -> Int,
 ) : AutoCloseable {
-    private val networkRef = "android-dpi:$networkGeneration"
-    private val strategyOrder = AndroidByeDpiRuntime.strategyOrder(networkRef)
+    private val strategyOwner = Any()
+    private val strategyLock = Any()
+    private var strategyFailed = false
+    private val strategyOrder = AndroidByeDpiRuntime.strategyOrder(networkHandle)
     @Volatile private var runtime: AndroidByeDpiRuntime? = null
     @Volatile private var holders: AndroidLocalDpiHolders? = null
     @Volatile private var switchingStrategy = false
@@ -101,12 +104,20 @@ internal class AndroidLocalDpiAdmission private constructor(
     }
 
     private fun start(strategy: AndroidByeDpiStrategy, port: Int = 0): AndroidByeDpiRuntime = try {
-        AndroidByeDpiRuntime.startUnproven(context, child, ::current, protect, strategy, port) {
-            if (!switchingStrategy) holders?.close()
+        AndroidByeDpiRuntime.startUnproven(context, child, ::current, protect, strategy, port) { failed ->
+            if (!switchingStrategy) {
+                if (failed) forgetStrategy()
+                holders?.close()
+            }
         }
     } catch (failure: Exception) {
         logLocalDpiDiagnostic("native_start=failed")
         throw failure
+    }
+
+    private fun forgetStrategy() = synchronized(strategyLock) {
+        strategyFailed = true
+        AndroidByeDpiRuntime.forgetStrategy(networkHandle, strategyOwner)
     }
 
     fun publish(server: CommandServer, serverCurrent: () -> Boolean) {
@@ -115,6 +126,7 @@ internal class AndroidLocalDpiAdmission private constructor(
             server::readLocalDpiAdmissionID, server::admitLocalDpiAdmission,
             { server.withdrawLocalDpiAdmission(it) },
             server::readLocalDpiObservation,
+            ::forgetStrategy,
         )
         holders = captured
         child.onCancel(captured::close)
@@ -181,7 +193,9 @@ internal class AndroidLocalDpiAdmission private constructor(
                         }
                     }
                     if (captured.hasAdmission()) {
-                        AndroidByeDpiRuntime.rememberStrategy(networkRef, strategy)
+                        synchronized(strategyLock) {
+                            if (!strategyFailed) AndroidByeDpiRuntime.rememberStrategy(networkHandle, strategy, strategyOwner)
+                        }
                         return@execute
                     }
                 }
@@ -321,7 +335,7 @@ internal class AndroidLocalDpiAdmission private constructor(
                 }
                 if (controls.isEmpty()) return unavailable("prepare=no_matching_rules")
                 failureCode = "prepare=network_exception"
-                val generation = AndroidDefaultNetworkMonitor.contextGeneration()
+                val network = AndroidDefaultNetworkMonitor.localDpiNetwork()
                     ?: return unavailable("prepare=network_unavailable")
                 val issued = Instant.parse(source.getString("issued_at"))
                 val expires = Instant.parse(source.getString("expires_at"))
@@ -330,7 +344,8 @@ internal class AndroidLocalDpiAdmission private constructor(
                 val child = AndroidLifecycleTaskScope(parent.generation, "pokrov-dpi", 1)
                 parent.onCancel(child::close)
                 val admission = AndroidLocalDpiAdmission(context, child, ownsProfile, protect, handler,
-                    metadata, controls, tags, generation, issued, expires, SystemClock.elapsedRealtime() + ttl, proofBudgetMillis)
+                    metadata, controls, tags, network.first, network.second, issued, expires,
+                    SystemClock.elapsedRealtime() + ttl, proofBudgetMillis)
                 result = admission
                 child.onCancel { admission.holders?.close() }
                 val networkObservation = AndroidDefaultNetworkMonitor.onContextInvalidated(admission::close)

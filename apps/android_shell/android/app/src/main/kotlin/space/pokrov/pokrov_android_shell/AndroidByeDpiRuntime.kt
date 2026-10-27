@@ -39,6 +39,26 @@ import javax.net.ssl.SSLSocketFactory
 
 internal enum class AndroidByeDpiStrategy { OOB_TLS_RECORD, DISORDER }
 
+/** Short-lived ordering hints only; every admission still requires a fresh proof. */
+internal class AndroidByeDpiStrategyCache {
+    private data class Entry(val strategy: AndroidByeDpiStrategy, val owner: Any)
+    private val entries = LinkedHashMap<Long, Entry>(2, 0.75f, true)
+
+    @Synchronized fun order(network: Long): List<AndroidByeDpiStrategy> {
+        val preferred = entries[network]?.strategy
+        return AndroidByeDpiStrategy.entries.sortedBy { if (it == preferred) 0 else 1 }
+    }
+
+    @Synchronized fun remember(network: Long, strategy: AndroidByeDpiStrategy, owner: Any) {
+        entries[network] = Entry(strategy, owner)
+        if (entries.size > 2) entries.remove(entries.keys.first())
+    }
+
+    @Synchronized fun forget(network: Long, owner: Any) {
+        if (entries[network]?.owner === owner) entries.remove(network)
+    }
+}
+
 /** One embedded SOCKS loop and protect listener, owned by the existing VPN session. */
 internal class AndroidByeDpiRuntime private constructor(
     context: Context,
@@ -230,16 +250,12 @@ internal class AndroidByeDpiRuntime private constructor(
     private external fun nativeProofFinish(handle: Long, token: Long): LongArray?
 
     companion object {
-        private var lastStrategy: Pair<String, AndroidByeDpiStrategy>? = null
+        private val strategies = AndroidByeDpiStrategyCache()
 
-        @Synchronized fun strategyOrder(network: String): List<AndroidByeDpiStrategy> {
-            if (lastStrategy?.first != network) lastStrategy = null
-            return AndroidByeDpiStrategy.entries.sortedBy { if (it == lastStrategy?.second) 0 else 1 }
-        }
-
-        @Synchronized fun rememberStrategy(network: String, strategy: AndroidByeDpiStrategy) {
-            lastStrategy = network to strategy
-        }
+        fun strategyOrder(network: Long) = strategies.order(network)
+        fun rememberStrategy(network: Long, strategy: AndroidByeDpiStrategy, owner: Any) =
+            strategies.remember(network, strategy, owner)
+        fun forgetStrategy(network: Long, owner: Any) = strategies.forget(network, owner)
 
         /** Binds a loopback endpoint; it grants no Core route admission. */
         fun startUnproven(

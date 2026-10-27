@@ -9,6 +9,7 @@ internal class AndroidLocalDpiHolders(
     private val admit: (String) -> Boolean,
     private val withdraw: (String) -> Unit,
     private val readObservation: (String) -> String,
+    private val onFailure: () -> Unit,
 ) {
     private val lock = Any()
     private val holders = linkedMapOf<String, String>()
@@ -53,6 +54,7 @@ internal class AndroidLocalDpiHolders(
                 it.optString("state") in setOf("unpublished", "ready", "failed", "withdrawn")
             }
         }
+        if (observations.any { it.optString("state") == "failed" }) onFailure()
         if (observations.size != ids.size) return "Локальный DPI: наблюдение недоступно"
         val ready = observations.count { it.optString("state") == "ready" }
         val pending = observations.count { it.optString("state") == "unpublished" }

@@ -157,6 +157,11 @@ internal object AndroidDefaultNetworkMonitor {
         if (currentNetwork == null) null else currentNetworkGeneration
     }
 
+    // This monitor accepts only a non-VPN uplink; capture handle and generation together.
+    fun localDpiNetwork(): Pair<Long, Long>? = synchronized(networkLock) {
+        currentNetwork?.let { it.networkHandle to currentNetworkGeneration }
+    }
+
     fun currentUplink(): Network? = currentNetwork
 
     fun matchesTransportContext(network: Network, links: LinkProperties): Boolean = synchronized(networkLock) {
