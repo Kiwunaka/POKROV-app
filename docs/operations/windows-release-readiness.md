@@ -1,8 +1,14 @@
 # Windows acceptance
 
 Updated 27 October 2026. Public version remains **1.4.5**; the seven-asset
-**1.5.0+4175** draft is unchanged. Current private **1.5.0+4229**, App `15684b17` /
-Core `8897fd8`, includes the settlement/recovery and idle-socket fixes below.
+**1.5.0+4175** draft is unchanged. The latest Windows-only private build is
+**1.5.0+4230**, App `08f17394` / Core `8897fd8`, with the normal Stop fix.
+Its setup and installer-only ZIP passed build and package checks and are in
+`E:/POKROV-tools/temp/release-1.5.0-4230`; Windows runtime acceptance is pending.
+The latest Android APKs remain **1.5.0+4229**; Android was not rebuilt for 4230.
+
+The previous private **1.5.0+4229**, App `15684b17` / Core `8897fd8`, includes
+the settlement/recovery and idle-socket fixes below.
 Four Android APKs and Windows setup/ZIP passed standard build checks and remain
 in `E:/POKROV-tools/temp/release-1.5.0-4229`; both devices have 4229 installed.
 Acceptance is still in progress. On the active VM, ordinary Selective YouTube /
