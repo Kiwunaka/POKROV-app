@@ -17,18 +17,23 @@ Strict-v2 is not required by the current release plan.
 
 Current private **1.5.0+4228**, App `ee9c7fc0` / Core `698662e`, is built.
 The included `0f28428b` repair normalizes canonical DNS lanes for both fresh and
-cached profiles in Android Automatic. Android 4228 has not been checked on the
-physical phone; the owner has taken the phone and it is unavailable. Windows 4228
+cached profiles in Android Automatic. The owner's phone is unavailable, so its
+controlled Android 4228 check has not been run. Windows 4228
 passed a bounded ALT4 direct 1080p run after ordinary Retry selected it following
 strategy 101's runtime failure; [Windows acceptance](windows-release-readiness.md)
 retains the exact scope. Home showed attention despite healthy native state and
-`profile_identity_mismatch` after the first Stop. That UI issue remains open;
-final network/preferences restoration and VM shutdown are not yet confirmed.
-Core source `8897fd8` is absent from 4228 and does not establish the cause of the
-VM runtime failure. The targeted universal APK 4228 link was sent in reply 291
-for case 86, with an in-place update offered when convenient. Customer installation
-and successful connection on 4228 are not confirmed. Public 1.4.5 and draft 4175
-remain unchanged.
+`profile_identity_mismatch` after the first Stop. App source `56a50d91`/`d20b2840`
+fixes settlement/reconciliation with existing owner/proof guards; the new code's
+runtime acceptance is pending. Those fixes and Core `8897fd8` are outside the
+unchanged 4228 packages; the concrete VM failures are not attributed to them.
+Final Stop/app exit, bytewise preferences and DNS/default-route/proxy restoration,
+temporary-file cleanup and VM PoweredOff were confirmed.
+
+Case 86 installed the targeted 4228 delivered in reply 291. Fresh `connected_ok /
+running / success` and runtime-observed success arrived at 10:10:11 UTC, with no
+new errors in those post-update events. This confirms connection by telemetry;
+the customer has not yet confirmed browsing or replied in text. Reply 292 was
+sent and the case remains open/in_progress. Public 1.4.5 and draft 4175 remain unchanged.
 
 Before 4228, mobile YouTube 1080p opened and fresh media bytes arrived. Final native
 DPI counters and a bounded fixed 1080p pass were not captured; mobile DNSTT has
@@ -239,7 +244,10 @@ The accepted 4200 Flowseal and 4195 Gemini checks below were not repeated.
 
 ## Private artifacts
 
-This table retains the earlier 4227 set; current 4228 acceptance is stated above.
+All six final 4228 artifacts remain in `E:/POKROV-tools/temp/release-1.5.0-4228`.
+Temporary Android/Windows build trees were removed after checks, with absolute
+paths verified; no build process or temporary P: drive remains. This table retains
+the earlier 4227 set; current 4228 acceptance is stated above.
 
 | Private artifact | Path |
 | --- | --- |

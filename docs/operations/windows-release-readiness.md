@@ -13,12 +13,20 @@ and after remained running=1, DNS/egress=1, services=1, admitted=1/failed=0 and 
 vpnTCP=0. Playback was paused afterward. This accepts that bounded ALT4 direct 1080p
 case and switching after failure; it does not establish long-term stability or Android.
 
-The separate UI/profile-identity issue remains open. After the first ordinary
+The 4228 run exposed a separate UI/profile-identity issue. After the first ordinary
 Stop, native state was running=0/config_staged/failure=none while Home showed
 `profile_identity_mismatch`. During the successful second ALT4 run, native state
-was healthy but Home still showed «Защита требует внимания». The cause is unproven;
-identity checks were not weakened. Final normal Stop, preferences/network
-restoration and VM shutdown are not yet confirmed.
+was healthy but Home still showed «Защита требует внимания». Later App source
+`56a50d91` uses trusted service Status after bound settlement; `d20b2840` rechecks
+the existing owner/proof-fenced reconciliation after an action even when the
+healthy snapshot is unchanged. The targeted regression went RED→PASS and guards
+remain. Both fixes are outside 4228; the warning's removal on this VM with the new
+code has not been tested. The concrete `config_staged` cause remains unproven.
+
+Final normal Stop and app exit completed. Preferences were restored byte for byte;
+DNS, default routes and proxy matched baseline. Edge policy was unchanged, the
+owned debug browser was closed, and the temporary guest QA folder and host
+screenshot were removed with path checks. VirtualBox state1/PoweredOff was confirmed.
 
 Separate Core source `8897fd8` fixes idle `ECONNRESET` on Read before the first
 write, with a meaningful RED→PASS regression. The `early_read` guard after a write
