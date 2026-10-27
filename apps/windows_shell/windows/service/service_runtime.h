@@ -231,9 +231,9 @@ class RuntimeHost {
   std::unique_ptr<WindowsLocalDpiPreparation> local_dpi_preparation_;
   std::string local_dpi_profile_digest_;
   std::string local_dpi_core_digest_;
-  // Ordering hint only; fresh holders/proof are still required. Serialized
-  // snapshots may invalidate its network key after a proven runtime failure.
-  mutable std::optional<std::pair<std::string, WindowsLocalDpiStrategy>> local_dpi_success_strategy_;
+  // Ordering hints only; each connection still requires fresh holder proof.
+  mutable WindowsLocalDpiStrategyHints local_dpi_strategy_hints_;
+  std::optional<std::pair<std::string, WindowsLocalDpiStrategy>> local_dpi_active_strategy_;
   std::string original_staged_config_;
   std::string staged_runtime_config_;
   bool local_dpi_requested_ = false;

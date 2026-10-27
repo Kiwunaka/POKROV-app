@@ -3,6 +3,8 @@
 
 #include <windows.h>
 #include <memory>
+#include <map>
+#include <optional>
 #include <functional>
 #include <string>
 #include <vector>
@@ -39,6 +41,27 @@ enum class WindowsLocalDpiStrategy { kFakeMultisplitAlt4 = 4, kMultidisorderMids
 
 std::array<WindowsLocalDpiStrategy, 2> WindowsLocalDpiStrategyOrder(
     WindowsLocalDpiStrategy preferred = WindowsLocalDpiStrategy::kMultidisorderMidsld);
+
+// A single winws child serves all selected services. Hints only change the
+// ordering; every service still requires fresh proof before admission.
+class WindowsLocalDpiStrategyHints final {
+ public:
+  WindowsLocalDpiStrategy Preferred(const std::string& network,
+      const std::vector<WindowsLocalDpiService>& services) const;
+  void RecordSuccess(const std::string& network,
+      const std::vector<WindowsLocalDpiService>& services, WindowsLocalDpiStrategy strategy);
+  void RecordFailure(const std::string& network, const std::string& service,
+      WindowsLocalDpiStrategy strategy);
+
+ private:
+  struct Hint {
+    WindowsLocalDpiStrategy strategy;
+    bool failed;
+  };
+  Hint& Entry(const std::string& network, const std::string& service);
+  std::map<std::pair<std::string, std::string>, Hint> hints_;
+};
+
 bool WindowsLocalDpiRetryableProof(const std::string& failure);
 std::wstring WindowsLocalDpiCommand(const std::wstring& directory,
     const std::string& hostlist, DWORD interface_index, WindowsLocalDpiStrategy strategy);

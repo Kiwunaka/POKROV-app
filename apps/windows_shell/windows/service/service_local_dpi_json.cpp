@@ -255,13 +255,12 @@ std::optional<WindowsLocalDpiHolderObservation> ReadWindowsLocalDpiHolderObserva
 }
 
 void InvalidateWindowsLocalDpiStrategyHint(
-    std::pair<std::string, WindowsLocalDpiStrategy>& hint,
+    WindowsLocalDpiStrategyHints& hints, const std::string& network,
+    const std::string& service, WindowsLocalDpiStrategy strategy,
     const WindowsLocalDpiHolderObservation& observation) {
   if (observation.state == "failed" ||
       (!observation.failure_reason.empty() && observation.failure_reason != "none")) {
-    // Keep the strategy ID for the current runtime journal, but stop preferring
-    // it on the next connection. A healthy normal withdrawal preserves success.
-    hint.first.clear();
+    hints.RecordFailure(network, service, strategy);
   }
 }
 

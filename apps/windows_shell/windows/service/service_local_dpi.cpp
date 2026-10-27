@@ -255,6 +255,53 @@ std::array<WindowsLocalDpiStrategy, 2> WindowsLocalDpiStrategyOrder(
   return strategies;
 }
 
+WindowsLocalDpiStrategyHints::Hint& WindowsLocalDpiStrategyHints::Entry(
+    const std::string& network, const std::string& service) {
+  const auto key = std::make_pair(network, service);
+  auto found = hints_.find(key);
+  if (found != hints_.end()) return found->second;
+  // The prepared catalog permits at most 256 services. Bound history across
+  // network changes as well; a cleared hint never bypasses fresh proof.
+  if (hints_.size() >= 256) hints_.clear();
+  return hints_.emplace(key, Hint{WindowsLocalDpiStrategy::kMultidisorderMidsld, false}).first->second;
+}
+
+WindowsLocalDpiStrategy WindowsLocalDpiStrategyHints::Preferred(const std::string& network,
+    const std::vector<WindowsLocalDpiService>& services) const {
+  const auto fallback = WindowsLocalDpiStrategy::kMultidisorderMidsld;
+  std::optional<WindowsLocalDpiStrategy> success;
+  std::optional<WindowsLocalDpiStrategy> after_failure;
+  bool incomplete = false;
+  bool conflicting_success = false;
+  for (const auto& service : services) {
+    const auto found = hints_.find({network, service.service_id});
+    if (found == hints_.end()) { incomplete = true; continue; }
+    const auto& hint = found->second;
+    const auto candidate = hint.failed
+        ? (hint.strategy == fallback ? WindowsLocalDpiStrategy::kFakeMultisplitAlt4 : fallback)
+        : hint.strategy;
+    if (hint.failed) {
+      if (after_failure && *after_failure != candidate) return fallback;
+      after_failure = candidate;
+    } else {
+      if (success && *success != candidate) conflicting_success = true;
+      success = candidate;
+    }
+  }
+  if (after_failure) return *after_failure;
+  return !incomplete && !conflicting_success ? success.value_or(fallback) : fallback;
+}
+
+void WindowsLocalDpiStrategyHints::RecordSuccess(const std::string& network,
+    const std::vector<WindowsLocalDpiService>& services, WindowsLocalDpiStrategy strategy) {
+  for (const auto& service : services) Entry(network, service.service_id) = {strategy, false};
+}
+
+void WindowsLocalDpiStrategyHints::RecordFailure(const std::string& network,
+    const std::string& service, WindowsLocalDpiStrategy strategy) {
+  Entry(network, service) = {strategy, true};
+}
+
 bool WindowsLocalDpiRetryableProof(const std::string& failure) {
   // Only the intercepted TCP path can benefit from another desync strategy.
   // DNS, interface/permit setup, cancelled ownership and unknown errors cannot.

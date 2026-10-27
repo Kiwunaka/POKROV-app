@@ -235,19 +235,38 @@ void TestWindowsLocalDpiStrategyArguments() {
          order[1] == WindowsLocalDpiStrategy::kFakeMultisplitAlt4 &&
          static_cast<int>(order[0]) == 101,
          "verified CDN strategy must lead the bounded pair under a distinct journal ID");
-  auto hint = std::make_pair(std::string("physical-network"), WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
-  const auto next_order = [&] {
-    return WindowsLocalDpiStrategyOrder(hint.first == "physical-network"
-        ? hint.second : WindowsLocalDpiStrategy::kMultidisorderMidsld);
-  };
-  InvalidateWindowsLocalDpiStrategyHint(hint, {"ready", "none"});
-  InvalidateWindowsLocalDpiStrategyHint(hint, {"withdrawn", "none", true});
-  Expect(next_order()[0] == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
-         "healthy proof followed by normal Stop lost the same-network strategy hint");
-  InvalidateWindowsLocalDpiStrategyHint(hint, {"failed", "early_read"});
-  Expect(next_order()[0] == WindowsLocalDpiStrategy::kMultidisorderMidsld &&
-         hint.second == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
-         "runtime failure retained the stale preference or lost journal attribution");
+  const WindowsLocalDpiService youtube{"youtube", "pokrov-local-dpi-youtube", "www.youtube.com", {}};
+  const WindowsLocalDpiService discord{"discord", "pokrov-local-dpi-discord", "discord.com", {}};
+  WindowsLocalDpiStrategyHints hints;
+  hints.RecordSuccess("network-a", {youtube}, WindowsLocalDpiStrategy::kMultidisorderMidsld);
+  hints.RecordSuccess("network-a", {discord}, WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+  hints.RecordSuccess("network-b", {youtube}, WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+  Expect(hints.Preferred("network-a", {youtube}) == WindowsLocalDpiStrategy::kMultidisorderMidsld &&
+         hints.Preferred("network-a", {discord}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4 &&
+         hints.Preferred("network-b", {youtube}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4 &&
+         hints.Preferred("network-b", {discord}) == WindowsLocalDpiStrategy::kMultidisorderMidsld,
+         "strategy history leaked across networks or services");
+  InvalidateWindowsLocalDpiStrategyHint(hints, "network-a", "youtube",
+      WindowsLocalDpiStrategy::kMultidisorderMidsld, {"ready", "none"});
+  InvalidateWindowsLocalDpiStrategyHint(hints, "network-a", "youtube",
+      WindowsLocalDpiStrategy::kMultidisorderMidsld, {"withdrawn", "none", true});
+  Expect(hints.Preferred("network-a", {youtube}) == WindowsLocalDpiStrategy::kMultidisorderMidsld,
+         "healthy proof followed by normal Stop lost the service strategy hint");
+  InvalidateWindowsLocalDpiStrategyHint(hints, "network-a", "youtube",
+      WindowsLocalDpiStrategy::kMultidisorderMidsld, {"failed", "early_read"});
+  Expect(hints.Preferred("network-a", {youtube}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4 &&
+         hints.Preferred("network-a", {discord}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4 &&
+         hints.Preferred("network-b", {youtube}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
+         "runtime failure did not prefer the alternate only for its own service and network");
+  hints.RecordSuccess("network-a", {youtube}, WindowsLocalDpiStrategy::kMultidisorderMidsld);
+  Expect(hints.Preferred("network-a", {youtube, discord}) == WindowsLocalDpiStrategy::kMultidisorderMidsld,
+         "conflicting service successes did not use the default strategy");
+  hints.RecordFailure("network-a", "youtube", WindowsLocalDpiStrategy::kMultidisorderMidsld);
+  Expect(hints.Preferred("network-a", {youtube, discord}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
+         "a known failed strategy was retried first for a selected service");
+  hints.RecordSuccess("network-a", {youtube, discord}, WindowsLocalDpiStrategy::kFakeMultisplitAlt4);
+  Expect(hints.Preferred("network-a", {youtube, discord}) == WindowsLocalDpiStrategy::kFakeMultisplitAlt4,
+         "proof for all selected services was not remembered");
   for (const char* failure : {"local_dpi_control_connect_failed", "local_dpi_control_tls_failed",
                              "local_dpi_control_http_failed"}) {
     Expect(WindowsLocalDpiRetryableProof(failure), "transport failure lost its bounded strategy retry");

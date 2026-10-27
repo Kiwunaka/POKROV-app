@@ -1705,9 +1705,8 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     const auto dpi_owner_failure = [&] {
       return local_dpi_owner_current() ? "local_dpi_child_failed" : "local_dpi_owner_changed";
     };
-    const auto strategies = WindowsLocalDpiStrategyOrder(local_dpi_success_strategy_ &&
-        local_dpi_success_strategy_->first == local_dpi_network->selection_key
-            ? local_dpi_success_strategy_->second : WindowsLocalDpiStrategy::kMultidisorderMidsld);
+    const auto strategies = WindowsLocalDpiStrategyOrder(local_dpi_strategy_hints_.Preferred(
+        local_dpi_network->selection_key, local_dpi_preparation_->services));
     bool proved = false;
     WindowsLocalDpiStrategy successful_strategy = strategies[0];
     for (std::size_t attempt = 0; attempt < strategies.size(); ++attempt) {
@@ -1733,6 +1732,10 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
         if (!local_dpi_current()) proof_failure = dpi_owner_failure();
         record_dpi(LocalDpiStage::kProof, strategies[attempt], proof_failure);
         if (!proof_failure.empty()) {
+          if (WindowsLocalDpiRetryableProof(proof_failure) && local_dpi_current()) {
+            local_dpi_strategy_hints_.RecordFailure(local_dpi_network->selection_key,
+                service.service_id, strategies[attempt]);
+          }
           proved = false;
           break;
         }
@@ -1831,7 +1834,9 @@ RuntimeResult RuntimeHost::ConnectImpl(const std::string& expected_profile_diges
     return Fail(Status::kNotReady, "transition_guard_failed");
   }
   if (proved_local_dpi_strategy && local_dpi_network && local_dpi_current()) {
-    local_dpi_success_strategy_ = std::make_pair(local_dpi_network->selection_key, *proved_local_dpi_strategy);
+    local_dpi_active_strategy_ = std::make_pair(local_dpi_network->selection_key, *proved_local_dpi_strategy);
+    local_dpi_strategy_hints_.RecordSuccess(local_dpi_network->selection_key,
+        local_dpi_preparation_->services, *proved_local_dpi_strategy);
   }
   return Snapshot();
 }
@@ -2244,6 +2249,7 @@ RuntimeResult RuntimeHost::MaintainTelegramWS(const CheckInterruption& interrupt
 bool RuntimeHost::ClearWindowsLocalDpiAfterCoreStopped() {
   if (local_dpi_executor_ && !local_dpi_executor_->StopAfterCoreStopped()) return false;
   local_dpi_preparation_.reset();
+  local_dpi_active_strategy_.reset();
   telegram_ws_preparation_.reset();
   telegram_ws_holders_.clear();
   telegram_ws_original_digest_.clear();
@@ -2458,11 +2464,13 @@ std::optional<WindowsLocalDpiRuntimeObservation> RuntimeHost::ReadLocalDpiRuntim
         value->failure_reason != "none") {
       local_dpi_runtime_failure_reported_ = events_->RecordLocalDpiObservation(
           LocalDpiStage::kRuntime,
-          local_dpi_success_strategy_ ? static_cast<int>(local_dpi_success_strategy_->second) : 0,
+          local_dpi_active_strategy_ ? static_cast<int>(local_dpi_active_strategy_->second) : 0,
           value->failure_reason, local_dpi_executor_->Alive());
     }
-    if (local_dpi_success_strategy_) {
-      InvalidateWindowsLocalDpiStrategyHint(*local_dpi_success_strategy_, *value);
+    if (local_dpi_active_strategy_) {
+      InvalidateWindowsLocalDpiStrategyHint(local_dpi_strategy_hints_,
+          local_dpi_active_strategy_->first, service.service_id,
+          local_dpi_active_strategy_->second, *value);
     }
   }
   return result;
