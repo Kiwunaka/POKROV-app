@@ -1,9 +1,23 @@
 # Windows acceptance
 
 Updated 27 October 2026. Public version remains **1.4.5**; the seven-asset
-**1.5.0+4175** draft is unchanged. The current private Windows candidate is
-**1.5.0+4228**, built from App `ee9c7fc0` with Core `698662e`.
-It is installed in the owned VM. Ordinary UI Selective with only YouTube and LocalDPI Auto admitted
+**1.5.0+4175** draft is unchanged. Current private **1.5.0+4229**, App `15684b17` /
+Core `8897fd8`, includes the settlement/recovery and idle-socket fixes below.
+Four Android APKs and Windows setup/ZIP passed standard build checks and remain
+in `E:/POKROV-tools/temp/release-1.5.0-4229`; both devices have 4229 installed.
+Acceptance is still in progress. On the active VM, ordinary Selective YouTube /
+LocalDPI Auto Connect reached healthy native state and admitted=1, but the video
+remained time=0/readyState=0 with 53 direct handoffs/vpn=0. This is not a playback
+pass; the cause is being investigated. The mojibake IS city label came from cachedLocations
+dated 18 October; the live DB has the correct «Исландия» value. Current VM restoration
+is pending. The owner's phone was taken back and ADB is unavailable; mobile
+YouTube/DNSTT 4229 remain unchecked. The fresh Beeline example.com HTTPS 200/h3
+baseline without VPN does not establish a full whitelist-network result.
+
+## Earlier 4228 acceptance
+
+Private **1.5.0+4228**, App `ee9c7fc0` / Core `698662e`, was installed in the owned VM.
+Ordinary UI Selective with only YouTube and LocalDPI Auto admitted
 strategy 101 after fresh start/proof. About 124 seconds later, runtime `early_read`
 withdrew admission; local/VPN handoffs were 8/1 and video continued over VPN.
 Ordinary Retry then selected ALT4/id4 and passed fresh proof/admission. Edge UI
