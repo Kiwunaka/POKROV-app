@@ -104,9 +104,10 @@ not repeat unchanged protocol QA on all ABIs.
 - After the 26 October top-up, direct IS HTTPS in Chrome still returned
   `ERR_TIMED_OUT`; RF2 works. Later native Pi4 wlan0 checks accepted direct IS
   VLESS/HY2/AWG after the private-DNS firewall repair, not Android UI. Android
-  now has manual choices and Naive was accepted on 4210. The later Android SmartDNS
-  QA and the pending normal UI read are described above. Ordinary YouTube playback
-  on 4214 does not accept direct ByeDPI routing or permanent absence of ads.
+  now has manual choices and Naive was accepted on 4210. Android SmartDNS QA and
+  the 4225 normal UI read are described above. The 4214 YouTube playback did not
+  establish direct ByeDPI routing; the later 4227 Wi-Fi acceptance is described
+  above and does not guarantee permanent absence of ads.
 - Direct RU VLESS/AWG failed on 4172/4173; the precise cause was not established.
   The owner subsequently deleted Hostkey RU; its protected archive remains on
   Brain. The retirement replaces the old direct RU AWG acceptance requirement.
@@ -114,7 +115,8 @@ not repeat unchanged protocol QA on all ABIs.
   Chrome HTTPS 204 plus all 65536 bytes, remaining healthy for about 230 seconds.
   On 4144, US VLESS REALITY passed the same traffic checks and an independent US
   country check; Gemini still rejected the country. Neither case accepts SmartDNS
-  or subsequent endpoint changes. SmartDNS is outside the current release scope.
+  or subsequent endpoint changes. Expanded SmartDNS acceptance remains outside
+  the mandatory 1.5.0 scope.
 - US AWG on 4144–4147 and US HY2 on 4144 failed. The 4147 AWG diagnostics retained
   `tls_read` and reserve `egress_204` cancellation before a response; that localized
   cancellation without establishing the underlying cause. Later DE2 AWG and

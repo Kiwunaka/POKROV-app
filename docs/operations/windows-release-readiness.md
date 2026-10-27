@@ -1,15 +1,15 @@
 # Windows acceptance
 
-Updated 21 October 2026. Public version remains **1.4.5**; the seven-asset
+Updated 27 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The current private Windows candidate is
-**1.5.0+4185**, built from App `54a5e680` with the existing Core `0f159bb` /
-1.2.14 and matching Cronet. The built-in Xbox DNS preset removal (`ed2a982d`) is
-included. Packaging is accepted: the [installer](E:/POKROV-tools/temp/pokrov-windows-x64-1.5.0+4185-setup.exe)
-remains `NotSigned`, and the [ZIP](E:/POKROV-tools/temp/POKROV-Windows-1.5.0-4185.zip)
-contains the same installer. **4185 installation and network behavior have not
-been checked.** The 4184 native/Connect/Stop results below remain historical.
-Customer cases 89–90 are paused: do not contact the customer or send a package
-until the owner lifts the hold. Public release requires a separate explicit yes.
+**1.5.0+4227**, built from App `c416369c` with Core `58b11d4` / 1.2.14.
+Packaging passed: the [installer](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-windows-x64-1.5.0+4227-setup.exe)
+is unsigned, and the [ZIP](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-windows-x64-1.5.0+4227.zip)
+contains one installer. Windows 4227 was not reinstalled on the VM; the accepted
+Windows 4216 results remain in [cutover readiness](cutover-readiness.md).
+The 4184 results below are historical. Customer cases 89–90 are paused: do not
+contact the customer or send a package until the owner lifts the hold. Public
+release requires a separate explicit yes.
 
 The separate clean-Win11 Edge secure-DoH comparison is recorded in
 [Smart Access DNS](../architecture/smart-access-dns.md). It does not test POKROV

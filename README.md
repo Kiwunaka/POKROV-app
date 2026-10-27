@@ -1,8 +1,8 @@
 # POKROV client
 
 Android and Windows are the public client platforms. Public **1.4.5**, draft
-**1.5.0+4175 / seven assets**, and private **Android/Windows 1.5.0+4204** with
-Core **1.2.14 / `d80a992`** are separate states. Current package results, device limits and release decisions
+**1.5.0+4175 / seven assets**, and private **Android/Windows 1.5.0+4227** with
+Core **1.2.14 / `58b11d4`** are separate states. Current package results, device limits and release decisions
 live in [cutover readiness](docs/operations/cutover-readiness.md).
 
 Start with [AGENTS.md](AGENTS.md), the [document index](docs/README.md), and the
