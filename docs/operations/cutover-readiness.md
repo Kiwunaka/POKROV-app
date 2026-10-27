@@ -19,8 +19,13 @@ Current private **1.5.0+4228**, App `ee9c7fc0` / Core `698662e`, is built.
 The included `0f28428b` repair normalizes canonical DNS lanes for both fresh and
 cached profiles in Android Automatic. Android 4228 has not been checked on the
 physical phone; the owner has taken the phone and it is unavailable. Windows 4228
-is installed in the owned VM with the service running and UI open; the new functional
-run is still in progress. The targeted universal APK 4228 link was sent in reply 291
+passed a bounded ALT4 direct 1080p run after ordinary Retry selected it following
+strategy 101's runtime failure; [Windows acceptance](windows-release-readiness.md)
+retains the exact scope. Home showed attention despite healthy native state and
+`profile_identity_mismatch` after the first Stop. That UI issue remains open;
+final network/preferences restoration and VM shutdown are not yet confirmed.
+Core source `8897fd8` is absent from 4228 and does not establish the cause of the
+VM runtime failure. The targeted universal APK 4228 link was sent in reply 291
 for case 86, with an in-place update offered when convenient. Customer installation
 and successful connection on 4228 are not confirmed. Public 1.4.5 and draft 4175
 remain unchanged.

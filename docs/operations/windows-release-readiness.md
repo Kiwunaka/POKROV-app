@@ -2,8 +2,30 @@
 
 Updated 27 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. The current private Windows candidate is
-**1.5.0+4227**, built from App `c416369c` with Core `58b11d4` / 1.2.14.
-Packaging passed: the [installer](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-windows-x64-1.5.0+4227-setup.exe)
+**1.5.0+4228**, built from App `ee9c7fc0` with Core `698662e`.
+It is installed in the owned VM. Ordinary UI Selective with only YouTube and LocalDPI Auto admitted
+strategy 101 after fresh start/proof. About 124 seconds later, runtime `early_read`
+withdrew admission; local/VPN handoffs were 8/1 and video continued over VPN.
+Ordinary Retry then selected ALT4/id4 and passed fresh proof/admission. Edge UI
+selected 1080p60: the bounded 45-second observation retained 1920×1080 at both ends,
+video advanced from 67.740 to 111.400 seconds, readyState=4/error=null. Native before
+and after remained running=1, DNS/egress=1, services=1, admitted=1/failed=0 and localTCP=6/
+vpnTCP=0. Playback was paused afterward. This accepts that bounded ALT4 direct 1080p
+case and switching after failure; it does not establish long-term stability or Android.
+
+The separate UI/profile-identity issue remains open. After the first ordinary
+Stop, native state was running=0/config_staged/failure=none while Home showed
+`profile_identity_mismatch`. During the successful second ALT4 run, native state
+was healthy but Home still showed «Защита требует внимания». The cause is unproven;
+identity checks were not weakened. Final normal Stop, preferences/network
+restoration and VM shutdown are not yet confirmed.
+
+Separate Core source `8897fd8` fixes idle `ECONNRESET` on Read before the first
+write, with a meaningful RED→PASS regression. The `early_read` guard after a write
+remains. That commit is absent from 4228; the concrete VM failure is not proven to
+have that cause.
+
+The earlier 4227 [installer](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-windows-x64-1.5.0+4227-setup.exe)
 is unsigned, and the [ZIP](E:/POKROV-tools/temp/release-1.5.0-4227/pokrov-windows-x64-1.5.0+4227.zip)
 contains one installer. Windows 4227 was not reinstalled on the VM; the accepted
 Windows 4216 results remain in [cutover readiness](cutover-readiness.md).
@@ -13,8 +35,8 @@ release requires a separate explicit yes.
 
 The separate clean-Win11 Edge secure-DoH comparison is recorded in
 [Smart Access DNS](../architecture/smart-access-dns.md). It does not test POKROV
-4185 or change Auto. The Flowseal canary was not executed because the guest
-token was UAC filtered; no new DPI result is accepted.
+4185 or change Auto. The earlier Flowseal canary was not executed because the guest
+token was UAC filtered; it is separate from the 4228 acceptance above.
 
 ## Earlier 4184 acceptance
 
