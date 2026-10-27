@@ -263,9 +263,9 @@ class _RulesAdvancedSectionState extends State<_RulesAdvancedSection> {
                       ),
                     if ((widget.hostPlatform == HostPlatform.android ||
                          (widget.hostPlatform == HostPlatform.windows && widget.windowsLocalDpiReady)) &&
-                        widget.fallbackMode == RouteMode.selectiveServices)
+                         const {RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(widget.fallbackMode))
                       _LocalDpiCard(preferences: _draftPreferences, onChanged: _stage,
-                          hostPlatform: widget.hostPlatform),
+                          hostPlatform: widget.hostPlatform, routeMode: widget.fallbackMode),
                     _DnsAndLanCard(
                       hostPlatform: widget.hostPlatform,
                       fallbackMode: widget.fallbackMode,

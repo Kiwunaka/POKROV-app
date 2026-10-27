@@ -146,7 +146,7 @@ class PokrovRoutingPreferences {
     required this.trustedWifiNames,
     required this.pauseOnTrustedWifi,
     this.autoConnectOnUntrustedWifi = false,
-    this.localDpiEnabled = false,
+    this.localDpiEnabled = true,
     required this.windowsConnectionMode,
     required this.tunStack,
   });
@@ -164,7 +164,7 @@ class PokrovRoutingPreferences {
         trustedWifiNames = const <String>[],
         pauseOnTrustedWifi = false,
         autoConnectOnUntrustedWifi = false,
-        localDpiEnabled = false,
+        localDpiEnabled = true,
         windowsConnectionMode = PokrovWindowsConnectionMode.vpn,
         tunStack = PokrovTunStack.system;
 
@@ -287,7 +287,7 @@ class PokrovRoutingPreferences {
       pauseOnTrustedWifi:
           json['pauseOnTrustedWifi'] == true && trustedWifi.isNotEmpty,
       autoConnectOnUntrustedWifi: json['autoConnectOnUntrustedWifi'] == true,
-      localDpiEnabled: json['localDpiEnabled'] == true,
+      localDpiEnabled: !json.containsKey('localDpiEnabled') || json['localDpiEnabled'] == true,
       windowsConnectionMode: windowsConnectionMode,
       tunStack: tunStack,
     );
@@ -1114,10 +1114,11 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   final meta = _routingMap(config['_meta']);
   meta.remove('local_dpi');
   if (preferences.localDpiEnabled &&
-      const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) && selective &&
+      const {HostPlatform.android, HostPlatform.windows}.contains(hostPlatform) &&
+      const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(expectedMode) &&
       policy.localDpiControlHosts.isNotEmpty) {
     meta['local_dpi'] = {
-      'mode': 'selective', 'platform': hostPlatform.name,
+      'mode': selective ? 'selective' : 'smart_safe', 'platform': hostPlatform.name,
       'catalog_envelope': policy.catalog.canonicalEnvelopeJson,
       'catalog_sha256': policy.payloadSha256,
       'revision': policy.revision, 'security_revision': policy.securityRevision,

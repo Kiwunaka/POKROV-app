@@ -114,6 +114,14 @@ void TestWindowsTelegramMetadataComposition() {
   Expect(runtime_copy.find("_meta") == std::string::npos &&
          runtime_copy.find("pokrov_telegram_ws") != std::string::npos,
          "final metadata strip lost the prepared Telegram outbound");
+  const std::string smart_safe = R"({"route":{"final":"vpn"},"_meta":{"local_dpi":{"platform":"windows","mode":"smart_safe","services":{"youtube":"www.youtube.com"}}}})";
+  Expect(StripWindowsLocalDpiMetadata(smart_safe, &runtime_copy, &dpi) && dpi &&
+         runtime_copy.find("_meta") == std::string::npos,
+         "Smart Safe YouTube intent did not reach Core admission");
+  auto full = smart_safe;
+  full.replace(full.find("smart_safe"), std::string("smart_safe").size(), "full");
+  Expect(StripWindowsLocalDpiMetadata(full, &runtime_copy, &dpi) && !dpi,
+         "Full requested a local DPI executor");
   const auto receipt = ReadWindowsTelegramWSPreparation(
       "{\"schema_version\":1,\"profile\":" + prepared +
       R"(,"issued_at":"2020-01-01T00:00:00Z","expires_at":"2099-01-01T00:00:00Z","services":[{"service_id":"telegram","outbound_tag":"tg"}]})");
@@ -1891,6 +1899,10 @@ void TestProtectedHandoffRetainsGuardUntilVerifiedOrExplicitOff() {
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 2 && std::string(argv[1]) == "--local-dpi-metadata") {
+    TestWindowsTelegramMetadataComposition();
+    return failures == 0 ? 0 : 1;
+  }
   if (argc == 2 && std::string(argv[1]) == "--local-dpi-strategy") {
     TestWindowsLocalDpiScopePreparation();
     TestWindowsLocalDpiStrategyArguments();

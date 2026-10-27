@@ -321,6 +321,92 @@ void main() {
       throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'catalog_selected_service_unsupported')));
   });
 
+  test('signed YouTube DPI is mode-bound and withdraws with its authority', () async {
+    final now = DateTime.now().toUtc();
+    String wire(DateTime time) => '${time.toIso8601String().substring(0, 19)}Z';
+    final start = wire(now.subtract(const Duration(seconds: 2)));
+    final end = wire(now.add(const Duration(hours: 1)));
+    final key = await Ed25519().newKeyPairFromSeed(List.generate(32, (i) => i + 1));
+    final payload = <String, Object?>{
+      'schema_version': 'pokrov-routing-catalog-v1', 'revision': 1, 'security_revision': 1,
+      'audience': 'lab', 'issued_at': start, 'expires_at': end,
+      'sources': [{'source_id': 'youtube-source', 'url': 'https://source.example.test/',
+        'revision': '1', 'sha256': await _qaDigest('youtube-source'), 'license': 'test', 'retrieved_at': start, 'expires_at': end}],
+      'evidence': [{'evidence_id': 'youtube-review', 'service_id': 'youtube',
+        'source_ids': ['youtube-source'], 'sha256': await _qaDigest('youtube-review'), 'origin': 'synthetic',
+        'observed_at': start, 'expires_at': end}],
+      'services': [{
+        'service_id': 'youtube', 'display_name': 'YouTube', 'categories': ['video'],
+        'enabled': true, 'classification': 'ordinary', 'reason': 'test', 'evidence_status': 'verified',
+        'source_ids': ['youtube-source'], 'evidence_ids': ['youtube-review'],
+        'platforms': ['android', 'windows'], 'access_states': ['paid_unlimited'],
+        'route_intents': [
+          {'mode': 'selective', 'action': 'vpn', 'local_dpi_control_host': 'www.youtube.com'},
+          {'mode': 'smart_safe', 'action': 'vpn', 'local_dpi_control_host': 'www.youtube.com'},
+        ],
+        'android': [], 'windows': [], 'domains': [
+          {'name': 'www.youtube.com', 'match': 'exact', 'role': 'web', 'shared': false, 'source_ids': ['youtube-source']},
+          {'name': 'googlevideo.com', 'match': 'suffix', 'role': 'media', 'shared': false, 'source_ids': ['youtube-source']},
+        ], 'networks': [], 'provider_capability_refs': [], 'external_gateway_policy': 'forbidden',
+      }],
+    };
+    final verifier = RoutingCatalogVerifier(publicKeysById: {
+      'qa-test': base64Encode((await key.extractPublicKey()).bytes),
+    }, audience: 'lab');
+    Future<RoutingCatalogPolicy> signed(Map<String, Object?> body) async => RoutingCatalogPolicy.fromVerified(
+      await verifier.verify(await _qaSigned(body, 'pokrov-routing-catalog-v1', key), now: now,
+        minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null));
+    final policy = await signed(payload);
+    CatalogDomainPolicy compile(CatalogRoutingMode mode) => compileCatalogDomainPolicy(policy: policy,
+      mode: mode, platform: 'android', accessState: 'paid_unlimited', vpnAvailable: true, now: now,
+      selectedServiceIds: mode == CatalogRoutingMode.selective ? {'youtube'} : const {});
+    Map configured(RouteMode mode, CatalogDomainPolicy domainPolicy, bool enabled) {
+      final profile = ManagedProfilePayload(profileName: 'youtube-fixture', routeMode: mode,
+        materializedForRuntime: true, configPayload: jsonEncode({
+          'inbounds': [{'type': 'tun'}],
+          'outbounds': [{'type': 'direct', 'tag': 'direct'}, {'type': 'vless', 'tag': 'proxy'}],
+          'route': {'final': 'proxy', 'rules': []},
+          'dns': {'servers': [
+            {'tag': 'dns-remote', 'address': 'https://1.1.1.1/dns-query', 'detour': 'proxy'},
+            {'tag': 'dns-direct', 'address': 'local', 'detour': 'direct'},
+          ], 'final': 'dns-remote'},
+        }));
+      final preferences = const PokrovRoutingPreferences.defaults().copyWith(
+        localDpiEnabled: enabled, selectedCatalogServiceIds: mode == RouteMode.selectiveServices ? {'youtube'} : {});
+      return jsonDecode(applyPokrovRoutingPreferences(profile, preferences, hostPlatform: HostPlatform.android,
+        catalogPolicy: domainPolicy, catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1).configPayload) as Map;
+    }
+    final smartPolicy = compile(CatalogRoutingMode.smartSafe);
+    final smart = configured(RouteMode.allExceptRu, smartPolicy, true);
+    expect(smart['route']['final'], 'proxy');
+    expect(smart['_meta']['local_dpi']['mode'], 'smart_safe');
+    expect(smart['_meta']['local_dpi']['services'], {'youtube': 'www.youtube.com'});
+    final youtubeRules = (smart['route']['rules'] as List).cast<Map>().where((rule) =>
+      rule['pokrov_catalog_window'] is Map && rule['pokrov_catalog_window']['service_id'] == 'youtube');
+    expect(youtubeRules, hasLength(2));
+    expect(youtubeRules.every((rule) => rule['outbound'] == smart['route']['final']), isTrue);
+    final selective = configured(RouteMode.selectiveServices, compile(CatalogRoutingMode.selective), true);
+    expect(selective['_meta']['local_dpi']['mode'], 'selective');
+    expect(configured(RouteMode.allExceptRu, smartPolicy, false)['_meta'], isNull);
+    expect(configured(RouteMode.fullTunnel, compile(CatalogRoutingMode.full), true)['_meta'], isNull);
+
+    final identity = await catalogRuntimeIdentity(smartPolicy, localDpiServiceIds: {'youtube'});
+    final replacement = jsonDecode(jsonEncode(payload)) as Map<String, Object?>;
+    replacement['revision'] = 2;
+    final service = (replacement['services'] as List).single as Map;
+    final intent = (service['route_intents'] as List).cast<Map>()
+      .singleWhere((item) => item['mode'] == 'smart_safe');
+    intent.remove('local_dpi_control_host');
+    expect(await catalogRuntimeRevocations(identity, policy.catalog.payloadSha256, await signed(replacement), now), {'youtube'});
+    expect((await signed(replacement)).services.single.localDpiControlHostsByMode.keys.toSet(),
+      {CatalogRoutingMode.selective});
+    final otherService = jsonDecode(jsonEncode(payload)) as Map<String, Object?>;
+    (otherService['services'] as List).single['service_id'] = 'other';
+    (otherService['evidence'] as List).single['service_id'] = 'other';
+    await expectLater(signed(otherService), throwsA(isA<RoutingCatalogFailure>().having(
+      (error) => error.code, 'code', 'catalog_local_dpi_authority')));
+  });
+
   for (final (serviceId, controlFailure, hostPlatform, comssDns) in <(String, String?, HostPlatform, bool)>[
     for (final failure in const <String?>[null, 'core_egress_tls_failed', 'service_unavailable', 'unknown_private_control_code', 'smart_access_signature_invalid', 'control_deadline'])
       ('gemini', failure, HostPlatform.windows, false),
@@ -444,6 +530,7 @@ void main() {
                   'final': 'profile-dns'},
                 'route': {'final': 'proxy'}}};
           case '/api/client/routing-catalog':
+            expect(request.uri.queryParameters['smart_safe_local_dpi'], '1');
             reply = {'schema': 'routing-catalog-response-v1', 'envelope': catalogEnvelope};
           case '/api/client/smart-access/first-provider-qa/claim':
             claimPosts++;
@@ -752,6 +839,10 @@ void main() {
     }
     expect(claimRequest!.containsKey('candidate_ref'), isFalse);
     expect(claimRequest!['core_module_sha256'], coreHash);
+    expect(experience.saved.routingPreferences.localDpiEnabled, isTrue,
+      reason: 'QA must preserve the saved automatic local DPI choice');
+    expect((staged!['_meta'] as Map?)?['local_dpi'], isNull,
+      reason: 'QA compiles its scoped projection with local DPI disabled');
     final providerDns = ((staged!['dns'] as Map)['servers'] as List).cast<Map>()
         .singleWhere((server) => server['tag'] == 'pokrov-smart-access-dns-$leaseId');
     expect(providerDns['domain_resolver'], {'server': comssDns ? 'pokrov-catalog-user-dns-direct' : 'dns-direct', 'strategy': 'ipv4_only'},

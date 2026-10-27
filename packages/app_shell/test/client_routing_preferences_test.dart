@@ -52,6 +52,14 @@ Map _dnsConfig(PokrovRoutingPreferences preferences, HostPlatform platform,
         .configPayload) as Map)['dns'] as Map;
 
 void main() {
+  test('local DPI defaults to auto but preserves a saved opt-out', () {
+    expect(const PokrovRoutingPreferences.defaults().localDpiEnabled, isTrue);
+    expect(PokrovRoutingPreferences.fromJson({}).localDpiEnabled, isTrue);
+    final optedOut = PokrovRoutingPreferences.fromJson({'localDpiEnabled': false});
+    expect(optedOut.localDpiEnabled, isFalse);
+    expect(PokrovRoutingPreferences.fromJson(optedOut.toJson()).localDpiEnabled, isFalse);
+  });
+
   test('Full ignores saved Internet Direct rules and keeps them for Smart Safe', () {
     final preferences = const PokrovRoutingPreferences.defaults().copyWith(
       overrides: [

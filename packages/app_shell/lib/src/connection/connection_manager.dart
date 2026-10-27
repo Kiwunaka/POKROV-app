@@ -674,7 +674,6 @@ class ConnectionManager extends ChangeNotifier {
         : _runtimeSnapshot?.connectionPending == true ? PokrovFirstProviderQaAvailabilityReason.connectionPending
         : _selectedRouteMode == RouteMode.selectedApps || _selectedRouteMode == RouteMode.excludedApps ? PokrovFirstProviderQaAvailabilityReason.appScope
         : preferences.overrides.isNotEmpty || preferences.purposeRoutes.isNotEmpty ? PokrovFirstProviderQaAvailabilityReason.explicitRouting
-        : preferences.localDpiEnabled ? PokrovFirstProviderQaAvailabilityReason.localDpiEnabled
         : _warpRuntimeConsent ? PokrovFirstProviderQaAvailabilityReason.warpEnabled
         : id != null && id == _startedFirstProviderQaAdmissionId ? PokrovFirstProviderQaAvailabilityReason.attemptConsumed
         : id == null ? PokrovFirstProviderQaAvailabilityReason.pendingAbsent
@@ -3459,7 +3458,8 @@ class ConnectionManager extends ChangeNotifier {
       configuredPayload = applyPokrovRoutingPreferences(
         runtimePayload,
         _pendingFirstProviderQaAdmissionId == null ? _clientExperience.routingPreferences
-            : _clientExperience.routingPreferences.copyWith(selectedCatalogServiceIds: {_activeFirstProviderQa!.permit.serviceId}),
+            : _clientExperience.routingPreferences.copyWith(localDpiEnabled: false,
+                selectedCatalogServiceIds: {_activeFirstProviderQa!.permit.serviceId}),
         hostPlatform: _appContext.hostPlatform,
         catalogPolicy: catalogPolicy,
         catalogAccessState: localSmartAccessState,

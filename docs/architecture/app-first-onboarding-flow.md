@@ -80,9 +80,15 @@ and read require this projection; invalid nested policy cannot replace the last
 accepted envelope or advance its revision floors. Network metadata does not
 produce CIDR/ASN routes; Windows identities are not yet matched to installed apps.
 
-Android Selective has a default-off local DPI opt-in. Only an explicit signed
-`local_dpi_control_host` on a Selective VPN intent can authorize it; the control
-host must be an exact nonshared domain of the service. The Android host retains
+Local DPI defaults to Auto only when its saved setting is absent; an explicit
+saved `false` remains off. Smart Safe tries local DPI only for YouTube with an
+explicit signed `smart_safe` VPN intent and exact nonshared control host, then
+falls back to the ordinary VPN in the selected country. Selective limits it to
+selected services with their own signed `selective` VPN intent. Android uses
+ByeDPI and Windows uses Flowseal; Full creates no local DPI executor. Gemini's
+SmartDNS/US relay authority is unchanged. A first-provider QA attempt disables
+local DPI only in its compiled preference copy, preserving the saved choice.
+The Android host retains
 the complete original signed envelope, repeats signature/pin/hash/revision/TTL
 verification in Core, starts one process-restricted ByeDPI SOCKS child, captures each
 fresh Core holder ID, and then runs SOCKS/TLS/HEAD proof before admission. The JNI
@@ -107,7 +113,7 @@ VPN callback before SOCKS connect, matching Core's protected local-DPI transport
 Recapture of the previously unprotected proof by default routes remains a
 hypothesis until the same default-route device fixture passes; this change does
 not alter package/UID policy, catalog authority or admission requirements.
-Production catalog trust and the default-off feature remain unchanged.
+That earlier proof did not change production catalog trust or feature settings.
 
 On a transient transport failure or retryable HTTP outage, only a currently
 verifiable cached envelope can return, with `usingCache=true`. TLS failures,

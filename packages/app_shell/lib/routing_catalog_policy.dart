@@ -55,7 +55,7 @@ class CatalogServicePolicy {
     required this.accessStates, required this.categories, required this.intents,
     required this.domains, required this.android,
     required this.providerCapabilityRefs,
-    required this.localDpiControlHost,
+    required this.localDpiControlHostsByMode,
   });
   final String id;
   final String displayName;
@@ -69,7 +69,7 @@ class CatalogServicePolicy {
   final List<CatalogDomain> domains;
   final List<CatalogAndroidIdentity> android;
   final Set<String> providerCapabilityRefs;
-  final String? localDpiControlHost;
+  final Map<CatalogRoutingMode, String> localDpiControlHostsByMode;
 }
 
 /// Validated consumer projection of the platform-owned routing_catalog.py v1.
@@ -130,7 +130,7 @@ class RoutingCatalogPolicy {
       final external = _choice(value['external_gateway_policy'], const {'forbidden', 'approved'});
       final providers = _ids(value['provider_capability_refs'], 0, 16);
       final intents = <CatalogRoutingMode, CatalogRouteAction>{};
-      String? localDpiControlHost;
+      final localDpiControlHosts = <CatalogRoutingMode, String>{};
       for (final intent in _objects(value['route_intents'], 0, 5)) {
         final mode = _modeNames[intent['mode']];
         final action = _actionNames[intent['action']];
@@ -148,9 +148,10 @@ class RoutingCatalogPolicy {
         }
         final dpiHost = intent['local_dpi_control_host'];
         if (dpiHost != null) {
-          if (mode != CatalogRoutingMode.selective || action != CatalogRouteAction.vpn ||
+          if ((!const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(mode) ||
+              (mode == CatalogRoutingMode.smartSafe && id != 'youtube')) || action != CatalogRouteAction.vpn ||
               (!platforms.contains('android') && !platforms.contains('windows'))) _fail('local_dpi_authority');
-          localDpiControlHost = _domain(dpiHost);
+          localDpiControlHosts[mode] = _domain(dpiHost);
         }
         intents[mode] = action;
       }
@@ -167,8 +168,8 @@ class RoutingCatalogPolicy {
             (name == 'pokrov.space' || name.endsWith('.pokrov.space'))) _fail('gateway_pokrov');
         domains.add(CatalogDomain._(name, suffix, role, shared));
       }
-      if (localDpiControlHost != null && !domains.any((domain) =>
-          domain.name == localDpiControlHost && !domain.suffix && !domain.shared)) {
+      if (localDpiControlHosts.values.any((host) => !domains.any((domain) =>
+          domain.name == host && !domain.suffix && !domain.shared))) {
         _fail('local_dpi_control_scope');
       }
       final android = <CatalogAndroidIdentity>[];
@@ -219,7 +220,7 @@ class RoutingCatalogPolicy {
         accessStates: Set.unmodifiable(access), categories: Set.unmodifiable(categories),
         intents: Map.unmodifiable(intents), domains: List.unmodifiable(domains),
         android: List.unmodifiable(android),
-        localDpiControlHost: localDpiControlHost,
+        localDpiControlHostsByMode: Map.unmodifiable(localDpiControlHosts),
       ));
     }
     if (evidenceOwners.values.any((id) => !serviceIds.contains(id))) _fail('unknown_evidence_service');
@@ -379,10 +380,11 @@ CatalogDomainPolicy compileCatalogDomainPolicy({
   return CatalogDomainPolicy._(
     catalog: catalog,
     localDpiControlHosts: Map.unmodifiable({
-      if (mode == CatalogRoutingMode.selective && const {'android', 'windows'}.contains(platform) && vpnAvailable)
+      if (const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(mode) &&
+          const {'android', 'windows'}.contains(platform) && vpnAvailable)
         for (final service in policy.services)
-          if (selected.contains(service.id) && service.localDpiControlHost != null)
-            service.id: service.localDpiControlHost!,
+          if (selected.contains(service.id) && service.localDpiControlHostsByMode[mode] != null)
+            service.id: service.localDpiControlHostsByMode[mode]!,
     }),
     audience: catalog.payload['audience']! as String,
     revision: catalog.revision, securityRevision: catalog.securityRevision,
@@ -488,9 +490,11 @@ Future<Set<String>> catalogRuntimeRevocations(CatalogRuntimeIdentity previous,
       for (final domain in service.domains) {
         if (!domain.shared) {
           allowed.add(await _runtimeRuleDigest(service.id, domain, action));
-          if (mode == CatalogRoutingMode.selective && const {'android', 'windows'}.contains(previous.platform) &&
-              action == CatalogRouteAction.vpn && service.localDpiControlHost != null) {
-            allowed.add(await _runtimeRuleDigest(service.id, domain, action, service.localDpiControlHost));
+          final dpiHost = service.localDpiControlHostsByMode[mode];
+          if (const {CatalogRoutingMode.selective, CatalogRoutingMode.smartSafe}.contains(mode) &&
+              const {'android', 'windows'}.contains(previous.platform) &&
+              action == CatalogRouteAction.vpn && dpiHost != null) {
+            allowed.add(await _runtimeRuleDigest(service.id, domain, action, dpiHost));
           }
         }
       }

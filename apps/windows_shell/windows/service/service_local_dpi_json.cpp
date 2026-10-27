@@ -447,7 +447,13 @@ bool StripWindowsLocalDpiMetadata(const std::string& original,
   if (!has_meta) { *runtime_copy = original; return true; }
   const auto meta = Object(profile.Get(), L"_meta");
   const auto dpi = meta ? Object(meta.Get(), L"local_dpi") : ComPtr<IJsonObject>{};
-  if (dpi) *requested = String(dpi.Get(), L"platform") == "windows" && String(dpi.Get(), L"mode") == "selective";
+  if (dpi) {
+    const auto mode = String(dpi.Get(), L"mode");
+    // This dispatches proof preparation; Core verifies the signed service scope
+    // and the protected VPN fallback before returning any admission holders.
+    *requested = String(dpi.Get(), L"platform") == "windows" &&
+        (mode == "selective" || mode == "smart_safe");
+  }
   if (telegram_requested) {
     const auto telegram = meta ? Object(meta.Get(), L"telegram_ws") : ComPtr<IJsonObject>{};
     if (telegram) *telegram_requested = String(telegram.Get(), L"platform") == "windows" &&
