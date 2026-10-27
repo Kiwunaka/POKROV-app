@@ -1272,13 +1272,15 @@ bool FlutterWindow::OnCreate() {
           const auto owner = pending_connect_;
           owner->cancel_requested = true;
           if (!runtime_tasks_ || !runtime_tasks_->Submit(Command::kCancelConnectAndConfirm, "", owner,
-              [this, owner, respond, id = *request_id](auto snapshot) {
+              [this, owner, respond, id = *request_id, intent = expected_profile_digest_](auto snapshot) {
                 if (!snapshot.command_accepted) {
                   respond(false);
                   return;
                 }
                 if (snapshot.connect_stopped && pending_connect_ == owner) {
-                  pokrov::service::ClearStoppedProfileIntent(snapshot, expected_profile_digest_);
+                  if (expected_profile_digest_ == intent) {
+                    pokrov::service::ClearStoppedProfileIntent(snapshot, expected_profile_digest_);
+                  }
                   stopped_connect_request_id_ = id;
                   pending_connect_.reset();
                   pending_connect_request_id_.clear();

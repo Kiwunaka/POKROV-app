@@ -157,9 +157,15 @@ int main() {
   using namespace pokrov::service;
   wchar_t temporary[MAX_PATH]{}, root_path[MAX_PATH]{};
   if (!::GetTempPathW(MAX_PATH, temporary) ||
-      !::GetTempFileNameW(temporary, L"pkc", 0, root_path)) return 1;
+      !::GetTempFileNameW(temporary, L"pkc", 0, root_path)) {
+    std::cerr << "temporary test path failed: " << ::GetLastError() << '\n';
+    return 1;
+  }
   ::DeleteFileW(root_path);
-  if (!::CreateDirectoryW(root_path, nullptr)) return 1;
+  if (!::CreateDirectoryW(root_path, nullptr)) {
+    std::cerr << "temporary test directory failed: " << ::GetLastError() << '\n';
+    return 1;
+  }
   const std::wstring root(root_path);
   const auto pipe = std::wstring(kTestPipePrefix) + L"Cancellation." + std::to_wstring(::GetCurrentProcessId());
   const HANDLE stop = ::CreateEventW(nullptr, TRUE, FALSE, nullptr);
@@ -179,7 +185,31 @@ int main() {
       Expect(!IsZeroIdentifier(first.token) && !IsZeroIdentifier(control.token), "IPC hello failed");
       const std::string profile = "0\n{\"inbounds\":[{\"type\":\"tun\"}]}";
       Expect(Has(control.Call(Command::kInitialize), Status::kOk), "IPC initialize failed");
+      ServiceCallControl stopped_owner;
+      stopped_owner.completed = true;
+      const auto clean_stop = InvokeServiceForTest(
+          pipe, Command::kCancelConnectAndConfirm, "", &stopped_owner);
+      auto expected = ProfileDigest(profile);
+      Expect(clean_stop.command_accepted && clean_stop.connect_stopped &&
+                 clean_stop.trusted && clean_stop.compatible &&
+                 ClearStoppedProfileIntent(clean_stop, expected) && expected.empty(),
+             "settled bound Stop did not use clean native Status to clear profile intent");
+      ServiceCallControl other_owner;
+      other_owner.completed = true;
+      other_owner.bound_cancellation_target = EncodeCancellationTarget({first.token, NewId()});
+      const auto unsettled = InvokeServiceForTest(
+          pipe, Command::kCancelConnectAndConfirm, "", &other_owner);
+      Expect(unsettled.command_accepted && !unsettled.connect_stopped &&
+                 unsettled.phase == "artifact_missing",
+             "unsettled bound Stop obtained a runtime Status");
       Expect(Has(control.Call(Command::kStageProfile, profile), Status::kOk), "IPC stage failed");
+      const auto staged_stop = InvokeServiceForTest(
+          pipe, Command::kCancelConnectAndConfirm, "", &stopped_owner);
+      expected = std::string(64, 'a');
+      Expect(staged_stop.connect_stopped && staged_stop.phase == "config_staged" &&
+                 !ClearStoppedProfileIntent(staged_stop, expected) &&
+                 BindSnapshotToProfileIntent(staged_stop, expected).failure == "profile_identity_mismatch",
+             "settled Stop cleared intent or suppressed a staged profile mismatch");
       const auto connect = first.Request(Command::kConnect, ProfileDigest(profile));
       Expect(first.Send(connect), "first connect was not sent");
       probe_state->WaitFor(1);

@@ -1082,26 +1082,41 @@ bool CancelInstalledServiceConnect(ServiceCallControl* control) {
   return accepted;  // cancellation admission, not completed TUN restoration
 }
 
+static ServiceRuntimeSnapshot ConfirmStoppedConnect(ServiceCallControl* control,
+                                                    const wchar_t* pipe_name,
+                                                    bool verify_server) {
+  ServiceRuntimeSnapshot receipt;
+  control->cancel_requested = true;
+  // The runner queues this after the original invocation on the same worker.
+  if (!control->completed.load()) return receipt;
+  std::string target;
+  {
+    std::lock_guard<std::mutex> guard(control->cancellation_lock);
+    target = control->bound_cancellation_target;
+  }
+  if (target.empty()) {
+    receipt.command_accepted = true;
+    receipt.connect_stopped = true;  // no request could have been written
+  } else {
+    // The cancelled start's control must not interrupt its own cleanup IPC.
+    receipt = InvokeService(Command::kCancelConnectAndConfirm, target, nullptr,
+                            pipe_name, verify_server);
+  }
+  if (!receipt.command_accepted || !receipt.connect_stopped) return receipt;
+
+  // Settlement is a receipt, not runtime state. Preserve it if Status cannot
+  // be trusted, so a failed observation cannot undo confirmed cleanup.
+  auto status = InvokeService(Command::kStatus, "", nullptr, pipe_name, verify_server);
+  if (!status.command_accepted || !status.trusted || !status.compatible) return receipt;
+  status.connect_stopped = true;
+  return status;
+}
+
 ServiceRuntimeSnapshot InvokeInstalledService(Command command,
                                               const std::string& body,
                                               ServiceCallControl* control) {
   if (command == Command::kCancelConnectAndConfirm && body.empty() && control != nullptr) {
-    ServiceRuntimeSnapshot result;
-    control->cancel_requested = true;
-    // The runner queues this after the original invocation on the same worker.
-    if (!control->completed.load()) return result;
-    std::string target;
-    {
-      std::lock_guard<std::mutex> guard(control->cancellation_lock);
-      target = control->bound_cancellation_target;
-    }
-    if (target.empty()) {
-      result.command_accepted = true;
-      result.connect_stopped = true;  // no request could have been written
-      return result;
-    }
-    // The cancelled start's control must not interrupt its own cleanup IPC.
-    return InvokeService(command, target, nullptr, kProductionPipeName, true);
+    return ConfirmStoppedConnect(control, kProductionPipeName, true);
   }
   if (command == Command::kCancel && body.empty() && control != nullptr) {
     ServiceRuntimeSnapshot result;
@@ -1130,6 +1145,9 @@ ServiceRuntimeSnapshot InvokeServiceForTest(const std::wstring& pipe_name,
                                             Command command, const std::string& body,
                                             ServiceCallControl* control) {
   if (pipe_name.rfind(kTestPipePrefix, 0) != 0) return {};
+  if (command == Command::kCancelConnectAndConfirm && body.empty() && control != nullptr) {
+    return ConfirmStoppedConnect(control, pipe_name.c_str(), false);
+  }
   return InvokeService(command, body, control, pipe_name.c_str(), false);
 }
 #endif

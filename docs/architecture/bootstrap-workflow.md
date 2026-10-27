@@ -25,6 +25,10 @@ Ordinary snapshot binding, Start/Apply, active, staged and retained profile chec
 remain strict. A focused native regression reproduced and fixed this source defect;
 its connection to the observed 4205 Stop/CONN-005 UI error is probable, not proven
 without that attempt's failure kind. No new packaged-client acceptance is implied.
+After a bound cancellation settles, the runner now checks a separate trusted
+service Status before clearing that owner's unchanged intent; the settlement
+receipt itself is not runtime state. A staged profile still keeps the strict
+identity check. This does not establish the cause of the observed 4228 mismatch.
 
 The ordinary Diagnostics screen shows the current run's last access request:
 not observed, started without an observed completion, or finished. Failures show
