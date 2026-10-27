@@ -131,9 +131,15 @@ failures remain blocking. Ordinary RU domain/IP rules come from the managed
 profile and are retained independently. Fetching metadata alone does not mutate
 a native host, send app inventory or grant a provider lease.
 
+Full Tunnel keeps saved Internet Direct overrides and the RU Direct purpose
+inactive, including when the optional catalog is unavailable. A selected DNS
+resolver uses the VPN in Full even if Direct DNS was saved. These preferences
+are retained for other modes; explicit LAN access and tunnel bootstrap remain.
+
 A signed neutral catalog with empty sources, evidence and services adds no
-service exceptions. Full and Smart Safe retain their ordinary VPN default and
-the separate managed RU rules; it does not verify RU apps or grant Smart Access.
+service exceptions. Full and Smart Safe retain their ordinary VPN default;
+Smart Safe also retains the managed RU rules. The catalog does not verify RU
+apps or grant Smart Access.
 Selective rejects empty selections and previously selected services absent from
 the current catalog. Signature, audience, expiry and revision-floor checks still
 apply to the neutral catalog.

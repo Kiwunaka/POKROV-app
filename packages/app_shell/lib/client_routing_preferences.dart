@@ -429,6 +429,7 @@ PokrovRouteDecision explainPokrovRouteDecision({
       );
     }
     for (final rule in preferences.overrides) {
+      if (fallbackMode == RouteMode.fullTunnel && rule.action == PokrovRouteAction.direct) continue;
       if (_routeOverrideMatches(rule, normalized.$1, normalized.$2)) {
         return PokrovRouteDecision(
           action: rule.action,
@@ -441,6 +442,7 @@ PokrovRouteDecision explainPokrovRouteDecision({
     }
     if (normalized.$2 == PokrovRouteMatchType.domain) {
       for (final purpose in preferences.purposeRoutes) {
+        if (fallbackMode == RouteMode.fullTunnel && purpose == PokrovPurposeRoute.ruDirect) continue;
         if (_purposeDomains[purpose]!.any(
           (suffix) => _domainMatches(normalized.$1, suffix),
         )) {
@@ -569,6 +571,7 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     {'ip_is_private': true, 'action': 'reject'},
   ]);
   for (final override in preferences.overrides) {
+    if (payload.routeMode == RouteMode.fullTunnel && override.action == PokrovRouteAction.direct) continue;
     final target =
         override.action == PokrovRouteAction.direct ? directTag : proxyTag;
     final rule = <String, dynamic>{'outbound': target};
@@ -582,7 +585,8 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
     _appendUniqueRule(injected, rule);
   }
   for (final purpose in PokrovPurposeRoute.values) {
-    if (!preferences.purposeRoutes.contains(purpose)) {
+    if (!preferences.purposeRoutes.contains(purpose) ||
+        (payload.routeMode == RouteMode.fullTunnel && purpose == PokrovPurposeRoute.ruDirect)) {
       continue;
     }
     _appendUniqueRule(injected, <String, dynamic>{
@@ -626,21 +630,21 @@ ManagedProfilePayload applyPokrovRoutingPreferences(
 
   final dnsAddress = preferences.effectiveDnsAddress;
   if (dnsAddress != null) {
+    final directDns = payload.routeMode != RouteMode.fullTunnel &&
+        preferences.dnsTransport == PokrovDnsTransport.direct;
     final dns = _routingMap(config['dns']);
     final servers = _routingListOfMaps(dns['servers'])
       ..removeWhere(
           (server) => _routingText(server['tag']) == 'pokrov-user-dns');
     final bootstrap = InternetAddress.tryParse(Uri.parse(dnsAddress).host) == null
         ? _dnsBootstrapResolverTag(servers,
-            protectedDetour: preferences.dnsTransport == PokrovDnsTransport.vpn ? proxyTag : null)
+            protectedDetour: directDns ? null : proxyTag)
         : null;
     servers.insert(0, <String, dynamic>{
       'tag': 'pokrov-user-dns',
       'address': dnsAddress,
       if (bootstrap != null) 'address_resolver': bootstrap,
-      'detour': preferences.dnsTransport == PokrovDnsTransport.direct
-          ? directTag
-          : proxyTag,
+      'detour': directDns ? directTag : proxyTag,
     });
     dns['servers'] = servers;
     dns['final'] = 'pokrov-user-dns';
@@ -996,6 +1000,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   final manualDns = <Map<String, dynamic>>[];
   for (final override in preferences.overrides) {
     final isDirect = override.action == PokrovRouteAction.direct;
+    if (expectedMode == CatalogRoutingMode.full && isDirect) continue;
     final match = override.matchType == PokrovRouteMatchType.domain ? 'domain_suffix' : 'ip_cidr';
     manual.add({match: [override.value],
       if (isDirect || policy.vpnAvailable) 'outbound': isDirect ? direct : vpn else 'action': 'reject'});
@@ -1007,6 +1012,7 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
   for (final purpose in PokrovPurposeRoute.values) {
     if (!preferences.purposeRoutes.contains(purpose)) continue;
     final isDirect = purpose == PokrovPurposeRoute.ruDirect;
+    if (expectedMode == CatalogRoutingMode.full && isDirect) continue;
     manual.add({'domain_suffix': _purposeDomains[purpose],
       if (isDirect || policy.vpnAvailable) 'outbound': isDirect ? direct : vpn else 'action': 'reject'});
     manualDns.add({'domain_suffix': _purposeDomains[purpose],
@@ -1075,7 +1081,8 @@ ManagedProfilePayload _applyCatalogRoutingPreferences(
       {'query_type': ['AAAA'], 'action': 'route', 'server': directDns,
         'strategy': 'ipv4_only'},
   ];
-  dns['final'] = selective || (dnsAddress != null && preferences.dnsTransport == PokrovDnsTransport.direct)
+  dns['final'] = selective || (expectedMode != CatalogRoutingMode.full &&
+      dnsAddress != null && preferences.dnsTransport == PokrovDnsTransport.direct)
       ? directDns : vpnDns;
   dns['independent_cache'] = true;
   dns['disable_expire'] = false;

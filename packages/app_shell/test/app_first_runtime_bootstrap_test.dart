@@ -278,6 +278,39 @@ void main() {
       expect(compiled.defaultAction, CatalogRouteAction.vpn);
       expect(compiled.rules, isEmpty);
       expect(compiled.localDpiControlHosts, isEmpty);
+      final full = mode == CatalogRoutingMode.full;
+      final preferences = const PokrovRoutingPreferences.defaults().copyWith(
+        overrides: [PokrovRouteOverride.tryCreate(
+          value: 'youtube.com', action: PokrovRouteAction.direct)!],
+        purposeRoutes: {PokrovPurposeRoute.ruDirect},
+        allowLan: true, lanSubnets: ['10.20.0.0/16'],
+        dnsPreset: PokrovDnsPreset.cloudflare, dnsTransport: PokrovDnsTransport.direct,
+      );
+      final profile = ManagedProfilePayload(profileName: 'routing-fixture',
+        routeMode: full ? RouteMode.fullTunnel : RouteMode.allExceptRu,
+        materializedForRuntime: true, configPayload: jsonEncode({
+          'inbounds': [{'type': 'tun'}],
+          'outbounds': [{'type': 'direct', 'tag': 'direct'}, {'type': 'vless', 'tag': 'proxy'}],
+          'route': {'final': 'proxy', 'rules': []},
+          'dns': {'servers': [
+            {'tag': 'dns-remote', 'address': 'https://1.1.1.1/dns-query', 'detour': 'proxy'},
+            {'tag': 'dns-direct', 'address': 'local', 'detour': 'direct'},
+          ], 'final': 'dns-remote'},
+        }));
+      final configured = jsonDecode(applyPokrovRoutingPreferences(profile, preferences,
+        hostPlatform: HostPlatform.windows, catalogPolicy: compiled,
+        catalogAccessState: 'paid_unlimited', nativeCatalogWindowVersion: 1).configPayload) as Map;
+      final rules = (configured['route']['rules'] as List).cast<Map>();
+      expect(rules.any((rule) => rule['domain_suffix']?.contains('youtube.com') == true &&
+        rule['outbound'] == 'direct'), !full);
+      expect(rules.any((rule) => rule['domain_suffix']?.contains('ru') == true &&
+        rule['outbound'] == 'direct'), !full);
+      expect(rules.any((rule) => rule['ip_cidr']?.contains('10.20.0.0/16') == true &&
+        rule['outbound'] == 'direct'), isTrue);
+      final dns = configured['dns'] as Map;
+      final resolver = (dns['servers'] as List).cast<Map>()
+        .singleWhere((server) => server['tag'] == dns['final']);
+      expect(resolver['detour'], full ? 'proxy' : isNull);
     }
     expect(() => compileCatalogDomainPolicy(policy: policy, mode: CatalogRoutingMode.selective,
       platform: 'windows', accessState: 'paid_unlimited', vpnAvailable: true, now: now),

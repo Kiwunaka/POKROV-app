@@ -52,6 +52,47 @@ Map _dnsConfig(PokrovRoutingPreferences preferences, HostPlatform platform,
         .configPayload) as Map)['dns'] as Map;
 
 void main() {
+  test('Full ignores saved Internet Direct rules and keeps them for Smart Safe', () {
+    final preferences = const PokrovRoutingPreferences.defaults().copyWith(
+      overrides: [
+        PokrovRouteOverride.tryCreate(value: 'youtube.com', action: PokrovRouteAction.direct)!,
+        PokrovRouteOverride.tryCreate(value: 'example.org', action: PokrovRouteAction.vpn)!,
+      ],
+      purposeRoutes: {PokrovPurposeRoute.ruDirect},
+      allowLan: true, lanSubnets: ['10.20.0.0/16'],
+      dnsPreset: PokrovDnsPreset.cloudflare, dnsTransport: PokrovDnsTransport.direct,
+    );
+    Map config(RouteMode mode) => jsonDecode(applyPokrovRoutingPreferences(
+      _profile(mode: mode), preferences, hostPlatform: HostPlatform.android).configPayload) as Map;
+    List<Map> rules(Map value) => (value['route']['rules'] as List).cast<Map>();
+    final full = config(RouteMode.fullTunnel);
+    final smart = config(RouteMode.allExceptRu);
+    expect(rules(full).any((rule) => rule['domain_suffix']?.contains('youtube.com') == true), isFalse);
+    expect(rules(full).any((rule) => rule['domain_suffix']?.contains('ru') == true), isFalse);
+    expect(rules(full).any((rule) => rule['domain_suffix']?.contains('example.org') == true &&
+        rule['outbound'] == 'proxy'), isTrue);
+    expect(rules(full).any((rule) => rule['ip_cidr']?.contains('10.20.0.0/16') == true &&
+        rule['outbound'] == 'direct'), isTrue);
+    expect(rules(smart).any((rule) => rule['domain_suffix']?.contains('youtube.com') == true &&
+        rule['outbound'] == 'direct'), isTrue);
+    expect(rules(smart).any((rule) => rule['domain_suffix']?.contains('ru') == true &&
+        rule['outbound'] == 'direct'), isTrue);
+    final fullDns = full['dns'] as Map;
+    final fullResolver = (fullDns['servers'] as List).cast<Map>()
+        .singleWhere((server) => server['tag'] == fullDns['final']);
+    expect(fullResolver['detour'], 'proxy');
+    final smartDns = smart['dns'] as Map;
+    final smartResolver = (smartDns['servers'] as List).cast<Map>()
+        .singleWhere((server) => server['tag'] == smartDns['final']);
+    expect(smartResolver['detour'], isNull);
+    expect(explainPokrovRouteDecision(destination: 'youtube.com', preferences: preferences,
+        fallbackMode: RouteMode.fullTunnel).action, PokrovRouteAction.vpn);
+    expect(explainPokrovRouteDecision(destination: 'youtube.com', preferences: preferences,
+        fallbackMode: RouteMode.allExceptRu).action, PokrovRouteAction.direct);
+    expect(preferences.dnsTransport, PokrovDnsTransport.direct);
+    expect(preferences.overrides.first.action, PokrovRouteAction.direct);
+  });
+
   test('saved custom DoH query and fragment remain editable but are not used',
       () {
     for (final url in _unsupportedUrls) {
