@@ -4403,6 +4403,15 @@ void main() {
         experienceStore: recoveryExperience,
         authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
     addTearDown(manager.dispose);
+    Future<void> waitForDesktopPoll() async {
+      final reads = runtime.calls.where((call) => call == 'snapshot').length;
+      final deadline = DateTime.now().add(const Duration(seconds: 3));
+      while (runtime.calls.where((call) => call == 'snapshot').length == reads &&
+          DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(runtime.calls.where((call) => call == 'snapshot').length, greaterThan(reads));
+    }
     await manager.connect();
     expect(manager.status.phase, ConnectionPhase.connected);
     runtime.failedProbeProfiles.addAll(_candidates.map((candidate) => candidate.candidateRef));
@@ -4440,7 +4449,12 @@ void main() {
 
     bootstrapper.gate = null;
     bootstrapper.failure = null;
-    await manager.refresh();
+    expect(manager.snapshot!.hasSameStateAs(runtime.value(runtime.phase)), isTrue,
+        reason: 'the next desktop poll observes the same healthy state');
+    final pollDeadline = DateTime.now().add(const Duration(seconds: 3));
+    while (manager.retainsProtection && DateTime.now().isBefore(pollDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
     expect(manager.snapshot?.isCleanlyHealthy, isTrue);
     expect(manager.snapshot?.lastFailureKind, isNull);
     expect(manager.snapshot?.proofObservedAt, runtime.proofObservedAt);
@@ -4500,11 +4514,17 @@ void main() {
     runtime.warpEgressFailure = false;
     await manager.refresh();
     expect(manager.retainsProtection, isTrue, reason: 'the old proof cannot acknowledge the new handoff');
+    runtime.proofObservedAt = null;
+    await manager.readSnapshot();
+    await waitForDesktopPoll();
+    expect(manager.retainsProtection, isTrue, reason: 'an unchanged observation without proof cannot release protection');
     runtime.profileDigest = 'c' * 64;
     runtime.proofObservedAt = DateTime.now().toUtc();
     await manager.refresh();
     expect(manager.retainsProtection, isTrue, reason: 'a different native owner cannot release retained protection');
     await manager.readSnapshot();
+    await waitForDesktopPoll();
+    expect(manager.retainsProtection, isTrue, reason: 'an unchanged foreign owner cannot release protection');
     await Future<void>.delayed(Duration.zero);
     final decisions = recoveryExperience.saved.protectionEvents.where((event) => event.kind == 'native_recovery_blocked');
     final mismatch = decisions.where((event) => event.detail == 'Причина: digestMismatch.');

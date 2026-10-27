@@ -2104,6 +2104,16 @@ class ConnectionManager extends ChangeNotifier {
           _runtimeHeadline = null;
         }
       });
+    } else if (refreshed != null && _activePhase == ConnectionPhase.actionRequired &&
+        _reconcileHealthyNativeRecovery(refreshed)) {
+      // A healthy observation can arrive while recovery is still in flight.
+      // Recheck the unchanged state once the action is finished, using the
+      // same owner and fresh-proof requirements as any changed observation.
+      final recovered = refreshed;
+      _update(() {
+        _runtimeSnapshot = recovered;
+        _finalizeProvenConnection(recovered);
+      });
     }
     if (refreshed != null && await _observeAndroidNetwork(refreshed)) return;
     // A UI/resume read may already have adopted this failure. Recovery belongs

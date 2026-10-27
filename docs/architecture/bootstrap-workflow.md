@@ -575,6 +575,8 @@ running owner can later pass its own periodic verifier. Fresh healthy proof with
 the same profile digest and source retires only the App recovery presentation
 guard; pending settings, authorization denial, native retention and bound leases
 still block that reconciliation. It does not retry or stage a profile.
+Windows also rechecks an unchanged healthy observation after recovery finishes;
+the same owner and fresh-proof checks still decide whether to clear the guard.
 Ordinary catalog location changes use the location catalog's policy metadata,
 so the previous AWG candidate cannot impose
 a legacy laboratory node allowlist. A completed explicit Android Disconnect
