@@ -142,6 +142,11 @@ inactive, including when the optional catalog is unavailable. A selected DNS
 resolver uses the VPN in Full even if Direct DNS was saved. These preferences
 are retained for other modes; explicit LAN access and tunnel bootstrap remain.
 
+Android profiles with supplied DNS retain their original resolver names and
+references. Materialization also supplies missing `dns-remote`/`dns-direct`
+aliases from its selected protected resolver and Direct bootstrap so Automatic
+DNS can enter catalog compilation; the VPN/Direct detour checks remain enforced.
+
 A signed neutral catalog with empty sources, evidence and services adds no
 service exceptions. Full and Smart Safe retain their ordinary VPN default;
 Smart Safe also retains the managed RU rules. The catalog does not verify RU
