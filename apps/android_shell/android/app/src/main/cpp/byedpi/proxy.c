@@ -1030,7 +1030,7 @@ int on_connect(struct poolhd *pool, struct eval *val, int et)
         val->cb = &on_tunnel;
         val->pair->cb = &on_tunnel;
 #ifdef POKROV_EMBEDDED
-        pokrov_byedpi_proof_ready(val->pokrov_proof_token);
+        pokrov_byedpi_proof_ready(val->pokrov_proof_token, val->fd);
 #endif
     }
     if (!error && val->pair->buff) {

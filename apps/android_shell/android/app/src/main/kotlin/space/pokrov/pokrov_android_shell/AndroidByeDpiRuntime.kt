@@ -95,10 +95,11 @@ internal class AndroidByeDpiRuntime private constructor(
         return try { attempt.run(rawPort(), SNIHostName(host).asciiName, address) }
         finally {
             attempt.close()
-            if (trace && isCurrent()) runCatching {
+            if (trace) runCatching {
                 val stats = nativeProofFinish(nativeHandle, token.get())
                 val seen = stats?.getOrNull(0) == 1L
                 fun count(index: Int) = if (seen) stats!![index].toString() else "unknown"
+                fun tcp(index: Int) = stats?.getOrNull(index)?.takeIf { it >= 0 }?.toString() ?: "unknown"
                 fun flag(index: Int) = when (stats?.getOrNull(index)) {
                     0L -> "false"
                     1L -> "true"
@@ -107,7 +108,9 @@ internal class AndroidByeDpiRuntime private constructor(
                 if (isCurrent()) Log.d("POKROV-DPIProof",
                     "target_ipv4=${publicProofIpv4(address) ?: "unknown"} client_rx=${count(1)} " +
                     "upstream_tx=${count(2)} remote_rx=${count(3)} " +
-                    "hello_sni_first_chunk=${flag(4)} tlsrec_applied=${flag(5)}")
+                    "hello_sni_first_chunk=${flag(4)} tlsrec_applied=${flag(5)} " +
+                    "tcp_state=${tcp(6)} tcp_unacked=${tcp(7)} tcp_total_retrans=${tcp(8)} " +
+                    "tcp_bytes_acked=${tcp(9)} tcp_bytes_received=${tcp(10)}")
             }
         }
     }

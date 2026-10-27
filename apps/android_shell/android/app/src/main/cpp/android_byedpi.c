@@ -13,6 +13,7 @@
 #include "proxy.h"
 #include "android_socket_owner.h"
 #include "android_proof_stats.h"
+#include "android_proof_tcp.h"
 
 int parse_args(int argc, char **argv);
 int init(void);
@@ -34,6 +35,7 @@ struct runtime {
     JNIEnv *thread_env;
     uint64_t proof_sequence;
     struct pokrov_proof_stats proof_stats;
+    int proof_fd;
 };
 
 static JavaVM *vm;
@@ -52,11 +54,12 @@ uint64_t pokrov_byedpi_proof_claim(uint16_t port)
     return token;
 }
 
-void pokrov_byedpi_proof_ready(uint64_t token)
+void pokrov_byedpi_proof_ready(uint64_t token, int fd)
 {
     if (!token) return;
     pthread_mutex_lock(&lock);
-    if (current) pokrov_proof_ready(&current->proof_stats, token);
+    if (current && pokrov_proof_ready(&current->proof_stats, token))
+        pokrov_proof_tcp_hold(&current->proof_fd, fd);
     pthread_mutex_unlock(&lock);
 }
 
@@ -137,6 +140,7 @@ static void *run_proxy(void *value)
 
 static void release(JNIEnv *env, struct runtime *runtime)
 {
+    pokrov_proof_tcp_close(&runtime->proof_fd);
     if (runtime->stop >= 0) close(runtime->stop);
     if (runtime->owner) (*env)->DeleteGlobalRef(env, runtime->owner);
     clear_params(NULL, NULL);
@@ -178,7 +182,7 @@ Java_space_pokrov_pokrov_1android_1shell_AndroidByeDpiRuntime_nativeStart(
         fail(env, "byedpi: native allocation failed");
         return 0;
     }
-    runtime->stop = runtime->stop_read = runtime->listener = -1;
+    runtime->stop = runtime->stop_read = runtime->listener = runtime->proof_fd = -1;
     const char *utf_path = (*env)->GetStringUTFChars(env, path, NULL);
     if (utf_path) {
         runtime->protect_path = strdup(utf_path);
@@ -268,15 +272,18 @@ Java_space_pokrov_pokrov_1android_1shell_AndroidByeDpiRuntime_nativeProofFinish(
 {
     (void)owner;
     struct pokrov_proof_stats stats;
+    struct pokrov_proof_tcp_info tcp;
     pthread_mutex_lock(&lock);
     int found = current && current->id == id &&
         pokrov_proof_finish(&current->proof_stats, (uint64_t)token, &stats);
+    if (found) tcp = pokrov_proof_tcp_finish(&current->proof_fd);
     pthread_mutex_unlock(&lock);
     if (!found) return NULL;
     jlong values[] = {stats.tunnel, (jlong)stats.client_rx, (jlong)stats.upstream_tx,
-        (jlong)stats.remote_rx, stats.hello, stats.tlsrec};
-    jlongArray result = (*env)->NewLongArray(env, 6);
-    if (result) (*env)->SetLongArrayRegion(env, result, 0, 6, values);
+        (jlong)stats.remote_rx, stats.hello, stats.tlsrec, tcp.state, tcp.unacked,
+        tcp.total_retrans, tcp.bytes_acked, tcp.bytes_received};
+    jlongArray result = (*env)->NewLongArray(env, 11);
+    if (result) (*env)->SetLongArrayRegion(env, result, 0, 11, values);
     return result;
 }
 

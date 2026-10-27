@@ -31,9 +31,11 @@ static inline uint64_t pokrov_proof_claim(struct pokrov_proof_stats *stats, uint
     return stats->token;
 }
 
-static inline void pokrov_proof_ready(struct pokrov_proof_stats *stats, uint64_t token)
+static inline int pokrov_proof_ready(struct pokrov_proof_stats *stats, uint64_t token)
 {
-    if (token && stats->token == token && stats->claimed) stats->tunnel = 1;
+    if (!token || stats->token != token || !stats->claimed || stats->tunnel) return 0;
+    stats->tunnel = 1;
+    return 1;
 }
 
 static inline void pokrov_proof_recv(struct pokrov_proof_stats *stats, uint64_t token,
@@ -71,7 +73,7 @@ static inline int pokrov_proof_finish(struct pokrov_proof_stats *stats,
 }
 
 uint64_t pokrov_byedpi_proof_claim(uint16_t port);
-void pokrov_byedpi_proof_ready(uint64_t token);
+void pokrov_byedpi_proof_ready(uint64_t token, int fd);
 void pokrov_byedpi_proof_recv(uint64_t token, int remote, int64_t bytes, int hello);
 void pokrov_byedpi_proof_sent(uint64_t token, int64_t bytes);
 void pokrov_byedpi_proof_tlsrec(uint64_t token, int applied);
