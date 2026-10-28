@@ -677,6 +677,7 @@ abstract final class PokrovDiagnosticsPresenter {
       buildNumber: buildNumber,
       generatedAt: now,
     );
+    final localDpiMode = const {RouteMode.allExceptRu, RouteMode.selectiveServices}.contains(routeMode);
     return PokrovDiagnosticsReport(
       statusLabel: statusLabel,
       summaryKey: summaryKey,
@@ -691,10 +692,9 @@ abstract final class PokrovDiagnosticsPresenter {
       currentAppCrash: currentAppCrash,
       authRequest: authRequest,
       connectionFailure: connectionFailure,
-      showWindowsLocalDpiRuntime: hostPlatform == HostPlatform.windows &&
-          routeMode == RouteMode.selectiveServices,
+      showWindowsLocalDpiRuntime: hostPlatform == HostPlatform.windows && localDpiMode,
       windowsLocalDpiRuntime: snapshot?.windowsLocalDpiRuntime,
-      androidLocalDpiSummary: hostPlatform == HostPlatform.android && routeMode == RouteMode.selectiveServices
+      androidLocalDpiSummary: hostPlatform == HostPlatform.android && localDpiMode
           ? snapshot?.hostDiagnosticsSummary?.split(' | ')
                   .where((part) => part.startsWith('Локальный DPI:')).singleOrNull ??
               'Локальный DPI: текущие данные не получены.'
@@ -1624,7 +1624,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
             ),
             if (_report.showWindowsLocalDpiRuntime) ...[
               const SizedBox(height: 12),
-              Text('Пути выбранных сервисов', style: theme.textTheme.titleSmall),
+              Text('Пути сервисов', style: theme.textTheme.titleSmall),
               const SizedBox(height: 8),
               _DiagnosticsCard(
                 child: Text(
@@ -1636,7 +1636,7 @@ class _PokrovDiagnosticsScreenState extends State<PokrovDiagnosticsScreen> {
             ],
             if (_report.androidLocalDpiSummary != null) ...[
               const SizedBox(height: 12),
-              Text('Пути выбранных сервисов', style: theme.textTheme.titleSmall),
+              Text('Пути сервисов', style: theme.textTheme.titleSmall),
               const SizedBox(height: 8),
               _DiagnosticsCard(
                 child: Text(

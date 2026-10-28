@@ -27,6 +27,12 @@ and the unused TCP-only helper temporary folder were removed; final release
 folders and selected Core libraries were retained, older helpers/wrappers unchanged.
 Android remains 4229 with the owner; mobile checks/cleanup await its return.
 
+The existing technical diagnostics card now shows LocalDPI runtime observations in
+both Russia Direct and Selective on Android and Windows. Previously Russia Direct
+could use LocalDPI but hid its counters. The focused regression covers both
+supported route modes; this source change is not in the retained private packages
+and has no new device acceptance.
+
 ## Earlier 4230 and 4229 acceptance
 
 Windows **1.5.0+4230**, App `08f17394` (includes `b0f686fd`) / Core `8897fd8` / 1.2.14.

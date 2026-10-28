@@ -4265,7 +4265,7 @@ void main() {
     });
   });
 
-  testWidgets('Android local DPI counts appear only inside technical diagnostics', (tester) async {
+  testWidgets('Local DPI counts in Russia Direct appear only inside technical diagnostics', (tester) async {
     const aggregate = 'Локальный DPI: готово 1, ожидание 0, сбой 0, отключено 0; '
         'TCP напрямую 21, через VPN 0; отклонено соединений QUIC 3';
     const snapshot = RuntimeSnapshot(
@@ -4275,8 +4275,8 @@ void main() {
       canInitialize: false, canConnect: false, message: 'fixture',
       hostDiagnosticsSummary: 'Сеть готова | $aggregate',
     );
-    PokrovDiagnosticsReport report(HostPlatform platform) => PokrovDiagnosticsPresenter.fromRuntime(
-      hostPlatform: platform, routeMode: RouteMode.selectiveServices, snapshot: snapshot,
+    PokrovDiagnosticsReport report(HostPlatform platform, {RouteMode mode = RouteMode.allExceptRu}) => PokrovDiagnosticsPresenter.fromRuntime(
+      hostPlatform: platform, routeMode: mode, snapshot: snapshot,
       statusLabel: 'connected', warpState: 'disabled', now: DateTime.now().toUtc(),
       appVersion: '1.5.0', buildNumber: 'fixture', releaseChannel: 'private', candidateLabel: 'fixture',
       encryptedDeliveryAvailable: false,
@@ -4286,6 +4286,8 @@ void main() {
     final windows = report(HostPlatform.windows);
     expect(windows.showWindowsLocalDpiRuntime, isTrue);
     expect(windows.androidLocalDpiSummary, isNull);
+    expect(report(HostPlatform.android, mode: RouteMode.selectiveServices).androidLocalDpiSummary, aggregate);
+    expect(report(HostPlatform.windows, mode: RouteMode.selectiveServices).showWindowsLocalDpiRuntime, isTrue);
     await tester.pumpWidget(MaterialApp(home: PokrovDiagnosticsScreen(
       initialReport: android, onRefresh: () async => android, onOpenProtection: () {}, onOpenSupport: () {},
     )));
