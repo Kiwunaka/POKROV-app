@@ -1,5 +1,14 @@
 # Windows acceptance
 
+Private **1.5.0+4236**, App `0359cf68` including `d6105816`, preserves live QA
+ownership during read-only resume. All six packages are retained in
+`E:/POKROV-tools/temp/release-1.5.0-4236`: four production-signed, non-debuggable
+APKs, the unsigned Windows setup and its single-installer ZIP. Standard builders
+passed version, ABI and runtime-binding checks; packaged Android Core/Slipstream
+bytes and license match the retained Core **1.2.15 / ABI2**, `1b74a65` SDK,
+and the Windows verified bundle includes its CLI/license pair. Core was not rebuilt.
+Installed Windows VM acceptance and Android device acceptance of 4236 are pending.
+
 Private **1.5.0+4235** is built from App `43d506a6` (Android) and `1af27810`
 (Windows), with Core `1b74a65` / **1.2.15 / ABI2** and its bundled Slipstream CLI.
 Four production-signed APKs and the unsigned Windows setup plus single-installer
