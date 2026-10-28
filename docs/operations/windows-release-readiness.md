@@ -1,5 +1,16 @@
 # Windows acceptance
 
+Private **1.5.0+4238**, App `3db825b6`, includes the Windows LocalDPI packaging
+guard, timeout and DNS copy updates, complete SmartDNS scope with local-to-VPN
+fallback, and Naive country catalog refresh. Four production-signed, non-debuggable
+APKs, the unsigned Windows setup and its single-installer ZIP are in
+`E:/POKROV-tools/temp/release-1.5.0-4238`. The builders passed version, ABI and
+runtime-binding checks; APK Core/Slipstream bytes and license match Core **1.2.15 /
+ABI2** (`1b74a65`). The staged Windows LocalDPI files are present; Core, Cronet,
+CLI and license match the SDK. Windows App, service, Core, Cronet and CLI are
+x64 PE; the ZIP contains only the byte-identical `POKROV-Setup.exe`.
+Core was not rebuilt; 4238 device installation and runtime acceptance were not checked.
+
 Private **1.5.0+4237**, App `8670079d` including `b8783faf`, adds Gemini RPC
 to the exact strict SmartDNS QA scope. All six packages are retained in
 `E:/POKROV-tools/temp/release-1.5.0-4237`: four production-signed, non-debuggable
