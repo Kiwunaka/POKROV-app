@@ -291,20 +291,26 @@ Managed route names and the client's fallback label call this transport
 **«DNS-туннель (DNSTT)»**. The previous SlipNet label named a separate client
 application and obscured which DNS transport was actually available.
 
-Slipstream is still absent from managed delivery and the Android/Windows client
-runtime. The existing implementation is the Linux-only
-`VPN/scripts/local_slipstream_lab.py`, which builds
-[`0FL01/slipstream`](https://github.com/0FL01/slipstream/tree/feat/rust-parity-ab)
-at `d7cd5555a88933053551128ff8b3741ae93049a0` with Meson/Ninja, CMake,
-GCC/G++, OpenSSL and picoquic. Its accepted loopback run checks pinned TLS,
-FlowRelay token/password/ACL rejection and synthetic data; it does not establish
-recursive DNS, Android, Windows or a live whitelist network. The current
-`feat/rust-parity-ab` head is `16fdfe97159a3b0b7b13563a671a730923e68c55`, which
-was inspected, not built or accepted. Both revisions expose CLI executables;
-the C runtime is POSIX-oriented. A client transport package and owned server
-endpoint, Premium issuance, process/socket lifecycle and platform packaging are
-still needed. No Slipstream runtime capability, profile producer or client
-entry exists today. The DNSTT reserve above is a different wire protocol.
+On 2026-10-28 private build 4235 added the real Slipstream carrier with Core
+1.2.15 and the pinned Mygod/slipstream-rust v0.1.1 client: a bundled Windows
+executable and three Android native executables. Core owns their process and
+protected DNS socket lifecycle; managed material cannot choose an executable.
+The exact VLESS-over-Slipstream graph requires `slipstream_vless_v1`, a pinned
+leaf certificate and an active Premium entitlement, including trial/manual.
+Old clients without the capability cannot select this carrier.
+
+CH now serves `s.t.portal-privacy.online` through a bounded UDP dispatcher on
+public port 53; the original `t.portal-privacy.online` DNSTT backend remains.
+Through recursive resolver `95.85.240.254:53`, Slipstream passed owned HTTPS204
+and exact 65536-byte payload; retained DNSTT passed the current Core probe in
+8679 ms. The guarded cutover is kept, its timer is inactive, and services are
+enabled for boot. CH profile issuance is enabled; the private app's ordinary
+Auto/TUN acceptance is still pending. Android device/real whitelist acceptance
+is also pending. These server and package checks do not establish those results.
+
+The earlier `VPN/scripts/local_slipstream_lab.py` POSIX loopback exercise remains
+historical lab work, separate from this deployed Rust carrier. DNSTT is a
+different wire protocol and remains available alongside Slipstream.
 
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection
