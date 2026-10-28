@@ -1,8 +1,94 @@
 #include "service_client.h"
 #include "service_profile_identity.h"
 
+#include <windows.h>
+
+#include <algorithm>
 #include <iostream>
 #include <string>
+#include <thread>
+
+#include "service_server.h"
+
+#ifdef _DEBUG
+namespace {
+using namespace pokrov::service;
+
+bool Transfer(HANDLE pipe, void* data, std::size_t size, bool write) {
+  auto* bytes = static_cast<std::uint8_t*>(data);
+  while (size > 0) {
+    DWORD transferred = 0;
+    const BOOL ok = write ? ::WriteFile(pipe, bytes, static_cast<DWORD>(size), &transferred, nullptr)
+                          : ::ReadFile(pipe, bytes, static_cast<DWORD>(size), &transferred, nullptr);
+    if (!ok || transferred == 0) return false;
+    bytes += transferred;
+    size -= transferred;
+  }
+  return true;
+}
+
+std::optional<Frame> ReadFrame(HANDLE pipe) {
+  std::array<std::uint8_t, kFrameHeaderSize> header{};
+  if (!Transfer(pipe, header.data(), header.size(), false)) return std::nullopt;
+  const auto size = ExpectedFrameSize(header.data(), header.size());
+  if (!size) return std::nullopt;
+  std::vector<std::uint8_t> bytes(*size);
+  std::copy(header.begin(), header.end(), bytes.begin());
+  if (*size > header.size() &&
+      !Transfer(pipe, bytes.data() + header.size(), *size - header.size(), false)) return std::nullopt;
+  return Decode(bytes.data(), bytes.size());
+}
+
+bool WriteFrame(HANDLE pipe, const Frame& frame) {
+  auto bytes = Encode(frame);
+  return !bytes.empty() && Transfer(pipe, bytes.data(), bytes.size(), true);
+}
+
+ServiceRuntimeSnapshot RuntimeControlReceipt(Command command, Status status,
+    const std::string& response, DWORD delay_ms, std::uint64_t* request_wait_ms) {
+  const auto name = std::wstring(kTestPipePrefix) + L"RuntimeControlReceipt." +
+      std::to_wstring(::GetCurrentProcessId());
+  const HANDLE pipe = ::CreateNamedPipeW(name.c_str(), PIPE_ACCESS_DUPLEX,
+      PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT | PIPE_REJECT_REMOTE_CLIENTS,
+      1, 32768, 32768, 0, nullptr);
+  if (pipe == INVALID_HANDLE_VALUE) return {};
+  std::thread server([&] {
+    if (::ConnectNamedPipe(pipe, nullptr) || ::GetLastError() == ERROR_PIPE_CONNECTED) {
+      const auto hello = ReadFrame(pipe);
+      Identifier token{};
+      token[0] = 1;
+      if (hello && WriteFrame(pipe, {FrameKind::kResponse, Command::kHello, Status::kOk,
+          hello->correlation_id, token, {}, 0,
+          kCapabilityProtocolV1 | kCapabilityStatus | kCapabilityRuntimeControl |
+              kCapabilityProfileIdentity | kCapabilityCancellation |
+              kCapabilityBoundRuntimeControl | kCapabilitySmartAccessRuntimeControl, ""})) {
+        const auto request = ReadFrame(pipe);
+        if (request) {
+          FILETIME time{};
+          ::GetSystemTimeAsFileTime(&time);
+          const auto now = ((static_cast<std::uint64_t>(time.dwHighDateTime) << 32) |
+              time.dwLowDateTime) / 10000ULL - 11644473600000ULL;
+          *request_wait_ms = request->deadline_unix_ms - now;
+          ::Sleep(delay_ms);
+          WriteFrame(pipe, {FrameKind::kResponse, command, status,
+              request->correlation_id, token, {}, 0, 0, response});
+        }
+      }
+    }
+    ::FlushFileBuffers(pipe);
+    ::DisconnectNamedPipe(pipe);
+    ::CloseHandle(pipe);
+  });
+  const auto config = ProfileDigest("runtime-control-fixture") +
+      R"(|{"platform":"windows","capability":"saqa1.fixture"})";
+  const auto body = command == Command::kConfigureBoundSmartAccessRuntimeControl
+      ? std::string(64, 'a') + "|" + config : config;
+  const auto result = InvokeServiceForTest(name, command, body);
+  server.join();
+  return result;
+}
+}  // namespace
+#endif
 
 int main() {
   using namespace pokrov::service;
@@ -204,5 +290,22 @@ int main() {
                           std::string("core_version=1.1.1").size(), "core_version=1..1");
   expect(!ParseServiceRuntimeSnapshot(invalid_version, &versioned),
          "malformed Core version was accepted");
+#ifdef _DEBUG
+  std::uint64_t request_wait_ms = 0;
+  const auto delayed_control = RuntimeControlReceipt(Command::kConfigureBoundSmartAccessRuntimeControl,
+      Status::kNotReady, "core_egress_connect_failed", 3500, &request_wait_ms);
+  expect(request_wait_ms > 3000 && request_wait_ms <= 6000,
+         "bound runtime control did not budget setup separately from its native probe");
+  expect(delayed_control.trusted && delayed_control.compatible && !delayed_control.command_accepted &&
+             !delayed_control.smart_access_runtime_control_configured &&
+             delayed_control.status == Status::kNotReady && delayed_control.failure == "core_egress_connect_failed",
+         "a delayed native rejection became service_unavailable or accepted QA proof");
+  request_wait_ms = 0;
+  const auto ordinary_control = RuntimeControlReceipt(Command::kConfigureSmartAccessRuntimeControl,
+      Status::kOk, "configured=1", 0, &request_wait_ms);
+  expect(request_wait_ms > 0 && request_wait_ms <= 3000 &&
+             ordinary_control.command_accepted && ordinary_control.smart_access_runtime_control_configured,
+         "ordinary runtime control lost its short IPC budget or configuration receipt");
+#endif
   return failures == 0 ? 0 : 1;
 }

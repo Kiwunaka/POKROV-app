@@ -555,6 +555,12 @@ response; an unavailable IPC exchange remains `service_unavailable`. Unknown
 codes, exception messages and details do not enter the QA context. A failed
 Smart probe leaves the separate ordinary VPN health unchanged.
 
+Windows bound runtime-control IPC budgets its three-second setup allowance
+separately from the unchanged three-second QA Smart probe, then allows the
+existing three-second response transfer tail. Other short controls keep their
+current budget. Connect ownership, cancellation, permit and lease expiry still
+bound admission; a received rejection remains a rejection.
+
 ## Resolver location and service egress
 
 Smart DNS changes a service's visible source address by directing selected

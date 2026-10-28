@@ -25,6 +25,9 @@ constexpr wchar_t kProductionServiceName[] = L"POKROVService";
 constexpr wchar_t kLocalSystemServiceAccount[] = L"LocalSystem";
 constexpr DWORD kProductionPipeConnectTimeoutMs = 5000;
 constexpr DWORD kStandardConnectIpcWaitMs = 90000;
+// Bound control configures Core before its synchronous, bounded 3000 ms QA
+// probe. Keep the existing 3000 ms setup allowance separate from that probe.
+constexpr DWORD kBoundRuntimeControlIpcWaitMs = 6000;
 // The service rejects frame deadlines more than five minutes ahead.
 constexpr std::uint64_t kMaximumBoundIpcWaitMs = 299000;
 
@@ -359,7 +362,7 @@ ExchangeResult Exchange(Command command, const std::string& body,
       command == Command::kRevokeRoutingCatalogService || command == Command::kRenewSmartAccessLease ||
       command == Command::kConfigureSmartAccessRuntimeControl || command == Command::kReadSmartAccessRestrictions ||
       command == Command::kAcknowledgeSmartAccessRestrictions || command == Command::kReadSmartAccessLeases ||
-      command == Command::kConfigureSmartAccessRenewal || command == Command::kConfigureBoundSmartAccessRuntimeControl ||
+      command == Command::kConfigureSmartAccessRenewal ||
       command == Command::kPromoteTransportLease || command == Command::kRevokeTransportLease;
   const auto bound_wait_ms = command == Command::kConnectWithIdentity
       ? BoundIpcWaitMs(body) : std::optional<DWORD>{};
@@ -367,7 +370,8 @@ ExchangeResult Exchange(Command command, const std::string& body,
     ::CloseHandle(pipe);
     return result;
   }
-  const DWORD ipc_wait_ms = command == Command::kObserveNetworkContext ? 7000 : short_control ? 3000
+  const DWORD ipc_wait_ms = command == Command::kConfigureBoundSmartAccessRuntimeControl ? kBoundRuntimeControlIpcWaitMs
+      : command == Command::kObserveNetworkContext ? 7000 : short_control ? 3000
       : (command == Command::kConnect || command == Command::kReplaceManagedProfile) ? kStandardConnectIpcWaitMs
       : bound_wait_ms.value_or(30000);
   const Frame request{
