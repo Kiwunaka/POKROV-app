@@ -254,6 +254,10 @@ a remaining slot. If the selected route and both reserves all use TCP or all use
 UDP, one additional already materialized reserve may use the other network family.
 This exception keeps the original two choices and adds no profile request; the
 existing 8 MiB cache limit, expiry and account binding still apply.
+
+When Naive H2 follows two TCP alternatives, an unbundled refresh fetches its exact
+material and retains it for offline use.
+
 In a mixed catalog, the legacy IPv4 base shares its typed IPv6
 sibling's native-start fence and cannot probe while that sibling is preparing.
 A manually selected country keeps all reserves in that country,

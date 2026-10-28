@@ -2157,6 +2157,8 @@ void main() {
     const ordinaryRef = 'ch:legacy_reality_fallback';
     const naiveRef = 'ch:naive_h2';
     var accessState = 'trial_premium';
+    var bundleMaterials = true;
+    final requestedCandidates = <String>[];
     final naive = <String, Object?>{'type': 'naive', 'tag': 'proxy',
       'server': 'naive.fixture.invalid', 'server_port': 443,
       'username': 'synthetic@example.invalid', 'password': 'synthetic-node-key',
@@ -2197,7 +2199,9 @@ void main() {
             'session_token': 'synthetic-session', 'account_id': 'synthetic-account'},
             'provisioning': {'status': 'ready', 'sync_ok': true}}));
         } else if (request.uri.path == '/api/client/profile/managed') {
-          final exact = request.uri.queryParameters['selected_candidate_ref'] == naiveRef;
+          final requested = request.uri.queryParameters['selected_candidate_ref'] ?? ordinaryRef;
+          requestedCandidates.add(requested);
+          final exact = requested == naiveRef;
           request.response.write(jsonEncode({
             'profile_revision': 'naive-managed', 'config_format': 'singbox-json',
             'transport_profile': exact ? 'naive_h2' : 'legacy_reality_fallback',
@@ -2205,7 +2209,7 @@ void main() {
             'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
               'revision': 'naive-managed', 'selected_candidate_ref': exact ? naiveRef : ordinaryRef,
               'candidates': [candidate(false), alternative('grpc', 1), alternative('xhttp', 2), candidate(true)]},
-            'candidate_materials': [for (final useNaive in exact ? [true] : [false, true]) {
+            if (bundleMaterials) 'candidate_materials': [for (final useNaive in exact ? [true] : [false, true]) {
               'candidate_ref': useNaive ? naiveRef : ordinaryRef,
               'transport_kind': useNaive ? 'naive' : 'reality',
               'config_format': 'singbox-json', 'config_payload': config(useNaive)},
@@ -2261,6 +2265,17 @@ void main() {
     await storage.write(key: cacheKey, value: jsonEncode(stored));
     expect(await online.loadCachedManagedProfile(inputs, selectedCandidateRef: naiveRef,
       runtimeFeatures: features), isNull);
+    (stored['candidates'] as Map).remove(naiveRef);
+    await storage.write(key: cacheKey, value: jsonEncode(stored));
+    bundleMaterials = false;
+    requestedCandidates.clear();
+    await online.refreshCachedManagedProfile(inputs, runtimeFeatures: features,
+      selectedCandidateRef: ordinaryRef);
+    expect(requestedCandidates, [ordinaryRef, naiveRef],
+      reason: 'the third TCP alternative is Naive, not the extra opposite-network reserve');
+    expect((await offline.loadCachedManagedProfile(inputs, selectedCandidateRef: naiveRef,
+      runtimeFeatures: features))?.configPayload, reserve.configPayload);
+    bundleMaterials = true;
     final android = await resolve(platform: HostPlatform.android, selected: naiveRef);
     final androidLeaf = (jsonDecode(android.configPayload)['outbounds'] as List)
         .cast<Map>().singleWhere((row) => row['type'] == 'naive');

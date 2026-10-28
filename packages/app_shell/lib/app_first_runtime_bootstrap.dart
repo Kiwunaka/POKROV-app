@@ -3555,7 +3555,9 @@ class AppFirstRuntimeBootstrapper
         countryOnly: inputs.preferredCountryCode.isNotEmpty, catalog: catalog);
     for (final (index, candidate) in alternatives.indexed) {
       // The extra network-family reserve must not add an exact-profile request.
-      if (index == 2 && !bundled.containsKey(candidate.candidateRef)) continue;
+      if (index == 2 && candidate.network != selected.materialCandidate!.network &&
+          alternatives.take(2).every((alternate) => alternate.network == selected.materialCandidate!.network) &&
+          !bundled.containsKey(candidate.candidateRef)) continue;
       final cached = await _managedProfileCache.read(platform: inputs.hostPlatform.name,
           binding: inputs.binding(state.accountId, state.installId), selectedCandidateRef: candidate.candidateRef);
       await requireCurrent();
