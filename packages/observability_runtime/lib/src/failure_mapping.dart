@@ -200,6 +200,7 @@ abstract final class OperationalFailureMapper {
     'core_egress_tls_timeout': 'TRANSPORT-006',
     'core_egress_response_timeout': 'TRANSPORT-007',
     'core_egress_timeout': 'TRANSPORT-001',
+    'connect_deadline': 'CONN-008',
     'core_egress_probe_unavailable': 'CONN-008',
     'desktop_tun_egress_probe_failed': 'EGRESS-001',
     'profile_staging_failed': 'CONN-005',

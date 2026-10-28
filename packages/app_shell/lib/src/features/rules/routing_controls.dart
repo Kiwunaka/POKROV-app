@@ -304,6 +304,8 @@ class _DnsAndLanCard extends StatelessWidget {
                   ? 'Настройка сохранена. В режиме «Всё через POKROV» DoH идёт через VPN.'
                   : preferences.dnsTransport == PokrovDnsTransport.direct
                   ? 'Только зашифрованный DoH идёт без VPN. IP-адрес не меняется.'
+                  : fallbackMode == RouteMode.selectiveServices
+                  ? 'DNS-запросы идут по правилам маршрута; часть — напрямую.'
                   : 'DoH идёт через VPN.',
               value: preferences.dnsTransport == PokrovDnsTransport.direct,
               onChanged: (value) => onChanged(

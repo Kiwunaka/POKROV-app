@@ -5,6 +5,10 @@ import 'package:pokrov_observability_contracts/observability_contracts.dart';
 import 'package:pokrov_observability_runtime/observability_runtime.dart';
 
 void main() {
+  test('connection deadline maps to timeout', () {
+    expect(OperationalFailureMapper.connection('connect_deadline'), 'CONN-008');
+  });
+
   group('typed privacy contract', () {
     test('rejects unknown fields and privacy-mode widening', () {
       expect(
