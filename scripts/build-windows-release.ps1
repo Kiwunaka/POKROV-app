@@ -452,10 +452,16 @@ function Invoke-TrustedAuthenticodeSigning {
 }
 
 $root = Split-Path -Parent $PSScriptRoot
-$windowsReleaseConfigPath = if ($WindowsReleasePath) {
-  (Resolve-Path -LiteralPath $WindowsReleasePath -ErrorAction Stop).Path
-} else { Join-Path $root "config\\windows-release.seed.json" }
-$windowsReleaseConfig = Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
+$windowsReleaseSeedPath = Join-Path $root "config\\windows-release.seed.json"
+$windowsReleaseSeed = Get-Content -Raw -LiteralPath $windowsReleaseSeedPath | ConvertFrom-Json
+$windowsReleaseConfig = if ($WindowsReleasePath) {
+  $windowsReleaseConfigPath = (Resolve-Path -LiteralPath $WindowsReleasePath -ErrorAction Stop).Path
+  Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
+} else { $windowsReleaseSeed }
+$requiredFiles = @(
+  (@($windowsReleaseSeed.required_files) + @($windowsReleaseConfig.required_files)) |
+    Select-Object -Unique
+)
 $appDirectory = Join-Path $root "apps\\windows_shell"
 $pubspecPath = Join-Path $appDirectory "pubspec.yaml"
 $version = Resolve-VersionFromPubspec -PubspecPath $pubspecPath
@@ -644,7 +650,7 @@ function Write-Utf8BomFile {
 
 $releaseOutputDirectory = Join-Path $root $windowsReleaseConfig.bundle_root
 $buildRequiredFiles = @(
-  @($windowsReleaseConfig.required_files) |
+  $requiredFiles |
     Where-Object { $appLocalMsvcRuntimeFiles -notcontains $_ }
 )
 $missingBuildFiles = @(
@@ -707,7 +713,7 @@ foreach ($runtimeFile in $appLocalMsvcRuntimeFiles) {
     -Destination (Join-Path $stagedBundleDirectory $runtimeFile)
 }
 $missingStagedFiles = @(
-  Test-RequiredFiles -BasePath $stagedBundleDirectory -RelativePaths $windowsReleaseConfig.required_files
+  Test-RequiredFiles -BasePath $stagedBundleDirectory -RelativePaths $requiredFiles
 )
 if ($missingStagedFiles.Count -gt 0) {
   throw "Missing expected staged Windows release outputs: $($missingStagedFiles -join ', ')"

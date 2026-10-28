@@ -16,6 +16,13 @@
     "vcruntime140.dll",
     "vcruntime140_1.dll",
     "pokrov_tray.ico",
+    "local-dpi/winws.exe",
+    "local-dpi/cygwin1.dll",
+    "local-dpi/WinDivert.dll",
+    "local-dpi/WinDivert64.sys",
+    "local-dpi/tls_clienthello_4pda_to.bin",
+    "local-dpi/tls_clienthello_www_google_com.bin",
+    "local-dpi/NOTICES.txt",
     "data/app.so",
     "data/icudtl.dat"
   ],

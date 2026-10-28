@@ -30,7 +30,9 @@ selected binding and must not be used to restage this private build.
   runtime after requested sync or restoration of missing files. Before staging,
   it checks built Core/dependency bytes against that verified runtime and both
   executable version fields against the client version. This also applies to
-  `-SkipBuild`: a stale bundle requires a rebuild. The optional
+  `-SkipBuild`: a stale bundle requires a rebuild. Packaging requires the seed's
+  complete `local-dpi` files even when a private release config is selected.
+  The optional
   [reproducible wrapper](build-windows-release-reproducible.ps1) forwards arguments
   and uses a temporary `P:` mapping.
   WinDivert's driver has a separate installer entry: an identical installed
