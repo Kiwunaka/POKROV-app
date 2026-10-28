@@ -1,5 +1,15 @@
 # Windows acceptance
 
+Private **1.5.0+4237**, App `8670079d` including `b8783faf`, adds Gemini RPC
+to the exact strict SmartDNS QA scope. All six packages are retained in
+`E:/POKROV-tools/temp/release-1.5.0-4237`: four production-signed, non-debuggable
+APKs, the unsigned Windows setup and a ZIP containing only its byte-identical
+`POKROV-Setup.exe`. Standard builders passed version, ABI, required-file and
+runtime-binding checks; APK Core/Slipstream bytes and license match the retained
+Core **1.2.15 / ABI2**, `1b74a65` SDK. Windows Core/Cronet/CLI x64 PE checks and
+the staged CLI/license binding passed. Core was not rebuilt. These package checks
+do not establish installed runtime acceptance or a real Gemini response.
+
 Private **1.5.0+4236**, App `0359cf68` including `d6105816`, preserves live QA
 ownership during read-only resume. All six packages are retained in
 `E:/POKROV-tools/temp/release-1.5.0-4236`: four production-signed, non-debuggable
