@@ -1,6 +1,16 @@
 # Windows acceptance
 
-Private Android and Windows **1.5.0+4234**, App `34a2533c`, include the Russia Direct
+Private **1.5.0+4235** is built from App `43d506a6` (Android) and `1af27810`
+(Windows), with Core `1b74a65` / **1.2.15 / ABI2** and its bundled Slipstream CLI.
+Four production-signed APKs and the unsigned Windows setup plus single-installer
+ZIP passed version, ABI, native-byte, license and packaging checks; Android enables
+extraction of executable JNI libraries. The private manifest pair is retained beside
+the SDK in `E:/POKROV-tools/artifacts/core-1.2.15-slipstream-private4235`, and all
+six packages are in `E:/POKROV-tools/temp/release-1.5.0-4235`. Device extraction,
+SmartDNS and Slipstream Auto/TUN acceptance are not established by these builds.
+Public 1.4.5, draft 4175 and the selected Core 1.2.14 seeds are unchanged.
+
+Earlier private Android and Windows **1.5.0+4234**, App `34a2533c`, include the Russia Direct
 LocalDPI diagnostics and DNSTT naming changes. The four production-signed APKs,
 unsigned Windows setup and ZIP containing only its byte-identical `POKROV-Setup.exe`
 passed package checks with production trust and ATS=false. Android reuses Core

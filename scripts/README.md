@@ -24,6 +24,8 @@ selected binding and must not be used to restage this private build.
 - [build-android-production.ps1](build-android-production.ps1) validates an
   already staged Android runtime with `RuntimeArtifactsPath`. Copying is
   explicit: `-SyncRuntime` or `-CoreArtifactDirectory` invokes Android-only sync.
+  Both production builders accept `-WindowsReleasePath` for a paired private
+  release config; omission keeps the existing Windows release seed.
 - [build-windows-release.ps1](build-windows-release.ps1) validates the Windows
   runtime after requested sync or restoration of missing files. Before staging,
   it checks built Core/dependency bytes against that verified runtime and both
@@ -45,8 +47,9 @@ selected binding and must not be used to restage this private build.
   A Slipstream Windows SDK lists `slipstream-client.exe` and
   `slipstream-LICENSE.txt` in the selected manifest's existing runtime dependencies;
   CMake installs the pair. Android receives the per-ABI executable
-  `libslipstream.so` and license from Core's AAR and extracts native libraries for
-  execution by Core. Source support alone does not establish packaged readiness.
+  `libslipstream.so` from Core's AAR and extracts native libraries for execution
+  by Core. Sync also extracts that AAR's Slipstream license into an ignored
+  Android license asset. Source support alone does not establish packaged readiness.
 - [check-client-version-parity.ps1](check-client-version-parity.ps1) checks
   selected-platform versions and artifact identities. Pass the same
   `RuntimeArtifactsPath` as packaging; use `-Platforms android` or
