@@ -28,6 +28,12 @@ eligible Premium access. Ordinary Windows 4216 Auto/TUN and cleanup passed.
 Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
 
+The owner subsequently confirmed permission for all discussed external DNS
+services and clarified that their public addresses may be used. This also
+supersedes the earlier missing-permission notes for COMSS, Malw, Mafioznik and
+Xbox; do not request those permissions again. Endpoint availability, a signed
+scoped policy and real native feature acceptance are still separate requirements.
+
 In the current client, open **«Правила» → «Для опытных» → «Блокировка и DNS» →
 «SmartDNS-провайдер»**. The choices display the resolver hostname: Windows has
 `dns.wlrus.cfd` and `dns.dns-ai.ru`; Android has `dns.wlrus.cfd`. Select Gemini
@@ -50,7 +56,7 @@ host's fake-IP DNS results were discarded for availability decisions.
 | [Bezmezhau](https://bezmezhau.com/) — `dns.bezmezhau.com` | Verified DoH 200, DNS NOERROR, Gemini A `181.215.40.49` | Real feature acceptance and signed publication; the former name-resolution failure is no longer current |
 | GeoHide US — `us.geohide.ru` | Verified DoH 200, DNS NOERROR, four relay A records | Real answer; the earlier blank Gemini page remains unaccepted |
 | Zapret — `dns.zapret.moe` | Verified DoH 200, DNS NOERROR, Gemini A `83.217.211.149` | Real answer; the earlier prompt/page without an answer remains unaccepted |
-| [Xbox DNS](https://xbox-dns.ru/) | DoH answers Gemini with `0.0.0.0`; the official site still says the service is unavailable | Working service and commercial permission; it is outside the approved provider list |
+| [Xbox DNS](https://xbox-dns.ru/) | DoH answers Gemini with `0.0.0.0`; the official site still says the service is unavailable | A working service and native feature acceptance; permission is not the outstanding blocker |
 
 The table records the earlier 21 October root-run comparison in the clean
 Windows 11 VM from the Russian home network. Only a temporary Edge profile used
@@ -64,7 +70,7 @@ are recorded below. The owner's host network was not changed.
 
 | Provider / endpoint | Gemini result in this comparison | Commercial permission recorded by owner |
 | --- | --- | --- |
-| COMSS — `https://dns.comss.one/dns-query` | PASS: real answer | Not recorded in the current approved list |
+| COMSS — `https://dns.comss.one/dns-query` | PASS: real answer | Subsequently covered by the owner's public-endpoint approval |
 | GeoHide EU — `https://eu.geohide.ru/dns-query` | PASS: real answer | Approved for active Premium |
 | GeoHide RU — `https://geohide.ru/dns-query` | PASS: real answer | Approved for active Premium |
 | GeoHide US — `https://us.geohide.ru/dns-query` | HTTP 200, blank page; not accepted | Approved for active Premium |
@@ -73,10 +79,10 @@ are recorded below. The owner's host network was not changed.
 | Zapret DNS — `https://dns.zapret.moe/dns-query` | Page and prompt HTTP 200, no answer; not accepted | Approved for active Premium |
 | Astra / Astracat — `https://dns.commonnet.work/dns-query` | Google unusual-traffic response; not accepted | Approved for active Premium |
 | Bezmezhau — `https://dns.bezmezhau.com/dns-query` | Name resolution failed; not accepted | Approved for active Premium |
-| Malw — `https://dns.malw.link/dns-query` | Connection reset; not accepted | Not recorded in the current approved list |
+| Malw — `https://dns.malw.link/dns-query` | Connection reset; not accepted | Subsequently covered by the owner's public-endpoint approval |
 | Shecan | Not tested: no freshly confirmed DoH endpoint | Approved for active Premium |
-| Mafioznik | Not tested: no freshly confirmed DoH endpoint | Not recorded in the current approved list |
-| Xbox DNS | Not tested in this comparison; built-in preset removed in `ed2a982d` | Not recorded in the current approved list |
+| Mafioznik | Not tested: no freshly confirmed DoH endpoint | Subsequently covered by the owner's public-endpoint approval |
+| Xbox DNS | Not tested in this comparison; built-in preset removed in `ed2a982d` | Subsequently covered by the owner's public-endpoint approval |
 
 Premium gates are implemented on server provider/lease issuance and
 renewal/control paths. App commit `38adc208` uses the server's
@@ -86,6 +92,17 @@ returns to Automatic without expanding its former DNS scope; ordinary custom
 DoH and the existing COMSS preset remain separate. Signed provider permission,
 scoped leases and runtime expiry/revocation remain mandatory. Manual/family VPN
 access is unchanged, and public DNS endpoints remain public.
+
+Private Windows4236 subsequently passed ordinary Astra startup, current native
+proof, server binding and confirmed control. A real Gemini answer was still not
+obtained: the official page used `geminiweb-pa.clients6.google.com`, which lay
+outside catalog30's single-host Gemini scope and therefore went Direct in QA.
+The private QA contract now requires exactly `gemini.google.com` and that RPC
+host; both receive the same signed SmartDNS/TCP443 scope, while sibling and
+unrelated names retain Direct. Ordinary grants retain their independently
+verified domain scope and do not inherit an added host merely from the catalog.
+App fix `b8783faf` passed its changed contract/compiler tests; new catalog,
+server rollout and real feature acceptance remain separate unfinished steps.
 
 Windows local SmartDNS profiles use the same memory policy as ordinary managed
 Windows profiles: `disableMemoryLimit=true`, retained through routing copies.
@@ -313,9 +330,25 @@ remain running. Client transfer diagnosis and Auto/TUN acceptance are pending,
 as are Android device/real whitelist checks. Server/package checks do not
 establish those results.
 
+The follow-up isolated official Windows CLI/Xray check, without Core's DNS
+relay or TUN, also stopped at 8192 payload bytes within 30 seconds; verified
+HTTPS204 took 6057 ms. On the actual home Pi4, official ARM64 CLI/Xray through
+the same resolver passed HTTPS204 in 3017 ms but returned no 64KiB body before
+the same deadline. The second approved WLrus resolver `138.124.254.134:53`
+reached only 13037 bytes; a single documented BBR comparison on the original
+resolver did not finish HTTPS204. These results do not establish a Windows-only
+or Core-relay-only cause, nor prove DPI. No timeout, provider or runtime default
+was changed; all owned diagnostic children and private temporary files were
+removed. Do not repeat these unchanged paths as acceptance checks.
+
 The earlier `VPN/scripts/local_slipstream_lab.py` POSIX loopback exercise remains
 historical lab work, separate from this deployed Rust carrier. DNSTT is a
 different wire protocol and remains available alongside Slipstream.
+
+The pinned upstream was archived on 2026-08-28; its author discusses resolver
+rate limits, loss and polling in the [deprecation notice](https://github.com/Mygod/slipstream-rust/discussions/111).
+This is relevant maintenance context, not evidence for the Windows timeout's
+cause. No replacement transport or unreviewed upstream revision was enabled.
 
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection
