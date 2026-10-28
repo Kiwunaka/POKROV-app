@@ -114,5 +114,28 @@ foreach ($platform in $Platforms) {
       -ExpectedSha256 ([string]$dependencySha256)
   }
 
+  if ($platform -eq "android") {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $aar = [System.IO.Compression.ZipFile]::OpenRead((Join-Path $destination $asset.entry))
+    try {
+      $slipstreamClients = @($aar.Entries | Where-Object {
+        $_.FullName -match '^jni/[^/]+/libslipstream\.so$'
+      })
+      if ($slipstreamClients.Count -gt 0) {
+        $license = $aar.GetEntry("META-INF/licenses/slipstream/LICENSE")
+        if ($null -eq $license) {
+          throw "Bundled Android Slipstream client is missing its license."
+        }
+        $licenseDirectory = Join-Path $clientRoot "apps/android_shell/assets/licenses"
+        New-Item -ItemType Directory -Force -Path $licenseDirectory | Out-Null
+        [System.IO.Compression.ZipFileExtensions]::ExtractToFile(
+          $license, (Join-Path $licenseDirectory "slipstream-LICENSE.txt"), $true
+        )
+      }
+    } finally {
+      $aar.Dispose()
+    }
+  }
+
   Write-Host "Synced POKROV Core $($runtime.version) bytes for $platform." -ForegroundColor Green
 }
