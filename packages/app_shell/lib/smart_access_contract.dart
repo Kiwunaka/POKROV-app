@@ -541,7 +541,9 @@ class SmartAccessVerifier {
         .where((row) => row['service_id'] == service['service_id']).toList();
       final domains = (capability['domains']! as List).cast<Map<String, Object?>>();
       final domainScopeAllowed = service['service_id'] == 'gemini'
-          ? domains.length == 1 && _canonical(domains.single) == _canonical({'name': 'gemini.google.com', 'match': 'exact'})
+          ? domains.length == 2 && domains.every((domain) => domain['match'] == 'exact') &&
+            domains.map((domain) => domain['name']).toSet().containsAll(
+              const ['gemini.google.com', 'geminiweb-pa.clients6.google.com'])
           : domains.any((domain) => domain['name'] == 'chatgpt.com') &&
             domains.every((domain) => domain['match'] == 'exact' &&
               const ['chatgpt.com', 'openai.com', 'oaistatic.com', 'oaiusercontent.com'].any((root) =>

@@ -508,7 +508,8 @@ void main() {
     final coreHash = await _qaDigest('actual fixture core');
     const admission = '1234567890abcdef1234567890abcdef';
     const leaseId = 'abcdef0123456789abcdef0123456789';
-    final domainNames = serviceId == 'gemini' ? ['gemini.google.com'] : ['chatgpt.com', 'ws.chatgpt.com'];
+    final domainNames = serviceId == 'gemini'
+        ? ['gemini.google.com', 'geminiweb-pa.clients6.google.com'] : ['chatgpt.com', 'ws.chatgpt.com'];
     final service = <String, Object?>{'service_id': serviceId, 'display_name': serviceId, 'categories': ['ai'],
       'enabled': hostPlatform == HostPlatform.android, 'classification': 'geo_restricted', 'reason': 'test domain metadata', 'evidence_status': 'source_only',
       'source_ids': ['qa-source'], 'evidence_ids': ['domain-review'], 'platforms': ['windows'],
@@ -669,17 +670,25 @@ void main() {
       }
     }());
     Map? staged;
-    bool controlRouteAvailable(Uri url) {
+    ({String outbound, Map dnsServer}) webRoute(Uri url) {
       final route = staged!['route'] as Map;
       final dns = staged!['dns'] as Map;
+      bool matchesDomain(Map rule) => (rule['domain'] as List?)?.contains(url.host) == true ||
+          ((rule['domain_suffix'] as List?)?.cast<String>().any((suffix) =>
+            url.host == suffix || url.host.endsWith('.$suffix')) ?? false);
       final routeRule = (route['rules'] as List).cast<Map>().where((rule) =>
-        (rule['domain'] as List?)?.contains(url.host) == true &&
-        rule['network'] == 'tcp' && (rule['port'] as List?)?.contains(url.port) == true).firstOrNull;
+        matchesDomain(rule) && (rule['network'] == null || rule['network'] == 'tcp') &&
+        (rule['port'] == null || (rule['port'] as List).contains(url.port))).firstOrNull;
       final dnsRule = (dns['rules'] as List).cast<Map>().where((rule) =>
-        (rule['domain'] as List?)?.contains(url.host) == true).firstOrNull;
+        matchesDomain(rule)).firstOrNull;
       final dnsServer = (dns['servers'] as List).cast<Map>().firstWhere((server) =>
         server['tag'] == (dnsRule?['server'] ?? dns['final']));
-      return (routeRule?['outbound'] ?? route['final']) == 'proxy' && dnsServer['detour'] == 'proxy';
+      return (outbound: (routeRule?['outbound'] ?? routeRule?['action'] ?? route['final']) as String,
+        dnsServer: dnsServer);
+    }
+    bool controlRouteAvailable(Uri url) {
+      final selected = webRoute(url);
+      return selected.outbound == 'proxy' && selected.dnsServer['detour'] == 'proxy';
     }
     final issuedTimeWaits = <Duration>[];
     final bootstrapper = AppFirstRuntimeBootstrapper(apiBaseUrl: 'https://app.pokrov.space', apiFallbackBaseUrls: const [],
@@ -977,6 +986,9 @@ void main() {
       reason: 'owned first-provider QA retains its ECH guard');
     final route = staged!['route'] as Map;
     for (final domainName in domainNames) {
+    final selected = webRoute(Uri.https(domainName, '/'));
+    expect(selected.outbound, 'pokrov-smart-access-$leaseId');
+    expect(selected.dnsServer['tag'], 'pokrov-smart-access-dns-$leaseId');
     final domainRules = (route['rules'] as List).cast<Map>().where((row) => (row['domain'] as List?)?.contains(domainName) == true).toList();
     expect(domainRules[0]['pokrov_catalog_window']['lease_id'], leaseId);
     expect(domainRules[0]['network'], 'tcp');
@@ -998,6 +1010,10 @@ void main() {
       reason: 'the untimed exact-domain rejection survives catalog expiry');
     }
     expect(route['final'], 'direct', reason: 'other traffic retains Direct');
+    final unknownRoute = webRoute(Uri.https('other.clients6.google.com', '/'));
+    expect(unknownRoute.outbound, 'direct');
+    expect(unknownRoute.dnsServer['detour'] ?? 'direct', 'direct',
+      reason: 'the exact RPC scope cannot route sibling hosts through SmartDNS');
     for (final host in const ['app.pokrov.space', 'api.pokrov.space']) {
       expect(controlRouteAvailable(Uri.https(host, '/api/client/smart-access/first-provider-qa/control')), isTrue,
         reason: 'both owned API origins must deliver control when the Direct API path is blocked');
@@ -1048,14 +1064,15 @@ void main() {
       final localProfileDigest = await smartAccessProfileSha256(localWindows.configPayload);
       Future<({VerifiedSmartAccessLease grant, VerifiedRoutingCatalog catalog})> publicLease(String kind,
           {bool approved = true, String match = 'exact'}) async {
-        final publicDomains = [{'name': domainNames.single, 'match': match}];
+        final publicDomains = [{'name': domainNames.first, 'match': match}];
         final publicCatalogEnvelope = await _qaSigned({
           ...(catalogEnvelope['payload'] as Map).cast<String, Object?>(),
           'services': [{...service, 'enabled': true, 'evidence_status': 'verified',
             'external_gateway_policy': approved ? 'approved' : 'forbidden',
             'provider_capability_refs': ['$serviceId-qa'],
             'route_intents': [{'mode': 'selective', 'action': 'approved_gateway'}],
-            'domains': [{...publicDomains.single, 'shared': false, 'role': 'web', 'source_ids': ['qa-source']}]}],
+            'domains': [for (final name in domainNames)
+              {'name': name, 'match': match, 'shared': false, 'role': 'web', 'source_ids': ['qa-source']}]}],
         }, 'pokrov-routing-catalog-v1', key);
         final publicCatalog = await catalogVerifier.verify(publicCatalogEnvelope, now: now,
             minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
@@ -1086,6 +1103,8 @@ void main() {
       }
       final externalScope = await publicLease('external');
       final external = externalScope.grant;
+      expect(external.lease['domains'], [{'name': 'gemini.google.com', 'match': 'exact'}],
+        reason: 'ordinary provider leases retain their single-host capability in the expanded catalog');
       final owned = (await publicLease('owned')).grant;
       expect(smartAccessNativeOutbound(external)['external_ech_outer_sni'], isTrue);
       expect(smartAccessNativeOutbound(owned).containsKey('external_ech_outer_sni'), isFalse);
@@ -1105,6 +1124,8 @@ void main() {
           accessState: 'paid_unlimited', vpnAvailable: false,
           now: DateTime.now().toUtc(), selectedServiceIds: {serviceId},
           smartAccessProfile: bound);
+      expect(localPolicy.rules.singleWhere((rule) => rule.domain.name == 'geminiweb-pa.clients6.google.com').action,
+        CatalogRouteAction.block, reason: 'ordinary grants cannot inherit unleased catalog domains');
       Map localConfig(bool ipv6Available, {String? customDnsUrl}) => jsonDecode(applyPokrovRoutingPreferences(
           localWindows, const PokrovRoutingPreferences.defaults().copyWith(
             selectedCatalogServiceIds: {serviceId}, customDnsUrl: customDnsUrl,
@@ -1123,25 +1144,31 @@ void main() {
       }
       final scopedDns = (withIpv6['dns'] as Map)['rules'] as List;
       final physicalIpv4Dns = (withoutIpv6['dns'] as Map)['rules'] as List;
-      expect(scopedDns.last, {'domain': domainNames, 'action': 'reject'});
+      expect(scopedDns.last, {'domain': [domainNames.first], 'action': 'reject'});
       expect(physicalIpv4Dns, [...scopedDns,
         {'query_type': ['AAAA'], 'action': 'route', 'server': 'dns-direct', 'strategy': 'ipv4_only'}],
         reason: 'only unmatched Direct AAAA receives NODATA when physical IPv6 is absent');
       expect(withoutIpv6['route'], withIpv6['route'],
         reason: 'physical IPv4 DNS adaptation cannot weaken the signed gateway or its rejection');
     }
-    if (serviceId == 'chatgpt') {
-      for (final changes in <Map<String, Object?>>[
-        {'domains': [{'name': 'chatgpt.com', 'match': 'suffix'}]},
-        {'service_id': 'gemini'},
-      ]) {
-        final rejected = jsonDecode(jsonEncode(permitEnvelope!['payload'])) as Map<String, dynamic>;
-        ((rejected['qa_projection'] as Map)['capability'] as Map).addAll(changes);
-        final signed = await _qaSigned(rejected, 'pokrov-smart-access-first-provider-qa-v1', key);
-        await expectLater(verifier.verifyFirstProviderQa(signed, request: claimRequest!,
-          accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, platform: hostPlatform.name, now: DateTime.now().toUtc()),
-          throwsA(isA<RoutingCatalogFailure>().having((failure) => failure.code, 'code', 'smart_access_qa_projection_invalid')));
-      }
+    final invalidScopes = serviceId == 'gemini' ? <Map<String, Object?>>[
+      {'domains': [{'name': 'gemini.google.com', 'match': 'exact'}]},
+      {'domains': [for (var i = 0; i < 2; i++) {'name': 'gemini.google.com', 'match': 'exact'}]},
+      {'domains': [for (final name in domainNames) {'name': name, 'match': 'suffix'}]},
+      {'domains': [{'name': '*.google.com', 'match': 'exact'}, {'name': domainNames.last, 'match': 'exact'}]},
+      {'domains': [for (final name in [...domainNames, 'generativelanguage.googleapis.com']) {'name': name, 'match': 'exact'}]},
+      {'domains': [{'name': 'unrelated.example.test', 'match': 'exact'}, {'name': domainNames.last, 'match': 'exact'}]},
+    ] : <Map<String, Object?>>[
+      {'domains': [{'name': 'chatgpt.com', 'match': 'suffix'}]},
+      {'service_id': 'gemini'},
+    ];
+    for (final changes in invalidScopes) {
+      final rejected = jsonDecode(jsonEncode(permitEnvelope!['payload'])) as Map<String, dynamic>;
+      ((rejected['qa_projection'] as Map)['capability'] as Map).addAll(changes);
+      final signed = await _qaSigned(rejected, 'pokrov-smart-access-first-provider-qa-v1', key);
+      await expectLater(verifier.verifyFirstProviderQa(signed, request: claimRequest!,
+        accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, platform: hostPlatform.name, now: DateTime.now().toUtc()),
+        throwsA(isA<RoutingCatalogFailure>().having((failure) => failure.code, 'code', 'smart_access_qa_projection_invalid')));
     }
     await expectLater(verifier.verifyFirstProviderQa(permitEnvelope, request: {...claimRequest!, 'core_module_sha256': await _qaDigest('other core')},
       accountId: 'synthetic-qa-account', installId: installId!, catalog: catalog, platform: hostPlatform.name, now: DateTime.now().toUtc()),
