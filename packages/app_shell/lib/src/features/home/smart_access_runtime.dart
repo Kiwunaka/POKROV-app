@@ -249,6 +249,12 @@ extension _SmartAccessRuntimeOperations on ConnectionManager {
     final snapshot = _runtimeSnapshot;
     final digest = snapshot?.effectiveProfileDigest;
     final qa = _activeFirstProviderQa;
+    // A foreground/account refresh can finish while this exact QA Start still
+    // owns a staged profile. Its missing effective digest is not a scope change.
+    if (qa != null && digest == null && _runtimeBusy &&
+        _pendingFirstProviderQaAdmissionId == qa.permit.permitId &&
+        _connectionCoordinator.ownsOperation(qa.generation) &&
+        !_accessDenialPending && !_cachedProfileFallbackGate.authorizationDenied) return;
     if (qa != null && digest != null && digest == qa.profileDigest && snapshot?.phase == RuntimePhase.running &&
         _connectionCoordinator.ownsOperation(qa.generation)) {
       await _refreshFirstProviderQa(qa, digest);

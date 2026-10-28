@@ -3233,6 +3233,12 @@ An unknown delivery keeps the ordinary connected tunnel and original native
 lease deadline, without confirming SmartDNS readiness or renewing the grant.
 The request has no automatic retry.
 
+A foreground or account refresh that finishes during the same admitted QA Start
+retains its claimed scope while the staged profile has no effective digest yet.
+An operation change or known access denial still invalidates that scope; the
+existing account/device, Core, profile and permit-expiry checks remain required
+before control delivery.
+
 Selective VPN routes the exact bootstrap/control origins `app.pokrov.space`
 and `api.pokrov.space` through the existing VPN TCP/443 and DNS rules. The
 selected/excluded application mode keeps its existing service-only API probe

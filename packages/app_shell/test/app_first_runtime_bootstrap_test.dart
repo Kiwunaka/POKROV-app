@@ -491,6 +491,7 @@ void main() {
     ('gemini', 'unknown_private_control_code', HostPlatform.android, false),
   ]) {
   test('${hostPlatform.name} explicit first-provider QA uses the signed disabled $serviceId projection through ordinary managed stage${comssDns ? ' with Comss DNS' : controlFailure == null ? '' : ' with $controlFailure'}', () async {
+    final refreshDuringStart = hostPlatform == HostPlatform.windows && serviceId == 'gemini' && controlFailure == null;
     final httpOverrides = HttpOverrides.current;
     HttpOverrides.global = null;
     addTearDown(() => HttpOverrides.global = httpOverrides);
@@ -707,6 +708,11 @@ void main() {
     var postStartProofPending = false;
     var postStartProofObserved = false;
     var boundProgressReads = 0;
+    final resumeWifiEntered = Completer<void>();
+    final resumeWifi = Completer<PokrovWifiNetworkStatus>();
+    Future<void>? pendingResume;
+    late ConnectionManager manager;
+    var wifiReads = 0;
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMethodCallHandler(channel, (call) async {
@@ -759,6 +765,14 @@ void main() {
             expect(args['deadlineElapsedMs'], 1000 + actionTimeout.inMilliseconds);
             expect(args['requestId'], matches(r'^[a-f0-9]{32}$'));
             nativeBoundRequestId = args['requestId'] as String;
+            if (refreshDuringStart && pendingResume != null) {
+              final resume = pendingResume;
+              pendingResume = null;
+              expect(manager.busy, isTrue);
+              expect(manager.snapshot?.effectiveProfileDigest, isNull);
+              resumeWifi.complete(const PokrovWifiNetworkStatus.unavailable());
+              await resume;
+            }
             if (failBoundConnect) {
               throw PlatformException(code: 'core_identity_connect_failed', details: {
                 'schema': 1, 'requestId': nativeBoundRequestId, 'operation': 'core_connect',
@@ -838,12 +852,23 @@ void main() {
       experience.saved = experience.saved.copyWith(routingPreferences:
         const PokrovRoutingPreferences.defaults().copyWith(dnsPreset: PokrovDnsPreset.comss));
     }
-    final manager = ConnectionManager(appContext: buildSeedAppContext(hostPlatform: hostPlatform),
+    if (refreshDuringStart) {
+      experience.saved = experience.saved.copyWith(routingPreferences:
+        const PokrovRoutingPreferences.defaults().copyWith(pauseOnTrustedWifi: true, trustedWifiNames: ['Home']));
+    }
+    manager = ConnectionManager(appContext: buildSeedAppContext(hostPlatform: hostPlatform),
       runtimeEngine: runtime, bootstrapper: bootstrapper, actionTimeout: actionTimeout,
       accountSessionCoordinator: account, firstSessionCoordinator: first, clientExperienceStore: experience,
       connectHintStore: const PokrovFileConnectHintStore(), windowsTunnelAuthorizer: () async => PokrovWindowsTunnelAuthorization.allowed,
+      currentWifiProbe: () async {
+        if (refreshDuringStart && wifiReads++ == 0) {
+          resumeWifiEntered.complete();
+          return resumeWifi.future;
+        }
+        return const PokrovWifiNetworkStatus.unavailable();
+      },
       authorizeAndroidConnect: () async => true, refreshSubscription: () async => true, onNotice: (_, __) {});
-    if (comssDns) manager.updateExperience(experience.saved);
+    if (comssDns || refreshDuringStart) manager.updateExperience(experience.saved);
     addTearDown(() async {
       manager.dispose();
       // Join background lifecycle delivery before removing its temporary outbox.
@@ -851,6 +876,14 @@ void main() {
         runtimePhase: 'disconnected', connected: false);
     });
     expect(requests.where((path) => path.endsWith('/claim')), isEmpty, reason: 'availability cannot issue a permit');
+    if (refreshDuringStart) {
+      phase['phase'] = 'running';
+      pendingResume = manager.resume();
+      await resumeWifiEntered.future.timeout(const Duration(seconds: 5));
+      phase['phase'] = 'initialized';
+      await manager.readSnapshot();
+      expect(manager.firstProviderQaAdmissionId, admission);
+    }
     if (controlDeadline) {
       final elapsed = Stopwatch()..start();
       final pending = manager.startFirstProviderQa(admission);
@@ -899,6 +932,11 @@ void main() {
     }
     await manager.startFirstProviderQa(admission);
     expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
+    if (refreshDuringStart) {
+      expect((await manager.readFirstProviderQaContext())?['control_delivery'], 'confirmed',
+        reason: 'a late foreground refresh must retain the pending QA owner until exact native Start completes');
+      expect(controlPosts, 1);
+    }
     expect(nativeCalls.where((method) => method == 'runtimeEngine.probeCandidate'), hasLength(1));
     expect(nativeCalls.where((method) => method == 'runtimeEngine.stageManagedProfile'), hasLength(1));
     expect(nativeCalls, isNot(contains('runtimeEngine.connect')));
