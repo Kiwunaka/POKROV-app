@@ -3610,6 +3610,69 @@ void main() {
     expect(runtime.handoffCalls, 0);
   });
 
+  test('stopped country changes refresh CH Naive and Auto without Connect', () async {
+    final de = _candidates.first;
+    final ch = TransportCandidate(candidateRef: 'ch:reality', profileRef: 'reality',
+      nodeCode: 'ch', countryCode: 'CH', protocol: 'vless', transport: 'tcp', protection: 'reality',
+      priority: 0, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: const {});
+    final naive = TransportCandidate(candidateRef: 'ch:naive_h2', profileRef: 'naive_h2',
+      nodeCode: 'ch', countryCode: 'CH', protocol: 'naive', transport: 'h2', protection: 'tls',
+      priority: 1, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.windows}, requiredFeatures: {RuntimeTransportFeature.naiveH2, RuntimeTransportFeature.tls});
+    final chCatalog = TransportCandidateCatalog(revision: 'ch',
+      selectedCandidateRef: ch.candidateRef, candidates: [ch, naive]);
+    final autoCatalog = TransportCandidateCatalog(revision: 'auto',
+      selectedCandidateRef: de.candidateRef, candidates: [de, ch, naive]);
+    final bootstrapper = _CachedBootstrapper()..cachedCatalog = TransportCandidateCatalog(
+      revision: 'de', selectedCandidateRef: de.candidateRef, candidates: [de]);
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..supportsCandidates = true..coreVersion = '1.2.12'..phase = RuntimePhase.initialized;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    manager.restoreConnectionPreferences(const PokrovClientExperienceState.empty().copyWith(
+      interfaceMode: PokrovInterfaceMode.advanced, preferredCountryCode: 'DE',
+      firstRouteScopeConfirmed: true, firstRouteScopeMode: RouteMode.fullTunnel), const {});
+    await manager.refresh();
+    await manager.refreshTransportCatalog(force: true);
+    expect(manager.transportCatalog?.candidates, [de]);
+
+    final countryGate = Completer<void>();
+    final autoGate = Completer<void>();
+    addTearDown(() {
+      if (!countryGate.isCompleted) countryGate.complete();
+      if (!autoGate.isCompleted) autoGate.complete();
+    });
+    bootstrapper
+      ..cacheAvailable = false..cacheRefreshGate = countryGate.future..refreshedCatalog = chCatalog;
+    await manager.setPreferredCountry('CH');
+    await Future<void>.delayed(Duration.zero);
+    expect(manager.transportCatalog, isNull, reason: 'the DE catalog is not presented as the CH selection');
+    expect(bootstrapper.refreshedInputs, hasLength(2));
+    expect(bootstrapper.refreshedInputs.last.preferredCountryCode, 'CH');
+    final countryRefresh = manager.refreshTransportCatalog(force: true);
+    bootstrapper.cacheAvailable = true;
+    countryGate.complete();
+    await countryRefresh;
+    expect(manager.transportCatalog?.candidates, [ch, naive]);
+
+    bootstrapper
+      ..cacheAvailable = false..cacheRefreshGate = autoGate.future..refreshedCatalog = autoCatalog;
+    await manager.setAutomaticLocation();
+    await Future<void>.delayed(Duration.zero);
+    expect(manager.transportCatalog, isNull, reason: 'the CH catalog is not presented as all countries');
+    expect(bootstrapper.refreshedInputs, hasLength(3));
+    expect(bootstrapper.refreshedInputs.last.preferredCountryCode, isEmpty);
+    final autoRefresh = manager.refreshTransportCatalog(force: true);
+    bootstrapper.cacheAvailable = true;
+    autoGate.complete();
+    await autoRefresh;
+    expect(manager.transportCatalog?.candidates, [de, ch, naive]);
+    expect(runtime.stagedPayloads, isEmpty);
+    expect(runtime.connectCalls, 0);
+    expect(runtime.handoffCalls, 0);
+  });
+
   testWidgets('Home keeps the pending profile reason and retry action visible', (tester) async {
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;

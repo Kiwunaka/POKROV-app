@@ -5963,6 +5963,7 @@ class ConnectionManager extends ChangeNotifier {
 
   Future<void> _saveConnectionPreference(PokrovClientExperienceState next) async {
     final previousBinding = _managedProfileCacheInputs.binding('', '');
+    final countryChanged = next.preferredCountryCode != _clientExperience.preferredCountryCode;
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
     var changed = false;
     _update(() {
@@ -5972,6 +5973,7 @@ class ConnectionManager extends ChangeNotifier {
       changed = previousBinding != _managedProfileCacheInputs.binding('', '');
       if (changed) {
         _cancelAutomaticFailover();
+        if (countryChanged && !wasConnected) _transportCatalog = null;
         _stagedNodeCode = '';
         _stagedVariantId = 'direct';
         _managedProfileDirty = true;
@@ -5986,6 +5988,8 @@ class ConnectionManager extends ChangeNotifier {
         progressMessage: 'Применяем выбор подключения…',
         successMessage: 'Выбор подключения применён.',
       );
+    } else if (countryChanged) {
+      unawaited(refreshTransportCatalog(force: true));
     }
   }
 
@@ -6329,6 +6333,7 @@ class ConnectionManager extends ChangeNotifier {
     _cancelAutomaticFailover();
     final wasConnected = _runtimeSnapshot?.phase == RuntimePhase.running;
     _update(() {
+      if (!wasConnected) _transportCatalog = null;
       _preferredNodeCode = '';
       _preferredVariantId = 'direct';
       _stagedNodeCode = '';
@@ -6353,6 +6358,7 @@ class ConnectionManager extends ChangeNotifier {
         successMessage: 'Автоматический выбор применён.',
       );
     } else {
+      unawaited(refreshTransportCatalog(force: true));
       _notify(
         'Автоматический выбор включен. Подключите POKROV.',
         tone: PokrovSnackTone.success,

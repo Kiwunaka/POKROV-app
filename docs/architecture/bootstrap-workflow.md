@@ -88,6 +88,12 @@ catalog before reading public locations, so a newly admitted finite bridge can
 appear without Connect. It retains the current operation/revision and material
 guards; ordinary navigation and runtime snapshots do not force network refreshes.
 
+With protection stopped, changing the preferred country or returning to Auto
+clears the previous transport catalog and starts the same explicit refresh for
+the new selection. Manual connections, including CH Naive, therefore appear
+without Connect; a pending or failed refresh does not show the previous country's
+transports as the new selection. Running changes use the existing reconnect.
+
 The final routing assembler converts legacy DNS servers to typed transports
 after applying user and catalog preferences, including restored offline profiles.
 It preserves resolver tags, VPN paths and DNS response-code rules, while removing
