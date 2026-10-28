@@ -3507,7 +3507,8 @@ class ConnectionManager extends ChangeNotifier {
       }
       final grants = catalogPolicy?.smartAccessProfile?.byService.values
           .expand((group) => group);
-      if (localSmartAccessState != null && (grants == null || grants.isEmpty)) {
+      if (localSmartAccessState != null && (grants == null || grants.isEmpty ||
+          catalogPolicy!.rules.any((rule) => rule.fallbackReason == 'gateway_unavailable_blocked'))) {
         throw const RoutingCatalogFailure('catalog_gateway_lease_missing');
       }
       if (catalogPolicy != null &&
@@ -3544,6 +3545,8 @@ class ConnectionManager extends ChangeNotifier {
               'Не удалось применить выбор EXE. Повторно выберите приложения.',
             'catalog_process_dns_transport_unsupported' =>
               'Для выбора приложений в Windows включите DNS через VPN.',
+            'catalog_dns_lane_invalid' =>
+              'Не удалось применить настройки DNS. Проверьте выбранный DNS и повторите подключение.',
             'catalog_gateway_lease_missing' =>
               'Для этого режима ещё не подготовлен маршрут сервиса.',
             _ =>

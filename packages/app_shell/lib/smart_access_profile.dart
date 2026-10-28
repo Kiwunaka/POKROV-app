@@ -366,12 +366,20 @@ Future<List<Map<String, Object?>>> selectSmartAccessWebCapabilities({
     if (!isCurrent()) throw const RoutingCatalogFailure('smart_access_fetch_superseded');
     final service = services.where((row) => row['service_id'] == serviceId).single;
     final refs = service['provider_capability_refs']! as List;
-    final eligible = capabilities.where((capability) {
+    var eligible = capabilities.where((capability) {
       return capability['service_id'] == serviceId && refs.contains(capability['capability_id']) &&
           (selectedProviderId.isEmpty || capability['provider_id'] == selectedProviderId) &&
           _smartAccessCapabilityEligible(capability, providerRows, permissionRows, platform, now);
     }).toList();
     if (eligible.isEmpty) continue;
+    final domains = (service['domains']! as List).cast<Map<String, Object?>>()
+        .where((domain) => domain['shared'] == false).toList();
+    final complete = eligible.where((capability) => domains.every((domain) =>
+        (capability['domains']! as List).any((scope) =>
+            scope['name'] == domain['name'] && scope['match'] == domain['match']))).toList();
+    // Prefer a complete service before affinity, family and provider ranking.
+    // A partial lease remains usable with the catalog's per-domain VPN fallback.
+    if (complete.isNotEmpty) eligible = complete;
     final preferred = eligible.where((row) => row['capability_id'] == preferredCapabilityIds[serviceId]).toList();
     // Retain the declared IPv4-first subset when there is no active affinity.
     // Family/origin/feature scope is not inferred from an IP, SSID or interface.

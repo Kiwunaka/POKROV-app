@@ -12,6 +12,7 @@ import 'package:pokrov_app_shell/app_shell.dart' hide TransportCandidate;
 import 'package:pokrov_app_ui/pokrov_app_ui.dart' as ui;
 import 'package:pokrov_app_shell/routing_catalog_contract.dart';
 import 'package:pokrov_app_shell/routing_catalog_policy.dart';
+import 'package:pokrov_app_shell/smart_access_profile.dart';
 import 'package:pokrov_app_shell/src/features/rules/routing_catalog_store.dart';
 import 'package:pokrov_app_shell/src/shell/managed_profile_cache.dart';
 import 'package:pokrov_app_shell/src/shell/runtime_connectivity_report.dart';
@@ -415,6 +416,117 @@ class _QaProfileFailureBootstrapper extends AppFirstRuntimeBootstrapper {
   }) async => true;
 }
 
+class _PartialSmartDnsBootstrapper extends _QaProfileFailureBootstrapper {
+  _PartialSmartDnsBootstrapper(Directory directory, this.catalog, this.providers, this.issueLease)
+      : super(directory) { cached.cacheAvailable = false; }
+  final VerifiedRoutingCatalog catalog;
+  final VerifiedSmartAccessProviderPolicy providers;
+  final Future<VerifiedSmartAccessLease> Function(String) issueLease;
+  int leaseRequests = 0;
+
+  @override
+  bool get firstProviderQaConfigured => false;
+  @override
+  bool get smartAccessEnabled => true;
+  @override
+  bool get smartAccessControlAvailable => true;
+  @override
+  Future<ClientSubscriptionInfo> fetchClientSubscription({required HostPlatform hostPlatform,
+      Duration? requestTimeout, Future<void>? cancelled}) async => ClientSubscriptionInfo.fromJson({
+        'lane': 'paidUnlimited', 'access_state': 'paid_unlimited', 'smart_access_eligible': true,
+      });
+  @override
+  Future<RoutingCatalogFetchResult?> fetchRoutingCatalog({required HostPlatform hostPlatform,
+      bool cacheOnly = false, Future<void>? cancelled}) async =>
+      RoutingCatalogFetchResult(catalog: catalog, usingCache: false);
+  @override
+  Future<VerifiedSmartAccessProviderPolicy> fetchSmartAccessProviders({required HostPlatform hostPlatform,
+      required bool Function() operationIsCurrent, required Duration remainingBudget,
+      required Future<void> cancelled}) async => providers;
+  @override
+  Future<VerifiedSmartAccessLease> requestSmartAccessLease({required HostPlatform hostPlatform,
+      required VerifiedRoutingCatalog catalog, required VerifiedSmartAccessProviderPolicy providerPolicy,
+      required String capabilityId, required String profileSha256, required String origin,
+      required String family, required String feature, String routeMode = 'selective',
+      required bool Function() operationIsCurrent, required Duration remainingBudget,
+      required Future<void> cancelled}) {
+    leaseRequests++;
+    return issueLease(profileSha256);
+  }
+}
+
+Future<Map<String, Object?>> _signedSmartDns(Map<String, Object?> payload,
+    String purpose, SimpleKeyPair key) async {
+  Object? sorted(Object? value) {
+    if (value is Map) return {for (final key in value.keys.cast<String>().toList()..sort()) key: sorted(value[key])};
+    if (value is List) return value.map(sorted).toList();
+    return value;
+  }
+  final body = jsonEncode(sorted(payload));
+  final signature = await Ed25519().sign(utf8.encode('$purpose\n$body'), keyPair: key);
+  return {'algorithm': 'Ed25519', 'key_id': 'fixture', 'payload': payload,
+    'payload_sha256': await smartAccessProfileSha256(body),
+    'signature_b64': base64UrlEncode(signature.bytes).replaceAll('=', '')};
+}
+
+String _smartDnsTime(DateTime time) => '${time.toUtc().toIso8601String().split('.').first}Z';
+
+Future<({VerifiedRoutingCatalog catalog, VerifiedSmartAccessProviderPolicy providers,
+    SmartAccessVerifier verifier, SimpleKeyPair key})> _smartDnsFixture() async {
+  final now = DateTime.now().toUtc();
+  final start = _smartDnsTime(now.subtract(const Duration(minutes: 1)));
+  final end = _smartDnsTime(now.add(const Duration(hours: 1)));
+  final key = await Ed25519().newKeyPair();
+  final public = base64Encode((await key.extractPublicKey()).bytes);
+  final verifier = SmartAccessVerifier(providerKeysById: {'fixture': public},
+      leaseKeysById: {'fixture': public}, audience: 'lab');
+  final digest = await smartAccessProfileSha256('synthetic SmartDNS fixture');
+  const domains = [
+    {'name': 'gemini.google.com', 'match': 'exact'},
+    {'name': 'geminiweb-pa.clients6.google.com', 'match': 'exact'},
+  ];
+  final catalog = await RoutingCatalogVerifier(publicKeysById: {'fixture': public}, audience: 'lab').verify(
+      await _signedSmartDns({
+        'schema_version': 'pokrov-routing-catalog-v1', 'revision': 1, 'security_revision': 1,
+        'audience': 'lab', 'issued_at': start, 'expires_at': end,
+        'sources': [{'source_id': 'fixture', 'url': 'https://fixture.example.test/', 'revision': '1',
+          'sha256': digest, 'license': 'test', 'retrieved_at': start, 'expires_at': end}],
+        'evidence': [{'evidence_id': 'fixture', 'service_id': 'gemini', 'source_ids': ['fixture'],
+          'sha256': digest, 'origin': 'current-origin', 'observed_at': start, 'expires_at': end}],
+        'services': [{'service_id': 'gemini', 'display_name': 'Gemini', 'categories': ['ai'],
+          'enabled': true, 'classification': 'geo_restricted', 'reason': 'Synthetic test',
+          'evidence_status': 'verified', 'source_ids': ['fixture'], 'evidence_ids': ['fixture'],
+          'platforms': ['windows'], 'access_states': ['paid_unlimited'],
+          'route_intents': [{'mode': 'selective', 'action': 'approved_gateway'}],
+          'android': [], 'windows': [], 'networks': [], 'external_gateway_policy': 'approved',
+          'provider_capability_refs': ['gemini-old', 'gemini-complete'],
+          'domains': [for (final domain in domains) {...domain, 'shared': false, 'role': 'web', 'source_ids': ['fixture']}]}],
+      }, 'pokrov-routing-catalog-v1', key), now: now, minimumRevision: 0,
+      minimumSecurityRevision: 1, currentPayloadSha256: null);
+  final providers = await verifier.verifyProvider(await _signedSmartDns({
+    'schema_version': 'pokrov-smart-access-providers-v1', 'revision': 1, 'security_revision': 1,
+    'audience': 'lab', 'issued_at': start, 'expires_at': end,
+    'permissions': [for (final id in ['old', 'complete']) {
+      'permission_id': id, 'provider_id': id, 'revision': 1, 'status': 'approved', 'embedded_use_allowed': true,
+      'review_ref': 'fixture', 'review_sha256': digest, 'issued_at': start, 'expires_at': end,
+      'max_new_connections_per_minute': 1, 'max_concurrent_connections_per_lease': 1, 'relay_connect_policy': null}],
+    'providers': [for (final id in ['old', 'complete']) {
+      'provider_id': id, 'revision': 1, 'kind': id == 'old' ? 'owned' : 'external', 'enabled': true,
+      'permission_id': id, 'resolver_url': 'https://dns.example.test/dns-query',
+      'relay_addresses': [id == 'old' ? '1.1.1.1' : '2606:4700:4700::1111'],
+      'privacy_review_ref': 'fixture', 'privacy_review_sha256': digest}],
+    'capabilities': [for (final id in ['old', 'complete']) {
+      'capability_id': 'gemini-$id', 'provider_id': id, 'provider_revision': 1, 'service_id': 'gemini',
+      'enabled': true, 'verification': 'verified', 'platform': 'windows', 'origin': 'current-origin',
+      'family': id == 'old' ? 'ipv4' : 'ipv6', 'feature': 'web_request', 'transport': 'tls_tcp_443_visible_sni',
+      'checks': {for (final name in ['resolver_transport', 'dns_answer', 'tls_certificate', 'feature_request']) name: 'PASS'},
+      'domains': id == 'old' ? [domains.first] : domains,
+      'proof_ref': 'fixture', 'proof_sha256': digest, 'observed_at': start, 'expires_at': end}],
+  }, 'pokrov-smart-access-providers-v1', key), now: now, minimumRevision: 0,
+      minimumSecurityRevision: 1, currentPayloadSha256: null);
+  return (catalog: catalog, providers: providers, verifier: verifier, key: key);
+}
+
 class _StartupAccountBootstrapper extends _StatsBootstrapper implements AppFirstClientDataService {
   int subscriptionReads = 0;
   ClientSubscriptionInfo? subscription;
@@ -444,6 +556,9 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   bool supportsCandidates = false;
   bool supportsSlipstreamClient = true;
   bool coreInitializationPending = false;
+  int routingCatalogWindowVersion = 0;
+  int routingCatalogControlVersion = 0;
+  int smartAccessLeaseVersion = 0;
   Duration probeDelay = Duration.zero;
   Duration probeDuration = Duration.zero;
   final probeTimeouts = <Duration>[];
@@ -619,6 +734,9 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
             ? '/test/profile.json'
             : null,
         supportsLiveConnect: true,
+        routingCatalogWindowVersion: routingCatalogWindowVersion,
+        routingCatalogControlVersion: routingCatalogControlVersion,
+        smartAccessLeaseVersion: smartAccessLeaseVersion,
         protectionRetained: restoredHandoffGuard,
         canInitialize: phase == RuntimePhase.artifactReady || coreInitializationPending,
         canConnect: phase.index >= RuntimePhase.configStaged.index,
@@ -5052,6 +5170,88 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.actionRequired);
     expect(manager.presentation.isVerified, isFalse);
     expect(runtime.connectCalls, 2, reason: 'signature failure cannot fall through to the VPN cache');
+  });
+
+  test('SmartDNS complete scope wins before affinity and partial local access uses VPN fallback', () async {
+    final fixture = await _smartDnsFixture();
+    final now = DateTime.now().toUtc();
+    Future<List<Map<String, Object?>>> select(VerifiedSmartAccessProviderPolicy providers,
+        {String provider = ''}) => selectSmartAccessWebCapabilities(
+      catalog: fixture.catalog, providers: providers, serviceIds: {'gemini'}, platform: 'windows',
+      now: now, selectionSeed: '01' * 32, isCurrent: () => true,
+      preferredCapabilityIds: {'gemini': 'gemini-old'}, selectedProviderId: provider);
+    expect((await select(fixture.providers)).map((row) => row['capability_id']), ['gemini-complete'],
+      reason: 'complete IPv6/external scope must outrank old IPv4/owned affinity');
+    expect((await select(fixture.providers, provider: 'old')).map((row) => row['capability_id']), ['gemini-old'],
+      reason: 'manual provider identity must not be replaced by a complete provider');
+    final old = (fixture.providers.payload['capabilities']! as List).first as Map<String, Object?>;
+    final partial = await fixture.verifier.verifyProvider(await _signedSmartDns({
+      ...fixture.providers.payload, 'capabilities': [old],
+    }, 'pokrov-smart-access-providers-v1', fixture.key), now: now, minimumRevision: 0,
+        minimumSecurityRevision: 1, currentPayloadSha256: null);
+    expect((await select(partial)).map((row) => row['capability_id']), ['gemini-old'],
+      reason: 'a partial capability remains available for a VPN-backed profile');
+
+    final directory = await Directory.systemTemp.createTemp('pokrov-partial-smart-dns-');
+    addTearDown(() => _deleteTestDirectory(directory));
+    final bootstrapper = _PartialSmartDnsBootstrapper(directory, fixture.catalog, partial, (profile) async {
+      const nonce = '0123456789abcdef0123456789abcdef';
+      final issued = DateTime.now().toUtc().subtract(const Duration(seconds: 1));
+      final request = <String, Object?>{'request_nonce': nonce, 'profile_sha256': profile,
+        'route_mode': 'selective', 'capability_id': 'gemini-old',
+        'catalog_sha256': fixture.catalog.payloadSha256, 'provider_policy_sha256': partial.payloadSha256,
+        for (final field in ['platform', 'origin', 'family', 'feature']) field: old[field]};
+      final envelope = await _signedSmartDns({
+        'schema_version': 'pokrov-smart-access-grant-v1', 'request_nonce': nonce,
+        'device_binding': await smartAccessProfileSha256(
+          'pokrov-smart-access-device-v1\u0000$nonce\u0000synthetic-account\u0000synthetic-install'),
+        'profile_sha256': profile, 'route_mode': 'selective',
+        'lease': {'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': nonce, 'audience': 'lab',
+          'provider_id': 'old', 'provider_revision': 1, 'permission_id': 'old', 'permission_revision': 1,
+          'capability_id': 'gemini-old', 'provider_policy_revision': 1, 'provider_security_revision': 1,
+          'provider_policy_sha256': partial.payloadSha256, 'catalog_revision': 1, 'catalog_security_revision': 1,
+          'catalog_sha256': fixture.catalog.payloadSha256,
+          for (final field in ['service_id', 'platform', 'origin', 'family', 'feature', 'transport', 'domains']) field: old[field],
+          'issued_at': _smartDnsTime(issued),
+          'new_flows_until': _smartDnsTime(issued.add(const Duration(minutes: 5))),
+          'active_flows_until': _smartDnsTime(issued.add(const Duration(minutes: 10))),
+          'resolver_url': 'https://dns.example.test/dns-query', 'relay_addresses': ['1.1.1.1'],
+          'max_new_connections_per_minute': 1, 'max_concurrent_connections': 1, 'relay_connect_policy': null},
+      }, 'pokrov-smart-access-grant-v1', fixture.key);
+      return fixture.verifier.verifyLease(envelope, request: request,
+        accountId: 'synthetic-account', installId: 'synthetic-install', catalog: fixture.catalog,
+        providerPolicy: partial, now: DateTime.now().toUtc());
+    });
+    final runtime = _Runtime(hostPlatform: HostPlatform.windows)
+      ..routingCatalogWindowVersion = 1..routingCatalogControlVersion = 4..smartAccessLeaseVersion = 1;
+    final manager = _manager(runtime, bootstrapper,
+      authorizeWindows: () async => PokrovWindowsTunnelAuthorization.allowed);
+    addTearDown(manager.dispose);
+    manager.updateExperience(const PokrovClientExperienceState.empty().copyWith(
+      routingPreferences: const PokrovRoutingPreferences.defaults().copyWith(selectedCatalogServiceIds: {'gemini'})));
+    manager.selectRouteMode(RouteMode.selectiveServices);
+    await manager.connect();
+    expect(bootstrapper.leaseRequests, 1, reason: 'local preparation obtained the old single-host lease');
+    expect(bootstrapper.cached.resolutions, isNotEmpty,
+      reason: 'the unleased RPC host must reject local success and enter the existing VPN resolver');
+    expect(manager.status.phase, ConnectionPhase.actionRequired,
+      reason: 'the synthetic VPN resolver is unavailable; partial local service is not connected');
+    expect(manager.presentation.isVerified, isFalse);
+    expect(runtime.stagedPayloads, isEmpty, reason: 'a partial local profile must never be staged as DNS-only');
+    expect(runtime.connectCalls, 0);
+  });
+
+  test('catalog DNS lane failure asks to check DNS settings', () async {
+    final runtime = _Runtime();
+    final bootstrapper = _CatalogFailureBootstrapper()
+      ..catalogFailure = const RoutingCatalogFailure('catalog_dns_lane_invalid');
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(manager.status.phase, ConnectionPhase.actionRequired);
+    expect(manager.headline,
+      'Не удалось применить настройки DNS. Проверьте выбранный DNS и повторите подключение.');
+    expect(runtime.connectCalls, 0);
   });
 
   test('catalog clock rollback asks to check device time', () async {
