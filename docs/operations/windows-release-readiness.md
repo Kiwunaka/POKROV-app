@@ -1,5 +1,16 @@
 # Windows acceptance
 
+Private Android and Windows **1.5.0+4234**, App `34a2533c`, include the Russia Direct
+LocalDPI diagnostics and DNSTT naming changes. The four production-signed APKs,
+unsigned Windows setup and ZIP containing only its byte-identical `POKROV-Setup.exe`
+passed package checks with production trust and ATS=false. Android reuses Core
+`8897fd8`; Windows reuses `2b2354f` / 1.2.14 / ABI2. Core was not rebuilt.
+Packages are retained in `E:/POKROV-tools/temp/release-1.5.0-4234`.
+No 4234 device installation or runtime acceptance was performed; earlier results
+below retain their stated scope. Public 1.4.5 and draft 4175 are unchanged.
+
+## Earlier 4233 and 4232 acceptance
+
 Updated 27 October 2026. Public version remains **1.4.5**; the seven-asset
 **1.5.0+4175** draft is unchanged. Windows **4232**, App `376cd9c9` /
 Core `2b2354f` / 1.2.14, passed the scoped runtime retry case after the App
