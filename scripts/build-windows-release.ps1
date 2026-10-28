@@ -6,6 +6,7 @@ param(
   [switch]$OfflinePubGet,
   [string]$CoreRoot,
   [string]$RuntimeArtifactsPath,
+  [string]$WindowsReleasePath,
   [string]$CoreArtifactDirectory,
   [string]$SupportSigningKeyId = $env:POKROV_SUPPORT_SIGNING_KEY_ID,
   [string]$SupportSigningPublicKey = $env:POKROV_SUPPORT_SIGNING_PUBLIC_KEY_B64,
@@ -39,6 +40,7 @@ if ($CoreRoot) {
   $versionParityArguments.CoreRoot = $CoreRoot
 }
 if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
+if ($WindowsReleasePath) { $versionParityArguments.WindowsReleasePath = $WindowsReleasePath }
 
 $SupportSigningKeyId = [string]$SupportSigningKeyId
 $SupportSigningPublicKey = [string]$SupportSigningPublicKey
@@ -450,7 +452,9 @@ function Invoke-TrustedAuthenticodeSigning {
 }
 
 $root = Split-Path -Parent $PSScriptRoot
-$windowsReleaseConfigPath = Join-Path $root "config\\windows-release.seed.json"
+$windowsReleaseConfigPath = if ($WindowsReleasePath) {
+  (Resolve-Path -LiteralPath $WindowsReleasePath -ErrorAction Stop).Path
+} else { Join-Path $root "config\\windows-release.seed.json" }
 $windowsReleaseConfig = Get-Content -Raw -LiteralPath $windowsReleaseConfigPath | ConvertFrom-Json
 $appDirectory = Join-Path $root "apps\\windows_shell"
 $pubspecPath = Join-Path $appDirectory "pubspec.yaml"

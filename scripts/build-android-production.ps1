@@ -7,6 +7,7 @@ param(
   [string]$TransportTrustDefinesFile,
   [string]$CoreRoot,
   [string]$RuntimeArtifactsPath,
+  [string]$WindowsReleasePath,
   [string]$CoreArtifactDirectory,
   [switch]$SyncRuntime,
   [switch]$Arm64Only
@@ -68,6 +69,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $versionParityArguments = @{ Platforms = @("android") }
 if ($CoreRoot) { $versionParityArguments.CoreRoot = $CoreRoot }
 if ($RuntimeArtifactsPath) { $versionParityArguments.RuntimeArtifactsPath = $RuntimeArtifactsPath }
+if ($WindowsReleasePath) { $versionParityArguments.WindowsReleasePath = $WindowsReleasePath }
 # A manifest also validates an already installed runtime; copying is explicit.
 if ($SyncRuntime -or $CoreArtifactDirectory) {
   $syncArguments = @{ Platforms = @("android") }
