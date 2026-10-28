@@ -1963,8 +1963,21 @@ class ConnectionManager extends ChangeNotifier {
     Future<RuntimeSnapshot> Function() action,
   ) async {
     if (_runtimeBusy) throw const ConnectionOperationSuperseded();
+    final qa = _activeFirstProviderQa;
+    final engine = _runtimeEngine;
+    // Observing the same native QA Connect must not cancel its first control
+    // response or discard its proof. Connection commands still advance ownership.
+    final observingQa = qa != null && qa.requestId != null && engine is RuntimeConnectCancellation &&
+        (engine as RuntimeConnectCancellation).activeConnectRequestId == qa.requestId &&
+        _connectionCoordinator.ownsOperation(qa.generation) && qa.profileRevision == _managedProfileRevision &&
+        (_activeCandidateRef ?? _candidateRef) == qa.transportCandidateRef &&
+        _runtimeSnapshot?.isCleanlyHealthy == true && _runtimeSnapshot?.protectionRetained == false &&
+        qa.profileDigest != null && _runtimeSnapshot?.effectiveProfileDigest == qa.profileDigest &&
+        _runtimeSnapshot?.coreModuleSha256 == qa.permit.payload['core_module_sha256'] &&
+        !_accessDenialPending && !_cachedProfileFallbackGate.authorizationDenied &&
+        DateTime.now().toUtc().isBefore(qa.permit.expiresAt);
     _update(() {
-      _runtimeBusy = true;
+      _connectionCoordinator.updateActionInFlight(true, preserveOperation: observingQa);
     });
     final generation = _connectionCoordinator.operationGeneration;
 

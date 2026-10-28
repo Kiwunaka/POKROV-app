@@ -1300,8 +1300,8 @@ class ConnectionCoordinator {
     }
   }
 
-  void updateActionInFlight(bool value) {
-    if (value && !_actionInFlight) {
+  void updateActionInFlight(bool value, {bool preserveOperation = false}) {
+    if (value && !_actionInFlight && !preserveOperation) {
       _advanceOperation();
     }
     _actionInFlight = value;

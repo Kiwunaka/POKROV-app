@@ -3238,6 +3238,13 @@ retains its claimed scope while the staged profile has no effective digest yet.
 An operation change or known access denial still invalidates that scope; the
 existing account/device, Core, profile and permit-expiry checks remain required
 before control delivery.
+Read-only runtime refresh preserves that operation only while the same native
+QA Connect request, acknowledged profile digest, Core, selected candidate and
+profile revision still match a healthy runtime with current access and permit.
+Foreground resume then retains the pending first control response and confirmed
+proof without retrying the request. Connection commands keep their existing
+ownership change; a different native request cannot inherit the QA scope even
+when it loads the same profile bytes.
 
 Selective VPN routes the exact bootstrap/control origins `app.pokrov.space`
 and `api.pokrov.space` through the existing VPN TCP/443 and DNS rules. The

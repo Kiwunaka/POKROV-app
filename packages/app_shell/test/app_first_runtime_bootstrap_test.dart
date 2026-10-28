@@ -502,6 +502,7 @@ void main() {
     final start = wire(now.subtract(const Duration(seconds: 1)));
     final end = wire(now.add(const Duration(hours: 1)));
     final qaEnd = wire(now.add(const Duration(minutes: 5)));
+    const qaAudience = String.fromEnvironment('POKROV_SMART_ACCESS_AUDIENCE', defaultValue: 'production');
     final key = await Ed25519().newKeyPairFromSeed(List.generate(32, (i) => i + 1));
     final public = base64Encode((await key.extractPublicKey()).bytes);
     final coreHash = await _qaDigest('actual fixture core');
@@ -515,13 +516,13 @@ void main() {
       'domains': [for (final name in domainNames) {'name': name, 'match': 'exact', 'shared': false, 'role': 'web', 'source_ids': ['qa-source']}],
       'networks': <Object>[], 'provider_capability_refs': <Object>[], 'external_gateway_policy': 'forbidden'};
     final catalogEnvelope = await _qaSigned({'schema_version': 'pokrov-routing-catalog-v1', 'revision': 1,
-      'security_revision': 1, 'audience': 'lab', 'issued_at': start, 'expires_at': end,
+      'security_revision': 1, 'audience': qaAudience, 'issued_at': start, 'expires_at': end,
       'sources': [{'source_id': 'qa-source', 'url': 'https://source.example.test/', 'revision': '1',
         'sha256': await _qaDigest('source'), 'license': 'test', 'retrieved_at': start, 'expires_at': end}],
       'evidence': [{'evidence_id': 'domain-review', 'service_id': serviceId, 'source_ids': ['qa-source'],
-        'sha256': await _qaDigest('domain metadata'), 'origin': 'synthetic', 'observed_at': start, 'expires_at': end}],
+        'sha256': await _qaDigest('domain metadata'), 'origin': 'current-origin', 'observed_at': start, 'expires_at': end}],
       'services': [service]}, 'pokrov-routing-catalog-v1', key);
-    final catalogVerifier = RoutingCatalogVerifier(publicKeysById: {'qa-test': public}, audience: 'lab');
+    final catalogVerifier = RoutingCatalogVerifier(publicKeysById: {'qa-test': public}, audience: qaAudience);
     final catalog = await catalogVerifier.verify(catalogEnvelope, now: now, minimumRevision: 0,
       minimumSecurityRevision: 1, currentPayloadSha256: null);
     final policy = RoutingCatalogPolicy.fromVerified(catalog);
@@ -543,7 +544,7 @@ void main() {
       'transport': 'tls_tcp_443_visible_sni', 'domains': [for (final name in domainNames) {'name': name, 'match': 'exact'}],
       'proof_ref': 'unverified-proof', 'proof_sha256': await _qaDigest('unverified proof'), 'observed_at': start, 'expires_at': end};
     final providerHash = await _qaDigest(jsonEncode(_qaSorted({'schema_version': 'pokrov-smart-access-providers-v1',
-      'revision': 1, 'security_revision': 1, 'audience': 'lab', 'issued_at': start, 'expires_at': end,
+      'revision': 1, 'security_revision': 1, 'audience': qaAudience, 'issued_at': start, 'expires_at': end,
       'permissions': [permission], 'providers': [provider], 'capabilities': [capability]})));
     String? installId;
     Map<String, Object?>? permitEnvelope;
@@ -551,6 +552,8 @@ void main() {
     var claimPosts = 0;
     var controlPosts = 0;
     var terminateQa = false;
+    late ConnectionManager manager;
+    final controlResumeCompleted = Completer<void>();
     final requests = <String>[];
     final controlDeadline = controlFailure == 'control_deadline';
     final actionTimeout = Duration(seconds: controlDeadline ? 2 : 18);
@@ -613,7 +616,7 @@ void main() {
             final issued = wire(DateTime.now().toUtc().add(hostPlatform == HostPlatform.android
                 ? const Duration(seconds: 2) : Duration.zero));
             final lease = <String, Object?>{'schema_version': 'pokrov-smart-access-lease-v1', 'lease_id': leaseId,
-              'audience': 'lab', 'provider_id': 'owned-provider', 'provider_revision': 1, 'permission_id': 'owned-permission',
+              'audience': qaAudience, 'provider_id': 'owned-provider', 'provider_revision': 1, 'permission_id': 'owned-permission',
               'permission_revision': 1, 'capability_id': '$serviceId-qa', 'provider_policy_revision': 1, 'provider_security_revision': 1,
               'provider_policy_sha256': providerHash, 'catalog_revision': 1, 'catalog_security_revision': 1,
               'catalog_sha256': catalog.payloadSha256, 'service_id': serviceId, 'platform': hostPlatform.name, 'origin': 'current-origin',
@@ -635,6 +638,11 @@ void main() {
             reply = {'schema': 'smart-access-first-provider-qa-response-v1', 'envelope': permitEnvelope};
           case '/api/client/smart-access/first-provider-qa/control':
             controlPosts++;
+            if (refreshDuringStart && controlPosts == 1) {
+              expect(manager.busy, isFalse);
+              await manager.resume();
+              controlResumeCompleted.complete();
+            }
             final issued = DateTime.now().toUtc().add(hostPlatform == HostPlatform.android
                 ? const Duration(seconds: 2) : Duration.zero);
             reply = {'schema': 'smart-access-first-provider-qa-control-response-v1',
@@ -642,7 +650,7 @@ void main() {
               'envelope': await _qaSigned({'schema_version': 'pokrov-smart-access-control-v1',
                 'request_nonce': body['request_nonce'],
                 'device_binding': await _qaDigest('pokrov-smart-access-device-v1\u0000${body['request_nonce']}\u0000synthetic-qa-account\u0000$installId'),
-                'profile_digest': body['profile_digest'], 'platform': hostPlatform.name, 'audience': 'lab',
+                'profile_digest': body['profile_digest'], 'platform': hostPlatform.name, 'audience': qaAudience,
                 'action': terminateQa ? 'terminate' : 'none', 'reason': terminateQa ? 'access_denied' : 'current',
                 'issued_at': wire(issued), 'expires_at': wire(issued.add(const Duration(seconds: 60)))},
                 'pokrov-smart-access-control-v1', key)};
@@ -682,7 +690,7 @@ void main() {
       allExceptRuRuleSetUrlsResolver: (_) => const [],
       routingCatalogStore: RoutingCatalogStore(enabled: true, verifier: catalogVerifier),
       smartAccessPolicyStore: SmartAccessPolicyStore(enabled: false,
-        verifier: SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab')));
+        verifier: SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: qaAudience)));
     final localWindows = bootstrapper.buildLocalSmartAccessBase(hostPlatform: hostPlatform);
     expect(localWindows.disableMemoryLimit, hostPlatform == HostPlatform.windows);
     expect(localWindows.copyWith(configPayload: localWindows.configPayload).disableMemoryLimit, hostPlatform == HostPlatform.windows,
@@ -711,7 +719,6 @@ void main() {
     final resumeWifiEntered = Completer<void>();
     final resumeWifi = Completer<PokrovWifiNetworkStatus>();
     Future<void>? pendingResume;
-    late ConnectionManager manager;
     var wifiReads = 0;
     const channel = MethodChannel('space.pokrov/runtime_engine');
     final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -816,7 +823,7 @@ void main() {
           }
           final config = jsonDecode(args['configJson'] as String) as Map;
           expect(config['capability'], startsWith('saqa1.'));
-          expect(config['profile_digest'], phase['stagedProfileDigest']);
+          expect(config['profile_digest'], phase['stagedProfileDigest'] ?? phase['effectiveProfileDigest']);
           final lease = (staged!['outbounds'] as List).cast<Map>()
               .singleWhere((outbound) => outbound['type'] == 'pokrov-smart-access');
           expect(config['issued_at'], lease['issued_at']);
@@ -933,8 +940,9 @@ void main() {
     await manager.startFirstProviderQa(admission);
     expect(manager.status.phase, ConnectionPhase.connected, reason: manager.headline);
     if (refreshDuringStart) {
+      await controlResumeCompleted.future.timeout(const Duration(seconds: 5));
       expect((await manager.readFirstProviderQaContext())?['control_delivery'], 'confirmed',
-        reason: 'a late foreground refresh must retain the pending QA owner until exact native Start completes');
+        reason: 'foreground observation must retain the QA owner during Start and its first control response');
       expect(controlPosts, 1);
     }
     expect(nativeCalls.where((method) => method == 'runtimeEngine.probeCandidate'), hasLength(1));
@@ -1005,6 +1013,15 @@ void main() {
     expect(context['proof_current'], isTrue);
     expect(context['fallback_guard_closed'], isFalse);
     expect(context['feature_request'], 'NOT_VERIFIED');
+    if (refreshDuringStart) {
+      await manager.resume();
+      final resumed = await manager.readFirstProviderQaContext();
+      expect(resumed?['proof_current'], isTrue,
+        reason: 'foreground observation must retain the same native QA Connect owner');
+      expect(resumed?['request_id'], context['request_id']);
+      expect(resumed?['profile_digest'], context['profile_digest']);
+      expect(resumed?['generation'], context['generation']);
+    }
     probeId = 2;
     expect((await manager.readFirstProviderQaContext())!['probe_id'], 1, reason: 'same live scope keeps the atomic first completion');
     guardClosed = true;
@@ -1012,7 +1029,7 @@ void main() {
     expect(closedContext!['native_stages'], 'NOT_VERIFIED');
     expect(closedContext['proof_current'], isFalse);
     expect(closedContext['fallback_guard_closed'], isTrue);
-    final verifier = SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: 'lab');
+    final verifier = SmartAccessVerifier(providerKeysById: {}, leaseKeysById: {'qa-test': public}, audience: qaAudience);
     if (hostPlatform == HostPlatform.android) {
       final payload = permitEnvelope!['payload'] as Map;
       for (final checkedAt in [
@@ -1027,7 +1044,7 @@ void main() {
     }
     if (serviceId == 'gemini' && hostPlatform == HostPlatform.windows) {
       final publicVerifier = SmartAccessVerifier(providerKeysById: {'qa-test': public},
-          leaseKeysById: {'qa-test': public}, audience: 'lab');
+          leaseKeysById: {'qa-test': public}, audience: qaAudience);
       final localProfileDigest = await smartAccessProfileSha256(localWindows.configPayload);
       Future<({VerifiedSmartAccessLease grant, VerifiedRoutingCatalog catalog})> publicLease(String kind,
           {bool approved = true, String match = 'exact'}) async {
@@ -1044,7 +1061,7 @@ void main() {
             minimumRevision: 0, minimumSecurityRevision: 1, currentPayloadSha256: null);
         final publicPolicyEnvelope = await _qaSigned({
           'schema_version': 'pokrov-smart-access-providers-v1', 'revision': 1,
-          'security_revision': 1, 'audience': 'lab', 'issued_at': start, 'expires_at': end,
+          'security_revision': 1, 'audience': qaAudience, 'issued_at': start, 'expires_at': end,
           'permissions': [permission], 'providers': [{...provider, 'kind': kind}],
           'capabilities': [{...capability, 'enabled': true, 'verification': 'verified',
             'checks': {for (final name in (capability['checks'] as Map).keys.cast<String>()) name: 'PASS'},
@@ -1134,14 +1151,35 @@ void main() {
       platform: hostPlatform == HostPlatform.android ? 'windows' : 'android', now: DateTime.now().toUtc()),
       throwsA(isA<RoutingCatalogFailure>().having((error) => error.code, 'code', 'smart_access_qa_projection_invalid')));
     expect(manager.firstProviderQaAdmissionId, isNull, reason: 'one explicit attempt cannot be renewed');
-    terminateQa = true;
-    await manager.refresh();
-    expect(nativeCalls.where((method) => method == 'runtimeEngine.revokeSmartAccessLease'), hasLength(1));
-    expect(nativeCalls, isNot(contains('runtimeEngine.revokeRoutingCatalog')));
-    expect(manager.status.phase, ConnectionPhase.connected, reason: 'QA termination closes the member, not ordinary VPN access');
+    if (serviceId == 'chatgpt') {
+      final oldRequest = nativeBoundRequestId!;
+      final digest = context['profile_digest']! as String;
+      expect(await (runtime as RuntimeConnectSettlement).cancelAndConfirmConnectStopped(oldRequest), isTrue);
+      phase.addAll({'phase': 'configStaged', 'stagedProfileDigest': digest});
+      await (runtime as RuntimeCoreIdentityConnect).connectWithCoreIdentity(
+        expectedCoreModuleSha256: coreHash, expectedProfileDigest: digest,
+        expectedNetworkContextRef: networkRef,
+        budgetStartedAt: RuntimeBootClockSnapshot.fromWire(
+          {'schema': 1, 'boot_ref': bootRef, 'elapsed_ms': 1000, 'quantum_ms': 1}, hostPlatform),
+        budget: actionTimeout, onRequestCreated: (_) {});
+      expect(nativeBoundRequestId, isNot(oldRequest));
+      final postsBeforeResume = controlPosts;
+      await manager.resume();
+      expect(await manager.readFirstProviderQaContext(),
+        {'control_delivery': 'confirmed', 'control_native_accepted': true},
+        reason: 'the same digest under another native Connect cannot inherit the QA owner');
+      expect(controlPosts, postsBeforeResume);
+    } else {
+      terminateQa = true;
+      await manager.refresh();
+      expect(nativeCalls.where((method) => method == 'runtimeEngine.revokeSmartAccessLease'), hasLength(1));
+      expect(nativeCalls, isNot(contains('runtimeEngine.revokeRoutingCatalog')));
+      expect(manager.status.phase, ConnectionPhase.connected, reason: 'QA termination closes the member, not ordinary VPN access');
+    }
     await manager.disconnect();
     expect(await manager.readFirstProviderQaContext(),
-      {'control_delivery': 'confirmed', 'control_native_accepted': true},
+      serviceId == 'chatgpt' ? {'control_delivery': 'confirmed', 'control_native_accepted': true}
+        : {'control_delivery': 'terminated'},
       reason: 'disconnect retains only the closed control diagnostic, without live lease or proof bindings');
 
     // Recreate an unconfirmed native Connect with the UI's last staged snapshot.
