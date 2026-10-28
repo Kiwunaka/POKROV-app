@@ -13,6 +13,10 @@ import org.junit.Before
 import org.junit.Test
 
 class AndroidRuntimeStateTest {
+    class SlipstreamSetupOptions {
+        var clientPath: String? = null
+        fun setSlipstreamClientPath(path: String) { clientPath = path }
+    }
     @Before
     fun setUp() {
         resetState()
@@ -39,6 +43,25 @@ class AndroidRuntimeStateTest {
         assertEquals(inventory, snapshot["transportCapabilitiesJson"])
         assertNull(snapshot["runningSince"])
         assertNull(snapshot["last_failure_kind"])
+        assertEquals(false, snapshot["slipstreamClientReady"])
+    }
+
+    @Test
+    fun slipstreamSetup_usesOnlyTheExtractedBundledExecutable_andRequiresItsOptionalSetter() {
+        val nativeDirectory = Files.createTempDirectory("pokrov-slipstream-").toFile()
+        try {
+            val options = SlipstreamSetupOptions()
+            assertFalse(AndroidRuntimeState.configureSlipstreamClient(options, nativeDirectory.absolutePath))
+            val client = File(nativeDirectory, "libslipstream.so").apply {
+                writeBytes(byteArrayOf(1))
+                setExecutable(true)
+            }
+            assertTrue(AndroidRuntimeState.configureSlipstreamClient(options, nativeDirectory.absolutePath))
+            assertEquals(client.absolutePath, options.clientPath)
+            assertFalse(AndroidRuntimeState.configureSlipstreamClient(Any(), nativeDirectory.absolutePath))
+        } finally {
+            nativeDirectory.deleteRecursively()
+        }
     }
 
     @Test
@@ -766,6 +789,7 @@ class AndroidRuntimeStateTest {
     private fun resetState() {
         setPrivateField("environment", null)
         setPrivateField("transportCapabilitiesJson", null)
+        setPrivateField("slipstreamClientReady", false)
         setPrivateField("phase", AndroidRuntimePhase.ARTIFACT_MISSING)
         setPrivateField("stagedConfigPath", null)
         setPrivateField("stagedProfileDigest", null)

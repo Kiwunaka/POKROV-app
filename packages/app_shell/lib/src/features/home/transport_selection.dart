@@ -94,7 +94,7 @@ class TransportSelectionContext {
     // Admission guarantees a single revision for each platform/module pair.
     final bindings = <String, TransportCapabilityBinding>{
       for (final binding in matching)
-        if (inventory.features.containsAll(binding.requiredFeatures)) binding.capabilityRef: binding,
+        if (runtime.availableTransportFeatures.containsAll(binding.requiredFeatures)) binding.capabilityRef: binding,
     };
     if (bindings.isEmpty) _transportSelectionFail('core_features_unavailable');
     return TransportSelectionContext._(networkContextRef: networkContextRef, networkSource: networkSource,
@@ -134,7 +134,8 @@ class TransportSelectionContext {
       runtime.hostPlatform == hostPlatform &&
       runtime.coreModuleSha256 == artifactSha256 &&
       const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(runtime.phase) &&
-      runtime.transportCapabilities?.canonicalJson == coreInventoryJson;
+      runtime.transportCapabilities?.canonicalJson == coreInventoryJson &&
+      bindings.values.every((binding) => runtime.availableTransportFeatures.containsAll(binding.requiredFeatures));
 }
 
 enum TransportSelectionStage { profile, transport, dns, payload, egress }

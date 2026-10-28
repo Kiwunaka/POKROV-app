@@ -283,6 +283,8 @@ flutter::EncodableValue RuntimeSnapshotValue(
       snapshot.compatible && !snapshot.transport_capabilities_json.empty()
           ? flutter::EncodableValue(snapshot.transport_capabilities_json)
           : flutter::EncodableValue();
+  values[flutter::EncodableValue("slipstreamClientReady")] =
+      flutter::EncodableValue(snapshot.compatible && snapshot.slipstream_client_ready);
   values[flutter::EncodableValue("coreModuleSha256")] =
       snapshot.compatible && !snapshot.core_module_sha256.empty()
           ? flutter::EncodableValue(snapshot.core_module_sha256) : flutter::EncodableValue();

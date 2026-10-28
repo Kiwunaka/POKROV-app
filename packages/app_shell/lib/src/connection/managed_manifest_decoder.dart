@@ -83,6 +83,91 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     }
   }
 
+  void _validateSlipstreamMaterial(Object raw, TransportCandidate? candidate,
+      Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
+    try {
+      final config = _readMap(raw is String ? jsonDecode(raw) : raw);
+      final outbounds = (config['outbounds'] as List? ?? const []).map(_readMap).toList();
+      final carriers = outbounds.where((outbound) => outbound['type'] == 'slipstream').toList();
+      if (carriers.isEmpty && candidate?.transport != 'slipstream' && kind != 'slipstream') return;
+      _requirePremiumTransportAccess(access);
+      if (candidate?.transport != 'slipstream' ||
+          !runtimeFeatures.containsAll({RuntimeTransportFeature.vless, RuntimeTransportFeature.slipstreamVless}) ||
+          carriers.length != 1 ||
+          (config['endpoints'] is List && (config['endpoints'] as List).isNotEmpty)) {
+        throw const FormatException();
+      }
+      final leaf = outbounds.where((outbound) => outbound['type'] == 'vless').single;
+      final carrier = carriers.single;
+      bool exactKeys(Map<String, dynamic> value, Set<String> keys) =>
+          value.length == keys.length && value.keys.every(keys.contains);
+      if (!exactKeys(leaf, const {'type', 'tag', 'server', 'server_port', 'uuid', 'flow', 'network', 'detour'}) ||
+          leaf['tag'] != 'proxy' || leaf['server'] != '127.0.0.1' || leaf['server_port'] != 12543 ||
+          !RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+              .hasMatch(_readText(leaf['uuid'])) ||
+          leaf['flow'] != '' || leaf['network'] != 'tcp' || leaf['detour'] != 'dns-tunnel' ||
+          !exactKeys(carrier, const {'type', 'tag', 'domain', 'resolvers', 'certificate', 'network'}) ||
+          carrier['tag'] != 'dns-tunnel' || carrier['network'] != 'tcp') {
+        throw const FormatException();
+      }
+      final domain = _readText(carrier['domain']);
+      if (domain != carrier['domain'] || domain.length > 239 || !domain.contains('.') ||
+          domain.split('.').any((label) =>
+              !RegExp(r'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$').hasMatch(label))) {
+        throw const FormatException();
+      }
+      final resolver = (carrier['resolvers'] as List).single as String;
+      final address = resolver.endsWith(':53')
+          ? InternetAddress.tryParse(resolver.substring(0, resolver.length - 3)) : null;
+      if (address == null || address.type != InternetAddressType.IPv4 || '${address.address}:53' != resolver) {
+        throw const FormatException();
+      }
+      final b = address.rawAddress;
+      if (b[0] == 0 || b[0] == 10 || b[0] == 127 || b[0] >= 224 ||
+          (b[0] == 100 && b[1] >= 64 && b[1] <= 127) ||
+          (b[0] == 169 && b[1] == 254) || (b[0] == 172 && b[1] >= 16 && b[1] <= 31) ||
+          (b[0] == 192 && ((b[1] == 0 &&
+              ((b[2] == 0 && b[3] != 9 && b[3] != 10) || b[2] == 2)) || b[1] == 168)) ||
+          (b[0] == 198 && (b[1] == 18 || b[1] == 19 || (b[1] == 51 && b[2] == 100))) ||
+          (b[0] == 203 && b[1] == 0 && b[2] == 113)) {
+        throw const FormatException();
+      }
+      final certificate = carrier['certificate'];
+      if (certificate is! String ||
+          !RegExp(r'^-----BEGIN CERTIFICATE-----\r?\n[A-Za-z0-9+/=\r\n]+-----END CERTIFICATE-----$')
+              .hasMatch(certificate.trim())) {
+        throw const FormatException();
+      }
+      SecurityContext(withTrustedRoots: false).setTrustedCertificatesBytes(utf8.encode(certificate));
+      final tags = <String>{};
+      for (final outbound in outbounds) {
+        if (!tags.add(_readText(outbound['tag'])) ||
+            !const {'vless', 'slipstream', 'selector', 'urltest', 'direct', 'block', 'dns'}.contains(outbound['type']) ||
+            (outbound['type'] != 'vless' && outbound.containsKey('detour')) ||
+            outbound['default'] == 'dns-tunnel' ||
+            ((outbound['outbounds'] as List? ?? const []).contains('dns-tunnel'))) {
+          throw const FormatException();
+        }
+      }
+      void rejectCarrierRoute(Object? value) {
+        if (value is Map) {
+          for (final entry in value.entries) {
+            if (const {'outbound', 'final', 'detour'}.contains(entry.key) && entry.value == 'dns-tunnel') {
+              throw const FormatException();
+            }
+            rejectCarrierRoute(entry.value);
+          }
+        } else if (value is List) {
+          value.forEach(rejectCarrierRoute);
+        }
+      }
+      rejectCarrierRoute(config['route']);
+      rejectCarrierRoute(config['dns']);
+    } on Object {
+      throw const TransportManifestFailure('transport_catalog_profile_mismatch');
+    }
+  }
+
   void _validateNaiveMaterial(Object raw, TransportCandidate? candidate,
       Object? access, Set<RuntimeTransportFeature> runtimeFeatures, {String kind = ''}) {
     try {
@@ -138,7 +223,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
             requestedCandidateRef: selectedCandidateRef)
         : null;
     if (transportCatalog?.candidates.any((candidate) =>
-        candidate.transport == 'dnstt' || candidate.protocol == 'naive') == true) {
+        const {'dnstt', 'slipstream'}.contains(candidate.transport) || candidate.protocol == 'naive') == true) {
       _requirePremiumTransportAccess(response['access']);
     }
     if (selectedCandidateRef.isNotEmpty && transportCatalog == null) {
@@ -191,6 +276,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         'grpc' => ('vless', 'grpc', 'tls'),
         'xhttp' => ('vless', 'xhttp', candidate.protection),
         'dnstt' => ('vless', 'dnstt', 'noise'),
+        'slipstream' => ('vless', 'slipstream', 'tls'),
         'naive' => ('naive', 'h2', 'tls'),
         'awg31' => ('awg', 'udp', 'awg31'),
         'hysteria2' => ('hysteria2', 'udp', 'tls'),
@@ -200,6 +286,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
         throw const TransportManifestFailure('transport_catalog_profile_mismatch');
       }
       _validateDnsttMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
+      _validateSlipstreamMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       _validateNaiveMaterial(raw, candidate, response['access'], runtimeFeatures, kind: kind);
       if (candidate?.warpMode == 'warp_direct') {
         try {
@@ -298,7 +385,7 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
           'awg2' => 'awg2', 'awg31' => 'awg31', 'hysteria2' => 'hysteria2',
           'warp_direct' => 'warp',
           'naive' => 'naive',
-          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' => 'vless',
+          'reality' || 'grpc' || 'xhttp' || 'ru_bridge' || 'dnstt' || 'slipstream' => 'vless',
           _ => 'unknown',
         },
       ),
@@ -339,7 +426,8 @@ extension _ManagedManifestDecoder on AppFirstRuntimeBootstrapper {
     final bundled = <String, ManagedProfilePayload>{};
     final ManagedProfilePayload payload;
     if (response.containsKey('candidate_materials')) {
-      if (transportCatalog == null || supplied is! List || supplied.isEmpty || supplied.length > 6) {
+      final materialLimit = runtimeFeatures.contains(RuntimeTransportFeature.slipstreamVless) ? 7 : 6;
+      if (transportCatalog == null || supplied is! List || supplied.isEmpty || supplied.length > materialLimit) {
         throw const TransportManifestFailure('transport_catalog_materials_mismatch');
       }
       for (final value in supplied) {

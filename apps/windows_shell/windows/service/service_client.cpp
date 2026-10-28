@@ -604,6 +604,8 @@ bool ParseSnapshotBodyInternal(const std::string& body,
   std::string module_digest = "none";
   const bool has_core_version = body.find(";core_version=") != std::string::npos;
   std::string core_version = "none";
+  const bool has_slipstream_client = body.find(";slipstream_client_ready=") != std::string::npos;
+  std::string slipstream_client = "0";
   const bool has_retained_protection = body.find(";protection_retained=") != std::string::npos;
   std::string protection_retained = "0";
   const bool has_windows_dpi = body.find(";windows_local_dpi_admission_version=") != std::string::npos;
@@ -616,6 +618,7 @@ bool ParseSnapshotBodyInternal(const std::string& body,
   if (has_proof_state && !has_module_digest) return false;
   if (has_retained_protection && !has_module_digest) return false;
   if (has_core_version && !has_module_digest) return false;
+  if (has_slipstream_client && !has_core_version) return false;
   if (has_module_digest && !has_transport_capabilities) return false;
   if (has_transport_capabilities && !has_runtime_control) return false;
   if (has_smart_access && !has_catalog_window) return false;
@@ -643,7 +646,8 @@ bool ParseSnapshotBodyInternal(const std::string& body,
       (has_transport_capabilities && !ReadField(body, &offset,
           "transport_capabilities", &transport_capabilities, !has_module_digest)) ||
       (has_module_digest && !ReadField(body, &offset, "core_module_sha256", &module_digest, !has_core_version && !has_retained_protection && !has_proof_state)) ||
-      (has_core_version && !ReadField(body, &offset, "core_version", &core_version, !has_retained_protection && !has_proof_state)) ||
+      (has_core_version && !ReadField(body, &offset, "core_version", &core_version, !has_slipstream_client && !has_retained_protection && !has_proof_state)) ||
+      (has_slipstream_client && !ReadField(body, &offset, "slipstream_client_ready", &slipstream_client, !has_retained_protection && !has_proof_state)) ||
       (has_retained_protection && !ReadField(body, &offset, "protection_retained", &protection_retained, !has_proof_state && !has_windows_dpi)) ||
       (has_windows_dpi && (!has_retained_protection || !ReadField(body, &offset,
           "windows_local_dpi_admission_version", &windows_dpi, !has_proof_state))) ||
@@ -673,6 +677,7 @@ bool ParseSnapshotBodyInternal(const std::string& body,
       !ParseBool(egress, &output->core_egress_validated) ||
       !ParseBool(protection_retained, &output->protection_retained) ||
       !ParseBool(dns_ready, &output->dns_ready) ||
+      !ParseBool(slipstream_client, &output->slipstream_client_ready) ||
       !ParseBool(proof_pending, &output->transport_proof_pending) ||
       !ParseBool(lease_active, &output->transport_lease_active)) {
     return false;
@@ -713,6 +718,7 @@ bool ParseSnapshotBodyInternal(const std::string& body,
       ? transport_capabilities : "";
   output->core_module_sha256 = output->core_ready && module_digest != "none" ? module_digest : "";
   output->core_version = output->core_ready && core_version != "none" ? core_version : "";
+  output->slipstream_client_ready = output->core_ready && output->slipstream_client_ready;
   output->protection_retained_state_available = has_retained_protection;
   output->transport_proof_state_available = has_proof_state;
   output->transport_lease_state_available = has_lease_state;

@@ -65,6 +65,21 @@ void main() {
         'code', 'transport_catalog_invalid')));
   });
 
+  test('Slipstream catalog requires its own compiled capability and TCP-only VLESS chain', () {
+    final row = candidate('de', 'slipstream_vless', transport: 'slipstream',
+      protection: 'tls', features: ['singbox_vless_v1', 'slipstream_vless_v1']);
+    (row['requirements'] as Map)['minimum_client_release'] = '1.5.0';
+    expect(parse(catalog([row]), clientRelease: '1.5.0').selected.transport, 'slipstream');
+    expect(() => decodeManagedTransportCatalog(catalog([row]), platform: HostPlatform.windows,
+      clientRelease: '1.5.0', runtimeFeatures: {RuntimeTransportFeature.vless, RuntimeTransportFeature.dnsttVless}),
+      throwsA(isA<TransportManifestFailure>().having((failure) => failure.code,
+        'code', 'transport_catalog_incompatible')));
+    (row['parameters'] as Map)['network'] = 'udp';
+    expect(() => parse(catalog([row]), clientRelease: '1.5.0'),
+      throwsA(isA<TransportManifestFailure>().having((failure) => failure.code,
+        'code', 'transport_catalog_invalid')));
+  });
+
   test('direct WARP has no node and requires the client that understands it', () {
     final direct = candidate('', 'warp_free', protocol: 'warp', transport: 'udp',
         protection: 'warp', features: [])

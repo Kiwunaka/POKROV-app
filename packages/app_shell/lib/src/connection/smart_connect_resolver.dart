@@ -96,6 +96,10 @@ class SmartConnectCandidateSelector {
       final reserve = ordered.where((candidate) => candidate.transport == 'dnstt').firstOrNull;
       if (reserve != null) alternatives.add(reserve);
     }
+    if (selected.transport != 'slipstream' && alternatives.every((candidate) => candidate.transport != 'slipstream')) {
+      final reserve = ordered.where((candidate) => candidate.transport == 'slipstream').firstOrNull;
+      if (reserve != null) alternatives.add(reserve);
+    }
     if (selected.protocol != 'naive' && alternatives.every((candidate) => candidate.protocol != 'naive')) {
       final reserve = ordered.where((candidate) => candidate.protocol == 'naive').firstOrNull;
       if (reserve != null) alternatives.add(reserve);

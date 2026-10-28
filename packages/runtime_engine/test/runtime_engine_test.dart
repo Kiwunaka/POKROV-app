@@ -581,6 +581,28 @@ void main() {
     expect(invalidated.canConnect, isFalse);
   });
 
+  test('Slipstream host readiness gates selection without rewriting the Core inventory', () async {
+    const channel = MethodChannel('space.pokrov/runtime_engine');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+    final inventory = jsonEncode({'schema': 1,
+      'features': ['singbox_vless_v1', 'slipstream_vless_v1']});
+    final response = <String, Object?>{
+      'phase': 'initialized', 'transportCapabilitiesJson': inventory,
+    };
+    messenger.setMockMethodCallHandler(channel, (call) async => response);
+    final engine = createRuntimeEngine(hostPlatform: HostPlatform.android);
+    final unavailable = await engine.snapshot();
+    expect(unavailable.slipstreamClientReady, isFalse);
+    expect(unavailable.availableTransportFeatures, {RuntimeTransportFeature.vless});
+    expect(unavailable.transportCapabilities?.canonicalJson, inventory);
+    response['slipstreamClientReady'] = true;
+    final ready = await engine.snapshot();
+    expect(ready.availableTransportFeatures, contains(RuntimeTransportFeature.slipstreamVless));
+    expect(ready.transportCapabilities?.canonicalJson, inventory);
+    expect(unavailable.hasSameStateAs(ready), isFalse);
+  });
+
   test('running egress failure preserves its observation without claiming a stop',
       () async {
     const channel = MethodChannel('space.pokrov/runtime_engine');

@@ -42,6 +42,15 @@ and protected cached material; ordinary country/Auto selection is unchanged.
 This source support does not prove a packaged binary or network reachability.
 Unknown features and malformed inventories still fail closed.
 
+Slipstream is a separate DNS reserve under `slipstream_vless_v1`, with the same
+Premium gate and an exact TCP-only personal VLESS detour over one pinned X509
+leaf certificate. Selection additionally requires the trusted host to configure
+its bundled native client: `slipstream-client.exe` beside Windows Core or the
+extracted Android `nativeLibraryDir/libslipstream.so`. Missing optional setup APIs
+or client files leave other transports available. Raw Core inventory stays intact
+for ATS; online and cached selection use host readiness as well. Auto retains
+both DNS reserves and reports `vless_slipstream_tls` separately from DNSTT.
+
 Managed Naive uses the loaded `singbox_naive_h2_v1` and TLS capabilities plus
 the same active Premium gate. Online and cached material require authenticated
 Naive on HTTPS 443 with certificate verification and an explicit TLS server name;

@@ -204,7 +204,7 @@ class ConnectionManager extends ChangeNotifier {
     final service = _bootstrapper;
     if (service is AppFirstRuntimeBootstrapper && service.invitationNetworkDeferred) return;
     if (service is! CachedManagedProfileBootstrapper) return;
-    final features = _runtimeSnapshot?.transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
+    final features = _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
     // Before Core initialization, a legacy-only request would replace the
     // existing full catalog. Connect refreshes with the loaded capabilities.
     if (features.isEmpty) return;
@@ -1145,6 +1145,7 @@ class ConnectionManager extends ChangeNotifier {
       if (candidate.transport == 'xhttp' && candidate.protection == 'reality') return 'xhttp_reality';
       if (candidate.transport == 'xhttp' && candidate.protection == 'tls') return 'xhttp_tls';
       if (candidate.transport == 'dnstt' && candidate.protection == 'noise') return 'vless_dnstt_noise';
+      if (candidate.transport == 'slipstream' && candidate.protection == 'tls') return 'vless_slipstream_tls';
     }
     if (candidate.protocol == 'hysteria2' && candidate.transport == 'udp') return 'hysteria2';
     if (candidate.protocol == 'awg' && candidate.protection == 'awg31') return 'awg31';
@@ -2624,7 +2625,7 @@ class ConnectionManager extends ChangeNotifier {
     final signedTransport = _bootstrapper is AppFirstTransportManifestService &&
         (_bootstrapper as AppFirstTransportManifestService).transportManifestEnabled;
     final features = signedTransport ? const <RuntimeTransportFeature>{}
-        : _runtimeSnapshot?.transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
+        : _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
     final engine = _runtimeEngine;
     final discoverCandidates = !signedTransport && engine is RuntimeCandidateProbing && features.isNotEmpty;
     final useCandidateProbes = discoverCandidates && _connectionCoordinator.actionInFlight;
@@ -2728,8 +2729,11 @@ class ConnectionManager extends ChangeNotifier {
       final warpCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
       final ordinaryCandidates = eligibleCandidates.where((candidate) =>
-          candidate.warpMode == null && candidate.transport != 'dnstt').toList();
-      final dnsCandidates = eligibleCandidates.where((candidate) => candidate.transport == 'dnstt').take(1).toList();
+          candidate.warpMode == null && !const {'dnstt', 'slipstream'}.contains(candidate.transport)).toList();
+      final dnsCandidates = [
+        ...eligibleCandidates.where((candidate) => candidate.transport == 'dnstt').take(1),
+        ...eligibleCandidates.where((candidate) => candidate.transport == 'slipstream').take(1),
+      ]..sort((a, b) => a.priority.compareTo(b.priority));
       final directWarpCandidates = eligibleCandidates.where((candidate) =>
           candidate.warpMode == 'warp_direct').toList();
       final groups = [
@@ -2959,7 +2963,7 @@ class ConnectionManager extends ChangeNotifier {
       final probing = engine as RuntimeCandidateProbing;
       final service = cache as CachedManagedProfileBootstrapper;
       final cachedWarpAllowed = _explicitWarpRuntimeConsent == true;
-      final features = _runtimeSnapshot?.transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
+      final features = _runtimeSnapshot?.availableTransportFeatures ?? const <RuntimeTransportFeature>{};
       final available = <String, ManagedProfilePayload>{};
       for (final candidate in catalog.candidates.where((candidate) =>
           (inputs.preferredCandidateRef.isEmpty || candidate.candidateRef == inputs.preferredCandidateRef) &&
@@ -3000,10 +3004,14 @@ class ConnectionManager extends ChangeNotifier {
             candidate.warpMode != null && candidate.warpMode != 'warp_direct').toList();
         final directWarpCandidates = cachedCandidates.where((candidate) =>
             candidate.warpMode == 'warp_direct').toList();
-        final dnsCandidates = cachedCandidates.where((candidate) => candidate.transport == 'dnstt').take(1).toList();
+        final dnsCandidates = [
+          ...cachedCandidates.where((candidate) => candidate.transport == 'dnstt').take(1),
+          ...cachedCandidates.where((candidate) => candidate.transport == 'slipstream').take(1),
+        ]..sort((a, b) => a.priority.compareTo(b.priority));
         final groups = [
           warpCandidates,
-          cachedCandidates.where((candidate) => candidate.warpMode == null && candidate.transport != 'dnstt').toList(),
+          cachedCandidates.where((candidate) => candidate.warpMode == null &&
+              !const {'dnstt', 'slipstream'}.contains(candidate.transport)).toList(),
           dnsCandidates,
           directWarpCandidates,
         ];
@@ -4185,7 +4193,7 @@ class ConnectionManager extends ChangeNotifier {
                 .loadCachedManagedProfile(
                   cacheInputs,
                   preferProven: _cachedProfileFallbackGate.preferProvenProfile,
-                  runtimeFeatures: current.transportCapabilities?.features ?? const {},
+                  runtimeFeatures: current.availableTransportFeatures,
                   coreRelease: current.coreVersion,
                 )
                 .timeout(const Duration(seconds: 2), onTimeout: () => null)
@@ -5343,7 +5351,7 @@ class ConnectionManager extends ChangeNotifier {
             !_cachedProfileFallbackGate.canFallback(cachedProfileAvailable: true, inputsVerified: true)) return null;
         final cached = await (cacheService as CachedManagedProfileBootstrapper).loadCachedManagedProfile(
             cacheInputs, preferProven: true,
-            runtimeFeatures: _runtimeSnapshot?.transportCapabilities?.features ?? const {},
+            runtimeFeatures: _runtimeSnapshot?.availableTransportFeatures ?? const {},
             coreRelease: _runtimeSnapshot?.coreVersion)
             .timeout(const Duration(seconds: 2), onTimeout: () => null);
         if (_disposed || !_connectionCoordinator.ownsOperation(generation) ||

@@ -42,6 +42,11 @@ selected binding and must not be used to restage this private build.
   or `-Platforms windows` for a single-platform change; it otherwise selects both.
   `CoreArtifactDirectory` requires exactly one platform. Never replace exact
   bindings with whichever files happen to be in Core `dist/`.
+  A Slipstream Windows SDK lists `slipstream-client.exe` and
+  `slipstream-LICENSE.txt` in the selected manifest's existing runtime dependencies;
+  CMake installs the pair. Android receives the per-ABI executable
+  `libslipstream.so` and license from Core's AAR and extracts native libraries for
+  execution by Core. Source support alone does not establish packaged readiness.
 - [check-client-version-parity.ps1](check-client-version-parity.ps1) checks
   selected-platform versions and artifact identities. Pass the same
   `RuntimeArtifactsPath` as packaging; use `-Platforms android` or

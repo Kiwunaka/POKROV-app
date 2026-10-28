@@ -43,6 +43,7 @@ class RuntimeTransportCapabilities {
 /// Optional loaded binding extension; absence is unavailable, not support.
 abstract interface class RuntimeTransportCapabilitySource {
   RuntimeTransportCapabilities? get transportCapabilities;
+  bool get slipstreamClientReady;
 }
 
 RuntimeTransportCapabilities? _readCoreTransportCapabilities(DynamicLibrary library) {

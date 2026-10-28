@@ -99,6 +99,7 @@ internal object AndroidRuntimeState {
     private var smartAccessRuntimeControlVersion: Int = 0
     private var routingCatalogControlVersion: Int = 0
     private var transportCapabilitiesJson: String? = null
+    private var slipstreamClientReady: Boolean = false
     private var coreModuleSha256: String? = null
     private var coreVersion: String? = null
     private var lastFailureKind: String? = null
@@ -135,6 +136,7 @@ internal object AndroidRuntimeState {
         )
         if (packagedCore == null) {
             environment = null
+            slipstreamClientReady = false
             phase = AndroidRuntimePhase.ARTIFACT_MISSING
             stagedConfigPath = null
             stagedProfileDigest = null
@@ -186,26 +188,29 @@ internal object AndroidRuntimeState {
         smartAccessRuntimeControlVersion = 0
         routingCatalogControlVersion = 0
         transportCapabilitiesJson = null
+        slipstreamClientReady = false
         coreModuleSha256 = null
         coreVersion = null
         val resolved = resolveEnvironment(context) ?: return false
         return try {
             Seq.setContext(context.applicationContext)
             Libbox.touch()
-            Libbox.setup(
-                SetupOptions().apply {
-                    setBasePath(resolved.baseDirectory.absolutePath)
-                    setWorkingPath(resolved.workingDirectory.absolutePath)
-                    setTempPath(resolved.tempDirectory.absolutePath)
-                    setFixAndroidStack(true)
-                    // Debug builds classify native failures into fixed safe categories.
-                    // Raw Core messages are never forwarded to logcat.
-                    setDebug(
-                        context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0,
-                    )
-                    setLogMaxLines(3000)
-                },
+            val setupOptions = SetupOptions().apply {
+                setBasePath(resolved.baseDirectory.absolutePath)
+                setWorkingPath(resolved.workingDirectory.absolutePath)
+                setTempPath(resolved.tempDirectory.absolutePath)
+                setFixAndroidStack(true)
+                // Debug builds classify native failures into fixed safe categories.
+                // Raw Core messages are never forwarded to logcat.
+                setDebug(
+                    context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0,
+                )
+                setLogMaxLines(3000)
+            }
+            val slipstreamConfigured = configureSlipstreamClient(
+                setupOptions, context.applicationInfo.nativeLibraryDir,
             )
+            Libbox.setup(setupOptions)
             // The retained AAR has no catalog getter. Read the loaded binding
             // without advertising a source-only capability on that artifact.
             routingCatalogWindowVersion = readRoutingCatalogWindowVersion()
@@ -213,6 +218,8 @@ internal object AndroidRuntimeState {
             routingCatalogControlVersion = readRoutingCatalogControlVersion()
             smartAccessRuntimeControlVersion = readSmartAccessRuntimeControlVersion()
             ensureCompiledTransportCapabilities()
+            slipstreamClientReady = slipstreamConfigured &&
+                transportCapabilitiesJson?.contains("\"slipstream_vless_v1\"") == true
             coreModuleSha256 = readCoreModuleSha256()
             coreVersion = readCoreVersion()
             phase = if (phase == AndroidRuntimePhase.RUNNING) {
@@ -223,6 +230,7 @@ internal object AndroidRuntimeState {
             lastMessage = "POKROV подготовил устройство."
             true
         } catch (_: Throwable) {
+            slipstreamClientReady = false
             phase = AndroidRuntimePhase.ARTIFACT_READY
             connectionPending = false
             lastFailureKind = "runtime_initialization_failed"
@@ -258,6 +266,22 @@ internal object AndroidRuntimeState {
         null
     } catch (_: LinkageError) {
         null
+    }
+
+    internal fun configureSlipstreamClient(options: Any, nativeLibraryDir: String?): Boolean {
+        if (nativeLibraryDir.isNullOrBlank()) return false
+        val client = File(nativeLibraryDir, "libslipstream.so")
+        if (!client.isFile || !client.canExecute()) return false
+        return try {
+            options.javaClass.getMethod("setSlipstreamClientPath", String::class.java)
+                .invoke(options, client.absolutePath)
+            true
+        } catch (_: ReflectiveOperationException) {
+            // Retained AARs lack this additive setup field; other transports work.
+            false
+        } catch (_: LinkageError) {
+            false
+        }
     }
 
     @Synchronized
@@ -840,6 +864,7 @@ internal object AndroidRuntimeState {
             "smartAccessRuntimeControlVersion" to smartAccessRuntimeControlVersion,
             "routingCatalogControlVersion" to routingCatalogControlVersion,
             "transportCapabilitiesJson" to transportCapabilitiesJson,
+            "slipstreamClientReady" to slipstreamClientReady,
             "coreModuleSha256" to coreModuleSha256,
             "coreVersion" to coreVersion,
             "artifactDirectory" to resolved?.artifactDirectory,

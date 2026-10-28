@@ -23,6 +23,17 @@ String _inventory(List<String> features) =>
     jsonEncode({'schema': 1, 'features': features});
 
 void main() {
+  test('Slipstream adds compiled support without changing the raw inventory', () {
+    final names = [..._dnsttCoreFeatures, 'singbox_naive_h2_v1', 'slipstream_vless_v1']..sort();
+    final wire = _inventory(names);
+    final capabilities = RuntimeTransportCapabilities.fromWire(wire);
+    expect(capabilities?.canonicalJson, wire);
+    expect(capabilities?.features, containsAll([
+      RuntimeTransportFeature.dnsttVless, RuntimeTransportFeature.slipstreamVless,
+      RuntimeTransportFeature.vless, RuntimeTransportFeature.naiveH2,
+    ]));
+  });
+
   test('DNSTT Core inventory retains the ordinary transport capabilities', () {
     final wire = _inventory(_dnsttCoreFeatures);
     final capabilities = RuntimeTransportCapabilities.fromWire(wire);

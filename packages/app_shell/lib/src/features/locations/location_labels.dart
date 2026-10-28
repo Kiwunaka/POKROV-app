@@ -150,6 +150,7 @@ String _locationCandidateLabel(domain.TransportCandidate candidate) {
   final protocol = switch (candidate.protocol) {
     'vless' => switch (candidate.transport) {
         'dnstt' => 'DNS-туннель (DNSTT)',
+        'slipstream' => 'DNS-туннель (Slipstream)',
         'xhttp' => 'VLESS XHTTP',
         'grpc' => 'VLESS gRPC',
         _ => candidate.protection == 'reality' ? 'VLESS REALITY' : 'VLESS TLS',

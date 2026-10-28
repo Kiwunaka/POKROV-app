@@ -448,6 +448,10 @@ class InstalledCoreRuntime final : public CoreRuntime {
     return initialized_ ? transport_capabilities_json_ : "";
   }
 
+  bool SlipstreamClientReady() const override {
+    return initialized_ && slipstream_client_ready_;
+  }
+
   std::string CoreModuleSHA256() const override {
     return initialized_ ? core_module_sha256_ : "";
   }
@@ -613,6 +617,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
     }
     routing_catalog_window_version_ = 0;
     transport_capabilities_json_.clear();
+    slipstream_client_ready_ = false;
     core_version_.clear();
     configure_smart_access_control_ = nullptr;
     configure_smart_access_renewal_ = nullptr;
@@ -875,6 +880,20 @@ class InstalledCoreRuntime final : public CoreRuntime {
         free_string_(value);
       }
     }
+    if (transport_capabilities_json_.find("\"slipstream_vless_v1\"") != std::string::npos) {
+      const auto set_client_path = reinterpret_cast<SecureFileFunction>(
+          ::GetProcAddress(module_, "pokrovCoreSetSlipstreamClientPath"));
+      const auto client_path = AppendPath(directory, L"slipstream-client.exe");
+      const auto attributes = ::GetFileAttributesW(client_path.c_str());
+      if (set_client_path != nullptr && attributes != INVALID_FILE_ATTRIBUTES &&
+          (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+        const auto encoded_client_path = Utf8(client_path);
+        if (!encoded_client_path.empty()) {
+          char* configured = set_client_path(encoded_client_path.c_str());
+          slipstream_client_ready_ = configured != nullptr && StringResult(configured).empty();
+        }
+      }
+    }
     initialized_ = true;
     return "";
   }
@@ -1080,6 +1099,7 @@ class InstalledCoreRuntime final : public CoreRuntime {
   LocalDpiAdmissionFunction admit_telegram_ws_ = nullptr;
   LocalDpiAdmissionFunction withdraw_telegram_ws_ = nullptr;
   std::string transport_capabilities_json_;
+  bool slipstream_client_ready_ = false;
   std::string core_module_sha256_;
   std::string core_version_;
   RevokeSmartAccessFunction revoke_smart_access_ = nullptr;
@@ -2556,6 +2576,7 @@ std::string RuntimeHost::SnapshotBody(const char* pending_phase) const {
          (initialized_ && !core_->CoreModuleSHA256().empty() ? core_->CoreModuleSHA256() : "none") +
          ";core_version=" +
          (initialized_ && !core_->CoreVersion().empty() ? core_->CoreVersion() : "none") +
+         ";slipstream_client_ready=" + (initialized_ && core_->SlipstreamClientReady() ? "1" : "0") +
          ";protection_retained=" + (guarded ? "1" : "0") +
          ";windows_local_dpi_admission_version=" + (local_dpi_ready_ ? "1" : "0") +
          local_dpi_observation +

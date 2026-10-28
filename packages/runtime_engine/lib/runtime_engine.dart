@@ -241,6 +241,7 @@ class RuntimeSnapshot {
     this.windowsLocalDpiAdmissionVersion = 0,
     this.windowsLocalDpiRuntime,
     this.transportCapabilities,
+    this.slipstreamClientReady = false,
     this.coreModuleSha256,
     this.coreVersion,
   });
@@ -309,6 +310,16 @@ class RuntimeSnapshot {
   /// Null when the current captured Core session cannot be observed.
   final WindowsLocalDpiRuntime? windowsLocalDpiRuntime;
   final RuntimeTransportCapabilities? transportCapabilities;
+  /// The trusted host configured its installed bundled native Slipstream client.
+  /// This does not replace compiled support, profile admission or connectivity proof.
+  final bool slipstreamClientReady;
+
+  /// Features eligible for selection on this host; the raw inventory stays intact for ATS.
+  Set<RuntimeTransportFeature> get availableTransportFeatures {
+    final features = transportCapabilities?.features ?? const <RuntimeTransportFeature>{};
+    return slipstreamClientReady ? features : Set.unmodifiable(
+      features.where((feature) => feature != RuntimeTransportFeature.slipstreamVless));
+  }
   /// Native-observed executable/module digest. Never a profile/package hash.
   final String? coreModuleSha256;
   /// Version reported by the Core loaded by the native host.
@@ -370,6 +381,7 @@ class RuntimeSnapshot {
         windowsLocalDpiAdmissionVersion,
         windowsLocalDpiRuntime,
         transportCapabilities?.canonicalJson,
+        slipstreamClientReady,
         coreModuleSha256,
         coreVersion,
       );
@@ -2866,6 +2878,9 @@ class DesktopRuntimeEngine implements PokrovRuntimeEngine, RuntimeBootClock {
       transportCapabilities: binding is RuntimeTransportCapabilitySource &&
               const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase)
           ? (binding as RuntimeTransportCapabilitySource).transportCapabilities : null,
+      slipstreamClientReady: binding is RuntimeTransportCapabilitySource &&
+              const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase) &&
+          (binding as RuntimeTransportCapabilitySource).slipstreamClientReady,
       phase: phase,
       artifactDirectory: artifacts.artifactDirectory?.path,
       coreBinaryPath: artifacts.coreBinary?.path,
@@ -4772,6 +4787,8 @@ class MobileArtifactRuntimeEngine with _CandidateProbeChannel implements PokrovR
       transportLeaseActive: transportLeaseActive,
       transportCapabilities: const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase)
           ? RuntimeTransportCapabilities.fromWire(response['transportCapabilitiesJson']) : null,
+      slipstreamClientReady: const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase) &&
+          response['slipstreamClientReady'] == true,
       coreModuleSha256: const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase)
           ? _coreModuleDigestFromWire(response['coreModuleSha256']) : null,
       coreVersion: const {RuntimePhase.initialized, RuntimePhase.configStaged, RuntimePhase.running}.contains(phase) &&
@@ -5493,7 +5510,7 @@ class _PokrovCoreBindingsLoader {
         'The POKROV Core capability descriptor is malformed.',
       );
     }
-    return _PokrovCoreBindings.load(dynamicLibrary);
+    return _PokrovCoreBindings.load(dynamicLibrary, libraryPath);
   }
 
   static int? _pokrovCoreAbiVersion(DynamicLibrary dynamicLibrary) {
@@ -5557,11 +5574,15 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings, RuntimeTransportCap
     required Pointer<Char> Function(Pointer<Char>) secureFile,
     required void Function(Pointer<Char>) freeString,
     required this.transportCapabilities,
+    required Pointer<Char> Function(Pointer<Char>)? setSlipstreamClientPath,
+    required String? slipstreamClientPath,
   })  : _setup = setup,
         _start = start,
         _stop = stop,
         _secureFile = secureFile,
-        _freeString = freeString;
+        _freeString = freeString,
+        _setSlipstreamClientPath = setSlipstreamClientPath,
+        _slipstreamClientPath = slipstreamClientPath;
 
   final Pointer<Char> Function(
     Pointer<Char>,
@@ -5577,10 +5598,15 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings, RuntimeTransportCap
   final Pointer<Char> Function() _stop;
   final Pointer<Char> Function(Pointer<Char>) _secureFile;
   final void Function(Pointer<Char>) _freeString;
+  final Pointer<Char> Function(Pointer<Char>)? _setSlipstreamClientPath;
+  final String? _slipstreamClientPath;
+  bool _slipstreamClientReady = false;
+  @override
+  bool get slipstreamClientReady => _slipstreamClientReady;
   @override
   final RuntimeTransportCapabilities? transportCapabilities;
 
-  static DesktopRuntimeBindings load(DynamicLibrary dynamicLibrary) {
+  static DesktopRuntimeBindings load(DynamicLibrary dynamicLibrary, String libraryPath) {
     final setup = dynamicLibrary.lookupFunction<
         Pointer<Char> Function(
           Pointer<Char>,
@@ -5613,6 +5639,17 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings, RuntimeTransportCap
     final secureFile = dynamicLibrary.lookupFunction<
         Pointer<Char> Function(Pointer<Char>),
         Pointer<Char> Function(Pointer<Char>)>('pokrovSecureFile');
+    final transportCapabilities = _readCoreTransportCapabilities(dynamicLibrary);
+    Pointer<Char> Function(Pointer<Char>)? setSlipstreamClientPath;
+    if (transportCapabilities?.features.contains(RuntimeTransportFeature.slipstreamVless) == true) {
+      try {
+        setSlipstreamClientPath = dynamicLibrary.lookupFunction<
+            Pointer<Char> Function(Pointer<Char>),
+            Pointer<Char> Function(Pointer<Char>)>('pokrovCoreSetSlipstreamClientPath');
+      } on ArgumentError {
+        // Older ABI 2 libraries remain usable for their other transports.
+      }
+    }
 
     return _PokrovCoreBindings._(
       setup: setup,
@@ -5620,7 +5657,10 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings, RuntimeTransportCap
       stop: stop,
       secureFile: secureFile,
       freeString: freeString,
-      transportCapabilities: _readCoreTransportCapabilities(dynamicLibrary),
+      transportCapabilities: transportCapabilities,
+      setSlipstreamClientPath: setSlipstreamClientPath,
+      slipstreamClientPath: Platform.isWindows
+          ? File(p.join(p.dirname(libraryPath), 'slipstream-client.exe')).absolute.path : null,
     );
   }
 
@@ -5638,7 +5678,7 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings, RuntimeTransportCap
     final listen = ''.toNativeUtf8();
     final secret = ''.toNativeUtf8();
     try {
-      return _stringResult(
+      final result = _stringResult(
         _setup(
           base.cast<Char>(),
           working.cast<Char>(),
@@ -5650,6 +5690,20 @@ class _PokrovCoreBindings implements DesktopRuntimeBindings, RuntimeTransportCap
           debug,
         ),
       );
+      _slipstreamClientReady = false;
+      final configureClient = _setSlipstreamClientPath;
+      final bundledClientPath = _slipstreamClientPath;
+      if (result.isEmpty && configureClient != null &&
+          bundledClientPath != null && File(bundledClientPath).existsSync()) {
+        final clientPath = bundledClientPath.toNativeUtf8();
+        try {
+          final configured = configureClient(clientPath.cast<Char>());
+          _slipstreamClientReady = configured != nullptr && _stringResult(configured).isEmpty;
+        } finally {
+          calloc.free(clientPath);
+        }
+      }
+      return result;
     } finally {
       calloc.free(base);
       calloc.free(working);

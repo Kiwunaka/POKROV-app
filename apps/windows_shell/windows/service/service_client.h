@@ -70,6 +70,7 @@ struct ServiceRuntimeSnapshot {
   int windows_local_dpi_admission_version = 0;
   std::optional<WindowsLocalDpiRuntimeObservation> windows_local_dpi_runtime;
   std::string transport_capabilities_json;
+  bool slipstream_client_ready = false;
   std::string core_module_sha256;
   std::string core_version;
   std::string staged_profile_digest;

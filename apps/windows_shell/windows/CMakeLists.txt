@@ -117,6 +117,15 @@ foreach(POKROV_RUNTIME_FILE pokrov-core.dll libcronet.dll)
   endif()
 endforeach()
 
+if(EXISTS "${POKROV_RUNTIME_DIR}/slipstream-client.exe")
+  if(NOT EXISTS "${POKROV_RUNTIME_DIR}/slipstream-LICENSE.txt")
+    message(FATAL_ERROR "Missing bundled Slipstream license")
+  endif()
+  install(FILES "${POKROV_RUNTIME_DIR}/slipstream-client.exe"
+    "${POKROV_RUNTIME_DIR}/slipstream-LICENSE.txt"
+    DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
+endif()
+
 # Approved local-DPI package assets are required. No fetching or execution;
 # never package upstream .bat files.
 foreach(POKROV_DPI_FILE winws.exe cygwin1.dll WinDivert.dll WinDivert64.sys

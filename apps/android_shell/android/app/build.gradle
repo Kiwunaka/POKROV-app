@@ -118,9 +118,11 @@ android {
             excludes += ["DebugProbesKt.bin"]
         }
         jniLibs {
+            // Slipstream is an executable CLI in nativeLibraryDir, started by Core.
+            useLegacyPackaging = true
             // Preserve the published Core identity inside APK/AAB packages.
             // Android's strip task otherwise rewrites the Go ELF section table.
-            keepDebugSymbols += ["**/libpokrov-core.so"]
+            keepDebugSymbols += ["**/libpokrov-core.so", "**/libslipstream.so"]
         }
     }
 

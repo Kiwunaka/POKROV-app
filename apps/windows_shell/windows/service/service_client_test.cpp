@@ -118,8 +118,23 @@ int main() {
       "smart_access_runtime_control_version=0;transport_capabilities=none;" +
       "core_module_sha256=" + digest + ";core_version=1.1.1;protection_retained=0";
   expect(ParseServiceRuntimeSnapshot(versioned_body, &versioned) &&
-             versioned.core_version == "1.1.1" && versioned.protection_retained_state_available,
+             versioned.core_version == "1.1.1" && versioned.protection_retained_state_available &&
+             !versioned.slipstream_client_ready,
          "loaded Core version or guard observation was lost");
+  auto slipstream_body = versioned_body;
+  const std::string slipstream_inventory = "{\"schema\":1,\"features\":[\"singbox_vless_v1\",\"slipstream_vless_v1\"]}";
+  slipstream_body.replace(slipstream_body.find("transport_capabilities=none"),
+      std::string("transport_capabilities=none").size(), "transport_capabilities=" + slipstream_inventory);
+  slipstream_body.insert(slipstream_body.find(";protection_retained="), ";slipstream_client_ready=1");
+  ServiceRuntimeSnapshot slipstream;
+  expect(ParseServiceRuntimeSnapshot(slipstream_body, &slipstream) &&
+             slipstream.slipstream_client_ready && slipstream.transport_capabilities_json == slipstream_inventory,
+         "Slipstream readiness changed the raw compiled inventory or was lost");
+  auto invalid_slipstream = slipstream_body;
+  invalid_slipstream.replace(invalid_slipstream.find("slipstream_client_ready=1"),
+      std::string("slipstream_client_ready=1").size(), "slipstream_client_ready=2");
+  expect(!ParseServiceRuntimeSnapshot(invalid_slipstream, &slipstream),
+         "malformed Slipstream readiness crossed the service boundary");
   expect(BindSnapshotToProfileIntent(versioned, digest).failure == "profile_identity_mismatch",
          "unconfirmed Start/Apply accepted a missing profile");
   auto stopped_intent = digest;

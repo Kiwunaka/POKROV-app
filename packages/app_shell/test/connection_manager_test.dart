@@ -64,6 +64,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
   Object? failure;
   StackTrace? failureStack;
   String? lastCoreRelease;
+  Set<RuntimeTransportFeature> lastRuntimeFeatures = const {};
   Duration? lastProfileTimeout;
   final profileTimeouts = <Duration?>[];
   final entered = Completer<void>();
@@ -97,6 +98,7 @@ class _Bootstrapper implements ManagedProfileBootstrapper, AppFirstNodePreferenc
     Future<void>? cancelled,
   }) async {
     lastCoreRelease = coreRelease;
+    lastRuntimeFeatures = runtimeFeatures;
     lastProfileTimeout = timeout;
     profileTimeouts.add(timeout);
     requestedCountries.add(preferredCountryCode);
@@ -440,6 +442,7 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
   _Runtime({this.heldOperation, this.hostPlatform = HostPlatform.android});
   final String? heldOperation;
   bool supportsCandidates = false;
+  bool supportsSlipstreamClient = true;
   bool coreInitializationPending = false;
   Duration probeDelay = Duration.zero;
   Duration probeDuration = Duration.zero;
@@ -635,6 +638,8 @@ class _Runtime implements PokrovRuntimeEngine, RuntimeConnectCancellation, Runti
         transportCapabilities: supportsCandidates && phase != RuntimePhase.artifactReady && !coreInitializationPending
             ? RuntimeTransportCapabilities.fromWire(jsonEncode({'schema': 1,
                 'features': RuntimeTransportFeature.values.map((feature) => feature.wireName).toList()..sort()})) : null,
+        slipstreamClientReady: supportsCandidates && supportsSlipstreamClient &&
+            phase != RuntimePhase.artifactReady && !coreInitializationPending,
         coreVersion: phase == RuntimePhase.artifactReady || coreInitializationPending ? null : coreVersion,
         hostHealth: phase == RuntimePhase.running
             ? RuntimeHostHealth.healthy
@@ -2690,24 +2695,28 @@ void main() {
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 
-  test('Auto retains a DNS reserve and probes it only after ordinary candidates settle', () async {
+  test('Auto retains both DNS reserves and probes them only after ordinary candidates settle', () async {
     final ordinary = [_candidates.first, _CachedBootstrapper.alternatives[1]];
     final dns = TransportCandidate(candidateRef: 'de:dnstt_vless', profileRef: 'dnstt_vless',
       nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'dnstt', protection: 'noise',
       priority: 100, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
       platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: {RuntimeTransportFeature.dnsttVless});
+    final slipstream = TransportCandidate(candidateRef: 'de:slipstream_vless', profileRef: 'slipstream_vless',
+      nodeCode: 'de', countryCode: 'DE', protocol: 'vless', transport: 'slipstream', protection: 'tls',
+      priority: 101, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
+      platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: {RuntimeTransportFeature.slipstreamVless});
     final otherNode = TransportCandidate(candidateRef: 'ch:reality', profileRef: 'reality',
       nodeCode: 'ch', countryCode: 'CH', protocol: 'vless', transport: 'tcp', protection: 'reality',
       priority: 3, network: 'tcp', flow: '', minimumClientRelease: '1.5.0', minimumCoreRelease: null,
       platforms: {HostPlatform.android, HostPlatform.windows}, requiredFeatures: const {});
-    final pool = [...ordinary, otherNode, dns];
+    final pool = [...ordinary, otherNode, dns, slipstream];
     expect(SmartConnectCandidateSelector.cacheAlternatives(ordinary.first, pool, countryOnly: false,
       catalog: TransportCandidateCatalog(revision: 'test', selectedCandidateRef: ordinary.first.candidateRef,
-        candidates: pool)), [otherNode, ordinary.last, dns]);
-    final bootstrapper = _Bootstrapper(catalog: true, bundle: true)..candidates = [...ordinary, dns];
+        candidates: pool)), [otherNode, ordinary.last, dns, slipstream]);
+    final bootstrapper = _Bootstrapper(catalog: true, bundle: true)..candidates = [...ordinary, dns, slipstream];
     final runtime = _Runtime()..supportsCandidates = true
       ..heldProbeCandidates.addAll(ordinary.map((row) => row.candidateRef))
-      ..failedProbeCandidates.addAll(ordinary.map((row) => row.candidateRef));
+      ..failedProbeCandidates.addAll([...ordinary.map((row) => row.candidateRef), dns.candidateRef]);
     final manager = _manager(runtime, bootstrapper);
     addTearDown(manager.dispose);
     final connection = manager.connect();
@@ -2718,10 +2727,23 @@ void main() {
     runtime.probeRelease.complete();
     await connection;
     expect(runtime.activeProbes, isEmpty);
-    expect(runtime.stagedProfile, dns.candidateRef);
+    expect(runtime.stagedProfile, slipstream.candidateRef);
+    expect(runtime.probedPayloads.map((row) => row.materialCandidate?.candidateRef),
+      [...ordinary.map((row) => row.candidateRef), dns.candidateRef, slipstream.candidateRef]);
     expect(runtime.probeTimeouts.last.inMilliseconds, inInclusiveRange(29000, 30000),
       reason: 'the unchanged TLS/204/64KiB proof receives a separate bounded DNS budget');
     expect(bootstrapper.resolutions, hasLength(1), reason: 'the authorized bundled reserve needs no extra fetch');
+    expect(manager.status.phase, ConnectionPhase.connected);
+  });
+
+  test('Auto omits Slipstream from profile discovery when the host CLI is unavailable', () async {
+    final bootstrapper = _Bootstrapper(catalog: true);
+    final runtime = _Runtime()..supportsCandidates = true..supportsSlipstreamClient = false;
+    final manager = _manager(runtime, bootstrapper);
+    addTearDown(manager.dispose);
+    await manager.connect();
+    expect(bootstrapper.lastRuntimeFeatures, contains(RuntimeTransportFeature.vless));
+    expect(bootstrapper.lastRuntimeFeatures, isNot(contains(RuntimeTransportFeature.slipstreamVless)));
     expect(manager.status.phase, ConnectionPhase.connected);
   });
 

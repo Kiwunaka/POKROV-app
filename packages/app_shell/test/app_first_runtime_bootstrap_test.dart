@@ -1710,7 +1710,7 @@ void main() {
       httpClientFactory: offline ? () => throw StateError('offline restore used HTTP') : null);
     const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
       routeMode: RouteMode.fullTunnel, preferredCountryCode: 'DE');
-    final features = RuntimeTransportFeature.values.toSet();
+    final features = RuntimeTransportFeature.values.toSet()..remove(RuntimeTransportFeature.slipstreamVless);
     final online = create();
     final selected = await online.resolveManagedProfile(hostPlatform: inputs.hostPlatform,
       routeMode: inputs.routeMode, preferredCountryCode: inputs.preferredCountryCode,
@@ -1849,6 +1849,197 @@ void main() {
     expiry = '2000-01-01T00:00:00Z';
     await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
     expiry = null;
+    bypassCarrier = true;
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+  });
+
+  test('Premium Slipstream keeps its certificate-pinned VLESS graph online and offline', () async {
+    final directory = await Directory.systemTemp.createTemp('pokrov-slipstream-reserve-');
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() async {
+      await server.close(force: true);
+      await directory.delete(recursive: true);
+    });
+    const ordinaryRef = 'ch:legacy_reality_fallback';
+    const reserveRef = 'ch:slipstream_vless';
+    final queries = <Map<String, String>>[];
+    final certificate = await File('test/fixtures/slipstream-leaf.pem').readAsString();
+    final carrier = <String, Object?>{'type': 'slipstream', 'tag': 'dns-tunnel',
+      'domain': 's.t.fixture.invalid', 'resolvers': ['8.8.8.8:53'],
+      'certificate': certificate, 'network': 'tcp'};
+    var responseBytes = 0;
+    var accessState = 'trial_premium';
+    var bypassCarrier = false;
+    Map<String, Object?> config(bool reserve) => {
+      'outbounds': [
+        {'type': 'vless', 'tag': 'proxy', 'server': reserve ? '127.0.0.1' : 'fixture.invalid',
+          'server_port': reserve ? 12543 : 443, 'uuid': '11111111-1111-4111-8111-111111111111',
+          if (reserve) ...{'network': 'tcp', 'flow': '', 'detour': 'dns-tunnel'}
+          else 'tls': {'enabled': true, 'server_name': 'fixture.invalid'}},
+        if (reserve) carrier,
+      ],
+      'dns': {'servers': [{'tag': 'dns-remote', 'address': 'tcp://8.8.8.8', 'detour': 'proxy'}]},
+      'route': {'final': reserve && bypassCarrier ? 'dns-tunnel' : 'proxy'},
+    };
+    Map<String, Object?> candidate(bool reserve) => {
+      'candidate_ref': reserve ? reserveRef : ordinaryRef,
+      'profile_ref': reserve ? 'slipstream_vless' : 'legacy_reality_fallback',
+      'node_code': 'ch', 'country_code': 'CH', 'protocol': 'vless',
+      'transport': reserve ? 'slipstream' : 'tcp', 'protection': reserve ? 'tls' : 'reality',
+      'priority': reserve ? 101 : 0, 'parameters': {'network': 'tcp', 'flow': ''},
+      'requirements': {'minimum_client_release': '1.5.0', 'minimum_core_release': null,
+        'platforms': ['windows', 'android'], 'required_features': [
+          'singbox_vless_v1', reserve ? 'slipstream_vless_v1' : 'singbox_reality_v1']},
+    };
+    Map<String, Object?> extraCandidate(String profile, {required String protocol,
+        required String transport, required String protection, required List<String> features}) => {
+      ...candidate(false), 'candidate_ref': 'ch:$profile', 'profile_ref': profile,
+      'protocol': protocol, 'transport': transport, 'protection': protection, 'priority': 50,
+      'parameters': {'network': transport == 'udp' ? 'udp' : 'tcp', 'flow': ''},
+      'requirements': {...candidate(false)['requirements'] as Map, 'required_features': features},
+    };
+    final extraCandidates = [
+      {...candidate(false), 'candidate_ref': 'ch2:legacy_reality_fallback', 'node_code': 'ch2'},
+      extraCandidate('awg31_lab', protocol: 'awg', transport: 'udp', protection: 'awg31',
+        features: ['pokrov_awg31_endpoint_v1']),
+      extraCandidate('hy2_lab', protocol: 'hysteria2', transport: 'udp', protection: 'tls',
+        features: ['singbox_hysteria2_v1']),
+      extraCandidate('dnstt_vless', protocol: 'vless', transport: 'dnstt', protection: 'noise',
+        features: ['singbox_vless_v1', 'dnstt_vless_v1']),
+      extraCandidate('naive_h2', protocol: 'naive', transport: 'h2', protection: 'tls',
+        features: ['singbox_naive_h2_v1', 'singbox_tls_v1']),
+    ];
+    final extraMaterials = <String, (String, Map<String, Object?>)>{
+      'ch2:legacy_reality_fallback': ('reality', config(false)),
+      'ch:awg31_lab': ('awg31', {
+        '_meta': {'transport_contract': {'id': 'pokrov.awg31.endpoint.v1',
+          'sha256': '1bb49b61549ba7c4a3c2d56df445e919ebb1ed12d42e04b0cb3c915d23240818',
+          'profile': 'awg31_lab', 'state': 'enabled', 'generation': 'fixture'}},
+        'endpoints': [{'type': 'awg', 'tag': 'pokrov-awg31-lab',
+          'useIntegratedTun': false, 'contract_id': 'pokrov.awg31.endpoint.v1',
+          'private_key': base64Encode(List.filled(32, 1)), 'address': ['10.204.0.2/32'],
+          'mtu': 1280, 'jc': 6, 'jmin': 48, 'jmax': 96,
+          for (final name in ['s1', 's2', 's3', 's4']) name: 16,
+          for (var index = 1; index <= 4; index++) 'h$index': '${index}100001-${index}100099',
+          for (var index = 1; index <= 5; index++) 'i$index': '',
+          'header_protection_key': base64Encode(List.filled(32, 3)),
+          'content_padding_addition': '0', 'rekey_after_time': '120', 'rekey_timeout': '5',
+          'reject_after_time': '180', 'keepalive_timeout': '10', 'max_handshake_attempts': '18',
+          'random_trailers': true, 'peers': [{'address': '203.0.113.10', 'port': 51820,
+            'public_key': base64Encode(List.filled(32, 2)), 'allowed_ips': ['0.0.0.0/0'],
+            'persistent_keepalive_interval_range': '25'}]}],
+        'outbounds': [{'type': 'direct', 'tag': 'direct'}, {'type': 'block', 'tag': 'block'},
+          {'type': 'dns', 'tag': 'dns-out'}],
+        'dns': {'servers': [{'tag': 'cloudflare', 'address': 'https://1.1.1.1/dns-query',
+          'detour': 'pokrov-awg31-lab'}], 'final': 'cloudflare'},
+        'route': {'final': 'pokrov-awg31-lab'},
+      }),
+      'ch:hy2_lab': ('hysteria2', {'outbounds': [{'type': 'hysteria2', 'tag': 'proxy',
+        'server': 'hy2.fixture.invalid', 'server_port': 443, 'password': 'synthetic',
+        'tls': {'enabled': true, 'server_name': 'hy2.fixture.invalid'}}], 'route': {'final': 'proxy'}}),
+      'ch:dnstt_vless': ('dnstt', {'outbounds': [
+        (config(true)['outbounds'] as List).first,
+        {'type': 'dnstt', 'tag': 'dns-tunnel', 'domain': 't.fixture.invalid',
+          'publicKey': 'a' * 64, 'resolvers': ['8.8.8.8:53'], 'network': 'tcp', 'tunnel_per_resolver': 1}],
+        'route': {'final': 'proxy'}}),
+      'ch:naive_h2': ('naive', {'outbounds': [{'type': 'naive', 'tag': 'proxy',
+        'server': 'naive.fixture.invalid', 'server_port': 443, 'username': 'synthetic',
+        'password': 'synthetic', 'quic': false, 'udp_over_tcp': {'enabled': false},
+        'tls': {'enabled': true, 'server_name': 'naive.fixture.invalid'}}], 'route': {'final': 'proxy'}}),
+    };
+    unawaited(() async {
+      await for (final request in server) {
+        await utf8.decoder.bind(request).join();
+        request.response.headers.contentType = ContentType.json;
+        if (request.uri.path == '/api/client/session/start-trial') {
+          request.response.write(jsonEncode({
+            'session': {'session_token': 'synthetic-session', 'account_id': 'synthetic-account'},
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+          }));
+        } else if (request.uri.path == '/api/client/profile/managed') {
+          queries.add(request.uri.queryParameters);
+          final body = jsonEncode({
+            'profile_revision': 'slipstream-reserve', 'config_format': 'singbox-json',
+            'transport_profile': 'legacy_reality_fallback', 'transport_kind': 'reality',
+            'config_payload': config(false),
+            'transport_catalog': {'schema_version': 'pokrov-transport-catalog-v1',
+              'revision': 'slipstream-reserve', 'selected_candidate_ref': ordinaryRef,
+              'candidates': [candidate(false), ...extraCandidates, candidate(true)]},
+            'candidate_materials': [
+              for (final reserve in [false, true]) {
+                'candidate_ref': reserve ? reserveRef : ordinaryRef,
+                'transport_kind': reserve ? 'slipstream' : 'reality',
+                'config_format': 'singbox-json', 'config_payload': config(reserve),
+              },
+              for (final entry in extraMaterials.entries) {
+                'candidate_ref': entry.key, 'transport_kind': entry.value.$1,
+                'config_format': 'singbox-json', 'config_payload': entry.value.$2,
+              },
+            ],
+            'provisioning': {'status': 'ready', 'sync_ok': true},
+            'access': {'access_state': accessState, 'expiry_at': null},
+          });
+          responseBytes = utf8.encode(body).length;
+          request.response.write(body);
+        } else {
+          request.response.write('{"ok":true}');
+        }
+        await request.response.close();
+      }
+    }());
+    AppFirstRuntimeBootstrapper create({bool offline = false}) => AppFirstRuntimeBootstrapper(
+      apiBaseUrl: 'http://127.0.0.1:${server.port}', supportDirectoryResolver: () async => directory,
+      maxRequestAttempts: 1,
+      httpClientFactory: offline ? () => throw StateError('offline restore used HTTP') : null);
+    const inputs = ManagedProfileCacheInputs(hostPlatform: HostPlatform.windows,
+      routeMode: RouteMode.fullTunnel, preferredCountryCode: 'CH');
+    final features = RuntimeTransportFeature.values.toSet();
+    final online = create();
+    Future<ManagedProfilePayload> resolve({HostPlatform platform = HostPlatform.windows}) =>
+        online.resolveManagedProfile(hostPlatform: platform, routeMode: inputs.routeMode,
+          preferredCountryCode: 'CH', runtimeFeatures: features, selectCandidate: false);
+    final selected = await resolve();
+    expect(queries.single['candidate_material_limit'], '7');
+    expect(selected.candidateMaterials, hasLength(7));
+    expect(responseBytes, inInclusiveRange(1, 8 * 1024 * 1024));
+    final reserve = selected.candidateMaterials[reserveRef]!;
+    final outbounds = (jsonDecode(reserve.configPayload)['outbounds'] as List).cast<Map>();
+    expect(reserve.materialCandidate?.transport, 'slipstream');
+    expect(outbounds.singleWhere((row) => row['type'] == 'slipstream'), carrier);
+    expect(outbounds.singleWhere((row) => row['type'] == 'vless')['detour'], 'dns-tunnel');
+    expect(outbounds.where((row) => row['outbounds'] is List)
+      .expand((row) => row['outbounds'] as List), isNot(contains('dns-tunnel')));
+    final restarted = create(offline: true);
+    expect((await restarted.loadCachedManagedProfile(inputs, selectedCandidateRef: reserveRef,
+      runtimeFeatures: features))?.configPayload, reserve.configPayload);
+    expect(await restarted.loadCachedManagedProfile(inputs, selectedCandidateRef: reserveRef,
+      runtimeFeatures: features.difference({RuntimeTransportFeature.slipstreamVless})), isNull);
+    const storage = FlutterSecureStorage();
+    const cacheKey = 'pokrov-managed-profile-windows-v1';
+    final stored = jsonDecode((await storage.read(key: cacheKey))!) as Map<String, dynamic>;
+    final cachedMaterial = stored['candidates'][reserveRef]['payload'] as Map;
+    final altered = jsonDecode(cachedMaterial['config_payload'] as String) as Map;
+    (altered['outbounds'] as List).cast<Map>().singleWhere((row) => row['type'] == 'vless').remove('detour');
+    cachedMaterial['config_payload'] = jsonEncode(altered);
+    await storage.write(key: cacheKey, value: jsonEncode(stored));
+    expect(await restarted.loadCachedManagedProfile(inputs, selectedCandidateRef: reserveRef,
+      runtimeFeatures: features), isNull);
+    expect((await resolve(platform: HostPlatform.android)).candidateMaterials[reserveRef]
+      ?.materialCandidate?.transport, 'slipstream');
+    accessState = 'free_monthly';
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    accessState = 'paid_unlimited';
+    carrier['certificate'] = '$certificate$certificate';
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    carrier['certificate'] = '-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----\n';
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    carrier['certificate'] = certificate;
+    carrier['executable_path'] = 'remote-client';
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    carrier.remove('executable_path');
+    carrier['resolvers'] = ['127.0.0.1:53'];
+    await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
+    carrier['resolvers'] = ['8.8.8.8:53'];
     bypassCarrier = true;
     await expectLater(resolve(), throwsA(isA<TransportManifestFailure>()));
   });
