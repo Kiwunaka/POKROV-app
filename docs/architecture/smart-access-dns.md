@@ -1,6 +1,6 @@
 # Smart Access DNS routing
 
-## Current external-provider work — 27 October 2026
+## Current delivery — 28 October 2026
 
 The owner approved commercial embedded use of Shecan, Astra/Astracat, GeoHide,
 Bezmezhau, WLrus, DNS-AI and Zapret DNS. For these agreements, an eligible paid
@@ -9,9 +9,12 @@ bonus, manual or family access. The server uses the existing trial/paid/bonus
 Premium projection, including its manual/family handling, and excludes Free and
 expired/blocked access. No payment receipt, `provider_payment` origin or new
 entitlement class is required. Provider fees (fixed or percentage) remain under
-discussion; no spending is authorized. Public release remains paused. Live catalog
-29/state 29 and provider policy 4/state 3 enable Gemini on Android and Windows
-for eligible Premium access. Android 4222 NativeQA produced a real Gemini answer;
+discussion; no spending is authorized. Public release remains paused. The live
+readback at 07:41:40 UTC confirmed catalog 30/state 30/security 2 and provider
+policy 4/state 3/security 1, with admission open. It contains WLrus and DNS-AI
+for Windows Gemini, and WLrus for Android Gemini, all current-origin/IPv4/web.
+The provider policy and its three verified capabilities expire on 17 November
+2026 at 19:36:53 UTC. Android 4222 NativeQA produced a real Gemini answer;
 on 4225 the ordinary UI showed Gemini enabled and selectable. Android 4227 also
 accepted direct ByeDPI YouTube playback at 1080p on the owned Wi-Fi. These are
 scoped results, not a guarantee for other networks or providers. The owner also
@@ -24,6 +27,30 @@ and 65536 bytes in 11,732 ms. CH managed DNSTT delivery is enabled for all curre
 eligible Premium access. Ordinary Windows 4216 Auto/TUN and cleanup passed.
 Rates remain pending. See the platform-owned
 [whitelist research](../../../VPN/docs/competitive/censorship-stack-research-2026-07-22/whitelist-bypass-2026-10-21.md).
+
+In the current client, open **«Правила» → «Для опытных» → «Блокировка и DNS» →
+«SmartDNS-провайдер»**. The choices display the resolver hostname: Windows has
+`dns.wlrus.cfd` and `dns.dns-ai.ru`; Android has `dns.wlrus.cfd`. Select Gemini
+through **«Выбрать сервисы и режим»**, apply the selection and connect. The
+server issues a scoped lease for the selected service. Ordinary DNS/AdGuard and
+custom DoH settings are separate. An owner's commercial permission alone does
+not add a provider to this signed policy. Shecan, Astra/Astracat, GeoHide,
+Bezmezhau and Zapret are currently absent; Android DNS-AI also has no admitted
+capability. These are delivery gaps, not hidden picker entries.
+
+The 28 October targeted recheck used verified TLS and one Gemini A query per
+endpoint; it did not repeat the accepted WLrus/DNS-AI feature checks. Brain
+resolved and queried the previously failing/unknown endpoints directly. The
+host's fake-IP DNS results were discarded for availability decisions.
+
+| Endpoint | Current targeted result | Remaining before SmartDNS delivery |
+| --- | --- | --- |
+| Shecan candidates `free.shecan.ir` / `dns.shecan.ir` | Both reach `178.22.122.100`, but HTTPS certificate verification fails because the certificate expired | A verified current DoH endpoint, then a real service answer; TLS verification stays enabled |
+| [Astra/Astracat](https://github.com/ASTRACAT2022/host-DNS) — `dns.commonnet.work` | Verified DoH 200, DNS NOERROR, Gemini A `217.60.179.6` | Real feature acceptance and signed publication; the former down result is no longer current |
+| [Bezmezhau](https://bezmezhau.com/) — `dns.bezmezhau.com` | Verified DoH 200, DNS NOERROR, Gemini A `181.215.40.49` | Real feature acceptance and signed publication; the former name-resolution failure is no longer current |
+| GeoHide US — `us.geohide.ru` | Verified DoH 200, DNS NOERROR, four relay A records | Real answer; the earlier blank Gemini page remains unaccepted |
+| Zapret — `dns.zapret.moe` | Verified DoH 200, DNS NOERROR, Gemini A `83.217.211.149` | Real answer; the earlier prompt/page without an answer remains unaccepted |
+| [Xbox DNS](https://xbox-dns.ru/) | DoH answers Gemini with `0.0.0.0`; the official site still says the service is unavailable | Working service and commercial permission; it is outside the approved provider list |
 
 The table records the earlier 21 October root-run comparison in the clean
 Windows 11 VM from the Russian home network. Only a temporary Edge profile used
@@ -83,7 +110,8 @@ the next attempt reached TUN ready and rejected the protected API/app-domain
 pair. Parser correction `6e8cb4da` passed its focused test for 4212. Those VPN
 and external-client results did not themselves accept Android SmartDNS or
 LocalDPI/YouTube; subsequent scoped acceptance is stated above.
-DNSTT delegation, recursive transport and Windows 4216 Auto/TUN passed. Slipstream remains separate and deferred.
+DNSTT delegation, recursive transport and Windows 4216 Auto/TUN passed. The
+separate Slipstream integration gap is described below; DNSTT does not close it.
 Previous checks retain their original scope.
 The already accepted 4195 Gemini checks were not
 repeated: in ordinary Edge with default settings, POKROV
@@ -258,6 +286,25 @@ the recorded nonempty DNS/default-route/proxy baseline matched. Owned rules/task
 QA files were removed and PoweredOff confirmed. This does not prove behavior on
 a live whitelist network. WhiteDNS remains research. Commercial permission
 already covers active Premium; fees are pending.
+
+Managed route names and the client's fallback label call this transport
+**«DNS-туннель (DNSTT)»**. The previous SlipNet label named a separate client
+application and obscured which DNS transport was actually available.
+
+Slipstream is still absent from managed delivery and the Android/Windows client
+runtime. The existing implementation is the Linux-only
+`VPN/scripts/local_slipstream_lab.py`, which builds
+[`0FL01/slipstream`](https://github.com/0FL01/slipstream/tree/feat/rust-parity-ab)
+at `d7cd5555a88933053551128ff8b3741ae93049a0` with Meson/Ninja, CMake,
+GCC/G++, OpenSSL and picoquic. Its accepted loopback run checks pinned TLS,
+FlowRelay token/password/ACL rejection and synthetic data; it does not establish
+recursive DNS, Android, Windows or a live whitelist network. The current
+`feat/rust-parity-ab` head is `16fdfe97159a3b0b7b13563a671a730923e68c55`, which
+was inspected, not built or accepted. Both revisions expose CLI executables;
+the C runtime is POSIX-oriented. A client transport package and owned server
+endpoint, Premium issuance, process/socket lifecycle and platform packaging are
+still needed. No Slipstream runtime capability, profile producer or client
+entry exists today. The DNSTT reserve above is a different wire protocol.
 
 Root confirmed network/process cleanup after 4200: ordinary Stop left running/guard/TUN/winws 0;
 allExceptRu/IS, Automatic SmartDNS, local DPI off and empty service selection
