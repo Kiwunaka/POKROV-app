@@ -304,9 +304,14 @@ public port 53; the original `t.portal-privacy.online` DNSTT backend remains.
 Through recursive resolver `95.85.240.254:53`, Slipstream passed owned HTTPS204
 and exact 65536-byte payload; retained DNSTT passed the current Core probe in
 8679 ms. The guarded cutover is kept, its timer is inactive, and services are
-enabled for boot. CH profile issuance is enabled; the private app's ordinary
-Auto/TUN acceptance is still pending. Android device/real whitelist acceptance
-is also pending. These server and package checks do not establish those results.
+enabled for boot. During ordinary manual selection on Windows4235, issuance,
+bundled-client startup, TLS and HTTPS204 succeeded, but the API64KiB body did
+not finish within the 30-second candidate budget (`probe_budget_expired`). TUN
+was not started; Auto was not repeated. CH Slipstream issuance was therefore
+returned to disabled with its existing catalog rollback; the server and DNSTT
+remain running. Client transfer diagnosis and Auto/TUN acceptance are pending,
+as are Android device/real whitelist checks. Server/package checks do not
+establish those results.
 
 The earlier `VPN/scripts/local_slipstream_lab.py` POSIX loopback exercise remains
 historical lab work, separate from this deployed Rust carrier. DNSTT is a
