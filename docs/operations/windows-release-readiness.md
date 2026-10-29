@@ -13,6 +13,17 @@ Normal Exit left app/TUN/helpers absent, DNS/routes/proxy/preferences matched th
 baseline, and the VM was PoweredOff/Unlocked. Android was not built; no public
 release was published.
 
+One targeted Bezmezhau source-only QA attempt on installed **4242** on 29 October
+passed claim and foreground control HTTP 200 and reached ordinary native
+running/DNS/egress. Installing native control then raised `PlatformException`;
+the later `connect_deadline` was the watchdog rollback. The primary native code
+was hidden when the general Diagnostics refresh failed before reading QA context.
+App `16064b8d` fixes that readback in source; it was not installed in this run.
+The staged provider DNS used `dns.bezmezhau.com` through `dns-direct/ipv4_only`;
+native reserve bootstrap and Gemini remain unaccepted. Stop and normal tray Exit
+restored preferences, DNS, all 16 routes, proxy and WinHTTP; refreshed auth tokens
+were preserved. Root approved a Running VM handoff for the next owned probe.
+
 Private Windows **1.5.0+4241**, App `b119b7c6`, includes the opt-in v1
 candidate-ranker shadow with bounded local model reads and cancellable cold Connect.
 It reuses Core **1.2.15 / ABI2** (`1b74a65`) from the retained private4235 SDK.
